@@ -186,12 +186,12 @@ fn empty_rule_boundaries_and_native_and_power_on_starts_remain_distinct() {
     assert_eq!(empty.len(), 4);
     assert!(empty.iter().all(|view| view.declared_relevance.is_empty()
         && view.reviewed_requirement.claim == Claim::Boundary));
-    let checkpoint = views
+    let record = views
         .iter()
-        .find(|view| view.declaration.id.0 == "audio/native-expire-post64")
+        .find(|view| view.declaration.id.0 == "health/ceres-tail-drawing-gauge")
         .unwrap();
-    assert_eq!(checkpoint.coordinates, Coordinates::NativeFixture);
-    assert_eq!(checkpoint.first_compared_cut, Some(65));
+    assert_eq!(record.coordinates, Coordinates::NativeFixture);
+    assert_eq!(record.first_compared_cut, Some(993));
     let native = views
         .iter()
         .find(|view| view.declaration.id.0 == "audio/native-control")

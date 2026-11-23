@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "acf683a44ba215cffe03445a4eb8c7549ba94d8094bbb67a4c085b784ccdc753"
+index_sha256 = "1e0821fc62321e9f62858c0414ce52586e128dbaef0b00171e81a42409edcb31"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -41,55 +41,37 @@ pending_restorations = 0
 id = "audio/native-control"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "72c4997c5dab99c7eddd0fd40cb1809c8e3df009ceb56fd2ca5df8118de776d0"
+observation_sha256 = "7d65ef802a9628fed6b10c3bff5f181892ef460fe830de22602da1e391c04c87"
 
 [case.counts]
 cuts = 184
 fields = 7157
-outputs = 764
-publications = 764
-replies = 736
-null_cuts = 0
+outputs = 1276
+publications = 0
+replies = 724
+null_cuts = 1
 null_fields = 5731
 restorations = 184
-pending_boundaries = 573
-pending_restorations = 573
+pending_boundaries = 0
+pending_restorations = 0
 
 [[case]]
 id = "audio/native-expire-prefix"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "34db45f0cac6dab5078eb4111c4ab138d811c7b7a027d3f3ca03a2669edf357a"
+observation_sha256 = "a84f0f8321b941a31569a02357419817521f15bf387aa2f07d9626be8a695865"
 
 [case.counts]
 cuts = 65
 fields = 2453
-outputs = 269
-publications = 269
-replies = 260
-null_cuts = 0
+outputs = 453
+publications = 0
+replies = 258
+null_cuts = 1
 null_fields = 2193
 restorations = 65
-pending_boundaries = 201
-pending_restorations = 201
-
-[[case]]
-id = "audio/native-expire-post64"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "a1ad50f70f25b80e5a972f74ed9bf26638418d5555e388072613facb412943f0"
-
-[case.counts]
-cuts = 119
-fields = 4704
-outputs = 495
-publications = 495
-replies = 476
-null_cuts = 0
-null_fields = 3809
-restorations = 119
-pending_boundaries = 372
-pending_restorations = 372
+pending_boundaries = 0
+pending_restorations = 0
 
 [[case]]
 id = "ceres/door-closes-after-departure"

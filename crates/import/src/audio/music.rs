@@ -1,6 +1,6 @@
 use data::assets::audio::{
-    Articulation, EffectVoiceId, ExtraHandlingWork, MusicEvent, MusicTurns, MusicalPitch,
-    PitchOffset, TrackContent, VoiceId,
+    Articulation, EffectVoiceId, MusicEvent, MusicTurns, MusicalPitch, PitchOffset, TrackContent,
+    VoiceId,
 };
 use std::num::NonZeroU8;
 use std::ops::Range;
@@ -167,7 +167,6 @@ impl Tracks<'_> {
     }
 
     fn timing(&self, opcode: u8, reader: &mut Reader<'_>) -> Result<MusicEvent, ImportError> {
-        let start = reader.at.saturating_sub(1);
         let [next] = reader.region.get(reader.at)?;
         let articulation = if next < 0x80 {
             reader.take::<1>()?;
@@ -183,12 +182,9 @@ impl Tracks<'_> {
         } else {
             None
         };
-        // Advancing the duration or articulation operand across a page consumes extra work.
-        let crosses_page = start >> 8 != reader.at >> 8;
         Ok(MusicEvent::Timing {
             duration: MusicTurns(NonZeroU8::new(opcode).ok_or(ImportError::Music)?),
             articulation,
-            extra: ExtraHandlingWork::new(if crosses_page { 3 } else { 0 }),
         })
     }
 

@@ -60,4 +60,3 @@ proc-macro2 = { path = "vendor/proc-macro2-1.0.107" }
 quote = { path = "vendor/quote-1.0.47" }
 serde = { path = "vendor/serde-1.0.229" }
 serde_core = { path = "vendor/serde_core-1.0.229" }
-num-traits = { path = "vendor/num-traits-0.2.19" }

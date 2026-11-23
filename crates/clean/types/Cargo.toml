@@ -7,9 +7,6 @@ publish = false
 description = "The domain types the clean models share"
 
 [dependencies]
-num-bigint = { version = "=0.4.6", features = ["serde"] }
-num-rational = { version = "=0.4.2", features = ["serde"] }
-num-traits = "=0.2.19"
 enum-map = { version = "=3.1.0", features = ["serde"] }
 serde = { version = "=1.0.229", features = ["derive"] }
 

@@ -16,7 +16,6 @@ pub mod index;
 mod movement;
 mod movement_touchdown;
 mod native_search;
-mod pending;
 pub mod played;
 mod progress;
 mod readers;
@@ -29,7 +28,6 @@ mod touched_cells;
 mod weapons;
 
 use compare::{CompareFault, Observation};
-use game::production::{AdvanceInput, Production, ProductionOutputs};
 use index::{Case, Start};
 use result::{CaseResult, Counts, Outcome};
 use std::path::{Path, PathBuf};
@@ -57,9 +55,7 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         kind: case.kind,
         row: case.row.clone(),
         start_cut: match case.start {
-            Start::CacheCut { frame }
-            | Start::NativeRecord { frame, .. }
-            | Start::NativeCheckpoint { frame, .. } => Some(frame),
+            Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => Some(frame),
             Start::NativeOpportunity { .. }
             | Start::NativeSeed { .. }
             | Start::NativeSenderOffer { .. }
@@ -121,15 +117,6 @@ fn production_failure(cut: u64, fault: game::production::ProductionFault) -> Out
         game::production::ProductionFault::Blocks(_) => {
             data_failure(Some(cut), "block input room bounds")
         }
-        game::production::ProductionFault::TimeReversed => {
-            data_failure(Some(cut), "audio clock order")
-        }
-        game::production::ProductionFault::PresentationOutsideInterval => {
-            data_failure(Some(cut), "audio presentation interval")
-        }
-        game::production::ProductionFault::PresentationsUnordered => {
-            data_failure(Some(cut), "audio presentation order")
-        }
     }
 }
 
@@ -144,198 +131,6 @@ fn compared(cut: u64, expected: &[Observation], actual: &[Observation]) -> Resul
         }
         CompareFault::EmptyExpected => data_failure(Some(cut), "empty expected observation"),
     })
-}
-
-/// This reader owns only physical presentations and the declared measured stop schedule.
-struct AudioInputReader<'a> {
-    tape: &'a audio::InputTape,
-}
-impl AudioInputReader<'_> {
-    fn advance(
-        &self,
-        production: &mut Production,
-        cut: u64,
-        stop: &audio_transport::AudioInstant,
-    ) -> Result<ProductionOutputs, Outcome> {
-        let Some(state) = production.transport() else {
-            return Err(data_failure(Some(cut), "audio state scope"));
-        };
-        let presentations: Vec<_> = self
-            .tape
-            .presentations
-            .iter()
-            .filter(|input| input.at > state.now && input.at <= *stop)
-            .cloned()
-            .collect();
-        production
-            .advance(AdvanceInput::Audio {
-                stop: stop.clone(),
-                presentations: &presentations,
-            })
-            .map_err(|fault| production_failure(cut, fault))
-    }
-}
-
-/// Expected quantities can be read only after advancement, by the comparison side.
-struct AudioExpectedReader<'a> {
-    tape: &'a audio::ExpectedTape,
-}
-impl AudioExpectedReader<'_> {
-    fn at(&self, cut: u64) -> Result<&audio::Cut, Outcome> {
-        self.tape
-            .cuts
-            .iter()
-            .find(|expected| u64::try_from(expected.index).ok() == Some(cut))
-            .ok_or_else(|| data_failure(Some(cut), "missing native expected cut"))
-    }
-    fn observations(&self, cut: u64) -> Result<Vec<Observation>, Outcome> {
-        let expected = self.at(cut)?;
-        let mut fields: Vec<_> = expected
-            .fields
-            .iter()
-            .map(|field| Observation::quantity(field.field.clone(), field.value))
-            .collect();
-        fields.push(Observation::quantity(
-            "audio.pending_music",
-            i64::from(expected.pending_music),
-        ));
-        for (slot, byte) in expected.replies.iter().enumerate() {
-            fields.push(Observation::quantity(
-                format!("audio.reply{slot}"),
-                i64::from(*byte),
-            ));
-        }
-        let offset = self
-            .tape
-            .cuts
-            .iter()
-            .take_while(|capture| u64::try_from(capture.index).ok() != Some(cut))
-            .last()
-            .map_or(0, |capture| capture.publications);
-        let publications = self
-            .tape
-            .publications
-            .get(offset..expected.publications)
-            .ok_or_else(|| data_failure(Some(cut), "native expected publication horizon"))?;
-        fields.extend(publication_observations_range(
-            publications,
-            expected.publications,
-            offset,
-        )?);
-        Ok(fields)
-    }
-}
-
-fn publication_observations_range(
-    publications: &[audio::Publication],
-    total: usize,
-    offset: usize,
-) -> Result<Vec<Observation>, Outcome> {
-    #[derive(serde::Serialize)]
-    struct Instant<'a> {
-        at: &'a audio_transport::AudioInstant,
-    }
-    let mut fields = vec![Observation::quantity(
-        "audio.publication_count",
-        i64::try_from(total).map_err(|_| data_failure(None, "publication count range"))?,
-    )];
-    for (index, publication) in publications.iter().enumerate() {
-        let index = offset
-            .checked_add(index)
-            .ok_or_else(|| data_failure(None, "publication coordinate range"))?;
-        fields.push(Observation::quantity(
-            format!("audio.publication{index}.line"),
-            i64::try_from(audio::reply_slot(publication.line)).unwrap_or(i64::MAX),
-        ));
-        fields.push(Observation::quantity(
-            format!("audio.publication{index}.byte"),
-            i64::from(publication.byte),
-        ));
-        let instant = toml::to_string(&Instant {
-            at: &publication.at,
-        })
-        .map_err(|_| data_failure(None, "publication instant encoding"))?;
-        fields.push(Observation {
-            field: format!("audio.publication{index}.instant"),
-            bytes: instant.into_bytes(),
-        });
-    }
-    Ok(fields)
-}
-
-fn add_publications(
-    tape: &audio::InputTape,
-    outputs: ProductionOutputs,
-    publications: &mut Vec<audio::Publication>,
-    replies: &mut [u8; 4],
-    cut: u64,
-) -> Result<(), Outcome> {
-    let ProductionOutputs::Audio(outputs) = outputs else {
-        return Err(data_failure(Some(cut), "audio output scope"));
-    };
-    for output in outputs {
-        if let audio_transport::transport::Output::Publication {
-            at, line, reply, ..
-        } = output
-        {
-            let byte = audio::encode(&tape.aliases, line, reply)
-                .map_err(|_| data_failure(Some(cut), "physical reply alias"))?;
-            *replies
-                .get_mut(audio::reply_slot(line))
-                .ok_or_else(|| data_failure(Some(cut), "physical reply line"))? = byte;
-            publications.push(audio::Publication { line, byte, at });
-        }
-    }
-    Ok(())
-}
-
-fn actual_audio(
-    production: &Production,
-    publications: &[audio::Publication],
-    replies: [u8; 4],
-) -> Result<Vec<Observation>, Outcome> {
-    actual_audio_from(production, publications, replies, 0)
-}
-
-fn actual_audio_from(
-    production: &Production,
-    publications: &[audio::Publication],
-    replies: [u8; 4],
-    offset: usize,
-) -> Result<Vec<Observation>, Outcome> {
-    let Some(state) = production.transport() else {
-        return Err(data_failure(None, "audio state scope"));
-    };
-    let mut fields: Vec<_> = audio_projection::project(state)
-        .into_iter()
-        .map(|field| Observation::quantity(field.field, field.value))
-        .collect();
-    let pending = matches!(
-        state.phase,
-        audio_transport::AudioPhase::Work {
-            result: audio_transport::CompletionResult::Music(_),
-            ..
-        }
-    );
-    fields.push(Observation::quantity(
-        "audio.pending_music",
-        i64::from(pending),
-    ));
-    for (slot, byte) in replies.iter().enumerate() {
-        fields.push(Observation::quantity(
-            format!("audio.reply{slot}"),
-            i64::from(*byte),
-        ));
-    }
-    let newly_published = publications
-        .get(offset..)
-        .ok_or_else(|| data_failure(None, "actual publication coordinate"))?;
-    fields.extend(publication_observations_range(
-        newly_published,
-        publications.len(),
-        offset,
-    )?);
-    Ok(fields)
 }
 
 fn append_digest(bytes: &mut Vec<u8>, cut: u64, expected: &[Observation]) {
@@ -425,11 +220,10 @@ mod tests {
         assert_eq!(result.outcome, Outcome::Pass);
         assert_eq!(result.counts.cuts, 184);
         assert_eq!(result.counts.fields, 7157);
-        assert_eq!(result.counts.publications, 764);
-        assert_eq!(result.counts.replies, 736);
+        // Twelve replies were published by an effect turn still under way at their cut.
+        assert_eq!(result.counts.replies, 724);
+        assert_eq!(result.counts.outputs, 1276);
         assert_eq!(result.counts.restorations, 184);
-        assert_eq!(result.counts.pending_boundaries, 573);
-        assert_eq!(result.counts.pending_restorations, 573);
     }
     #[test]
     #[ignore = "private pinned indexed captures"]

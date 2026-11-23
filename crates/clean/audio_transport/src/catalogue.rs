@@ -8,8 +8,10 @@ pub enum BehaviourId {
     RequestDelivery,
     /// Clear and reset lifetime.
     RequestRelease,
-    /// CPU service clock.
-    SenderTiming,
+    /// Each frame's effect and music turns around its sender service.
+    FrameCadence,
+    /// Replies each turn publishes.
+    PublishedReplies,
     /// Handled versus staged requests.
     StagedRequests,
     /// Note countdown and release.
@@ -24,22 +26,8 @@ pub enum BehaviourId {
     EffectResources,
     /// Upward connected slides.
     ConnectedPitchMotion,
-    /// Effect work.
-    EffectTiming,
     /// Retained song choices.
     SongControls,
-    /// Consumed versus preview work.
-    MusicTiming,
-    /// Independent overflow phases.
-    IndependentCadence,
-    /// Two equal observations.
-    StableRequests,
-    /// Deferred result publication.
-    VisibleCompletion,
-    /// Four-bit count and polling lattice.
-    ClockObservation,
-    /// Ordered publication anchors.
-    ReplyCadence,
 }
 pub use types::{Kind, Switch};
 /// Named rule, classification and supplied check family.
@@ -58,24 +46,18 @@ pub struct Behaviour {
 #[must_use]
 pub fn catalogue() -> enum_map::EnumMap<BehaviourId, Behaviour> {
     enum_map::enum_map! {
-        BehaviourId::OfferAcceptance => Behaviour { summary: "admit permitted offers with space", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["offer"] },
-        BehaviourId::RequestDelivery => Behaviour { summary: "deliver oldest cue and retry acknowledgement", kind: Kind::Quirk, switch: Switch::Fixed, checked_by: &["sender"] },
-        BehaviourId::RequestRelease => Behaviour { summary: "clear a handled line before next delivery", kind: Kind::Quirk, switch: Switch::Fixed, checked_by: &["sender"] },
-        BehaviourId::SenderTiming => Behaviour { summary: "observe and present during CPU sender work", kind: Kind::Timing, switch: Switch::Fixed, checked_by: &["sender"] },
-        BehaviourId::StagedRequests => Behaviour { summary: "prepare changed requests on a later turn", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["staged"] },
-        BehaviourId::MusicalProgress => Behaviour { summary: "count finite note and release turns", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["progress"] },
-        BehaviourId::FinitePhrases => Behaviour { summary: "finite repeat returns to its root", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["phrase"] },
-        BehaviourId::WholeArrangement => Behaviour { summary: "first root completion restarts both tracks", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["restart", "content_admission"] },
-        BehaviourId::LoudnessProgress => Behaviour { summary: "finite wrapping interpolation retains active configuration", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["ramp", "control", "inactive_ramp"] },
-        BehaviourId::EffectResources => Behaviour { summary: "retain all part histories and remove allocated echo members", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["effect", "effect_history", "effect_echo"] },
-        BehaviourId::ConnectedPitchMotion => Behaviour { summary: "connected motion retains its terminal fraction", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["effect"] },
-        BehaviourId::EffectTiming => Behaviour { summary: "visited parts and resources determine deferred semantic work", kind: Kind::Timing, switch: Switch::Fixed, checked_by: &["effect", "effect_history", "effect_echo"] },
-        BehaviourId::SongControls => Behaviour { summary: "retain choices until consumed replacements", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["control"] },
-        BehaviourId::MusicTiming => Behaviour { summary: "consume or preview the named semantic path", kind: Kind::Timing, switch: Switch::Fixed, checked_by: &["music_work"] },
-        BehaviourId::IndependentCadence => Behaviour { summary: "distribute only the batch remainder", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["cadence"] },
-        BehaviourId::StableRequests => Behaviour { summary: "stage two equal actual observations", kind: Kind::Quirk, switch: Switch::Fixed, checked_by: &["sample"] },
-        BehaviourId::VisibleCompletion => Behaviour { summary: "publish completed results exactly once", kind: Kind::Output, switch: Switch::Fixed, checked_by: &["completion", "clock", "resident_reply"] },
-        BehaviourId::ClockObservation => Behaviour { summary: "work and retries accrue the wrapping clock count", kind: Kind::Timing, switch: Switch::Fixed, checked_by: &["clock", "completion"] },
-        BehaviourId::ReplyCadence => Behaviour { summary: "ordered group and resident music publication anchors", kind: Kind::Timing, switch: Switch::Fixed, checked_by: &["completion", "resident_reply"] },
+        BehaviourId::OfferAcceptance => Behaviour { summary: "admit a sound offer only while sound is permitted and its queue allowance has space", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["offer", "frame"] },
+        BehaviourId::RequestDelivery => Behaviour { summary: "deliver the oldest queued cue and wait for its acknowledgement", kind: Kind::Quirk, switch: Switch::Fixed, checked_by: &["sender", "frame"] },
+        BehaviourId::RequestRelease => Behaviour { summary: "clear a handled cue before sending the next one", kind: Kind::Quirk, switch: Switch::Fixed, checked_by: &["sender", "frame"] },
+        BehaviourId::FrameCadence => Behaviour { summary: "a frame runs its effect turns before and after its sender service, and its music turns", kind: Kind::Timing, switch: Switch::Fixed, checked_by: &["frame"] },
+        BehaviourId::PublishedReplies => Behaviour { summary: "each effect turn publishes every group's handled request, each music turn the resident reply", kind: Kind::Output, switch: Switch::Fixed, checked_by: &["staged", "frame", "resident_reply"] },
+        BehaviourId::StagedRequests => Behaviour { summary: "handle the staged request before publishing, then stage the request line", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["staged", "frame"] },
+        BehaviourId::MusicalProgress => Behaviour { summary: "time the next musical event and its release", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["progress", "frame"] },
+        BehaviourId::FinitePhrases => Behaviour { summary: "a finite phrase repeat returns to its enclosing phrase", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["phrase"] },
+        BehaviourId::WholeArrangement => Behaviour { summary: "the first completed root restarts the repeating arrangement", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["restart", "content_admission", "resident_reply"] },
+        BehaviourId::LoudnessProgress => Behaviour { summary: "interpolate loudness for a finite number of music turns", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["ramp", "control", "inactive_ramp"] },
+        BehaviourId::EffectResources => Behaviour { summary: "prepared sounds acquire free voices and keep them until playback finishes", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["effect", "effect_history", "effect_echo"] },
+        BehaviourId::ConnectedPitchMotion => Behaviour { summary: "a connected sound slides up to its target and keeps its final fraction", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["effect"] },
+        BehaviourId::SongControls => Behaviour { summary: "retain musical choices until a later musical event replaces them", kind: Kind::Mechanic, switch: Switch::Fixed, checked_by: &["control", "effect_echo"] },
     }
 }

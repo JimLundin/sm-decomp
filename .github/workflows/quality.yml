@@ -81,8 +81,6 @@ jobs:
         run: bash tools/ci/replay_test.sh && bash tools/ci/replay_parallel_test.sh
       - name: Test exact historical replay claim accounting
         run: python3 tools/check_replay_transition_test.py
-      - name: Test independent audio continuation seed decoding
-        run: python3 -m unittest discover -s tools -p test_audio_expiry_seed.py
       - name: Test the planted-fault runner
         run: python3 -m unittest discover -s tools -p test_check_mutants.py
       - name: Test movie input qualification and publication

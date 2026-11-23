@@ -1,10 +1,21 @@
-//! Native capture admission separates immutable physical inputs from expected cut outcomes.
+//! Native capture admission, one frame at a time.
+//!
+//! The capture's port log supplies each frame's borrowed inputs: its offers (each cue the CPU
+//! newly presents, offered in the frame it is presented) and its audio cadence (the effect turns
+//! completed before and after the frame's first CPU write, and its completed music turns). The
+//! expected side reads only the capture's cut outcomes: the replies last published before each
+//! cut, the request lines last written, and the decoded song and release fields.
 
 use super::audio_projection::SemanticObservation;
+use super::compare::Observation;
+use audio_transport::frame::{EffectCadence, FrameCadence, TurnCount};
 use audio_transport::{
-    AudioInstant, Content, CueId, Reply, ReplyLine, Request, SoundGroup, State, transport,
+    Content, CueId, GroupState, OfferPermission, QueueAllowance, Request, ResidentMusicReply,
+    SongState, SoundGroup,
 };
 use serde::Deserialize;
+use std::cmp::Ordering;
+use std::collections::BTreeSet;
 use std::path::Path;
 
 pub(super) mod room_load;
@@ -16,23 +27,101 @@ pub enum ProviderFault {
     Missing,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Publication {
-    pub line: ReplyLine,
-    pub byte: u8,
-    pub at: AudioInstant,
+/// A captured instant, an exact non-negative fraction of audio cycles since the capture began.
+#[derive(Clone, Copy, Debug)]
+struct Instant {
+    numerator: u128,
+    denominator: u128,
+}
+
+/// A captured fraction's integer: a sign and little-endian 32-bit limbs.
+#[derive(Deserialize)]
+struct Integer(i8, Vec<u32>);
+
+impl Integer {
+    fn value(&self) -> Option<u128> {
+        // Two limbs keep every cross product of two fractions within u128.
+        if self.0 < 0 || self.1.len() > 2 {
+            return None;
+        }
+        Some(
+            self.1
+                .iter()
+                .rev()
+                .fold(0, |value, limb| (value << 32) | u128::from(*limb)),
+        )
+    }
+}
+
+#[derive(Deserialize)]
+struct Fraction {
+    numerator: Integer,
+    denominator: Integer,
+}
+
+impl<'de> Deserialize<'de> for Instant {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let fraction = Fraction::deserialize(deserializer)?;
+        match (fraction.numerator.value(), fraction.denominator.value()) {
+            (Some(numerator), Some(denominator)) if denominator > 0 => Ok(Self {
+                numerator,
+                denominator,
+            }),
+            _ => Err(serde::de::Error::custom("captured instant fraction")),
+        }
+    }
+}
+
+impl PartialEq for Instant {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl Eq for Instant {}
+
+impl PartialOrd for Instant {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Instant {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let left = self.numerator.saturating_mul(other.denominator);
+        let right = other.numerator.saturating_mul(self.denominator);
+        left.cmp(&right)
+    }
+}
+
+/// The line a captured publication was written on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+enum Line {
+    Music,
+    Group(SoundGroup),
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Cut {
-    pub index: usize,
-    pub at: AudioInstant,
-    pub publications: usize,
-    pub replies: [u8; 4],
-    pub fields: Vec<SemanticObservation>,
-    pub pending_music: bool,
+struct Publication {
+    line: Line,
+    // Replies are compared through each cut's own reply bytes.
+    #[serde(rename = "byte")]
+    _byte: u8,
+    at: Instant,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Cut {
+    index: usize,
+    at: Instant,
+    publications: usize,
+    replies: [u8; 4],
+    fields: Vec<SemanticObservation>,
+    // The old transport's pending-music flag; the frame form has no pending work to compare.
+    #[serde(rename = "pending_music")]
+    _pending_music: bool,
 }
 
 #[derive(Deserialize)]
@@ -40,7 +129,7 @@ pub struct Cut {
 struct Presentation {
     group: u8,
     byte: u8,
-    at: AudioInstant,
+    at: Instant,
 }
 
 #[derive(Clone, Deserialize)]
@@ -67,10 +156,21 @@ struct WriterMask {
     writer: String,
 }
 
+/// The loaded seed's audio side. The capture also records the driver's clock, cadence
+/// remainders and scheduler phase; they are T1's and the frame form reads none of them.
+#[derive(Clone, Deserialize)]
+pub struct Seed {
+    pub groups: enum_map::EnumMap<SoundGroup, GroupState>,
+    pub song: SongState,
+    pub reservations: BTreeSet<audio_transport::EffectVoiceId>,
+    pub requests: enum_map::EnumMap<SoundGroup, Request>,
+    pub resident_music_reply: ResidentMusicReply,
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Fixture {
-    seed: State,
+    seed: Seed,
     content: Content,
     inputs: Vec<Presentation>,
     publications: Vec<Publication>,
@@ -87,38 +187,31 @@ struct Fixture {
     timbres: usize,
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Continuation {
-    schema: String,
-    start_cut: usize,
-    next_cut: usize,
-    last_cut: usize,
-    source_boundary: String,
-    coordinate: String,
-    content_sha256: String,
-    fixture_sha256: String,
-    publication_offset: usize,
-    initial_replies: [u8; 4],
-    seed: State,
-    pins: Vec<Pin>,
+/// One frame's borrowed inputs.
+pub struct Frame {
+    pub offers: Vec<audio_transport::Offer>,
+    pub cadence: FrameCadence,
 }
 
-/// Contains no later expected quantities. The clock tape is a declared measured input.
+/// Contains no expected quantities: the seed, content and each frame's borrowed inputs.
 pub struct InputTape {
-    pub seed: State,
+    pub seed: Seed,
     pub content: Content,
-    pub presentations: Vec<transport::Input>,
-    pub stops: Vec<(u64, AudioInstant)>,
     pub initial_replies: [u8; 4],
     pub aliases: Vec<Alias>,
-    pub deadlines: Vec<AudioInstant>,
+    pub frames: Vec<(u64, Frame)>,
+}
+
+/// One cut's expected observations, and how many of them are replies.
+pub struct ExpectedCut {
+    pub fields: Vec<Observation>,
+    pub semantic_count: usize,
+    pub replies: usize,
 }
 
 /// Capture outcomes are inaccessible through the production input tape.
 pub struct ExpectedTape {
-    pub cuts: Vec<Cut>,
-    pub publications: Vec<Publication>,
+    pub cuts: Vec<(u64, ExpectedCut)>,
 }
 
 pub const fn group(value: u8) -> Result<SoundGroup, ProviderFault> {
@@ -130,108 +223,66 @@ pub const fn group(value: u8) -> Result<SoundGroup, ProviderFault> {
     }
 }
 
-pub fn encode(aliases: &[Alias], line: ReplyLine, reply: Reply) -> Result<u8, ProviderFault> {
-    match (line, reply) {
-        (ReplyLine::Music, Reply::Music(resident)) => Ok(resident.original_byte),
-        (ReplyLine::Group(_), Reply::Effect(Request::Absent)) => Ok(0),
-        (ReplyLine::Group(sound_group), Reply::Effect(Request::Cue(cue))) => aliases
-            .iter()
-            .find(|alias| alias.cue == cue && group(alias.group).ok() == Some(sound_group))
-            .map(|alias| alias.byte)
-            .ok_or(ProviderFault::Admission("missing physical cue alias")),
-        (ReplyLine::Music, Reply::Effect(_)) | (ReplyLine::Group(_), Reply::Music(_)) => {
-            Err(ProviderFault::Admission("reply line kind"))
-        }
+const fn slot(group: SoundGroup) -> usize {
+    match group {
+        SoundGroup::Action => 1,
+        SoundGroup::Ambient => 2,
+        SoundGroup::Contact => 3,
     }
 }
 
-pub fn load(
-    path: &Path,
-    hash: &str,
-    end: u64,
-    continuation: Option<(&Path, &str, u64)>,
-) -> Result<(InputTape, ExpectedTape), ProviderFault> {
+/// The physical byte of a request on its group's line.
+pub fn encode(aliases: &[Alias], line: SoundGroup, request: Request) -> Option<u8> {
+    match request {
+        Request::Absent => Some(0),
+        Request::Cue(cue) => aliases
+            .iter()
+            .find(|alias| alias.cue == cue && group(alias.group).ok() == Some(line))
+            .map(|alias| alias.byte),
+    }
+}
+
+fn read(path: &Path, hash: &str) -> Result<Fixture, ProviderFault> {
     let bytes = std::fs::read(path).map_err(|_| ProviderFault::Missing)?;
     if crate::lock::Sha256::try_from(hash).ok() != Some(crate::lock::Sha256::of(&bytes)) {
         return Err(ProviderFault::Pin);
     }
     let text = std::str::from_utf8(&bytes)
         .map_err(|_| ProviderFault::Admission("native fixture encoding"))?;
-    let mut fixture: Fixture =
-        toml::from_str(text).map_err(|_| ProviderFault::Admission("native fixture schema"))?;
-    if fixture.expire && continuation.is_none() && end > 64 {
+    // The capture's music events still carry the old transport's per-event extra work, which
+    // the frame form ignores. The TOML reader can't skip that field in place, so the text is
+    // read as a table first.
+    toml::from_str::<toml::Table>(text)
+        .ok()
+        .and_then(|table| toml::Value::Table(table).try_into().ok())
+        .ok_or(ProviderFault::Admission("native fixture schema"))
+}
+
+pub fn load(path: &Path, hash: &str, end: u64) -> Result<(InputTape, ExpectedTape), ProviderFault> {
+    let fixture = read(path, hash)?;
+    if fixture.expire && end > 64 {
         return Err(ProviderFault::Admission(
-            "expiry requires an independently captured post-intervention seed",
+            "expiry ends before the external repeat-count intervention",
         ));
     }
     validate_provenance(&fixture)?;
-    validate_native_start(&fixture.seed, &fixture.content, fixture.timbres, true)?;
-    if let Some((path, seed_hash, frame)) = continuation {
-        continue_from(&mut fixture, text, hash, path, seed_hash, frame)?;
-    }
-    let presentations = fixture
+    validate_order(&fixture)?;
+    let writes = fixture
         .inputs
-        .into_iter()
-        .map(|input| {
-            let sound_group = group(input.group)?;
-            if input.byte == 0 {
-                return Ok(transport::Input::absence(input.at, sound_group));
-            }
-            let cue = fixture
-                .aliases
-                .iter()
-                .find(|alias| alias.group == input.group && alias.byte == input.byte)
-                .map(|alias| alias.cue)
-                .ok_or(ProviderFault::Admission("unsupported presentation byte"))?;
-            if audio_transport::effects::group(cue) != sound_group {
-                return Err(ProviderFault::Admission("cue group mismatch"));
-            }
-            Ok(transport::Input::cue(input.at, cue))
-        })
+        .iter()
+        .map(|input| Ok((group(input.group)?, input.byte, input.at)))
         .collect::<Result<Vec<_>, ProviderFault>>()?;
-    if presentations
-        .iter()
-        .any(|input| input.at <= fixture.seed.now)
-        || presentations
-            .windows(2)
-            .any(|pair| matches!(pair, [left, right] if left.at > right.at))
-        || fixture
-            .cuts
-            .windows(2)
-            .any(|pair| matches!(pair, [left, right] if left.at > right.at))
-    {
-        return Err(ProviderFault::Admission("native input clock order"));
-    }
-    let stops = fixture
-        .cuts
-        .iter()
-        .map(|cut| (u64::try_from(cut.index).unwrap_or(u64::MAX), cut.at.clone()))
-        .collect();
-    let deadlines = fixture
-        .publications
-        .iter()
-        .filter(|publication| {
-            fixture
-                .cuts
-                .iter()
-                .any(|cut| u64::try_from(cut.index).ok() == Some(end) && publication.at <= cut.at)
-        })
-        .map(|publication| publication.at.clone())
-        .collect();
+    let frames = frames(&fixture, &writes, end)?;
+    let expected = expected(&fixture, &writes, end)?;
     Ok((
         InputTape {
             seed: fixture.seed,
             content: fixture.content,
-            presentations,
-            stops,
             initial_replies: fixture.initial_replies,
             aliases: fixture.aliases,
-            deadlines,
+            frames,
         },
-        ExpectedTape {
-            cuts: fixture.cuts,
-            publications: fixture.publications,
-        },
+        expected,
     ))
 }
 
@@ -266,6 +317,8 @@ fn validate_provenance(fixture: &Fixture) -> Result<(), ProviderFault> {
             .enumerate()
             .any(|(index, cut)| cut.index != index || cut.fields.is_empty())
         || fixture.inactive_ramp_observations > 736
+        || fixture.timbres == 0
+        || !fixture.seed.reservations.is_empty()
     {
         return Err(ProviderFault::Admission(
             "native source provenance or field contract",
@@ -274,110 +327,246 @@ fn validate_provenance(fixture: &Fixture) -> Result<(), ProviderFault> {
     Ok(())
 }
 
-fn continue_from(
-    fixture: &mut Fixture,
-    text: &str,
-    hash: &str,
-    path: &Path,
-    seed_hash: &str,
-    frame: u64,
-) -> Result<(), ProviderFault> {
-    let seed_bytes = std::fs::read(path).map_err(|_| ProviderFault::Missing)?;
-    if crate::lock::Sha256::try_from(seed_hash).ok() != Some(crate::lock::Sha256::of(&seed_bytes)) {
-        return Err(ProviderFault::Pin);
-    }
-    let seed_text = std::str::from_utf8(&seed_bytes)
-        .map_err(|_| ProviderFault::Admission("native continuation encoding"))?;
-    let saved: Continuation = toml::from_str(seed_text)
-        .map_err(|_| ProviderFault::Admission("native continuation schema"))?;
-    let content_line = text
-        .lines()
-        .find_map(|line| line.strip_prefix("content = "))
-        .ok_or(ProviderFault::Admission("native content identity"))?;
-    let boundary = fixture
-        .cuts
-        .get(saved.start_cut)
-        .ok_or(ProviderFault::Admission("native continuation cut"))?;
-    if !fixture.expire
-        || saved.schema != "audio-expiry-post64-seed-v1"
-        || saved.start_cut != 64
-        || saved.next_cut != 65
-        || saved.last_cut != 183
-        || u64::try_from(saved.start_cut).ok() != Some(frame)
-        || saved.source_boundary.is_empty()
-        || saved.coordinate.is_empty()
-        || saved.fixture_sha256 != hash
-        || crate::lock::Sha256::try_from(saved.content_sha256.as_str()).ok()
-            != Some(crate::lock::Sha256::of(content_line.as_bytes()))
-        || saved.seed.now != boundary.at
-        || saved.publication_offset != boundary.publications
-        || saved.initial_replies != boundary.replies
-        || saved.pins.len() != 184
-        || saved.pins.iter().any(|pin| {
-            pin.name.is_empty() || pin.size == 0 || !super::index::valid_hash(&pin.sha256)
-        })
-    {
-        return Err(ProviderFault::Admission(
-            "independent native continuation provenance and context",
-        ));
-    }
-    validate_native_start(&saved.seed, &fixture.content, fixture.timbres, false)?;
-    fixture.seed = saved.seed;
-    fixture.initial_replies = saved.initial_replies;
-    fixture.inputs.retain(|input| input.at > fixture.seed.now);
-    fixture.publications = fixture
-        .publications
-        .get(saved.publication_offset..)
-        .ok_or(ProviderFault::Admission(
-            "native continuation publication offset",
-        ))?
-        .to_vec();
-    fixture.cuts.retain(|cut| cut.index >= saved.next_cut);
-    for cut in &mut fixture.cuts {
-        cut.publications = cut
+/// Instants are ordered, and each cut's publication count is its prefix.
+fn validate_order(fixture: &Fixture) -> Result<(), ProviderFault> {
+    let ordered = |at: &[Instant]| at.is_sorted();
+    let cuts: Vec<_> = fixture.cuts.iter().map(|cut| cut.at).collect();
+    let publications: Vec<_> = fixture.publications.iter().map(|at| at.at).collect();
+    let inputs: Vec<_> = fixture.inputs.iter().map(|input| input.at).collect();
+    let prefixes = fixture.cuts.iter().all(|cut| {
+        fixture
             .publications
-            .checked_sub(saved.publication_offset)
-            .ok_or(ProviderFault::Admission(
-                "native continuation publication horizon",
-            ))?;
+            .iter()
+            .filter(|publication| publication.at <= cut.at)
+            .count()
+            == cut.publications
+    });
+    if !ordered(&cuts) || !ordered(&publications) || !ordered(&inputs) || !prefixes {
+        return Err(ProviderFault::Admission("native capture order"));
     }
     Ok(())
 }
 
-pub const fn reply_slot(line: ReplyLine) -> usize {
-    match line {
-        ReplyLine::Music => 0,
-        ReplyLine::Group(SoundGroup::Action) => 1,
-        ReplyLine::Group(SoundGroup::Ambient) => 2,
-        ReplyLine::Group(SoundGroup::Contact) => 3,
+/// The instants after the previous cut and through this one.
+fn within(cuts: &[Cut], index: usize, at: Instant) -> bool {
+    let after_previous = index
+        .checked_sub(1)
+        .and_then(|previous| cuts.get(previous))
+        .is_none_or(|previous| at > previous.at);
+    cuts.get(index).is_some_and(|cut| at <= cut.at) && after_previous
+}
+
+fn turns(count: usize) -> Result<TurnCount, ProviderFault> {
+    u8::try_from(count)
+        .ok()
+        .and_then(TurnCount::new)
+        .ok_or(ProviderFault::Admission(
+            "more than two audio turns in a frame",
+        ))
+}
+
+/// Each frame's offers and cadence, from the CPU writes and the SPC's publications.
+///
+/// An effect turn publishes every group's reply in turn order, so it is complete at its Contact
+/// publication. The frame's sender service is placed at its first CPU write; a frame that
+/// writes nothing still runs its service, after its turns.
+fn frames(
+    fixture: &Fixture,
+    writes: &[(SoundGroup, u8, Instant)],
+    end: u64,
+) -> Result<Vec<(u64, Frame)>, ProviderFault> {
+    let completed: Vec<Instant> = fixture
+        .publications
+        .iter()
+        .filter(|publication| publication.line == Line::Group(SoundGroup::Contact))
+        .map(|publication| publication.at)
+        .collect();
+    let music: Vec<Instant> = fixture
+        .publications
+        .iter()
+        .filter(|publication| publication.line == Line::Music)
+        .map(|publication| publication.at)
+        .collect();
+    let mut presented = enum_map::EnumMap::<SoundGroup, u8>::default();
+    let mut frames = Vec::new();
+    for (index, cut) in fixture.cuts.iter().enumerate() {
+        let number = u64::try_from(cut.index).map_err(|_| ProviderFault::Admission("cut index"))?;
+        if number > end {
+            break;
+        }
+        let mut offers = Vec::new();
+        let mut service = None;
+        for &(line, byte, at) in writes
+            .iter()
+            .filter(|(_, _, at)| within(&fixture.cuts, index, *at))
+        {
+            service.get_or_insert(at);
+            if byte != 0 && byte != presented[line] {
+                let cue = fixture
+                    .aliases
+                    .iter()
+                    .find(|alias| group(alias.group).ok() == Some(line) && alias.byte == byte)
+                    .map(|alias| alias.cue)
+                    .ok_or(ProviderFault::Admission("unsupported presentation byte"))?;
+                if cue.group() != line {
+                    return Err(ProviderFault::Admission("cue group mismatch"));
+                }
+                offers.push(audio_transport::Offer {
+                    cue,
+                    allowance: QueueAllowance::Fifteen,
+                    permission: OfferPermission::Enabled,
+                });
+            }
+            presented[line] = byte;
+        }
+        let in_frame = |at: &&Instant| within(&fixture.cuts, index, **at);
+        let effect = completed.iter().filter(in_frame).count();
+        let before = service.map_or(effect, |service| {
+            completed
+                .iter()
+                .filter(in_frame)
+                .filter(|at| **at < service)
+                .count()
+        });
+        let after = effect.saturating_sub(before);
+        frames.push((
+            number,
+            Frame {
+                offers,
+                cadence: FrameCadence {
+                    effects: EffectCadence::AroundService {
+                        before: turns(before)?,
+                        after: turns(after)?,
+                    },
+                    music: turns(music.iter().filter(in_frame).count())?,
+                },
+            },
+        ));
     }
+    Ok(frames)
+}
+
+/// Each cut's expected song fields, replies and request lines.
+///
+/// A cut can fall inside an effect turn: the turn has published some groups' replies but not
+/// Contact's. The frame form completes that turn in the next frame, so the replies it had
+/// already published are T1's and are not compared at that cut.
+fn expected(
+    fixture: &Fixture,
+    writes: &[(SoundGroup, u8, Instant)],
+    end: u64,
+) -> Result<ExpectedTape, ProviderFault> {
+    let mut cuts = Vec::new();
+    for cut in &fixture.cuts {
+        let number = u64::try_from(cut.index).map_err(|_| ProviderFault::Admission("cut index"))?;
+        if number > end {
+            break;
+        }
+        let published = |line: Line| {
+            fixture
+                .publications
+                .iter()
+                .filter(|publication| publication.line == line && publication.at <= cut.at)
+                .count()
+        };
+        let complete = published(Line::Group(SoundGroup::Contact));
+        let mut fields: Vec<_> = cut
+            .fields
+            .iter()
+            .map(|field| Observation::quantity(field.field.clone(), field.value))
+            .collect();
+        let semantic_count = fields.len();
+        let reply = |index: usize| cut.replies.get(index).copied().unwrap_or_default();
+        fields.push(Observation::quantity("audio.reply0", i64::from(reply(0))));
+        let mut replies = 1_usize;
+        for line in SoundGroup::IN_TURN_ORDER {
+            let index = slot(line);
+            if published(Line::Group(line)) == complete {
+                fields.push(Observation::quantity(
+                    format!("audio.reply{index}"),
+                    i64::from(reply(index)),
+                ));
+                replies = replies.saturating_add(1);
+            }
+            let written = writes
+                .iter()
+                .rfind(|(group, _, at)| *group == line && *at <= cut.at)
+                .map_or_else(
+                    || encode(&fixture.aliases, line, fixture.seed.requests[line]),
+                    |(_, byte, _)| Some(*byte),
+                )
+                .ok_or(ProviderFault::Admission("seed request alias"))?;
+            fields.push(Observation::quantity(
+                format!("audio.request{index}"),
+                i64::from(written),
+            ));
+        }
+        cuts.push((
+            number,
+            ExpectedCut {
+                fields,
+                semantic_count,
+                replies,
+            },
+        ));
+    }
+    Ok(ExpectedTape { cuts })
+}
+
+/// Play the cut's frame with its borrowed offers and cadence.
+pub(super) fn advance(
+    production: &mut game::production::Production,
+    tape: &InputTape,
+    cut: u64,
+) -> Result<game::production::ProductionOutputs, super::Outcome> {
+    let frame = tape
+        .frames
+        .iter()
+        .find(|(number, _)| *number == cut)
+        .map(|(_, frame)| frame)
+        .ok_or_else(|| super::data_failure(Some(cut), "borrowed audio frame"))?;
+    production
+        .advance(game::production::AdvanceInput::Audio {
+            offers: &frame.offers,
+            cadence: frame.cadence,
+        })
+        .map_err(|fault| super::production_failure(cut, fault))
+}
+
+/// The held State's song and release fields, its published replies and its request lines.
+pub(super) fn actual(
+    production: &game::production::Production,
+    aliases: &[Alias],
+) -> Result<Vec<Observation>, super::Outcome> {
+    let state = production
+        .transport()
+        .ok_or_else(|| super::data_failure(None, "audio state scope"))?;
+    let mut fields: Vec<_> = super::audio_projection::project(state)
+        .into_iter()
+        .map(|field| Observation::quantity(field.field, field.value))
+        .collect();
+    fields.push(Observation::quantity(
+        "audio.reply0",
+        i64::from(state.music_reply.original_byte),
+    ));
+    for line in SoundGroup::IN_TURN_ORDER {
+        let index = slot(line);
+        let byte = |request| {
+            encode(aliases, line, request)
+                .map(i64::from)
+                .ok_or_else(|| super::data_failure(None, "physical cue alias"))
+        };
+        fields.push(Observation::quantity(
+            format!("audio.reply{index}"),
+            byte(state.groups[line].reply)?,
+        ));
+        fields.push(Observation::quantity(
+            format!("audio.request{index}"),
+            byte(state.request_lines[line])?,
+        ));
+    }
+    Ok(fields)
 }
 
 #[cfg(test)]
 mod import_witness;
-
-fn validate_native_start(
-    state: &State,
-    graph: &Content,
-    timbres: usize,
-    loaded: bool,
-) -> Result<(), ProviderFault> {
-    use audio_transport::{AudioPhase, Playback};
-    if !matches!(&state.phase, AudioPhase::ObserveClock { at } if at >= &state.now)
-        || !state.reservations.is_empty()
-        || (loaded
-            && state
-                .groups
-                .iter()
-                .any(|(_, group)| group.playback != Playback::Empty))
-    {
-        return Err(ProviderFault::Admission("native scheduler or voice origin"));
-    }
-    game::production::audio::validate_scoped(state, graph, timbres).map_err(|fault| match fault {
-        game::production::audio::Fault::Invalid(field) => ProviderFault::Admission(field),
-        game::production::audio::Fault::Origin
-        | game::production::audio::Fault::ContentIdentity => {
-            ProviderFault::Admission("native transport context")
-        }
-    })
-}

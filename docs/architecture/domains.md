@@ -240,10 +240,9 @@ Two rules hold for the platform work whatever lane carries it:
   whole frames, at most a capped number per host frame, and drops the rest of the debt rather
   than run ahead in a burst. Neither the renderer nor the audio backend advances the game.
 
-T1 owns platform timing; no production path schedules time inside a frame yet. The scoped
-sender service and the limits of its timing evidence are described in
-[ARCHITECTURE §6.5](ARCHITECTURE.md#65-named-cpu-costs) and
-[§15](ARCHITECTURE.md#15-build-order).
+T1 owns platform timing; no production path schedules time inside a frame yet. The audio
+cadence each frame borrows until then is described in
+[ARCHITECTURE §6.5](ARCHITECTURE.md#65-named-cpu-costs).
 
 ### E1: where sprite drawing stands, and its second lane
 

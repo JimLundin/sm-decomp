@@ -5,106 +5,117 @@ from the implementer export. Sources below are observation/source arithmetic, no
 
 ## Evidence and scope
 
-The native opening prefix supplies184 named CPU cuts,140CPU events and764SPC publications.
-Reference control and an independently authorized repeat-expiry intervention use the same
-CPU stimuli. Each owns a loaded seed; no native prestate is injected each turn. Both frozen
-publication schedules match764/764 exactly. Both cut projections match736replies and5995
-committed song fields;13 pending plans mask77 individually attributed source writers. The expiry capture's SMP execution
-frontier differs at34 named CPU cuts; normalized CPU/PPU cut clocks agree184/184. CPU cut clocks and native SMP execution frontiers are distinct quantities; each publication
-and semantic cut comparison retains its declared clock domain.
+The spec states the domain one frame at a time (MODEL §1 decision 35): the rungs compare the
+sender's State, the reply lines and the song at each NMI cut. Intra-frame instants (audio
+instruction cycles, CPU master ticks, the driver's timer polling and its paired port reads)
+belong to T1 and are not State.
 
-The retained sender proof covers552activities,184cuts,19offers and140CPU events, with its
-independent input sequence. Earlier individually reseeded spans are localizers. Captured CPU
-clock events are diagnostic stimuli; T1 must supply production workload clocks independently.
+The native opening prefix supplies 184 named CPU cuts, 140 CPU presentations and 764 SPC
+publications, in a reference control arm and an independently authorized repeat-expiry arm
+that share the CPU stimuli. Each owns a loaded seed; no native prestate is injected each turn.
+Committed song fields are compared at every cut; 13 music turns under way at a cut mask 77
+individually attributed source writers (see the harness note).
+
+## The reply frame (FrameCadence)
+
+**Question.** Without the cycle tables, which frame does a reply first reach the sender on?
+
+**Rule chosen.** No frame count reproduces it, so the frame's audio cadence is a declared
+borrowed input, decision 35's pattern for a lag cut: per frame, the effect turns before the
+sender service, after it, and the music turns. The reply frame then follows from the turn rule
+the spec states (a turn handles the request staged by the previous turn, publishes it, then
+stages the request line), with no other timing.
+
+**Evidence.**
+- *A fixed frame count fails.* Over the 63 cached rows (lean CI cache, 5663de2c4b548c68), the
+  sender acknowledges 4,852 presentations (a cue or a clear). "First service at least two
+  frames after the presentation" holds for 4,475 (92.2%). In 312 (6.4%) the reply arrived
+  earlier, in 65 (1.3%) later. Lag frames are accounted (the first service at or after the
+  frame). One frame holds for 308 and three frames for 147. The misses are not rare cases of one kind: turns
+  come every 16,384 audio cycles against about 16,950 per frame, so their place in the frame
+  drifts across the service's, and the service's place moves with the frame's CPU load.
+- *The turn rule is exact.* In both native arms, every one of 34 resolved presentations is
+  first answered at the second effect turn after it, with no exception.
+- *Borrowed cadence, cut by cut.* Deriving each frame's cadence from the capture's port order
+  (turns before or after the frame's first presentation) and running the frame form on the
+  native control and expire arms reproduces all three group replies at 184/184 cuts in each
+  arm (552/552 replies). The two-frame cadence (every turn after the service) reproduces
+  164/184 cuts (531/552); holding the previous cut's replies reproduces 151/184 (518/552).
+- *Recorded cases.* F-recorded-two-turns is the control arm's Action group, frames 16-18: frame
+  17 runs one turn before its service and one after, and the reply is read on frame 18.
+  F-recorded-late is frames 29-32: the turn of frame 29 comes before the presenting service,
+  frame 30's before its service and frame 31's after, so the reply misses frame 31's read by 142
+  audio cycles and is read on frame 32. Frame 32 presents nothing, so where its turn falls is
+  not observed; either order gives the same outcome. The cached opening row
+  `chain-any-0003-DFD7` shows the same sender progress at those cuts (its queue is empty at cuts
+  15 and 28, so each cue is offered and sent in the same frame).
+
+**Where the cadence comes from.** A record whose APU port log carries the SPC's writes gives it
+directly: a frame's effect turns are its writes of the three group lines, in order with the
+CPU's sender reads and writes. The native captures carry these; the 63 lean rows log only the
+CPU side of the ports (no SPC writes), so for them only the reply each service read is
+available (the CPU read values), not the cadence.
+
+**Sender rules over the rows.** Per frame, applying the frame's offers (the queue entries the
+row shows appended), then the service when the frame ran one (the row's end-of-frame wait
+marker), reading as each group's reply the value its CPU read that frame, the sender's
+progress, delay, cue and queue agree at 122,239 of 122,446 group cuts (99.83%); holding the
+previous cut agrees at 110,749 (90.45%). Of the 207 misses, 53 are in frames with sender
+downtime (below) and the rest are frames where the wait marker misplaces the service: a
+service whose wait falls after the cut, or a wait-for-NMI from a transition loop with no service.
+
+**Planted faults** (reference model): an acknowledgement delay of one instead of two fails 7
+vectors (S-ack and every frame vector that reaches an acknowledgement); publishing before
+handling fails 11; staging before handling fails 7; running every turn after the service (the
+two-frame rule) fails F-early, F-recorded-two-turns and F-recorded-late; allocation that keeps
+echo membership fails 2; a restart that keeps a ramp fails M-restart.
 
 ## Independent expiry continuation seed
 
-`tools/audio_expiry_seed.py` imports `audio-expiry-post64-seed-v1` from the native expiry
-capture's complete `music-after` snapshot. The capture dumps `cut-64` before the paused
-repeat-count adjustment, increments its capture number to65, then dumps `music-before`
-and `music-after` at the intervention barrier. Every `music-before` device object equals
-its cut64 object. The post-adjustment CPU, PPU and DSP objects are unchanged; APURAM
-changes only offsets128/130, and SMP_STATE changes only their embedded equivalents176/178.
-The independent process-memory before/after snapshots equal the corresponding SMP objects.
+The encrypted native bundle holds `audio-expiry-post64-seed-v1`, decoded from the expiry
+capture's complete `music-after` snapshot at the intervention barrier, after the paused
+repeat-count adjustment. The capture dumps `cut-64` before the adjustment, increments its capture
+number to 65, then dumps `music-before` and `music-after`. Every `music-before` device object
+equals its cut64 object. The post-adjustment CPU, PPU and DSP objects are unchanged; APURAM
+changes only offsets 128/130, and SMP_STATE changes only their embedded equivalents 176/178.
 The ordinary cut64 observation remains the pre-adjustment expectation.
 
-The importer decodes every retained State field from the post-adjustment APURAM, CPU ports,
-native timer prescaler, captured publications and validated source content. It loads no
-reference or clean model and never advances one to construct the seed. Typed music positions
-come from the observed next-byte pointer, repeated-phrase target and root return pointer,
-with Duration/Articulation bundles mapped to their typed cursor. Active effect parts come
-from their allocated voice, instruction-list cursor/countdown, pitch/fraction and active slide
-registers. Their source span boundaries are checked against the independently imported clip.
-Every admitted release-history entry is decoded, including dormant parts. All native effect
-reservations belong to the decoded parts, so the external reservation set is empty.
-Resident identity and full content stay bound to the independently imported arrangement.
-
-The seed's global time is cut64's1109109 AudioCycles since the loaded native snapshot.
-Native PC is at the DSP-update boundary after the resident music pair, with no work pending.
-The preceding music publication is289 cycles earlier. The unchanged resident CPU0 request
-establishes a stable pair without retries; the source return establishes the next polling
-episode's first empty opportunity at publication+500.5, or211.5 cycles after the seed.
-The prescaler recurrence agrees independently from loaded state through cuts63/64/65.
-The first subsequent `soundEffectsClock` source store occurs406 cycles after the seed,
-agreeing with the first nonempty read on that episode and its26.5-cycle distribution interval.
-The importer checks both the recurrence and this source-store witness before emitting State.
-
-`tools/audio_expiry_seed_pins.toml` freezes184 source inputs explicitly, including the
-cut63/64/65 and intervention device objects, clock/write sidecars, capture code and decode
-content. These post-adjustment objects are not assumed to belong to the earlier selected
-roster. The private seed schema carries the full typed State, global start/next/last cuts,
-publication offset, initial physical replies, content/fixture hashes and those source pins.
-Its output remains private or in an encrypted evidence bundle.
-
-Expiry acceptance is two carried cases: the initial seed compares cuts0..64; the independent
-post-adjustment seed64 compares cuts65..183. There is no omitted cut, but these cases do not
-prove an uninterrupted184-cut execution or a restored continuation that begins before the
-intervention and crosses it. Restoration proof belongs separately to each carried case.
+The seed holds the audio side only: song positions, active effect parts, every release-history
+entry and the driver's clock position. It holds none of the CPU senders' queues or progress,
+which the frame-form State carries, and at cut 64 the Contact sender is mid-delivery. So no
+indexed case starts from it: the expiry arm is compared through cut 64 only, and its cuts 65..183
+wait for a seed that also decodes the senders from the capture's CPU memory.
 
 ## Sources by behaviour
 
 | Entry | Source ownership and evidence |
 | --- | --- |
 | OfferAcceptance | CPU queue offers, producer allowances and suppression; native enqueue proof |
-| RequestDelivery, RequestRelease | bank82 sender entries8A2C/8A55/8A6C/8A7C/8A90; native sender and retained-state proof |
-| IndependentCadence, StableRequests | installed sound driver timer observation/distribution and stable port pair; native clock/port sidecars |
+| RequestDelivery, RequestRelease | bank82 sender entries 8A2C/8A55/8A6C/8A7C/8A90, called once per main-loop frame from 8289EF; native sender and retained-state proof; the 63-row sender check above |
+| FrameCadence | the driver's timer-paced main loop (effect and music turns every 16,384 audio cycles in this song); native publication order against CPU presentations |
+| PublishedReplies | the driver's per-group reply writes after handling, and the resident music reply byte; native publications |
+| StagedRequests | the driver's request sampling after its reply writes and its handling at the next turn; the turn rule above |
 | MusicalProgress, FinitePhrases | typed imported two-root/five-phrase graph; music graph native field proof and source note/control arithmetic |
 | WholeArrangement | first-root completion, outer arrangement and all-track reload; independent outer arrangement audit |
 | LoudnessProgress | song's final volume pass; native scalar/ramp proof and constructed whole-song fault cases |
-| EffectResources | sound library allocation and connected Door service; independent Door aggregate source audit |
+| EffectResources, ConnectedPitchMotion | sound library allocation and connected Door service; independent Door aggregate source audit |
+| SongControls | music control events; native scalar and echo proof |
 
 Source work receipts are detailed in private observer reports. The admission is Forever,
 not a general arrangement interpreter. All eight native track
 slots are checked; two nonempty roots are imported and six slots are empty. Every event and
 timbre reference closes inside the admitted graph/content. No native pointer leaves import.
 
-## Sender intrinsic timing admission
-
-`SenderTiming` uses CPU master-clock ticks, not AudioCycles. The `FastBus` profile is a checked
-boundary contract: native mode is non-emulation with M8/X8; sender downtime is zero; group
-queue accesses have no indexed page crossing; every opcode and long-indexed ROM table access
-in the selected sender path has the six-master-clock fetch class. WRAM and stack accesses
-cost eight master clocks, internal steps six and physical-port accesses six. The oracle read
-callback occurs four master clocks before port-bus completion; the write callback occurs at
-bus completion. These conditions are checked outside the model before this profile is supplied.
-The profile is not inferred from a desired output timestamp.
-
-The table's work starts at the selected group decision and ends at its return, including the
-successful clear acknowledgement's same-activity queue delivery. Caller entry, dispatch,
-group iteration and outer return remain T1 work. Refresh, DMA, HDMA and interrupt stalls are
-also T1; they can move wall-clock milestones beyond this intrinsic table. Source timing
-arithmetic alone does not establish whole CPU timing or the engine's CPU-event gain.
-A pending sender asks for the physical reply at its named read callback, then schedules the
-reply-dependent branch. It never uses the future reply to select a result at service start.
-Invented vectors cover all eleven source paths, partial observations and restored continuations.
-
-Audio time uses `AudioCycles`: one audio instruction cycle spans 24 oscillator ticks. The
-2048-cycle timer period and all transport work use AudioCycles. CPU master-clock conversion
-uses the independently admitted platform clock relation, with exact rational arithmetic.
+**Sender downtime** (WRAM 0686 above zero) makes a main-loop frame skip the sender states and
+write zero to the three request ports and the three current cues. The opening never sets it;
+item collection and boss rows do (3,428 group cuts in the 63 rows). It is outside this round:
+such a frame is one without a service here, and the zeroed request lines and current cues are
+not modeled. **Queue reset** (8A9A) empties the queues and states outside a service; also not
+modeled (4 group cuts in the rows).
 
 ## Mapping
 
-APURAM offsets below are observations only. A track row has stride2 even for one-byte fields.
+APURAM offsets below are observations only. A track row has stride 2 even for one-byte fields.
 Raw source cursor addresses decode to validated typed event positions at the importer edge.
 The comparison consumes declared semantic quantities, not driver PCs or native command words.
 
@@ -131,12 +142,16 @@ The comparison consumes declared semantic quantities, not driver PCs or native c
 | echo filter | `i_echoFirFilterSet` | 1201 | 1 | 0 |
 | percussion set | `percussionInstrumentsBaseIndex` | 95 | 1 | 0 |
 
-CPU sender queue observations use WRAM base0643. Per group, read index is atbase+group,
-write index atbase+3+group, source mode atbase+6+group, current cue atbase+10+group and delay
-atbase+13+group; sixteen queue slots start atbase+19+16*group. Queue length is modular write
-minus read with capacity15. Convert to oldest-first semantic FIFO. A cue word meaningful only
-in AwaitCue and a delay meaningful only in its delay variant are carried by that variant;
-inactive scratch retention is not a new semantic State quantity.
+CPU sender queue observations use WRAM base 0643. Per group, read index is at base+group,
+write index at base+3+group, sender progress at base+6+group (0 Ready, 1 AwaitCue, 2 ClearDelay,
+3 AwaitClear, 4 ResetDelay), current cue at base+10+group and delay at base+13+group; sixteen
+queue slots start at base+19+16*group. Queue length is modular write minus read with capacity
+15. Convert to oldest-first semantic FIFO. A cue word meaningful only in AwaitCue and a delay
+meaningful only in its delay variant are carried by that variant; inactive scratch retention is
+not a new semantic State quantity. A frame's offers are the slots between the previous cut's
+write index and this cut's. The request line of group g is APU port g+1 as the CPU last wrote
+it; the reply line is the same port as the SPC last wrote it, and the CPU's read of it in the
+frame's service is the reply the sender reads.
 
 ## Effect release history
 
@@ -152,10 +167,9 @@ only the visited part's release state. `ResetSoundChannel` lines 19-39 does not 
 release history. `sound library 3.asm` lines 29-41 (replacement), 84-93 (last-voice
 completion) and 126-139 (allocation initialization) likewise preserve it. A prepared cue
 consumes the retained history in its ordered allocation; it does not create absent entries
-for parts unused by the preceding cue. The complete history travels in live and pending
-semantic state and restored continuations. Invented H-two-one-two-replacement,
-H-one-finished-two and H-dormant-two-release-count prove replacement, completion and a
-varied retained count independently from native content.
+for parts unused by the preceding cue. The complete history is State at every cut. Invented
+H-two-one-two-replacement, H-one-finished-two and H-dormant-two-release-count prove
+replacement, completion and a varied retained count independently from native content.
 
 ## Effect allocation and echo membership
 
@@ -164,57 +178,70 @@ varied retained count independently from native content.
 (lines 19-39) does not restore the bit. The explicit music echo selection writer
 (`music.asm` line 547) sets membership directly, independently of effect ownership.
 
-Decode `echoEnableFlags` (APURAM offset 74) as shared VoiceId membership. Compare the
-completed semantic membership at group publication, including in pending/restored State;
-allocation-time source scratch writes are not separately published semantics. Selection
-preserves ownership; allocation clears only voices it acquires; release preserves the result.
-No membership mask is added. J-one-allocation-release, J-two-subset-reserved and
-J-nonmember-allocation use invented content and test the pending boundary, external
-reservations, release and explicit reselection. The mapping does not establish an identical
-DSP update instant: `engine.asm` lines 80-93 separately publish DSP cache fields.
+Decode `echoEnableFlags` (APURAM offset 74) as shared VoiceId membership and compare it at each
+cut. Selection preserves ownership; allocation clears only voices it acquires; release
+preserves the result. No membership mask is added. J-one-allocation-release,
+J-two-subset-reserved and J-nonmember-allocation use invented content and test external
+reservations, release and explicit reselection. The mapping does not establish a DSP update
+instant: `engine.asm` lines 80-93 separately publish DSP cache fields.
 
-## Harness projection and masks
+## Harness note
 
-Compare every physical publication's group, byte and exact elapsed AudioCycle instant. At each
-named CPU cut compare publication count and last physical reply of every group, reconstructing
-from captured publications. Driver APURAM reply-cache words are not an additional physical-port
-projection. All named cuts refer to actual cut objects. Native SMP scheduler frontier and CPU
-cut master time are separate quantities; the frontier can differ while the CPU cut is the same.
+**Compared at each cut:** per group, the sender's progress, delay, cue and queue (WRAM, above);
+the three group replies and the music reply (the last SPC write of each port before the cut);
+the committed song fields from every cut object; effect release history and echo membership.
+A port reply that changes gameplay is compared on the frame it is read: the reply each
+service reads is the CPU's read of its port in that frame.
 
-Compare committed Song fields from every cut object. During an explicit pending music
-completion, mask only conditionally active source writers: note timers; positive release
-countdowns or cue resets; active-ramp loudness/countdowns. The admitted pending expiring cue
-has Loudness,Ramp,Duration,Sustain, so additionally mask its loudness/ramp target/increment
-and duration stores. Verify that route from the preceding completed native prestate and
-unchanged typed graph. Music175/196-197/510/517-520/785-795/913-914 own these writes;
-engine184-197 returns for Sustain before the pitch store203. All other track and mix fields
-remain compared during pending work. Across13 plans this masks77 fields and compares5995. Never mask
-published reply, publication count, group or timestamp. The mask is an unfinished-source-write
-projection; pending semantic work remains explicit saved State with restored continuation.
+**Borrowed per frame:** whether the frame runs a sender service, and its audio cadence (effect
+turns before and after the service, music turns), until T1 models the CPU's frame timing and
+the audio processor's clock. A harness derives the cadence from the record's port log; a record
+without SPC port writes cannot supply it.
+
+**Skipped:** publication instants, CPU master ticks, the driver's timer phase and polling
+lattice, the paired port reads and their retry spacing. These are T1's.
+
+**Masks.** A music turn can be under way at a cut: its turn has started but not completed, so
+the cut's APURAM holds some of its writes. The borrowed music count counts only completed turns,
+and the fields that turn's source writers have reached are masked at that cut: note timers;
+positive release countdowns or cue resets; active-ramp loudness/countdowns. The admitted
+expiring cue has Loudness,Ramp,Duration,Sustain, so its loudness/ramp target/increment and
+duration stores are also masked. Music 175/196-197/510/517-520/785-795/913-914 own these writes;
+engine 184-197 returns for Sustain before the pitch store 203. All other track and mix fields
+remain compared. Across 13 such cuts this masks 77 fields and compares 5,995. Never mask a reply
+or the sender's state.
+
+**Indexed replay.** The native cases play production's audio owner one frame at a time. Each
+frame's offers are the cues the CPU newly presents in it, and its cadence comes from the port
+log: an effect turn counts in the frame of its Contact reply, the turn's last write, and splits
+at the frame's first CPU write; a frame with no CPU write runs its service after its turns. The
+model completes a turn whole, so where a cut falls inside an effect turn (after its Action and
+Ambient replies, before Contact's) those two replies are not compared at that cut: 12 in the
+control arm (6 cuts) and 2 in the expiry prefix (cut 17). Every other reply, every request line
+and the song fields above are compared.
 
 ## Resident music reply ownership
 
-Music29 initializes cpuIo0_write from the selected resident track. Music85?90 compares the
+Music29 initializes cpuIo0_write from the selected resident track. Music85-90 compares the
 sampled CPU0 request with its previous value; equal retained selection does not load another
 track. Music93 admits resident progress while the retained write is nonzero. Engine170
 publishes cpuIo0_write before the stable pair; engine177 updates only the sampled read.
 Arrangement restarts do not change that music reply latch.
 
 Both paired loaded seeds independently have matching nonzero CPU0 incoming/read/previous/
-write values, and neither arm has a CPU0 presentation. Each arm's191 music publications
+write values, and neither arm has a CPU0 presentation. Each arm's 191 music publications
 preserves the loaded write byte. Fresh fixture initial_replies[0] independently decodes that
 same byte. The resident reply identity is initialized from the loaded arrangement/seed, never
 from expected publications or a captured constant. Effect absence retains its zero encoding.
 
-The model boundary now explicitly accepts the resident reply identity and music outputs carry
-it. This is an immutable input/output contract in this admitted scope, not a new music producer
-or selection transition. Its Rust representation and placement remain the implementer's choice.
-Two complete invented identities with distinct encodings are preserved through five music
-publications and two arrangement restarts each. Generic selection-absence-to-zero encoding
-fails at the first publication in both cases; correct boundary encoding restores all outputs.
-The existing104 records retain their inputs/expectations; the new total is106. Existing
-constructed cases use the invented default resident reply alias zero unless they specify one.
-Native admission independently requires the loaded resident encoding, never that fixture default.
+The model boundary accepts the resident reply identity and music outputs carry it. This is an
+immutable input/output contract in this admitted scope, not a new music producer or selection
+transition. Its Rust representation and placement remain the implementer's choice. Two
+complete invented identities with distinct encodings are preserved through five music turns
+and two arrangement restarts each. Generic selection-absence-to-zero encoding fails at the
+first music turn in both cases. Existing constructed cases use the invented default resident
+reply alias zero unless they specify one. Native admission independently requires the loaded
+resident encoding, never that fixture default.
 
 ## Echo voice identities
 
@@ -229,28 +256,6 @@ The resident initial echo membership is physical0/1/2/3, and a consumed root0 Ec
 all eight voices. This independently establishes admission of music-voice membership. The
 complete invented M-echo-all-voices selects all0..7 while retaining external effect reservations
 2/5. An actual effect-pool-only EchoMix fault drops0/1; the reference catches and restores it.
-All prior103 constructed records retain their inputs/expectations; the total is104.
-
-## Clock episode phase
-
-The source's direct-read callback samples halfway through its final AudioCycle. The idle
-music-start interval completes at anchor+874; its first resumed observation is anchor+873.5.
-After music publication and stable-sample retries, the corresponding completion is
-publication+retries+501 and observation phase is publication+retries+500.5. Each return
-establishes a new eight-cycle episode; only empty observations within that episode preserve
-its lattice. Timer prescaler phase survives observations and returns.
-
-For P-idle, first nonzero observation1517.5 distributes at1544; music-start1573 gives
-idle completion2447 and resumed phase2446.5. The next timer edge3565 is observed at3566.5,
-matching7133/2. For P-effects-alone, publications1604/1690/1778 give music-start1835,
-completion2709 and resumed phase2708.5; the same timer edge is observed at3572.5, matching7145/2.
-The completion fixture field `next_observe_numerator` compares the first future nonempty
-timer observation, not the next empty opportunity. After stops2447/2709, the respective next
-empty opportunities are2454.5/2716.5. A reference may skip these zero-count reads because
-they clear an already-zero count and preserve the prescaler phase; the compared nonempty
-instants remain3566.5/3572.5. No internal next-event representation is required.
-An actual global-initial-lattice fault instead observes3565.5 in both cases, and restoration
-recovers their declared expectations. No vector or behavior expectation changes.
 
 ## Semantic ramp projection
 
@@ -261,14 +266,13 @@ overwrites target and increment before the timer can advance again. Root reload 
 clears the timer. Immediate loudness music510 preserves an active ramp and never reads an
 inactive configuration.
 
-The frozen paired reference's5995 comparisons include these retained inactive values as
-supplementary observer-state evidence. Its predictions, comparisons and masks remain frozen.
-Those extra observations do not make inactive configuration clean-model State. The clean
-harness projects configuration only while a ramp is active; it still compares loudness, active
-ramp progression, all admitted later behavior and every publication. This domain has no existing
-engine floor changed by that projection. No new mask is added to the frozen paired experiment.
-Invented M-inactive-config proves equal admitted continuations for two starting states that
-differ only in inactive target and increment, including future ramp activation and root restarts.
+The paired reference's 5,995 comparisons include these retained inactive values as
+supplementary observer-state evidence. Those extra observations do not make inactive
+configuration clean-model State. The clean harness projects configuration only while a ramp is
+active; it still compares loudness, active ramp progression, all admitted later behavior and
+every reply. Invented M-inactive-config proves equal admitted continuations over 320 music
+turns for two starting states that differ only in inactive target and increment, including
+future ramp activation and root restarts.
 
 ## Admission and totality obligations
 
@@ -278,27 +282,25 @@ from event zero and requires its first Tone/Sustain/RepeatPhrase/CompletePhrase 
 Tone or Sustain. This also applies to roots with no repeated phrase and rejects a timed event
 that occurs only after earlier completion. The private importer applies this ordering check;
 six invented cases exercise actual admission, including a presence-only validation fault caught
-by two cases and restored. Both resident imported roots pass. All prior 97 vectors retain their
-inputs and expectations; together with these six admission cases the reference passes 103. The independent structural
-source audit covers5121valid semantic event-boundary/count states: only direct rootEnd or final repeatEnd
-followed by rootEnd can end the arrangement; roots restart into timed sounds, at most once
-per music turn. Exact source predispatch is923 or1025 respectively. Prior-slot full work
-ownership is independently source-audited and exercised by constructed ending cases.
+by two cases and restored. Both resident imported roots pass. The independent structural
+source audit covers 5,121 valid semantic event-boundary/count states: only direct rootEnd or
+final repeatEnd followed by rootEnd can end the arrangement; roots restart into timed sounds,
+at most once per music turn.
 
 Admitted current timbres are resolved non-noise selections. No external edit may change the
 fixed echo delay; the sole imported setting matches the seed, independently checked. Musical
 writer guards and effect allocations preserve the low two music voices. Generalized Door
 allocation, delayed starts, terminal motion and inactive holds are independently source-audited
-and exercised by constructed cases. Ordinary allocation includes sixteen work units per
-occupied visit for every group. The frozen model is unchanged; its separate successor carries
-these completed laws.
+and exercised by constructed cases. The source audit closes signed ramp wrapping and Timing
+adjacency with actual transition faults. No source page walk or address-class interpreter
+belongs in the clean spec or imported musical event model. The importer's per-Timing extra
+handling count is T1 work and is not part of the frame model's content.
 
-The source audit closes signed ramp wrapping, fractional-target work, Timing adjacency and
-extra handling, and all preview contributions. Preview starts with fifteen work units on release
-expiry or21 when note duration is three with a still-positive release; repeated-phrase entry
-adds59 and optional articulation adds14. These distinctions are verified with actual transition
-faults and both frozen arms are re-proved after the corrections. No source page
-walk or address-class interpreter belongs in the clean spec or imported musical event model.
+## Reference model
+
+The observer's reference model implements the frame-form spec and runs every vector, 77/77;
+its per-frame checks over the native arms and the cached rows give the agreement above,
+against a do-nothing step.
 
 ## Budget
 
@@ -310,9 +312,9 @@ implementation of sender queues, effect/music progress or physical reply transpo
 source area is empty in each area below, so its size is zero; no surrogate source is counted.
 The clean model adds the missing admitted behaviour.
 
-- Area sender (old 0): OfferAcceptance, RequestDelivery, RequestRelease, SenderTiming
-- Area effects (old 0): StagedRequests, EffectResources, ConnectedPitchMotion, EffectTiming
-- Area music (old 0): MusicalProgress, FinitePhrases, WholeArrangement, LoudnessProgress, SongControls, MusicTiming
-- Area transport (old 0): IndependentCadence, StableRequests, VisibleCompletion, ClockObservation, ReplyCadence
+- Area sender (old 0): OfferAcceptance, RequestDelivery, RequestRelease
+- Area effects (old 0): StagedRequests, EffectResources, ConnectedPitchMotion
+- Area music (old 0): MusicalProgress, FinitePhrases, WholeArrangement, LoudnessProgress, SongControls
+- Area transport (old 0): FrameCadence, PublishedReplies
 
-Budget: 37.5 × 72.3 units = 2,711 (sender 525, effects 862, music 787, transport 537)
+Budget: 37.5 × 52.3 units = 1,962 (sender 450, effects 725, music 637, transport 150)

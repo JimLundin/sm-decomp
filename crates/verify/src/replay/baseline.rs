@@ -201,9 +201,7 @@ impl Baseline {
                 .find(|case| case.id == result.id)
                 .ok_or_else(|| BaselineFault::MissingCase(result.id.clone()))?;
             let start_cut = match case.start {
-                Start::CacheCut { frame }
-                | Start::NativeRecord { frame, .. }
-                | Start::NativeCheckpoint { frame, .. } => Some(frame),
+                Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => Some(frame),
                 Start::NativeOpportunity { .. }
                 | Start::NativeSeed { .. }
                 | Start::NativeSenderOffer { .. }
@@ -323,10 +321,18 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         return valid;
     }
     if case.responsibilities == [Responsibility::Audio] {
-        return counts.cuts.checked_mul(4) == Some(counts.replies)
-            && counts.outputs == counts.publications
-            && counts.pending_boundaries <= counts.publications
-            && (case.checkpoints || counts.pending_boundaries == 0);
+        // Each cut compares at most four replies, and every cut its three request lines.
+        return counts
+            .cuts
+            .checked_mul(4)
+            .is_some_and(|most| counts.replies <= most)
+            && counts
+                .cuts
+                .checked_mul(3)
+                .and_then(|lines| lines.checked_add(counts.replies))
+                == Some(counts.outputs)
+            && counts.publications == 0
+            && counts.pending_boundaries == 0;
     }
     scoped_counts(case, counts, first)
 }

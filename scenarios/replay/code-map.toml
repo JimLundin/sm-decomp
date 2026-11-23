@@ -2,11 +2,11 @@
 format = 1
 
 [[rule]]
-id = "audio-transport/FinitePhrases"
+id = "audio-transport/FrameCadence"
 targets = [
-  { role = "model", path = "crates/clean/audio_transport/src/music.rs" },
-  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "model", path = "crates/clean/audio_transport/src/frame.rs" },
   { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]
 
@@ -23,6 +23,7 @@ targets = [
 id = "audio-transport/OfferAcceptance"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
+  { role = "adapter", path = "crates/game/src/production/audio.rs" },
   { role = "adapter", path = "crates/game/src/production/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
   { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },
@@ -30,20 +31,38 @@ targets = [
 ]
 
 [[rule]]
-id = "audio-transport/ReplyCadence"
+id = "audio-transport/PublishedReplies"
 targets = [
-  { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },
-  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "model", path = "crates/clean/audio_transport/src/frame.rs" },
   { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]
 
 [[rule]]
-id = "audio-transport/VisibleCompletion"
+id = "audio-transport/RequestDelivery"
 targets = [
-  { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },
-  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "audio-transport/RequestRelease"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
+  { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "audio-transport/StagedRequests"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/frame.rs" },
+  { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]
 
@@ -404,6 +423,7 @@ id = "samus-movement/TouchdownRequests"
 targets = [
   { role = "model", path = "crates/clean/samus_movement/src/touchdown.rs" },
   { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
+  { role = "adapter", path = "crates/game/src/production/audio.rs" },
   { role = "adapter", path = "crates/game/src/production/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/appearance.rs" },
   { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },

@@ -28,7 +28,7 @@ pub enum CaseKind {
 pub enum Responsibility {
     /// The existing movement and semantic pose owner.
     Movement,
-    /// The existing native audio transport owner.
+    /// Audio transport, played one frame at a time.
     Audio,
     /// The complete following camera.
     Camera,
@@ -48,7 +48,7 @@ pub enum Responsibility {
     Blocks,
     /// The complete passage and scene.
     Doors,
-    /// The complete CPU audio sender queue and pending service.
+    /// The sound queues' offer acceptance.
     AudioSender,
     /// Complete live health, including fractional energy and pending periodic loss.
     Health,
@@ -101,19 +101,6 @@ pub enum Start {
         path: PathBuf,
         /// Exact fixture SHA-256.
         sha256: String,
-    },
-    /// Complete independently captured continuation after an external intervention.
-    NativeCheckpoint {
-        /// Original native expectation fixture.
-        path: PathBuf,
-        /// Exact expectation fixture pin.
-        sha256: String,
-        /// Complete independently decoded seed file.
-        seed_path: PathBuf,
-        /// Exact independent seed pin.
-        seed_sha256: String,
-        /// Original saved cut coordinate.
-        frame: u64,
     },
     /// Power-on start without borrowed record state.
     PowerOn,
@@ -183,8 +170,8 @@ pub enum InputProvider {
     Unavailable,
     /// Independently observed or constructed queue offers.
     SenderOffers,
-    /// Physical port presentations and measured clock stops.
-    NativePhysicalPresentations,
+    /// Each frame's offers and audio cadence, from the native capture's port log.
+    NativeFrameInputs,
     /// Power-on play using movie inputs.
     Movie,
 }
@@ -195,9 +182,7 @@ pub enum InputProvider {
 pub enum ContentProvider {
     /// Checked content imported from the player ROM.
     PlayerRomImport,
-    /// Resident content in the independent pinned fixture.
-    NativeResidentContent,
-    /// Fixed group selected by the sender offer case.
+    /// Silent audio content: no clips or song, for frames that only queue offers.
     SenderGroup,
     /// ROM-selected audio for the independently admitted opening-room load.
     OpeningCeresAudio,
@@ -327,15 +312,12 @@ pub enum ObservationId {
     #[serde(rename = "audio.semantic")]
     /// Every admitted native semantic quantity.
     AudioSemantic,
-    #[serde(rename = "audio.publications")]
-    /// Ordered physical lines, bytes and instants.
-    AudioPublications,
     #[serde(rename = "audio.replies")]
-    /// Physical reply bytes at each cut.
+    /// Reply bytes last published on each line at each cut.
     AudioReplies,
-    #[serde(rename = "audio.pending_music")]
-    /// Whether music work is pending.
-    AudioPendingMusic,
+    #[serde(rename = "audio.request_lines")]
+    /// Request bytes last presented on each group's line at each cut.
+    AudioRequestLines,
     /// Exact independently decoded ceres.phase.
     #[serde(rename = "ceres.phase")]
     CeresPhase,
@@ -728,9 +710,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::WallTest
         | O::Reached
         | O::MapCarryMovement => Responsibility::Movement,
-        O::AudioSemantic | O::AudioPublications | O::AudioReplies | O::AudioPendingMusic => {
-            Responsibility::Audio
-        }
+        O::AudioSemantic | O::AudioReplies | O::AudioRequestLines => Responsibility::Audio,
         O::CeresPhase | O::CeresWait | O::CeresFigure | O::CeresShown | O::CeresSolid => {
             Responsibility::Ceres
         }
@@ -840,8 +820,12 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "audio-transport/MusicalProgress"
         | "audio-transport/WholeArrangement"
         | "audio-transport/FinitePhrases" => &[O::AudioSemantic],
-        "audio-transport/VisibleCompletion" => &[O::AudioPublications, O::AudioPendingMusic],
-        "audio-transport/ReplyCadence" => &[O::AudioPublications, O::AudioReplies],
+        "audio-transport/FrameCadence"
+        | "audio-transport/PublishedReplies"
+        | "audio-transport/StagedRequests" => &[O::AudioReplies],
+        "audio-transport/RequestDelivery" | "audio-transport/RequestRelease" => {
+            &[O::AudioRequestLines]
+        }
         "boss-ceres-ridley/Waiting" | "boss-ceres-ridley/Polling" => &[O::CeresPhase, O::CeresWait],
         "boss-ceres-ridley/SheIsNear" | "boss-ceres-ridley/Closing" => {
             &[O::CeresPhase, O::CeresFigure]
@@ -938,7 +922,6 @@ fn native_search_provider_valid(case: &Case, observations: &BTreeSet<Observation
         }
         Start::NativeOpportunity { .. }
         | Start::NativeSeed { .. }
-        | Start::NativeCheckpoint { .. }
         | Start::NativeRecord { .. }
         | Start::CacheCut { .. }
         | Start::NativeSenderOffer { .. }
@@ -1074,23 +1057,12 @@ fn weapons_provider_valid(case: &Case, recorded: bool) -> bool {
 fn audio_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     case.kind == CaseKind::Scoped
-        && matches!(
-            (&case.content, &case.start),
-            (ContentProvider::OpeningCeresAudio, Start::NativeSeed { .. })
-                | (
-                    ContentProvider::NativeResidentContent,
-                    Start::NativeCheckpoint { .. }
-                )
-        )
-        && case.inputs == InputProvider::NativePhysicalPresentations
+        && case.content == ContentProvider::OpeningCeresAudio
+        && matches!(case.start, Start::NativeSeed { .. })
+        && case.inputs == InputProvider::NativeFrameInputs
         && case.expectations.provider == ExpectedProvider::NativeDecodedCuts
         && *observations
-            == BTreeSet::from([
-                O::AudioSemantic,
-                O::AudioPublications,
-                O::AudioReplies,
-                O::AudioPendingMusic,
-            ])
+            == BTreeSet::from([O::AudioSemantic, O::AudioReplies, O::AudioRequestLines])
         && case.expectations.output_cut.is_none()
 }
 
@@ -1326,19 +1298,6 @@ fn start_valid(case: &Case) -> bool {
                 && *frame < case.end.cut_inclusive
         }
         Start::NativeSeed { path, sha256 } => !path.as_os_str().is_empty() && valid_hash(sha256),
-        Start::NativeCheckpoint {
-            path,
-            sha256,
-            seed_path,
-            seed_sha256,
-            frame,
-        } => {
-            !path.as_os_str().is_empty()
-                && !seed_path.as_os_str().is_empty()
-                && valid_hash(sha256)
-                && valid_hash(seed_sha256)
-                && *frame < case.end.cut_inclusive
-        }
         Start::NativeSenderOffer { source_id } => {
             *source_id < super::sender_offer::NATIVE_WINDOWS
                 && case.row == super::sender_offer::SOURCE_ROW
@@ -1395,9 +1354,7 @@ impl Case {
     #[must_use]
     pub const fn first_cut(&self) -> Option<u64> {
         match self.start {
-            Start::CacheCut { frame }
-            | Start::NativeRecord { frame, .. }
-            | Start::NativeCheckpoint { frame, .. } => frame.checked_add(1),
+            Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => frame.checked_add(1),
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
             Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {
                 Some(self.end.cut_inclusive)
@@ -1511,7 +1468,7 @@ mod tests {
             index.cases.len()
         );
         assert!(matches!(
-            index.select(&[], Some("audio-transport/RequestDelivery"), None),
+            index.select(&[], Some("audio-transport/EffectResources"), None),
             Err(IndexFault::Empty)
         ));
         let id = CaseId("audio/native-control".to_owned());

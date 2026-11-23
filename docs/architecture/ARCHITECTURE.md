@@ -158,11 +158,10 @@ path schedules them. A lag cut inside a rung is an explicit borrowed input.
 [T1](domains.md#platform-and-tracks-not-clean-room-hardware-formats-or-the-originals-timing)
 owns named CPU costs, beam scheduling and hardware arbitration outside the clean room.
 
-The existing `AudioSender` production entry retains CPU master ticks and advances the clean
-sender's intrinsic timed service under an admitted timing profile and ordered physical replies.
-That scoped service does not supply a whole-frame clock. Its clock inputs do not imply a
-power-on epoch or prove beam phase; each scoped case must declare the timing facts it admits.
-Required missing timing remains unsupported.
+Audio transport keeps no clock. Each frame's audio cadence (the effect turns before and after
+the sender service, whether the service runs, and the music turns) is a borrowed input of the
+audio owner's frame, like a lag cut, until T1 models the CPU's frame timing and the audio
+clock. Required missing timing remains unsupported.
 
 ### 6.6 Strands and continuations
 
@@ -214,9 +213,10 @@ its plan declares. Motion, semantic pose, contacts, travel and intents can be co
 pixels. `runtime` composes immutable display records into pictures. D17 describes the window
 presentation target.
 
-Native audio holds committed and pending transport State and publishes actual model milestones
-from admitted clock and physical requests. This does not prove the CPU request producer or
-whole-engine timing. No sound-driver code is emulated. Audio waveforms are not compared.
+Audio holds the whole transport State between frames and plays one frame at a time from the
+frame's queue offers and its borrowed cadence; the published replies and request lines are read
+back from that State. This does not prove the CPU request producers or whole-engine timing. No
+sound-driver code is emulated. Audio waveforms are not compared.
 
 ### 9.1 Exact output and intent output
 
@@ -233,23 +233,19 @@ Compositing independently admitted records proves the compositor, not production
 
 ### 9.4 Sound
 
-`Scope::ResidentAudio` admits the opening Ceres ROM bank with a common room-load origin for
-transport and all three CPU senders. The fresh load checks the tracks, resources, sender queues,
-physical latch directions, complete release histories, timer and first observation. It initializes
-the polling episode once. A canonical checkpoint carries the loaded clock relation, content
-identity and each owner's pending work. Restoration checks the selected context and resumes
-at the saved phase. A caller supplies the imported `ResidentAudio`, the authenticated
-`audio::Origin` and both typed state inputs. `audio::Load` carries the three sender values,
-effect request latches and one ordered release entry for Action and Ambient and two for Contact.
-`audio::State::opening_ceres` checks these against the complete sequencer State. The caller
-then admits `ProductionSeed::ResidentAudio` with the checked `ProductionContent::ResidentAudio`
-and fixed `ProductionRules::Audio`. The replay adapter is a complete example of that sequence.
+`Scope::Audio` holds the complete `audio_transport::State`: the three senders and their queues,
+the request lines, each group's audio side and the song. `ProductionContent::Audio` is a checked
+`audio::Content`: `Content::resident` admits a ROM-imported bank (its whole cue roster, aliases,
+resources and two-track song), and `Content::silent` has no clips or song, for frames that only
+queue offers. Admission and restoration check the State against the content: the song's tracks
+and mix, every group's history, requests and playback, and that each sender queues and awaits
+only its own group's cues. `AdvanceInput::Audio` plays one frame with its offers and its
+`FrameCadence`; it publishes nothing beyond the held State. The opening room's replay adapter
+admits the imported bank, the capture's loaded audio side and the load's three ready senders.
 [Opening-room loader](../../crates/verify/src/replay/audio/room_load.rs)
 
-`Scope::Audio` advances the same transport from a scoped starting state and admitted
-presentation times. `Scope::AudioSender` advances one sender under its admitted profile.
-Physical sender service joined to the resident transport, and synthesis in `runtime`, remain
-separate from room-load admission.
+Movement's touchdown offers its Contact cue to the same transport, carried with Movement in
+`Scope::MovementTouchdown`. Synthesis in `runtime` remains separate.
 
 ### 9.5 Saves
 

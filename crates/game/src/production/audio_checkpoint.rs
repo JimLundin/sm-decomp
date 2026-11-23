@@ -15,8 +15,8 @@ impl Canonical for PortableAudio {
     // This schema identifies the portable envelope and its precise Audio payload. A payload
     // change needs its own format decision, independently of the live checkpoint codecs.
     const SCHEMA: u64 = {
-        assert!(AudioPin::SHAPE == 0x8296_0EDF_19A5_1FC5);
-        0x029A_5174_21B2_EEB1
+        assert!(AudioPin::SHAPE == 0xF5B0_435C_9274_A3C7);
+        0x029A_5174_21B2_EEB2
     };
 
     fn encode(&self, out: &mut Vec<u8>) {

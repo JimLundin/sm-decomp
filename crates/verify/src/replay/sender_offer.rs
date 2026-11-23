@@ -1,18 +1,25 @@
-//! Scoped sender admission keeps recorded inputs separate from following-entry observations.
+//! Scoped offer acceptance: one frame's offers to one sound queue, compared before the frame's
+//! sender service.
+//!
+//! The recorded windows bracket each offer between a preceding cut and the group's next service
+//! entry, with no service of that group between, so the frame is played with a cadence that runs
+//! no audio turn and no service. The rest of the transport is a declared silent seed that such a
+//! frame never reads.
 
 use std::collections::VecDeque;
 use std::num::NonZeroU8;
 use std::path::Path;
 
+use audio_transport::frame::{EffectCadence, FrameCadence, TurnCount};
 use audio_transport::{
-    CpuMasterTicks, CueId, OfferPermission, QueueAllowance, Request, SenderProgress, SenderState,
-    SoundGroup,
+    CueId, CueQueue, GroupState, Loudness, OfferPermission, Playback, QueueAllowance,
+    ReleaseMemory, Request, ResidentMusicReply, SenderProgress, SenderState, SongMix, SongState,
+    SoundGroup, State,
 };
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
-    ProductionSeed, SenderInput,
+    ProductionSeed, audio,
 };
-use game::state::owned::OwnedState;
 use serde::Deserialize;
 
 use super::compare::Observation;
@@ -97,14 +104,6 @@ struct Seed {
     queue: VecDeque<CueId>,
     #[serde(flatten)]
     progress: RecordedProgress,
-    reply: ReplyKind,
-    reply_cue: Option<CueId>,
-}
-
-#[derive(Deserialize)]
-enum ReplyKind {
-    Absent,
-    Cue,
 }
 
 #[derive(Deserialize)]
@@ -150,12 +149,6 @@ impl RecordedProgress {
             _ => Err(data_failure(None, "sender progress payload")),
         }
     }
-}
-
-pub(super) struct Offer {
-    cue: CueId,
-    allowance: QueueAllowance,
-    permission: OfferPermission,
 }
 
 impl NativeOffer {
@@ -204,8 +197,69 @@ impl NativeOffer {
 struct Window {
     seed: SenderState,
     group: SoundGroup,
-    offers: Vec<Offer>,
+    offers: Vec<audio_transport::Offer>,
     expected: Vec<Observation>,
+}
+
+/// A frame that runs no audio turn and no sender service: it only queues its offers.
+pub(super) const fn offers_only() -> FrameCadence {
+    FrameCadence {
+        effects: EffectCadence::WithoutService(TurnCount::ZERO),
+        music: TurnCount::ZERO,
+    }
+}
+
+const fn parts(group: SoundGroup) -> usize {
+    match group {
+        SoundGroup::Action | SoundGroup::Ambient => 1,
+        SoundGroup::Contact => 2,
+    }
+}
+
+/// A silent transport holding one recorded sender: the other senders ready with empty queues,
+/// every line and reply absent, nothing playing and no song. A frame that runs no turn and no
+/// service reads only the selected queue.
+pub(super) fn silent_transport(group: SoundGroup, sender: SenderState) -> State {
+    let reply = ResidentMusicReply {
+        identity: "silent".to_owned(),
+        original_byte: 0,
+    };
+    let mut sender = Some(sender);
+    State {
+        senders: enum_map::EnumMap::from_fn(|line| {
+            sender
+                .take_if(|_| line == group)
+                .unwrap_or_else(|| SenderState {
+                    queue: CueQueue::default(),
+                    progress: SenderProgress::Ready,
+                })
+        }),
+        request_lines: enum_map::EnumMap::from_fn(|_| Request::Absent),
+        groups: enum_map::EnumMap::from_fn(|line| GroupState {
+            history: vec![ReleaseMemory::Inactive; parts(line)],
+            handled: Request::Absent,
+            staged: Request::Absent,
+            reply: Request::Absent,
+            playback: Playback::Empty,
+        }),
+        song: SongState {
+            tracks: Vec::new(),
+            mix: SongMix {
+                master: Loudness(0),
+                percussion: 0,
+                echo_voices: std::collections::BTreeSet::new(),
+                echo_left: 0,
+                echo_right: 0,
+                echo_delay: 0,
+                feedback: 0,
+                filter: 0,
+                echo_enabled: false,
+            },
+        },
+        music_reply: reply.clone(),
+        resident_music_reply: reply,
+        reservations: std::collections::BTreeSet::new(),
+    }
 }
 
 fn read_pinned<T: serde::de::DeserializeOwned>(path: &Path, pin: &str) -> Result<T, Outcome> {
@@ -271,7 +325,7 @@ fn native_records(
 
 fn native(path: &Path, source_id: usize, cut: u64) -> Result<Window, Outcome> {
     let (offer, fifo) = native_records(path, source_id, cut, false)?;
-    let request = Offer {
+    let request = audio_transport::Offer {
         cue: offer.cue,
         allowance: offer.allowance,
         permission: offer.permission()?,
@@ -285,25 +339,20 @@ fn native(path: &Path, source_id: usize, cut: u64) -> Result<Window, Outcome> {
 }
 
 impl Seed {
+    // The recorded reply and CPU time are the old service's inputs; offers read neither.
     fn decode(self, cut: u64) -> Result<SenderState, Outcome> {
-        let reply = match (self.reply, self.reply_cue) {
-            (ReplyKind::Absent, None) => Request::Absent,
-            (ReplyKind::Cue, Some(cue)) => Request::Cue(cue),
-            _ => return Err(data_failure(Some(cut), "sender seed reply payload")),
-        };
         Ok(SenderState {
-            now: CpuMasterTicks(self.now_master_ticks),
-            reply,
-            queue: self.queue,
+            queue: CueQueue::try_from(self.queue)
+                .map_err(|_| data_failure(Some(cut), "sender seed queue length"))?,
             progress: self.progress.decode()?,
-            pending: None,
         })
     }
 }
 
 pub(super) struct ContactIngress {
     pub seed: SenderState,
-    pub at: CpuMasterTicks,
+    /// The recorded CPU time of the seed, cross-checked against the touchdown's own record.
+    pub seed_master_ticks: u64,
     pub current: game::production::sender::OfferCurrent,
 }
 
@@ -350,16 +399,17 @@ pub(super) fn contact_ingress(
             PowerBomb::Inactive
         },
     };
+    let seed_master_ticks = offer.seed.now_master_ticks;
     Ok(ContactIngress {
         seed: offer.seed.decode(cut)?,
-        at: CpuMasterTicks(offer.exec_master_ticks),
+        seed_master_ticks,
         current,
     })
 }
 
 pub(super) struct ContactFifo {
     pub ingress_prefetch: u64,
-    pub at: CpuMasterTicks,
+    pub service_master_ticks: u64,
     pub queue: VecDeque<CueId>,
     pub progress: SenderProgress,
 }
@@ -372,7 +422,7 @@ pub(super) fn contact_fifo(
     let (offer, fifo) = native_records(path, source_id, cut, true)?;
     Ok(ContactFifo {
         ingress_prefetch: offer.prefetch_master_ticks,
-        at: CpuMasterTicks(fifo.master_ticks),
+        service_master_ticks: fifo.master_ticks,
         queue: fifo.queue,
         progress: fifo.progress.decode()?,
     })
@@ -409,24 +459,25 @@ fn constructed(control: SenderOfferControl) -> Window {
         DenyDemo => (&[], &[Door], Six, Demo, &[]),
         DenyExplosion => (&[], &[Door], Six, Explosion, &[]),
     };
-    let queue = |tail: &[CueId]| {
+    let queue = |tail: &[CueId]| -> VecDeque<CueId> {
         [Footstep; 4]
             .into_iter()
             .chain(tail.iter().copied())
             .collect()
     };
+    let mut seed = CueQueue::default();
+    for cue in queue(tail) {
+        seed.push(cue);
+    }
     Window {
         seed: SenderState {
-            now: CpuMasterTicks(0),
-            reply: Request::Absent,
-            queue: queue(tail),
+            queue: seed,
             progress: SenderProgress::Ready,
-            pending: None,
         },
         group: SoundGroup::Contact,
         offers: cues
             .iter()
-            .map(|&cue| Offer {
+            .map(|&cue| audio_transport::Offer {
                 cue,
                 allowance,
                 permission,
@@ -450,13 +501,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         | Start::NativeRecord { .. }
         | Start::CacheCut { .. }
         | Start::NativeSeed { .. }
-        | Start::NativeCheckpoint { .. }
         | Start::PowerOn => return Err(data_failure(Some(cut), "sender offer start contract")),
     };
-    let content = ProductionContent::AudioSender(group);
-    let rules = ProductionRules::AudioSender;
+    let content = ProductionContent::Audio(Box::new(audio::Content::silent()));
+    let rules = ProductionRules::Audio;
     let production = Production::admit(
-        ProductionSeed::AudioSender(Box::new(seed)),
+        ProductionSeed::Audio(Box::new(silent_transport(group, seed))),
         content.clone(),
         rules.clone(),
     )
@@ -467,41 +517,33 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         rules,
         inputs: InputReader::SenderOffer(offers),
         expected: ExpectedReader::SenderOffer(expected),
-        actual: ActualReader::SenderOffer,
+        actual: ActualReader::SenderOffer(group),
         schedule: vec![cut],
     })
 }
 
 pub(super) fn advance(
     production: &mut Production,
-    offers: &[Offer],
+    offers: &[audio_transport::Offer],
     cut: u64,
 ) -> Result<ProductionOutputs, Outcome> {
-    for &Offer {
-        cue,
-        allowance,
-        permission,
-    } in offers
-    {
-        let output = production
-            .advance(AdvanceInput::AudioSender(SenderInput::Offer {
-                cue,
-                allowance,
-                permission,
-            }))
-            .map_err(|fault| production_failure(cut, fault))?;
-        if !matches!(output, ProductionOutputs::AudioSender(events) if events.is_empty()) {
-            return Err(data_failure(Some(cut), "sender offer output scope"));
-        }
-    }
-    Ok(ProductionOutputs::AudioSender(Vec::new()))
+    production
+        .advance(AdvanceInput::Audio {
+            offers,
+            cadence: offers_only(),
+        })
+        .map_err(|fault| production_failure(cut, fault))
 }
 
-pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcome> {
-    let OwnedState::AudioSender(state) = production.state() else {
-        return Err(data_failure(None, "sender offer projection scope"));
-    };
-    Ok(observations(&state.0.queue, &state.0.progress))
+pub(super) fn actual(
+    production: &Production,
+    group: SoundGroup,
+) -> Result<Vec<Observation>, Outcome> {
+    let state = production
+        .transport()
+        .ok_or_else(|| data_failure(None, "sender offer projection scope"))?;
+    let sender = &state.senders[group];
+    Ok(observations(sender.queue.cues(), &sender.progress))
 }
 
 pub(super) const fn cue_tag(cue: CueId) -> u8 {

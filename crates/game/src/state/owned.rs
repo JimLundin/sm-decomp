@@ -11,12 +11,12 @@ impl Pinned for MovementPin {
     const SHAPE: u64 = 0x873B_3B46_1A4F_1747;
 }
 
-/// The complete transport state schema, including unfinished work.
+/// The complete transport state schema: senders, request lines, groups and song.
 pub struct AudioPin;
 impl Pinned for AudioPin {
     type State = Box<audio_transport::State>;
     const NAME: &'static str = "production-audio";
-    const SHAPE: u64 = 0x8296_0EDF_19A5_1FC5;
+    const SHAPE: u64 = 0xF5B0_435C_9274_A3C7;
     const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] = &[("MusicalPitch", 19)];
 }
 
@@ -44,14 +44,6 @@ impl Pinned for AppearancePin {
     const SHAPE: u64 = 0x347B_D040_BE28_1439;
 }
 
-/// The complete pending and committed CPU sender service schema.
-pub struct SenderPin;
-impl Pinned for SenderPin {
-    type State = Box<audio_transport::SenderState>;
-    const NAME: &'static str = "production-audio-sender";
-    const SHAPE: u64 = 0xB596_22C8_9169_DF68;
-}
-
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
@@ -61,14 +53,12 @@ pub enum OwnedState {
     HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
-    /// Current Movement, Figure and Contact sender at an ordinary opportunity.
+    /// Current Movement, Figure and audio transport at an ordinary opportunity.
     MovementTouchdown(Box<crate::production::movement_touchdown::State>),
     /// Complete owners connected by held movement position.
     MovementCeres(Box<crate::production::MovementCeresState>),
-    /// Committed and pending transport quantities.
+    /// The complete audio transport between frames.
     Audio(Model<AudioPin>),
-    /// Resident transport, all CPU senders and the measured clock relationship.
-    ResidentAudio(Box<crate::production::audio::State>),
     /// Current power shots and late contact consumption.
     WeaponsContact(Model<PowerPin>),
     /// Complete room tiles, running places and scroll screens.
@@ -85,8 +75,6 @@ pub enum OwnedState {
     Ceres(boss_ceres_ridley::CeresDoor),
     /// Complete retained passage and scene.
     Doors(Box<crate::production::PassageState>),
-    /// One sender group's committed and pending CPU service.
-    AudioSender(Model<SenderPin>),
 }
 
 /// Codec-only values created at the save edge; these never own live gameplay.
@@ -99,5 +87,4 @@ pub(crate) enum CodecState {
     WeaponsContact(Model<PowerPin>),
     Camera(Model<CameraPin>),
     Appearance(Model<AppearancePin>),
-    AudioSender(Model<SenderPin>),
 }

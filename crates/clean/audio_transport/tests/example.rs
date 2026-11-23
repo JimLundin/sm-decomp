@@ -1,13 +1,22 @@
-//! A complete compiling caller example using only public model interfaces.
+//! A complete caller example using only the public interface: frames played with their cadence,
+//! the State saved and restored between them, and the published replies read back.
 #![expect(
     clippy::expect_used,
     reason = "Invented example values and saved state must be valid"
 )]
+use audio_transport::frame::{self, EffectCadence, FrameCadence, TurnCount};
 use audio_transport::*;
-use audio_transport::{sender, time, transport};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::num::NonZeroU8;
 
+/// One effect turn after the sender service, and one music turn.
+const EVERY_FRAME: FrameCadence = FrameCadence {
+    effects: EffectCadence::AroundService {
+        before: TurnCount::ZERO,
+        after: TurnCount::ONE,
+    },
+    music: TurnCount::ONE,
+};
 const fn positive(value: u8) -> NonZeroU8 {
     NonZeroU8::new(value).expect("positive invented duration")
 }
@@ -65,7 +74,6 @@ fn invented_content() -> Content {
                         ratio: 128,
                         strength: 64,
                     }),
-                    extra: ExtraHandlingWork::new(3),
                 },
                 MusicEvent::Tone(mp(24)),
                 MusicEvent::Repeat {
@@ -118,7 +126,7 @@ fn invented_song() -> SongState {
         },
     }
 }
-const fn inactive_group(history: ReleaseHistory) -> GroupState {
+const fn quiet_group(history: ReleaseHistory) -> GroupState {
     GroupState {
         history,
         handled: Request::Absent,
@@ -127,117 +135,121 @@ const fn inactive_group(history: ReleaseHistory) -> GroupState {
         playback: Playback::Empty,
     }
 }
-fn initialized_audio() -> State {
-    let mut state = State {
-        now: time::cycles(0),
-        clock: ClockState {
-            phase: AudioCyclePhase::try_from(time::cycles(531)).expect("phase inside timer period"),
-            unread: 0,
-            lattice: time::halves(811),
+fn ready() -> SenderState {
+    SenderState {
+        queue: CueQueue::default(),
+        progress: SenderProgress::Ready,
+    }
+}
+/// The caller builds every part of the State, here at the start of play.
+fn new_audio() -> State {
+    let resident = ResidentMusicReply {
+        identity: "ordinary caller arrangement".into(),
+        original_byte: 42,
+    };
+    State {
+        senders: enum_map::enum_map! {
+            SoundGroup::Action => ready(),
+            SoundGroup::Ambient => ready(),
+            SoundGroup::Contact => ready(),
         },
-        cadence: CadencePhase {
-            effect: 7,
-            music: 224,
+        request_lines: enum_map::enum_map! {
+            SoundGroup::Action => Request::Absent,
+            SoundGroup::Ambient => Request::Absent,
+            SoundGroup::Contact => Request::Absent,
         },
-        music_due: false,
-        // The caller supplies all admitted histories even though playback is empty.
+        // The caller supplies every admitted history even though nothing plays.
         groups: enum_map::enum_map! {
-            SoundGroup::Action => inactive_group(vec![ReleaseMemory::Inactive]),
-            SoundGroup::Ambient => inactive_group(vec![ReleaseMemory::Inactive]),
-            SoundGroup::Contact => inactive_group(vec![ReleaseMemory::Inactive, ReleaseMemory::Active(positive(2))])
+            SoundGroup::Action => quiet_group(vec![ReleaseMemory::Inactive]),
+            SoundGroup::Ambient => quiet_group(vec![ReleaseMemory::Inactive]),
+            SoundGroup::Contact => quiet_group(vec![ReleaseMemory::Inactive, ReleaseMemory::Active(positive(2))]),
         },
         song: invented_song(),
-        resident_music_reply: ResidentMusicReply {
-            identity: "ordinary caller arrangement".into(),
-            original_byte: 42,
-        },
+        music_reply: resident.clone(),
+        resident_music_reply: resident,
         reservations: BTreeSet::new(),
-        requests: enum_map::enum_map! { SoundGroup::Action => Request::Absent, SoundGroup::Ambient => Request::Absent, SoundGroup::Contact => Request::Absent },
-        phase: AudioPhase::ObserveClock {
-            at: time::cycles(0),
-        },
-    };
-    // Initialization chooses the first polling opportunity. Restoration does not call this.
-    transport::initialize(&mut state);
-    state
+    }
+}
+fn save(audio: &State) -> toml::Value {
+    toml::Value::try_from(audio).expect("save the whole State")
 }
 #[test]
 fn complete_public_caller_example() {
-    // Importer owns the validated musical graph, resolved timbres and effect resources.
+    // The importer owns the validated content; the producer owns its offer and permission.
     let content = invented_content();
-    // Request producer owns permissions, offers and the queue; platform owns CPU time.
-    let mut sender = SenderState {
-        queue: VecDeque::new(),
-        progress: SenderProgress::Ready,
-        reply: Request::Absent,
-        now: CpuMasterTicks(0),
-        pending: None,
+    let spin = Offer {
+        cue: CueId::Spin,
+        allowance: QueueAllowance::Three,
+        permission: OfferPermission::Enabled,
     };
-    sender::offer(
-        &mut sender,
-        CueId::Spin,
-        QueueAllowance::Three,
-        OfferPermission::Enabled,
-    );
-    sender::begin(&mut sender, sender::SenderProfile::FastBus);
-    let cpu_publications = sender::advance(&mut sender, CpuMasterTicks(398));
+    let mut audio = new_audio();
+    frame::play(&mut audio, &content, &[spin], EVERY_FRAME);
     assert_eq!(
-        cpu_publications,
-        vec![
-            sender::SenderOutput::Presentation(CpuMasterTicks(212), Request::Cue(CueId::Spin)),
-            sender::SenderOutput::Completed(CpuMasterTicks(398))
-        ]
+        audio.request_lines[SoundGroup::Action],
+        Request::Cue(CueId::Spin)
     );
-    // The platform, not the model, maps sender presentations into ordered audio instants.
-    // No conversion from CPU ticks to audio cycles is implicit.
-    let inputs = [
-        transport::Input::cue(time::halves(3217), CueId::Spin),
-        transport::Input::cue(time::cycles(1800), CueId::Door),
-    ];
-    let mut audio = initialized_audio();
-    let first = transport::advance(&mut audio, &content, time::cycles(1603), &[]);
-    assert!(
-        !first
-            .iter()
-            .any(|out| matches!(out, transport::Output::Publication { .. }))
-    );
-    // Saving full retained state includes the pending result, prior committed song,
-    // exact time, timer/count phases, observation anchor and already visible inputs.
-    let saved = toml::Value::try_from(&audio).expect("save complete retained state");
-    let mut restored: State = saved.try_into().expect("restore without initialization");
     assert_eq!(
-        transport::advance(&mut restored, &content, time::cycles(0), &[]),
-        Vec::new()
+        audio.senders[SoundGroup::Action].progress,
+        SenderProgress::AwaitCue(CueId::Spin)
     );
-    let outputs = transport::advance(&mut restored, &content, time::cycles(4000), &inputs);
-    // The caller consumes ordered publications and observations, never side effects.
-    assert!(
-        outputs
-            .iter()
-            .any(|output| matches!(output, transport::Output::Publication { .. }))
+    // Restoring needs no initialization and replays nothing.
+    let mut restored: State = save(&audio).try_into().expect("restore the whole State");
+    assert_eq!(restored, audio);
+    // The reply reaches the sender, which then clears the line and sees it acknowledged.
+    for _ in 0..6 {
+        frame::play(&mut restored, &content, &[], EVERY_FRAME);
+        frame::play(&mut audio, &content, &[], EVERY_FRAME);
+    }
+    assert_eq!(restored, audio);
+    assert_eq!(
+        restored.senders[SoundGroup::Action].progress,
+        SenderProgress::Ready
     );
-    // Music-selection absence does not erase the supplied resident identity or encoding.
-    assert!(outputs.iter().any(|output| matches!(output,
-        transport::Output::Publication { reply: Reply::Music(identity), .. }
-        if identity == &audio.resident_music_reply
-    )));
-    assert_eq!(restored.resident_music_reply, audio.resident_music_reply);
-    let mut uninterrupted = initialized_audio();
-    let mut expected = transport::advance(&mut uninterrupted, &content, time::cycles(1603), &[]);
-    expected.extend(transport::advance(
-        &mut uninterrupted,
-        &content,
-        time::cycles(4000),
-        &inputs,
-    ));
-    let mut resumed = first;
-    resumed.extend(outputs);
-    assert_eq!(resumed, expected);
-    assert_eq!(restored, uninterrupted);
+    assert_eq!(restored.groups[SoundGroup::Action].reply, Request::Absent);
+    // The spin still sounds after its request is cleared.
+    assert_eq!(
+        restored.groups[SoundGroup::Action].playback.owned_voices(),
+        BTreeSet::from([EffectVoiceId::V7])
+    );
+    // The music line carries the resident reply; selection absence leaves it unchanged.
+    assert_eq!(restored.music_reply, restored.resident_music_reply);
+    assert_eq!(restored.music_reply.original_byte, 42);
+}
+#[test]
+fn a_frame_completes_at_most_two_turns_of_a_kind() {
+    assert_eq!(TurnCount::new(2), Some(TurnCount::TWO));
+    assert_eq!(TurnCount::new(3), None);
+}
+#[test]
+fn restore_refuses_an_overfull_queue() {
+    let content = invented_content();
+    let mut audio = new_audio();
+    audio.senders[SoundGroup::Action].queue =
+        CueQueue::try_from(VecDeque::from(vec![CueId::Spin; QUEUE_CAPACITY])).expect("full queue");
+    let mut saved = save(&audio);
+    let restored: State = saved.clone().try_into().expect("a full queue restores");
+    assert_eq!(restored, audio);
+    saved["senders"]["Action"]["queue"]
+        .as_array_mut()
+        .expect("saved queue")
+        .push(toml::Value::String("Spin".into()));
+    assert!(saved.try_into::<State>().is_err());
+    // Even the largest allowance admits no cue to a full queue.
+    let offer = Offer {
+        cue: CueId::EndSpin,
+        allowance: QueueAllowance::Fifteen,
+        permission: OfferPermission::Enabled,
+    };
+    let quiet = FrameCadence {
+        effects: EffectCadence::WithoutService(TurnCount::ZERO),
+        music: TurnCount::ZERO,
+    };
+    frame::play(&mut audio, &content, &[offer], quiet);
+    assert_eq!(audio, restored);
 }
 
-// Spec: Saved quantities. Edit one saved field at a time so neither a different invalid
-// quantity nor a constructor can account for a failed restore.
+// Edit one saved field at a time, so neither a different invalid quantity nor a constructor can
+// account for a refused restore.
 fn restore_pitch<T>(
     original: &T,
     field: fn(&mut toml::Value) -> &mut toml::Value,
@@ -258,47 +270,6 @@ where
     }
     restored
 }
-
-fn resume_pending_pitch(mut restored: State, mut direct: State, content: &Content) {
-    let deadline = if let AudioPhase::Work { at, .. } = &direct.phase {
-        Some(at.clone())
-    } else {
-        None
-    };
-    let at = deadline.expect("pending pitch work");
-    assert_eq!(restored.now, time::cycles(1603));
-    assert_eq!(
-        transport::advance(&mut restored, content, time::cycles(0), &[]),
-        []
-    );
-    assert_eq!(restored, direct);
-
-    let inputs = [transport::Input::cue(time::cycles(1608), CueId::Beam)];
-    let before = time::subtract(time::subtract(&at, &restored.now), time::halves(1));
-    assert_eq!(
-        transport::advance(&mut restored, content, before, &inputs),
-        []
-    );
-    assert_eq!(
-        restored.requests[SoundGroup::Action],
-        Request::Cue(CueId::Beam)
-    );
-    let output = transport::advance(&mut restored, content, time::halves(1), &[]);
-    assert!(
-        matches!(output.as_slice(), [transport::Output::Publication { at: instant, .. }] if instant == &at)
-    );
-    let elapsed = time::subtract(&at, &direct.now);
-    assert_eq!(
-        output,
-        transport::advance(&mut direct, content, elapsed, &inputs)
-    );
-    assert_eq!(restored, direct);
-    assert_eq!(
-        transport::advance(&mut restored, content, time::cycles(0), &[]),
-        []
-    );
-}
-
 #[test]
 fn restore_musical_pitch_at_saved_boundaries() {
     let invalid = [
@@ -306,9 +277,13 @@ fn restore_musical_pitch_at_saved_boundaries() {
         toml::Value::Integer(52),
         toml::Value::Float(19.5),
     ];
+    let one_music_turn = FrameCadence {
+        effects: EffectCadence::WithoutService(TurnCount::ZERO),
+        music: TurnCount::ONE,
+    };
     for pitch in [19, 51] {
         let mut content = invented_content();
-        // The first track sustains its saved pitch while the second reads a saved tone.
+        // The first track sustains its saved pitch while the second sounds a saved tone.
         content.tracks[0].phrases[0][1] = MusicEvent::Sustain;
         content.tracks[1].phrases[0][1] = MusicEvent::Tone(mp(pitch));
         let content = restore_pitch(
@@ -317,29 +292,29 @@ fn restore_musical_pitch_at_saved_boundaries() {
             pitch,
             &invalid,
         );
-        let mut audio = initialized_audio();
+        let mut audio = new_audio();
         audio.song.tracks[0].pitch = mp(pitch);
-        audio.cadence.effect = 0;
-        transport::advance(&mut audio, &content, time::cycles(1603), &[]);
-        let restored = restore_pitch(
+        frame::play(&mut audio, &content, &[], one_music_turn);
+        assert_eq!(audio.song.tracks[0].pitch, mp(pitch));
+        assert_eq!(audio.song.tracks[1].pitch, mp(pitch));
+        let mut restored = restore_pitch(
             &audio,
             |saved| &mut saved["song"]["tracks"][0]["pitch"],
             pitch,
             &invalid,
         );
-        let restored = restore_pitch(
-            &restored,
-            |saved| &mut saved["phase"]["Work"]["result"]["Music"]["tracks"][0]["pitch"],
-            pitch,
-            &invalid,
-        );
-        resume_pending_pitch(restored, audio, &content);
+        frame::play(&mut restored, &content, &[], one_music_turn);
+        frame::play(&mut audio, &content, &[], one_music_turn);
+        assert_eq!(restored, audio);
     }
 }
-
 #[test]
 fn restore_effect_pitch_at_saved_boundaries() {
     let invalid = [toml::Value::Integer(-1), toml::Value::Integer(72)];
+    let one_effect_turn = FrameCadence {
+        effects: EffectCadence::WithoutService(TurnCount::ONE),
+        music: TurnCount::ZERO,
+    };
     for pitch in [0, 71] {
         let mut content = invented_content();
         content
@@ -355,11 +330,12 @@ fn restore_effect_pitch_at_saved_boundaries() {
             pitch,
             &invalid,
         );
-        let mut audio = initialized_audio();
+        let mut audio = new_audio();
+        audio.request_lines[SoundGroup::Action] = Request::Cue(CueId::Spin);
         let action = &mut audio.groups[SoundGroup::Action];
         action.staged = Request::Cue(CueId::Spin);
         action.handled = action.staged;
-        // Pitch is retained during release while the instruction countdown wraps.
+        // The pitch holds through the release while the zero countdown wraps.
         action.history[0] = ReleaseMemory::Active(positive(2));
         action.playback = Playback::Active {
             cue: CueId::Spin,
@@ -372,22 +348,15 @@ fn restore_effect_pitch_at_saved_boundaries() {
                 motion: None,
             })],
         };
-        transport::advance(&mut audio, &content, time::cycles(1603), &[]);
-        let restored = restore_pitch(
+        frame::play(&mut audio, &content, &[], one_effect_turn);
+        let mut restored = restore_pitch(
             &audio,
             |saved| &mut saved["groups"]["Action"]["playback"]["Active"]["parts"][0]["Live"]["pitch"],
             pitch,
             &invalid,
         );
-        let restored = restore_pitch(
-            &restored,
-            |saved| {
-                &mut saved["phase"]["Work"]["result"]["Effect"]["result"]["playback"]["Active"]["parts"]
-                    [0]["Live"]["pitch"]
-            },
-            pitch,
-            &invalid,
-        );
-        resume_pending_pitch(restored, audio, &content);
+        frame::play(&mut restored, &content, &[], one_effect_turn);
+        frame::play(&mut audio, &content, &[], one_effect_turn);
+        assert_eq!(restored, audio);
     }
 }

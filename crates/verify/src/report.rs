@@ -80,13 +80,13 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "audio-transport",
         bridge: Some("audio_transport_bridge"),
-        adapters: &[],
-        providers: &["audio"],
+        adapters: &["production/audio.rs"],
+        providers: &["audio", "sender_offer"],
         areas: &[
             ("sender", &["sender.rs"]),
             ("effects", &["effects.rs"]),
             ("music", &["music.rs"]),
-            ("transport", &["transport.rs", "time.rs"]),
+            ("transport", &["frame.rs"]),
         ],
         apart: &[],
     },

@@ -1,4 +1,5 @@
-//! Typed content and retained state. Content relations are owned by the importer.
+//! Typed audio content and the audio-transport State saved between frames. Relations between
+//! content fields are the importer's.
 #![expect(
     clippy::doc_markdown,
     reason = "Spec entry identifiers are consistently written as plain catalogue labels"
@@ -9,125 +10,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::num::NonZeroU8;
 
-/// Spec: VisibleCompletion. Normalized nonnegative rational AudioCycles, without a width limit.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(try_from = "InstantFraction", into = "InstantFraction")]
-pub struct AudioInstant(num_rational::BigRational);
-/// Spec: VisibleCompletion. Input fractions require nonnegative numerators and positive denominators.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct InstantFraction {
-    /// Nonnegative numerator.
-    pub numerator: num_bigint::BigInt,
-    /// Strictly positive denominator.
-    pub denominator: num_bigint::BigInt,
-}
-/// Spec: VisibleCompletion. Invalid signs and zero denominators are rejected at the input edge.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FractionError {
-    /// Negative numerator.
-    NegativeNumerator,
-    /// Zero or negative denominator.
-    NonpositiveDenominator,
-}
-impl std::fmt::Display for FractionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-impl TryFrom<InstantFraction> for AudioInstant {
-    type Error = FractionError;
-    fn try_from(value: InstantFraction) -> Result<Self, Self::Error> {
-        use num_traits::{Signed, Zero};
-        if value.denominator <= num_bigint::BigInt::zero() {
-            return Err(FractionError::NonpositiveDenominator);
-        }
-        if value.numerator.is_negative() {
-            return Err(FractionError::NegativeNumerator);
-        }
-        Ok(Self(num_rational::BigRational::new(
-            value.numerator,
-            value.denominator,
-        )))
-    }
-}
-impl From<AudioInstant> for InstantFraction {
-    fn from(value: AudioInstant) -> Self {
-        Self {
-            numerator: value.0.numer().clone(),
-            denominator: value.0.denom().clone(),
-        }
-    }
-}
-impl AudioInstant {
-    /// Spec: VisibleCompletion. Construct an exact normalized fraction from unsigned components.
-    /// # Errors
-    /// A zero denominator returns `FractionError::NonpositiveDenominator`.
-    pub fn new(
-        numerator: num_bigint::BigUint,
-        denominator: num_bigint::BigUint,
-    ) -> Result<Self, FractionError> {
-        Self::try_from(InstantFraction {
-            numerator: numerator.into(),
-            denominator: denominator.into(),
-        })
-    }
-    /// Spec: VisibleCompletion. Read the normalized exact fraction.
-    #[must_use]
-    pub const fn rational(&self) -> &num_rational::BigRational {
-        &self.0
-    }
-    /// Spec: VisibleCompletion. Exact normalized sum.
-    #[must_use]
-    pub fn sum(&self, other: &Self) -> Self {
-        use std::ops::Add;
-        Self(Add::add(&self.0, &other.0))
-    }
-    /// Spec: VisibleCompletion. Nonnegative difference, zero for earlier instants.
-    #[must_use]
-    pub fn difference(&self, other: &Self) -> Self {
-        use std::ops::Sub;
-        if self < other {
-            return Self(num_rational::BigRational::from_integer(0.into()));
-        }
-        Self(Sub::sub(&self.0, &other.0))
-    }
-    /// Spec: VisibleCompletion. Whole nonnegative AudioCycles as an instant.
-    #[must_use]
-    pub fn whole(value: num_bigint::BigUint) -> Self {
-        Self(num_rational::BigRational::from_integer(value.into()))
-    }
-}
-/// Spec: SenderTiming. Unbounded whole CPU master ticks, distinct from audio work.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ExactCpuMasterTicks(pub num_bigint::BigUint);
-/// Spec: SenderTiming. CPU clock quantity.
-pub type CpuMasterTicks = ExactCpuMasterTicks;
-/// Spec: SenderTiming. Ordinary caller convenience for whole CPU ticks.
+/// Consume one turn of a positive count: the count left, or none once its last turn is consumed.
+///
+/// The sender's delays (RequestRelease), finite phrase repeats (FinitePhrases), loudness ramps
+/// (LoudnessProgress) and effect release counts (EffectResources) all count down this way.
 #[must_use]
-#[expect(non_snake_case, reason = "Preserve the ordinary caller constructor")]
-pub fn CpuMasterTicks(value: u64) -> CpuMasterTicks {
-    ExactCpuMasterTicks(value.into())
-}
-/// Spec: MusicTiming. Unbounded nonnegative integral AudioCycles.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ExactAudioCycles(pub num_bigint::BigUint);
-/// Spec: MusicTiming. Immutable event work and accumulated work use exact whole cycles.
-pub type AudioCycles = ExactAudioCycles;
-/// Spec: MusicTiming. Ordinary caller convenience for integral work.
-#[must_use]
-#[expect(non_snake_case, reason = "Preserve the ordinary caller constructor")]
-pub fn AudioCycles(value: u64) -> AudioCycles {
-    ExactAudioCycles(value.into())
-}
-/// Spec: MusicTiming. Immutable consumption-only whole AudioCycles; preview adds none.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ExtraHandlingWork(pub num_bigint::BigUint);
-impl ExtraHandlingWork {
-    /// Spec: MusicTiming. Ordinary caller construction without restricting larger imported counts.
-    #[must_use]
-    pub fn new(value: u64) -> Self {
-        Self(value.into())
-    }
+pub const fn count_down(count: NonZeroU8) -> Option<NonZeroU8> {
+    NonZeroU8::new(count.get().saturating_sub(1))
 }
 /// Spec: MusicalProgress. Positive musical duration.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -173,7 +62,7 @@ pub enum VoiceId {
     /// Ordered effect-pool identity.
     Effect(EffectVoiceId),
 }
-/// Spec: StagedRequests. Request group fixes the cue family.
+/// Spec: StagedRequests. A sound group: one sound queue, one request line and one reply line.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Enum, Serialize, Deserialize)]
 pub enum SoundGroup {
     /// Action sounds.
@@ -182,6 +71,10 @@ pub enum SoundGroup {
     Ambient,
     /// Contact sounds.
     Contact,
+}
+impl SoundGroup {
+    /// Spec: FrameCadence. An effect turn and a sender service take the groups in this order.
+    pub const IN_TURN_ORDER: [Self; 3] = [Self::Action, Self::Ambient, Self::Contact];
 }
 /// Spec: StagedRequests. Only admitted cues.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -202,6 +95,17 @@ pub enum CueId {
     BackgroundSilence,
     /// Protected door.
     Door,
+}
+impl CueId {
+    /// Spec: OfferAcceptance. The group a cue belongs to, whose queue it joins.
+    #[must_use]
+    pub const fn group(self) -> SoundGroup {
+        match self {
+            Self::Spin | Self::EndSpin | Self::Beam | Self::SamusSilence => SoundGroup::Action,
+            Self::BackgroundSilence => SoundGroup::Ambient,
+            Self::Footstep | Self::Land | Self::Door => SoundGroup::Contact,
+        }
+    }
 }
 /// Spec: StagedRequests. Absence is not silence.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -237,55 +141,82 @@ pub enum OfferPermission {
     /// Explosion suppression.
     Explosion,
 }
-/// Spec: RequestDelivery and RequestRelease. Retained sender progress.
+/// Spec: RequestDelivery and RequestRelease. Where a group's sender is in delivering a cue.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SenderProgress {
-    /// May send.
+    /// May present the oldest queued cue.
     Ready,
-    /// Await matching reply.
+    /// Presented this cue; waits for the group's reply to match it.
     AwaitCue(CueId),
-    /// Clear countdown.
+    /// Acknowledged; services left before the request line is cleared.
     ClearDelay(NonZeroU8),
-    /// Await absence.
+    /// Presented absence; waits for the group's reply to be absence.
     AwaitClear,
-    /// Reset countdown.
+    /// Services left before the sender is ready again.
     ResetDelay(NonZeroU8),
 }
-/// Spec: SenderTiming. Saved CPU sender service.
+/// Spec: OfferAcceptance. The most cues a sound queue holds.
+pub const QUEUE_CAPACITY: usize = 15;
+/// Spec: OfferAcceptance. A sound queue, oldest cue first, holding at most fifteen cues.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "VecDeque<CueId>", into = "VecDeque<CueId>")]
+pub struct CueQueue(VecDeque<CueId>);
+/// Spec: OfferAcceptance. A saved queue longer than fifteen cues.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QueueOverfull;
+impl std::fmt::Display for QueueOverfull {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("a sound queue holds at most fifteen cues")
+    }
+}
+impl TryFrom<VecDeque<CueId>> for CueQueue {
+    type Error = QueueOverfull;
+    fn try_from(cues: VecDeque<CueId>) -> Result<Self, Self::Error> {
+        if cues.len() > QUEUE_CAPACITY {
+            return Err(QueueOverfull);
+        }
+        Ok(Self(cues))
+    }
+}
+impl From<CueQueue> for VecDeque<CueId> {
+    fn from(queue: CueQueue) -> Self {
+        queue.0
+    }
+}
+impl CueQueue {
+    /// The cues waiting, oldest first.
+    #[must_use]
+    pub const fn cues(&self) -> &VecDeque<CueId> {
+        &self.0
+    }
+    /// How many cues wait.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+    /// Whether no cue waits.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    /// Append a cue as the newest; a full queue refuses it.
+    pub fn push(&mut self, cue: CueId) {
+        if self.0.len() < QUEUE_CAPACITY {
+            self.0.push_back(cue);
+        }
+    }
+    /// Remove and return the oldest cue.
+    pub fn pop_oldest(&mut self) -> Option<CueId> {
+        self.0.pop_front()
+    }
+}
+/// Spec: RequestDelivery. One group's sound queue and its sender's progress.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SenderState {
-    /// Oldest first, at most fifteen entries.
-    pub queue: VecDeque<CueId>,
-    /// Committed progress.
+    /// Accepted cues not yet presented.
+    pub queue: CueQueue,
+    /// Where delivery stands.
     pub progress: SenderProgress,
-    /// Latest physical reply presented by platform.
-    pub reply: Request,
-    /// Current CPU time.
-    pub now: CpuMasterTicks,
-    /// Unfinished service, if any.
-    pub pending: Option<SenderCompletion>,
-}
-/// Spec: SenderTiming. Milestones not yet consumed.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SenderCompletion {
-    /// Service origin.
-    pub origin: CpuMasterTicks,
-    /// Reply observation still due.
-    pub observation: Option<CpuMasterTicks>,
-    /// Result selected only at actual observation.
-    pub result: Option<SenderResult>,
-}
-/// Spec: SenderTiming. Completed semantic result and remaining presentation.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SenderResult {
-    /// Result progress.
-    pub progress: SenderProgress,
-    /// Result queue.
-    pub queue: VecDeque<CueId>,
-    /// Remaining presentation at absolute CPU time.
-    pub presentation: Option<(CpuMasterTicks, Request)>,
-    /// Absolute completion instant.
-    pub completion: CpuMasterTicks,
 }
 /// Spec: LoudnessProgress. Inactive configuration is absent.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -325,17 +256,15 @@ pub struct Articulation {
     /// Whole note strength.
     pub strength: u8,
 }
-/// Spec: SongControls and MusicTiming. Imported semantic events.
+/// Spec: SongControls and MusicalProgress. Imported musical events.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MusicEvent {
-    /// Bundled timing and immutable extra work.
+    /// A duration choice, with its optional articulation bundled.
     Timing {
         /// Positive duration.
         duration: MusicTurns,
         /// Optional articulation.
         articulation: Option<Articulation>,
-        /// Consumption-only work.
-        extra: ExtraHandlingWork,
     },
     /// Sound a non-noise pitch, admitted range 19 through 51.
     Tone(MusicalPitch),
@@ -463,8 +392,7 @@ pub struct EffectSpan {
     pub duration: EffectTurns,
     /// Semitone pitch in zero through 71.
     pub pitch: EffectPitch,
-    /// Spec: EffectResources and EffectTiming. Resolves the admitted ordinary instrument-work class.
-    /// Retained effect-instrument playback is outside this transport result.
+    /// Spec: EffectResources. Admitted effect instrument; its sound is the sequencer's.
     pub timbre: TimbreId,
     /// Connected slide, if any.
     pub motion: Option<PitchMotion>,
@@ -543,218 +471,71 @@ pub enum Playback {
         parts: Vec<PartState>,
     },
 }
+impl Playback {
+    /// Spec: EffectResources. The voices its live parts own; prepared and finished parts own none.
+    #[must_use]
+    pub fn owned_voices(&self) -> BTreeSet<EffectVoiceId> {
+        let Self::Active { parts, .. } = self else {
+            return BTreeSet::new();
+        };
+        parts
+            .iter()
+            .filter_map(|part| match part {
+                PartState::Live(live) => Some(live.voice),
+                PartState::Finished => None,
+            })
+            .collect()
+    }
+}
 /// Spec: EffectResources. Complete ordered release history, independent of playback.
 ///
-/// Construct from the caller's admitted history: one entry for Action/Ambient, two for Contact.
-/// This group/content shape relation is an importer invariant. Inactive is not an inferred seed.
-/// Each count lives here throughout preparation, sounding, release, dormancy and completion;
-/// playback never stores a second copy. Pending work owns a separate completed result.
+/// The caller supplies one entry for Action and Ambient and two for Contact, whatever is playing.
+/// Each part's count lives here through preparation, sounding, release, dormancy and completion;
+/// playback keeps no second copy.
 pub type ReleaseHistory = Vec<ReleaseMemory>;
-/// Spec: StagedRequests. Handled, staged and published are separate.
+/// Spec: StagedRequests. The audio side of one sound group: handled, staged and published apart.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GroupState {
-    /// Spec: EffectResources. All admitted part histories, even absent or finished parts.
-    /// Supply independently of active-part count at fresh construction; restore unchanged.
+    /// Spec: EffectResources. Every admitted part's release history, even absent or finished parts.
     pub history: ReleaseHistory,
-    /// Last handled line.
+    /// The staged request the group last handled.
     pub handled: Request,
-    /// Stable staged request.
+    /// The request line's value at the group's last effect turn.
     pub staged: Request,
-    /// Last physical reply.
+    /// Spec: PublishedReplies. The reply the group's last effect turn published.
     pub reply: Request,
-    /// Retained playback.
+    /// What the group is playing.
     pub playback: Playback,
 }
-/// Spec: IndependentCadence. Independent threshold remainders.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct CadencePhase {
-    /// Zero through seven.
-    pub effect: u8,
-    /// Zero through 255.
-    pub music: u8,
-}
-/// Spec: ClockObservation. Exact rational timer phase in zero up to, but excluding, 2048 AudioCycles.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "AudioInstant", into = "AudioInstant")]
-pub struct AudioCyclePhase(AudioInstant);
-/// Spec: ClockObservation. A saved timer phase must lie inside one timer period.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PhaseOutOfRange;
-impl std::fmt::Display for PhaseOutOfRange {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("timer phase outside its period")
-    }
-}
-impl TryFrom<AudioInstant> for AudioCyclePhase {
-    type Error = PhaseOutOfRange;
-    fn try_from(value: AudioInstant) -> Result<Self, Self::Error> {
-        const TIMER_PERIOD: u64 = 2048;
-        if value >= AudioInstant::whole(TIMER_PERIOD.into()) {
-            return Err(PhaseOutOfRange);
-        }
-        Ok(Self(value))
-    }
-}
-impl From<AudioCyclePhase> for AudioInstant {
-    fn from(value: AudioCyclePhase) -> Self {
-        value.0
-    }
-}
-impl AudioCyclePhase {
-    /// Spec: ClockObservation. Read the exact retained timer phase.
-    #[must_use]
-    pub const fn instant(&self) -> &AudioInstant {
-        &self.0
-    }
-    /// Spec: ClockObservation. Accrue exact time, retaining the phase and returning whole overflows.
-    #[must_use]
-    pub fn accrue(&self, elapsed: &AudioInstant) -> (Self, num_bigint::BigUint) {
-        use std::ops::{Div, Mul};
-        const TIMER_PERIOD: u64 = 2048;
-        let total = self.0.sum(elapsed);
-        let periods = total.rational().to_integer().magnitude().div(TIMER_PERIOD);
-        let remainder = total.difference(&AudioInstant::whole(Mul::mul(&periods, TIMER_PERIOD)));
-        (Self(remainder), periods)
-    }
-}
-/// Spec: ClockObservation. Timer phase and four-bit pending count.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ClockState {
-    /// Rational phase below 2048.
-    pub phase: AudioCyclePhase,
-    /// Four-bit count.
-    pub unread: u8,
-    /// Retained eight-cycle polling origin.
-    pub lattice: AudioInstant,
-}
-/// Spec: ResidentMusicReply and VisibleCompletion. Resident semantic identity and its original
-/// external reply byte are supplied independently of music-selection absence.
+/// Spec: PublishedReplies. The resident arrangement's reply: a semantic identity, and the original
+/// reply byte it resolves to at the boundary.
 ///
-/// Construct with a struct literal: `identity` is the caller's opaque semantic name (any String),
-/// and `original_byte` admits every byte, zero through 255. No fixture alias or byte is inferred.
-/// Save and restore both fields unchanged; neither sampling nor arrangement restart replaces them.
+/// It comes with the resident arrangement, independently of any music-selection request; music
+/// turns and arrangement restarts never change it. Every byte, zero through 255, is admitted.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResidentMusicReply {
-    /// Opaque semantic identity supplied with the admitted resident arrangement.
+    /// The caller's name for the resident arrangement's reply.
     pub identity: String,
-    /// Original physical encoding, resolved only at the external publication boundary.
+    /// Original physical reply byte.
     pub original_byte: u8,
 }
-/// Spec: VisibleCompletion. Effects acknowledge requests; resident music has its own identity.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Reply {
-    /// Effect request acknowledgement, including genuine request absence.
-    Effect(Request),
-    /// Resident identity and preserved original external encoding.
-    Music(ResidentMusicReply),
-}
-/// Spec: ReplyCadence. Selection absence does not make the resident music reply absent.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ReplyLine {
-    /// Sound line.
-    Group(SoundGroup),
-    /// Resident arrangement line.
-    Music,
-}
-/// Spec: VisibleCompletion. Pending completed result is not committed state.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum CompletionResult {
-    /// Effect completion.
-    Effect {
-        /// Group identity.
-        group: SoundGroup,
-        /// Completed group, including every admitted history entry.
-        result: GroupState,
-        /// Complete semantic echo membership after this turn; committed only at publication.
-        echo_voices: BTreeSet<VoiceId>,
-    },
-    /// Musical completion.
-    Music(SongState),
-}
-/// Spec: StableRequests. The pair owns its publication/retry anchor.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct StableSample {
-    /// Sample line.
-    pub line: ReplyLine,
-    /// Retry-adjusted anchor.
-    pub anchor: AudioInstant,
-    /// First observation, if consumed.
-    pub first: Option<Request>,
-}
-/// Spec: ReplyCadence. Remaining dispatch after a stable pair.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Continuation {
-    /// Next sound group.
-    Effect(SoundGroup),
-    /// Music or idle start after effects.
-    AfterEffects,
-    /// Poll after music.
-    AfterMusic,
-}
-/// Spec: VisibleCompletion. Complete saved scheduler lifecycle.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AudioPhase {
-    /// Polling opportunity.
-    ObserveClock {
-        /// Next opportunity.
-        at: AudioInstant,
-    },
-    /// Read batch pending distribution.
-    Distribute {
-        /// Completion.
-        at: AudioInstant,
-        /// Retained batch.
-        batch: u8,
-    },
-    /// Work owns its result and deadline.
-    Work {
-        /// Completion instant.
-        at: AudioInstant,
-        /// Semantic result.
-        result: CompletionResult,
-    },
-    /// Stable pair after publication.
-    Sample {
-        /// Retained pair.
-        sample: StableSample,
-        /// Dispatch after acceptance.
-        next: Continuation,
-    },
-    /// Work or idle interval starts later.
-    MusicStart {
-        /// Start anchor.
-        at: AudioInstant,
-    },
-    /// Idle interval before polling.
-    Idle {
-        /// End instant.
-        at: AudioInstant,
-    },
-}
-/// Spec: VisibleCompletion. Caller saves every retained field, without inputs replayed.
+/// Everything audio transport remembers from one frame to the next, saved and restored whole.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
-    /// Exact current time.
-    pub now: AudioInstant,
-    /// Clock memory.
-    pub clock: ClockState,
-    /// Cadence remainders.
-    pub cadence: CadencePhase,
-    /// Music still due in this interval.
-    pub music_due: bool,
-    /// Committed groups.
+    /// Each group's sound queue and sender progress.
+    pub senders: EnumMap<SoundGroup, SenderState>,
+    /// Spec: RequestDelivery. Each group's request line: the value its sender last presented.
+    pub request_lines: EnumMap<SoundGroup, Request>,
+    /// Each group's audio side: staged, handled, published reply, history and playback.
     pub groups: EnumMap<SoundGroup, GroupState>,
-    /// Committed song.
+    /// The resident song's progress and controls.
     pub song: SongState,
-    /// Spec: VisibleCompletion. Supply identity and original byte at initialization. Restore this
-    /// field with the entire State, including pending work; do not reinitialize or replay inputs.
+    /// Spec: PublishedReplies. The reply the last music turn published on the music line.
+    pub music_reply: ResidentMusicReply,
+    /// The resident arrangement's reply, supplied with it and never changed here.
     pub resident_music_reply: ResidentMusicReply,
-    /// External voice reservations.
+    /// Effect voices reserved outside the three sound groups.
     pub reservations: BTreeSet<EffectVoiceId>,
-    /// Visible environment request values.
-    pub requests: EnumMap<SoundGroup, Request>,
-    /// Retained scheduler.
-    pub phase: AudioPhase,
 }
 /// Spec: EffectResources and WholeArrangement. Caller owns validated resident content.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

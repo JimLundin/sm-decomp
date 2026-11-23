@@ -22,16 +22,7 @@ mod audio_checkpoint;
 mod continuation;
 mod entries;
 pub(super) mod fixtures;
-mod sender;
 mod weapons;
-
-#[test]
-fn sender_state_shape_remains_pinned() {
-    assert_eq!(
-        canonical::model::pin_holds::<crate::state::owned::SenderPin>(),
-        Ok(())
-    );
-}
 
 pub(super) fn movement() -> (Production, ProductionContent, ProductionRules) {
     let content = ProductionContent::Movement(
@@ -201,8 +192,8 @@ fn wrong_scope_and_missing_input_leave_movement_and_checkpoint_unchanged() {
     let saved = production.save().unwrap();
     assert_eq!(
         production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(20),
-            presentations: &[]
+            offers: &[],
+            cadence: fixtures::silent_cadence(),
         }),
         Err(ProductionFault::WrongScope)
     );
@@ -221,7 +212,7 @@ fn restore_refuses_other_rules_content_and_previous_state_schema() {
     assert_eq!(
         Production::restore(
             &production.save().unwrap(),
-            ProductionContent::Audio(fixtures::audio_content()),
+            ProductionContent::Audio(Box::new(fixtures::audio_content())),
             rules.clone()
         ),
         Err(AdmissionFault::ContentChanged)
@@ -241,137 +232,6 @@ fn restore_refuses_other_rules_content_and_previous_state_schema() {
         Err(AdmissionFault::Checkpoint(
             canonical::DecodeError::SchemaMismatch { .. }
         ))
-    ));
-}
-
-fn audio() -> (
-    Production,
-    ProductionContent,
-    ProductionRules,
-    audio_transport::SongState,
-) {
-    let (state, pending) = fixtures::pending_audio();
-    let content = ProductionContent::Audio(fixtures::audio_content());
-    let rules = ProductionRules::Audio;
-    let production = Production::admit(
-        ProductionSeed::Audio(Box::new(state)),
-        content.clone(),
-        rules.clone(),
-    )
-    .unwrap();
-    (production, content, rules, pending)
-}
-
-#[test]
-fn pending_audio_survives_zero_time_restore_and_publishes_only_at_deadline() {
-    let (mut production, content, rules, pending) = audio();
-    let before = production.state().clone();
-    assert_eq!(
-        production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(99),
-            presentations: &[]
-        }),
-        Ok(ProductionOutputs::Audio(vec![]))
-    );
-    let OwnedState::Audio(state) = production.state() else {
-        panic!("audio scope");
-    };
-    let OwnedState::Audio(initial) = &before else {
-        panic!("audio scope");
-    };
-    assert_eq!(state.0.song, initial.0.song);
-    assert_eq!(state.0.phase, initial.0.phase);
-    let at_99 = production.save().unwrap();
-    assert_eq!(
-        production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(99),
-            presentations: &[]
-        }),
-        Ok(ProductionOutputs::Audio(vec![]))
-    );
-    assert_eq!(production.save().unwrap(), at_99);
-    let mut restored = Production::restore(&at_99, content, rules).unwrap();
-    let expected =
-        ProductionOutputs::Audio(vec![audio_transport::transport::Output::Publication {
-            at: audio_transport::time::cycles(100),
-            line: audio_transport::ReplyLine::Music,
-            reply: audio_transport::Reply::Music(initial.0.resident_music_reply.clone()),
-            result: audio_transport::CompletionResult::Music(pending.clone()),
-        }]);
-    assert_eq!(
-        production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(100),
-            presentations: &[]
-        }),
-        Ok(expected.clone())
-    );
-    assert_eq!(
-        restored.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(100),
-            presentations: &[]
-        }),
-        Ok(expected)
-    );
-    assert_eq!(restored.state(), production.state());
-    let OwnedState::Audio(state) = production.state() else {
-        panic!("audio scope");
-    };
-    assert_eq!(state.0.song, pending);
-}
-
-#[test]
-fn invalid_audio_interval_cannot_consume_pending_publication() {
-    let (mut production, _, _, _) = audio();
-    let saved = production.save().unwrap();
-    let future = [audio_transport::transport::Input::cue(
-        audio_transport::time::cycles(101),
-        audio_transport::CueId::Beam,
-    )];
-    assert_eq!(
-        production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(100),
-            presentations: &future
-        }),
-        Err(ProductionFault::PresentationOutsideInterval)
-    );
-    let unordered = [
-        audio_transport::transport::Input::cue(
-            audio_transport::time::cycles(30),
-            audio_transport::CueId::Beam,
-        ),
-        audio_transport::transport::Input::cue(
-            audio_transport::time::cycles(20),
-            audio_transport::CueId::Land,
-        ),
-    ];
-    assert_eq!(
-        production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(100),
-            presentations: &unordered
-        }),
-        Err(ProductionFault::PresentationsUnordered)
-    );
-    assert_eq!(
-        production.advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(9),
-            presentations: &[]
-        }),
-        Err(ProductionFault::TimeReversed)
-    );
-    assert_eq!(production.save().unwrap(), saved);
-    let ProductionOutputs::Audio(outputs) = production
-        .advance(AdvanceInput::Audio {
-            stop: audio_transport::time::cycles(100),
-            presentations: &[],
-        })
-        .unwrap()
-    else {
-        panic!("audio output");
-    };
-    assert_eq!(outputs.len(), 1);
-    assert!(matches!(
-        outputs[0],
-        audio_transport::transport::Output::Publication { .. }
     ));
 }
 

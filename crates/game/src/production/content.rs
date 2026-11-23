@@ -80,14 +80,13 @@ pub enum ProductionContent {
     HealthTail(Box<super::health_tail::Content>),
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
     Movement(MovementContent),
-    /// Checked body and cannon content shared by the live touchdown caller.
-    MovementTouchdown(MovementContent),
+    /// Checked body and cannon content shared by the live touchdown caller, and the audio
+    /// content its Contact offer is played with.
+    MovementTouchdown(MovementContent, Box<super::audio::Content>),
     /// Checked movement content with fixed clean Ceres geometry.
     MovementCeres(MovementContent),
-    /// Imported resident effects and arrangement.
-    Audio(audio_transport::Content),
-    /// ROM-selected graphs, resources and aliases for the resident session.
-    ResidentAudio(Box<super::audio::Content>),
+    /// Checked effect clips, song graph and the resources they name.
+    Audio(Box<super::audio::Content>),
     /// Checked imported ordinary power assets.
     WeaponsContact(Box<crate::weapons_projectiles_bridge::PowerContent>),
     /// Blocks carry their imported reactions in the complete clean State.
@@ -104,8 +103,6 @@ pub enum ProductionContent {
     Ceres,
     /// Passage scene and doorway facts are carried State and explicit inputs.
     Doors,
-    /// The one request group whose queue and physical reply line this sender owns.
-    AudioSender(audio_transport::SoundGroup),
 }
 
 /// Rules selected by the same recipe.
@@ -144,8 +141,6 @@ pub enum ProductionRules {
     Ceres(boss_ceres_ridley::Rules),
     /// Complete passage parameters.
     Doors(world_doors::Rules),
-    /// The sender uses its fixed clean parameters and an admitted service profile.
-    AudioSender,
 }
 
 /// Exact saved context; restoring with other content or rules is refused.

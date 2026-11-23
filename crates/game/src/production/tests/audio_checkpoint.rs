@@ -1,87 +1,46 @@
-mod portable;
-
 use super::{
-    AdmissionFault, AdvanceInput, Production, ProductionContent, ProductionOutputs,
-    ProductionRules, ProductionSeed, fixtures,
+    AdmissionFault, Production, ProductionContent, ProductionRules, ProductionSeed, fixtures,
 };
 use audio_transport::{
-    AudioPhase, CompletionResult, CueId, EffectClip, EffectPartContent, EffectPitch, EffectSpan,
-    EffectTurns, EffectVoiceId, LivePart, MusicalPitch, PartState, Playback, ReleaseMemory, Reply,
-    ReplyLine, Request, SoundGroup, State, TimbreId, time::cycles, transport::Output,
+    CueId, EffectPitch, EffectVoiceId, LivePart, MusicalPitch, PartState, Playback, ReleaseMemory,
+    Request, SoundGroup, State,
 };
-use std::{collections::BTreeSet, num::NonZeroU8};
+use std::num::NonZeroU8;
 
-fn music_history(committed: u8, pending: u8) -> State {
-    let (mut state, _) = fixtures::pending_audio();
-    state.song.tracks[0].pitch = MusicalPitch::new(committed).unwrap();
-    let AudioPhase::Work {
-        result: CompletionResult::Music(song),
-        ..
-    } = &mut state.phase
-    else {
-        panic!("pending music fixture");
-    };
-    song.tracks[0].pitch = MusicalPitch::new(pending).unwrap();
+fn music_history(pitch: u8) -> State {
+    let mut state = fixtures::transport();
+    state.song.tracks[0].pitch = MusicalPitch::new(pitch).unwrap();
     state
 }
 
-fn effect_history(pending: u8) -> (State, ProductionContent) {
-    let (mut state, _) = fixtures::pending_audio();
+fn effect_history(pitch: u8) -> (State, ProductionContent) {
+    let mut state = fixtures::transport();
     let group = SoundGroup::Action;
     let cue = CueId::Beam;
     let request = Request::Cue(cue);
-    let before = &mut state.groups[group];
-    before.history[0] = ReleaseMemory::Active(NonZeroU8::MIN);
-    before.handled = request;
-    before.staged = request;
-    before.reply = request;
-    let part = LivePart {
-        voice: EffectVoiceId::V7,
-        cursor: 0,
-        instruction: 1,
-        pitch: EffectPitch::PRENOTE,
-        fraction: 0,
-        motion: None,
-    };
-    before.playback = Playback::Active {
-        cue,
-        parts: vec![PartState::Live(part.clone())],
-    };
-    let mut result = before.clone();
-    result.history[0] = ReleaseMemory::Inactive;
-    result.playback = Playback::Active {
+    let saved = &mut state.groups[group];
+    saved.history[0] = ReleaseMemory::Active(NonZeroU8::MIN);
+    saved.handled = request;
+    saved.staged = request;
+    saved.reply = request;
+    saved.playback = Playback::Active {
         cue,
         parts: vec![PartState::Live(LivePart {
+            voice: EffectVoiceId::V7,
             cursor: 1,
-            pitch: EffectPitch::new(pending).unwrap(),
-            ..part
+            instruction: 1,
+            pitch: EffectPitch::new(pitch).unwrap(),
+            fraction: 0,
+            motion: None,
         })],
     };
-    state.requests[group] = request;
-    state.phase = AudioPhase::Work {
-        at: cycles(100),
-        result: CompletionResult::Effect {
-            group,
-            result,
-            echo_voices: BTreeSet::new(),
-        },
-    };
-    let mut content = fixtures::audio_content();
-    content.effects.insert(
-        cue,
-        EffectClip {
-            parts: vec![EffectPartContent {
-                spans: vec![EffectSpan {
-                    duration: EffectTurns(NonZeroU8::new(1).unwrap()),
-                    pitch: EffectPitch::new(71).unwrap(),
-                    timbre: TimbreId(0),
-                    motion: None,
-                }],
-                loop_start: None,
-            }],
-        },
-    );
-    (state, ProductionContent::Audio(content))
+    state.request_lines[group] = request;
+    let content = fixtures::audio_content();
+    (state, ProductionContent::Audio(Box::new(content)))
+}
+
+fn music_content() -> ProductionContent {
+    ProductionContent::Audio(Box::new(fixtures::audio_content()))
 }
 
 fn admit(state: State, content: ProductionContent) -> Production {
@@ -91,42 +50,6 @@ fn admit(state: State, content: ProductionContent) -> Production {
         ProductionRules::Audio,
     )
     .unwrap()
-}
-
-fn check_publication(state: State, content: ProductionContent, line: ReplyLine, reply: Reply) {
-    let AudioPhase::Work { at, result } = state.phase.clone() else {
-        panic!("pending work fixture");
-    };
-    let mut carried = admit(state, content.clone());
-    assert_eq!(advance(&mut carried, 99), ProductionOutputs::Audio(vec![]));
-    let saved = carried.save().unwrap();
-    let mut restored = Production::restore(&saved, content, ProductionRules::Audio).unwrap();
-    assert_eq!(restored.state(), carried.state());
-    assert_eq!(restored.save().unwrap(), saved);
-
-    let expected = ProductionOutputs::Audio(vec![Output::Publication {
-        at,
-        line,
-        reply,
-        result,
-    }]);
-    assert_eq!(advance(&mut carried, 100), expected);
-    assert_eq!(advance(&mut restored, 100), expected);
-    assert_eq!(restored.state(), carried.state());
-    assert_eq!(restored.save().unwrap(), carried.save().unwrap());
-    assert_eq!(
-        advance(&mut restored, 100),
-        ProductionOutputs::Audio(vec![])
-    );
-}
-
-fn advance(production: &mut Production, stop: u64) -> ProductionOutputs {
-    production
-        .advance(AdvanceInput::Audio {
-            stop: cycles(stop),
-            presentations: &[],
-        })
-        .unwrap()
 }
 
 fn check_rejected_pitch(
@@ -161,34 +84,11 @@ fn check_rejected_pitch(
 }
 
 #[test]
-fn music_endpoints_preserve_state_and_publication() {
-    let state = music_history(19, 51);
-    let reply = Reply::Music(state.resident_music_reply.clone());
-    check_publication(
-        state,
-        ProductionContent::Audio(fixtures::audio_content()),
-        ReplyLine::Music,
-        reply,
-    );
-}
-
-#[test]
-fn effect_endpoints_preserve_state_and_publication() {
-    let (state, content) = effect_history(71);
-    check_publication(
-        state,
-        content,
-        ReplyLine::Group(SoundGroup::Action),
-        Reply::Effect(Request::Cue(CueId::Beam)),
-    );
-}
-
-#[test]
 fn restore_refuses_music_pitch_below_minimum() {
     check_rejected_pitch(
-        music_history(19, 51),
-        music_history(20, 51),
-        ProductionContent::Audio(fixtures::audio_content()),
+        music_history(19),
+        music_history(20),
+        music_content(),
         19,
         20,
         18,
@@ -198,9 +98,9 @@ fn restore_refuses_music_pitch_below_minimum() {
 #[test]
 fn restore_refuses_music_pitch_above_maximum() {
     check_rejected_pitch(
-        music_history(19, 51),
-        music_history(19, 50),
-        ProductionContent::Audio(fixtures::audio_content()),
+        music_history(51),
+        music_history(50),
+        music_content(),
         51,
         50,
         52,
@@ -214,73 +114,6 @@ fn restore_refuses_effect_pitch_above_maximum() {
     check_rejected_pitch(state, alternate, content, 71, 70, 72);
 }
 
-fn restore_portable(state: State, content: ProductionContent, encoded: &str) -> Production {
-    let (pairs, remainder) = encoded.as_bytes().as_chunks::<2>();
-    assert_eq!(remainder.len(), 0);
-    let bytes = pairs
-        .iter()
-        .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
-        .collect::<Vec<_>>();
-    let mut save = admit(state, content.clone()).save().unwrap();
-    save.state = bytes;
-    let restored = Production::restore(&save, content, ProductionRules::Audio).unwrap();
-    assert_eq!(restored.save().unwrap(), save);
-    restored
-}
-
-#[test]
-fn portable_pitch_histories_resume_around_publication() {
-    let (effect, effect_content) = effect_history(71);
-    let histories = [
-        (
-            music_history(19, 51),
-            ProductionContent::Audio(fixtures::audio_content()),
-            portable::MUSIC_99,
-            portable::MUSIC_100,
-        ),
-        (
-            effect,
-            effect_content,
-            portable::EFFECT_99,
-            portable::EFFECT_100,
-        ),
-    ];
-    for (state, content, before, after) in histories {
-        let AudioPhase::Work { at, result } = state.phase.clone() else {
-            panic!("pending work fixture");
-        };
-        let (line, reply) = match &result {
-            CompletionResult::Music(_) => (
-                ReplyLine::Music,
-                Reply::Music(state.resident_music_reply.clone()),
-            ),
-            CompletionResult::Effect { group, result, .. } => {
-                (ReplyLine::Group(*group), Reply::Effect(result.reply))
-            }
-        };
-        let mut before = restore_portable(state.clone(), content.clone(), before);
-        let mut after = restore_portable(state, content, after);
-        assert_eq!(
-            advance(&mut before, 99),
-            ProductionOutputs::Audio(Vec::new())
-        );
-        assert_eq!(
-            advance(&mut before, 100),
-            ProductionOutputs::Audio(vec![Output::Publication {
-                at,
-                line,
-                reply,
-                result
-            }])
-        );
-        assert_eq!(
-            advance(&mut after, 100),
-            ProductionOutputs::Audio(Vec::new())
-        );
-        assert_eq!(before.save().unwrap(), after.save().unwrap());
-    }
-}
-
 #[test]
 fn portable_audio_refuses_another_schema_or_scope_tag() {
     use crate::production::PortableAudio;
@@ -288,8 +121,8 @@ fn portable_audio_refuses_another_schema_or_scope_tag() {
     use canonical::model::Model;
     use canonical::{Canonical, DecodeError, Schema};
 
-    let state = music_history(19, 51);
-    let content = ProductionContent::Audio(fixtures::audio_content());
+    let state = music_history(24);
+    let content = music_content();
     let mut saved = admit(state.clone(), content.clone()).save().unwrap();
     let (movement, _, _) = super::movement();
     saved.state = movement.save().unwrap().state;

@@ -4,7 +4,7 @@ use super::compare::Observation;
 use super::index::Case;
 use super::readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader};
 use super::result::{CaseResult, Outcome};
-use super::{append_digest, compared, data_failure, pending};
+use super::{append_digest, compared, data_failure};
 use game::production::{
     Production, ProductionContent, ProductionRules, SaveFault, SavedProduction,
 };
@@ -90,17 +90,11 @@ fn record_cut(
     digest: &mut Vec<u8>,
     expected: &ExpectedCut,
     null: &[Observation],
-    publications: usize,
     cut: u64,
 ) -> Result<(), Outcome> {
     count(&mut result.counts.cuts, 1)?;
     count(&mut result.counts.fields, expected.semantic_count)?;
     count(&mut result.counts.outputs, expected.output_count)?;
-    let new_publications = publications
-        .checked_sub(result.counts.publications)
-        .ok_or_else(|| data_failure(Some(cut), "publication prefix count"))?;
-    count(&mut result.counts.outputs, new_publications)?;
-    result.counts.publications = publications;
     count(&mut result.counts.replies, expected.replies)?;
     count(
         &mut result.counts.null_fields,
@@ -140,7 +134,6 @@ pub(super) fn run(
         inputs: &inputs,
         expected: &expectation,
     };
-    let pending_start = inputs.pending_origin(case, &production);
     let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
@@ -155,14 +148,7 @@ pub(super) fn run(
             }
             Err(outcome) => return Err(outcome),
         };
-        record_cut(
-            result,
-            &mut digest,
-            &expected,
-            &null,
-            actual.publication_count(),
-            *cut,
-        )?;
+        record_cut(result, &mut digest, &expected, &null, *cut)?;
         if case.checkpoints {
             // A one-opportunity touchdown resumes across the actual advance.
             checkpoints.push(
@@ -188,7 +174,7 @@ pub(super) fn run(
     if let Some((_, outcome)) = stop {
         return Err(outcome);
     }
-    record_pending(pending_start, &reader, &content, &rules, result)
+    Ok(())
 }
 
 #[derive(Clone, Copy)]
@@ -235,13 +221,12 @@ fn verify_checkpoints(
             let resumed = reader.execute(&mut restored, &mut restored_actual, *cut);
             if resumed.as_ref().err() != Some(direct_outcome)
                 || &restored != production
-                || !restored_actual.same_publication_prefix(actual)
+                || !restored_actual.same_retained_outputs(actual)
             {
                 return Err(failed);
             }
         }
         if restored.state() != production.state()
-            || restored_actual.publication_count() != actual.publication_count()
             || !touchdown_outputs_hold(reader.inputs, &restored_actual, actual)
         {
             return Err(failed);
@@ -283,25 +268,7 @@ fn touchdown_outputs_hold(
     restored: &ActualReader,
     direct: &ActualReader,
 ) -> bool {
-    !matches!(inputs, InputReader::MovementTouchdown(_)) || restored.same_publication_prefix(direct)
-}
-
-fn record_pending(
-    start: Option<Production>,
-    reader: &CutReader<'_>,
-    content: &game::production::ProductionContent,
-    rules: &game::production::ProductionRules,
-    result: &mut CaseResult,
-) -> Result<(), Outcome> {
-    if let (InputReader::Audio(tape), Some(audio_start)) = (reader.inputs, start) {
-        let ExpectedReader::Audio(expected) = reader.expected else {
-            return Err(data_failure(None, "audio expected scope"));
-        };
-        let pending = pending::run(audio_start, content, rules, tape, &expected.publications)?;
-        result.counts.pending_boundaries = pending.0;
-        result.counts.pending_restorations = pending.1;
-    }
-    Ok(())
+    !matches!(inputs, InputReader::MovementTouchdown(_)) || restored.same_retained_outputs(direct)
 }
 
 #[cfg(test)]
@@ -347,12 +314,13 @@ mod tests {
         let observed = tape
             .cuts
             .iter_mut()
-            .find(|cut| cut.index == 1)
+            .find(|(cut, _)| *cut == 1)
             .unwrap()
+            .1
             .fields
             .first_mut()
             .unwrap();
-        observed.value = observed.value.wrapping_add(1);
+        observed.bytes[0] ^= 1;
         let field = observed.field.clone();
         execute(
             &case,
@@ -371,7 +339,7 @@ mod tests {
         let ExpectedReader::Audio(tape) = &mut altered.expected else {
             panic!()
         };
-        tape.cuts.retain(|cut| cut.index != 1);
+        tape.cuts.retain(|(cut, _)| *cut != 1);
         assert!(matches!(
             altered.expected.read(&case, 1),
             Err(Outcome::DataFailure { cut: Some(1), .. })

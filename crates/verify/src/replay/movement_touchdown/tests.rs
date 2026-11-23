@@ -30,15 +30,15 @@ fn opportunity(inputs: &Inputs) -> Input<'_> {
     Input {
         movement: inputs.movement,
         world: &inputs.world,
-        contact_at: inputs.contact_at.clone(),
         suppression: inputs.suppression,
+        audio: crate::replay::sender_offer::offers_only(),
         graphics_area: TouchdownArea::DryClear,
     }
 }
 
 #[test]
 #[ignore = "pinned native Movement and Contact inputs"]
-fn repeated_contact_opportunity_refuses_after_restore() {
+fn incoherent_figure_refuses_and_restored_owner_plays_on() {
     for mut admitted in admitted_windows() {
         let InputReader::MovementTouchdown(inputs) = admitted.inputs else {
             panic!("touchdown inputs");
@@ -65,19 +65,22 @@ fn repeated_contact_opportunity_refuses_after_restore() {
             .advance(&mut admitted.production, inputs.cut)
             .unwrap();
         let saved = admitted.production.save().unwrap();
-        let mut restored = Production::restore(&saved, admitted.content, admitted.rules).unwrap();
+        let mut restored =
+            Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
         assert!(
             restored == admitted.production,
             "complete post-opportunity restore"
         );
-        let retry = AdvanceInput::MovementTouchdown(opportunity(&inputs));
-        assert!(matches!(
-            restored.advance(retry),
-            Err(ProductionFault::Unsupported(
-                Unsupported::MovementTouchdownCurrent
-            ))
-        ));
-        assert!(restored.save().unwrap() == saved, "stale retry rolled back");
+        // A repeated opportunity is one more frame: the restored owner plays it as the direct one.
+        let direct = admitted
+            .production
+            .advance(AdvanceInput::MovementTouchdown(opportunity(&inputs)));
+        let resumed = restored.advance(AdvanceInput::MovementTouchdown(opportunity(&inputs)));
+        assert!(direct == resumed, "restored and direct next frames agree");
+        assert!(
+            restored == admitted.production,
+            "restored and direct owners agree"
+        );
     }
 }
 
@@ -85,8 +88,9 @@ fn advance_without_enqueue(owner: &mut Production, input: Input<'_>) -> Box<Outp
     let OwnedState::MovementTouchdown(before) = owner.state() else {
         panic!("touchdown owned state");
     };
-    let queue = before.contact.0.queue.clone();
-    let progress = before.contact.0.progress.clone();
+    let contact = &before.audio.0.senders[audio_transport::SoundGroup::Contact];
+    let queue = contact.queue.clone();
+    let progress = contact.progress.clone();
     let ProductionOutputs::MovementTouchdown(outputs) = owner
         .advance(AdvanceInput::MovementTouchdown(input))
         .unwrap()
@@ -96,8 +100,9 @@ fn advance_without_enqueue(owner: &mut Production, input: Input<'_>) -> Box<Outp
     let OwnedState::MovementTouchdown(state) = owner.state() else {
         panic!("touchdown owned state");
     };
-    assert_eq!(state.contact.0.queue, queue);
-    assert_eq!(state.contact.0.progress, progress);
+    let contact = &state.audio.0.senders[audio_transport::SoundGroup::Contact];
+    assert_eq!(contact.queue, queue);
+    assert_eq!(contact.progress, progress);
     outputs
 }
 

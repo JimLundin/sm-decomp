@@ -32736,7 +32736,7 @@ before_scope = "Native exact compared count; seed and full horizon defined in th
 disposition = "preserved"
 witness_case_ids = ["audio/native-control"]
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
+reason = "The uninterrupted frame-form native control case retains this exact measured count through the shared production runner, including complete suffix restorations."
 lost_observations = []
 
 [[claim]]
@@ -32745,11 +32745,11 @@ source_sha256 = "76d65d3dd4cfbe2b07091e276f3f64ac7b3e9ba13280e1fbd3b35e12923e8d0
 identity = "control/publications"
 before_values = [764]
 before_scope = "Native exact publications count; seed and full horizon defined in the pinned source snapshot."
-disposition = "preserved"
-witness_case_ids = ["audio/native-control"]
+disposition = "retired"
+witness_case_ids = []
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
-lost_observations = []
+reason = "Publications and pending boundaries were the old transport's instants and unfinished work, which are T1's (MODEL decision 35). The frame-form control case has none."
+lost_observations = ["control: the 764 publications with their instants, and the 573 pending boundaries and their restorations, are not compared."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32757,11 +32757,11 @@ source_sha256 = "76d65d3dd4cfbe2b07091e276f3f64ac7b3e9ba13280e1fbd3b35e12923e8d0
 identity = "control/replies"
 before_values = [736]
 before_scope = "Native exact replies count; seed and full horizon defined in the pinned source snapshot."
-disposition = "preserved"
+disposition = "replaced"
 witness_case_ids = ["audio/native-control"]
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
-lost_observations = []
+reason = "The frame-form control case compares 724 of the 736 replies: at 6 cuts an effect turn under way at the cut had published Action's and Ambient's replies but not Contact's, and the frame form completes that turn in the next frame."
+lost_observations = ["control: 12 replies under way at their cut are not compared."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32772,7 +32772,7 @@ before_scope = "Native exact fields count; seed and full horizon defined in the 
 disposition = "preserved"
 witness_case_ids = ["audio/native-control"]
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
+reason = "The uninterrupted frame-form native control case retains this exact measured count through the shared production runner, including complete suffix restorations."
 lost_observations = []
 
 [[claim]]
@@ -32781,11 +32781,11 @@ source_sha256 = "76d65d3dd4cfbe2b07091e276f3f64ac7b3e9ba13280e1fbd3b35e12923e8d0
 identity = "control/null_cuts"
 before_values = [0]
 before_scope = "Native exact null_cuts count; seed and full horizon defined in the pinned source snapshot."
-disposition = "preserved"
+disposition = "replaced"
 witness_case_ids = ["audio/native-control"]
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
-lost_observations = []
+reason = "The frame-form control case compares the request lines as well, and its null step (the seed held unchanged) matches every compared field at one cut."
+lost_observations = ["control: the null step now matches at 1 cut rather than none."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32796,7 +32796,7 @@ before_scope = "Native exact null_fields count; seed and full horizon defined in
 disposition = "preserved"
 witness_case_ids = ["audio/native-control"]
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
+reason = "The uninterrupted frame-form native control case retains this exact measured count through the shared production runner, including complete suffix restorations."
 lost_observations = []
 
 [[claim]]
@@ -32808,7 +32808,7 @@ before_scope = "Native exact restorations count; seed and full horizon defined i
 disposition = "preserved"
 witness_case_ids = ["audio/native-control"]
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
+reason = "The uninterrupted frame-form native control case retains this exact measured count through the shared production runner, including complete suffix restorations."
 lost_observations = []
 
 [[claim]]
@@ -32817,11 +32817,11 @@ source_sha256 = "76d65d3dd4cfbe2b07091e276f3f64ac7b3e9ba13280e1fbd3b35e12923e8d0
 identity = "control/pending_boundaries"
 before_values = [573]
 before_scope = "Native exact pending_boundaries count; seed and full horizon defined in the pinned source snapshot."
-disposition = "preserved"
-witness_case_ids = ["audio/native-control"]
+disposition = "retired"
+witness_case_ids = []
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
-lost_observations = []
+reason = "Publications and pending boundaries were the old transport's instants and unfinished work, which are T1's (MODEL decision 35). The frame-form control case has none."
+lost_observations = ["control: the 764 publications with their instants, and the 573 pending boundaries and their restorations, are not compared."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32829,11 +32829,11 @@ source_sha256 = "76d65d3dd4cfbe2b07091e276f3f64ac7b3e9ba13280e1fbd3b35e12923e8d0
 identity = "control/pending_restorations"
 before_values = [573]
 before_scope = "Native exact pending_restorations count; seed and full horizon defined in the pinned source snapshot."
-disposition = "preserved"
-witness_case_ids = ["audio/native-control"]
+disposition = "retired"
+witness_case_ids = []
 test_ids = []
-reason = "The uninterrupted native control case retains this exact measured count through the shared production runner, including complete suffix and pending-state restorations."
-lost_observations = []
+reason = "Publications and pending boundaries were the old transport's instants and unfinished work, which are T1's (MODEL decision 35). The frame-form control case has none."
+lost_observations = ["control: the 764 publications with their instants, and the 573 pending boundaries and their restorations, are not compared."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32842,10 +32842,10 @@ identity = "expire/compared"
 before_values = [184]
 before_scope = "Native exact compared count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32854,10 +32854,10 @@ identity = "expire/publications"
 before_values = [764]
 before_scope = "Native exact publications count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32866,10 +32866,10 @@ identity = "expire/replies"
 before_values = [736]
 before_scope = "Native exact replies count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32878,10 +32878,10 @@ identity = "expire/fields"
 before_values = [7157]
 before_scope = "Native exact fields count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32890,10 +32890,10 @@ identity = "expire/null_cuts"
 before_values = [0]
 before_scope = "Native exact null_cuts count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32902,10 +32902,10 @@ identity = "expire/null_fields"
 before_values = [5585]
 before_scope = "Native exact null_fields count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32914,10 +32914,10 @@ identity = "expire/restorations"
 before_values = [184]
 before_scope = "Native exact restorations count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32926,10 +32926,10 @@ identity = "expire/pending_boundaries"
 before_values = [573]
 before_scope = "Native exact pending_boundaries count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "crates/verify/src/harness/audio/native_floors.toml"
@@ -32938,10 +32938,10 @@ identity = "expire/pending_restorations"
 before_values = [573]
 before_scope = "Native exact pending_restorations count; seed and full horizon defined in the pinned source snapshot."
 disposition = "replaced"
-witness_case_ids = ["audio/native-expire-prefix", "audio/native-expire-post64"]
+witness_case_ids = ["audio/native-expire-prefix"]
 test_ids = []
-reason = "All184 observed cuts are covered by independent prefix0..64 and post-intervention seed64 followed by65..183. Counts belong to two cases, not one continuous execution."
-lost_observations = ["Continuity across the external repeat-count intervention and replay from a pre-intervention save through that intervention are not proven.", "Null fields are relative to each admitted seed:2193 and3809, not the former single-seed5585. Restorations184 and pending573 are within their respective segments only."]
+reason = "The frame-form prefix covers cuts 0..64 of the expiry arm. Cuts 65..183 are not compared: their post-intervention seed carries no CPU sender State, which the frame-form transport holds, so audio/native-expire-post64 is retired."
+lost_observations = ["Continuity across the external repeat-count intervention is not proven.", "Cuts 65..183 of the expiry arm, with their fields, publications, replies and pending boundaries, are not compared.", "Publications, publication instants and pending boundaries are not compared in the prefix either; they are T1's."]
 
 [[claim]]
 source_path = "scenarios/locks/lockstep.ratchet.txt"
@@ -34422,7 +34422,7 @@ disposition = "replaced"
 witness_case_ids = ["movement/soft-touchdown-57"]
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and samus-movement now plays a whole frame with no intra-frame work receipts. The same case, start, end and production path keep position, vertical speed, floor response, sender queue and progress, the touchdown offer and graphics, and pass with observation digest 93460f62ba24016aa472abc9463c2aad8e9bfb59b8d15ddeaa52ea83814ff0a0. movement.touchdown.floor_clip and movement.touchdown.body_fit stay compared, from the whole-frame outputs: the floor clip as her downward travel after collision (TravelledDistances), the body fit as her position after her moves, where the fit starts (MovesAsShePosed). The parts removed from them compared the original's work inside the frame."
-lost_observations = ["movement/soft-touchdown-57: movement.touchdown.floor_clip no longer compares the requested downward distance or the move's stop result; they are the original's work inside the frame, which the whole-frame model does not expose. The clipped distance is still compared.", "movement/soft-touchdown-57: movement.touchdown.body_fit no longer compares the fit's result, her old and new radii or the five ordered clearance tests; they are the original's work inside the frame, which the whole-frame model does not expose. The centre the fit starts from is still compared, and her position after the fit is compared as movement.position."]
+lost_observations = ["movement/soft-touchdown-57: the Contact offer now plays one frame of the carried audio transport with no audio turn or service, and the CPU time it was offered at is no longer a borrowed input; the observation digest and counts are unchanged.", "movement/soft-touchdown-57: movement.touchdown.floor_clip no longer compares the requested downward distance or the move's stop result; they are the original's work inside the frame, which the whole-frame model does not expose. The clipped distance is still compared.", "movement/soft-touchdown-57: movement.touchdown.body_fit no longer compares the fit's result, her old and new radii or the five ordered clearance tests; they are the original's work inside the frame, which the whole-frame model does not expose. The centre the fit starts from is still compared, and her position after the fit is compared as movement.position."]
 
 [[claim]]
 source_path = "scenarios/replay/baseline.toml"
@@ -34434,7 +34434,7 @@ disposition = "replaced"
 witness_case_ids = ["movement/soft-touchdown-124"]
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and samus-movement now plays a whole frame with no intra-frame work receipts. The same case, start, end and production path keep position, vertical speed, floor response, sender queue and progress, the touchdown offer and graphics, and pass with observation digest 61234828319f13f241c5bd9dcc17ff5a9eb20d92a11b8485a3f2606c9604d975. movement.touchdown.floor_clip and movement.touchdown.body_fit stay compared, from the whole-frame outputs: the floor clip as her downward travel after collision (TravelledDistances), the body fit as her position after her moves, where the fit starts (MovesAsShePosed). The parts removed from them compared the original's work inside the frame."
-lost_observations = ["movement/soft-touchdown-124: movement.touchdown.floor_clip no longer compares the requested downward distance or the move's stop result; they are the original's work inside the frame, which the whole-frame model does not expose. The clipped distance is still compared.", "movement/soft-touchdown-124: movement.touchdown.body_fit no longer compares the fit's result, her old and new radii or the five ordered clearance tests; they are the original's work inside the frame, which the whole-frame model does not expose. The centre the fit starts from is still compared, and her position after the fit is compared as movement.position."]
+lost_observations = ["movement/soft-touchdown-124: the Contact offer now plays one frame of the carried audio transport with no audio turn or service, and the CPU time it was offered at is no longer a borrowed input; the observation digest and counts are unchanged.", "movement/soft-touchdown-124: movement.touchdown.floor_clip no longer compares the requested downward distance or the move's stop result; they are the original's work inside the frame, which the whole-frame model does not expose. The clipped distance is still compared.", "movement/soft-touchdown-124: movement.touchdown.body_fit no longer compares the fit's result, her old and new radii or the five ordered clearance tests; they are the original's work inside the frame, which the whole-frame model does not expose. The centre the fit starts from is still compared, and her position after the fit is compared as movement.position."]
 
 [[claim]]
 source_path = "scenarios/replay/baseline.toml"
@@ -34471,3 +34471,351 @@ witness_case_ids = []
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case compared the order of the passage's sound offers inside the frame, with a save point after each offer, which is T1's. The production path it exercised is removed. The passage's first-entry rules return with the played-alone run once that run carries the sound queue; the played run already borrows the passage's sounds sent and music ready at each cut."
 lost_observations = ["gameplay-sound/passage-hold-shoot-held: its compared cut (1), field (1), outputs (5) and pending boundaries (2) are not a current obligation. No indexed case compares the passage's first-entry offers, their order or the Hold until the played-alone run carries the sound queue.", "gameplay-sound/passage-hold-shoot-held: world-doors/Quieting and samus-appearance/AtTheDoor lose their only indexed witness and their code-map entries.", "gameplay-sound/passage-hold-shoot-held: the faults passage-silences-swapped and passage-hold-before-offers are removed with it."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "audio/native-control"
+before_values = [184, 7157, 764, 764, 736, 0, 5731, 184, 573, 573]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["audio/native-control"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and audio transport now plays one frame at a time from the frame's offers and its borrowed audio cadence, with no clock, phases, deadlines or publication instants. The same case, seed and capture play each cut's frame through production's audio owner: its offers are the cues the CPU newly presents in it and its cadence is the capture's port order (effect turns completed before and after the frame's first CPU write, and completed music turns). It compares the song and release fields, the four replies and the three request lines at every cut, and passes with observation digest 7d65ef802a9628fed6b10c3bff5f181892ef460fe830de22602da1e391c04c87 and counts 184, 7157, 1276, 0, 724, 1, 5731, 184, 0, 0."
+lost_observations = ["audio/native-control: audio.publications (764 publications with their line, byte and instant) is not compared; publication instants are T1's.", "audio/native-control: audio.pending_music and the 573 pending-boundary restorations are gone; the frame form has no pending work between cuts.", "audio/native-control: 12 replies at 6 cuts are not compared: an effect turn under way at the cut had published Action's and Ambient's replies but not Contact's, and the frame form completes that turn in the next frame. The other 724 replies are compared.", "audio/native-control: the physical presentations are no longer inputs; the model's sender service writes the request lines, compared at every cut against the CPU's writes. The sender queues and progress are not compared: the capture records no CPU memory."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "audio/native-expire-prefix"
+before_values = [65, 2453, 269, 269, 260, 0, 2193, 65, 201, 201]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["audio/native-expire-prefix"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and audio transport now plays one frame at a time from the frame's offers and its borrowed audio cadence, with no clock, phases, deadlines or publication instants. The same case, seed and capture play each cut's frame as audio/native-control does and compare the same fields through cut 64, before the external repeat-count intervention. It passes with observation digest a84f0f8321b941a31569a02357419817521f15bf387aa2f07d9626be8a695865 and counts 65, 2453, 453, 0, 258, 1, 2193, 65, 0, 0."
+lost_observations = ["audio/native-expire-prefix: audio.publications (269 publications with their line, byte and instant) is not compared; publication instants are T1's.", "audio/native-expire-prefix: audio.pending_music and the 201 pending-boundary restorations are gone; the frame form has no pending work between cuts.", "audio/native-expire-prefix: 2 replies at cut 17 are not compared: an effect turn under way at the cut had published Action's and Ambient's replies but not Contact's. The other 258 replies are compared."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "audio/native-expire-post64"
+before_values = [119, 4704, 495, 495, 476, 0, 3809, 119, 372, 372]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and audio transport now plays one frame at a time from the frame's offers and its borrowed audio cadence, with no clock, phases, deadlines or publication instants. The frame-form State holds the CPU senders' queues and progress, and this case's independent post-intervention seed carries none: at cut 64 the Contact sender is mid-delivery, so no Ready seed can be assumed. Nothing frame-level can be compared without a seed that holds the CPU sender State."
+lost_observations = ["audio/native-expire-post64: its 119 cuts (65 through 183 of the expiry arm), 4,704 fields, 495 publications, 476 replies and 372 pending boundaries are not a current obligation.", "audio-transport/FinitePhrases loses its only indexed witness: the repeat count's expiry after the intervention is not compared.", "audio-transport/WholeArrangement keeps audio/native-control as its witness; the expiry arm's own arrangement restart after cut 64 is not compared.", "The case returns once the post-intervention seed is re-cut with the senders from the capture's CPU memory."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-at-six"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/deny-at-six"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/deny-at-six: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-demo"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/deny-demo"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/deny-demo: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-disabled"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/deny-disabled"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/deny-disabled: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-explosion"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/deny-explosion"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/deny-explosion: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-smaller-limit"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/deny-smaller-limit"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/deny-smaller-limit: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-00"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-00"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-00: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-01"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-01"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-01: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-02"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-02"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-02: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-03"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-03"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-03: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-04"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-04"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-04: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-05"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-05"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-05: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-06"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-06"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-06: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-07"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-07"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-07: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-08"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-08"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-08: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-09"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-09"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-09: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-10"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-10"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-10: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-11"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-11"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-11: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-12"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-12"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-12: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-13"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-13"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-13: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-14"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-14"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-14: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-15"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-15"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-15: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-16"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-16"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-16: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-17"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-17"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-17: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-18"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/native-18"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, which the window's bracket proves (no service of the group between the seed and the comparison), on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/native-18: the seed's recorded reply and CPU time are no longer borrowed inputs; the offer reads neither, and the comparison is the queue after the frame's offers."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/ordered-pair"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/ordered-pair"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/ordered-pair: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/repeat-at-five"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["sender-offer/repeat-at-five"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
+lost_observations = ["sender-offer/repeat-at-five: the seed's CPU time and reply are no longer part of the constructed start."]

@@ -1,16 +1,32 @@
-//! Physical fixture construction and ordered effect checks.
-mod arithmetic;
+//! Effect fixtures and the families that play one sound group's effect turns.
+mod frames;
 mod identity;
 mod resident;
 mod retention;
-use super::effect_voice as voice;
 use super::*;
-use audio_transport::EffectVoiceId as VoiceId;
-use num_traits::ToPrimitive;
+pub use frames::frame_vector;
 pub use resident::resident_vector;
 pub use retention::{echo_vector, history_vector};
-fn effect_fixture(row: &Table) -> (SoundGroup, GroupState, Content, BTreeSet<VoiceId>) {
-    let group = group_name(text(row, "group"));
+/// A group's effect playback and its content, as an effect vector declares them.
+struct EffectFixture {
+    group: SoundGroup,
+    cue: CueId,
+    audio: GroupState,
+    content: Content,
+    occupied: BTreeSet<EffectVoiceId>,
+}
+const fn fixture_part(cursor: usize, instruction: u8, voice: EffectVoiceId) -> PartState {
+    PartState::Live(LivePart {
+        voice,
+        cursor,
+        instruction,
+        pitch: ep(0),
+        fraction: 0,
+        motion: None,
+    })
+}
+fn effect_fixture(row: &Table) -> EffectFixture {
+    let group: SoundGroup = named(text(row, "group"));
     let motion = row.get("slide_speed").map(|_| PitchMotion {
         speed: nz(byte(row, "slide_speed")),
         target: ep(byte(row, "slide_target")),
@@ -24,152 +40,136 @@ fn effect_fixture(row: &Table) -> (SoundGroup, GroupState, Content, BTreeSet<Voi
             SoundGroup::Contact => CueId::Footstep,
         }
     };
-    let count = if motion.is_some() { 2 } else { 1 };
-    let intro = usize::try_from(optional(row, "intro_parts", 0)).expect("intro");
-    let loops = usize::try_from(optional(row, "loop_parts", 0)).expect("loop");
-    let spans = if loops == 0 {
-        1
-    } else {
-        intro.saturating_add(loops)
-    };
+    let intro = row
+        .get("intro_parts")
+        .map_or(0, |_| index(row, "intro_parts"));
+    let loops = row
+        .get("loop_parts")
+        .map_or(0, |_| index(row, "loop_parts"));
     let part = EffectPartContent {
-        spans: (0..spans)
-            .map(|_| EffectSpan {
+        spans: vec![
+            EffectSpan {
                 duration: EffectTurns(nz(byte(row, "duration"))),
                 pitch: ep(byte(row, "pitch")),
                 timbre: TimbreId(0),
                 motion: motion.clone(),
-            })
-            .collect(),
+            };
+            intro.saturating_add(loops).max(1)
+        ],
         loop_start: (loops > 0).then_some(intro),
     };
-    let clip = EffectClip {
-        parts: vec![part; count],
+    let first_finished = row.contains_key("first_finished");
+    let parts = if motion.is_some() || first_finished {
+        2
+    } else {
+        1
     };
-    let mut releases = release_fixture(row, if group == SoundGroup::Contact { 2 } else { 1 });
-    if row.contains_key("first_finished") {
-        releases[1] = ReleaseMemory::Active(nz(1));
-    }
-    let playback = if row.get("prepared_remaining").is_some() {
-        Playback::Active {
-            cue,
-            parts: [VoiceId::V7, VoiceId::V6]
-                .into_iter()
-                .map(|voice| {
-                    PartState::Live(LivePart {
-                        voice,
-                        cursor: 0,
-                        instruction: byte(row, "prepared_remaining"),
-                        pitch: ep(0),
-                        fraction: 0,
-                        motion: None,
-                    })
-                })
-                .collect(),
-        }
-    } else if row.get("first_finished").is_some() {
-        assert!(flag(row, "first_finished"));
+    let mut history = release_fixture(row, if group == SoundGroup::Contact { 2 } else { 1 });
+    let playback = if row.contains_key("prepared_remaining") {
+        let remaining = byte(row, "prepared_remaining");
         Playback::Active {
             cue,
             parts: vec![
-                PartState::Finished,
-                PartState::Live(LivePart {
-                    voice: VoiceId::V6,
-                    cursor: 0,
-                    instruction: 1,
-                    pitch: ep(0),
-                    fraction: 0,
-                    motion: None,
-                }),
+                fixture_part(0, remaining, EffectVoiceId::V7),
+                fixture_part(0, remaining, EffectVoiceId::V6),
             ],
+        }
+    } else if first_finished {
+        assert!(flag(row, "first_finished"));
+        history[1] = ReleaseMemory::Active(nz(1));
+        Playback::Active {
+            cue,
+            parts: vec![PartState::Finished, fixture_part(0, 1, EffectVoiceId::V6)],
         }
     } else {
         Playback::Prepared { cue }
     };
-    let mut clip = clip;
-    if row.get("first_finished").is_some() {
-        clip.parts.push(clip.parts[0].clone());
-    }
-    let content = Content {
-        effects: BTreeMap::from([(cue, clip)]),
-        tracks: Vec::new(),
-    };
-    let occupied = row.get("occupied").map_or_else(BTreeSet::new, |_| {
-        ints(row, "occupied").into_iter().map(voice).collect()
-    });
-    (
+    let occupied = row
+        .get("occupied")
+        .map_or_else(BTreeSet::new, |_| effect_voices(row, "occupied"));
+    EffectFixture {
         group,
-        GroupState {
-            history: releases,
+        cue,
+        audio: GroupState {
+            history,
             handled: Request::Cue(cue),
             staged: Request::Cue(cue),
             reply: Request::Absent,
             playback,
         },
-        content,
+        content: content(
+            BTreeMap::from([(
+                cue,
+                EffectClip {
+                    parts: vec![part; parts],
+                },
+            )]),
+            Vec::new(),
+        ),
         occupied,
-    )
-}
-fn release_fixture(row: &Table, count: usize) -> Vec<ReleaseMemory> {
-    row.get("release").map_or_else(
-        || vec![ReleaseMemory::Inactive; count],
-        |_| {
-            ints(row, "release")
-                .iter()
-                .map(|v| {
-                    NonZeroU8::new(u8::try_from(*v).expect("release"))
-                        .map_or(ReleaseMemory::Inactive, ReleaseMemory::Active)
-                })
-                .chain(std::iter::repeat(ReleaseMemory::Inactive))
-                .take(count)
-                .collect()
-        },
-    )
-}
-pub fn effect_vector(row: &Table) {
-    keys(
-        row,
-        "id group pitch duration slide_speed slide_target release work after_pitch after_fraction after_instruction after_release prepared_remaining first_finished intro_parts loop_parts after_span occupied after_voices after_owned",
-    );
-    let (group, mut saved, content, occupied) = effect_fixture(row);
-    let mut work = Vec::new();
-    for expected in ints(row, "work") {
-        let result = effects::turn(group, &saved, &content, &occupied, &BTreeSet::new());
-        work.push(result.work.0.to_i64().expect("work"));
-        assert_eq!(
-            result.work.0.to_i64().expect("work"),
-            expected,
-            "{} turn {}",
-            text(row, "id"),
-            work.len()
-        );
-        check_effect_pending(group, &saved, &result, &content, &occupied);
-        let serialized = Value::try_from(&result.group).expect("group serialization");
-        saved = serialized.try_into().expect("group restoration");
     }
-    assert_eq!(work, ints(row, "work"));
-    let parts = match &saved.playback {
-        Playback::Active { parts, .. } => parts,
-        Playback::Empty | Playback::Prepared { .. } => {
-            assert!(false, "allocation must have completed");
-            return;
-        }
+}
+fn release_fixture(row: &Table, count: usize) -> ReleaseHistory {
+    let declared = row
+        .get("release")
+        .map_or_else(Vec::new, |_| ints(row, "release"));
+    declared
+        .into_iter()
+        .map(|v| {
+            NonZeroU8::new(u8::try_from(v).expect("release"))
+                .map_or(ReleaseMemory::Inactive, ReleaseMemory::Active)
+        })
+        .chain(std::iter::repeat(ReleaseMemory::Inactive))
+        .take(count)
+        .collect()
+}
+/// A State holding the fixture's group, its cue steady on the group's request line, and the
+/// fixture's occupied voices as external reservations.
+fn effect_state(fixture: &EffectFixture, mix: &Value) -> State {
+    let mut state = fresh_state(silent_song(mix));
+    state.groups[fixture.group] = fixture.audio.clone();
+    state.request_lines[fixture.group] = Request::Cue(fixture.cue);
+    state.reservations.clone_from(&fixture.occupied);
+    state
+}
+fn live_parts(playback: &Playback) -> Vec<(usize, &LivePart)> {
+    let Playback::Active { parts, .. } = playback else {
+        return Vec::new();
     };
-    for (identity, live) in parts
+    parts
         .iter()
         .enumerate()
         .filter_map(|(identity, part)| match part {
             PartState::Live(live) => Some((identity, live)),
             PartState::Finished => None,
         })
-    {
+        .collect()
+}
+/// `turns` frames of one effect turn each.
+pub fn effect_vector(row: &Table, mix: &Value) {
+    keys(
+        row,
+        "id group pitch duration slide_speed slide_target release turns after_pitch after_fraction after_instruction after_release prepared_remaining first_finished intro_parts loop_parts after_span occupied after_voices after_owned",
+    );
+    let fixture = effect_fixture(row);
+    let mut state = effect_state(&fixture, mix);
+    for _ in 0..unsigned(row, "turns") {
+        play(&mut state, &fixture.content, &[], ONE_EFFECT_TURN);
+    }
+    let audio = &state.groups[fixture.group];
+    assert!(
+        matches!(audio.playback, Playback::Active { .. }),
+        "allocation has completed"
+    );
+    let id = text(row, "id");
+    for (identity, live) in live_parts(&audio.playback) {
         for (key, actual) in [
             ("after_pitch", u64::from(live.pitch.get())),
             ("after_fraction", u64::from(live.fraction)),
             ("after_instruction", u64::from(live.instruction)),
             (
                 "after_release",
-                u64::from(saved.history[identity].remaining()),
+                u64::from(audio.history[identity].remaining()),
             ),
             (
                 "after_span",
@@ -177,57 +177,41 @@ pub fn effect_vector(row: &Table) {
             ),
         ] {
             if row.contains_key(key) {
-                assert_eq!(actual, unsigned(row, key), "{} {key}", text(row, "id"));
+                assert_eq!(actual, unsigned(row, key), "{id} {key}");
             }
         }
     }
     if row.contains_key("after_voices") {
-        let voices: Vec<_> = parts
-            .iter()
-            .filter_map(|part| match part {
-                PartState::Live(live) => Some(live.voice),
-                PartState::Finished => None,
-            })
+        let voices: Vec<_> = live_parts(&audio.playback)
+            .into_iter()
+            .map(|(_, live)| live.voice)
             .collect();
-        assert_eq!(
-            voices,
-            ints(row, "after_voices")
-                .into_iter()
-                .map(voice)
-                .collect::<Vec<_>>()
-        );
+        let expected: Vec<_> = ints(row, "after_voices")
+            .into_iter()
+            .map(effect_voice)
+            .collect();
+        assert_eq!(voices, expected, "{id}");
     }
     if row.contains_key("after_owned") {
         assert_eq!(
-            u64::try_from(effects::owned(&saved.playback).len()).expect("ownership"),
-            unsigned(row, "after_owned")
+            u64::try_from(audio.playback.owned_voices().len()).expect("ownership"),
+            unsigned(row, "after_owned"),
+            "{id}"
         );
     }
 }
-pub fn staged_vector(row: &Table) {
-    keys(row, "id handled staged protected decision after_handled");
-    let protected = flag(row, "protected");
-    let cue = if protected {
+/// One Contact effect turn: it handles the staged request, publishes the request it handled, and
+/// stages the request line.
+pub fn staged_vector(row: &Table, mix: &Value) {
+    keys(
+        row,
+        "id handled staged protected decision after_handled after_reply",
+    );
+    let group = SoundGroup::Contact;
+    let playing = if flag(row, "protected") {
         CueId::Door
     } else {
         CueId::Footstep
-    };
-    let saved = GroupState {
-        history: vec![ReleaseMemory::Inactive; 2],
-        handled: cue_name(text(row, "handled")),
-        staged: cue_name(text(row, "staged")),
-        reply: Request::Absent,
-        playback: Playback::Active {
-            cue,
-            parts: vec![PartState::Live(LivePart {
-                voice: VoiceId::V7,
-                cursor: 1,
-                instruction: 10,
-                pitch: ep(24),
-                fraction: 0,
-                motion: None,
-            })],
-        },
     };
     let clip = EffectClip {
         parts: vec![EffectPartContent {
@@ -240,24 +224,45 @@ pub fn staged_vector(row: &Table) {
             loop_start: None,
         }],
     };
-    let content = Content {
-        effects: BTreeMap::from([(CueId::Footstep, clip.clone()), (CueId::Door, clip)]),
-        tracks: Vec::new(),
+    let content = content(
+        BTreeMap::from([(CueId::Footstep, clip.clone()), (CueId::Door, clip)]),
+        Vec::new(),
+    );
+    let staged = request_named(text(row, "staged"));
+    let mut state = fresh_state(silent_song(mix));
+    state.groups[group] = GroupState {
+        history: vec![ReleaseMemory::Inactive; 2],
+        handled: request_named(text(row, "handled")),
+        staged,
+        reply: Request::Absent,
+        playback: Playback::Active {
+            cue: playing,
+            parts: vec![PartState::Live(LivePart {
+                voice: EffectVoiceId::V7,
+                cursor: 1,
+                instruction: 10,
+                pitch: ep(24),
+                fraction: 0,
+                motion: None,
+            })],
+        },
     };
-    let result = effects::turn(
-        SoundGroup::Contact,
-        &saved,
-        &content,
-        &BTreeSet::new(),
-        &BTreeSet::new(),
-    );
-    assert_eq!(result.group.handled, cue_name(text(row, "after_handled")));
+    // The line still carries the staged request.
+    state.request_lines[group] = staged;
+    play(&mut state, &content, &[], ONE_EFFECT_TURN);
+    let audio = &state.groups[group];
+    let id = text(row, "id");
     assert_eq!(
-        text(row, "decision"),
-        if matches!(result.group.playback, Playback::Prepared { .. }) {
-            "Prepare"
-        } else {
-            "Continue"
-        }
+        audio.handled,
+        request_named(text(row, "after_handled")),
+        "{id}"
     );
+    assert_eq!(audio.reply, request_named(text(row, "after_reply")), "{id}");
+    assert_eq!(audio.staged, state.request_lines[group], "{id}");
+    let decision = if matches!(audio.playback, Playback::Prepared { .. }) {
+        "Prepare"
+    } else {
+        "Continue"
+    };
+    assert_eq!(text(row, "decision"), decision, "{id}");
 }

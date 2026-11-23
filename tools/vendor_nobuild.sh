@@ -33,12 +33,6 @@ patch=${version#*.}; patch=${patch#*.}; patch=${patch%%[+-]*}
 # Read the new build.rs before changing a version here.
 recipe() {
   case $crate-$version in
-    num-traits-0.2.19)
-      # f64::total_cmp is stable since 1.62, with or without the crate's std feature.
-      # autocfg emits this declaration indirectly, beyond the literal extractor below.
-      check 'cfg(has_total_cmp)'
-      cfg has_total_cmp 'all()'
-      ;;
     proc-macro2-1.0.107)
       # Without `procmacro2_semver_exempt` in RUSTFLAGS: wrap the compiler's proc_macro, and use
       # Span::start/end and Span::file, whose probes compile on stable 1.88 and later.

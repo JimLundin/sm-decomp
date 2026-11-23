@@ -35,7 +35,6 @@ pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRul
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
 pub use immutable::{BlockRules, CameraRules, HudRules};
 pub use movement::MovementInputs;
-pub use sender::{SenderInput, Senders};
 
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -50,10 +49,8 @@ pub enum Scope {
     MovementTouchdown,
     /// Movement position consumed by one Ceres door.
     MovementCeres,
-    /// Admitted native audio transport.
+    /// Audio transport, one frame at a time.
     Audio,
-    /// Joint resident transport and three CPU senders from a common origin.
-    ResidentAudio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
     WeaponsContact,
     /// Ordered block requests and running reactions.
@@ -70,8 +67,6 @@ pub enum Scope {
     Ceres,
     /// Door passage and its carried scene.
     Doors,
-    /// One CPU audio sender group, with independently admitted service timing.
-    AudioSender,
 }
 
 /// Complete initial state, admitted once rather than reconstructed each cut.
@@ -83,14 +78,12 @@ pub enum ProductionSeed {
     HealthTail(Box<health_tail::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
-    /// Movement, preceding Figure and the current Contact queue.
+    /// Movement, preceding Figure and the current audio transport.
     MovementTouchdown(Box<movement_touchdown::State>),
     /// Both complete owners admitted at the same boundary.
     MovementCeres(Box<MovementCeresState>),
-    /// Full committed and pending audio state; restoration never initializes it.
+    /// Complete audio transport State; restoration never initializes it.
     Audio(Box<audio_transport::State>),
-    /// Loaded or restored resident audio.
-    ResidentAudio(Box<audio::State>),
     /// Full ordinary power shot/trail/spacing state.
     WeaponsContact(Box<weapons_projectiles::State>),
     /// Full tiles, places and screens.
@@ -107,8 +100,6 @@ pub enum ProductionSeed {
     Ceres(boss_ceres_ridley::CeresDoor),
     /// Full passage and scene.
     Doors(Box<PassageState>),
-    /// Full committed and pending CPU sender service.
-    AudioSender(Box<audio_transport::SenderState>),
 }
 
 /// Independent stimuli for one selected entry.
@@ -146,12 +137,12 @@ pub enum AdvanceInput<'a> {
     },
     /// Ordinary Movement with its admitted Contact and graphics opportunities.
     MovementTouchdown(movement_touchdown::Input<'a>),
-    /// Native transport time and physical presentations.
+    /// One frame of audio transport: its queue offers and its borrowed cadence.
     Audio {
-        /// Absolute stop, including every milestone through it.
-        stop: audio_transport::AudioInstant,
-        /// Ordered presentations strictly after the held current time and through the stop.
-        presentations: &'a [audio_transport::transport::Input],
+        /// The frame's offers, in the order their producers made them.
+        offers: &'a [audio_transport::Offer],
+        /// The frame's effect turns around its sender service, and its music turns.
+        cadence: audio_transport::frame::FrameCadence,
     },
     /// Independently admitted ordinary power inputs and current actor opportunities.
     WeaponsContact {
@@ -183,15 +174,6 @@ pub enum AdvanceInput<'a> {
     Ceres(&'a boss_ceres_ridley::Inputs),
     /// Actual passage work, sound, music and doorway inputs.
     Doors(&'a world_doors::Inputs),
-    /// An actual queue offer or an admitted CPU sender service operation.
-    AudioSender(SenderInput<'a>),
-    /// Operate one resident sender at an independently scheduled CPU opportunity.
-    ResidentSender {
-        /// The physical request line selected by the caller.
-        group: audio_transport::SoundGroup,
-        /// The production sender operation.
-        input: SenderInput<'a>,
-    },
     /// A required producer has no admitted value at this boundary.
     Missing(Scope),
 }
@@ -209,8 +191,8 @@ pub enum ProductionOutputs {
     MovementTouchdown(Box<movement_touchdown::Outputs>),
     /// Complete outputs committed with both owners.
     MovementCeres(Box<MovementCeresOutputs>),
-    /// Every ordered observation, staging and publication milestone.
-    Audio(Vec<audio_transport::transport::Output>),
+    /// The frame played; its published replies are read back from the held State.
+    Audio,
     /// Every weapons request and supplied contact receipt.
     WeaponsContact(weapons::WeaponsOutputs),
     /// Scoped weapons requests, ordered contact and exact flying-picture insertion.
@@ -229,8 +211,6 @@ pub enum ProductionOutputs {
     Ceres(boss_ceres_ridley::Run),
     /// Complete resulting scene and every passage report.
     Doors(Box<world_doors::Exports>),
-    /// Every CPU reply observation, request presentation and service completion.
-    AudioSender(Vec<audio_transport::sender::SenderOutput>),
 }
 
 /// Why a selected start or checkpoint cannot be admitted.
@@ -248,16 +228,12 @@ pub enum AdmissionFault {
     MovementTouchdownFigure,
     /// Carried scoped Health belongs to a different authenticated origin.
     HealthTailOrigin,
-    /// Audio content has no complete two-track arrangement.
-    AudioTracks,
-    /// The resident session violates an audio admission invariant.
-    ResidentAudio(audio::Fault),
+    /// Audio content or a saved transport State violates an admission invariant.
+    Audio(audio::Fault),
     /// Invalid restored shot or content references.
     Weapons(crate::weapons_projectiles_bridge::Fault),
     /// A semantic figure has conflicting or missing clip content.
     Appearance(ClipFault),
-    /// The complete sender queue/progress contains an invalid length or another group.
-    SenderQueue,
     /// A checkpoint belongs to other content.
     ContentChanged,
     /// A checkpoint belongs to other rules.
@@ -297,10 +273,6 @@ pub enum Unsupported {
     BeamSpan,
     /// The flying-picture insertion cannot consume the supplied drawing state.
     BeamDrawing,
-    /// Queue offers must occur between CPU sender services.
-    SenderService,
-    /// A cue or physical reply belongs to another sender's request line.
-    SenderCueGroup,
 }
 
 /// A failed advance leaves state and publications unchanged.
@@ -321,12 +293,6 @@ pub enum ProductionFault {
     Appearance(ClipFault),
     /// A block request or placement lies outside the admitted room.
     Blocks(world_blocks::OutsideTheRoom),
-    /// Absolute audio time moved backwards.
-    TimeReversed,
-    /// A presentation lies outside the requested interval.
-    PresentationOutsideInterval,
-    /// Presentations are not in nondecreasing order.
-    PresentationsUnordered,
 }
 
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
@@ -375,7 +341,6 @@ impl Production {
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
-            ProductionSeed::ResidentAudio(_) => Scope::ResidentAudio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
             ProductionSeed::Blocks(_) => Scope::Blocks,
             ProductionSeed::Camera(_) => Scope::Camera,
@@ -384,7 +349,6 @@ impl Production {
             ProductionSeed::Hud(_) => Scope::Hud,
             ProductionSeed::Ceres(_) => Scope::Ceres,
             ProductionSeed::Doors(_) => Scope::Doors,
-            ProductionSeed::AudioSender(_) => Scope::AudioSender,
         })?;
         let state = match (seed, &content, &rules) {
             (
@@ -409,10 +373,10 @@ impl Production {
             }
             (
                 ProductionSeed::MovementTouchdown(state),
-                ProductionContent::MovementTouchdown(content),
+                ProductionContent::MovementTouchdown(content, audio),
                 ProductionRules::MovementTouchdown(_),
             ) => {
-                state.validate(content)?;
+                state.validate(content, audio)?;
                 OwnedState::MovementTouchdown(state)
             }
             (
@@ -460,7 +424,6 @@ impl Production {
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
-            OwnedState::ResidentAudio(_) => Scope::ResidentAudio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
             OwnedState::Blocks(_) => Scope::Blocks,
             OwnedState::Camera(_) => Scope::Camera,
@@ -469,14 +432,13 @@ impl Production {
             OwnedState::Hud(_) => Scope::Hud,
             OwnedState::Ceres(_) => Scope::Ceres,
             OwnedState::Doors(_) => Scope::Doors,
-            OwnedState::AudioSender(_) => Scope::AudioSender,
         }
     }
 
     /// Advance a candidate value and commit its state and complete outputs together.
     ///
     /// # Errors
-    /// Wrong scope, missing inputs and invalid audio intervals do not advance state.
+    /// Wrong scope and missing inputs do not advance state.
     pub fn advance(
         &mut self,
         input: AdvanceInput<'_>,
@@ -527,11 +489,11 @@ impl Production {
             )?)),
             (
                 OwnedState::MovementTouchdown(state),
-                ProductionContent::MovementTouchdown(content),
+                ProductionContent::MovementTouchdown(content, audio),
                 ProductionRules::MovementTouchdown(rules),
                 AdvanceInput::MovementTouchdown(input),
             ) => ProductionOutputs::MovementTouchdown(Box::new(movement_touchdown::advance(
-                state, content, rules, input,
+                state, content, audio, rules, &input,
             )?)),
             (
                 OwnedState::Movement(samus),
@@ -572,16 +534,15 @@ impl Production {
         Ok((state, outputs))
     }
 
-    /// Read the admitted transport shared by the loaded and independently scoped entries.
+    /// Read the admitted audio transport, alone or carried with Movement's touchdown.
     #[must_use]
     pub fn transport(&self) -> Option<&audio_transport::State> {
         match &self.state {
             OwnedState::Audio(state) => Some(&state.0),
-            OwnedState::ResidentAudio(state) => Some(state.transport()),
+            OwnedState::MovementTouchdown(state) => Some(&state.audio.0),
             OwnedState::Connected(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
-            | OwnedState::MovementTouchdown(_)
             | OwnedState::MovementCeres(_)
             | OwnedState::WeaponsContact(_)
             | OwnedState::Blocks(_)
@@ -590,8 +551,7 @@ impl Production {
             | OwnedState::Progress(_)
             | OwnedState::Hud(_)
             | OwnedState::Ceres(_)
-            | OwnedState::Doors(_)
-            | OwnedState::AudioSender(_) => None,
+            | OwnedState::Doors(_) => None,
         }
     }
 
@@ -605,12 +565,10 @@ impl Production {
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
-            OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
-            OwnedState::AudioSender(state) => CodecState::AudioSender(state.clone()),
             OwnedState::MovementCeres(_)
             | OwnedState::Blocks(_)
             | OwnedState::Progress(_)
@@ -653,11 +611,7 @@ impl Production {
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             let PortableAudio(state) = checkpoint.state;
             ProductionSeed::Audio(state.0)
-        } else if matches!(&content, ProductionContent::ResidentAudio(_)) {
-            let checkpoint: Checkpoint<Box<audio::State>> =
-                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
-            ProductionSeed::ResidentAudio(checkpoint.state)
-        } else if matches!(&content, ProductionContent::MovementTouchdown(_)) {
+        } else if matches!(&content, ProductionContent::MovementTouchdown(..)) {
             let checkpoint: Checkpoint<Box<movement_touchdown::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::MovementTouchdown(checkpoint.state)
@@ -675,7 +629,6 @@ impl Production {
                 CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
                 CodecState::Camera(state) => ProductionSeed::Camera(state.0),
                 CodecState::Appearance(state) => ProductionSeed::Appearance(state.0),
-                CodecState::AudioSender(state) => ProductionSeed::AudioSender(state.0),
             }
         };
         Self::admit(seed, content, rules)
@@ -701,53 +654,13 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::MovementTouchdown => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
                 .and_then(|()| canonical::model::pin_holds::<movement::FigurePin>())
-                .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>())
+                .and_then(|()| canonical::model::pin_holds::<crate::state::owned::AudioPin>())
         }
         Scope::Audio => canonical::model::pin_holds::<crate::state::owned::AudioPin>(),
-        Scope::ResidentAudio => canonical::model::pin_holds::<crate::state::owned::AudioPin>()
-            .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>()),
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
-        Scope::AudioSender => canonical::model::pin_holds::<crate::state::owned::SenderPin>(),
         Scope::Blocks | Scope::Progress | Scope::Hud | Scope::Ceres | Scope::Doors => Ok(()),
     }
     .map_err(AdmissionFault::StatePin)
-}
-
-fn advance_transport(
-    state: &mut audio_transport::State,
-    content: &audio_transport::Content,
-    stop: &audio_transport::AudioInstant,
-    presentations: &[audio_transport::transport::Input],
-) -> Result<ProductionOutputs, ProductionFault> {
-    validate_audio_interval(&state.now, stop, presentations)?;
-    let elapsed = stop.difference(&state.now);
-    Ok(ProductionOutputs::Audio(
-        audio_transport::transport::advance(state, content, elapsed, presentations),
-    ))
-}
-
-fn validate_audio_interval(
-    now: &audio_transport::AudioInstant,
-    stop: &audio_transport::AudioInstant,
-    inputs: &[audio_transport::transport::Input],
-) -> Result<(), ProductionFault> {
-    if stop < now {
-        return Err(ProductionFault::TimeReversed);
-    }
-    if inputs
-        .iter()
-        .any(|input| input.at <= *now || input.at > *stop)
-    {
-        return Err(ProductionFault::PresentationOutsideInterval);
-    }
-    if inputs
-        .iter()
-        .zip(inputs.iter().skip(1))
-        .any(|(first, second)| first.at > second.at)
-    {
-        return Err(ProductionFault::PresentationsUnordered);
-    }
-    Ok(())
 }

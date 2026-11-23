@@ -7,9 +7,6 @@ publish = false
 description = "The audio-transport model, built from its behaviour spec"
 
 [dependencies]
-num-bigint = { version = "=0.4.6", features = ["serde"] }
-num-rational = { version = "=0.4.2", features = ["serde"] }
-num-traits = "=0.2.19"
 types = { path = "../types" }
 enum-map = "=3.1.0"
 

@@ -23,7 +23,6 @@ weapons_projectiles = { path = "../clean/weapons_projectiles" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 enum-map = "=3.1.0"
-num-bigint = "=0.4.6"
 serde = { version = "=1.0.229", features = ["derive"] }
 
 [lints]

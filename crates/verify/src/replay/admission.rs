@@ -71,86 +71,37 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
 }
 
 fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    if case.inputs != InputProvider::NativePhysicalPresentations
+    if case.inputs != InputProvider::NativeFrameInputs
         || case.expectations.provider != ExpectedProvider::NativeDecodedCuts
+        || case.content != ContentProvider::OpeningCeresAudio
     {
         return Err(data_failure(None, "audio provider contract"));
     }
-    let (path, sha256, continuation) = match &case.start {
-        Start::NativeSeed { path, sha256 } => (path, sha256, None),
-        Start::NativeCheckpoint {
-            path,
-            sha256,
-            seed_path,
-            seed_sha256,
-            frame,
-        } => {
-            let seed_path = if seed_path.is_absolute() {
-                seed_path.clone()
-            } else {
-                sources.native.join(seed_path)
-            };
-            (path, sha256, Some((seed_path, seed_sha256, *frame)))
-        }
-        Start::NativeOpportunity { .. }
-        | Start::NativeRecord { .. }
-        | Start::CacheCut { .. }
-        | Start::NativeSenderOffer { .. }
-        | Start::ConstructedSenderOffer { .. }
-        | Start::PowerOn => {
-            return Err(data_failure(None, "audio start contract"));
-        }
+    let Start::NativeSeed { path, sha256 } = &case.start else {
+        return Err(data_failure(None, "audio start contract"));
     };
     let path = if path.is_absolute() {
         path.clone()
     } else {
         sources.native.join(path)
     };
-    let continuation = continuation
-        .as_ref()
-        .map(|(path, hash, frame)| (path.as_path(), hash.as_str(), *frame));
     let (input_tape, expected_tape) =
-        audio::load(&path, sha256, case.end.cut_inclusive, continuation).map_err(|fault| {
-            match fault {
-                audio::ProviderFault::Admission(source) => data_failure(None, source),
-                audio::ProviderFault::Pin => data_failure(None, "native fixture pin"),
-                audio::ProviderFault::Missing => data_failure(None, "native fixture file"),
-            }
+        audio::load(&path, sha256, case.end.cut_inclusive).map_err(|fault| match fault {
+            audio::ProviderFault::Admission(source) => data_failure(None, source),
+            audio::ProviderFault::Pin => data_failure(None, "native fixture pin"),
+            audio::ProviderFault::Missing => data_failure(None, "native fixture file"),
         })?;
-    let (seed, content) = match case.content {
-        ContentProvider::OpeningCeresAudio => {
-            audio::room_load::admit(&sources.rom, &sources.native, &input_tape, sha256)?
-        }
-        ContentProvider::NativeResidentContent => (
-            ProductionSeed::Audio(Box::new(input_tape.seed.clone())),
-            ProductionContent::Audio(input_tape.content.clone()),
-        ),
-        ContentProvider::PlayerRomImport
-        | ContentProvider::SenderGroup
-        | ContentProvider::CeresReference
-        | ContentProvider::RecordedScrollRun
-        | ContentProvider::HudReference => {
-            return Err(data_failure(None, "audio content provider"));
-        }
-    };
+    let (seed, content) =
+        audio::room_load::admit(&sources.rom, &sources.native, &input_tape, sha256)?;
     let rules = ProductionRules::Audio;
     let production = Production::admit(seed, content.clone(), rules.clone())
         .map_err(|_| data_failure(None, "production audio admission"))?;
-    let actual = ActualReader::Audio {
-        publications: Vec::new(),
-        replies: input_tape.initial_replies,
-    };
-    let schedule = input_tape
-        .stops
-        .iter()
-        .filter(|(cut, _)| *cut <= case.end.cut_inclusive)
-        .map(|(cut, _)| *cut)
-        .collect();
+    let schedule = input_tape.frames.iter().map(|(cut, _)| *cut).collect();
     Ok(AdmittedCase {
         production,
         content,
         rules,
-        actual,
+        actual: ActualReader::Audio(input_tape.aliases.clone()),
         schedule,
         inputs: InputReader::Audio(Box::new(input_tape)),
         expected: ExpectedReader::Audio(Box::new(expected_tape)),

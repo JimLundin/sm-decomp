@@ -99,14 +99,24 @@ cut = 7
 field = "ceres.wait"
 
 [[fault]]
-name = "audio-elapsed-not-carried"
+name = "audio-music-turns-dropped"
 responsibility = "audio"
-file = "crates/game/src/production.rs"
-before = "let elapsed = stop.difference(&state.now);"
-after = "let elapsed = audio_transport::time::cycles(0);"
+file = "crates/game/src/production/audio.rs"
+before = "audio_transport::frame::play(state, &content.graph, offers, cadence);"
+after = "audio_transport::frame::play(state, &content.graph, offers, audio_transport::frame::FrameCadence { music: audio_transport::frame::TurnCount::ZERO, ..cadence });"
 case = "audio/native-control"
 cut = 0
 field = "track0.note"
+
+[[fault]]
+name = "audio-effect-turns-after-service"
+responsibility = "audio"
+file = "crates/game/src/production/audio.rs"
+before = "audio_transport::frame::play(state, &content.graph, offers, cadence);"
+after = "let cadence = match cadence.effects { audio_transport::frame::EffectCadence::AroundService { before, after } => audio_transport::frame::FrameCadence { effects: audio_transport::frame::EffectCadence::AroundService { before: audio_transport::frame::TurnCount::ZERO, after: audio_transport::frame::TurnCount::new(before.get() + after.get()).unwrap_or(after) }, ..cadence }, audio_transport::frame::EffectCadence::WithoutService(_) => cadence }; audio_transport::frame::play(state, &content.graph, offers, cadence);"
+case = "audio/native-control"
+cut = 11
+field = "audio.reply3"
 
 [[fault]]
 name = "movement-ceres-door-centre-substitution"
@@ -230,9 +240,9 @@ field = "movement.state.complete"
 [[fault]]
 name = "sender-offer-demo-bypassed"
 responsibility = "audio-sender"
-file = "crates/game/src/production/sender.rs"
-before = "audio_transport::sender::offer(state, cue, allowance, permission);"
-after = "audio_transport::sender::offer(state, cue, allowance, if permission == OfferPermission::Demo { OfferPermission::Enabled } else { permission });"
+file = "crates/game/src/production/audio.rs"
+before = "audio_transport::frame::play(state, &content.graph, offers, cadence);"
+after = "let offers: Vec<_> = offers.iter().map(|offer| audio_transport::Offer { permission: if offer.permission == audio_transport::OfferPermission::Demo { audio_transport::OfferPermission::Enabled } else { offer.permission }, ..*offer }).collect(); audio_transport::frame::play(state, &content.graph, &offers, cadence);"
 case = "sender-offer/deny-demo"
 cut = 0
 field = "sender.queue"
@@ -240,9 +250,9 @@ field = "sender.queue"
 [[fault]]
 name = "live-touchdown-contact-omission-57"
 responsibility = "audio-sender"
-file = "crates/game/src/production/movement_touchdown.rs"
-before = "input.suppression.transport_permission(),"
-after = "if input.suppression.transport_permission() == audio_transport::OfferPermission::Enabled { audio_transport::OfferPermission::Disabled } else { input.suppression.transport_permission() },"
+file = "crates/game/src/production/sender.rs"
+before = "permission: current.transport_permission(),"
+after = "permission: if current.transport_permission() == audio_transport::OfferPermission::Enabled { audio_transport::OfferPermission::Disabled } else { current.transport_permission() },"
 case = "movement/soft-touchdown-57"
 cut = 57
 field = "sender.queue"
@@ -250,9 +260,9 @@ field = "sender.queue"
 [[fault]]
 name = "live-touchdown-contact-omission-124"
 responsibility = "audio-sender"
-file = "crates/game/src/production/movement_touchdown.rs"
-before = "input.suppression.transport_permission(),"
-after = "if input.suppression.transport_permission() == audio_transport::OfferPermission::Enabled { audio_transport::OfferPermission::Disabled } else { input.suppression.transport_permission() },"
+file = "crates/game/src/production/sender.rs"
+before = "permission: current.transport_permission(),"
+after = "permission: if current.transport_permission() == audio_transport::OfferPermission::Enabled { audio_transport::OfferPermission::Disabled } else { current.transport_permission() },"
 case = "movement/soft-touchdown-124"
 cut = 124
 field = "sender.queue"

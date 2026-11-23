@@ -120,7 +120,7 @@ inventory comes from the index and reviewed baseline, so omitting an owner fails
 Weapons and contact have separate faults in their shared case. The movement/Ceres connection
 has a separate fault substituting the door centre for held movement proximity.
 
-These faults exercise movement scheduling, elapsed audio time, cannon permission, contact
+These faults exercise movement scheduling, the audio frame's cadence, cannon permission, contact
 permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres
 scheduling. They prove the named comparisons detect those errors within the existing scoped
 cases and the narrowly integrated movement/Ceres connection. They do not prove all rules,
@@ -177,17 +177,35 @@ Install the encrypted [sender offer fixture](../tools/ci/fetch_sender_offers.sh)
 with `bash tools/ci/fetch_sender_offers.sh "$ROM" "$NATIVE"`, then select
 `--rule audio-transport/OfferAcceptance --native "$NATIVE"` in the shared replay command.
 
-Each recorded case admits one group's independent starting bracket and the borrowed offer
-from `inputs.toml`. The case calls the production AudioSender Offer entry. It compares
-the full oldest-first FIFO and committed progress against `expected.toml` at the first
-following selected-group service entry. The index uses the source video cut and the
-ingress identity distinguishes the two offers at cuts 157 and 183. Source chronology
-qualifies the borrowed cross-group order. Live producer order, physical timing, replies
-after the initial bracket and sender service are outside this scope.
+Each recorded case admits one group's independent starting queue and progress and the
+borrowed offer from `inputs.toml`. It plays one frame through production's audio owner with that
+offer and a cadence of no audio turn and no service: the window's bracket holds no service of the
+group between the seed and the comparison. The rest of the transport is a silent seed such a
+frame never reads. The case compares the full oldest-first queue and progress against
+`expected.toml` at the following selected-group service entry, before that service. The index
+uses the source video cut, and the ingress identity distinguishes the two offers at cuts 157 and
+183. Source chronology qualifies the borrowed cross-group order. Live producer order and the
+sender service are outside this scope.
 
 The constructed cases exercise same-group order, duplicates, capacity, reduced allowance
-and three suppressors. The saved final cut checks restoration of the complete scoped
-sender, including the seed reply. Each native case has one independent seed.
+and three suppressors. The saved final cut checks restoration of the complete transport State.
+Each native case has one independent seed.
+
+## Native audio frames
+
+`audio/native-control` (cuts 0 to 183) and `audio/native-expire-prefix` (cuts 0 to 64) play
+the opening room's audio one frame at a time from the ROM-imported resident bank, the capture's
+loaded audio side and the load's three ready senders. The native capture's port log supplies each
+frame's borrowed inputs: the cues the CPU newly presents in the frame are its offers, and its
+cadence is the effect turns completed before and after its first CPU write and its completed
+music turns. A turn is complete at its Contact reply. The cases compare the song and release
+fields, the four replies and the three request lines at every cut; the model's sender service
+writes the request lines, so they witness RequestDelivery and RequestRelease. A cut can fall
+inside an effect turn, after its Action and Ambient replies and before Contact's; the frame
+form completes that turn in the next frame, and those replies are not compared (12 in the
+control arm, 2 in the expiry prefix). The capture records no CPU memory, so the senders' queues
+and progress are not compared. The expiry arm's post-intervention seed carries no sender State,
+so its cuts 65 to 183 are not indexed.
 
 ## Live soft touchdown
 
@@ -200,17 +218,15 @@ dry Appearance arm. The replay compares her landing position and vertical speed,
 travel after the floor clips it, her position after her moves (where the pose fit starts), the
 accepted response, the Contact offer and Appearance clear publication. The requested downward
 distance, the fit's result and its clearance tests happen inside the frame, have no whole-frame
-counterpart and are not compared. The scoped Contact owner stops after the offer.
-The next native service-entry snapshot independently corroborates its FIFO. The pinned bracket
-contains no intervening Contact offer or service, and the case advances neither the intervening
-clock nor the service. The offer and clear command count as two scoped outputs. The publication
-counter measures physical callback streams and is zero here.
+counterpart and are not compared. The Contact offer plays one frame of the carried transport with a cadence of no audio turn
+and no service, and the next native service-entry snapshot independently corroborates its queue.
+The pinned bracket contains no intervening Contact offer or service. The offer and clear
+command count as two scoped outputs.
 
 Install the [touchdown fixture](../tools/ci/fetch_movement_touchdown.sh) and the sender-offer
 fixture under the same native source directory. Use the common replay command with
 `--case movement/soft-touchdown-57 --case movement/soft-touchdown-124`. The checkpoints
-restore each disjoint window from its own starting owners. The physical ring and Contact port
-service have separate boundaries.
+restore each disjoint window from its own starting owners.
 
 ## Finding the code for a replay segment
 
@@ -237,7 +253,7 @@ $TOOLS replay map "$INDEX" --case movement/W15
 $TOOLS replay map "$INDEX" --rule samus-movement/TravelledDistances
 $TOOLS replay map "$INDEX" --path crates/clean/samus_movement/src/travel.rs
 $TOOLS replay map "$INDEX" --mapping scenarios/replay/code-map.toml \
-  --baseline scenarios/replay/baseline.toml --repo . --case audio/native-expire-post64
+  --baseline scenarios/replay/baseline.toml --repo . --case audio/native-control
 ```
 
 Mapping and baseline paths default to `code-map.toml` and `baseline.toml` beside the index.
@@ -258,9 +274,10 @@ Unsupported boundaries. A boundary's rule references do not make it a passing be
 Mapping queries never select or skip landing checks; the complete index remains required.
 
 Cache cuts are local to the named record row: W15 starts at cut 814 and compares cuts 815
-through 817 of `item-morph-ball`. Native seeds and checkpoints use native fixture coordinates;
-the post-intervention audio case compares original fixture cuts 65 through 183 from its
-independent cut-64 seed. Power-on starts have their own coordinate family. The report exposes
+through 817 of `item-morph-ball`. Native seeds and records use native fixture coordinates:
+`audio/native-control` compares fixture cuts 0 through 183, and the Ceres tail record's case
+compares cuts 993 and 994 after its cut-992 origin. Power-on starts have their own coordinate
+family. The report exposes
 the index's lock path and source declarations; it supplies no movie-global offset conversion.
 
 ## Making the record cache

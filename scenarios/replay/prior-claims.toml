@@ -3478,3 +3478,206 @@ source_sha256 = "115377907f13435240814f5e0d475a89f4b9b81b5247b416ff1a3b4298e74cc
 identity = "gameplay-sound/passage-hold-shoot-held"
 before_values = [1, 1, 5, 0, 0, 0, 0, 1, 2, 2]
 meaning = "reviewed behaviour case holding Pass with observation digest 18145d5955935bbb993c330ab6b946b32b167591af3987a6e5b67342f0850fb0; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "audio/native-control"
+before_values = [184, 7157, 764, 764, 736, 0, 5731, 184, 573, 573]
+meaning = "reviewed behaviour case holding Pass with observation digest 72c4997c5dab99c7eddd0fd40cb1809c8e3df009ceb56fd2ca5df8118de776d0; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "audio/native-expire-prefix"
+before_values = [65, 2453, 269, 269, 260, 0, 2193, 65, 201, 201]
+meaning = "reviewed behaviour case holding Pass with observation digest 34db45f0cac6dab5078eb4111c4ab138d811c7b7a027d3f3ca03a2669edf357a; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "audio/native-expire-post64"
+before_values = [119, 4704, 495, 495, 476, 0, 3809, 119, 372, 372]
+meaning = "reviewed behaviour case holding Pass with observation digest a1ad50f70f25b80e5a972f74ed9bf26638418d5555e388072613facb412943f0; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-at-six"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 63c11631d9deaa454ecf0e8e50bb2f312422cb8562034b3b096fd5f8535ded7f; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-demo"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest d55ea5eb30a5e9c3fa6a2959f65f0a948783b988ca2cfd8da6d82d75966f21ea; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-disabled"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest d55ea5eb30a5e9c3fa6a2959f65f0a948783b988ca2cfd8da6d82d75966f21ea; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-explosion"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest d55ea5eb30a5e9c3fa6a2959f65f0a948783b988ca2cfd8da6d82d75966f21ea; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/deny-smaller-limit"
+before_values = [1, 2, 0, 0, 0, 1, 2, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 0c3710bf1d413c171fbbf20387172ae813ec86f600e090ead537bc0e61c01107; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-00"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest a4ff985db70dd0f40b16a9aa0f0bfe8aee529023e1dbc4674cd8b70c12a18355; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-01"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest e4ed7bb731a9956d3ae6d415914f4dc750742384caa7149f2af3a3df44597459; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-02"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest cbd0575c3976cbc8dc17a39b4c45628a48cd1209bc472509de4b4c792b7e03a3; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-03"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 17eb4530e4f64c41f9e01081e5773e74816b1acc5c4ca4bbf6f395ee16ec845c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-04"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 48bad14a7e422206726998515873b29b0b3436886d53a05a2f080eda6a3cbd7e; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-05"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 85040907ff712b7e67ba5e74a6a267e75e687645f7211055376ff571b3e34944; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-06"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 2610a42547240270e416d9eaff83705e2b41c585a65e3454e40369fdd1afdcce; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-07"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest c0b5451a135ec4e9e604d6c5fa3c7057aa7ac64f9eb4bf16fc9c7885a6615414; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-08"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest ea6e2d170377838d32d9608ca1425197aca6768d0cb5fe48fcc363a20782fdfd; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-09"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 6fba6e57b62a05ebcb8d92a8a804468e051047a077e3d1c48b268ce494412885; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-10"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 594327763450b078b8a40260f6425084c734da8b1eb3d9cf5c3f5abcf01bc287; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-11"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 7992747d325741c60774b8fb7a214bb95bc27bf8226c54eaca1afc5be96249be; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-12"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 7d54d8289d00106b972434f7e6759cceaadad95578d3e56b33e53265db3c4d8b; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-13"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 9d53a814d867ca43d8a9d81cdfb4ab55869a2f5cb96a9d4dc2c936204646361a; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-14"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest d7373b65712607d43eeb3e0a17a2a4035335c6528aafe02c32ef9f8ea1655c61; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-15"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest bc61076bf7e858191da7407ff9a9744f434e23cb77eed6033f25baa0679a1c3b; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-16"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 83ce15a8fb3299d4b07f3b3fc3bb9a6094fdb36f31cbe843624e3531c9f7435a; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-17"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 7fb9e73dcd0dd063b0762a573a5bdea510cc0280e010054a53e35bd9213c9d4c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/native-18"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 20054a6a2baafe261d03909d6508ab7f47f3c75ed1f80514d7bfb8a618d42fee; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/ordered-pair"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 63c11631d9deaa454ecf0e8e50bb2f312422cb8562034b3b096fd5f8535ded7f; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae880"
+identity = "sender-offer/repeat-at-five"
+before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 3e60c70c2adf854ca5044b33231d489632234f83626ea6c3518385d081c85f04; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

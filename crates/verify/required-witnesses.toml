@@ -24,18 +24,11 @@ content = [
 
 audio_assets = [
     "replay::audio::import_witness::opening_ceres_rom_content_matches_resident_observations",
-    "replay::audio::room_load::tests::first_empty_poll_survives_joint_checkpoint",
-    "replay::audio::room_load::tests::all_three_pending_senders_survive_joint_checkpoint",
-    "replay::audio::room_load::tests::substituted_room_content_and_incomplete_load_are_refused",
-    "replay::audio::room_load::tests::changed_origin_clock_or_lineage_is_refused",
-    "replay::audio::room_load::tests::asymmetric_physical_latches_survive_joint_checkpoint",
-    "replay::audio::room_load::tests::room_load_joins_the_cpu_request_latch",
-    "replay::audio::room_load::tests::room_load_joins_the_transport_reply_latch",
 ]
 
 touchdown = [
     "replay::movement_touchdown::tests::graphics_and_contact_obey_separate_permissions",
-    "replay::movement_touchdown::tests::repeated_contact_opportunity_refuses_after_restore",
+    "replay::movement_touchdown::tests::incoherent_figure_refuses_and_restored_owner_plays_on",
 ]
 
 early_map = ["replay::early_map::tests::early_map_restores_between_frames_and_refuses_a_missing_map"]

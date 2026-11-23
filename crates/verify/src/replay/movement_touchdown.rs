@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use audio_transport::{CpuMasterTicks, CueId, OfferPermission, SenderProgress};
+use audio_transport::{CueId, OfferPermission, SenderProgress};
 use canonical::model::Model;
 use game::production::{
     AdvanceInput, MovementInputs, Production, ProductionContent, ProductionOutputs,
@@ -159,7 +159,6 @@ pub(super) struct Inputs {
     cut: u64,
     movement: MovementInputs,
     world: MovementWorld,
-    contact_at: CpuMasterTicks,
     suppression: OfferCurrent,
 }
 
@@ -176,8 +175,8 @@ impl Inputs {
             .advance(AdvanceInput::MovementTouchdown(Input {
                 movement: self.movement,
                 world: &self.world,
-                contact_at: self.contact_at.clone(),
                 suppression: self.suppression,
+                audio: sender_offer::offers_only(),
                 graphics_area: TouchdownArea::DryClear,
             }))
             .map_err(|fault| production_failure(cut, fault))
@@ -255,8 +254,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         || first.roster_slot >= 32
         || second.roster_slot >= 32
         || first.roster_slot == second.roster_slot
-        || owned_contact.seed.now != CpuMasterTicks(observed.contact_seed_master_ticks)
-        || owned_contact.seed.queue != observed.contact_seed_queue
+        || owned_contact.seed_master_ticks != observed.contact_seed_master_ticks
+        || owned_contact.seed.queue.cues() != &observed.contact_seed_queue
         || owned_contact.seed.progress != observed.contact_seed_progress
         || observed.contact_offer_permission != "Enabled"
         || owned_contact.current.transport_permission() != OfferPermission::Enabled
@@ -268,7 +267,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         cut,
         movement: preceding.stimuli(),
         world,
-        contact_at: owned_contact.at,
         suppression: owned_contact.current,
     };
     let state = State {
@@ -277,9 +275,15 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             pose: samus.pose,
             sprite: preceding.sprite,
         }),
-        contact: Model(Box::new(owned_contact.seed)),
+        audio: Model(Box::new(sender_offer::silent_transport(
+            audio_transport::SoundGroup::Contact,
+            owned_contact.seed,
+        ))),
     };
-    let content = ProductionContent::MovementTouchdown(content.movement);
+    let content = ProductionContent::MovementTouchdown(
+        content.movement,
+        Box::new(game::production::audio::Content::silent()),
+    );
     let rules = ProductionRules::MovementTouchdown(samus_movement::Rules::default());
     let production = Production::admit(
         ProductionSeed::MovementTouchdown(Box::new(state)),

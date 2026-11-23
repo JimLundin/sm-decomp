@@ -1,25 +1,12 @@
-//! Spec: EffectResources, ConnectedPitchMotion and EffectTiming.
-use crate::ReleaseMemory;
-use crate::{
-    AudioCycles, Content, CueId, EffectPartContent, EffectVoiceId, GroupState, LivePart, PartState,
-    Playback, Request, SoundGroup,
-};
+//! Spec: StagedRequests, EffectResources and ConnectedPitchMotion. One group's effect turn up to
+//! its publication: it handles the staged request, then plays its effect parts.
 use std::collections::BTreeSet;
 use std::num::NonZeroU8;
-const FRACTIONS: u16 = 256;
-const OCTAVE: u8 = 12;
-const OCTAVE_WORK: u64 = 14;
-const SECOND: u64 = 6;
-const AMBIENT: u64 = 12;
-const SILENCE: u64 = 8;
-const PART: u64 = 300;
-const VISIT: u64 = 16;
-const ALIVE: u64 = 19;
-const RELEASE_START: u64 = 64;
-const RELEASE_CONTINUE: u64 = 34;
-const FRACTIONAL: u64 = 464;
-const TERMINAL: u64 = 489;
-const NONTERMINAL: u64 = 479;
+use types::audio::{
+    Content, CueId, EffectPartContent, EffectSpan, EffectVoiceId, GroupState, LivePart, PartState,
+    Playback, ReleaseMemory, Request, VoiceId, count_down,
+};
+/// Spec: EffectResources. The six-voice effect pool in the order allocation searches it.
 const POOL: [EffectVoiceId; 6] = [
     EffectVoiceId::V7,
     EffectVoiceId::V6,
@@ -28,341 +15,173 @@ const POOL: [EffectVoiceId; 6] = [
     EffectVoiceId::V3,
     EffectVoiceId::V2,
 ];
-/// Spec: EffectTiming. Group work profile.
-#[derive(Clone, Copy)]
-struct Profile {
-    base: u64,
-    prepare: u64,
-    replace: u64,
-    play: u64,
-    allocate: u64,
-}
-const fn profile(group: SoundGroup) -> Profile {
-    match group {
-        SoundGroup::Action => Profile {
-            base: 60,
-            prepare: 188,
-            replace: 1433,
-            play: 59,
-            allocate: 494,
-        },
-        SoundGroup::Ambient => Profile {
-            base: 86,
-            prepare: 170,
-            replace: 719,
-            play: 37,
-            allocate: 278,
-        },
-        SoundGroup::Contact => Profile {
-            base: 88,
-            prepare: 197,
-            replace: 719,
-            play: 37,
-            allocate: 278,
-        },
-    }
-}
-/// Spec: StagedRequests. A cue's family is fixed.
-#[must_use]
-pub const fn group(cue: CueId) -> SoundGroup {
-    match cue {
-        CueId::Spin | CueId::EndSpin | CueId::Beam | CueId::SamusSilence => SoundGroup::Action,
-        CueId::BackgroundSilence => SoundGroup::Ambient,
-        CueId::Footstep | CueId::Land | CueId::Door => SoundGroup::Contact,
-    }
-}
-/// Spec: EffectResources. Live ownership only.
-#[must_use]
-pub fn owned(playback: &Playback) -> BTreeSet<EffectVoiceId> {
-    let Playback::Active { parts, .. } = playback else {
-        return BTreeSet::new();
-    };
-    parts
-        .iter()
-        .filter_map(|part| match part {
-            PartState::Live(live) => Some(live.voice),
-            PartState::Finished => None,
-        })
-        .collect()
-}
-/// Spec: EffectTiming. Completed group and exact work, for deferred publication.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct EffectResult {
-    /// Completed group.
-    pub group: GroupState,
-    /// Audio instruction work.
-    pub work: AudioCycles,
-    /// Spec: EffectResources. Complete echo membership, published with the completed group.
-    pub echo_voices: BTreeSet<crate::VoiceId>,
-}
-/// Spec: StagedRequests, EffectResources. Changed requests prepare; absence does not stop sound.
+/// Spec: StagedRequests and EffectResources. Handle the group's staged request, then play.
 ///
-/// The caller supplies complete group history and current semantic echo membership independently
-/// of ownership. The result is pending data: do not commit its history or membership before work
-/// completes. Allocated voices leave membership; releasing voices never restores it.
-#[must_use]
+/// A changed cue replaces the group's playback with the prepared cue, which acquires voices on a
+/// later turn; absence, an unchanged request and a cue dropped by door protection all let the
+/// current sound play on. `occupied` holds the voices other owners hold; `echo_voices` is the
+/// song's echo membership, from which allocation removes the voices it acquires.
 pub fn turn(
-    group: SoundGroup,
-    state: &GroupState,
+    group: &mut GroupState,
     content: &Content,
     occupied: &BTreeSet<EffectVoiceId>,
-    echo_voices: &BTreeSet<crate::VoiceId>,
-) -> EffectResult {
-    let mut result = state.clone();
-    let rules = profile(group);
-    let mut work = rules.base;
-    if state.staged != state.handled {
-        result.handled = state.staged;
-        if let Request::Cue(cue) = state.staged
-            && !protected(&state.playback)
+    echo_voices: &mut BTreeSet<VoiceId>,
+) {
+    if group.staged != group.handled {
+        group.handled = group.staged;
+        if let Request::Cue(cue) = group.staged
+            && !protected(&group.playback)
         {
-            if !owned(&state.playback).is_empty() {
-                work = work.saturating_add(rules.replace);
-            }
-            work =
-                work.saturating_add(rules.prepare.saturating_sub(if cue == CueId::SamusSilence {
-                    SILENCE
-                } else {
-                    0
-                }));
-            result.playback = Playback::Prepared { cue };
-            result.reply = state.staged;
-            return EffectResult {
-                group: result,
-                work: AudioCycles(work),
-                echo_voices: echo_voices.clone(),
-            };
+            // Replacing the playback releases the voices the old one owned.
+            group.playback = Playback::Prepared { cue };
+            return;
         }
-        let handling = match state.staged {
-            Request::Absent => 8,
-            Request::Cue(_) => 36,
-        };
-        work = work.saturating_add(handling);
     }
-    let mut echo_voices = echo_voices.clone();
-    let (playback, playback_work) = play(
-        group,
-        &result.playback,
-        &mut result.history,
+    play(
+        &mut group.playback,
+        &mut group.history,
         content,
         occupied,
-        &mut echo_voices,
-    );
-    result.playback = playback;
-    result.reply = state.staged;
-    EffectResult {
-        group: result,
-        work: AudioCycles(work.saturating_add(playback_work)),
         echo_voices,
+    );
+}
+/// Spec: StagedRequests. Door playback is protected against another cue in its group until its
+/// last part finishes.
+fn protected(playback: &Playback) -> bool {
+    match playback {
+        Playback::Prepared { cue } => *cue == CueId::Door,
+        Playback::Active { cue, parts } => {
+            *cue == CueId::Door && parts.iter().any(|part| matches!(part, PartState::Live(_)))
+        }
+        Playback::Empty => false,
     }
 }
-fn protected(playback: &Playback) -> bool {
-    matches!(
-        playback,
-        Playback::Prepared {
-            cue: CueId::Door,
-            ..
-        } | Playback::Active {
-            cue: CueId::Door,
-            ..
-        }
-    ) && !matches!(playback, Playback::Active { parts, .. } if parts.iter().all(|part| matches!(part, PartState::Finished)))
-}
+/// Spec: EffectResources. A prepared clip acquires its voices; then every part of the playing clip
+/// advances once, reading and updating its own release-history entry by part order.
 fn play(
-    group: SoundGroup,
-    playback: &Playback,
+    playback: &mut Playback,
     history: &mut [ReleaseMemory],
     content: &Content,
     occupied: &BTreeSet<EffectVoiceId>,
-    echo_voices: &mut BTreeSet<crate::VoiceId>,
-) -> (Playback, u64) {
-    let (cue, mut parts, allocation) = match playback {
-        Playback::Empty => return (Playback::Empty, 0),
-        Playback::Prepared { cue } => {
-            let Some(clip) = content.effects.get(cue) else {
-                return (playback.clone(), 0);
-            };
-            let (parts, visits) = allocate(clip.parts.len(), occupied, echo_voices);
-            let cost = profile(group)
-                .allocate
-                .saturating_add(PART.saturating_mul(u64::try_from(parts.len()).unwrap_or(0)))
-                .saturating_add(VISIT.saturating_mul(visits));
-            (*cue, parts, cost)
-        }
-        Playback::Active { cue, parts } => (*cue, parts.clone(), 0),
-    };
-    let alive = parts
-        .iter()
-        .filter(|part| matches!(part, PartState::Live(_)))
-        .count();
-    if alive == 0 {
-        return (Playback::Active { cue, parts }, 0);
-    }
-    let mut work = allocation
-        .saturating_add(profile(group).play)
-        .saturating_add(ALIVE.saturating_mul(u64::try_from(alive).unwrap_or(0)));
-    let last = parts
-        .iter()
-        .rposition(|part| matches!(part, PartState::Live(_)));
-    let Some(clip) = content.effects.get(&cue) else {
-        return (playback.clone(), work);
-    };
-    for (identity, ((part, graph), release)) in
-        parts.iter_mut().zip(&clip.parts).zip(history).enumerate()
+    echo_voices: &mut BTreeSet<VoiceId>,
+) {
+    if let Playback::Prepared { cue } = *playback
+        && let Some(clip) = content.effects.get(&cue)
     {
-        work = work.saturating_add(advance_part(
-            part,
-            release,
-            graph,
-            group,
-            identity,
-            Some(identity) == last,
-        ));
+        let parts = allocate(clip.parts.len(), occupied, echo_voices);
+        *playback = Playback::Active { cue, parts };
     }
-    (Playback::Active { cue, parts }, work)
+    let Playback::Active { cue, parts } = playback else {
+        return;
+    };
+    let Some(clip) = content.effects.get(cue) else {
+        return;
+    };
+    for ((part, graph), release) in parts.iter_mut().zip(&clip.parts).zip(history) {
+        advance_part(part, release, graph);
+    }
 }
+/// Spec: EffectResources. Give a clip's ordered parts the highest free voices and take exactly
+/// those voices out of echo membership. Each part starts before its first span, with a countdown
+/// that expires on the turn it is allocated.
 fn allocate(
     count: usize,
     occupied: &BTreeSet<EffectVoiceId>,
-    echo_voices: &mut BTreeSet<crate::VoiceId>,
-) -> (Vec<PartState>, u64) {
-    let mut parts = Vec::new();
-    let mut visits: u64 = 0;
-    for voice in POOL {
-        if occupied.contains(&voice) {
-            visits = visits.saturating_add(1);
-            continue;
-        }
-        if parts.len() == count {
-            break;
-        }
-        echo_voices.remove(&crate::VoiceId::Effect(voice));
-        parts.push(PartState::Live(LivePart {
-            voice,
-            cursor: 0,
-            instruction: 1,
-            pitch: crate::EffectPitch::PRENOTE,
-            fraction: 0,
-            motion: None,
-        }));
+    echo_voices: &mut BTreeSet<VoiceId>,
+) -> Vec<PartState> {
+    let voices: Vec<_> = POOL
+        .into_iter()
+        .filter(|voice| !occupied.contains(voice))
+        .take(count)
+        .collect();
+    for voice in &voices {
+        echo_voices.remove(&VoiceId::Effect(*voice));
     }
-    (parts, visits)
+    voices
+        .into_iter()
+        .map(|voice| {
+            PartState::Live(LivePart {
+                voice,
+                cursor: 0,
+                instruction: 1,
+                pitch: crate::EffectPitch::PRENOTE,
+                fraction: 0,
+                motion: None,
+            })
+        })
+        .collect()
 }
-fn advance_part(
-    part: &mut PartState,
-    release: &mut ReleaseMemory,
-    graph: &EffectPartContent,
-    group: SoundGroup,
-    identity: usize,
-    last: bool,
-) -> u64 {
+/// Spec: EffectResources. One turn of one part: count its instruction down with eight-bit
+/// wrapping, and when the countdown expires, release, start its next span or finish.
+fn advance_part(part: &mut PartState, release: &mut ReleaseMemory, graph: &EffectPartContent) {
     let PartState::Live(live) = part else {
-        return 0;
+        return;
     };
+    // A retained zero countdown wraps to 255 here.
     live.instruction = live.instruction.wrapping_sub(1);
     if live.instruction != 0 {
-        let slide_work = motion(live);
-        return slide_work.saturating_add(if group == SoundGroup::Ambient {
-            AMBIENT
-        } else {
-            0
-        });
+        motion(live);
+        return;
     }
-    let connected = live.motion.is_some();
-    if !connected {
-        match *release {
-            ReleaseMemory::Inactive => {
-                *release = ReleaseMemory::Active(NonZeroU8::MIN);
-                live.instruction = 1;
-                return RELEASE_START;
-            }
-            ReleaseMemory::Active(n) if n.get() > 1 => {
-                *release = ReleaseMemory::Active(
-                    NonZeroU8::new(n.get().saturating_sub(1)).unwrap_or(NonZeroU8::MIN),
-                );
-                return RELEASE_CONTINUE;
-            }
-            ReleaseMemory::Active(_) => {}
-        }
+    // With an active connected slide the release lasts no turn: the next span starts at once.
+    if live.motion.is_none() && hold_release(live, release) {
+        return;
     }
     *release = ReleaseMemory::Inactive;
-    let Some(span) = next_span(live, graph) else {
-        const FINISH: u64 = 463;
-        const LAST: u64 = 15;
-        const CONNECTED: u64 = 66;
-        *part = PartState::Finished;
-        return FINISH
-            .saturating_add(if last { LAST } else { 0 })
-            .saturating_sub(if connected { CONNECTED } else { 0 });
-    };
-    start_span(live, span, graph, group, identity != 0)
+    match next_span(live, graph) {
+        Some((index, span)) => start_span(live, index, span),
+        // Finishing releases the part's voice: a finished part owns none.
+        None => *part = PartState::Finished,
+    }
 }
-fn next_span<'a>(live: &LivePart, graph: &'a EffectPartContent) -> Option<&'a crate::EffectSpan> {
-    let cursor = if live.cursor >= graph.spans.len() {
-        graph.loop_start?
-    } else {
+/// Spec: EffectResources. An expired countdown with no active slide: begin a release delay, or
+/// count an existing one down. Whether the part still waits on its release this turn.
+fn hold_release(live: &mut LivePart, release: &mut ReleaseMemory) -> bool {
+    match *release {
+        ReleaseMemory::Inactive => {
+            *release = ReleaseMemory::Active(NonZeroU8::MIN);
+            live.instruction = 1;
+            true
+        }
+        // The countdown stays at zero, so it wraps before the next release observation.
+        ReleaseMemory::Active(count) => count_down(count).is_some_and(|left| {
+            *release = ReleaseMemory::Active(left);
+            true
+        }),
+    }
+}
+/// Spec: EffectResources. The part's next span and its position: the one after the last started,
+/// or the loop span once a repeated sequence reaches its end; none once a finite clip has ended.
+fn next_span<'a>(live: &LivePart, graph: &'a EffectPartContent) -> Option<(usize, &'a EffectSpan)> {
+    let index = if live.cursor < graph.spans.len() {
         live.cursor
+    } else {
+        graph.loop_start?
     };
-    graph.spans.get(cursor)
+    graph.spans.get(index).map(|span| (index, span))
 }
-fn start_span(
-    live: &mut LivePart,
-    span: &crate::EffectSpan,
-    graph: &EffectPartContent,
-    group: SoundGroup,
-    second: bool,
-) -> u64 {
-    const START: u64 = 1298;
-    const CONNECTION: u64 = 102;
-    const ENTRY: u64 = 94;
-    const RETURN: u64 = 44;
-    let returning = live.cursor >= graph.spans.len();
-    if returning {
-        live.cursor = graph.loop_start.unwrap_or(0);
-    }
-    let mut work = START
-        .saturating_sub(
-            OCTAVE_WORK
-                .saturating_mul(u64::from(span.pitch.get().checked_div(OCTAVE).unwrap_or(0))),
-        )
-        .saturating_sub(if second { SECOND } else { 0 });
-    if graph.loop_start == Some(live.cursor) {
-        work = work.saturating_add(if returning { RETURN } else { ENTRY });
-    }
+/// Spec: EffectResources. Start a span: its duration, its pitch with the fraction reset, and its
+/// connected pitch motion, which advances once in the same turn.
+fn start_span(live: &mut LivePart, index: usize, span: &EffectSpan) {
+    live.cursor = index.saturating_add(1);
     live.instruction = span.duration.0.get();
     live.pitch = span.pitch;
     live.fraction = 0;
     live.motion.clone_from(&span.motion);
-    live.cursor = live.cursor.saturating_add(1);
-    if span.motion.is_some() {
-        work = work.saturating_add(CONNECTION).saturating_add(motion(live));
-    }
-    if group == SoundGroup::Ambient {
-        work = work.saturating_add(AMBIENT);
-    }
-    work
+    motion(live);
 }
-/// Spec: ConnectedPitchMotion. Fractional carry and terminal carry charge work once.
-pub fn motion(live: &mut LivePart) -> u64 {
+/// Spec: ConnectedPitchMotion. An active slide adds its speed to the fraction, carries whole
+/// semitones into the pitch, and ends on reaching its target, keeping its final fraction.
+fn motion(live: &mut LivePart) {
     let Some(slide) = &live.motion else {
-        return 0;
+        return;
     };
     let sum = u16::from(live.fraction).saturating_add(u16::from(slide.speed.get()));
-    live.fraction = u8::try_from(sum.checked_rem(FRACTIONS).unwrap_or(0)).unwrap_or(0);
-    let carry = sum.checked_div(FRACTIONS).unwrap_or(0);
-    live.pitch = live.pitch.carry(u8::try_from(carry).unwrap_or(0));
-    let terminal = live.pitch.get() >= slide.target.get();
-    let base = if carry == 0 {
-        FRACTIONAL
-    } else if terminal {
-        TERMINAL
-    } else {
-        NONTERMINAL
-    };
-    if terminal {
+    // The low byte is `sum mod 256`, the high byte `floor(sum / 256)` semitones.
+    let [fraction, semitones] = sum.to_le_bytes();
+    live.fraction = fraction;
+    live.pitch = live.pitch.carry(semitones);
+    if live.pitch.get() >= slide.target.get() {
         live.motion = None;
     }
-    base.saturating_sub(
-        OCTAVE_WORK.saturating_mul(u64::from(live.pitch.get().checked_div(OCTAVE).unwrap_or(0))),
-    )
 }

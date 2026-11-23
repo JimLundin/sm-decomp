@@ -79,7 +79,7 @@ impl Captured {
             || self.observed.graphics_complete.master_ticks
                 >= self.observed.clear_vertical_motion.master_ticks
             || self.observed.clear_vertical_motion.master_ticks >= self.contact_service_master_ticks
-            || fifo.at != audio_transport::CpuMasterTicks(self.contact_service_master_ticks)
+            || fifo.service_master_ticks != self.contact_service_master_ticks
             || fifo.queue != self.contact_service_queue
             || fifo.progress != self.contact_service_progress
         {
@@ -250,9 +250,10 @@ fn state_fields(state: &State) -> Vec<Observation> {
         i64::from(state.movement.0.position.y.0),
         i64::from(state.movement.0.vertical.speed.0),
     );
+    let contact = &state.audio.0.senders[SoundGroup::Contact];
     fields.extend(sender_offer::observations(
-        &state.contact.0.queue,
-        &state.contact.0.progress,
+        contact.queue.cues(),
+        &contact.progress,
     ));
     fields
 }

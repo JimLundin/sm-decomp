@@ -52,7 +52,7 @@ fn opening_ceres_rom_content_matches_resident_observations() {
         panic!("native control seed");
     };
     let native = PathBuf::from(std::env::var_os("SM_AUDIO_NATIVE").unwrap());
-    let (observed, _) = load(&native.join(path), sha256, case.end.cut_inclusive, None).unwrap();
+    let (observed, _) = load(&native.join(path), sha256, case.end.cut_inclusive).unwrap();
     assert!(
         imported.content.tracks == observed.content.tracks,
         "song graph"

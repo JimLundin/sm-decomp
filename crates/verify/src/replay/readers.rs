@@ -3,10 +3,7 @@
 use super::compare::Observation;
 use super::index::{Case, ObservationId};
 use super::result::Outcome;
-use super::{
-    AudioExpectedReader, AudioInputReader, actual_audio, actual_audio_from, add_publications,
-    audio, data_failure, movement,
-};
+use super::{audio, data_failure, movement};
 use crate::cache::Cache;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
@@ -16,7 +13,7 @@ use game::state::owned::OwnedState;
 pub(super) enum InputReader {
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
-    SenderOffer(Vec<super::sender_offer::Offer>),
+    SenderOffer(Vec<audio_transport::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     NativeSearch(Box<super::native_search::Inputs>),
     Recorded(Box<super::recorded::Inputs>),
@@ -42,14 +39,11 @@ pub(super) enum ExpectedReader {
 pub(super) enum ActualReader {
     EarlyMap,
     HealthTail,
-    SenderOffer,
+    SenderOffer(audio_transport::SoundGroup),
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
-    Audio {
-        publications: Vec<audio::Publication>,
-        replies: [u8; 4],
-    },
+    Audio(Vec<audio::Alias>),
     Movement,
 }
 
@@ -84,10 +78,6 @@ pub(super) fn record(cache: &Cache, cut: u64) -> Result<oracle_record::FrameReco
 }
 
 impl InputReader {
-    pub fn pending_origin(&self, case: &Case, production: &Production) -> Option<Production> {
-        (case.checkpoints && matches!(self, Self::Audio(_))).then(|| production.clone())
-    }
-
     pub fn advance(
         &self,
         production: &mut Production,
@@ -102,15 +92,7 @@ impl InputReader {
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
             Self::Recorded(reader) => reader.advance(production, cut),
-            Self::Audio(tape) => {
-                let stop = tape
-                    .stops
-                    .iter()
-                    .find(|(at, _)| *at == cut)
-                    .map(|(_, stop)| stop)
-                    .ok_or_else(|| data_failure(Some(cut), "admitted audio clock stop"))?;
-                AudioInputReader { tape }.advance(production, cut, stop)
-            }
+            Self::Audio(tape) => audio::advance(production, tape, cut),
             Self::Movement { cache, content } => {
                 let OwnedState::Movement(samus) = production.state() else {
                     return Err(data_failure(Some(cut), "movement owned scope"));
@@ -180,11 +162,9 @@ impl ActualReader {
                 *retained = Some(outputs);
                 Ok(fields)
             }
-            (
-                Self::SenderOffer,
-                InputReader::SenderOffer(_),
-                ProductionOutputs::AudioSender(outputs),
-            ) if outputs.is_empty() => super::sender_offer::actual(production),
+            (Self::SenderOffer(group), InputReader::SenderOffer(_), ProductionOutputs::Audio) => {
+                super::sender_offer::actual(production, *group)
+            }
             (
                 Self::NativeSearch(retained),
                 InputReader::NativeSearch(_),
@@ -197,17 +177,8 @@ impl ActualReader {
             (Self::Recorded(actual), InputReader::Recorded(_), outputs) => {
                 actual.accept(production, &outputs, cut)
             }
-            (
-                Self::Audio {
-                    publications,
-                    replies,
-                },
-                InputReader::Audio(tape),
-                outputs @ ProductionOutputs::Audio(_),
-            ) => {
-                let before = publications.len();
-                add_publications(tape, outputs, publications, replies, cut)?;
-                actual_audio_from(production, publications, *replies, before)
+            (Self::Audio(aliases), InputReader::Audio(_), ProductionOutputs::Audio) => {
+                audio::actual(production, aliases)
             }
             (Self::EarlyMap, InputReader::EarlyMap(_), ProductionOutputs::Connected(_)) => {
                 super::early_map::actual(production, Some(cut))
@@ -244,14 +215,11 @@ impl ActualReader {
         match self {
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::HealthTail => super::health_tail::initial(production),
-            Self::SenderOffer => super::sender_offer::actual(production),
+            Self::SenderOffer(group) => super::sender_offer::actual(production, *group),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::NativeSearch(_) => super::touched_cells::initial(),
             Self::Recorded(actual) => actual.initial(production),
-            Self::Audio {
-                publications,
-                replies,
-            } => actual_audio(production, publications, *replies),
+            Self::Audio(aliases) => audio::actual(production, aliases),
             Self::Movement => {
                 let OwnedState::Movement(state) = production.state() else {
                     return Err(data_failure(None, "movement null scope"));
@@ -274,50 +242,14 @@ impl ActualReader {
         }
     }
 
-    pub fn same_publication_prefix(&self, direct: &Self) -> bool {
+    /// Whether a restored run published the same retained outputs as the direct one.
+    pub fn same_retained_outputs(&self, direct: &Self) -> bool {
         match (self, direct) {
             (Self::MovementTouchdown(restored), Self::MovementTouchdown(direct)) => {
                 restored == direct
             }
-            (
-                Self::Audio {
-                    publications: restored,
-                    replies: restored_replies,
-                },
-                Self::Audio {
-                    publications: direct,
-                    replies: direct_replies,
-                },
-            ) => restored == direct && restored_replies == direct_replies,
-            (
-                Self::EarlyMap
-                | Self::NativeSearch(_)
-                | Self::Recorded(_)
-                | Self::Movement
-                | Self::SenderOffer
-                | Self::HealthTail,
-                Self::EarlyMap
-                | Self::NativeSearch(_)
-                | Self::Recorded(_)
-                | Self::Movement
-                | Self::SenderOffer
-                | Self::HealthTail,
-            ) => true,
-            (Self::Audio { .. } | Self::MovementTouchdown(_), _)
-            | (_, Self::Audio { .. } | Self::MovementTouchdown(_)) => false,
-        }
-    }
-
-    pub const fn publication_count(&self) -> usize {
-        match self {
-            Self::Audio { publications, .. } => publications.len(),
-            Self::EarlyMap
-            | Self::NativeSearch(_)
-            | Self::Movement
-            | Self::Recorded(_)
-            | Self::SenderOffer
-            | Self::HealthTail
-            | Self::MovementTouchdown(_) => 0,
+            (Self::MovementTouchdown(_), _) | (_, Self::MovementTouchdown(_)) => false,
+            _ => true,
         }
     }
 }
@@ -347,18 +279,24 @@ impl ExpectedReader {
             }
             Self::Recorded(reader) => reader.read(case, cut),
             Self::Audio(tape) => {
-                let reader = AudioExpectedReader { tape };
-                let capture = reader.at(cut)?;
+                let capture = tape
+                    .cuts
+                    .iter()
+                    .find(|(number, _)| *number == cut)
+                    .map(|(_, expected)| expected)
+                    .ok_or_else(|| data_failure(Some(cut), "missing native expected cut"))?;
                 Ok(ExpectedCut {
-                    fields: reader.observations(cut)?,
+                    fields: capture.fields.clone(),
                     semantics: capture
                         .fields
                         .iter()
-                        .map(|field| Observation::quantity(field.field.clone(), field.value))
+                        .take(capture.semantic_count)
+                        .cloned()
                         .collect(),
-                    semantic_count: capture.fields.len(),
-                    output_count: 0,
-                    replies: 4,
+                    semantic_count: capture.semantic_count,
+                    // The replies compared, and the three request lines.
+                    output_count: capture.replies.saturating_add(3),
+                    replies: capture.replies,
                 })
             }
             Self::Movement { cache, row } => {

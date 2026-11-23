@@ -7,11 +7,14 @@ the same change as the implementation. Replay case limits name narrower witness 
 
 ## Audio transport production inputs
 
-Native production audio owns complete committed and pending transport State and accepts
-independently captured physical requests and elapsed time. This proves the selected transport
-observations, not CPU request generation, game-time costs or waveform synthesis. Required
-whole-engine producers remain unsupported. See
-[audio-transport gaps](behaviours/audio-transport.gaps.md).
+Production audio owns the complete transport State and plays one frame at a time. Each frame's
+queue offers and its audio cadence (effect turns around the sender service, and music turns) are
+borrowed: in the native cases the offers are the cues the CPU newly presents and the cadence is
+the capture's port order. This proves the transport's frame-level replies, request lines and
+song, not CPU request generation, the CPU's frame timing, the audio clock or waveform synthesis.
+An effect turn under way at a cut is completed in the next frame, so the replies it had already
+published at that cut are not reproduced there. Required whole-engine producers remain
+unsupported. See [audio-transport gaps](behaviours/audio-transport.gaps.md).
 
 ## Comparison representation limits
 

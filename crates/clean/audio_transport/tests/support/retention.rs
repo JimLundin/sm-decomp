@@ -1,6 +1,6 @@
-//! Spec: `EffectResources` and `EffectTiming`. Complete admitted histories and echo results.
+//! Spec: EffectResources. Complete release histories and echo membership across effect turns.
 use super::*;
-
+const GROUP: SoundGroup = SoundGroup::Contact;
 fn history(values: &[Value]) -> ReleaseHistory {
     values
         .iter()
@@ -11,14 +11,14 @@ fn history(values: &[Value]) -> ReleaseHistory {
         .collect()
 }
 fn span(value: &Value) -> EffectSpan {
-    let r = value.as_table().expect("span");
+    let r = table(value);
     keys(r, "duration pitch timbre motion");
     EffectSpan {
         duration: EffectTurns(nz(byte(r, "duration"))),
         pitch: ep(byte(r, "pitch")),
         timbre: TimbreId(u16::try_from(integer(r, "timbre")).expect("timbre")),
         motion: r.get("motion").map(|v| {
-            let m = v.as_table().expect("motion");
+            let m = table(v);
             keys(m, "speed target");
             PitchMotion {
                 speed: nz(byte(m, "speed")),
@@ -27,6 +27,7 @@ fn span(value: &Value) -> EffectSpan {
         }),
     }
 }
+/// A clip of one single-span part per span.
 fn clip(spans: Vec<EffectSpan>) -> EffectClip {
     EffectClip {
         parts: spans
@@ -38,13 +39,11 @@ fn clip(spans: Vec<EffectSpan>) -> EffectClip {
             .collect(),
     }
 }
-fn initial(root: &Table, retained: ReleaseHistory) -> State {
-    let (song, _) = song(
-        array(root, "progress")[0].as_table().expect("song"),
-        &root["fixture_mix"],
-    );
-    let mut state = state_fixture(song, 0, 0);
-    state.groups[SoundGroup::Contact] = GroupState {
+/// The first progress vector's song, with Contact's Footstep prepared and steady on its line.
+fn prepared_footstep(root: &Table, retained: ReleaseHistory) -> State {
+    let (song, _) = song(table(&array(root, "progress")[0]), &root["fixture_mix"]);
+    let mut state = fresh_state(song);
+    state.groups[GROUP] = GroupState {
         history: retained,
         handled: Request::Cue(CueId::Footstep),
         staged: Request::Cue(CueId::Footstep),
@@ -53,12 +52,129 @@ fn initial(root: &Table, retained: ReleaseHistory) -> State {
             cue: CueId::Footstep,
         },
     };
+    state.request_lines[GROUP] = Request::Cue(CueId::Footstep);
     state
 }
+/// A changed cue, presented and staged on earlier turns, for the next turn to handle.
+fn stage(state: &mut State, cue: CueId) {
+    state.request_lines[GROUP] = Request::Cue(cue);
+    state.groups[GROUP].staged = Request::Cue(cue);
+}
+pub fn history_vector(row: &Table, root: &Table) {
+    keys(
+        row,
+        "id initial_history prior_parts steps history owned prior_span one_span door_spans door_external_voice",
+    );
+    let content = content(
+        BTreeMap::from([
+            (
+                CueId::Footstep,
+                clip(vec![span(&row["prior_span"]); index(row, "prior_parts")]),
+            ),
+            (CueId::Land, clip(vec![span(&row["one_span"])])),
+            (
+                CueId::Door,
+                clip(array(row, "door_spans").iter().map(span).collect()),
+            ),
+        ]),
+        Vec::new(),
+    );
+    let mut state = prepared_footstep(root, history(array(row, "initial_history")));
+    let steps = array(row, "steps");
+    let histories = array(row, "history");
+    let owned = ints(row, "owned");
+    assert_eq!(steps.len(), histories.len());
+    assert_eq!(steps.len(), owned.len());
+    for (i, step) in steps.iter().enumerate() {
+        match step.as_str().expect("step") {
+            "AllocatePrior" => assert_eq!(i, 0),
+            "Advance" => {}
+            "PrepareOne" => stage(&mut state, CueId::Land),
+            other => {
+                assert_eq!(other, "PrepareDoor");
+                stage(&mut state, CueId::Door);
+                state
+                    .reservations
+                    .insert(effect_voice(integer(row, "door_external_voice")));
+            }
+        }
+        play(&mut state, &content, &[], ONE_EFFECT_TURN);
+        let audio = &state.groups[GROUP];
+        let label = format!("{} step {i}", text(row, "id"));
+        assert_eq!(
+            audio.history,
+            history(histories[i].as_array().expect("history")),
+            "{label}"
+        );
+        assert_eq!(
+            i64::try_from(audio.playback.owned_voices().len()).expect("owned"),
+            owned[i],
+            "{label}"
+        );
+    }
+}
+pub fn echo_vector(row: &Table, root: &Table) {
+    keys(
+        row,
+        "id initial_echo external_voices parts span release_history turns after_echo after_voices reselect_echo",
+    );
+    let mut state = prepared_footstep(root, history(array(row, "release_history")));
+    state.song.mix.echo_voices = voices(row, "initial_echo");
+    state.reservations = effect_voices(row, "external_voices");
+    let effects = BTreeMap::from([(
+        CueId::Footstep,
+        clip(vec![span(&row["span"]); index(row, "parts")]),
+    )]);
+    let effect_content = content(effects.clone(), Vec::new());
+    for turn in 0..unsigned(row, "turns") {
+        play(&mut state, &effect_content, &[], ONE_EFFECT_TURN);
+        assert_eq!(state.song.mix.echo_voices, voices(row, "after_echo"));
+        if turn == 0 {
+            let acquired: Vec<_> = live_parts(&state.groups[GROUP].playback)
+                .into_iter()
+                .map(|(_, live)| live.voice)
+                .collect();
+            let expected: Vec<_> = ints(row, "after_voices")
+                .into_iter()
+                .map(effect_voice)
+                .collect();
+            assert_eq!(acquired, expected);
+        }
+    }
+    assert!(state.groups[GROUP].playback.owned_voices().is_empty());
+    reselect_echo(row, &mut state, effects);
+}
+/// After playback finishes, a music turn's explicit echo selection restores the membership; it
+/// changes no effect ownership or reservation.
+fn reselect_echo(row: &Table, state: &mut State, effects: BTreeMap<CueId, EffectClip>) {
+    let reservations = state.reservations.clone();
+    let groups = state.groups.clone();
+    let selecting = TrackContent {
+        phrases: vec![vec![
+            MusicEvent::EchoMix {
+                voices: voices(row, "reselect_echo"),
+                left: 1,
+                right: 1,
+            },
+            MusicEvent::Tone(mp(24)),
+            MusicEvent::Complete,
+        ]],
+    };
+    for track in &mut state.song.tracks {
+        track.note = MusicTurns(nz(1));
+        track.position = TrackPosition::Root { cursor: 0 };
+    }
+    let music_content = content(effects, vec![selecting; 2]);
+    play(state, &music_content, &[], ONE_MUSIC_TURN);
+    assert_eq!(state.song.mix.echo_voices, voices(row, "reselect_echo"));
+    assert_eq!(state.reservations, reservations);
+    assert_eq!(state.groups, groups);
+}
 #[test]
-fn initialization_and_restore_preserve_caller_supplied_dormant_history() {
-    let root: Table = toml::from_str(SOURCE).expect("vectors");
-    for count in 0u8..=255 {
+fn restoring_and_idle_frames_keep_caller_supplied_dormant_history() {
+    let root: Table = toml::from_str(VECTORS).expect("vectors");
+    let content = content(BTreeMap::new(), Vec::new());
+    for count in 0u8..=u8::MAX {
         let retained = NonZeroU8::new(count).map_or(ReleaseMemory::Inactive, ReleaseMemory::Active);
         for playback in [
             Playback::Empty,
@@ -70,275 +186,13 @@ fn initialization_and_restore_preserve_caller_supplied_dormant_history() {
                 parts: vec![PartState::Finished],
             },
         ] {
-            let mut state = initial(&root, vec![ReleaseMemory::Inactive, retained]);
-            state.groups[SoundGroup::Contact].playback = playback;
+            let mut state = prepared_footstep(&root, vec![ReleaseMemory::Inactive, retained]);
+            state.groups[GROUP].playback = playback;
             state.groups[SoundGroup::Action].history = vec![retained];
             state.groups[SoundGroup::Ambient].history = vec![retained];
             let groups = state.groups.clone();
-            transport::initialize(&mut state);
+            play(&mut state, &content, &[], SERVICE_ONLY);
             assert_eq!(state.groups, groups);
-            assert_eq!(roundtrip(&state), state);
         }
     }
-}
-fn completion(result: &effects::EffectResult) -> CompletionResult {
-    CompletionResult::Effect {
-        group: SoundGroup::Contact,
-        result: result.group.clone(),
-        echo_voices: result.echo_voices.clone(),
-    }
-}
-// Start through the actual dispatcher, then stop and restore on both sides of publication.
-fn publish_turn(state: &mut State, content: &Content, expected: i64) -> effects::EffectResult {
-    let before = state.groups[SoundGroup::Contact].clone();
-    let mix = state.song.mix.clone();
-    let reservations = state.reservations.clone();
-    let result = effects::turn(
-        SoundGroup::Contact,
-        &before,
-        content,
-        &reservations,
-        &mix.echo_voices,
-    );
-    assert_eq!(result.work.0.to_i64().expect("work"), expected);
-    let anchor = state.now.clone();
-    state.phase = AudioPhase::Sample {
-        sample: StableSample {
-            line: ReplyLine::Group(SoundGroup::Ambient),
-            anchor: anchor.clone(),
-            first: Some(Request::Absent),
-        },
-        next: Continuation::Effect(SoundGroup::Contact),
-    };
-    let initial = roundtrip(state);
-    let mut split_output = transport::advance(state, content, time::halves(19), &[]);
-    let at = time::add(&anchor, time::whole(result.work.0.clone()));
-    assert_eq!(
-        state.phase,
-        AudioPhase::Work {
-            at: at.clone(),
-            result: completion(&result),
-        }
-    );
-    *state = roundtrip(state);
-    assert_eq!(
-        transport::advance(state, content, time::cycles(0), &[]),
-        Vec::new()
-    );
-    let remaining = time::subtract(time::subtract(&at, &state.now), time::halves(1));
-    assert_eq!(
-        transport::advance(state, content, remaining, &[]),
-        Vec::new()
-    );
-    assert_eq!(state.groups[SoundGroup::Contact], before);
-    assert_eq!(state.song.mix, mix);
-    *state = roundtrip(state);
-    let output = transport::advance(state, content, time::halves(1), &[]);
-    assert_eq!(
-        output,
-        vec![transport::Output::Publication {
-            at,
-            line: ReplyLine::Group(SoundGroup::Contact),
-            reply: Reply::Effect(result.group.reply),
-            result: completion(&result),
-        }]
-    );
-    split_output.extend(output);
-    let mut direct = initial;
-    assert_eq!(
-        transport::advance(
-            &mut direct,
-            content,
-            time::whole(result.work.0.clone()),
-            &[]
-        ),
-        split_output
-    );
-    assert_eq!(*state, direct);
-    assert_eq!(state.groups[SoundGroup::Contact], result.group);
-    let mut completed_mix = mix;
-    completed_mix.echo_voices.clone_from(&result.echo_voices);
-    assert_eq!(state.song.mix, completed_mix);
-    assert_eq!(state.reservations, reservations);
-    assert_eq!(
-        transport::advance(state, content, time::cycles(0), &[]),
-        Vec::new()
-    );
-    result
-}
-pub fn history_vector(row: &Table, root: &Table) {
-    keys(
-        row,
-        "id initial_history prior_parts steps work history owned prior_span one_span door_spans door_external_voice wrong_final_allocation_work",
-    );
-    let prior = span(&row["prior_span"]);
-    let content = Content {
-        effects: BTreeMap::from([
-            (
-                CueId::Footstep,
-                clip(vec![
-                    prior;
-                    usize::try_from(integer(row, "prior_parts"))
-                        .expect("parts")
-                ]),
-            ),
-            (CueId::Land, clip(vec![span(&row["one_span"])])),
-            (
-                CueId::Door,
-                clip(array(row, "door_spans").iter().map(span).collect()),
-            ),
-        ]),
-        tracks: Vec::new(),
-    };
-    let mut state = initial(root, history(array(row, "initial_history")));
-    let steps = array(row, "steps");
-    assert_eq!(steps.len(), array(row, "work").len());
-    assert_eq!(steps.len(), array(row, "history").len());
-    assert_eq!(steps.len(), array(row, "owned").len());
-    for (i, step) in steps.iter().enumerate() {
-        match step.as_str().expect("step") {
-            "AllocatePrior" => assert_eq!(i, 0),
-            "Advance" => {}
-            "PrepareOne" => state.groups[SoundGroup::Contact].staged = Request::Cue(CueId::Land),
-            "PrepareDoor" => {
-                state.groups[SoundGroup::Contact].staged = Request::Cue(CueId::Door);
-                state
-                    .reservations
-                    .insert(effect_voice(integer(row, "door_external_voice")));
-            }
-            other => assert_eq!(other, "known step"),
-        }
-        let saved = &state.groups[SoundGroup::Contact];
-        if matches!(saved.playback, Playback::Prepared { cue: CueId::Door }) {
-            let mut lost = saved.clone();
-            lost.history[1] = ReleaseMemory::Inactive;
-            let wrong = effects::turn(
-                SoundGroup::Contact,
-                &lost,
-                &content,
-                &state.reservations,
-                &state.song.mix.echo_voices,
-            );
-            assert_eq!(
-                wrong.work,
-                AudioCycles(unsigned(row, "wrong_final_allocation_work"))
-            );
-            assert_ne!(
-                (wrong.work, wrong.group.history),
-                (
-                    AudioCycles(u64::try_from(ints(row, "work")[i]).expect("work")),
-                    history(array(row, "history")[i].as_array().expect("history"))
-                )
-            );
-        }
-        publish_turn(&mut state, &content, ints(row, "work")[i]);
-        assert_eq!(
-            state.groups[SoundGroup::Contact].history,
-            history(array(row, "history")[i].as_array().expect("history")),
-            "{} step {i}",
-            text(row, "id")
-        );
-        assert_eq!(
-            effects::owned(&state.groups[SoundGroup::Contact].playback).len(),
-            usize::try_from(ints(row, "owned")[i]).expect("owned")
-        );
-    }
-}
-pub fn echo_vector(row: &Table, root: &Table) {
-    keys(
-        row,
-        "id initial_echo external_voices parts span release_history work after_echo after_voices reselect_echo",
-    );
-    let mut state = initial(root, history(array(row, "release_history")));
-    state.song.mix.echo_voices = ints(row, "initial_echo")
-        .into_iter()
-        .map(super::super::voice)
-        .collect();
-    state.reservations = ints(row, "external_voices")
-        .into_iter()
-        .map(effect_voice)
-        .collect();
-    let mut content = Content {
-        effects: BTreeMap::from([(
-            CueId::Footstep,
-            clip(vec![
-                span(&row["span"]);
-                usize::try_from(integer(row, "parts")).expect("parts")
-            ]),
-        )]),
-        tracks: Vec::new(),
-    };
-    for (i, work) in ints(row, "work").into_iter().enumerate() {
-        publish_turn(&mut state, &content, work);
-        assert_eq!(
-            state.song.mix.echo_voices,
-            ints(row, "after_echo")
-                .into_iter()
-                .map(super::super::voice)
-                .collect()
-        );
-        if i == 0 {
-            let Playback::Active { parts, .. } = &state.groups[SoundGroup::Contact].playback else {
-                assert!(false);
-                return;
-            };
-            let voices: Vec<_> = parts
-                .iter()
-                .filter_map(|p| match p {
-                    PartState::Live(l) => Some(l.voice),
-                    PartState::Finished => None,
-                })
-                .collect();
-            assert_eq!(
-                voices,
-                ints(row, "after_voices")
-                    .into_iter()
-                    .map(effect_voice)
-                    .collect::<Vec<_>>()
-            );
-        }
-    }
-    assert!(effects::owned(&state.groups[SoundGroup::Contact].playback).is_empty());
-    reselect_echo(row, &mut state, &mut content);
-}
-fn reselect_echo(row: &Table, state: &mut State, content: &mut Content) {
-    let reservations = state.reservations.clone();
-    let groups = state.groups.clone();
-    let selected = ints(row, "reselect_echo")
-        .into_iter()
-        .map(super::super::voice)
-        .collect();
-    content.tracks = vec![
-        TrackContent {
-            phrases: vec![vec![
-                MusicEvent::EchoMix {
-                    voices: selected,
-                    left: 1,
-                    right: 1
-                },
-                MusicEvent::Tone(mp(24)),
-                MusicEvent::Complete
-            ]]
-        };
-        2
-    ];
-    for track in &mut state.song.tracks {
-        track.note = MusicTurns(nz(1));
-        track.position = TrackPosition::Root { cursor: 0 };
-    }
-    state.music_due = true;
-    state.phase = AudioPhase::MusicStart {
-        at: state.now.clone(),
-    };
-    let result = music::turn(&state.song, &content.tracks);
-    transport::advance(state, content, time::whole(result.work.0), &[]);
-    assert_eq!(
-        state.song.mix.echo_voices,
-        ints(row, "reselect_echo")
-            .into_iter()
-            .map(super::super::voice)
-            .collect()
-    );
-    assert_eq!(state.reservations, reservations);
-    assert_eq!(state.groups, groups);
 }

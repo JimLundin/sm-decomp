@@ -67,66 +67,42 @@ kind = "scoped"
 row = "native-control"
 start = { source = "native-seed", path = "control.local.toml", sha256 = "7b7eb9f99ad4e148889376e154aff5e8f30fe887d01f105ecb864c6c74d1aa52" }
 end = { cut_inclusive = 183 }
-rules = ["audio-transport/MusicalProgress", "audio-transport/WholeArrangement", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
+rules = ["audio-transport/MusicalProgress", "audio-transport/WholeArrangement", "audio-transport/FrameCadence", "audio-transport/PublishedReplies", "audio-transport/StagedRequests", "audio-transport/RequestDelivery", "audio-transport/RequestRelease"]
 profile = "reference"
 responsibilities = ["audio"]
 content = "opening-ceres-audio"
-inputs = "native-physical-presentations"
-expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
+inputs = "native-frame-inputs"
+expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic"], outputs = ["audio.replies", "audio.request_lines"] }
 checkpoints = true
-limits = ["locked room-entry transport and three sender states admitted", "measured transport stops and physical presentations admitted", "CPU workload and sender timing unproved", "audio waveform omitted", "77 independently named source-writer exclusions"]
+limits = ["locked room-entry audio side and three ready, empty senders admitted", "each frame's offers are the cues the CPU newly presents in it; its audio cadence is the capture's port order", "an effect turn under way at a cut completes in the next frame; the replies it had already published there are T1's and are not compared", "sender queues and progress not compared: the capture records no CPU memory", "CPU frame timing, the audio clock and the audio waveform are unproved", "77 independently named source-writer exclusions"]
 
 [[case.borrowed]]
-dependency = "audio.clock-and-requests"
+dependency = "audio.offers-and-cadence"
 provider = "pinned-native-capture"
-fields = ["physical.clock", "physical.presentations"]
-phase = "CPU-cut"
-claim = "clock and CPU request producers outside case"
-
+fields = ["frame.offers", "frame.cadence"]
+phase = "per frame"
+claim = "CPU producers, the CPU's frame timing and the audio clock outside case (T1)"
 [[case]]
 id = "audio/native-expire-prefix"
 kind = "scoped"
 row = "native-expire"
 start = { source = "native-seed", path = "expire.local.toml", sha256 = "45113c87404d46760293702be222f3efa53e1404df6a1c8367c7b7f0a00728b7" }
 end = { cut_inclusive = 64 }
-rules = ["audio-transport/MusicalProgress", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
+rules = ["audio-transport/MusicalProgress", "audio-transport/FrameCadence", "audio-transport/PublishedReplies", "audio-transport/StagedRequests", "audio-transport/RequestDelivery", "audio-transport/RequestRelease"]
 profile = "reference"
 responsibilities = ["audio"]
 content = "opening-ceres-audio"
-inputs = "native-physical-presentations"
-expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
+inputs = "native-frame-inputs"
+expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic"], outputs = ["audio.replies", "audio.request_lines"] }
 checkpoints = true
-limits = ["locked room-entry transport and three sender states admitted", "measured transport stops and physical requests admitted", "ends before external repeat-count intervention", "no through-intervention continuation claim", "CPU timing and audio waveform unproved"]
+limits = ["locked room-entry audio side and three ready, empty senders admitted", "each frame's offers are the cues the CPU newly presents in it; its audio cadence is the capture's port order", "an effect turn under way at a cut completes in the next frame; the replies it had already published there are T1's and are not compared", "sender queues and progress not compared: the capture records no CPU memory", "CPU frame timing, the audio clock and the audio waveform are unproved", "ends before external repeat-count intervention"]
 
 [[case.borrowed]]
-dependency = "audio.clock-and-requests"
+dependency = "audio.offers-and-cadence"
 provider = "pinned-native-capture"
-fields = ["physical.clock", "physical.presentations"]
-phase = "CPU-cut"
-claim = "clock and CPU request producers external"
-
-[[case]]
-id = "audio/native-expire-post64"
-kind = "scoped"
-row = "native-expire"
-start = { source = "native-checkpoint", path = "expire.local.toml", sha256 = "45113c87404d46760293702be222f3efa53e1404df6a1c8367c7b7f0a00728b7", seed_path = "expire-post64-seed.local.toml", seed_sha256 = "1220beb747750c51b702ae7b26e5f2655743ad489a78b76e58ab4ccbaeaa4ab2", frame = 64 }
-end = { cut_inclusive = 183 }
-rules = ["audio-transport/MusicalProgress", "audio-transport/FinitePhrases", "audio-transport/WholeArrangement", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
-profile = "reference"
-responsibilities = ["audio"]
-content = "native-resident-content"
-inputs = "native-physical-presentations"
-expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
-checkpoints = true
-limits = ["independent complete post-intervention seed at original cut64", "compares original cuts65 through183", "no through-intervention continuity claim", "measured clock and physical requests admitted", "CPU timing and audio waveform unproved"]
-
-[[case.borrowed]]
-dependency = "audio.clock-and-requests"
-provider = "pinned-native-capture"
-fields = ["physical.clock", "physical.presentations"]
-phase = "CPU-cut"
-claim = "clock and CPU request producers external"
-
+fields = ["frame.offers", "frame.cadence"]
+phase = "per frame"
+claim = "CPU producers, the CPU's frame timing and the audio clock outside case (T1)"
 [[case]]
 id = "ceres/door-closes-after-departure"
 kind = "scoped"
@@ -602,12 +578,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -624,12 +600,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -646,12 +622,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -668,12 +644,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -690,12 +666,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -712,12 +688,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -734,12 +710,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -756,12 +732,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -778,12 +754,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -800,12 +776,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -822,12 +798,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -844,12 +820,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -866,12 +842,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -888,12 +864,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -910,12 +886,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -932,12 +908,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -954,12 +930,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -976,12 +952,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -998,12 +974,12 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["independent start for one selected group", "producer and permission flags externally observed", "no clock, reply advance or physical service selected", "comparison at the first following service entry"]
+limits = ["independent start for one selected group", "producer and permission flags externally observed", "the frame's offers only: the bracket holds no service of the group, so no audio turn or service is played", "comparison at the first following service entry, before the frame's service", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
 provider = "sender-offers-v1/inputs.toml"
-fields = ["seed.queue", "seed.progress", "seed.reply", "seed.now", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
+fields = ["seed.queue", "seed.progress", "offer.group", "offer.cue", "offer.allowance", "offer.suppression"]
 phase = "seed bracket and observed ingress"
 claim = "ordered captured ingress and complete selected sender start"
 
@@ -1020,7 +996,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1042,7 +1018,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1064,7 +1040,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1086,7 +1062,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1108,7 +1084,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1130,7 +1106,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1152,7 +1128,7 @@ content = "sender-group"
 inputs = "sender-offers"
 expectations = { provider = "sender-offer-queue", fields = ["sender.queue", "sender.progress"], outputs = [] }
 checkpoints = true
-limits = ["constructed queue control", "no physical service or live producer selected"]
+limits = ["constructed queue control", "the frame's offers only: no audio turn, service or live producer", "the rest of the transport is a silent seed the frame never reads"]
 
 [[case.borrowed]]
 dependency = "sender.offer"
@@ -1174,7 +1150,7 @@ content = "player-rom-import"
 inputs = "native-touchdown-inputs"
 expectations = { provider = "native-touchdown-observations", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed", "movement.touchdown.floor_clip", "movement.touchdown.body_fit", "movement.touchdown.floor_response", "sender.queue", "sender.progress"], outputs = ["sender.touchdown_offer", "appearance.touchdown_graphics"] }
 checkpoints = true
-limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope", "no native actor candidate visitation or individual terrain cell identities compared"]
+limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the frame's offer only: no audio turn or service is played, and the rest of the transport is a silent seed the frame never reads", "no native actor candidate visitation or individual terrain cell identities compared"]
 
 [[case.borrowed]]
 dependency = "movement.entry"
@@ -1186,7 +1162,7 @@ claim = "the independently qualified predecessor provides the Movement seed and 
 [[case.borrowed]]
 dependency = "sender.ingress and appearance.area"
 provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
-fields = ["Contact queue, progress and reply", "Contact ingress time and suppression owners", "dry touchdown graphics arm"]
+fields = ["Contact queue and progress", "Contact suppression owners", "dry touchdown graphics arm"]
 phase = "before the Contact offer and at the later graphics opportunity"
 claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
 
@@ -1203,7 +1179,7 @@ content = "player-rom-import"
 inputs = "native-touchdown-inputs"
 expectations = { provider = "native-touchdown-observations", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed", "movement.touchdown.floor_clip", "movement.touchdown.body_fit", "movement.touchdown.floor_response", "sender.queue", "sender.progress"], outputs = ["sender.touchdown_offer", "appearance.touchdown_graphics"] }
 checkpoints = true
-limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope", "no native actor candidate visitation or individual terrain cell identities compared"]
+limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the frame's offer only: no audio turn or service is played, and the rest of the transport is a silent seed the frame never reads", "no native actor candidate visitation or individual terrain cell identities compared"]
 
 [[case.borrowed]]
 dependency = "movement.entry"
@@ -1215,7 +1191,7 @@ claim = "the independently qualified predecessor provides the Movement seed and 
 [[case.borrowed]]
 dependency = "sender.ingress and appearance.area"
 provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
-fields = ["Contact queue, progress and reply", "Contact ingress time and suppression owners", "dry touchdown graphics arm"]
+fields = ["Contact queue and progress", "Contact suppression owners", "dry touchdown graphics arm"]
 phase = "before the Contact offer and at the later graphics opportunity"
 claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
 

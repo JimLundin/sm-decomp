@@ -2,8 +2,8 @@
 
 pub use types::audio::{
     Articulation, Content, CueId, EffectClip, EffectPartContent, EffectPitch, EffectSpan,
-    EffectTurns, EffectVoiceId, ExtraHandlingWork, MusicEvent, MusicTurns, MusicalPitch,
-    PitchMotion, PitchOffset, ResidentMusicReply, SoundGroup, TimbreId, TrackContent, VoiceId,
+    EffectTurns, EffectVoiceId, MusicEvent, MusicTurns, MusicalPitch, PitchMotion, PitchOffset,
+    ResidentMusicReply, SoundGroup, TimbreId, TrackContent, VoiceId,
 };
 
 /// The admitted arrangement and cue bank, with the resources they reference.

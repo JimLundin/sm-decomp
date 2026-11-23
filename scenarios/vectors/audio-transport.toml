@@ -5,19 +5,11 @@
 # All graphs, scalars and cue aliases in this file are invented source-expected inputs.
 # Track records contain the entire graph and saved state. Event kind names are typed
 # choices; phrase/cursor indexes are zero based. Inactive repeat/ramp has no payload.
-# Each family runs one turn unless its work array explicitly requests successive turns.
-# Music work uses fixture_mix; other song families declare their own complete mix.
+# Each family runs one turn unless its `turns` or `music_turns` asks for successive turns.
 # TimbreId aliases 0 and 1 name resolved invented non-noise instruments; they
 # are identities, not source instrument bytes. Echo delay is fixed at 2.
 # Sender CueId aliases 7 and 9 carry identity only; they are not game command bytes.
-# A -1 observation/presentation offset means no milestone; value 0 means Absent.
-# Inactive-ramp uses completion_clock, declared cadence phases, no effects/inputs.
-# Completion fixtures start at AudioInstant 0, timer phase 531 AudioCycles, zero
-# unread overflows, and polling lattice origin 811/2 AudioCycles (eight-cycle steps).
-# Profiles both/effects use effect phase 7; both/music use music phase 224; others 0.
-# All accepted/handled/request/reply values start Absent; all effect slots are free.
-# both/effects presents Action CueId 7 at 3217/2, a single invented pitch-24 span
-# lasting 20 turns, with no release or controls. Other profiles have no presentations.
+# A -1 presentation means the service presents nothing; value 0 means Absent.
 # Effect fixtures prepare one span per part: declared pitch/duration, zero auxiliary
 # scalar fields, release array in physical part order; occupied lists physical slots.
 # Allocation searches 7 down to 2. Slide speed/target creates ConnectedPitchSlide at
@@ -26,19 +18,20 @@
 # prepared_remaining, Hold connection, zero pitch/fraction/span cursor/slide progress.
 # E-second-part starts dead slot 7 then live slot 6, releasing with release timer 1,
 # span countdown one, span cursor zero, pitch/fraction zero; only slot 6 is owned.
-# Clock fixtures start at 2048*overflows AudioCycles, zero previously cleared count,
-# pending ObserveClock at that instant, and polling end now+1/2; phase is declared.
 # Offer fixtures start Ready with no current cue or delay, and the declared queue.
 # Staged fixtures start one live Footstep slot 7 at pitch 24, span cursor 1,
 # instruction remaining 10, fraction 0, no release/slide or pending preparation.
-# Other groups are Absent/free; protected selects Door ownership.
-# Sample fixtures start at 0, first value already presented, second at 5; pair reads
-# at 9/2 and 19/2. Publication anchor 0 survives retries; only Contact is tested.
+# Other groups are Absent/free; protected selects Door ownership. after_reply is the
+# group's reply that turn publishes.
+# Inactive-ramp runs music_turns music turns from both starting songs, with no effects or
+# requests, and compares the two songs after every turn.
+# Resident-reply runs music_turns music turns and lists the music line's reply after each.
 # Invented sender, phrase and loudness cases. No imported game content.
 # sender: one group service; phrase: finish one repeated phrase;
 # ramp: start a ramp then advance one final-pass volume turn.
-schema = "audio-transport-draft-v1"
-completion_clock = { now = 0, timer_phase = 531, unread_overflows = 0, polling_origin_numerator = 811, polling_origin_denominator = 2 }
+# Song families without their own mix use fixture_mix; effect_history and effect_echo
+# keep the first progress vector's song with fixture_mix (their own echo membership).
+schema = "audio-transport-frames-v1"
 fixture_mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
 
 [[sender]]
@@ -52,10 +45,6 @@ after_value = 0
 after_queue = []
 present = -1
 
-work_master_ticks = 122
-read_master_ticks = -1
-present_master_ticks = -1
-
 [[sender]]
 id = "S-send"
 state = "Ready"
@@ -66,10 +55,6 @@ after_state = "AwaitCue"
 after_value = 7
 after_queue = [9]
 present = 7
-
-work_master_ticks = 398
-read_master_ticks = -1
-present_master_ticks = 212
 
 [[sender]]
 id = "S-retry"
@@ -82,10 +67,6 @@ after_value = 7
 after_queue = [9]
 present = 7
 
-work_master_ticks = 162
-read_master_ticks = 58
-present_master_ticks = 104
-
 [[sender]]
 id = "S-ack"
 state = "AwaitCue"
@@ -96,10 +77,6 @@ after_state = "ClearDelay"
 after_value = 2
 after_queue = [9]
 present = -1
-
-work_master_ticks = 210
-read_master_ticks = 58
-present_master_ticks = -1
 
 [[sender]]
 id = "S-delay"
@@ -112,10 +89,6 @@ after_value = 1
 after_queue = [9]
 present = -1
 
-work_master_ticks = 116
-read_master_ticks = -1
-present_master_ticks = -1
-
 [[sender]]
 id = "S-clear"
 state = "ClearDelay"
@@ -126,10 +99,6 @@ after_state = "AwaitClear"
 after_value = 0
 after_queue = [9]
 present = 0
-
-work_master_ticks = 218
-read_master_ticks = -1
-present_master_ticks = 100
 
 [[sender]]
 id = "S-clear-retry"
@@ -142,10 +111,6 @@ after_value = 0
 after_queue = [9]
 present = 0
 
-work_master_ticks = 162
-read_master_ticks = 58
-present_master_ticks = 104
-
 [[sender]]
 id = "S-clear-empty"
 state = "AwaitClear"
@@ -156,10 +121,6 @@ after_state = "Ready"
 after_value = 0
 after_queue = []
 present = -1
-
-work_master_ticks = 252
-read_master_ticks = 58
-present_master_ticks = -1
 
 [[sender]]
 id = "S-clear-send"
@@ -172,10 +133,6 @@ after_value = 9
 after_queue = []
 present = 9
 
-work_master_ticks = 528
-read_master_ticks = 58
-present_master_ticks = 342
-
 [[sender]]
 id = "S-reset-wait"
 state = "ResetDelay"
@@ -187,10 +144,6 @@ after_value = 1
 after_queue = [9]
 present = -1
 
-work_master_ticks = 116
-read_master_ticks = -1
-present_master_ticks = -1
-
 [[sender]]
 id = "S-reset-expire"
 state = "ResetDelay"
@@ -201,10 +154,6 @@ after_state = "Ready"
 after_value = 0
 after_queue = [9]
 present = -1
-
-work_master_ticks = 142
-read_master_ticks = -1
-present_master_ticks = -1
 
 [[phrase]]
 id = "M-repeat"
@@ -293,7 +242,7 @@ after_second_volume = 3584
 after_first_ramp_remaining = 1
 
 
-tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 3 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Ramp", turns = 2, target = 14 }, { kind = "Timing", duration = 5, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 17, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 3584, position = { phrase = 1, cursor = 0 }, repeat = { kind = "Active", count = 6, return_cursor = 3 }, ramp = { kind = "Active", remaining = 4, target = 9, delta = 1 }, phrases = [[{ kind = "Timing", duration = 7, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 25 }, { kind = "RepeatPhrase", phrase = 1, count = 6 }, { kind = "CompletePhrase" }], [{ kind = "Sustain" }, { kind = "CompletePhrase" }]] }]
+tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 3 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Ramp", turns = 2, target = 14 }, { kind = "Timing", duration = 5 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 17, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 3584, position = { phrase = 1, cursor = 0 }, repeat = { kind = "Active", count = 6, return_cursor = 3 }, ramp = { kind = "Active", remaining = 4, target = 9, delta = 1 }, phrases = [[{ kind = "Timing", duration = 7 }, { kind = "Tone", pitch = 25 }, { kind = "RepeatPhrase", phrase = 1, count = 6 }, { kind = "CompletePhrase" }], [{ kind = "Sustain" }, { kind = "CompletePhrase" }]] }]
 mix = { percussion_set = 0, master_loudness = 17920, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
 
 [[offer]]
@@ -346,50 +295,6 @@ demo = false
 exploding = true
 after_queue = []
 
-[[cadence]]
-id = "C-effect"
-effect_phase = 7
-music_phase = 40
-overflows = 1
-after_effect_phase = 0
-after_music_phase = 72
-effect_due = true
-music_due = false
-
-[[cadence]]
-id = "C-music"
-effect_phase = 2
-music_phase = 240
-overflows = 1
-after_effect_phase = 3
-after_music_phase = 16
-effect_due = false
-music_due = true
-
-[[cadence]]
-id = "C-both"
-effect_phase = 6
-music_phase = 200
-overflows = 3
-after_effect_phase = 1
-after_music_phase = 40
-effect_due = true
-music_due = true
-
-[[sample]]
-id = "R-stable"
-first = 7
-second = 7
-accept = true
-retry_shift = 0
-
-[[sample]]
-id = "R-changing"
-first = 7
-second = 9
-accept = false
-retry_shift = 14
-
 [[progress]]
 id = "M-count"
 note = 4
@@ -414,16 +319,6 @@ after_gate = 2
 
 tracks = [{ note = 1, release = 0, duration = 5, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }]
 
-[[cadence]]
-id = "C-discard-eight"
-effect_phase = 7
-music_phase = 240
-overflows = 8
-after_effect_phase = 7
-after_music_phase = 240
-effect_due = false
-music_due = false
-
 [[staged]]
 id = "D-new"
 handled = "Absent"
@@ -431,6 +326,7 @@ staged = "Footstep"
 protected = false
 decision = "Prepare"
 after_handled = "Footstep"
+after_reply = "Footstep"
 
 [[staged]]
 id = "D-same"
@@ -439,6 +335,7 @@ staged = "Footstep"
 protected = false
 decision = "Continue"
 after_handled = "Footstep"
+after_reply = "Footstep"
 
 [[staged]]
 id = "D-absence"
@@ -447,6 +344,7 @@ staged = "Absent"
 protected = false
 decision = "Continue"
 after_handled = "Absent"
+after_reply = "Absent"
 
 [[staged]]
 id = "D-protected"
@@ -455,6 +353,7 @@ staged = "Footstep"
 protected = true
 decision = "Continue"
 after_handled = "Footstep"
+after_reply = "Footstep"
 
 [[staged]]
 id = "D-after-absence"
@@ -463,6 +362,7 @@ staged = "Footstep"
 protected = false
 decision = "Prepare"
 after_handled = "Footstep"
+after_reply = "Footstep"
 
 [[ramp]]
 id = "M-ramp-wrap-up"
@@ -527,7 +427,7 @@ value = 96
 after_value = 96
 
 
-tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 64, strength = 96 }, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 5, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Sustain" }, { kind = "CompletePhrase" }]] }]
+tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 64, strength = 96 } }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 5, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Sustain" }, { kind = "CompletePhrase" }]] }]
 mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
 
 [[control]]
@@ -576,7 +476,7 @@ duration = 255
 slide_speed = 200
 slide_target = 14
 release = [0, 0]
-work = [1169, 3829, 1113, 163]
+turns = 4
 after_pitch = 14
 after_fraction = 144
 
@@ -588,7 +488,7 @@ duration = 255
 slide_speed = 200
 slide_target = 14
 release = [1, 1]
-work = [4707, 1113, 163]
+turns = 3
 after_pitch = 14
 after_fraction = 144
 
@@ -600,7 +500,7 @@ duration = 255
 slide_speed = 200
 slide_target = 15
 release = [1, 1]
-work = [4707, 1093, 1113, 163]
+turns = 4
 after_pitch = 15
 after_fraction = 88
 
@@ -612,7 +512,7 @@ duration = 255
 slide_speed = 200
 slide_target = 14
 release = [2, 2]
-work = [1109, 163]
+turns = 2
 after_instruction = 255
 after_release = 1
 
@@ -624,7 +524,7 @@ duration = 255
 slide_speed = 200
 slide_target = 14
 prepared_remaining = 3
-work = [163]
+turns = 1
 after_instruction = 2
 
 [[effect]]
@@ -634,7 +534,7 @@ pitch = 24
 duration = 20
 first_finished = true
 release = [1]
-work = [1408]
+turns = 1
 after_instruction = 20
 
 [[effect]]
@@ -645,7 +545,7 @@ duration = 1
 intro_parts = 3
 loop_parts = 1
 release = [1]
-work = [2202, 202, 1408, 202, 1408, 202, 1502, 202, 1452, 202, 1452, 202, 1452]
+turns = 13
 after_span = 3
 
 [[effect]]
@@ -657,7 +557,7 @@ slide_speed = 200
 slide_target = 14
 release = [1, 1]
 occupied = [7, 4]
-work = [4739]
+turns = 1
 after_voices = [6, 5]
 
 [[effect]]
@@ -667,7 +567,7 @@ pitch = 24
 duration = 20
 release = [1]
 occupied = [7, 4]
-work = [2218]
+turns = 1
 after_voices = [6]
 
 [[effect]]
@@ -677,7 +577,7 @@ pitch = 24
 duration = 20
 release = [1]
 occupied = [7, 4]
-work = [2008]
+turns = 1
 after_voices = [6]
 
 [[effect]]
@@ -687,7 +587,7 @@ pitch = 24
 duration = 20
 release = [1]
 occupied = [7, 4]
-work = [2018]
+turns = 1
 after_voices = [6]
 
 [[effect]]
@@ -696,7 +596,7 @@ group = "Contact"
 pitch = 24
 duration = 1
 release = [1]
-work = [1992, 208, 622]
+turns = 3
 after_owned = 0
 
 [[effect]]
@@ -707,890 +607,8 @@ duration = 1
 slide_speed = 200
 slide_target = 14
 release = [1, 1]
-work = [4707, 972]
+turns = 2
 after_owned = 0
-
-[[music_work]]
-id = "W-count"
-kind = "count"
-work = 969
-
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-released"
-kind = "released"
-work = 954
-
-
-[[music_work.tracks]]
-note = 4
-release = 0
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview"
-kind = "preview"
-work = 1060
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-tone"
-kind = "tone"
-work = 1825
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-sustain"
-kind = "sustain"
-work = 992
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Sustain" }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-timing"
-kind = "timing"
-duration = 3
-ratio = 128
-strength = 96
-extra = 0
-work = 1934
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 128, strength = 96 }, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-extra-three"
-kind = "timing"
-duration = 3
-ratio = 128
-strength = 96
-extra = 3
-work = 1937
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 128, strength = 96 }, extra_handling_cycles = 3 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-extra-seven"
-kind = "timing"
-duration = 3
-ratio = 128
-strength = 96
-extra = 7
-work = 1941
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 128, strength = 96 }, extra_handling_cycles = 7 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-ramp-equal-fraction"
-kind = "ramp"
-volume = 2815
-target = 10
-length = 2
-work = 1605
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2815
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Ramp", turns = 2, target = 10 }, { kind = "Sustain" }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-ramp-down"
-kind = "ramp"
-volume = 2815
-target = 9
-length = 2
-work = 1620
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2815
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Ramp", turns = 2, target = 9 }, { kind = "Sustain" }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-root-first"
-kind = "root-first"
-work = 3604
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 1 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-return-first"
-kind = "return-first"
-work = 3706
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 1, cursor = 1 }
-repeat = { kind = "Active", count = 1, return_cursor = 2 }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "RepeatPhrase", phrase = 1, count = 1 }, { kind = "CompletePhrase" }], [{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-root-second"
-kind = "root-second"
-work = 3763
-
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 1 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-prior-tone"
-kind = "prior-tone"
-work = 4309
-
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 1
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 1 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-timing"
-kind = "preview-timing"
-work = 1070
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-articulation"
-kind = "preview-articulation"
-work = 1084
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 128, strength = 96 }, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-sustain"
-kind = "preview-sustain"
-work = 1008
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Sustain" }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-timing-sustain"
-kind = "preview-timing-sustain"
-work = 1018
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, extra_handling_cycles = 0 }, { kind = "Sustain" }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-articulation-sustain"
-kind = "preview-articulation-sustain"
-work = 1032
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Timing", duration = 3, articulation = { ratio = 128, strength = 96 }, extra_handling_cycles = 0 }, { kind = "Sustain" }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-control"
-kind = "preview-control"
-work = 1105
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Loudness", value = 10 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-repeat"
-kind = "preview-repeat"
-work = 1119
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 1 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "RepeatPhrase", phrase = 1, count = 2 }, { kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }], [{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-again"
-kind = "preview-again"
-work = 1112
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 1, cursor = 1 }
-repeat = { kind = "Active", count = 2, return_cursor = 2 }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "RepeatPhrase", phrase = 1, count = 2 }, { kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }], [{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-return"
-kind = "preview-return"
-work = 1110
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 1, cursor = 1 }
-repeat = { kind = "Active", count = 1, return_cursor = 2 }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "RepeatPhrase", phrase = 1, count = 2 }, { kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }], [{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[music_work]]
-id = "W-preview-root"
-kind = "preview-root"
-work = 1051
-
-
-[[music_work.tracks]]
-note = 3
-release = 2
-duration = 8
-articulation = 128
-pitch = 24
-loudness = 2560
-position = { phrase = 0, cursor = 1 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]]
-
-[[music_work.tracks]]
-note = 4
-release = 2
-duration = 8
-articulation = 128
-pitch = 25
-loudness = 2560
-position = { phrase = 0, cursor = 0 }
-repeat = { kind = "Inactive" }
-ramp = { kind = "Inactive" }
-phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]]
-
-[[completion]]
-id = "P-effect-before"
-profile = "both"
-time_numerator = 3206
-time_denominator = 2
-publications = 0
-note = 4
-staged_action = 0
-pending_work = "Effect"
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-effect-on"
-profile = "both"
-time_numerator = 3208
-time_denominator = 2
-publications = 1
-note = 4
-staged_action = 0
-pending_work = "None"
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-sample-between"
-profile = "both"
-time_numerator = 3220
-time_denominator = 2
-publications = 1
-note = 4
-staged_action = 0
-pending_work = "None"
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-sample-on"
-profile = "both"
-time_numerator = 3227
-time_denominator = 2
-publications = 1
-note = 4
-staged_action = 7
-pending_work = "Effect"
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-music-before"
-profile = "both"
-time_numerator = 5606
-time_denominator = 2
-publications = 3
-note = 4
-staged_action = 7
-pending_work = "Music"
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-music-on"
-profile = "both"
-time_numerator = 5608
-time_denominator = 2
-publications = 4
-note = 3
-staged_action = 7
-pending_work = "None"
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-music-alone-before"
-profile = "music"
-time_numerator = 5082
-time_denominator = 2
-publications = 0
-note = 4
-staged_action = 0
-pending_work = "Music"
-next_observe_numerator = 0
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-music-alone-on"
-profile = "music"
-time_numerator = 5084
-time_denominator = 2
-publications = 1
-note = 3
-staged_action = 0
-pending_work = "None"
-next_observe_numerator = 0
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-idle"
-profile = "idle"
-time_numerator = 4894
-time_denominator = 2
-publications = 0
-note = 4
-staged_action = 0
-pending_work = "None"
-next_observe_numerator = 7133
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-
-[[completion]]
-id = "P-effects-alone"
-profile = "effects"
-time_numerator = 5418
-time_denominator = 2
-publications = 3
-note = 4
-staged_action = 7
-pending_work = "None"
-next_observe_numerator = 7145
-
-
-tracks = [{ note = 4, release = 2, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 4, release = 2, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
-mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
 
 [[inactive_ramp]]
 id = "M-inactive-config"
@@ -1598,13 +616,10 @@ first_target = 0
 first_delta = -32768
 second_target = 255
 second_delta = 32767
-elapsed = 640000
-check_interval = 4096
+music_turns = 320
 
-tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Timing", duration = 4, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 24 }, { kind = "RepeatPhrase", phrase = 1, count = 2 }, { kind = "CompletePhrase" }], [{ kind = "Ramp", turns = 3, target = 10 }, { kind = "Timing", duration = 3, extra_handling_cycles = 0 }, { kind = "Sustain" }, { kind = "CompletePhrase" }]] }, { note = 1, release = 1, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Timing", duration = 100, extra_handling_cycles = 0 }, { kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
+tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Timing", duration = 4 }, { kind = "Tone", pitch = 24 }, { kind = "RepeatPhrase", phrase = 1, count = 2 }, { kind = "CompletePhrase" }], [{ kind = "Ramp", turns = 3, target = 10 }, { kind = "Timing", duration = 3 }, { kind = "Sustain" }, { kind = "CompletePhrase" }]] }, { note = 1, release = 1, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Timing", duration = 100 }, { kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
 mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-effect_phase = 0
-music_phase = 224
 
 [[control]]
 id = "M-immediate"
@@ -1634,49 +649,33 @@ after_ramp_remaining = 1
 tracks = [{ note = 1, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Active", remaining = 2, target = 14, delta = 341 }, phrases = [[{ kind = "Loudness", value = 15 }, { kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 5, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Sustain" }, { kind = "CompletePhrase" }]] }]
 mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
 
-[[clock]]
-id = "T-fifteen"
-phase = 0
-overflows = 15
-observed = 15
-after_observed = 0
-
-[[clock]]
-id = "T-wrapped-empty"
-phase = 0
-overflows = 16
-observed = 0
-after_observed = 0
-
-[[clock]]
-id = "T-wrapped-one"
-phase = 0
-overflows = 17
-observed = 1
-after_observed = 0
-
 # Invented admission cases: validate event-zero root introduction, not saved cursor.
 [[content_admission]]
 id = "A-root-empty"
 root = [{kind="CompletePhrase"}]
 admitted = false
+
 [[content_admission]]
 id = "A-root-scalar-only"
 root = [{kind="Loudness",value=10},{kind="CompletePhrase"}]
 admitted = false
+
 [[content_admission]]
 id = "A-root-unreachable-tone"
 root = [{kind="CompletePhrase"},{kind="Tone",pitch=24},{kind="CompletePhrase"}]
 admitted = false
+
 [[content_admission]]
 id = "A-root-early-repeat"
 root = [{kind="RepeatPhrase",phrase=1,count=2},{kind="Tone",pitch=24},{kind="CompletePhrase"}]
 repeated = [{kind="Tone",pitch=25},{kind="CompletePhrase"}]
 admitted = false
+
 [[content_admission]]
 id = "A-root-no-repeat"
 root = [{kind="Loudness",value=10},{kind="Timing",duration=4},{kind="Tone",pitch=24},{kind="CompletePhrase"}]
 admitted = true
+
 [[content_admission]]
 id = "A-root-timed-before-repeat"
 root = [{kind="Sustain"},{kind="RepeatPhrase",phrase=1,count=2},{kind="CompletePhrase"}]
@@ -1702,12 +701,9 @@ after_reserved_voices = [2, 5]
 id = "R-resident-alpha"
 resident_identity = "R-resident-alpha"
 resident_reply_alias = 11
-clock = { now = 0, timer_phase = 531, unread_overflows = 0, polling_origin_numerator = 811, polling_origin_denominator = 2 }
-effect_phase = 0
-music_phase = 224
 tracks = [{ note = 1, release = 1, duration = 2, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 1, release = 1, duration = 2, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
 mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-music_publications = 5
+music_turns = 5
 expected_reply_aliases = [11, 11, 11, 11, 11]
 after_restarts = 2
 inputs = []
@@ -1716,67 +712,56 @@ inputs = []
 id = "R-resident-beta"
 resident_identity = "R-resident-beta"
 resident_reply_alias = 23
-clock = { now = 0, timer_phase = 531, unread_overflows = 0, polling_origin_numerator = 811, polling_origin_denominator = 2 }
-effect_phase = 0
-music_phase = 224
 tracks = [{ note = 1, release = 1, duration = 2, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 1, release = 1, duration = 2, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 0 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
 mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
-music_publications = 5
+music_turns = 5
 expected_reply_aliases = [23, 23, 23, 23, 23]
 after_restarts = 2
 inputs = []
 
-
 # effect_history keeps a complete admitted Contact history for both ordered parts,
 # independent of current playback. Cues are complete invented clips. Each step
-# plans one Contact turn, restores its unfinished completion, then commits it.
-# history counts use zero for Inactive, positive for Active. Other groups are free.
+# runs one Contact effect turn. History counts use zero for Inactive, positive for
+# Active. Other groups are free.
 [[effect_history]]
 id = "H-two-one-two-replacement"
 initial_history = [1, 1]
 prior_parts = 2
 steps = ["AllocatePrior", "Advance", "PrepareOne", "Advance", "Advance", "PrepareDoor", "Advance", "Advance", "Advance"]
-work = [3575, 291, 1004, 1992, 208, 1004, 4723, 1113, 163]
 history = [[0, 0], [1, 1], [1, 1], [0, 1], [1, 1], [1, 1], [0, 0], [0, 0], [0, 0]]
 owned = [2, 2, 0, 1, 1, 0, 2, 2, 2]
 prior_span = { duration = 1, pitch = 24, timbre = 0 }
 one_span = { duration = 1, pitch = 24, timbre = 0 }
 door_spans = [{ duration = 255, pitch = 13, timbre = 0, motion = { speed = 200, target = 14 } }, { duration = 255, pitch = 13, timbre = 0, motion = { speed = 200, target = 14 } }]
 door_external_voice = 7
-wrong_final_allocation_work = 2957
 
 [[effect_history]]
 id = "H-one-finished-two"
 initial_history = [1, 1]
 prior_parts = 1
 steps = ["AllocatePrior", "Advance", "Advance", "PrepareDoor", "Advance"]
-work = [1992, 208, 622, 285, 2951]
 history = [[0, 1], [1, 1], [0, 1], [0, 1], [1, 0]]
 owned = [1, 1, 0, 0, 2]
 prior_span = { duration = 1, pitch = 24, timbre = 0 }
 one_span = { duration = 1, pitch = 24, timbre = 0 }
 door_spans = [{ duration = 255, pitch = 13, timbre = 0, motion = { speed = 200, target = 14 } }, { duration = 255, pitch = 13, timbre = 0, motion = { speed = 200, target = 14 } }]
 door_external_voice = 7
-wrong_final_allocation_work = 1185
 
 [[effect_history]]
 id = "H-dormant-two-release-count"
 initial_history = [1, 2]
 prior_parts = 1
 steps = ["AllocatePrior", "Advance", "PrepareDoor", "Advance", "Advance"]
-work = [1992, 208, 1004, 2927, 638]
 history = [[0, 2], [1, 2], [1, 2], [0, 1], [0, 1]]
 owned = [1, 1, 0, 2, 2]
 prior_span = { duration = 1, pitch = 24, timbre = 0 }
 one_span = { duration = 1, pitch = 24, timbre = 0 }
 door_spans = [{ duration = 255, pitch = 13, timbre = 0, motion = { speed = 200, target = 14 } }, { duration = 255, pitch = 13, timbre = 0, motion = { speed = 200, target = 14 } }]
 door_external_voice = 7
-wrong_final_allocation_work = 2957
 
-
-# effect_echo plans a finite invented Contact cue with complete history; echo
-# membership stays live until its allocation publication. Release leaves it alone.
-# After finishing, an explicit selection restores the declared membership.
+# effect_echo runs `turns` Contact effect turns of a finite invented cue with complete
+# history; allocation removes the acquired voices from echo membership and release
+# leaves it alone. After finishing, an explicit selection restores the declared membership.
 [[effect_echo]]
 id = "J-one-allocation-release"
 initial_echo = [0, 1, 7]
@@ -1784,7 +769,7 @@ external_voices = []
 parts = 1
 span = { duration = 1, pitch = 24, timbre = 0 }
 release_history = [1, 1]
-work = [1992, 208, 622]
+turns = 3
 after_echo = [0, 1]
 after_voices = [7]
 reselect_echo = [0, 1, 7]
@@ -1796,7 +781,7 @@ external_voices = [7]
 parts = 2
 span = { duration = 1, pitch = 24, timbre = 0 }
 release_history = [1, 1]
-work = [3591, 291, 1104]
+turns = 3
 after_echo = [0, 1, 7]
 after_voices = [6, 5]
 reselect_echo = [0, 1, 5, 6, 7]
@@ -1808,7 +793,193 @@ external_voices = [7]
 parts = 1
 span = { duration = 1, pitch = 24, timbre = 0 }
 release_history = [1, 1]
-work = [2008, 208, 622]
+turns = 3
 after_echo = [0, 1, 7]
 after_voices = [6]
 reselect_echo = [0, 1, 7]
+
+# frame runs one sound group through successive frames from the declared sender progress,
+# queue, request line, staged and handled requests and reply. Each frames entry is one frame:
+# its queue offers (allowance three, sound enabled, outside demo and explosion suppression),
+# its effect turns before and after the sender service, whether it runs a service, and its
+# music turns (zero unless given). Each expect entry is the state at that frame's cut.
+# progress is Ready, AwaitCue:<cue>, ClearDelay:<turns>, AwaitClear or ResetDelay:<turns>.
+# Cues are typed; each cue's clip is one invented part of one 20-turn span at pitch 24,
+# timbre 0. Other groups stay Ready with empty queues and Absent lines; all effect voices
+# start free. A recorded vector's cadence and sender progress come from the frames its
+# source names; its cue identity is invented.
+[[frame]]
+id = "F-two-frames"
+group = "Contact"
+progress = "Ready"
+queue = ["Footstep"]
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+]
+expect = [
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Absent" },
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+  { progress = "ClearDelay:2", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+  { progress = "ClearDelay:1", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+  { progress = "AwaitClear", queue = [], request = "Absent", staged = "Absent", reply = "Footstep" },
+  { progress = "AwaitClear", queue = [], request = "Absent", staged = "Absent", reply = "Absent" },
+  { progress = "Ready", queue = [], request = "Absent", staged = "Absent", reply = "Absent" },
+]
+
+[[frame]]
+id = "F-early"
+group = "Contact"
+progress = "Ready"
+queue = ["Footstep"]
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 1, service = true, after = 0 },
+]
+expect = [
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Absent" },
+  { progress = "ClearDelay:2", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+]
+
+[[frame]]
+id = "F-no-turn"
+group = "Contact"
+progress = "Ready"
+queue = ["Footstep"]
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = [], before = 0, service = true, after = 0 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+]
+expect = [
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Absent", reply = "Absent" },
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Absent" },
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+  { progress = "ClearDelay:2", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+]
+
+[[frame]]
+id = "F-lag"
+group = "Contact"
+progress = "Ready"
+queue = ["Footstep"]
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 0, service = false, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+]
+expect = [
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Absent" },
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+  { progress = "ClearDelay:2", queue = [], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+]
+
+[[frame]]
+id = "F-offer"
+group = "Contact"
+progress = "Ready"
+queue = []
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = ["Footstep"], before = 0, service = true, after = 1 },
+  { offers = ["Land"], before = 0, service = true, after = 1 },
+]
+expect = [
+  { progress = "AwaitCue:Footstep", queue = [], request = "Footstep", staged = "Footstep", reply = "Absent" },
+  { progress = "AwaitCue:Footstep", queue = ["Land"], request = "Footstep", staged = "Footstep", reply = "Footstep" },
+]
+
+[[frame]]
+id = "F-recorded-two-turns"
+source = "native opening control arm, Action group, frames 16-18"
+group = "Action"
+progress = "Ready"
+queue = []
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = ["Beam"], before = 1, service = true, after = 0 },
+  { offers = [], before = 1, service = true, after = 1 },
+  { offers = [], before = 0, service = true, after = 1 },
+]
+expect = [
+  { progress = "AwaitCue:Beam", queue = [], request = "Beam", staged = "Absent", reply = "Absent" },
+  { progress = "AwaitCue:Beam", queue = [], request = "Beam", staged = "Beam", reply = "Beam" },
+  { progress = "ClearDelay:2", queue = [], request = "Beam", staged = "Beam", reply = "Beam" },
+]
+
+[[frame]]
+id = "F-recorded-late"
+source = "native opening control arm, Action group, frames 29-32"
+group = "Action"
+progress = "Ready"
+queue = []
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+frames = [
+  { offers = ["Spin"], before = 1, service = true, after = 0 },
+  { offers = [], before = 1, service = true, after = 0 },
+  { offers = [], before = 0, service = true, after = 1 },
+  { offers = [], before = 1, service = true, after = 0 },
+]
+expect = [
+  { progress = "AwaitCue:Spin", queue = [], request = "Spin", staged = "Absent", reply = "Absent" },
+  { progress = "AwaitCue:Spin", queue = [], request = "Spin", staged = "Spin", reply = "Absent" },
+  { progress = "AwaitCue:Spin", queue = [], request = "Spin", staged = "Spin", reply = "Spin" },
+  { progress = "ClearDelay:2", queue = [], request = "Spin", staged = "Spin", reply = "Spin" },
+]
+
+# F-two-music also runs music turns from its declared song, with resident reply alias 11;
+# each of its expect entries adds both tracks' remaining note turns and the music line's reply.
+[[frame]]
+id = "F-two-music"
+group = "Contact"
+progress = "Ready"
+queue = []
+request = "Absent"
+staged = "Absent"
+handled = "Absent"
+reply = "Absent"
+resident_reply_alias = 11
+music_reply = 0
+frames = [
+  { offers = [], before = 0, service = true, after = 1, music = 2 },
+  { offers = [], before = 0, service = true, after = 1, music = 1 },
+  { offers = [], before = 0, service = true, after = 1, music = 0 },
+]
+expect = [
+  { progress = "Ready", queue = [], request = "Absent", staged = "Absent", reply = "Absent", notes = [6, 4], music_reply = 11 },
+  { progress = "Ready", queue = [], request = "Absent", staged = "Absent", reply = "Absent", notes = [5, 3], music_reply = 11 },
+  { progress = "Ready", queue = [], request = "Absent", staged = "Absent", reply = "Absent", notes = [5, 3], music_reply = 11 },
+]
+tracks = [{ note = 8, release = 1, duration = 8, articulation = 128, pitch = 24, loudness = 2560, position = { phrase = 0, cursor = 1 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 24 }, { kind = "CompletePhrase" }]] }, { note = 6, release = 1, duration = 8, articulation = 128, pitch = 25, loudness = 2560, position = { phrase = 0, cursor = 1 }, repeat = { kind = "Inactive" }, ramp = { kind = "Inactive" }, phrases = [[{ kind = "Tone", pitch = 25 }, { kind = "CompletePhrase" }]] }]
+mix = { percussion_set = 0, master_loudness = 25600, echo_voices = [], echo_left = 0, echo_right = 0, echo_delay = 2, feedback = 0, filter_set = 0, echo_writes_enabled = false, timbres = [0, 1], tone_offsets = [0, 0], note_strengths = [64, 64] }
