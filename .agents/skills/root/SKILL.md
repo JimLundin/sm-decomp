@@ -105,8 +105,17 @@ The blind review (a domain's first round, or when the last round gate asked for 
 same launch, on a code-only copy that
 `bash tools/cleanroom/blind_copy.sh EXPORT DEST` makes from the round's export: the model crate,
 its tests, the vector file and the [blind-reviewer](../blind-reviewer/SKILL.md) skill, without
-the spec, the design notes, `CLEANROOM.md` or a test that reads them. Its brief is one line: load
-that skill.
+the spec, the design notes, `CLEANROOM.md` or a test that reads them. Its brief is one line:
+"Read .agents/skills/blind-reviewer/SKILL.md in this workspace with the Read tool and follow it;
+it is your whole task." A confined session has no Skill tool, so every confined brief names its
+skill file by path.
+
+Confined sessions have no `cleanroom` function or other tool beyond the launch's allow-list: a
+brief names the checks as CLEANROOM.md does (`cargo check --all-targets`,
+`cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, with `-p <crate> -p types` to
+narrow a run) and the exact vector-runner command `launch.sh` appends. Before `launch.sh`, put
+the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_brief.sh`; a
+`name` hit is usually an ordinary phrase that matches the lexicon, which rewording clears.
 
 ## Landing
 

@@ -161,7 +161,14 @@ Each step names its owner, what it waits for, and its done-condition.
    Missing neighbours can be independently observed inputs of a scoped production case, with
    their ownership and timing explicitly unproved. Required missing integrated producers remain
    Unsupported and are named in the domain's gaps. Previous gameplay never supplies them.
-10. **Round gate** (adversary), after 8 (when it ran) and 9. It reads the leaks, the spec delta
+10. **Round gate** (adversary), in two parts so that review stays off the critical path
+    (Jim, 2026-11-23). The spec-and-model part starts at step 7's import, alongside
+    integration: the spec delta, the model's leaks and shape, and the blind review when it ran.
+    The integration part reads the landing PR's diff while its CI runs. A finding that only
+    corrects wording (stale docs, a gaps line, a ledger record's description, a missing limit) is
+    fixed by the root on the landing branch and re-read by the adversary in the same pass; a
+    finding that changes what a spec rule says, a vector, the model or a replay outcome goes to
+    its owner as before. The two parts together read the leaks, the spec delta
     when step 3 didn't gate it, replay provider independence, carried production State, case
     outcomes and first differences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (replay provider, adapter),
