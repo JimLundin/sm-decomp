@@ -328,6 +328,14 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     ([PROCESS](../cleanroom/PROCESS.md#working-hours)). The transition and prior-claim
     ledgers are pruned once the witness-shaped frame cases retire.
 
+37. **Audio is verified at its boundary with gameplay** (Jim, 2026-11-23). The rungs and the
+    milestone compare gameplay State and the boundary between gameplay and audio: the sound
+    requests each frame makes, and the audio replies the game reads back (a full queue, music
+    ready), both at frame cuts. The audio CPU's own timing, such as when its turns run within a
+    frame, stays a declared borrowed input until T1. The sequencer (U2: which note on which
+    voice at which tick) is a separate comparison stream, decided later, that gates no rung;
+    the audio waveform is never compared (decision 23).
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our

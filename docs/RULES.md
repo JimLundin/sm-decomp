@@ -52,6 +52,9 @@ ROM-derived bytes never go in commits or logs.
     ([MODEL decision 35](architecture/MODEL.md#1-the-goal-and-what-is-exact)).
 6g. Behaviour work leads: no new decision or process tooling until played-alone frames grow;
     each session review reports its behaviour share of commit lines (decision 36).
+6h. Audio is verified at its boundary with gameplay: requests out and the replies the game
+    reads, at frame cuts; its CPU timing is borrowed until T1, and the sequencer gates no rung
+    ([MODEL decision 37](architecture/MODEL.md#1-the-goal-and-what-is-exact)).
 
 ## The shape of the code
 
