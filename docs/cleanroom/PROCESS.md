@@ -129,7 +129,8 @@ Each step names its owner, what it waits for, and its done-condition.
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh --import`, which refuses a variant import
    (L4) even in a crate whose older ones still only warn on the trunk, applies the commits to a
-   lane branch, then runs both clippy configurations of `tools/lane/gate.sh` over every clean
+   lane branch, takes the branch back if the export's crates break the capability rule (clippy's
+   forbidden lints), then runs both clippy configurations of `tools/lane/gate.sh` over every clean
    crate in the workspace: an export holds one domain's model and `types`, so a change to
    `types` can break a crate its implementer never saw. Done when the import passes. A
    refusal goes back to the same implementer's export as a short follow-up session: the brief

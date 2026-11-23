@@ -1,25 +1,27 @@
 #!/usr/bin/env bash
-# code_check.sh [--import] DIR...: refuse clean-room crates whose code could reach outside its own
-# computation when `cargo test` or `cargo build` runs it (MODEL §5; launch.sh cannot confine
-# what cargo runs). Each DIR is a crate directory (it holds a Cargo.toml) or a root holding
-# crates/clean/* (the shared types and the models): an export, a git archive of one, or this
-# repository. A root with no clean crate passes. Exit 1 prints one line per finding:
+# code_check.sh [--import] DIR...: refuse clean-room crates that cargo would run or read outside
+# their own sources while it builds them, and the clean room's coding rules no lint holds (MODEL
+# §5; launch.sh cannot confine what cargo runs). Files, the network, processes, the environment,
+# include_bytes!, env!, assembly and unsafe code are clippy's: the workspace forbids
+# clippy::disallowed_* and unsafe_code, and tools/cleanroom/clippy.toml names the paths, which the
+# clean-room clippy run (gate.sh, Quality, import.sh) and the export's own clippy apply. This
+# check refuses a crate that would drop those lints. Each DIR is a crate directory (it holds a
+# Cargo.toml) or a root holding crates/clean/* (the shared types and the models): an export, a git
+# archive of one, or this repository. A root with no clean crate passes. Exit 1 prints one line
+# per finding:
 #   code_check: PATH: TAG: DETAIL
 # A warning, which doesn't fail, is `code_check: warning: PATH: TAG: DETAIL`.
 #
 # Sources (src/ and tests/ *.rs, comments and string contents removed, whitespace collapsed):
-#   std-fs std-net std-process std-env std-os std-io std-glob std-alias std-macro-ident
-#     std::fs and the rest, by full path, `use`, group or glob; std::io only as io::Write;
-#     `use std as x`, `std::$name`
-#   File TcpStream UdpSocket Command            those names, anywhere
-#   include-bytes include-path env-macro option-env asm global-asm macro-path
-#     include_bytes!, include!/include_str! of anything but a literal path that resolves to
-#     <root>/scenarios/vectors/<domain>.toml, env!, option_env!, asm!, global_asm!
-#   extern unsafe link path-attr proc-macro     extern, unsafe, #[link], #[path = ...], proc macros
-#   lint-attr      (L1) an #[allow] (the workspace denies clippy::allow_attributes); an #[expect],
-#     #[allow] or #[warn] without reason = "..."; or, outside test code, one that names a lint
-#     this repository's [workspace.lints] denies by name, a denied group, or `warnings`. A lint
-#     denied only through a group (pedantic, nursery) may be expected with its reason.
+#   include-path   include!/include_str! of anything but a literal path that resolves to
+#     <root>/scenarios/vectors/<domain>.toml, the domain's spec or a clean crate's source
+#   std-alias std-macro-ident macro-path   what would hide an include! from this scan:
+#     `use std as x`, `std::{self as x}`, `std::$name`, `core::include_str as x`
+#   path-attr      #[path = ...]
+#   lint-attr      (L1) outside test code, an #[expect] or #[warn] that names a lint this
+#     repository's [workspace.lints] denies by name, a denied group, or `warnings`. A lint denied
+#     only through a group (pedantic, nursery) may be expected with its reason; an #[allow] and
+#     one without reason = "..." are the forbidden clippy::allow_attributes(_without_reason).
 #   magic-literal  (L2) a number other than 0 or 1 in logic. Allowed in test code (tests/,
 #     tests.rs, #[cfg(test)] items), attributes, struct/enum/union/type items, a constant's or
 #     static's head and value while the value is data (L3, as `tools size` decides: literals,
@@ -34,7 +36,8 @@
 #     before the rule) it is a warning, unless --import, which import.sh passes: an implementer
 #     round removes them from every crate its export holds. A listed crate with none left is a
 #     `variant-import` finding too, so its line goes. The three rules are lint_scan.awk.
-# Manifest: build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
+# Manifest: lints-key (no `[lints] workspace = true`) edition (not 2024)
+#   build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
 #   dep-registry (not in allowed_deps.txt; or not at its pinned version, of an allowed kind, with
 #   allowed features only and no other key than version, features, default-features and package)
 #   target-path
@@ -48,9 +51,8 @@
 #   layering         (G7) a cycle of module references within the crate: modules import in one
 #     direction only
 #
-# What it can't see: see the report of the lane that wrote it; in short, macro-generated paths
-# beyond `std::$x`, registry crates the allowlist admits (and their transitive build scripts),
-# and anything that runs outside cargo.
+# What it can't see: macro-generated include! calls beyond `std::$x`, registry crates the
+# allowlist admits (and their transitive build scripts), and anything that runs outside cargo.
 #
 # Speed: process start-up is the cost on Windows (MSYS and an on-access scanner make each spawn
 # 50-500 ms), so a crate costs a handful of processes, not some per file: source_scan.awk runs

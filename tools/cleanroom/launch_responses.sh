@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # launch_responses.sh EXPORT BRIEF TRANSCRIPT PRIVATE_LANE
 # Fresh closed-tool Responses session. The provider's credential stays in the controller;
-# model-written source executes behind the existing code_check/import/canary barriers.
+# model-written tests run only after code_check and the capability clippy pass; the import and
+# canary barriers follow.
 # Windows launcher. --prepare-only writes the trusted record without inference.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)

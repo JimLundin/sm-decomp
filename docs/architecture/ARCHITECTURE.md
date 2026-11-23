@@ -66,7 +66,8 @@ A scoped entry does not imply boot, general actor dispatch, room loading or CPU 
 admission, observations and comparison; `tools` owns CLI selection. Independent capture stays
 in `oracle`/`oracle_record`. [The crate table](../../crates/README.md) lists dependencies.
 No engine crate depends on verification. `game` and `runtime` do not depend on each other or
-reach ROM import. `tools/check_crate_rules.sh` checks the dependency and source restrictions.
+reach ROM import. `cargo deny check bans` (`deny.toml`) checks the dependencies and build scripts;
+the workspace lints and `tools/check_crate_rules.sh` check the source restrictions.
 Concrete production recipes use existing clean entries. Domain traits answer environment
 queries; they cannot supply a second gameplay dispatcher. `Canonical` supplies codecs.
 
@@ -79,7 +80,13 @@ and the standard library.
 
 ### 4.2 Dependency rules (checked in CI)
 
-Quality checks dependencies and source restrictions with `tools/check_crate_rules.sh`.
+Quality checks the dependencies with `cargo deny check bans`: `deny.toml` denies each workspace
+crate to all but the crates [the table](../../crates/README.md) lets depend on it, which holds
+rules 1 to 3 and D1 through any path, and allows no build script. The workspace lints forbid
+`#![feature]`, `allow`, undeclared cfgs such as `cfg(verify)`, unsafe code and, with
+`tools/cleanroom/clippy.toml`, the clean crates' file, network, process and environment access.
+`tools/check_crate_rules.sh` greps what no tool sees: probe or observer names in the engine,
+SNES address literals (K1), `expect` in the engine (K8) and routine-label names (K9).
 
 ### 4.3 The trait budget
 

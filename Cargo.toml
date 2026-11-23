@@ -7,11 +7,16 @@ members = [
 ]
 
 # The new crates' lint set (PRINCIPLES K5, K7, K8), taken by each with `[lints] workspace = true`.
-# Sites are never silenced with `allow` or `expect`.
+# Sites are never silenced with `allow` or `expect`. A forbidden lint is one no attribute may lift:
+# unstable features (CI's RUSTC_BOOTSTRAP would otherwise let `#![feature]` through), a cfg no
+# crate declares (rule 4: no `cfg(verify)`), `allow` itself, and the clean room's capability rule
+# (the disallowed paths of tools/cleanroom/clippy.toml; elsewhere no path is disallowed).
 # Tests may unwrap, expect, panic and index through clippy.toml's `allow-*-in-tests`.
 # `game` adds `float_arithmetic` in its crate root: the original has no floats.
 [workspace.lints.rust]
 unsafe_code = "forbid"
+unstable_features = "forbid"
+unexpected_cfgs = "forbid"
 missing_docs = "deny"
 
 [workspace.lints.clippy]
@@ -33,8 +38,11 @@ wildcard_enum_match_arm = "deny"
 print_stdout = "deny"
 print_stderr = "deny"
 dbg_macro = "deny"
-allow_attributes = "deny"
-allow_attributes_without_reason = "deny"
+allow_attributes = "forbid"
+allow_attributes_without_reason = "forbid"
+disallowed_methods = "forbid"
+disallowed_types = "forbid"
+disallowed_macros = "forbid"
 
 # The shipped game: `cargo build --release -p app`. One code generation unit and whole-program
 # link-time optimisation, the slowest build and the fastest engine.

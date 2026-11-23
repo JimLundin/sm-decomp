@@ -1,6 +1,9 @@
 # check_manifest.awk: the findings in one clean crate's Cargo.toml, one `tag<TAB>detail` per line.
 #   -v crate=ABS_CRATE_DIR  -v allowed=PATH|PATH  (the directories a path dependency may name)
 #   -v allowfile=allowed_deps.txt  (lines `name version kinds features`, `#` comments)
+# The crate takes the workspace's lints (`[lints] workspace = true`) and edition 2024: the
+# capability rule is those lints with tools/cleanroom/clippy.toml, and edition 2024's extern blocks
+# and link attributes are `unsafe`, which the lints forbid.
 # Not a TOML parser: it reads the manifest shapes cargo's own templates and ours produce, and
 # reports a dependency line it can't read as a finding.
 function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
@@ -46,6 +49,7 @@ BEGIN {
       tname = sec; sub(/^.*dependencies\./, "", tname); tname = unq(tname)
     } else if (secn ~ /^(lib|bin|test|example|bench)$/) mode = "target"
     else if (secn == "package") mode = "package"
+    else if (secn == "lints") mode = "lints"
     next
   }
   if (t !~ /=/) next
@@ -53,6 +57,8 @@ BEGIN {
   if (k ~ /^proc[-_]macro$/) emit("proc-macro", t)
   if (mode == "package" && k == "build") emit("build-key", t)
   if (mode == "package" && k == "links") emit("links-key", t)
+  if (mode == "package" && k == "edition") edition = unq(v)
+  if (mode == "lints" && k == "workspace" && v == "true") lints = 1
   if (mode == "target" && k == "path") {
     pv = unq(v)
     if (pv ~ /^\// || pv ~ /(^|\/)\.\.(\/|$)/ || pv ~ /^[A-Za-z]:/) emit("target-path", t)
@@ -76,6 +82,8 @@ BEGIN {
   record(kind, name, "unreadable", v)
 }
 END {
+  if (!lints) emit("lints-key", "no `[lints] workspace = true`")
+  if (edition != "2024") emit("edition", "edition `" edition "`, not 2024")
   for (nk in seen) {
     split(nk, a, SUBSEP); kind = a[1]; name = a[2]; pre = kind SUBSEP name SUBSEP
     real = ((pre "package") in d) ? d[pre "package"] : name

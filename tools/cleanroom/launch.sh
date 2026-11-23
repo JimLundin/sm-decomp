@@ -52,9 +52,11 @@
 # Limits the CLI cannot confine: cargo runs code the implementer writes (tests, build scripts,
 # macros) as an ordinary process, which can read any file this user can. Build scripts and cargo
 # configuration are not writable here, but a test body is. The canary check after the session is
-# what catches a test that read a forbidden file and printed it, and code_check.sh, which import.sh
-# runs before applying anything, refuses the source that could (std::fs, net, process, env,
-# unsafe, include_*! outside the vector file, build scripts, dependencies beyond allowed_deps.txt).
+# what catches a test that read a forbidden file and printed it. On the trunk, code_check.sh, which
+# import.sh runs before applying anything, refuses what cargo would run or read at build time
+# (include!/include_str! outside the vector file, build scripts, dependencies beyond
+# allowed_deps.txt), and import.sh's clean-room clippy run refuses the source that could reach out
+# (std::fs, net, process, env, unsafe, include_bytes!) before anything runs it.
 # The clean crates' Cargo.toml is not writable here: their dependencies are the integrator's, from
 # allowed_deps.txt (export.sh gives a new model crate the vector parser), so a manifest edit is
 # never needed. CLI 2.1.316 offers only Read, Edit and Bash (Edit creates files; Glob, Grep and

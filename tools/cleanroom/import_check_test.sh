@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# import_check_test.sh: import.sh refuses a patch that adds std::fs::read to a test, leaving the
-# branch where it was; refuses an export whose own configuration rewrites URLs; imports a
+# import_check_test.sh: import.sh refuses a patch that adds a build script, leaving the branch
+# where it was, and one that adds std::fs::read to a test, which the capability rule refuses after
+# applying it, taking the branch back; refuses an export whose own configuration rewrites URLs;
+# imports a
 # harmless one, which passes both clippy runs, though the caller's environment carries such a
 # rewrite; and fails an import whose change to the shared types breaks another clean crate,
 # naming that crate. Builds throwaway
@@ -36,9 +38,15 @@ mkexport() { # DEST
 }
 
 git -C "$repo" worktree add -q -b "$branch" "$tmp/wt" HEAD || exit 1
+mkexport "$tmp/builds"
+implementer_commit "$tmp/builds" crates/clean/import_test/build.rs 'fn main() {}'
 mkexport "$tmp/leaky"
 implementer_commit "$tmp/leaky" crates/clean/import_test/tests/leak.rs \
-  '#[test] fn leak() { let _ = std::fs::read("C:/secret"); }'
+  '//! Reads a file.
+#[test]
+fn leak() {
+    let _ = std::fs::read("C:/secret");
+}'
 mkexport "$tmp/fine"
 implementer_commit "$tmp/fine" crates/clean/import_test/src/lib.rs \
   '//! Harmless: the workspace lints it, as it does every folder of crates/clean.
@@ -55,13 +63,21 @@ implementer_commit "$tmp/breaks" crates/clean/types/src/lib.rs \
   '//! Emptied, so the crates that use a clean type no longer build.'
 
 before=$(git -C "$tmp/wt" rev-parse HEAD)
-if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/leaky" "$branch" 2>&1); then
-  fail "import accepted std::fs::read: $out"
+if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/builds" "$branch" 2>&1); then
+  fail "import accepted a build script: $out"
 else
-  grep -q ': std-fs: ' <<<"$out" || fail "refusal did not name std-fs: $out"
+  grep -q ': extra-file: ' <<<"$out" || fail "refusal did not name extra-file: $out"
   grep -q 'nothing applied' <<<"$out" || fail "refusal did not say nothing applied: $out"
 fi
 [ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused import moved the branch"
+if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/leaky" "$branch" 2>&1); then
+  fail "import accepted std::fs::read: $out"
+else
+  grep -q 'std::fs::read' <<<"$out" || fail "refusal did not name std::fs::read: $out"
+  grep -q 'nothing applied' <<<"$out" || fail "refusal did not say nothing applied: $out"
+fi
+[ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused std::fs::read moved the branch"
+[ -z "$(git -C "$tmp/wt" status --porcelain)" ] || fail "the refused std::fs::read left changes"
 
 # A URL rewrite in the export's own configuration is refused; the same rewrite in the caller's
 # environment is the caller's, and a clean export imports under it.
@@ -90,5 +106,5 @@ else
     || fail "the clean-room run did not name world_blocks: $out"
   ! grep -q 'IMPORT OK' <<<"$out" || fail "the failing import said IMPORT OK: $out"
 fi
-[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: std::fs::read and an export that rewrites URLs refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them, a change to the shared types that breaks another clean crate failed naming it"
+[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: a build script, std::fs::read and an export that rewrites URLs refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them, a change to the shared types that breaks another clean crate failed naming it"
 exit $bad

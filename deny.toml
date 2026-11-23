@@ -1,0 +1,59 @@
+# The crate plan's dependency rules (ARCHITECTURE §4.2, D1; crates/README.md), held by
+# `cargo deny check bans` in Quality and, where cargo-deny is on PATH, by tools/lane/gate.sh.
+#
+# Each workspace crate is denied to every crate but its wrappers: the crates the table in
+# crates/README.md lets depend on it directly. A crate reached any other way, directly or
+# through another package, fails, so the engine (data, game, runtime, app) reaching verify,
+# oracle or tools, game and runtime reaching each other or import, and a clean crate reaching
+# anything but `types` all fail here. A new workspace crate takes its line in the same change
+# that adds it: until then any crate may depend on it. The registry crates are not constrained
+# here; tools/cleanroom/allowed_deps.txt and code_check.sh hold the clean crates' ones.
+
+[graph]
+all-features = true
+
+[bans]
+# Path dependencies between workspace crates carry no version; that is how a workspace is built.
+wildcards = "allow"
+multiple-versions = "allow"
+deny = [
+  # The engine.
+  { crate = "data", wrappers = ["import", "game", "runtime", "app", "oracle", "verify"], reason = "crates/README.md: only these crates depend on data" },
+  { crate = "game", wrappers = ["app", "verify"], reason = "rule 2: runtime doesn't depend on game; nothing below app or verify does" },
+  { crate = "runtime", wrappers = ["app", "verify", "tools"], reason = "rule 2: game doesn't depend on runtime" },
+  # Only the importer knows the ROM's layout: game, runtime and data never reach it.
+  { crate = "import", wrappers = ["app", "verify", "tools"], reason = "rule 2: game, runtime and data don't depend on import" },
+  # Verification and the oracle: no engine crate reaches them (rule 1); oracle depends only on
+  # data and its record types (rule 3).
+  { crate = "oracle", wrappers = ["tools"], reason = "rule 1: engine crates don't depend on oracle" },
+  { crate = "oracle_record", wrappers = ["oracle", "verify"], reason = "rule 3: the record types are the oracle's and the verifier's" },
+  { crate = "verify", wrappers = ["tools"], reason = "rule 1: engine crates don't depend on verify" },
+  { crate = "canonical", wrappers = ["data", "import", "game", "verify"], reason = "crates/README.md: the codec's users" },
+  { crate = "canonical_derive", wrappers = ["canonical"], reason = "canonical re-exports its derive" },
+  # The clean room (MODEL §5): the models depend only on `types`, and only the engine's `game`,
+  # `data` and the verifier take them.
+  { crate = "types", wrappers = ["data", "game", "verify", "samus_movement", "world_blocks", "world_camera", "interface_hud", "run_progress", "samus_appearance", "boss_ceres_ridley", "world_doors", "weapons_projectiles", "audio_transport", "game_time", "samus_health", "world_quake", "world_haze", "game_random"], reason = "MODEL §5: the clean room's shared types" },
+  { crate = "samus_movement", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "world_blocks", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "world_camera", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "interface_hud", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "run_progress", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "samus_appearance", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "boss_ceres_ridley", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "world_doors", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "weapons_projectiles", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "enemy_interactions", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "audio_transport", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "game_time", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "samus_health", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "world_quake", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "world_haze", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "game_random", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+]
+
+# Build scripts: only the listed crates may have one. No workspace crate does, the clean crates
+# included; the registry crates whose scripts Defender blocks locally are baked copies in vendor/
+# without one (tools/vendor_nobuild.sh).
+[bans.build]
+allow-build-scripts = []
+include-workspace = true

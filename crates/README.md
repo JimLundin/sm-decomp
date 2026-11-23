@@ -52,12 +52,13 @@ on `enum-map` because the progress model's tables are `EnumMap`s.
 `data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint
 set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float arithmetic.
 
-`tools/check_crate_rules.sh` checks the table's last column, that `data`, `game` and `runtime`
-reach no `import`, and the source rules of
-[§4.2](../docs/architecture/ARCHITECTURE.md#42-dependency-rules-checked-in-ci): no
-`cfg(verify)`, probe or observer in the engine, no SNES address literal in `game`, `runtime` or
-`app`, no `#![feature]`, `allow` or `expect` in the engine, and no routine-label names. CI runs
-it in Quality.
+`deny.toml` holds the table's last column: `cargo deny check bans` refuses any other edge
+between workspace crates, so `data`, `game` and `runtime` reach no `import` by any path. A new
+crate takes its line there. The source rules of
+[§4.2](../docs/architecture/ARCHITECTURE.md#42-dependency-rules-checked-in-ci) are the workspace
+lints (no `cfg(verify)`, `#![feature]` or `allow`) and `tools/check_crate_rules.sh` (no probe or
+observer in the engine, no SNES address literal in `game`, `runtime` or `app`, no `expect` in
+the engine, and no routine-label names). CI runs both in Quality.
 
 `vendor/` is not ours: it holds published registry crates whose build scripts Defender blocks on
 the development machine, each with its script's output baked in by `tools/vendor_nobuild.sh` and

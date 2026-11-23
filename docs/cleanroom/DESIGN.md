@@ -124,9 +124,8 @@ is imported, so keep to them as you go:
   of these beyond the ones the manifests turn on, no file, network, process or environment
   access, no `unsafe`, no build script. If another widely used crate is the standard tool for
   something your model needs and std lacks, ask for it in your report and say what it would
-  model.
-- No item, tests included, is named `File`, `TcpStream`, `UdpSocket` or `Command`: the check
-  can't tell a type of yours from the standard library's, so it refuses the names themselves.
+  model. Your own `cargo clippy` refuses the standard library's file, network, process,
+  environment and terminal paths (the workspace's `clippy.toml`), and no attribute lifts that.
 
 ## What a modern developer would expect
 

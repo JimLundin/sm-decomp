@@ -250,7 +250,7 @@ class Contract(unittest.TestCase):
     def test_fixed_commands_and_clean_environment(self) -> None:
         fixture = self.lane / "command.py"
         fixture.write_text("import os,json;print(json.dumps(dict(os.environ)))", encoding="utf-8")
-        for action in ("check", "clippy", "fmt", "test", "runner", "status", "diff", "log", "add", "commit", "code_check"):
+        for action in ("check", "clippy", "fmt", "test", "runner", "status", "diff", "log", "add", "commit", "code_check", "capability"):
             self.config["commands"][action] = [sys.executable, "-I", str(fixture)]
         for action in ("check", "clippy", "fmt", "test", "runner", "status", "diff", "log", "add", "commit"):
             with self.subTest(action=action):
@@ -548,7 +548,8 @@ class Preparation(unittest.TestCase):
                 (export / folder).mkdir(parents=True)
             for crate in ("types", "demo"):
                 (export / f"crates/clean/{crate}/Cargo.toml").write_text(
-                    f'[package]\nname = "{crate}"\nversion = "0.1.0"\nedition = "2024"\n', encoding="utf-8")
+                    f'[package]\nname = "{crate}"\nversion = "0.1.0"\nedition = "2024"\n\n[lints]\nworkspace = true\n',
+                    encoding="utf-8")
                 (export / f"crates/clean/{crate}/src/lib.rs").write_text("//! Invented model.\n", encoding="utf-8")
             (export / ".gitignore").write_text("target/\nsecret.note\n", encoding="utf-8")
             (export / "Cargo.toml").write_text('[workspace]\nmembers = ["crates/clean/types", "crates/clean/demo"]\n', encoding="utf-8")

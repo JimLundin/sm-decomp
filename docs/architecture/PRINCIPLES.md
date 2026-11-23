@@ -52,7 +52,8 @@ every Tick and kept the engine RAM-shaped.)
 **P6. Verification observes from outside and never shapes the engine.** It compares outputs and a
 decoded typed State. Engine code has no probes, observers or verify cfgs, and no field exists only
 because the oracle has a byte.
-*How we know:* `check_crate_rules.sh`; and for a new field, "which engine rule reads this?"
+*How we know:* `deny.toml` (no engine crate reaches `verify`), the forbidden `unexpected_cfgs`,
+`check_crate_rules.sh`'s name scan; and for a new field, "which engine rule reads this?"
 
 **P7. One mechanism per job, and one path per responsibility.** One interpreter, one State schema,
 one Checkpoint codec, one projection per stream, one digest, one decoder, one encoder, one runner. A
@@ -168,12 +169,16 @@ types have no hand-written codec impls.
 - **Lints, all denied, with no `allow` attributes** (the workspace `[lints]` in `Cargo.toml`):
   `clippy::pedantic`; `clippy::nursery`; `unwrap_used`, `expect_used`, `panic`, `indexing_slicing`,
   `arithmetic_side_effects`, `as_conversions`, `unreachable`, `todo`, `unimplemented`,
-  `wildcard_enum_match_arm`, `print_stdout`, `print_stderr`, `dbg_macro`, `allow_attributes`;
-  `float_arithmetic` in `game` (the original has no floats); `missing_docs`. A nursery lint that
+  `wildcard_enum_match_arm`, `print_stdout`, `print_stderr`, `dbg_macro`;
+  `float_arithmetic` in `game` (the original has no floats); `missing_docs`. Forbidden, so no
+  attribute lifts them: `allow_attributes` and `allow_attributes_without_reason`,
+  `unstable_features` (stable already refuses `#![feature]`, but CI's `RUSTC_BOOTSTRAP` would
+  not), `unexpected_cfgs`, `unsafe_code` and the clean room's `disallowed_*`. A nursery lint that
   misfires is dropped from the workspace set with its reason recorded there, never silenced at a site.
 
 *Jim (2026-11-05):* "the strictest, most idiomatic Rust possible"; stable, because unstable features
-churn. *How we know:* `Cargo.toml`, `rust-toolchain.toml` and `tools/check_crate_rules.sh`, in CI.
+churn. *How we know:* `Cargo.toml`, `rust-toolchain.toml` and `tools/check_crate_rules.sh` (no
+`expect` in the engine), in CI.
 
 **K9. A modern reader can understand the code without the original.** Names come from the domain:
 official names for enemies, bosses, items, rooms and mechanics, never addresses, routine labels or

@@ -17,3 +17,88 @@ max-fn-params-bools = 1
 excessive-nesting-threshold = 5
 cognitive-complexity-threshold = 15
 too-many-arguments-threshold = 7
+
+# The clean room's capability rule (MODEL §5): a model computes, and reaches nothing outside its
+# own process. Files, the network, other processes, the environment and the terminal are
+# refused here by path, as the compiler resolves it, so a renamed import or a macro reaches no
+# further; the workspace forbids these three lints, so no attribute lifts them.
+disallowed-types = [
+  { path = "std::fs::File", reason = "a model reads no files" },
+  { path = "std::fs::OpenOptions", reason = "a model reads no files" },
+  { path = "std::fs::DirBuilder", reason = "a model reads no files" },
+  { path = "std::fs::ReadDir", reason = "a model reads no files" },
+  { path = "std::fs::DirEntry", reason = "a model reads no files" },
+  { path = "std::net::TcpStream", reason = "a model uses no network" },
+  { path = "std::net::TcpListener", reason = "a model uses no network" },
+  { path = "std::net::UdpSocket", reason = "a model uses no network" },
+  { path = "std::process::Command", reason = "a model starts no process" },
+  { path = "std::process::Child", reason = "a model starts no process" },
+  { path = "std::process::Stdio", reason = "a model starts no process" },
+  { path = "std::env::Args", reason = "a model reads no environment" },
+  { path = "std::env::ArgsOs", reason = "a model reads no environment" },
+  { path = "std::env::Vars", reason = "a model reads no environment" },
+  { path = "std::env::VarsOs", reason = "a model reads no environment" },
+  { path = "std::io::Stdin", reason = "a model reads no terminal" },
+  { path = "std::io::Stdout", reason = "a model writes no terminal" },
+  { path = "std::io::Stderr", reason = "a model writes no terminal" },
+]
+disallowed-methods = [
+  { path = "std::fs::read", reason = "a model reads no files" },
+  { path = "std::fs::read_to_string", reason = "a model reads no files" },
+  { path = "std::fs::read_dir", reason = "a model reads no files" },
+  { path = "std::fs::read_link", reason = "a model reads no files" },
+  { path = "std::fs::metadata", reason = "a model reads no files" },
+  { path = "std::fs::symlink_metadata", reason = "a model reads no files" },
+  { path = "std::fs::canonicalize", reason = "a model reads no files" },
+  { path = "std::fs::exists", reason = "a model reads no files" },
+  { path = "std::fs::write", reason = "a model writes no files" },
+  { path = "std::fs::copy", reason = "a model writes no files" },
+  { path = "std::fs::rename", reason = "a model writes no files" },
+  { path = "std::fs::hard_link", reason = "a model writes no files" },
+  { path = "std::fs::create_dir", reason = "a model writes no files" },
+  { path = "std::fs::create_dir_all", reason = "a model writes no files" },
+  { path = "std::fs::remove_file", reason = "a model writes no files" },
+  { path = "std::fs::remove_dir", reason = "a model writes no files" },
+  { path = "std::fs::remove_dir_all", reason = "a model writes no files" },
+  { path = "std::fs::set_permissions", reason = "a model writes no files" },
+  { path = "std::path::Path::exists", reason = "a model reads no files" },
+  { path = "std::path::Path::try_exists", reason = "a model reads no files" },
+  { path = "std::path::Path::is_file", reason = "a model reads no files" },
+  { path = "std::path::Path::is_dir", reason = "a model reads no files" },
+  { path = "std::path::Path::is_symlink", reason = "a model reads no files" },
+  { path = "std::path::Path::metadata", reason = "a model reads no files" },
+  { path = "std::path::Path::symlink_metadata", reason = "a model reads no files" },
+  { path = "std::path::Path::canonicalize", reason = "a model reads no files" },
+  { path = "std::path::Path::read_dir", reason = "a model reads no files" },
+  { path = "std::path::Path::read_link", reason = "a model reads no files" },
+  { path = "std::net::ToSocketAddrs::to_socket_addrs", reason = "a model uses no network" },
+  { path = "std::process::exit", reason = "a model returns; it doesn't end the process" },
+  { path = "std::process::abort", reason = "a model returns; it doesn't end the process" },
+  { path = "std::process::id", reason = "a model reads no environment" },
+  { path = "std::env::args", reason = "a model reads no environment" },
+  { path = "std::env::args_os", reason = "a model reads no environment" },
+  { path = "std::env::var", reason = "a model reads no environment" },
+  { path = "std::env::var_os", reason = "a model reads no environment" },
+  { path = "std::env::vars", reason = "a model reads no environment" },
+  { path = "std::env::vars_os", reason = "a model reads no environment" },
+  { path = "std::env::set_var", reason = "a model changes no environment" },
+  { path = "std::env::remove_var", reason = "a model changes no environment" },
+  { path = "std::env::current_dir", reason = "a model reads no environment" },
+  { path = "std::env::set_current_dir", reason = "a model changes no environment" },
+  { path = "std::env::current_exe", reason = "a model reads no environment" },
+  { path = "std::env::home_dir", reason = "a model reads no environment" },
+  { path = "std::env::temp_dir", reason = "a model reads no environment" },
+  { path = "std::io::stdin", reason = "a model reads no terminal" },
+  { path = "std::io::stdout", reason = "a model writes no terminal" },
+  { path = "std::io::stderr", reason = "a model writes no terminal" },
+]
+# Build-time reach: what the compiler reads from the environment or the disk, or emits as
+# assembly. include! and include_str! stay with code_check.sh, which allows the domain's own
+# vector file, spec and sources by path.
+disallowed-macros = [
+  { path = "std::env", reason = "a model reads no environment, even at build time" },
+  { path = "std::option_env", reason = "a model reads no environment, even at build time" },
+  { path = "std::include_bytes", reason = "a model reads no files, even at build time" },
+  { path = "core::arch::global_asm", reason = "a model is Rust" },
+  { path = "core::arch::asm", reason = "a model is Rust" },
+]

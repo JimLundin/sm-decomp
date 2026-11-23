@@ -6,14 +6,17 @@
 # `git am`, authorship and messages kept. Each must touch only the [import] paths of
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
 # `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
-# code_check.sh --import (no file, network, process or build-time reach, and no variant import
+# code_check.sh --import (nothing cargo would run or read at build time, and no variant import
 # even in a crate whose old ones still only warn on the trunk), or nothing is applied. If BRANCH
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
 # `Role: integrator`), so the patches apply as they were made. The workspace takes every folder
 # of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring the model
 # into the engine is the integrator's next commit.
 #
-# Once applied, every clean crate in the workspace is linted with both clippy configurations of
+# Once applied, the export's crates must hold the capability rule (no files, network, processes,
+# environment or unsafe code): clippy with tools/cleanroom/clippy.toml and only the workspace's
+# forbidden lints, which runs none of the code. A finding resets BRANCH to where it was: nothing
+# applied. Then every clean crate in the workspace is linted with both clippy configurations of
 # tools/lane/gate.sh: the workspace's lints, and tools/cleanroom/clippy.toml. An export holds one
 # domain's model and the shared types, so a change to the types can break a crate its implementer
 # never saw. If either run fails, the import fails naming the run and the crates, with the patches
@@ -55,9 +58,10 @@ for c in "${commits[@]}"; do
 done
 [ "$refused" -eq 0 ] || die "nothing applied"
 
-# The code the patches leave behind is checked before anything is applied: cargo test and build
-# run it with this user's full access, which launch.sh cannot confine. The check runs on the
-# committed tree of the export's HEAD, which is what the patches add up to.
+# What cargo would run or read while it builds the patches' code (a build script, a proc macro,
+# an include! of another file) is checked before anything is applied: cargo runs it with this
+# user's full access, which launch.sh cannot confine. The check runs on the committed tree of the
+# export's HEAD, which is what the patches add up to.
 checked=$(mktemp -d)
 trap 'rm -rf "$checked"' EXIT
 git_isolated "$dest" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
@@ -90,6 +94,19 @@ fi
 outside=$(git diff --name-only "$scaffolded" HEAD | while IFS= read -r p; do in_entries "$p" "${writable[@]}" || echo "$p"; done)
 [ -z "$outside" ] || die "applied changes outside the clean crates: $(echo $outside); inspect $scaffolded..HEAD"
 applied="$(git rev-parse --short "$before")..$(git rev-parse --short HEAD)"
+
+# The capability rule, on the export's own crates, before any other run: every lint allowed but
+# those the workspace forbids (lib.sh). Clippy runs none of the code. A finding, or code that
+# doesn't compile, takes the branch back to where it was, as code_check.sh's refusal does.
+log=$(mktemp)
+if ! CLIPPY_CONF_DIR="$cleanroom_dir" "$cargo" clippy --locked -p types -p "$(model_package "$domain")" \
+    --all-targets --no-deps -- "${capability_lints[@]}" >"$log" 2>&1; then
+  awk '/^error|-->/ && shown++ < 20' "$log"
+  rm -f "$log"
+  git reset -q --hard "$before"
+  die "the capability rule refused the export's crates; nothing applied"
+fi
+rm -f "$log"
 
 # The clean crates, by package name: the workspace takes every folder of crates/clean.
 packages=()

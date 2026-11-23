@@ -1,10 +1,16 @@
-# lib.sh: shared by export.sh and import.sh. Source it; it defines functions only.
+# lib.sh: shared by export.sh and import.sh. Source it; it defines functions and one array.
 
 # The allowlist next to this file, unless CLEANROOM_ALLOWLIST names another.
 cleanroom_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 allowlist=${CLEANROOM_ALLOWLIST:-$cleanroom_dir/allowlist.txt}
 
 die() { echo "cleanroom: $*" >&2; exit 1; }
+
+# Clippy's arguments for the capability rule alone: every lint allowed but those the workspace
+# forbids (the clean room's disallowed paths in clippy.toml, unsafe code), which no flag lifts.
+# responses_controller.py's `capability` command passes the same.
+capability_lints=(-A warnings -A clippy::all -A clippy::pedantic -A clippy::nursery
+  -A clippy::restriction -A missing_docs)
 
 # A domain is a lowercase kebab-case name: it becomes a path and a package name. `types` is the
 # shared crate's folder beside the models, so it names no domain.

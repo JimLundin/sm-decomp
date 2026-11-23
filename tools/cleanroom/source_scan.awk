@@ -7,13 +7,18 @@
 # (DETAIL is the call and up to 200 characters after it) for code_check.sh to resolve, since
 # whether its path is allowed depends on where the file and the export root sit on disk.
 #
+# Files, the network, processes, the environment, include_bytes!, env! and assembly are clippy's
+# (tools/cleanroom/clippy.toml), and unsafe code, extern blocks and link attributes the
+# workspace's forbidden `unsafe_code`. What stays here is what a lint can't say: which file an
+# include! may read, and the renames that would hide an include! from this scan (`std as x`,
+# `std::$name`, `core::include_str as x`), and #[path = ...].
+#
 # The rules match over the source flattened to one line, as code_check.sh documents: comments
 # removed, string contents blanked (except for include calls, which need their literal), every
 # run of whitespace one space, and no space around `::` and the brackets and punctuation
 # ]{}(),;!#*[, so `std ::\n fs` reads `std::fs`. Each rule takes its matches left to right
-# without overlap, a match being the leftmost and then the longest, as `grep -o` takes them:
-# a rule's findings are the same as when each was a grep over that line. POSIX awk has no word
-# boundary, so the rules that need one check the characters around a match.
+# without overlap, a match being the leftmost and then the longest, as `grep -o` takes them.
+# POSIX awk has no word boundary, so the rules that need one check the characters around a match.
 
 function wordc(ch) { return ch != "" && ch ~ /^[A-Za-z0-9_]$/ }
 # Whether a match from i to j-1 starts and ends a word, as `\b` asks before a word character and
@@ -60,60 +65,6 @@ function each(s, re, bs, be, tag, detail,   from, m) {
   }
 }
 
-# std::fs and the rest by full path: the tag names the module.
-function std_paths(s,   from, m) {
-  from = 1
-  while (next_match(s, from, "std::(fs|net|process|env|os)", 0, 1)) {
-    m = substr(s, MS, ML); finding("std-" substr(m, 6), m); from = MS + ML
-  }
-}
-
-# std::io by path, a `::` group or any other use, except io::Write alone.
-function std_io(s,   from, m, t) {
-  from = 1
-  while (1) {
-    if (next_match(s, from, "std::io(::\\{[^}]*\\}|::[A-Za-z_*]+|[^A-Za-z0-9_])", 0, 0)) m = substr(s, MS, ML)
-    else if (length(s) - 6 >= from && substr(s, length(s) - 6) == "std::io") { m = "std::io"; MS = length(s) - 6; ML = 7 }
-    else return
-    t = m; gsub(/,\}/, "}", t)
-    if (t != "std::io::Write" && t != "std::io::{Write}") finding("std-io", m)
-    from = MS + ML
-  }
-}
-
-# A group under std (`std::{fs, io::Write}`), up to the statement's end: each forbidden module
-# named directly in it, and `self as` (std renamed). Only the first of two neighbouring modules
-# is seen (`{fs,net}` names fs), as the comma after the first is part of its match.
-function std_groups(s,   from, g, rest, m, t, gfrom) {
-  from = 1
-  while (match(substr(s, from), /std::\{[^;]*/)) {
-    g = substr(s, from + RSTART - 1, RLENGTH); from += RSTART - 1 + RLENGTH
-    rest = drop_io_write(g)
-    gfrom = 1
-    while (1) {
-      if (next_match(rest, gfrom, "[{,](fs|net|process|env|os|io|\\*)[^A-Za-z0-9_]", 0, 0)) m = substr(rest, MS, ML)
-      else if (match(substr(rest, gfrom), /[{,](fs|net|process|env|os|io|\*)$/)) { MS = gfrom + RSTART - 1; ML = RLENGTH; m = substr(rest, MS, ML) }
-      else break
-      t = m; gsub(/[^a-z*]/, "", t); finding("std-" t, g)
-      gfrom = MS + ML
-    }
-    if (index(rest, "{self as ") || index(rest, ",self as ")) finding("std-alias", g)
-  }
-}
-
-# A group's text without its allowed io::Write: `io::{Write}`, `io::{Write,}` and `io::Write`
-# where the word ends.
-function drop_io_write(g,   out, i) {
-  gsub(/io::\{Write,?\}/, "", g)
-  out = ""
-  while (i = index(g, "io::Write")) {
-    if (ends_word(g, i + 9)) out = out substr(g, 1, i - 1)
-    else out = out substr(g, 1, i)
-    g = substr(g, i + (ends_word(g, i + 9) ? 9 : 1))
-  }
-  return out g
-}
-
 # include!/include_str! calls in the source with its strings kept, for code_check.sh.
 function includes(k,   from, len) {
   from = 1
@@ -146,25 +97,6 @@ function last_in_attr(s, text,   q, n, best) {
   return best
 }
 
-# #[link(...)], link_name, link_section, export_name, no_mangle and #[link]: the leftmost of
-# them, the longer of the two attribute forms where both start at one `#`.
-function links(s,   from, h, end, alt, ws) {
-  from = 1
-  while (1) {
-    end = 0
-    for (h = next_attr(s, from); h; h = next_attr(s, h + 1)) {
-      end = last_in_attr(s, "link(")
-      alt = (substr(s, AO + 1, 4) == "link" && ends_word(s, AO + 5)) ? AO + 5 : 0
-      if (alt > end) end = alt
-      if (end) break
-    }
-    ws = next_match(s, from, "link_name|link_section|export_name|no_mangle", 1, 1) ? MS : 0
-    if (ws && (!end || ws < h)) { finding("link", substr(s, MS, ML)); from = MS + ML; continue }
-    if (!end) return
-    finding("link", substr(s, h, end - h)); from = end
-  }
-}
-
 # #[path = ...] (`#!?\[[^]]*\bpath ?=`): the attribute up to its last `path =` or `path=`.
 function path_attrs(s,   from, h, end) {
   from = 1
@@ -176,27 +108,13 @@ function path_attrs(s,   from, h, end) {
   }
 }
 
-function scan(b, k,   from, m, t) {
-  std_paths(b)
-  std_io(b)
-  std_groups(b)
-  each(b, "std::\\*", 0, 0, "std-glob", "")
+function scan(b, k) {
   each(b, "std as [A-Za-z_]+", 1, 0, "std-alias", "")
+  each(b, "std::\\{([^;}]*,)?self as ", 0, 0, "std-alias", "")
   each(b, "std::\\$[A-Za-z_]+", 0, 0, "std-macro-ident", "")
-  each(b, "File|TcpStream|UdpSocket|Command", 1, 1, "", "name used")
-  from = 1
-  while (next_match(b, from, "include_bytes|global_asm|option_env", 1, 1)) {
-    m = substr(b, MS, ML); t = m; gsub(/_/, "-", t); finding(t, m); from = MS + ML
-  }
-  each(b, "[A-Za-z_]*asm!", 0, 0, "asm", "")
-  each(b, "env!", 1, 0, "env-macro", "")
-  each(b, "(std|core|alloc)::(include_str|include|asm)|core::env", 0, 1, "macro-path", "")
+  each(b, "(std|core|alloc)::(include_str|include)", 0, 1, "macro-path", "")
   includes(k)
-  each(b, "extern", 1, 1, "extern", "")
-  each(b, "unsafe", 1, 1, "unsafe", "")
-  links(b)
   path_attrs(b)
-  each(b, "proc[-_]macro[A-Za-z0-9_]*", 1, 0, "proc-macro", "")
 }
 
 # The driver: the files are read here, not as awk's input, so each is one unit and an empty file

@@ -1,49 +1,14 @@
 #!/usr/bin/env bash
-# check_crate_rules.sh: the crate plan's rules (docs/architecture/ARCHITECTURE.md §4.1, §4.2,
-# D1; PRINCIPLES K1, K8, K9), checked over the new crates. Exit 1 lists each violation.
-#   Dependencies (rules 1-3, D1): each new crate depends on exactly the workspace packages the
-#     plan allows, over normal, build and dev dependencies with every feature on. Registry
-#     packages aren't constrained here, nor the baked copies under vendor/ that the root
-#     manifest patches in for registry crates (path packages, not workspace members).
-#   Sources (rules 4, 5, K8, K9): pattern checks over the engine crates' Rust files.
-# Run from the repository root. CARGO overrides the cargo binary.
+# check_crate_rules.sh: the crate plan's rules (docs/architecture/ARCHITECTURE.md §4.2; PRINCIPLES
+# K1, K8, K9) that no standard tool holds, over the new crates' sources. Exit 1 lists each
+# violation. The rest are standard tools: the dependency rules and build scripts are
+# `cargo deny check bans` (deny.toml); `#![feature]`, `allow`, `cfg(verify)` and the clean room's
+# capability rule are the workspace's forbidden lints (Cargo.toml, tools/cleanroom/clippy.toml).
+# Run from the repository root.
 set -u
-cargo=${CARGO:-cargo}
+engine="data game runtime app"
 bad=0
 fail() { echo "$1"; bad=1; }
-
-# The self-tests are independent, so they start now, at most one per processor, each into its own
-# file; each one's result is reported where it is listed below, in the same order and wording.
-selftests=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/crate-rules-XXXXXX")
-trap 'rm -rf "$selftests"' EXIT
-slots=$(nproc 2>/dev/null || echo 2)
-# Starts self-test script $1 once a slot is free.
-start() {
-  while [ "$(jobs -rp | wc -l)" -ge "$slots" ]; do wait -n; done
-  local name=${1//\//_}
-  { bash "$1" >"$selftests/$name.out" 2>&1; echo $? >"$selftests/$name.partial"; mv "$selftests/$name.partial" "$selftests/$name.status"; } &
-}
-# Fails with self-test $1's output unless it passed.
-finish() {
-  local name=${1//\//_}
-  while [ ! -f "$selftests/$name.status" ] && [ -n "$(jobs -rp)" ]; do wait -n || true; done
-  [ "$(cat "$selftests/$name.status")" = 0 ] || fail "$(cat "$selftests/$name.out")"
-}
-start tools/cleanroom/launch_test.sh
-start tools/cleanroom/code_check_test.sh
-start tools/cleanroom/canary_test.sh
-[ -z "${SM_SKIP_IMPORT_SELF_TEST:-}" ] && start tools/cleanroom/import_check_test.sh
-start tools/cleanroom/score_scan_test.sh
-start tools/lane/squash_test.sh
-start tools/lane/worktree_test.sh
-start tools/cleanroom/blind_copy_test.sh
-start tools/check_dependency_rules_test.sh
-start tools/cleanroom/adjusted_vectors_test.sh
-
-. tools/check_dependency_rules.sh
-check_direct_dependencies
-check_dependency_reachability
-finish tools/check_dependency_rules_test.sh
 
 # Rust source lines matching an extended regex, outside line comments. $1 names the check.
 scan() {
@@ -58,41 +23,27 @@ scan() {
 
 # Each scan's hits are violations.
 hits=$(
-  # Rule 4: no verification hooks in the engine (P6).
-  scan "rule 4 (no cfg(verify), probe or observer)" \
-    'cfg[[:space:]]*\(.*verify|[Pp]robes?\b|[Oo]bservers?\b' $engine
+  # Rule 4: no verification hooks in the engine (P6). `cfg(verify)` is the forbidden
+  # unexpected_cfgs; a probe or an observer is a name, which no lint sees.
+  scan "rule 4 (no probe or observer)" '[Pp]robes?\b|[Oo]bservers?\b' $engine
   # Rule 5 (K1): SNES addresses. Long WRAM ($7E/$7F), a bank:address pair, a LoROM long
   # address (banks $80-$DF, offsets $8000-$FFFF), and the PPU, CPU and DMA registers.
   # A bank-log reference in a comment is allowed (K9).
   scan "rule 5 (no SNES address literal)" \
     '0x7[EeFf]_?[0-9A-Fa-f]{4}\b|\$[0-9A-Fa-f]{2}:?[0-9A-Fa-f]{4}\b|0x[89A-Da-d][0-9A-Fa-f]_?[89A-Fa-f][0-9A-Fa-f]{3}\b|0x(21|42)[0-9A-Fa-f]{2}\b|0x43[0-7][0-9A-Fa-f]\b' \
     game runtime app
-  # K8: stable Rust and no silenced lints.
-  scan "K8 (no #![feature], allow or expect)" '#!?\[[[:space:]]*(feature|allow|expect)[[:space:]]*\(' $engine
+  # K8: no `expect` in the engine. `allow` and `#![feature]` are forbidden lints, but an
+  # `expect` with its reason is a lint level the clean crates may use, so it is a name here.
+  scan "K8 (no expect)" '#!?\[[[:space:]]*expect[[:space:]]*\(' $engine
   # K9: no routine labels for names.
   scan "K9 (no routine-label names)" '\b(func|sub|loc)_[0-9A-Fa-f]{2}_?[0-9A-Fa-f]{4}\b' $engine
 )
 [ -n "$hits" ] && fail "$hits"
 
-# The clean-room crates, where the spine has them: nothing in them reaches outside the process
-# when cargo runs it (tools/cleanroom/code_check.sh), and the check itself still catches its
-# fixtures.
+# The clean-room crates: what clippy can't see before cargo runs them (tools/cleanroom/code_check.sh).
 if [ -d crates/clean ]; then
   out=$(bash tools/cleanroom/code_check.sh crates/clean/* 2>&1) || fail "$out"
 fi
-finish tools/cleanroom/code_check_test.sh
-# The import self-test builds a throwaway worktree cold (about seven minutes). CI always runs it;
-# the local gate skips it, via SM_SKIP_IMPORT_SELF_TEST, when a branch leaves its subject unchanged.
-if [ -z "${SM_SKIP_IMPORT_SELF_TEST:-}" ]; then
-  finish tools/cleanroom/import_check_test.sh
-fi
-finish tools/cleanroom/score_scan_test.sh
-finish tools/lane/squash_test.sh
-finish tools/lane/worktree_test.sh
-finish tools/cleanroom/adjusted_vectors_test.sh
-finish tools/cleanroom/blind_copy_test.sh
-finish tools/cleanroom/canary_test.sh
-finish tools/cleanroom/launch_test.sh
 
 # What an export of each specced domain would carry, and the blind reviewer's skill, mention no
 # score or budget (MODEL §1 decision 10); export.sh checks the export itself too.

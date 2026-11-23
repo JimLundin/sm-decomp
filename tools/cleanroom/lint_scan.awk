@@ -6,10 +6,10 @@
 # lexer and the size counter's regions, not a parser.
 #   -v denied="..."  lints the workspace denies by name (and its denied groups), space-separated
 #
-# lint-attr      (L1) an #[allow] (the workspace denies clippy::allow_attributes), an
-#                #[expect]/#[allow]/#[warn] without reason = "...", or, outside test code, one
-#                that names a lint in `denied`. A lint denied only through a group (pedantic,
-#                nursery) may be expected, with its reason.
+# lint-attr      (L1) outside test code, an #[expect]/#[warn] that names a lint in `denied`. A
+#                lint denied only through a group (pedantic, nursery) may be expected. An #[allow]
+#                and an attribute without reason = "..." are the workspace's forbidden
+#                clippy::allow_attributes and allow_attributes_without_reason.
 # magic-literal  (L2) a number other than 0 or 1 in logic. Exempt: test code, attributes,
 #                struct/enum/union/type items, a constant's head, a constant's value while it is
 #                data (the counter's L3: literals, paths, tuples, arrays, struct literals and
@@ -290,20 +290,18 @@ function lookups(   a, o, e, k) {
   }
 }
 # A lint-control attribute's findings: the attribute spans a..b-1.
-function lint_attr(a, b, intest,   k, e, m, lint, why) {
+function lint_attr(a, b, intest,   k, e, m, lint) {
   for (k = a; k < b; k++) {
     if (kind[k] != "word" || text[k] !~ /^(allow|expect|warn)$/ || text[k + 1] != "(") continue
-    e = after_group(k + 1); why = 0
-    if (text[k] == "allow") finding("lint-attr", sprintf("line %d: allow (the workspace denies clippy::allow_attributes)", lineof[k]))
+    e = after_group(k + 1)
     for (m = k + 2; m < e - 1; m++) {
-      if (text[m] == "reason" && text[m + 1] == "=") { why = 1; m += 2; continue }
+      if (text[m] == "reason" && text[m + 1] == "=") { m += 2; continue }
       if (kind[m] != "word") continue
       lint = text[m]
       if (text[m + 1] == "::" && kind[m + 2] == "word") { lint = lint "::" text[m + 2]; m += 2 }
       if (!intest && (lint in refused))
         finding("lint-attr", sprintf("line %d: %s(%s) suppresses a lint the workspace denies", lineof[k], text[k], lint))
     }
-    if (!why) finding("lint-attr", sprintf("line %d: %s without reason = \"...\"", lineof[k], text[k]))
     k = e - 1
   }
 }
