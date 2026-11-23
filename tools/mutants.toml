@@ -449,3 +449,13 @@ after = "camera: self.camera.clone(),"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "camera.view.x.fraction"
+
+[[fault]]
+name = "played-room-tileset-colours-shifted"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "for (goal, colour) in goal.iter_mut().zip(colours) {"
+after = "for (goal, colour) in goal.iter_mut().zip(colours.skip(1)) {"
+case = "played chain-any-0003-DFD7 0 257"
+cut = 257
+field = "doors.colours.goal"
