@@ -702,7 +702,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 40 | 4,912 | 29,470 | 29,581 | 7,796 | 1,058 | 2,065 | 3,517 | 457 | 6,168 |
+| production and exact services | 40 | 4,896 | 29,375 | 29,470 | 7,796 | 1,058 | 2,061 | 3,517 | 457 | 6,146 |
 | bridges | 6 | 898 | 5,389 | 5,276 | 594 | 377 | 617 | 303 | 78 | 903 |
 | rebuilt models, shared types included | 120 | 7,017 | 42,101 | 50,298 | 21,462 | 18,081 | 2,451 | 2,035 | 985 | 15,477 |
 
@@ -961,8 +961,6 @@ graph LR
   c_game --> c_canonical
   c_game --> c_data
   c_game --> c_enemy_interactions
-  c_game --> c_game_random
-  c_game --> c_game_time
   c_game --> c_interface_hud
   c_game --> c_run_progress
   c_game --> c_samus_appearance
@@ -973,8 +971,6 @@ graph LR
   c_game --> c_world_blocks
   c_game --> c_world_camera
   c_game --> c_world_doors
-  c_game --> c_world_haze
-  c_game --> c_world_quake
   c_game_random --> c_types
   c_game_time --> c_types
   c_import --> c_canonical
@@ -2439,7 +2435,6 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 
 | Model | Engine file | Part | Names | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| audio-transport | `crates/game/src/production/appearance.rs` | names it | `CueId`, `OfferPermission`, `QueueAllowance`, `SenderState`, `SoundGroup` | 137 | 47 |
 | audio-transport | `crates/game/src/production/audio/admission.rs` | names it | `AudioCycles`, `AudioInstant`, `AudioPhase`, `CompletionResult`, `Content`, `CueId`, `EffectVoiceId`, `GroupState`, `MusicEvent`, `PartState`, `Playback`, `Request`, `SenderState`, `SongState`, `SoundGroup`, `State`, `TrackContent`, `TrackPosition`, `effects`, `music`, `transport` | 4,114 | 490 |
 | audio-transport | `crates/game/src/production/audio.rs` | names it | `AudioCyclePhase`, `AudioInstant`, `AudioPhase`, `Content`, `CpuMasterTicks`, `InstantFraction`, `Playback`, `ReleaseHistory`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `State`, `effects`, `time`, `transport` | 1,017 | 248 |
 | audio-transport | `crates/game/src/production/content.rs` | names it | `Content`, `SoundGroup` | 285 | 99 |
@@ -2489,7 +2484,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 3,201 | 585 |
 | world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 69 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AppearanceState`, `CannonDelay`, `CannonEvent`, `ChargeGlowPosition`, `Clip`, `ColourSequences`, `Content`, `Figure`, `Frame`, `FrameOutputs`, `FrameSound`, `Frames`, `Inputs`, `LapsLeft`, `Pace`, `Paces`, `PaletteOpportunity`, `PassageEntry`, `Playhead`, `Rules`, `Selection`, `SoundRequest`, `State`, `Step`, `Stride`, `VisorDelay`, `VisorStep`, `update` | 923 | 196 |
-| samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Ahead`, `Clip`, `Figure`, `FrameSound`, `SoundRequest`, `State` | 137 | 47 |
+| samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Ahead`, `Clip`, `Figure`, `State` | 42 | 25 |
 | samus-appearance | `crates/game/src/production/connected/inputs.rs` | names it | `CinematicActivity`, `ContactSuppressor`, `Liquid`, `SoundsWaiting` | 0 | 49 |
 | samus-appearance | `crates/game/src/production/connected.rs` | names it | `CinematicActivity`, `Figure`, `FrameSound`, `GraphicalContact`, `Liquid`, `Rules`, `Selection`, `State`, `Stride` | 1,133 | 248 |
 | samus-appearance | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
