@@ -32,13 +32,13 @@ first lag cut. Room facts with no selected producer yet are read once from the s
 not compare intra-frame bus timing.
 
 ```sh
-SM_CACHE=... SM_ROM=... SM_LOCK=scenarios/locks/lsnes.toml \
-  cargo test --profile verify -p verify --lib \
-  replay::played::tests::m0_room_three_played_alone -- --ignored --nocapture
+$TOOLS replay played chain-any-0003-DFD7 0 344 \
+  --cache "$CACHE" --rom "$ROM" --lock scenarios/locks/lsnes.toml
 ```
 
-It prints one `PLAYED_ALONE` line per start: the M0 row `chain-any-0003-DFD7` from its seed
-(cut 0) and from cut 6. It is a diagnostic, not yet an indexed obligation.
+It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by cut and field or
+dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
+dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
 ## The models' gain over the null model
 

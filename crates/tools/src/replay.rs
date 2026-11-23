@@ -11,7 +11,7 @@ use verify::replay::{
 
 mod map;
 
-pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
+pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       tools replay played ROW START END --cache CACHE --rom ROM --lock LOCK\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
 
 struct Options {
     ids: Vec<CaseId>,
@@ -114,10 +114,12 @@ enum Operation {
 }
 
 pub fn run(args: &[String]) -> Result<String, String> {
-    if let [command, rest @ ..] = args
-        && command == "map"
-    {
-        return map::run(rest).map_err(|fault| format!("replay map: {fault:?}"));
+    match args {
+        [command, rest @ ..] if command == "map" => {
+            return map::run(rest).map_err(|fault| format!("replay map: {fault:?}"));
+        }
+        [command, rest @ ..] if command == "played" => return played(rest),
+        _ => {}
     }
     let [command, index_path, rest @ ..] = args else {
         return Err(USAGE.to_owned());
@@ -326,6 +328,45 @@ fn receipt(results: &[CaseResult]) -> Result<String, String> {
         cases: results,
     })
     .map_err(|_| "receipt encoding failed".to_owned())
+}
+
+/// Play a lock row alone from its seed and report the cuts held. The line carries only the
+/// row, cut numbers and the stop's field or dependency name, never an observed value.
+fn played(args: &[String]) -> Result<String, String> {
+    let [row, start, end, rest @ ..] = args else {
+        return Err(USAGE.to_owned());
+    };
+    let cut = |text: &String| text.parse::<u64>().map_err(|_| USAGE.to_owned());
+    let (start, end) = (cut(start)?, cut(end)?);
+    let mut sources = Sources::default();
+    let mut remaining = rest;
+    while let [flag, value, tail @ ..] = remaining {
+        let path = PathBuf::from(value);
+        match flag.as_str() {
+            "--cache" => sources.cache = path,
+            "--rom" => sources.rom = path,
+            "--lock" => sources.lock = path,
+            _ => return Err(USAGE.to_owned()),
+        }
+        remaining = tail;
+    }
+    if !remaining.is_empty()
+        || [&sources.cache, &sources.rom, &sources.lock]
+            .iter()
+            .any(|path| path.as_os_str().is_empty())
+    {
+        return Err(USAGE.to_owned());
+    }
+    let report = replay::played::play(&sources, row, start, end)
+        .map_err(|outcome| format!("replay played: {outcome:?}"))?;
+    Ok(format!(
+        "PLAYED_ALONE row={} start={} held={} stop={:?} seed_held={:?}\n",
+        report.row,
+        report.start,
+        report.held,
+        report.stop,
+        replay::played::SEED_HELD
+    ))
 }
 
 #[cfg(test)]

@@ -198,12 +198,21 @@ jobs:
         if: inputs.target == ''
         # Fault workers can reuse compiler state from a clean main replay build.
         run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
+      - name: Play the M0 room alone from its seed
+        # Diagnostic: prints the cuts held and where the run stopped, by cut and field name only.
+        if: inputs.target == 'played'
+        run: |
+          for start in 0 6; do
+            cargo run --quiet --locked --profile verify -p tools --bin tools -- replay played \
+              chain-any-0003-DFD7 "$start" 344 --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc \
+              --lock scenarios/locks/lsnes.toml
+          done
       - name: Check the required witnesses and indexed replay against the reviewed baseline
         if: inputs.target == ''
         env: *witness_env
         run: bash tools/ci/replay_parallel.sh "$RUNNER_TEMP/replay-receipt.toml"
       - name: Check one indexed replay case against the reviewed baseline
-        if: inputs.target != '' && !contains(inputs.target, '::')
+        if: inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
         env:
           CARGO_INCREMENTAL: "1"
           REPLAY_CASE: ${{ inputs.target }}

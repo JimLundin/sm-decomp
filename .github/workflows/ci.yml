@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Indexed case ID or exact verify library test name (empty runs full CI)
+        description: Indexed case ID, exact verify library test name, or played for the M0 played-alone run (empty runs full CI)
         type: string
         required: false
 
