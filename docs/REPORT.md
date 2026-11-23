@@ -109,7 +109,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **appearance/dry-colours-opening-actions** declares no rule witness. Limits: actual palette opportunities past the admitted opening returns unavailable: production carries the frame through cut 8, and this row declares every palette opportunity in cuts 9 to 182, one per cut; they include Running at 9 to 15 and 158 to 182, the spin's steps at 16 to 28, the left spin at 80, Turning(Jump) in pose 30 at 106 to 111 and the landings at 57 and 124; at every declared cut compare visor delay, visor step and charge-glow position before and after, the application count and both unchanged colour banks; the first divergence to expect is the first Spinning, Jumping, Turning(Jump), Landing(Jump), Still or Moonwalking opportunity: cuts 16, 29, 36, 57, 156 and 157; the screw attack is off at every opportunity, so this row never reaches a spin with the screw attack on; the screw attack comes from the frame's equipment seeded once at the origin, not the live progress owner, so an item change mid-run would not be noticed; boundary holds unsupported; no behaviour Pass.
 - **movement-native-occupied-first-search** witnesses samus-movement/TouchedCells. Limits: Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.; The complete ordered reached cells and the inside cells are compared. The original's work inside the step (motion, support and fit work, collision tests, the first request's enemy candidates, skip status) has no whole-frame counterpart and is not compared. Elapsed CPU timing remains unproved.; Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change..
 - **movement-native-enemy-stop-terrain-absence** witnesses samus-movement/TouchedCells. Limits: Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.; The complete ordered reached cells and the inside cells are compared, as the enemy stop leaves them. The original's work inside the step (the ordinary-right terrain tests the stop skips, motion, support and fit work, the first request's enemy candidates, skip status) has no whole-frame counterpart and is not compared.; Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically..
-- **connected-ordinary/early-mini-map** witnesses samus-movement/MovesAsShePosed, interface-hud/Exploring, interface-hud/MiniMapWindow, interface-hud/HerBlink. Limits: full early coordinates, exploration and 15 Map cells at both opportunities; cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity; cut 80 plays its whole frame, into a later Spinning pose, and compares only the early Map, read at her position after her moves; at cut 80 her position after her moves equals her position at the frame's end, so that cut does not tell the two apart; cut 79 does, where the early-map-reads-end-position fault fails; selected HUD work ends at the early Map, before status; physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved.
+- **connected-ordinary/early-mini-map** witnesses samus-movement/MovesAsShePosed, interface-hud/Exploring, interface-hud/MiniMapWindow, interface-hud/HerBlink. Limits: full early coordinates, exploration and 15 Map cells at both opportunities; cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity; cut 80 plays its whole frame, into a later Spinning pose, and compares only the early Map, read at her position after her moves; at cut 80 her position after her moves equals her position at the frame's end, so that cut does not tell the two apart; cut 79 does, where the early-map-reads-end-position fault fails; each cut plays the HUD's whole frame and compares only the early Map; the status bar draws borrowed values and is not compared; physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved.
 - **sender-offer/native-00** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
 - **sender-offer/native-01** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
 - **sender-offer/native-02** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
@@ -176,7 +176,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | samus-movement | 10,896 | 9,923 | 1.10 | 0.90 | 18 % | 12,724 | 4,428 | 484 |
 | world-camera | 1,932 | 1,962 | 0.98 | 0.83 | 15 % | 2,274 | 675 | 103 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 76 |
-| interface-hud | 4,715 | 2,749 | 1.72 | 0.85 | 50 % (over 25 %) | 2,742 | 1,721 | 126 |
+| interface-hud | 2,855 | 2,412 | 1.18 | 0.90 | 24 % | 2,742 | 1,193 | 108 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 100 |
 | samus-appearance | 3,351 | 2,149 | 1.56 | 1.06 | 32 % (over 25 %) | 1,525 | 1,456 | 186 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 56 |
@@ -276,28 +276,26 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean/interface_hud/src/catalogue.rs` | - | tables and types | 0 | 18 | 109 | 807 | 0 | 0 | 0 | 246 |
-| `crates/clean/interface_hud/src/countdown.rs` | status | tables and types | 36 | 55 | 143 | 0 | 0 | 0 | 0 | 33 |
-| `crates/clean/interface_hud/src/countdown_work.rs` | status | logic | 157 | 221 | 45 | 0 | 5 | 0 | 0 | 46 |
+| `crates/clean/interface_hud/src/catalogue.rs` | - | tables and types | 0 | 18 | 99 | 652 | 0 | 0 | 0 | 208 |
+| `crates/clean/interface_hud/src/countdown.rs` | status | tables and types | 56 | 77 | 150 | 0 | 1 | 0 | 0 | 42 |
 | `crates/clean/interface_hud/src/events.rs` | - | tables and types | 0 | 16 | 32 | 0 | 0 | 0 | 0 | 9 |
 | `crates/clean/interface_hud/src/grid.rs` | - | logic | 224 | 368 | 68 | 0 | 3 | 0 | 0 | 55 |
-| `crates/clean/interface_hud/src/inputs.rs` | - | tables and types | 263 | 404 | 723 | 16 | 3 | 13 | 0 | 193 |
-| `crates/clean/interface_hud/src/inputs.rs` `fn has` | selection | logic | 49 | 50 | 0 | 0 | 0 | 12 | 0 | 6 |
+| `crates/clean/interface_hud/src/inputs.rs` | - | tables and types | 81 | 177 | 574 | 16 | 3 | 0 | 0 | 140 |
+| `crates/clean/interface_hud/src/inputs.rs` `fn has` | selection | logic | 43 | 50 | 0 | 0 | 0 | 0 | 0 | 7 |
 | `crates/clean/interface_hud/src/item.rs` | selection | tables and types | 0 | 11 | 85 | 33 | 0 | 0 | 0 | 26 |
 | `crates/clean/interface_hud/src/layout.rs` | status | tables and types | 94 | 147 | 63 | 237 | 11 | 0 | 0 | 52 |
-| `crates/clean/interface_hud/src/lib.rs` | - | logic | 0 | 259 | 12 | 0 | 0 | 0 | 0 | 45 |
+| `crates/clean/interface_hud/src/lib.rs` | - | logic | 0 | 227 | 12 | 0 | 0 | 0 | 0 | 39 |
 | `crates/clean/interface_hud/src/map.rs` | minimap | tables and types | 0 | 23 | 54 | 0 | 0 | 0 | 0 | 10 |
-| `crates/clean/interface_hud/src/mini_map.rs` | minimap | logic | 746 | 906 | 116 | 59 | 45 | 13 | 37 | 174 |
+| `crates/clean/interface_hud/src/mini_map.rs` | minimap | logic | 754 | 906 | 116 | 59 | 46 | 13 | 24 | 173 |
 | `crates/clean/interface_hud/src/pictures.rs` | status | logic | 127 | 204 | 154 | 0 | 0 | 0 | 0 | 46 |
 | `crates/clean/interface_hud/src/rules.rs` | - | tables and types | 59 | 115 | 119 | 186 | 1 | 0 | 0 | 67 |
 | `crates/clean/interface_hud/src/rules.rs` `fn reference` | minimap | logic | 38 | 43 | 0 | 0 | 2 | 0 | 0 | 11 |
-| `crates/clean/interface_hud/src/selection.rs` | selection | logic | 252 | 340 | 0 | 0 | 4 | 0 | 0 | 43 |
+| `crates/clean/interface_hud/src/selection.rs` | selection | logic | 237 | 306 | 0 | 0 | 4 | 0 | 0 | 39 |
 | `crates/clean/interface_hud/src/state.rs` | - | tables and types | 59 | 117 | 169 | 0 | 0 | 0 | 0 | 47 |
-| `crates/clean/interface_hud/src/status_bar.rs` | status | logic | 846 | 1,022 | 12 | 2 | 62 | 0 | 19 | 130 |
-| `crates/clean/interface_hud/src/step.rs` | - | logic | 141 | 214 | 0 | 0 | 2 | 0 | 7 | 38 |
+| `crates/clean/interface_hud/src/status_bar.rs` | status | logic | 823 | 977 | 12 | 2 | 63 | 0 | 21 | 122 |
+| `crates/clean/interface_hud/src/step.rs` | - | logic | 180 | 248 | 32 | 0 | 2 | 15 | 13 | 42 |
 | `crates/clean/interface_hud/src/tile.rs` | - | tables and types | 82 | 167 | 174 | 34 | 2 | 0 | 0 | 58 |
-| `crates/clean/interface_hud/src/work.rs` | - | logic | 1,544 | 1,590 | 530 | 0 | 44 | 198 | 22 | 386 |
-| total | | | 4,715 | 6,290 | 2,608 | 1,374 | 181 | 236 | 85 | 1,721 |
+| total | | | 2,855 | 4,197 | 1,913 | 1,219 | 135 | 28 | 58 | 1,193 |
 
 ### world-blocks
 
@@ -430,7 +428,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | samus-movement | 4,428 | 2,655 | 1,773 | 1,816 |
 | world-camera | 675 | 238 | 437 | 322 |
 | run-progress | 437 | 182 | 255 | 136 |
-| interface-hud | 1,721 | 741 | 980 | 786 |
+| interface-hud | 1,193 | 659 | 534 | 476 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
 | samus-appearance | 1,456 | 874 | 582 | 559 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
@@ -441,7 +439,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
 | shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,415 | 1,225 | 190 | 274 |
-| total | 16,005 | 8,076 | 7,929 | 7,327 |
+| total | 15,477 | 7,994 | 7,483 | 7,017 |
 
 ## Spec, budget and fit by area
 
@@ -534,14 +532,13 @@ Spec [`docs/behaviours/interface-hud.md`](behaviours/interface-hud.md), k = 37.5
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| status | 10 | 25.0 | 937 | 1,069 | 1,259 | 1.34 |
-| selection | 5 | 12.0 | 450 | - | 301 | 0.67 |
-| minimap | 10 | 33.3 | 1,250 | 1,673 | 784 | 0.63 |
-| unassigned | 1 | 3.0 | 112 | - | 0 | 0.00 |
-| shared (in no area) | | | | | 2,371 | |
-| total | 26 | 73.3 | 2,749 | 2,742 | 4,715 | 1.72 |
+| status | 8 | 22.0 | 825 | 1,069 | 1,099 | 1.33 |
+| selection | 4 | 11.0 | 412 | - | 280 | 0.68 |
+| minimap | 9 | 31.3 | 1,175 | 1,673 | 792 | 0.67 |
+| shared (in no area) | | | | | 684 | |
+| total | 21 | 64.3 | 2,412 | 2,742 | 2,855 | 1.18 |
 
-Area fit 0.85: the areas' score, 2,344, ÷ the budget. Shared code 2,371, its share of the model 50 % (over 25 %).
+Area fit 0.90: the areas' score, 2,171, ÷ the budget. Shared code 684, its share of the model 24 %.
 
 ### world-blocks
 
@@ -677,8 +674,8 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | run-progress | replay provider | 1 | 987 | 1,003 | 65 | 335 | 90 | 64 | 16 | 187 |
-| interface-hud | bridge | 1 | 861 | 885 | 140 | 36 | 45 | 140 | 26 | 177 |
-| interface-hud | replay provider | 1 | 3,406 | 3,189 | 35 | 76 | 272 | 321 | 16 | 488 |
+| interface-hud | bridge | 1 | 148 | 141 | 40 | 34 | 38 | 0 | 0 | 35 |
+| interface-hud | replay provider | 1 | 3,600 | 3,381 | 35 | 76 | 277 | 369 | 19 | 514 |
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-appearance | bridge | 2 | 1,643 | 1,660 | 130 | 36 | 194 | 49 | 0 | 268 |
@@ -688,7 +685,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-health | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-health | replay provider | 3 | 3,386 | 3,630 | 663 | 31 | 108 | 277 | 14 | 760 |
+| samus-health | replay provider | 3 | 3,434 | 3,693 | 708 | 87 | 112 | 277 | 14 | 795 |
 | game-time | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | game-time | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-quake | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -697,7 +694,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 39,455 | 38,582 | 3,326 | 1,618 | 2,856 | 3,607 | 440 | 6,543 |
+| total | | | 38,983 | 38,093 | 3,271 | 1,672 | 2,858 | 3,516 | 418 | 6,462 |
 
 ## Engine services
 
@@ -705,9 +702,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 40 | 4,990 | 29,939 | 29,977 | 7,735 | 1,058 | 2,102 | 3,562 | 458 | 6,223 |
-| bridges | 6 | 1,017 | 6,102 | 6,020 | 694 | 379 | 624 | 443 | 103 | 1,045 |
-| rebuilt models, shared types included | 122 | 7,327 | 43,961 | 52,391 | 22,157 | 18,236 | 2,497 | 2,243 | 1,012 | 16,005 |
+| production and exact services | 40 | 4,912 | 29,470 | 29,581 | 7,796 | 1,058 | 2,065 | 3,517 | 457 | 6,168 |
+| bridges | 6 | 898 | 5,389 | 5,276 | 594 | 377 | 617 | 303 | 78 | 903 |
+| rebuilt models, shared types included | 120 | 7,017 | 42,101 | 50,298 | 21,462 | 18,081 | 2,451 | 2,035 | 985 | 15,477 |
 
 ## Domain graph
 
@@ -1531,56 +1528,47 @@ graph LR
 
 ### interface-hud
 
-`crates/clean/interface_hud`, 19 modules.
+`crates/clean/interface_hud`, 17 modules.
 
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| `catalogue.rs` | - | The catalogue: one behaviour per entry of the HUD's spec, with its kind, its switch and how the spec checks it. | `enum BehaviourId (26)`, `struct Behaviour`, `const CATALOGUE` | 0 | 246 |
-| `countdown.rs` | status | Spec: EscapeCountdown. | `enum Countdown (1)`, `enum CountdownExpiry (1)`, `enum CountdownPicture (1)`, `enum CountdownOpportunity (1)`, `struct CountdownAnswer`, `Countdown::answer` | 36 | 33 |
-| `countdown_work.rs` | status | Spec: CountdownContinuation. | `struct CountdownWork`, `CountdownWork::{new, choose, apply, answer, state, publication}` | 157 | 46 |
+| `catalogue.rs` | - | The catalogue: one behaviour per entry of the HUD's spec, with its kind, its switch and how the spec checks it. | `enum BehaviourId (21)`, `struct Behaviour`, `const CATALOGUE` | 0 | 208 |
+| `countdown.rs` | status | The escape countdown (§5.1): the time remaining in the escape, shown over the room rather than in the status bar. | `enum Countdown (1)`, `enum CountdownRuns (2)`, `enum CountdownExpiry (1)`, `enum CountdownPicture (1)`, `struct CountdownAnswer`, `enum UnsupportedFrame (1)`, `Countdown::answer` | 56 | 42 |
 | `events.rs` | - | What a frame reports for other domains to act on. | `enum HudEvent (2)` | 0 | 9 |
 | `grid.rs` | - | A grid of cells, each holding a value: the HUD's cells, her map's pictures and the sets of her map's cells are each one. | `type Place`, `fn at`, `fn plus`, `struct Grid`, `Grid::{filled, get, set, contains, insert}`, `impl Default for Grid<T, COLUMNS, ROWS>`, 1 private | 224 | 55 |
-| `inputs.rs` | -; `fn has` in selection | What the HUD reads each step (§1.3): in a frame of play, the values other domains own, the buttons, what other domains drop before the status bar and after it, and where she is on her map; outside play, the mini-map's turn-on, a new area and a drop. | `struct FrameCount`, `struct Energy`, `enum ReserveMode (2)`, `struct Reserve`, `struct Stock`, `struct Ammunition`, `struct Equipped`, `struct Status`, `struct ItemControlInputs`, `enum SelectButton (2)`, `enum CancelButton (3)`, `enum Mute (4)`, `struct Controls`, `struct Room`, `struct MiniMapInputs`, `enum Dropped (3)`, `struct FrameInputs`, `struct StatusInputs`, `enum NewArea (2)`, `struct OutOfPlayInputs`, `Ammunition::{new, of, stocks}`, `ItemControlInputs::{from_frame, has}`, `Status::has`, `StatusInputs::from_frame`, `impl TryFrom<EnumMap<Ammo, Stock>> for Ammunition`, 2 private | 312 | 199 |
+| `inputs.rs` | -; `fn has` in selection | What the HUD reads each step (§1.3): in a frame of play, her stock as the frame begins and the buttons, which the selection reads; where she is on her map; the values other domains own as the frame ends, which the status bar draws; what other domains drop before the status bar and after it; and whether the scene runs the escape countdown. | `struct FrameCount`, `struct Energy`, `enum ReserveMode (2)`, `struct Reserve`, `struct Stock`, `struct Ammunition`, `struct Status`, `struct Equipped`, `struct StockAtStart`, `enum SelectButton (2)`, `enum CancelButton (3)`, `enum Mute (4)`, `struct Controls`, `struct Room`, `struct MiniMapInputs`, `enum Dropped (3)`, `struct FrameInputs`, `enum NewArea (2)`, `struct OutOfPlayInputs`, `Ammunition::{new, of, stocks}`, `StockAtStart::has`, 1 private | 123 | 147 |
 | `item.rs` | selection | The items the HUD can select (§1.1). | `enum Ammo (3)`, `enum SelectableItem (3)`, `SelectableItem::ORDER` | 0 | 26 |
 | `layout.rs` | status | Where things sit on the HUD (§1.2), as places on its grid: column across, row down. | `const TANKS`, `const ENERGY_DIGITS`, `fn ammo_digits`, `const RESERVE_SIGN`, `fn icon_top_left`, `const HER_CELL`, `const WINDOW_REACH`, `fn laid`, 3 private | 94 | 52 |
-| `lib.rs` | - | The HUD model, built from its behaviour spec alone: the status bar at the top of the screen, the selected item and the mini-map. | - | 0 | 45 |
+| `lib.rs` | - | The HUD model, built from its behaviour spec alone: the status bar at the top of the screen, the selected item and the mini-map. | - | 0 | 39 |
 | `map.rs` | minimap | Her map, as the mini-map reads it (§1.3): 64 columns by 32 rows of cells, each cell's picture with its flips, its beyond pictures, and the cells it charts; and the sets of its cells. | `type MapCellSet`, `type MapPictures`, `struct HerMap` | 0 | 10 |
-| `mini_map.rs` | minimap | The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own cell blinking, the bosses that blank it, and the quirks at the map's first and last columns. | `HudState::{mini_map_turned_on, movement_map, mini_map_updates, explore_and_draw_mini_map, boss_blanks_the_map}`, 22 private | 746 | 174 |
+| `mini_map.rs` | minimap | The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own cell blinking, the bosses that blank it, and the quirks at the map's first and last columns. | `HudState::{mini_map_turned_on, mini_map_turn, boss_blanks_the_map}`, 24 private | 754 | 173 |
 | `pictures.rs` | status | The HUD's pictures (§1.4): content the importer supplies by name, which the caller gives each step. | `struct Icons`, `fn rows`, `struct HudPictures`, `Icons::of`, `HudPictures::blank_cell` | 127 | 46 |
 | `rules.rs` | -; `fn reference` in minimap | The values the HUD's rules read: the reference profile holds the spec's; another `Rules` is an adjusted game. | `enum Boss (7)`, `struct Alternation`, `struct Rules`, `Alternation::first_half`, `Rules::reference`, `impl Default for Rules`, 3 private | 97 | 78 |
-| `selection.rs` | selection | How Select, item cancel and another domain's drop change the selection (spec: CyclingItems, CancellingTheItem, OneShotItem, Switching). | `Selection::{apply_drop, apply_item_controls}`, `HudState::item_controls`, 1 private | 252 | 43 |
-| `state.rs` | - | What the HUD keeps from one frame to the next (§1): its cells, the values last shown, the selection, the explored cells, mini-map power and independently owned escape countdown. | `struct Shown`, `enum Selection (3)`, `enum MiniMapPower (2)`, `struct HudState`, `Selection::{item, one_shot}` | 59 | 47 |
-| `status_bar.rs` | status | The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the items' icons with the selection's highlight. | `HudState::{refresh_status, energy_gauge, ammo_counts, reserve_sign, icon_appears, highlight, one_shot_flash}`, 5 private | 846 | 130 |
-| `step.rs` | - | Whole-frame and outside-play entries. | `HudState::{frame_of_play, out_of_play}` | 141 | 38 |
+| `selection.rs` | selection | How Select, item cancel and another domain's drop change the selection (spec: CyclingItems, CancellingTheItem, OneShotItem, Switching). | `Selection::{apply_drop, respond_to_controls}`, 1 private | 237 | 39 |
+| `state.rs` | - | What the HUD keeps from one frame to the next (§1): its cells, the values last shown, the selection, the explored cells, whether the mini-map is off, and the escape countdown. | `struct Shown`, `enum Selection (3)`, `enum MiniMapPower (2)`, `struct HudState`, `Selection::{item, one_shot}` | 59 | 47 |
+| `status_bar.rs` | status | The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the items' icons with the selection's highlight. | `HudState::draw_status_bar`, 11 private | 823 | 122 |
+| `step.rs` | - | The HUD's steps: a frame of play, whole, and a step outside play. | `struct FrameOutputs`, `HudState::{frame_of_play, out_of_play}` | 180 | 42 |
 | `tile.rs` | - | What a cell of the HUD shows (§1.4): a picture with its flips (the shared `Look`), in one of the HUD's eight colour sets; and the colour sets by the role the spec gives each. | `struct ColourSet`, `struct Tile`, `type HudGrid`, `const BLANK_COLOURS`, `const DIGIT_COLOURS`, `const FULL_TANK_COLOURS`, `const EMPTY_TANK_COLOURS`, `const SIGN_LIT`, `const SIGN_DIM`, `const PLAIN`, `const HIGHLIGHTED`, `const EXPLORED`, `const CHARTED`, `const BLINK`, `ColourSet::{new, number}`, `Tile::{new, in_colours}`, `impl TryFrom<u8> for ColourSet`, `impl From<ColourSet> for u8`, 1 private | 82 | 58 |
-| `work.rs` | - | Spec: ItemControls, MiniMapUpdate, StatusRefresh, RetainedHudWork. | `enum Observation (3)`, `enum HudOpportunity (4)`, `struct ControlAnswer`, `struct DisplayInputs`, `struct DisplayAnswer`, `struct MapAnswer`, `struct MovementInputs`, `struct StatusAnswer`, `struct EventCursor`, `struct HudWork`, `DisplayInputs::{from_frame, status_inputs, mini_map}`, `MovementInputs::{capture, as_mini_map}`, `EventCursor::next_event`, `HudWork::{new, begin, frame_count, opportunity, choose_controls, choose_display, choose_mini_map, choose_status, mini_map, status, apply, state, controls, display, initial_highlight, events, publication}`, 1 private | 1,544 | 386 |
 
 Its crate root exports:
 
 - from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
-- from `countdown`: `Countdown`, `CountdownAnswer`, `CountdownExpiry`, `CountdownOpportunity`, `CountdownPicture`
-- from `countdown_work`: `CountdownWork`
+- from `countdown`: `Countdown`, `CountdownAnswer`, `CountdownExpiry`, `CountdownPicture`, `CountdownRuns`, `UnsupportedFrame`
 - from `events`: `HudEvent`
 - from `grid`: `Grid`, `Place`
-- from `inputs`: `Ammunition`, `CancelButton`, `Controls`, `Dropped`, `Energy`, `Equipped`, `FrameCount`, `FrameInputs`, `ItemControlInputs`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `ReserveMode`, `Room`, `SelectButton`, `Status`, `StatusInputs`, `Stock`
+- from `inputs`: `Ammunition`, `CancelButton`, `Controls`, `Dropped`, `Energy`, `Equipped`, `FrameCount`, `FrameInputs`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `ReserveMode`, `Room`, `SelectButton`, `Status`, `Stock`, `StockAtStart`
 - from `item`: `Ammo`, `SelectableItem`
 - from `map`: `HerMap`, `MapCellSet`, `MapPictures`
 - from `pictures`: `HudPictures`, `Icons`
 - from `rules`: `Alternation`, `Boss`, `Rules`
 - from `state`: `HudState`, `MiniMapPower`, `Selection`, `Shown`
+- from `step`: `FrameOutputs`
 - from `tile`: `ColourSet`, `HudGrid`, `Tile`
 - from `types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`
-- from `work`: `ControlAnswer`, `DisplayAnswer`, `DisplayInputs`, `EventCursor`, `HudOpportunity`, `HudWork`, `MapAnswer`, `MovementInputs`, `Observation`, `StatusAnswer`
 
 The public functions a caller reaches through them:
 
 ```rust
-CountdownWork::new(state: HudState) -> Self
-CountdownWork::choose(&mut self, opportunity: CountdownOpportunity) -> bool
-CountdownWork::apply(&mut self) -> bool
-CountdownWork::answer(&self) -> &Observation<CountdownAnswer>
-CountdownWork::state(&self) -> &HudState
-CountdownWork::publication(&self) -> Option<(&HudState, &CountdownAnswer)>
 Grid::filled(value: T) -> Self
 Grid::get(&self, place: Place) -> Option<T>
 Grid::set(&mut self, place: Place, value: T)
@@ -1589,47 +1577,20 @@ Grid::insert(&mut self, place: Place)
 Ammunition::new(stocks: EnumMap<Ammo, Stock>) -> Option<Self>
 Ammunition::of(&self, ammo: Ammo) -> &Stock
 Ammunition::stocks(&self) -> impl Iterator<Item = (Ammo, &Stock)>
-ItemControlInputs::from_frame(inputs: &FrameInputs<'_>) -> Self
-ItemControlInputs::has(&self, item: SelectableItem) -> bool
-Status::has(&self, item: SelectableItem) -> bool
-StatusInputs::from_frame(inputs: &FrameInputs<'_>) -> Self
+StockAtStart::has(&self, item: SelectableItem) -> bool
 HudState::boss_blanks_the_map(&mut self, rules: &Rules, pictures: &HudPictures, boss: Boss, room: Place)
 Icons::of(&self, item: SelectableItem) -> [&[Look]; 2]
 HudPictures::blank_cell(&self) -> Tile
 Alternation::first_half(self, frame: FrameCount) -> bool
 Rules::reference() -> Self
-HudState::item_controls(&mut self, controls: &ItemControlInputs) -> Option<HudEvent>
 Selection::item(self) -> Option<SelectableItem>
 Selection::one_shot(self) -> Option<SelectableItem>
-HudState::frame_of_play(&mut self, rules: &Rules, pictures: &HudPictures, inputs: &FrameInputs<'_>) -> Vec<HudEvent>
+HudState::frame_of_play(&mut self, rules: &Rules, pictures: &HudPictures, inputs: &FrameInputs<'_>) -> Result<FrameOutputs, UnsupportedFrame>
 HudState::out_of_play(&mut self, inputs: &OutOfPlayInputs<'_>)
 ColourSet::new(number: u8) -> Option<Self>
 ColourSet::number(self) -> u8
 Tile::new(look: Look, colours: ColourSet) -> Self
 Tile::in_colours(self, colours: ColourSet) -> Self
-DisplayInputs::from_frame(inputs: &FrameInputs<'_>) -> Self
-DisplayInputs::status_inputs(&self) -> StatusInputs
-DisplayInputs::mini_map(&self) -> MiniMapInputs<'_>
-MovementInputs::capture(inputs: &MiniMapInputs<'_>, mother_brain_falls: bool) -> Self
-MovementInputs::as_mini_map(&self) -> MiniMapInputs<'_>
-EventCursor::next_event(&mut self, work: &HudWork) -> Option<HudEvent>
-HudWork::new(state: HudState) -> Self
-HudWork::begin(state: HudState, frame: FrameCount) -> Self
-HudWork::frame_count(&self) -> Option<FrameCount>
-HudWork::opportunity(&self) -> Option<HudOpportunity>
-HudWork::choose_controls(&mut self, inputs: ItemControlInputs) -> bool
-HudWork::choose_display(&mut self, rules: &Rules, pictures: &HudPictures, inputs: DisplayInputs) -> bool
-HudWork::choose_mini_map(&mut self, rules: &Rules, pictures: &HudPictures, inputs: MovementInputs) -> bool
-HudWork::choose_status(&mut self, rules: &Rules, pictures: &HudPictures, inputs: StatusInputs) -> bool
-HudWork::mini_map(&self) -> Observation<&MapAnswer>
-HudWork::status(&self) -> &Observation<StatusAnswer>
-HudWork::apply(&mut self) -> bool
-HudWork::state(&self) -> &HudState
-HudWork::controls(&self) -> &Observation<ControlAnswer>
-HudWork::display(&self) -> &Observation<DisplayAnswer>
-HudWork::initial_highlight(&self) -> Option<SelectableItem>
-HudWork::events(&self) -> &[HudEvent]
-HudWork::publication(&self) -> Option<(&HudState, &[HudEvent])>
 ```
 
 Shared types it takes from `types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`. Other crates it uses: `enum_map`, `serde`, `serde_big_array`, `std`.
@@ -1648,7 +1609,6 @@ graph LR
     m_state["state"]
     m_step["step"]
     m_tile["tile"]
-    m_work["work"]
   end
   subgraph a_minimap["minimap"]
     m_map["map"]
@@ -1660,15 +1620,12 @@ graph LR
   end
   subgraph a_status["status"]
     m_countdown["countdown"]
-    m_countdown_work["countdown_work"]
     m_layout["layout"]
     m_pictures["pictures"]
     m_status_bar["status_bar"]
   end
-  m_countdown_work --> m_countdown
-  m_countdown_work --> m_state
-  m_countdown_work --> m_work
   m_events --> m_item
+  m_inputs --> m_countdown
   m_inputs --> m_grid
   m_inputs --> m_item
   m_inputs --> m_map
@@ -1676,7 +1633,6 @@ graph LR
   m_layout --> m_item
   m_lib --> m_catalogue
   m_lib --> m_countdown
-  m_lib --> m_countdown_work
   m_lib --> m_events
   m_lib --> m_grid
   m_lib --> m_inputs
@@ -1685,8 +1641,8 @@ graph LR
   m_lib --> m_pictures
   m_lib --> m_rules
   m_lib --> m_state
+  m_lib --> m_step
   m_lib --> m_tile
-  m_lib --> m_work
   m_map --> m_grid
   m_mini_map --> m_grid
   m_mini_map --> m_inputs
@@ -1715,19 +1671,13 @@ graph LR
   m_status_bar --> m_rules
   m_status_bar --> m_state
   m_status_bar --> m_tile
+  m_step --> m_countdown
   m_step --> m_events
   m_step --> m_inputs
   m_step --> m_pictures
   m_step --> m_rules
   m_step --> m_state
   m_tile --> m_grid
-  m_work --> m_events
-  m_work --> m_inputs
-  m_work --> m_item
-  m_work --> m_map
-  m_work --> m_pictures
-  m_work --> m_rules
-  m_work --> m_state
 ```
 
 ### world-blocks
@@ -2497,72 +2447,72 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | audio-transport | `crates/game/src/production/movement_touchdown.rs` | names it | `CpuMasterTicks`, `CueId`, `QueueAllowance`, `SoundGroup` | 421 | 103 |
 | audio-transport | `crates/game/src/production/passage_audio.rs` | names it | `CueId`, `QueueAllowance` | 757 | 164 |
 | audio-transport | `crates/game/src/production/sender.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `QueueAllowance`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 1,864 | 341 |
-| audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `Content`, `SenderState`, `SoundGroup`, `State`, `sender`, `transport` | 3,287 | 587 |
+| audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `Content`, `SenderState`, `SoundGroup`, `State`, `sender`, `transport` | 3,201 | 585 |
 | audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 69 |
 | enemy-interactions | `crates/game/src/enemy_interactions_bridge.rs` | bridge | - | 234 | 39 |
 | enemy-interactions | `crates/game/src/production/weapons.rs` | bridge | `ContactConditions`, `DoorContact` | 1,955 | 335 |
 | weapons-projectiles | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
-| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 3,287 | 587 |
+| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 3,201 | 585 |
 | weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 69 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
 | samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Outcome`, `Samus` | 280 | 75 |
-| samus-movement | `crates/game/src/production/connected.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,208 | 252 |
+| samus-movement | `crates/game/src/production/connected.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,133 | 248 |
 | samus-movement | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 559 | 131 |
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 143 | 43 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 421 | 103 |
 | samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 1,732 | 327 |
-| samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 3,287 | 587 |
+| samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 3,201 | 585 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 69 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 280 | 75 |
-| world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 1,208 | 252 |
+| world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 1,133 | 248 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `ViewPosition` | 1,732 | 327 |
-| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 3,287 | 587 |
+| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 3,201 | 585 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 69 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
 | run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 1,732 | 327 |
 | run-progress | `crates/game/src/production/room_loading.rs` | names it | `Condition`, `EnteredRoom`, `Progress`, `RoomStates`, `Version` | 1,226 | 187 |
-| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 3,287 | 587 |
+| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 3,201 | 585 |
 | run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 69 |
-| interface-hud | `crates/game/src/production/connected/early_map.rs` | names it | `Ammunition`, `CancelButton`, `Equipped`, `FrameCount`, `HerMap`, `HudOpportunity`, `HudPictures`, `ItemControlInputs`, `MiniMapPower`, `MovementInputs`, `Pair`, `Room`, `Rules`, `SelectButton`, `Selection` | 352 | 78 |
-| interface-hud | `crates/game/src/production/connected.rs` | names it | `HudState` | 1,208 | 252 |
+| interface-hud | `crates/game/src/production/connected/early_map.rs` | names it | `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Pair`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 290 | 84 |
+| interface-hud | `crates/game/src/production/connected.rs` | names it | `HudState` | 1,133 | 248 |
 | interface-hud | `crates/game/src/production/content.rs` | names it | `HudPictures` | 285 | 99 |
-| interface-hud | `crates/game/src/production/entries.rs` | names it | `Boss`, `FrameInputs`, `HudEvent`, `HudPictures`, `HudState`, `OutOfPlayInputs`, `Place`, `Rules` | 1,563 | 291 |
-| interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Dropped`, `Energy`, `FrameCount`, `HerMap`, `HudOpportunity`, `HudPictures`, `HudState`, `ItemControlInputs`, `MiniMapPower`, `MovementInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `StatusInputs` | 1,355 | 354 |
-| interface-hud | `crates/game/src/production/hud.rs` | bridge | `ControlAnswer`, `DisplayAnswer`, `DisplayInputs`, `Flip`, `FrameCount`, `HudEvent`, `HudOpportunity`, `HudPictures`, `HudState`, `HudWork`, `ItemControlInputs`, `MapAnswer`, `MovementInputs`, `Observation`, `Place`, `Rules`, `StatusInputs` | 861 | 177 |
+| interface-hud | `crates/game/src/production/entries.rs` | names it | `Boss`, `FrameInputs`, `FrameOutputs`, `HudPictures`, `HudState`, `OutOfPlayInputs`, `Place`, `Rules` | 1,581 | 295 |
+| interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `HudState`, `MiniMapInputs`, `MiniMapPower`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 1,090 | 295 |
+| interface-hud | `crates/game/src/production/hud.rs` | bridge | `Flip`, `HudState`, `Place` | 148 | 35 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 3,287 | 587 |
+| interface-hud | `crates/game/src/production.rs` | names it | `FrameOutputs`, `HudState`, `UnsupportedFrame` | 3,201 | 585 |
 | interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 69 |
-| world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 1,563 | 291 |
+| world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 1,581 | 295 |
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 3,287 | 587 |
+| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 3,201 | 585 |
 | world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 69 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AppearanceState`, `CannonDelay`, `CannonEvent`, `ChargeGlowPosition`, `Clip`, `ColourSequences`, `Content`, `Figure`, `Frame`, `FrameOutputs`, `FrameSound`, `Frames`, `Inputs`, `LapsLeft`, `Pace`, `Paces`, `PaletteOpportunity`, `PassageEntry`, `Playhead`, `Rules`, `Selection`, `SoundRequest`, `State`, `Step`, `Stride`, `VisorDelay`, `VisorStep`, `update` | 923 | 196 |
 | samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Ahead`, `Clip`, `Figure`, `FrameSound`, `SoundRequest`, `State` | 137 | 47 |
 | samus-appearance | `crates/game/src/production/connected/inputs.rs` | names it | `CinematicActivity`, `ContactSuppressor`, `Liquid`, `SoundsWaiting` | 0 | 49 |
-| samus-appearance | `crates/game/src/production/connected.rs` | names it | `CinematicActivity`, `Figure`, `FrameSound`, `GraphicalContact`, `Liquid`, `Rules`, `Selection`, `State`, `Stride` | 1,208 | 252 |
+| samus-appearance | `crates/game/src/production/connected.rs` | names it | `CinematicActivity`, `Figure`, `FrameSound`, `GraphicalContact`, `Liquid`, `Rules`, `Selection`, `State`, `Stride` | 1,133 | 248 |
 | samus-appearance | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
 | samus-appearance | `crates/game/src/production/movement.rs` | names it | `Figure` | 559 | 131 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 421 | 103 |
 | samus-appearance | `crates/game/src/production/passage_audio.rs` | names it | `Charge`, `PassageEntry`, `SoundQueue`, `SoundRequest` | 757 | 164 |
 | samus-appearance | `crates/game/src/production/played.rs` | names it | `CinematicActivity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules` | 1,732 | 327 |
-| samus-appearance | `crates/game/src/production.rs` | names it | `FrameSound`, `Inputs`, `State` | 3,287 | 587 |
+| samus-appearance | `crates/game/src/production.rs` | names it | `FrameSound`, `Inputs`, `State` | 3,201 | 585 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,643 | 266 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
 | samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 69 |
 | boss-ceres-ridley | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
-| boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 1,563 | 291 |
+| boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 1,581 | 295 |
 | boss-ceres-ridley | `crates/game/src/production/movement_ceres.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 143 | 43 |
 | boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `Stage` | 1,732 | 327 |
 | boss-ceres-ridley | `crates/game/src/production/room_loading.rs` | names it | `ColourSet`, `Stage` | 1,226 | 187 |
-| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 3,287 | 587 |
+| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 3,201 | 585 |
 | boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 69 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
-| world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,563 | 291 |
+| world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,581 | 295 |
 | world-doors | `crates/game/src/production/passage_audio.rs` | names it | `Arrival`, `COLOURS`, `Doors`, `HerSound`, `Inputs`, `Passage`, `Phase`, `RoomSound`, `Rules`, `Scene` | 757 | 164 |
 | world-doors | `crates/game/src/production/played.rs` | names it | `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Inputs`, `Palette`, `Report`, `Rules`, `Scene` | 1,732 | 327 |
 | world-doors | `crates/game/src/production/room_loading.rs` | names it | `COLOURS`, `Palette`, `RoomCall` | 1,226 | 187 |
-| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 3,287 | 587 |
+| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 3,201 | 585 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
-| samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 1,355 | 354 |
+| samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 1,090 | 295 |

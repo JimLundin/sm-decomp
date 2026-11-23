@@ -102,7 +102,7 @@ fn constructed_protected_duplicate_preserves_complete_carried_health() {
     };
     let offer = hit.delivery.unwrap();
     let native_steps = Inputs::steps(*protected).collect::<Vec<_>>();
-    let (actor_read, regular_suffix) = native_steps.split_at(2);
+    let (actor_read, regular_suffix) = native_steps.split_at(1);
     advance(&mut production, protected_cut, actor_read).unwrap();
     let current = owner(&production).unwrap().health();
     assert!(current.protection != ProtectionFrames::ZERO);
@@ -177,9 +177,7 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
     assert!(powered_on.eq(&before));
 
     for opportunity in &mut inputs.0 {
-        let Input::HudMap(map) = &mut opportunity.hud.map else {
-            panic!("borrowed powered-off map opportunity");
-        };
+        let map = &mut opportunity.hud.map;
         map.position = types::Pair {
             x: u16::MAX,
             y: u16::MAX,
@@ -248,10 +246,7 @@ fn equal_energy_preserves_the_stale_gauge() {
     let [_, mut quiet] = inputs.0[..] else {
         panic!("native scope schedule");
     };
-    let Input::HudControls { opportunity, .. } = &mut quiet.hud.controls else {
-        panic!("early HUD controls");
-    };
-    *opportunity = 0;
+    quiet.hud.opportunity = 0;
     let steps = Inputs::steps(quiet).collect::<Vec<_>>();
     let outputs = advance(&mut constructed, protected_cut, &steps).unwrap();
     assert!(

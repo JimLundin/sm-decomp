@@ -247,7 +247,7 @@ fn hud_boss_entry_keeps_selection_and_refuses_an_incomplete_checkpoint() {
             boss: interface_hud::Boss::MotherBrain,
             room_cell: Pair { x: 2, y: 3 }
         })),
-        Ok(ProductionOutputs::Hud(Vec::new()))
+        Ok(ProductionOutputs::Hud(None))
     );
     let OwnedState::Hud(state) = production.state() else {
         panic!("hud scope")
@@ -294,14 +294,18 @@ fn hud_play_selects_once_and_preserves_both_ordered_events() {
                 capacity: 10,
             }))
             .unwrap(),
+        },
+        stock_at_start: hud::StockAtStart {
+            counts: enum_map::EnumMap::from_fn(|_| 10),
             equipped: hud::Equipped::default(),
         },
         controls: hud::Controls {
             select: hud::SelectButton::Pressed,
             cancel: hud::CancelButton::NotPressed,
             can_switch: true,
-            muted_by: None,
         },
+        muted_by: None,
+        countdown: hud::CountdownRuns::MaintainCountdown,
         dropped_before_status_bar: hud::Dropped::Nothing,
         dropped_after_status_bar: hud::Dropped::Nothing,
         collected: None,
@@ -318,15 +322,34 @@ fn hud_play_selects_once_and_preserves_both_ordered_events() {
             map_collected: false,
         },
     };
+    let before = production.clone();
+    let shown_only = hud::FrameInputs {
+        countdown: hud::CountdownRuns::PresentationOnly,
+        ..inputs
+    };
+    assert_eq!(
+        production.advance(AdvanceInput::Hud(HudInput::Play(&shown_only))),
+        Err(ProductionFault::Unsupported(Unsupported::Hud(
+            hud::UnsupportedFrame::CountdownOnlyShown
+        )))
+    );
+    assert!(production.eq(&before));
     let missiles = hud::SelectableItem::Ammo(hud::Ammo::Missiles);
     assert_eq!(
         production.advance(AdvanceInput::Hud(HudInput::Play(&inputs))),
-        Ok(ProductionOutputs::Hud(vec![
-            hud::HudEvent::Switched {
-                item: Some(missiles)
+        Ok(ProductionOutputs::Hud(Some(hud::FrameOutputs {
+            selection_after_controls: hud::Selection::Item(missiles),
+            events: vec![
+                hud::HudEvent::Switched {
+                    item: Some(missiles)
+                },
+                hud::HudEvent::Click
+            ],
+            countdown: hud::CountdownAnswer {
+                expiry: hud::CountdownExpiry::NoExpiry,
+                picture: hud::CountdownPicture::Absent,
             },
-            hud::HudEvent::Click
-        ]))
+        })))
     );
     let OwnedState::Hud(state) = production.state() else {
         panic!("hud scope")

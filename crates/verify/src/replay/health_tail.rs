@@ -5,7 +5,7 @@ use std::path::Path;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
     ProductionSeed,
-    health_tail::{Content, Context, Input, Output, State},
+    health_tail::{Content, Context, HudFrame, Input, Output, State},
 };
 use game::state::owned::OwnedState;
 use samus_health::{EnergyAmount, EnergyLoss, ProtectionFrames, Rules, Warning, WholeEnergy};
@@ -86,7 +86,7 @@ struct Delivery {
 struct Opportunity {
     maintenance: Context,
     delivery: Option<u16>,
-    hud: hud_inputs::Inputs,
+    hud: HudFrame,
 }
 
 pub(super) struct Inputs(Vec<Opportunity>);
@@ -107,7 +107,7 @@ fn read<T: serde::de::DeserializeOwned>(
 }
 
 impl Inputs {
-    fn load(native: &Path) -> Result<(Self, String), Outcome> {
+    fn load(native: &Path, origin_wram: &[u8]) -> Result<Self, Outcome> {
         let contexts: ContextSource =
             read(native, "ceres-health-tail-v1/borrowed.toml", CONTEXT_PIN)?;
         let offers: OfferSource = read(native, "ceres-tail-offer-v1/actor-offer.toml", OFFER_PIN)?;
@@ -129,7 +129,10 @@ impl Inputs {
         {
             return Err(data_failure(None, "Health tail causal ingress schedule"));
         }
-        let hud = hud_inputs::load(native, &contexts.initial_wram_sha256)?;
+        if Sha256::of(origin_wram).to_string() != contexts.initial_wram_sha256 {
+            return Err(data_failure(Some(ORIGIN), "Health tail origin WRAM pin"));
+        }
+        let hud = hud_inputs::load(native, &contexts.initial_wram_sha256, origin_wram)?;
         let opportunities = contexts_at_cut
             .into_iter()
             .zip(offers_at_cut)
@@ -148,7 +151,7 @@ impl Inputs {
                 },
             )
             .collect();
-        Ok((Self(opportunities), contexts.initial_wram_sha256))
+        Ok(Self(opportunities))
     }
 
     pub(super) fn advance(
@@ -166,20 +169,15 @@ impl Inputs {
     }
 
     fn steps(opportunity: Opportunity) -> impl Iterator<Item = Input> {
-        [
-            opportunity.hud.controls,
-            Input::Protection(opportunity.maintenance),
-        ]
-        .into_iter()
-        .chain(opportunity.delivery.map(Input::Impact))
-        .chain([
-            opportunity.hud.map,
-            Input::Maintenance,
-            Input::FirstDrawingRead,
-            Input::SecondDrawingRead,
-            opportunity.hud.status,
-            Input::ActiveClose,
-        ])
+        core::iter::once(Input::Protection(opportunity.maintenance))
+            .chain(opportunity.delivery.map(Input::Impact))
+            .chain([
+                Input::Maintenance,
+                Input::FirstDrawingRead,
+                Input::SecondDrawingRead,
+                Input::Status(opportunity.hud),
+                Input::ActiveClose,
+            ])
     }
 }
 
@@ -251,7 +249,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     else {
         return Err(data_failure(None, "Health tail origin coordinate"));
     };
-    let (inputs, wram_pin) = Inputs::load(&sources.native)?;
     let bytes = std::fs::read(sources.native.join(path))
         .map_err(|_| data_failure(Some(ORIGIN), "Health tail origin record"))?;
     let origin_identity = Sha256::of(&bytes);
@@ -260,9 +257,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     }
     let record = oracle_record::lsnes::read(&bytes)
         .map_err(|_| data_failure(Some(ORIGIN), "Health tail origin record format"))?;
-    if Sha256::of(&record.wram).to_string() != wram_pin {
-        return Err(data_failure(Some(ORIGIN), "Health tail origin WRAM pin"));
-    }
+    let inputs = Inputs::load(&sources.native, &record.wram)?;
     let state = admit_origin(origin_identity, &record.wram)?;
     let hud = hud::Content::load(&sources.rom)?;
     let content = ProductionContent::HealthTail(Box::new(Content {

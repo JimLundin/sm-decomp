@@ -22,8 +22,9 @@
 #   - boss_screens = { <boss> = [[across, down], ...] }: the screens a boss explores (spec
 #     BossBlanksTheMap), the boss named as in boss below or "MotherBrain"; a boss not named
 #     keeps the game's screens.
-# - step: "Frame" is one frame of play. "BossEvent" is the door or the load flow meeting a boss,
-#   on entering its room while it lives (spec `BossBlanksTheMap`): it has no `frame` key, and
+# - step: "Frame" is one whole frame of play: its after is State and outputs as the frame
+#   ends. "BossEvent" is the door or the load flow meeting a boss, on entering its room while
+#   it lives (spec `BossBlanksTheMap`): it has no `frame` key, and
 #   its only inputs are mini_map's room (its cell) and boss; its after is compared after the
 #   event alone. "OutOfPlay" is a step outside play (spec `OutOfPlay`): it has no `frame` key,
 #   and its only inputs are mini_map's turned_on, new_area and dropped (without its when).
@@ -46,7 +47,12 @@
 #   - energy = [now, capacity]; reserve (optional, default 0): the energy in the reserve tanks;
 #     auto_reserve (optional, default false): the reserve tanks are set to refill on their own.
 #   - missiles, super_missiles, power_bombs (optional, default [0, 0]): [count, capacity].
-#   - equipped (optional, default none): "GrappleBeam", "XRayScope" when she has them on.
+#   - equipped (optional, default none): "GrappleBeam", "XRayScope" when she has them on as the
+#     frame begins (spec §1.3, her stock as the frame begins: only Select reads it).
+#   - at_start (optional): { missiles, super_missiles, power_bombs }, each [count, capacity], her
+#     stock as the frame begins, before this frame's shots and pickups (spec CyclingItems); a key
+#     left out is the same as at the frame's end. missiles, super_missiles and power_bombs above
+#     are the counts as the frame ends.
 #   - select (optional): "Pressed" when item select goes down this frame; cancel (optional):
 #     "Pressed" when item cancel goes down this frame, "Held" when it is held from before.
 #   - can_switch (optional, default true): spec `CyclingItems`.
@@ -75,8 +81,10 @@
 # - after: compared at the end of the step: changed (optional, default none), the HUD's cells
 #   that differ from before, "column,row" = cell, columns and rows from 0, every other cell as
 #   before; shown, selection, one_shot, mini_map_off and explored, as in before (a field left
-#   out is as before); and events (default none), in the order raised: "Switched:<item>" (spec
-#   `Switching`) and "Click" (spec `SwitchClick`).
+#   out is as before); events (default none), in the order raised: "Switched:<item>" (spec
+#   `Switching`) and "Click" (spec `SwitchClick`); and, a "Frame" step only, controls = {
+#   selection, one_shot }, the selection after the controls, before any drop (spec `Switching`):
+#   left out, the selection and one_shot after the step, so a frame with a drop gives it.
 # - Every vector holds RAM values and invented content only: no picture, map cell or room of the
 #   game. The frames the oracle recorded are the harness's cases; each has a twin here, named
 #   C-R and the case's number: its frame's counts, selection, frame count, position, room size and
@@ -86,7 +94,8 @@
 #   one-shot item and its flash, a shot's cancel, a drop, an icon appearing, a capacity of 0,
 #   more than fourteen tanks, the clicks' other mutes, a mini-map that doesn't update, a
 #   collected map, the diagonal picture, the map's first and last columns, cells outside the
-#   map, spec §1.5, each boss, a step outside play, the adjusted rules); each gives its case in
+#   map, spec §1.5, each boss, a step outside play, the stock Select reads as the frame begins
+#   and the selection after the controls, the adjusted rules); each gives its case in
 #   a comment.
 
 # The HUD's pictures: invented, in the importer's format.
@@ -1080,6 +1089,7 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 dropped = { what = "Selection" }
 [vector.after]
+controls = { selection = "Missiles", one_shot = true }
 changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1110,6 +1120,7 @@ power_bombs = [5, 5]
 can_switch = false
 dropped = { what = "Selection" }
 [vector.after]
+controls = { selection = "Missiles", one_shot = true }
 changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -3200,6 +3211,7 @@ dropped = { what = "Selection", when = "AfterStatusBar" }
 [vector.inputs.mini_map]
 runs = false
 [vector.after]
+controls = { selection = "SuperMissiles", one_shot = false }
 shown = { energy = 0, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "None"
 one_shot = false
@@ -3228,6 +3240,7 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 dropped = { what = "Selection" }
 [vector.after]
+controls = { selection = "Missiles", one_shot = false }
 changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -3259,388 +3272,160 @@ power_bombs = [5, 5]
 equipped = ["GrappleBeam"]
 dropped = { what = "OneShot" }
 [vector.after]
+controls = { selection = "GrappleBeam", one_shot = true }
 changed = { "12,2" = "097:3" }
 shown = { energy = 299, missiles = 0, super_missiles = 5, power_bombs = 5, selection = "GrappleBeam" }
 selection = "GrappleBeam"
 one_shot = false
 
-# Interrupted-frame schema. The original whole-frame vectors still apply.
-# [[hud_work]]: id, source, entries, and shared frame count (default 0).
-# before uses the existing State defaults/format. Each opportunity uses only its own inputs.
-# controls: select/cancel/can_switch, ammunition counts and equipped.
-# mini_map: the existing inputs.mini_map format. Absent means the map does not run.
-# status: energy, reserve, ammunition, mute, pickup and drop, with the existing defaults.
-# controls_after, map_after and after are expected deltas from before (not from each other).
-# Fields and cells absent from each expected delta retain before. Events are cumulative.
-# Absent controls_after means before with no events. Absent map_after means controls_after.
-# map_after is after movement and before status, with all shown values and status cells held.
-# energy_at_map supplies the live external energy while movement draws the map. pose_after
-# supplies live position after map and before status. Replace both owners' values through
-# that interval using pose_after and status.energy. owner_at_map and owner_at_status compare
-# those live values at the two offers independently of resulting HUD State.
-# [[hud_resume]] patches only the named opportunity's actual external input (recursively).
-# BeforeAnswer patches after offer but before choice; AfterAnswer patches before its effect;
-# AfterEffect patches after completion. Read the patch only before the choice.
-# expect_controls_after, expect_map_after and expect_after recursively patch the relevant
-# expected deltas. Unspecified expected deltas inherit the base case.
-# For every H case serialize/discard/restore all work at each offered, chosen and completed
-# opportunity. Offered and chosen keep the previous completed State and event history.
-# Inspect the chosen answer before effects and compare frame-start highlight and progress.
-# Compare each opportunity's delivery with its new event suffix. Acknowledge Switched
-# before movement and only any new Click at status. Restore the acknowledged progress.
-# Each opportunity applies once. Complete publication occurs once, after status.
-# Compare complete final State and ordered events with whole-frame execution using the same
-# chosen inputs. Also execute every original Frame vector through both paths.
+# Select reads her stock as the frame begins (spec CyclingItems, Switching). Each frame's
+# `controls` is the selection after the controls, before any drop.
 
-[[hud_work]]
-id = "H-controls-drop"
+[[vector]]
+# Two missiles as the frame begins and none as it ends (she fires them this frame, with
+# the selection on none): Select lands on missiles, by the stock the frame began with,
+# and the status bar draws the counts the frame ends with. Her position is her position
+# after her moves (x 256: her room's second screen across, map cell (11, 10)); a step
+# after them would not move the mini-map this frame. The click is muted by her spin jump
+id = "C-select-stock-at-start"
 source = "constructed"
-entries = ["ItemControls", "StatusRefresh", "RetainedHudWork", "Switching"]
-[hud_work.controls]
-select = "Pressed"
-missiles = [2, 10]
-[hud_work.status]
-energy = [0, 0]
-dropped = { what = "Selection", when = "BeforeStatusBar" }
-[hud_work.controls_after]
-selection = "Missiles"
-events = ["Switched:Missiles"]
-[hud_work.after]
-events = ["Switched:Missiles"]
-
-[[hud_work]]
-id = "H-drop-after"
-source = "constructed"
-entries = ["ItemControls", "StatusRefresh", "RetainedHudWork", "SwitchClick", "IconsAppear"]
-[hud_work.controls]
-select = "Pressed"
-missiles = [2, 10]
-[hud_work.status]
-energy = [0, 0]
-collected = "Missiles"
-dropped = { what = "Selection", when = "AfterStatusBar" }
-[hud_work.controls_after]
-selection = "Missiles"
-events = ["Switched:Missiles"]
-[hud_work.after]
-shown = { selection = "Missiles" }
-changed = { "10,0" = "082:4", "11,0" = "1F0:4", "12,0" = "082:4h", "10,1" = "0AC:4", "11,1" = "0E5:4", "12,1" = "0AC:4h" }
-events = ["Switched:Missiles", "Click"]
-
-[[hud_work]]
-id = "H-fresh-status"
-source = "constructed"
-entries = ["ItemControls", "StatusRefresh", "MiniMapUpdate", "RetainedHudWork", "AmmoCounts", "Exploring"]
-pose_after = [512, 16]
-energy_at_map = [119, 199]
-owner_at_map = { position = [256, 16], energy = [119, 199] }
-owner_at_status = { position = [512, 16], energy = [107, 199] }
+entries = ["CyclingItems", "Switching", "AmmoCounts", "EnergyGauge", "SwitchClick", "Exploring", "MiniMapWindow"]
 frame = 8
-[hud_work.controls]
-select = "Pressed"
-missiles = [2, 10]
-[hud_work.status]
+[vector.inputs]
 energy = [107, 199]
 missiles = [0, 10]
 super_missiles = [3, 10]
 muted_by = "SpinJump"
-[hud_work.mini_map]
+select = "Pressed"
+[vector.inputs.at_start]
+missiles = [2, 10]
+[vector.inputs.mini_map]
 position = [256, 16]
 room = { cell = [10, 10], blocks = [64, 32] }
 map = { pictures = { "10,10" = "123v", "11,10" = "124h" } }
-[hud_work.controls_after]
-selection = "Missiles"
-events = ["Switched:Missiles"]
-[hud_work.map_after]
-selection = "Missiles"
-explored = [[11, 10]]
-changed = { "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "124:2h", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
-events = ["Switched:Missiles"]
-[hud_work.after]
+[vector.after]
 selection = "Missiles"
 shown = { energy = 107, super_missiles = 3, selection = "Missiles" }
 explored = [[11, 10]]
 changed = { "1,1" = "0A1:2", "6,2" = "097:3", "7,2" = "195:3", "14,2" = "097:3", "15,2" = "1F7:3", "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "124:2h", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
 events = ["Switched:Missiles"]
 
-[[hud_work]]
-id = "H-turn-fall"
+[[vector]]
+# Select lands on her last missile and she fires it: the weapons read missiles (the
+# selection after the controls), then drop the selection before the status bar, the
+# last of the selected ammunition gone. The switch reports missiles; the highlight never
+# moves off none, so there is no click; the count's digits are drawn at 0
+id = "C-select-last-missile"
 source = "constructed"
-entries = ["MiniMapUpdate", "RetainedHudWork", "BossBlanksTheMap"]
-[hud_work.before]
-mini_map_off = true
-[hud_work.status]
+entries = ["CyclingItems", "Switching", "CancellingTheItem", "SwitchClick", "AmmoCounts"]
+[vector.before]
+shown = { energy = 99, missiles = 1 }
+[vector.inputs]
+energy = [99, 99]
+missiles = [0, 10]
+select = "Pressed"
+dropped = { what = "Selection", when = "BeforeStatusBar" }
+[vector.inputs.at_start]
+missiles = [1, 10]
+[vector.after]
+controls = { selection = "Missiles", one_shot = false }
+shown = { missiles = 0 }
+changed = { "10,2" = "097:3", "11,2" = "097:3", "12,2" = "097:3" }
+events = ["Switched:Missiles"]
+
+[[vector]]
+# Select moves to missiles in the frame she picks up their icon, and the selection is
+# dropped after the status bar is drawn: the new icon is drawn and lit, the highlight's
+# move clicks, and the frame ends with none selected but missiles last shown
+id = "C-select-dropped-after"
+source = "constructed"
+entries = ["CyclingItems", "Switching", "CancellingTheItem", "IconsAppear", "SelectionHighlight", "SwitchClick", "AmmoCounts"]
+[vector.inputs]
 energy = [0, 0]
-[hud_work.mini_map]
+missiles = [2, 10]
+select = "Pressed"
+collected = "Missiles"
+dropped = { what = "Selection", when = "AfterStatusBar" }
+[vector.after]
+controls = { selection = "Missiles", one_shot = false }
+shown = { missiles = 2, selection = "Missiles" }
+changed = { "10,0" = "082:4", "11,0" = "1F0:4", "12,0" = "082:4h", "10,1" = "0AC:4", "11,1" = "0E5:4", "12,1" = "0AC:4h", "10,2" = "097:3", "11,2" = "097:3", "12,2" = "0DB:3" }
+events = ["Switched:Missiles", "Click"]
+
+[[vector]]
+# The mini-map is off at the room's origin, and in one frame is turned on and Mother Brain's
+# first form falls: the fall has the last word, so it is off again, blank, her four screens
+# explored, and it doesn't update
+id = "C-mm-turned-on-and-fall-origin"
+source = "constructed"
+entries = ["MiniMapStill", "BossBlanksTheMap"]
+[vector.before]
+mini_map_off = true
+[vector.inputs]
+energy = [0, 0]
+[vector.inputs.mini_map]
 turned_on = true
 mother_brain_falls = true
 position = [256, 16]
 room = { cell = [10, 10], blocks = [64, 32] }
-[hud_work.map_after]
-explored = [[10, 10], [11, 10], [12, 10], [13, 10]]
-changed = { "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "088:3h", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
-[hud_work.after]
+[vector.after]
 explored = [[10, 10], [11, 10], [12, 10], [13, 10]]
 changed = { "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "088:3h", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
 
-[[hud_resume]]
-id = "H-controls-before"
+[[vector]]
+# The mini-map is off and holds, while the energy gauge draws her new energy in the same
+# frame: one full tank and the digits 0 and 7
+id = "C-mm-off-gauge"
 source = "constructed"
-entries = ["ItemControls", "RetainedHudWork"]
-base = "H-controls-drop"
-opportunity = "ItemControls"
-cut = "BeforeAnswer"
-patch = { missiles = [0, 10], equipped = ["GrappleBeam"] }
-expect_controls_after = { selection = "GrappleBeam", events = ["Switched:GrappleBeam"] }
-expect_map_after = { selection = "GrappleBeam", events = ["Switched:GrappleBeam"] }
-expect_after = { events = ["Switched:GrappleBeam"] }
-
-[[hud_resume]]
-id = "H-controls-chosen"
-source = "constructed"
-entries = ["ItemControls", "RetainedHudWork"]
-base = "H-controls-drop"
-opportunity = "ItemControls"
-cut = "AfterAnswer"
-patch = { missiles = [0, 10], equipped = ["GrappleBeam"] }
-expect_after = {}
-
-[[hud_resume]]
-id = "H-position-before"
-source = "constructed"
-entries = ["MiniMapUpdate", "RetainedHudWork"]
-base = "H-fresh-status"
-opportunity = "MiniMapUpdate"
-cut = "BeforeAnswer"
-patch = { position = [255, 16] }
-expect_map_after = { explored = [[10, 10]], changed = { "28,1" = "123:2v" } }
-expect_after = { explored = [[10, 10]], changed = { "28,1" = "123:2v" } }
-
-[[hud_resume]]
-id = "H-position-chosen"
-source = "constructed"
-entries = ["MiniMapUpdate", "RetainedHudWork"]
-base = "H-fresh-status"
-opportunity = "MiniMapUpdate"
-cut = "AfterAnswer"
-patch = { position = [255, 16] }
-expect_after = {}
-
-[[hud_resume]]
-id = "H-status-before"
-source = "constructed"
-entries = ["StatusRefresh", "RetainedHudWork"]
-base = "H-fresh-status"
-opportunity = "StatusRefresh"
-cut = "BeforeAnswer"
-patch = { energy = [109, 199], muted_by = "None" }
-expect_after = { shown = { energy = 109 }, changed = { "7,2" = "1AB:3" }, events = ["Switched:Missiles", "Click"] }
-
-[[hud_resume]]
-id = "H-status-chosen"
-source = "constructed"
-entries = ["StatusRefresh", "RetainedHudWork"]
-base = "H-fresh-status"
-opportunity = "StatusRefresh"
-cut = "AfterAnswer"
-patch = { energy = [109, 199], muted_by = "None" }
-expect_after = {}
-
-[[hud_work]]
-# Her energy is the energy last shown, its cells showing other digits and an
-# empty tank: nothing is drawn, they keep what they show
-id = "H-stale-cache"
-source = "constructed"
-entries = ["ItemControls", "StatusRefresh", "RetainedHudWork", "EnergyGauge"]
+entries = ["MiniMapStill", "EnergyGauge"]
 frame = 8
-[hud_work.before]
-hud = [
-  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
-  "0B4:3 0A1:2 0A2:5h 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
-  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1A1:3 195:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
-]
-shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
-[hud_work.status]
-energy = [299, 299]
-missiles = [5, 5]
-super_missiles = [5, 5]
-power_bombs = [5, 5]
-auto_reserve = false
-reserve = 50
-[hud_work.after]
-shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
-selection = "None"
-one_shot = false
-
-
-[[hud_work]]
-# Select with item cancel held: the new item is also the one-shot item
-id = "H-one-shot"
-source = "constructed"
-entries = ["ItemControls", "StatusRefresh", "RetainedHudWork", "OneShotItem", "CyclingItems", "SelectionHighlight", "OneShotFlash"]
-frame = 19
-[hud_work.before]
-hud = [
-  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
-  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
-  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
-]
-shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
-selection = "None"
-one_shot = false
-[hud_work.status]
-energy = [299, 299]
-missiles = [5, 5]
-super_missiles = [5, 5]
-power_bombs = [5, 5]
-
-[hud_work.after]
-changed = { "10,0" = "082:4", "11,0" = "1F0:4", "12,0" = "082:4h", "10,1" = "0AC:4", "11,1" = "0E5:4", "12,1" = "0AC:4h" }
-shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
-selection = "Missiles"
-one_shot = true
-events = ["Switched:Missiles", "Click"]
-
-
-[hud_work.controls]
-select = "Pressed"
-cancel = "Held"
-missiles = [5, 5]
-[hud_work.controls_after]
-selection = "Missiles"
-one_shot = true
-events = ["Switched:Missiles"]
-
-[[hud_work]]
-id = "H-map-off"
-source = "constructed"
-entries = ["MiniMapUpdate", "StatusRefresh", "RetainedHudWork", "EnergyGauge"]
-frame = 8
-energy_at_map = [119, 199]
-[hud_work.before]
+[vector.before]
 mini_map_off = true
 explored = [[10, 10]]
-[hud_work.mini_map]
+[vector.inputs]
+energy = [107, 199]
+[vector.inputs.mini_map]
 position = [256, 16]
 room = { cell = [10, 10], blocks = [64, 32] }
-[hud_work.status]
-energy = [107, 199]
-[hud_work.after]
+[vector.after]
 shown = { energy = 107 }
 changed = { "1,1" = "0A1:2", "6,2" = "097:3", "7,2" = "195:3" }
 
-[[hud_work]]
-# The diagonal explores above after drawing. An extra map application draws that picture early.
-id = "H-map-once"
+[[vector]]
+# Her cell shows the diagonal: the cell over hers is explored after the window is drawn, so
+# the window's cell over hers still shows the map's blank this frame
+id = "C-mm-diagonal-after-window"
 source = "constructed"
-entries = ["MiniMapUpdate", "RetainedHudWork", "DiagonalPicture"]
+entries = ["DiagonalPicture", "Exploring", "MiniMapWindow"]
 frame = 8
-[hud_work.mini_map]
+[vector.inputs]
+energy = [0, 0]
+[vector.inputs.mini_map]
 position = [256, 16]
 room = { cell = [10, 10], blocks = [64, 32] }
 map = { pictures = { "11,9" = "133v", "11,10" = "2E4" } }
-[hud_work.map_after]
-explored = [[11, 9], [11, 10]]
-changed = { "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "2E4:2", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
-[hud_work.after]
+[vector.after]
 explored = [[11, 9], [11, 10]]
 changed = { "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "2E4:2", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
 
-[[hud_resume]]
-id = "H-controls-complete"
-source = "constructed"
-entries = ["ItemControls", "RetainedHudWork"]
-base = "H-fresh-status"
-opportunity = "ItemControls"
-cut = "AfterEffect"
-patch = { missiles = [0, 10], equipped = ["GrappleBeam"] }
-expect_after = {}
-
-[[hud_resume]]
-id = "H-map-complete"
-source = "constructed"
-entries = ["MiniMapUpdate", "RetainedHudWork"]
-base = "H-fresh-status"
-opportunity = "MiniMapUpdate"
-cut = "AfterEffect"
-patch = { position = [255, 16], turned_on = true, mother_brain_falls = true }
-expect_after = {}
-
-[[hud_resume]]
-id = "H-status-complete"
-source = "constructed"
-entries = ["StatusRefresh", "RetainedHudWork"]
-base = "H-drop-after"
-opportunity = "StatusRefresh"
-cut = "AfterEffect"
-patch = { energy = [109, 199], muted_by = "SpinJump", dropped = { when = "BeforeStatusBar" } }
-expect_after = {}
-
-[[hud_resume]]
-id = "H-status-event-before"
-source = "constructed"
-entries = ["StatusRefresh", "RetainedHudWork", "IconsAppear", "SelectionHighlight"]
-base = "H-drop-after"
-opportunity = "StatusRefresh"
-cut = "BeforeAnswer"
-patch = { dropped = { when = "BeforeStatusBar" } }
-expect_after = { shown = { selection = "None" }, changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }, events = ["Switched:Missiles"] }
-
-[[hud_resume]]
-id = "H-status-event-chosen"
-source = "constructed"
-entries = ["StatusRefresh", "RetainedHudWork", "IconsAppear", "SelectionHighlight"]
-base = "H-drop-after"
-opportunity = "StatusRefresh"
-cut = "AfterAnswer"
-patch = { dropped = { when = "BeforeStatusBar" } }
-expect_after = {}
-
-# Recorded relational witnesses identify the same two successive frames of play.
-# No native picture or state payload is needed in the clean export.
-[[hud_observed]]
-id = "R-map-status-127"
-source = "ordinary-play-pair"
-cut = 127
-entries = ["MiniMapUpdate", "StatusRefresh"]
-map_runs = true
-map_window_changed_by_movement = false
-map_retained_through_status = true
-energy_read_after_drawing = true
-gauge_retained_through_status = true
-
-[[hud_observed]]
-id = "R-map-status-128"
-source = "ordinary-play-pair"
-cut = 128
-entries = ["MiniMapUpdate", "StatusRefresh"]
-map_runs = true
-map_window_changed_by_movement = true
-map_retained_through_status = true
-energy_read_after_drawing = true
-gauge_retained_through_status = true
-
-# [[countdown]] cases supplement the existing vector/hud_work/hud_resume cases.
-# scope=Model cases execute the model; IntegrationAdmission cases are decoder/producer
-# contracts only and must not be counted as passing model vectors or behavior coverage.
-# before/after are the current countdown; only Dormant is admitted.
-# scene is MaintainCountdown or an unsupported neighboring choice.
-# opportunities counts distinct selected opportunities, never interrupted retries.
-# boundary is Unread, Chosen or Completed; restore discards all original instances.
-# answers and pictures are ordered outputs; None means no committed output.
-# incompatible cases test admission, not invented active countdown behavior.
+# [[countdown]] cases (spec §5.1, EscapeCountdown): frames of play in which the scene
+# runs the escape countdown or only shows it. scope = "Model" cases run the model;
+# "IntegrationAdmission" cases check only that the HUD refuses what the spec leaves out (they
+# are not model coverage). before and after are the current countdown; only "Dormant" is
+# defined. scene is "MaintainCountdown" (the scene runs the countdown this frame),
+# "PresentationOnly" (it only shows it) or "Unknown". frames counts the frames of play, each
+# with that scene. answers and pictures are the frames' outputs in order. energy and
+# protection_frames (optional) are the energy and protection from hits beside it, which no rule
+# here reads. expected is "Pass" or "Unsupported" (refused before any effect).
 
 [[countdown]]
 id = "R-countdown-dormant"
 scope = "Model"
 source = "recorded"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Dormant"
 scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Completed"
-restore = false
-later_scene = "MaintainCountdown"
+frames = 1
 expected = "Pass"
 after = "Dormant"
 answers = ["NoExpiry"]
@@ -3650,13 +3435,10 @@ pictures = ["Absent"]
 id = "C-countdown-repeat"
 scope = "Model"
 source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Dormant"
 scene = "MaintainCountdown"
-opportunities = 3
-boundary = "Completed"
-restore = false
-later_scene = "MaintainCountdown"
+frames = 3
 expected = "Pass"
 after = "Dormant"
 answers = ["NoExpiry", "NoExpiry", "NoExpiry"]
@@ -3666,13 +3448,10 @@ pictures = ["Absent", "Absent", "Absent"]
 id = "C-countdown-independent"
 scope = "Model"
 source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Dormant"
 scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Completed"
-restore = false
-later_scene = "MaintainCountdown"
+frames = 1
 expected = "Pass"
 after = "Dormant"
 answers = ["NoExpiry"]
@@ -3681,64 +3460,13 @@ energy = 47
 protection_frames = 9
 
 [[countdown]]
-id = "C-countdown-fresh-scene"
-scope = "IntegrationAdmission"
-source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
-before = "Dormant"
-scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Unread"
-restore = true
-later_scene = "PresentationOnly"
-expected = "Unsupported"
-after = "Dormant"
-answers = []
-pictures = []
-
-[[countdown]]
-id = "C-countdown-restore-chosen"
-scope = "Model"
-source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
-before = "Dormant"
-scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Chosen"
-restore = true
-later_scene = "PresentationOnly"
-expected = "Pass"
-after = "Dormant"
-answers = ["NoExpiry"]
-pictures = ["Absent"]
-
-[[countdown]]
-id = "C-countdown-restore-complete"
-scope = "Model"
-source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
-before = "Dormant"
-scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Completed"
-restore = true
-later_scene = "PresentationOnly"
-expected = "Pass"
-after = "Dormant"
-answers = ["NoExpiry"]
-pictures = ["Absent"]
-
-[[countdown]]
 id = "C-countdown-active"
 scope = "IntegrationAdmission"
 source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Active"
 scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Unread"
-restore = false
-later_scene = "MaintainCountdown"
+frames = 1
 expected = "Unsupported"
 after = "Active"
 answers = []
@@ -3748,13 +3476,10 @@ pictures = []
 id = "C-countdown-expired"
 scope = "IntegrationAdmission"
 source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Expired"
 scene = "MaintainCountdown"
-opportunities = 1
-boundary = "Unread"
-restore = false
-later_scene = "MaintainCountdown"
+frames = 1
 expected = "Unsupported"
 after = "Expired"
 answers = []
@@ -3764,13 +3489,10 @@ pictures = []
 id = "C-countdown-presentation-only"
 scope = "IntegrationAdmission"
 source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Dormant"
 scene = "PresentationOnly"
-opportunities = 1
-boundary = "Unread"
-restore = false
-later_scene = "PresentationOnly"
+frames = 1
 expected = "Unsupported"
 after = "Dormant"
 answers = []
@@ -3780,13 +3502,10 @@ pictures = []
 id = "C-countdown-unknown-scene"
 scope = "IntegrationAdmission"
 source = "constructed"
-entries = ["EscapeCountdown", "CountdownContinuation"]
+entries = ["EscapeCountdown"]
 before = "Dormant"
 scene = "Unknown"
-opportunities = 1
-boundary = "Unread"
-restore = false
-later_scene = "Unknown"
+frames = 1
 expected = "Unsupported"
 after = "Dormant"
 answers = []

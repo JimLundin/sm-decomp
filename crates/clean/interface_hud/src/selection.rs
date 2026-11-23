@@ -2,10 +2,9 @@
 //! CyclingItems, CancellingTheItem, OneShotItem, Switching).
 
 use crate::events::HudEvent;
-use crate::inputs::ItemControlInputs;
-use crate::inputs::{CancelButton, Dropped, SelectButton};
+use crate::inputs::{CancelButton, Controls, Dropped, SelectButton, StockAtStart};
 use crate::item::SelectableItem;
-use crate::state::{HudState, Selection};
+use crate::state::Selection;
 
 impl Selection {
     /// Spec: CancellingTheItem. A drop, at the point of the step it lands: the selection dropped
@@ -20,46 +19,40 @@ impl Selection {
     }
 
     /// Spec: CyclingItems. Select moves the selection to the first item after it, in the HUD's
-    /// order, that she has (an ammunition with a count, an item she has on); with none left
-    /// before the end, past the x-ray scope, to none. Spec: OneShotItem. With item cancel held
-    /// the item it lands on is the one-shot item; otherwise it isn't (item cancel pressed drops
-    /// the selection instead of cycling).
-    fn cycle(&mut self, status: &ItemControlInputs, cancel: CancelButton) {
+    /// order, that she has in her stock as the frame begins (an ammunition with a count, an item
+    /// she has on); with none left before the end, past the x-ray scope, to none.
+    /// Spec: OneShotItem. With item cancel held the item it lands on is the one-shot item;
+    /// otherwise it isn't (item cancel pressed drops the selection instead of cycling).
+    fn cycle(&mut self, stock: StockAtStart, cancel: CancelButton) {
         let current = self.item();
         let next = SelectableItem::ORDER
             .into_iter()
-            .find(|&item| Some(item) > current && status.has(item));
+            .find(|&item| Some(item) > current && stock.has(item));
         *self = match (next, cancel) {
             (None, _) => Self::None,
             (Some(item), CancelButton::Held) => Self::OneShot(item),
             (Some(item), CancelButton::NotPressed | CancelButton::Pressed) => Self::Item(item),
         };
     }
-}
 
-impl HudState {
-    /// The buttons change the selection, and report `Switched` when they act.
+    /// The buttons change the selection, by her stock as the frame begins, and report
+    /// `Switched` when they act. The result reads only the selection, the buttons, `can switch`
+    /// and her stock as the frame begins: it is the selection after the controls.
     ///
-    /// Spec: CyclingItems. While she can't switch, nothing changes. Spec: CancellingTheItem. Item
-    /// cancel pressed drops the selection, whatever Select does. Otherwise Select pressed cycles.
-    /// Spec: Switching. Either acting reports the item it lands on.
-    /// Spec: ItemControls. Complete the ordinary controls stage immediately, returning its
-    /// actual switch request. Grid, caches and map are untouched. For an interruptible frame
-    /// with a retained frame-start highlight and consumed progress, use `HudWork` instead.
-    pub fn item_controls(&mut self, controls: &ItemControlInputs) -> Option<HudEvent> {
-        self.selection.apply_item_controls(controls)
-    }
-}
-
-impl Selection {
-    /// Spec: ItemControls. The control choice needs only the selection, not any drawn cells.
-    pub(crate) fn apply_item_controls(&mut self, controls: &ItemControlInputs) -> Option<HudEvent> {
+    /// Spec: CyclingItems. While she can't switch, nothing changes. Spec: CancellingTheItem.
+    /// Item cancel pressed drops the selection, whatever Select does. Otherwise Select pressed
+    /// cycles. Spec: Switching. Either acting reports the item it lands on.
+    pub(crate) fn respond_to_controls(
+        &mut self,
+        controls: Controls,
+        stock: StockAtStart,
+    ) -> Option<HudEvent> {
         if !controls.can_switch {
             return None;
         }
         match (controls.cancel, controls.select) {
             (CancelButton::Pressed, _) => self.apply_drop(Dropped::Selection),
-            (cancel, SelectButton::Pressed) => self.cycle(controls, cancel),
+            (cancel, SelectButton::Pressed) => self.cycle(stock, cancel),
             (_, SelectButton::NotPressed) => return None,
         }
         Some(HudEvent::Switched { item: self.item() })

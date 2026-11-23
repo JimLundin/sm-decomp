@@ -353,16 +353,17 @@ The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its 
 identity separate from the first witness. The same borrowed producers and omitted consumers apply.
 
 The scoped early mini-map witness starts once at cut 78 of the room-seeded Ceres row.
-At 79 and 80 the staged HUD reads movement's position after her moves, before the aim step and
-pose change, from the frame's outcome. It compares both exact early axes, the complete explored
+At 79 and 80 the HUD plays its whole frame, its mini-map read at movement's position after her
+moves, before the aim step and pose change, from the frame's outcome. It compares both exact early axes, the complete explored
 bitmap and the fifteen mini-map cells. Cut 79 also compares complete Movement, Appearance with
 Figure, and Camera against the independent carried record. Cut 80 plays its whole frame, into
 the later spinning pose, and compares only the map. The ordinary and restored executions
 compare both frames, and a frame without the map's inputs is rejected before any change.
 
 The [early mini-map fixture](../tools/ci/fetch_movement_early_map.sh) supplies the independently
-qualified current collision roster, control, room, clock and other borrowed inputs. Late HUD
-status, physical Frame scheduling, VRAM and audio delivery are outside this scope.
+qualified current collision roster, control, room, clock and other borrowed inputs; the record
+pairs supply her stock as the frame begins and the values the status bar draws, which are not
+compared. Physical Frame scheduling, VRAM and audio delivery are outside this scope.
 
 ## Scoped ordinary power shot and drawing
 

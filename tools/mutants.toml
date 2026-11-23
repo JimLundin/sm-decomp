@@ -60,8 +60,8 @@ field = "camera.view.x.pixel"
 name = "hud-clock-offset"
 responsibility = "hud"
 file = "crates/game/src/production/entries.rs"
-before = '''HudInput::Play(inputs) => state.frame_of_play(rules, pictures, inputs),'''
-after = '''HudInput::Play(inputs) => state.frame_of_play(rules, pictures, &interface_hud::FrameInputs { frame: interface_hud::FrameCount(inputs.frame.0.wrapping_add(8)), ..*inputs }),'''
+before = '''.frame_of_play(rules, pictures, inputs)'''
+after = '''.frame_of_play(rules, pictures, &interface_hud::FrameInputs { frame: interface_hud::FrameCount(inputs.frame.0.wrapping_add(8)), ..*inputs })'''
 case = "hud/stationary-map-blink"
 cut = 8
 field = "hud.grid"
@@ -158,8 +158,8 @@ field = "appearance.step"
 name = "early-map-reads-end-position"
 responsibility = "hud"
 file = "crates/game/src/production/connected.rs"
-before = '''owner.publish(outcome.position_after_moves, premises)'''
-after = '''owner.publish(samus.position, premises)'''
+before = '''owner.play(outcome.position_after_moves, premises)'''
+after = '''owner.play(samus.position, premises)'''
 case = "connected-ordinary/early-mini-map"
 cut = 79
 field = "movement.position.x"

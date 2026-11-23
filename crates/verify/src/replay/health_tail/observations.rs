@@ -220,16 +220,13 @@ pub(in crate::replay) fn actual(
 ) -> Result<Vec<Observation>, Outcome> {
     let (before, impact, downstream) = match outputs {
         [
-            Output::HudControls,
             Output::Protection(before),
             Output::Impact(impact),
             downstream @ ..,
         ] if cut == CUTS[0] => (before, Some(impact), downstream),
-        [
-            Output::HudControls,
-            Output::Protection(before),
-            downstream @ ..,
-        ] if cut == CUTS[1] => (before, None, downstream),
+        [Output::Protection(before), downstream @ ..] if cut == CUTS[1] => {
+            (before, None, downstream)
+        }
         _ => {
             return Err(data_failure(
                 Some(cut),
@@ -238,7 +235,6 @@ pub(in crate::replay) fn actual(
         }
     };
     let [
-        Output::HudMap,
         Output::Maintenance(after, warning),
         Output::FirstDrawingRead(first_read, first_protection),
         Output::SecondDrawingRead(second_energy, previous_energy_after, second_protection),

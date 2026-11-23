@@ -2,10 +2,10 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use enum_map::enum_map;
 use interface_hud::{
-    Ammo, Ammunition, CancelButton, ColourSet, Controls, Dropped, Energy, Equipped, Flip,
-    FrameCount, FrameInputs, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look,
-    MapCellSet, MapPictures, MiniMapInputs, MiniMapPower, Mute, Pair, Picture, Place, Reserve,
-    ReserveMode, Room, SelectButton, SelectableItem, Selection, Shown, Status, Stock, Tile,
+    Ammo, Ammunition, CancelButton, ColourSet, Controls, CountdownRuns, Dropped, Energy, Equipped,
+    Flip, FrameCount, FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet,
+    MapPictures, MiniMapInputs, MiniMapPower, Mute, Pair, Picture, Place, Reserve, ReserveMode,
+    Room, SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart, Tile,
 };
 use std::path::Path;
 
@@ -294,59 +294,105 @@ fn validate_quiet_controls(prior: &[u8]) -> Result<(), Outcome> {
     }
     Ok(())
 }
-pub fn input<'a>(prior: &[u8], content: &'a Content) -> Result<OwnedInput<'a>, Outcome> {
-    validate_quiet_controls(prior)?;
+/// Her stock as the frame begins, from record N: the switch reads it before this frame's shots
+/// and pickups change it.
+pub(super) fn stock_at_start(start: &[u8]) -> Result<StockAtStart, Outcome> {
+    let equipment = word(start, 0x09a2)?;
+    Ok(StockAtStart {
+        counts: enum_map! {
+            Ammo::Missiles => word(start, 0x09c6)?,
+            Ammo::SuperMissiles => word(start, 0x09ca)?,
+            Ammo::PowerBombs => word(start, 0x09ce)?,
+        },
+        equipped: Equipped {
+            grapple_beam: equipment & 0x4000 != 0,
+            x_ray_scope: equipment & 0x8000 != 0,
+        },
+    })
+}
+
+/// What the status bar draws, from record N+1: this frame's damage, shots and pickups land
+/// before the HUD's turn.
+pub(super) fn status(end: &[u8]) -> Result<Status, Outcome> {
     let stock = |at: usize| {
         Ok::<_, Outcome>(Stock {
-            count: word(prior, at)?,
-            capacity: word(prior, at.saturating_add(2))?,
+            count: word(end, at)?,
+            capacity: word(end, at.saturating_add(2))?,
         })
     };
-    let ammunition = Ammunition::new(enum_map! { Ammo::Missiles => stock(0x09c6)?,
-    Ammo::SuperMissiles => stock(0x09ca)?, Ammo::PowerBombs => stock(0x09ce)? })
-    .ok_or_else(|| data_failure(None, "HUD ammunition range"))?;
-    let equipment = word(prior, 0x09a2)?;
-    let select = word(prior, 0x008f)? & word(prior, 0x09ba)? != 0;
-    let pressed_cancel = word(prior, 0x008f)? & word(prior, 0x09b8)? != 0;
-    let held_cancel = word(prior, 0x008b)? & word(prior, 0x09b8)? != 0;
-    let muted_by = if word(prior, 0x0a78)? != 0 {
+    Ok(Status {
+        energy: Energy {
+            now: word(end, 0x09c2)?,
+            capacity: word(end, 0x09c4)?,
+        },
+        reserve: Reserve {
+            energy: word(end, 0x09d6)?,
+            mode: match word(end, 0x09c0)? {
+                1 => ReserveMode::Auto,
+                0 | 2 => ReserveMode::Manual,
+                _ => return Err(data_failure(None, "HUD reserve mode")),
+            },
+        },
+        ammunition: Ammunition::new(enum_map! {
+            Ammo::Missiles => stock(0x09c6)?,
+            Ammo::SuperMissiles => stock(0x09ca)?,
+            Ammo::PowerBombs => stock(0x09ce)?,
+        })
+        .ok_or_else(|| data_failure(None, "HUD ammunition range"))?,
+    })
+}
+
+/// Why a switch makes no click, from record N+1.
+pub(super) fn muted_by(end: &[u8]) -> Result<Option<Mute>, Outcome> {
+    Ok(if word(end, 0x0a78)? != 0 {
         Some(Mute::TimeStopped)
-    } else if word(prior, 0x0d32)? != 0xc4f0 {
+    } else if word(end, 0x0d32)? != 0xc4f0 {
         Some(Mute::Grapple)
     } else {
-        match word(prior, 0x0a1e)?.to_le_bytes()[1] {
+        match word(end, 0x0a1e)?.to_le_bytes()[1] {
             3 => Some(Mute::SpinJump),
             0x14 => Some(Mute::WallJump),
             _ => None,
         }
-    };
-    let runs = match word(prior, 0x0a44)? {
+    })
+}
+
+/// Whether the controls may switch, from record N+1: the normal or demo handler, not facing
+/// the screen.
+pub(super) fn can_switch(end: &[u8]) -> Result<bool, Outcome> {
+    Ok(matches!(word(end, 0x0a42)?, 0xe695 | 0xe6c9) && !matches!(word(end, 0x0a1c)?, 0 | 0x9b))
+}
+
+/// The scene's countdown choice: main gameplay, the game state at both records of the pair,
+/// runs the escape countdown each frame. Any other scene's choice is not observed here.
+pub(super) fn countdown_runs(start: &[u8], end: &[u8]) -> Result<CountdownRuns, Outcome> {
+    if word(start, 0x0998)? != 8 || word(end, 0x0998)? != 8 {
+        return Err(Outcome::Unsupported {
+            cut: None,
+            dependency: "HUD countdown choice outside main gameplay".to_owned(),
+        });
+    }
+    Ok(CountdownRuns::MaintainCountdown)
+}
+
+pub fn input<'a>(
+    start: &[u8],
+    end: &[u8],
+    content: &'a Content,
+) -> Result<OwnedInput<'a>, Outcome> {
+    validate_quiet_controls(start)?;
+    let select = word(start, 0x008f)? & word(start, 0x09ba)? != 0;
+    let pressed_cancel = word(start, 0x008f)? & word(start, 0x09b8)? != 0;
+    let held_cancel = word(start, 0x008b)? & word(start, 0x09b8)? != 0;
+    let runs = match word(end, 0x0a44)? {
         0xe725 | 0xe7f5 | 0xe86a | 0xe8dc | 0xe8ec | 0xe8aa => true,
         0xe7d2 | 0xe833 | 0xe8d6 | 0xe8d9 | 0xe902 | 0xe8cd => false,
         _ => return Err(data_failure(None, "HUD mini-map handler")),
     };
     Ok(OwnedInput {
         frame: FrameInputs {
-            frame: FrameCount(word(prior, 0x05b5)?.to_le_bytes()[0]),
-            status: Status {
-                energy: Energy {
-                    now: word(prior, 0x09c2)?,
-                    capacity: word(prior, 0x09c4)?,
-                },
-                reserve: Reserve {
-                    energy: word(prior, 0x09d6)?,
-                    mode: match word(prior, 0x09c0)? {
-                        1 => ReserveMode::Auto,
-                        0 | 2 => ReserveMode::Manual,
-                        _ => return Err(data_failure(None, "HUD reserve mode")),
-                    },
-                },
-                ammunition,
-                equipped: Equipped {
-                    grapple_beam: equipment & 0x4000 != 0,
-                    x_ray_scope: equipment & 0x8000 != 0,
-                },
-            },
+            frame: FrameCount(word(start, 0x05b5)?.to_le_bytes()[0]),
+            stock_at_start: stock_at_start(start)?,
             controls: Controls {
                 select: if select {
                     SelectButton::Pressed
@@ -360,28 +406,29 @@ pub fn input<'a>(prior: &[u8], content: &'a Content) -> Result<OwnedInput<'a>, O
                 } else {
                     CancelButton::NotPressed
                 },
-                can_switch: matches!(word(prior, 0x0a42)?, 0xe695 | 0xe6c9)
-                    && !matches!(word(prior, 0x0a1c)?, 0 | 0x9b),
-                muted_by,
+                can_switch: can_switch(end)?,
             },
-            dropped_before_status_bar: Dropped::Nothing,
-            dropped_after_status_bar: Dropped::Nothing,
-            collected: None,
-            mother_brain_falls: false,
             mini_map: MiniMapInputs {
                 runs,
                 turned_on: false,
                 position: Pair {
-                    x: word(prior, 0x0af6)?,
-                    y: word(prior, 0x0afa)?,
+                    x: word(end, 0x0af6)?,
+                    y: word(end, 0x0afa)?,
                 },
                 room: room_from_words(
-                    [word(prior, 0x07a1)?, word(prior, 0x07a3)?],
-                    [word(prior, 0x07a5)?, word(prior, 0x07a7)?],
+                    [word(end, 0x07a1)?, word(end, 0x07a3)?],
+                    [word(end, 0x07a5)?, word(end, 0x07a7)?],
                 ),
-                map: content.map(prior)?,
-                map_collected: word(prior, 0x0789)? != 0,
+                map: content.map(end)?,
+                map_collected: word(end, 0x0789)? != 0,
             },
+            mother_brain_falls: false,
+            status: status(end)?,
+            collected: None,
+            muted_by: muted_by(end)?,
+            dropped_before_status_bar: Dropped::Nothing,
+            dropped_after_status_bar: Dropped::Nothing,
+            countdown: countdown_runs(start, end)?,
         },
     })
 }
@@ -499,13 +546,6 @@ pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>,
     ));
     Ok(fields)
 }
-pub fn actual(
-    state: &HudState,
-    _events: &[HudEvent],
-    content: &Content,
-) -> Result<Vec<Observation>, Outcome> {
-    initial(state, content)
-}
 
 #[cfg(test)]
 mod tests {
@@ -517,11 +557,11 @@ mod tests {
         let path = std::env::var_os("SM_FRAME_HUD_WRAM").expect("independent first-cut WRAM");
         let wram = std::fs::read(path).unwrap();
         let state = decode_state(&wram).unwrap();
-        let owner = game::production::hud::Hud::new(state.clone());
-        let restored: game::production::hud::Hud =
+        let owner = canonical::model::Model::<game::production::hud::HudPin>(state.clone());
+        let restored: canonical::model::Model<game::production::hud::HudPin> =
             canonical::from_bytes(&canonical::to_bytes(&owner)).unwrap();
         assert!(restored.eq(&owner));
-        let actual = game::production::hud::tilemap(restored.state()).unwrap();
+        let actual = game::production::hud::tilemap(&restored.0).unwrap();
         assert_eq!(actual.len(), 192);
         assert!(actual.iter().eq(wram.get(0xc608..0xc6c8).unwrap()));
         let mut changed_health = wram.clone();

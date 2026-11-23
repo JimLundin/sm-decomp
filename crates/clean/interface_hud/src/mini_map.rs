@@ -4,7 +4,7 @@
 use types::{Look, Pair, Picture, Screen};
 
 use crate::grid::{Place, at, plus};
-use crate::inputs::{FrameCount, MiniMapInputs};
+use crate::inputs::{FrameCount, FrameInputs, MiniMapInputs};
 use crate::layout::{HER_CELL, WINDOW_REACH};
 use crate::pictures::HudPictures;
 use crate::rules::{Boss, Rules};
@@ -143,28 +143,29 @@ impl HudState {
         }
     }
 
-    /// Spec: MiniMapUpdate. Turn-on precedes the fall, which can stop this frame's draw.
-    pub(crate) fn movement_map(
+    /// The mini-map's turn in a frame of play, at her position after her moves: a turn-on comes
+    /// before Mother Brain's fall, and both before the update, so a fall in the same frame has
+    /// the last word and the mini-map doesn't update.
+    pub(crate) fn mini_map_turn(
         &mut self,
         rules: &Rules,
         pictures: &HudPictures,
-        inputs: &MiniMapInputs<'_>,
-        mother_brain_falls: bool,
-        frame: FrameCount,
+        inputs: &FrameInputs<'_>,
     ) {
-        self.mini_map_turned_on(inputs.turned_on);
-        if mother_brain_falls {
-            self.boss_blanks_the_map(rules, pictures, Boss::MotherBrain, inputs.room.cell);
+        let mini_map = &inputs.mini_map;
+        self.mini_map_turned_on(mini_map.turned_on);
+        if inputs.mother_brain_falls {
+            self.boss_blanks_the_map(rules, pictures, Boss::MotherBrain, mini_map.room.cell);
         }
-        if self.mini_map_updates(inputs) {
-            self.explore_and_draw_mini_map(rules, pictures, inputs, frame);
+        if self.mini_map_updates(mini_map) {
+            self.explore_and_draw_mini_map(rules, pictures, mini_map, inputs.frame);
         }
     }
 
     /// Spec: MiniMapStill. Whether the mini-map updates this frame: it runs, it isn't off, and
     /// she lies within her room's blocks, her position read as 0 to 65,535 so that one left of
     /// or above the room reads as past it.
-    pub(crate) fn mini_map_updates(&self, inputs: &MiniMapInputs<'_>) -> bool {
+    fn mini_map_updates(&self, inputs: &MiniMapInputs<'_>) -> bool {
         let blocks = inputs.room.blocks;
         inputs.runs
             && self.mini_map == MiniMapPower::On
@@ -175,7 +176,7 @@ impl HudState {
     /// The mini-map's update, in the order §5 gives: her cell is explored, the window is drawn
     /// from the explored cells, the cell over a diagonal one is explored after, and her cell
     /// blinks last.
-    pub(crate) fn explore_and_draw_mini_map(
+    fn explore_and_draw_mini_map(
         &mut self,
         rules: &Rules,
         pictures: &HudPictures,
@@ -212,8 +213,8 @@ impl HudState {
     /// `room`, joins the explored cells, and the mini-map is off. Nothing else changes.
     ///
     /// A boss met on entering its room while it lives, from the door or the load flow, is this
-    /// step alone, outside a frame of play. Mother Brain's fall is the frame of play's
-    /// (`HudState::frame_of_play`), which calls this with `Boss::MotherBrain`.
+    /// step alone, outside a frame of play. Mother Brain's fall comes during a frame of play
+    /// (`HudState::frame_of_play`), in the mini-map's turn.
     pub fn boss_blanks_the_map(
         &mut self,
         rules: &Rules,

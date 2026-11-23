@@ -5,13 +5,13 @@
 //! `HudState`, is changed in place by each step of the running game; its grid is the picture
 //! drawn. Which step a frame is, the main loop chooses, calling one of three entries:
 //!
-//! - `HudState::frame_of_play`, with the rules, the HUD's pictures (content the importer
-//!   supplies) and what other domains report (her energy, ammunition and reserve, the items she
-//!   has on, the buttons, the selection dropped before the status bar and after it, where she is
-//!   on her map). It returns the `HudEvent`s it reports: `HudEvent::Switched { item }` for
-//!   the weapons and her look (`item: None` still reports a switch), `HudEvent::Click` for
-//!   the sound domain. Events use ordinary externally tagged derived Serde; the named optional
-//!   payload keeps a switch to no item distinct from a click through TOML restoration.
+//! - `HudState::frame_of_play`, one whole frame of play: with the rules, the HUD's pictures
+//!   (content the importer supplies) and the frame's `FrameInputs` (her stock as the frame
+//!   begins and the buttons, her position after her moves, the values as the frame ends, the
+//!   drops, whether the scene runs the escape countdown), it leaves the State as the frame ends
+//!   and returns the `FrameOutputs`: the selection after the controls, the `HudEvent`s in the
+//!   order raised (`HudEvent::Switched { item }` for the weapons and her look, `HudEvent::Click`
+//!   for the sound domain) and the countdown's answer.
 //! - `HudState::out_of_play`: a step between frames of play, where only the mini-map's turn-on,
 //!   a new area's explored cells and a drop of the selection change anything.
 //! - `HudState::boss_blanks_the_map`: a boss met on entering its room, which blanks the
@@ -21,23 +21,9 @@
 //! and written at a `Place`, column first; a place outside a grid has no cell. A picture with
 //! its flips is the shared `Look`; a HUD cell, a `Tile`, is a look in one of its colour sets.
 //! The content a caller lends, `HudPictures` and `HerMap`, is always supplied by the importer;
-//! each one's `Default` is an empty stand-in for a caller with nothing imported yet. No
-//! meaningful drawing is defined for unimported content. Caches and visible cells are
-//! independent: neither is reconstructed from the other. `Click` is a sound request, not a
-//! promise that a sound is heard.
-//!
-//! For staged frames, call `HudWork::begin` with the full State and frame-start count. Choose
-//! and apply controls, movement mini-map and late status in that order. Inspect each chosen
-//! answer before applying it. After movement application the map is already visible on the
-//! carried HUD; only after status does `publication` give the complete HUD and event history.
-//! Save the entire `HudWork` and any caller-owned `EventCursor` values to restore and continue.
-//!
-//! Spec: EscapeCountdown, CountdownContinuation. `HudState::countdown` owns the admitted
-//! `Countdown::Dormant` value. A distinct `CountdownWork` receives the producer's qualified
-//! `CountdownOpportunity`, exposes its chosen expiry/picture answer, and completes it once.
-//! Ordinary HUD refresh never schedules countdown maintenance. Whole-work serde restoration
-//! retains the full HUD and chosen/completed progress; scene qualification and active escape
-//! countdowns remain unsupported neighboring responsibilities.
+//! each one's `Default` is an empty stand-in for a caller with nothing imported yet. The values
+//! last shown and the cells are independent: neither is worked out from the other. `Click` is a
+//! sound request, not a promise that a sound is heard.
 //!
 //! The values the rules read, every Parameter the spec lists, are in `Rules`: `Rules::reference`,
 //! its default, holds the spec's. `CATALOGUE` lists one behaviour per spec entry.
@@ -48,7 +34,6 @@
 
 mod catalogue;
 mod countdown;
-mod countdown_work;
 mod events;
 mod grid;
 mod inputs;
@@ -63,30 +48,24 @@ mod state;
 mod status_bar;
 mod step;
 mod tile;
-mod work;
-
-pub use work::{
-    ControlAnswer, DisplayAnswer, DisplayInputs, EventCursor, HudOpportunity, HudWork, MapAnswer,
-    MovementInputs, Observation, StatusAnswer,
-};
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use countdown::{
-    Countdown, CountdownAnswer, CountdownExpiry, CountdownOpportunity, CountdownPicture,
+    Countdown, CountdownAnswer, CountdownExpiry, CountdownPicture, CountdownRuns, UnsupportedFrame,
 };
-pub use countdown_work::CountdownWork;
 pub use events::HudEvent;
 pub use grid::{Grid, Place};
 pub use inputs::{
     Ammunition, CancelButton, Controls, Dropped, Energy, Equipped, FrameCount, FrameInputs,
-    ItemControlInputs, MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve, ReserveMode, Room,
-    SelectButton, Status, StatusInputs, Stock,
+    MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve, ReserveMode, Room, SelectButton,
+    Status, Stock, StockAtStart,
 };
 pub use item::{Ammo, SelectableItem};
 pub use map::{HerMap, MapCellSet, MapPictures};
 pub use pictures::{HudPictures, Icons};
 pub use rules::{Alternation, Boss, Rules};
 pub use state::{HudState, MiniMapPower, Selection, Shown};
+pub use step::FrameOutputs;
 pub use tile::{ColourSet, HudGrid, Tile};
 pub use types::{Checked, Flip, Kind, Look, Pair, Picture, Screen, Switch};
 

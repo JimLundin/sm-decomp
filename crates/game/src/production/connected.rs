@@ -126,7 +126,7 @@ impl State {
             return Err(Fault::HudMap);
         }
         self.early_map = Some(Box::new(early_map::State {
-            hud: crate::production::hud::Hud::new(hud),
+            hud: Model(hud),
             position: None,
         }));
         Ok(self)
@@ -137,7 +137,7 @@ impl State {
     pub fn early_map(&self) -> Option<(&interface_hud::HudState, Option<[u32; 2]>)> {
         self.early_map
             .as_ref()
-            .map(|map| (map.hud.state(), map.position))
+            .map(|map| (&map.hud.0, map.position))
     }
 
     /// The frames played.
@@ -153,8 +153,7 @@ impl State {
     pub fn validate(&self, content: &Content) -> Result<(), Fault> {
         drawn(self.playing.0, &content.appearance)?;
         if let Some(map) = &self.early_map
-            && (map.position.is_some() != (self.completed > 0)
-                || map.position.is_some() != map.hud.map_ready())
+            && map.position.is_some() != (self.completed > 0)
         {
             return Err(Fault::HudMap);
         }
@@ -209,9 +208,6 @@ impl State {
         if self.playing.0.pose != self.movement.0.pose {
             return Err(Fault::Figure);
         }
-        if let (Some(owner), Some(premises)) = (&mut self.early_map, map) {
-            owner.begin(premises)?;
-        }
         let playing = self.playing.0;
         let previous = self.movement.0;
         let clip = content.appearance.get(playing).ok_or(Fault::Figure)?;
@@ -247,7 +243,7 @@ impl State {
             return Err(Fault::Family);
         }
         if let (Some(owner), Some(premises)) = (&mut self.early_map, map) {
-            owner.publish(outcome.position_after_moves, premises)?;
+            owner.play(outcome.position_after_moves, premises)?;
         }
 
         let selected = Figure {

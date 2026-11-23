@@ -202,8 +202,33 @@ struct Current {
     map: SourceMap,
 }
 
+/// The HUD's neighbours in a frame, from its record pair; no selected owner supplies them.
+#[derive(Clone, Copy)]
+struct HudNeighbours {
+    stock_at_start: interface_hud::StockAtStart,
+    status: interface_hud::Status,
+    muted_by: Option<interface_hud::Mute>,
+    can_switch: bool,
+    countdown: interface_hud::CountdownRuns,
+}
+
+impl HudNeighbours {
+    fn read(cache: &Cache, cut: u64) -> Result<Self, Outcome> {
+        let start = record(cache, cut.saturating_sub(1))?;
+        let end = record(cache, cut)?;
+        Ok(Self {
+            stock_at_start: hud::stock_at_start(&start.wram)?,
+            status: hud::status(&end.wram)?,
+            muted_by: hud::muted_by(&end.wram)?,
+            can_switch: hud::can_switch(&end.wram)?,
+            countdown: hud::countdown_runs(&start.wram, &end.wram)?,
+        })
+    }
+}
+
 pub(super) struct InputTape {
     current: [Current; 2],
+    neighbours: [HudNeighbours; 2],
     hud: hud::Content,
     rules: interface_hud::Rules,
 }
@@ -301,6 +326,10 @@ pub(super) fn admit(sources: &Sources) -> Result<AdmittedCase, Outcome> {
         ));
     }
     let current = inputs(sources, &origin.wram, &content, pads)?;
+    let neighbours = [
+        HudNeighbours::read(&cache, FIRST_MAP)?,
+        HudNeighbours::read(&cache, SECOND_MAP)?,
+    ];
     let hud = hud::Content::load(&sources.rom)?;
     let seed_hud = hud::decode_state(&origin.wram)?;
     let expected = Expectations::load(sources, &cache, &content)?;
@@ -334,6 +363,7 @@ pub(super) fn admit(sources: &Sources) -> Result<AdmittedCase, Outcome> {
         rules,
         inputs: InputReader::EarlyMap(Box::new(InputTape {
             current,
+            neighbours,
             hud,
             rules: interface_hud::Rules::default(),
         })),
@@ -350,6 +380,10 @@ impl InputTape {
             .current
             .get(index)
             .ok_or_else(|| data_failure(Some(cut), "early Map input opportunity"))?;
+        let neighbours = self
+            .neighbours
+            .get(index)
+            .ok_or_else(|| data_failure(Some(cut), "early Map HUD neighbours"))?;
         let map = &current.map;
         Ok(AdvanceInput::ConnectedMap {
             inputs: &current.movement,
@@ -361,6 +395,11 @@ impl InputTape {
                     interface_hud::SelectButton::NotPressed,
                     interface_hud::CancelButton::NotPressed,
                 ),
+                can_switch: neighbours.can_switch,
+                stock_at_start: neighbours.stock_at_start,
+                status: neighbours.status,
+                muted_by: neighbours.muted_by,
+                countdown: neighbours.countdown,
                 map_collected: map.map_collected,
                 map: self.hud.map_area(map.area)?,
                 pictures: &self.hud.pictures,

@@ -231,8 +231,8 @@ pub enum ProductionOutputs {
     Appearance(Option<types::AnimationSound>),
     /// Progress changed only its held complete State and emits no requests.
     Progress,
-    /// Every ordered HUD event from the selected entry.
-    Hud(Vec<interface_hud::HudEvent>),
+    /// A frame of play's outputs; a step outside play or a boss blanking the map has none.
+    Hud(Option<interface_hud::FrameOutputs>),
     /// Complete resulting door, sound and shake.
     Ceres(boss_ceres_ridley::Run),
     /// Complete resulting scene and every passage report.
@@ -260,8 +260,6 @@ pub enum AdmissionFault {
     MovementTouchdownFigure,
     /// Carried scoped Health belongs to a different authenticated origin.
     HealthTailOrigin,
-    /// The scoped Health phase disagrees with the retained HUD work.
-    HealthTailPhase,
     /// Audio content has no complete two-track arrangement.
     AudioTracks,
     /// The resident session violates an audio admission invariant.
@@ -291,6 +289,8 @@ pub enum Unsupported {
     PassageAudio,
     /// The scoped actor, Maintenance or late consumer opportunity is unavailable.
     HealthTailOpportunity,
+    /// A frame of play the HUD leaves out.
+    Hud(interface_hud::UnsupportedFrame),
     /// A produced Appearance request has no selected receiver mapping.
     AppearanceSound(samus_appearance::FrameSound),
     /// No independent value or producer for the selected entry.
@@ -714,13 +714,11 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
                 .and_then(|()| pin_holds::<connected::PlayingPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::AppearancePin>())
                 .and_then(|()| pin_holds::<hud::HudPin>())
-                .and_then(|()| pin_holds::<hud::WorkPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::CameraPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
         }
         Scope::HealthTail => canonical::model::pin_holds::<health_tail::HealthPin>()
-            .and_then(|()| canonical::model::pin_holds::<hud::HudPin>())
-            .and_then(|()| canonical::model::pin_holds::<hud::WorkPin>()),
+            .and_then(|()| canonical::model::pin_holds::<hud::HudPin>()),
         Scope::Movement | Scope::MovementCeres => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
         }

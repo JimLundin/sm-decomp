@@ -2,7 +2,7 @@
 
 use super::{
     AdmissionFault, AdvanceInput, ProductionContent, ProductionFault, ProductionOutputs,
-    ProductionRules, ProductionSeed,
+    ProductionRules, ProductionSeed, Unsupported,
 };
 use crate::state::owned::OwnedState;
 use canonical::model::Model;
@@ -196,7 +196,7 @@ pub(super) fn advance(
             ProductionContent::Hud(pictures),
             ProductionRules::Hud(rules),
             AdvanceInput::Hud(input),
-        ) => ProductionOutputs::Hud(advance_hud(state, rules.get(), pictures, input)),
+        ) => ProductionOutputs::Hud(advance_hud(state, rules.get(), pictures, input)?),
         (
             OwnedState::Ceres(state),
             ProductionContent::Ceres,
@@ -297,18 +297,22 @@ fn advance_hud(
     rules: &interface_hud::Rules,
     pictures: &interface_hud::HudPictures,
     input: HudInput<'_>,
-) -> Vec<interface_hud::HudEvent> {
-    match input {
-        HudInput::Play(inputs) => state.frame_of_play(rules, pictures, inputs),
+) -> Result<Option<interface_hud::FrameOutputs>, ProductionFault> {
+    Ok(match input {
+        HudInput::Play(inputs) => Some(
+            state
+                .frame_of_play(rules, pictures, inputs)
+                .map_err(|frame| ProductionFault::Unsupported(Unsupported::Hud(frame)))?,
+        ),
         HudInput::OutOfPlay(inputs) => {
             state.out_of_play(inputs);
-            Vec::new()
+            None
         }
         HudInput::Boss { boss, room_cell } => {
             state.boss_blanks_the_map(rules, pictures, boss, room_cell);
-            Vec::new()
+            None
         }
-    }
+    })
 }
 
 /// Shared complete Ceres adapter entry.

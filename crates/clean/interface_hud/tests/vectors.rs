@@ -32,29 +32,26 @@ mod shape {
     pub struct VectorFile {
         pub pictures: PicturesIn,
         pub vector: Vec<VectorIn>,
-        #[serde(default)]
-        pub hud_work: Vec<WorkIn>,
-        #[serde(default)]
-        pub hud_resume: Vec<ResumeIn>,
-        pub hud_observed: Vec<ObservedIn>,
-        #[serde(default)]
         pub countdown: Vec<CountdownIn>,
     }
 
-    /// Countdown scope distinguishes actual model vectors from neighboring producer obligations.
+    /// Whether a countdown case runs the model, or checks only the HUD's refusal of what the
+    /// spec leaves out.
     #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
     pub enum CountdownScope {
         Model,
         IntegrationAdmission,
     }
 
+    /// A current countdown, as the file names it; only `Dormant` is the spec's.
     #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum CountdownCurrentIn {
+    pub enum CurrentCountdownIn {
         Dormant,
         Active,
         Expired,
     }
 
+    /// The scene's choice for the countdown, as the file names it.
     #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
     pub enum SceneIn {
         MaintainCountdown,
@@ -62,19 +59,14 @@ mod shape {
         Unknown,
     }
 
-    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum CountdownBoundary {
-        Unread,
-        Chosen,
-        Completed,
-    }
-
+    /// What a countdown case expects of the frames.
     #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
     pub enum CountdownExpected {
         Pass,
         Unsupported,
     }
 
+    /// Where a countdown case comes from.
     #[derive(Deserialize)]
     pub enum CountdownSource {
         #[serde(rename = "recorded")]
@@ -83,7 +75,7 @@ mod shape {
         Constructed,
     }
 
-    /// Strict vector shape only, not an integration admission implementation.
+    /// One `[[countdown]]`: frames of play with one scene choice each.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     pub struct CountdownIn {
@@ -92,113 +84,17 @@ mod shape {
         #[serde(rename = "source")]
         pub _source: CountdownSource,
         pub entries: Vec<String>,
-        pub before: CountdownCurrentIn,
+        pub before: CurrentCountdownIn,
         pub scene: SceneIn,
-        pub opportunities: usize,
-        pub boundary: CountdownBoundary,
-        pub restore: bool,
-        pub later_scene: SceneIn,
+        pub frames: usize,
         pub expected: CountdownExpected,
-        pub after: CountdownCurrentIn,
+        pub after: CurrentCountdownIn,
         pub answers: Vec<interface_hud::CountdownExpiry>,
         pub pictures: Vec<interface_hud::CountdownPicture>,
         pub energy: Option<u16>,
-        /// Neighboring quantity, deliberately not an input of the model.
+        /// Her protection from hits, which no rule of the HUD reads: not an input of the model.
         #[serde(rename = "protection_frames")]
         pub _protection_frames: Option<u16>,
-    }
-
-    /// Additive staged-frame tables, recursively validated using the ordinary strict shapes.
-    #[derive(Deserialize)]
-    #[serde(deny_unknown_fields)]
-    pub struct WorkIn {
-        pub id: String,
-        #[serde(rename = "source")]
-        pub _source: Source,
-        pub entries: Vec<String>,
-        #[serde(default)]
-        pub before: BeforeIn,
-        #[serde(default)]
-        pub controls: toml::Table,
-        #[serde(default)]
-        pub mini_map: toml::Table,
-        #[serde(default)]
-        pub status: toml::Table,
-        #[serde(default)]
-        pub frame: u8,
-        #[serde(default)]
-        pub controls_after: toml::Table,
-        pub map_after: Option<toml::Table>,
-        pub after: toml::Table,
-        pub pose_after: Option<[u16; 2]>,
-        pub energy_at_map: Option<[u16; 2]>,
-        pub owner_at_map: Option<OwnerIn>,
-        pub owner_at_status: Option<OwnerIn>,
-    }
-
-    /// A change at an offered or chosen observation of a base work case.
-    #[derive(Deserialize)]
-    #[serde(deny_unknown_fields)]
-    pub struct ResumeIn {
-        pub id: String,
-        #[serde(rename = "source")]
-        pub _source: Source,
-        pub entries: Vec<String>,
-        pub base: String,
-        pub opportunity: Stage,
-        pub cut: CutIn,
-        pub patch: toml::Table,
-        #[serde(default)]
-        pub expect_controls_after: toml::Table,
-        #[serde(default)]
-        pub expect_map_after: toml::Table,
-        pub expect_after: toml::Table,
-    }
-
-    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Stage {
-        ItemControls,
-        MiniMapUpdate,
-        StatusRefresh,
-    }
-
-    #[derive(Deserialize, Clone, Copy, PartialEq, Eq)]
-    pub enum CutIn {
-        BeforeAnswer,
-        AfterAnswer,
-        AfterEffect,
-    }
-
-    #[derive(Deserialize, Debug, PartialEq, Eq)]
-    #[serde(deny_unknown_fields)]
-    pub struct OwnerIn {
-        pub position: [u16; 2],
-        pub energy: [u16; 2],
-    }
-
-    #[derive(Deserialize)]
-    pub enum ObservedSource {
-        #[serde(rename = "ordinary-play-pair")]
-        OrdinaryPlayPair,
-    }
-
-    #[derive(Deserialize)]
-    #[serde(deny_unknown_fields)]
-    #[expect(
-        clippy::struct_excessive_bools,
-        reason = "independent recorded relations, not work state flags"
-    )]
-    pub struct ObservedIn {
-        pub id: String,
-        #[serde(rename = "source")]
-        pub _source: ObservedSource,
-        pub cut: u16,
-        pub entries: Vec<String>,
-        pub map_runs: bool,
-        pub map_window_changed_by_movement: bool,
-        pub map_retained_through_status: bool,
-        pub energy_read_after_drawing: bool,
-        pub gauge_retained_through_status: bool,
     }
 
     /// `[pictures]`: the HUD's pictures by name.
@@ -307,13 +203,22 @@ mod shape {
     pub struct AfterIn {
         #[serde(default)]
         pub changed: BTreeMap<HudPlaceIn, TileIn>,
-        pub shown: Option<ShownIn>,
+        pub shown: Option<ShownAfterIn>,
         pub selection: Option<ItemName>,
         pub one_shot: Option<bool>,
         pub mini_map_off: Option<bool>,
         pub explored: Option<Vec<[i32; 2]>>,
         #[serde(default)]
         pub events: Vec<EventIn>,
+        pub controls: Option<ControlsAfterIn>,
+    }
+
+    /// `controls`: the selection after the controls, before any drop (a `Frame` step only).
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct ControlsAfterIn {
+        pub selection: ItemName,
+        pub one_shot: bool,
     }
 
     /// `shown`: each value left out is 0 or none.
@@ -327,6 +232,17 @@ mod shape {
         pub selection: ItemName,
     }
 
+    /// An after's `shown`: each value left out is as before.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct ShownAfterIn {
+        pub energy: Option<u16>,
+        pub missiles: Option<u16>,
+        pub super_missiles: Option<u16>,
+        pub power_bombs: Option<u16>,
+        pub selection: Option<ItemName>,
+    }
+
     /// A vector's inputs; which are allowed depends on the step.
     #[derive(Deserialize, Default)]
     #[serde(deny_unknown_fields)]
@@ -338,6 +254,7 @@ mod shape {
         pub super_missiles: Option<[u16; 2]>,
         pub power_bombs: Option<[u16; 2]>,
         pub equipped: Option<Vec<Equipment>>,
+        pub at_start: Option<AtStartIn>,
         pub select: Option<SelectIn>,
         pub cancel: Option<CancelIn>,
         pub can_switch: Option<bool>,
@@ -346,6 +263,16 @@ mod shape {
         pub new_area: Option<NewAreaIn>,
         pub collected: Option<ItemName>,
         pub mini_map: Option<MiniMapIn>,
+    }
+
+    /// `at_start`: her stock as the frame begins, each `[count, capacity]`; a key left out is
+    /// the same as at the frame's end.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct AtStartIn {
+        pub missiles: Option<[u16; 2]>,
+        pub super_missiles: Option<[u16; 2]>,
+        pub power_bombs: Option<[u16; 2]>,
     }
 
     /// `dropped`: what another domain drops, and (a `Frame` step only) when.
@@ -622,19 +549,19 @@ mod convert {
 
     use enum_map::enum_map;
     use interface_hud::{
-        Alternation, Ammo, Ammunition, Boss, CancelButton, Controls, DisplayInputs, Dropped,
-        Energy, Equipped, FrameCount, FrameInputs, HerMap, HudEvent, HudGrid, HudPictures,
-        HudState, HudWork, Icons, ItemControlInputs, Look, MapCellSet, MapPictures, MiniMapInputs,
-        MiniMapPower, MovementInputs, Mute, NewArea, Observation, OutOfPlayInputs, Pair, Place,
-        Reserve, ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection, Shown,
-        Status, Stock,
+        Alternation, Ammo, Ammunition, Boss, CancelButton, Controls, CountdownRuns, Dropped,
+        Energy, Equipped, FrameCount, FrameInputs, FrameOutputs, HerMap, HudEvent, HudGrid,
+        HudPictures, HudState, Icons, Look, MapCellSet, MapPictures, MiniMapInputs, MiniMapPower,
+        Mute, NewArea, OutOfPlayInputs, Pair, Place, Reserve, ReserveMode, Room, Rules, Screen,
+        SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart,
     };
+    use serde::de::DeserializeOwned;
 
     use super::shape::{
-        AfterIn, BeforeIn, BossName, BossScreensIn, CancelIn, DropWhatIn, DropWhenIn, DroppedIn,
-        Equipment, IconsIn, InputsIn, ItemName, MapIn, MiniMapIn, MuteIn, PictureIn, PicturesIn,
-        PlaceIn, ResumeIn, RoomIn, RulesIn, SelectIn, ShownIn, StepIn, VectorFile, VectorIn,
-        WorkIn,
+        AfterIn, BeforeIn, BossName, BossScreensIn, CancelIn, CountdownExpected, CountdownIn,
+        CountdownScope, DropWhatIn, DropWhenIn, DroppedIn, Equipment, IconsIn, InputsIn, ItemName,
+        MapIn, MiniMapIn, MuteIn, PictureIn, PicturesIn, PlaceIn, RoomIn, RulesIn, SelectIn,
+        ShownIn, StepIn, VectorFile, VectorIn,
     };
 
     /// The vector file.
@@ -660,23 +587,32 @@ mod convert {
     }
 
     impl Step<'_> {
-        /// Takes the step on `state`, returning what it reports; only a frame of play reports
-        /// anything.
+        /// Takes the step on `state`, returning its events and, for a frame of play, the
+        /// selection after the controls.
         fn take(
             &self,
             state: &mut HudState,
             rules: &Rules,
             pictures: &HudPictures,
-        ) -> Vec<HudEvent> {
+        ) -> Result<(Vec<HudEvent>, Option<Selection>), String> {
             match self {
-                Self::FrameOfPlay(inputs) => state.frame_of_play(rules, pictures, inputs),
+                Self::FrameOfPlay(inputs) => {
+                    let FrameOutputs {
+                        selection_after_controls,
+                        events,
+                        countdown: _,
+                    } = state
+                        .frame_of_play(rules, pictures, inputs)
+                        .map_err(|refused| format!("frame refused: {refused:?}"))?;
+                    Ok((events, Some(selection_after_controls)))
+                }
                 Self::OutOfPlay(inputs) => {
                     state.out_of_play(inputs);
-                    Vec::new()
+                    Ok((Vec::new(), None))
                 }
                 &Self::BossEncountered(boss, room) => {
                     state.boss_blanks_the_map(rules, pictures, boss, room);
-                    Vec::new()
+                    Ok((Vec::new(), None))
                 }
             }
         }
@@ -695,9 +631,7 @@ mod convert {
 
     /// A vector file's text, read.
     fn load_text(text: &str) -> Result<VectorFile, String> {
-        let file: VectorFile = toml::from_str(text).map_err(|error| error.to_string())?;
-        validate_work_tables(&file)?;
-        Ok(file)
+        toml::from_str(text).map_err(|error| error.to_string())
     }
 
     /// The HUD's pictures. The blank's flips and the diagonal's are read by no rule (§1.4), so
@@ -738,7 +672,36 @@ mod convert {
     impl VectorIn {
         /// Runs the vector: `Ok` with each way the model's after differs from the vector's, or
         /// `Err` when the vector breaks the file's format.
+        ///
+        /// A `Frame` step that gives no frame count must hold at every one, so it runs at each.
         pub fn run(&self, pictures: &HudPictures) -> Result<Vec<String>, String> {
+            match (self.step, self.frame) {
+                (StepIn::Frame, None) => self.run_at_every_frame(pictures),
+                (_, frame) => self.run_at(frame.map(FrameCount), pictures),
+            }
+        }
+
+        /// Runs a `Frame` step that gives no frame count at each count, reporting the first at
+        /// which it fails.
+        fn run_at_every_frame(&self, pictures: &HudPictures) -> Result<Vec<String>, String> {
+            for frame in 0..=u8::MAX {
+                let problems = self.run_at(Some(FrameCount(frame)), pictures)?;
+                if !problems.is_empty() {
+                    return Ok(problems
+                        .into_iter()
+                        .map(|problem| format!("at frame {frame}: {problem}"))
+                        .collect());
+                }
+            }
+            Ok(Vec::new())
+        }
+
+        /// Runs the vector's step at the frame count `frame`, none outside a frame of play.
+        fn run_at(
+            &self,
+            frame: Option<FrameCount>,
+            pictures: &HudPictures,
+        ) -> Result<Vec<String>, String> {
             let before = state(&self.before, pictures)?;
             let rules = self.rules.as_ref().map_or_else(Rules::reference, rules);
             let map = her_map(self.inputs.mini_map.as_ref(), pictures)?;
@@ -748,44 +711,37 @@ mod convert {
                 .as_ref()
                 .map(|area| cell_set(&area.explored))
                 .transpose()?;
-            let step = self.step(&map, new_area.as_ref())?;
+            let step = self.step(frame, &map, new_area.as_ref())?;
             let mut after = before.clone();
-            let events = step.take(&mut after, &rules, pictures);
-            if let Step::FrameOfPlay(inputs) = &step {
-                let complete = complete_staged(
-                    before.clone(),
-                    ItemControlInputs::from_frame(inputs),
-                    &DisplayInputs::from_frame(inputs),
-                    &rules,
-                    pictures,
-                );
-                assert_eq!(
-                    complete.state(),
-                    &after,
-                    "{} full ordinary/staged State",
-                    self.id
-                );
-                assert_eq!(
-                    complete.events(),
-                    events,
-                    "{} complete ordered events",
-                    self.id
-                );
-            }
+            let (events, after_controls) = step.take(&mut after, &rules, pictures)?;
             let expected = expected_state(&self.after, &before)?;
             let expected_events: Vec<HudEvent> = self.after.events.iter().map(|e| e.0).collect();
-            Ok(differences(&expected, &after, &expected_events, &events))
+            let mut problems = differences(&expected, &after, &expected_events, &events);
+            let expected_controls = match (after_controls, self.after.controls.as_ref()) {
+                (None, Some(_)) => return Err("only a Frame step has controls".to_owned()),
+                (None, None) => None,
+                (Some(_), None) => Some(expected.selection),
+                (Some(_), Some(given)) => Some(selection(given.selection.item(), given.one_shot)?),
+            };
+            if after_controls != expected_controls {
+                problems.push(format!(
+                    "selection after the controls: expected {expected_controls:?}, got \
+                     {after_controls:?}"
+                ));
+            }
+            Ok(problems)
         }
 
         /// The step the vector takes, with its inputs; only a `Frame` step has a frame count.
         fn step<'a>(
             &self,
+            frame: Option<FrameCount>,
             map: &'a HerMap,
             new_area: Option<&'a MapCellSet>,
         ) -> Result<Step<'a>, String> {
-            match (self.step, self.frame) {
+            match (self.step, frame) {
                 (StepIn::Frame, Some(frame)) => {
-                    frame_inputs(FrameCount(frame), &self.inputs, map).map(Step::FrameOfPlay)
+                    frame_inputs(frame, &self.inputs, map).map(Step::FrameOfPlay)
                 }
                 (StepIn::Frame, None) => Err("a Frame step has a frame".to_owned()),
                 (StepIn::BossEvent, None) => boss_event(&self.inputs),
@@ -799,87 +755,132 @@ mod convert {
         }
     }
 
-    /// Execute only admitted Model cases through the public countdown model. This harness
-    /// has no scene admission decision: the producer's qualified input is supplied directly.
-    pub fn run_countdown(vector: &super::shape::CountdownIn, pictures: &HudPictures) {
-        use interface_hud::{Countdown, CountdownOpportunity, CountdownWork};
-
-        use super::shape::{
-            CountdownBoundary, CountdownCurrentIn, CountdownExpected, CountdownScope, SceneIn,
-        };
-
-        assert_eq!(vector.scope, CountdownScope::Model);
-        assert_eq!(vector.before, CountdownCurrentIn::Dormant);
-        assert_eq!(vector.after, CountdownCurrentIn::Dormant);
-        assert_eq!(vector.scene, SceneIn::MaintainCountdown);
-        assert_eq!(vector.expected, CountdownExpected::Pass);
-        // Later scene input is deliberately not supplied to already chosen work. Qualification
-        // of an unread PresentationOnly contrast is outside this model and is not tested here.
-        assert!(matches!(
-            vector.later_scene,
-            SceneIn::MaintainCountdown | SceneIn::PresentationOnly
-        ));
-        assert_ne!(vector.boundary, CountdownBoundary::Unread);
-        let mut current = countdown_fixture(pictures);
-        if let Some(energy) = vector.energy {
-            refresh_countdown_fixture(&mut current, pictures, energy);
-        }
-        // Protection is external to this domain and deliberately not supplied to the model.
-        current.countdown = Countdown::Dormant;
-        let initial = current.clone();
-        let mut answers = Vec::new();
-        let mut contributions = Vec::new();
-        for _ in 0..vector.opportunities {
-            let mut work = CountdownWork::new(current);
-            assert_eq!(work.answer(), &Observation::Unread);
-            assert!(work.publication().is_none());
-            assert!(!work.apply());
-            assert!(work.choose(CountdownOpportunity::MaintainCountdown));
-            let Observation::Chosen(chosen) = work.answer() else {
-                panic!("{}: no actual chosen model answer", vector.id);
+    impl CountdownIn {
+        /// Runs the case's frames of play through the model: `Ok` with each way the model
+        /// differs from the case, or `Err` when the fixture can't be built.
+        ///
+        /// The case's current countdown is read into the HUD's State and its scene into the
+        /// frame's input, each through the model's own serde: a countdown or a scene the spec
+        /// leaves out has no value there, and is refused before any frame. A frame the model
+        /// refuses must leave the State as it was.
+        pub fn run(&self, pictures: &HudPictures) -> Result<Vec<String>, String> {
+            let map = HerMap {
+                pictures: MapPictures::filled(pictures.map_blank),
+                charted: MapCellSet::default(),
             };
-            assert_eq!(chosen.expiry, interface_hud::CountdownExpiry::NoExpiry);
-            assert_eq!(chosen.picture, interface_hud::CountdownPicture::Absent);
-            assert_eq!(chosen.opportunity, CountdownOpportunity::MaintainCountdown);
-            assert_eq!(work.state(), &initial);
-            assert!(work.publication().is_none());
-            assert!(!work.choose(CountdownOpportunity::MaintainCountdown));
-            if vector.boundary == CountdownBoundary::Completed {
-                assert!(work.apply());
+            let energy_inputs = InputsIn {
+                energy: Some([self.energy.unwrap_or(0), COUNTDOWN_CAPACITY]),
+                can_switch: Some(false),
+                ..InputsIn::default()
+            };
+            let mut inputs = frame_inputs(FrameCount(0), &energy_inputs, &map)?;
+            let hud = model_value::<HudState>(with_countdown(&countdown_fixture(pictures)?, self)?);
+            let runs =
+                model_value::<CountdownRuns>(toml::Value::String(format!("{:?}", self.scene)));
+            let mut played = Played {
+                refused: true,
+                ..Played::default()
+            };
+            if let (Some(hud), Some(runs)) = (hud, runs) {
+                inputs.countdown = runs;
+                self.play(hud, &inputs, pictures, &mut played);
             }
-            if vector.restore {
-                work = restore_countdown(work);
+            let Played {
+                mut problems,
+                answers,
+                contributions,
+                refused,
+            } = played;
+            let expected_refusal = self.expected == CountdownExpected::Unsupported;
+            if refused != expected_refusal {
+                problems.push(format!("expected {:?}, refused: {refused}", self.expected));
             }
-            let completed_now = work.apply();
-            assert_eq!(completed_now, vector.boundary == CountdownBoundary::Chosen);
-            assert!(!work.apply());
-            let (state, answer) = work.publication().expect("completed countdown publication");
-            assert_eq!(work.answer(), &Observation::Completed(*answer));
-            assert_eq!(state, &initial, "{}: complete HUD preserved", vector.id);
-            answers.push(answer.expiry);
-            contributions.push(answer.picture);
-            current = state.clone();
+            if answers != self.answers || contributions != self.pictures {
+                problems.push(format!(
+                    "answers {answers:?} and pictures {contributions:?}, expected {:?} and {:?}",
+                    self.answers, self.pictures
+                ));
+            }
+            Ok(problems)
         }
-        assert_eq!(
-            answers, vector.answers,
-            "{}: ordered expiry answers",
-            vector.id
-        );
-        assert_eq!(
-            contributions, vector.pictures,
-            "{}: ordered picture contributions",
-            vector.id
-        );
-        assert_eq!(current, initial);
     }
 
-    /// Independently varied grid, caches, selection, explored map and map power.
+    /// What a countdown case's frames gave.
+    #[derive(Default)]
+    struct Played {
+        problems: Vec<String>,
+        answers: Vec<interface_hud::CountdownExpiry>,
+        contributions: Vec<interface_hud::CountdownPicture>,
+        /// The model refused the case: it holds no value for its countdown or its scene, or it
+        /// refused a frame.
+        refused: bool,
+    }
+
+    impl CountdownIn {
+        /// Plays the case's frames on `hud`, stopping at a refused frame, which must leave the
+        /// State as it was; then checks the countdown the frames leave.
+        fn play(
+            &self,
+            mut hud: HudState,
+            inputs: &FrameInputs<'_>,
+            pictures: &HudPictures,
+            played: &mut Played,
+        ) {
+            played.refused = false;
+            for _ in 0..self.frames {
+                let start = hud.clone();
+                let result = hud.frame_of_play(&Rules::reference(), pictures, inputs);
+                played.refused = result.is_err();
+                if played.refused && hud != start {
+                    played
+                        .problems
+                        .push("a refused frame changed the State".to_owned());
+                }
+                let Ok(outputs) = result else { return };
+                played.answers.push(outputs.countdown.expiry);
+                played.contributions.push(outputs.countdown.picture);
+            }
+            let after = format!("{:?}", hud.countdown);
+            if after != format!("{:?}", self.after) {
+                played.problems.push(format!(
+                    "countdown after: expected {:?}, got {after}",
+                    self.after
+                ));
+            }
+        }
+    }
+
+    /// The energy capacity of the countdown cases' frames, which no countdown rule reads.
+    const COUNTDOWN_CAPACITY: u16 = 1499;
+
+    /// A value of the model's, read by its serde from `value`, or `None` if it has no such value.
+    fn model_value<T: DeserializeOwned>(value: toml::Value) -> Option<T> {
+        value.try_into().ok()
+    }
+
+    /// The saved form of `hud`, holding the case's current countdown by its name.
+    fn with_countdown(hud: &HudState, case: &CountdownIn) -> Result<toml::Value, String> {
+        let mut value = toml::Value::try_from(hud).map_err(|error| error.to_string())?;
+        value
+            .as_table_mut()
+            .ok_or("a State saves as a table")?
+            .insert("countdown".to_owned(), format!("{:?}", case.before).into());
+        Ok(value)
+    }
+
+    /// Whether a countdown case runs the model, rather than checking only the HUD's refusal.
+    pub fn runs_the_model(case: &CountdownIn) -> bool {
+        case.scope == CountdownScope::Model
+    }
+
+    /// A State with every part set apart from the defaults: varied cells, values last shown,
+    /// a one-shot selection, explored cells and the mini-map off.
     #[expect(
         clippy::arithmetic_side_effects,
         reason = "invented grid numbers and palettes have known bounded ranges"
     )]
-    fn countdown_fixture(pictures: &HudPictures) -> HudState {
-        let mut hud = state(&BeforeIn::default(), pictures).expect("countdown fixture");
+    fn countdown_fixture(pictures: &HudPictures) -> Result<HudState, String> {
+        let mut hud = state(&BeforeIn::default(), pictures)?;
         for y in 0..HUD_ROWS {
             for x in 0..HUD_COLUMNS {
                 let number = u16::try_from(y * HUD_COLUMNS + x).expect("invented cell");
@@ -905,162 +906,8 @@ mod convert {
         hud.explored.insert(Pair { x: 32, y: 31 });
         hud.explored.insert(Pair { x: 63, y: 31 });
         hud.mini_map = MiniMapPower::Off;
-        hud
+        Ok(hud)
     }
-
-    /// The independent-health vector supplies actual status inputs to the ordinary HUD first.
-    fn refresh_countdown_fixture(hud: &mut HudState, pictures: &HudPictures, energy: u16) {
-        let inputs = InputsIn {
-            energy: Some([energy, 1499]),
-            can_switch: Some(false),
-            ..InputsIn::default()
-        };
-        let map = HerMap {
-            pictures: MapPictures::filled(pictures.map_blank),
-            charted: MapCellSet::default(),
-        };
-        let frame = frame_inputs(FrameCount(0), &inputs, &map).expect("fixture frame inputs");
-        assert_eq!(
-            hud.frame_of_play(&Rules::reference(), pictures, &frame),
-            [HudEvent::Click]
-        );
-        assert_eq!(hud.shown.energy, energy);
-        assert_eq!(hud.countdown, interface_hud::Countdown::Dormant);
-    }
-
-    /// Whole-value fresh restoration: discard the work, not just its State projection.
-    #[expect(
-        clippy::drop_non_drop,
-        reason = "whole-work serde restoration explicitly discards its original"
-    )]
-    fn restore_countdown(original: interface_hud::CountdownWork) -> interface_hud::CountdownWork {
-        let text = toml::to_string(&original).expect("serialize countdown work");
-        drop(original);
-        toml::from_str(&text).expect("restore fresh countdown work")
-    }
-
-    /// Recursively apply a table patch; arrays and scalar answers replace whole values.
-    fn merge(target: &mut toml::Table, patch: &toml::Table) {
-        for (key, value) in patch {
-            match (target.get_mut(key), value) {
-                (Some(toml::Value::Table(old)), toml::Value::Table(new)) => merge(old, new),
-                _ => {
-                    target.insert(key.clone(), value.clone());
-                }
-            }
-        }
-    }
-
-    /// Additive defaults only. The ordinary parser's requirements remain unchanged.
-    fn work_inputs(table: &toml::Table) -> Result<(u8, InputsIn), String> {
-        let mut table = table.clone();
-        let frame = table
-            .remove("frame")
-            .map_or(Ok(0), toml::Value::try_into)
-            .map_err(|error: toml::de::Error| error.to_string())?;
-        table
-            .entry("energy")
-            .or_insert(toml::Value::Array(vec![0.into(), 0.into()]));
-        if let Some(toml::Value::Table(mini_map)) = table.get_mut("mini_map") {
-            mini_map
-                .entry("map")
-                .or_insert(toml::Value::Table(toml::Table::new()));
-        }
-        let inputs = toml::Value::Table(table)
-            .try_into()
-            .map_err(|error: toml::de::Error| error.to_string())?;
-        Ok((frame, inputs))
-    }
-
-    fn after_table(table: &toml::Table) -> Result<AfterIn, String> {
-        toml::Value::Table(table.clone())
-            .try_into()
-            .map_err(|error| error.to_string())
-    }
-
-    /// Even recursive patches are checked against the appropriate stage's shape at load.
-    fn validate_work_tables(file: &VectorFile) -> Result<(), String> {
-        let pictures = pictures(&file.pictures);
-        for work in &file.hud_work {
-            WorkCase::load(work, None, &pictures)?;
-        }
-        for resume in &file.hud_resume {
-            WorkCase::load(resume.base(file)?, Some(resume), &pictures)?;
-        }
-        Ok(())
-    }
-
-    /// The public staged path for inputs already known to describe a complete frame.
-    fn complete_staged(
-        before: HudState,
-        controls: ItemControlInputs,
-        display: &DisplayInputs,
-        rules: &Rules,
-        pictures: &HudPictures,
-    ) -> HudWork {
-        let mut work = HudWork::begin(before, display.frame);
-        assert!(work.choose_controls(controls));
-        assert!(work.apply());
-        let movement = MovementInputs::capture(&display.mini_map(), display.mother_brain_falls);
-        assert!(work.choose_mini_map(rules, pictures, movement));
-        assert!(work.apply());
-        assert!(work.choose_status(rules, pictures, display.status_inputs()));
-        assert!(work.apply());
-        work
-    }
-
-    /// Additive after tables leave omitted shown values independent, as they were before.
-    fn work_expected(
-        table: &toml::Table,
-        before: &HudState,
-    ) -> Result<(HudState, Vec<HudEvent>), String> {
-        let after = after_table(table)?;
-        let mut expected = expected_state(&after, before)?;
-        if let Some(toml::Value::Table(shown_patch)) = table.get("shown") {
-            if !shown_patch.contains_key("energy") {
-                expected.shown.energy = before.shown.energy;
-            }
-            if !shown_patch.contains_key("selection") {
-                expected.shown.highlighted = before.shown.highlighted;
-            }
-            for (key, ammo) in [
-                ("missiles", Ammo::Missiles),
-                ("super_missiles", Ammo::SuperMissiles),
-                ("power_bombs", Ammo::PowerBombs),
-            ] {
-                if !shown_patch.contains_key(key) {
-                    expected.shown.ammo[ammo] = before.shown.ammo[ammo];
-                }
-            }
-        }
-        Ok((expected, after.events.iter().map(|event| event.0).collect()))
-    }
-
-    fn chosen_inputs(table: &toml::Table, pictures: &HudPictures) -> Result<DisplayInputs, String> {
-        let (frame, inputs) = work_inputs(table)?;
-        let map = her_map(inputs.mini_map.as_ref(), pictures)?;
-        Ok(DisplayInputs::from_frame(&frame_inputs(
-            FrameCount(frame),
-            &inputs,
-            &map,
-        )?))
-    }
-
-    fn chosen_controls(
-        table: &toml::Table,
-        pictures: &HudPictures,
-    ) -> Result<ItemControlInputs, String> {
-        let (frame, inputs) = work_inputs(table)?;
-        let map = her_map(inputs.mini_map.as_ref(), pictures)?;
-        Ok(ItemControlInputs::from_frame(&frame_inputs(
-            FrameCount(frame),
-            &inputs,
-            &map,
-        )?))
-    }
-
-    mod staged_vectors;
-    use staged_vectors::WorkCase;
 
     /// The rules a vector runs under: the game's, with each value the vector gives in its place.
     fn rules(given: &RulesIn) -> Rules {
@@ -1114,6 +961,7 @@ mod convert {
             super_missiles: None,
             power_bombs: None,
             equipped: None,
+            at_start: None,
             select: None,
             cancel: None,
             can_switch: None,
@@ -1165,6 +1013,7 @@ mod convert {
             super_missiles: None,
             power_bombs: None,
             equipped: None,
+            at_start: None,
             select: None,
             cancel: None,
             can_switch: None,
@@ -1246,13 +1095,6 @@ mod convert {
             Ammo::PowerBombs => stock(inputs.power_bombs),
         })
         .ok_or("ammunition outside the HUD's domain")?;
-        let mut equipped = Equipped::default();
-        for equipment in inputs.equipped.iter().flatten() {
-            match equipment {
-                Equipment::GrappleBeam => equipped.grapple_beam = true,
-                Equipment::XRayScope => equipped.x_ray_scope = true,
-            }
-        }
         let mode = if inputs.auto_reserve.unwrap_or(false) {
             ReserveMode::Auto
         } else {
@@ -1263,6 +1105,10 @@ mod convert {
             frame_drops(inputs.dropped.as_ref());
         Ok(FrameInputs {
             frame,
+            stock_at_start: stock_at_start(inputs, &ammunition),
+            controls: controls(inputs),
+            mini_map,
+            mother_brain_falls,
             status: Status {
                 energy: Energy { now, capacity },
                 reserve: Reserve {
@@ -1270,15 +1116,45 @@ mod convert {
                     mode,
                 },
                 ammunition,
-                equipped,
             },
-            controls: controls(inputs),
+            collected: inputs.collected.and_then(ItemName::item),
+            muted_by: inputs.muted_by.and_then(|mute| match mute {
+                MuteIn::None => None,
+                MuteIn::Grapple => Some(Mute::Grapple),
+                MuteIn::SpinJump => Some(Mute::SpinJump),
+                MuteIn::TimeStopped => Some(Mute::TimeStopped),
+                MuteIn::WallJump => Some(Mute::WallJump),
+            }),
             dropped_before_status_bar,
             dropped_after_status_bar,
-            collected: inputs.collected.and_then(ItemName::item),
-            mother_brain_falls,
-            mini_map,
+            countdown: CountdownRuns::MaintainCountdown,
         })
+    }
+
+    /// Her stock as the frame begins: `at_start`'s counts, each left out the same as at the
+    /// frame's end, and the items she has on.
+    fn stock_at_start(inputs: &InputsIn, at_end: &Ammunition) -> StockAtStart {
+        let given = inputs.at_start.as_ref();
+        let count = |ammo: Ammo, at_start: Option<[u16; 2]>| {
+            at_start.map_or_else(|| at_end.of(ammo).count, |[count, _capacity]| count)
+        };
+        let mut equipped = Equipped::default();
+        for equipment in inputs.equipped.iter().flatten() {
+            match equipment {
+                Equipment::GrappleBeam => equipped.grapple_beam = true,
+                Equipment::XRayScope => equipped.x_ray_scope = true,
+            }
+        }
+        StockAtStart {
+            counts: enum_map! {
+                Ammo::Missiles => count(Ammo::Missiles, given.and_then(|stock| stock.missiles)),
+                Ammo::SuperMissiles =>
+                    count(Ammo::SuperMissiles, given.and_then(|stock| stock.super_missiles)),
+                Ammo::PowerBombs =>
+                    count(Ammo::PowerBombs, given.and_then(|stock| stock.power_bombs)),
+            },
+            equipped,
+        }
     }
 
     /// The buttons.
@@ -1294,20 +1170,14 @@ mod convert {
                 Some(CancelIn::Held) => CancelButton::Held,
             },
             can_switch: inputs.can_switch.unwrap_or(true),
-            muted_by: inputs.muted_by.and_then(|mute| match mute {
-                MuteIn::None => None,
-                MuteIn::Grapple => Some(Mute::Grapple),
-                MuteIn::SpinJump => Some(Mute::SpinJump),
-                MuteIn::TimeStopped => Some(Mute::TimeStopped),
-                MuteIn::WallJump => Some(Mute::WallJump),
-            }),
         }
     }
 
     /// The mini-map's inputs and whether Mother Brain falls; with no `mini_map`, it has nothing
     /// to do: it doesn't run.
     ///
-    /// A mini-map that runs reads where she is, her room's cell and blocks, and her map; her
+    /// A mini-map that runs reads where she is and her room's cell and blocks; her map left out
+    /// is one whose every cell shows the map's blank, charted by none and not collected. Her
     /// fall reads her room's cell. An input no rule reads this step may be left out, and stands
     /// at 0.
     fn mini_map_inputs<'map>(
@@ -1331,9 +1201,8 @@ mod convert {
         let falls = mini_map.mother_brain_falls.unwrap_or(false);
         let room = mini_map.room.as_ref();
         let blocks = room.and_then(|room| room.blocks);
-        let reads_all = mini_map.position.is_some() && blocks.is_some() && mini_map.map.is_some();
-        if runs && !reads_all {
-            return Err("a running mini-map has a position, a room's blocks and a map".to_owned());
+        if runs && (mini_map.position.is_none() || blocks.is_none()) {
+            return Err("a running mini-map has a position and a room's blocks".to_owned());
         }
         if falls && room.is_none() {
             return Err("Mother Brain's fall reads her room's cell".to_owned());
@@ -1427,7 +1296,10 @@ mod convert {
             .unwrap_or_else(|| before.selection.one_shot().is_some());
         Ok(HudState {
             grid,
-            shown: after.shown.as_ref().map_or(before.shown, shown),
+            shown: after
+                .shown
+                .as_ref()
+                .map_or(before.shown, |given| shown_after(given, before.shown)),
             selection: selection(item, one_shot)?,
             explored: after
                 .explored
@@ -1467,6 +1339,20 @@ mod convert {
                 Ammo::PowerBombs => shown.power_bombs,
             },
             highlighted: shown.selection.item(),
+        }
+    }
+
+    /// The values last shown an after expects: each it gives, and every other as before.
+    fn shown_after(given: &super::shape::ShownAfterIn, before: Shown) -> Shown {
+        Shown {
+            energy: given.energy.unwrap_or(before.energy),
+            ammo: enum_map! {
+                Ammo::Missiles => given.missiles.unwrap_or(before.ammo[Ammo::Missiles]),
+                Ammo::SuperMissiles =>
+                    given.super_missiles.unwrap_or(before.ammo[Ammo::SuperMissiles]),
+                Ammo::PowerBombs => given.power_bombs.unwrap_or(before.ammo[Ammo::PowerBombs]),
+            },
+            highlighted: given.selection.map_or(before.highlighted, ItemName::item),
         }
     }
 
@@ -1566,15 +1452,27 @@ mod convert {
 mod tests {
     use interface_hud::{BehaviourId, CATALOGUE, Checked, HudEvent};
 
-    use crate::convert::{load, load_changed, pictures};
+    use crate::convert::{load, load_changed, pictures, runs_the_model};
     use crate::shape::VectorIn;
 
     /// Changes to the file that each add a key or a name its header doesn't define: a key in
     /// each table, a place off its grid or not written "column,row" in each table keyed by
     /// places, and each kind of name.
-    const UNKNOWN: [(&str, &str); 37] = [
+    const UNKNOWN: [(&str, &str); 40] = [
         // A key in each table.
         ("[pictures]", "speed = 1\n[pictures]"),
+        (
+            "[vector.inputs.at_start]\nmissiles = [2, 10]",
+            "[vector.inputs.at_start]\nmissiles = [2, 10]\nspeed = 1",
+        ),
+        (
+            "controls = { selection = \"SuperMissiles\", one_shot = false }",
+            "controls = { selection = \"SuperMissiles\", one_shot = false, speed = 1 }",
+        ),
+        (
+            "controls = { selection = \"SuperMissiles\", one_shot = false }",
+            "controls = { selection = \"Bombs\", one_shot = false }",
+        ),
         (
             "rules = { one_shot_flash = 4 }",
             "rules = { one_shot_flash = 4, speed = 1 }",
@@ -1658,7 +1556,16 @@ mod tests {
     /// Changes to the file that each give a step an input its header allows only in another
     /// step: a drop's when outside play, an input of a frame outside play, a mini-map that runs
     /// outside play, and a new area in a frame.
-    const MISPLACED: [(&str, &str); 4] = [
+    const MISPLACED: [(&str, &str); 6] = [
+        (
+            "[vector.inputs]\ndropped = { what = \"Selection\" }",
+            "[vector.inputs]\ndropped = { what = \"Selection\" }\nat_start = { missiles = [1, 1] }",
+        ),
+        (
+            "[vector.inputs]\ndropped = { what = \"Selection\" }\n[vector.after]",
+            "[vector.inputs]\ndropped = { what = \"Selection\" }\n[vector.after]\n\
+             controls = { selection = \"None\", one_shot = false }",
+        ),
         (
             "[vector.inputs]\ndropped = { what = \"Selection\" }",
             "[vector.inputs]\ndropped = { what = \"Selection\", when = \"AfterStatusBar\" }",
@@ -1728,51 +1635,29 @@ mod tests {
     }
 
     #[test]
-    fn five_countdown_model_vectors_pass() {
+    fn every_countdown_case_passes() {
         let file = load().unwrap();
         let pictures = pictures(&file.pictures);
-        let model: Vec<_> = file
+        assert!(
+            !file.countdown.is_empty(),
+            "the file holds no countdown cases"
+        );
+        let failures: Vec<String> = file
             .countdown
             .iter()
-            .filter(|v| v.scope == super::shape::CountdownScope::Model)
+            .filter_map(|case| match case.run(&pictures) {
+                Ok(problems) if problems.is_empty() => None,
+                Ok(problems) => Some(format!("{}: {}", case.id, problems.join("; "))),
+                Err(error) => Some(format!("{}: unreadable: {error}", case.id)),
+            })
             .collect();
-        assert_eq!(model.len(), 5);
-        for vector in model {
-            super::convert::run_countdown(vector, &pictures);
-        }
-        let neighboring: Vec<_> = file
-            .countdown
-            .iter()
-            .filter(|v| v.scope == super::shape::CountdownScope::IntegrationAdmission)
-            .collect();
-        assert_eq!(neighboring.len(), 5);
-        // Descriptions only: no admission evaluator runs and none earn model coverage.
-        for vector in neighboring {
-            assert_eq!(
-                vector.expected,
-                super::shape::CountdownExpected::Unsupported
-            );
-            let no_answers: [interface_hud::CountdownExpiry; 0] = [];
-            let no_pictures: [interface_hud::CountdownPicture; 0] = [];
-            assert_eq!(vector.answers, no_answers);
-            assert_eq!(vector.pictures, no_pictures);
-        }
-    }
-
-    #[test]
-    fn countdown_catalogue_metadata_matches_spec() {
-        for (id, kind) in [
-            (BehaviourId::EscapeCountdown, interface_hud::Kind::Mechanic),
-            (
-                BehaviourId::CountdownContinuation,
-                interface_hud::Kind::Timing,
-            ),
-        ] {
-            let entry = CATALOGUE.iter().find(|b| b.id == id).unwrap();
-            assert_eq!(entry.kind, kind);
-            assert_eq!(entry.switch, interface_hud::Switch::Fixed);
-            assert_eq!(entry.checked, Checked::ByVectors);
-        }
+        assert!(
+            failures.is_empty(),
+            "{} of {} countdown cases fail:\n{}",
+            failures.len(),
+            file.countdown.len(),
+            failures.join("\n")
+        );
     }
 
     #[test]
@@ -1782,13 +1667,14 @@ mod tests {
                 "id = \"R-countdown-dormant\"",
                 "id = \"R-countdown-dormant\"\nspeed = 1",
             ),
-            ("scope = \"Model\"", "scope = \"Anything\""),
+            ("scope = \"Model\"\nsource", "scope = \"Anything\"\nsource"),
             ("before = \"Dormant\"", "before = \"Other\""),
             (
                 "scene = \"MaintainCountdown\"",
                 "scene = \"InventedChoice\"",
             ),
-            ("boundary = \"Completed\"", "boundary = \"AppliedTwice\""),
+            ("frames = 1", "frames = \"one\""),
+            ("expected = \"Pass\"", "expected = \"Maybe\""),
             ("answers = [\"NoExpiry\"]", "answers = [\"Expiry\"]"),
             ("pictures = [\"Absent\"]", "pictures = [\"Digits\"]"),
         ] {
@@ -1797,150 +1683,28 @@ mod tests {
     }
 
     #[test]
-    fn additive_work_and_resume_vectors_pass() {
-        let file = load().unwrap();
-        let pictures = pictures(&file.pictures);
-        assert_eq!(file.hud_work.len(), 8);
-        assert_eq!(file.hud_resume.len(), 11);
-        for work in &file.hud_work {
-            let problems = work.run(&pictures).unwrap();
-            assert!(problems.is_empty(), "{}: {}", work.id, problems.join("; "));
-        }
-        for resume in &file.hud_resume {
-            let problems = resume.run(&file, &pictures).unwrap();
-            assert!(
-                problems.is_empty(),
-                "{}: {}",
-                resume.id,
-                problems.join("; ")
-            );
-        }
-    }
-
-    #[test]
-    fn additive_unknown_fields_and_names_are_rejected() {
-        for (from, to) in [
-            (
-                "id = \"H-controls-drop\"",
-                "id = \"H-controls-drop\"\nspeed = 1",
-            ),
-            ("[hud_work.controls]", "[hud_work.controls]\nspeed = 1"),
-            ("[hud_work.status]", "[hud_work.status]\nspeed = 1"),
-            (
-                "[hud_work.controls]",
-                "[hud_work.controls]\nenergy = [0, 0]",
-            ),
-            ("[hud_work.map_after]", "[hud_work.map_after]\nspeed = 1"),
-            ("[hud_observed]]", "[hud_observed]]\nspeed = 1"),
-            (
-                "[hud_work.controls_after]",
-                "[hud_work.controls_after]\nspeed = 1",
-            ),
-            ("[hud_work.after]", "[hud_work.after]\nspeed = 1"),
-            ("[hud_work.before]", "[hud_work.before]\nspeed = 1"),
-            ("[hud_work.mini_map]", "[hud_work.mini_map]\nspeed = 1"),
-            (
-                "id = \"H-controls-before\"",
-                "id = \"H-controls-before\"\nspeed = 1",
-            ),
-            (
-                "patch = { missiles = [0, 10],",
-                "patch = { speed = 1, missiles = [0, 10],",
-            ),
-            ("expect_after = {}", "expect_after = { speed = 1 }"),
-            (
-                "owner_at_map = { position = [256, 16], energy = [119, 199] }",
-                "owner_at_map = { position = [256, 16], energy = [119, 199], speed = 1 }",
-            ),
-            ("\ncut = \"BeforeAnswer\"", "\ncut = \"BeforeReading\""),
-            ("opportunity = \"ItemControls\"", "opportunity = \"Move\""),
-        ] {
-            assert!(load_changed(from, to).is_err(), "accepted {to}");
-        }
-    }
-
-    #[test]
-    fn recorded_pair_checks_only_the_exported_relations() {
-        let file = load().unwrap();
-        let [first, second] = file.hud_observed.as_slice() else {
-            panic!("successive recorded frames")
-        };
-        assert_eq!((first.cut, second.cut), (127, 128));
-        assert!(!first.map_window_changed_by_movement);
-        assert!(second.map_window_changed_by_movement);
-        for observation in [first, second] {
-            assert!(observation.map_runs);
-            assert!(observation.map_retained_through_status);
-            assert!(observation.energy_read_after_drawing);
-            assert!(observation.gauge_retained_through_status);
-        }
-        // No native state, energy or picture numbers are supplied by these witnesses.
-        // The H vectors separately execute the model with invented content and inputs.
-    }
-
-    #[test]
-    fn staged_catalogue_metadata_matches_spec() {
-        for id in [
-            BehaviourId::ItemControls,
-            BehaviourId::MiniMapUpdate,
-            BehaviourId::StatusRefresh,
-            BehaviourId::RetainedHudWork,
-        ] {
-            let entry = CATALOGUE.iter().find(|b| b.id == id).unwrap();
-            assert_eq!(entry.kind, interface_hud::Kind::Timing);
-            assert_eq!(entry.switch, interface_hud::Switch::Fixed);
-            assert_eq!(entry.checked, Checked::ByVectors);
-        }
-    }
-
-    #[test]
-    fn additive_ids_and_catalogue_entries_are_checked() {
+    fn ids_are_unique_and_entries_are_in_the_catalogue() {
         let file = load().unwrap();
         let mut ids = std::collections::BTreeSet::new();
         let rows = file
             .vector
             .iter()
             .map(|v| (&v.id, &v.entries))
-            .chain(file.hud_work.iter().map(|v| (&v.id, &v.entries)))
-            .chain(file.hud_resume.iter().map(|v| (&v.id, &v.entries)))
-            .chain(file.countdown.iter().map(|v| (&v.id, &v.entries)))
-            .chain(file.hud_observed.iter().map(|v| (&v.id, &v.entries)));
+            .chain(file.countdown.iter().map(|v| (&v.id, &v.entries)));
         for (id, entries) in rows {
-            assert!(ids.insert(id), "duplicate {id}");
+            assert!(ids.insert(id), "{id} appears twice");
             for entry in entries {
                 assert!(
                     CATALOGUE.iter().any(|b| name(b.id) == *entry),
-                    "{id}: unknown {entry}"
+                    "{id} lists {entry}, which the catalogue lacks"
                 );
             }
         }
     }
 
     #[test]
-    fn vector_ids_are_unique() {
-        let file = load().unwrap();
-        for (at, vector) in file.vector.iter().enumerate() {
-            let again = file
-                .vector
-                .iter()
-                .skip(at)
-                .skip(1)
-                .any(|v| v.id == vector.id);
-            assert!(!again, "vector {} appears twice", vector.id);
-        }
-    }
-
-    #[test]
-    fn every_listed_entry_is_in_the_catalogue() {
-        for vector in load().unwrap().vector {
-            for entry in &vector.entries {
-                assert!(
-                    CATALOGUE.iter().any(|b| name(b.id) == *entry),
-                    "vector {} lists {entry}, which the catalogue lacks",
-                    vector.id
-                );
-            }
-        }
+    fn the_catalogue_lists_the_specs_21_entries() {
+        assert_eq!(CATALOGUE.len(), 21);
     }
 
     #[test]
@@ -1951,11 +1715,10 @@ mod tests {
             let name = name(behaviour.id);
             assert!(
                 file.vector.iter().any(|v| exercised(v).any(|e| e == name))
-                    || file.hud_work.iter().any(|v| v.entries.contains(&name))
-                    || file.hud_resume.iter().any(|v| v.entries.contains(&name))
-                    || file.countdown.iter().any(|v| {
-                        v.scope == super::shape::CountdownScope::Model && v.entries.contains(&name)
-                    }),
+                    || file
+                        .countdown
+                        .iter()
+                        .any(|case| runs_the_model(case) && case.entries.contains(&name)),
                 "no vector exercises {name}"
             );
         }

@@ -1,59 +1,75 @@
-//! Spec: EscapeCountdown. Only maintenance before an escape begins is admitted.
-//! Scene qualification, active countdowns and presentation-only choices belong to producers.
+//! The escape countdown (§5.1): the time remaining in the escape, shown over the room rather
+//! than in the status bar. The spec covers only the frames before an escape countdown begins;
+//! starting and advancing one, its digits and what its expiry does are outside it.
 
-/// Spec: EscapeCountdown. The independently owned current escape countdown.
+/// Spec: EscapeCountdown. The current countdown, part of the HUD's State. No other input of the
+/// HUD, nor her energy or her protection from hits, replaces it.
+///
+/// An active or an expired countdown is outside the spec, and so is not a value of this type.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Countdown {
-    /// No escape countdown has begun; the sole admitted current value.
+    /// No escape countdown has begun.
     Dormant,
 }
 
-/// Spec: EscapeCountdown. The answer about expiry, not a health or protection value.
+/// Spec: EscapeCountdown. The countdown runs: an input each frame, the scene's choice, which the
+/// ordinary HUD frame doesn't imply.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum CountdownRuns {
+    /// The scene runs the escape countdown this frame.
+    MaintainCountdown,
+    /// The scene only shows it: outside the spec, so the frame is refused
+    /// (`UnsupportedFrame::CountdownOnlyShown`).
+    PresentationOnly,
+}
+
+/// Spec: EscapeCountdown. Whether the escape's time has run out, read by the escape scene.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum CountdownExpiry {
-    /// No escape has run out of time at this opportunity.
+    /// The escape's time hasn't run out.
     NoExpiry,
 }
 
-/// Spec: EscapeCountdown. Room presentation contribution, separate from status-bar cells.
+/// Spec: EscapeCountdown. The countdown picture the frame contributes to the room's
+/// presentation, apart from the status bar's cells.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum CountdownPicture {
-    /// No countdown picture contributed at this opportunity.
+    /// No countdown picture this frame.
     Absent,
 }
 
-/// Spec: EscapeCountdown, CountdownContinuation. An actually qualified scene choice.
-///
-/// The producer must qualify the actual current scene input before supplying this value.
-/// Ordinary HUD refresh, a mere offer, presentation-only and unknown choices do not imply
-/// maintenance. Unsupported choices and active/expired countdowns require a neighboring
-/// unsupported dependency before effects; they are deliberately not variants of this type.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum CountdownOpportunity {
-    /// The scene actually selected countdown maintenance.
-    MaintainCountdown,
-}
-
-/// Spec: EscapeCountdown. The actual selected opportunity and its computed outputs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+/// Spec: EscapeCountdown. The countdown's one answer for a frame of play.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CountdownAnswer {
-    /// Qualified scene choice actually received, not inferred from a HUD refresh.
-    pub opportunity: CountdownOpportunity,
-    /// Expiry answer for this opportunity.
+    /// Whether the escape's time has run out.
     pub expiry: CountdownExpiry,
-    /// Countdown picture contribution for this opportunity.
+    /// The countdown picture contributed.
     pub picture: CountdownPicture,
 }
 
+/// A frame of play the spec leaves out, which the HUD refuses before any effect.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UnsupportedFrame {
+    /// Spec: EscapeCountdown. The scene only shows the countdown this frame.
+    CountdownOnlyShown,
+}
+
 impl Countdown {
-    /// Spec: EscapeCountdown. Dormant maintenance keeps Dormant and reports no expiry/picture.
-    pub(crate) const fn answer(self, opportunity: CountdownOpportunity) -> CountdownAnswer {
-        match (self, opportunity) {
-            (Self::Dormant, CountdownOpportunity::MaintainCountdown) => CountdownAnswer {
-                opportunity,
+    /// Spec: EscapeCountdown. A frame whose scene runs the countdown, before one has begun: it
+    /// stays dormant, the escape doesn't expire and no countdown picture is contributed. A frame
+    /// that only shows it is refused.
+    pub(crate) const fn answer(
+        self,
+        runs: CountdownRuns,
+    ) -> Result<CountdownAnswer, UnsupportedFrame> {
+        match (self, runs) {
+            (Self::Dormant, CountdownRuns::MaintainCountdown) => Ok(CountdownAnswer {
                 expiry: CountdownExpiry::NoExpiry,
                 picture: CountdownPicture::Absent,
-            },
+            }),
+            (Self::Dormant, CountdownRuns::PresentationOnly) => {
+                Err(UnsupportedFrame::CountdownOnlyShown)
+            }
         }
     }
 }

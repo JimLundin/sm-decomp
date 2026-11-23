@@ -191,23 +191,17 @@ const DOMAINS: &[Domain] = &[
         areas: &[
             (
                 "status",
-                &[
-                    "status_bar.rs",
-                    "pictures.rs",
-                    "layout.rs",
-                    "countdown.rs",
-                    "countdown_work.rs",
-                ],
+                &["status_bar.rs", "pictures.rs", "layout.rs", "countdown.rs"],
             ),
             ("selection", &["selection.rs", "item.rs"]),
             ("minimap", &["mini_map.rs", "map.rs"]),
         ],
         apart: &[
-            // `CyclingItems`: the early control input and the status view share the availability check.
+            // `CyclingItems`: Select lands only on what her stock as the frame begins holds.
             Apart {
                 file: "inputs.rs",
                 function: "has",
-                occurrences: 2,
+                occurrences: 1,
                 area: "selection",
             },
             // The reference rules: the bosses' screens (`BossBlanksTheMap`) and her blink are

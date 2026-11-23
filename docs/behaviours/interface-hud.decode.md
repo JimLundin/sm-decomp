@@ -122,8 +122,9 @@ the scratch `$12`..`$34`.
 | frame count | `05B5` low byte of record N (the 8-bit counter the NMI increments when the frame finished, `$80:95ED`; zeroed at a door) | as is; the HUD reads it during frame N+1's main processing, before NMI N+1 increments it |
 | energy | `09C2`, `09C4` of N+1 | as is; damage lands before the HUD's turn (`$A0:9785`, `$A0:A306`); the running-out-of-health check (`$82:DB69`) after it |
 | reserve | `09D6`; `09C0` (reserve health mode) | `auto` when `09C0` = 1 (0 not obtained, 2 manual) |
-| missiles, supers, power bombs | `09C6`/`09C8`, `09CA`/`09CC`, `09CE`/`09D0` of N+1 | count, capacity |
-| equipment | `09A2` (equipped items) | bit 4000h grapple, 8000h x-ray |
+| missiles, supers, power bombs | `09C6`/`09C8`, `09CA`/`09CC`, `09CE`/`09D0` of N+1 | count, capacity, as the status bar `$80:9B44` reads them |
+| her stock as the frame begins | `09C6`, `09CA`, `09CE` and `09A2` of record N | the counts and the equipment the switch `$90:C4B5` tests (`$90:C539`'s handlers). It runs in `$90:DCED`, the first call of `$90:DCDD`, from the current state handler `$90:E6C0`, which main gameplay calls at `$82:8B58`; before it only enemy selection, the debug handler, palette effects, the pose input handler and the block-inside handling run, and none writes these. The projectiles (`$90:DD00`, in the same `$90:DCDD`) and the pickups (the PLM handler `$82:8B71`) change them after it, so record N's values are the ones it reads |
+| equipment | `09A2` (equipped items), record N (her stock as the frame begins) | bit 4000h grapple, 8000h x-ray |
 | item select, item cancel | `8F` (newly pressed) and `8B` (held) of record N, against the bindings `09BA` (item select) and `09B8` (item cancel) | `Pressed` when `8F` has the binding; cancel `Held` when only `8B` has it |
 | can switch | `0A42` (Samus current state handler) and `0A1C` (pose) at N+1 | `0A42` ∈ {`$E695` (normal), `$E6C9` (demo: the title's demos, `$91:8813`)} and `0A1C` ∉ {0, 9Bh} (facing forward, `$90:DCE0`). Both handlers call `$90:DCDD` (`$90:E6C0`, `$90:E70A`), which switches through `$90:DCED`. The opening's scenes set `$E6C9` too (`$8B:AF4A`, `$8B:AFF7`) and run it in game state 1Eh (`$8B:8E12` calls `$90:E692`): hits at `$90:C4BD` on any-intro-2219 (1,197 pairs) and any-intro-4323 (128). 1Eh is a step outside play (spec §1.3) all the same: the opening drives her with its own input, which never presses item select or item cancel (on both rows `09D2` moves only at `$8B:AF44` and `$8B:AFF1`), so its switch never acts, and the spec's can switch leaves the opening out |
 | the selection dropped | the stores of §The selection's writers owned by other domains, the weapons' among them | a hit in frame N+1 (an instruction hit, as `collected` is named). In a frame of play, before the status bar: the weapons' drop, `Selection`: their stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`, the special beam attack's `$90:CCE9`, the one-shot grapple beam put away, `$9B:C8BE`, `$9B:C9B3`, `$9B:CA5E`, `$9B:CBF4` (each reached only when `0A04` ≠ 0), and the one-shot x-ray scope put away, `$88:8A9C` (likewise); cache-v2 watches the first four on every row, not the other six (§The harness, what the integrator needs). Also before it: `$A9:C4E5`, `$A9:C512`, `$A9:C537` (the rainbow beam: `Selection`), `$A9:C4EB`, `$A9:C518`, `$A9:C53D` without one of those (`OneShot`), `$90:AD70` from `$A3:9548` (an elevator starting: `Selection`); a frame with drops of both kinds decodes as `Selection`; after it: `$82:DCCF` (game state 13h, after `$82:DC83`'s main gameplay: `Selection`). On a step outside play: `$90:AD70` from `$82:E4A9` (a door's passage), `$8B:C655` (game state 25h): `Selection`. `$90:AD70` is reached only with `09EA` (the icon cancel option) ≠ 0. None but the weapons' first four is watched: until they are, decode `$82:DCCF` from the pair's game states (N 13h: `09D2` and `0A04` read 0 at N+1 by that store) and treat any other unexplained clear of `09D2` as a harness defect |
@@ -135,7 +136,7 @@ the scratch `$12`..`$34`.
 | a boss encountered | a call of `$90:A7E2` outside game state 8, with the boss `179C` (3 Kraid, 5 Ridley in Norfair, 6 Crocomire, 7 Phantoon, 8 Draygon; 1 Ridley in Ceres) | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain); boss id 1 isn't in it, so Ceres Ridley's screens are none |
 | Mother Brain falls | a call of `$90:A7E2` in frame N+1 with `179C` = Ah | Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event |
 | the HUD's pictures | the importer (§The HUD's pictures) | by name; the clean model holds none |
-| her position | `0AF6`, `0AFA` of N+1 | pixels; masked on pose-change frames (§Harness) |
+| her position | samus-movement's `position_after_moves` (`MovesAsShePosed`), its pixel parts; until the harness takes it from that model, `0AF6`, `0AFA` of N+1 | the value `0AF6`/`0AFA` hold at `$90:E734`'s call of the mini-map, after the movement handler `$90:E731` and before the pose change `$91:EB88`; from the records, masked on pose-change frames (§Harness) |
 | her room | `07A1`, `07A3` (room map X, Y); `07A5`, `07A7` (width, height in blocks) | cell `[07A1, 07A3 + 1]` |
 | her map | `079F` (area); the tilemap at the long pointer `$82:964A + area × 3` (800h words: the left page's 32 rows of 32 words, then the right page's); the charted bitmap at `$82:9717 + area × 2` (bank `$82`, 100h bytes, laid out as the explored bitmap); `0789` (current area's map collected) | a picture is a word's bits 0-9, 14 and 15 (its colour bits are replaced); a cell `(c, y)` is word `page × 400h + y × 20h + c mod 32` |
 | the beyond pictures | the 800h words after the area's tilemap | in ROM the area maps are consecutive 1000h-byte blocks of bank `$B5` (Brinstar `$8000`, Crateria `$9000`, Norfair `$A000`, Wrecked Ship `$B000`, Maridia `$C000`, Tourian `$D000`, Ceres `$E000`), so the beyond pictures are the left page of the block after: Crateria's are Norfair's, Brinstar's Crateria's, Ceres's whatever `$B5:F000` holds. Beyond `(c, y)` is word `800h + y × 20h + c` |
@@ -154,7 +155,7 @@ the scratch `$12`..`$34`.
 | CyclingItems | `$90:C4B5`..`$90:C519` (`$90:C4D9` select, the loop `$90:C4EF`..`$90:C508` through the handlers `$90:C539`: `$90:C551`, `$90:C564`, `$90:C577` count = 0, `$90:C58A`, `$90:C5AE` not equipped); called from `$90:DCED` when the pose isn't facing forward (`$90:DCE0`), from the normal current state handler `$90:E6C0` |
 | CancellingTheItem | `$90:C4BD`..`$90:C4C7` (newly pressed cancel: `0A04` = 0, then `$90:C4E9`); the weapons' cancel `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`, `$90:CCE9`, the grapple's and the x-ray's (§Inputs); the drops of §The selection's writers, before the HUD routine `$80:9B44` (from `$82:8BA0`) or, for `$82:DCCF`, after it |
 | OneShotItem* | `$90:C4C9`..`$90:C4D7` (`$16` = holding cancel), `$90:C50A`..`$90:C516` |
-| Switching | the switched-to handlers `$90:C545`..`$90:C5C3` (clear the charge, reload the suit palette, the grapple's function); the arm cannon flag `0AAA` at `$90:C519`..`$90:C534` |
+| Switching | the switched-to handlers `$90:C545`..`$90:C5C3` (clear the charge, reload the suit palette, the grapple's function); the arm cannon flag `0AAA` at `$90:C519`..`$90:C534`. The selection after the controls: `09D2` and `0A04` as `$90:DCED` returns; the projectiles `$90:AECE` (from `$90:DD00`, in the same `$90:DCDD`) read it before any drop of the frame, and their own drop (`$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`) follows the shot |
 | Exploring* | `$90:A943`..`$90:A984` |
 | MiniMapWindow | `$90:A98D`..`$90:AA41` (the window's bits), `$90:AA43`..`$90:AB46` (the tiles, the three rows, palette 3 or 2, `0789`) |
 | HerBlink* | `$90:AB4A`..`$90:AB59` (`05B5` & 8 = 0: `C680` \|= 1C00h) |
@@ -511,7 +512,8 @@ store can land in a compared pair (a frame of play, or a step outside play).
 ## The harness (for the integrator)
 
 The HUD is downstream of everything it shows: nothing in another domain reads its cells, and only
-the weapons and her look read its selection, on later frames. It can be verified on its own from
+the weapons and her look read its selection: the selection after the controls in the same frame
+(spec `Switching`), and the selection the frame ends with on later frames. It can be verified on its own from
 the records, with the other domains' values decoded as inputs.
 
 - **Frames:** every pair N, N+1 of consecutive records at a frame's end of every row: records
@@ -551,8 +553,10 @@ the records, with the other domains' values decoded as inputs.
   `$E8CD`; before that every such pair was `Unrepresentable { FRAME_HANDLER_BETA, 59597 }`.
 - **Decoded from record N:** the State: the HUD's cells, the values last shown, `09D2`, `0A04`,
   the explored cells; the frame count and the pad (§Inputs).
-- **Decoded from record N+1:** every other input, at the HUD's turn; the HUD's pictures and
-  her map's from the importer (§The HUD's pictures).
+- **Decoded from record N+1:** every other input, at the HUD's turn, but her stock as the frame
+  begins (record N, §Inputs); the HUD's pictures and her map's from the importer (§The HUD's
+  pictures). The selection after the controls has no record: no cut falls between the switch and
+  the shot, so it is compared through the weapons' and her look's own harnesses, not here.
 - **Named cases:** R1 to R18 (§The harness cases) are compared by name, so their skip or mask
   fails the harness; so are the Ceres gate's three: chain-0059-A293 pair 585→586 and
   chain-0220-D017 pair 145→146 (her death's first frame, game state 13h: the selection, 2 and 3,
@@ -568,16 +572,15 @@ the records, with the other domains' values decoded as inputs.
   - **Her position at the mini-map's turn.** Writer: the pose change's placement, `$91:EB88`,
     which runs after the mini-map (`$90:E734` calls `$90:A91B` first) and can move her across a
     screen boundary. The decode that removes the mask is either of:
-    - samus-movement's model run on the frame, taking her position before its pose change places
-      her, as the camera harness does for `camera_from`; or
+    - samus-movement's model run on the frame, taking its `position_after_moves`
+      (`MovesAsShePosed`, the spec's `her position`); or
     - the records: `0AF6` and `0AFA` captured at an instruction hit on `$90:A91B` (the mini-map's
       entry, or `$90:E734`'s call of it) in frame N+1.
 
     Until then mask the mini-map's 15 cells and the explored cells only on frames with a hit on
     `$91:EB88`'s writes to `0AF6`/`0AFA` that moved her `x div 256` or `y div 256`. cache-v2
-    records the hit on `$91:EB88` but not what it wrote, and samus-movement's model reports only
-    `camera_from` (a y, and only where pose fit or a shrink moved her), not where her moves left
-    her, so neither decode is available yet. Today the mask falls back to the frames the writer
+    records the hit on `$91:EB88` but not what it wrote, and no harness reads samus-movement's
+    `position_after_moves` yet, so neither decode is wired. Today the mask falls back to the frames the writer
     can reach: `0A1C` differs,
     the mini-map runs and isn't off (on any other frame it never reads her), and her position at
     N+1 lies within 32 px of a screen's edge on either axis (the pose change's placements, pose
@@ -857,10 +860,10 @@ indicator: the fit is score ÷ budget, and being over it costs in proportion to 
 as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
-  SwitchClick, OneShotFlash, IconsAppear, StatusRefresh, EscapeCountdown, CountdownContinuation
-- Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching, ItemControls
+  SwitchClick, OneShotFlash, IconsAppear, EscapeCountdown
+- Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
 - Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, OutOfPlay,
-  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift, MiniMapUpdate
+  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift
 
 Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
 one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
@@ -888,149 +891,128 @@ operator count: 58.3 → 62.3 units.
 Adversary 112's C3 (§Adversary 112's C3) folds the shot's input into `CancellingTheItem`'s drop
 before the status bar, an arm that already named it: no arm or operator changes. 62.3 units.
 
-Budget: 37.5 × 62.3 units = 2,337 (status 787, selection 375, minimap 1,175)
+The countdown's and the frame's staged entries took the units to 73.3 (26 entries, 56 arms):
+`ItemControls`, `MiniMapUpdate`, `StatusRefresh` and `RetainedHudWork` (9 arms), the escape
+countdown's `EscapeCountdown` and `CountdownContinuation` (2), with `RetainedHudWork` in no area.
+
+The whole-frame amendment (§The whole frame) removes those five timing entries and their 10
+arms, and adds one: `Switching`'s report of the selection after the controls. `CyclingItems`'
+stock as the frame begins changes an arm's words, not its count. 73.3 → 64.3 units, 21 entries,
+47 arms.
+
+Budget: 37.5 × 64.3 units = 2,412 (status 825, selection 412, minimap 1,175)
 
 
 ## Dormant escape countdown contract
 
-`EscapeCountdown` is the H2 countdown ownership boundary: the current retained countdown
-status, expiry result and conditional sprite presentation belong together, independently of
-energy, Samus protection from hits, animation and the HUD's display caches. `CountdownContinuation`
-is complete retained HUD work, not a second scene service.
+`EscapeCountdown` is the countdown's ownership boundary: the current countdown, its expiry
+answer and its picture contribution belong together, independently of energy, her protection
+from hits, animation and the HUD's display values.
 
 Sources: [bank 80](https://patrickjohnston.org/bank/80), process timer at $80:9DE7,
-timer drawing at $80:9F6C and $80:9FB3; the gameplay scene wrapper's selected countdown service
-and its two current status reads. Current status is $0943: zero means Dormant. The admitted
-owner stores the semantic Dormant quantity, not a raw status word. A nonzero status requires
-unsupported admission until the active rules are observed and specified. Carry clear from the
-reached countdown work means NoExpiry; the current zero status suppresses timer presentation.
-These codes and call relationships stay outside the clean specification.
+timer drawing at $80:9F6C and $80:9FB3; the gameplay scene wrapper's call of the countdown
+and its two current status reads. Current status is $0943: zero means Dormant. The model stores
+the semantic Dormant quantity, not a raw status word. A nonzero status requires unsupported
+admission until the active rules are observed and specified. Carry clear from the timer's
+processing means NoExpiry; the current zero status suppresses timer presentation. These codes
+and call relationships stay outside the clean specification. The spec's `the countdown runs`
+input is whether the scene's routine calls the timer's processing that frame
+(`MaintainCountdown`) or only its drawing (`PresentationOnly`).
 
-Recorded witness R-countdown-dormant is the independent retained ordinary gameplay source
-packet audited in `$TEMP/collab/retained-time-479/timer-source-563/check.py`. It reconstructs the
-physical observations from pinned first-record input, not engine predictions. Source groups
-3568 and 3580 read the same live zero countdown status; 3573 supplies the explicit no-expiry
-answer; 3579 and 3581 prove the actual return/presentation branches. The scene-selected service
-at 3561 is joined to the later current scene-controller read at 4277. The private manifest
-SHA256 is 8af8a5601abeefb1a17ccfd029014a3a8e27db3a557d83f01ec1b4030380bf9e;
-checker SHA256 is 36021f3737ce4f8e2cf90f844e8de17c9f484f5b013df079df5ac0f6aba04b4a.
-The independent re-gate is `$TEMP/collab/retained-time-479/timer-source-review/REGATE.md`,
-SHA256 2f1a51e3bb9a89efde92f70e492ec4b05562bc8c0c45b074ac70586f79859986.
-The recorded case carries semantic observed current status and result only; its source
-coordinates and receipts are private harness evidence, not clean inputs or scheduling authority.
+Recorded witness R-countdown-dormant is the independent ordinary gameplay source packet audited
+in `$TEMP/collab/retained-time-479/timer-source-563/check.py`. It reconstructs the physical
+observations from pinned first-record input, not engine predictions. Source groups 3568 and 3580
+read the same live zero countdown status; 3573 supplies the explicit no-expiry answer; 3579 and
+3581 prove the actual return and presentation branches. The scene's call at 3561 is joined to the
+later scene-controller read at 4277. The private manifest SHA256 is
+8af8a5601abeefb1a17ccfd029014a3a8e27db3a557d83f01ec1b4030380bf9e; checker SHA256 is
+36021f3737ce4f8e2cf90f844e8de17c9f484f5b013df079df5ac0f6aba04b4a. The independent re-gate is
+`$TEMP/collab/retained-time-479/timer-source-review/REGATE.md`, SHA256
+2f1a51e3bb9a89efde92f70e492ec4b05562bc8c0c45b074ac70586f79859986. The recorded case carries the
+semantic observed current status and result only; its source coordinates and receipts are
+private harness evidence, not clean inputs.
 
-Integration must decode/set the complete countdown owner once on admission, carry it without
-oracle next-state feedback, read that same owner at both actual dependent uses and encode its
-actual answer/picture. Compare current countdown, expiry result and absent countdown
-contribution; do not claim pixels from absent contribution alone. Native stack writes are
-excluded from the domain's retained State because they belong to source execution machinery;
-there are no persistent countdown writes in this reached witness. No countdown mask based on
-energy, protection, unrelated zero values, endpoint or final presentation is allowed.
+Integration decodes the countdown once on admission, carries it without oracle next-state
+feedback, and encodes the frame's answer and picture. Compare the current countdown, the expiry
+answer and the absent picture contribution at the cut; do not claim pixels from an absent
+contribution alone. No countdown mask based on energy, protection, unrelated zero values or the
+final presentation is allowed. No clean scene API supplies `the countdown runs` yet: a frame
+whose choice is missing or presentation-only, or whose countdown is active or expired, stays
+Unsupported before any effect. Expiry effects, digits and active advancement are not inferred
+from this dormant witness.
 
-The scene's MaintainCountdown versus PresentationOnly choice is a distinct neighboring input.
-A scoped independent observation may provide that stimulus only with producer/timing explicitly
-unproved. Integrated execution needs an actual qualified scene scheduling producer; no existing
-clean scene API supplies this choice or these opportunities at the fixed base.
-No production owner retains or produces countdown service selection. Missing scheduling,
-active/expired countdown or presentation-only execution remains Unsupported before dependent
-effects. B8 doors/station stage and ordinary HUD refresh do not supply countdown scheduling.
-Expiry effects, digits and active advancement are deliberately not inferred from this dormant
-witness. Complete set/read/save/restore covers existing HUD State plus countdown and pending
-chosen answers/completion; no partial durable codec or startup reconstruction is sufficient.
+Countdown belongs to the status area's budget accounting. The old-code baseline is unchanged;
+it contains no countdown owner. No extra old-code allowance is claimed.
 
-Reference evidence: `$TEMP/collab/retained-time-479/countdown-spec-564/reference.py` runs the
-countdown vectors, preserves the preexisting ordinary HUD vectors using a retained local copy
-of the HUD reference, and reruns the pinned physical recorded witness. Constructed active,
-expired, presentation-only and unknown scene contrasts test unsupported admission; they assert
-no unobserved active countdown behavior. Repeated distinct opportunities each return an answer;
-a chosen/completed opportunity restored into fresh instances is not repeated. Unread restoration
-uses a changed current scene choice. The independence contrast keeps nonzero energy/protection
-untouched. Planted expiry, presentation, collapsed repeated answers, stale unread scene choice,
-reread chosen choice, repeated completion and protection alias faults must fail.
+## The whole frame
 
-Countdown belongs to the status area's budget accounting. Existing old-code baseline remains
-unchanged; it contains no complete countdown owner. No extra old-code allowance is claimed.
-The root regenerates official spec units and budget at its normal post-review accounting step.
+The HUD's frame of play is one step: its inputs are the frame's values (§Inputs), its after is
+State and outputs as the frame ends, its events in order (MODEL §1 decision 35: bus-cycle timing
+within the frame is T1's). The spec names no query point, no work list and no saved partial
+frame. Within the frame the original's order is (main gameplay `$82:8B44`):
 
+1. the current state handler (`$82:8B58` → `$90:E6C0` → `$90:DCDD`): the switch `$90:C4B5`
+   from `$90:DCED`, reading her stock as the frame begins, then the projectiles `$90:DD00`, which
+   read the selection after the controls and drop it after a shot;
+2. the new state handler (`$82:8B69` → `$90:E725`): the movement handler `$90:E731`, the
+   mini-map `$90:E734` → `$90:A91B` (her position after her moves, samus-movement's
+   `position_after_moves`), then the pose change `$91:EB88` and the periodic damage `$90:E9CE`;
+3. the PLMs `$82:8B71` (the pickups' icons, `IconsAppear`), the drawing `$82:8B98`, then the HUD
+   routine `$82:8BA0` → `$80:9B44` (the drops before the status bar come before it);
+4. after it, `$82:DCCF`'s drop (game state 13h) and the running-out-of-health check `$82:DB69`.
 
-Reference check results for the bounded contract: five executable model cases agree, including
-one recorded dormant opportunity and four constructed output/completion/independence cases.
-The no-output do-nothing comparison agrees with zero of those five: its gain is explicit
-NoExpiry/Absent results and once-only completion, not a changed countdown quantity. Five
-integration-admission contrasts agree and receive no model credit. Nine reference faults
-are rejected; stale unread choice is an admission fault, while expiry, picture, collapsed
-repetition, reread chosen choice, repeated completion, protection alias and omission/corruption
-of an already chosen answer exercise executable
-outputs or retained work. All 95 existing ordinary HUD vectors agree, with 95 fresh full-State
-restorations. Countdown has its own opportunity and continuation; see the HUD frame opportunities below.
-The retained read-only scanner reports zero in every class on the spec and vectors. The new
-Budget accounting is held for the root's official post-review measurement, not supplied to
-independent or confined roles.
+So the two values another domain reads within the frame are a named output and a named input,
+not query points: `the selection after the controls` (spec §1, `Switching`), which the weapons
+and her look read, and `her position` (spec §1.3), samus-movement's `position_after_moves`.
+Mother Brain's fall and the mini-map's turn-on during play are the frame's events, in §5's order.
 
-Chosen restoration reference work selects the actual expiry answer and picture before saving,
-serializes those chosen outputs alongside complete State and progress, discards the originals,
-and completes that retained pair after restoring fresh instances. It never regenerates a
-chosen answer from the current scene/countdown. Separate omission and corruption faults reject
-this proof; fresh selection alone is insufficient to establish chosen-answer restoration.
+**Removed entries.** Each was `kind: timing` and existed to expose the frame's stages or a saved
+partial frame. Each arm's behaviour, where it had one, is stated at its owner:
 
-## HUD frame opportunities
+| Removed arm | Disposition |
+| --- | --- |
+| `ItemControls` 1 (controls read with the current availability, applied once; the selection and `Switched` exposed before movement) | moved: the availability is her stock as the frame begins (§1.3, `CyclingItems`' second arm); the selection the weapons and her look read is `Switching`'s new arm; applying the rules once is the step itself |
+| `ItemControls` 2 (the control choice kept through later stock changes) | moved to `CyclingItems` (its "So" on a shot or a pickup in the frame, C-select-stock-at-start) |
+| `MiniMapUpdate` 1 (the map reads her position after her moves; turn-on, then the fall, then §4) | already stated at §1.3 `her position` (now samus-movement's output) and §5's mini-map order |
+| `MiniMapUpdate` 2 (the map's effects held, the status cells left for later) | already stated at §5: the status bar draws after the mini-map, with the values as the frame ends |
+| `StatusRefresh` 1 (late values; the drop before, the counts, sign, pickup, highlight, flash, the drop after; the click against the frame-start highlight) | already stated at §1.3 (energy and counts as the frame ends), §5's status order, `CancellingTheItem` and `SwitchClick` (the highlight moving is `SelectionHighlight`'s first rule, against the item last shown) |
+| `StatusRefresh` 2 (`Switched` then `Click`; one publication) | already stated at §5 (the events' order); the publication is the step's after |
+| `RetainedHudWork` 1 to 3 (fresh inputs while unread, chosen answers kept, save and restore at any stage) | timing only: no behaviour |
+| `CountdownContinuation` 1 (a chosen or completed countdown answer kept across a restore) | timing only; one answer and one picture per frame is `EscapeCountdown`'s "So" (C-countdown-repeat) |
 
-The frame contract separates current item controls, movement mini-map and late status.
-The controls read in the current handler (bank $90:E6C0 and $90:DCED) are distinct from
-the map call after movement ($90:E731, $90:E734). The map returns at $90:E738 before
-pose placement and Maintenance ($90:E74D). The main gameplay path calls Samus Drawing
-($82:8B98) before status ($82:8BA0). Status's whole-energy load ($80:9B8B, callback
-$80:9B8E) compares against the shown cache; its redraw's separate energy load is at
-$80:9B96. The bank log references above and the status/mini-map harness field maps still
-apply. Health supplies whole current energy, independently of capacity and HUD caches.
+The spec's table of the frame's stages goes with them. The catalogue's `RetainedHudWork` and
+`CountdownContinuation` entries go, and so do `ItemControls`, `MiniMapUpdate` and `StatusRefresh`:
+21 entries remain.
 
-**Recorded relational witnesses.** The vector alias ordinary-play-pair is
-chain-any-0003-DFD7, seed cut 126 and ordinary cuts 127 and 128. Use the retained full WRAM
-images, instruction markers and bus callbacks in the qualified capture, with its independent
-record cuts and pinned controller/animation projections. At each cut verify the map inputs
-at the movement return, before Maintenance, and check the map's 15 cells and complete explored
-bitmap at the return, Drawing, ordinary return and independent cut. Both maps ran: three map
-area word reads per cut. The map center changed palette by movement return at cut 128. Both
-positions differed in pixels at the two observations while their block and screen quotients
-agreed. Do not substitute late position when Movement is selected.
+**Vectors.** The 8 `[[hud_work]]` cases:
 
-For status verify one complete physical whole-energy read after both Drawing reads in each
-opportunity. At Drawing, ordinary return and independent cut compare the status input bracket
-and the gauge's last-shown energy and 16 cells. The 16 gauge cells and cache held through the
-independent cuts; neither opportunity reached the redraw energy read. This is recorded zero
-loss with no current-energy change. Capacity has bracket evidence, with no reached redraw
-load on this pair. The gauge fixture uses an independently constructed changing-energy
-answer instead of treating these two frames as proof of a reached loss or redraw.
+| Was | Now |
+| --- | --- |
+| H-fresh-status | converted: C-select-stock-at-start (the stock as the frame begins against the counts as it ends; her position after her moves) |
+| H-controls-drop | converted: C-select-last-missile (Select onto her last missile, fired and dropped before the status bar; the selection after the controls) |
+| H-drop-after | converted: C-select-dropped-after (with the pickup's icon, dropped after the status bar) |
+| H-turn-fall | converted: C-mm-turned-on-and-fall-origin |
+| H-map-off | converted: C-mm-off-gauge |
+| H-map-once | converted: C-mm-diagonal-after-window |
+| H-one-shot | dropped: the same before, inputs and after as C-one-shot-set |
+| H-stale-cache | dropped: the same before, inputs and after as C-energy-unchanged-stale |
 
-Reproduce original qualification with the private
-`$TEMP/collab/health-connected-integration/source/check.py` and its pinned captures.
-For this observer delta run
-`$TEMP/collab/one-frame-479/hud-evidence/reference.py scenarios/vectors/interface-hud.toml`
-for the HUD vectors and `recorded.py scenarios/vectors/interface-hud.toml` in that same
-evidence directory for the two recorded comparisons. The recorded reference checks the
-projected mini-map window, complete explored bitmap and gauge (including cache); it reports
-the reference and null agreements on those projections. Original phase samples supply the
-explicitly scoped premises, including prior rendered map pictures. The reference is a
-bounded prediction with stable non-center pictures and a center known explored, supplemented
-by the independent bus/source qualification. It provides no new integrated replay credit,
-full native HUD field coverage or changing Health producer.
+The 11 `[[hud_resume]]` cases (an input patched before or after a stage's choice, or after its
+effect) and the two `[[hud_observed]]` witnesses (R-map-status-127 and 128: the map and the gauge
+held from the mini-map's read to the status bar's, on chain-any-0003-DFD7 cuts 127 and 128) test
+only the removed stages: dropped. Their frames' whole-frame effect is an ordinary frame of play
+of the harness (§The harness). Of the 10 `[[countdown]]` cases, C-countdown-fresh-scene,
+C-countdown-restore-chosen and C-countdown-restore-complete test only the continuation: dropped.
+The other seven keep their outcome, without the `boundary`, `restore` and `later_scene` fields;
+`opportunities` is now `frames`. Every frame vector with a drop (C-shot-cancels,
+C-shot-cancels-cannot-switch, C-death-drops, C-dropped-before, C-one-shot-dropped and the two new
+ones) names its `controls`.
 
-**Constructed discriminators.** At x = 256 and y = 16, the room origin (10, 10) gives
-(11, 10); x = 255 gives (10, 10). The two pictured center cells differ and each case records
-its own explored cell. Later pose placement at x = 512 would have explored (12, 10). The
-frame count 8 leaves the center in explored colours. At map completion energy 0 is still
-shown, regardless of the mock early energy of 119. Late energy 107 with capacity 199 draws
-one full tank and digits 0 and 7. The late
-input replacement before choice reaches 109 and a click, after choice the original 107 and
-mute are kept. The same gauge changes with the map off. A second application of the diagonal case would
-draw the freshly explored cell above her before the next frame. The controls/drop, pickup/highlight,
-flash and turn-on/fall cases compare partial State and ordered events as well as final output.
-The observed pair documents active map and stable gauge; the constructed cases distinguish
-stale position, moved map and changed energy and establish continuation for the clean model.
-
-**Integration boundary.** Original qualification does not admit item permission and availability,
-every intervening drop/pickup/status writer, the physical gauge cache or capacity operand, or
-hardware transfer. The engine orders current owners and has to prove those joins independently.
-Its replay must compare early effects separately from the sole final HUD publication, carry
-complete State through a fresh restore, and distinguish early event consumption from later
-final ordered output. Existing Ceres and HUD replay claims do not change at the spec amendment.
+**Reference.** `$TEMP/collab/hud-whole-frame-710/reference.py scenarios/vectors/interface-hud.toml`
+(the previous whole-frame reference, with the stock as the frame begins and the selection after
+the controls added, and the countdown): 101 of 101 frame and step vectors agree (null 15), the 3
+countdown model cases agree (null 0) and the 4 admission cases are refused. Three planted faults
+fail: Select reading the counts as the frame ends (C-select-stock-at-start), the selection after
+the controls read after the drop (C-shot-cancels) and one answer for several countdown frames
+(C-countdown-repeat). Every rule but `CyclingItems`' stock is unchanged, so the per-frame
+agreement over the records (§How the spec was made, §The harness) stands; it was not re-run.

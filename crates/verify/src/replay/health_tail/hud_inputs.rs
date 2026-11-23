@@ -1,17 +1,19 @@
-//! Independent early controls, powered-off map premises and late status neighbours.
+//! The HUD's independently observed neighbours at each opportunity: released controls, the
+//! powered-off map's premises and the late status values.
 
 use std::path::Path;
 
-use game::production::health_tail::{Input, MapInput};
+use enum_map::EnumMap;
+use game::production::health_tail::{HudFrame, MapInput};
 use interface_hud::{
-    Ammo, Ammunition, CancelButton, Dropped, Equipped, FrameCount, ItemControlInputs, Reserve,
-    ReserveMode, Room, SelectButton, Stock,
+    Ammo, Ammunition, CancelButton, Controls, CountdownRuns, Equipped, FrameCount, Reserve,
+    ReserveMode, Room, SelectButton, Stock, StockAtStart,
 };
 use serde::Deserialize;
 use types::Pair;
 
 use super::{CUTS, ORIGIN, ROW, Tape, read};
-use crate::replay::{data_failure, result::Outcome};
+use crate::replay::{data_failure, hud, result::Outcome};
 
 const PIN: &str = "a081de5b1d80cf60a7f0a1a475dbcf54efb2d8372fc15ae3ee6db0dfc51f2fec";
 
@@ -27,18 +29,31 @@ struct Source {
 struct Opportunity {
     end_cut: u64,
     frame_count: u8,
-    controls: Controls,
+    controls: TapeControls,
     map: MapPremises,
-    status: Status,
+    status: TapeStatus,
 }
 
 #[derive(Deserialize)]
-struct Controls {
-    select: SelectButton,
-    cancel: CancelButton,
+struct TapeControls {
+    select: Select,
+    cancel: Cancel,
     can_switch: bool,
     grapple_beam: bool,
     x_ray_scope: bool,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+enum Select {
+    NotPressed,
+    Pressed,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+enum Cancel {
+    NotPressed,
+    Pressed,
+    Held,
 }
 
 #[derive(Deserialize)]
@@ -60,17 +75,31 @@ struct MapEvents {
 }
 
 #[derive(Deserialize)]
-struct Status {
+struct TapeStatus {
     energy_capacity: u16,
-    reserve_mode: ReserveMode,
+    reserve_mode: Refill,
     reserve_energy: u16,
     missiles: [u16; 2],
     super_missiles: [u16; 2],
     power_bombs: [u16; 2],
     muted_by: Absent,
     collected: Absent,
-    dropped_before: Dropped,
-    dropped_after: Dropped,
+    dropped_before: Drop,
+    dropped_after: Drop,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+enum Refill {
+    Auto,
+    Manual,
+}
+
+/// The tape names every drop; this scope admits only `Nothing`.
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
+enum Drop {
+    Nothing,
+    Selection,
+    OneShotItemAlone,
 }
 
 #[derive(Deserialize)]
@@ -78,14 +107,13 @@ enum Absent {
     None,
 }
 
-#[derive(Clone, Copy)]
-pub(super) struct Inputs {
-    pub controls: Input,
-    pub map: Input,
-    pub status: Input,
-}
-
-pub(super) fn load(native: &Path, origin_pin: &str) -> Result<[Inputs; 2], Outcome> {
+/// Each opportunity's HUD frame. Her stock as the first frame begins is the origin record's;
+/// as the second begins, the stock the first frame's status bar drew.
+pub(super) fn load(
+    native: &Path,
+    origin_pin: &str,
+    origin_wram: &[u8],
+) -> Result<[HudFrame; 2], Outcome> {
     let source: Source = read(
         native,
         "ceres-health-hud-operands-v1/hud-operands.toml",
@@ -103,11 +131,27 @@ pub(super) fn load(native: &Path, origin_pin: &str) -> Result<[Inputs; 2], Outco
     {
         return Err(data_failure(None, "Health tail HUD origin and schedule"));
     }
+    // The origin is main gameplay and the HUD opportunities are its next two frames, so the
+    // scene runs the escape countdown in each.
+    let countdown = hud::countdown_runs(origin_wram, origin_wram)?;
     let [first, next] = source.tape.opportunity;
-    Ok([inputs(first, 0)?, inputs(next, 1)?])
+    let first = inputs(
+        first,
+        0,
+        hud::stock_at_start(origin_wram)?.counts,
+        countdown,
+    )?;
+    let drawn = EnumMap::from_fn(|ammo| first.ammunition.of(ammo).count);
+    let next = inputs(next, 1, drawn, countdown)?;
+    Ok([first, next])
 }
 
-fn inputs(observed: Opportunity, opportunity: u64) -> Result<Inputs, Outcome> {
+fn inputs(
+    observed: Opportunity,
+    opportunity: u64,
+    counts_at_start: EnumMap<Ammo, u16>,
+    countdown: CountdownRuns,
+) -> Result<HudFrame, Outcome> {
     let Opportunity {
         end_cut,
         frame_count,
@@ -115,7 +159,7 @@ fn inputs(observed: Opportunity, opportunity: u64) -> Result<Inputs, Outcome> {
         map,
         status,
     } = observed;
-    let Status {
+    let TapeStatus {
         energy_capacity,
         reserve_mode,
         reserve_energy,
@@ -131,8 +175,8 @@ fn inputs(observed: Opportunity, opportunity: u64) -> Result<Inputs, Outcome> {
         || map.events.turned_on
         || map.events.mother_brain_falls
         || data::room::Area::try_from(map.area) != Ok(data::room::Area::Ceres)
-        || dropped_before != Dropped::Nothing
-        || dropped_after != Dropped::Nothing
+        || dropped_before != Drop::Nothing
+        || dropped_after != Drop::Nothing
     {
         return Err(data_failure(
             Some(end_cut),
@@ -148,36 +192,45 @@ fn inputs(observed: Opportunity, opportunity: u64) -> Result<Inputs, Outcome> {
     .ok_or_else(|| data_failure(Some(end_cut), "Health tail HUD ammunition range"))?;
     let pair = |[x, y]: [u16; 2]| Pair { x, y };
     let [x, y] = map.room_cell;
-    Ok(Inputs {
-        controls: Input::HudControls {
-            opportunity,
-            frame: FrameCount(frame_count),
-            controls: ItemControlInputs {
-                select: controls.select,
-                cancel: controls.cancel,
-                can_switch: controls.can_switch,
-                ammunition,
-                equipped: Equipped {
-                    grapple_beam: controls.grapple_beam,
-                    x_ray_scope: controls.x_ray_scope,
-                },
+    Ok(HudFrame {
+        opportunity,
+        frame: FrameCount(frame_count),
+        stock_at_start: StockAtStart {
+            counts: counts_at_start,
+            equipped: Equipped {
+                grapple_beam: controls.grapple_beam,
+                x_ray_scope: controls.x_ray_scope,
             },
         },
-        map: Input::HudMap(MapInput {
+        controls: Controls {
+            select: match controls.select {
+                Select::NotPressed => SelectButton::NotPressed,
+                Select::Pressed => SelectButton::Pressed,
+            },
+            cancel: match controls.cancel {
+                Cancel::NotPressed => CancelButton::NotPressed,
+                Cancel::Pressed => CancelButton::Pressed,
+                Cancel::Held => CancelButton::Held,
+            },
+            can_switch: controls.can_switch,
+        },
+        map: MapInput {
             position: pair(map.position),
             room: Room {
                 cell: Pair { x, y },
                 blocks: pair(map.room_blocks),
             },
             map_collected: map.map_collected,
-        }),
-        status: Input::Status {
-            capacity: energy_capacity,
-            reserve: Reserve {
-                energy: reserve_energy,
-                mode: reserve_mode,
-            },
-            ammunition,
         },
+        capacity: energy_capacity,
+        reserve: Reserve {
+            energy: reserve_energy,
+            mode: match reserve_mode {
+                Refill::Auto => ReserveMode::Auto,
+                Refill::Manual => ReserveMode::Manual,
+            },
+        },
+        ammunition,
+        countdown,
     })
 }

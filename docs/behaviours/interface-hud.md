@@ -8,7 +8,7 @@ time. Vectors: [`scenarios/vectors/interface-hud.toml`](../../scenarios/vectors/
 
 ## Header
 
-**Scope.** The status bar, its mini-map, and the escape countdown displayed over the room (§5.2). It covers what each of
+**Scope.** The status bar, its mini-map, and the escape countdown displayed over the room (§5.1). It covers what each of
 the HUD's cells shows from one frame to the next, the selected item and the one-shot item, how
 Select and item cancel change them, and the cells of her map she has explored. It reads the
 values it shows from the domains that own them (§1.3), and draws pictures the importer supplies
@@ -41,11 +41,12 @@ division and its remainder.
 | the values last shown | energy, missiles, super missiles, power bombs: counts; an item or none | a value is drawn again only when it differs from the one the HUD shows | `EnergyGauge`, `AmmoCounts`, `SelectionHighlight` |
 | the selected item | an item or none (§1.1) | its icon is highlighted; what she fires | `CyclingItems`, `SelectionHighlight`; output (the weapons) |
 | the one-shot item | the selected item or none: whether the selection is the one-shot item | its icon flashes; the weapons drop the selection after one shot of it | `OneShotFlash`, `CyclingItems`; output (the weapons) |
+| the selection after the controls | the selected item and the one-shot item as this frame's item select and item cancel leave them, before any drop | a shot this frame fires the item Select has just moved to, and her gun opens or closes for it, though a drop later in the frame puts the selection back to none | output (the weapons and her look read it in the same frame; each frame works it out, so it isn't State); `Switching` |
 | the explored cells | a set of her map's cells | the mini-map shows them, and so does the pause screen's map | `Exploring`, `MiniMapWindow`, `DiagonalPicture`; output (the pause screen, saves) |
 | the mini-map is off | `bool`: from when a boss turns it off until it is turned on | the mini-map stops changing, her cell's blink with it | `MiniMapStill`, `OutOfPlay` |
 
 Every cell keeps what it shows until a rule of this spec draws it. The escape countdown also
-keeps its own State (§5.2); it is separate from the status bar, energy and her protection from hits.
+keeps its own State (§5.1); it is separate from the status bar, energy and her protection from hits.
 
 ### 1.1 Items
 
@@ -75,13 +76,13 @@ when Select cycles.
 | Input | Type | Read by |
 | --- | --- | --- |
 | frame count | 0 to 255: the count of frames the game has finished, mod 256, as this frame begins (a frame the game didn't finish in time, a lag frame, isn't one) | `OneShotFlash`, `HerBlink` |
-| energy | now and capacity, counts | `EnergyGauge` |
+| energy | now and capacity, counts, as the frame ends: after this frame's damage | `EnergyGauge` |
 | reserve | the energy in the reserve tanks, a count; whether they refill on their own (`auto`) | `AutoReserveSign` |
-| missiles, super missiles, power bombs | each a count and a capacity | `AmmoCounts`, `CyclingItems` |
-| equipment | whether she has the grapple beam on, and the x-ray scope | `CyclingItems` |
+| missiles, super missiles, power bombs | each a count and a capacity, as the frame ends: after this frame's shots and pickups | `AmmoCounts` |
+| her stock as the frame begins | the counts of missiles, super missiles and power bombs, and whether she has the grapple beam on, and the x-ray scope, as they were before this frame's shots and pickups: as the last frame ended | `CyclingItems` |
 | item select, item cancel | each: pressed this frame (it went down), or (cancel) held from before | `CyclingItems`, `CancellingTheItem`, `OneShotItem` |
 | can switch | `bool`: the player controls her, or a demo that plays by itself moves her, and she doesn't face the screen. The opening's scenes aren't frames of play (below) | `CyclingItems`, `CancellingTheItem` |
-| the selection dropped | none, or what another domain drops this step, and when: the selection (and with it the one-shot item) or the one-shot item alone; in a frame of play, before late status is drawn or after it. §6 names who: the weapons drop the selection before the status bar after a shot. When two drops arrive in one frame, the selection's wins | `CancellingTheItem`, `OutOfPlay` |
+| the selection dropped | none, or what another domain drops this step, and when: the selection (and with it the one-shot item) or the one-shot item alone; in a frame of play, before the status bar is drawn or after it. §6 names who: the weapons drop the selection before the status bar after a shot. When two drops arrive in one frame, the selection's wins | `CancellingTheItem`, `OutOfPlay` |
 | why no click | none, or she spin jumps, she wall jumps, the grapple beam is out, time is stopped | `SwitchClick` |
 | collected | an item whose pickup this frame draws its icon, or none | `IconsAppear` |
 | the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, dying, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
@@ -89,7 +90,7 @@ when Select cycles.
 | a new area | the explored cells Progress keeps for the area she enters, on a step outside play that leads into another area; or none | `OutOfPlay` |
 | a boss encountered | the boss she encounters: Kraid, Draygon, Crocomire, Phantoon, or Ridley in Norfair or in Ceres, on entering its room while it lives; a step of its own, outside a frame of play (supplied by the door and the load flow) | `BossBlanksTheMap` |
 | Mother Brain falls | `bool`: her first form falls this frame, her brain in the tank destroyed (supplied by her fight) | `BossBlanksTheMap` |
-| her position | x, y: whole pixels in her room, after this frame's moves and before a pose change places her | `Exploring`, `MiniMapStill` |
+| her position | x, y: whole pixels in her room: samus-movement's `her position after her moves` ([`MovesAsShePosed`](samus-movement.md#movesassheposed)), before the aim change's step and the pose change move her | `Exploring`, `MiniMapStill` |
 | her room | its top-left cell on her map, and its size in 16 px blocks across and down | `Exploring`, `MiniMapStill` |
 | her map | each cell's picture with its flips; the cells it charts; whether she has collected it; its beyond pictures (`LastColumnsShift`) | `MiniMapWindow`, `DiagonalPicture` |
 | the HUD's pictures | content, by name (§1.4), from the importer | every entry that draws a cell |
@@ -278,12 +279,17 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   selection moves to the next item in the order after it, wrapping after the x-ray scope to none
   [C-R9, C-R11, C-R12, C-R15, C-select-nothing-to-have]
 - The next item is missiles, super missiles or power bombs with a count of 0, the grapple beam
-  she doesn't have on, or the x-ray scope she doesn't have on → it moves past it to the one
-  after [C-select-skip, C-select-lacks, C-select-nothing-to-have]
+  she doesn't have on, or the x-ray scope she doesn't have on, in her stock as the frame begins
+  → it moves past it to the one after [C-select-skip, C-select-lacks, C-select-nothing-to-have,
+  C-select-stock-at-start, C-select-last-missile]
 - She can't switch → the selection and the one-shot item stay as they are [C-cannot-switch]
 - So none is always there to land on (C-R15, C-select-nothing-to-have).
+- So a shot or a pickup in the same frame doesn't change where Select lands, though the status
+  bar draws the counts the frame ends with: with 2 missiles as the frame begins and none as it
+  ends, Select lands on missiles (C-select-stock-at-start).
 - checked: oracle (the harness cases R9 to R12, R15); constructed (C-R9, C-R10, C-R11, C-R12, C-R15,
-  C-select-skip, C-select-lacks, C-cannot-switch).
+  C-select-skip, C-select-lacks, C-cannot-switch, C-select-stock-at-start,
+  C-select-last-missile).
 
 ### CancellingTheItem
 - kind: mechanic.
@@ -323,13 +329,23 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ### Switching
 - kind: output.
-- summary: each switch tells the weapons and her look which item she switched to.
+- summary: each switch tells the weapons and her look which item she switched to, and each frame
+  tells them what the controls left selected.
 - params: none.
 - switch: none.
 - Select or item cancel acting (`CyclingItems`' first rule, `CancellingTheItem`'s first) → a
   `Switched` event with the item it lands on, the same item or none included [C-R9, C-R13,
   C-select-nothing-to-have, C-cancel-wins]
-- checked: constructed (the event isn't in a record; its effects are other domains').
+- Each frame of play → it reports `the selection after the controls` (§1): the selection and the
+  one-shot item as `CyclingItems`, `CancellingTheItem`'s first rule and `OneShotItem` leave them,
+  before any drop [C-R9, C-one-shot-set, C-shot-cancels, C-select-last-missile,
+  C-select-dropped-after, C-death-drops]
+- So it depends only on the State as the frame begins, the buttons, `can switch` and her stock
+  as the frame begins, and a drop this frame leaves it as it was: Select landing on her last
+  missile, which she fires, reports missiles though the frame ends with none selected
+  (C-select-last-missile).
+- checked: constructed (neither the event nor this output is in a record; their effects are other
+  domains').
 
 ---
 
@@ -516,10 +532,14 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ## 5. Order that matters
 
-- The selection responds to the controls first. The mini-map then reflects her movement. The
-  status bar shows the later status values and selection after intervening play. A selection
-  drop before status affects the highlight and flash; a drop after status leaves those effects
-  drawn for the frame.
+A frame of play is one step: the HUD reads the frame's inputs (§1.3), and its State and outputs
+are those at the frame's end, with `the selection after the controls` (§1) and the events in the
+order raised.
+
+- The selection responds to the controls first, by her stock as the frame begins; the weapons
+  and her look read `the selection after the controls`. The mini-map then reflects her position
+  after her moves. The status bar draws the values as the frame ends. A drop before the status
+  bar affects the highlight and the flash; a drop after it leaves them drawn for the frame.
 - In the status bar: the icon a pickup draws comes before the highlight and the flash, so a
   selected item's new icon is lit; the flash has the last word on the colours of the one-shot
   item.
@@ -530,166 +550,58 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   is the spec's choice (docs/LEGACY.md). Her cell is explored before the window reads the
   explored cells; the cell `DiagonalPicture` adds over hers is explored after, so it shows from
   the next frame; the blink comes last.
-- Where she is: after this frame's moves and before a pose change places her. On a frame whose
-  pose changes, a placement that takes her into another screen comes after the mini-map has read
-  her.
+- Where she is: her position after her moves (§1.3). On a frame whose aim step or pose change
+  takes her into another screen, the mini-map shows the cell her moves left her in, not the one
+  the step or the pose change takes her to.
+- The events: a `Switched` from the controls comes before a `Click` from the status bar.
 
-### 5.1 Current inputs during a frame
-
-A frame of play has three successive opportunities on one carried HUD: item controls, movement
-mini-map, and late status. A whole-frame caller supplies the same observations and gets the same
-complete State and ordered events as a caller completing the opportunities individually. The
-names identify the opportunities a caller can observe. At each opportunity the caller can see
-the actual chosen answer before the HUD applies its effects.
-
-| Quantity | Units / domain type | Read by |
-| --- | --- | --- |
-| item controls | Select pressed; Cancel pressed, held or neither; can switch (bool); current ammunition counts and items she has on (§1.3) | `ItemControls` |
-| movement mini-map | current room (16 px blocks), position (whole pixels), pictures for her area and charted and collected cells, whether the map runs, and turn-on and fall events (§1.3) | `MiniMapUpdate` |
-| late status | current energy and capacity, reserve count/mode, ammunition counts and capacities, mute reason, pickup and before/after-status drop events (§1.3) | `StatusRefresh` |
-| frame count | frame-start count mod 256, shared by the two drawing opportunities (§1.3) | `HerBlink`, `OneShotFlash`, `RetainedHudWork` |
-| frame-start highlighted item | item or none (§1.1), independent of actual selection | `SwitchClick`, `RetainedHudWork` |
-| chosen observation | actual inputs and their actual selected answer at one opportunity; unread, chosen or completed | `RetainedHudWork` |
-| retained events | ordered `Switched` and `Click` requests (§2, §3) | weapons, her look, sound; `RetainedHudWork` |
-| completed effects | full State (§1), including every grid cell, cache, explored cell, map power and countdown; consumed input and decision progress | `RetainedHudWork` |
-
-### ItemControls
-- kind: timing.
-- summary: her choice responds to the actual item controls before this frame's movement.
-- params: none.
-- switch: none.
-- Controls unread → receive controls read with the current bindings and current item
-  availability, then apply `CyclingItems`,
-  `CancellingTheItem`, `OneShotItem` and `Switching` once; expose the selected/one-shot item
-  and ordered `Switched` before movement [H-controls-drop, H-fresh-status,
-  H-controls-before, H-controls-chosen].
-- Controls complete → retain the selection and event with the map, shown values and cells
-  as they were; later stock changes leave the control choice in effect [H-fresh-status,
-  H-controls-chosen].
-- checked: constructed (the H cases); ordinary equivalence (every existing Frame vector).
-
-### MiniMapUpdate
-- kind: timing.
-- summary: her mini-map updates where she is after movement, before her later pose placement.
-- params: none.
-- switch: none.
-- Movement mini-map unread → choose from the current room, her map, map-running answer and
-  events, and her position after movement and before later pose placement. A turn-on comes
-  first, Mother Brain's fall comes next, and the map rules of §4 follow, including the blink
-  for this frame [H-position-before, H-position-chosen, H-turn-fall, H-map-off].
-- Movement mini-map complete → the same HUD already holds its resulting cells, explored
-  cells and map power for their readers. Status cells, shown values, actual and one-shot
-  selection and the retained controls event keep their post-controls values [R-map-status-127,
-  R-map-status-128, H-fresh-status, H-map-off, H-turn-fall, H-map-once, H-controls-drop].
-- checked: oracle (R-map-status-127 and R-map-status-128, active map and early output);
-  constructed (movement across a map-cell boundary, map off, event order and continuation).
-
-### StatusRefresh
-- kind: timing.
-- summary: the status bar reflects current values after intervening play, including her
-  current whole energy after health maintenance and her picture for this frame.
-- params: none.
-- switch: none.
-- Late status unread → choose from current counts, capacities, reserve mode, mute reason,
-  pickup and status drop events. Apply the before-status drop, then counts and reserve sign,
-  pickup icon, highlight and one-shot flash, then the after-status drop. Compare the final
-  shown highlight with the frame-start shown highlight for the click [H-fresh-status,
-  H-status-before, H-status-chosen, H-controls-drop, H-drop-after, H-status-event-before,
-  H-status-event-chosen, H-one-shot, H-stale-cache].
-- Late status complete → retain the map already drawn and the explored cells and map power
-  already set. The ordered event result contains the earlier `Switched` if it happened, then
-  the late `Click` if it happened. The complete HUD is ready for its single frame publication
-  [R-map-status-127, R-map-status-128, H-fresh-status, H-map-off, H-drop-after].
-- checked: oracle (R-map-status-127 and R-map-status-128, late energy observation and held
-  gauge); constructed (changed energy, ordering and continuation).
-
-### RetainedHudWork
-- kind: timing.
-- summary: interruption retains chosen answers and applied effects on the same HUD, while
-  unread opportunities receive their current inputs.
-- params: none.
-- switch: none.
-- Offered but unread, then its input changes → choose from the fresh input when answering
-  [H-controls-before, H-position-before, H-status-before].
-- Answer chosen before effects, then its input changes → retain and apply the chosen answer
-  once; each later unread opportunity still takes fresh inputs [H-controls-chosen,
-  H-position-chosen, H-status-chosen, H-fresh-status].
-- Interrupted at any offered, chosen or completed opportunity → save full HUD State, pending
-  chosen observations, frame count and frame-start highlight, retained events and consumed
-  progress. Discard the original instances, restore fresh instances and continue with the
-  same partial and final State and ordered outputs [every H case]. The full grid and cached
-  values are retained independently [H-stale-cache, H-one-shot].
-- Controls effects are available to their readers before movement and map effects are available
-  before late status. Each opportunity applies once. A reader resuming after delivery retains
-  delivery progress, so it receives each request once even when the final ordered result includes
-  the earlier event. The caller owns delivery and publishes the complete HUD once, after status
-  [H-controls-drop, H-drop-after, H-fresh-status, H-map-off].
-- checked: constructed (every H case at each offered, chosen and completed boundary).
-
-### 5.2 The escape countdown
+### 5.1 The escape countdown
 
 The countdown is the time remaining in the escape, displayed over the room rather than in the
-status bar's cells. This bounded contract covers the period before an escape countdown begins.
-It owns the current countdown, its answer about expiry, and whether it contributes a countdown
-picture. Starting and advancing an active countdown, its digits, and the consequences of expiry
-are outside the admitted contract. No rule here changes energy or protection from hits.
+status bar's cells. This spec covers the frames before an escape countdown begins: the current
+countdown, its answer about expiry, and whether it contributes a countdown picture. Starting and
+advancing an active countdown, its digits, and the consequences of expiry are outside it. No
+rule here changes energy or protection from hits.
 
 | Quantity | Units and domain type | Read by |
 | --- | --- | --- |
-| current countdown | `Dormant`: no escape countdown has begun; the sole admitted countdown State | `EscapeCountdown`; output |
-| expiry answer | `NoExpiry`: no escape has run out of time at this opportunity | output (the escape scene) |
-| countdown picture | `Absent`: no countdown picture contributed at this opportunity | output (room presentation) |
+| current countdown | `Dormant`: no escape countdown has begun; the one countdown State this spec defines | `EscapeCountdown`; output |
+| the countdown runs | an input, each frame: the scene runs the escape countdown this frame (`MaintainCountdown`), or only shows it (`PresentationOnly`) | `EscapeCountdown` |
+| expiry answer | `NoExpiry`: the escape's time hasn't run out | output (the escape scene) |
+| countdown picture | `Absent`: no countdown picture contributed this frame | output (room presentation) |
 
-Current countdown is independently settable and readable at every admitted value. It belongs
-inside complete HUD State, together with the existing cells, shown values, selection, one-shot
-item, explored map and mini-map off state. Neither previous display inputs nor a zero health or
-protection quantity may replace it. The expiry answer and picture are outputs, not hidden State.
+The current countdown is part of the HUD's State, beside the cells, the values last shown, the
+selection, the one-shot item, the explored cells and the mini-map's off; it can be set and read
+at every value it takes. Neither the HUD's other inputs nor a zero energy or protection from hits
+replaces it. The expiry answer and the picture are outputs of the frame, not State.
 
-The scene supplies a distinct current choice: an opportunity to maintain the escape countdown,
-or a presentation-only opportunity. It owns whether, when and how many such opportunities occur.
-Only an actually selected maintenance opportunity is admitted here; merely offering an
-opportunity does not imply it was selected. The ordinary HUD refresh does not imply one.
-The model admits only the qualified maintenance opportunity. Its public opportunity work must
-retain actual chosen answers and completion progress; production qualifies the scene input
-before offering that work and cannot manufacture its answer. Unread work has no chosen scene
-answer: a fresh scene input must be qualified on resumption.
-A presentation-only choice, unknown choice, or active/expired countdown requires an explicit
-unsupported dependency before any effects. Such values are integration admission contrasts,
-not additional admitted countdown State variants or invented active-countdown rules.
-The `scope = Model` countdown vectors execute the model. `IntegrationAdmission` vectors
-check these neighboring requirements only; they are not passing model vectors or model coverage.
+The scene decides, each frame, whether it runs the countdown; the ordinary HUD frame doesn't
+imply it. A frame that only shows the countdown, a scene whose choice isn't known, and an active
+or expired countdown are outside this spec: the HUD reports them unsupported before any effect,
+and they are not further countdown States. The `scope = Model` countdown vectors run the model;
+the `IntegrationAdmission` ones check that refusal only, and are not model coverage.
 
 ### EscapeCountdown
 - kind: mechanic.
-- summary: before an escape countdown begins, an actual countdown opportunity cannot expire
-  the escape and contributes no countdown picture.
+- summary: before an escape countdown begins, a frame that runs the countdown cannot expire the
+  escape and contributes no countdown picture.
 - params: none.
 - switch: none.
-- Actual maintenance opportunity with current countdown Dormant → keep Dormant, report NoExpiry
-  and contribute Absent [R-countdown-dormant, C-countdown-repeat, C-countdown-independent].
+- A frame whose scene runs the countdown, the current countdown Dormant → it stays Dormant, the
+  frame reports NoExpiry and contributes Absent [R-countdown-dormant, C-countdown-repeat,
+  C-countdown-independent].
+- So each such frame gives one answer and one picture contribution (C-countdown-repeat).
 - checked: oracle (R-countdown-dormant); constructed (C-countdown-repeat,
   C-countdown-independent).
 
-### CountdownContinuation
-- kind: timing.
-- summary: an interrupted countdown opportunity retains its actual answer without repeating it.
-- params: none.
-- switch: none.
-Before an unread opportunity is admitted after interruption, production must qualify the fresh
-scene choice; C-countdown-fresh-scene is an integration-only unsupported contrast, not a model arm.
-- Answer chosen or completed, then interrupted → save complete HUD State, selected opportunity,
-  actual answer/picture and completion progress; discard all original objects and restore fresh
-  instances, retaining exactly one answer and picture contribution for that opportunity
-  [C-countdown-restore-chosen, C-countdown-restore-complete].
-- checked: constructed (C-countdown-restore-chosen,
-  C-countdown-restore-complete).
-
 ## 6. Out of scope, and who supplies it
 
-- **The weapons:** firing, and the drop of the selection after a shot (below). They read the
-  selection, the one-shot item and `Switched` (a switch drops the charge).
+- **The weapons:** firing, and the drop of the selection after a shot (below). They read
+  `the selection after the controls` and `Switched` (a switch drops the charge), in the same
+  frame.
 - **Her look:** her gun opens or closes when the selection changes, and a switch reloads her
-  suit's colours; they read the selection and `Switched`.
+  suit's colours; they read `the selection after the controls` and `Switched`, in the same
+  frame.
 - **Energy, reserves and pickups:** the values this domain shows, and the pickup that calls
   `IconsAppear`.
 - **Progress:** the area, the map collected, the explored cells of the other areas: those of the
@@ -709,6 +621,8 @@ scene choice; C-countdown-fresh-scene is an integration-only unsupported contras
 - **Her control (samus-movement, the stations, cinematics and the intro):** `the mini-map runs`,
   false while she is held at a station, drained, entering or leaving the gunship, or shown by the
   game's opening.
+- **Her motion (samus-movement):** `her position` each frame of play, her position after her
+  moves (`MovesAsShePosed`).
 - **The bosses' domain (the fight with Mother Brain):** `Mother Brain falls`, when her first
   form falls, her brain in the tank destroyed, during a frame of play.
 - **The opening's scenes (the cinematics):** the selection they give her: missiles as the
@@ -738,7 +652,6 @@ scene choice; C-countdown-fresh-scene is an integration-only unsupported contras
    the one-shot item) or the cinematics own the selection while the opening shows no HUD is the root's
    to settle before the whole-movie run; no compared frame reaches it, since the opening shows
    no HUD.
-3. Active escape countdown and its start, advancement, digits and expiry consequences remain
-   unsupported. The scene's actual selection of countdown maintenance versus presentation-only
-   remains an explicit neighboring producer requirement (§5.2). A scoped observed scene input
-   proves neither integrated scheduling nor the active escape.
+3. An active escape countdown, its start, advancement, digits and the consequences of its
+   expiry remain unsupported. Whether a frame's scene runs the countdown or only shows it is an
+   input from the scene (§5.1), which no domain supplies yet.

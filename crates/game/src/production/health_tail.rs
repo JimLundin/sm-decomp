@@ -1,13 +1,14 @@
 //! Current Health, Drawing history and ordinary HUD in an admitted tail-contact opportunity.
 
-use super::{AdmissionFault, ProductionFault, Unsupported, hud::Hud};
+use super::{AdmissionFault, ProductionFault, Unsupported, hud::HudPin};
 use canonical::{
     Canonical,
     model::{Model, Pinned},
 };
 use interface_hud::{
-    Ammunition, Dropped, Energy, FrameCount, HudOpportunity, HudPictures, HudState,
-    ItemControlInputs, MiniMapPower, MovementInputs, Reserve, Room, StatusInputs,
+    Ammunition, CancelButton, Controls, CountdownRuns, Dropped, Energy, FrameCount, FrameInputs,
+    HudPictures, HudState, MiniMapInputs, MiniMapPower, Reserve, Room, SelectButton, Selection,
+    Status, StockAtStart,
 };
 use samus_health::{ProtectionFrames, Rules, TailImpact, WarningSound};
 
@@ -95,10 +96,10 @@ pub struct Context {
     pub gravity: bool,
 }
 
-/// The current room facts at the powered-off map opportunity.
+/// The current room facts the powered-off mini-map reads.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MapInput {
-    /// Current player position after movement.
+    /// Her position after her moves.
     pub position: types::Pair<u16>,
     /// Current room on the map, with its bounds.
     pub room: Room,
@@ -106,39 +107,44 @@ pub struct MapInput {
     pub map_collected: bool,
 }
 
+/// The HUD's neighbours' facts for its whole frame, read once the frame's Health is known.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HudFrame {
+    /// Number of completed opportunities since admission.
+    pub opportunity: u64,
+    /// The frame count as the frame begins.
+    pub frame: FrameCount,
+    /// Her stock as the frame begins.
+    pub stock_at_start: StockAtStart,
+    /// The item controls; this scope admits them only released.
+    pub controls: Controls,
+    /// What the powered-off mini-map reads.
+    pub map: MapInput,
+    /// Her energy capacity as the frame ends.
+    pub capacity: u16,
+    /// Her reserve as the frame ends.
+    pub reserve: Reserve,
+    /// Her ammunition as the frame ends.
+    pub ammunition: Ammunition,
+    /// Whether the scene runs the escape countdown this frame.
+    pub countdown: CountdownRuns,
+}
+
 /// The next causal action at a supported scoped gameplay opportunity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Input {
-    /// Open the opportunity at actual HUD controls.
-    HudControls {
-        /// Number of completed opportunities since admission.
-        opportunity: u64,
-        /// Independently observed current HUD clock.
-        frame: FrameCount,
-        /// Actual independent current control inputs.
-        controls: ItemControlInputs,
-    },
     /// Answer the actor's current query and admit the actual Maintenance context.
     Protection(Context),
     /// Deliver the external actor's actual whole-energy argument.
     Impact(u16),
-    /// Apply ordinary map work in the independently qualified powered-off scope.
-    HudMap(MapInput),
     /// Complete the admitted Health Maintenance and Warning opportunity.
     Maintenance,
     /// First Drawing energy consumer, with prior Drawing history.
     FirstDrawingRead,
     /// Second Drawing energy consumer commits the new history.
     SecondDrawingRead,
-    /// The late status opportunity reads current Health.
-    Status {
-        /// Capacity observed at its actual status read.
-        capacity: u16,
-        /// Actual reserve status.
-        reserve: Reserve,
-        /// Actual status ammunition.
-        ammunition: Ammunition,
-    },
+    /// The HUD plays its whole frame, its status bar reading current Health.
+    Status(HudFrame),
     /// Independently qualified active protection ageing after status.
     ActiveClose,
 }
@@ -146,14 +152,10 @@ pub enum Input {
 /// One output at each actual read or owner transition.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Output {
-    /// Early HUD controls completed without changing the selection.
-    HudControls,
     /// Current complete Health at the actor's query.
     Protection(samus_health::State),
     /// Current complete Health after a delivered impact.
     Impact(samus_health::State),
-    /// Early map work completed without enabling the map.
-    HudMap,
     /// Current Health and its request to the Warning receiver.
     Maintenance(samus_health::State, WarningSound),
     /// The live energy comparison and protection at the first Drawing read.
@@ -168,11 +170,9 @@ pub enum Output {
 
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 enum Phase {
-    HudControls,
     ActorQuery,
     ActorDelivery,
     ActorDelivered,
-    Maintenance,
     FirstDrawingRead,
     SecondDrawingRead,
     Status,
@@ -184,7 +184,7 @@ enum Phase {
 pub struct State {
     origin_identity: [u8; 32],
     health: Model<HealthPin>,
-    hud: Hud,
+    hud: Model<HudPin>,
     previous_draw_energy: u16,
     completed: u64,
     phase: Phase,
@@ -193,7 +193,7 @@ pub struct State {
 impl State {
     /// Admit one origin before any selected work.
     #[must_use]
-    pub fn new(
+    pub const fn new(
         origin_identity: [u8; 32],
         health: samus_health::State,
         hud: HudState,
@@ -202,10 +202,10 @@ impl State {
         Self {
             origin_identity,
             health: Model(health),
-            hud: Hud::new(hud),
+            hud: Model(hud),
             previous_draw_energy,
             completed: 0,
-            phase: Phase::HudControls,
+            phase: Phase::ActorQuery,
         }
     }
 
@@ -213,30 +213,13 @@ impl State {
         if self.origin_identity != content.origin_identity {
             return Err(AdmissionFault::HealthTailOrigin);
         }
-        let expected = match self.phase {
-            Phase::HudControls | Phase::ActiveClose => None,
-            Phase::ActorQuery | Phase::ActorDelivery | Phase::ActorDelivered => {
-                Some(HudOpportunity::MiniMapUpdate)
-            }
-            Phase::Maintenance
-            | Phase::FirstDrawingRead
-            | Phase::SecondDrawingRead
-            | Phase::Status => Some(HudOpportunity::StatusRefresh),
-        };
-        let joined = match &self.hud {
-            Hud::Initial(_) => expected.is_none(),
-            Hud::Work(_) => expected.is_some() && self.hud.opportunity() == expected,
-        };
-        if !joined {
-            return Err(AdmissionFault::HealthTailPhase);
-        }
         Ok(())
     }
 
     /// Complete carried HUD including gauge publication and cache.
     #[must_use]
-    pub fn hud(&self) -> &HudState {
-        self.hud.state()
+    pub const fn hud(&self) -> &HudState {
+        &self.hud.0
     }
 
     /// Complete carried Health including its current protection.
@@ -251,69 +234,65 @@ impl State {
         self.previous_draw_energy
     }
 
-    fn hud_controls(
-        &mut self,
-        frame: FrameCount,
-        inputs: ItemControlInputs,
-    ) -> Result<(), ProductionFault> {
-        let state = self.hud.state();
-        if state.selection != interface_hud::Selection::None
-            || state.shown.highlighted.is_some()
-            || state.mini_map != MiniMapPower::Off
-            || inputs.select != interface_hud::SelectButton::NotPressed
-            || inputs.cancel != interface_hud::CancelButton::NotPressed
-            || !self.hud.begin_staged(frame)
-            || !self.hud.choose_controls(inputs)
-            || !self.hud.apply()
-            || !self.hud.events().is_empty()
-        {
-            return Err(missing());
-        }
-        Ok(())
-    }
-
-    fn hud_map(&mut self, content: &Content, input: MapInput) -> Result<(), ProductionFault> {
-        let inputs = MovementInputs {
-            runs: true,
-            turned_on: false,
-            mother_brain_falls: false,
-            position: input.position,
-            room: input.room,
-            map: content.map.clone(),
-            map_collected: input.map_collected,
-        };
-        if self.hud.state().mini_map != MiniMapPower::Off
-            || !self
-                .hud
-                .choose_map(&interface_hud::Rules::default(), &content.pictures, inputs)
-            || !self.hud.apply()
-        {
-            return Err(missing());
-        }
-        Ok(())
-    }
-
-    fn hud_status(
+    /// The HUD's whole frame. The scope holds a quiet HUD: nothing selected or highlighted,
+    /// the mini-map off, the item controls released and no event raised.
+    fn hud_frame(
         &mut self,
         content: &Content,
-        inputs: StatusInputs,
+        input: &HudFrame,
     ) -> Result<Output, ProductionFault> {
-        let prior = self.hud.state().shown.energy;
-        if !self.hud.choose_ordinary_status(
-            &interface_hud::Rules::default(),
-            &content.pictures,
-            inputs,
-        ) || !self.hud.apply()
+        let prior = &self.hud.0;
+        if input.opportunity != self.completed
+            || prior.selection != Selection::None
+            || prior.shown.highlighted.is_some()
+            || prior.mini_map != MiniMapPower::Off
+            || input.controls.select != SelectButton::NotPressed
+            || input.controls.cancel != CancelButton::NotPressed
         {
             return Err(missing());
         }
-        let (hud, events) = self.hud.publication().ok_or_else(missing)?;
-        if !events.is_empty() {
+        let energy = Energy {
+            now: self.health.0.energy.whole.get(),
+            capacity: input.capacity,
+        };
+        let mut hud = prior.clone();
+        let outputs = hud
+            .frame_of_play(
+                &interface_hud::Rules::default(),
+                &content.pictures,
+                &FrameInputs {
+                    frame: input.frame,
+                    stock_at_start: input.stock_at_start,
+                    controls: input.controls,
+                    mini_map: MiniMapInputs {
+                        runs: true,
+                        turned_on: false,
+                        position: input.map.position,
+                        room: input.map.room,
+                        map: &content.map,
+                        map_collected: input.map.map_collected,
+                    },
+                    mother_brain_falls: false,
+                    status: Status {
+                        energy,
+                        reserve: input.reserve,
+                        ammunition: input.ammunition,
+                    },
+                    collected: None,
+                    muted_by: None,
+                    dropped_before_status_bar: Dropped::Nothing,
+                    dropped_after_status_bar: Dropped::Nothing,
+                    countdown: input.countdown,
+                },
+            )
+            .map_err(|_| missing())?;
+        if !outputs.events.is_empty() {
             return Err(missing());
         }
-        let redrawn = hud.shown.energy != prior;
-        self.hud = Hud::new(hud.clone());
-        Ok(Output::Status(inputs.energy.now, prior, redrawn))
+        let shown_before = prior.shown.energy;
+        let redrawn = hud.shown.energy != shown_before;
+        self.hud = Model(hud);
+        Ok(Output::Status(energy.now, shown_before, redrawn))
     }
 
     pub(super) fn advance(
@@ -324,7 +303,7 @@ impl State {
     ) -> Result<Vec<Output>, ProductionFault> {
         inputs
             .iter()
-            .map(|step| self.step(content, rules, *step))
+            .map(|step| self.step(content, rules, step))
             .collect()
     }
 
@@ -332,20 +311,9 @@ impl State {
         &mut self,
         content: &Content,
         rules: Rules,
-        input: Input,
+        input: &Input,
     ) -> Result<Output, ProductionFault> {
         let (next, output) = match (self.phase, input) {
-            (
-                Phase::HudControls,
-                Input::HudControls {
-                    opportunity,
-                    frame,
-                    controls,
-                },
-            ) if opportunity == self.completed => {
-                self.hud_controls(frame, controls)?;
-                (Phase::ActorQuery, Output::HudControls)
-            }
             (Phase::ActorQuery, Input::Protection(clock_and_suits))
                 if !clock_and_suits.time_stopped
                     && !clock_and_suits.varia
@@ -357,11 +325,7 @@ impl State {
                 self.health.0.tail_contact(TailImpact::EligibleCeresTail);
                 (Phase::ActorDelivered, Output::Impact(self.health.0))
             }
-            (Phase::ActorDelivery | Phase::ActorDelivered, Input::HudMap(input)) => {
-                self.hud_map(content, input)?;
-                (Phase::Maintenance, Output::HudMap)
-            }
-            (Phase::Maintenance, Input::Maintenance) => {
+            (Phase::ActorDelivery | Phase::ActorDelivered, Input::Maintenance) => {
                 let warning = self.health.0.health_opportunity(&rules);
                 (
                     Phase::FirstDrawingRead,
@@ -387,36 +351,14 @@ impl State {
                     ),
                 )
             }
-            (
-                Phase::Status,
-                Input::Status {
-                    capacity,
-                    reserve,
-                    ammunition,
-                },
-            ) => {
-                let output = self.hud_status(
-                    content,
-                    StatusInputs {
-                        energy: Energy {
-                            now: self.health.0.energy.whole.get(),
-                            capacity,
-                        },
-                        reserve,
-                        ammunition,
-                        muted_by: None,
-                        collected: None,
-                        dropped_before_status_bar: Dropped::Nothing,
-                        dropped_after_status_bar: Dropped::Nothing,
-                    },
-                )?;
-                (Phase::ActiveClose, output)
+            (Phase::Status, Input::Status(hud)) => {
+                (Phase::ActiveClose, self.hud_frame(content, hud)?)
             }
             (Phase::ActiveClose, Input::ActiveClose) => {
                 self.completed = self.completed.checked_add(1).ok_or_else(missing)?;
                 self.health.0.close_active_opportunity();
                 (
-                    Phase::HudControls,
+                    Phase::ActorQuery,
                     Output::ActiveClose(self.health.0.protection),
                 )
             }

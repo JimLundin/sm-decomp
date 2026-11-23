@@ -475,7 +475,7 @@ impl Inputs {
                 let current = record(&self.cache, cut)?;
                 hud::validate_step(&prior.wram, &current.wram)?;
                 hud::validate_events(&current)?;
-                let input = hud::input(&prior.wram, content)?;
+                let input = hud::input(&prior.wram, &current.wram, content)?;
                 production.advance(AdvanceInput::Hud(input.input()))
             }
             Context::Appearance(content) => {
@@ -582,8 +582,8 @@ impl Actual {
             (Self::Camera, OwnedState::Camera(state), ProductionOutputs::Camera(outputs)) => {
                 Ok(camera::actual(&state.0, outputs))
             }
-            (Self::Hud(content), OwnedState::Hud(state), ProductionOutputs::Hud(outputs)) => {
-                hud::actual(state, outputs, content)
+            (Self::Hud(content), OwnedState::Hud(state), ProductionOutputs::Hud(_)) => {
+                hud::initial(state, content)
             }
             (
                 Self::Appearance(content),
@@ -668,12 +668,10 @@ mod tests {
         let Context::Hud(content) = &reader.recipe else {
             panic!()
         };
-        let prior = record(
-            &reader.cache,
-            case.first_cut().unwrap().checked_sub(1).unwrap(),
-        )
-        .unwrap();
-        let input = super::hud::input(&prior.wram, content).unwrap();
+        let first = case.first_cut().unwrap();
+        let prior = record(&reader.cache, first.checked_sub(1).unwrap()).unwrap();
+        let current = record(&reader.cache, first).unwrap();
+        let input = super::hud::input(&prior.wram, &current.wram, content).unwrap();
         let baseline = input.frame();
         let mut reference = admitted.production.clone();
         let expected_outputs = reference

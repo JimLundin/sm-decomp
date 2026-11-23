@@ -1,5 +1,5 @@
 //! What the HUD keeps from one frame to the next (§1): its cells, the values last shown, the
-//! selection, the explored cells, mini-map power and independently owned escape countdown.
+//! selection, the explored cells, whether the mini-map is off, and the escape countdown.
 
 use enum_map::EnumMap;
 
@@ -84,6 +84,6 @@ pub struct HudState {
     pub explored: MapCellSet,
     /// Whether the mini-map is off.
     pub mini_map: MiniMapPower,
-    /// Spec: EscapeCountdown. Current countdown, independent of all display inputs.
+    /// Spec: EscapeCountdown. The current countdown; no other input of the HUD replaces it.
     pub countdown: Countdown,
 }

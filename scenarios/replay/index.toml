@@ -262,9 +262,9 @@ limits = ["drops represented by Nothing under unselected invariant; turn-on repr
 [[case.borrowed]]
 dependency = "hud.upstream-status-controls-and-map"
 provider = "preceding-cut-independent-observations"
-fields = ["frame-counter", "physical-controls", "bindings", "progress-gauges", "equipment", "samus-handlers", "samus-pose", "samus-position", "room-map-origin", "room-size", "area", "map-collected"]
-phase = "preceding-record-cut"
-claim = "external quantities only; paired current cuts certify unchanged producers and one gameplay tick"
+fields = ["frame-counter", "physical-controls", "bindings", "stock-at-start", "equipment", "progress-gauges", "samus-handlers", "samus-pose", "samus-position", "room-map-origin", "room-size", "area", "map-collected", "main-gameplay-countdown"]
+phase = "record N for the frame count, controls and stock as the frame begins; record N+1 for the status, handlers, pose, position and room"
+claim = "external quantities only; paired current cuts certify unchanged producers and one gameplay tick; main gameplay at both cuts runs the escape countdown"
 
 [[case.borrowed]]
 dependency = "hud.inert-drop-and-turn-on-inputs"
@@ -580,7 +580,7 @@ content = "player-rom-import"
 inputs = "early-map-inputs"
 checkpoints = true
 expectations = { provider = "native-early-map", fields = ["hud.explored", "hud.map-window", "movement.position.x", "movement.position.y", "movement.ordinary-completion", "appearance.ordinary-completion", "camera.ordinary-completion"], outputs = [] }
-limits = ["full early coordinates, exploration and 15 Map cells at both opportunities", "cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity", "cut 80 plays its whole frame, into a later Spinning pose, and compares only the early Map, read at her position after her moves", "at cut 80 her position after her moves equals her position at the frame's end, so that cut does not tell the two apart; cut 79 does, where the early-map-reads-end-position fault fails", "selected HUD work ends at the early Map, before status", "physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved"]
+limits = ["full early coordinates, exploration and 15 Map cells at both opportunities", "cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity", "cut 80 plays its whole frame, into a later Spinning pose, and compares only the early Map, read at her position after her moves", "at cut 80 her position after her moves equals her position at the frame's end, so that cut does not tell the two apart; cut 79 does, where the early-map-reads-end-position fault fails", "each cut plays the HUD's whole frame and compares only the early Map; the status bar draws borrowed values and is not compared", "physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved"]
 
 [[case.borrowed]]
 dependency = "unselected current ordinary and Map producers"
@@ -588,6 +588,13 @@ provider = "authenticated-movement-early-map-v1"
 fields = ["locked controls and bindings", "current equipment, liquid, Contact guards, energy and queue occupancy", "origin terrain and current eligible actor boxes in search order", "Camera room settings", "Map area, room, clock, power and event predicates"]
 phase = "each actual input use from controller through the first Camera carry and second early Map"
 claim = "Movement, Appearance, Camera carry and early Map run the selected production owners with independently qualified external stimuli."
+
+[[case.borrowed]]
+dependency = "hud.frame-neighbours"
+provider = "pinned-record-cache"
+fields = ["stock-at-start", "status", "mute", "can-switch", "main-gameplay-countdown"]
+phase = "record N for her stock as the frame begins; record N+1 for the rest"
+claim = "other domains' values, no selected owner's; released controls leave the stock and can-switch unread, and the frame must raise no HUD event"
 
 [[case]]
 id = "sender-offer/native-00"
@@ -1251,9 +1258,9 @@ claim = "externally qualified scheduling and equipment; Health decides all carri
 [[case.borrowed]]
 dependency = "hud.tail-neighbours"
 provider = "independent-native-hud-tail-opportunities"
-fields = ["hud-clock", "quiet-item-controls", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers"]
-phase = "controls-through-late-status"
-claim = "unselected neighbour inputs only; late status reads whole energy from carried Health"
+fields = ["hud-clock", "quiet-item-controls", "stock-at-start", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers", "main-gameplay-countdown"]
+phase = "one whole HUD frame after the second Drawing read"
+claim = "unselected neighbour inputs only; the status bar reads whole energy from carried Health; her stock as the first frame begins is the origin record's and as the second begins the first frame's drawn stock; the origin's main gameplay runs the escape countdown"
 
 [[case]]
 id = "gameplay-sound/passage-hold"

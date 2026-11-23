@@ -47,18 +47,8 @@ pub enum BehaviourId {
     FirstColumnsShift,
     /// Spec: LastColumnsShift.
     LastColumnsShift,
-    /// Spec: ItemControls.
-    ItemControls,
-    /// Spec: MiniMapUpdate.
-    MiniMapUpdate,
-    /// Spec: StatusRefresh.
-    StatusRefresh,
-    /// Spec: RetainedHudWork.
-    RetainedHudWork,
     /// Spec: EscapeCountdown.
     EscapeCountdown,
-    /// Spec: CountdownContinuation.
-    CountdownContinuation,
 }
 
 /// A behaviour of the HUD, as the catalogue lists it.
@@ -77,10 +67,7 @@ pub struct Behaviour {
 
 /// Every behaviour of the HUD's spec, one row per entry, each naming its entry; listed in the
 /// spec's order, though the order means nothing.
-///
-/// Spec: ItemControls, MiniMapUpdate, StatusRefresh, RetainedHudWork. Their timing rules govern
-/// when inputs are observed and how chosen answers survive interruption.
-pub const CATALOGUE: [Behaviour; 26] = [
+pub const CATALOGUE: [Behaviour; 21] = [
     Behaviour {
         id: BehaviourId::EnergyGauge,
         summary: "Her energy's last two digits, and one tank per 100 of her capacity, full while \
@@ -164,7 +151,8 @@ pub const CATALOGUE: [Behaviour; 26] = [
     },
     Behaviour {
         id: BehaviourId::Switching,
-        summary: "Each switch tells the weapons and her look which item she switched to.",
+        summary: "Each switch tells the weapons and her look which item she switched to, and each \
+                  frame tells them what the controls left selected.",
         kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -246,44 +234,10 @@ pub const CATALOGUE: [Behaviour; 26] = [
         checked: Checked::ByVectors,
     },
     Behaviour {
-        id: BehaviourId::ItemControls,
-        summary: "Choose current controls once before movement, without drawing or exploring.",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::MiniMapUpdate,
-        summary: "Update the mini-map where she is after movement, before later pose placement.",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::StatusRefresh,
-        summary: "Refresh the status bar with current values after intervening play.",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::RetainedHudWork,
-        summary: "Retain actual answers and complete effects, leaving future observations unread.",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
         id: BehaviourId::EscapeCountdown,
-        summary: "Before an escape begins, countdown maintenance reports no expiry or picture.",
+        summary: "Before an escape countdown begins, a frame that runs the countdown cannot \
+                  expire the escape and contributes no countdown picture.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::CountdownContinuation,
-        summary: "Retain an interrupted countdown's actual answer without repeating it.",
-        kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

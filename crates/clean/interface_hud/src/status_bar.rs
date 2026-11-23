@@ -5,8 +5,9 @@ use std::{iter, mem};
 
 use types::Look;
 
+use crate::events::HudEvent;
 use crate::grid::Place;
-use crate::inputs::{Ammunition, Energy, FrameCount, Reserve, ReserveMode};
+use crate::inputs::{Ammunition, Energy, FrameCount, FrameInputs, Reserve, ReserveMode};
 use crate::item::SelectableItem;
 use crate::layout::{ENERGY_DIGITS, RESERVE_SIGN, TANKS, ammo_digits, icon_top_left, laid};
 use crate::pictures::{HudPictures, rows};
@@ -23,34 +24,33 @@ const ENERGY_PER_TANK: u16 = 100;
 const DECIMAL: u16 = 10;
 
 impl HudState {
-    /// Spec: StatusRefresh, SwitchClick. Draw the late status without revisiting movement.
-    pub(crate) fn refresh_status(
+    /// The status bar's turn: it draws the values as the frame ends. The icon a pickup draws
+    /// comes before the highlight and the flash, so a selected item's new icon is lit; the flash
+    /// has the last word on the one-shot item's colours. Returns the click, if the highlight
+    /// moved.
+    pub(crate) fn draw_status_bar(
         &mut self,
         rules: &Rules,
         pictures: &HudPictures,
-        inputs: &crate::inputs::StatusInputs,
-        frame: crate::inputs::FrameCount,
-        initial_highlight: Option<SelectableItem>,
-    ) -> Option<crate::events::HudEvent> {
-        self.selection.apply_drop(inputs.dropped_before_status_bar);
-        self.energy_gauge(pictures, inputs.energy);
-        self.ammo_counts(pictures, &inputs.ammunition);
-        self.reserve_sign(pictures, inputs.reserve);
+        inputs: &FrameInputs<'_>,
+    ) -> Option<HudEvent> {
+        self.energy_gauge(pictures, inputs.status.energy);
+        self.ammo_counts(pictures, &inputs.status.ammunition);
+        self.reserve_sign(pictures, inputs.status.reserve);
         if let Some(item) = inputs.collected {
             self.icon_appears(pictures, item);
         }
-        self.highlight(pictures);
-        self.one_shot_flash(rules, pictures, frame);
-        self.selection.apply_drop(inputs.dropped_after_status_bar);
-        (self.shown.highlighted != initial_highlight && inputs.muted_by.is_none())
-            .then_some(crate::events::HudEvent::Click)
+        let highlight_moved = self.highlight(pictures);
+        self.one_shot_flash(rules, pictures, inputs.frame);
+        // Spec: SwitchClick. The highlight moving clicks, unless something mutes it.
+        (highlight_moved && inputs.muted_by.is_none()).then_some(HudEvent::Click)
     }
 
     /// Spec: EnergyGauge. When her energy isn't the energy last shown, it becomes the one shown:
     /// one tank per 100 of her capacity, as many as fit (14), full while whole hundreds remain
     /// and empty after, and her energy's last two digits. Cells past her capacity keep what they
     /// show.
-    pub(crate) fn energy_gauge(&mut self, pictures: &HudPictures, energy: Energy) {
+    fn energy_gauge(&mut self, pictures: &HudPictures, energy: Energy) {
         if mem::replace(&mut self.shown.energy, energy.now) == energy.now {
             return;
         }
@@ -68,7 +68,7 @@ impl HudState {
     /// Spec: AmmoCounts. Each count whose capacity isn't 0 and isn't the count last shown
     /// becomes the one shown, in its digits. With a capacity of 0 nothing is drawn and the count
     /// last shown stays.
-    pub(crate) fn ammo_counts(&mut self, pictures: &HudPictures, ammunition: &Ammunition) {
+    fn ammo_counts(&mut self, pictures: &HudPictures, ammunition: &Ammunition) {
         for (ammo, stock) in ammunition.stocks() {
             if stock.capacity != 0
                 && mem::replace(&mut self.shown.ammo[ammo], stock.count) != stock.count
@@ -94,7 +94,7 @@ impl HudState {
     /// Spec: AutoReserveSign. While the reserve tanks refill on their own, the sign shows, lit
     /// with energy in them and dim when they are empty. Set to refill by hand, its cells keep
     /// what they show.
-    pub(crate) fn reserve_sign(&mut self, pictures: &HudPictures, reserve: Reserve) {
+    fn reserve_sign(&mut self, pictures: &HudPictures, reserve: Reserve) {
         if reserve.mode == ReserveMode::Manual {
             return;
         }
@@ -109,7 +109,7 @@ impl HudState {
     /// Spec: IconsAppear. A pickup draws its item's icon in the plain colours when the icon's
     /// top-left cell shows the blank's picture, whatever its colours and flips: the picture
     /// alone is tested. Otherwise its cells keep what they show.
-    pub(crate) fn icon_appears(&mut self, pictures: &HudPictures, item: SelectableItem) {
+    fn icon_appears(&mut self, pictures: &HudPictures, item: SelectableItem) {
         let top_left = icon_top_left(item);
         let shows_blank_picture = self
             .grid
@@ -129,11 +129,11 @@ impl HudState {
 
     /// Spec: SelectionHighlight. When the selected item isn't the item shown highlighted, its
     /// icon takes the highlighted colours, the one shown takes the plain ones, and the selected
-    /// item becomes the one shown.
-    pub(crate) fn highlight(&mut self, pictures: &HudPictures) {
+    /// item becomes the one shown. Returns whether the highlight moved.
+    fn highlight(&mut self, pictures: &HudPictures) -> bool {
         let selected = self.selection.item();
         if selected == self.shown.highlighted {
-            return;
+            return false;
         }
         for (icon, colours) in [(selected, HIGHLIGHTED), (self.shown.highlighted, PLAIN)] {
             if let Some(item) = icon {
@@ -141,17 +141,13 @@ impl HudState {
             }
         }
         self.shown.highlighted = selected;
+        true
     }
 
     /// Spec: OneShotFlash. After the highlight, the one-shot item's icon takes the plain colours
     /// in the first half of the flash's cycle and the highlighted ones in the second, though it
     /// is the selected item.
-    pub(crate) fn one_shot_flash(
-        &mut self,
-        rules: &Rules,
-        pictures: &HudPictures,
-        frame: FrameCount,
-    ) {
+    fn one_shot_flash(&mut self, rules: &Rules, pictures: &HudPictures, frame: FrameCount) {
         let Some(item) = self.selection.one_shot() else {
             return;
         };

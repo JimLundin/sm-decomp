@@ -1,25 +1,35 @@
-//! The quiet early mini-map, at her position after her moves.
+//! The quiet early HUD frame, its mini-map read at her position after her moves.
 
 use super::Fault;
-use crate::production::hud::Hud;
-use canonical::Canonical;
+use crate::production::hud::HudPin;
+use canonical::{Canonical, model::Model};
 use interface_hud::{
-    Ammunition, CancelButton, Equipped, FrameCount, HerMap, HudOpportunity, HudPictures,
-    ItemControlInputs, MiniMapPower, MovementInputs, Room, Rules, SelectButton, Selection,
+    CancelButton, Controls, CountdownRuns, Dropped, FrameCount, FrameInputs, HerMap, HudPictures,
+    MiniMapInputs, MiniMapPower, Mute, Room, Rules, SelectButton, Selection, Status, StockAtStart,
 };
 use types::Parts;
 
-/// Current room, activity and frame facts for the selected early map.
+/// The frame's facts from the HUD's neighbours, beside the position Movement supplies.
 #[derive(Clone, Copy)]
 pub struct Inputs<'a> {
     /// The current area map imported from checked content.
     pub map: &'a HerMap,
     /// The current room and its dimensions.
     pub room: Room,
-    /// The ordinary opportunity's HUD clock.
+    /// The frame count as the frame begins.
     pub frame: FrameCount,
-    /// Actual admitted item control dispositions.
+    /// Item select and item cancel this frame.
     pub controls: (SelectButton, CancelButton),
+    /// Whether the controls may switch the item.
+    pub can_switch: bool,
+    /// Her stock as the frame begins.
+    pub stock_at_start: StockAtStart,
+    /// What the status bar draws, as the frame ends.
+    pub status: Status,
+    /// Why a switch would make no click.
+    pub muted_by: Option<Mute>,
+    /// Whether the scene runs the escape countdown this frame.
+    pub countdown: CountdownRuns,
     /// The currently observed map power.
     pub enabled: bool,
     /// Whether charted cells are always shown.
@@ -32,62 +42,64 @@ pub struct Inputs<'a> {
 
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub(super) struct State {
-    pub(super) hud: Hud,
+    pub(super) hud: Model<HudPin>,
     pub(super) position: Option<[u32; 2]>,
 }
 
 impl State {
-    pub(super) fn begin(&mut self, input: Inputs<'_>) -> Result<(), Fault> {
-        if input.controls != (SelectButton::NotPressed, CancelButton::NotPressed)
-            || self.hud.state().selection != Selection::None
-            || (self.hud.state().mini_map == MiniMapPower::On) != input.enabled
-        {
-            return Err(Fault::HudMap);
-        }
-        let mut hud = Hud::new(self.hud.state().clone());
-        // This arm has neither Select nor Cancel. No availability is inspected.
-        let controls = ItemControlInputs {
-            select: input.controls.0,
-            cancel: input.controls.1,
-            can_switch: true,
-            ammunition: Ammunition::new(enum_map::EnumMap::default()).ok_or(Fault::HudMap)?,
-            equipped: Equipped::default(),
-        };
-        if !hud.begin_staged(input.frame) || !hud.choose_controls(controls) || !hud.apply() {
-            return Err(Fault::HudMap);
-        }
-        self.hud = hud;
-        self.position = None;
-        Ok(())
-    }
-
-    pub(super) fn publish(
+    /// Play the HUD's whole frame once her moves are known. The family has no item controls
+    /// and nothing that hears the HUD's events, so a frame that would switch or click is
+    /// refused.
+    pub(super) fn play(
         &mut self,
         position: types::Position,
         input: Inputs<'_>,
     ) -> Result<(), Fault> {
-        if self.position.is_some()
-            || self.hud.opportunity() != Some(HudOpportunity::MiniMapUpdate)
-            || !self.hud.choose_map(
-                input.rules,
-                input.pictures,
-                MovementInputs {
-                    runs: true,
-                    turned_on: false,
-                    mother_brain_falls: false,
-                    position: interface_hud::Pair {
-                        x: position.x.pixel().0,
-                        y: position.y.pixel().0,
-                    },
-                    room: input.room,
-                    map: input.map.clone(),
-                    map_collected: input.map_collected,
-                },
-            )
-            || !self.hud.apply()
+        let state = &self.hud.0;
+        if input.controls != (SelectButton::NotPressed, CancelButton::NotPressed)
+            || state.selection != Selection::None
+            || (state.mini_map == MiniMapPower::On) != input.enabled
         {
             return Err(Fault::HudMap);
         }
+        let mut hud = state.clone();
+        let outputs = hud
+            .frame_of_play(
+                input.rules,
+                input.pictures,
+                &FrameInputs {
+                    frame: input.frame,
+                    stock_at_start: input.stock_at_start,
+                    controls: Controls {
+                        select: input.controls.0,
+                        cancel: input.controls.1,
+                        can_switch: input.can_switch,
+                    },
+                    mini_map: MiniMapInputs {
+                        runs: true,
+                        turned_on: false,
+                        position: interface_hud::Pair {
+                            x: position.x.pixel().0,
+                            y: position.y.pixel().0,
+                        },
+                        room: input.room,
+                        map: input.map,
+                        map_collected: input.map_collected,
+                    },
+                    mother_brain_falls: false,
+                    status: input.status,
+                    collected: None,
+                    muted_by: input.muted_by,
+                    dropped_before_status_bar: Dropped::Nothing,
+                    dropped_after_status_bar: Dropped::Nothing,
+                    countdown: input.countdown,
+                },
+            )
+            .map_err(|_| Fault::HudMap)?;
+        if !outputs.events.is_empty() {
+            return Err(Fault::HudMap);
+        }
+        self.hud = Model(hud);
         self.position = Some([position.x.0, position.y.0]);
         Ok(())
     }
