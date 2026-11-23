@@ -2,6 +2,15 @@
 format = 1
 
 [[rule]]
+id = "audio-transport/FinitePhrases"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/music.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
 id = "audio-transport/FrameCadence"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/frame.rs" },
