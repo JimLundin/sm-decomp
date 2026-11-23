@@ -96,22 +96,6 @@ impl Work {
         self.graphics_delivered = 0;
         Ok(())
     }
-    /// Retire frame-scoped controls alongside completed animation work.
-    ///
-    /// # Errors
-    /// Unfinished or undelivered work cannot be retired.
-    pub(crate) fn retire_frame(&mut self) -> Result<(), WorkFault> {
-        if matches!(
-            self.cannon_observation.0,
-            samus_appearance::CannonObservation::Chosen(_)
-        ) {
-            return Err(WorkFault::Retirement);
-        }
-        self.retire()?;
-        self.cannon_before = self.cannon;
-        self.cannon_observation.0 = samus_appearance::CannonObservation::Unmade;
-        Ok(())
-    }
 
     /// Retain actual work without deciding or completing an opportunity.
     #[must_use]

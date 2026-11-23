@@ -186,13 +186,8 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "interface-hud",
         bridge: Some("interface_hud_bridge"),
-        adapters: &[
-            "production/hud.rs",
-            "production/frame/hud_map_caller.rs",
-            "production/frame/late_hud.rs",
-            "production/frame/countdown_caller.rs",
-        ],
-        providers: &["hud", "frame_hud_inputs", "frame_countdown_scene"],
+        adapters: &["production/hud.rs"],
+        providers: &["hud"],
         areas: &[
             (
                 "status",
@@ -292,8 +287,8 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "samus-appearance",
         bridge: Some("samus_appearance_bridge"),
-        adapters: &["production/frame/samus_palette.rs"],
-        providers: &["appearance", "frame_palette"],
+        adapters: &[],
+        providers: &["appearance"],
         areas: &[
             ("clip", &["clip.rs", "ahead.rs", "play.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
@@ -331,7 +326,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "boss-ceres-ridley",
         bridge: Some("boss_ceres_ridley_bridge"),
-        adapters: &["production/frame/actor_doors.rs"],
+        adapters: &[],
         providers: &["ceres"],
         areas: &[
             ("doors", &["door.rs", "phase.rs", "figure.rs"]),
@@ -377,19 +372,15 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "samus-health",
         bridge: None,
-        adapters: &[
-            "production/frame/health.rs",
-            "production/frame/maintenance.rs",
-        ],
-        providers: &["frame_health_inputs"],
+        adapters: &[],
+        providers: &["health_tail"],
         areas: &[("current-energy", &["lib.rs"])],
         apart: &[],
     },
-    // The retained frame loader and terminal comparisons serve both owners.
     Domain {
         name: "game-time",
         bridge: None,
-        adapters: &["production/frame/play_time.rs"],
+        adapters: &[],
         providers: &[],
         areas: &[("clock", &["lib.rs"])],
         apart: &[],
@@ -397,7 +388,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "world-quake",
         bridge: None,
-        adapters: &["production/frame/room_quake.rs"],
+        adapters: &[],
         providers: &[],
         areas: &[("quiet-quake", &["lib.rs"])],
         apart: &[],
@@ -405,20 +396,16 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "game-random",
         bridge: None,
-        adapters: &["production/frame/random.rs"],
-        providers: &["frame_random_prelude"],
+        adapters: &[],
+        providers: &[],
         areas: &[("sequence", &["lib.rs"])],
         apart: &[],
     },
     Domain {
         name: "world-haze",
         bridge: None,
-        adapters: &[
-            "production/frame/haze.rs",
-            "production/frame/haze_caller.rs",
-            "production/frame/steady_prelude.rs",
-        ],
-        providers: &["frame_steady"],
+        adapters: &[],
+        providers: &[],
         areas: &[("backdrop", &["lib.rs"])],
         apart: &[],
     },

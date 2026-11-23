@@ -1,54 +1,21 @@
 //! The sole carried-state comparison loop, also used for every saved continuation.
 
 use super::compare::Observation;
-use super::frame::HeldAdvance;
 use super::index::Case;
 use super::readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader};
 use super::result::{CaseResult, Outcome};
 use super::{append_digest, compared, data_failure, pending};
 use game::production::{
-    Production, ProductionContent, ProductionRules, SaveFault, SavedCompletedFrame, SavedProduction,
+    Production, ProductionContent, ProductionRules, SaveFault, SavedProduction,
 };
 
-enum SavedCut {
-    Frame(SavedCompletedFrame),
-    Scoped(SavedProduction),
-}
-
-fn save_cut(inputs: &InputReader, production: &Production, cut: u64) -> Result<SavedCut, Outcome> {
-    if matches!(inputs, InputReader::Frame(_)) {
-        return production
-            .save_completed_frame()
-            .map(SavedCut::Frame)
-            .map_err(|_| Outcome::CheckpointFailure { cut });
-    }
+fn save_cut(production: &Production, cut: u64) -> Result<SavedProduction, Outcome> {
     production
         .save()
-        .map(SavedCut::Scoped)
         .map_err(|SaveFault::Unsupported(scope)| Outcome::Unsupported {
             cut: Some(cut),
             dependency: format!("checkpoint codec for {scope:?}"),
         })
-}
-
-fn restore_cut(
-    saved: &SavedCut,
-    content: ProductionContent,
-    rules: ProductionRules,
-    failed: Outcome,
-) -> Result<Production, Outcome> {
-    match saved {
-        SavedCut::Frame(saved) => {
-            let restored = Production::restore_completed_frame(saved, content, rules)
-                .map_err(|_| failed.clone())?;
-            // Later advancement can replace return eligibility, so check it at restore.
-            if restored.save_completed_frame().as_ref() != Ok(saved) {
-                return Err(failed);
-            }
-            Ok(restored)
-        }
-        SavedCut::Scoped(saved) => Production::restore(saved, content, rules).map_err(|_| failed),
-    }
 }
 
 fn count(counter: &mut usize, amount: usize) -> Result<(), Outcome> {
@@ -72,7 +39,7 @@ pub(super) fn execute(
         inputs,
         expected,
     }
-    .execute(production, actual, cut, &mut HeldAdvance::default())
+    .execute(production, actual, cut)
 }
 
 struct CutReader<'a> {
@@ -87,16 +54,12 @@ impl CutReader<'_> {
         production: &mut Production,
         actual: &mut ActualReader,
         cut: u64,
-        held: &mut HeldAdvance,
     ) -> Result<ExpectedCut, Outcome> {
-        let output = match self.inputs.advance_observing_stop(production, cut, held) {
-            Ok(output) => output,
-            Err(outcome) => {
-                held.compare_boundary(self.expected, production, cut)?;
-                return Err(at_cut(outcome, cut));
-            }
-        };
-        let observed = actual.accept_observing_stop(self.inputs, production, output, cut, held)?;
+        let output = self
+            .inputs
+            .advance(production, cut)
+            .map_err(|outcome| at_cut(outcome, cut))?;
+        let observed = actual.accept(self.inputs, production, output, cut)?;
         let expected = self
             .expected
             .read(self.case, cut)
@@ -178,18 +141,13 @@ pub(super) fn run(
         expected: &expectation,
     };
     let pending_start = inputs.pending_origin(case, &production);
-    let mut null = actual.initial(&production)?;
-    if matches!(&inputs, InputReader::Frame(inputs) if inputs.observe_health_hud) {
-        null.extend(super::frame::health_hud::null(&production)?);
-    }
-    let phase_receiver = actual.clone();
+    let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
     let mut digest = Vec::new();
-    let mut held = HeldAdvance::default();
     let mut stop = None;
     for cut in &schedule {
-        let expected = match reader.execute(&mut production, &mut actual, *cut, &mut held) {
+        let expected = match reader.execute(&mut production, &mut actual, *cut) {
             Ok(compared) => compared,
             Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
                 stop = Some((*cut, outcome));
@@ -207,10 +165,11 @@ pub(super) fn run(
         )?;
         if case.checkpoints {
             // A one-opportunity shot or touchdown resumes across the actual advance.
-            checkpoints.push(origin.take().map_or_else(
-                || capture_checkpoint(&inputs, &production, &actual, *cut),
-                Ok,
-            )?);
+            checkpoints.push(
+                origin
+                    .take()
+                    .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
+            );
         }
     }
     verify_checkpoints(
@@ -222,8 +181,6 @@ pub(super) fn run(
             actual: &actual,
             schedule: &schedule,
         },
-        held,
-        &phase_receiver,
         checkpoints,
         stop.as_ref(),
         result,
@@ -246,8 +203,6 @@ struct CheckpointProof<'a> {
 
 fn verify_checkpoints(
     proof: CheckpointProof<'_>,
-    mut held: HeldAdvance,
-    phase_receiver: &ActualReader,
     checkpoints: Vec<CutCheckpoint>,
     stop: Option<&(u64, Outcome)>,
     result: &mut CaseResult,
@@ -260,37 +215,16 @@ fn verify_checkpoints(
         actual,
         schedule,
     } = proof;
-    for phase in std::mem::take(&mut held.phase_checkpoints) {
-        let cut = phase.cut;
-        let failed = Outcome::CheckpointFailure { cut };
-        let mut receiver = Production::restore(&phase.save, content.clone(), rules.clone())
-            .map_err(|_| failed.clone())?;
-        let mut resumed_actual = phase_receiver.clone();
-        reader.execute(
-            &mut receiver,
-            &mut resumed_actual,
-            cut,
-            &mut phase.receiver(),
-        )?;
-        if &receiver != production || !resumed_actual.same_publication_prefix(actual) {
-            return Err(failed);
-        }
-        count(&mut result.counts.restorations, 1)?;
-    }
     for (start, saved, mut restored_actual) in checkpoints {
         let failed = Outcome::CheckpointFailure { cut: start };
-        let mut restored = restore_cut(&saved, content.clone(), rules.clone(), failed.clone())?;
+        let mut restored = Production::restore(&saved, content.clone(), rules.clone())
+            .map_err(|_| failed.clone())?;
         let compared_suffix = schedule
             .iter()
             .filter(|cut| **cut > start)
             .take_while(|cut| stop.is_none_or(|(end, _)| *cut != end));
         for cut in compared_suffix {
-            let resumed = reader.execute(
-                &mut restored,
-                &mut restored_actual,
-                *cut,
-                &mut HeldAdvance::default(),
-            );
+            let resumed = reader.execute(&mut restored, &mut restored_actual, *cut);
             if stop.is_some() {
                 resumed.map_err(|_| failed.clone())?;
             } else {
@@ -298,15 +232,8 @@ fn verify_checkpoints(
             }
         }
         if let Some((cut, direct_outcome)) = stop {
-            let mut restored_held = HeldAdvance::default();
-            let resumed = reader.execute(
-                &mut restored,
-                &mut restored_actual,
-                *cut,
-                &mut restored_held,
-            );
+            let resumed = reader.execute(&mut restored, &mut restored_actual, *cut);
             if resumed.as_ref().err() != Some(direct_outcome)
-                || restored_held != held
                 || &restored != production
                 || !restored_actual.same_publication_prefix(actual)
             {
@@ -324,15 +251,14 @@ fn verify_checkpoints(
     Ok(())
 }
 
-type CutCheckpoint = (u64, SavedCut, ActualReader);
+type CutCheckpoint = (u64, SavedProduction, ActualReader);
 
 fn capture_checkpoint(
-    inputs: &InputReader,
     production: &Production,
     actual: &ActualReader,
     cut: u64,
 ) -> Result<CutCheckpoint, Outcome> {
-    Ok((cut, save_cut(inputs, production, cut)?, actual.clone()))
+    Ok((cut, save_cut(production, cut)?, actual.clone()))
 }
 
 fn origin_checkpoint(
@@ -341,20 +267,15 @@ fn origin_checkpoint(
     production: &Production,
     actual: &ActualReader,
 ) -> Result<Option<CutCheckpoint>, Outcome> {
-    use super::index::{InputProvider, Start};
+    use super::index::Start;
     if !case.checkpoints {
         return Ok(None);
     }
-    let origin = match (inputs, &case.start, case.inputs) {
-        (InputReader::MovementTouchdown(_), Start::CacheCut { frame }, _)
-        | (
-            InputReader::ShotOpportunity(_),
-            Start::NativeCheckpoint { frame, .. },
-            InputProvider::NativeShotSoundInputs | InputProvider::ShotSoundNoFire,
-        ) => *frame,
-        _ => return Ok(None),
+    let (InputReader::MovementTouchdown(_), Start::CacheCut { frame }) = (inputs, &case.start)
+    else {
+        return Ok(None);
     };
-    capture_checkpoint(inputs, production, actual, origin).map(Some)
+    capture_checkpoint(production, actual, *frame).map(Some)
 }
 
 fn touchdown_outputs_hold(

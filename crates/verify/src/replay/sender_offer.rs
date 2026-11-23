@@ -378,43 +378,6 @@ pub(super) fn contact_fifo(
     })
 }
 
-pub(super) struct ShotWindow {
-    pub seed: SenderState,
-    pub cue: CueId,
-    pub allowance: QueueAllowance,
-    pub permission: OfferPermission,
-    pub prefix: VecDeque<CueId>,
-    pub queue: VecDeque<CueId>,
-    pub progress: SenderProgress,
-}
-
-pub(super) fn shot_windows(path: &Path) -> Result<[ShotWindow; 2], Outcome> {
-    let (beam, beam_fifo) = native_records(path, 13, 157, false)?;
-    let (door, door_fifo) = native_records(path, 14, 157, true)?;
-    if beam.group != SoundGroup::Action
-        || door.group != SoundGroup::Contact
-        || beam.exec_master_ticks >= door.exec_master_ticks
-        || door.exec_master_ticks >= beam_fifo.master_ticks.min(door_fifo.master_ticks)
-    {
-        return Err(data_failure(
-            Some(157),
-            "shot and door chronological bracket",
-        ));
-    }
-    let window = |offer: NativeOffer, after: Fifo| {
-        Ok(ShotWindow {
-            cue: offer.cue,
-            allowance: offer.allowance,
-            permission: offer.permission()?,
-            prefix: offer.seed.queue.clone(),
-            seed: offer.seed.decode(157)?,
-            queue: after.queue,
-            progress: after.progress.decode()?,
-        })
-    };
-    Ok([window(beam, beam_fifo)?, window(door, door_fifo)?])
-}
-
 fn cross_group_order(offers: &[NativeOffer]) -> bool {
     use CueId::{BackgroundSilence, Beam, Door, SamusSilence};
     use SoundGroup::{Action, Ambient, Contact};

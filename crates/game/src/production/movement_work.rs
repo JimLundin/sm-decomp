@@ -100,42 +100,6 @@ impl Movement {
         }
     }
 
-    pub(super) fn selected_running_figures(
-        &self,
-        playing: samus_appearance::Figure,
-        content: &crate::production::AppearanceContent,
-    ) -> Option<(samus_appearance::Figure, samus_appearance::Figure)> {
-        use samus_movement::suspended::LocalRule;
-        let MovementDecision::Local {
-            rule: LocalRule::PoseInitialization { accepted },
-            before,
-            answer,
-            ..
-        } = self.decisions().last()?
-        else {
-            return None;
-        };
-        if answer != self.state() || answer.pose != accepted.pose {
-            return None;
-        }
-        let from = samus_appearance::Figure {
-            pose: before.pose,
-            sprite: playing.sprite,
-        };
-        let selected = samus_appearance::Figure {
-            pose: accepted.pose,
-            sprite: playing.sprite,
-        };
-        if from.pose.action != types::Action::Running
-            || selected.pose.action != types::Action::Running
-            || content.get(from).is_none()
-            || content.get(selected).is_none()
-        {
-            return None;
-        }
-        Some((from, selected))
-    }
-
     /// Begin one ordinary update from the actual current quantities.
     ///
     /// # Errors

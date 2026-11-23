@@ -226,7 +226,6 @@ impl State {
         let joined = match &self.hud {
             Hud::Initial(_) => expected.is_none(),
             Hud::Work(_) => expected.is_some() && self.hud.opportunity() == expected,
-            Hud::Countdown { .. } => false,
         };
         if !joined {
             return Err(AdmissionFault::HealthTailPhase);

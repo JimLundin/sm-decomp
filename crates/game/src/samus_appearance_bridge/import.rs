@@ -72,12 +72,6 @@ impl Imported {
         let at = self.frames.iter().position(|&each| each == frame)?;
         u8::try_from(at).ok().map(Step)
     }
-
-    /// The original's frame of `step`; `None` past the clip.
-    #[must_use]
-    pub fn frame_of(&self, step: Step) -> Option<AnimationFrame> {
-        self.frames.get(usize::from(step.0)).copied()
-    }
 }
 
 /// Her clips by pose, and the run's paces: the model's content.

@@ -72,16 +72,6 @@ pub(super) fn admit(
             OwnedState::HealthTail(state)
         }
         (
-            ProductionSeed::FrameOpening(state),
-            ProductionContent::FrameOpening(profiles),
-            ProductionRules::FrameOpening,
-        ) => {
-            state
-                .validate(profiles)
-                .map_err(super::frame::Fault::Production)?;
-            OwnedState::FrameOpening(state)
-        }
-        (
             ProductionSeed::Audio(state),
             ProductionContent::Audio(content),
             ProductionRules::Audio,
@@ -142,14 +132,6 @@ pub(super) fn admit(
         (ProductionSeed::Doors(state), ProductionContent::Doors, ProductionRules::Doors(_)) => {
             OwnedState::Doors(state)
         }
-        (
-            ProductionSeed::ShotOpportunity(state),
-            ProductionContent::ShotOpportunity(content),
-            ProductionRules::ShotOpportunity,
-        ) => {
-            state.validate(content)?;
-            OwnedState::ShotOpportunity(state)
-        }
         _ => return Err(AdmissionFault::WrongScope),
     })
 }
@@ -167,15 +149,6 @@ pub(super) fn advance(
             ProductionRules::HealthTail(rules),
             AdvanceInput::HealthTail(input),
         ) => ProductionOutputs::HealthTail(state.advance(content, *rules, input)?),
-        (
-            OwnedState::FrameOpening(state),
-            ProductionContent::FrameOpening(profiles),
-            ProductionRules::FrameOpening,
-            AdvanceInput::Frame { budget },
-        ) => {
-            let (progress, events) = state.advance(profiles, budget)?;
-            ProductionOutputs::FrameOpening(progress, events)
-        }
         (
             OwnedState::WeaponsContact(state),
             ProductionContent::WeaponsContact(content),
@@ -250,15 +223,6 @@ pub(super) fn advance(
             ProductionRules::PassageAudio(rules),
             AdvanceInput::PassageAudio(shoot),
         ) => ProductionOutputs::PassageAudio(state.advance(content, rules, shoot)?),
-        (
-            OwnedState::ShotOpportunity(state),
-            ProductionContent::ShotOpportunity(content),
-            ProductionRules::ShotOpportunity,
-            AdvanceInput::ShotOpportunity {
-                inputs,
-                environment,
-            },
-        ) => state.advance(inputs, &content.at(environment))?,
         (state, content, rules, input) => return advance_audio(state, content, rules, input),
     })
 }

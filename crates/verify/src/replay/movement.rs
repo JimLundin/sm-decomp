@@ -40,11 +40,6 @@ pub struct Content {
 }
 
 impl Content {
-    /// The checked immutable image used to validate physical movement operands.
-    pub(crate) const fn rom(&self) -> &Rom {
-        &self.rom
-    }
-
     pub fn load(path: &std::path::Path) -> Result<Self, Outcome> {
         let image = std::fs::read(path).map_err(|_| data_failure(None, "player ROM file"))?;
         let rom = Rom::new(image).map_err(|_| data_failure(None, "player ROM pin"))?;

@@ -9,6 +9,7 @@ use audio_transport::{
 };
 use canonical::Canonical;
 use canonical::model::Model;
+use std::collections::VecDeque;
 
 /// The three actual request queues, each with its complete pending service.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
@@ -109,7 +110,7 @@ fn progress_group(progress: &SenderProgress, group: SoundGroup) -> bool {
 }
 
 pub(super) fn validate(state: &SenderState, group: SoundGroup) -> Result<(), AdmissionFault> {
-    let queue_valid = |queue: &std::collections::VecDeque<CueId>| {
+    let queue_valid = |queue: &VecDeque<CueId>| {
         queue.len() <= 15
             && queue
                 .iter()
@@ -279,5 +280,150 @@ impl OfferCurrent {
             }
             _ => None,
         }
+    }
+}
+
+/// Invalid current queue representation or producer transition.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum QueueFault {
+    /// Cursors do not represent the actual sole clean FIFO.
+    Queue,
+    /// The observed producer transition is not an append or retained dequeue.
+    Transition,
+    /// The offer is not the one-cue enqueue its permission allows.
+    Receipt,
+}
+
+/// Physical positions only; the actual cue FIFO belongs to the clean sender.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QueueWindow {
+    head: u8,
+    tail: u8,
+}
+
+impl QueueWindow {
+    /// Import independently qualified current positions once at the frame origin.
+    /// # Errors
+    /// Positions outside the sixteen-slot physical representation.
+    pub const fn new(head: u8, tail: u8) -> Result<Self, QueueFault> {
+        if head >= 16 || tail >= 16 {
+            return Err(QueueFault::Queue);
+        }
+        Ok(Self { head, tail })
+    }
+
+    /// Current physical positions, used only to qualify a source envelope.
+    #[must_use]
+    pub const fn positions(self) -> [u8; 2] {
+        [self.head, self.tail]
+    }
+
+    fn validate(self, queue: &VecDeque<CueId>) -> Result<(), QueueFault> {
+        if self.head >= 16
+            || self.tail >= 16
+            || usize::from(self.tail.wrapping_sub(self.head) % 16) != queue.len()
+        {
+            return Err(QueueFault::Queue);
+        }
+        Ok(())
+    }
+}
+
+/// Origin-derived positions for the three actual sender owners.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct Queues {
+    action: QueueWindow,
+    ambient: QueueWindow,
+    contact: QueueWindow,
+}
+
+fn sender(senders: &Senders, group: SoundGroup) -> &SenderState {
+    match group {
+        SoundGroup::Action => &senders.action.0,
+        SoundGroup::Ambient => &senders.ambient.0,
+        SoundGroup::Contact => &senders.contact.0,
+    }
+}
+
+impl Queues {
+    /// Import positions alongside, rather than in place of, actual clean queues.
+    /// # Errors
+    /// A physical window disagrees with its actual current sender FIFO.
+    pub fn new(
+        action: QueueWindow,
+        ambient: QueueWindow,
+        contact: QueueWindow,
+        senders: &Senders,
+    ) -> Result<Self, QueueFault> {
+        let queues = Self {
+            action,
+            ambient,
+            contact,
+        };
+        queues.validate(senders)?;
+        Ok(queues)
+    }
+
+    /// Check restored positions against all actual current FIFOs.
+    /// # Errors
+    /// An invalid window or lost queue transition.
+    pub fn validate(&self, senders: &Senders) -> Result<(), QueueFault> {
+        for group in [SoundGroup::Action, SoundGroup::Ambient, SoundGroup::Contact] {
+            self.window(group).validate(&sender(senders, group).queue)?;
+        }
+        Ok(())
+    }
+
+    /// The current physical window, never reconstructed from queue length.
+    #[must_use]
+    pub const fn window(&self, group: SoundGroup) -> QueueWindow {
+        match group {
+            SoundGroup::Action => self.action,
+            SoundGroup::Ambient => self.ambient,
+            SoundGroup::Contact => self.contact,
+        }
+    }
+
+    const fn window_mut(&mut self, group: SoundGroup) -> &mut QueueWindow {
+        match group {
+            SoundGroup::Action => &mut self.action,
+            SoundGroup::Ambient => &mut self.ambient,
+            SoundGroup::Contact => &mut self.contact,
+        }
+    }
+
+    /// Track actual append results on the same candidate as the producer commit.
+    /// # Errors
+    /// A producer replaced existing cues, shortened the FIFO or changed progress.
+    pub fn offered(
+        &mut self,
+        group: SoundGroup,
+        before: &SenderState,
+        after: &SenderState,
+    ) -> Result<(), QueueFault> {
+        let mut window = self.window(group);
+        window.validate(&before.queue)?;
+        if before.progress != after.progress
+            || before.reply != after.reply
+            || before.now != after.now
+            || before.pending != after.pending
+            || after.queue.len() < before.queue.len()
+            || !before
+                .queue
+                .iter()
+                .eq(after.queue.iter().take(before.queue.len()))
+        {
+            return Err(QueueFault::Transition);
+        }
+        let added = after
+            .queue
+            .len()
+            .checked_sub(before.queue.len())
+            .ok_or(QueueFault::Transition)?;
+        let added = u8::try_from(added).map_err(|_| QueueFault::Queue)?;
+        window.tail = window.tail.wrapping_add(added) % 16;
+        window.validate(&after.queue)?;
+        *self.window_mut(group) = window;
+        Ok(())
     }
 }

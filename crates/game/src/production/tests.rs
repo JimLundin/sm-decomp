@@ -22,7 +22,6 @@ mod audio_checkpoint;
 mod continuation;
 mod entries;
 pub(super) mod fixtures;
-mod frame_movement;
 mod sender;
 mod weapons;
 

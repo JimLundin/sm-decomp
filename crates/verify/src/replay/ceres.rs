@@ -200,10 +200,6 @@ const fn figure_value(figure: Option<Figure>) -> i64 {
     }
 }
 
-pub(super) fn invisible(wram: &[u8], slot: Slot) -> Result<bool, Outcome> {
-    Ok(word(wram, slot, source::ENEMY_PROPERTIES)? & 0x0100 != 0)
-}
-
 pub(super) fn expected(wram: &[u8], slot: Slot) -> Result<Vec<Observation>, Outcome> {
     identity(wram, slot)?;
     let figure = match word(wram, slot, source::ENEMY_SPRITEMAP)? {

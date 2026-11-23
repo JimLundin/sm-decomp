@@ -20,9 +20,9 @@ use game::{
     production::{
         AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
         ProductionSeed, Senders,
-        frame::sender_contract::{QueueWindow, Queues},
         gameplay_sounds::GameplaySounds,
         passage_audio::{Advance, Content, Output, ShootHeld, State},
+        sender::{QueueWindow, Queues},
     },
     state::owned::OwnedState,
 };
@@ -458,10 +458,13 @@ fn inputs(
     }
     let pads = member(root, "inputs/steps-183-to-185.pads", PADS_PIN)?;
     let mut pads = std::str::from_utf8(&pads).map_err(|_| bad())?.lines();
-    let pad =
-        super::frame_origin::hardware_seed::pad(pads.next().ok_or_else(bad)?).map_err(|_| bad())?;
+    let pad = pads
+        .next()
+        .filter(|row| !row.is_empty() && row.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .and_then(|row| u16::from_str_radix(row, 16).ok())
+        .ok_or_else(bad)?;
     let shoot = word(0x09b2)?;
-    let shoot_held = pad.0 & shoot != 0;
+    let shoot_held = pad & shoot != 0;
     if shoot_held != (word(0x008b)? & shoot != 0) {
         return Err(bad());
     }

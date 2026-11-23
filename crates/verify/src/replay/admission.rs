@@ -11,14 +11,6 @@ use game::production::{Production, ProductionContent, ProductionRules, Productio
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     if matches!(
         case.inputs,
-        InputProvider::ScopedShotOpportunityInputs
-            | InputProvider::NativeShotSoundInputs
-            | InputProvider::ShotSoundNoFire
-    ) {
-        return super::shot_opportunity::admit_indexed(case, sources);
-    }
-    if matches!(
-        case.inputs,
         InputProvider::NativePassageSoundInputs | InputProvider::PassageSoundShootHeld
     ) {
         return super::passage_audio::admit(case, sources);
@@ -31,12 +23,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     }
     if case.inputs == InputProvider::NativeTouchdownInputs {
         return super::movement_touchdown::admit(case, sources);
-    }
-    if case.inputs == InputProvider::NativeFrameOwners {
-        return super::frame_origin::admit(case, sources);
-    }
-    if case.inputs == InputProvider::NativeSteadyPrelude {
-        return super::frame_steady::admit(case, sources);
     }
     if case.inputs == InputProvider::Unavailable {
         let dependency = match case.responsibilities.as_slice() {

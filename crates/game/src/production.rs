@@ -15,7 +15,6 @@ mod camera_semantic;
 pub mod connected;
 mod content;
 mod entries;
-pub mod frame;
 pub mod health_tail;
 pub mod hud;
 mod immutable;
@@ -30,14 +29,12 @@ pub mod played;
 pub mod sender;
 #[cfg(test)]
 mod tests;
-pub mod timing;
 pub mod weapons;
 pub mod world;
 pub use animation::{AppearanceContent, ClipFault, FigureClip};
 use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
-use frame::shot_opportunity;
 pub use immutable::{BlockRules, CameraRules, HudRules};
 pub use movement::MovementInputs;
 pub use sender::{SenderInput, Senders};
@@ -47,8 +44,6 @@ pub use sender::{SenderInput, Senders};
 pub enum Scope {
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
-    /// Retained CPU frame or its admitted bounded opening.
-    Frame,
     /// Scoped Health and its late Drawing and HUD consumers.
     HealthTail,
     /// Movement and semantic pose.
@@ -63,8 +58,6 @@ pub enum Scope {
     ResidentAudio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
     WeaponsContact,
-    /// Scoped ordinary fire, doors, Movement, Camera and drawing.
-    ShotOpportunity,
     /// Ordered block requests and running reactions.
     Blocks,
     /// Following camera and retained receipts.
@@ -90,10 +83,6 @@ pub enum Scope {
 pub enum ProductionSeed {
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
-    /// Complete caller, selected owners, hardware and delivery continuation.
-    Frame(Box<frame::State>),
-    /// Bounded Frame acknowledgment and Music owner.
-    FrameOpening(Box<frame::opening_prelude::Opening>),
     /// Complete current Health, Drawing history and gauge from a single origin.
     HealthTail(Box<health_tail::State>),
     /// Full movement memory.
@@ -108,8 +97,6 @@ pub enum ProductionSeed {
     ResidentAudio(Box<audio::State>),
     /// Full ordinary power shot/trail/spacing state.
     WeaponsContact(Box<weapons_projectiles::State>),
-    /// Complete scoped shot continuation at an ordinary boundary.
-    ShotOpportunity(Box<shot_opportunity::Continuation>),
     /// Full tiles, places and screens.
     Blocks(Box<world_blocks::State>),
     /// Full camera memory and receipt.
@@ -149,16 +136,6 @@ pub enum AdvanceInput<'a> {
         map: connected::early_map::Inputs<'a>,
         /// Stop at the map or continue the ordinary opportunity.
         advance: connected::Advance,
-    },
-    /// Pause budget for the actual retained frame caller.
-    Frame {
-        /// Intrinsic host pause budget.
-        budget: data::timing::MasterTicks,
-    },
-    /// Advance every owner to the next native return as one atomic operation.
-    FrameReturn {
-        /// Intrinsic pause budget for each hardware step inside the return.
-        budget: data::timing::MasterTicks,
     },
     /// One independently admitted ordinary opportunity for connected owners.
     MovementCeres {
@@ -202,13 +179,6 @@ pub enum AdvanceInput<'a> {
         /// Independently admitted inputs at the flying-picture insertion point.
         drawing: weapons::FlyingDraw<'a>,
     },
-    /// One scoped ordinary shot opportunity from current physical buttons and drawing stores.
-    ShotOpportunity {
-        /// Current sampled controls and independently qualified surrounding stores.
-        inputs: shot_opportunity::Inputs<'a>,
-        /// Fixed external geometry and Camera lead setting.
-        environment: shot_opportunity::Environment<'a>,
-    },
     /// Independent ordered block requests or room placements.
     Blocks(BlocksInput<'a>),
     /// Actual movement placement, lead, room screens and time permission.
@@ -245,10 +215,6 @@ pub enum ProductionOutputs {
     HealthTail(Vec<health_tail::Output>),
     /// Complete new selected outputs and actual semantic progress.
     Connected(Box<connected::Outputs>),
-    /// Actual frame progress and ordered fresh physical outputs.
-    Frame(frame::Outputs),
-    /// Real physical steps of the bounded Frame opening.
-    FrameOpening(timing::Progress, Vec<timing::Event>),
     /// Every movement receipt, including requests and placements.
     Movement(samus_movement::Outcome),
     /// Movement and completed touchdown consumer publications.
@@ -261,15 +227,6 @@ pub enum ProductionOutputs {
     WeaponsContact(weapons::WeaponsOutputs),
     /// Scoped weapons requests, ordered contact and exact flying-picture insertion.
     WeaponsContactDrawing(Box<weapons::ShotDrawingOutputs>),
-    /// Complete connected publications from the scoped shot opportunity.
-    ShotOpportunity(Box<shot_opportunity::Completion>),
-    /// Carried shot opportunity with actual sound ingress in producer order.
-    ShotOpportunityWithAudio {
-        /// Original shot and actor outputs.
-        shot: Box<shot_opportunity::Completion>,
-        /// Typed sound offers at the selected producer boundaries.
-        offers: Vec<gameplay_sounds::Offer>,
-    },
     /// Every block request answer, written cell and sound.
     Blocks(BlocksOutputs),
     /// Complete resulting camera and retained receipt.
@@ -297,8 +254,6 @@ pub enum AdmissionFault {
     GameplaySoundServicePending(audio_transport::SoundGroup),
     /// Complete connected owner/content relation is invalid.
     Connected(connected::Fault),
-    /// Complete frame continuation failed validation.
-    Frame(Box<frame::Fault>),
     /// State, content and rules must select the same entry.
     WrongScope,
     /// A selectable semantic pose has no body content.
@@ -317,8 +272,6 @@ pub enum AdmissionFault {
     ResidentAudio(audio::Fault),
     /// Invalid restored shot or content references.
     Weapons(crate::weapons_projectiles_bridge::Fault),
-    /// Invalid carried scoped shot or inconsistent initial owners.
-    ShotOpportunity,
     /// A semantic figure has conflicting or missing clip content.
     Appearance(ClipFault),
     /// The complete sender queue/progress contains an invalid length or another group.
@@ -333,12 +286,6 @@ pub enum AdmissionFault {
     StatePin(canonical::model::Unpinned),
 }
 
-impl From<frame::Fault> for AdmissionFault {
-    fn from(fault: frame::Fault) -> Self {
-        Self::Frame(Box::new(fault))
-    }
-}
-
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
@@ -346,14 +293,10 @@ pub enum Unsupported {
     WeaponImpactSound,
     /// The passage first-entry sound sequence is outside its qualified arm.
     PassageAudio,
-    /// A required relation in the scoped ordinary shot continuation is unavailable.
-    ShotOpportunity,
     /// The scoped actor, Maintenance or late consumer opportunity is unavailable.
     HealthTailOpportunity,
     /// A produced Appearance request has no selected receiver mapping.
     AppearanceSound(samus_appearance::PublishedSound),
-    /// A current causal frame prerequisite has no admitted owner.
-    Frame(frame::Dependency),
     /// No independent value or producer for the selected entry.
     MissingInput(Scope),
     /// A selected pose requires unavailable semantic content.
@@ -385,10 +328,6 @@ pub enum Unsupported {
 pub enum ProductionFault {
     /// A connected opportunity lacks actual current owners or supported inputs.
     Connected(connected::Fault),
-    /// Invalid or unavailable current frame hardware continuation.
-    FrameHardware(timing::Fault),
-    /// Invalid retained frame output ordering or delivery cursor.
-    FramePublications(frame::PublicationFault),
     /// Input belongs to another admitted entry.
     WrongScope,
     /// Required production behaviour is unavailable.
@@ -424,26 +363,11 @@ pub enum SaveFault {
 }
 
 /// Canonical state bytes bound to an exact in-memory context.
-/// Completed retained frames also carry the production return evidence.
 /// Durable context encoding requires clean rule serialization support.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SavedProduction {
     state: Vec<u8>,
     context: Arc<Context>,
-    frame_returned: bool,
-}
-
-/// A saved retained frame whose production caller completed the native return.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SavedCompletedFrame(SavedProduction);
-
-/// Why the current production state cannot be saved as a completed retained frame.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CompletedFrameSaveFault {
-    /// The selected entry is not the retained frame caller.
-    WrongScope,
-    /// Production has yet to complete the current frame's native return.
-    Incomplete,
 }
 
 /// One admitted entry with immutable context and one writable clean state owner.
@@ -451,7 +375,6 @@ pub enum CompletedFrameSaveFault {
 pub struct Production {
     state: OwnedState,
     context: Arc<Context>,
-    frame_returned: bool,
 }
 
 impl Production {
@@ -468,14 +391,12 @@ impl Production {
         validate_pins(match &seed {
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
-            ProductionSeed::Frame(_) | ProductionSeed::FrameOpening(_) => Scope::Frame,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::ResidentAudio(_) => Scope::ResidentAudio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
-            ProductionSeed::ShotOpportunity(_) => Scope::ShotOpportunity,
             ProductionSeed::Blocks(_) => Scope::Blocks,
             ProductionSeed::Camera(_) => Scope::Camera,
             ProductionSeed::Appearance(_) => Scope::Appearance,
@@ -495,24 +416,6 @@ impl Production {
                 content.movement.validate()?;
                 state.validate(content).map_err(AdmissionFault::Connected)?;
                 OwnedState::Connected(state)
-            }
-            (
-                ProductionSeed::Frame(state),
-                ProductionContent::Frame(content),
-                ProductionRules::Frame(rules),
-            ) => {
-                state.validate()?;
-                content.movement.validate()?;
-                content
-                    .random_requests
-                    .multiplier
-                    .checked()
-                    .map_err(|_| frame::Fault::InvalidRandomWork)?;
-                state.current_clip(&content.appearance)?;
-                state.validate_committed_actors(content)?;
-                state.validate_carried_health(content)?;
-                state.validate_opportunity(content, rules)?;
-                OwnedState::Frame(state)
             }
             (
                 ProductionSeed::MovementCeres(state),
@@ -559,7 +462,6 @@ impl Production {
         Ok(Self {
             state,
             context: Arc::new(Context { content, rules }),
-            frame_returned: false,
         })
     }
 
@@ -575,14 +477,12 @@ impl Production {
         match self.state {
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::HealthTail(_) => Scope::HealthTail,
-            OwnedState::Frame(_) | OwnedState::FrameOpening(_) => Scope::Frame,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::ResidentAudio(_) => Scope::ResidentAudio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
-            OwnedState::ShotOpportunity(_) => Scope::ShotOpportunity,
             OwnedState::Blocks(_) => Scope::Blocks,
             OwnedState::Camera(_) => Scope::Camera,
             OwnedState::Appearance(_) => Scope::Appearance,
@@ -595,43 +495,6 @@ impl Production {
         }
     }
 
-    /// Read the scoped incoming Contact latch and the actual CPU presentation.
-    #[must_use]
-    pub fn frame_contact_latches(&self) -> Option<[u8; 2]> {
-        let (OwnedState::Frame(state), ProductionContent::Frame(content)) =
-            (&self.state, &self.context.content)
-        else {
-            return None;
-        };
-        state.contact_latches(content)
-    }
-
-    /// Schedule physical first-port changes for the retained frame.
-    ///
-    /// Use absolute hardware times at or after the current time, in strictly increasing
-    /// order across pending changes. Entering line 241 samples the latest change through
-    /// that crossing and holds it for serial polling. A crossing already processed by
-    /// an earlier advance is final. Unsampled changes survive pauses and checkpoints.
-    ///
-    /// # Errors
-    /// A wrong scope, past time or unordered batch leaves the queue unchanged.
-    pub fn schedule_frame_pad_changes(
-        &mut self,
-        changes: &[timing::PadChange],
-    ) -> Result<(), ProductionFault> {
-        let OwnedState::Frame(state) = &mut self.state else {
-            return Err(ProductionFault::WrongScope);
-        };
-        state
-            .timing
-            .schedule_pad_changes(changes)
-            .map_err(ProductionFault::FrameHardware)?;
-        if !changes.is_empty() {
-            self.frame_returned = false;
-        }
-        Ok(())
-    }
-
     /// Advance a candidate value and commit its state and complete outputs together.
     ///
     /// # Errors
@@ -641,8 +504,6 @@ impl Production {
         input: AdvanceInput<'_>,
     ) -> Result<ProductionOutputs, ProductionFault> {
         let (candidate, outputs) = self.advance_candidate(self.state.clone(), input)?;
-        self.frame_returned = matches!(&outputs, ProductionOutputs::Frame(output)
-            if output.progress == frame::Progress::Completed);
         self.state = candidate;
         Ok(outputs)
     }
@@ -678,21 +539,6 @@ impl Production {
                     .advance_with_map(inputs, content, rules, advance, Some(map))
                     .map_err(ProductionFault::Connected)?,
             )),
-            (
-                OwnedState::Frame(state),
-                ProductionContent::Frame(content),
-                ProductionRules::Frame(rules),
-                AdvanceInput::Frame { budget },
-            ) => {
-                // The outer candidate already makes this caller's changes atomic.
-                ProductionOutputs::Frame(state.advance_caller(content, rules, budget)?)
-            }
-            (
-                OwnedState::Frame(state),
-                ProductionContent::Frame(content),
-                ProductionRules::Frame(rules),
-                AdvanceInput::FrameReturn { budget },
-            ) => ProductionOutputs::Frame(state.advance_to_return(content, rules, budget)?),
             (
                 OwnedState::MovementCeres(state),
                 ProductionContent::MovementCeres(content),
@@ -759,14 +605,11 @@ impl Production {
             OwnedState::Audio(state) => Some(&state.0),
             OwnedState::ResidentAudio(state) => Some(state.transport()),
             OwnedState::Connected(_)
-            | OwnedState::Frame(_)
             | OwnedState::HealthTail(_)
-            | OwnedState::FrameOpening(_)
             | OwnedState::Movement(_)
             | OwnedState::MovementTouchdown(_)
             | OwnedState::MovementCeres(_)
             | OwnedState::WeaponsContact(_)
-            | OwnedState::ShotOpportunity(_)
             | OwnedState::Blocks(_)
             | OwnedState::Camera(_)
             | OwnedState::Appearance(_)
@@ -780,32 +623,17 @@ impl Production {
     }
 
     /// Save the selected state and pending work with its immutable context in memory.
-    /// A suspended Frame can be saved before the requested NMI return.
     ///
     /// # Errors
     /// A model without a complete codec reports its selected scope explicitly.
     pub fn save(&self) -> Result<SavedProduction, SaveFault> {
         let state = match &self.state {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
-            OwnedState::Frame(state) => CodecState::Frame(state.clone()),
-            OwnedState::FrameOpening(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
-            OwnedState::ShotOpportunity(state) => {
-                let ProductionContent::ShotOpportunity(content) = &self.context.content else {
-                    return Err(SaveFault::Unsupported(self.scope()));
-                };
-                return Ok(SavedProduction {
-                    state: state
-                        .save(content.dress)
-                        .map_err(|_| SaveFault::Unsupported(self.scope()))?,
-                    context: self.context.clone(),
-                    frame_returned: false,
-                });
-            }
             OwnedState::PassageAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
@@ -823,25 +651,6 @@ impl Production {
         Ok(self.encode_save(state))
     }
 
-    /// Save the current completed retained frame and its selected content, rules and timing.
-    /// A failed advance preserves any prior committed return. Advancing partway into the next
-    /// frame or scheduling new controller input clears eligibility until another native return.
-    ///
-    /// # Errors
-    /// Returns [`CompletedFrameSaveFault::WrongScope`] for other entries and
-    /// [`CompletedFrameSaveFault::Incomplete`] before a completed return.
-    pub fn save_completed_frame(&self) -> Result<SavedCompletedFrame, CompletedFrameSaveFault> {
-        let OwnedState::Frame(state) = &self.state else {
-            return Err(CompletedFrameSaveFault::WrongScope);
-        };
-        if !self.frame_returned {
-            return Err(CompletedFrameSaveFault::Incomplete);
-        }
-        Ok(SavedCompletedFrame(
-            self.encode_save(CodecState::Frame(state.clone())),
-        ))
-    }
-
     fn encode_save<S: Canonical>(&self, state: S) -> SavedProduction {
         SavedProduction {
             state: canonical::to_bytes(&Checkpoint {
@@ -849,21 +658,7 @@ impl Production {
                 state,
             }),
             context: self.context.clone(),
-            frame_returned: self.frame_returned,
         }
-    }
-
-    /// Continue from a saved native return using the same imported content and selected rules.
-    /// The saved hardware clock, pending controller input and publication cursor resume directly.
-    ///
-    /// # Errors
-    /// Returns the same schema, content, rules and state admission errors as [`Self::restore`].
-    pub fn restore_completed_frame(
-        saved: &SavedCompletedFrame,
-        content: ProductionContent,
-        rules: ProductionRules,
-    ) -> Result<Self, AdmissionFault> {
-        Self::restore(&saved.0, content, rules)
     }
 
     /// Restore directly; no initialization, model step or input replay occurs.
@@ -881,16 +676,7 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if let ProductionContent::ShotOpportunity(shot) = &content {
-            let state = shot_opportunity::Continuation::restore(
-                &saved.state,
-                shot.admitted.clone(),
-                shot.dress,
-                &shot.power,
-            )
-            .map_err(|_| AdmissionFault::ShotOpportunity)?;
-            ProductionSeed::ShotOpportunity(Box::new(state))
-        } else if matches!(&content, ProductionContent::Audio(_)) {
+        let seed = if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             let PortableAudio(state) = checkpoint.state;
@@ -911,16 +697,11 @@ impl Production {
             let checkpoint: Checkpoint<Box<passage_audio::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::PassageAudio(checkpoint.state)
-        } else if matches!(&content, ProductionContent::FrameOpening(_)) {
-            let checkpoint: Checkpoint<Box<frame::opening_prelude::Opening>> =
-                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
-            ProductionSeed::FrameOpening(checkpoint.state)
         } else {
             let checkpoint: Checkpoint<CodecState> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             match checkpoint.state {
                 CodecState::Connected(state) => ProductionSeed::Connected(state),
-                CodecState::Frame(state) => ProductionSeed::Frame(state),
                 CodecState::Movement(state) => ProductionSeed::Movement(state.0),
                 CodecState::Audio(_) => return Err(AdmissionFault::WrongScope),
                 CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
@@ -929,9 +710,7 @@ impl Production {
                 CodecState::AudioSender(state) => ProductionSeed::AudioSender(state.0),
             }
         };
-        let mut restored = Self::admit(seed, content, rules)?;
-        restored.frame_returned = saved.frame_returned;
-        Ok(restored)
+        Self::admit(seed, content, rules)
     }
 }
 
@@ -950,7 +729,6 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
                 .and_then(|()| pin_holds::<crate::state::owned::CameraPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
         }
-        Scope::Frame => frame::validate_pins(),
         Scope::HealthTail => canonical::model::pin_holds::<health_tail::HealthPin>()
             .and_then(|()| canonical::model::pin_holds::<hud::HudPin>())
             .and_then(|()| canonical::model::pin_holds::<hud::WorkPin>()),
@@ -966,15 +744,6 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::ResidentAudio => canonical::model::pin_holds::<crate::state::owned::AudioPin>()
             .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>()),
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
-        Scope::ShotOpportunity => {
-            use crate::state::owned::{CameraPin, MovementPin, PowerPin};
-            use canonical::model::pin_holds;
-            pin_holds::<PowerPin>()
-                .and_then(|()| pin_holds::<CameraPin>())
-                .and_then(|()| pin_holds::<MovementPin>())
-                .and_then(|()| pin_holds::<movement::MovementInputsPin>())
-                .and_then(|()| pin_holds::<crate::state::owned::SenderPin>())
-        }
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
         Scope::AudioSender | Scope::PassageAudio => {

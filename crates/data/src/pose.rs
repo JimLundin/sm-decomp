@@ -10,7 +10,6 @@ use canonical::Canonical;
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 pub mod animation;
-pub mod cannon;
 pub mod spritemap;
 pub mod tiles;
 pub mod transition;

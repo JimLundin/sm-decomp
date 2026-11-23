@@ -57,10 +57,6 @@ impl Pinned for SenderPin {
 pub enum OwnedState {
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
-    /// Complete retained frame caller, selected producers and physical continuation.
-    Frame(Box<crate::production::frame::State>),
-    /// Bounded Frame acknowledgment and Music continuation.
-    FrameOpening(Box<crate::production::frame::opening_prelude::Opening>),
     /// Complete Health and qualified late consumer continuation.
     HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.
@@ -75,8 +71,6 @@ pub enum OwnedState {
     ResidentAudio(Box<crate::production::audio::State>),
     /// Current power shots and late contact consumption.
     WeaponsContact(Model<PowerPin>),
-    /// Current ordinary weapon, door, Movement, Camera and drawing owners.
-    ShotOpportunity(Box<crate::production::frame::shot_opportunity::Continuation>),
     /// Complete room tiles, running places and scroll screens.
     Blocks(Box<world_blocks::State>),
     /// Following view, remembered centre and height receipt.
@@ -108,5 +102,4 @@ pub(crate) enum CodecState {
     Camera(Model<CameraPin>),
     Appearance(Model<AppearancePin>),
     AudioSender(Model<SenderPin>),
-    Frame(Box<crate::production::frame::State>),
 }

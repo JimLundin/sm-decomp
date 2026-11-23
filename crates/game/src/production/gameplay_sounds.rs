@@ -2,8 +2,7 @@
 
 use super::{
     AdmissionFault, ProductionFault, SenderInput, Unsupported,
-    frame::sender_contract::Queues,
-    sender::{self, OfferCurrent, Senders, Sounds},
+    sender::{self, OfferCurrent, Queues, Senders, Sounds},
 };
 use audio_transport::{CueId, OfferPermission, QueueAllowance, SoundGroup};
 use canonical::Canonical;

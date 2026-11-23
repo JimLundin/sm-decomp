@@ -17,16 +17,6 @@ pub struct Content {
 }
 
 impl Content {
-    pub(super) fn rendering(
-        &self,
-        rom: &Rom,
-    ) -> Result<game::production::frame::rendering_stage::Content, Outcome> {
-        let imported = import::samus::import_with_bindings(rom.lorom())
-            .map_err(|_| data_failure(None, "actual Samus rendering assets"))?;
-        game::production::frame::rendering_stage::Content::import(&imported.assets, &self.clips)
-            .map_err(|_| data_failure(None, "actual Samus rendering bindings"))
-    }
-
     pub fn load(path: &std::path::Path) -> Result<Self, Outcome> {
         let bytes = std::fs::read(path).map_err(|_| data_failure(None, "player ROM file"))?;
         let rom = Rom::new(bytes).map_err(|_| data_failure(None, "player ROM pin"))?;

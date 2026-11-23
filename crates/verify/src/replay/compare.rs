@@ -59,9 +59,6 @@ pub fn compare(expected: &[Observation], actual: &[Observation]) -> Result<(), C
                 {
                     super::full_movement::difference(&observed.bytes, &actual.bytes)
                         .unwrap_or_default()
-                } else if observed.field == "frame.outputs" {
-                    super::frame_timing::difference(&observed.bytes, &actual.bytes)
-                        .unwrap_or_default()
                 } else {
                     String::new()
                 };

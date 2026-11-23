@@ -1644,11 +1644,6 @@ pub const SAMUS_BOUNCE_STATE: WramWord = WramWord {
     name: "USED_FOR_BALL_BOUNCE_ON_LANDING",
     offset: 0x0B20,
 };
-/// Bank $82 log: the run button's binding, a pad bit.
-pub const BINDING_RUN: WramWord = WramWord {
-    name: "BUTTON_CONFIG_RUN_B",
-    offset: 0x09B6,
-};
 
 /// Ordinary collision-returned signed travels, before independent position snapping
 /// (samus-movement decode notes, Directional travel outputs).

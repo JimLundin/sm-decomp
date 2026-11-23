@@ -1,4 +1,4 @@
-//! Complete HUD quantities and actual ordered publications retained across frame suspension.
+//! Complete HUD quantities and actual ordered publications retained across staged HUD work.
 
 use canonical::Canonical;
 use canonical::model::{Model, Pinned};
@@ -56,14 +56,6 @@ impl Pinned for WorkPin {
     const SHAPE: u64 = 17_383_438_775_381_115_216;
 }
 
-/// Complete countdown work, including unread, chosen and consumed answer progress.
-pub struct CountdownPin;
-impl Pinned for CountdownPin {
-    type State = interface_hud::CountdownWork;
-    const NAME: &'static str = "production-frame-countdown-work";
-    const SHAPE: u64 = 0x8F72_7F07_F697_4D9A;
-}
-
 /// One current HUD authority; staged work retains its complete state and publications.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub enum Hud {
@@ -71,13 +63,6 @@ pub enum Hud {
     Initial(Box<Model<HudPin>>),
     /// Current complete quantities, consumed and pending answers, and actual events.
     Work(Box<Model<WorkPin>>),
-    /// Countdown owns current quantities; ordinary work is a read-only completed receipt.
-    Countdown {
-        /// Sole writable current HUD and countdown progress.
-        work: Box<Model<CountdownPin>>,
-        /// Previously completed ordinary observations and event history.
-        ordinary: Box<Model<WorkPin>>,
-    },
 }
 
 /// Invalid ordinary HUD scheduling leaves the retained owner unchanged.
@@ -100,15 +85,6 @@ impl Hud {
         match self {
             Self::Initial(state) => &state.0,
             Self::Work(work) => work.0.state(),
-            Self::Countdown { work, ordinary } => {
-                if ordinary.0.frame_count().is_some()
-                    && matches!(ordinary.0.display(), interface_hud::Observation::Unread)
-                {
-                    ordinary.0.state()
-                } else {
-                    work.0.state()
-                }
-            }
         }
     }
 
@@ -118,7 +94,6 @@ impl Hud {
         match self {
             Self::Initial(_) => &[],
             Self::Work(work) => work.0.events(),
-            Self::Countdown { ordinary, .. } => ordinary.0.events(),
         }
     }
 
@@ -127,9 +102,6 @@ impl Hud {
     /// # Errors
     /// An unfinished update rejects replacement before changing the owner.
     pub fn begin(&mut self) -> Result<(), WorkFault> {
-        if matches!(self, Self::Countdown { .. }) {
-            return Err(WorkFault::Busy);
-        }
         if matches!(self, Self::Work(work) if work.0.publication().is_none()) {
             return Err(WorkFault::Busy);
         }
@@ -170,7 +142,7 @@ impl Hud {
     /// Completed current Map answer with the Movement position used at its choice.
     #[must_use]
     pub fn applied_map(&self) -> Option<&interface_hud::MapAnswer> {
-        let (Self::Work(work) | Self::Countdown { ordinary: work, .. }) = self else {
+        let Self::Work(work) = self else {
             return None;
         };
         if let interface_hud::Observation::Completed(answer) = work.0.mini_map() {
@@ -192,63 +164,10 @@ impl Hud {
         work.0.choose_status(rules, pictures, inputs)
     }
 
-    pub(super) fn before_late_status(&self, map: &Self) -> Option<Self> {
-        let (Self::Countdown { work, .. }, Self::Work(ordinary)) = (self, map) else {
-            return None;
-        };
-        if !self.retains_ordinary(map)
-            || !matches!(ordinary.0.status(), interface_hud::Observation::Unread)
-        {
-            return None;
-        }
-        Some(Self::Countdown {
-            ordinary: ordinary.clone(),
-            work: work.clone(),
-        })
-    }
-
-    pub(super) fn choose_late_status(
-        &mut self,
-        rules: &Rules,
-        pictures: &HudPictures,
-        inputs: interface_hud::StatusInputs,
-    ) -> bool {
-        let Self::Countdown { ordinary, work } = self else {
-            return false;
-        };
-        if !matches!(work.0.answer(), interface_hud::Observation::Completed(_))
-            || work.0.state() != ordinary.0.state()
-        {
-            return false;
-        }
-        ordinary.0.choose_status(rules, pictures, inputs)
-    }
-
-    pub(super) fn chosen_status_energy(&self) -> Option<u16> {
-        self.chosen_status_input().map(|energy| energy.now)
-    }
-
-    pub(super) fn chosen_status_input(&self) -> Option<interface_hud::Energy> {
-        let Self::Countdown { ordinary, .. } = self else {
-            return None;
-        };
-        match ordinary.0.status() {
-            interface_hud::Observation::Chosen(answer) => Some(answer.inputs.energy),
-            interface_hud::Observation::Unread | interface_hud::Observation::Completed(_) => None,
-        }
-    }
-
-    pub(super) fn apply_late_status(&mut self) -> bool {
-        let Self::Countdown { ordinary, work } = self else {
-            return false;
-        };
-        matches!(work.0.answer(), interface_hud::Observation::Completed(_)) && ordinary.0.apply()
-    }
-
     pub(in crate::production) const fn frame_count(&self) -> Option<interface_hud::FrameCount> {
         match self {
             Self::Initial(_) => None,
-            Self::Work(work) | Self::Countdown { ordinary: work, .. } => work.0.frame_count(),
+            Self::Work(work) => work.0.frame_count(),
         }
     }
 
@@ -256,7 +175,7 @@ impl Hud {
     #[must_use]
     pub fn opportunity(&self) -> Option<interface_hud::HudOpportunity> {
         match self {
-            Self::Initial(_) | Self::Countdown { .. } => None,
+            Self::Initial(_) => None,
             Self::Work(work) => work.0.opportunity(),
         }
     }
@@ -267,7 +186,6 @@ impl Hud {
         match self {
             Self::Initial(_) => None,
             Self::Work(work) => Some(work.0.controls()),
-            Self::Countdown { ordinary, .. } => Some(ordinary.0.controls()),
         }
     }
 
@@ -277,14 +195,13 @@ impl Hud {
         match self {
             Self::Initial(_) => None,
             Self::Work(work) => Some(work.0.display()),
-            Self::Countdown { ordinary, .. } => Some(ordinary.0.display()),
         }
     }
 
     /// Choose actual current controls once, before applying their effects.
     pub fn choose_controls(&mut self, inputs: interface_hud::ItemControlInputs) -> bool {
         match self {
-            Self::Initial(_) | Self::Countdown { .. } => false,
+            Self::Initial(_) => false,
             Self::Work(work) => work.0.choose_controls(inputs),
         }
     }
@@ -297,7 +214,7 @@ impl Hud {
         inputs: interface_hud::DisplayInputs,
     ) -> bool {
         match self {
-            Self::Initial(_) | Self::Countdown { .. } => false,
+            Self::Initial(_) => false,
             Self::Work(work) => work.0.choose_display(rules, pictures, inputs),
         }
     }
@@ -305,7 +222,7 @@ impl Hud {
     /// Apply one chosen actual answer once; absent or consumed answers return false.
     pub fn apply(&mut self) -> bool {
         match self {
-            Self::Initial(_) | Self::Countdown { .. } => false,
+            Self::Initial(_) => false,
             Self::Work(work) => work.0.apply(),
         }
     }
@@ -316,81 +233,6 @@ impl Hud {
         match self {
             Self::Initial(_) => None,
             Self::Work(work) => work.0.publication(),
-            Self::Countdown { ordinary, .. } => ordinary
-                .0
-                .publication()
-                .map(|(_, events)| (self.state(), events)),
-        }
-    }
-
-    /// Validate unchanged complete ordinary output after transferring quantity ownership.
-    #[must_use]
-    pub fn retains_ordinary(&self, expected: &Self) -> bool {
-        match (self, expected) {
-            (Self::Countdown { ordinary, work }, Self::Work(previous)) => {
-                if matches!(
-                    previous.0.mini_map(),
-                    interface_hud::Observation::Completed(_)
-                ) {
-                    ordinary.0.mini_map() == previous.0.mini_map()
-                        && ordinary.0.controls() == previous.0.controls()
-                        && work.0.state() == previous.0.state()
-                } else {
-                    ordinary == previous && work.0.state() == previous.0.state()
-                }
-            }
-            _ => self == expected,
-        }
-    }
-
-    /// Transfer completed HUD quantities without selecting a future scene answer.
-    pub fn begin_countdown(&mut self) -> bool {
-        let Self::Work(ordinary) = self else {
-            return false;
-        };
-        if ordinary.0.publication().is_none()
-            && !matches!(
-                ordinary.0.mini_map(),
-                interface_hud::Observation::Completed(_)
-            )
-        {
-            return false;
-        }
-        *self = Self::Countdown {
-            work: Box::new(Model(interface_hud::CountdownWork::new(
-                ordinary.0.state().clone(),
-            ))),
-            ordinary: ordinary.clone(),
-        };
-        true
-    }
-
-    /// Select countdown only from the actual current qualified scene offer.
-    pub fn choose_countdown(&mut self, opportunity: interface_hud::CountdownOpportunity) -> bool {
-        match self {
-            Self::Countdown { work, .. } => work.0.choose(opportunity),
-            Self::Initial(_) | Self::Work(_) => false,
-        }
-    }
-
-    /// Complete one chosen countdown answer at its actual physical return.
-    pub fn apply_countdown(&mut self) -> bool {
-        match self {
-            Self::Countdown { work, ordinary } => {
-                work.0.apply() && work.0.state() == ordinary.0.state()
-            }
-            Self::Initial(_) | Self::Work(_) => false,
-        }
-    }
-
-    /// Actual retained observation, inspected without completing or delivering it.
-    #[must_use]
-    pub fn countdown_answer(
-        &self,
-    ) -> Option<&interface_hud::Observation<interface_hud::CountdownAnswer>> {
-        match self {
-            Self::Countdown { work, .. } => Some(work.0.answer()),
-            Self::Initial(_) | Self::Work(_) => None,
         }
     }
 }
@@ -428,15 +270,6 @@ mod tests {
     #[test]
     fn complete_work_shape_remains_pinned() {
         assert_eq!(canonical::model::pin_holds::<WorkPin>(), Ok(()));
-    }
-
-    #[test]
-    fn complete_countdown_work_shape_remains_pinned() {
-        assert_eq!(canonical::model::pin_holds::<CountdownPin>(), Ok(()));
-        assert_eq!(
-            canonical::model::pin_holds::<crate::production::frame::countdown_caller::AnswerPin>(),
-            Ok(())
-        );
     }
 
     #[test]

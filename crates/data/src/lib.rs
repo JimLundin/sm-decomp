@@ -24,5 +24,4 @@ pub mod rom;
 pub mod room;
 pub mod span;
 pub mod spritemap;
-pub mod timing;
 pub mod video;

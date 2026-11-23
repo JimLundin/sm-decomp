@@ -247,60 +247,6 @@ impl Baseline {
 }
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
-    if case.opening_contact_cycle() {
-        use super::frame::opening_contact::field_count;
-        let fields = field_count(counts.cuts, case.opening_ground_corridor());
-        // Cumulative CPU audio port reads and writes the locked opening capture records through
-        // each return. The eight-return cycle compares a prefix of the ground corridor's sixteen.
-        let reads = [0, 0, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 5, 6, 6, 6, 7];
-        let writes = [0, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 5, 6, 6, 6, 7, 8];
-        return Some(
-            fields == Some(counts.fields)
-                && reads.get(counts.cuts) == Some(&counts.replies)
-                && writes.get(counts.cuts) == Some(&counts.publications)
-                && counts.outputs == counts.publications
-                && counts.pending_boundaries == 0,
-        );
-    }
-    if case.expectations.provider == ExpectedProvider::NativeFrameCallbacks {
-        use super::frame::health_hud::FIELDS_PER_CUT;
-
-        // The phase marker expands to the observations from the individual Health and HUD owners.
-        let fields = if case.expectations.native_health_hud.is_some() {
-            case.expectations
-                .fields
-                .len()
-                .checked_sub(1)?
-                .checked_add(FIELDS_PER_CUT)?
-        } else {
-            case.expectations.fields.len()
-        };
-        // The bounded opening compares one CPU-port read on each recurring interval.
-        // Count those reads separately from the ordinary hardware callbacks.
-        let replies = if case.opening_clock() {
-            [0, 0, 1, 2].get(counts.cuts).copied()?
-        } else {
-            0
-        };
-        // One declared stream contains every observed publication at this return.
-        return Some(
-            fields.checked_mul(counts.cuts) == Some(counts.fields)
-                && counts.outputs == counts.publications
-                && (counts.outputs == 0) == (counts.cuts == 0)
-                && counts.replies == replies
-                && counts.pending_boundaries == 0,
-        );
-    }
-    if case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries {
-        let random = super::frame_random_prelude::Arm::for_case(case).is_some() && counts.cuts == 5;
-        return Some(
-            super::frame_steady::field_count(case, counts.cuts) == Some(counts.fields)
-                && counts.outputs == if random { 7 } else { 0 }
-                && counts.publications == if random { 4 } else { 0 }
-                && counts.replies == 0
-                && counts.pending_boundaries == 0,
-        );
-    }
     if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
         return Some(
             super::early_map::field_count(case, counts.cuts) == Some(counts.fields)
@@ -337,15 +283,7 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         return false;
     };
     let counts = &floor.counts;
-    let restores_per_cut = if case.checkpoints {
-        if case.expectations.native_health_hud.is_some() {
-            super::frame::health_hud::PHASE_RESTORES_PER_CUT.saturating_add(1)
-        } else {
-            1
-        }
-    } else {
-        0
-    };
+    let restores_per_cut = usize::from(case.checkpoints);
     if counts.cuts > horizon
         || counts.null_cuts > counts.cuts
         || counts.null_fields > counts.fields

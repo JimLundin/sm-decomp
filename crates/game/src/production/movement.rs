@@ -30,14 +30,6 @@ pub struct MovementInputs {
     pub animation_ends: Option<ClipEnd>,
 }
 
-/// Owned current movement input schema, including independently captured appearance facts.
-pub struct MovementInputsPin;
-impl Pinned for MovementInputsPin {
-    type State = MovementInputs;
-    const NAME: &'static str = "production-frame-movement-inputs";
-    const SHAPE: u64 = 0x1073_CEEA_7B2B_8D9B;
-}
-
 impl MovementInputs {
     /// Borrow the current inputs with actual imported content adapters.
     /// No gameplay decision or query is performed by borrowing them.

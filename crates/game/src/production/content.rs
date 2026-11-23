@@ -76,10 +76,6 @@ impl MovementContent {
 pub enum ProductionContent {
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
-    /// Complete selected frame producer content.
-    Frame(Box<super::frame::Content>),
-    /// Fixed acknowledgment and Music physical profiles.
-    FrameOpening(Box<super::frame::opening_prelude::Profiles>),
     /// Checked current gauge content.
     HealthTail(Box<super::health_tail::Content>),
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
@@ -94,8 +90,6 @@ pub enum ProductionContent {
     ResidentAudio(Box<super::audio::Content>),
     /// Checked imported ordinary power assets.
     WeaponsContact(Box<crate::weapons_projectiles_bridge::PowerContent>),
-    /// Fixed content and immutable neighbours for the scoped shot continuation.
-    ShotOpportunity(Box<super::frame::shot_opportunity::Content>),
     /// Blocks carry their imported reactions in the complete clean State.
     Blocks,
     /// Camera room/scroll constraints are explicit inputs.
@@ -121,10 +115,6 @@ pub enum ProductionContent {
 pub enum ProductionRules {
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
-    /// Complete selected frame producer rules.
-    Frame(Box<super::frame::Rules>),
-    /// The Frame opening uses its fixed caller rules.
-    FrameOpening,
     /// Scoped current Health rules.
     HealthTail(samus_health::Rules),
     /// The existing movement model's complete rules.
@@ -142,8 +132,6 @@ pub enum ProductionRules {
     Audio,
     /// The existing power model's tuning parameters.
     WeaponsContact(weapons_projectiles::Rules),
-    /// Reference rules for the scoped ordinary shot owners.
-    ShotOpportunity,
     /// Complete immutable block rule tables.
     Blocks(super::BlockRules),
     /// Complete following-camera parameters.

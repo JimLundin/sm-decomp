@@ -26,8 +26,6 @@ pub enum CaseKind {
 #[serde(rename_all = "kebab-case")]
 /// An existing selected production owner.
 pub enum Responsibility {
-    /// The complete retained frame caller and physical time owner.
-    Frame,
     /// The existing movement and semantic pose owner.
     Movement,
     /// The existing native audio transport owner.
@@ -54,14 +52,6 @@ pub enum Responsibility {
     AudioSender,
     /// Complete live health, including fractional energy and pending periodic loss.
     Health,
-    /// Complete play-clock state after the admitted gameplay opportunity.
-    GameTime,
-    /// The carried shared random sequence.
-    GameRandom,
-    /// Complete room quake timer and phase after its quiet opportunity.
-    WorldQuake,
-    /// The current Ceres backdrop haze and its band publication.
-    WorldHaze,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -155,34 +145,6 @@ pub enum SenderOfferControl {
 pub struct End {
     /// Last compared original cut.
     pub cut_inclusive: u64,
-    /// Pinned return schedule for a native frame case spanning multiple cuts.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub native_returns: Option<NativeReturns>,
-}
-
-/// Source supplement for consecutive native frame returns.
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct NativeReturns {
-    /// First compared return in the native fixture coordinates.
-    pub first_cut: u64,
-    /// Supplement manifest path relative to the native fixture directory.
-    pub path: PathBuf,
-    /// Exact supplement manifest SHA-256.
-    pub sha256: String,
-    /// Independent causal input qualification for the adjacent frame tail.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub continuation: Option<NativeContinuation>,
-}
-
-/// Pinned causal input content for the next ordinary tail.
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct NativeContinuation {
-    /// Manifest below the replay native fixture directory.
-    pub path: PathBuf,
-    /// Exact input manifest digest.
-    pub sha256: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -195,10 +157,6 @@ pub enum InputProvider {
     NativeHealthTailInputs,
     /// Authenticated actual-use snapshots for the connected ordinary family.
     ConnectedOrdinaryInputs,
-    /// Qualified current owner inputs and explicitly borrowed unselected completions.
-    NativeFrameOwners,
-    /// Independent true-resume origin and reached Steady Haze preparation inputs.
-    NativeSteadyPrelude,
     /// Independently admitted selector-time Frame and actor-selection-time geometry.
     NativeSearchInputs,
     /// Prior locked Movement state, actual solid actors and independent sender ingress.
@@ -215,12 +173,6 @@ pub enum InputProvider {
     PrecedingCutWeaponsContactInputs,
     /// Independently watched ordinary weapon inputs and the flying-picture insertion context.
     ScopedShotDrawingInputs,
-    /// One initial shot owner admission and ongoing sampled controls with surrounding drawing.
-    ScopedShotOpportunityInputs,
-    /// The locked shot opportunity with live audio sender admission.
-    NativeShotSoundInputs,
-    /// The same locked shot opportunity with shoot released in the sampled pad.
-    ShotSoundNoFire,
     /// One touched doorway, retained Appearance, and three actual sender roots.
     NativePassageSoundInputs,
     /// Constructed held-shoot control from the same touched doorway.
@@ -269,10 +221,6 @@ pub enum ExpectedProvider {
     NativeEarlyMap,
     /// Independently observed Health, Drawing reads and HUD gauge around a tail hit.
     NativeHealthTailObservations,
-    /// Independent frozen ordered physical callbacks and completed-return wall time.
-    NativeFrameCallbacks,
-    /// Independently observed Steady Haze and `LayerBlend` boundaries and mirrors.
-    NativeSteadyBoundaries,
     /// Frozen complete source-derived movement work, with independent captured input packets.
     NativeCompleteMovementWork,
     /// Live floor, fit and consumer observations, with the independent Contact FIFO.
@@ -283,10 +231,6 @@ pub enum ExpectedProvider {
     SenderOfferQueue,
     /// Pinned slot state and independently watched exact shot insertions.
     PinnedShotDrawingObservations,
-    /// Independent native observations at the five carried shot opportunities.
-    PinnedShotOpportunityObservations,
-    /// Ordered independent native offer identities and selected queue brackets.
-    NativeShotSoundOffers,
     /// First passage entry's independent offer and hold markers.
     NativePassageSoundOffers,
     /// Independent decoded native cuts.
@@ -314,30 +258,6 @@ pub enum ObservationId {
     /// The passage hold after both offers.
     #[serde(rename = "live-sound.hold")]
     LiveSoundHold,
-    /// Exposed physical held, current-new and previous-new controls at W1.
-    #[serde(rename = "shot.controller")]
-    ShotController,
-    /// Current and retained prior pose used at the reading boundary.
-    #[serde(rename = "shot.pose-history")]
-    ShotPoseHistory,
-    /// Carried directional travel and Camera height read by W1.
-    #[serde(rename = "shot.inherited-motion")]
-    ShotInheritedMotion,
-    /// View origin at W1 and at the distinct E1 boundary.
-    #[serde(rename = "shot.camera")]
-    ShotCamera,
-    /// Complete waits of the two ordered B8 door runs.
-    #[serde(rename = "shot.door-clocks")]
-    ShotDoorClocks,
-    /// Actual per-door opening sound requests in slot order.
-    #[serde(rename = "shot.door-opening")]
-    ShotDoorOpening,
-    /// Digest of the live OAM backing at entry to the power encoder.
-    #[serde(rename = "shot.oam.pre-power")]
-    ShotOamPrePower,
-    /// Digest of the final live OAM backing and cursor.
-    #[serde(rename = "shot.oam.final")]
-    ShotOamFinal,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -398,93 +318,6 @@ pub enum ObservationId {
     /// Complete currently playing Figure.
     #[serde(rename = "appearance.playing")]
     AppearancePlaying,
-    /// Exact completed-return wall time from the retained physical owner.
-    #[serde(rename = "frame.time")]
-    FrameTime,
-    /// Ordered CPU reads and writes at the audio ports.
-    #[serde(rename = "frame.audio.ports")]
-    FrameAudioPorts,
-    /// Physical OAM hash.
-    #[serde(rename = "frame.opening.oam")]
-    FrameOpeningOam,
-    /// Aim horizontal position and fraction.
-    #[serde(rename = "frame.opening.aim_x")]
-    FrameOpeningAimX,
-    /// Camera state and output.
-    #[serde(rename = "frame.opening.camera")]
-    FrameOpeningCamera,
-    /// First-door phase.
-    #[serde(rename = "frame.opening.first_door_phase")]
-    FrameOpeningFirstDoorPhase,
-    /// First-door wait timers.
-    #[serde(rename = "frame.opening.door_waits")]
-    FrameOpeningDoorWaits,
-    /// Retained animation playhead.
-    #[serde(rename = "frame.opening.animation_playhead")]
-    FrameOpeningAnimationPlayhead,
-    /// Camera horizontal fraction.
-    #[serde(rename = "frame.opening.camera_x_fraction")]
-    FrameOpeningCameraXFraction,
-    /// Retained Contact clean sender phase with remaining delay turns.
-    #[serde(rename = "frame.contact.phase")]
-    FrameContactPhase,
-    /// Independently supplied incoming Contact latch.
-    #[serde(rename = "frame.contact.incoming")]
-    FrameContactIncoming,
-    /// CPU Contact presentation latch.
-    #[serde(rename = "frame.contact.outgoing")]
-    FrameContactOutgoing,
-    /// Selected Haze and `LayerBlend` state at each committed prelude boundary.
-    #[serde(rename = "frame.steady")]
-    FrameSteady,
-    /// Actual committed seed from the bounded Random owner.
-    #[serde(rename = "frame.random.seed")]
-    FrameRandomSeed,
-    /// Ordered requests and samples from the bounded Random owner.
-    #[serde(rename = "frame.random.device")]
-    FrameRandomDevice,
-    /// The committed shared random number.
-    #[serde(rename = "frame.random")]
-    FrameRandom,
-    /// Complete ordered physical callback stream, including equal-time multiplicity.
-    #[serde(rename = "frame.outputs")]
-    FrameOutputs,
-    /// Independently observed early map, Animation, Maintenance, Drawing, late Status and DMA.
-    #[serde(rename = "frame.health_hud")]
-    FrameHealthHud,
-    /// Whole hours carried by the play clock.
-    #[serde(rename = "frame.play_time.hours")]
-    PlayTimeHours,
-    /// Minutes within the play-clock hour.
-    #[serde(rename = "frame.play_time.minutes")]
-    PlayTimeMinutes,
-    /// Seconds within the play-clock minute.
-    #[serde(rename = "frame.play_time.seconds")]
-    PlayTimeSeconds,
-    /// Frames within the play-clock second.
-    #[serde(rename = "frame.play_time.frames")]
-    PlayTimeFrames,
-    /// Complete current room-shake timer.
-    #[serde(rename = "frame.room_shake.timer")]
-    RoomShakeTimer,
-    /// Complete current room-shake phase.
-    #[serde(rename = "frame.room_shake.phase")]
-    RoomShakePhase,
-    /// Whole energy after Maintenance.
-    #[serde(rename = "frame.health.energy.whole")]
-    HealthEnergyWhole,
-    /// Fractional energy after Maintenance.
-    #[serde(rename = "frame.health.energy.fraction")]
-    HealthEnergyFraction,
-    /// Whole pending energy loss.
-    #[serde(rename = "frame.health.pending_loss.whole")]
-    HealthPendingWhole,
-    /// Fractional pending energy loss.
-    #[serde(rename = "frame.health.pending_loss.fraction")]
-    HealthPendingFraction,
-    /// Current requested low-energy warning.
-    #[serde(rename = "frame.health.warning")]
-    HealthWarning,
     /// Every ordered Motion, Support and nested `BodyFit` receipt.
     #[serde(rename = "movement.work")]
     MovementWork,
@@ -722,34 +555,6 @@ pub struct Expectations {
     #[serde(default)]
     /// Outputs compare only at this cut, or every cut when absent.
     pub output_cut: Option<u64>,
-    /// Independent Random draw observations, when the case compares them.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub native_random: Option<NativeObservations>,
-    /// Independent native Health, Drawing and HUD phases and changed return observations.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub native_health_hud: Option<NativeHealthHudObservations>,
-}
-
-/// Expected-only source for each selected retained Health and HUD interval.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct NativeHealthHudObservations {
-    /// Named native snapshots at the producer phases.
-    pub phases: NativeObservations,
-    /// Ordered physical callbacks for the selected restart from the shared origin.
-    pub callbacks: NativeObservations,
-    /// Final selected Health and play-time owners.
-    pub final_owners: NativeObservations,
-}
-
-/// Pinned expected-only file in the native fixture directory.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct NativeObservations {
-    /// File under the replay native fixture directory.
-    pub path: PathBuf,
-    /// Exact expected observation file digest.
-    pub sha256: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -945,10 +750,6 @@ fn rule_exists(rule: &str) -> bool {
         .any(|id| rule == format!("enemy-interactions/{id:?}"))
 }
 
-#[expect(
-    clippy::too_many_lines,
-    reason = "Keep each observation and its owner in one exhaustive list."
-)]
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -959,30 +760,11 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::LiveSoundPermission
         | O::LiveSoundPrefix
         | O::LiveSoundAccepted
-        | O::LiveSoundFifo
-        | O::FrameAudioPorts
-        | O::FrameContactPhase
-        | O::FrameContactIncoming
-        | O::FrameContactOutgoing => Responsibility::AudioSender,
+        | O::LiveSoundFifo => Responsibility::AudioSender,
         O::LiveSoundHold => Responsibility::Doors,
-        O::FrameTime | O::FrameOutputs | O::FrameHealthHud | O::FrameOpeningOam => {
-            Responsibility::Frame
+        O::HealthTailState | O::HealthTailImpact | O::HealthTailClose | O::HealthTailWarning => {
+            Responsibility::Health
         }
-        O::FrameSteady => Responsibility::WorldHaze,
-        O::FrameRandom | O::FrameRandomSeed | O::FrameRandomDevice => Responsibility::GameRandom,
-        O::PlayTimeHours | O::PlayTimeMinutes | O::PlayTimeSeconds | O::PlayTimeFrames => {
-            Responsibility::GameTime
-        }
-        O::RoomShakeTimer | O::RoomShakePhase => Responsibility::WorldQuake,
-        O::HealthTailState
-        | O::HealthTailImpact
-        | O::HealthTailClose
-        | O::HealthTailWarning
-        | O::HealthEnergyWhole
-        | O::HealthEnergyFraction
-        | O::HealthPendingWhole
-        | O::HealthPendingFraction
-        | O::HealthWarning => Responsibility::Health,
         O::TouchdownClip
         | O::TouchdownFit
         | O::TouchdownResponse
@@ -1004,22 +786,13 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::TravelDown
         | O::WallTest
         | O::Reached
-        | O::MapCarryMovement
-        | O::ShotPoseHistory
-        | O::ShotInheritedMotion
-        | O::FrameOpeningAimX => Responsibility::Movement,
+        | O::MapCarryMovement => Responsibility::Movement,
         O::AudioSemantic | O::AudioPublications | O::AudioReplies | O::AudioPendingMusic => {
             Responsibility::Audio
         }
-        O::CeresPhase
-        | O::CeresWait
-        | O::CeresFigure
-        | O::CeresShown
-        | O::CeresSolid
-        | O::ShotDoorClocks
-        | O::ShotDoorOpening
-        | O::FrameOpeningFirstDoorPhase
-        | O::FrameOpeningDoorWaits => Responsibility::Ceres,
+        O::CeresPhase | O::CeresWait | O::CeresFigure | O::CeresShown | O::CeresSolid => {
+            Responsibility::Ceres
+        }
         O::CameraViewXPixel
         | O::CameraViewXFraction
         | O::CameraViewYPixel
@@ -1029,10 +802,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CameraRememberedYPixel
         | O::CameraRememberedYFraction
         | O::CameraVerticalFraction
-        | O::MapCarryCamera
-        | O::ShotCamera
-        | O::FrameOpeningCamera
-        | O::FrameOpeningCameraXFraction => Responsibility::Camera,
+        | O::MapCarryCamera => Responsibility::Camera,
         O::GaugeRefresh
         | O::GaugeWords
         | O::EarlyMapWindow
@@ -1049,10 +819,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         O::WeaponsState
         | O::WeaponsUpdateEvents
         | O::WeaponsFlyingPictures
-        | O::WeaponsOamInsertion
-        | O::ShotController
-        | O::ShotOamPrePower
-        | O::ShotOamFinal => Responsibility::Weapons,
+        | O::WeaponsOamInsertion => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
         O::DrawingEnergy
         | O::TouchdownGraphics
@@ -1061,8 +828,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::AppearanceTimeLeft
         | O::AppearanceBoostStage
         | O::AppearanceLapsLeft
-        | O::MapCarryAppearance
-        | O::FrameOpeningAnimationPlayhead => Responsibility::Appearance,
+        | O::MapCarryAppearance => Responsibility::Appearance,
         O::ProgressPlanetAwake
         | O::ProgressMotherBrainTankBroken
         | O::ProgressPhantoonStatueGrey
@@ -1101,10 +867,6 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("samus-appearance/", Responsibility::Appearance),
         ("run-progress/", Responsibility::Progress),
         ("samus-health/", Responsibility::Health),
-        ("game-time/", Responsibility::GameTime),
-        ("game-random/", Responsibility::GameRandom),
-        ("world-quake/", Responsibility::WorldQuake),
-        ("world-haze/", Responsibility::WorldHaze),
     ]
     .iter()
     .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
@@ -1119,10 +881,7 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
                 O::LiveSoundAccepted,
                 O::LiveSoundFifo,
             ],
-            "weapons-projectiles/HoldingShoot" | "samus-appearance/AtTheDoor" => {
-                &[O::LiveSoundOrder]
-            }
-            "boss-ceres-ridley/Polling" => &[O::ShotDoorOpening],
+            "samus-appearance/AtTheDoor" => &[O::LiveSoundOrder],
             "world-doors/Quieting" => &[O::LiveSoundOrder, O::LiveSoundHold],
             _ => return None,
         });
@@ -1463,60 +1222,17 @@ fn early_map_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
-fn shot_opportunity_provider_valid(case: &Case) -> bool {
-    use super::shot_opportunity::{EXPECTED_PIN, START_PIN};
-    use ObservationId as O;
-    case.kind == CaseKind::Scoped
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedShotOpportunityObservations
-        && case.row == super::shot_drawing::ROW
-        && matches!(&case.start, Start::NativeCheckpoint {
-            path, sha256, seed_path, seed_sha256, frame: 156
-        } if path == std::path::Path::new("shot-contact-five-v1/expected.toml")
-            && seed_path == std::path::Path::new("shot-contact-five-v1/start.record")
-            && sha256 == EXPECTED_PIN
-            && seed_sha256 == START_PIN)
-        && case.end.cut_inclusive == 161
-        && case.expectations.fields
-            == [
-                O::ShotController,
-                O::ShotPoseHistory,
-                O::ShotInheritedMotion,
-                O::ShotCamera,
-                O::ShotDoorClocks,
-                O::ShotOamPrePower,
-                O::ShotOamFinal,
-                O::WeaponsState,
-            ]
-        && case.expectations.outputs
-            == [
-                O::ContactConsumedMarkers,
-                O::ShotDoorOpening,
-                O::WeaponsUpdateEvents,
-                O::ContactReceivers,
-                O::WeaponsFlyingPictures,
-                O::WeaponsOamInsertion,
-            ]
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
 impl InputProvider {
     const fn live_sound(self) -> bool {
         matches!(
             self,
-            Self::NativeShotSoundInputs
-                | Self::ShotSoundNoFire
-                | Self::NativePassageSoundInputs
-                | Self::PassageSoundShootHeld
+            Self::NativePassageSoundInputs | Self::PassageSoundShootHeld
         )
     }
 }
 
 fn live_sound_provider_valid(case: &Case) -> bool {
-    use super::shot_opportunity::{EXPECTED_PIN as SHOT_EXPECTED_PIN, START_PIN as SHOT_START_PIN};
+    use super::passage_audio::{EVENT_PIN, START_PIN};
     use ObservationId as O;
     use Responsibility as R;
     if case.kind != CaseKind::Scoped
@@ -1535,51 +1251,27 @@ fn live_sound_provider_valid(case: &Case) -> bool {
         O::LiveSoundPrefix,
         O::LiveSoundAccepted,
     ];
-    if matches!(
-        case.inputs,
-        InputProvider::NativePassageSoundInputs | InputProvider::PassageSoundShootHeld
-    ) {
-        use super::passage_audio::{EVENT_PIN, START_PIN};
-        return case.end.cut_inclusive == 183
-            && matches!(&case.start, Start::NativeCheckpoint {
-                path, sha256, seed_path, seed_sha256, frame: 182
-            } if path == std::path::Path::new("passage-offers-v1/expected/events.toml")
-                && seed_path == std::path::Path::new("passage-offers-v1/inputs/cut-182.record")
-                && sha256 == EVENT_PIN && seed_sha256 == START_PIN)
-            && case.expectations.provider == ExpectedProvider::NativePassageSoundOffers
-            && case.expectations.fields == [O::LiveSoundFifo]
-            && case
-                .expectations
-                .outputs
-                .iter()
-                .copied()
-                .eq(offers.into_iter().chain([O::LiveSoundHold]))
-            && case.responsibilities == [R::Doors, R::Appearance, R::AudioSender];
-    }
-    case.end.cut_inclusive == 157
+    case.end.cut_inclusive == 183
         && matches!(&case.start, Start::NativeCheckpoint {
-            path, sha256, seed_path, seed_sha256, frame: 156
-        } if path == std::path::Path::new("shot-contact-five-v1/expected.toml")
-            && seed_path == std::path::Path::new("shot-contact-five-v1/start.record")
-            && sha256 == SHOT_EXPECTED_PIN && seed_sha256 == SHOT_START_PIN)
-        && case.expectations.provider == ExpectedProvider::NativeShotSoundOffers
+            path, sha256, seed_path, seed_sha256, frame: 182
+        } if path == std::path::Path::new("passage-offers-v1/expected/events.toml")
+            && seed_path == std::path::Path::new("passage-offers-v1/inputs/cut-182.record")
+            && sha256 == EVENT_PIN && seed_sha256 == START_PIN)
+        && case.expectations.provider == ExpectedProvider::NativePassageSoundOffers
         && case.expectations.fields == [O::LiveSoundFifo]
         && case
             .expectations
             .outputs
             .iter()
             .copied()
-            .eq(offers.into_iter().chain([O::ShotDoorOpening]))
-        && case.responsibilities == [R::Weapons, R::Ceres, R::AudioSender]
+            .eq(offers.into_iter().chain([O::LiveSoundHold]))
+        && case.responsibilities == [R::Doors, R::Appearance, R::AudioSender]
 }
 
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs.live_sound() {
         return live_sound_provider_valid(case);
-    }
-    if case.inputs == InputProvider::ScopedShotOpportunityInputs {
-        return shot_opportunity_provider_valid(case);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);
@@ -1707,117 +1399,6 @@ fn health_tail_provider_valid(case: &Case) -> bool {
         && case.expectations.outputs == [O::HealthTailWarning, O::GaugeWords]
 }
 
-const FINAL_OWNER_FIELDS: [ObservationId; 7] = [
-    ObservationId::FrameTime,
-    ObservationId::PlayTimeHours,
-    ObservationId::PlayTimeMinutes,
-    ObservationId::PlayTimeSeconds,
-    ObservationId::PlayTimeFrames,
-    ObservationId::RoomShakeTimer,
-    ObservationId::RoomShakePhase,
-];
-
-const FINAL_HEALTH_FIELDS: [ObservationId; 5] = [
-    ObservationId::HealthEnergyWhole,
-    ObservationId::HealthEnergyFraction,
-    ObservationId::HealthPendingWhole,
-    ObservationId::HealthPendingFraction,
-    ObservationId::HealthWarning,
-];
-
-pub(super) const PLAY_TIME_RULE: &str = "game-time/PlayTimeAdvance";
-pub(super) const ROOM_QUAKE_RULE: &str = "world-quake/QuietQuakePhase";
-
-impl Case {
-    pub(super) fn opening_clock(&self) -> bool {
-        self.borrowed
-            .iter()
-            .any(|value| value.dependency == "frame.opening-clock")
-    }
-
-    pub(super) fn opening_contact_cycle(&self) -> bool {
-        self.borrowed
-            .iter()
-            .any(|value| value.dependency == "frame.opening-contact-cycle")
-    }
-
-    pub(super) fn opening_ground_corridor(&self) -> bool {
-        self.borrowed
-            .iter()
-            .any(|value| value.dependency == "frame.opening-ground-corridor")
-    }
-
-    pub(super) fn adjacent_native_end(&self) -> u64 {
-        if self.opening_clock() {
-            2
-        } else {
-            self.end.cut_inclusive
-        }
-    }
-
-    fn native_frame_fields(&self) -> &[ObservationId] {
-        let fields = self.expectations.fields.as_slice();
-        let fields = fields
-            .strip_suffix(&[ObservationId::FrameHealthHud])
-            .unwrap_or(fields);
-        fields
-            .strip_suffix(&[ObservationId::FrameRandom])
-            .unwrap_or(fields)
-    }
-
-    pub(super) fn compares_final_frame_health(&self) -> bool {
-        self.native_frame_fields()
-            .strip_prefix(FINAL_OWNER_FIELDS.as_slice())
-            == Some(FINAL_HEALTH_FIELDS.as_slice())
-    }
-
-    pub(super) fn compares_final_frame_owners(&self) -> bool {
-        (self.native_frame_fields() == FINAL_OWNER_FIELDS || self.compares_final_frame_health())
-            && self.declares_final_frame_work()
-    }
-
-    fn declares_final_frame_work(&self) -> bool {
-        self.responsibilities.contains(&Responsibility::GameTime)
-            && self.responsibilities.contains(&Responsibility::WorldQuake)
-            && [PLAY_TIME_RULE, ROOM_QUAKE_RULE]
-                .into_iter()
-                .all(|id| self.rules.iter().any(|rule| rule == id))
-    }
-}
-
-fn steady_scope_valid(case: &Case, owners: &BTreeSet<Responsibility>) -> bool {
-    if super::frame_random_prelude::Arm::for_case(case).is_some() {
-        return case.kind == CaseKind::Scoped
-            && case.content == ContentProvider::PlayerRomImport
-            && *owners
-                == BTreeSet::from([
-                    Responsibility::Frame,
-                    Responsibility::WorldHaze,
-                    Responsibility::GameRandom,
-                ])
-            && case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries
-            && case.expectations.fields
-                == [
-                    ObservationId::FrameTime,
-                    ObservationId::FrameSteady,
-                    ObservationId::FrameRandomSeed,
-                ]
-            && case.expectations.outputs == [ObservationId::FrameRandomDevice]
-            && case.expectations.output_cut == Some(4)
-            && case.end.cut_inclusive == 5
-            && case.checkpoints;
-    }
-    case.kind == CaseKind::Scoped
-        && case.content == ContentProvider::PlayerRomImport
-        && *owners == BTreeSet::from([Responsibility::Frame, Responsibility::WorldHaze])
-        && case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries
-        && case.expectations.fields == [ObservationId::FrameTime, ObservationId::FrameSteady]
-        && case.expectations.outputs.is_empty()
-        && matches!(case.start, Start::NativeSeed { .. })
-        && case.end.cut_inclusive == 4
-        && case.checkpoints
-}
-
 fn scope_valid(case: &Case) -> bool {
     let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
     if owners.len() != case.responsibilities.len()
@@ -1839,16 +1420,6 @@ fn scope_valid(case: &Case) -> bool {
         .any(|field| !owners.contains(&observation_owner(*field)))
     {
         return false;
-    }
-    if case.inputs == InputProvider::NativeSteadyPrelude {
-        return steady_scope_valid(case, &owners);
-    }
-    if case.inputs == InputProvider::NativeFrameOwners {
-        return native_frame_scope_valid(
-            case,
-            &owners,
-            observations.contains(&ObservationId::FrameHealthHud),
-        );
     }
     for rule in &case.rules {
         if rule_owner(rule).is_none_or(|owner| !owners.contains(&owner)) {
@@ -1874,113 +1445,6 @@ fn scope_valid(case: &Case) -> bool {
         return false;
     }
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
-}
-
-fn opening_contact_fields_valid(case: &Case) -> bool {
-    use ObservationId as O;
-    let Some(extra) = case.expectations.fields.strip_prefix(&[
-        O::FrameTime,
-        O::FrameContactPhase,
-        O::FrameContactIncoming,
-        O::FrameContactOutgoing,
-    ]) else {
-        return false;
-    };
-    if case.opening_ground_corridor() {
-        extra
-            == [
-                O::FrameOpeningOam,
-                O::FrameOpeningAimX,
-                O::FrameOpeningCamera,
-                O::FrameOpeningFirstDoorPhase,
-                O::FrameOpeningDoorWaits,
-                O::FrameOpeningAnimationPlayhead,
-                O::FrameOpeningCameraXFraction,
-            ]
-    } else {
-        extra.is_empty()
-    }
-}
-
-fn native_frame_scope_valid(
-    case: &Case,
-    owners: &BTreeSet<Responsibility>,
-    health_hud: bool,
-) -> bool {
-    let mut frame_owners = owners.clone();
-    frame_owners.remove(&Responsibility::Health);
-    let haze = frame_owners.remove(&Responsibility::WorldHaze);
-    let random = frame_owners.remove(&Responsibility::GameRandom);
-    let compares_final_owners = case.compares_final_frame_owners();
-    let mut expected_frame_owners = BTreeSet::from([
-        Responsibility::Frame,
-        Responsibility::Movement,
-        Responsibility::Hud,
-        Responsibility::Appearance,
-        Responsibility::AudioSender,
-    ]);
-    if case.opening_ground_corridor() {
-        expected_frame_owners.extend([Responsibility::Camera, Responsibility::Ceres]);
-    }
-    if compares_final_owners || case.opening_contact_cycle() {
-        frame_owners.remove(&Responsibility::GameTime);
-        frame_owners.remove(&Responsibility::WorldQuake);
-    }
-    case.kind == CaseKind::Integrated
-        && case.content == ContentProvider::PlayerRomImport
-        && haze
-            == case
-                .rules
-                .iter()
-                .any(|rule| rule.starts_with("world-haze/"))
-        && random == (case.expectations.native_random.is_some() || case.opening_contact_cycle())
-        && health_hud == case.expectations.native_health_hud.is_some()
-        && health_hud == super::frame::health_hud::Arm::from_case(case).is_some()
-        && (!health_hud
-            || (case.compares_final_frame_health()
-                && case.end.cut_inclusive == 1
-                && case.end.native_returns.is_none()
-                && case.expectations.fields.last() == Some(&ObservationId::FrameHealthHud)
-                && case.checkpoints))
-        && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
-        && matches!(case.start, Start::NativeSeed { .. })
-        && frame_owners == expected_frame_owners
-        && (compares_final_owners
-            || case.native_frame_fields() == [ObservationId::FrameTime]
-            || case.opening_contact_cycle())
-        && if case.opening_contact_cycle() {
-            case.opening_clock()
-                && case.declares_final_frame_work()
-                && case.first_cut() == Some(1)
-                && case.end.cut_inclusive
-                    == if case.opening_ground_corridor() {
-                        super::frame::opening_contact::GROUND_CORRIDOR_LAST_RETURN
-                    } else {
-                        super::frame::opening_contact::LAST_RETURN
-                    }
-                && opening_contact_fields_valid(case)
-                && case.expectations.outputs == [ObservationId::FrameAudioPorts]
-                && case.checkpoints
-        } else if case.opening_clock() {
-            case.first_cut() == Some(1)
-                && case.end.cut_inclusive == 3
-                && case.expectations.outputs
-                    == [ObservationId::FrameOutputs, ObservationId::FrameAudioPorts]
-        } else {
-            case.expectations.outputs == [ObservationId::FrameOutputs]
-        }
-        && case.expectations.output_cut.is_none()
-        && !case.borrowed.is_empty()
-        && case.rules.iter().all(|rule| {
-            let owner = match rule.as_str() {
-                "audio-transport/OfferAcceptance"
-                | "audio-transport/RequestDelivery"
-                | "audio-transport/RequestRelease"
-                | "audio-transport/SenderTiming" => Some(Responsibility::AudioSender),
-                _ => rule_owner(rule),
-            };
-            owner.is_some_and(|owner| owners.contains(&owner))
-        })
 }
 
 fn start_valid(case: &Case) -> bool {
@@ -2059,44 +1523,7 @@ impl Case {
             || case.responsibilities.is_empty()
             || (observations.is_empty() && case.inputs != InputProvider::Unavailable)
             || unique.len() != observations.len()
-            || case.expectations.native_random.is_some()
-                != case
-                    .expectations
-                    .fields
-                    .contains(&ObservationId::FrameRandom)
-            || case
-                .expectations
-                .native_random
-                .as_ref()
-                .is_some_and(|source| {
-                    case.inputs != InputProvider::NativeFrameOwners
-                        || source.path.as_os_str().is_empty()
-                        || !valid_hash(&source.sha256)
-                })
-            || case
-                .expectations
-                .native_health_hud
-                .as_ref()
-                .is_some_and(|source| {
-                    case.inputs != InputProvider::NativeFrameOwners
-                        || [&source.phases, &source.callbacks, &source.final_owners]
-                            .into_iter()
-                            .any(|file| {
-                                file.path.as_os_str().is_empty() || !valid_hash(&file.sha256)
-                            })
-                })
             || !start_valid(case)
-            || case.end.native_returns.as_ref().is_some_and(|returns| {
-                case.inputs != InputProvider::NativeFrameOwners
-                    || returns.first_cut == 0
-                    || returns.first_cut >= case.end.cut_inclusive
-                    || returns.path.as_os_str().is_empty()
-                    || !valid_hash(&returns.sha256)
-                    || returns.continuation.as_ref().is_some_and(|continuation| {
-                        continuation.path.as_os_str().is_empty()
-                            || !valid_hash(&continuation.sha256)
-                    })
-            })
             || !scope_valid(case)
             || case.borrowed.iter().any(|borrowed| {
                 borrowed.dependency.is_empty()
@@ -2121,12 +1548,6 @@ impl Case {
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
             Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {
                 Some(self.end.cut_inclusive)
-            }
-            Start::NativeSeed { .. } if matches!(self.inputs, InputProvider::NativeFrameOwners) => {
-                Some(match &self.end.native_returns {
-                    Some(returns) => returns.first_cut,
-                    None => self.end.cut_inclusive,
-                })
             }
             Start::NativeSeed { .. } | Start::PowerOn => Some(0),
         }
