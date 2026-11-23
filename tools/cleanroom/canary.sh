@@ -130,14 +130,27 @@ fingerprints() {
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | LC_ALL=C sort -u >"$work/common"
   # Distinctive lines: 40+ characters, printable ASCII without quotes or backslashes, so they
   # read the same raw and inside a JSON transcript, and 12+ letters or digits: a table rule such
-  # as "| --- | --- |" is in every Markdown file and a substring of any wider one.
-  : >"$work/map"
-  while IFS=$'\t' read -r blob path; do
-    git -C "$top" cat-file blob "$blob" | tr -d '\r' \
-      | LC_ALL=C awk -v b="$blob" -v p="$path" '{ sub(/^[ \t]+/, ""); sub(/[ \t]+$/, "") }
-          length($0) >= 40 && $0 !~ /[^ -~]/ && $0 !~ /["\\]/ {
-            words = $0; if (gsub(/[A-Za-z0-9]/, "", words) >= 12) print $0 "\t" b "\t" p }' >>"$work/map"
-  done <"$work/blobs"
+  # as "| --- | --- |" is in every Markdown file and a substring of any wider one. Every version
+  # comes from one `git cat-file --batch`, not a process per version: each is a header
+  # "<blob> blob <size>", its bytes, and a newline, so a version that ends in a newline is followed
+  # by one empty line.
+  cut -f1 "$work/blobs" | sort -u | git -C "$top" cat-file --batch \
+    | LC_ALL=C awk 'FNR == NR {
+          split($0, f, "\t"); paths[f[1]] = (f[1] in paths) ? paths[f[1]] "\n" f[2] : f[2]; next }
+        skip { skip = 0; if ($0 == "") next }
+        !inblob {
+          split($0, h, " "); blob = h[1]; left = h[3] + 0
+          if (left == 0) skip = 1; else inblob = 1
+          next }
+        {
+          left -= length($0) + 1
+          if (left <= 0) { inblob = 0; if (left == 0) skip = 1 }
+          line = $0; gsub(/\r/, "", line); sub(/^[ \t]+/, "", line); sub(/[ \t]+$/, "", line)
+          if (length(line) < 40 || line ~ /[^ -~]/ || line ~ /["\\]/) next
+          words = line; if (gsub(/[A-Za-z0-9]/, "", words) < 12) next
+          n = split(paths[blob], ps, "\n")
+          for (i = 1; i <= n; i++) print line "\t" blob "\t" ps[i]
+        }' "$work/blobs" - >"$work/map"
   LC_ALL=C sort -u -t$'\t' -k1,1 "$work/map" >"$work/map.sorted"
   LC_ALL=C join -t$'\t' -v1 "$work/map.sorted" "$work/common" >"$private/fingerprints.tsv"
   cut -f1 "$private/fingerprints.tsv" >"$private/fingerprints.txt"
