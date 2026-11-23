@@ -47,9 +47,11 @@ ROM-derived bytes never go in commits or logs.
 6e. Each bounded outcome has a work issue with an owner, dependencies, state and proof;
     milestone and session issues link that work ([PROCESS](cleanroom/PROCESS.md#work-items),
     MODEL decision 31).
-6f. Prioritize reusable multi-frame production coverage; the exact retained-time frame remains
-    a required witness, and intermediate tick boundaries are diagnostics
-    ([MODEL decision 34](architecture/MODEL.md#1-the-goal-and-what-is-exact)).
+6f. Rungs compare owners' State and output bytes at each NMI cut on movie inputs only;
+    intra-frame bus-cycle timing is T1's, and a lag cut inside a rung is a borrowed input
+    ([MODEL decision 35](architecture/MODEL.md#1-the-goal-and-what-is-exact)).
+6g. Behaviour work leads: no new decision or process tooling until played-alone frames grow;
+    each session review reports its behaviour share of commit lines (decision 36).
 
 ## The shape of the code
 

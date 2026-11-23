@@ -344,7 +344,10 @@ review included. Each session has three parts:
    already in flight under the rule below and writes the session's review on the plan's issue:
    what landed, the figures before and after, what the gates found, and what the next session
    should take up, including the [Code Health review](#coordinator-code-health-review) of the
-   session's changes. Update each selected work issue with its actual outcome, evidence and
+   session's changes, and the behaviour share of its commit lines (MODEL §1 decision 36): the
+   lines added and removed under `crates/clean/` and the played loop
+   (`crates/game/src/production/played*`), against all other lines under `crates/` and `tools/`,
+   from `git diff --numstat` over the session's range. Update each selected work issue with its actual outcome, evidence and
    remaining dependency; the session review links those issues.
 
 **Finish active work.** The scheduled shift end stops new scope, not completion. Every task or

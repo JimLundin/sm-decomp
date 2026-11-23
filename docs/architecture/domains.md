@@ -433,8 +433,9 @@ come first, each played alone from its first seed, as `[[rung]]` in
 | the milestone | power-on through Ceres | boot, title, file select and intro (F2), the flights and explosion (F4), the palette FX runner (R4), SRAM (P2), the sound requests and their replies (U1), modelled lag (T1), the whole run (V2) |
 
 The rungs' needs are planning estimates; session planning corrects them from actual missing
-owners and indexed witnesses. A scoped case may admit recorded timing but declares that limit;
-whole-movie acceptance requires modeled timing and movie inputs only.
+owners and indexed witnesses. The rungs compare at NMI cuts (MODEL §1 decision 35): a lag cut
+inside a rung is a declared borrowed input, and intra-frame bus-cycle order is T1's. Whole-movie
+acceptance requires modeled timing and movie inputs only.
 
 Each rung is a target stretch, not a sum of successful scoped cases. The selected comparison
 plan declares required fields and outputs, including video or APU observations when claimed.

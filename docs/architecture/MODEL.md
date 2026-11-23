@@ -313,6 +313,21 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     Additional scoped cases do not establish integrated dependency closure or played-alone
     frames; borrowed inputs remain explicit and are not counted as modeled producers.
 
+35. **The rungs compare at frame cuts** (Jim, 2026-11-23). Rungs M0–M2 compare the selected
+    owners' State and the output bytes at each NMI cut (decision 1), with inputs from the
+    movie only. Intra-frame bus-cycle order, absolute master-tick clocks and ordered CPU port
+    callbacks belong to T1 and are not required until the headline milestone. A port reply
+    that changes gameplay is compared on the frame it is read. A lag cut inside a rung is an
+    explicit borrowed input until T1. This supersedes decision 34's retained-time frame as a
+    required witness for the rungs.
+
+36. **Behaviour work leads** (Jim, 2026-11-23). No new decision here and no new process
+    tooling until the frames the engine plays alone from a rung's seed grow over successive
+    sessions; work that an existing decision or work item already requires is not new. Each
+    session review reports the behaviour share of its commit lines
+    ([PROCESS](../cleanroom/PROCESS.md#working-hours)). The transition and prior-claim
+    ledgers are pruned once the witness-shaped frame cases retire.
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our
