@@ -30,7 +30,3 @@ pub struct ProgramId(pub u16);
 /// A scanline of the picture, 0 at the top.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Line(pub u16);
-
-/// CPU time, in master clock cycles (D9).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Cycles(pub u32);
