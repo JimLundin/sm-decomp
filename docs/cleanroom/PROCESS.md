@@ -236,10 +236,11 @@ of implementer and independent-reviewer material, and relays only concrete shape
 
 ## What can run at once
 
-**A manageable amount** (Jim, 2026-11-08). At most three lanes run at once, and at most one round
-is in flight per domain, so every lane stays observable while the process is still changing. The
-root names each lane to Jim when it starts, and reports its result when it ends. Within that
-limit, the dependencies below decide what may overlap.
+**A manageable amount** (Jim, 2026-11-08; widened 2026-11-23). The root runs as many lanes at
+once as the machine and CI hold: disk for each building lane's own `target/` (about 5 GB) with
+room to spare, and GitHub's limit of 20 concurrent jobs. At most one round is in flight per
+domain. The root names each lane to Jim when it starts, and reports its result when it ends.
+Within that limit, the dependencies below decide what may overlap.
 
 **Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
 writes nothing, and the integrator works outside the clean crates.
