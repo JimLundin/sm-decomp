@@ -161,7 +161,7 @@ than frames, and where they fall in a frame drifts. Until that clock is modeled,
 cadence is a borrowed input, as a frame without a service is.
 
 - A frame runs → apply its queue offers, complete its effect turns before the service, run the service if the frame has one, then complete its remaining effect turns [F-two-frames, F-early, F-lag, F-no-turn, F-offer, F-recorded-two-turns, F-recorded-late].
-- A frame has music turns → advance the song once for each, independently of the frame's effect turns and service [F-two-music, R-resident-alpha, R-resident-beta].
+- A frame has music turns → after its effect turns, advance the song once for each [F-two-music, R-resident-alpha, R-resident-beta].
 
 So in the most common cadence, one effect turn after each service, a cue's reply first reaches
 the sender two frames after the service that presented it. A turn that moves before the service
@@ -405,9 +405,15 @@ that turn replaces an earlier one. Track-specific choices affect only that track
 ## Order that matters
 
 Within a frame: the frame's queue offers, then the effect turns before its sender service, then
-the service, then the remaining effect turns. Within an effect turn, sound groups take their turn
-in Action, Ambient, Contact order; each group handles its staged request, publishes its reply,
-then stages its request line. Within a sender service, the groups are served in the same order.
+the service, then the remaining effect turns, then the frame's music turns. Music turns and
+effect turns share only echo voice membership: an effect allocation removes the voices it
+acquires and an echo mix choice replaces the membership, so their order shows at the cut only
+when both happen in one frame. The audio side interleaves the two kinds of turn by its own
+clock; the cadence counts them but does not place one kind among the other, and this order
+stands in for that placement until the clock is modeled. Within an effect turn, sound groups
+take their turn in Action, Ambient, Contact order; each group handles its staged request,
+publishes its reply, then stages its request line. Within a sender service, the groups are
+served in the same order.
 The ordered parts of a clip keep their identities as other parts finish. Tracks progress in
 their retained arrangement order; the first completed root restarts the whole arrangement
 immediately. Already consumed scalar choices remain until a restarted introduction replaces

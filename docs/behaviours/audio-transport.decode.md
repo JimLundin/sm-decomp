@@ -36,13 +36,21 @@ stages the request line), with no other timing.
   drifts across the service's, and the service's place moves with the frame's CPU load.
 - *The turn rule is exact.* In both native arms, every one of 34 resolved presentations is
   first answered at the second effect turn after it, with no exception.
-- *Borrowed cadence, cut by cut.* Deriving each frame's cadence from the capture's port order
-  (turns before or after the frame's first presentation) and running the frame form on the
-  native control and expire arms reproduces all three group replies at 184/184 cuts in each
-  arm (552/552 replies). The two-frame cadence (every turn after the service) reproduces
-  164/184 cuts (531/552); holding the previous cut's replies reproduces 151/184 (518/552).
-- *Recorded cases.* F-recorded-two-turns is the control arm's Action group, frames 16-18: frame
-  17 runs one turn before its service and one after, and the reply is read on frame 18.
+- *Borrowed cadence, cut by cut.* The frame form takes one cadence for all three groups. The
+  indexed replay derives it from the capture's port log: an effect turn counts in the frame of
+  its Contact reply and splits at the frame's first CPU write (Indexed replay, below). Run that
+  way, the frame form reproduces every compared group reply: 540/540 in the control arm (cuts
+  0-183) and 193/193 in the expire prefix (cuts 0-64). At 7 cuts (6 control, 1 expire) a turn is
+  under way, its Action and Ambient replies published and Contact's not; those 14 replies are
+  not compared, and 11 of them happen to agree. The misses are Action's at control cuts 17 and
+  162 and at expire cut 17. Counting each group's own replies per frame instead, a cadence per
+  group, reproduces all 552 control replies: what remains is the instant within a turn, which
+  is T1's. The two-frame cadence (every turn after the service) reproduces 164/184 control cuts
+  (531/552); holding the previous cut's replies reproduces 151/184 (518/552).
+- *Recorded cases.* F-recorded-two-turns is the control arm's Action group, frames 16-18, with
+  the cadence counted from Action's own replies: frame 17 runs one turn before its service and
+  one after, and the reply is read on frame 18. Counted at Contact's replies, as the indexed
+  replay does, the frame-17 cut falls inside that second turn.
   F-recorded-late is frames 29-32: the turn of frame 29 comes before the presenting service,
   frame 30's before its service and frame 31's after, so the reply misses frame 31's read by 142
   audio cycles and is read on frame 32. Frame 32 presents nothing, so where its turn falls is
@@ -208,8 +216,9 @@ positive release countdowns or cue resets; active-ramp loudness/countdowns. The 
 expiring cue has Loudness,Ramp,Duration,Sustain, so its loudness/ramp target/increment and
 duration stores are also masked. Music 175/196-197/510/517-520/785-795/913-914 own these writes;
 engine 184-197 returns for Sustain before the pitch store 203. All other track and mix fields
-remain compared. Across 13 such cuts this masks 77 fields and compares 5,995. Never mask a reply
-or the sender's state.
+remain compared. Across 13 such cuts this masks 77 fields and compares 5,995. These masks
+cover song fields only: no reply or sender field is masked for a music turn. The replies of an
+effect turn under way at a cut are a separate exclusion (Indexed replay, below).
 
 **Indexed replay.** The native cases play production's audio owner one frame at a time. Each
 frame's offers are the cues the CPU newly presents in it, and its cadence comes from the port

@@ -916,7 +916,7 @@ expect = [
 
 [[frame]]
 id = "F-recorded-two-turns"
-source = "native opening control arm, Action group, frames 16-18"
+source = "native opening control arm, Action group, frames 16-18; cadence counted from Action's own replies (counted at Contact's, as the indexed replay does, the frame-17 cut falls inside the second turn)"
 group = "Action"
 progress = "Ready"
 queue = []
