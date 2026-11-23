@@ -4,16 +4,14 @@
 mod retained {
     use enum_map::EnumMap;
     use samus_appearance::{
-        AppearanceState, CannonDelay, CannonEvent, Charge, ChargeGlowPosition, CinematicActivity,
-        Clip, ColourSequences, ContactSuppressor, Content, Control, Dash, Figure, Frame,
-        FrameOutputs, FrameSound, Frames, Hold, Inputs, Instruction, Laps, LapsLeft, Liquid,
-        NormalDrawing, Pace, Paces, PaletteOpportunity, PassageEntry, Playhead, Rules, Selection,
-        SoundQueue, SoundRequest, SoundsWaiting, State, Step, Stride, VisorDelay, VisorStep,
-        update,
+        Activity, AppearanceState, CannonDelay, CannonEvent, Charge, ChargeGlowPosition, Clip,
+        ColourSequences, Content, Control, Dash, Figure, Frame, FrameOutputs, FramePart, Frames,
+        Hold, Inputs, Instruction, Laps, LapsLeft, Liquid, Pace, Paces, PaletteOpportunity,
+        Playhead, Rules, SoundQueue, SoundRequest, SoundsWaiting, State, Step, VisorDelay,
+        VisorStep, update,
     };
     use types::{
-        Action, Aim, AnimationSound, Body, BoostStage, Facing, Gun, Item, Legs, Pose, Set, Sprite,
-        ZERO, set_of,
+        Action, Aim, Body, BoostStage, Facing, Gun, Item, Legs, Pose, Set, Sprite, ZERO, set_of,
     };
 
     /// Her figure upright, facing right, unaimed, doing `action`.
@@ -84,12 +82,45 @@ mod retained {
         charge_glow_position: ChargeGlowPosition(2),
     };
 
-    /// Her appearance State with `animation`, her cannon waiting a frame and some colours.
+    /// Her appearance State with `animation`, a kept spin, her cannon waiting a frame and some
+    /// colours.
     fn appearance(animation: State) -> AppearanceState {
         AppearanceState {
             animation,
+            kept_action: Action::Spinning,
             cannon: CannonDelay::new(1).expect("a delay in range"),
             colours: COLOURS,
+        }
+    }
+
+    /// A frame's inputs: she starts in `figure` and ends in `figure_after`, out of a liquid,
+    /// with nothing else happening.
+    fn inputs(figure: Figure, figure_after: Figure) -> Inputs {
+        Inputs {
+            figure,
+            figure_after,
+            moves: Set::default(),
+            dash: Dash::Off,
+            run_held: false,
+            heading_down: false,
+            vertical_speed: ZERO,
+            energy: 99,
+            items: Set::default(),
+            liquid: Liquid::NONE,
+            sounds_waiting: SoundsWaiting::NONE,
+            activities: Set::default(),
+            shoot_held: false,
+            charge: Charge::new(0).expect("no charge"),
+        }
+    }
+
+    /// A frame of `inputs` with `parts`, with no item controls and no palette opportunity.
+    fn frame<const N: usize>(inputs: Inputs, parts: [FramePart; N]) -> Frame {
+        Frame {
+            inputs,
+            parts: set_of(parts),
+            cannon: CannonEvent::ControlsSkipped,
+            palette: PaletteOpportunity::Absent,
         }
     }
 
@@ -104,33 +135,9 @@ mod retained {
         }
     }
 
-    /// A frame with none of its parts, to which each test adds its own.
-    fn bare_frame() -> Frame {
-        Frame {
-            cannon: CannonEvent::ControlsSkipped,
-            stride: None,
-            animation: None,
-            selection: None,
-            palette: PaletteOpportunity::Absent,
-            passage: None,
-            drawing: None,
-        }
-    }
-
     /// Plays `frame` from `state` with the stride clip for every figure.
     fn play(state: AppearanceState, frame: &Frame) -> (AppearanceState, FrameOutputs) {
         update(state, frame, &OneClip::of(stride_clip()), &Rules::VANILLA)
-    }
-
-    fn requests(outputs: &FrameOutputs) -> Vec<SoundRequest> {
-        outputs
-            .sounds
-            .iter()
-            .map(|&sound| match sound {
-                FrameSound::Opportunity(request) => request,
-                FrameSound::Animation(sound) => panic!("an animation sound {sound:?}"),
-            })
-            .collect()
     }
 
     #[test]
@@ -160,10 +167,14 @@ mod retained {
 
     #[test]
     fn the_appearance_state_saves_all_it_remembers() {
-        let state = appearance(on_contact(BoostStage::Stage3, LapsLeft::WithoutBooster));
+        let state = AppearanceState {
+            kept_action: Action::WallJumping,
+            ..appearance(on_contact(BoostStage::Stage3, LapsLeft::WithoutBooster))
+        };
         let text = toml::to_string(&state).expect("the appearance State saves");
         for part in [
             "animation",
+            "kept_action = \"WallJumping\"",
             "cannon",
             "colours",
             "visor_delay = 7",
@@ -199,27 +210,22 @@ mod retained {
             .flat_map(|a| [false, true].map(|b| (a, b)))
             .flat_map(|(a, b)| [false, true].map(|c| (a, b, c)));
         for (cinematic, boss, colours) in combinations {
-            let suppressors: Set<ContactSuppressor> = [
-                (ContactSuppressor::Cinematic, cinematic),
-                (ContactSuppressor::Boss, boss),
-                (ContactSuppressor::SpecialColours, colours),
+            let running = upright(Action::Running);
+            let mut given = inputs(running, running);
+            given.activities = [
+                (Activity::Cinematic, cinematic),
+                (Activity::Boss, boss),
+                (Activity::SpecialColourTime, colours),
             ]
             .into_iter()
             .collect();
-            let frame = Frame {
-                stride: Some(Stride {
-                    figure: upright(Action::Running),
-                    suppressors,
-                }),
-                ..bare_frame()
-            };
             let before = appearance(on_contact(BoostStage::Stage3, LapsLeft::WithoutBooster));
-            let (after, outputs) = play(before, &frame);
-            assert_eq!(after, before, "a stride changes no State");
-            assert!(outputs.contact.is_some());
+            let (_, outputs) = play(before, &frame(given, [FramePart::Movement]));
+            let contact = outputs.contact.expect("a contact");
+            assert_eq!(contact.playhead, before.animation.playhead, "as she starts");
             let quiet = cinematic || boss || colours;
             let footstep = (!quiet).then_some(SoundRequest::Footstep);
-            assert_eq!(requests(&outputs), footstep.into_iter().collect::<Vec<_>>());
+            assert_eq!(outputs.sounds, footstep.into_iter().collect::<Vec<_>>());
         }
     }
 
@@ -235,56 +241,48 @@ mod retained {
             },
             ..on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster)
         };
-        let frame = Frame {
-            stride: Some(Stride {
-                figure: upright(Action::Running),
-                suppressors: Set::default(),
-            }),
-            ..bare_frame()
-        };
+        let running = upright(Action::Running);
         let (_, outputs) = update(
             appearance(state),
-            &frame,
+            &frame(inputs(running, running), [FramePart::Movement]),
             &OneClip::of(clip),
             &Rules::VANILLA,
         );
         assert_eq!(outputs.contact, None);
-        assert_eq!(requests(&outputs), []);
+        assert_eq!(outputs.sounds, []);
     }
 
     #[test]
     fn drawing_and_passage_have_no_hidden_engine_admission_guards() {
+        let most = Charge::new(Charge::MOST).expect("in range");
+        let spinning = upright(Action::Spinning);
         let cases = [
             (
-                Frame {
-                    drawing: Some(NormalDrawing {
-                        previous: Action::WallJumping,
-                        current: Action::Unmorphing,
-                    }),
-                    ..bare_frame()
-                },
+                frame(
+                    inputs(spinning, upright(Action::Unmorphing)),
+                    [FramePart::Drawing],
+                ),
                 vec![SoundRequest::SpinEnded],
             ),
             (
-                Frame {
-                    passage: Some(PassageEntry {
-                        current: Action::Spinning,
+                frame(
+                    Inputs {
                         shoot_held: true,
-                        charge: Charge::new(Charge::MOST).expect("in range"),
-                    }),
-                    ..bare_frame()
-                },
+                        charge: most,
+                        ..inputs(spinning, spinning)
+                    },
+                    [FramePart::PassageEntry],
+                ),
                 vec![SoundRequest::SpinEnded],
             ),
             (
-                Frame {
-                    passage: Some(PassageEntry {
-                        current: Action::Running,
-                        shoot_held: false,
-                        charge: Charge::new(Charge::MOST).expect("in range"),
-                    }),
-                    ..bare_frame()
-                },
+                frame(
+                    Inputs {
+                        charge: most,
+                        ..inputs(spinning, upright(Action::Running))
+                    },
+                    [FramePart::PassageEntry],
+                ),
                 Vec::new(),
             ),
         ];
@@ -292,38 +290,72 @@ mod retained {
             let before = appearance(on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster));
             let (after, outputs) = play(before, &frame);
             assert_eq!(after, before);
-            assert_eq!(requests(&outputs), expected, "{frame:?}");
+            assert_eq!(outputs.sounds, expected, "{frame:?}");
         }
     }
 
-    /// A frozen frame at a passage's door: no animation update, the door's request and then
-    /// normal drawing's, the State as it was.
+    /// A frozen frame at a passage's door, with its work unprepared: no animation update, the
+    /// door's request and then normal drawing's, from the spin her State kept, the State as it
+    /// was.
     #[test]
     fn a_frozen_passage_frame_asks_at_the_door_then_draws() {
-        let frame = Frame {
-            passage: Some(PassageEntry {
-                current: Action::Running,
-                shoot_held: false,
-                charge: Charge::new(0).expect("in range"),
-            }),
-            drawing: Some(NormalDrawing {
-                previous: Action::Spinning,
-                current: Action::Running,
-            }),
-            ..bare_frame()
-        };
+        let running = upright(Action::Running);
+        let frame = frame(
+            inputs(running, running),
+            [FramePart::PassageEntry, FramePart::Drawing],
+        );
         let before = appearance(on_contact(BoostStage::Boosting, LapsLeft::WithoutBooster));
         let (after, outputs) = play(before, &frame);
         assert_eq!(after, before);
-        assert_eq!(outputs.ahead, None);
         assert_eq!(
-            requests(&outputs),
+            outputs.sounds,
             [SoundRequest::SamusSilence, SoundRequest::SpinEnded]
         );
     }
 
-    /// One frame whose stride, animation update, pose selection and passage entry each ask for
-    /// a sound: all four, in the frame's order, with the one animation update's State.
+    /// Her initialization comes first in its frame and the frame plays on from it: drawing reads
+    /// the kept action initialization leaves, `Still`, not the spin the frame was given, and the
+    /// frame leaves her State as at initialization.
+    #[test]
+    fn a_frame_plays_on_from_her_initialization() {
+        let falling = upright(Action::Falling);
+        let frame = Frame {
+            cannon: CannonEvent::SamusInitialized,
+            ..frame(inputs(falling, falling), [FramePart::Drawing])
+        };
+        let before = appearance(on_contact(BoostStage::Boosting, LapsLeft::WithoutBooster));
+        let (after, outputs) = play(before, &frame);
+        assert_eq!(after, AppearanceState::INITIAL);
+        assert_eq!(outputs.sounds, []);
+        assert!(!outputs.cannon_may_follow);
+    }
+
+    /// Drawing repeated on frames whose work is not prepared reads the same kept action each
+    /// time; a prepared frame keeps her action as it starts, before drawing reads it.
+    #[test]
+    fn drawing_reads_the_action_her_last_prepared_frame_kept() {
+        let (running, falling) = (upright(Action::Running), upright(Action::Falling));
+        let mut state = appearance(on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster));
+        for _ in 0..2 {
+            let (after, outputs) = play(
+                state,
+                &frame(inputs(falling, falling), [FramePart::Drawing]),
+            );
+            assert_eq!(outputs.sounds, [SoundRequest::SpinEnded]);
+            assert_eq!(after.kept_action, Action::Spinning);
+            state = after;
+        }
+        let prepared = frame(
+            inputs(running, falling),
+            [FramePart::Preparation, FramePart::Drawing],
+        );
+        let (after, outputs) = play(state, &prepared);
+        assert_eq!(outputs.sounds, []);
+        assert_eq!(after.kept_action, Action::Running);
+    }
+
+    /// One frame whose stride, animation update, spin start and passage entry each ask for a
+    /// sound: all four, in the frame's order, with the one animation update's State.
     #[test]
     fn the_frames_sounds_come_in_the_frames_order() {
         let (running, spinning) = (upright(Action::Running), upright(Action::Spinning));
@@ -331,46 +363,21 @@ mod retained {
             BoostStage::Stage3,
             LapsLeft::WithBooster(Laps::new(1).expect("a lap")),
         );
-        let frame = Frame {
-            stride: Some(Stride {
-                figure: running,
-                suppressors: Set::default(),
-            }),
-            animation: Some(Inputs {
-                figure: running,
-                figure_after: spinning,
-                moves: Set::default(),
-                dash: Dash::On,
-                run_held: true,
-                heading_down: false,
-                vertical_speed: ZERO,
-                energy: 99,
-                items: set_of([Item::SpeedBooster]),
-                liquid: Liquid::NONE,
-                sounds_waiting: SoundsWaiting::NONE,
-            }),
-            selection: Some(Selection {
-                from: running,
-                selected: spinning,
-                items: Set::default(),
-                submerged: false,
-                cinematic: CinematicActivity::Inactive,
-            }),
-            passage: Some(PassageEntry {
-                current: Action::Spinning,
-                shoot_held: false,
-                charge: Charge::new(0).expect("in range"),
-            }),
-            ..bare_frame()
+        let given = Inputs {
+            dash: Dash::On,
+            run_held: true,
+            items: set_of([Item::SpeedBooster]),
+            ..inputs(running, spinning)
         };
+        let frame = frame(given, [FramePart::Movement, FramePart::PassageEntry]);
         let (after, outputs) = play(appearance(at_start), &frame);
         assert_eq!(
             outputs.sounds,
             [
-                FrameSound::Opportunity(SoundRequest::Footstep),
-                FrameSound::Animation(AnimationSound::Boosting),
-                FrameSound::Opportunity(SoundRequest::PlainSpin),
-                FrameSound::Opportunity(SoundRequest::SpinEnded),
+                SoundRequest::Footstep,
+                SoundRequest::Boosting,
+                SoundRequest::PlainSpin,
+                SoundRequest::SpinEnded,
             ]
         );
         assert!(outputs.contact.is_some());
@@ -387,8 +394,10 @@ mod retained {
     #[test]
     fn requests_describe_admission_not_driver_work() {
         assert_eq!(SoundRequest::Footstep.queue(), SoundQueue::Footsteps);
+        assert_eq!(SoundRequest::Boosting.queue(), SoundQueue::Footsteps);
         for sound in [
             SoundRequest::Footstep,
+            SoundRequest::Boosting,
             SoundRequest::PlainSpin,
             SoundRequest::SpaceJump,
             SoundRequest::ScrewAttack,

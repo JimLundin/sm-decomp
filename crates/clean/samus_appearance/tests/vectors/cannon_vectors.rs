@@ -2,15 +2,15 @@
 //! appearance State saved and restored between frames.
 
 use samus_appearance::{
-    AppearanceState, CannonDelay, CannonEvent, Charge, ControlEligibility, Frame,
-    ItemControlAnswer, PassageEntry, Rules, SelectedItem,
+    AppearanceState, CannonDelay, CannonEvent, ControlEligibility, Frame, FramePart,
+    ItemControlAnswer, Rules, SelectedItem,
 };
 use serde::Deserialize;
-use types::Action;
+use types::{Action, Set, set_of};
 
 use super::{
-    Library, UNTOUCHED_COLOURS, VectorContent, VectorFile, animation, bare_frame, behaviour, kept,
-    play, read_file, state,
+    Library, UNTOUCHED_COLOURS, VectorContent, VectorFile, VectorInputs, behaviour, frame, kept,
+    moving_content, play, read_file, state,
 };
 
 #[derive(Deserialize)]
@@ -107,65 +107,79 @@ impl HistoryStep {
     }
 }
 
-/// An animation vector an unrelated frame borrows its animation update from.
-fn borrowed<'a>(file: &'a VectorFile, id: &str) -> &'a super::Vector {
-    file.vector
+/// The inputs of an animation vector an unrelated frame borrows its movement from.
+fn borrowed<'a>(file: &'a VectorFile, id: &str) -> &'a VectorInputs {
+    &file
+        .vector
         .iter()
         .find(|vector| vector.id == id)
         .unwrap_or_else(|| panic!("no animation vector {id}"))
+        .inputs
 }
 
 /// The frame a step plays, with the clips it reads, if the step is a frame of play.
 ///
 /// A selection change outside item controls and a drawing are not inputs of the model: no frame
 /// is played for them, and the history checks the delay as it stands. A pose or clip change is
-/// a frame whose animation update takes another pose or clip and whose controls don't run; a
-/// passage without initialization is a frame with a passage entry and no controls.
+/// a frame whose movement takes another pose or clip and whose controls don't run; a passage
+/// without initialization is a frame with a passage entry and no controls. A frame of her item
+/// controls or her initialization alone brings her standing still.
 fn frame_of<'a>(
     step: &HistoryStep,
     file: &VectorFile,
     library: &'a Library,
 ) -> Option<(Frame, VectorContent<'a>)> {
-    let mut frame = bare_frame();
-    let mut clips = Vec::new();
-    match step.kind {
-        Operation::Controls => frame.cannon = CannonEvent::ControlsRan(step.answer()),
-        Operation::Skip => frame.cannon = CannonEvent::ControlsSkipped,
-        Operation::Initialize => frame.cannon = CannonEvent::SamusInitialized,
+    let standing = VectorInputs {
+        pose: "Upright Still Right Forward".to_owned(),
+        ..VectorInputs::default()
+    };
+    let running = VectorInputs {
+        pose: "Upright Running Right Forward".to_owned(),
+        ..VectorInputs::default()
+    };
+    let (given, parts, cannon): (&VectorInputs, Set<FramePart>, CannonEvent) = match step.kind {
+        Operation::Controls => (
+            &standing,
+            Set::default(),
+            CannonEvent::ControlsRan(step.answer()),
+        ),
+        Operation::Skip => (&standing, Set::default(), CannonEvent::ControlsSkipped),
+        Operation::Initialize => (&standing, Set::default(), CannonEvent::SamusInitialized),
         Operation::OutsideSelection | Operation::Draw => return None,
         Operation::Unrelated => match step.event.expect("an unrelated event") {
-            UnrelatedEvent::PoseChange => {
-                let (inputs, taken) = animation(borrowed(file, "C-start"), library);
-                frame.animation = Some(inputs);
-                clips = taken;
-            }
-            UnrelatedEvent::ClipChange => {
-                let (inputs, taken) = animation(borrowed(file, "C-end"), library);
-                frame.animation = Some(inputs);
-                clips = taken;
-            }
-            UnrelatedEvent::PassageWithoutInitialization => {
-                frame.passage = Some(PassageEntry {
-                    current: Action::Running,
-                    shoot_held: false,
-                    charge: Charge::new(0).expect("no charge"),
-                });
-            }
+            UnrelatedEvent::PoseChange => (
+                borrowed(file, "C-start"),
+                set_of([FramePart::Movement]),
+                CannonEvent::ControlsSkipped,
+            ),
+            UnrelatedEvent::ClipChange => (
+                borrowed(file, "C-end"),
+                set_of([FramePart::Movement]),
+                CannonEvent::ControlsSkipped,
+            ),
+            UnrelatedEvent::PassageWithoutInitialization => (
+                &running,
+                set_of([FramePart::PassageEntry]),
+                CannonEvent::ControlsSkipped,
+            ),
         },
-    }
-    let content = VectorContent {
-        clips,
-        paces: &library.paces,
     };
-    Some((frame, content))
+    let played = Frame {
+        cannon,
+        ..frame(given, parts)
+    };
+    Some((played, moving_content("a cannon frame", given, library)))
 }
 
 /// Plays a history frame by frame from its initial delay, checking the delay after each step,
-/// and at each drawing whether the frame left the cannon free to follow.
+/// and at each drawing whether the frame left the cannon free to follow. Her kept action and
+/// colours stay as they were, until an initialization sets her whole State as at
+/// initialization.
 fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
     let id = &history.id;
     let mut appearance = AppearanceState {
         animation: state(2, 3, 1, 1),
+        kept_action: Action::Spinning,
         cannon: CannonDelay::new(history.initial_delay)
             .unwrap_or_else(|| panic!("{id}: initial delay outside the spec")),
         colours: UNTOUCHED_COLOURS,
@@ -175,7 +189,14 @@ fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
         step.validate();
         if let Some((frame, content)) = frame_of(step, file, library) {
             let (after, outputs) = play(appearance, &frame, &content, &Rules::VANILLA);
-            assert_eq!(after.colours, UNTOUCHED_COLOURS, "{id} step {at}");
+            let unchanged = if step.kind == Operation::Initialize {
+                assert_eq!(after, AppearanceState::INITIAL, "{id} step {at}");
+                AppearanceState::INITIAL
+            } else {
+                appearance
+            };
+            assert_eq!(after.colours, unchanged.colours, "{id} step {at}");
+            assert_eq!(after.kept_action, unchanged.kept_action, "{id} step {at}");
             assert!(
                 outputs.sounds.len() <= 1,
                 "{id} step {at}: at most a passage's"
@@ -251,6 +272,7 @@ fn the_delay_is_built_and_restored_only_in_its_range() {
         assert_eq!(delay.may_follow(), frames == 0);
         let appearance = AppearanceState {
             animation: state(3, 7, 2, 1),
+            kept_action: Action::WallJumping,
             cannon: delay,
             colours: UNTOUCHED_COLOURS,
         };
@@ -258,11 +280,7 @@ fn the_delay_is_built_and_restored_only_in_its_range() {
     }
     assert_eq!(CannonDelay::new(3), None);
     assert_eq!(CannonDelay::new(u8::MAX), None);
-    let initial = AppearanceState {
-        animation: state(3, 7, 2, 1),
-        cannon: CannonDelay::INITIAL,
-        colours: UNTOUCHED_COLOURS,
-    };
+    let initial = AppearanceState::INITIAL;
     let text = toml::to_string(&initial).expect("the appearance State saves");
     assert!(text.contains("\"Two\""), "{text}");
     assert!(toml::from_str::<AppearanceState>(&text.replace("\"Two\"", "\"Three\"")).is_err());

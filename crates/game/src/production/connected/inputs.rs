@@ -67,10 +67,11 @@ pub struct Inputs {
     pub liquid: samus_appearance::Liquid,
     /// Actual borrowed destination occupancy; no live Sender is invented.
     pub sounds_waiting: samus_appearance::SoundsWaiting,
-    /// Complete current Contact guard meanings.
-    pub contact: Set<samus_appearance::ContactSuppressor>,
-    /// Current selection-time cinematic meaning.
-    pub cinematic: samus_appearance::CinematicActivity,
+    /// The owners active this frame that her appearance reads: a cinematic, a boss, special
+    /// colour time. Her moves read the cinematic too.
+    pub activities: Set<samus_appearance::Activity>,
+    /// How long her shot has charged: the weapons' fact a first passage entry reads.
+    pub charge: samus_appearance::Charge,
     /// Current room/query geometry.
     pub geometry: crate::production::world::MovementWorld,
     /// Current camera room/settings.
@@ -84,5 +85,5 @@ pub struct InputsPin;
 impl Pinned for InputsPin {
     type State = Inputs;
     const NAME: &'static str = "production-connected-inputs";
-    const SHAPE: u64 = 0xf64e_9370_17ae_47af;
+    const SHAPE: u64 = 0x004e_f490_1f5d_92a8;
 }

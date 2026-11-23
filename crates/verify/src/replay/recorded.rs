@@ -561,8 +561,8 @@ impl Actual {
             (
                 Self::Appearance(content),
                 OwnedState::Appearance(state),
-                ProductionOutputs::Appearance(outputs),
-            ) => Ok(appearance::actual(state.0, *outputs, content)),
+                ProductionOutputs::Appearance(_),
+            ) => Ok(appearance::actual(&state.0, content)),
             (Self::Progress, OwnedState::Progress(state), ProductionOutputs::Progress) => {
                 Ok(progress::actual(state))
             }
@@ -587,7 +587,7 @@ impl Actual {
             (Self::Camera, OwnedState::Camera(state)) => Ok(camera::initial(&state.0)),
             (Self::Hud(content), OwnedState::Hud(state)) => hud::initial(state, content),
             (Self::Appearance(content), OwnedState::Appearance(state)) => {
-                Ok(appearance::initial(state.0, content))
+                Ok(appearance::actual(&state.0, content))
             }
             (Self::Progress, OwnedState::Progress(state)) => Ok(progress::actual(state)),
             _ => Err(data_failure(None, "recorded initial scope")),

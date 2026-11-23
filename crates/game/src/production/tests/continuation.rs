@@ -72,7 +72,7 @@ fn animation() -> (
     Production,
     ProductionContent,
     ProductionRules,
-    samus_appearance::Inputs,
+    samus_appearance::Frame,
 ) {
     use samus_appearance as animation;
     let figure = animation::Figure {
@@ -102,13 +102,17 @@ fn animation() -> (
         .unwrap(),
     );
     let rules = ProductionRules::Appearance(animation::Rules::VANILLA);
-    let state = animation::State {
-        playhead: animation::Playhead {
-            step: animation::Step::FIRST,
-            time_left: animation::Frames(3),
+    let state = animation::AppearanceState {
+        animation: animation::State {
+            playhead: animation::Playhead {
+                step: animation::Step::FIRST,
+                time_left: animation::Frames(3),
+            },
+            stage: types::BoostStage::Stage0,
+            laps_left: animation::LapsLeft::WithoutBooster,
         },
-        stage: types::BoostStage::Stage0,
-        laps_left: animation::LapsLeft::WithoutBooster,
+        kept_action: types::Action::Spinning,
+        ..animation::AppearanceState::INITIAL
     };
     let production = Production::admit(
         ProductionSeed::Appearance(state),
@@ -128,38 +132,54 @@ fn animation() -> (
         items: types::Set::default(),
         liquid: animation::Liquid::NONE,
         sounds_waiting: animation::SoundsWaiting::NONE,
+        activities: types::Set::default(),
+        shoot_held: false,
+        charge: animation::Charge::new(0).unwrap(),
     };
-    (production, content, rules, inputs)
+    let mut parts = types::Set::default();
+    parts[animation::FramePart::Movement] = true;
+    let frame = animation::Frame {
+        inputs,
+        parts,
+        cannon: animation::CannonEvent::ControlsSkipped,
+        palette: animation::PaletteOpportunity::Absent,
+    };
+    (production, content, rules, frame)
 }
 
 #[test]
 fn animation_carries_hold_through_restore_and_missing_clip_refuses_without_advancing() {
-    let (mut production, content, rules, inputs) = animation();
-    assert_eq!(
-        production.advance(AdvanceInput::Appearance(&inputs)),
-        Ok(ProductionOutputs::Appearance(None))
-    );
+    let (mut production, content, rules, frame) = animation();
+    let Ok(ProductionOutputs::Appearance(outputs)) =
+        production.advance(AdvanceInput::Appearance(&frame))
+    else {
+        panic!("appearance outputs")
+    };
+    assert_eq!(outputs.sounds, Vec::new());
     let saved = production.save().unwrap();
     let OwnedState::Appearance(held) = production.state() else {
         panic!("appearance scope")
     };
-    assert_eq!(held.0.playhead.time_left, samus_appearance::Frames(2));
-    let mut absent = inputs;
-    absent.figure_after.sprite = types::Sprite::ScrewAttack;
+    assert_eq!(
+        held.0.animation.playhead.time_left,
+        samus_appearance::Frames(2)
+    );
+    let mut absent = frame.clone();
+    absent.inputs.figure_after.sprite = types::Sprite::ScrewAttack;
     assert_eq!(
         production.advance(AdvanceInput::Appearance(&absent)),
         Err(ProductionFault::Appearance(ClipFault::Missing(
-            absent.figure_after
+            absent.inputs.figure_after
         )))
     );
     assert_eq!(production.save().unwrap(), saved);
     let mut restored = Production::restore(&saved, content, rules).unwrap();
     for _ in 0..2 {
         let expected = production
-            .advance(AdvanceInput::Appearance(&inputs))
+            .advance(AdvanceInput::Appearance(&frame))
             .unwrap();
         assert_eq!(
-            restored.advance(AdvanceInput::Appearance(&inputs)),
+            restored.advance(AdvanceInput::Appearance(&frame)),
             Ok(expected)
         );
     }
@@ -167,6 +187,14 @@ fn animation_carries_hold_through_restore_and_missing_clip_refuses_without_advan
     let OwnedState::Appearance(held) = restored.state() else {
         panic!("appearance scope")
     };
-    assert_eq!(held.0.playhead.step, samus_appearance::Step::SECOND);
-    assert_eq!(held.0.playhead.time_left, samus_appearance::Frames(6));
+    assert_eq!(
+        held.0.animation.playhead.step,
+        samus_appearance::Step::SECOND
+    );
+    assert_eq!(
+        held.0.animation.playhead.time_left,
+        samus_appearance::Frames(6)
+    );
+    // The frame has no preparation, so her kept action carries through the checkpoint.
+    assert_eq!(held.0.kept_action, types::Action::Spinning);
 }

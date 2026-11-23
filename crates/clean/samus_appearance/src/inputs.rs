@@ -1,4 +1,4 @@
-//! What a frame reads, each from the domain that owns it.
+//! What a frame brings, each fact once, from the domain that owns it.
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
@@ -55,7 +55,8 @@ pub struct Liquid {
     pub slowdown: Slowdown,
     /// The start's slowdown: added to the first hold of the pose she takes.
     pub start_slowdown: Slowdown,
-    /// Under a liquid's surface that slows her, without the gravity suit (`WallJumpBranch`).
+    /// Under a liquid's surface that slows her, without the gravity suit (`WallJumpBranch`,
+    /// `SpinStarts`).
     pub submerged: bool,
 }
 
@@ -68,11 +69,64 @@ impl Liquid {
     };
 }
 
-/// The animation update's inputs: samus-movement's results and the pose she takes, with what
-/// the liquids, progress, health and the sound domain give.
+/// An owner's activity that the frame's sound rules read: a cinematic, a boss, special colour
+/// time (`FootContact`; the cinematic also `SpinStarts`). Listed in no order.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum, Serialize, Deserialize)]
+pub enum Activity {
+    /// A cinematic is active (the cinematic owner).
+    Cinematic,
+    /// A boss is active (the boss owner).
+    Boss,
+    /// Special colour time remains (appearance's colour owner, part 2); not the palette
+    /// opportunity's special colouring.
+    SpecialColourTime,
+}
+
+/// How long her shot has charged, in frames, 0 to `Charge::MOST` (weapons; `AtTheDoor`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "u16")]
+pub struct Charge(u16);
+
+impl TryFrom<u16> for Charge {
+    type Error = &'static str;
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        Self::new(value).ok_or("charge must be from 0 to 32767 frames")
+    }
+}
+
+impl Charge {
+    /// The most a shot charges: 32767 frames.
+    pub const MOST: u16 = 32767;
+    /// Spec: `AtTheDoor`. Below 16 frames of charge, a passage quiets her.
+    pub const QUIET_BELOW: u16 = 16;
+
+    /// The charge of `frames`, if the spec allows it: 0 to `MOST`.
+    #[must_use]
+    pub const fn new(frames: u16) -> Option<Self> {
+        if frames <= Self::MOST {
+            Some(Self(frames))
+        } else {
+            None
+        }
+    }
+
+    /// Its frames.
+    #[must_use]
+    pub const fn frames(self) -> u16 {
+        self.0
+    }
+}
+
+/// What a frame brings: each fact once, from the domain that owns it, read by every rule that
+/// needs it.
+///
+/// Her pose comes twice, as the frame starts and as it ends, because samus-movement picks the
+/// pose she takes part-way through the frame: her stride and the preparation of her work come
+/// before the pick, the clip of the first pose plays out before the clip of the second starts,
+/// and the spin start compares the two. On a frame she doesn't move, the two are the same.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Inputs {
-    /// Her figure at the frame's start.
+    /// Her figure as the frame starts: the one whose clip her State is on.
     pub figure: Figure,
     /// The figure she ends the frame in: samus-movement's choice of pose, in its sprite.
     pub figure_after: Figure,
@@ -97,6 +151,12 @@ pub struct Inputs {
     pub liquid: Liquid,
     /// The sounds waiting in the queue the speed booster's sound joins (`BoostingLap`).
     pub sounds_waiting: SoundsWaiting,
+    /// The owners active this frame: a cinematic, a boss, special colour time.
+    pub activities: Set<Activity>,
+    /// The pad holds shoot (`AtTheDoor`).
+    pub shoot_held: bool,
+    /// How long her shot has charged (`AtTheDoor`).
+    pub charge: Charge,
 }
 
 /// How many sounds wait in the queue the speed booster's sound joins, before it (the sound

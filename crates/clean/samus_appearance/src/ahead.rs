@@ -1,12 +1,18 @@
-//! What a caller reads as the frame starts, before samus-movement's step: the end her clip reaches
-//! and whether her spin has turned far.
+//! The read-ahead: what a caller asks of her State as the frame starts, before samus-movement's
+//! step: the end her clip reaches and whether her spin has turned far.
 
 use types::ClipEnd;
 
 use crate::clip::{Clip, Instruction};
-use crate::state::{Playhead, RunDown};
+use crate::state::{AppearanceState, RunDown};
 
-/// What is known of a frame from its start alone.
+/// What is known of a frame from its start alone: the read-ahead.
+///
+/// It is one query of her State before the frame, not a part of the frame: it reads the State
+/// as the frame starts and the clip of her pose then, and nothing else, and it changes nothing.
+/// A frame with her movement gives the same answer, so the frame doesn't tell it again. A
+/// caller asks it before the frame, as samus-movement does before its step, since the frame
+/// needs her pose at its end, which that step picks.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Ahead {
     /// The end her clip reaches this frame, if it reaches one (`ClipEnds`), which samus-movement's
@@ -18,8 +24,8 @@ pub struct Ahead {
 }
 
 impl Ahead {
-    /// What is known of the frame from `playhead`, as the caller kept it, and `clip`, the clip of
-    /// her figure at the frame's start.
+    /// What is known of the frame from `state`, her appearance State as the caller kept it, and
+    /// `clip`, the clip of her figure at the frame's start.
     ///
     /// Spec: `ClipEnds`. The end is the one the time running down moves her clip on to, if it
     /// moves on to one. No move of the frame can change it: the spec's clips that end have no
@@ -30,7 +36,8 @@ impl Ahead {
     /// is on it or past it by step number, so the steps of a branch numbered after the kick step
     /// are past it. What the frame's moves and the pose she takes do shows from the next frame.
     #[must_use]
-    pub fn of(playhead: Playhead, clip: &Clip) -> Self {
+    pub fn of(state: &AppearanceState, clip: &Clip) -> Self {
+        let playhead = state.animation.playhead;
         let end = match playhead.run_down(clip) {
             RunDown::MovesOn(_, Instruction::Control(control)) => control.end(),
             RunDown::MovesOn(_, Instruction::Show(_)) | RunDown::Stays(_) => None,

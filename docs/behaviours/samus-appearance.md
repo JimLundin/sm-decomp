@@ -19,14 +19,14 @@ run's stages up to boosting, which the shinespark, the echoes, her glow, the blo
 boost breaks, and the enemies she touches read. Cannon readiness is a separate visible delay;
 it does not choose a weapon, fire a shot or animate how her gun changes shape.
 
-**What it reads** (§1.3, each from the domain that owns it): her pose at the frame's start and at
-its end, and what her moves did this frame (samus-movement); her clips and the run's paces (the
-importer, §1.4); her current energy ([health](samus-health.md)) and the items switched on
-(progress); the pad's run button; the
-slowdown and whether she is submerged (the liquids); how many sounds are waiting (the sound
-domain).
+**What it reads** (§1.3, each from the domain that owns it, each once a frame): her pose at the
+frame's start and at its end, and what her moves did this frame (samus-movement); her clips and
+the run's paces (the importer, §1.4); her current energy ([health](samus-health.md)) and the
+items switched on (progress); the pad's run and shoot buttons; the slowdown and whether she is
+submerged (the liquids); how many sounds are waiting (the sound domain); whether a cinematic or
+a boss is active; her charge (weapons).
 
-**Palette neighbours.** Movement supplies the selected figure and position. Equipment,
+**Palette neighbours.** Movement supplies her pose as the frame ends (§1.3). Equipment,
 room effects, Environment, Grapple and the charge and effect owners supply current facts
 (§11). Appearance owns the ordinary visor and charge-glow reset. Room palette objects
 supply their own palette changes, and video owns delivery of the current palette.
@@ -50,11 +50,13 @@ after the one it is on. A hold is a number of frames.
 | the boost stage | 0 to 4; 4 is boosting | her run's pace, and once boosting her glow and echoes | `RunPace`, `BoostStages`; output (the shinespark, the echoes, her glow, the blocks a boost breaks, her contact with enemies) |
 | the laps left | 0 to the most laps a stage lasts (2 in the game): the laps of her run the stage still lasts, the lap she is running included, so at 1 that lap is the stage's last | when the pace next quickens | `BoostStages` |
 
-These four are all the domain remembers; each is State a caller can set to any value the spec
-allows and read back. A caller keeps them from one frame to the next and gives them back as they
-were left: nothing else carries over, since the end, whether her spin has turned far, where the
-clip of the pose she takes starts, the slowdowns and what her moves did are each worked out
-within the frame. A vector gives them as `before` and compares them as `after`.
+These four, with the cannon delay (§10), the three colour-sequence quantities (§11.1) and her
+kept action (§9.1), are her appearance State: all she remembers from one frame to the next.
+Each is State a caller can set to any value the spec allows and read back. A caller keeps the
+State from one frame to the next and gives it back as it was left: nothing else carries over,
+since the end, whether her spin has turned far, where the clip of the pose she takes starts, the
+slowdowns and what her moves did are each worked out within the frame. §1.6 gives the State she
+starts with. A vector gives it as `before` and compares it as `after`.
 
 ### 1.1 Outputs
 
@@ -62,17 +64,18 @@ within the frame. A vector gives them as `before` and compares them as `after`.
 | --- | --- | --- |
 | end | the end her clip reaches this frame (`ClipEnds`): none, an end, or an end unless a jump; known from the frame's start, before samus-movement picks her pose (§6) | samus-movement (`AnimationEnds`, where an end unless a jump gives way when its pad chart's pose that frame is a take-off aimed forward or a spin) |
 | turned far | `bool`: whether her spin has turned far enough to kick off a wall (`SpinTurnedFar`); known from the frame's start, before samus-movement's step (§6) | samus-movement (`WallJump`), that frame |
-| sounds | the sound asked for by the animation update, at most one (an update passes at most one control): `PlainSpin`, `SpaceJump`, `ScrewAttack` (`WallJumpBranch`), `Boosting` (`BoostStages`) | the sound domain |
 | her step and the boost stage | as §1 | part 2 (her sprite, her glow), the shinespark, the echoes, the blocks, the enemies |
-| the frame's sounds | the requests of §9.2, in the order asked: the stride's, the animation update's, the spin start's, drawing's | the sound domain |
+| the frame's sounds | one list of the sounds of §9.1, in the order asked (§9.2): the stride's, the animation update's (at most one, since an update passes at most one control), the spin start's, a passage entry's, drawing's | the sound domain |
 | graphical contact | the stride's contact opportunity (`FootContact`) | part 2 (splashes and dust), that frame |
 | cannon may follow | readiness as the frame's item controls leave it (§10) | the picture of her gun, that frame |
 | her colour sequences | the visor delay, visor position and charge-glow position as the frame's palette opportunity leaves them (§11) | drawing and palette upload, that frame |
 
-The end and turned far are given ahead: each follows from the State and the clip of her pose at
-the frame's start alone, so a caller reads them before the frame, as samus-movement does. The frame
-itself then tells only what it alone can: the State it leaves and the other outputs above,
-each as the whole frame leaves it.
+The end and turned far are the **read-ahead**: one query of her State before the frame, not a
+part of the frame. It reads the State as the frame starts and the clip of her pose then, and
+nothing else; it changes nothing, and a frame with her movement gives the same answer. A caller
+asks it before the frame, as samus-movement does before its step, because the frame needs her
+pose at its end, which that step picks. The frame itself then tells only what it alone can: the
+State it leaves and the other outputs above, each as the whole frame leaves it.
 
 ### 1.2 Her pose
 
@@ -80,17 +83,23 @@ Her pose comes from samus-movement (§2 there: body, action, facing, aim, gun, l
 `HowSheIsDrawn` chooses for it (plain, the screw attack's, the space jump's, the other suit's):
 each pose and sprite has its own clip. She takes another pose when either part differs.
 
-### 1.3 What it reads (Inputs)
+### 1.3 What a frame brings (Inputs)
+
+Each fact of the frame is one input, read by every rule that needs it. Her pose is two inputs,
+as the frame starts and as it ends, because samus-movement picks the pose she takes part-way
+through the frame: her stride and the preparation of her work come before the pick, the clip of
+the first pose plays out before the clip of the second starts (§6), and the spin start compares
+the two (§9.2). On a frame she doesn't move, her pose after is her pose.
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| her pose | §1.2, at the frame's start | every entry |
-| her pose after | §1.2: the pose she ends the frame in (samus-movement's choice) | `StartingClip` |
-| her clips | content, by pose (§1.4) | every entry |
+| her pose | §1.2, as the frame starts: the pose whose clip the State is on | every entry of §2 to §5; `FootContact` (her action and her clip's contact steps), `SpinStarts` (the pose she is selected from), `SpinEnds` (the action her preparation keeps) |
+| her pose after | §1.2: the pose she ends the frame in (samus-movement's choice) | `StartingClip`; `SpinStarts` (the pose selected); `SpinEnds` and `AtTheDoor` (her action); `OrdinaryDryColours` (her body and action) |
+| her clips | content, by pose (§1.4) | every entry of §2 to §5, `FootContact` |
 | the run's paces | content (§1.4) | `RunPace`, `BoostStages` |
 | energy | a count | `Breathing` |
-| items switched on | `SpeedBooster`, `SpaceJump`, `ScrewAttack`: progress's own output | `RunPace`, `BoostStages`, `WallJumpBranch` |
-| submerged | `bool`: she is under a liquid's surface, the liquid slows her, and she lacks the gravity suit (the liquids) | `WallJumpBranch` |
+| items switched on | `SpeedBooster`, `SpaceJump`, `ScrewAttack`: progress's own output | `RunPace`, `BoostStages`, `WallJumpBranch`, `SpinStarts`, `OrdinaryDryColours` |
+| submerged | `bool`: she is under a liquid's surface, the liquid slows her, and she lacks the gravity suit (the liquids) | `WallJumpBranch`, `SpinStarts` |
 | slowdown | frames, 0 to 3: added to the holds her clip moves on to: 3 in water, whatever her suit; 2 in acid, whatever her suit; 2 in lava without the gravity suit, 0 with it; 0 out of a liquid (the liquids) | `ClipPlays`, `ClipControls`, `Breathing`, `WallJumpBranch`, `HandOverSlowdown`, `RunPace`, `BoostStages` |
 | the start's slowdown | frames, 0 to 3: added to the first hold of the pose she takes: 3 with the feet of that pose under water, 2 under lava or acid; 0 with the gravity suit, out of a liquid, or where the liquid doesn't slow her (the liquids) | `StartingClip`, `HandOverSlowdown` |
 | run held | `bool`: the pad holds run this frame | `RunPace`, `BoostStages` |
@@ -102,6 +111,22 @@ each pose and sprite has its own clip. She takes another pose when either part d
 | her vertical speed | signed `P.S`, pixels a frame, downward positive: samus-movement's `vertical speed after her moves` (its §1.4), as her moves leave her, before what they met acts and before the pose change. An input of its own, apart from heading down: she can rise fast in a fall's pose, and the moonfall and a rise a ceiling stops are not heading down whatever the speed | `FastFall` |
 | heading down | `bool`: samus-movement's `heading down` (its §1.4), as her moves leave her, before what they met acts and before the pose change: she falls, a fall at 0 included, and not in the moonfall (samus-movement's `Moonfall`: the spin she enters as a turn ends, which drops with no rise); a rise a ceiling stops this frame is not heading down | `RisingHold` |
 | sounds waiting | 0 to 15: the sounds waiting in the queue the speed booster's sound joins, before it (the sound domain) | `BoostingLap` |
+| cinematic active | `bool` (the cinematic owner) | `FootContact`, `SpinStarts` |
+| boss active | `bool` (the boss owner) | `FootContact` |
+| special colours active | `bool`: special colour time remains (appearance's colour owner, part 2); not §11.2's special colouring | `FootContact` |
+| shoot held | `bool`: the pad holds shoot | `AtTheDoor` |
+| charge | frames, 0 to 32767: how long her shot has charged (weapons) | `AtTheDoor` |
+
+Which parts the frame has is an input too. A frame may have any of them, each at most once:
+
+| Part | When | Read by |
+| --- | --- | --- |
+| her movement | samus-movement's step, with the animation update on its results; her stride is part of it. A frozen frame, at a passage's door or while paused, has none | every entry of §2 to §5, `FootContact`, `SpinStarts` |
+| the preparation of her work | before her movement (§9.2). A frame whose work is locked is still prepared; a paused frame, or a passage's frame that bypasses her work, is not | `SpinEnds` |
+| her item controls, or her initialization | §10; her initialization comes first in its frame and sets her whole appearance State (§1.6) | `CannonItemDelay`, `CannonReadinessReset`; initialization, every quantity of the State |
+| the palette opportunity, with its observations (§11.2) | after her movement and the suit's selection | `OrdinaryDryColours` |
+| her first entry into a passage | before the passage holds its sounds | `AtTheDoor` |
+| normal drawing | the frame's last | `SpinEnds` |
 
 ### 1.4 Her clips and the run's paces
 
@@ -148,10 +173,35 @@ this spec (stated simplifications, docs/LEGACY.md):
   within the time left's 0 to 255.
 - Not 5 sounds waiting when she starts boosting (`BoostingLap`): with 5 the game's behaviour is
   outside this spec (LEGACY).
-- The laps left are 1 to the stage's laps with the speed booster, 0 without it; each stage
-  lasts 1 lap or more.
+- The laps left are 1 to the stage's laps with the speed booster, 0 without it or before her
+  first dash since initialization (§1.6), when no rule reads them; each stage lasts 1 lap or
+  more.
+- Within the poses this domain plays (§7, which leaves the x-ray scope to another domain),
+  nothing changes her pose between the frame's start and the preparation of her work: her
+  preparation keeps the action of her pose as the frame starts (`SpinEnds`).
 - A dash that begins this frame is dashing, and she is handed over a pose only on a frame whose
   end (`ClipEnds`) is an end, or an end unless a jump that doesn't give way.
+
+### 1.6 Her appearance at initialization
+
+When Samus is initialized (her arrival at Ceres or Zebes, or a demo's loading), her appearance
+State is the same whatever came before. Her initialization is a part of a frame (§1.3): it
+sets every quantity of her appearance State to the table below, whatever State the frame
+starts with, before any other part of that frame, which plays on from it
+[C-initialize, C-cannon-initialize]. So a caller either starts from this State or plays a
+frame with her initialization from any State, alike:
+
+| Quantity | At initialization |
+| --- | --- |
+| her step and the time left | 0 and 0 |
+| the boost stage and the laps left | 0 and 0, whatever her items: a dash's beginning sets the laps (`BoostStages`) |
+| the cannon delay | 2 (`CannonReadinessReset`) |
+| the visor delay and visor sequence position | 1 eligible palette tick and the fourth entry (zero-based 3), the values the ordinary reset sets (`OrdinaryDryColours`) |
+| the charge-glow position | the reset position |
+| her kept action | `Still`: no spin, so drawing asks for no spin's end until a preparation keeps one (`SpinEnds`) |
+
+The pose she takes at the start, and a demo's own setup of her, are other domains' (§7), and
+play on from this State. The vector file's `[initialization]` table holds it.
 
 ---
 
@@ -449,9 +499,9 @@ Cells: kept, step 1
 A frame has two halves, because samus-movement reads the end before it picks her pose, and this
 domain reads the pose it picks:
 
-- **First, before samus-movement's step:** the end (`ClipEnds`), from her step, the time left and
-  her clip at the frame's start, and whether her spin has turned far (`SpinTurnedFar`), from her
-  step and that clip. §1.5 makes the end exact: no move of the frame can change whether her
+- **First, before samus-movement's step:** the read-ahead (§1.1): the end (`ClipEnds`), from her
+  step, the time left and her clip at the frame's start, and whether her spin has turned far
+  (`SpinTurnedFar`), from her step and that clip. §1.5 makes the end exact: no move of the frame can change whether her
   clip ends; turned far reads nothing the frame changes.
 - **Then, with samus-movement's results and the pose she takes**, in this order, as the State at
   the frame's end shows:
@@ -489,25 +539,19 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
 
 These opportunities belong to how Samus looks: a foot contacting the ground is timed by the
 picture still showing, a spin starts with the figure she takes, and a spin ends while that
-figure is drawn. Each is a rule of the frame with its own inputs; the implementer chooses the
-interface form. None advances the animation, changes its four State quantities, or consumes a
-sound acknowledgement. Each applies at most once a frame. Several may ask for a sound in the
-same frame; the animation update's at-most-one sound does not limit them (§9.2).
+figure is drawn. Each is a rule of the frame that reads the frame's inputs (§1.3); the
+implementer chooses the interface form. None advances the animation, changes its four
+quantities, or consumes a sound acknowledgement. Each applies at most once a frame. Several may
+ask for a sound in the same frame; the animation update's at-most-one sound does not limit them
+(§9.2).
 
-### 9.1 Inputs, content and outputs
+### 9.1 Content, State and sounds
 
 | Quantity | Type and owner | Read by |
 | --- | --- | --- |
 | contact steps | a set of shown step indices in each clip, content supplied by the importer; any number of contacts, independent of holds and the kick mark | `FootContact` |
-| stride figure and playhead | her figure, step and frames left as the frame starts: her running movement doesn't change them, and the frame's update comes after the stride; samus-movement and this domain | `FootContact` |
-| cinematic active | bool, the cinematic owner | `FootContact`, `SpinStarts` |
-| boss active | bool, the boss owner | `FootContact` |
-| special colours active | bool, appearance's colour owner: special colour time remains | `FootContact` |
-| boosting | the boost stage in this domain's State as the frame starts | `FootContact` |
-| figure selected from and figure selected | her pose and her pose after (§1.3), each with its sprite: the figure she ends the frame in, against the one she starts it in; samus-movement | `SpinStarts` |
-| submerged and items | the liquid input and the items switched on (§1.3) | `SpinStarts` |
-| previous and current movement | typed actions: spin, wall jump, or any named other action; previous is the action the caller kept when the frame's work was last prepared (§9.2), current is samus-movement's action as the frame ends. Previous is independent of pose-change history | `SpinEnds` |
-| current action, shoot held, charge | current action from samus-movement, bool from the pad, charge frames from weapons, a count from 0 to 32767 | `AtTheDoor` |
+| her step, the time left and the boost stage, as the frame starts | the State (§1): her running movement doesn't change them, and the frame's animation update comes after the stride; at stage 4 she is boosting | `FootContact` |
+| her kept action | State: the action her last prepared frame kept (§9.2), an action of §1.2; independent of pose-change history and of her pose as the frame starts | `SpinEnds` |
 
 A contact opportunity returns a graphical contact opportunity separately from its optional sound.
 Part 2 reads the graphical opportunity with the room and liquid context to decide the splash
@@ -516,11 +560,18 @@ replace the existing atmospheric drawing or add liquid graphics. Its bounded dry
 admission has no boosting, so the graphical opportunity leaves atmospheric slots and sprite output unchanged;
 it must still remain available to part 2.
 
-Sound outputs are semantic requests: `Footstep` to the footstep sounds, with at most 6 waiting;
-`PlainSpin`, `SpaceJump` and `ScrewAttack` to Samus sounds, with at most 6 waiting;
-`SpinEnded` and `SamusSilence` to Samus sounds, with at most 15 waiting. Sound admission,
-sending, retries and driver replies belong to the sound domain. An outstanding retry is not
-another appearance sound. Callers keep the frame's requests in the order of §9.2.
+The domain's sounds are semantic requests, one set whichever rule asks for them:
+
+| Sound | Joins, with at most | Asked for by |
+| --- | --- | --- |
+| `Footstep` | the footstep sounds, 6 waiting | `FootContact` |
+| `Boosting` | the footstep sounds, 6 waiting | `BoostStages` |
+| `PlainSpin`, `SpaceJump`, `ScrewAttack` | Samus sounds, 6 waiting | `WallJumpBranch` (a wall jump's branch) and `SpinStarts` (the spin she takes): each is the same request whichever asks |
+| `SpinEnded` | Samus sounds, 15 waiting | `SpinEnds`, `AtTheDoor` |
+| `SamusSilence` | Samus sounds, 15 waiting | `AtTheDoor` |
+
+Sound admission, sending, retries and driver replies belong to the sound domain. An outstanding
+retry is not another appearance sound. Callers keep the frame's requests in the order of §9.2.
 
 **Bounded engine admission for the other drawing effects.** Charge is zero, a charge sound is not retained
 for resumption, the echoes are quiet, debug is inactive, and the countdown has not expired.
@@ -555,9 +606,10 @@ colour and liquid effects remain part 2.
 - params: none.
 - switch: none.
 
-For the item branches below, a qualifying selection means a different figure is selected,
-its action is `Spinning`, and she is not submerged. This common condition says nothing
-about her items, prior action or cinematic activity.
+For the item branches below, a qualifying selection means her pose after differs from her pose
+(§1.2, the sprite included), its action is `Spinning`, and she is not submerged. This common
+condition says nothing about her items, her pose's action or cinematic activity; "from spin or
+wall jump" is her pose's action.
 
 - Qualifying selection, with SpaceJump and without ScrewAttack → ask for `SpaceJump`,
   even from spin or wall jump and even during a cinematic [C-start-space, C-start-space-continued, C-start-space-cinematic]
@@ -569,21 +621,27 @@ about her items, prior action or cinematic activity.
   ask for `PlainSpin` [C-start-plain, R-start]
 - Qualifying selection, with neither item, from spin or wall jump or cinematic active → no sound
   [C-start-continued, C-start-wall, C-start-cinematic, C-start-continued-cinematic]
-- No different figure, no spinning selection, or submerged → no sound
+- Her pose after the same as her pose, no spinning selection, or submerged → no sound
   [C-start-same, C-start-other, C-start-submerged, C-start-submerged-both]
-- checked: constructed (the cases above); recorded (R-start). The existing `WallJumpBranch`
-  remains a wall jump's later animation branch sound, a distinct opportunity.
+- checked: constructed (the cases above); recorded (R-start). `WallJumpBranch` asks for the
+  same spin sounds at a different moment of a frame, a wall jump's branch in the clip of her
+  pose as the frame starts.
 
 ### SpinEnds
 - kind: output.
-- summary: when she leaves a spin or wall jump, normal drawing ends its sound, even while
-  her animation is frozen.
+- summary: her prepared frames keep her action, and when she has left a kept spin or wall
+  jump, normal drawing ends its sound, even while her animation is frozen.
 - params: none.
 - switch: none.
-- Normal drawing, prior action `Spinning` or `WallJumping`, current action
-  neither → ask for `SpinEnded` [C-end-spin, C-end-wall, C-end-frozen, R-unspin]
-- Prior action neither, or current action `Spinning` or `WallJumping` → no sound
-  [C-end-neither, C-end-spin-spin, C-end-spin-wall, C-end-wall-spin, C-end-wall-wall]
+- The frame's work prepared → her kept action becomes her pose's action, before normal drawing
+  reads it [C-end-prepared, C-end-prepared-replaces, R-unspin]
+- So a frame without preparation leaves her kept action as it is, as a paused frame does
+  (C-end-frozen, C-end-spin, C-end-wall).
+- Normal drawing, her kept action `Spinning` or `WallJumping`, her pose after's action
+  neither → ask for `SpinEnded` [C-end-spin, C-end-wall, C-end-frozen, C-end-prepared, R-unspin]
+- Her kept action neither, or her pose after's action `Spinning` or `WallJumping` → no sound
+  [C-end-neither, C-end-spin-spin, C-end-spin-wall, C-end-wall-spin, C-end-wall-wall,
+  C-end-prepared-replaces]
 - checked: constructed (the cases above); recorded (R-unspin).
 
 ### AtTheDoor
@@ -592,11 +650,11 @@ about her items, prior action or cinematic activity.
   sound before sounds are held.
 - params: none.
 - switch: none.
-- First passage opportunity, current action `Spinning` or `WallJumping` → ask for `SpinEnded`,
-  whatever shoot and charge [C-door-spin, C-door-wall]
-- Current movement neither, shoot released, charge below 16 frames → ask for `SamusSilence`
+- First passage opportunity, her pose after's action `Spinning` or `WallJumping` → ask for
+  `SpinEnded`, whatever shoot and charge [C-door-spin, C-door-wall]
+- Her action neither, shoot released, charge below 16 frames → ask for `SamusSilence`
   [C-door-quiet, C-door-below, R-door]
-- Current movement neither, shoot held or charge 16 frames or more → no request
+- Her action neither, shoot held or charge 16 frames or more → no request
   [C-door-held, C-door-threshold, C-door-above]
 - checked: constructed (the cases above); recorded (R-door).
 
@@ -610,7 +668,8 @@ the graphical contact beside it:
 2. the animation update's own, at most one (`WallJumpBranch`, `BoostStages`);
 3. the spin start of the pose she takes (`SpinStarts`), after the clip of her pose at the
    frame's start has played (§6, 3) and before the clip of the pose she takes starts (§6, 4);
-4. normal drawing's spin end (`SpinEnds`), with her action as the frame ends.
+4. normal drawing's spin end (`SpinEnds`), with her kept action and her action as the frame
+   ends.
 
 A frame in which she first enters a passage asks for `AtTheDoor`'s request once, before the
 passage holds its sounds, and then normal drawing's. Animation and motion may stay frozen in
@@ -619,23 +678,22 @@ retries are the sound domain's. None of these needs another motion step or anoth
 update [C-end-frozen, C-contact, C-door-quiet].
 
 An invented frame combines the wall-jump branch sound with drawing's spin end; another
-combines a contact and a spin start. Each keeps both requests in this order and the graphical
-contact, and compares all four animation quantities, with at most one animation update
-[C-branch-and-end, C-contact-and-start].
+combines a contact and a spin start. Each is one frame with one set of inputs (§1.3), keeps both
+requests in this order and the graphical contact, and compares the State it leaves, with one
+animation update [C-branch-and-end, C-contact-and-start].
 
-The caller keeps her current action whenever the frame's work is prepared, after
-earlier effects that may have changed her action and before ordinary movement; pose selection
-follows. It keeps this action independently of pose-change history, and restores it with the
-rest of the caller's State. Normal drawing reads it without refreshing or consuming it. It is
-a supplied input, outside this model's four animation quantities; the appearance model stores
-no extra history. Her figure as the frame starts is not a substitute for it.
+Her kept action is her appearance State. The frame's preparation of her work keeps her action
+as the frame starts, before her moves and the pose she takes; normal drawing reads it later in
+the frame without refreshing or consuming it. It is independent of pose-change history. Her
+pose as the frame starts is not a substitute for it: a frame without preparation keeps the
+earlier action, so drawing compares her action as the frame ends with the action of the last
+prepared frame.
 
 Frozen animation alone does not decide whether the kept action changes. A frame whose work is
-locked but still prepared keeps the current action; a paused frame without that preparation keeps
-the earlier one. The extra inanimate body draw keeps no action and asks for no second sound. If
-preparation is skipped and normal drawing repeats, each normal drawing reads the same kept
-action. So both the last prepared spin and a current action that has left it are kept, without
-another motion or animation update.
+locked but still prepared keeps her action; a paused frame without that preparation keeps the
+earlier one. The extra inanimate body draw keeps no action and asks for no second sound. If
+preparation is skipped and normal drawing repeats on later frames, each normal drawing reads
+the same kept action, without another motion or animation update.
 
 ## 10. When the cannon may follow her selected item
 
@@ -733,14 +791,14 @@ applying it can leave the three quantities as they were.
 
 ### 11.2 Current observations
 
-Each observation is its owner's value for the frame's palette opportunity: her figure and where
-she is once this frame has moved her and selected her pose, the suit selection made for this
-frame, and the others as their owners have them by then.
+The rule reads two of the frame's inputs (§1.3): her pose after, the pose this frame's movement
+selected (its body and action), and the items switched on (the screw attack). Its other
+observations are its own: each is its owner's value for the frame's palette opportunity, the
+suit selection made for this frame, and the others as their owners have them by then. Where
+she is doesn't enter: the water and magma levels say whether a liquid is present.
 
 | Observation | Type and owner | Read by |
 | --- | --- | --- |
-| selected figure and position | valid current pose including `Body` and `Action`, and current position in pixels/subpixels, from Movement after selection | `OrdinaryDryColours` |
-| screw attack | switched on or off, from the items switched on (progress) | `OrdinaryDryColours` |
 | current suit selection | `Suit` (Power, Varia or Gravity), the actual equipment-dependent selection supplied for current use | `OrdinaryDryColours` |
 | room colour treatment | `RoomColours` (standard, red background or orange background), from room effects | `OrdinaryDryColours` |
 | water and magma levels | independently present or absent, from room effects and the current Environment | `OrdinaryDryColours` |
@@ -761,7 +819,7 @@ the grapple or room effects observations above.
 - summary: during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were.
 - params: none.
 - switch: none.
-- The frame's palette opportunity sees a valid upright figure that is running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Leave all 256 current and 256 target colours at their positions as the frame's other producers leave them, even with different valid poses of those actions, positions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump, C-ordinary-shared-colours].
+- The frame's palette opportunity sees her pose after upright and running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Leave all 256 current and 256 target colours at their positions as the frame's other producers leave them, even with different valid poses of those actions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump, C-ordinary-shared-colours].
 - checked: oracle (recorded application and preservation for each admitted action, R-ordinary-run-colours to R-ordinary-moonwalk-colours); original and constructed (stale reset and varied inputs).
 
 **Admission.** The surrounding caller reports unsupported for a frame's palette opportunity
@@ -777,7 +835,7 @@ opportunity, or drawing alone, does not apply this rule. `C-ordinary-boundary` c
 independently, and `C-ordinary-spin-boundary` the premises of a spin, the screw attack included.
 
 **Order that matters.** The frame's palette opportunity comes after movement has selected her
-figure and position and the suit has been selected, and before health maintenance and the
+pose and the suit has been selected, and before health maintenance and the
 frame's later drawing and palette upload, which read the three quantities as the reset leaves
 them. It does not advance animation, cannon readiness, movement, room palette objects or
 health. The model chooses its API and representation. The palette histories in the vector file

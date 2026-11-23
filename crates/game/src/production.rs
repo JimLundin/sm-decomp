@@ -90,8 +90,8 @@ pub enum ProductionSeed {
     Blocks(Box<world_blocks::State>),
     /// Full camera memory and receipt.
     Camera(world_camera::Camera),
-    /// Full animation memory.
-    Appearance(samus_appearance::State),
+    /// Her whole appearance State.
+    Appearance(samus_appearance::AppearanceState),
     /// Full run progress.
     Progress(Box<run_progress::Progress>),
     /// Full HUD memory.
@@ -164,8 +164,8 @@ pub enum AdvanceInput<'a> {
     Blocks(BlocksInput<'a>),
     /// Actual movement placement, lead, room screens and time permission.
     Camera(&'a world_camera::Frame<'a>),
-    /// Actual pre/post figures, movement events, liquid and sound queue facts.
-    Appearance(&'a samus_appearance::Inputs),
+    /// One frame of her appearance: its facts, once each, and its parts.
+    Appearance(&'a samus_appearance::Frame),
     /// Actual ordered world/inventory reports.
     Progress(&'a [run_progress::Report]),
     /// One selected play/out-of-play/boss HUD entry.
@@ -201,8 +201,8 @@ pub enum ProductionOutputs {
     Blocks(BlocksOutputs),
     /// Complete resulting camera and retained receipt.
     Camera(world_camera::Camera),
-    /// The clean animation entry's sound request, if any.
-    Appearance(Option<types::AnimationSound>),
+    /// Her appearance frame's complete outputs: sounds, contact, cannon and dry colours.
+    Appearance(samus_appearance::FrameOutputs),
     /// Progress changed only its held complete State and emits no requests.
     Progress,
     /// A frame of play's outputs; a step outside play or a boss blanking the map has none.

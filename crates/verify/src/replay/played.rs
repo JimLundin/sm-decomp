@@ -40,7 +40,8 @@ pub const SEED_HELD: &[&str] = &[
     "her map collected",
     "liquid (none)",
     "sound queue occupancy",
-    "Contact guards",
+    "the owners active at her stride: a cinematic, a boss, special colour time",
+    "her shot's charge, which no frame of play reads",
     "cinematic and elevator status",
     "room geometry, doors and actor boxes",
     "camera room settings and lead",
@@ -287,7 +288,7 @@ fn expected(
         row,
         cut,
     )?);
-    let (state, playing) = appearance::owner(wram, content)?;
+    let (state, playing) = appearance::animation_owner(wram, content)?;
     fields.extend(appearance::initial(state, content));
     fields.push(connected::playing_observation(playing));
     fields.extend(camera::expected(wram)?);
@@ -674,7 +675,7 @@ fn actual(
         Observation::quantity("movement.position.x", i64::from(samus.position.x.0)),
         Observation::quantity("movement.position.y", i64::from(samus.position.y.0)),
     ]);
-    fields.extend(appearance::initial(state.appearance.0, content));
+    fields.extend(appearance::actual(&state.appearance.0, content));
     fields.push(connected::playing_observation(state.figure.0));
     fields.extend(camera::initial(&state.camera.0));
     fields.push(passing_observation(matches!(

@@ -149,9 +149,9 @@ pub(super) fn advance(
             OwnedState::Appearance(state),
             ProductionContent::Appearance(content),
             ProductionRules::Appearance(rules),
-            AdvanceInput::Appearance(inputs),
+            AdvanceInput::Appearance(frame),
         ) => ProductionOutputs::Appearance(
-            super::animation::advance(&mut state.0, content, rules, inputs)
+            super::animation::play(&mut state.0, content, rules, frame)
                 .map_err(ProductionFault::Appearance)?,
         ),
         (

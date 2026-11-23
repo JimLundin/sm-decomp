@@ -558,20 +558,6 @@ pub struct SoundRequest {
     pub queue_allowance: QueueAllowance,
 }
 
-/// A sound her animation asks for (samus-appearance `WallJumpBranch`, `BoostStages`), for the sound
-/// domain to play or not.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
-pub enum AnimationSound {
-    /// A wall jump's plain spin.
-    PlainSpin,
-    /// A wall jump spun as the space jump.
-    SpaceJump,
-    /// A wall jump spun as the screw attack.
-    ScrewAttack,
-    /// She starts boosting.
-    Boosting,
-}
-
 /// The pad: a set of its buttons, the ones held or the ones just pressed, each a bit of
 /// `button`'s.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

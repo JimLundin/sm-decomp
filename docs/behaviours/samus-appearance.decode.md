@@ -36,6 +36,23 @@ the Budget section of [samus-appearance.md](samus-appearance.md). Bank logs:
 | the time left | `0A94` | as is: the frames left on the step is the quantity itself (RAM-shape: one word copied as is, because the count the player sees is that word) |
 | the boost stage | `0B3F` (the high byte of `0B3E`) | as is, 0 to 4 |
 | the laps left | `0B3E` low byte | as is (the speed boost timer: the laps the stage still lasts) |
+| her kept action | `0A11` (the movement byte of `0A10`) | through the movement-type map to her action; written only by the preparation, `$90:EB2D`/`$90:EB30` (§The prepared movement snapshot) |
+
+The rest of her appearance State is the cannon delay (`0AAA`, §Cannon selection readiness) and
+the three colour-sequence quantities (`0A72`, `0B62`, §Ordinary dry palette preparation).
+
+**At initialization** (spec §1.6): `$91:E00D` (Initialise Samus, for a demo's loading and the
+Ceres and Zebes starts) clears `$0A02..0E0B` at `$91:E01F..E026`, which holds `0A94`, `0A96`,
+`0B3E`, `0B62`, `0A10` and `0AAA`, then stores `0601h` in `0A72` at `$91:E0BF..E0C2` (delay 1,
+entry 3) on every path, and zeroes the pose `0A1C` and movement word `0A1E` at
+`$91:E12F..E132`. So step 0, time left 0, stage 0, laps 0, kept action movement type 0
+(standing: `Still`), cannon delay `2 - 0` = 2, visor delay 1 at entry 3, charge glow reset.
+The clear covers every quantity of her appearance State, and the routine is one call from the
+loading of a game or a demo, ahead of any of her work that frame, so the spec makes her
+initialization a part of the frame that sets the whole State, first in its frame (spec §1.3,
+§1.6; `C-initialize`), not only the cannon delay that `CannonReadinessReset` names.
+Demo data loading (`$91:8790`, after the clear) sets items, energy and the demo input, and its
+demo setup the pose: other domains' (spec §7).
 
 `0A9A` (the new pose's frame) and `0A9C` (the frame buffer, rewritten by the FX routine at the
 start of every animation step, `$90:8078`) are not State: they never carry from one frame to the
@@ -101,6 +118,9 @@ record N to the next `R` record):
 | vertical speed | samus-movement's `vertical speed after her moves` where its model runs the frame; elsewhere `0B2E`.`0B2C` at N+1 read as signed, then negated when `0B36` = 1 (up), so a rise the pull took past zero (`FFFF.F400` rising, samus-ceres-push 989) is the small `+0000.0C00`, as samus-movement gives it and as `BMI` reads it. The original reads `0B2E` alone at `$90:A5AC` (`CMP #5`, `BMI`), right after the falling movement (`$90:A590` → `$90:9168`) and before the pose change: `0B2E`.`0B2C` holds the size and `0B36` the direction, so the test is the size's, whichever way she moves (root decision a) |
 | heading down | samus-movement's `heading down` where its model runs the frame; elsewhere `0B36` = 2 at N+1. The two differ on a landing (as her moves leave her she heads down; N+1 shows none), where the landing's clip starts either way |
 | sounds waiting | `(0648 low − 0645) & 0Fh` at N: library 3's queue, `$80:9158` |
+| cinematic, boss, special colours active | `1F51`, `179C`, `0A68` non-zero, as `FootContact` reads them (`$90:A404..A419`); `1F51` also for `SpinStarts` |
+| shoot held, charge | `008B & 09B2`, `0CD0` (`AtTheDoor`, `$90:F471..F4A1`) |
+| the frame's parts | her movement: the new state handler's normal, demo or elevator handler runs (§The harness). Preparation: the current state handler reaches `$90:EB02` (`$90:E6C3`, `$90:E70D`, `$90:E71C`). Palette opportunity: the pose-update PC `91eb88` hits (§Actions the opening reaches). First passage entry: `$84:8250`. Normal drawing: `$90:EB35` |
 
 Which inputs samus-movement's model doesn't yet report is §Requests to samus-movement.
 
@@ -357,8 +377,8 @@ graphics (splashes, dust, `$90:80E6`, `$90:A413`), and the echoes' pictures. Old
 
 `tools/cleanroom/scan.sh` on the spec and the vectors: 0 (address-form 0, address-known 0, name 0,
 enum-order 0, ram-field 0, single-routine 0, entry-point 0, route 0). `score_scan.sh`: 0.
-`scan.sh --mirror` on the spec and these notes: 4 of 22 entries single-routine (18 %, limit
-30 %), 1 unsourced. FootContact, SpinStarts,
+`scan.sh --mirror` on the spec and these notes: 3 of 22 entries single-routine (13 %, limit
+30 %), 1 unsourced. FootContact,
 CannonItemDelay and CannonReadinessReset each have one source mechanism; the spec states their
 observable rules and leaves the public API form to the implementer.
 
@@ -390,8 +410,9 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 57.3 units = 2,149 (clip 1,300, moves 225, run 375, cannon 212, palette 37),
-22 entries, 52 arms, 186 vectors.
+Budget: 37.5 × 58.3 units = 2,186 (clip 1,337, moves 225, run 375, cannon 212, palette 37),
+22 entries, 53 arms, 188 vectors. The kept action's preparation arm in `SpinEnds` is 1.0 of
+them; naming each input once counts no unit.
 
 Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.
@@ -414,12 +435,12 @@ indexed by that animation frame. Import this as a contact-step set through `Impo
 not a new execution table or numeric movement code. `$A401` requests graphics before sound
 suppression; `$A404..A419` checks `1F51`, `179C`, `0A68`, then `0B3E & 0400`.
 `$A41B/A41E` asks for sound 6 in library3, cap 6 (`$80:914D`). The sound suppressors have
-no effect on the already-run graphic request. Current `Clip` has no contact markers;
-`Playhead` already supplies step/time. `Samus::movement` already supplies Running and
-`Samus::animation.boost.stage` supplies boosting. `Inputs::figure` is the frame start;
-`figure_after` is the animation's final figure, not the contact-phase figure after movement.
-The contact opportunity must be captured where running movement has executed, before
-`samus_appearance_bridge::animate`, not discovered from a resulting sender write.
+no effect on the already-run graphic request. The step, the time left and the stage it
+reads are the State as the frame starts, and Running is her pose as the frame starts (spec
+§1.3): the stride runs before the frame's pose selection, so her pose after is not the
+contact-phase pose. The contact opportunity must be captured where running movement has
+executed, before `samus_appearance_bridge::animate`, not discovered from a resulting sender
+write.
 
 `SpinStarts`: `$91:F624..F757`, the spinning pose initialisation. Old movement `0A23`
 spin or wall jump sets a first-step skip, which suppresses plain/screw spin-start but not
@@ -438,9 +459,8 @@ non-M0 test: SpaceJump may sound while plain and ScrewAttack do not.
 `$F5A8..F5CB` reads previous movement `0A11` and current `0A1F`; prior spin/wall and
 current neither asks sound 32, library1, cap 15. `0A11` is a separate retained preparation
 snapshot, NOT `Samus.previous: PoseRecord`, which the decoder maps from `0A20/0A22/0A23`.
-The engine needs a typed `preparation_movement` alongside its pose history; current movement
-still comes from `Samus.movement`. `Inputs::figure` at frame start cannot substitute for
-the actual preparation snapshot. Model output
+It is her appearance State's kept action (spec §9.1); current movement is her pose after.
+Her pose as the frame starts cannot substitute for it on a frame without preparation. Model output
 is a pure semantic decision, with no acknowledgement, animation update or motion step.
 Drawing can repeat this decision if remembered movement remains unspun; the sender retry
 itself never invokes it. The engine must call it on each real normal drawing opportunity.
@@ -520,9 +540,13 @@ native sound-State equivalence is not claimed here.
 
 ### Vectors and checks
 
-Vector source alias `M0` names row `chain-any-0003-DFD7`. The 45 `[[opportunity]]` cases supplement the 98 existing animation vectors. Each compares
-semantic sounds, independent graphical contact and unchanged four-quantity animation State;
-recorded guard cases use invented content, never copied contact tables or clip holds.
+Vector source alias `M0` names row `chain-any-0003-DFD7`. The 47 `[[opportunity]]` cases (§The whole-frame
+update) supplement the animation vectors. Each compares
+semantic sounds, independent graphical contact and the whole State the frame leaves: a contact
+or selection case is a frame with her movement, so its clip plays (on invented clips); a drawing
+or passage case leaves the four animation quantities unchanged. Recorded guard cases use
+invented content, never copied contact tables or clip holds, so their `after` animation is the
+invented clip's, not the record's.
 `reference.py`: existing98/98, opportunities45/45, native183/183 versus null170/183.
 Contact vectors supply the actual retained stride stage, with matching before/after State:
 stage 3 requests Footstep, stage 4 suppresses its sound while preserving graphical contact.
@@ -541,6 +565,8 @@ using the fixed k and the areas above.
 
 ### The prepared movement snapshot and boundary accounting
 
+The kept action is appearance State (spec §1, §9.1): it carries over every frame that skips
+preparation, so it is memory, and the State holds all she remembers.
 The sole explicit writer in inspected banks is `$90:EB2D/EB30`: copy the current word
 `0A1E` (facing/movement) into `0A10`; `0A11` is its movement byte. Current-state preparation
 calls this from normal `$E695` at `$E6C3`, demo `$E6C9` at `$E70D`, and locked `$E713`
@@ -566,6 +592,23 @@ Ceres opening157 and firing157 families. `snapshot_reference.py` exercises captu
 effects, hold, locked preparation, repeated normal drawing and body-only inanimate drawing;
 pose-history substitution and frame-start substitution faults fail their named cases.
 
+**Her action at the preparation is her pose's as the frame starts** (spec §1.5). The movement
+word `0A1E` is written only by Initialise Samus (`$91:E132`) and pose initialisation
+(`$91:F433`, `$91:F468`). Its callers, from banks `$82`, `$90` and `$91`: her pose update
+(`$91:EB88`, `$91:F404`) and the hack handler (`$90:E12E`, from `$90:E738`) in her new state
+handler; Samus commands, item pickups, making her face forward, the crystal flash, Draygon's
+grab and release and the drained controller, run by enemies, PLMs or her new state handler;
+equipment changes on the pause screen; demo setup; and the x-ray scope's pose input handler
+(`$91:FCAF`). Game state 8 (`$82:8B44`) runs only the debug and palette-object handlers before
+her current state handler (`$82:8B58`), and that handler reaches the preparation after her
+pose input handler, suit palette index, acceleration, block-inside handling and HUD/projectile
+handling (`$90:E6B0..E6C0`). So within a frame only the x-ray scope, outside the domain's
+poses, changes her action before the preparation, and every other writer's change shows in
+the record the frame starts from. Bank `$94`, run from the same handler, only reads her pose
+(`0A1C`, `0A1E`); bank `$9B`'s one writer, `$9B:B3A7`, sets the death pose, outside the
+domain's poses. This is a reading of the bank logs' callers, not checked
+callee by callee for an indirect pose write.
+
 ## The whole-frame update
 
 MODEL §1 decision 35 compares owners' State and output bytes at each NMI cut and leaves
@@ -576,9 +619,11 @@ resumable part-frame update. The catalogue holds 22 entries.
 
 **Values read part-way through the frame, as whole-frame outputs** (spec §1.1):
 
-- *The end and turned far*, read by samus-movement before its step: already given ahead from
-  the frame's start (§6). Evidence: §Requests to samus-movement; the harness reads both from
-  record N.
+- *The end and turned far*, read by samus-movement before its step: the read-ahead (spec
+  §1.1), one query of the State and her pose's clip as the frame starts, not a partial frame:
+  it changes nothing, and the frame that follows gives the same values. A query, because the
+  frame needs her pose at its end, which samus-movement's step picks after reading them.
+  Evidence: §Requests to samus-movement; the harness reads both from record N.
 - *Graphical contact*, read by part 2 for the stride's splash or dust in the same frame: the
   stride's contact opportunity. Evidence: §Stride sources, the contact read sits after her
   running movement and before the animation update, and reads the frame-start step and time
@@ -602,27 +647,74 @@ resumable part-frame update. The catalogue holds 22 entries.
 No other domain reads a value of this domain between those points: the HUD's early mini-map
 reads samus-movement's position, not appearance.
 
+**One set of inputs.** Each fact of the frame is one input (spec §1.3), read by every rule that
+needs it: the figure, the items, submerged and cinematic among them. Her pose is two inputs
+only because the pose as the frame starts and the pose she ends it in are different values (the stride and the preparation come before
+samus-movement's pick, drawing and the palette opportunity after it). The stride's step, time
+left and boost stage are the State's, not inputs. The palette opportunity reads no position: the original's bottom calculation enters only the surface comparisons, which the
+water and magma levels already stand for (§Sources and exact mapping), and the arm holds the
+same outcome whatever the position. The spin sounds are one set of requests that
+`WallJumpBranch` and `SpinStarts` both ask for (spec §9.1). The appearance State holds the kept
+action (§The prepared movement snapshot), and has a starting value (spec §1.6, §State).
+
 **Harness note.** The comparison is per frame, from record N to record N+1 (§The harness),
 with the masks named there. No vector compares part-frame work. Indexed replay cites
-`ClipPlays` and `AtTheDoor` from this domain.
+`ClipPlays` and `AtTheDoor` from this domain. The kept action is `0A11` at N+1 through the
+movement-type map; the harness doesn't compare it yet, and a case that draws reads it from the
+carried State, never from record N+1.
 
-**Vectors.** 186: 99 animation frames, 45 single-rule sound cases, 2 combined frames, 19
+**Vectors.** 189: 99 animation frames, 47 single-rule sound cases, 3 combined frames, 19
 cannon histories (each step a frame's controls, a skip, an initialization, an outside drop, an
-unrelated event or a drawing), 19 palette histories and 2 refusal boundaries. In the palette
-histories `palette_updates` are another producer's writes in the reset's frame, and
-`applications` whether that frame applied the reset.
+unrelated event or a drawing), 19 palette histories and 2 refusal boundaries, beside the
+`[initialization]` table. In the palette histories `palette_updates` are another producer's
+writes in the reset's frame, and `applications` whether that frame applied the reset. Every
+kind of case names the frame's inputs alike (`pose`, `pose_after`, `items`, `submerged`,
+`cinematic`, ...). Each case keeps the meaning the arms it cites give it:
 
-**Reference model.** `$TEMP/collab/round-appearance-whole-frame-scratch/reference.py`, written
-from the spec's whole-frame rules, without the model. It agrees with every vector: animation
-99/99, opportunities 45/45, frames 2/2, cannon 19/19 (57 steps), palette 50/50 (19 histories
-and 31 refused cases). A do-nothing model agrees on 0/99, 21/45, 0/2, 7/19 and 31/50. Eleven
-planted faults each fail: the end read after the moves (8 vectors), the boosting lap's quirk
-off (3), no kept rows (4), no hand-over slowdown (3), stage 3 silencing contact (1), the
-frame's sound order reversed (2 frames), a switch event restarting the delay (4 histories), a
-drop restarting it (1), the frame-end selection in place of the controls' (1,
-C-cannon-drop-after-change), a screw-attack spin admitted (2) and other producers' palette
-writes lost (1). Per-frame record agreement for the same rules is stated in §The harness,
-§Cannon selection readiness and §Ordinary dry palette preparation.
+- the contact cases give her pose and the stride's clip and read her step, time left and stage
+  from `before`; each is a frame with her movement, so `after` shows the stride's clip moving
+  on (to its rest from the contact step) or counting down;
+- the selection cases give her pose and pose after, their clips, and the items as a list; a
+  changed pose with the same action changes her facing, and `C-start-same` keeps one spinning
+  pose with the space jump, so that only the unchanged pose silences it; each is a frame with
+  her movement, so `after` shows her clip playing and the clip of the pose she takes starting
+  (a run to a spin from step 0, a spin or wall jump to a spin from step 1, a run to a run
+  kept), and the two submerged cases are in water (both slowdowns 3);
+- the drawing cases give the kept action in `before` and `after` and her pose; a drawing case
+  whose pose changes is a whole frame with her movement, preparation and drawing, since a frame
+  without her movement keeps her pose: `R-unspin` is the prepared frame it was on record (cut 81
+  prepared her spin, §The prepared movement snapshot), with invented facing and aim and the
+  invented spin and fall clips in place of her animation; `C-end-prepared` is the same frame
+  from a kept run, and `C-end-prepared-replaces` a prepared drawing frame alone, for the
+  preparation's two arms;
+- the passage cases give her pose;
+- `C-initialize` is a frame with her initialization alone, from a State with every quantity
+  changed, which leaves the `[initialization]` State;
+- two more combined frames are whole frames with one set of inputs and their parts, so each
+  takes a pose after her clip's: `C-branch-and-end` falls out of the wall jump (the fall's
+  clip from step 0, held 9), `C-contact-and-start` takes the spin (its clip from step 0, held
+  6), since no single-rule case's pose agrees with the other rule's;
+- the stride's invented clip is a `[clips]` entry with its contact steps, and gains a shown
+  step after its rest (spec §1.5);
+- the palette histories give `pose_after` and `items`, with no position, and no `action` or
+  `screw_attack` observation beside the pose and items.
+
+**Reference model.** `$TEMP/collab/appearance-gaps-scratch/reference.py`, written from the
+spec's whole-frame rules on the frame's one set of inputs, without the model. It agrees with
+every vector: animation 99/99, opportunities 47/47, frames 3/3, cannon 19/19 (57 steps),
+palette 50/50 (19 histories and 31 refused cases), and the `[initialization]` table. A
+do-nothing model agrees on 0/99, 8/47, 0/3, 7/19 and 31/50. Sixteen planted faults each fail:
+a contact or selection case leaving her animation as it was (28 cases), initialization
+resetting the cannon delay alone (1 frame, C-initialize),
+the end read after the moves (8 vectors), the boosting lap's quirk off (3), no kept rows (4, and the case C-start-other),
+no hand-over slowdown (3), stage 3 silencing contact (1), the frame's sound order reversed (2
+frames), a switch event restarting the delay (4 histories), a drop restarting it (1), the
+frame-end selection in place of the controls' (1, C-cannon-drop-after-change), a screw-attack
+spin admitted (2), other producers' palette writes lost (1), the preparation not keeping her
+action (2), drawing reading her pose as the frame starts in place of the kept action (3) and
+the selection compared by action alone (1, C-start-space-continued). Per-frame record
+agreement for the same rules is stated in §The harness, §Cannon selection readiness and
+§Ordinary dry palette preparation.
 
 ## Cannon selection readiness
 
@@ -782,7 +874,7 @@ are serialized in the vectors.
 | dormant or busy grapple | `$0D32`, bounded semantic decoder as above |
 | room colour treatment | `$1982`, standard/red/orange only, as above |
 | water and lava levels | `$195E`, `$1962`, absent when the corresponding signed surface is negative |
-| current figure and position | `$0A1C`, `$0A1F`, `$0AFA` plus one immutable pose geometry read. The bottom calculation uses current pose and current vertical pixel position. Dry admitted poses and positions give the same palette outcome. The admitted upright actions are movement types 0 (Still and Landing(Jump) poses), 1 (Running), 2 (Jumping), 3 (Spinning), `10h` (Moonwalking) and `17h` (Turning(Jump)) |
+| her pose after | `$0A1C`, `$0A1F`; the original also reads `$0AFA` and one immutable pose geometry read for her bottom, which enters only the liquid surface comparisons, so the spec's water and magma levels stand for it and no rule reads her position. Dry admitted poses and positions give the same palette outcome. The admitted upright actions are movement types 0 (Still and Landing(Jump) poses), 1 (Running), 2 (Jumping), 3 (Spinning), `10h` (Moonwalking) and `17h` (Turning(Jump)) |
 | screw attack | `$09A2` bit `0008h`, read only for movement types 3 and `14h` |
 | speed glow and hit colour pulse | `$0B3E`, `$0A48`, each inactive at zero in the bounded proof |
 | current and target palettes | `$C000..C1FF`, `$C200..C3FF`, both complete ordered RGB555 palettes. Source checks preserve every byte. Admit this RGB555 representation only if all 512 high bits are clear at the edge; otherwise report unsupported. The recorded state meets that condition |
@@ -805,7 +897,7 @@ origin in `retained-time-479/receipt-profile-bridge/origin-wram-v1/` (corrected-
 SHA-256 `bfee6ac13da413a36ad42194a36aa3224af6a84e818092b1e7040ed4782f03db`) against the
 source's completed-return origin and the pre-use snapshot. It checks intervening writes
 using WRAM address normalization, including CPU mirrors. The ten independent guard
-observations besides suit and current figure/position must be current from their owners;
+observations besides suit and her pose after must be current from their owners;
 an origin carry for a borrowed fact requires the actual bounded writer-free history,
 including interruption preservation. The first-frame diagnosis does not itself supply a runtime receipt. The checked origin ranges cover ten non-suit guard
 fields, both metadata words and both banks. Every such range was equal and had zero

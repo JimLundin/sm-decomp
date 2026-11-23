@@ -45,7 +45,7 @@ pub struct ItemControlAnswer {
     pub eligibility: ControlEligibility,
 }
 
-/// What a frame does to her cannon's delay.
+/// The frame's part that runs her item controls or, in their place, initializes her.
 ///
 /// A selection change outside item controls, a pose or clip change, a repeated drawing, a lag
 /// frame and a passage that does not reinitialize her are none of these: each is a frame whose
@@ -57,8 +57,9 @@ pub enum CannonEvent {
     ControlsSkipped,
     /// Her item controls ran, with this answer (`CannonItemDelay`).
     ControlsRan(ItemControlAnswer),
-    /// Samus is initialized this frame, for arrival at Ceres or Zebes or for a demo
-    /// (`CannonReadinessReset`).
+    /// Samus is initialized this frame, for arrival at Ceres or Zebes or for a demo: first in
+    /// the frame, it sets her whole appearance State as at initialization, the cannon's delay
+    /// at 2 among it (`CannonReadinessReset`).
     SamusInitialized,
 }
 
@@ -117,7 +118,8 @@ impl CannonDelay {
 
     /// The delay as the frame's `event` leaves it, before her gun's picture reads it that frame.
     ///
-    /// Spec: `CannonReadinessReset`. Initialization starts the wait over at 2.
+    /// Spec: `CannonReadinessReset`. Initialization has already set her whole State as the frame
+    /// starts, this delay at 2 with it, so it leaves the delay as that left it.
     ///
     /// Spec: `CannonItemDelay`. Eligible controls that leave another identity than they started
     /// from make it 1, a change to none and a change during a wait included. Eligible controls
@@ -125,8 +127,7 @@ impl CannonDelay {
     /// one-shot mode or the switch event. Ineligible or skipped controls leave it as it is.
     pub(crate) fn after(self, event: CannonEvent) -> Self {
         let answer = match event {
-            CannonEvent::SamusInitialized => return Self::INITIAL,
-            CannonEvent::ControlsSkipped => return self,
+            CannonEvent::SamusInitialized | CannonEvent::ControlsSkipped => return self,
             CannonEvent::ControlsRan(answer) => answer,
         };
         if answer.eligibility == ControlEligibility::Ineligible {

@@ -326,16 +326,22 @@ pub(super) fn input_at(
         .get(usize::from(stage))
         .copied()
         .ok_or_else(|| data_failure(None, "appearance observed boost stage"))?;
-    let appearance = samus_appearance::State {
-        playhead: samus_appearance::Playhead {
-            step,
-            time_left: samus_appearance::Frames(timer),
+    // A movement case borrows the read-ahead, which asks her State for her step and the time
+    // left (spec §1.1). It borrows her animation alone; the rest of her appearance State is no
+    // input of the case, so it stands at her initialization's, which the query doesn't read.
+    let appearance = samus_appearance::AppearanceState {
+        animation: samus_appearance::State {
+            playhead: samus_appearance::Playhead {
+                step,
+                time_left: samus_appearance::Frames(timer),
+            },
+            stage,
+            laps_left: samus_appearance::Laps::new(laps).map_or(
+                samus_appearance::LapsLeft::WithoutBooster,
+                samus_appearance::LapsLeft::WithBooster,
+            ),
         },
-        stage,
-        laps_left: samus_appearance::Laps::new(laps).map_or(
-            samus_appearance::LapsLeft::WithoutBooster,
-            samus_appearance::LapsLeft::WithBooster,
-        ),
+        ..samus_appearance::AppearanceState::INITIAL
     };
     let ahead = game::production::appearance::ahead(&appearance, &imported.clip);
     Ok(Input {

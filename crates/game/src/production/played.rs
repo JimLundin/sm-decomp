@@ -156,7 +156,7 @@ pub struct PassageAudio {
 pub struct State {
     /// Her movement.
     pub movement: Model<MovementPin>,
-    /// Her animation's playhead and boost.
+    /// Her whole appearance State.
     pub appearance: Model<AppearancePin>,
     /// The figure she is drawn in.
     pub figure: Model<FigurePin>,
@@ -181,8 +181,8 @@ pub struct State {
 pub struct Outputs {
     /// Movement's complete outcome; none while a passage runs.
     pub movement: Option<samus_movement::Outcome>,
-    /// The sound her animation asked for, if any.
-    pub sound: Option<types::AnimationSound>,
+    /// Her appearance's sounds, in the order asked; none while a passage runs.
+    pub sounds: Vec<samus_appearance::SoundRequest>,
     /// What the doors report.
     pub doors: world_doors::Report,
     /// Health's frame; none while a passage runs.
@@ -249,11 +249,11 @@ impl State {
         let mut seen = animation_inputs(start, after, &outcome, inputs);
         // The energy the tail hit leaves, before the frame's loss: with no tail, as it starts.
         seen.energy = self.health.0.energy.whole.get();
-        let sound = animation::advance(
+        let shown = animation::play(
             &mut appearance,
             &content.appearance,
             &rules.appearance,
-            &seen,
+            &animation::frame_of_play(seen),
         )
         .map_err(|fault| match fault {
             animation::ClipFault::Missing(figure) | animation::ClipFault::Conflicting(figure) => {
@@ -314,7 +314,7 @@ impl State {
         };
         Ok(Outputs {
             movement: Some(outcome),
-            sound,
+            sounds: shown.sounds,
             doors: doors.report,
             health: Some(health),
             hud: Some(hud_outputs),
@@ -345,10 +345,7 @@ impl State {
         let heading = |pose| content.movement.cannon_heading(pose);
         let frame = samus_movement::Frame {
             sprite_before_movement: start.sprite,
-            cinematic_active: matches!(
-                inputs.cinematic,
-                samus_appearance::CinematicActivity::Active
-            ),
+            cinematic_active: inputs.activities[samus_appearance::Activity::Cinematic],
             pad: inputs.held,
             pressed: inputs.pressed,
             items: inputs.items,
@@ -423,7 +420,7 @@ impl State {
         }
         Ok(Outputs {
             movement: None,
-            sound: None,
+            sounds: Vec::new(),
             doors: exports.report,
             health: None,
             hud: None,
@@ -556,6 +553,9 @@ pub(super) fn animation_inputs(
         items: inputs.items,
         liquid: inputs.liquid,
         sounds_waiting: inputs.sounds_waiting,
+        activities: inputs.activities,
+        shoot_held: inputs.held.any(types::button::SHOOT),
+        charge: inputs.charge,
     }
 }
 

@@ -1,16 +1,17 @@
 //! What her appearance remembers from one frame to the next: the four animation quantities
-//! (her step, the time left on it, the boost stage and the laps left), the cannon selection
-//! delay, and her colour sequences. A caller may build each at any value the spec allows, read
-//! it back, save and restore it, and gives it back to the next frame as `update` left it.
+//! (her step, the time left on it, the boost stage and the laps left), her kept action, the
+//! cannon selection delay, and her colour sequences. A caller may build each at any value the
+//! spec allows, read it back, save and restore it, and gives it back to the next frame as
+//! `update` left it.
 
 use core::num::NonZeroU8;
 
 use serde::{Deserialize, Serialize};
-use types::BoostStage;
+use types::{Action, BoostStage};
 
 use crate::cannon::CannonDelay;
 use crate::clip::{Clip, Frames, Hold, Instruction, Slowdown, Step};
-use crate::colours::ColourSequences;
+use crate::colours::{ColourSequences, ORDINARY_READY};
 
 /// Spec: `ClipPlays`, `BoostStages`. How the time left and the laps left run out: the count less
 /// 1, while that is above 0; at 0 or below the count is over. So 1 left and none left are over
@@ -133,17 +134,42 @@ pub struct State {
 
 /// Her appearance State: all her appearance remembers from one frame to the next.
 ///
-/// Spec: `CannonItemDelay`, `OrdinaryDryColours`. The cannon selection delay and the colour
-/// sequences are memories of their own: neither can be rebuilt from her animation, the selected
-/// item or the palettes, so a caller keeping her look keeps all three. The current and target
-/// palettes are not here: their producers and consumers share them, and this domain neither
-/// reads nor writes them.
+/// Spec: `SpinEnds`, `CannonItemDelay`, `OrdinaryDryColours`. Her kept action, the cannon
+/// selection delay and the colour sequences are memories of their own: none can be rebuilt from
+/// her animation, her pose, the selected item or the palettes. The current and target palettes
+/// are not here: their producers and consumers share them, and this domain neither reads nor
+/// writes them.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct AppearanceState {
     /// Her animation's four quantities.
     pub animation: State,
+    /// Her kept action: the action of her pose as her last prepared frame started, which normal
+    /// drawing reads (`SpinEnds`). Not her pose's history, nor her pose as the frame starts.
+    pub kept_action: Action,
     /// The cannon selection delay.
     pub cannon: CannonDelay,
     /// The visor delay, the visor's entry and the charge glow's position.
     pub colours: ColourSequences,
+}
+
+impl AppearanceState {
+    /// Her appearance as Samus is initialized (her arrival at Ceres or Zebes, or a demo's
+    /// loading), whatever came before: step 0 with no time left, stage 0 with no laps left
+    /// whatever her items, her kept action `Still` (no spin, so drawing ends none until a
+    /// preparation keeps one), the cannon waiting 2 frames (`CannonReadinessReset`), and the
+    /// colour sequences as the ordinary reset leaves them (`OrdinaryDryColours`). A frame with
+    /// her initialization sets every quantity to this first, and plays on from it.
+    pub const INITIAL: Self = Self {
+        animation: State {
+            playhead: Playhead {
+                step: Step::FIRST,
+                time_left: Frames::NONE,
+            },
+            stage: BoostStage::Stage0,
+            laps_left: LapsLeft::WithoutBooster,
+        },
+        kept_action: Action::Still,
+        cannon: CannonDelay::INITIAL,
+        colours: ORDINARY_READY,
+    };
 }

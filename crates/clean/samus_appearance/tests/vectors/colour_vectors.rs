@@ -2,20 +2,17 @@
 //! opportunity played through the one update. The shared current and target palettes are the
 //! caller's, saved and restored with her appearance State.
 
-use core::num::Wrapping;
 use std::collections::BTreeMap;
 
 use samus_appearance::{
     AppearanceState, CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences,
-    DryColourFacts, DryColourReset, Figure, Frame, FrameOutputs, GrappleActivity, LiquidLevel,
-    PaletteOpportunity, RoomColours, Rules, ScrewAttack, Suit, VisorDelay, VisorStep, update,
+    DryColourReset, Frame, FrameOutputs, GrappleActivity, LiquidLevel, PaletteObservations,
+    PaletteOpportunity, RoomColours, Rules, Suit, VisorDelay, VisorStep, update,
 };
 use serde::{Deserialize, Serialize};
-use types::{Colour, PALETTE_SLOTS, Pair, Palette, Palettes, px};
+use types::{Action, Colour, PALETTE_SLOTS, Palette, Palettes, Set};
 
-use super::{
-    ACTIONS, Library, VectorContent, bare_frame, behaviour, figure, named, read_file, state,
-};
+use super::{Library, VectorContent, VectorInputs, behaviour, frame, named, read_file, state};
 
 /// The levels of each colour channel, 0 to 31: the invented fixtures' slot pattern.
 const LEVELS: u16 = 32;
@@ -51,14 +48,9 @@ impl ColourVectors {
     }
 
     /// The frame's palette opportunity for `history`: the shared observations, then the
-    /// history's own `observed` table, then `replacement`, each replacing keys already present.
-    /// A boundary case's `figure`, given apart, replaces the history's figure.
-    fn opportunity(
-        &self,
-        history: &History,
-        figure_text: Option<&str>,
-        replacement: &toml::Table,
-    ) -> PaletteOpportunity {
+    /// history's own `observed` table, then `replacement`'s observations, each replacing keys
+    /// already present.
+    fn opportunity(&self, history: &History, replacement: &toml::Table) -> PaletteOpportunity {
         let mut input = self.observations.clone();
         for (key, value) in history.observed.iter().chain(replacement) {
             assert!(
@@ -70,10 +62,17 @@ impl ColourVectors {
         let input: Observations = toml::Value::Table(input)
             .try_into()
             .expect("known observations");
-        input.opportunity(
-            figure(figure_text.unwrap_or(&history.figure)),
-            history.position,
-        )
+        input.opportunity()
+    }
+}
+
+/// The frame's inputs a history reads: her pose as the frame ends, which is her pose as it
+/// starts too, since the frame has no movement, and the items switched on.
+fn frame_inputs(pose_after: &str, items: &[String]) -> VectorInputs {
+    VectorInputs {
+        pose: pose_after.to_owned(),
+        items: items.to_vec(),
+        ..VectorInputs::default()
     }
 }
 
@@ -83,8 +82,9 @@ struct History {
     id: String,
     source: String,
     entries: Vec<String>,
-    figure: String,
-    position: [u16; 2],
+    pose_after: String,
+    #[serde(default)]
+    items: Vec<String>,
     #[serde(default)]
     observed: toml::Table,
     before: Sequences,
@@ -144,15 +144,26 @@ enum Outcome {
     Unsupported,
 }
 
-/// A boundary case: its figure, if it names one, and its changed shared observations.
-fn boundary_case(replacement: &toml::Table) -> (Option<String>, toml::Table) {
+/// A boundary case: the frame's inputs, with the history's pose after and items where the case
+/// doesn't replace them, and its changed shared observations.
+fn boundary_case(history: &History, replacement: &toml::Table) -> (VectorInputs, toml::Table) {
     let mut observations = replacement.clone();
-    let figure = observations.remove("figure").map(|text| {
-        text.as_str()
-            .expect("a boundary figure is written as text")
-            .to_owned()
-    });
-    (figure, observations)
+    let pose_after = observations.remove("pose_after").map_or_else(
+        || history.pose_after.clone(),
+        |text| {
+            text.as_str()
+                .expect("a boundary pose is written as text")
+                .to_owned()
+        },
+    );
+    let items = observations
+        .remove("items")
+        .map_or_else(
+            || Ok(history.items.clone()),
+            toml::Value::try_into::<Vec<String>>,
+        )
+        .expect("boundary items are written as names");
+    (frame_inputs(&pose_after, &items), observations)
 }
 
 #[derive(Deserialize)]
@@ -162,8 +173,6 @@ fn boundary_case(replacement: &toml::Table) -> (Option<String>, toml::Table) {
     reason = "the vector format supplies independent owner facts as flags"
 )]
 struct Observations {
-    action: String,
-    screw_attack: bool,
     suit: Suit,
     room_colours: String,
     water_present: bool,
@@ -181,29 +190,14 @@ struct Observations {
 const UNAVAILABLE: &str = "Unavailable";
 
 impl Observations {
-    /// The opportunity these observations make, with `figure` where `position` says: one whose
-    /// owners couldn't supply a fact is unrecognized.
-    fn opportunity(&self, figure: Figure, [x, y]: [u16; 2]) -> PaletteOpportunity {
-        assert_eq!(
-            figure.pose.action,
-            named(ACTIONS, &self.action),
-            "the observed action agrees with the figure"
-        );
+    /// The opportunity these observations make: one whose owners couldn't supply a fact is
+    /// unrecognized.
+    fn opportunity(&self) -> PaletteOpportunity {
         let (room, grapple) = (&self.room_colours, &self.grapple);
         if room == UNAVAILABLE || grapple == UNAVAILABLE {
             return PaletteOpportunity::Unrecognized;
         }
-        PaletteOpportunity::Observed(DryColourFacts {
-            figure,
-            position: Pair {
-                x: px(Wrapping(x)),
-                y: px(Wrapping(y)),
-            },
-            screw_attack: if self.screw_attack {
-                ScrewAttack::On
-            } else {
-                ScrewAttack::Off
-            },
+        PaletteOpportunity::Observed(PaletteObservations {
             suit: self.suit,
             room_colours: named(
                 &[
@@ -257,6 +251,7 @@ fn start(vectors: &ColourVectors, history: &History) -> Kept {
     restored(&Kept {
         appearance: AppearanceState {
             animation: state(2, 3, 1, 1),
+            kept_action: Action::WallJumping,
             cannon: CannonDelay::INITIAL,
             colours: history.before.into(),
         },
@@ -267,11 +262,12 @@ fn start(vectors: &ColourVectors, history: &History) -> Kept {
     })
 }
 
-/// Plays the frame of `opportunity` from `kept`: the frame's other producers write the banks
-/// they write, and the opportunity readies or leaves her sequences. Gives what the caller then
-/// keeps, restored, and the frame's outputs.
+/// Plays the frame of `opportunity`, with `inputs`, from `kept`: the frame's other producers
+/// write the banks they write, and the opportunity readies or leaves her sequences. Gives what
+/// the caller then keeps, restored, and the frame's outputs.
 fn play_frame(
     mut kept: Kept,
+    inputs: &VectorInputs,
     opportunity: PaletteOpportunity,
     updates: &[PaletteUpdate],
     vectors: &ColourVectors,
@@ -286,7 +282,7 @@ fn play_frame(
     }
     let frame = Frame {
         palette: opportunity,
-        ..bare_frame()
+        ..frame(inputs, Set::default())
     };
     let content = VectorContent {
         clips: Vec::new(),
@@ -312,7 +308,6 @@ fn applications(outputs: &FrameOutputs) -> usize {
 fn check_quiet(before: &Kept, after: &Kept, outputs: &FrameOutputs, id: &str) {
     assert!(outputs.sounds.is_empty(), "{id}: no requests");
     assert_eq!(outputs.contact, None, "{id}: no graphics");
-    assert_eq!(outputs.ahead, None, "{id}: no animation update");
     assert_eq!(
         after.appearance.animation, before.appearance.animation,
         "{id}: animation"
@@ -320,6 +315,10 @@ fn check_quiet(before: &Kept, after: &Kept, outputs: &FrameOutputs, id: &str) {
     assert_eq!(
         after.appearance.cannon, before.appearance.cannon,
         "{id}: cannon"
+    );
+    assert_eq!(
+        after.appearance.kept_action, before.appearance.kept_action,
+        "{id}: kept action"
     );
 }
 
@@ -334,9 +333,11 @@ fn run_history(vectors: &ColourVectors, history: &History, library: &Library) {
             Bank::Target => expected_palettes.target = colours,
         }
     }
-    let opportunity = vectors.opportunity(history, None, &toml::Table::new());
+    let inputs = frame_inputs(&history.pose_after, &history.items);
+    let opportunity = vectors.opportunity(history, &toml::Table::new());
     let (after, outputs) = play_frame(
         before.clone(),
+        &inputs,
         opportunity,
         &history.palette_updates,
         vectors,
@@ -394,10 +395,11 @@ fn every_refusal_boundary_leaves_everything() {
             .unwrap_or_else(|| panic!("{}: no history {}", boundary.id, boundary.based_on));
         for replacement in &boundary.replacements {
             let case = format!("{}: {replacement:?}", boundary.id);
-            let (figure_text, observations) = boundary_case(replacement);
-            let opportunity = vectors.opportunity(history, figure_text.as_deref(), &observations);
+            let (inputs, observations) = boundary_case(history, replacement);
+            let opportunity = vectors.opportunity(history, &observations);
             let before = start(vectors, history);
-            let (after, outputs) = play_frame(before.clone(), opportunity, &[], vectors, &library);
+            let (after, outputs) =
+                play_frame(before.clone(), &inputs, opportunity, &[], vectors, &library);
             assert_eq!(outputs.dry_colours, DryColourReset::Unsupported, "{case}");
             assert_eq!(applications(&outputs), boundary.applications, "{case}");
             assert_eq!(

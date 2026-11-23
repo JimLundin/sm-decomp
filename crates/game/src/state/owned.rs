@@ -36,12 +36,12 @@ impl Pinned for CameraPin {
     const SHAPE: u64 = 0x1ED5_DF03_BD0A_7BD4;
 }
 
-/// The complete clean animation state, including its playhead and boost laps.
+/// Her complete appearance State: her animation, kept action, cannon delay and colour sequences.
 pub struct AppearancePin;
 impl Pinned for AppearancePin {
-    type State = samus_appearance::State;
+    type State = samus_appearance::AppearanceState;
     const NAME: &'static str = "samus-appearance";
-    const SHAPE: u64 = 0x347B_D040_BE28_1439;
+    const SHAPE: u64 = 0xBF0E_A64C_6F9A_9E48;
 }
 
 /// One writable owner for every selected model quantity.
@@ -65,7 +65,7 @@ pub enum OwnedState {
     Blocks(Box<world_blocks::State>),
     /// Following view, remembered centre and height receipt.
     Camera(Model<CameraPin>),
-    /// The animation playhead, boost stage and laps.
+    /// Her animation, kept action, cannon delay and colour sequences.
     Appearance(Model<AppearancePin>),
     /// Complete inventory, events and remembered locations/maps/stations.
     Progress(Box<run_progress::Progress>),

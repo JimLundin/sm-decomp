@@ -70,9 +70,9 @@ field = "hud.grid"
 name = "appearance-double-update"
 responsibility = "appearance"
 file = "crates/game/src/production/animation.rs"
-before = '''let (after, outputs) = samus_appearance::update(before, &frame, &provider, rules);'''
-after = '''let (first, _) = samus_appearance::update(before, &frame, &provider, rules);
-    let (after, outputs) = samus_appearance::update(first, &frame, &provider, rules);'''
+before = '''let (after, outputs) = samus_appearance::update(*state, frame, &provider, rules);'''
+after = '''let (first, _) = samus_appearance::update(*state, frame, &provider, rules);
+    let (after, outputs) = samus_appearance::update(first, frame, &provider, rules);'''
 case = "appearance/standing-clip"
 cut = 435
 field = "appearance.time-left"
@@ -158,7 +158,7 @@ name = "connected-playhead-reseed"
 responsibility = "appearance"
 file = "crates/game/src/production/connected.rs"
 before = '''        let playing = self.playing.0;'''
-after = '''        self.appearance.0.playhead = samus_appearance::Playhead { step: samus_appearance::Step::FIRST, time_left: samus_appearance::Frames::NONE };
+after = '''        self.appearance.0.animation.playhead = samus_appearance::Playhead { step: samus_appearance::Step::FIRST, time_left: samus_appearance::Frames::NONE };
         let playing = self.playing.0;'''
 case = "connected-ordinary/carried-running-camera"
 cut = 7
@@ -179,7 +179,7 @@ name = "connected-wrap-omitted"
 responsibility = "appearance"
 file = "crates/game/src/production/connected.rs"
 before = '''        let mut camera = self.camera.0;'''
-after = '''        if appearance.playhead.step < self.appearance.0.playhead.step { appearance.playhead.step = self.appearance.0.playhead.step; }
+after = '''        if appearance.animation.playhead.step < self.appearance.0.animation.playhead.step { appearance.animation.playhead.step = self.appearance.0.animation.playhead.step; }
         let mut camera = self.camera.0;'''
 case = "connected-ordinary/carried-running-camera"
 cut = 14

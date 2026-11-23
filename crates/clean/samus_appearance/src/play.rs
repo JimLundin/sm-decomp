@@ -1,11 +1,12 @@
 //! Her clip plays: the time runs down, and when it is over the clip moves on as its steps say.
 
-use types::{AnimationSound, BoostStage, Item};
+use types::{BoostStage, Item};
 
 use crate::clip::{Branch, Clip, Control, Instruction, Pace, Step};
 use crate::inputs::{Content, Inputs};
 use crate::rules::Rules;
 use crate::run::{boosting_lap_stage, hold_on, next_stage, stride};
+use crate::sounds::SoundRequest;
 use crate::state::{LapsLeft, Playhead, RunDown, State};
 
 /// Spec: `ClipPlays`. The clip of her figure at the frame's start plays: the time runs down by a
@@ -19,7 +20,7 @@ pub fn play(
     inputs: &Inputs,
     content: &impl Content,
     rules: &Rules,
-) -> (State, Option<AnimationSound>) {
+) -> (State, Option<SoundRequest>) {
     let clip = content.clip(&inputs.figure);
     let (step, instruction) = match state.playhead.run_down(clip) {
         RunDown::Stays(playhead) => return (State { playhead, ..state }, None),
@@ -51,7 +52,7 @@ fn lap_end(
     inputs: &Inputs,
     content: &impl Content,
     rules: &Rules,
-) -> (State, Option<AnimationSound>) {
+) -> (State, Option<SoundRequest>) {
     let (clip, paces) = (content.clip(&inputs.figure), content.paces());
     if !inputs.items[Item::SpeedBooster] {
         let playhead = lap_start(&paces.plain, clip, inputs);
@@ -76,10 +77,7 @@ fn lap_end(
         stage: new_stage,
         laps_left: LapsLeft::WithBooster(rules.laps_per_stage[lap_stage]),
     };
-    (
-        next_lap,
-        starts_boosting.then_some(AnimationSound::Boosting),
-    )
+    (next_lap, starts_boosting.then_some(SoundRequest::Boosting))
 }
 
 /// Spec: `RunPace`. A lap starts over in the control's place: step 0, on `pace`'s first hold
@@ -100,7 +98,7 @@ fn follow(
     inputs: &Inputs,
     clip: &Clip,
     rules: &Rules,
-) -> (State, Option<AnimationSound>) {
+) -> (State, Option<SoundRequest>) {
     let (to, sound) = match control {
         Control::Rest | Control::End | Control::EndUnlessJump => (at, None),
         Control::Again(to) => (to, None),
@@ -126,15 +124,15 @@ fn breath(at: Step, inputs: &Inputs, rules: &Rules) -> Step {
 
 /// Spec: `WallJumpBranch`. The spin she wall jumps in, and its sound: plainly when submerged,
 /// else as the screw attack with it, else as the space jump with it, else plainly.
-fn wall_jump(branch: Branch, inputs: &Inputs) -> (Step, AnimationSound) {
+fn wall_jump(branch: Branch, inputs: &Inputs) -> (Step, SoundRequest) {
     let items = &inputs.items;
     if inputs.liquid.submerged {
-        (branch.spin, AnimationSound::PlainSpin)
+        (branch.spin, SoundRequest::PlainSpin)
     } else if items[Item::ScrewAttack] {
-        (branch.screw_attack, AnimationSound::ScrewAttack)
+        (branch.screw_attack, SoundRequest::ScrewAttack)
     } else if items[Item::SpaceJump] {
-        (branch.space_jump, AnimationSound::SpaceJump)
+        (branch.space_jump, SoundRequest::SpaceJump)
     } else {
-        (branch.spin, AnimationSound::PlainSpin)
+        (branch.spin, SoundRequest::PlainSpin)
     }
 }

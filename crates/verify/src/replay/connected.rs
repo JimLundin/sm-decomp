@@ -173,10 +173,12 @@ fn step(
     {
         return Err(data_failure(None, "connected unselected input lifetime"));
     }
-    let mut guards = types::Set::default();
-    guards[samus_appearance::ContactSuppressor::Cinematic] = word(contact, 0x1f51)? != 0;
-    guards[samus_appearance::ContactSuppressor::Boss] = word(contact, 0x179c)? != 0;
-    guards[samus_appearance::ContactSuppressor::SpecialColours] = word(contact, 0x0a68)? != 0;
+    // Her stride reads the activities at the contact opportunity and her pose selection reads
+    // the cinematic later in the frame: the frame's one input holds both readings when they agree.
+    let activities = appearance::activities(contact)?;
+    if activities[samus_appearance::Activity::Cinematic] != (word(late, 0x1f51)? != 0) {
+        return Err(data_failure(None, "connected cinematic lifetime"));
+    }
     let waiting = animation
         .get(0x0648)
         .copied()
@@ -196,12 +198,8 @@ fn step(
         liquid: samus_appearance::Liquid::NONE,
         sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
             .ok_or_else(|| data_failure(None, "connected queue occupancy"))?,
-        contact: guards,
-        cinematic: if word(late, 0x1f51)? == 0 {
-            samus_appearance::CinematicActivity::Inactive
-        } else {
-            samus_appearance::CinematicActivity::Active
-        },
+        activities,
+        charge: appearance::charge(animation)?,
         geometry: borrowed.world,
         camera: camera_input(cam)?,
         activity: Activity::Inactive,
@@ -216,10 +214,6 @@ pub(super) fn seed_inputs(
     geometry: game::production::world::MovementWorld,
 ) -> Result<connected::inputs::Inputs, Outcome> {
     dry_and_bound(seed, seed, seed)?;
-    let mut guards = types::Set::default();
-    guards[samus_appearance::ContactSuppressor::Cinematic] = word(seed, 0x1f51)? != 0;
-    guards[samus_appearance::ContactSuppressor::Boss] = word(seed, 0x179c)? != 0;
-    guards[samus_appearance::ContactSuppressor::SpecialColours] = word(seed, 0x0a68)? != 0;
     let queue = |at: usize| {
         seed.get(at)
             .copied()
@@ -235,12 +229,10 @@ pub(super) fn seed_inputs(
         liquid: samus_appearance::Liquid::NONE,
         sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
             .ok_or_else(|| data_failure(None, "seed queue occupancy"))?,
-        contact: guards,
-        cinematic: if word(seed, 0x1f51)? == 0 {
-            samus_appearance::CinematicActivity::Inactive
-        } else {
-            samus_appearance::CinematicActivity::Active
-        },
+        activities: appearance::activities(seed)?,
+        // Held from the seed like the room's facts: only a passage's first entry reads it, and
+        // no frame these inputs play has one.
+        charge: appearance::charge(seed)?,
         geometry,
         camera: camera_input(seed)?,
         activity: Activity::Inactive,
@@ -394,7 +386,7 @@ pub(super) fn expected(
         &case.row,
         cut,
     )?);
-    let (state, playing) = appearance::running_owner(bytes, content)?;
+    let (state, playing) = appearance::running_animation(bytes, content)?;
     fields.extend(appearance::initial(state, content));
     fields.push(playing_observation(playing));
     fields.extend(camera::expected(bytes)?);
@@ -428,7 +420,7 @@ pub(super) fn actual(
             i64::from(state.movement.0.position.y.0),
         ),
     ];
-    fields.extend(appearance::initial(state.appearance.0, content));
+    fields.extend(appearance::actual(&state.appearance.0, content));
     fields.push(playing_observation(state.playing.0));
     fields.extend(camera::initial(&state.camera.0));
     for (direction, name) in [
@@ -519,7 +511,7 @@ mod tests {
     fn connected_marked_contact_and_first_wrap_have_complete_publications() {
         use game::production::ProductionOutputs;
         use game::state::owned::OwnedState;
-        use samus_appearance::{FrameSound, GraphicalContact, SoundRequest};
+        use samus_appearance::{GraphicalContact, SoundRequest};
         let index = index();
         let sources = sources();
         let case = index
@@ -535,7 +527,7 @@ mod tests {
             let OwnedState::Connected(before) = admitted.production.state() else {
                 panic!()
             };
-            let playhead = before.appearance.0.playhead;
+            let playhead = before.appearance.0.animation.playhead;
             let contact = GraphicalContact {
                 figure: before.playing.0,
                 playhead,
@@ -548,8 +540,7 @@ mod tests {
                 panic!()
             };
             let expected_contact = (cut == 10).then_some(contact);
-            let expected_sound =
-                (cut == 10).then_some(FrameSound::Opportunity(SoundRequest::Footstep));
+            let expected_sound = (cut == 10).then_some(SoundRequest::Footstep);
             let graphics_match = output.contact == expected_contact;
             if !graphics_match {
                 diagnostic(format_args!(
@@ -567,7 +558,7 @@ mod tests {
             let OwnedState::Connected(after) = admitted.production.state() else {
                 panic!()
             };
-            let step = after.appearance.0.playhead.step;
+            let step = after.appearance.0.animation.playhead.step;
             if step == playhead.step {
                 holds += 1;
             } else {

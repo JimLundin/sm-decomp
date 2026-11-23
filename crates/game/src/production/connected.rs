@@ -1,22 +1,23 @@
 //! One carried ordinary running frame through movement, appearance and camera.
 //!
 //! Each model is stepped once per frame through its whole-frame entry, in the played owner's
-//! order: her clip's look ahead, her moves, her animation (with her stride and pose selection),
-//! then the camera following her. With the early mini-map selected, the map reads her position
-//! after her moves from movement's outcome. The frame commits every owner together or none.
+//! order: her clip's read-ahead, her moves, her appearance's frame of play (her work prepared,
+//! her stride, her clip, the pose she takes and her drawing), then the camera following her.
+//! With the early mini-map selected, the map reads her position after her moves from movement's
+//! outcome. The frame commits every owner together or none.
 
 pub mod early_map;
 pub mod inputs;
 mod world;
 
-use super::animation::{self, Parts};
+use super::animation;
 use crate::production::{AppearanceContent, CameraRules, MovementContent, MovementInputs};
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
 use canonical::{
     Canonical,
     model::{Model, Pinned},
 };
-use samus_appearance::{Figure, Selection, Stride};
+use samus_appearance::Figure;
 use types::{Action, Facing, Sprite};
 
 /// Complete content for the connected selected owners.
@@ -52,7 +53,7 @@ impl Pinned for PlayingPin {
 pub struct State {
     /// Her movement.
     pub movement: Model<MovementPin>,
-    /// Her animation's playhead and boost.
+    /// Her whole appearance State.
     pub appearance: Model<AppearancePin>,
     /// The figure she is drawn in.
     pub playing: Model<PlayingPin>,
@@ -66,7 +67,7 @@ pub struct State {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outputs {
     /// Her appearance's sounds, in the order asked.
-    pub sounds: Vec<samus_appearance::FrameSound>,
+    pub sounds: Vec<samus_appearance::SoundRequest>,
     /// Her stride's graphical contact, even when its sound is quieted.
     pub contact: Option<samus_appearance::GraphicalContact>,
     /// Movement's complete outcome.
@@ -98,7 +99,7 @@ impl State {
     /// A figure or pose outside the running family.
     pub fn new(
         movement: samus_movement::Samus,
-        appearance: samus_appearance::State,
+        appearance: samus_appearance::AppearanceState,
         playing: Figure,
         camera: world_camera::Camera,
     ) -> Result<Self, Fault> {
@@ -224,10 +225,7 @@ impl State {
             &rules.movement,
             &MovementInputs {
                 sprite_before_movement: playing.sprite,
-                cinematic_active: matches!(
-                    input.cinematic,
-                    samus_appearance::CinematicActivity::Active
-                ),
+                cinematic_active: input.activities[samus_appearance::Activity::Cinematic],
                 pad: input.held,
                 pressed: input.pressed,
                 items: input.items,
@@ -256,22 +254,9 @@ impl State {
             &mut appearance,
             &content.appearance,
             &rules.appearance,
-            Parts {
-                stride: Some(Stride {
-                    figure: playing,
-                    suppressors: input.contact,
-                }),
-                animation: Some(super::played::animation_inputs(
-                    playing, selected, &outcome, input,
-                )),
-                selection: Some(Selection {
-                    from: playing,
-                    selected,
-                    items: input.items,
-                    submerged: input.liquid.submerged,
-                    cinematic: input.cinematic,
-                }),
-            },
+            &animation::frame_of_play(super::played::animation_inputs(
+                playing, selected, &outcome, input,
+            )),
         )
         .map_err(|_| Fault::Figure)?;
 

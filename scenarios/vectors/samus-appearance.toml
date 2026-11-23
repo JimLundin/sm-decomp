@@ -5,7 +5,11 @@
 #   running clip; boosted, five lists, one per boost stage 0 to 4.
 # - [clips.NAME]: an invented clip (spec §1.4): steps, in order from step 0, each "N" (a shown
 #   step held N frames), "rest", "again S", "breathe", "end", "end-unless-jump" or
-#   "branch X Y Z"; kick, fast_fall and rising (optional): the step each marks.
+#   "branch X Y Z"; kick, fast_fall and rising (optional): the step each marks; contacts
+#   (optional, default none): its contact steps (spec §9.1).
+# - [initialization]: her appearance State as initialization leaves it (spec §1.6): the four
+#   animation quantities, her kept action, the cannon delay and the three colour-sequence
+#   quantities.
 # - Each [[vector]] is one frame, from the State before it to the State after it: id; source
 #   ("constructed", or "ROW:FRAME", the record the frame starts from); entries (the spec's
 #   behaviours it exercises); rules (optional); before; ahead (optional); inputs; after.
@@ -16,13 +20,16 @@
 #   on, "PPPP.SSSS" in hex (FastFall; "0005.0000"); fast_fall_hold, the fast fall step's hold
 #   (FastFall; 8); rising_hold, the rising step's hold while she rises (RisingHold; 4);
 #   laps_per_stage, the laps each boost stage 0 to 4 lasts (BoostStages; [1, 1, 1, 1, 2]).
-# - before and after: step, left (the time left), stage and laps (the laps left), each default 0
-#   in before; after states all four, and sounds (default none), each asked for this frame, in
-#   the order asked: "PlainSpin", "SpaceJump", "ScrewAttack", "Boosting".
+# - before and after: her appearance State's animation part and kept action: step, left (the
+#   time left), stage and laps (the laps left), each default 0 in before, and kept (her kept
+#   action, spec §9.1: an action, default "Still" in before, and in after the same as before);
+#   after states all four animation quantities, and sounds (default none), each asked for this
+#   frame, in the order asked: "PlainSpin", "SpaceJump", "ScrewAttack", "Boosting".
 # - ahead: what is known from the frame's start alone, from before and the clip of her pose:
 #   end (default "None"; "End" or "EndUnlessJump"), the end her clip reaches this frame
 #   (ClipEnds), and turned_far (default false), whether her spin has turned far (SpinTurnedFar).
-# - inputs (spec §1.3): pose, "BODY ACTION FACING AIM", then "Drawn" for the gun drawn,
+# - inputs (spec §1.3): the frame's inputs, one name for each fact in every kind of case below.
+#   pose, "BODY ACTION FACING AIM", then "Drawn" for the gun drawn,
 #   "Striding" for the legs, and "ScrewAttack", "SpaceJump" or "OtherSuit" for the sprite
 #   (default the gun stowed, legs together, the plain sprite); an action with a turn or a landing
 #   is written "Turning(Ground)", "Landing(Jump)" and the like. clip: the clip of her pose.
@@ -32,7 +39,10 @@
 #   standing_restarts, wall_jump_readied, heading_down (each default false; dashing is true
 #   whenever dash_began is); slowdown, start_slowdown, sounds_waiting (each default 0);
 #   vertical_speed (default "+0000.0000"): her vertical speed, a signed P.S quantity "+PPPP.SSSS"
-#   or "-PPPP.SSSS", the pixel part and the subpixel part both hex, downward positive.
+#   or "-PPPP.SSSS", the pixel part and the subpixel part both hex, downward positive;
+#   cinematic, boss, special_colours, shoot_held (each default false); charge (default 0);
+#   prepared (default false): the frame's work is prepared (spec §1.3's parts). A [[vector]]
+#   frame has her moves, with none of the other parts.
 # - Every vector holds RAM values and invented content only: no clip or pace of the game. The
 #   constructed vectors (C) work each rule on the invented clips. The recorded vectors (R) are
 #   frames the oracle recorded on which no clip is read: the time runs down without the clip
@@ -40,6 +50,17 @@
 #   record's step, time left, stage and laps, with an invented clip the frame never reads.
 #   Recorded frames that read a clip are the harness's
 #   cases.
+
+[initialization]
+step = 0
+left = 0
+stage = 0
+laps = 0
+kept = "Still"
+cannon_delay = 2
+visor_delay = 1
+visor_step = 3
+charge_glow_position = 0
 
 [paces]
 plain = [11, 4, 10, 7, 13]
@@ -1004,16 +1025,23 @@ before = { step = 0, left = 2, stage = 3, laps = 1 }
 inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, vertical_speed = "+0000.C400" }
 after = { step = 0, left = 1, stage = 0, laps = 0 }
 
-# Each [[opportunity]] checks one rule of the frame's sounds (spec section 9) alone, apart
-# from the [[vector]] animation update: kind Contact (the stride), PoseSelected (the pose she
-# takes), NormalDraw or PassageEntry; inputs supply every value the rule reads, expected lists
-# its semantic sounds and graphical contact, and before/after show that the rule leaves the
-# four animation quantities as they were. Contact reads her step, time left and stage as the
-# frame starts: inputs.step, inputs.left and inputs.stage match before; the stage stands in for
-# a boosting flag.
+# Each [[opportunity]] checks one rule of the frame's sounds (spec section 9): kind Contact (the
+# stride), PoseSelected (the pose she takes), NormalDraw or PassageEntry; inputs are named as in
+# a [[vector]] (pose_after defaults to pose), expected lists the frame's semantic sounds and
+# graphical contact, and after is her State as the whole frame leaves it, compared whole.
+# A Contact or PoseSelected case is a frame with her movement and none of the other parts:
+# inputs name the clip of her pose and, where the pose she takes has its own, clip_after; the
+# stride and the spin start come with her clip playing and the clip of the pose she takes
+# starting, so after shows the animation's effect (spec section 6) beside the rule's sounds.
+# Contact reads her step, time left and stage as the frame starts from before (stage 4 is
+# boosting), and her action and contact steps from her pose and its clip. A NormalDraw case is
+# a frame with drawing alone, and with prepared, her preparation too: it reads her kept action
+# from before, her preparation keeps her pose's action first, and after shows the kept action
+# the frame leaves. A PassageEntry case is a frame with her first entry into a passage alone.
+# Neither has her movement, so after leaves the four animation quantities as they were.
 # Contact content is invented, including recorded guard cases; ROM content is harness-only.
-[contact_content.invented_stride]
-steps = ["13", "2", "7", "rest", "again 0"]
+[clips.invented_stride]
+steps = ["13", "2", "7", "rest", "11", "again 0"]
 contacts = [2]
 
 [[opportunity]]
@@ -1022,8 +1050,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = ["Footstep"], contact = true }
 
 [[opportunity]]
@@ -1032,8 +1060,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = true, boss = false, special_colours = false, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = true, boss = false, special_colours = false }
 expected = { sounds = [], contact = true }
 
 [[opportunity]]
@@ -1042,8 +1070,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = true, special_colours = false, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = true, special_colours = false }
 expected = { sounds = [], contact = true }
 
 [[opportunity]]
@@ -1052,8 +1080,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = true, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = true }
 expected = { sounds = [], contact = true }
 
 [[opportunity]]
@@ -1062,8 +1090,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 4, laps = 2 }
-after = { step = 2, left = 1, stage = 4, laps = 2 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 4 }
+after = { step = 3, left = 0, stage = 4, laps = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = [], contact = true }
 
 [[opportunity]]
@@ -1072,8 +1100,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Jumping", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1082,8 +1110,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 2, stage = 0, laps = 0 }
-after = { step = 2, left = 2, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 2, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1092,8 +1120,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 0, stage = 0, laps = 0 }
-after = { step = 2, left = 0, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 0, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1102,8 +1130,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 1, left = 1, stage = 0, laps = 0 }
-after = { step = 1, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 1, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1112,8 +1140,8 @@ source = "M0:63->64"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+after = { step = 3, left = 0, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = ["Footstep"], contact = true }
 
 [[opportunity]]
@@ -1122,8 +1150,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", submerged = false, cinematic = false }
 expected = { sounds = ["PlainSpin"], contact = false }
 
 [[opportunity]]
@@ -1132,8 +1160,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 1, left = 11, stage = 0, laps = 0 }
+inputs = { pose = "Upright Spinning Right Forward", pose_after = "Upright Spinning Left Forward", clip = "spin", clip_after = "twirl", submerged = false, cinematic = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1142,8 +1170,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "WallJumping", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 1, left = 9, stage = 0, laps = 0 }
+inputs = { pose = "Upright WallJumping Right Forward", pose_after = "Upright Spinning Right Forward", clip = "walljump", clip_after = "spin", submerged = false, cinematic = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1152,18 +1180,20 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = true }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", submerged = false, cinematic = true }
 expected = { sounds = [], contact = false }
 
+# her pose after the same spinning pose: no selection sounds, though a changed spin with the
+# space jump would (C-start-space-continued)
 [[opportunity]]
 id = "C-start-same"
 source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = false, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 3, left = 5, stage = 0, laps = 0 }
+inputs = { pose = "Upright Spinning Right Forward", pose_after = "Upright Spinning Right Forward", clip = "spin", items = ["SpaceJump"], submerged = false, cinematic = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1172,8 +1202,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Running", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 3, left = 9, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Running Left Forward", clip = "run", submerged = false, cinematic = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1182,8 +1212,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = true, cinematic = false }
+after = { step = 0, left = 9, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", submerged = true, cinematic = false, slowdown = 3, start_slowdown = 3 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1192,8 +1222,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["SpaceJump"], submerged = false, cinematic = false }
 expected = { sounds = ["SpaceJump"], contact = false }
 
 [[opportunity]]
@@ -1202,8 +1232,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = true, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 1, left = 11, stage = 0, laps = 0 }
+inputs = { pose = "Upright Spinning Right Forward", pose_after = "Upright Spinning Left Forward", clip = "spin", clip_after = "twirl", items = ["SpaceJump"], submerged = false, cinematic = false }
 expected = { sounds = ["SpaceJump"], contact = false }
 
 [[opportunity]]
@@ -1212,8 +1242,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = false, submerged = false, cinematic = true }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["SpaceJump"], submerged = false, cinematic = true }
 expected = { sounds = ["SpaceJump"], contact = false }
 
 [[opportunity]]
@@ -1222,8 +1252,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = true, submerged = false, cinematic = false }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["ScrewAttack"], submerged = false, cinematic = false }
 expected = { sounds = ["ScrewAttack"], contact = false }
 
 [[opportunity]]
@@ -1232,8 +1262,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = true, submerged = false, cinematic = false }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["SpaceJump", "ScrewAttack"], submerged = false, cinematic = false }
 expected = { sounds = ["ScrewAttack"], contact = false }
 
 [[opportunity]]
@@ -1242,8 +1272,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = true, submerged = false, cinematic = true }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["ScrewAttack"], submerged = false, cinematic = true }
 expected = { sounds = ["ScrewAttack"], contact = false }
 
 [[opportunity]]
@@ -1252,8 +1282,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "WallJumping", to_action = "Spinning", changed = true, space_jump = false, screw_attack = true, submerged = false, cinematic = false }
+after = { step = 1, left = 9, stage = 0, laps = 0 }
+inputs = { pose = "Upright WallJumping Right Forward", pose_after = "Upright Spinning Right Forward", clip = "walljump", clip_after = "spin", items = ["ScrewAttack"], submerged = false, cinematic = false }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1262,8 +1292,8 @@ source = "M0:15->16"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", submerged = false, cinematic = false }
 expected = { sounds = ["PlainSpin"], contact = false }
 
 [[opportunity]]
@@ -1271,9 +1301,9 @@ id = "C-end-spin"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "Spinning", current = "Falling" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+inputs = { pose = "Upright Falling Right Forward" }
 expected = { sounds = ["SpinEnded"], contact = false }
 
 [[opportunity]]
@@ -1281,9 +1311,9 @@ id = "C-end-wall"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "WallJumping", current = "Running" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "WallJumping" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "WallJumping" }
+inputs = { pose = "Upright Running Right Forward" }
 expected = { sounds = ["SpinEnded"], contact = false }
 
 [[opportunity]]
@@ -1291,9 +1321,9 @@ id = "C-end-frozen"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "Spinning", current = "Running" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+inputs = { pose = "Upright Running Right Forward" }
 expected = { sounds = ["SpinEnded"], contact = false }
 
 [[opportunity]]
@@ -1301,9 +1331,9 @@ id = "C-end-neither"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "Running", current = "Falling" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "Running" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "Running" }
+inputs = { pose = "Upright Falling Right Forward" }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1311,9 +1341,9 @@ id = "C-end-spin-spin"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "Spinning", current = "Spinning" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+inputs = { pose = "Upright Spinning Right Forward" }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1321,9 +1351,9 @@ id = "C-end-spin-wall"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "Spinning", current = "WallJumping" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+inputs = { pose = "Upright WallJumping Right Forward" }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1331,9 +1361,9 @@ id = "C-end-wall-spin"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "WallJumping", current = "Spinning" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "WallJumping" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "WallJumping" }
+inputs = { pose = "Upright Spinning Right Forward" }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1341,20 +1371,21 @@ id = "C-end-wall-wall"
 source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "WallJumping", current = "WallJumping" }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "WallJumping" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "WallJumping" }
+inputs = { pose = "Upright WallJumping Right Forward" }
 expected = { sounds = [], contact = false }
 
+# a prepared frame replaces a kept spin with her running: drawing asks for nothing
 [[opportunity]]
-id = "R-unspin"
-source = "M0:80->81"
+id = "C-end-prepared-replaces"
+source = "constructed"
 kind = "NormalDraw"
 entries = ["SpinEnds"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { previous = "Spinning", current = "Falling" }
-expected = { sounds = ["SpinEnded"], contact = false }
+before = { step = 2, left = 1, stage = 0, laps = 0, kept = "Spinning" }
+after = { step = 2, left = 1, stage = 0, laps = 0, kept = "Running" }
+inputs = { prepared = true, pose = "Upright Running Right Forward" }
+expected = { sounds = [], contact = false }
 
 [[opportunity]]
 id = "C-door-spin"
@@ -1363,7 +1394,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Spinning", shoot_held = true, charge = 23 }
+inputs = { pose = "Upright Spinning Right Forward", shoot_held = true, charge = 23 }
 expected = { sounds = ["SpinEnded"], contact = false }
 
 [[opportunity]]
@@ -1373,7 +1404,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "WallJumping", shoot_held = false, charge = 0 }
+inputs = { pose = "Upright WallJumping Right Forward", shoot_held = false, charge = 0 }
 expected = { sounds = ["SpinEnded"], contact = false }
 
 [[opportunity]]
@@ -1383,7 +1414,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Running", shoot_held = false, charge = 0 }
+inputs = { pose = "Upright Running Right Forward", shoot_held = false, charge = 0 }
 expected = { sounds = ["SamusSilence"], contact = false }
 
 [[opportunity]]
@@ -1393,7 +1424,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Running", shoot_held = false, charge = 15 }
+inputs = { pose = "Upright Running Right Forward", shoot_held = false, charge = 15 }
 expected = { sounds = ["SamusSilence"], contact = false }
 
 [[opportunity]]
@@ -1403,7 +1434,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Running", shoot_held = true, charge = 0 }
+inputs = { pose = "Upright Running Right Forward", shoot_held = true, charge = 0 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1413,7 +1444,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Running", shoot_held = false, charge = 16 }
+inputs = { pose = "Upright Running Right Forward", shoot_held = false, charge = 16 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1423,7 +1454,7 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Running", shoot_held = false, charge = 17 }
+inputs = { pose = "Upright Running Right Forward", shoot_held = false, charge = 17 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1433,32 +1464,81 @@ kind = "PassageEntry"
 entries = ["AtTheDoor"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { current = "Running", shoot_held = false, charge = 0 }
+inputs = { pose = "Upright Running Right Forward", shoot_held = false, charge = 0 }
 expected = { sounds = ["SamusSilence"], contact = false }
 
-# An [[appearance_work]] is one frame that combines already-checked rules: its animation_vector
-# (optional) is the frame's one animation update, and its opportunities are the frame's other
-# sound rules. sounds lists the frame's requests in the order of spec section 9.2; contact and
-# all four after quantities are its other expected outputs. This is a composition check, not a
-# required clean interface.
+# An [[appearance_work]] is one whole frame that combines rules checked alone above: parts
+# lists the parts it has (spec §1.3: "initialization", "movement", "preparation", "drawing"),
+# and before and inputs are as in a [[vector]], one set of inputs every rule reads. before and
+# after may also give the cannon delay and the colour-sequence quantities, named as in
+# [initialization]; unnamed, before has the initialization's values and after the same as
+# before. sounds lists the frame's requests in the order of spec section 9.2; contact and the
+# State in after are its other expected outputs.
+# her initialization from a State far from it, every quantity changed: she is as
+# [initialization] gives her, whatever came before (spec §1.6)
+[[appearance_work]]
+id = "C-initialize"
+source = "constructed"
+entries = ["CannonReadinessReset"]
+parts = ["initialization"]
+before = { step = 4, left = 9, stage = 3, laps = 1, kept = "Spinning", cannon_delay = 0, visor_delay = 7, visor_step = 5, charge_glow_position = 2 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin" }
+sounds = []
+contact = false
+after = { step = 0, left = 0, stage = 0, laps = 0, kept = "Still", cannon_delay = 2, visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+
+# her wall jump's clip branches to the plain spin as her moves take her out of it into a fall:
+# the branch's sound, then drawing ends the kept wall jump's; the fall's clip from step 0, held 9
 [[appearance_work]]
 id = "C-branch-and-end"
 source = "constructed"
 entries = ["WallJumpBranch", "SpinEnds"]
-animation_vector = "C-branch-spin"
-opportunities = ["C-end-wall"]
+parts = ["movement", "preparation", "drawing"]
+before = { step = 0, left = 1, kept = "WallJumping" }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", pose_after = "Upright Falling Right Forward", clip_after = "fall" }
 sounds = ["PlainSpin", "SpinEnded"]
 contact = false
-after = { step = 2, left = 7, stage = 0, laps = 0 }
+after = { step = 0, left = 9, stage = 0, laps = 0, kept = "WallJumping" }
 
+# the frame's preparation keeps her spin, her moves take her out of it into a fall, and drawing
+# ends its sound; the spin's clip moves on, then the fall's starts at step 0, held 9 (her
+# facing and aim, the animation quantities and the clips invented)
+[[appearance_work]]
+id = "R-unspin"
+source = "M0:80->81"
+entries = ["SpinEnds"]
+parts = ["movement", "preparation", "drawing"]
+before = { step = 2, left = 1, kept = "Spinning" }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", pose_after = "Upright Falling Right Forward", clip_after = "fall" }
+sounds = ["SpinEnded"]
+contact = false
+after = { step = 0, left = 9, stage = 0, laps = 0, kept = "Spinning" }
+
+# a prepared frame keeps the spin she starts it in over her kept run, then her moves take her
+# into a fall: drawing ends the kept spin's sound; the fall's clip starts at step 0, held 9
+[[appearance_work]]
+id = "C-end-prepared"
+source = "constructed"
+entries = ["SpinEnds"]
+parts = ["movement", "preparation", "drawing"]
+before = { step = 2, left = 1, kept = "Running" }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", pose_after = "Upright Falling Right Forward", clip_after = "fall" }
+sounds = ["SpinEnded"]
+contact = false
+after = { step = 0, left = 9, stage = 0, laps = 0, kept = "Spinning" }
+
+# the last frame of a running contact picture, then she takes a spin: the footstep, then the
+# spin's start; the clip moves on to its rest, then the spin's clip starts at step 0, held 6
 [[appearance_work]]
 id = "C-contact-and-start"
 source = "constructed"
 entries = ["FootContact", "SpinStarts"]
-opportunities = ["C-contact", "C-start-plain"]
+parts = ["movement", "preparation"]
+before = { step = 2, left = 1, kept = "Running" }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", pose_after = "Upright Spinning Right Forward", clip_after = "spin" }
 sounds = ["Footstep", "PlainSpin"]
 contact = true
-after = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 0, left = 6, stage = 0, laps = 0, kept = "Running" }
 
 [[opportunity]]
 id = "C-contact-stage3"
@@ -1466,8 +1546,8 @@ source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
 before = { step = 2, left = 1, stage = 3, laps = 1 }
-after = { step = 2, left = 1, stage = 3, laps = 1 }
-inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 3 }
+after = { step = 3, left = 0, stage = 3, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "invented_stride", cinematic = false, boss = false, special_colours = false }
 expected = { sounds = ["Footstep"], contact = true }
 
 [[opportunity]]
@@ -1476,8 +1556,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = true, submerged = true, cinematic = false }
+after = { step = 0, left = 9, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["SpaceJump", "ScrewAttack"], submerged = true, cinematic = false, slowdown = 3, start_slowdown = 3 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1486,8 +1566,8 @@ source = "constructed"
 kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
-inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = true }
+after = { step = 1, left = 11, stage = 0, laps = 0 }
+inputs = { pose = "Upright Spinning Right Forward", pose_after = "Upright Spinning Left Forward", clip = "spin", clip_after = "twirl", submerged = false, cinematic = true }
 expected = { sounds = [], contact = false }
 
 # running to running aimed up-forward as the clip moves on to step 2: kept, with the hold the
@@ -1724,13 +1804,13 @@ steps = [
 # Each invented fixture names a red level. Slot i (0 through 255) has RGB components
 # [red, i % 32, i // 32]. All slots within a bank and all fixtures are distinguishable.
 # A recorded witness observes both complete banks privately; substitute the invented patterns
-# for the unexported colours and the supplied valid figure and position for geometry.
+# for the unexported colours and the supplied valid pose for geometry.
 # The recorded admission and sequence quantities are checked at the frame's opportunity.
-# The shared observations are the frame's inputs for a Running Power figure in standard
-# room colours, with absent surfaces, a dormant tether, the screw attack switched off and no
-# active colour effects. "action" is the figure's action and always agrees with "figure".
-# A history supplies its valid figure/position. Its optional "observed" table replaces
-# named shared observations (each key already present); other fields override shared inputs.
+# A history reads two of the frame's inputs (spec §1.3): pose_after, her pose as the frame
+# ends, whose action is the recorded one, and items (default none: the screw attack switched
+# off). The shared observations are the palette opportunity's own, for a Power suit in
+# standard room colours, with absent surfaces, a dormant tether and no active colour effects.
+# Its optional "observed" table replaces named shared observations (each key already present).
 # palettes names the banks' fixtures before the frame. Each optional palette_updates item is a
 # change another producer makes to one bank in the same frame; after the frame each bank holds
 # its latest colours.
@@ -1738,12 +1818,10 @@ steps = [
 # applications, 1 when the frame applied the reset (even if before equals after), 0 when it
 # refused. Animation and cannon are unchanged.
 # Each [[boundary]] starts from its based_on history, observed table included. Its
-# "replacements" are independent cases, each changing shared observations of that frame; a
-# replacement's "figure", when present, replaces the history's figure with one that agrees with
-# its action.
+# "replacements" are independent cases, each changing shared observations or the inputs
+# pose_after and items of that frame.
 
 [ordinary_dry_colours.observations]
-action = "Running"
 suit = "Power"
 room_colours = "Standard"
 water_present = false
@@ -1755,7 +1833,6 @@ override_colours = false
 special_colours = false
 speed_glow = false
 hit_colour_pulse = false
-screw_attack = false
 
 [ordinary_dry_colours.invented_palettes]
 current = 1
@@ -1769,10 +1846,9 @@ source = "opening:0"
 # Observed: all shared observations above, including Running action, current suit and
 # all admitted neighbour facts. Also observed: before and after metadata, applications,
 # and unchanged colours at every slot of both banks.
-# Invented: the detailed figure (apart from Running action), position and palette fixtures.
+# Invented: the pose's detail apart from its Running action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Running Left Forward Striding"
-position = [121, 152]
+pose_after = "Upright Running Left Forward Striding"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1782,8 +1858,7 @@ applications = 1
 id = "C-ordinary-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Running Left Forward Striding"
-position = [36, 184]
+pose_after = "Upright Running Left Forward Striding"
 before = { visor_delay = 19, visor_step = 2, charge_glow_position = 4 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1793,8 +1868,7 @@ applications = 1
 id = "C-ordinary-other-stride"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Running Right Forward Striding"
-position = [215, 63]
+pose_after = "Upright Running Right Forward Striding"
 before = { visor_delay = 0, visor_step = 5, charge_glow_position = 2 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "different_target"]
@@ -1804,8 +1878,7 @@ applications = 1
 id = "C-ordinary-already-ready"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Running Right Forward Striding"
-position = [68, 250]
+pose_after = "Upright Running Right Forward Striding"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "target"]
@@ -1815,8 +1888,7 @@ applications = 1
 id = "C-ordinary-shared-colours"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Running Right Forward Striding"
-position = [89, 134]
+pose_after = "Upright Running Right Forward Striding"
 before = { visor_delay = 91, visor_step = 1, charge_glow_position = 5 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1831,11 +1903,9 @@ id = "R-ordinary-spin-colours"
 source = "opening:16"
 # Observed: the Spinning action and every shared observation above, before and after
 # metadata, applications, and unchanged colours at every slot of both banks.
-# Invented: the figure's detail apart from its action, the position and palette fixtures.
+# Invented: the pose's detail apart from its action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Spinning Right Forward"
-position = [118, 141]
-observed = { action = "Spinning" }
+pose_after = "Upright Spinning Right Forward"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1846,11 +1916,9 @@ id = "R-ordinary-jump-colours"
 source = "opening:29"
 # Observed: the Jumping action and every shared observation above, before and after
 # metadata, applications, and unchanged colours at every slot of both banks.
-# Invented: the figure's detail apart from its action, the position and palette fixtures.
+# Invented: the pose's detail apart from its action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Jumping Right Down"
-position = [140, 97]
-observed = { action = "Jumping" }
+pose_after = "Upright Jumping Right Down"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1861,11 +1929,9 @@ id = "R-ordinary-jump-turn-colours"
 source = "opening:36"
 # Observed: the Turning(Jump) action and every shared observation above, before and after
 # metadata, applications, and unchanged colours at every slot of both banks.
-# Invented: the figure's detail apart from its action, the position and palette fixtures.
+# Invented: the pose's detail apart from its action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Turning(Jump) Left Forward"
-position = [151, 88]
-observed = { action = "Turning(Jump)" }
+pose_after = "Upright Turning(Jump) Left Forward"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1876,11 +1942,9 @@ id = "R-ordinary-landing-colours"
 source = "opening:57"
 # Observed: the Landing(Jump) action and every shared observation above, before and after
 # metadata, applications, and unchanged colours at every slot of both banks.
-# Invented: the figure's detail apart from its action, the position and palette fixtures.
+# Invented: the pose's detail apart from its action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Landing(Jump) Left Forward"
-position = [102, 152]
-observed = { action = "Landing(Jump)" }
+pose_after = "Upright Landing(Jump) Left Forward"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1891,11 +1955,9 @@ id = "R-ordinary-still-colours"
 source = "opening:156"
 # Observed: the Still action and every shared observation above, before and after
 # metadata, applications, and unchanged colours at every slot of both banks.
-# Invented: the figure's detail apart from its action, the position and palette fixtures.
+# Invented: the pose's detail apart from its action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Still Right DownForward"
-position = [77, 152]
-observed = { action = "Still" }
+pose_after = "Upright Still Right DownForward"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1906,11 +1968,9 @@ id = "R-ordinary-moonwalk-colours"
 source = "opening:157"
 # Observed: the Moonwalking action and every shared observation above, before and after
 # metadata, applications, and unchanged colours at every slot of both banks.
-# Invented: the figure's detail apart from its action, the position and palette fixtures.
+# Invented: the pose's detail apart from its action, and the palette fixtures.
 entries = ["OrdinaryDryColours"]
-figure = "Upright Moonwalking Left Forward"
-position = [79, 152]
-observed = { action = "Moonwalking" }
+pose_after = "Upright Moonwalking Left Forward"
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1920,9 +1980,7 @@ applications = 1
 id = "C-ordinary-spin-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Spinning Right Forward"
-position = [44, 203]
-observed = { action = "Spinning" }
+pose_after = "Upright Spinning Right Forward"
 before = { visor_delay = 4, visor_step = 5, charge_glow_position = 3 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1932,9 +1990,7 @@ applications = 1
 id = "C-ordinary-spin-other-way"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Spinning Left Forward SpaceJump"
-position = [230, 17]
-observed = { action = "Spinning" }
+pose_after = "Upright Spinning Left Forward SpaceJump"
 before = { visor_delay = 0, visor_step = 0, charge_glow_position = 1 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "different_target"]
@@ -1944,9 +2000,7 @@ applications = 1
 id = "C-ordinary-jump-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Jumping Left Forward Striding"
-position = [12, 60]
-observed = { action = "Jumping" }
+pose_after = "Upright Jumping Left Forward Striding"
 before = { visor_delay = 200, visor_step = 4, charge_glow_position = 5 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "target"]
@@ -1956,9 +2010,7 @@ applications = 1
 id = "C-ordinary-jump-turn-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Turning(Jump) Right Forward"
-position = [161, 33]
-observed = { action = "Turning(Jump)" }
+pose_after = "Upright Turning(Jump) Right Forward"
 before = { visor_delay = 3, visor_step = 2, charge_glow_position = 4 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "different_target"]
@@ -1968,9 +2020,7 @@ applications = 1
 id = "C-ordinary-landing-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Landing(Jump) Right Forward"
-position = [99, 190]
-observed = { action = "Landing(Jump)" }
+pose_after = "Upright Landing(Jump) Right Forward"
 before = { visor_delay = 255, visor_step = 1, charge_glow_position = 2 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -1980,9 +2030,7 @@ applications = 1
 id = "C-ordinary-still-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Still Left Up"
-position = [5, 120]
-observed = { action = "Still" }
+pose_after = "Upright Still Left Up"
 before = { visor_delay = 2, visor_step = 1, charge_glow_position = 2 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "different_target"]
@@ -1992,9 +2040,7 @@ applications = 1
 id = "C-ordinary-moonwalk-stale"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Moonwalking Right UpForward"
-position = [180, 72]
-observed = { action = "Moonwalking" }
+pose_after = "Upright Moonwalking Right UpForward"
 before = { visor_delay = 9, visor_step = 0, charge_glow_position = 1 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
@@ -2006,9 +2052,8 @@ applications = 1
 id = "C-ordinary-screw-jump"
 source = "constructed"
 entries = ["OrdinaryDryColours"]
-figure = "Upright Jumping Right Forward"
-position = [140, 88]
-observed = { action = "Jumping", screw_attack = true }
+pose_after = "Upright Jumping Right Forward"
+items = ["ScrewAttack"]
 before = { visor_delay = 7, visor_step = 5, charge_glow_position = 2 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "target"]
@@ -2021,13 +2066,13 @@ based_on = "C-ordinary-stale"
 outcome = "Unsupported"
 applications = 0
 replacements = [
-    { action = "Falling", figure = "Upright Falling Left Forward" },
-    { action = "TakingOff", figure = "Upright TakingOff Left Forward" },
-    { action = "Turning(Ground)", figure = "Upright Turning(Ground) Left Forward" },
-    { action = "Landing(Spin)", figure = "Upright Landing(Spin) Left Forward" },
-    { action = "WallJumping", figure = "Upright WallJumping Left Forward" },
-    { action = "Still", figure = "Crouched Still Left Forward" },
-    { action = "Still", figure = "Ball Still Left Forward" },
+    { pose_after = "Upright Falling Left Forward" },
+    { pose_after = "Upright TakingOff Left Forward" },
+    { pose_after = "Upright Turning(Ground) Left Forward" },
+    { pose_after = "Upright Landing(Spin) Left Forward" },
+    { pose_after = "Upright WallJumping Left Forward" },
+    { pose_after = "Crouched Still Left Forward" },
+    { pose_after = "Ball Still Left Forward" },
     { suit = "Gravity" },
     { suit = "Varia" },
     { room_colours = "RedBackground" },
@@ -2052,8 +2097,8 @@ based_on = "C-ordinary-spin-stale"
 outcome = "Unsupported"
 applications = 0
 replacements = [
-    { screw_attack = true },
-    { screw_attack = true, figure = "Upright Spinning Right Forward ScrewAttack" },
+    { items = ["ScrewAttack"] },
+    { items = ["ScrewAttack"], pose_after = "Upright Spinning Right Forward ScrewAttack" },
     { suit = "Varia" },
     { room_colours = "OrangeBackground" },
     { water_present = true },

@@ -40,7 +40,7 @@ pub enum BehaviourId {
     FootContact,
     /// Pose selection starts its spin sound.
     SpinStarts,
-    /// Normal drawing ends a departed spin sound.
+    /// Prepared frames keep her action; normal drawing ends a kept spin's sound once she left it.
     SpinEnds,
     /// First passage entry quiets Samus before sound hold.
     AtTheDoor,
@@ -205,7 +205,8 @@ pub const CATALOGUE: [Behaviour; 22] = [
     },
     Behaviour {
         id: BehaviourId::SpinEnds,
-        summary: "when she leaves a spin or wall jump, normal drawing ends its sound, even while her animation is frozen",
+        summary: "her prepared frames keep her action, and when she has left a kept spin or wall \
+                  jump, normal drawing ends its sound, even while her animation is frozen",
         kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

@@ -324,17 +324,21 @@ Ceres continuation, pixels, application, power-on or played-alone coverage follo
 The connected ordinary witness starts once at cut6 and compares nine actual opportunities
 through cut15 in one production owner, which steps each model once per frame in the played
 owner's order. Complete Movement, the four Appearance quantities, the playing Figure and all
-nine Camera components are observed, along with four directional travels per frame. Ahead reads
-the retained playing state before her moves; Appearance plays her stride, the animation update
-and the pose selection from movement's outcome; Camera follows the finished movement and
-retains its history.
+nine Camera components are observed, along with four directional travels per frame. The
+read-ahead asks the retained appearance State before her moves; Appearance plays a frame of
+play from one set of inputs and movement's outcome (her work prepared, her stride, her clip,
+the pose she takes and her drawing); Camera follows the finished movement and retains its
+history. The owner carries her whole appearance State, decoded once from the start's record:
+her animation, kept action, cannon delay and colour sequences. Her item controls and the
+palette opportunity have no producer in the loop, so the delay and the sequences carry as
+decoded; only the four animation quantities are compared.
 
 The separately checked current source has five clip holds, four advances, its first wrap at
 cut14 and one marked Contact at cut10, with its graphical contact and Footstep request. The
 indexed case checks each cut's continuation from a checkpoint.
 
-Controls, equipment, liquid, energy, occupancy, Contact guards, current terrain and actors,
-and room settings are authenticated borrowed stimuli. Actor lifecycle, receiver execution,
+Controls, equipment, liquid, energy, occupancy, the owners active at her stride, the charge,
+current terrain and actors, and room settings are authenticated borrowed stimuli. Actor lifecycle, receiver execution,
 health arithmetic and played-alone production remain outside this witness. Its package is
 fetched by [the pinned connected fixture script](../tools/ci/fetch_connected_ordinary.sh); the declaration,
 reviewed outcome and code navigation are in the existing replay index, baseline and mapping.

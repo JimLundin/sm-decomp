@@ -1,11 +1,10 @@
 //! Checked immutable animation content and the clean appearance entry.
 
 use samus_appearance::{
-    AppearanceState, CannonDelay, CannonEvent, ChargeGlowPosition, Clip, ColourSequences, Content,
-    Figure, Frame, FrameOutputs, FrameSound, Inputs, Paces, PaletteOpportunity, Rules, Selection,
-    State, Stride, VisorDelay, VisorStep,
+    AppearanceState, CannonEvent, Clip, Content, Figure, Frame, FrameOutputs, FramePart, Inputs,
+    Paces, PaletteOpportunity, Rules,
 };
-use types::AnimationSound;
+use types::Set;
 
 /// One imported semantic figure and its complete clip.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -81,47 +80,44 @@ impl Content for ClipProvider<'_> {
     }
 }
 
-/// The parts of a frame of her appearance these owners play. Her item controls and the palette
-/// opportunity have no owner in these loops: the frame skips the controls and has no palette
-/// opportunity, so neither changes.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(super) struct Parts {
-    /// Her stride, before the animation update.
-    pub stride: Option<Stride>,
-    /// The animation update, with movement's results.
-    pub animation: Option<Inputs>,
-    /// Her pose selection.
-    pub selection: Option<Selection>,
+/// The parts of a frame of play in these loops: her work is prepared, she moves, and she is
+/// drawn. A passage's frame doesn't reach her appearance.
+const PLAYED: [FramePart; 3] = [
+    FramePart::Preparation,
+    FramePart::Movement,
+    FramePart::Drawing,
+];
+
+/// A frame of play that brings each of `inputs`' facts once.
+///
+/// Her item controls and the palette opportunity have no producer in these loops: the frame
+/// reports the controls skipped and no palette opportunity, so the cannon delay and the colour
+/// sequences carry in her State as they came.
+#[must_use]
+pub(super) fn frame_of_play(inputs: Inputs) -> Frame {
+    let mut parts = Set::default();
+    for part in PLAYED {
+        parts[part] = true;
+    }
+    Frame {
+        inputs,
+        parts,
+        cannon: CannonEvent::ControlsSkipped,
+        palette: PaletteOpportunity::Absent,
+    }
 }
 
-/// The cannon delay and colour sequences of a frame that neither runs her item controls nor
-/// meets a palette opportunity: the update gives both back as they came, so any value does,
-/// and neither is kept.
-const UNOWNED: (CannonDelay, ColourSequences) = (
-    CannonDelay::INITIAL,
-    ColourSequences {
-        visor_delay: VisorDelay(0),
-        visor_step: VisorStep(0),
-        charge_glow_position: ChargeGlowPosition(0),
-    },
-);
-
-/// Play one frame of her animation through the clean appearance entry.
+/// Play one frame of her appearance through the clean entry, from her whole State.
 ///
 /// # Errors
 /// A figure the frame shows has no admitted clip; `state` is unchanged.
 pub(super) fn play(
-    state: &mut State,
+    state: &mut AppearanceState,
     content: &AppearanceContent,
     rules: &Rules,
-    parts: Parts,
+    frame: &Frame,
 ) -> Result<FrameOutputs, ClipFault> {
-    let shown = parts
-        .animation
-        .iter()
-        .flat_map(|inputs| [inputs.figure, inputs.figure_after])
-        .chain(parts.stride.map(|stride| stride.figure));
-    for figure in shown {
+    for figure in [frame.inputs.figure, frame.inputs.figure_after] {
         if content.get(figure).is_none() {
             return Err(ClipFault::Missing(figure));
         }
@@ -137,50 +133,10 @@ pub(super) fn play(
             contacts: std::collections::BTreeSet::new(),
         },
     };
-    let (cannon, colours) = UNOWNED;
-    let frame = Frame {
-        cannon: CannonEvent::ControlsSkipped,
-        stride: parts.stride,
-        animation: parts.animation,
-        selection: parts.selection,
-        palette: PaletteOpportunity::Absent,
-        passage: None,
-        drawing: None,
-    };
-    let before = AppearanceState {
-        animation: *state,
-        cannon,
-        colours,
-    };
-    let (after, outputs) = samus_appearance::update(before, &frame, &provider, rules);
+    let (after, outputs) = samus_appearance::update(*state, frame, &provider, rules);
     if let Some(figure) = provider.missing.get() {
         return Err(ClipFault::Missing(figure));
     }
-    *state = after.animation;
+    *state = after;
     Ok(outputs)
-}
-
-/// Play one frame's animation update alone, giving the sound it asks for, if any.
-///
-/// # Errors
-/// A figure the frame shows has no admitted clip; `state` is unchanged.
-pub(super) fn advance(
-    state: &mut State,
-    content: &AppearanceContent,
-    rules: &Rules,
-    inputs: &Inputs,
-) -> Result<Option<AnimationSound>, ClipFault> {
-    let outputs = play(
-        state,
-        content,
-        rules,
-        Parts {
-            animation: Some(*inputs),
-            ..Parts::default()
-        },
-    )?;
-    Ok(outputs.sounds.into_iter().find_map(|sound| match sound {
-        FrameSound::Animation(sound) => Some(sound),
-        FrameSound::Opportunity(_) => None,
-    }))
 }

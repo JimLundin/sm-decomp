@@ -3,9 +3,9 @@
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
-use types::{Action, Body, LandedFrom, Position, Set, Turn};
+use types::{Action, Body, Item, LandedFrom, Set, Turn};
 
-use crate::inputs::Figure;
+use crate::inputs::{Figure, Inputs};
 
 /// Eligible visor palette ticks remaining, from 0 to 255.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -31,8 +31,9 @@ pub struct ColourSequences {
 }
 
 /// Spec: `OrdinaryDryColours`. The sequences as the ordinary reset leaves them: one eligible
-/// palette tick of visor delay, the visor's entry 3 (its fourth), the charge glow reset.
-const ORDINARY_READY: ColourSequences = ColourSequences {
+/// palette tick of visor delay, the visor's entry 3 (its fourth), the charge glow reset. Her
+/// initialization leaves them so too.
+pub const ORDINARY_READY: ColourSequences = ColourSequences {
     visor_delay: VisorDelay(1),
     visor_step: VisorStep(3),
     charge_glow_position: ChargeGlowPosition(0),
@@ -95,17 +96,7 @@ pub enum ColourEffect {
     HitColourPulse,
 }
 
-/// Spec: `OrdinaryDryColours`. Whether the screw attack is switched on, from the items switched
-/// on (progress), as it stands at the palette opportunity. Not the figure's sprite.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ScrewAttack {
-    /// The screw attack is switched off, or not taken.
-    Off,
-    /// The screw attack is switched on.
-    On,
-}
-
-/// What an admitted dry movement asks of the screw attack observation.
+/// What an admitted dry movement asks of the screw attack, among the items switched on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ScrewAttackPremise {
     /// The movement is admitted whether the screw attack is on or off.
@@ -115,10 +106,11 @@ enum ScrewAttackPremise {
 }
 
 impl ScrewAttackPremise {
-    const fn holds(self, screw_attack: ScrewAttack) -> bool {
+    /// Whether the premise holds, with the screw attack switched on or not.
+    const fn holds(self, screw_attack_on: bool) -> bool {
         match self {
             Self::Either => true,
-            Self::SwitchedOff => matches!(screw_attack, ScrewAttack::Off),
+            Self::SwitchedOff => !screw_attack_on,
         }
     }
 }
@@ -156,42 +148,39 @@ const ADMITTED_DRY_MOVEMENTS: &[(Action, ScrewAttackPremise)] = &[
     (Action::Spinning, ScrewAttackPremise::SwitchedOff),
 ];
 
-/// Whether this figure is an admitted dry movement under the current screw attack observation.
-fn admits_dry_movement(figure: Figure, screw_attack: ScrewAttack) -> bool {
+/// Whether `figure`, the one she ends the frame in, is an admitted dry movement, with the screw
+/// attack switched on or not.
+fn admits_dry_movement(figure: Figure, screw_attack_on: bool) -> bool {
     figure.pose.body == ADMITTED_BODY
-        && ADMITTED_DRY_MOVEMENTS
-            .iter()
-            .any(|&(action, premise)| action == figure.pose.action && premise.holds(screw_attack))
+        && ADMITTED_DRY_MOVEMENTS.iter().any(|&(action, premise)| {
+            action == figure.pose.action && premise.holds(screw_attack_on)
+        })
 }
 
-/// Spec: `OrdinaryDryColours`. Every owner's current fact at the frame's palette opportunity.
+/// Spec: `OrdinaryDryColours`. The palette opportunity's own observations, each its owner's.
 ///
-/// Movement supplies her selected figure and its position; equipment the suit selection made
-/// for this frame, and progress whether the screw attack is switched on now. Where an owner
-/// cannot supply its fact, the opportunity is `PaletteOpportunity::Unrecognized` instead.
+/// Her figure and her items are the frame's inputs, not observations; where she is doesn't
+/// enter. Where an owner cannot supply its fact, the opportunity is `PaletteOpportunity::Unrecognized`
+/// instead.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DryColourFacts {
-    /// Current figure after selection.
-    pub figure: Figure,
-    /// Current position after movement and selection.
-    pub position: Position,
-    /// Whether the screw attack is currently switched on.
-    pub screw_attack: ScrewAttack,
-    /// Current suit selection.
+pub struct PaletteObservations {
+    /// The suit selection made for this frame (equipment).
     pub suit: Suit,
-    /// Actual room colour treatment.
+    /// The room's colour treatment (room effects).
     pub room_colours: RoomColours,
-    /// The levels currently present.
+    /// The liquid levels present (room effects and the current Environment).
     pub levels: Set<LiquidLevel>,
-    /// Actual activity of the grapple beam.
+    /// The grapple beam's activity (Grapple).
     pub grapple: GrappleActivity,
-    /// The effects currently active.
+    /// The colour effects active (their owners).
     pub effects: Set<ColourEffect>,
 }
 
-impl DryColourFacts {
-    fn admits_ordinary_reset(&self) -> bool {
-        admits_dry_movement(self.figure, self.screw_attack)
+impl PaletteObservations {
+    /// Whether these observations, with her figure as the frame ends and whether the screw
+    /// attack is switched on, are ordinary dry movement.
+    fn admit_ordinary_reset(&self, figure: Figure, screw_attack_on: bool) -> bool {
+        admits_dry_movement(figure, screw_attack_on)
             && self.suit == Suit::Power
             && self.room_colours == RoomColours::Standard
             && self.levels.values().all(|present| !present)
@@ -206,7 +195,7 @@ pub enum PaletteOpportunity {
     /// The frame has no palette opportunity, or only draws: the reset is not considered.
     Absent,
     /// The opportunity, with every owner's current fact.
-    Observed(DryColourFacts),
+    Observed(PaletteObservations),
     /// The opportunity, with a current fact its owner could not supply or that is not one of the
     /// recognized values: the reset is unsupported.
     Unrecognized,
@@ -225,8 +214,9 @@ pub enum DryColourReset {
 }
 
 /// Spec: `OrdinaryDryColours`. The frame's palette opportunity, after movement has selected her
-/// figure and position and the suit has been selected, and before health maintenance and the
-/// frame's drawing and palette upload.
+/// figure and the suit has been selected, and before health maintenance and the frame's drawing
+/// and palette upload. It reads her figure as the frame ends and the screw attack from the
+/// frame's inputs.
 ///
 /// An admitted opportunity sets the visor delay to 1, the visor to its entry 3 and the charge
 /// glow to its reset position, whatever they were; any other leaves them as they were. Neither
@@ -236,10 +226,14 @@ pub enum DryColourReset {
 pub fn ordinary_dry_colours(
     sequences: ColourSequences,
     opportunity: PaletteOpportunity,
+    inputs: &Inputs,
 ) -> (ColourSequences, DryColourReset) {
+    let screw_attack_on = inputs.items[Item::ScrewAttack];
     match opportunity {
         PaletteOpportunity::Absent => (sequences, DryColourReset::NoOpportunity),
-        PaletteOpportunity::Observed(facts) if facts.admits_ordinary_reset() => {
+        PaletteOpportunity::Observed(observed)
+            if observed.admit_ordinary_reset(inputs.figure_after, screw_attack_on) =>
+        {
             (ORDINARY_READY, DryColourReset::Applied)
         }
         PaletteOpportunity::Observed(_) | PaletteOpportunity::Unrecognized => {

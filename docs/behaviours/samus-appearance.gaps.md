@@ -72,8 +72,8 @@ first-passage AtTheDoor. Imported contact-step content and actual ordinary Ceres
 opportunities produce ordered typed requests through `TickOutput`. No indexed case witnesses
 the first-entry AtTheDoor request until the played run carries the sound queue, and the spinning
 passage arms still need their callers.
-Existing WallJumpBranch and BoostingLap remain animation outputs and must coexist without
-another animation update. Normal drawing during Quieting must run SpinEnds with remembered
+WallJumpBranch's and BoostStages' sounds join the frame's one list of sounds (spec §9.1, §9.2)
+without another animation update. Normal drawing during Quieting must run SpinEnds with remembered
 movement and frozen animation. The first-entry passage request precedes holding sounds.
 
 Cinematic, boss and special-colour suppression need typed owning inputs or native-seed
@@ -91,11 +91,13 @@ Audio replies are U1;
 source opportunities alone do not establish native prefix sound-State equality.
 
 
-Normal drawing's previous movement is a caller-retained preparation snapshot, separate from
-`Samus.previous` pose-change history. The engine decodes and retains it independently,
-refreshes it only at actual current-state preparation, and preserves it when paused drawing
-bypasses preparation. Frozen animation alone is not a refresh guard. S5 reads this supplied
-input statelessly; its four animation State quantities and sound decision do not change.
+Normal drawing's kept action is appearance State (spec §9.1), separate from `Samus.previous`
+pose-change history. The engine carries it with the rest of the appearance State, tells the
+model which frames prepare her work, and keeps it through paused drawing that bypasses
+preparation. Frozen animation alone is not a refresh guard. Production keeps only the
+animation part of the appearance State today, so the kept action, the cannon delay and the
+colour sequences need the whole State carried before drawing, item controls or the palette
+opportunity get an owner.
 
 The ordinary producer capability is separately admitted from independently decoded native
 seed facts: no cinematic, boss, special colour, charge/resume, echo, debug, time-up or liquid

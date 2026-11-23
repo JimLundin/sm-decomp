@@ -51,7 +51,7 @@ struct Opportunity {
     energy: u16,
     liquid: Dry,
     sounds_waiting: u8,
-    contact_suppressors: Vec<samus_appearance::ContactSuppressor>,
+    contact_suppressors: Vec<ContactSuppressor>,
     cinematic: bool,
     elevator_moving: bool,
     ordinary_guards_clear: bool,
@@ -63,6 +63,24 @@ struct Opportunity {
 #[derive(Deserialize)]
 enum Dry {
     None,
+}
+
+/// An owner active at her stride, as the fixture names it.
+#[derive(Clone, Copy, Deserialize)]
+enum ContactSuppressor {
+    Cinematic,
+    Boss,
+    SpecialColours,
+}
+
+impl ContactSuppressor {
+    const fn activity(self) -> samus_appearance::Activity {
+        match self {
+            Self::Cinematic => samus_appearance::Activity::Cinematic,
+            Self::Boss => samus_appearance::Activity::Boss,
+            Self::SpecialColours => samus_appearance::Activity::SpecialColourTime,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -167,9 +185,14 @@ impl Opportunity {
         for item in self.equipped_items {
             items[item] = true;
         }
-        let mut contact = types::Set::default();
+        let mut activities = types::Set::default();
         for suppressor in self.contact_suppressors {
-            contact[suppressor] = true;
+            activities[suppressor.activity()] = true;
+        }
+        // The fixture reads the cinematic at her stride and at her moves; the frame's one input
+        // holds both readings when they agree.
+        if activities[samus_appearance::Activity::Cinematic] != self.cinematic {
+            return Err(data_failure(Some(cut), "early Map cinematic lifetime"));
         }
         let movement = Inputs {
             held: Buttons(self.held),
@@ -180,12 +203,10 @@ impl Opportunity {
             liquid: samus_appearance::Liquid::NONE,
             sounds_waiting: samus_appearance::SoundsWaiting::new(self.sounds_waiting)
                 .ok_or_else(|| data_failure(Some(cut), "early Map queue occupancy"))?,
-            contact,
-            cinematic: if self.cinematic {
-                samus_appearance::CinematicActivity::Active
-            } else {
-                samus_appearance::CinematicActivity::Inactive
-            },
+            activities,
+            // Held from the origin: only a passage's first entry reads it, and neither
+            // opportunity has one.
+            charge: super::appearance::charge(seed)?,
             geometry: movement::level_world(seed, &content.movement, actors)?,
             camera: self.camera,
             activity: Activity::Inactive,
@@ -333,10 +354,10 @@ pub(super) fn admit(sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let hud = hud::Content::load(&sources.rom)?;
     let seed_hud = hud::decode_state(&origin.wram)?;
     let expected = Expectations::load(sources, &cache, &content)?;
-    let (playhead, playing) = appearance::running_owner(&origin.wram, &content.appearance)?;
+    let (appearance, playing) = appearance::running_owner(&origin.wram, &content.appearance)?;
     let seed = production::State::new(
         movement::seed(&origin.wram)?,
-        playhead,
+        appearance,
         playing,
         camera::seed(&origin.wram, &camera::Content)?,
     )
@@ -460,7 +481,7 @@ impl Expectations {
                 "early Map independent carry alignment",
             ));
         }
-        let (state, playing) = appearance::running_owner(&record.wram, &content.appearance)?;
+        let (state, playing) = appearance::running_animation(&record.wram, &content.appearance)?;
         let camera = camera::seed(&record.wram, &camera::Content)?;
         let carry = carry(CompletedOwners {
             movement: &movement,
@@ -538,6 +559,15 @@ fn map_observations(
     ]
 }
 
+/// Her animation's four quantities, which the completed carry compares: the first map frame's
+/// record is the comparison's only capture of her appearance.
+struct AnimationPin;
+impl canonical::model::Pinned for AnimationPin {
+    type State = samus_appearance::State;
+    const NAME: &'static str = "samus-appearance-animation";
+    const SHAPE: u64 = 0x347B_D040_BE28_1439;
+}
+
 struct CompletedOwners<'a> {
     movement: &'a samus_movement::Samus,
     appearance: samus_appearance::State,
@@ -556,7 +586,7 @@ fn carry(
     use canonical::{model::Model, to_bytes};
     let movement = connected::state_observation(movement).bytes;
     let appearance = to_bytes(&vec![
-        to_bytes(&Model::<game::state::owned::AppearancePin>(appearance)),
+        to_bytes(&Model::<AnimationPin>(appearance)),
         to_bytes(&Model::<production::PlayingPin>(playing)),
     ]);
     let camera = to_bytes(&Model::<game::state::owned::CameraPin>(camera));
@@ -605,7 +635,7 @@ pub(super) fn actual(
     if cut != Some(SECOND_MAP) {
         fields.extend(carry(CompletedOwners {
             movement: &state.movement.0,
-            appearance: state.appearance.0,
+            appearance: state.appearance.0.animation,
             playing: state.playing.0,
             camera: state.camera.0,
         }));
@@ -616,6 +646,11 @@ pub(super) fn actual(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_compared_animation_keeps_its_shape() {
+        assert_eq!(canonical::model::pin_holds::<AnimationPin>(), Ok(()));
+    }
 
     #[test]
     #[ignore = "requires the pinned record cache, ROM and early Map fixture"]
