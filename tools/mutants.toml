@@ -459,3 +459,73 @@ after = "for (goal, colour) in goal.iter_mut().zip(colours.skip(1)) {"
 case = "played chain-any-0003-DFD7 0 257"
 cut = 257
 field = "doors.colours.goal"
+
+[[fault]]
+name = "played-contents-beam-not-shown"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "set(&mut screen, SpriteRow::BEAM, 0, &beam.0)?;"
+after = "set(&mut goal, SpriteRow::BEAM, 0, &beam.0)?;"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.screen"
+
+[[fault]]
+name = "played-contents-flash-is-common"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "set(&mut goal, SpriteRow::FLASH, 0, &rooms.actors.flash.0)?;"
+after = "set(&mut goal, SpriteRow::FLASH, 0, &rooms.actors.common.0)?;"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-contents-common-is-flash"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "set(&mut goal, SpriteRow::COMMON, 0, &rooms.actors.common.0)?;"
+after = "set(&mut goal, SpriteRow::COMMON, 0, &rooms.actors.flash.0)?;"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-contents-species-wrong-row"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "set(&mut goal, loaded.row, 0, &own.0)?;"
+after = "set(&mut goal, SpriteRow::COMMON, 0, &own.0)?;"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-contents-doors-escape-set"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "ColourSet::Calm => &doors.calm,"
+after = "ColourSet::Calm => &doors.escape,"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-contents-suit-varia"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "&suits.power"
+after = "&suits.varia"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-contents-fetch-lag-read"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "work_done: finished(current) || fetching_contents(self.state.doors),"
+after = "work_done: finished(current),"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 300
+field = "doors.colours.screen"
