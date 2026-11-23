@@ -123,7 +123,7 @@ const DOMAINS: &[Domain] = &[
                     "vertical.rs",
                 ],
             ),
-            // The suspended controller spans motion and pose decisions and counts as shared.
+            // Her moves (moves.rs) span motion and pose decisions and count as shared.
             ("pose fit", &["fit.rs"]),
             (
                 "pose chart",

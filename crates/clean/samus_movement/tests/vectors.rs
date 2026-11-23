@@ -23,11 +23,8 @@ use types::{
     SlopeFaces, Touch, Turn, Way, World, ZERO, button, fixed,
 };
 
-mod support;
-mod work;
-use support as suspension;
-
-/// Run an isolated full-frame receipt through the real public controller.
+/// One vector without a lead-in, played through the single step: her State and the frame's
+/// outputs.
 fn receipt(vector: &Vector) -> (Samus, Outcome) {
     assert!(vector.lead_in.is_empty());
     let step = step_of(&vector.checked());
@@ -58,144 +55,9 @@ fn receipt(vector: &Vector) -> (Samus, Outcome) {
     (samus, outcome)
 }
 
-fn publications_match(after: &After, outcome: &Outcome) -> bool {
-    compared_new_outputs(after, outcome)
-        .iter()
-        .all(|(_, expected, actual)| expected.as_ref().is_none_or(|expected| expected == actual))
-}
-
-/// Receipts compare complete ordered work, not just lengths or final displacement.
-#[test]
-fn work_comparison_detects_missing_publications_candidate_order_and_seating() {
-    let vectors = file().vector;
-    let vector = vectors
-        .iter()
-        .find(|v| v.id == "C-attempt-running-miss-touch")
-        .unwrap();
-    let (mut samus, outcome) = receipt(vector);
-    assert!(publications_match(&vector.after, &outcome));
-    let mut missing = outcome.clone();
-    missing.movement_work.remove(0);
-    assert!(!publications_match(&vector.after, &missing));
-    let mut wrong_order = outcome.clone();
-    let types::MovementWork::Motion(first) = &mut wrong_order.movement_work[0] else {
-        panic!("ordinary request")
-    };
-    first.enemy_search.as_mut().unwrap().candidates.reverse();
-    assert!(!publications_match(&vector.after, &wrong_order));
-    let mut wrong_support = outcome;
-    let types::MovementWork::Support(support) = &mut wrong_support.movement_work[1] else {
-        panic!("floor support")
-    };
-    support.placement = types::PlacementDistance(Wrapping(0));
-    assert!(!publications_match(&vector.after, &wrong_support));
-    samus.seat = Seat::Unseated;
-    assert!(
-        hers(&vector.after, &samus)
-            .iter()
-            .any(|(field, expected, actual)| {
-                *field == "seated" && expected.as_ref().is_some_and(|e| e != actual)
-            })
-    );
-    let vector = vectors
-        .iter()
-        .find(|v| v.id == "C-attempt-fit-substitute")
-        .unwrap();
-    let (_, outcome) = receipt(vector);
-    assert!(publications_match(&vector.after, &outcome));
-    let mut wrong_fit = outcome;
-    let types::MovementWork::BodyFit(fit) = wrong_fit.movement_work.last_mut().unwrap() else {
-        panic!("selected body")
-    };
-    fit.checks.reverse();
-    assert!(!publications_match(&vector.after, &wrong_fit));
-    let types::MovementWork::BodyFit(fit) = wrong_fit.movement_work.last_mut().unwrap() else {
-        panic!("selected body")
-    };
-    fit.checks.reverse();
-    fit.placement = None;
-    assert!(!publications_match(&vector.after, &wrong_fit));
-}
-
-/// Spec: `AimingAndShooting`, `PerformedCollisionTests`. The fractional start
-/// reaches a different column, not different rows; the earlier witness is unchanged.
-#[test]
-fn corrected_aim_receipts_keep_their_distinct_starting_centres() {
-    let vectors = file().vector;
-    for (id, column) in [("C-attempt-aim-no-growth", 3), ("C-work-aim-change", 2)] {
-        let vector = vectors.iter().find(|v| v.id == id).unwrap();
-        assert_eq!(run(vector), Vec::<String>::new());
-        let (_, outcome) = receipt(vector);
-        let aim_cells: Vec<Cell> = outcome
-            .collision_tests
-            .iter()
-            .filter(|test| test.purpose == types::CollisionPurpose::AimChange)
-            .map(|test| test.cell)
-            .collect();
-        assert_eq!(aim_cells, [9, 10, 11].map(|y| Cell { x: column, y }));
-        let mut wrong_column = outcome;
-        for test in &mut wrong_column.collision_tests {
-            if test.purpose == types::CollisionPurpose::AimChange {
-                test.cell.x = if column == 3 { 2 } else { 3 };
-            }
-        }
-        assert!(!publications_match(&vector.after, &wrong_column));
-    }
-}
-
-/// Spec: `DriftInTheAir`, `MotionAttempts`, `PerformedBodyFit`. An unsteered
-/// straight jump requests vertical travel first, not a zero horizontal move.
-#[test]
-fn corrected_straight_jump_fit_receipt_has_no_horizontal_or_support_prefix() {
-    let vectors = file().vector;
-    let vector = vectors
-        .iter()
-        .find(|v| v.id == "C-attempt-fit-push")
-        .unwrap();
-    assert_eq!(run(vector), Vec::<String>::new());
-    let (_, outcome) = receipt(vector);
-    let [
-        types::MovementWork::Motion(motion),
-        types::MovementWork::BodyFit(_),
-    ] = outcome.movement_work.as_slice()
-    else {
-        panic!("downward travel followed by complete body fitting only")
-    };
-    assert_eq!(motion.direction, Direction::Down);
-    assert_eq!(motion.purpose, types::CollisionPurpose::OrdinaryMove);
-    assert!(publications_match(&vector.after, &outcome));
-
-    // A fabricated zero horizontal request must not disappear from comparison.
-    let mut extra_horizontal = outcome.clone();
-    let mut horizontal = motion.clone();
-    horizontal.direction = Direction::Right;
-    horizontal.intended = TravelDistance::ZERO;
-    horizontal.effect = types::RequestEffect::Travel(TravelDistance::ZERO);
-    horizontal.result = types::MotionResult::Unobstructed;
-    extra_horizontal
-        .movement_work
-        .insert(0, types::MovementWork::Motion(horizontal));
-    assert!(!publications_match(&vector.after, &extra_horizontal));
-
-    // Support work is equally observable, even when it has no placement effect.
-    let aim = vectors
-        .iter()
-        .find(|v| v.id == "C-attempt-aim-no-growth")
-        .unwrap();
-    let (_, aim_outcome) = receipt(aim);
-    let mut extra_support = outcome.clone();
-    extra_support
-        .movement_work
-        .splice(0..0, aim_outcome.movement_work[1..3].iter().cloned());
-    assert!(!publications_match(&vector.after, &extra_support));
-    let mut missing_fit = outcome;
-    missing_fit.movement_work.pop();
-    assert!(!publications_match(&vector.after, &missing_fit));
-}
-
-/// Spec: `AnimationEnds`, `PerformedBodyFit`. Handover does not read selected body
-/// geometry for fitting, even when that content grows into the floor. Compare all state
-/// and outputs, including absence of a placement, through the controller entry point.
+/// Spec: `AnimationEnds`. An end that hands over its pose takes it without pose fit, whatever
+/// body the caller gives the pose handed over: her State and every output of the frame are
+/// the same at every height, and nothing places her.
 #[test]
 fn animation_handover_bypasses_fit_at_every_supplied_target_height() {
     let mut vectors = file().vector;
@@ -207,12 +69,6 @@ fn animation_handover_bypasses_fit_at_every_supplied_target_height() {
     let (expected_state, expected_outcome) = receipt(vector);
     assert!(expected_outcome.handed_over);
     assert_eq!(expected_outcome.placed, None);
-    assert!(
-        expected_outcome
-            .movement_work
-            .iter()
-            .all(|work| { !matches!(work, types::MovementWork::BodyFit(_)) })
-    );
     for radius in [[0, 0], [5, 19], [5, 21], [u16::MAX, u16::MAX]] {
         vector.next_pose.as_mut().unwrap().radius = Some(radius);
         let (state, outcome) = receipt(vector);
@@ -221,45 +77,50 @@ fn animation_handover_bypasses_fit_at_every_supplied_target_height() {
     }
 }
 
-/// Spec: `MotionAttempts`, `SolidEnemies`, `SlopesSlowTheWalk`. Limited requested
-/// travel, enemy-accepted travel and the skipped terrain work are distinct receipts.
+/// Spec: `MovesAsShePosed`. Her position after her moves is compared wherever a vector gives
+/// it, and tells apart her moves from the aim change's step that follows them: standing at
+/// 00FF.0000 with the pad asking to run, her moves leave her there and the step takes her on.
 #[test]
-fn slope_enemy_receipt_uses_the_complete_limited_request() {
-    let vectors = file().vector;
-    let vector = vectors
+fn position_after_moves_is_compared_apart_from_the_step() {
+    let mut vectors = file().vector;
+    let given = vectors
         .iter()
-        .find(|v| v.id == "C-attempt-slope-enemy-before-factor")
+        .filter(|v| v.after.position_after_moves.is_some())
+        .count();
+    assert!(given > 0, "no vector gives position_after_moves");
+    let vector = vectors
+        .iter_mut()
+        .find(|v| v.id == "C-after-moves-screen-edge")
         .unwrap();
     assert_eq!(run(vector), Vec::<String>::new());
-    let (_, outcome) = receipt(vector);
-    assert!(publications_match(&vector.after, &outcome));
-    let types::MovementWork::Motion(motion) = &outcome.movement_work[0] else {
-        panic!("ordinary horizontal request")
-    };
-    assert_eq!(motion.intended, TravelDistance(fixed(Wrapping(1), 0xC000)));
-    assert_eq!(motion.result, types::MotionResult::EnemyStopped);
-    assert_eq!(
-        motion.effect,
-        types::RequestEffect::Travel(TravelDistance(fixed(Wrapping(1), 0)))
-    );
+    let (samus, outcome) = receipt(vector);
+    assert_ne!(outcome.position_after_moves, samus.position);
+    vector.after.position_after_moves = vector.after.position;
     assert!(
-        outcome
-            .collision_tests
+        run(vector)
             .iter()
-            .all(|test| test.direction != Direction::Right)
+            .any(|m| m.contains("position_after_moves")),
+        "her final position passed as her position after her moves"
     );
-    let mut shortened_request = outcome.clone();
-    let types::MovementWork::Motion(motion) = &mut shortened_request.movement_work[0] else {
-        panic!("ordinary horizontal request")
-    };
-    motion.intended = TravelDistance(fixed(Wrapping(0), 0xE000));
-    assert!(!publications_match(&vector.after, &shortened_request));
-    let mut wrong_accepted = outcome;
-    let types::MovementWork::Motion(motion) = &mut wrong_accepted.movement_work[0] else {
-        panic!("ordinary horizontal request")
-    };
-    motion.effect = types::RequestEffect::Travel(TravelDistance(fixed(Wrapping(0), 0xE000)));
-    assert!(!publications_match(&vector.after, &wrong_accepted));
+}
+
+/// Spec: `SolidEnemies`, `SlopesCarry`. Several solid enemies decide in the world's order: the
+/// first she reaches and doesn't overlap, not the nearest. Each order of the same two enemies
+/// leaves her where its vector says, seated or not, and swapping the order changes the frame.
+#[test]
+fn the_first_enemy_in_order_decides() {
+    let vectors = file().vector;
+    let find = |id: &str| vectors.iter().find(|v| v.id == id).unwrap();
+    let (gap_first, touch_first) = (
+        find("C-attempt-running-gap-touch"),
+        find("C-attempt-running-touch-gap"),
+    );
+    for vector in [gap_first, touch_first] {
+        assert_eq!(run(vector), Vec::<String>::new());
+    }
+    let (gap_state, _) = receipt(gap_first);
+    let (touch_state, _) = receipt(touch_first);
+    assert_ne!(gap_state.position, touch_state.position);
 }
 
 const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-movement.toml");
@@ -276,12 +137,6 @@ struct VectorFile {
     distance_history: Vec<DistanceHistory>,
     /// The pose steps.
     pose_step: Vec<PoseStep>,
-    #[serde(default)]
-    suspended_update: Vec<suspension::SuspendedCase>,
-    #[serde(default)]
-    resume_case: Vec<suspension::ResumeCase>,
-    #[serde(default)]
-    decision_change_case: Vec<suspension::DecisionChangeCase>,
 }
 
 /// A `[[vector]]`: a short run of frames, the lead-in's and then the one it checks.
@@ -673,17 +528,21 @@ struct Before {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct After {
-    movement_work: Option<Vec<work::ExpectedWork>>,
-    movement_skip: Option<types::MotionSkipReason>,
+    /// Whether she is seated on a slope.
     seated: Option<bool>,
+    /// The floor response accepted this frame, or "None".
     floor_response: Option<ExpectedFloor>,
+    /// The touchdown's sound requests, in order.
     touchdown_requests: Option<Vec<types::SoundIdentity>>,
+    /// The touchdown graphics opportunity.
     touchdown_graphics: Option<bool>,
-    collision_tests: Option<Vec<ExpectedTest>>,
     /// Fresh publication, not a separate test-support calculation or retained state.
     pending_aim: Option<PendingAim>,
     /// Her position, `[x, y]`.
     position: Option<[Quantity; 2]>,
+    /// Her position after her moves, `[x, y]`, before the aim change's step and the pose
+    /// change move her.
+    position_after_moves: Option<[Quantity; 2]>,
     /// Complete latest signed ordinary distances, checked from movement's output.
     travelled: Option<DistanceMap>,
     /// Her x alone.
@@ -722,9 +581,7 @@ struct After {
     dash_began: Option<bool>,
     /// Whether her dash was lost this frame.
     dash_lost: Option<bool>,
-    /// Spec: `AnimationEnds`, `PerformedBodyFit`. Whether an animation end hands over its
-    /// pose rather than giving way. Even a taller supplied target is accepted without fit
-    /// consideration, clearance, or fit placement (`C-attempt-taller-animation-handover`).
+    /// Whether her animation's end handed over her pose.
     handed_over: Option<bool>,
     /// Whether she is heading down as her moves leave her.
     heading_down: Option<bool>,
@@ -789,27 +646,6 @@ fn show_floor(response: Option<types::FloorResponse>) -> String {
     format!("{kind:?} {count:?} {}", speed_y(r.speed.0).show())
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ExpectedTest {
-    cell: [u16; 2],
-    direction: DirectionName,
-    purpose: types::CollisionPurpose,
-    vertical_motion: Option<types::VerticalMotionAtTest>,
-}
-
-impl ExpectedTest {
-    fn model(&self) -> types::CollisionTest {
-        let [x, y] = self.cell;
-        types::CollisionTest {
-            cell: Cell { x, y },
-            direction: self.direction.model(),
-            purpose: self.purpose,
-            vertical_motion: self.vertical_motion,
-        }
-    }
-}
-
 /// Independent expectation from `TouchdownRequests`' library/allowance prose, NOT the
 /// production request constructor or any production constants. Compare all three fields.
 fn expected_sound(identity: types::SoundIdentity) -> types::SoundRequest {
@@ -838,27 +674,10 @@ fn expected_sound(identity: types::SoundIdentity) -> types::SoundRequest {
     }
 }
 
+/// The touchdown's outputs: the floor response, its sound requests (identity, library and
+/// allowance) and its graphics opportunity.
 fn compared_new_outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
     vec![
-        (
-            "movement_work",
-            after.movement_work.as_ref().map(|work| {
-                format!(
-                    "{:?}",
-                    work.iter()
-                        .map(work::ExpectedWork::model)
-                        .collect::<Vec<_>>()
-                )
-            }),
-            format!("{:?}", outcome.movement_work),
-        ),
-        (
-            "movement_skip",
-            after
-                .movement_skip
-                .map(|reason| format!("{:?}", Some(reason))),
-            format!("{:?}", outcome.movement_skip),
-        ),
         (
             "floor_response",
             after.floor_response.as_ref().map(ExpectedFloor::show),
@@ -878,16 +697,6 @@ fn compared_new_outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
             "touchdown_graphics",
             after.touchdown_graphics.map(|b| b.to_string()),
             outcome.touchdown_graphics.to_string(),
-        ),
-        (
-            "collision_tests",
-            after.collision_tests.as_ref().map(|list| {
-                format!(
-                    "{:?}",
-                    list.iter().map(ExpectedTest::model).collect::<Vec<_>>()
-                )
-            }),
-            format!("{:?}", outcome.collision_tests),
         ),
     ]
 }
@@ -1587,7 +1396,6 @@ impl PoseTable {
 /// The vectors' stand-in room: a floor from `floor_top` down, a wall from `wall_right`
 /// rightward, a ceiling above `ceiling_bottom`, single blocks at cells (sloped, solid,
 /// stepped or another kind), solid enemies, air elsewhere.
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
 struct Room {
     floor_top: Option<u32>,
     wall_right: Option<u32>,
@@ -2146,11 +1954,19 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
 fn outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
     let cell = |[x, y]: &[u16; 2]| format!("[{x}, {y}]");
     let touch = |t: &TouchTable| format!("{} {:?}", cell(&t.cell), t.way);
+    let moved_to = outcome.position_after_moves;
     vec![
         (
             "placed",
             after.placed.as_ref().map(|p| show_placed(p.0)),
             show_placed(outcome.placed),
+        ),
+        (
+            "position_after_moves",
+            after
+                .position_after_moves
+                .map(|[x, y]| format!("[{}, {}]", show(x.0), show(y.0))),
+            format!("[{}, {}]", show(moved_to.x), show(moved_to.y)),
         ),
         (
             "rising",
@@ -2722,22 +2538,20 @@ fn ordinary_call_delivers_outputs_and_comparison_checks_transport_fields() {
     assert_eq!(transport.len(), outcome.touchdown_requests.len() + 1);
     assert!(outcome.touchdown_graphics); // Appearance may still decline graphics.
     assert!(outcome.floor_response.is_some());
-    assert_ne!(outcome.collision_tests, Vec::new()); // Timing receives work, no costs.
 }
 
-/// Spec: `PadChart` and `ShrinkingLowersHer`. Tapping Down admits crouching and its
-/// lowering look; holding Down alone keeps the upright pose and performs only ground
-/// following. Both cases use the actual movement entry point, with independent expectations.
+/// Spec: `PadChart`, `ShrinkingLowersHer`. Down pressed standing starts the crouch and its
+/// look down lowers her 5 px, a placement; down held and not pressed keeps her standing,
+/// unlowered and unplaced, her ground pull's cell alone reached. Both through the one step.
 #[test]
-fn lowering_requires_tapping_down_not_merely_holding_it() {
+fn lowering_needs_down_pressed_not_merely_held() {
     let mut vectors = file().vector;
     let vector = vectors
         .iter_mut()
-        .find(|v| v.id == "C-work-lowering")
+        .find(|v| v.id == "C-touch-lowering-look")
         .unwrap();
     assert_eq!(buttons(&vector.pad), button::DOWN);
     assert_eq!(buttons(&vector.pressed), button::DOWN);
-    // Check the corrected supplied work verbatim, without adding a press or filtering tests.
     assert_eq!(run(vector), Vec::<String>::new());
     vector.after.pose = vector.next_pose.clone();
     vector.after.position = Some([
@@ -2747,7 +2561,6 @@ fn lowering_requires_tapping_down_not_merely_holding_it() {
     vector.after.placed = Some(Placed(Some(fixed(Wrapping(176), 0xFFFF))));
     assert_eq!(run(vector), Vec::<String>::new());
 
-    // The held-only counterexample starts independently from the same supplied state.
     vector.pressed.clear();
     vector.next_pose = None;
     vector.after = toml::from_str(
@@ -2755,7 +2568,7 @@ fn lowering_requires_tapping_down_not_merely_holding_it() {
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
 position = ["0028.0000", "00AB.FFFF"]
 placed = "none"
-collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "GroundFollowing" }]
+reached = [{ cell = [32, 192], way = "Down" }]
 "#,
     )
     .unwrap();
@@ -2770,13 +2583,6 @@ fn new_output_tables_and_names_are_strict() {
         "kind = \"Landed\"\nspeed = \"+0001.1000\"",
     ] {
         assert!(toml::from_str::<FloorTable>(text).is_err());
-    }
-    for text in [
-        "cell = [2, 1]\ndirection = \"Right\"\npurpose = \"OrdinaryMove\"\nbogus = 1",
-        "cell = [2, 1]\ndirection = \"Right\"\npurpose = \"Unknown\"",
-        "cell = [2, 1]\ndirection = \"Right\"\npurpose = \"OrdinaryMove\"\nvertical_motion = \"Grounded\"",
-    ] {
-        assert!(toml::from_str::<ExpectedTest>(text).is_err());
     }
     let known = with_unknown_key_in(EVERY_TABLE, TABLES, None);
     for field in [
@@ -2800,9 +2606,6 @@ fn catalogue_matches_the_vectors() {
         .flat_map(|v| &v.entries)
         .chain(file.pose_step.iter().flat_map(|s| &s.entries))
         .chain(file.distance_history.iter().flat_map(|h| &h.entries))
-        .chain(file.suspended_update.iter().flat_map(|s| &s.entries))
-        .chain(file.resume_case.iter().flat_map(|s| &s.entries))
-        .chain(file.decision_change_case.iter().flat_map(|s| &s.entries))
         .map(String::as_str)
         .collect();
     for entry in &exercised {

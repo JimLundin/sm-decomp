@@ -48,16 +48,10 @@ pub fn compare(expected: &[Observation], actual: &[Observation]) -> Result<(), C
             None => return Err(CompareFault::MissingActual(observed.field.clone())),
             Some(actual) if actual.bytes == observed.bytes => {}
             Some(actual) => {
-                let suffix = if [
-                    "movement.work",
-                    "movement.collision_tests",
-                    "movement.reached.complete",
-                    "movement.inside",
-                    "movement.skip",
-                ]
-                .contains(&observed.field.as_str())
+                let suffix = if ["movement.reached.complete", "movement.inside"]
+                    .contains(&observed.field.as_str())
                 {
-                    super::full_movement::difference(&observed.bytes, &actual.bytes)
+                    super::touched_cells::difference(&observed.bytes, &actual.bytes)
                         .unwrap_or_default()
                 } else {
                     String::new()

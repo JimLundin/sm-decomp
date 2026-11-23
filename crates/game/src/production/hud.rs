@@ -164,13 +164,6 @@ impl Hud {
         work.0.choose_status(rules, pictures, inputs)
     }
 
-    pub(in crate::production) const fn frame_count(&self) -> Option<interface_hud::FrameCount> {
-        match self {
-            Self::Initial(_) => None,
-            Self::Work(work) => work.0.frame_count(),
-        }
-    }
-
     /// Next actual controls or display opportunity; no inputs are captured by inspection.
     #[must_use]
     pub fn opportunity(&self) -> Option<interface_hud::HudOpportunity> {

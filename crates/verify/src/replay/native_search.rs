@@ -1,4 +1,4 @@
-//! Independently admitted within-video movement inputs and bounded first-search observations.
+//! Independently admitted within-video movement inputs and the cells the step touched.
 
 use super::{compare::Observation, data_failure, movement, result::Outcome};
 use crate::{lock::Sha256, source};
@@ -28,8 +28,6 @@ impl Kind {
         }
     }
 }
-const PREFIX: &str = "movement.motion.0";
-
 pub(super) struct Inputs {
     pub seed: samus_movement::Samus,
     pub content: movement::Content,
@@ -39,8 +37,6 @@ pub(super) struct Inputs {
 }
 
 pub(super) struct Expected {
-    root: PathBuf,
-    pins: String,
     kind: Kind,
     pub work_root: PathBuf,
 }
@@ -94,8 +90,6 @@ pub(super) fn load(root: &Path, rom: &Path, kind: Kind) -> Result<(Inputs, Expec
             height,
         },
         Expected {
-            root: root.to_owned(),
-            pins,
             kind,
             work_root: root.parent().unwrap_or(root).join("native-search-work-v2"),
         },
@@ -174,354 +168,15 @@ impl Inputs {
     }
 }
 
-fn quantity(field: &str, value: i64) -> Observation {
-    Observation::quantity(format!("{PREFIX}.{field}"), value)
-}
-fn name(field: &str, value: &str) -> Observation {
-    Observation {
-        field: format!("{PREFIX}.{field}"),
-        bytes: value.as_bytes().to_vec(),
-    }
-}
-fn count_bytes(count: usize) -> [u8; 8] {
-    u64::try_from(count).unwrap_or(u64::MAX).to_le_bytes()
-}
-fn candidates_bytes(candidates: &[types::EnemyCandidate]) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    bytes.extend_from_slice(&count_bytes(candidates.len()));
-    for candidate in candidates {
-        bytes.extend_from_slice(&count_bytes(candidate.candidate.0));
-        for value in [
-            candidate.centre.x,
-            candidate.centre.y,
-            candidate.radius.x,
-            candidate.radius.y,
-        ] {
-            bytes.extend_from_slice(&value.0.to_le_bytes());
-        }
-        let (result, gap) = match candidate.result {
-            types::CandidateResult::Miss => (0_u8, 0),
-            types::CandidateResult::AlreadyOverlapping(gap) => (1, gap.0.0),
-            types::CandidateResult::Touching => (2, 0),
-            types::CandidateResult::StopsAtGap(gap) => (3, gap.0.0),
-        };
-        bytes.push(result);
-        bytes.extend_from_slice(&gap.to_le_bytes());
-    }
-    bytes
-}
-
-pub(super) fn actual(outputs: &samus_movement::Outcome) -> Vec<Observation> {
-    let motion = outputs.movement_work.iter().find_map(|work| match work {
-        types::MovementWork::Motion(motion) => Some(motion),
-        types::MovementWork::Support(_) | types::MovementWork::BodyFit(_) => None,
-    });
-    let Some(motion) = motion else {
-        return initial();
-    };
-    let mut fields = vec![
-        quantity("present", 1),
-        name("purpose", &format!("{:?}", motion.purpose)),
-        name("direction", &format!("{:?}", motion.direction)),
-        name("world", &format!("{:?}", motion.world)),
-        quantity("start.x", i64::from(motion.start.x.0)),
-        quantity("start.y", i64::from(motion.start.y.0)),
-        quantity("radius.x", i64::from(motion.radius.x.0)),
-        quantity("radius.y", i64::from(motion.radius.y.0)),
-        quantity("intended", i64::from(motion.intended.0.0)),
-    ];
-    match motion.effect {
-        types::RequestEffect::Travel(by) => {
-            fields.push(name("effect", "Travel"));
-            fields.push(quantity("accepted", i64::from(by.0.0)));
-        }
-        types::RequestEffect::Clearance(room) => {
-            fields.push(name("effect", "Clearance"));
-            fields.push(quantity("accepted", i64::from(room.0.0)));
-        }
-    }
-    fields.push(name("result", &format!("{:?}", motion.result)));
-    fields.push(quantity(
-        "enemy_search.present",
-        i64::from(motion.enemy_search.is_some()),
-    ));
-    if let Some(search) = &motion.enemy_search {
-        fields.push(quantity(
-            "enemy_search.supplied_count",
-            i64::try_from(search.supplied_count.0).unwrap_or(i64::MAX),
-        ));
-        fields.push(Observation {
-            field: format!("{PREFIX}.enemy_search.candidates"),
-            bytes: candidates_bytes(&search.candidates),
-        });
-    }
-    let mut observed = vec![ordinary_right_terrain(outputs)];
-    observed.extend(grouped(fields));
-    observed
-}
-fn ordinary_right_terrain(outputs: &samus_movement::Outcome) -> Observation {
-    let tests: Vec<_> = outputs
-        .collision_tests
-        .iter()
-        .filter(|test| {
-            test.purpose == types::CollisionPurpose::OrdinaryMove
-                && test.direction == types::Direction::Right
-        })
-        .collect();
-    let mut bytes = count_bytes(tests.len()).to_vec();
-    for test in tests {
-        bytes.extend_from_slice(&test.cell.x.to_le_bytes());
-        bytes.extend_from_slice(&test.cell.y.to_le_bytes());
-        let vertical_motion = match test.vertical_motion {
-            None => 0_u8,
-            Some(types::VerticalMotionAtTest::ExactlyZero) => 1,
-            Some(types::VerticalMotionAtTest::Nonzero) => 2,
-        };
-        bytes.push(vertical_motion);
-    }
-    Observation {
-        field: format!("{PREFIX}.ordinary_terrain_tests"),
-        bytes,
-    }
-}
-fn grouped(mut fields: Vec<Observation>) -> Vec<Observation> {
-    let candidate_field = format!("{PREFIX}.enemy_search.candidates");
-    let candidates = fields
-        .iter()
-        .position(|field| field.field == candidate_field)
-        .map(|index| fields.remove(index))
-        .unwrap_or(Observation {
-            field: candidate_field,
-            bytes: Vec::new(),
-        });
-    let mut bytes = Vec::new();
-    for field in fields {
-        bytes.extend_from_slice(&count_bytes(field.field.len()));
-        bytes.extend_from_slice(field.field.as_bytes());
-        bytes.extend_from_slice(&count_bytes(field.bytes.len()));
-        bytes.extend_from_slice(&field.bytes);
-    }
-    vec![
-        Observation {
-            field: format!("{PREFIX}.request"),
-            bytes,
-        },
-        candidates,
-    ]
-}
-pub(super) fn initial() -> Vec<Observation> {
-    vec![
-        Observation {
-            field: format!("{PREFIX}.ordinary_terrain_tests"),
-            bytes: count_bytes(0).to_vec(),
-        },
-        Observation {
-            field: format!("{PREFIX}.request"),
-            bytes: Vec::new(),
-        },
-        Observation {
-            field: format!("{PREFIX}.enemy_search.candidates"),
-            bytes: candidates_bytes(&[]),
-        },
-    ]
-}
-
-fn table(bytes: Vec<u8>) -> Result<toml::Value, Outcome> {
-    let text = String::from_utf8(bytes)
-        .map_err(|_| data_failure(None, "native search expectation encoding"))?;
-    toml::from_str(&text).map_err(|_| data_failure(None, "native search expectation schema"))
-}
-fn number(value: &toml::Value, key: &str) -> Result<i64, Outcome> {
-    value
-        .get(key)
-        .and_then(toml::Value::as_integer)
-        .ok_or_else(|| data_failure(None, "native search expectation quantity"))
-}
-fn text<'a>(value: &'a toml::Value, key: &str) -> Result<&'a str, Outcome> {
-    value
-        .get(key)
-        .and_then(toml::Value::as_str)
-        .ok_or_else(|| data_failure(None, "native search expectation name"))
-}
-fn position(value: &toml::Value, pixel: &str, subpixel: &str) -> Result<i64, Outcome> {
-    number(value, pixel)?
-        .checked_mul(65536)
-        .and_then(|whole| {
-            number(value, subpixel)
-                .ok()
-                .and_then(|sub| whole.checked_add(sub))
-        })
-        .ok_or_else(|| data_failure(None, "native search position range"))
-}
 impl Expected {
     pub fn read(&self, cut: u64) -> Result<Vec<Observation>, Outcome> {
-        let mut fields = match self.kind {
-            Kind::Miss => self.read_miss(cut)?,
-            Kind::Touch => self.read_touch(cut)?,
-        };
-        fields.extend(super::full_movement::expected(&self.work_root, self.kind)?);
-        Ok(fields)
-    }
-    fn read_miss(&self, cut: u64) -> Result<Vec<Observation>, Outcome> {
         if cut != COMPLETION {
             return Err(data_failure(
                 Some(cut),
                 "native search expectation opportunity",
             ));
         }
-        let complete = table(pinned(
-            &self.root,
-            &self.pins,
-            "expectations/completed-request.toml",
-        )?)?;
-        let enemy = table(pinned(
-            &self.root,
-            &self.pins,
-            "expectations/enemy-stage.toml",
-        )?)?;
-        if number(&complete, "video_frame")? != i64::try_from(COMPLETION).unwrap_or(i64::MAX)
-            || number(&complete, "complete_step_source_start_index")? != 424
-            || number(&complete, "complete_step_source_completion_index")? != 4283
-            || number(&complete, "request_ordinal_among_motion_attempts")? != 0
-            || number(&complete, "source_wrapper_index")? != 2392
-            || number(&complete, "source_enemy_entry_index")? != 2395
-            || number(&complete, "supplied_eligible_count")? != 1
-            || number(&complete, "considered_candidates")? != 1
-            || text(&complete, "candidate_result")? != "Miss"
-        {
-            return Err(data_failure(
-                Some(cut),
-                "native search admitted expectation association",
-            ));
-        }
-        let player = enemy
-            .get("player")
-            .ok_or_else(|| data_failure(None, "native search player expectation"))?;
-        let actors = enemy
-            .get("actors")
-            .and_then(toml::Value::as_array)
-            .ok_or_else(|| data_failure(None, "native search ordered candidate expectations"))?;
-        let mut candidate_bytes = Vec::new();
-        candidate_bytes.extend_from_slice(&count_bytes(actors.len()));
-        for (ordinal, actor) in actors.iter().enumerate() {
-            candidate_bytes.extend_from_slice(&count_bytes(ordinal));
-            for key in ["centre_x", "centre_y", "radius_x", "radius_y"] {
-                let value = u16::try_from(number(actor, key)?)
-                    .map_err(|_| data_failure(None, "native search candidate quantity range"))?;
-                candidate_bytes.extend_from_slice(&value.to_le_bytes());
-            }
-            if text(actor, "result")? != "SeparatedOnX" {
-                return Err(data_failure(
-                    None,
-                    "native search admitted candidate result",
-                ));
-            }
-            candidate_bytes.push(0);
-            candidate_bytes.extend_from_slice(&0_u16.to_le_bytes());
-        }
-        Ok(grouped(vec![
-            quantity("present", 1),
-            name("purpose", text(&complete, "purpose")?),
-            name("direction", text(&complete, "direction")?),
-            name("world", text(&complete, "requested_world")?),
-            quantity("start.x", position(player, "centre_x", "subpixel_x")?),
-            quantity("start.y", position(player, "centre_y", "subpixel_y")?),
-            quantity("radius.x", number(player, "radius_x")?),
-            quantity("radius.y", number(player, "radius_y")?),
-            quantity("intended", number(&complete, "intended_fixed_16_16")?),
-            name("effect", text(&complete, "effect")?),
-            quantity("accepted", number(&complete, "accepted_fixed_16_16")?),
-            name("result", text(&complete, "result")?),
-            quantity("enemy_search.present", 1),
-            quantity(
-                "enemy_search.supplied_count",
-                number(&complete, "supplied_eligible_count")?,
-            ),
-            Observation {
-                field: format!("{PREFIX}.enemy_search.candidates"),
-                bytes: candidate_bytes,
-            },
-        ]))
-    }
-
-    fn read_touch(&self, cut: u64) -> Result<Vec<Observation>, Outcome> {
-        if cut != COMPLETION {
-            return Err(data_failure(
-                Some(cut),
-                "native Touch expectation opportunity",
-            ));
-        }
-        let expected = table(pinned(
-            &self.root,
-            &self.pins,
-            "expectations/completed-request.toml",
-        )?)?;
-        for (field, wanted) in [
-            ("video_frame", 9233),
-            ("source_start_index", 424),
-            ("source_completion_index", 4052),
-            ("wrapper_start", 2418),
-            ("enemy_start", 2421),
-            ("motion_ordinal", 0),
-            ("supplied_count", 1),
-            ("candidate_count", 1),
-            ("ordinary_right_terrain_tests", 0),
-        ] {
-            if number(&expected, field)? != wanted {
-                return Err(data_failure(
-                    Some(cut),
-                    "native Touch expectation association",
-                ));
-            }
-        }
-        let candidates = expected
-            .get("candidates")
-            .and_then(toml::Value::as_array)
-            .ok_or_else(|| data_failure(None, "native Touch candidate expectations"))?;
-        let mut bytes = count_bytes(candidates.len()).to_vec();
-        for candidate in candidates {
-            let ordinal = usize::try_from(number(candidate, "candidate")?)
-                .map_err(|_| data_failure(None, "native Touch candidate identity"))?;
-            bytes.extend_from_slice(&count_bytes(ordinal));
-            for field in ["centre_x", "centre_y", "half_width", "half_height"] {
-                let value = u16::try_from(number(candidate, field)?)
-                    .map_err(|_| data_failure(None, "native Touch candidate geometry"))?;
-                bytes.extend_from_slice(&value.to_le_bytes());
-            }
-            if text(candidate, "result")? != "Touching" {
-                return Err(data_failure(None, "native Touch candidate result"));
-            }
-            bytes.push(2);
-            bytes.extend_from_slice(&0_u16.to_le_bytes());
-        }
-        let mut fields = vec![Observation {
-            field: format!("{PREFIX}.ordinary_terrain_tests"),
-            bytes: count_bytes(0).to_vec(),
-        }];
-        fields.extend(grouped(vec![
-            quantity("present", 1),
-            name("purpose", text(&expected, "purpose")?),
-            name("direction", text(&expected, "direction")?),
-            name("world", text(&expected, "world")?),
-            quantity("start.x", number(&expected, "start_x_fixed")?),
-            quantity("start.y", number(&expected, "start_y_fixed")?),
-            quantity("radius.x", number(&expected, "body_half_width")?),
-            quantity("radius.y", number(&expected, "body_half_height")?),
-            quantity("intended", number(&expected, "intended_fixed")?),
-            name("effect", text(&expected, "effect")?),
-            quantity("accepted", number(&expected, "accepted_fixed")?),
-            name("result", text(&expected, "result")?),
-            quantity("enemy_search.present", 1),
-            quantity(
-                "enemy_search.supplied_count",
-                number(&expected, "supplied_count")?,
-            ),
-            Observation {
-                field: format!("{PREFIX}.enemy_search.candidates"),
-                bytes,
-            },
-        ]));
-        Ok(fields)
+        super::touched_cells::expected(&self.work_root, self.kind)
     }
 }
 
@@ -532,7 +187,7 @@ mod tests {
         Sources, admission, compare,
         index::{Index, Start},
         readers::ActualReader,
-        runner,
+        runner, touched_cells,
     };
     use game::production::{ProductionContent, ProductionRules, ProductionSeed};
 
@@ -599,9 +254,9 @@ mod tests {
         );
         assert_eq!(result.outcome, Outcome::Pass);
         assert_eq!(result.counts.cuts, 1);
-        assert_eq!(result.counts.fields, 7);
+        assert_eq!(result.counts.fields, 2);
         assert_eq!(result.counts.null_cuts, 0);
-        assert_eq!(result.counts.null_fields, 1);
+        assert_eq!(result.counts.null_fields, 0);
         assert_eq!(result.counts.restorations, 1);
         std::fs::write(
             std::env::var("SM_SEARCH_RECEIPT").unwrap(),
@@ -626,12 +281,7 @@ mod tests {
             COMPLETION,
         )
         .unwrap();
-        for (id, remove, complete) in [
-            ("missing", true, false),
-            ("altered", false, false),
-            ("complete-missing", true, true),
-            ("complete-altered", false, true),
-        ] {
+        for (id, remove) in [("complete-missing", true), ("complete-altered", false)] {
             let root = copy(packet, &format!("{case_id}-{id}"));
             let case = named_case(&root, case_id);
             let work_root = root.join("native-search-work-v2");
@@ -653,11 +303,7 @@ mod tests {
                 ..Sources::default()
             };
             // Every failure exists before admission and the real production execution.
-            let path = if complete {
-                work_root.join(complete_name)
-            } else {
-                root.join("expectations/completed-request.toml")
-            };
+            let path = work_root.join(complete_name);
             if remove {
                 std::fs::remove_file(path).unwrap();
             } else {
@@ -778,7 +424,7 @@ mod tests {
     }
     #[test]
     #[ignore = "private independently pinned native search packet"]
-    fn native_search_null_and_candidate_only_omission_are_distinct() {
+    fn native_search_null_and_one_cell_omission_are_distinct() {
         let (packet, rom) = source();
         let case = native_case(&packet);
         let mut admitted = admission::admit(
@@ -799,39 +445,19 @@ mod tests {
         )
         .unwrap();
         let expected = admitted.expected.read(&case, COMPLETION).unwrap().fields;
-        assert!(compare::compare(&expected, &initial()).is_err());
+        assert!(compare::compare(&expected, &touched_cells::initial().unwrap()).is_err());
         let vanilla = retained(&admitted.actual).unwrap();
         let mut omitted = vanilla.clone();
-        let motion = omitted
-            .movement_work
-            .iter_mut()
-            .find_map(|work| match work {
-                types::MovementWork::Motion(motion) => Some(motion),
-                types::MovementWork::Support(_) | types::MovementWork::BodyFit(_) => None,
-            })
-            .unwrap();
-        assert_eq!(
-            motion
-                .enemy_search
-                .as_mut()
-                .unwrap()
-                .candidates
-                .pop()
-                .unwrap()
-                .result,
-            types::CandidateResult::Miss
-        );
-        assert_eq!(
-            compare::compare(&expected, &actual(&omitted)),
-            Err(compare::CompareFault::Difference(format!(
-                "{PREFIX}.enemy_search.candidates"
-            )))
-        );
-        // Complete comparison ignores only this explicitly omitted candidate, then equality holds.
-        omitted.movement_work = vanilla.movement_work.clone();
+        assert!(omitted.inside.pop().is_some());
+        assert!(matches!(
+            compare::compare(&expected, &touched_cells::actual(&omitted).unwrap()),
+            Err(compare::CompareFault::Difference(field)) if field.starts_with("movement.inside")
+        ));
+        // Only the omitted cell differs: putting it back restores the complete native output.
+        omitted.inside.clone_from(&vanilla.inside);
         assert!(
             &omitted == vanilla,
-            "candidate-only fault preserves remaining complete native output"
+            "cell-only fault preserves remaining complete native output"
         );
     }
 
@@ -853,13 +479,13 @@ mod tests {
         )
         .unwrap();
         if std::env::var_os("SM_SEARCH_EXPECT_FAULT").is_some() {
-            assert_eq!(
+            assert!(matches!(
                 result.outcome,
                 Outcome::Difference {
                     cut: COMPLETION,
-                    field: format!("{PREFIX}.enemy_search.candidates")
+                    ..
                 }
-            );
+            ));
         } else {
             assert_eq!(result.outcome, Outcome::Pass);
         }
@@ -885,9 +511,9 @@ mod tests {
         .unwrap();
         assert_eq!(result.outcome, Outcome::Pass);
         assert_eq!(result.counts.cuts, 1);
-        assert_eq!(result.counts.fields, 8);
+        assert_eq!(result.counts.fields, 2);
         assert_eq!(result.counts.null_cuts, 0);
-        assert_eq!(result.counts.null_fields, 2);
+        assert_eq!(result.counts.null_fields, 0);
         assert_eq!(result.counts.restorations, 1);
     }
 }

@@ -1,10 +1,17 @@
-//! Additive complete readiness histories and fresh-restoration checks.
-use super::{behaviour, read_file, state, suspended_vectors::make_work};
+//! The cannon readiness histories, played a frame at a time through the one update, with her
+//! appearance State saved and restored between frames.
+
 use samus_appearance::{
-    CannonDelay, CannonObservation, ControlEligibility, ItemControlAnswer, Look, SelectedItem,
-    SuspendedAppearance,
+    AppearanceState, CannonDelay, CannonEvent, Charge, ControlEligibility, Frame,
+    ItemControlAnswer, PassageEntry, Rules, SelectedItem,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use types::Action;
+
+use super::{
+    Library, UNTOUCHED_COLOURS, VectorContent, VectorFile, animation, bare_frame, behaviour, kept,
+    play, read_file, state,
+};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -13,32 +20,35 @@ pub(super) struct CannonHistory {
     source: String,
     pub(super) entries: Vec<String>,
     initial_delay: u8,
-    restoration: String,
     steps: Vec<HistoryStep>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+/// What a step of a history is, as the file's comment names it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum Operation {
+    /// A frame whose item controls run.
     Controls,
-    ChooseControls,
-    CompleteControls,
-    Initialize,
-    Draw,
+    /// A frame whose item controls don't run.
     Skip,
+    /// A frame in which Samus is initialized.
+    Initialize,
+    /// A selection change outside item controls.
     OutsideSelection,
+    /// A change that is not her cannon's: a pose, a clip, or a passage without initialization.
     Unrelated,
-    SaveRestore,
+    /// The picture of her gun reading readiness as the frame leaves it.
+    Draw,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 enum UnrelatedEvent {
     PoseChange,
     ClipChange,
     PassageWithoutInitialization,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct HistoryStep {
     kind: Operation,
@@ -55,11 +65,15 @@ struct HistoryStep {
 }
 
 impl HistoryStep {
+    /// The item controls' answer: the identities they start from and leave, and whether they
+    /// may switch. The HUD's one-shot mode, its switch event and frozen time are not part of it.
     fn answer(&self) -> ItemControlAnswer {
         ItemControlAnswer {
-            before: self.item_before.expect("actual starting identity"),
-            after: self.item_after.expect("actual chosen identity"),
-            eligibility: if self.eligible.expect("actual eligibility") {
+            before: self
+                .item_before
+                .expect("the identity the controls start from"),
+            after: self.item_after.expect("the identity the controls leave"),
+            eligibility: if self.eligible.expect("whether the controls may switch") {
                 ControlEligibility::Eligible
             } else {
                 ControlEligibility::Ineligible
@@ -67,175 +81,139 @@ impl HistoryStep {
         }
     }
 
-    /// Known fields cannot silently acquire meaning at the wrong opportunity.
+    /// Each field belongs to the operations that give it, so none takes a meaning elsewhere.
     fn validate(&self) {
-        let controls = matches!(self.kind, Operation::Controls | Operation::ChooseControls);
-        let identities = controls || matches!(self.kind, Operation::OutsideSelection);
-        assert_eq!(self.item_before.is_some(), identities);
-        assert_eq!(self.item_after.is_some(), identities);
-        assert_eq!(self.eligible.is_some(), controls);
+        let controls = self.kind == Operation::Controls;
+        let identities = controls || self.kind == Operation::OutsideSelection;
+        assert_eq!(self.item_before.is_some(), identities, "{self:?}");
+        assert_eq!(self.item_after.is_some(), identities, "{self:?}");
+        assert_eq!(self.eligible.is_some(), controls, "{self:?}");
         assert_eq!(
             self.event.is_some(),
-            matches!(self.kind, Operation::Unrelated)
+            self.kind == Operation::Unrelated,
+            "{self:?}"
         );
-        if !controls {
-            assert!(self.one_shot_before.is_none());
-            assert!(self.one_shot_after.is_none());
-            assert!(self.switched.is_none());
-            assert!(self.world_paused.is_none());
-        }
-        assert!(CannonDelay::new(self.expected_delay).is_some());
+        let controls_only = [
+            self.one_shot_before,
+            self.one_shot_after,
+            self.switched,
+            self.world_paused,
+        ];
+        assert!(
+            controls || controls_only.iter().all(Option::is_none),
+            "{self:?}"
+        );
+        assert!(CannonDelay::new(self.expected_delay).is_some(), "{self:?}");
     }
 }
 
-/// Complete owner plus actual-control, query, provider and ordered output progress.
-/// External delivery is caller-owned, and is not model completion.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-struct HistoryRun {
-    look: Look,
-    observation: Option<CannonObservation>,
-    next_step: usize,
-    provider: Vec<HistoryStep>,
-    reads: Vec<bool>,
-    external_delivered: usize,
-    appearance: SuspendedAppearance,
+/// An animation vector an unrelated frame borrows its animation update from.
+fn borrowed<'a>(file: &'a VectorFile, id: &str) -> &'a super::Vector {
+    file.vector
+        .iter()
+        .find(|vector| vector.id == id)
+        .unwrap_or_else(|| panic!("no animation vector {id}"))
 }
 
-fn fresh(run: HistoryRun) -> HistoryRun {
-    let text = toml::to_string(&run).expect("complete readiness and work serialize");
-    drop(run);
-    let restored = toml::from_str(&text).expect("fresh complete owners deserialize");
-    assert_eq!(
-        toml::to_string(&restored).expect("complete restored owner"),
-        text
-    );
-    restored
-}
-
-fn checkpoint(run: HistoryRun, restore: bool) -> HistoryRun {
-    if restore { fresh(run) } else { run }
-}
-
-fn choose(mut run: HistoryRun, step: &HistoryStep, restore: bool) -> HistoryRun {
-    assert!(!matches!(
-        run.observation,
-        Some(CannonObservation::Chosen(_))
-    ));
-    run.observation = Some(CannonObservation::Unmade);
-    run = checkpoint(run, restore);
-    let before = run.look;
-    let answer = step.answer();
-    assert!(run.observation.as_mut().expect("unmade").choose(answer));
-    assert_eq!(run.look, before, "a chosen answer must not age readiness");
-    run = checkpoint(run, restore);
-    let different = ItemControlAnswer {
-        before: SelectedItem::Grapple,
-        after: SelectedItem::None,
-        eligibility: ControlEligibility::Ineligible,
-    };
-    assert!(!run.observation.as_mut().expect("chosen").choose(different));
-    assert_eq!(run.observation, Some(CannonObservation::Chosen(answer)));
-    run
-}
-
-fn complete(mut run: HistoryRun, restore: bool) -> HistoryRun {
-    let before = run.look.animation;
-    assert!(
-        run.observation
-            .as_mut()
-            .expect("chosen answer")
-            .complete(&mut run.look)
-    );
-    assert_eq!(run.look.animation, before);
-    run = checkpoint(run, restore);
-    let after = run.look;
-    assert!(
-        !run.observation
-            .as_mut()
-            .expect("completed")
-            .complete(&mut run.look)
-    );
-    assert_eq!(run.look, after, "completed effects must not run twice");
-    assert_eq!(
-        run.external_delivered, 0,
-        "model completion is not delivery"
-    );
-    run
-}
-
-fn perform(mut run: HistoryRun, step: &HistoryStep, restore: bool) -> HistoryRun {
+/// The frame a step plays, with the clips it reads, if the step is a frame of play.
+///
+/// A selection change outside item controls and a drawing are not inputs of the model: no frame
+/// is played for them, and the history checks the delay as it stands. A pose or clip change is
+/// a frame whose animation update takes another pose or clip and whose controls don't run; a
+/// passage without initialization is a frame with a passage entry and no controls.
+fn frame_of<'a>(
+    step: &HistoryStep,
+    file: &VectorFile,
+    library: &'a Library,
+) -> Option<(Frame, VectorContent<'a>)> {
+    let mut frame = bare_frame();
+    let mut clips = Vec::new();
     match step.kind {
-        Operation::Controls => {
-            run = choose(run, step, restore);
-            let mut ordinary = run.look.cannon;
-            ordinary.controls_completed(step.answer());
-            run = complete(run, restore);
+        Operation::Controls => frame.cannon = CannonEvent::ControlsRan(step.answer()),
+        Operation::Skip => frame.cannon = CannonEvent::ControlsSkipped,
+        Operation::Initialize => frame.cannon = CannonEvent::SamusInitialized,
+        Operation::OutsideSelection | Operation::Draw => return None,
+        Operation::Unrelated => match step.event.expect("an unrelated event") {
+            UnrelatedEvent::PoseChange => {
+                let (inputs, taken) = animation(borrowed(file, "C-start"), library);
+                frame.animation = Some(inputs);
+                clips = taken;
+            }
+            UnrelatedEvent::ClipChange => {
+                let (inputs, taken) = animation(borrowed(file, "C-end"), library);
+                frame.animation = Some(inputs);
+                clips = taken;
+            }
+            UnrelatedEvent::PassageWithoutInitialization => {
+                frame.passage = Some(PassageEntry {
+                    current: Action::Running,
+                    shoot_held: false,
+                    charge: Charge::new(0).expect("no charge"),
+                });
+            }
+        },
+    }
+    let content = VectorContent {
+        clips,
+        paces: &library.paces,
+    };
+    Some((frame, content))
+}
+
+/// Plays a history frame by frame from its initial delay, checking the delay after each step,
+/// and at each drawing whether the frame left the cannon free to follow.
+fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
+    let id = &history.id;
+    let mut appearance = AppearanceState {
+        animation: state(2, 3, 1, 1),
+        cannon: CannonDelay::new(history.initial_delay)
+            .unwrap_or_else(|| panic!("{id}: initial delay outside the spec")),
+        colours: UNTOUCHED_COLOURS,
+    };
+    let mut drawn = appearance.cannon.may_follow();
+    for (at, step) in history.steps.iter().enumerate() {
+        step.validate();
+        if let Some((frame, content)) = frame_of(step, file, library) {
+            let (after, outputs) = play(appearance, &frame, &content, &Rules::VANILLA);
+            assert_eq!(after.colours, UNTOUCHED_COLOURS, "{id} step {at}");
+            assert!(
+                outputs.sounds.len() <= 1,
+                "{id} step {at}: at most a passage's"
+            );
+            drawn = outputs.cannon_may_follow;
+            appearance = after;
+        } else {
+            appearance = kept(appearance);
+        }
+        let delay = appearance.cannon;
+        assert_eq!(delay.remaining(), step.expected_delay, "{id} step {at}");
+        assert_eq!(
+            delay.may_follow(),
+            step.expected_may_follow,
+            "{id} step {at}"
+        );
+        if step.kind == Operation::Draw {
             assert_eq!(
-                run.look.cannon, ordinary,
-                "ordinary and retained rules agree"
+                drawn, step.expected_may_follow,
+                "{id} step {at}: the picture"
             );
         }
-        Operation::ChooseControls => run = choose(run, step, restore),
-        Operation::CompleteControls => run = complete(run, restore),
-        Operation::Initialize => run.look.cannon.initialize(),
-        Operation::Draw => run.reads.push(run.look.cannon.may_follow()),
-        Operation::SaveRestore => run = fresh(run),
-        Operation::Skip | Operation::OutsideSelection | Operation::Unrelated => {}
     }
-    run.next_step = run.next_step.saturating_add(1);
-    assert_eq!(run.look.cannon.remaining(), step.expected_delay);
-    assert_eq!(run.look.cannon.may_follow(), step.expected_may_follow);
-    checkpoint(run, restore)
-}
-
-fn run_history(v: &CannonHistory, restore: bool) -> (HistoryRun, Vec<String>) {
-    let (file, _, _) = read_file();
-    // Retain a real completed contact/selection composition and all its outputs
-    // alongside readiness. Readiness must neither advance nor republish that work.
-    let mut appearance = make_work(&file, "Work", "C-contact-and-start");
-    appearance.finish();
-    let animation = appearance.state;
-    let mut run = HistoryRun {
-        look: Look {
-            animation,
-            cannon: CannonDelay::new(v.initial_delay).expect("bounded delay"),
-        },
-        observation: None,
-        next_step: 0,
-        provider: v.steps.clone(),
-        reads: Vec::new(),
-        external_delivered: 0,
-        appearance,
-    };
-    run = checkpoint(run, restore);
-    let mut complete_states = vec![toml::to_string(&run).expect("complete starting owners")];
-    while let Some(step) = run.provider.get(run.next_step).cloned() {
-        step.validate();
-        let outputs = toml::to_string(&run.appearance).expect("complete old work");
-        run = perform(run, &step, restore);
-        assert_eq!(run.look.animation, animation);
-        assert_eq!(toml::to_string(&run.appearance).expect("old work"), outputs);
-        complete_states.push(toml::to_string(&run).expect("complete operation result"));
-    }
-    (run, complete_states)
 }
 
 #[test]
-#[expect(clippy::print_stdout, reason = "report additive history count")]
+#[expect(
+    clippy::print_stdout,
+    reason = "report the number of supplied cannon histories"
+)]
 fn every_cannon_history() {
-    let (file, _, _) = read_file();
-    for v in &file.cannon_readiness {
-        assert_ne!(v.source, "");
-        assert_eq!(v.restoration, "SerializeDropDeserializeAtEveryBoundary");
-        for entry in &v.entries {
+    let (file, library) = read_file();
+    for history in &file.cannon_readiness {
+        assert_ne!(history.source, "", "{}", history.id);
+        for entry in &history.entries {
             behaviour(entry);
         }
-        assert_eq!(
-            run_history(v, false),
-            run_history(v, true),
-            "{}: complete readiness, progress and ordered effects",
-            v.id
-        );
+        run_history(history, &file, &library);
     }
     println!(
         "{} cannon readiness histories passed",
@@ -245,7 +223,7 @@ fn every_cannon_history() {
 
 #[test]
 fn strict_cannon_parser_rejects_unknown_fields_and_names() {
-    let text = "id='test'\nsource='constructed'\nentries=[]\ninitial_delay=0\nrestoration='SerializeDropDeserializeAtEveryBoundary'\nsteps=[{kind='draw',expected_delay=0,expected_may_follow=true}]";
+    let text = "id='test'\nsource='constructed'\nentries=[]\ninitial_delay=0\nsteps=[{kind='draw',expected_delay=0,expected_may_follow=true}]";
     assert!(toml::from_str::<CannonHistory>(text).is_ok());
     assert!(toml::from_str::<CannonHistory>(&format!("{text}\nunknown=1")).is_err());
     assert!(
@@ -262,153 +240,30 @@ fn strict_cannon_parser_rejects_unknown_fields_and_names() {
         ))
         .is_err()
     );
-    assert!(
-        toml::from_str::<super::VectorFile>(&format!("{}\nunknown=1", super::VECTORS)).is_err()
-    );
+    assert!(toml::from_str::<VectorFile>(&format!("{}\nunknown=1", super::VECTORS)).is_err());
 }
 
 #[test]
-fn bounded_construction_and_unmade_completion() {
-    for n in 0..=2 {
-        let delay = CannonDelay::new(n).expect("every bounded value");
-        assert_eq!(delay.remaining(), n);
-        assert_eq!(delay.may_follow(), n == 0);
-        let mut look = Look {
+fn the_delay_is_built_and_restored_only_in_its_range() {
+    for frames in 0..=2 {
+        let delay = CannonDelay::new(frames).expect("every delay the spec allows");
+        assert_eq!(delay.remaining(), frames);
+        assert_eq!(delay.may_follow(), frames == 0);
+        let appearance = AppearanceState {
             animation: state(3, 7, 2, 1),
             cannon: delay,
+            colours: UNTOUCHED_COLOURS,
         };
-        let before = look;
-        let mut unmade = CannonObservation::Unmade;
-        assert!(!unmade.complete(&mut look));
-        assert_eq!(look, before);
-        assert_eq!(unmade, CannonObservation::Unmade);
+        assert_eq!(kept(appearance), appearance);
     }
     assert_eq!(CannonDelay::new(3), None);
     assert_eq!(CannonDelay::new(u8::MAX), None);
-    let valid = Look {
+    let initial = AppearanceState {
         animation: state(3, 7, 2, 1),
         cannon: CannonDelay::INITIAL,
+        colours: UNTOUCHED_COLOURS,
     };
-    let text = toml::to_string(&valid).expect("complete look");
-    assert_eq!(toml::from_str::<Look>(&text).expect("valid look"), valid);
-    assert!(text.contains("Two"));
-    assert!(toml::from_str::<Look>(&text.replace("Two", "Three")).is_err());
-}
-
-#[test]
-fn retained_eligibility_and_consumed_progress_are_discriminating() {
-    let (file, _, _) = read_file();
-    let answers = [
-        ItemControlAnswer {
-            before: SelectedItem::None,
-            after: SelectedItem::None,
-            eligibility: ControlEligibility::Eligible,
-        },
-        ItemControlAnswer {
-            before: SelectedItem::None,
-            after: SelectedItem::Missiles,
-            eligibility: ControlEligibility::Eligible,
-        },
-        ItemControlAnswer {
-            before: SelectedItem::None,
-            after: SelectedItem::Missiles,
-            eligibility: ControlEligibility::Ineligible,
-        },
-    ];
-    for (answer, remaining) in answers.into_iter().zip([1, 1, 2]) {
-        let appearance = make_work(&file, "Work", "C-contact-and-start");
-        let run = HistoryRun {
-            look: Look {
-                animation: appearance.state,
-                cannon: CannonDelay::INITIAL,
-            },
-            observation: Some(CannonObservation::Unmade),
-            next_step: 0,
-            provider: Vec::new(),
-            reads: Vec::new(),
-            external_delivered: 1,
-            appearance,
-        };
-        let mut run = fresh(run);
-        assert!(run.observation.as_mut().expect("unmade").choose(answer));
-        let mut run = fresh(run);
-        assert_eq!(
-            run.look.cannon,
-            CannonDelay::INITIAL,
-            "choice has no effects"
-        );
-        let later = ItemControlAnswer {
-            eligibility: ControlEligibility::Eligible,
-            after: SelectedItem::Grapple,
-            ..answer
-        };
-        assert!(!run.observation.as_mut().expect("chosen").choose(later));
-        assert!(
-            run.observation
-                .as_mut()
-                .expect("chosen")
-                .complete(&mut run.look)
-        );
-        let mut run = fresh(run);
-        assert_eq!(run.look.cannon.remaining(), remaining);
-        assert_eq!(run.observation, Some(CannonObservation::Completed(answer)));
-        assert!(
-            !run.observation
-                .as_mut()
-                .expect("completed")
-                .complete(&mut run.look)
-        );
-        assert_eq!(
-            run.look.cannon.remaining(),
-            remaining,
-            "repeated unchanged completion would prematurely reach zero"
-        );
-        assert_eq!(run.external_delivered, 1);
-    }
-}
-
-fn animation_checkpoint(work: SuspendedAppearance, delay: u8) -> SuspendedAppearance {
-    let run = HistoryRun {
-        look: Look {
-            animation: work.state,
-            cannon: CannonDelay::new(delay).expect("bounded"),
-        },
-        observation: Some(CannonObservation::Chosen(ItemControlAnswer {
-            before: SelectedItem::None,
-            after: SelectedItem::Missiles,
-            eligibility: ControlEligibility::Eligible,
-        })),
-        next_step: 0,
-        provider: Vec::new(),
-        reads: Vec::new(),
-        external_delivered: 0,
-        appearance: work,
-    };
-    let restored = fresh(run);
-    assert_eq!(restored.look.cannon.remaining(), delay);
-    assert_eq!(restored.look.animation, restored.appearance.state);
-    restored.appearance
-}
-
-#[test]
-fn readiness_survives_every_existing_animation_boundary() {
-    let (file, _, _) = read_file();
-    for delay in 0..=2 {
-        for v in &file.suspended_update {
-            // The existing strict tests still check their full base results and
-            // observation subsequences. This adds complete-look preservation.
-            let mut work = make_work(&file, &v.base_kind, &v.base);
-            let mut expected = work.clone();
-            expected.finish();
-            loop {
-                let _ = work.offer();
-                work = animation_checkpoint(work, delay);
-                if !work.complete() {
-                    break;
-                }
-                work = animation_checkpoint(work, delay);
-            }
-            assert_eq!(work, expected);
-        }
-    }
+    let text = toml::to_string(&initial).expect("the appearance State saves");
+    assert!(text.contains("\"Two\""), "{text}");
+    assert!(toml::from_str::<AppearanceState>(&text.replace("\"Two\"", "\"Three\"")).is_err());
 }

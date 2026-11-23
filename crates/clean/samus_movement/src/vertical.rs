@@ -10,7 +10,7 @@ use crate::rows::{Doing, Footing, Met};
 use crate::rules::{Bounce, Bounces, Rules};
 use crate::tick::Tick;
 use types::button::JUMP;
-use types::{Buttons, Fixed, Item, Parts, ZERO};
+use types::{Buttons, Fixed, FloorResponse, FloorResponseKind, Item, Parts, VerticalSpeed, ZERO};
 
 /// Her vertical motion's phase.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
@@ -44,7 +44,7 @@ pub struct Vertical {
 }
 
 /// `FollowingTheGround`, `RisingAndFalling`, `Moonfall`: how her vertical move goes this frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Course {
     /// The ground pull: on the ground, with no vertical motion she moves by (a turn in the
     /// moonfall too), she is pulled down by that frame's speed plus 1 px, 1 px seated on a slope.
@@ -62,7 +62,7 @@ pub enum Course {
 /// `Landing`, `WallJump`: what her moves' contact with a floor or a wall does to her motion,
 /// once the change it comes with is taken (`PoseFitAfterMoves`: a change refused, or the crouch
 /// taken instead, brings none of it). The pose it chooses is the chart's (`WhatHerMovesMet`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Contact {
     /// `WallJump`'s kick off a wall: she rises at the wall-jump speed, x speed 0, following the
     /// pad; it ends a moonfall.
@@ -209,9 +209,10 @@ impl Vertical {
         }
     }
 
-    /// `RisingAndFalling`: the pull grows her vertical speed, which stops growing at a pixel part
-    /// of exactly 5 (a speed of 6 px or more grows on); `Moonfall`: with no limit.
-    fn grow(&mut self, r: &Rules) {
+    /// `RisingAndFalling`: the pull grows her vertical speed, after a move by it, which stops
+    /// growing at a pixel part of exactly 5 (a speed of 6 px or more grows on); `Moonfall`: with
+    /// no limit.
+    pub(crate) fn grow(&mut self, r: &Rules) {
         if self.phase == Phase::Moonfall || self.speed.pixel() != r.fall_settle_px {
             self.speed += r.gravity;
         }
@@ -228,44 +229,47 @@ impl Vertical {
         self.bounces = Bounces::None;
     }
 
+    /// `AcceptedFloorResponse`: the response a floor makes within her vertical move, stopped
+    /// moving down, with her vertical speed after the pull: a turn's stop and the grounded ball's
+    /// keep that speed, and a change of shape's ends it. Her other floor contacts respond only
+    /// once pose fit takes the change they come with.
+    pub(crate) fn floor_stop(
+        self,
+        course: Course,
+        by: Fixed,
+        stopped: bool,
+        footing: Footing,
+    ) -> Option<FloorResponse> {
+        if !stopped || by.negative() {
+            return None;
+        }
+        let kind = match (course, footing) {
+            (_, Footing::Turning) => FloorResponseKind::TurningStops,
+            (Course::BallMovesByIt, _) => FloorResponseKind::GroundedBallStops,
+            (Course::InTheAir, Footing::ChangingShape) => FloorResponseKind::ChangingBodyStops,
+            (Course::Pulled | Course::InTheAir, _) => return None,
+        };
+        Some(FloorResponse {
+            kind,
+            speed: VerticalSpeed(self.speed),
+        })
+    }
+
     /// What her vertical move by `by` met, stopped or not, as its course and her situation's
-    /// footing say. Moving by her speed, the pull then grows it (`RisingAndFalling`). An upward
-    /// move stopped is a ceiling (`WallsAndCeilings`). The pull grows the published
-    /// pre-response speed first; the normal ceiling response then ends the rise at zero.
-    /// While her body changes shape it stops her flush only, retaining the pulled rise. In the air
-    /// a floor is met (`Landing`): while her body changes shape it lands her within her moves,
-    /// only her vertical motion stopping. On the ground the floor stops her flush and never lands
-    /// her, and finding none she walks off a ledge (`FollowingTheGround`), unless turning, where
-    /// she sinks by the pull. (Changing shape, she stays where she is instead: the move's own
-    /// case in the ordinary continuation, before speed growth.) What else it met acts afterwards
-    /// (`meet_in_moves`, or at the pose change for a floor).
+    /// footing say, once the pull has grown her speed. An upward move stopped is a ceiling
+    /// (`WallsAndCeilings`); while her body changes shape it stops her flush only, keeping the
+    /// pulled rise. In the air a floor is met (`Landing`): while her body changes shape it lands
+    /// her within her moves, only her vertical motion stopping. On the ground the floor stops
+    /// her flush and never lands her, and finding none she walks off a ledge
+    /// (`FollowingTheGround`), unless turning, where she sinks by the pull. What else it met
+    /// acts afterwards (`meet_in_moves`, or at the pose change for a floor).
     pub(crate) fn end_move(
         &mut self,
         course: Course,
         by: Fixed,
         stopped: bool,
         footing: Footing,
-        t: &mut Tick,
     ) -> Option<Met> {
-        if course != Course::Pulled {
-            self.grow(t.rules);
-        }
-        // Spec: AcceptedFloorResponse. These stops happen within the move and keep their
-        // own speed meaning; ordinary contact is published only after pose fit accepts it.
-        if stopped && !by.negative() {
-            let kind = match (course, footing) {
-                (_, Footing::Turning) => Some(types::FloorResponseKind::TurningStops),
-                (Course::BallMovesByIt, _) => Some(types::FloorResponseKind::GroundedBallStops),
-                (Course::InTheAir, Footing::ChangingShape) => {
-                    Some(types::FloorResponseKind::ChangingBodyStops)
-                }
-                _ => None,
-            };
-            t.floor_response = kind.map(|kind| types::FloorResponse {
-                kind,
-                speed: types::VerticalSpeed(self.speed),
-            });
-        }
         let shaping = footing == Footing::ChangingShape;
         if stopped && by.negative() {
             return (!shaping).then_some(Met::Ceiling);

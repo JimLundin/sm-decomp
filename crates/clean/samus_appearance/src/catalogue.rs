@@ -44,20 +44,12 @@ pub enum BehaviourId {
     SpinEnds,
     /// First passage entry quiets Samus before sound hold.
     AtTheDoor,
-    /// Actual animation answers offered before their effects.
-    PerformedAnimationDecisions,
-    /// Complete interrupted work restored and continued once.
-    SuspendedAppearance,
-    /// Selected item identity controls the independent cannon delay.
+    /// A changed selected item waits one more frame of eligible item controls.
     CannonItemDelay,
-    /// Full initialization starts two eligible observations' wait.
+    /// A newly initialized Samus waits two frames of eligible unchanged item controls.
     CannonReadinessReset,
-    /// Actual chosen controls complete readiness once and survive restoration.
-    RetainedCannonReadiness,
     /// Ordinary dry movement readies the visor and charge glow without changing either palette.
     OrdinaryDryColours,
-    /// An admitted palette reset survives interruption and completes once.
-    RetainedDryColours,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -76,7 +68,7 @@ pub struct Behaviour {
 }
 
 /// Every behaviour of the spec, in its order.
-pub const CATALOGUE: [Behaviour; 26] = [
+pub const CATALOGUE: [Behaviour; 22] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -226,37 +218,16 @@ pub const CATALOGUE: [Behaviour; 26] = [
         checked: Checked::ByVectors,
     },
     Behaviour {
-        id: BehaviourId::PerformedAnimationDecisions,
-        summary: "the actual current clip decision and selected clip initialization are observable before their effects",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::SuspendedAppearance,
-        summary: "interrupted animation and appearance opportunities continue once with complete State and ordered outputs",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
         id: BehaviourId::CannonItemDelay,
-        summary: "after her selected item changes, the cannon waits for one more eligible control observation before it may follow that item",
+        summary: "after her selected item changes, the cannon waits for one more frame of eligible item controls before it may follow that item",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::CannonReadinessReset,
-        summary: "a newly initialized Samus needs two eligible unchanged item-control observations before her cannon may follow the selection",
+        summary: "a newly initialized Samus needs two frames of eligible unchanged item controls before her cannon may follow the selection",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::RetainedCannonReadiness,
-        summary: "cannon readiness follows one actual completed control answer, survives interruption, and is read without advancing it",
-        kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
@@ -264,13 +235,6 @@ pub const CATALOGUE: [Behaviour; 26] = [
         id: BehaviourId::OrdinaryDryColours,
         summary: "during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::RetainedDryColours,
-        summary: "one actual ordinary palette opportunity survives interruption and applies its reset once",
-        kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

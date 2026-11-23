@@ -132,7 +132,12 @@ A declared cut-to-cut advance carries selected State. Native audio uses transpor
 The played-alone owner, `game::production::played`, steps one whole frame per NMI cut: her
 clip's look ahead, her moves, her animation, the camera and the doors, once each. While a
 passage runs the doors step alone, and `game::production::room_loading` loads what each of
-their calls names of the next room from our own room and tileset formats.
+their calls names of the next room from our own room and tileset formats. The scoped connected
+owner, `game::production::connected`, steps her movement, animation and camera once each in the
+same order, adding her stride and pose selection to the appearance update and, when selected,
+the early mini-map. No clean model pauses inside its frame: what a neighbour reads between two
+of a model's rules is one of its outputs, such as movement's `position_after_moves` for the
+mini-map.
 
 ### 6.2 The beam-sync point
 

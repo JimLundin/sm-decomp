@@ -1,11 +1,12 @@
-//! Persistent cannon readiness, independent of animation and HUD mode.
+//! When her cannon may follow the selected item: a delay of its own, apart from her animation
+//! and the HUD's mode.
 
 use serde::{Deserialize, Serialize};
 
-use crate::state::State;
-
-/// Spec: `CannonItemDelay`. Item identity from actual controls, not HUD one-shot mode
-/// or a switch event. Selecting and firing these items remain the HUD/weapon owners' work.
+/// Spec: `CannonItemDelay`. A selected item's identity, as the item controls start from it.
+///
+/// The controls leave one too. The HUD's one-shot mode and its switch event are not part of
+/// it. Selecting and firing these items remain the HUD's and the weapons' work.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SelectedItem {
     /// No selected item.
@@ -22,26 +23,43 @@ pub enum SelectedItem {
     Grapple,
 }
 
-/// Spec: `CannonItemDelay`. Only performed eligible controls advance readiness;
-/// frozen time alone is not ineligibility.
+/// Spec: `CannonItemDelay`. Whether the item controls that ran may switch (the HUD's `can
+/// switch`). Frozen time alone does not make them ineligible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ControlEligibility {
-    /// The HUD can switch at these actual controls.
+    /// The HUD can switch: the controls count towards readiness.
     Eligible,
-    /// The HUD cannot switch; readiness remains untouched.
+    /// The HUD cannot switch: the delay stays as it is.
     Ineligible,
 }
 
-/// Spec: `RetainedCannonReadiness`. The actual chosen control answer carries its
-/// starting and resulting identities and eligibility, independently of later selections.
+/// Spec: `CannonItemDelay`. What a frame's item controls answer: the selected item they start
+/// from and the one they leave, before any later weapon drop, and whether they were eligible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ItemControlAnswer {
-    /// Identity immediately before the actual controls.
+    /// The identity immediately before the controls.
     pub before: SelectedItem,
-    /// Identity chosen by those controls, before any later weapon drop.
+    /// The identity the controls leave.
     pub after: SelectedItem,
-    /// The HUD's can-switch answer for this observation.
+    /// The HUD's `can switch`.
     pub eligibility: ControlEligibility,
+}
+
+/// What a frame does to her cannon's delay.
+///
+/// A selection change outside item controls, a pose or clip change, a repeated drawing, a lag
+/// frame and a passage that does not reinitialize her are none of these: each is a frame whose
+/// controls are skipped, or no frame at all, and leaves the delay alone.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CannonEvent {
+    /// Her item controls don't run this frame: skipped, facing the screen, or controlled by
+    /// another domain.
+    ControlsSkipped,
+    /// Her item controls ran, with this answer (`CannonItemDelay`).
+    ControlsRan(ItemControlAnswer),
+    /// Samus is initialized this frame, for arrival at Ceres or Zebes or for a demo
+    /// (`CannonReadinessReset`).
+    SamusInitialized,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -51,121 +69,75 @@ enum Remaining {
     Two,
 }
 
-/// Spec: `CannonItemDelay`, `CannonReadinessReset`. A bounded delay of 0..=2
-/// *eligible item-control observations*, not frames.
+/// Spec: `CannonItemDelay`, `CannonReadinessReset`. The cannon selection delay: 0 to 2 frames
+/// of eligible item controls left before her cannon may follow the selected item.
 ///
-/// Zero permits following the
-/// selection; it does not mean the cannon has finished opening or closing.
-/// The finite representation also keeps deserialized values in the bounded domain.
+/// It is persistent appearance memory of its own, not reconstructed from the selected item,
+/// her gun or her animation. At 0 the cannon may begin responding to the selection; that says
+/// nothing of whether it has finished opening or closing. Only the three values exist, so a
+/// restored delay is always one of them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CannonDelay(Remaining);
 
+/// Spec: `CannonReadinessReset`. A newly initialized Samus waits two frames of eligible
+/// unchanged item controls.
+const INITIAL_FRAMES: u8 = 2;
+
 impl CannonDelay {
-    /// Spec: `CannonReadinessReset`. Full Samus initialization (Ceres, Zebes or
-    /// demo) starts with two observations remaining. Room passage is not initialization.
+    /// Spec: `CannonReadinessReset`. The delay of a newly initialized Samus: 2.
     pub const INITIAL: Self = Self(Remaining::Two);
 
-    /// Spec: `CannonItemDelay`. Construct any allowed number of observations remaining.
+    /// The delay of `frames` frames of eligible item controls left, if the spec allows it: 0
+    /// to 2.
     #[must_use]
-    pub const fn new(observations: u8) -> Option<Self> {
-        match observations {
+    pub const fn new(frames: u8) -> Option<Self> {
+        match frames {
             0 => Some(Self(Remaining::Ready)),
             1 => Some(Self(Remaining::One)),
-            INITIAL_OBSERVATIONS => Some(Self::INITIAL),
+            INITIAL_FRAMES => Some(Self::INITIAL),
             _ => None,
         }
     }
 
-    /// Spec: `RetainedCannonReadiness`. Inspection has no effects.
+    /// The frames of eligible item controls left.
     #[must_use]
     pub const fn remaining(self) -> u8 {
         match self.0 {
             Remaining::Ready => 0,
             Remaining::One => 1,
-            Remaining::Two => INITIAL_OBSERVATIONS,
+            Remaining::Two => INITIAL_FRAMES,
         }
     }
 
-    /// Spec: `RetainedCannonReadiness`. A read-only permission for downstream drawing.
+    /// Whether her cannon may follow the selected item: the delay is 0.
     #[must_use]
     pub const fn may_follow(self) -> bool {
         matches!(self.0, Remaining::Ready)
     }
 
-    /// Spec: `CannonItemDelay`. Call once when the actual control effects complete.
-    /// Changed eligible identity starts one observation's wait; unchanged eligible
-    /// identity reduces it towards zero. Ineligible controls leave it untouched.
-    /// Skipped controls, drawing and outside selection changes must not call this.
-    pub fn controls_completed(&mut self, answer: ItemControlAnswer) {
+    /// The delay as the frame's `event` leaves it, before her gun's picture reads it that frame.
+    ///
+    /// Spec: `CannonReadinessReset`. Initialization starts the wait over at 2.
+    ///
+    /// Spec: `CannonItemDelay`. Eligible controls that leave another identity than they started
+    /// from make it 1, a change to none and a change during a wait included. Eligible controls
+    /// that leave the same identity bring it down by 1, to no less than 0, whatever the
+    /// one-shot mode or the switch event. Ineligible or skipped controls leave it as it is.
+    pub(crate) fn after(self, event: CannonEvent) -> Self {
+        let answer = match event {
+            CannonEvent::SamusInitialized => return Self::INITIAL,
+            CannonEvent::ControlsSkipped => return self,
+            CannonEvent::ControlsRan(answer) => answer,
+        };
         if answer.eligibility == ControlEligibility::Ineligible {
-            return;
+            return self;
         }
         if answer.before != answer.after {
-            self.0 = Remaining::One;
-            return;
+            return Self(Remaining::One);
         }
-        self.0 = match self.0 {
+        Self(match self.0 {
             Remaining::Ready | Remaining::One => Remaining::Ready,
             Remaining::Two => Remaining::One,
-        };
-    }
-
-    /// Spec: `CannonReadinessReset`. Reset only at actual full initialization.
-    pub const fn initialize(&mut self) {
-        *self = Self::INITIAL;
-    }
-}
-
-const INITIAL_OBSERVATIONS: u8 = 2;
-
-/// Spec: `RetainedCannonReadiness`. The persistent animation and cannon portion of the look,
-/// with the four animation quantities unchanged and independent cannon readiness included.
-///
-/// Serialize this owner, rather than reconstructing readiness from animation or HUD State.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Look {
-    /// The existing animation playhead, boost stage and laps.
-    pub animation: State,
-    /// Independent persistent cannon readiness.
-    pub cannon: CannonDelay,
-}
-
-/// Spec: `RetainedCannonReadiness`. One actual observation's lifecycle, retained
-/// alongside its complete look. No observation is created for skipped controls.
-///
-/// Completion here is model completion, not external delivery acknowledgement.
-/// A caller saves this progress and its own input/read/output delivery positions;
-/// reading readiness neither consumes this progress nor publishes sounds or graphics.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum CannonObservation {
-    /// Actual controls have not chosen their answer yet.
-    Unmade,
-    /// Actual answer retained, with no readiness effects applied yet.
-    Chosen(ItemControlAnswer),
-    /// Actual effects consumed once; the answer is retained for inspection.
-    Completed(ItemControlAnswer),
-}
-
-impl CannonObservation {
-    /// Spec: `RetainedCannonReadiness`. Retain the actual answer only if unmade.
-    /// Later unrelated inputs cannot replace a chosen or completed answer.
-    /// Returns whether this call made the choice; readiness is still unchanged.
-    pub fn choose(&mut self, answer: ItemControlAnswer) -> bool {
-        if *self != Self::Unmade {
-            return false;
-        }
-        *self = Self::Chosen(answer);
-        true
-    }
-
-    /// Spec: `RetainedCannonReadiness`. Apply once at actual control completion.
-    /// An unmade or completed observation does nothing; returns whether effects ran.
-    pub fn complete(&mut self, look: &mut Look) -> bool {
-        let Self::Chosen(answer) = *self else {
-            return false;
-        };
-        look.cannon.controls_completed(answer);
-        *self = Self::Completed(answer);
-        true
+        })
     }
 }

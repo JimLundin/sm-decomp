@@ -3429,3 +3429,31 @@ source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff397
 identity = "gameplay-sound/shot-opening-no-fire"
 before_values = [1, 1, 5, 0, 0, 0, 0, 1, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 47e29b1486c02e931bb4c1074c8ac3ca7e47506cc5bae53b0f21a3908ff1fd82; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement-native-occupied-first-search"
+before_values = [1, 7, 0, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 99e1733ec6efbb203b0da3689af59a5134b0f46f43503b40637890284d7db9f7; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement-native-enemy-stop-terrain-absence"
+before_values = [1, 8, 0, 0, 0, 0, 2, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 6d0c0a70ded3f4271fff3c7469af80de1602ca9a2e47c78942c1cbd18fd82f08; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement/soft-touchdown-57"
+before_values = [1, 8, 2, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest eae0e49cfe829b7d3257c4f7e1c46956e6b325a2f44925b8724d3d0ee6e444c8; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement/soft-touchdown-124"
+before_values = [1, 8, 2, 0, 0, 0, 1, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 0614c4ce5e3cbf79b4e72744ae2c7586184042add75d3cf2680948c8045479ee; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

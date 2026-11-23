@@ -165,21 +165,22 @@ const TABLE: [Row; 7] = [
 
 /// Spec: `StartingClip`. When she takes another pose and the table doesn't keep her clip going,
 /// `clip_after`, the clip of that pose, starts from the step the table says, with its hold plus
-/// the start's slowdown (and `HandOverSlowdown`'s).
+/// the start's slowdown (and `HandOverSlowdown`'s). Otherwise `played`, the playhead her clip
+/// at the frame's start left as it played, stays as it is.
 #[must_use]
-pub fn start(inputs: &Inputs, clip_after: &Clip) -> Option<Playhead> {
+pub fn start(played: Playhead, inputs: &Inputs, clip_after: &Clip) -> Playhead {
     let (from, takes) = (&inputs.figure, &inputs.figure_after);
     if from == takes {
-        return None;
+        return played;
     }
     let row = TABLE
         .iter()
         .find(|row| row.takes.names(takes.pose) && row.from.names(from.pose));
     let Start::At(step) = row.map_or(Start::At(Step::FIRST), |row| row.starts) else {
-        return None;
+        return played;
     };
     let slowdowns = [inputs.liquid.start_slowdown, hand_over_slowdown(inputs)];
-    Some(Playhead::on(step, clip_after.hold(step), &slowdowns))
+    Playhead::on(step, clip_after.hold(step), &slowdowns)
 }
 
 /// Spec: `HandOverSlowdown` (a quirk). The first step of a pose her clip's end handed over is

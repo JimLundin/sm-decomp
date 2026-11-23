@@ -1,19 +1,23 @@
-//! One carried ordinary lifecycle through movement, appearance and camera.
+//! One carried ordinary running frame through movement, appearance and camera.
+//!
+//! Each model is stepped once per frame through its whole-frame entry, in the played owner's
+//! order: her clip's look ahead, her moves, her animation (with her stride and pose selection),
+//! then the camera following her. With the early mini-map selected, the map reads her position
+//! after her moves from movement's outcome. The frame commits every owner together or none.
 
-mod appearance;
 pub mod early_map;
 pub mod inputs;
-mod transition;
 mod world;
 
-use crate::production::{AppearanceContent, CameraRules, MovementContent, movement_work::Movement};
-use crate::state::owned::{CameraPin, MovementPin};
+use super::animation::{self, Parts};
+use crate::production::{AppearanceContent, CameraRules, MovementContent, MovementInputs};
+use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
 use canonical::{
     Canonical,
     model::{Model, Pinned},
 };
-use samus_appearance::{AnimationDecision, Figure, WorkStep};
-use samus_movement::suspended::{LocalRule, MovementDecision};
+use samus_appearance::{Figure, Selection, Stride};
+use types::{Action, Facing, Sprite};
 
 /// Complete content for the connected selected owners.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -35,7 +39,7 @@ pub struct Rules {
     pub camera: CameraRules,
 }
 
-/// Complete current playing Figure, independent of unmade selection.
+/// The figure she is drawn in as the frame starts.
 pub struct PlayingPin;
 impl Pinned for PlayingPin {
     type State = Figure;
@@ -43,125 +47,55 @@ impl Pinned for PlayingPin {
     const SHAPE: u64 = 0x4301_5F68_4F3E_58BA;
 }
 
-/// Complete actual Ahead query retained before movement.
-pub struct AheadPin;
-impl Pinned for AheadPin {
-    type State = samus_appearance::Ahead;
-    const NAME: &'static str = "production-connected-ahead";
-    const SHAPE: u64 = 0xc3a4_0ebc_338e_3734;
-}
-
-#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
-struct Context {
-    inputs: Model<inputs::InputsPin>,
-    previous: Model<MovementPin>,
-    playing: Model<PlayingPin>,
-    ahead: Model<AheadPin>,
-}
-
-#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
-enum Phase {
-    #[default]
-    Ready,
-    Motion(Box<Context>),
-    MotionComplete(Box<Context>),
-    Contact(Box<Context>),
-    Animation(Box<Context>),
-    AnimationComplete(Box<Context>),
-    Pose(Box<Context>),
-    PoseComplete(Box<Context>),
-    Selection(Box<Context>),
-    SelectedClip(Box<Context>),
-    SelectedClipComplete(Box<Context>),
-    RemainingMotion(Box<Context>),
-    RemainingMotionComplete(Box<Context>),
-    DashLoss(Box<Context>),
-    DashLossComplete(Box<Context>),
-    Camera(Box<Context>),
-    EarlyMap(Box<Context>),
-}
-
-/// Complete selected owners and actual unfinished ordinary opportunity.
+/// The selected owners, carried frame to frame.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct State {
-    /// Sole movement owner, with all current request/answer publications.
-    pub movement: Movement,
-    /// Sole appearance owner and intent-delivery positions.
-    pub appearance: crate::production::appearance::Work,
-    /// Actually playing Figure; accepted selection remains distinct until published.
+    /// Her movement.
+    pub movement: Model<MovementPin>,
+    /// Her animation's playhead and boost.
+    pub appearance: Model<AppearancePin>,
+    /// The figure she is drawn in.
     pub playing: Model<PlayingPin>,
-    /// Complete retained camera.
+    /// The camera.
     pub camera: Model<CameraPin>,
-    phase: Phase,
     completed: u64,
-    receipts_delivered: u64,
     early_map: Option<Box<early_map::State>>,
 }
 
-/// The caller may yield after actual semantic work, without inventing hardware time.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Advance {
-    /// Preserve the next pending operation/answer after one semantic transition.
-    Yield,
-    /// Complete this actual ordinary opportunity.
-    Opportunity,
-    /// Stop after actual Motion and Contact, before Animation and pose placement.
-    EarlyMap,
-}
-
-/// Actual ordinary progress is independent of record indices and comparison horizons.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Progress {
-    /// Complete owner State retains unfinished work.
-    Pending,
-    /// One admitted ordinary opportunity completed.
-    Complete,
-}
-
-/// Complete actual outputs newly published by this call.
+/// What one frame published.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outputs {
-    /// Actual opportunity progress.
-    pub progress: Progress,
-    /// Ordered Appearance/animation sound requests.
-    pub sounds: Vec<samus_appearance::PublishedSound>,
-    /// Ordered graphical Contact intents, even with receivers unselected.
-    pub graphics: Vec<samus_appearance::GraphicalContact>,
-    /// Actual model receipts in opportunity order, preserving each read's full output.
-    pub appearance_receipts: Vec<samus_appearance::Receipt>,
-    /// Complete movement outputs when this opportunity completed.
-    pub movement: Option<samus_movement::Outcome>,
-    /// Complete actual camera when this opportunity completed.
-    pub camera: Option<world_camera::Camera>,
+    /// Her appearance's sounds, in the order asked.
+    pub sounds: Vec<samus_appearance::FrameSound>,
+    /// Her stride's graphical contact, even when its sound is quieted.
+    pub contact: Option<samus_appearance::GraphicalContact>,
+    /// Movement's complete outcome.
+    pub movement: samus_movement::Outcome,
+    /// The camera as the frame leaves it.
+    pub camera: world_camera::Camera,
 }
 
-/// Unsupported current family, missing producer or invalid retained operation.
+/// Why a frame was not played. State is unchanged.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
-    /// Wrong/missing ordinary progress or completion.
-    Order,
-    /// Changed/missing independently current stimuli.
+    /// The room's geometry is malformed.
     Inputs,
-    /// Unqualified action, activity, liquid, booster or reaction family.
+    /// An action, activity, liquid, booster, terrain or reaction outside the running family.
     Family,
-    /// Movement did not provide the actual required current publication.
+    /// Movement has no situation or content for her pose.
     Movement,
-    /// Appearance work or intent-delivery progress is invalid.
-    Appearance,
-    /// Current or accepted Figure lacks the qualified content relation.
+    /// A figure she shows is outside the running family or has no imported clip.
     Figure,
-    /// Actual consumed pose initialization is unavailable or replaced.
-    Publication,
-    /// Final/prior movement or camera room/history is invalid.
+    /// The camera's room is malformed, or it did not last see her where she was.
     Camera,
-    /// Missing or incompatible early map owner.
+    /// The early map owner is missing, unexpected or refused its inputs.
     HudMap,
 }
 
 impl State {
-    /// Admit selected initial quantities without completing any operation.
+    /// Admit the selected owners' first State.
     /// # Errors
-    /// An incompatible playing/current pose has no qualified current owner.
+    /// A figure or pose outside the running family.
     pub fn new(
         movement: samus_movement::Samus,
         appearance: samus_appearance::State,
@@ -169,30 +103,26 @@ impl State {
         camera: world_camera::Camera,
     ) -> Result<Self, Fault> {
         if playing.pose != movement.pose
-            || playing.sprite != types::Sprite::Plain
-            || movement.pose.action != types::Action::Running
+            || playing.sprite != Sprite::Plain
+            || movement.pose.action != Action::Running
         {
             return Err(Fault::Figure);
         }
         Ok(Self {
-            movement: Movement::new(movement),
-            appearance: crate::production::appearance::Work::new(
-                samus_appearance::SuspendedAppearance::new(appearance, None, Vec::new()),
-            ),
+            movement: Model(movement),
+            appearance: Model(appearance),
             playing: Model(playing),
             camera: Model(camera),
-            phase: Phase::Ready,
             completed: 0,
-            receipts_delivered: 0,
             early_map: None,
         })
     }
 
-    /// Select early map ownership at admission before any ordinary work begins.
+    /// Select the early map owner before the first frame.
     /// # Errors
-    /// An active or previously configured owner rejects replacement.
+    /// A frame already played, or an owner already selected.
     pub fn with_early_map(mut self, hud: interface_hud::HudState) -> Result<Self, Fault> {
-        if self.pending() || self.completed() != 0 || self.early_map.is_some() {
+        if self.completed != 0 || self.early_map.is_some() {
             return Err(Fault::HudMap);
         }
         self.early_map = Some(Box::new(early_map::State {
@@ -202,7 +132,7 @@ impl State {
         Ok(self)
     }
 
-    /// Current scoped HUD and the latest early Movement coordinates when produced.
+    /// The early map's HUD and the position it last read, once a frame has played.
     #[must_use]
     pub fn early_map(&self) -> Option<(&interface_hud::HudState, Option<[u32; 2]>)> {
         self.early_map
@@ -210,226 +140,37 @@ impl State {
             .map(|map| (map.hud.state(), map.position))
     }
 
-    /// Number of genuinely completed ordinary opportunities.
+    /// The frames played.
     #[must_use]
     pub const fn completed(&self) -> u64 {
         self.completed
     }
 
-    /// An actual ordinary opportunity remains unfinished.
-    #[must_use]
-    pub const fn pending(&self) -> bool {
-        !matches!(self.phase, Phase::Ready)
-    }
-
-    /// Validate complete current owners and retained constructor state.
+    /// Check the owners against the running family and each other.
     /// # Errors
-    /// Changed current owner, stale pending work or unsupported inputs reject.
+    /// A figure or pose outside the family, or an early map whose reading disagrees with the
+    /// frames played.
     pub fn validate(&self, content: &Content) -> Result<(), Fault> {
-        self.appearance.validate().map_err(|_| Fault::Appearance)?;
-        if usize::try_from(self.receipts_delivered)
-            .is_ok_and(|at| at > self.appearance.model.0.completed.len())
+        drawn(self.playing.0, &content.appearance)?;
+        if let Some(map) = &self.early_map
+            && (map.position.is_some() != (self.completed > 0)
+                || map.position.is_some() != map.hud.map_ready())
         {
-            return Err(Fault::Appearance);
-        }
-        appearance::running(self.playing.0, &content.appearance)?;
-        let at_map = matches!(self.phase, Phase::EarlyMap(_));
-        if let Some(map) = &self.early_map {
-            let position = self.movement.state().position;
-            if map.position.is_some() != (at_map || self.completed > 0)
-                || map.position.is_some() != map.hud.map_ready()
-                || (at_map && map.position != Some([position.x.0, position.y.0]))
-                || (self.pending() && !at_map)
-            {
-                return Err(Fault::HudMap);
-            }
-        } else if at_map {
             return Err(Fault::HudMap);
         }
-        match &self.phase {
-            Phase::Ready => {
-                if self.appearance.model.0.pending.is_some()
-                    || self.appearance.model.0.consumed != self.appearance.model.0.steps.len()
-                {
-                    return Err(Fault::Appearance);
-                }
-            }
-            Phase::Motion(ctx)
-            | Phase::MotionComplete(ctx)
-            | Phase::Contact(ctx)
-            | Phase::EarlyMap(ctx)
-            | Phase::Animation(ctx)
-            | Phase::AnimationComplete(ctx)
-            | Phase::Pose(ctx)
-            | Phase::PoseComplete(ctx)
-            | Phase::Selection(ctx)
-            | Phase::SelectedClip(ctx)
-            | Phase::SelectedClipComplete(ctx)
-            | Phase::RemainingMotion(ctx)
-            | Phase::RemainingMotionComplete(ctx)
-            | Phase::DashLoss(ctx)
-            | Phase::DashLossComplete(ctx)
-            | Phase::Camera(ctx) => {
-                if ctx.inputs.0.activity != inputs::Activity::Inactive
-                    || self.movement.state().pose.action != types::Action::Running
-                {
-                    return Err(Fault::Family);
-                }
-                let Movement::Work(work) = &self.movement else {
-                    return Err(Fault::Movement);
-                };
-                if work.model.0.start != ctx.previous.0 {
-                    return Err(Fault::Movement);
-                }
-            }
-        }
         Ok(())
     }
 
-    fn begin(&mut self, input: &inputs::Inputs, content: &Content) -> Result<(), Fault> {
-        if input.activity != inputs::Activity::Inactive
-            || input.items[types::Item::SpeedBooster]
-            || input.liquid != samus_appearance::Liquid::NONE
-        {
-            return Err(Fault::Family);
-        }
-        appearance::running(self.playing.0, &content.appearance)?;
-        input.geometry.validate().map_err(|_| Fault::Inputs)?;
-        if usize::try_from(self.receipts_delivered).ok()
-            != Some(self.appearance.model.0.completed.len())
-        {
-            return Err(Fault::Appearance);
-        }
-        self.appearance.retire().map_err(|_| Fault::Appearance)?;
-        self.receipts_delivered = 0;
-        let ctx = Context {
-            inputs: Model(input.clone()),
-            previous: Model(*self.movement.state()),
-            playing: self.playing,
-            ahead: Model(appearance::ahead(
-                &self.appearance,
-                self.playing.0,
-                &content.appearance,
-            )?),
-        };
-        self.movement.begin().map_err(|_| Fault::Movement)?;
-        self.phase = Phase::Motion(Box::new(ctx));
-        Ok(())
-    }
-
-    fn movement_operation(
-        &mut self,
-        ctx: &Context,
-        content: &Content,
-        rules: &Rules,
-        complete: bool,
-    ) -> Result<MovementDecision, Fault> {
-        let guard = world::Guard {
-            world: &ctx.inputs.0.geometry,
-            rejected: std::cell::Cell::new(false),
-        };
-        let world: &dyn types::World = &guard;
-        let radius = content
-            .movement
-            .radius(self.movement.state().pose)
-            .ok_or(Fault::Figure)?;
-        let body = |_| radius;
-        let heading = |pose| content.movement.cannon_heading(pose);
-        let frame = samus_movement::Frame {
-            sprite_before_movement: ctx.playing.0.sprite,
-            cinematic_active: matches!(
-                ctx.inputs.0.cinematic,
-                samus_appearance::CinematicActivity::Active
-            ),
-            pad: ctx.inputs.0.held,
-            pressed: ctx.inputs.0.pressed,
-            items: ctx.inputs.0.items,
-            spin_turned_far: ctx.ahead.0.turned_far,
-            elevator_moving: false,
-            parity: ctx.inputs.0.parity,
-            animation_ends: ctx.ahead.0.end,
-            body: &body,
-            cannon_heading: &heading,
-        };
-        if !complete {
-            let offered = self
-                .movement
-                .offer(&content.movement, &rules.movement, &frame, world)
-                .map_err(|_| Fault::Movement)?
-                .ok_or(Fault::Movement)?;
-            if guard.rejected.get() {
-                return Err(Fault::Family);
-            }
-            return Ok(offered);
-        }
-        let Movement::Work(work) = &self.movement else {
-            return Err(Fault::Movement);
-        };
-        let decision = work.model.0.offered.clone().ok_or(Fault::Movement)?;
-        self.movement
-            .complete(&content.movement, &rules.movement, &frame, world)
-            .map_err(|_| Fault::Movement)?;
-        if guard.rejected.get() {
-            return Err(Fault::Family);
-        }
-        Ok(decision)
-    }
-
-    fn animation_data(
-        &self,
-        ctx: &Context,
-        from: Figure,
-        selected: Figure,
-        content: &Content,
-        rules: &Rules,
-    ) -> Result<samus_appearance::AnimationInputs, Fault> {
-        let input = appearance::animation_inputs(
-            &self.movement,
-            &ctx.previous.0,
-            ctx.playing.0,
-            selected,
-            &ctx.inputs.0,
-        )?;
-        content
-            .appearance
-            .animation_inputs(input, from, rules.appearance.clone())
-            .map_err(|_| Fault::Figure)
-    }
-
-    fn transition(&mut self, content: &Content, rules: &Rules) -> Result<(), Fault> {
-        let phase = core::mem::take(&mut self.phase);
-        self.phase = match phase {
-            phase @ (Phase::Motion(_)
-            | Phase::MotionComplete(_)
-            | Phase::Pose(_)
-            | Phase::PoseComplete(_)
-            | Phase::RemainingMotion(_)
-            | Phase::RemainingMotionComplete(_)) => self.movement_phase(phase, content, rules)?,
-            phase @ (Phase::Contact(_)
-            | Phase::EarlyMap(_)
-            | Phase::Animation(_)
-            | Phase::AnimationComplete(_)
-            | Phase::Selection(_)
-            | Phase::SelectedClip(_)
-            | Phase::SelectedClipComplete(_)) => self.appearance_phase(phase, content, rules)?,
-            phase @ (Phase::DashLoss(_) | Phase::DashLossComplete(_)) => self.dash_phase(phase)?,
-            phase @ Phase::Camera(_) => self.camera_phase(phase, rules)?,
-            Phase::Ready => return Err(Fault::Order),
-        };
-        Ok(())
-    }
-
-    /// Advance actual selected semantic work on a complete private candidate.
+    /// Play one frame from `input`.
     /// # Errors
-    /// Missing/current inputs, unsupported families or stale owners reject atomically.
+    /// Inputs or results outside the running family leave State unchanged.
     pub fn advance(
         &mut self,
         input: &inputs::Inputs,
         content: &Content,
         rules: &Rules,
-        until: Advance,
     ) -> Result<Outputs, Fault> {
-        self.advance_with_map(input, content, rules, until, None)
+        self.advance_with_map(input, content, rules, None)
     }
 
     pub(super) fn advance_with_map(
@@ -437,136 +178,163 @@ impl State {
         input: &inputs::Inputs,
         content: &Content,
         rules: &Rules,
-        until: Advance,
         map: Option<early_map::Inputs<'_>>,
     ) -> Result<Outputs, Fault> {
-        let mut candidate = self.clone();
-        candidate.validate(content)?;
-        if candidate.early_map.is_some() != map.is_some()
-            || until == Advance::EarlyMap && (map.is_none() || candidate.pending())
-            || until == Advance::Yield && map.is_some()
-        {
+        if self.early_map.is_some() != map.is_some() {
             return Err(Fault::HudMap);
         }
-        if matches!(candidate.phase, Phase::Ready) {
-            if let (Some(owner), Some(premises)) = (&mut candidate.early_map, map) {
-                owner.begin(premises)?;
-            }
-            candidate.begin(input, content)?;
-        } else {
-            if candidate.context_inputs() != Some(input) {
-                return Err(Fault::Inputs);
-            }
-            if let (Some(owner), Some(premises)) = (&candidate.early_map, map)
-                && !owner.holds_applied(premises)
-            {
-                return Err(Fault::HudMap);
-            }
-        }
-        let mut sounds = Vec::new();
-        let mut graphics = Vec::new();
-        let mut appearance_receipts = Vec::new();
-        loop {
-            candidate.transition(content, rules)?;
-            if let (Phase::EarlyMap(_), Some(owner), Some(premises)) =
-                (&candidate.phase, &mut candidate.early_map, map)
-            {
-                owner.publish(candidate.movement.state(), premises)?;
-            }
-            let delivered = candidate
-                .appearance
-                .deliver()
-                .map_err(|_| Fault::Appearance)?;
-            sounds.extend(delivered.sounds);
-            graphics.extend(delivered.graphics);
-            let at =
-                usize::try_from(candidate.receipts_delivered).map_err(|_| Fault::Appearance)?;
-            appearance_receipts.extend(
-                candidate
-                    .appearance
-                    .model
-                    .0
-                    .completed
-                    .iter()
-                    .skip(at)
-                    .cloned(),
-            );
-            candidate.receipts_delivered =
-                u64::try_from(candidate.appearance.model.0.completed.len())
-                    .map_err(|_| Fault::Appearance)?;
-            if !candidate.pending()
-                || until == Advance::Yield
-                || until == Advance::EarlyMap && matches!(candidate.phase, Phase::EarlyMap(_))
-            {
-                break;
-            }
-        }
+        let mut candidate = self.clone();
         candidate.validate(content)?;
-        let ready = !candidate.pending();
-        let outputs = Outputs {
-            progress: if ready {
-                Progress::Complete
-            } else {
-                Progress::Pending
-            },
-            sounds,
-            graphics,
-            appearance_receipts,
-            movement: if ready {
-                candidate.movement.finished().map(|(_, out)| out.clone())
-            } else {
-                None
-            },
-            camera: ready.then_some(candidate.camera.0),
-        };
+        let outputs = candidate.frame(input, content, rules, map)?;
+        candidate.validate(content)?;
         *self = candidate;
         Ok(outputs)
     }
 
-    fn context_inputs(&self) -> Option<&inputs::Inputs> {
-        match &self.phase {
-            Phase::Ready => None,
-            Phase::Motion(ctx)
-            | Phase::MotionComplete(ctx)
-            | Phase::Contact(ctx)
-            | Phase::EarlyMap(ctx)
-            | Phase::Animation(ctx)
-            | Phase::AnimationComplete(ctx)
-            | Phase::Pose(ctx)
-            | Phase::PoseComplete(ctx)
-            | Phase::Selection(ctx)
-            | Phase::SelectedClip(ctx)
-            | Phase::SelectedClipComplete(ctx)
-            | Phase::RemainingMotion(ctx)
-            | Phase::RemainingMotionComplete(ctx)
-            | Phase::DashLoss(ctx)
-            | Phase::DashLossComplete(ctx)
-            | Phase::Camera(ctx) => Some(&ctx.inputs.0),
+    fn frame(
+        &mut self,
+        input: &inputs::Inputs,
+        content: &Content,
+        rules: &Rules,
+        map: Option<early_map::Inputs<'_>>,
+    ) -> Result<Outputs, Fault> {
+        if input.activity != inputs::Activity::Inactive
+            || input.items[types::Item::SpeedBooster]
+            || input.liquid != samus_appearance::Liquid::NONE
+        {
+            return Err(Fault::Family);
         }
+        input.geometry.validate().map_err(|_| Fault::Inputs)?;
+        running(self.playing.0, &content.appearance)?;
+        if self.playing.0.pose != self.movement.0.pose {
+            return Err(Fault::Figure);
+        }
+        if let (Some(owner), Some(premises)) = (&mut self.early_map, map) {
+            owner.begin(premises)?;
+        }
+        let playing = self.playing.0;
+        let previous = self.movement.0;
+        let clip = content.appearance.get(playing).ok_or(Fault::Figure)?;
+        let ahead = super::appearance::ahead(&self.appearance.0, clip);
+
+        let guard = world::Guard {
+            world: &input.geometry,
+            rejected: core::cell::Cell::new(false),
+        };
+        let mut samus = previous;
+        let outcome = super::movement::advance_scoped(
+            &mut samus,
+            &content.movement,
+            &rules.movement,
+            &MovementInputs {
+                sprite_before_movement: playing.sprite,
+                cinematic_active: matches!(
+                    input.cinematic,
+                    samus_appearance::CinematicActivity::Active
+                ),
+                pad: input.held,
+                pressed: input.pressed,
+                items: input.items,
+                spin_turned_far: ahead.turned_far,
+                elevator_moving: false,
+                parity: input.parity,
+                animation_ends: ahead.end,
+            },
+            &guard,
+        )
+        .map_err(|_| Fault::Movement)?;
+        if guard.rejected.get() {
+            return Err(Fault::Family);
+        }
+        if let (Some(owner), Some(premises)) = (&mut self.early_map, map) {
+            owner.publish(outcome.position_after_moves, premises)?;
+        }
+
+        let selected = Figure {
+            pose: samus.pose,
+            sprite: playing.sprite,
+        };
+        drawn(selected, &content.appearance)?;
+        let mut appearance = self.appearance.0;
+        let shown = animation::play(
+            &mut appearance,
+            &content.appearance,
+            &rules.appearance,
+            Parts {
+                stride: Some(Stride {
+                    figure: playing,
+                    suppressors: input.contact,
+                }),
+                animation: Some(super::played::animation_inputs(
+                    playing, selected, &outcome, input,
+                )),
+                selection: Some(Selection {
+                    from: playing,
+                    selected,
+                    items: input.items,
+                    submerged: input.liquid.submerged,
+                    cinematic: input.cinematic,
+                }),
+            },
+        )
+        .map_err(|_| Fault::Figure)?;
+
+        let mut camera = self.camera.0;
+        super::camera_semantic::follow(
+            &mut camera,
+            &previous,
+            &samus,
+            &outcome,
+            &input.camera,
+            rules.camera.get(),
+        )?;
+
+        self.movement = Model(samus);
+        self.appearance = Model(appearance);
+        self.playing = Model(selected);
+        self.camera = Model(camera);
+        self.completed = self.completed.saturating_add(1);
+        Ok(Outputs {
+            sounds: shown.sounds,
+            contact: shown.contact,
+            movement: outcome,
+            camera,
+        })
     }
+}
+
+/// A frame starts in the running family: a plain running figure, facing left or right.
+fn running(figure: Figure, content: &AppearanceContent) -> Result<(), Fault> {
+    if figure.pose.action != Action::Running
+        || !matches!(figure.pose.facing, Facing::Left | Facing::Right)
+    {
+        return Err(Fault::Figure);
+    }
+    drawn(figure, content)
+}
+
+/// A figure she may end a frame in: plain, with an imported clip. The pose she takes may
+/// leave the running family; the next frame then refuses to start.
+fn drawn(figure: Figure, content: &AppearanceContent) -> Result<(), Fault> {
+    if figure.sprite != Sprite::Plain || content.get(figure).is_none() {
+        return Err(Fault::Figure);
+    }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn pins_keep_complete_inputs_query_and_work() {
+    fn pins_keep_complete_inputs_and_playing_figure() {
         use canonical::model::{pin_holds, shape};
         assert_eq!(
             (
                 shape::<inputs::Inputs>(),
-                shape::<samus_appearance::Ahead>(),
-                pin_holds::<crate::production::appearance::WorkPin>(),
-                pin_holds::<crate::production::movement_work::WorkPin>(),
-                pin_holds::<crate::production::movement_work::ReceiptsPin>()
+                pin_holds::<PlayingPin>(),
+                pin_holds::<AppearancePin>()
             ),
-            (
-                Ok(inputs::InputsPin::SHAPE),
-                Ok(AheadPin::SHAPE),
-                Ok(()),
-                Ok(()),
-                Ok(())
-            )
+            (Ok(inputs::InputsPin::SHAPE), Ok(()), Ok(()))
         );
     }
 }

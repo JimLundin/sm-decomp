@@ -413,7 +413,6 @@ impl Inputs {
                 )?;
                 production.advance(AdvanceInput::Connected {
                     inputs: inputs.current(cut)?,
-                    advance: game::production::connected::Advance::Opportunity,
                 })
             }
             Context::MovementCeres {

@@ -10,7 +10,6 @@ mod ceres;
 mod compare;
 mod connected;
 mod early_map;
-mod full_movement;
 mod gameplay_sounds;
 mod health_tail;
 mod hud;
@@ -29,6 +28,7 @@ pub mod result;
 mod runner;
 mod sender_offer;
 mod shot_drawing;
+mod touched_cells;
 mod weapons;
 
 use compare::{CompareFault, Observation};

@@ -10,7 +10,7 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 ## Header
 
 **Scope.** Part 1 of the domain "how Samus looks": her animation's timing, its sound opportunities (§9),
-when her cannon may follow the selected item (§11), and the ordinary dry palette opportunity (§12).
+when her cannon may follow the selected item (§10), and the ordinary dry palette opportunity (§11).
 Her sprite and colours belong to the same domain because the player sees one figure.
 The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -28,7 +28,7 @@ domain).
 
 **Palette neighbours.** Movement supplies the selected figure and position. Equipment,
 room effects, Environment, Grapple and the charge and effect owners supply current facts
-(§12). Appearance owns the ordinary visor and charge-glow reset. Room palette objects
+(§11). Appearance owns the ordinary visor and charge-glow reset. Room palette objects
 supply their own palette changes, and video owns delivery of the current palette.
 
 **What it leaves to others**: which pose follows a clip's end (samus-movement, `AnimationEnds`);
@@ -64,10 +64,15 @@ within the frame. A vector gives them as `before` and compares them as `after`.
 | turned far | `bool`: whether her spin has turned far enough to kick off a wall (`SpinTurnedFar`); known from the frame's start, before samus-movement's step (§6) | samus-movement (`WallJump`), that frame |
 | sounds | the sound asked for by the animation update, at most one (an update passes at most one control): `PlainSpin`, `SpaceJump`, `ScrewAttack` (`WallJumpBranch`), `Boosting` (`BoostStages`) | the sound domain |
 | her step and the boost stage | as §1 | part 2 (her sprite, her glow), the shinespark, the echoes, the blocks, the enemies |
+| the frame's sounds | the requests of §9.2, in the order asked: the stride's, the animation update's, the spin start's, drawing's | the sound domain |
+| graphical contact | the stride's contact opportunity (`FootContact`) | part 2 (splashes and dust), that frame |
+| cannon may follow | readiness as the frame's item controls leave it (§10) | the picture of her gun, that frame |
+| her colour sequences | the visor delay, visor position and charge-glow position as the frame's palette opportunity leaves them (§11) | drawing and palette upload, that frame |
 
 The end and turned far are given ahead: each follows from the State and the clip of her pose at
 the frame's start alone, so a caller reads them before the frame, as samus-movement does. The frame
-itself then tells only what it alone can: the State it leaves and the sound it asks for.
+itself then tells only what it alone can: the State it leaves and the other outputs above,
+each as the whole frame leaves it.
 
 ### 1.2 Her pose
 
@@ -256,7 +261,7 @@ this spec (stated simplifications, docs/LEGACY.md):
 - params: the table.
 - switch: none.
 - She takes another pose, the pair in a row of "kept" below → her step and the time left stay as
-  they are [C-kept-run, C-kept-ball, C-kept-spring]
+  they are [C-kept-run, C-kept-run-advance, C-kept-ball, C-kept-spring]
 - She takes another pose, the pair in a row of "step 1" below → its clip from step 1, with its
   hold plus the start's slowdown, `hold + start` [C-spin-from-spin, C-spin-from-walljump,
   C-stand-up-from-up, C-landing-up-from-up, C-jump-up-from-takeoff, C-crouch-up-from-crouching,
@@ -484,25 +489,24 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
 
 These opportunities belong to how Samus looks: a foot contacting the ground is timed by the
 picture still showing, a spin starts with the figure she takes, and a spin ends while that
-figure is drawn. Each is an observable opportunity with its own inputs; the implementer chooses the
-interface form. None advances the animation, changes
-its four State quantities, or consumes a sound acknowledgement. The caller runs each at its
-named opportunity once. Multiple opportunities in one work may each ask for sound; the
-animation update's at-most-one output does not limit their combined outputs.
+figure is drawn. Each is a rule of the frame with its own inputs; the implementer chooses the
+interface form. None advances the animation, changes its four State quantities, or consumes a
+sound acknowledgement. Each applies at most once a frame. Several may ask for a sound in the
+same frame; the animation update's at-most-one sound does not limit them (§9.2).
 
 ### 9.1 Inputs, content and outputs
 
 | Quantity | Type and owner | Read by |
 | --- | --- | --- |
 | contact steps | a set of shown step indices in each clip, content supplied by the importer; any number of contacts, independent of holds and the kick mark | `FootContact` |
-| stride figure and playhead | her figure, step and frames left at the running movement opportunity, before the animation update; samus-movement and this domain | `FootContact` |
+| stride figure and playhead | her figure, step and frames left as the frame starts: her running movement doesn't change them, and the frame's update comes after the stride; samus-movement and this domain | `FootContact` |
 | cinematic active | bool, the cinematic owner | `FootContact`, `SpinStarts` |
 | boss active | bool, the boss owner | `FootContact` |
 | special colours active | bool, appearance's colour owner: special colour time remains | `FootContact` |
-| boosting | the boost stage already in this domain's State, at the stride opportunity | `FootContact` |
-| figure selected from and figure selected | her figure immediately before and after a pose selection, including its sprite; samus-movement | `SpinStarts` |
-| submerged and items | the existing liquid input and items switched on, at pose selection | `SpinStarts` |
-| previous and current movement | typed actions: spin, wall jump, or any named other action; previous is the caller-retained action captured at the latest actual work preparation, current is samus-movement's action at normal drawing. Previous is independent of pose-change history | `SpinEnds` |
+| boosting | the boost stage in this domain's State as the frame starts | `FootContact` |
+| figure selected from and figure selected | her pose and her pose after (§1.3), each with its sprite: the figure she ends the frame in, against the one she starts it in; samus-movement | `SpinStarts` |
+| submerged and items | the liquid input and the items switched on (§1.3) | `SpinStarts` |
+| previous and current movement | typed actions: spin, wall jump, or any named other action; previous is the action the caller kept when the frame's work was last prepared (§9.2), current is samus-movement's action as the frame ends. Previous is independent of pose-change history | `SpinEnds` |
 | current action, shoot held, charge | current action from samus-movement, bool from the pad, charge frames from weapons, a count from 0 to 32767 | `AtTheDoor` |
 
 A contact opportunity returns a graphical contact opportunity separately from its optional sound.
@@ -516,8 +520,7 @@ Sound outputs are semantic requests: `Footstep` to the footstep sounds, with at 
 `PlainSpin`, `SpaceJump` and `ScrewAttack` to Samus sounds, with at most 6 waiting;
 `SpinEnded` and `SamusSilence` to Samus sounds, with at most 15 waiting. Sound admission,
 sending, retries and driver replies belong to the sound domain. An outstanding retry is not
-another appearance opportunity. Callers preserve requests from distinct opportunities in the
-order those opportunities occur.
+another appearance sound. Callers keep the frame's requests in the order of §9.2.
 
 **Bounded engine admission for the other drawing effects.** Charge is zero, a charge sound is not retained
 for resumption, the echoes are quiet, debug is inactive, and the countdown has not expired.
@@ -597,224 +600,142 @@ about her items, prior action or cinematic activity.
   [C-door-held, C-door-threshold, C-door-above]
 - checked: constructed (the cases above); recorded (R-door).
 
-### 9.2 Opportunities and paused work
+### 9.2 The frame's sounds, in order
 
-The running contact read follows that running movement's position changes and precedes the
-animation update; pose selection follows. The selection read belongs to each actual pose selection;
-it uses the selected figures, not next-cut sound State. Normal drawing reads the remembered
-prepared action and the current action after pose selection, including the normal drawing
-performed during a passage's quieting; animation and motion may remain frozen there.
-The first passage read happens once on entry before the sound hold, separately from normal
-drawing. Sound retries are serviced by sound work alone. These reads require neither another
-motion step nor another animation update [C-end-frozen, C-contact, C-door-quiet].
+A frame of play gives this domain's sounds as one list, in the order they are asked for, with
+the graphical contact beside it:
 
+1. the stride's (`FootContact`), from the frame's start, after her running movement and before
+   the animation update;
+2. the animation update's own, at most one (`WallJumpBranch`, `BoostStages`);
+3. the spin start of the pose she takes (`SpinStarts`), after the clip of her pose at the
+   frame's start has played (§6, 3) and before the clip of the pose she takes starts (§6, 4);
+4. normal drawing's spin end (`SpinEnds`), with her action as the frame ends.
 
-An invented work combines the existing wall-jump branch sound with drawing's spin end;
-another combines a contact and a spin selection. Each retains both requests in opportunity
-order, retain graphical contact, and compare all four animation quantities while animation
-runs at most once [C-branch-and-end, C-contact-and-start].
+A frame in which she first enters a passage asks for `AtTheDoor`'s request once, before the
+passage holds its sounds, and then normal drawing's. Animation and motion may stay frozen in
+such a frame: it has no animation update, and normal drawing still compares her actions. Sound
+retries are the sound domain's. None of these needs another motion step or another animation
+update [C-end-frozen, C-contact, C-door-quiet].
 
+An invented frame combines the wall-jump branch sound with drawing's spin end; another
+combines a contact and a spin start. Each keeps both requests in this order and the graphical
+contact, and compares all four animation quantities, with at most one animation update
+[C-branch-and-end, C-contact-and-start].
 
-The caller captures her current action when work preparation actually runs, after earlier
-effects that may have changed her action, before ordinary movement; pose selection follows. It retains this
-snapshot independently of pose-change history, and restores it with the rest of the caller's
-State. Normal drawing reads the snapshot without refreshing or consuming it. It is a supplied
-input, outside this model's four animation quantities; the appearance model stores no extra
-history. A frame-start figure is not a substitute for the actual preparation snapshot.
+The caller keeps her current action whenever the frame's work is prepared, after
+earlier effects that may have changed her action and before ordinary movement; pose selection
+follows. It keeps this action independently of pose-change history, and restores it with the
+rest of the caller's State. Normal drawing reads it without refreshing or consuming it. It is
+a supplied input, outside this model's four animation quantities; the appearance model stores
+no extra history. Her figure as the frame starts is not a substitute for it.
 
-Frozen animation alone does not decide whether the snapshot changes. Locked work that still
-performs preparation captures the current action; paused drawing that bypasses preparation
-keeps the earlier snapshot. The extra inanimate body draw does not capture an action or run a
-second sound opportunity. If preparation is bypassed and normal drawing repeats, each actual
-normal drawing reads the same retained snapshot. These rules preserve both the last prepared
-spin and a current action that has left it, without another motion or animation update.
+Frozen animation alone does not decide whether the kept action changes. A frame whose work is
+locked but still prepared keeps the current action; a paused frame without that preparation keeps
+the earlier one. The extra inanimate body draw keeps no action and asks for no second sound. If
+preparation is skipped and normal drawing repeats, each normal drawing reads the same kept
+action. So both the last prepared spin and a current action that has left it are kept, without
+another motion or animation update.
 
-## 10. Observing and suspending the ordinary animation update
-
-The two halves and order of section6 still hold. These observations let timing see the existing
-animation decision before its effects, without another animation update. The implementation
-chooses its interface and retention mechanism; no concrete method, stage list or enum is required.
-
-| Quantity | Units and domain meaning | Read by |
-| --- | --- | --- |
-| pending animation decision | named existing animation rule, current figure/clip, playhead, stage/laps, relevant inputs and its chosen answer; steps as clip indices, holds in frames | output (timing); completion of that decision |
-| completed playing result | actual playhead, boost stage and laps after the current clip plays, plus its optional semantic sound | StartingClip, BoostStages; output |
-| actual selection | figure immediately before and actually accepted figure after selection, not an anticipated frame-end figure | StartingClip, HandOverSlowdown, SpinStarts |
-| interrupted animation update | all four animation quantities, pending answer and still-needed actual inputs/figures, completed outputs and consumed input position | output (caller save/restore); continuation of this update |
-
-These are update quantities, not a fifth persistent animation memory. The caller retains complete
-interrupted work alongside the four State quantities and caller-owned opportunity/input progress.
-An already chosen answer is retained unchanged. Inputs for a decision not yet made are supplied
-at its actual opportunity; different future figures cannot choose how the earlier current clip plays.
-
-### PerformedAnimationDecisions
-- kind: timing.
-- summary: the actual current clip decision and selected clip initialization are observable before their effects.
-- params: none; the observed rules retain their existing parameters and content.
-- switch: none.
-- An animation update reaches a move-driven playhead change, current-clip play decision, selected-clip start or dash-loss decision → offer its actual named rule, current quantities and chosen answer before applying it; report its completed State and sound before any later decision consumes them [C-op-kept-clip, C-op-current-play, C-op-restart-play, C-op-restart-adjusted, C-op-kept-advance]
-- checked: constructed (the cases above); adjusted (C-op-restart-adjusted).
-
-Clip-playing reads the actual playhead after earlier movement-driven changes and rising hold,
-and the current figure's clip, pace and stage. Its answer does not require a future selected
-figure. Selected-clip initialization instead reads the actual accepted selection and the already
-completed playing result. A kept Running clip keeps that result, including a hold newly read
-from the old clip, rather than restoring its earlier playhead or reading a new clip's hold.
-Dash loss follows these decisions as section6 defines.
-
-FootContact and SpinStarts remain independent read-only opportunities of section9, with their
-actual current quantities at the named opportunity. A contact reads after running position
-changes and before animation advances. Selection reads actual selected figures. Their sound and
-graphical outputs keep opportunity order with any animation-control output; none advances the
-playhead, repeats movement or consumes a sound acknowledgement. Sound suppression leaves contact
-graphics available. NormalDraw and PassageEntry keep their existing frozen-work meanings.
-
-### SuspendedAppearance
-- kind: timing.
-- summary: interrupted animation and appearance opportunities continue once with complete State and ordered outputs.
-- params: none.
-- switch: none.
-- Suspend before an offered animation effect or after a completed animation/appearance opportunity → serialize all four State quantities, pending answer and still-needed actual inputs/figures, completed outputs and consumed opportunity/input progress; discard the original interrupted instance and deserialize a fresh instance to restore to identical final State, graphics and ordered sounds as uninterrupted updating [C-op-kept-clip, C-op-current-play, C-op-restart-play, C-op-restart-adjusted, C-op-contact-order, C-op-contact-suppressed]
-- The actual selection changes after current-clip playing but before selected-clip initialization is decided → preserve the already played current clip and decide initialization from the new actual selection [C-resume-selection-before]
-- Selection changes after the local initialization answer was chosen, before its effect → apply the retained answer to its retained actual selection once, without recomputing it from the later figure [C-resume-selection-after]
-- A contact suppressor changes before contact is read → its fresh value decides that sound, leaving graphics available [C-resume-contact-before]
-- A contact suppressor changes after contact was completed → retain its completed sound and graphics without another contact read or publication [C-resume-contact-after]
-- checked: constructed (the opportunity cases above), using every offered/completed opportunity as a save point.
-
-The ordinary animation entry completes the same rules without suspension. Read-only Ahead and
-appearance opportunities remain read-only; retaining their completed receipt prevents a resumed
-update from asking them again. Saving observes work without advancing it. The caller's prepared
-action snapshot remains independently retained as section9.2 specifies. A completed update has
-no effects left to resume. All existing ordinary and frozen-work vectors retain their results.
-
-Opportunity vectors use the additive `suspended_update` format documented in the existing
-[samus-appearance vectors](../../scenarios/vectors/samus-appearance.toml). Animation rules and
-content determine the answers; timing assigns no animation result or future selection. These
-observations introduce no liquid, palette, echo, sound-transport or dispatch producer.
-
-A future input is not cached merely because an update has begun. The changed-selection cases
-play the old running clip to step2 with hold5 first. Before the selected initialization decision,
-a new actual falling selection starts hold9. After a KeepPlayhead answer was already chosen for
-the running selection, a later supplied figure cannot change that answer or its selected identity.
-The paired contact cases likewise distinguish an unmade read from a completed publication.
-These are observations of existing total rules, not new capability guards.
-
-Every all-opportunity save test serializes the complete interrupted work and caller-held inputs,
-opportunity/query and output progress, discards the original objects, then deserializes fresh
-objects. A clone or memory-only checkpoint is insufficient. All four animation quantities,
-actual figures, pending answers and completed sound/graphic progress survive; each actual effect
-and read-only opportunity publishes once. Compare complete State and all outputs, beyond the
-listed observation subsequence. No storage layout, method list or stage enum is prescribed.
-
-## 11. When the cannon may follow her selected item
+## 10. When the cannon may follow her selected item
 
 The HUD owns the selected item. Her look owns the delay before her cannon may follow that
 item: a selection change can leave the cannon showing its previous open or closed state for
-one item-control opportunity. This is independent of the animation playhead, boost and sounds.
+one more frame of item controls. This is independent of the animation playhead, boost and sounds.
 Opening or closing the cannon, its pictures, and which selected items need it open remain
 downstream appearance rules; readiness does not assert that the cannon has finished moving.
 
 | Quantity | Units and domain type | Why the player can tell | Read by |
 | --- | --- | --- | --- |
-| cannon selection delay | `CannonDelay`, 0 to 2 eligible item-control opportunities remaining | her cannon can keep its previous open or closed state while the newly selected item is already highlighted | `CannonItemDelay`, `CannonReadinessReset`; output (the picture of her gun) |
-| cannon may follow the selection | readiness: delay is zero | the cannon may begin responding to the currently selected item | output (the picture of her gun) |
+| cannon selection delay | `CannonDelay`, 0 to 2 frames of eligible item controls remaining | her cannon can keep its previous open or closed state while the newly selected item is already highlighted | `CannonItemDelay`, `CannonReadinessReset`; output (the picture of her gun) |
+| cannon may follow the selection | readiness: the delay, as the frame's item controls leave it, is zero | the cannon may begin responding to the currently selected item | output, that frame (the picture of her gun) |
 
 The delay is separate persistent appearance memory. A caller can construct it at every value
-in its range, read it, and serialize/deserialize its complete owner. The existing four animation
-quantities and their interrupted work remain complete and unchanged; a caller carrying the
+in its range, read it, and save and restore it with the rest of the look; a caller carrying the
 whole look also carries cannon readiness. It is not reconstructed from the selected item,
 whether her gun is open, a frame number, or an event retained by the HUD.
 
-**Inputs and neighbours.** One actual item-control observation supplies whether controls are
+**Inputs and neighbours.** A frame whose item controls run supplies whether controls are
 eligible (the HUD's `can switch`) and the selected item identities immediately before and
 after those controls. An identity is none, missiles, super missiles, power bombs, the x-ray
 scope or the grapple beam. The HUD's one-shot mode is independent: `Item(item)` and
 `OneShot(item)` have the same identity. The event `Switched` also is independent: item cancel
 on none and cycling back to the same available identity still report an event.
 
-These identities belong to the actual control answer and its starting selection. They are not
-the displayed highlight, an animation figure, or a selection read after a later weapon
-drop. Controls that cannot switch do not advance this clock. Its unit is a performed eligible
-control observation, not a video interrupt, a lag frame, an animation update or a drawing call. Frozen
-time alone does not suppress an eligible control observation. An ordinary skipped control
-observation, including facing the screen or being controlled by another domain, leaves it alone.
+These identities belong to the item controls' own answer and the selection they start from.
+They are not the displayed highlight, an animation figure, or a selection read after a later
+weapon drop. Controls that cannot switch do not advance this clock. Its unit is a frame whose
+eligible item controls run, not a video interrupt, a lag frame, an animation update or a
+drawing. Frozen time alone does not stop eligible controls. A frame whose controls are skipped,
+including facing the screen or being controlled by another domain, leaves it alone.
 
 ### CannonItemDelay
 - kind: mechanic.
-- summary: after her selected item changes, the cannon waits for one more eligible control observation before it may follow that item.
+- summary: after her selected item changes, the cannon waits for one more frame of eligible item controls before it may follow that item.
 - params: none.
 - switch: none.
-- Eligible controls complete with different selected item identities before and after them → the delay becomes 1, including a change to none and another change during a delay [C-cannon-change, C-cannon-deselect, C-cannon-rechange, R-cannon-select, R-cannon-deselect].
-- Eligible controls complete with the same selected item identity → the delay becomes `max(0, delay - 1)`, irrespective of a same-item switch event or a change in one-shot mode [C-cannon-change, C-cannon-same-event, C-cannon-mode-only, C-cannon-ready, R-cannon-follow, R-cannon-same-item].
-- Controls are ineligible or are skipped → the delay stays as it is [C-cannon-disabled, C-cannon-skipped, C-cannon-frozen, R-cannon-lag].
+- Eligible controls run with different selected item identities before and after them → the delay becomes 1, including a change to none and another change during a delay [C-cannon-change, C-cannon-deselect, C-cannon-rechange, C-cannon-drop-after-change, R-cannon-select, R-cannon-deselect].
+- Eligible controls run with the same selected item identity → the delay becomes `max(0, delay - 1)`, irrespective of a same-item switch event or a change in one-shot mode [C-cannon-change, C-cannon-same-event, C-cannon-mode-only, C-cannon-ready, R-cannon-follow, R-cannon-same-item].
+- Controls are ineligible or are skipped, or the selection changes outside item controls → the delay stays as it is [C-cannon-disabled, C-cannon-skipped, C-cannon-frozen, C-cannon-external-drop, C-cannon-drop-after-change, R-cannon-lag].
 - checked: oracle (the R cases); constructed (the C cases).
 
 ### CannonReadinessReset
 - kind: mechanic.
-- summary: a newly initialized Samus needs two eligible unchanged item-control observations before her cannon may follow the selection.
+- summary: a newly initialized Samus needs two frames of eligible unchanged item controls before her cannon may follow the selection.
 - params: none.
 - switch: none.
 - Samus is initialized for arrival at Ceres or Zebes, or a demo is initialized → the delay becomes 2 [C-cannon-initialize, C-cannon-reset-during-wait].
 - A pose or clip changes, drawing repeats, the game lags or a passage only moves her to another room without reinitializing Samus → keep this delay; only `CannonItemDelay` and actual initialization change it [C-cannon-unrelated, C-cannon-skipped, R-cannon-lag].
 - checked: original only (initialization); constructed (the C cases). No recorded initialization-delay history is claimed.
 
-### RetainedCannonReadiness
-- kind: timing.
-- summary: cannon readiness follows one actual completed control answer, survives interruption, and is read without advancing it.
-- params: none.
-- switch: none.
-- An eligible control answer has been chosen but has not completed → preserve the current readiness until that actual answer's effects complete; the completed look applies its retained before/after item identities once [C-cannon-retained-change, C-cannon-retained-same].
-- Suspend with an unmade readiness observation, an actual chosen answer or completed readiness effects → serialize complete readiness, any pending actual answer and consumed control/read progress, discard the objects, and deserialize fresh instances; continuation produces exactly the uninterrupted readiness and outputs without repeating a completed update [C-cannon-retained-change, C-cannon-retained-same, C-cannon-save-ready].
-- Read readiness for the picture of her gun, or save or inspect the owner → report whether its delay is zero, without changing the delay or advancing animation or sounds [C-cannon-change, C-cannon-initialize, C-cannon-save-ready, C-cannon-unrelated].
-- checked: constructed (the C cases at the unmade, chosen and completed boundaries).
+**Order that matters.** A frame's eligible item controls change the delay before her gun's
+picture reads it that frame. A changed selection has delay 1 in the frame of those controls. At
+the next frame of eligible unchanged controls it reaches zero, so that frame's picture may follow
+the item. A selection drop outside item controls, before or after them in the frame, does not
+itself age or restart this clock; drawing reads the current selected item with the delay as it
+stands [C-cannon-external-drop, C-cannon-drop-after-change]. All cannon animation, weapon
+selection, weapon-charge effects and suit colour changes and rendering outputs remain their
+neighbouring contracts.
 
-**Order that matters.** The actual eligible control observation changes readiness before the
-cannon reads it for that drawing opportunity. A changed selection has delay 1 during the
-first draw after those controls. At the next eligible unchanged observation it reaches zero,
-so the following draw may follow the item. An intervening selection drop outside item controls
-does not itself age or restart this clock; drawing reads the actual current selected item with
-the existing readiness [C-cannon-external-drop]. All cannon animation, weapon selection,
-weapon-charge effects and suit colour changes and rendering outputs remain their existing neighbouring contracts.
+The `cannon_readiness` vectors in the appearance vector file hold histories of these frames.
+They supply item identities and one-shot mode separately and compare the delay after every
+operation. The implementation chooses the interface and shape; no source counter, callback,
+method list or original state encoding is specified.
 
-The additive `cannon_readiness` vectors in the existing appearance vector file contain complete
-histories of these observations. They supply item identities and one-shot mode separately and
-compare readiness after every operation. Existing ordinary, opportunity and changed-resume
-vectors retain their inputs and results. The implementation chooses the interface and shape;
-no source counter, callback, method list or original state encoding is specified.
-
-## 12. Samus's colours during ordinary dry movement
+## 11. Samus's colours during ordinary dry movement
 
 Appearance owns the visor sequence and charge-glow position, alongside animation and
-cannon readiness. The complete state at this opportunity includes both ordered palettes.
+cannon readiness. The frame's palette state includes both ordered palettes.
 Keep a single current palette and a single palette for target colours shared by their producers and
 consumers. Appearance's ordinary reset needs no reads or writes of either palette. Room
-palette objects and other producers make their own changes to those same palettes. Video
-reads the current colours for presentation, and colour transitions can read the target
-colours. The same palettes remain authoritative while the reset is pending. A colour
-producer can change either palette during that time. Completion keeps the latest colours
-at their exact slots and emits no colour replacement, graphics, sound or hardware request.
+palette objects and other producers make their own changes to those same palettes, in the
+reset's frame as in any other. Video reads the current colours for presentation, and colour
+transitions can read the target colours. The reset keeps whatever colours the frame's other
+producers leave, at their exact slots, and asks for no colour replacement, graphics, sound or
+hardware request.
 
-### 12.1 Persistent quantities
+### 11.1 Persistent quantities
 
 | Quantity | Type and units | Read by |
 | --- | --- | --- |
-| visor delay | `VisorDelay`, 0 to 255 eligible palette ticks remaining | `OrdinaryDryColours`; visor sequence |
-| visor sequence position | `VisorStep`, entry in the visor's colour sequence, numbered from zero | `OrdinaryDryColours`; visor sequence |
-| charge-glow position | `ChargeGlowPosition`, a picture in the charge glow's sequence, numbered from zero, with zero the reset position | `OrdinaryDryColours`; charge-glow sequence |
+| visor delay | `VisorDelay`, 0 to 255 eligible palette ticks remaining | `OrdinaryDryColours`; output, that frame (the visor sequence) |
+| visor sequence position | `VisorStep`, entry in the visor's colour sequence, numbered from zero | `OrdinaryDryColours`; output, that frame (the visor sequence) |
+| charge-glow position | `ChargeGlowPosition`, a picture in the charge glow's sequence, numbered from zero, with zero the reset position | `OrdinaryDryColours`; output, that frame (the charge-glow sequence) |
 | current colours | `Palette`, 256 ordered RGB colours with 0 to 31 levels per component | output (video and colour transitions) |
 | target colours | `Palette`, 256 ordered RGB colours with 0 to 31 levels per component | output (colour transitions) |
-| actual palette opportunity progress | before observation, a pending admitted observation, or completed for the same opportunity | `RetainedDryColours`; continuation |
 
 A caller can supply and read back the entire palette state, including when the palettes
-are stored in a shared owner. A complete save and restore preserves both palettes at their
-current values along with Appearance's reset state and applicable progress. A reset charge-glow position
-describes the sequence's first picture. The current beam and effect facts govern
-whether a glow is active. The caller also retains the rest of the look and the actual
-opportunity's identity and delivery progress, so one completed opportunity cannot be
-applied twice. An application count, when observed, counts completions, including a
-completion that leaves the values equal. It does not count colour writes or frames.
+are stored in a shared owner. A save and restore keeps both palettes at their current values
+along with Appearance's three sequence quantities. A reset charge-glow position describes the
+sequence's first picture. The current beam and effect facts govern whether a glow is active.
+A frame applies the reset at most once; whether it applied is an output of the frame, and
+applying it can leave the three quantities as they were.
 
-### 12.2 Current observations
+### 11.2 Current observations
+
+Each observation is its owner's value for the frame's palette opportunity: her figure and where
+she is once this frame has moved her and selected her pose, the suit selection made for this
+frame, and the others as their owners have them by then.
 
 | Observation | Type and owner | Read by |
 | --- | --- | --- |
@@ -828,9 +749,9 @@ completion that leaves the values equal. It does not count colour writes or fram
 | appearance override and special colouring | independently inactive or active, from the current colour-effect owners | `OrdinaryDryColours` |
 | speed glow and hit colour pulse | independently inactive or active, from current boost activity and the damage appearance owner | `OrdinaryDryColours` |
 
-Use the current suit selection. With Gravity enabled it is Gravity, otherwise with Varia
-enabled it is Varia, otherwise it is Power. A value once observed before a current selection
-cannot stand for the completed selection, even if it describes the same suit. Similar-looking
+Use the frame's suit selection. With Gravity enabled it is Gravity, otherwise with Varia
+enabled it is Varia, otherwise it is Power. A suit value from before this frame's selection
+cannot stand for it, even if it describes the same suit. Similar-looking
 facts such as a camera's tether-related scrolling status or which layers haze blends do not establish
 the grapple or room effects observations above.
 
@@ -840,34 +761,24 @@ the grapple or room effects observations above.
 - summary: during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were.
 - params: none.
 - switch: none.
-- An actual palette opportunity observes a current valid upright figure that is running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Preserve all 256 current and 256 target colours at their positions, even with different valid poses of those actions, positions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump].
+- The frame's palette opportunity sees a valid upright figure that is running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Leave all 256 current and 256 target colours at their positions as the frame's other producers leave them, even with different valid poses of those actions, positions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump, C-ordinary-shared-colours].
 - checked: oracle (recorded application and preservation for each admitted action, R-ordinary-run-colours to R-ordinary-moonwalk-colours); original and constructed (stale reset and varied inputs).
 
-**Admission.** The surrounding caller reports unsupported for an actual palette opportunity
+**Admission.** The surrounding caller reports unsupported for a frame's palette opportunity
 outside this arm: other actions (among them falling, crouching, the morph and spring balls,
 taking off, standing up, wall jumps, turning on the ground or in a fall, landing from a spin
 or a wall jump, and any action of a crouched or ball figure), a spin while the screw attack is
 switched on, other suits, water or magma present, busy grapple, active stored
 glow, weapon charging, special colouring, appearance override, speed glow or hit colour pulse, and
 unrecognized or unavailable current facts or unrepresentable colours. Red and orange room backgrounds can advance the
-visor sequence clock and are outside the ordinary reset. The attempt leaves the palette and
-application progress unchanged on refusal. Idle time, skipped opportunities and observation
-or drawing alone do not apply this rule. `C-ordinary-boundary` changes each premise of a run
+visor sequence clock and are outside the ordinary reset. A refused frame leaves the three
+quantities and both palettes as they were and applies nothing. A frame without a palette
+opportunity, or drawing alone, does not apply this rule. `C-ordinary-boundary` changes each premise of a run
 independently, and `C-ordinary-spin-boundary` the premises of a spin, the screw attack included.
 
-### RetainedDryColours
-
-- kind: timing.
-- summary: one actual ordinary palette opportunity survives interruption and applies its reset once.
-- params: none.
-- switch: none.
-- The palette opportunity is admitted but its effects are pending → the complete prior palette state is still readable. Retain the actual admitted observation across suspension so a newer neighbouring value cannot substitute for the one already observed. Before observation the caller must still ask the current owners [C-ordinary-stale, C-ordinary-spin-stale, C-ordinary-boundary, C-ordinary-spin-boundary].
-- The admitted opportunity's effects complete → publish the reset and preserved palettes once. Saving, restoring, inspecting or continuing a completed opportunity does not apply it again. Save and restore the complete state and applicable progress at unobserved, pending and completed cuts, then compare the continued result with an uninterrupted execution [C-ordinary-stale, C-ordinary-already-ready, C-ordinary-shared-colours, C-ordinary-spin-stale, C-ordinary-jump-stale].
-- checked: constructed (interruption, changed neighbours and independent writes to both palettes).
-
-**Order that matters.** Observe this opportunity after the current selected figure, position
-and suit answer are available, before health maintenance and later drawing or palette upload.
-Its completion makes the updated metadata available to later opportunities. It does not
-advance animation, cannon readiness, movement, room palette objects or health. The model
-chooses its API and representation. The palette histories in the vector file specify the
-visible outcomes and retention cuts.
+**Order that matters.** The frame's palette opportunity comes after movement has selected her
+figure and position and the suit has been selected, and before health maintenance and the
+frame's later drawing and palette upload, which read the three quantities as the reset leaves
+them. It does not advance animation, cannon readiness, movement, room palette objects or
+health. The model chooses its API and representation. The palette histories in the vector file
+specify the visible outcomes.

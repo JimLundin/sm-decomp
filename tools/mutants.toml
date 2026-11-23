@@ -70,9 +70,9 @@ field = "hud.grid"
 name = "appearance-double-update"
 responsibility = "appearance"
 file = "crates/game/src/production/animation.rs"
-before = '''let (next, sound) = samus_appearance::update(*state, inputs, &provider, rules);'''
-after = '''let (first, _) = samus_appearance::update(*state, inputs, &provider, rules);
-    let (next, sound) = samus_appearance::update(first, inputs, &provider, rules);'''
+before = '''let (after, outputs) = samus_appearance::update(before, &frame, &provider, rules);'''
+after = '''let (first, _) = samus_appearance::update(before, &frame, &provider, rules);
+    let (after, outputs) = samus_appearance::update(first, &frame, &provider, rules);'''
 case = "appearance/standing-clip"
 cut = 435
 field = "appearance.time-left"
@@ -122,23 +122,16 @@ cut = 9
 field = "ceres.phase"
 
 [[fault]]
-name = "movement-considered-miss-omitted"
+name = "movement-inside-cells-omitted"
 responsibility = "movement"
 file = "crates/game/src/production/movement.rs"
 before = "Ok(outcome)"
 after = '''let mut outcome = outcome;
-    if let Some(request) = outcome.movement_work.iter_mut().find_map(|work| match work {
-        types::MovementWork::Motion(request) => Some(request),
-        types::MovementWork::Support(_) | types::MovementWork::BodyFit(_) => None,
-    }) {
-        if let Some(search) = &mut request.enemy_search {
-            search.candidates.pop();
-        }
-    }
+    outcome.inside.clear();
     Ok(outcome)'''
 case = "movement-native-occupied-first-search"
 cut = 9233
-field = "movement.motion.0.enemy_search.candidates"
+field = "movement.inside.count"
 
 [[fault]]
 name = "movement-required-enemy-input-omitted"
@@ -148,15 +141,15 @@ before = "&self.enemies"
 after = "&[]"
 case = "movement-native-enemy-stop-terrain-absence"
 cut = 9233
-field = "movement.motion.0.ordinary_terrain_tests"
+field = "movement.reached.complete.count"
 
 [[fault]]
 name = "connected-playhead-reseed"
 responsibility = "appearance"
 file = "crates/game/src/production/connected.rs"
-before = '''        self.receipts_delivered = 0;'''
-after = '''        self.appearance.model.0.state.playhead = samus_appearance::Playhead { step: samus_appearance::Step::FIRST, time_left: samus_appearance::Frames::NONE };
-        self.receipts_delivered = 0;'''
+before = '''        let playing = self.playing.0;'''
+after = '''        self.appearance.0.playhead = samus_appearance::Playhead { step: samus_appearance::Step::FIRST, time_left: samus_appearance::Frames::NONE };
+        let playing = self.playing.0;'''
 case = "connected-ordinary/carried-running-camera"
 cut = 7
 field = "appearance.step"
@@ -164,19 +157,10 @@ field = "appearance.step"
 [[fault]]
 name = "connected-wrap-omitted"
 responsibility = "appearance"
-file = "crates/game/src/production/connected/transition.rs"
-before = '''            Phase::AnimationComplete(ctx) => {
-                if !self.appearance.complete() {
-                    return Err(Fault::Appearance);
-                }
-                Phase::Animation(ctx)
-            }'''
-after = '''            Phase::AnimationComplete(ctx) => {
-                let before = self.appearance.model.0.state.playhead;
-                if !self.appearance.complete() { return Err(Fault::Appearance); }
-                if self.appearance.model.0.state.playhead.step < before.step { self.appearance.model.0.state.playhead.step = before.step; }
-                Phase::Animation(ctx)
-            }'''
+file = "crates/game/src/production/connected.rs"
+before = '''        let mut camera = self.camera.0;'''
+after = '''        if appearance.playhead.step < self.appearance.0.playhead.step { appearance.playhead.step = self.appearance.0.playhead.step; }
+        let mut camera = self.camera.0;'''
 case = "connected-ordinary/carried-running-camera"
 cut = 14
 field = "appearance.step"
@@ -194,12 +178,10 @@ field = "camera.view.x.fraction"
 [[fault]]
 name = "connected-motion-placement-omitted"
 responsibility = "movement"
-file = "crates/game/src/production/movement_work.rs"
-before = '''        work.model = candidate;
-        work.completed.0.push(decision);'''
-after = '''        if matches!(decision, MovementDecision::MotionAnswer { .. }) { candidate.0.state.position = work.model.0.state.position; }
-        work.model = candidate;
-        work.completed.0.push(decision);'''
+file = "crates/game/src/production/connected.rs"
+before = '''        if guard.rejected.get() {'''
+after = '''        samus.position = previous.position;
+        if guard.rejected.get() {'''
 case = "connected-ordinary/carried-running-camera"
 cut = 7
 field = "movement.state.complete"
@@ -207,9 +189,9 @@ field = "movement.state.complete"
 [[fault]]
 name = "connected-playing-publication-omitted"
 responsibility = "appearance"
-file = "crates/game/src/production/connected/transition.rs"
-before = '''                self.playing = Model(offered.inputs.figure_after);'''
-after = '''                let _ = offered.inputs.figure_after;'''
+file = "crates/game/src/production/connected.rs"
+before = '''        self.playing = Model(selected);'''
+after = '''        let _ = selected;'''
 case = "connected-ordinary/carried-running-camera"
 cut = 7
 field = "appearance.playing"
@@ -229,8 +211,8 @@ field = "camera.view.x.fraction"
 name = "connected-stale-run"
 responsibility = "movement"
 file = "crates/game/src/production/connected.rs"
-before = "            pad: ctx.inputs.0.held,"
-after = "            pad: types::Buttons(ctx.inputs.0.held.0 | types::button::RUN.0),"
+before = "                pad: input.held,"
+after = "                pad: types::Buttons(input.held.0 | types::button::RUN.0),"
 case = "connected-ordinary/run-release-floor-aim"
 cut = 141
 field = "movement.state.complete"
@@ -347,13 +329,12 @@ before = '''                    .offer(CueId::BackgroundSilence, QueueAllowance:
         {
             return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
         }
-        let opportunity = Opportunity::PassageEntry {
+        let quieting = super::animation::passage_entry(PassageEntry {
             current: content.movement,
             shoot_held: shoot.0,
             charge: content.charge,
-        }
-        .read();
-        let offer = if let Some(sound) = opportunity.sound {
+        });
+        let offer = if let Some(sound) = quieting {
             if sound != SoundRequest::SamusSilence
                 || sound.queue() != SoundQueue::Samus
                 || sound.max_waiting() != 15
@@ -397,13 +378,12 @@ after = '''                    .offer(CueId::SamusSilence, QueueAllowance::Fifte
         {
             return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
         }
-        let opportunity = Opportunity::PassageEntry {
+        let quieting = super::animation::passage_entry(PassageEntry {
             current: content.movement,
             shoot_held: shoot.0,
             charge: content.charge,
-        }
-        .read();
-        let offer = if let Some(sound) = opportunity.sound {
+        });
+        let offer = if let Some(sound) = quieting {
             if sound != SoundRequest::SamusSilence
                 || sound.queue() != SoundQueue::Samus
                 || sound.max_waiting() != 15

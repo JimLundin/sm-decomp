@@ -25,7 +25,8 @@ pub enum BehaviourId {
     Jumping,
     /// The pull that holds her on the floor after each horizontal move (§4).
     FollowingTheGround,
-    /// A frame's moves follow the pose she started it in (§4).
+    /// A frame's moves follow the pose she started it in, and it reports where they leave
+    /// her (§4).
     MovesAsShePosed,
     /// How a taller new pose is fitted between what is above and below her (§4).
     PoseFitAfterMoves,
@@ -43,16 +44,6 @@ pub enum BehaviourId {
     AcceptedFloorResponse,
     /// Ordered touchdown sound opportunities and separate graphics permission.
     TouchdownRequests,
-    /// Actual ordered leading-edge collision work without timing cost.
-    PerformedCollisionTests,
-    /// Actual travel and clearance requests, including zero and enemy stops.
-    MotionAttempts,
-    /// Considered eligible-box prefix in supplied order.
-    ReachedEnemyCandidates,
-    /// Separate floor and ceiling support decisions.
-    PerformedSupportChecks,
-    /// Selected-body consideration and its actual clearances.
-    PerformedBodyFit,
     /// What touching down does to her speeds, and the ball's bounces (§6).
     Landing,
     /// What decides her next pose, and when the change acts (§7).
@@ -83,10 +74,6 @@ pub enum BehaviourId {
     OtherBlockKinds,
     /// How the top speed is tested part by part (§9).
     WordwiseTopSpeed,
-    /// Actual named decisions offered before their dependent effects.
-    PerformedMotionDecisions,
-    /// Complete serialized continuation without repeated work.
-    SuspendedMovement,
 }
 
 /// A catalogue entry.
@@ -106,7 +93,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 41] = [
+pub const CATALOGUE: [Behaviour; 34] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -179,7 +166,7 @@ pub const CATALOGUE: [Behaviour; 41] = [
     },
     Behaviour {
         id: BehaviourId::MovesAsShePosed,
-        summary: "a frame's moves follow the pose she started it in.",
+        summary: "a frame's moves follow the pose she started it in, and the frame reports where they leave her.",
         kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -235,43 +222,8 @@ pub const CATALOGUE: [Behaviour; 41] = [
     },
     Behaviour {
         id: BehaviourId::TouchdownRequests,
-        summary: "a real touchdown offers ordered sounds and separate graphics permission.",
+        summary: "a real touchdown offers its sounds and a separate touchdown graphics opportunity.",
         kind: Kind::Output,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::PerformedCollisionTests,
-        summary: "report actual ordered leading-edge collision work without assigning cost.",
-        kind: Kind::Output,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::MotionAttempts,
-        summary: "actual requests retain intended travel, geometry and result",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::ReachedEnemyCandidates,
-        summary: "eligible boxes actually considered in supplied order",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::PerformedSupportChecks,
-        summary: "floor then ceiling support with updated centres",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::PerformedBodyFit,
-        summary: "actual selected-body consideration and clearance",
-        kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
@@ -378,20 +330,6 @@ pub const CATALOGUE: [Behaviour; 41] = [
         summary: "the top speed is tested part by part.",
         kind: Kind::Quirk,
         switch: Switch::Toggle,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::PerformedMotionDecisions,
-        summary: "actual motion decisions are offered before their dependent effects",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
-        checked: Checked::ByVectors,
-    },
-    Behaviour {
-        id: BehaviourId::SuspendedMovement,
-        summary: "serialized interrupted movement continues only unfinished work",
-        kind: Kind::Timing,
-        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
 ];

@@ -21,7 +21,6 @@ mod immutable;
 mod movement;
 mod movement_ceres;
 pub mod movement_touchdown;
-pub mod movement_work;
 pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
 pub mod gameplay_sounds;
 pub mod passage_audio;
@@ -122,21 +121,17 @@ pub enum ProductionSeed {
 pub enum AdvanceInput<'a> {
     /// One admitted scoped Health opportunity or current owner read.
     HealthTail(&'a [health_tail::Input]),
-    /// Independently admitted unselected stimuli for one connected ordinary opportunity.
+    /// Independently admitted unselected stimuli for one connected ordinary frame.
     Connected {
         /// Complete current inputs; selected feedback is derived internally.
         inputs: &'a connected::inputs::Inputs,
-        /// A semantic yield or genuine opportunity completion.
-        advance: connected::Advance,
     },
-    /// A scoped ordinary opportunity with the current early map inputs.
+    /// A scoped ordinary frame with the current early map inputs.
     ConnectedMap {
         /// Complete current ordinary Movement and Appearance inputs.
         inputs: &'a connected::inputs::Inputs,
         /// Current early map premises.
         map: connected::early_map::Inputs<'a>,
-        /// Stop at the map or continue the ordinary opportunity.
-        advance: connected::Advance,
     },
     /// One independently admitted ordinary opportunity for connected owners.
     MovementCeres {
@@ -297,7 +292,7 @@ pub enum Unsupported {
     /// The scoped actor, Maintenance or late consumer opportunity is unavailable.
     HealthTailOpportunity,
     /// A produced Appearance request has no selected receiver mapping.
-    AppearanceSound(samus_appearance::PublishedSound),
+    AppearanceSound(samus_appearance::FrameSound),
     /// No independent value or producer for the selected entry.
     MissingInput(Scope),
     /// A selected pose requires unavailable semantic content.
@@ -520,24 +515,20 @@ impl Production {
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
                 ProductionRules::Connected(rules),
-                AdvanceInput::Connected { inputs, advance },
+                AdvanceInput::Connected { inputs },
             ) => ProductionOutputs::Connected(Box::new(
                 state
-                    .advance(inputs, content, rules, advance)
+                    .advance(inputs, content, rules)
                     .map_err(ProductionFault::Connected)?,
             )),
             (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
                 ProductionRules::Connected(rules),
-                AdvanceInput::ConnectedMap {
-                    inputs,
-                    map,
-                    advance,
-                },
+                AdvanceInput::ConnectedMap { inputs, map },
             ) => ProductionOutputs::Connected(Box::new(
                 state
-                    .advance_with_map(inputs, content, rules, advance, Some(map))
+                    .advance_with_map(inputs, content, rules, Some(map))
                     .map_err(ProductionFault::Connected)?,
             )),
             (
@@ -720,13 +711,10 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Connected => {
             use canonical::model::pin_holds;
             pin_holds::<connected::inputs::InputsPin>()
-                .and_then(|()| pin_holds::<connected::AheadPin>())
                 .and_then(|()| pin_holds::<connected::PlayingPin>())
+                .and_then(|()| pin_holds::<crate::state::owned::AppearancePin>())
                 .and_then(|()| pin_holds::<hud::HudPin>())
                 .and_then(|()| pin_holds::<hud::WorkPin>())
-                .and_then(|()| pin_holds::<movement_work::WorkPin>())
-                .and_then(|()| pin_holds::<movement_work::ReceiptsPin>())
-                .and_then(|()| pin_holds::<appearance::WorkPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::CameraPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
         }

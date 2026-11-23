@@ -355,7 +355,7 @@ fn doors_inputs(
 }
 
 /// What animation reads of this frame's moves.
-fn animation_inputs(
+pub(super) fn animation_inputs(
     start: Figure,
     after: Figure,
     outcome: &samus_movement::Outcome,

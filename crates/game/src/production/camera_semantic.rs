@@ -1,11 +1,8 @@
 //! Following from actual completed movement and the retained prior centre.
 
-use super::{
-    connected::{
-        Fault,
-        inputs::{CameraInputs, Lead, Screen},
-    },
-    movement_work::Movement,
+use super::connected::{
+    Fault,
+    inputs::{CameraInputs, Lead, Screen},
 };
 use core::num::Wrapping;
 use types::Parts;
@@ -22,15 +19,12 @@ pub(super) fn step(
 pub(super) fn follow(
     camera: &mut world_camera::Camera,
     previous: &samus_movement::Samus,
-    movement: &Movement,
+    current: &samus_movement::Samus,
+    outputs: &samus_movement::Outcome,
     input: &CameraInputs,
     rules: &world_camera::Rules,
 ) -> Result<(), Fault> {
-    let (current, outputs) = movement.finished().ok_or(Fault::Movement)?;
-    let Movement::Work(work) = movement else {
-        return Err(Fault::Movement);
-    };
-    if camera.seen() != previous.position || &work.model.0.start != previous {
+    if camera.seen() != previous.position {
         return Err(Fault::Camera);
     }
     let [width, height] = input.size;

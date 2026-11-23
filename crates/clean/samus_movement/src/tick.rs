@@ -53,12 +53,17 @@ pub struct Tick<'a> {
     pub rules: &'a Rules,
     /// The cells her moves and looks reach, in order.
     pub reached: Vec<Touch>,
-    /// Spec: `PerformedCollisionTests`. Only actually evaluated leading-edge tests.
-    pub collision_tests: types::CollisionTests,
-    /// Spec: `MotionAttempts`. Fresh performed requests and decisions in order.
-    pub movement_work: Vec<types::MovementWork>,
-    /// Spec: `AcceptedFloorResponse`. Move-local stops, or accepted contact after fitting.
-    pub floor_response: Option<types::FloorResponse>,
-    /// Spec: `TransitionFiringAim`. Fresh publication from the accepted ordinary pose change.
-    pub pending_aim: Option<types::FiringDirection>,
+}
+
+impl<'a> Tick<'a> {
+    /// A frame that has reached no cells yet.
+    #[must_use]
+    pub const fn new(frame: &'a Frame<'a>, world: &'a dyn World, rules: &'a Rules) -> Self {
+        Self {
+            frame,
+            world,
+            rules,
+            reached: Vec::new(),
+        }
+    }
 }

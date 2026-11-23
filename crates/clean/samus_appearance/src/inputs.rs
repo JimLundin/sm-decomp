@@ -68,7 +68,8 @@ impl Liquid {
     };
 }
 
-/// The frame's inputs.
+/// The animation update's inputs: samus-movement's results and the pose she takes, with what
+/// the liquids, progress, health and the sound domain give.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Inputs {
     /// Her figure at the frame's start.

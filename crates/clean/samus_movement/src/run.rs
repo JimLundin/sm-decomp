@@ -37,7 +37,7 @@ pub enum Dashing {
 }
 
 /// `SpeedBuildsAndBrakes`: what a frame's horizontal move is made of.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Stride {
     /// She makes no horizontal move.
     Nothing,
@@ -155,7 +155,9 @@ impl Run {
         }
     }
 
-    /// Spec: `Dash`, `PerformedMotionDecisions`. Dash is decided before speed building.
+    /// `Dash`, `Dashing`: her dash, before her speed builds. Running with run held she is
+    /// dashing from her moves on and her dash grows to its cap; in any other activity whose
+    /// speed builds, a dash she has while not dashing is gone.
     pub(crate) fn dash_for_moves(&mut self, moves: Moves, t: &Tick) {
         if let Moves::Build(gait, _) = moves {
             if running_with_run_held(gait, t.frame.pad) {

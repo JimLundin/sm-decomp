@@ -297,12 +297,6 @@ pub enum ObservationId {
     /// Complete committed sender progress.
     #[serde(rename = "sender.progress")]
     SenderProgress,
-    /// Initial downward request and terrain-clipped travel into the floor.
-    #[serde(rename = "movement.touchdown.floor_clip")]
-    TouchdownClip,
-    /// Selected body change and ordered clearance observations.
-    #[serde(rename = "movement.touchdown.body_fit")]
-    TouchdownFit,
     /// Actual accepted floor response and its speed.
     #[serde(rename = "movement.touchdown.floor_response")]
     TouchdownResponse,
@@ -318,30 +312,12 @@ pub enum ObservationId {
     /// Complete currently playing Figure.
     #[serde(rename = "appearance.playing")]
     AppearancePlaying,
-    /// Every ordered Motion, Support and nested `BodyFit` receipt.
-    #[serde(rename = "movement.work")]
-    MovementWork,
-    /// Every ordered leading-edge test, including classified horizontal context.
-    #[serde(rename = "movement.collision_tests")]
-    MovementTests,
     /// Complete ordered reaction-facing reaches.
     #[serde(rename = "movement.reached.complete")]
     CompleteReached,
     /// All starting inside cells, distinct from leading-edge tests.
     #[serde(rename = "movement.inside")]
     Inside,
-    /// Explicit absent ordinary-movement admission reason.
-    #[serde(rename = "movement.skip")]
-    MovementSkip,
-    /// Complete independently selected first request and its considered candidates.
-    #[serde(rename = "movement.motion.0.request")]
-    FirstMotionSearch,
-    /// Ordered considered identities, geometry and outcomes in the selected request.
-    #[serde(rename = "movement.motion.0.enemy_search.candidates")]
-    FirstMotionCandidates,
-    /// Actual ordinary-right terrain work for the independently unique first request.
-    #[serde(rename = "movement.motion.0.ordinary_terrain_tests")]
-    FirstMotionTerrain,
     #[serde(rename = "movement.position.x")]
     /// Fixed-point horizontal position.
     PositionX,
@@ -765,17 +741,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         O::HealthTailState | O::HealthTailImpact | O::HealthTailClose | O::HealthTailWarning => {
             Responsibility::Health
         }
-        O::TouchdownClip
-        | O::TouchdownFit
-        | O::TouchdownResponse
-        | O::MovementWork
-        | O::MovementTests
+        O::TouchdownResponse
         | O::CompleteReached
         | O::Inside
-        | O::MovementSkip
-        | O::FirstMotionSearch
-        | O::FirstMotionCandidates
-        | O::FirstMotionTerrain
         | O::MovementStateComplete
         | O::PositionX
         | O::PositionY
@@ -887,13 +855,9 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         });
     }
     Some(match rule {
-        "samus-movement/MotionAttempts" => &[O::FirstMotionSearch],
-        "samus-movement/ReachedEnemyCandidates" => &[O::FirstMotionCandidates],
-        "samus-movement/PerformedCollisionTests" => &[O::MovementTests],
-        "samus-movement/PerformedSupportChecks" | "samus-movement/PerformedBodyFit" => {
-            &[O::MovementWork]
+        "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
+            &[O::PositionX, O::PositionY]
         }
-        "samus-movement/MovesAsShePosed" => &[O::PositionX, O::PositionY],
         "samus-movement/Dash" => &[O::MovementStateComplete],
         "samus-movement/AimingAndShooting"
         | "samus-movement/SlopesCarry"
@@ -904,12 +868,12 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "samus-movement/TravelledDistances" => {
             &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
         }
-        "samus-movement/PoseFitAfterMoves" => &[O::TouchdownFit, O::PositionX, O::PositionY],
-        "samus-movement/AcceptedFloorResponse" => {
-            &[O::TouchdownClip, O::TouchdownResponse, O::VerticalSpeed]
-        }
+        "samus-movement/AcceptedFloorResponse" => &[O::TouchdownResponse, O::VerticalSpeed],
         "samus-movement/TouchdownRequests" => &[O::TouchdownOffer, O::TouchdownGraphics],
         "samus-movement/WallJump" => &[O::WallTest],
+        "samus-movement/TouchedCells" if provider == InputProvider::NativeSearchInputs => {
+            &[O::CompleteReached, O::Inside]
+        }
         "samus-movement/TouchedCells" => &[O::Reached],
         "audio-transport/OfferAcceptance" => &[O::SenderQueue],
         "audio-transport/MusicalProgress"
@@ -1001,16 +965,7 @@ fn native_search_provider_valid(case: &Case, observations: &BTreeSet<Observation
             source_completion_index: 4283,
             ..
         } if sha256 == super::native_search::PACKET_PIN => {
-            *observations
-                == BTreeSet::from([
-                    O::FirstMotionSearch,
-                    O::FirstMotionCandidates,
-                    O::MovementWork,
-                    O::MovementTests,
-                    O::CompleteReached,
-                    O::Inside,
-                    O::MovementSkip,
-                ])
+            *observations == BTreeSet::from([O::CompleteReached, O::Inside])
         }
         Start::NativeOpportunity {
             sha256,
@@ -1019,18 +974,7 @@ fn native_search_provider_valid(case: &Case, observations: &BTreeSet<Observation
             source_completion_index: 4052,
             ..
         } if sha256 == super::native_search::TOUCH_PACKET_PIN => {
-            *observations
-                == BTreeSet::from([
-                    O::FirstMotionTerrain,
-                    O::FirstMotionSearch,
-                    O::FirstMotionCandidates,
-                    O::MovementWork,
-                    O::MovementTests,
-                    O::CompleteReached,
-                    O::Inside,
-                    O::MovementSkip,
-                ])
-                && case.expectations.fields.first() == Some(&O::FirstMotionTerrain)
+            *observations == BTreeSet::from([O::CompleteReached, O::Inside])
         }
         Start::NativeOpportunity { .. }
         | Start::NativeSeed { .. }
@@ -1122,8 +1066,6 @@ fn touchdown_provider_valid(case: &Case) -> bool {
                 O::PositionX,
                 O::PositionY,
                 O::VerticalSpeed,
-                O::TouchdownClip,
-                O::TouchdownFit,
                 O::TouchdownResponse,
                 O::SenderQueue,
                 O::SenderProgress,
