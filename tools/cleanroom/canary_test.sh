@@ -81,16 +81,22 @@ expect 2 snapshot-error canary "$tmp/clean"
 unset -f grep git sort cp
 unset CANARY_FAULT
 # Stop one check after exclusions, run another against the same record, then release it.
-# Run both verdict orders: a paused clean check and a paused breach check.
-export CANARY_BARRIER="$tmp/barrier"
+# Run both verdict orders: a paused clean check and a paused breach check. Each side waits on the
+# other's file, not on a time: a loaded machine (the gate's checks run at once) can make the
+# second check take any time. The limit only ends a hang.
+export CANARY_BARRIER="$tmp/barrier" CANARY_BARRIER_LIMIT=600
+# Waits until the paused check at PID $1 is at the barrier, or has exited without reaching it.
+await_ready() {
+  local deadline=$((SECONDS + CANARY_BARRIER_LIMIT))
+  while [ ! -e "$CANARY_BARRIER/ready" ] && [ "$SECONDS" -lt "$deadline" ] && kill -0 "$1" 2>/dev/null; do
+    sleep 0.05
+  done
+}
 function grep() {
   if [ "${1:-}" = -rhoIF ] && [ "${CANARY_PAUSE:-}" = yes ]; then
     : >"$CANARY_BARRIER/ready"
-    local deadline=$((SECONDS + 10))
-    while [ "$SECONDS" -lt "$deadline" ]; do
-      [ ! -e "$CANARY_BARRIER/go" ] || break
-      sleep 0.05
-    done
+    local deadline=$((SECONDS + CANARY_BARRIER_LIMIT))
+    while [ ! -e "$CANARY_BARRIER/go" ] && [ "$SECONDS" -lt "$deadline" ]; do sleep 0.05; done
     [ -e "$CANARY_BARRIER/go" ] || return 2
   fi
   command grep "$@"
@@ -102,16 +108,12 @@ for order in clean breach; do
   else first=other; second=given; a=1; b=0; fi
   (status=0; CANARY_PAUSE=yes canary "$tmp/$first" "$tmp/fingerprint" >"$tmp/first.out" 2>&1 || status=$?; echo "$status" >"$tmp/first.status") &
   pid=$!
-  deadline=$((SECONDS + 10))
-while [ "$SECONDS" -lt "$deadline" ]; do
-    [ ! -e "$CANARY_BARRIER/ready" ] || break
-    sleep 0.05
-  done
+  await_ready "$pid"
   [ -e "$CANARY_BARRIER/ready" ] || fail 'overlap barrier not reached'
   expect "$b" "overlap-$order-second" canary "$tmp/$second" "$tmp/fingerprint"
   : >"$CANARY_BARRIER/go"
   wait "$pid"
-pid=
+  pid=
   [ "$(cat "$tmp/first.status")" -eq "$a" ] || fail "overlap-$order-first"
   if [ "$a" -ne 0 ] && command grep -q 'CANARY CLEAN' "$tmp/first.out"; then fail 'overlap breach returned CLEAN'; fi
   rm -rf -- "$CANARY_BARRIER"
@@ -120,11 +122,7 @@ done
 mkdir "$CANARY_BARRIER"
 (status=0; CANARY_PAUSE=yes canary "$tmp/leak" "$tmp/fingerprint" >"$tmp/snapshot.out" 2>&1 || status=$?; echo "$status" >"$tmp/snapshot.status") &
 pid=$!
-deadline=$((SECONDS + 10))
-while [ "$SECONDS" -lt "$deadline" ]; do
-  [ ! -e "$CANARY_BARRIER/ready" ] || break
-  sleep 0.05
-done
+await_ready "$pid"
 [ -e "$CANARY_BARRIER/ready" ] || fail 'snapshot barrier not reached'
 command cp "$CLEANROOM_PRIVATE/tokens.tsv" "$tmp/tokens.saved"
 command cp "$CLEANROOM_PRIVATE/fingerprints.tsv" "$tmp/fingerprints.saved"
