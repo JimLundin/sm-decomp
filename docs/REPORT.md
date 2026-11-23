@@ -673,7 +673,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | weapons-projectiles | bridge | 1 | 1,409 | 1,347 | 68 | 240 | 208 | 37 | 0 | 226 |
 | weapons-projectiles | replay provider | 2 | 4,889 | 4,628 | 331 | 130 | 360 | 495 | 59 | 752 |
 | samus-movement | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-movement | replay provider | 3 | 7,648 | 7,634 | 577 | 376 | 548 | 637 | 67 | 1,352 |
+| samus-movement | replay provider | 3 | 8,155 | 7,900 | 577 | 376 | 584 | 857 | 67 | 1,381 |
 | world-camera | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -698,7 +698,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 39,745 | 39,096 | 3,369 | 1,708 | 2,860 | 3,458 | 440 | 6,692 |
+| total | | | 40,251 | 39,362 | 3,369 | 1,708 | 2,897 | 3,677 | 440 | 6,721 |
 
 ## Engine services
 
@@ -706,7 +706,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 43 | 5,928 | 35,567 | 34,297 | 8,049 | 1,135 | 2,506 | 4,831 | 578 | 6,952 |
+| production and exact services | 43 | 6,015 | 36,087 | 34,854 | 8,191 | 1,135 | 2,519 | 4,860 | 635 | 7,058 |
 | bridges | 6 | 1,026 | 6,153 | 6,064 | 694 | 379 | 624 | 464 | 103 | 1,051 |
 | rebuilt models, shared types included | 123 | 8,783 | 52,696 | 58,646 | 24,309 | 18,651 | 3,636 | 3,811 | 1,016 | 17,742 |
 
@@ -2560,13 +2560,13 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 143 | 43 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 395 | 103 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 665 | 137 |
-| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `StandingAnimation`, `UnknownPose`, `WallTest` | 1,109 | 197 |
+| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 1,630 | 303 |
 | samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 3,392 | 596 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 69 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 325 | 81 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 2,960 | 467 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-camera | `crates/game/src/production/played.rs` | names it | `Frame`, `Heights`, `LeadSetting`, `Room` | 1,109 | 197 |
+| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `ViewPosition` | 1,630 | 303 |
 | world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 3,392 | 596 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 69 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
@@ -2597,7 +2597,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/movement.rs` | names it | `Figure` | 559 | 131 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 395 | 103 |
 | samus-appearance | `crates/game/src/production/passage_audio.rs` | names it | `Charge`, `Opportunity`, `SoundQueue`, `SoundRequest` | 758 | 165 |
-| samus-appearance | `crates/game/src/production/played.rs` | names it | `CinematicActivity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules` | 1,109 | 197 |
+| samus-appearance | `crates/game/src/production/played.rs` | names it | `CinematicActivity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules` | 1,630 | 303 |
 | samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 3,392 | 596 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,643 | 266 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
@@ -2610,6 +2610,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,563 | 291 |
 | world-doors | `crates/game/src/production/passage_audio.rs` | names it | `Arrival`, `COLOURS`, `Doors`, `HerSound`, `Inputs`, `Passage`, `Phase`, `RoomSound`, `Rules`, `Scene` | 758 | 165 |
+| world-doors | `crates/game/src/production/played.rs` | names it | `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Inputs`, `Palette`, `Report`, `Rules`, `Scene` | 1,630 | 303 |
 | world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 3,392 | 596 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
 | samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 1,370 | 354 |
