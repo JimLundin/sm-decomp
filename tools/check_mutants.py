@@ -7,6 +7,7 @@ require a fresh Pass from an immutable vanilla executable. Print safe identities
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -19,6 +20,11 @@ from pathlib import Path
 from typing import Any
 
 WORKER_COUNT = 4
+# A case that starts with this is a lock row played alone, `played ROW START END` as
+# `tools replay played` takes it; any other case is an indexed replay case.
+PLAYED = "played "
+PLAYED_LOCK = "scenarios/locks/lsnes.toml"
+PLAYED_RUNNER = "crates/verify/src/replay/played.rs"
 
 @dataclass(frozen=True)
 class Fault:
@@ -37,8 +43,9 @@ def source_path(root: Path, source: str) -> Path:
         raise ValueError("fault source must be relative without traversal")
     path = (root / relative).resolve()
     production = (root / "crates/game/src/production").resolve()
-    if path != (root / "crates/game/src/production.rs").resolve() and not path.is_relative_to(production):
-        raise ValueError("fault source is outside production adapters")
+    adapters = {(root / "crates/game/src/production.rs").resolve(), (root / PLAYED_RUNNER).resolve()}
+    if path not in adapters and not path.is_relative_to(production):
+        raise ValueError("fault source is outside production adapters and the played runner")
     if path.suffix != ".rs":
         raise ValueError("fault source must be Rust")
     return path
@@ -98,9 +105,13 @@ def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int
             executable = build_executable(root)
         except subprocess.CalledProcessError as error:
             return error.returncode, error.stderr
-    command = [str(executable), "replay", "run",
-               "scenarios/replay/index.toml", "--case", case]
-    for flag, variable in [("--cache", "SM_CACHE"), ("--rom", "SM_ROM"), ("--native", "SM_AUDIO_NATIVE")]:
+    if case.startswith(PLAYED):
+        command = [str(executable), "replay", *case.split(), "--lock", PLAYED_LOCK]
+        sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM")]
+    else:
+        command = [str(executable), "replay", "run", "scenarios/replay/index.toml", "--case", case]
+        sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM"), ("--native", "SM_AUDIO_NATIVE")]
+    for flag, variable in sources:
         if value := os.environ.get(variable):
             command.extend([flag, value])
     started = time.perf_counter()
@@ -109,7 +120,26 @@ def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int
     print(f"TIMING replay case={case} seconds={time.perf_counter() - started:.6f}", flush=True)
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
+def played_receipt(output: str, case: str) -> dict[str, Any] | None:
+    """The run's one report line; its stop is the Debug form of the runner's `Stop`."""
+    _, row, start, _ = case.split()
+    lines = [line for line in output.splitlines()
+             if line.startswith(f"PLAYED_ALONE row={row} start={start} ")]
+    if len(lines) != 1:
+        return None
+    stop = lines[0].partition(" stop=")[2]
+    outcome: dict[str, Any] = {"status": "other", "stop": stop.partition(" seed_held=")[0]}
+    if stop.startswith("End "):
+        outcome = {"status": "pass"}
+    elif found := re.match(r'At\(Difference \{ cut: (\d+), field: "([^"]+)" \}\) ', stop):
+        outcome = {"status": "difference", "cut": int(found[1]), "field": found[2]}
+    elif found := re.match(r'At\(DataFailure \{ cut: Some\((\d+)\), source: "([^"]+)" \}\) ', stop):
+        outcome = {"status": "data-failure", "cut": int(found[1]), "field": found[2]}
+    return {"id": case, "report": lines[0], "outcome": outcome}
+
 def receipt(output: str, case: str) -> dict[str, Any] | None:
+    if case.startswith(PLAYED):
+        return played_receipt(output, case)
     for prefix in ("format = 1", "tools: format = 1"):
         start = output.find(prefix)
         if start < 0:
@@ -152,9 +182,15 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
         path.write_bytes(mutated)
         code, output = run_case(root, fault.case)
         observed = receipt(output, fault.case)
-        killed = code == 1 and observed is not None and observed.get("outcome") == {
-            "status": "difference", "cut": fault.cut, "field": fault.field}
-        print(f"{'KILLED' if killed else 'INVALID OR SURVIVED'} {fault.name}: {fault.case} cut{fault.cut} {fault.field}", flush=True)
+        # A played run reports where it stopped and exits normally; a replay case fails. A
+        # played run's own pad alignment check may stop it before the comparison does.
+        played = fault.case.startswith(PLAYED)
+        stops = ("difference", "data-failure") if played else ("difference",)
+        killed = code == (0 if played else 1) and observed is not None and observed.get("outcome") in [
+            {"status": status, "cut": fault.cut, "field": fault.field} for status in stops]
+        # A survivor names where the run really stopped: status, cut and field names only.
+        seen = "" if killed else f" observed exit={code} {observed and observed.get('outcome')}"
+        print(f"{'KILLED' if killed else 'INVALID OR SURVIVED'} {fault.name}: {fault.case} cut{fault.cut} {fault.field}{seen}", flush=True)
     finally:
         started = time.perf_counter()
         if path.read_bytes() != mutated:
@@ -175,15 +211,19 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
     return killed
 
 def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
-    """Every responsibility with a reviewed Pass needs its own production fault."""
+    """Every responsibility with a reviewed Pass, and the played runner, needs its own fault."""
     with (root / "scenarios/replay/index.toml").open("rb") as stream:
         cases = {case["id"]: case for case in tomllib.load(stream)["case"]}
     with (root / "scenarios/replay/baseline.toml").open("rb") as stream:
         supported = {case["id"] for case in tomllib.load(stream)["case"]
                      if case["expected"] == {"status": "pass"}}
-    required = {owner for case in supported for owner in cases[case]["responsibilities"]}
+    required = {owner for case in supported for owner in cases[case]["responsibilities"]} | {"played"}
     for fault in faults:
-        if fault.case not in supported or fault.responsibility not in cases[fault.case]["responsibilities"]:
+        if fault.case.startswith(PLAYED):
+            _, _, start, end = fault.case.split()
+            if fault.responsibility != "played" or not int(start) < fault.cut <= int(end):
+                raise ValueError("a played fault must stop its run at a cut it plays")
+        elif fault.case not in supported or fault.responsibility not in cases[fault.case]["responsibilities"]:
             raise ValueError("fault must witness its responsibility in a reviewed Pass case")
         source_path(root, fault.file)
     if {fault.responsibility for fault in faults} != required:

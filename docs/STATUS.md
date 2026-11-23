@@ -56,6 +56,11 @@ It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by c
 dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
+Two planted faults in the fault matrix stop that run at a recorded cut. A pad one frame stale
+fails the runner's pad alignment check at cut 2, and a camera State held rather than carried
+differs at cut 1 in `camera.view.x.fraction`. Each plays cuts 1 to 41 of the M0 row, a span
+the run holds.
+
 ## Intra-frame timing and the played-alone run
 
 Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). Intra-frame
@@ -63,7 +68,7 @@ timing is T1's: absolute master-tick clocks, ordered hardware callbacks, ordered
 access, the Contact latches at post-RTI clocks and Random's ordered device transfers. No
 indexed case compares them, and production has no frame caller that schedules them.
 
-The played-alone run carries Movement, Appearance and Camera from the M0 seed. The HUD,
+The played-alone run carries Movement, Appearance, Camera and Doors from the M0 seed. The HUD,
 Health, Random and Haze fields at those frames are covered only by their models' vectors and
 by the scoped `health/ceres-tail-drawing-gauge`, `hud/stationary-map-blink` and
 `connected-ordinary/early-mini-map` cases, until their owners join the loop. Weapons, Contact,

@@ -429,3 +429,23 @@ after = '''Stage::Touched => {
 case = "gameplay-sound/passage-hold"
 cut = 183
 field = "live-sound.permission"
+
+[[fault]]
+name = "played-pad-one-frame-stale"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "controller = controller.read(current.pad.0, polled(&current));"
+after = "controller = controller.read(previous.pad.0, polled(&previous));"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 2
+field = "played pad alignment"
+
+[[fault]]
+name = "played-camera-state-held"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "camera: Model(camera),"
+after = "camera: self.camera.clone(),"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "camera.view.x.fraction"

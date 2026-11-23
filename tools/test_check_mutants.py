@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 import check_mutants
-from check_mutants import (Fault, FrozenInputs, build_executable, check_fault, receipt,
+from check_mutants import (PLAYED_RUNNER, Fault, FrozenInputs, build_executable, check_fault, receipt,
                            run_case, source_path, validate_coverage)
 
 def outcome(status: str, case: str = "audio/example", cut: int = 3, field: str = "audio.reply0") -> str:
@@ -289,6 +289,36 @@ field = "audio.reply0"
                         with self.assertRaises(ValueError):
                             check_mutants.main(["plan"])
                     build.assert_not_called()
+
+    def test_a_played_run_kills_only_at_its_recorded_stop(self) -> None:
+        case = "played row-1 0 9"
+        def report(stop: str, row: str = "row-1") -> str:
+            return f'PLAYED_ALONE row={row} start=0 held=4 stop={stop} seed_held=["energy"]\n'
+        stopped = report('At(Difference { cut: 5, field: "camera.x" })')
+        ended = receipt(report("End"), case)
+        assert ended is not None
+        self.assertEqual(ended["outcome"], {"status": "pass"})
+        self.assertEqual(receipt(stopped, case), {"id": case, "report": stopped.strip(), "outcome": {
+            "status": "difference", "cut": 5, "field": "camera.x"}})
+        for output in [report("End", row="row-2"), report("End") * 2, ""]:
+            self.assertIsNone(receipt(output, case))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / PLAYED_RUNNER
+            path.parent.mkdir(parents=True)
+            original = b"let held = controller.held;\n"
+            path.write_bytes(original)
+            fault = Fault("stale", "played", PLAYED_RUNNER, "controller.held", "stale.held", case, 5, "camera.x")
+            for result, killed in [((0, stopped), True), ((1, stopped), False),
+                                   ((0, report('At(Difference { cut: 6, field: "camera.x" })')), False),
+                                   ((0, report('At(DataFailure { cut: Some(5), source: "pad" })')), False),
+                                   ((0, report('At(DataFailure { cut: Some(5), source: "camera.x" })')), True),
+                                   ((0, report('At(Unsupported { cut: Some(5), dependency: "camera.x" })')), False),
+                                   ((0, report("End")), False)]:
+                with self.subTest(result=result), \
+                     patch("check_mutants.run_case", side_effect=[result, (0, report("End"))]):
+                    self.assertEqual(check_fault(root, fault, ended), killed)
+                self.assertEqual(path.read_bytes(), original)
 
     def test_source_restores_after_runner_exception(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
