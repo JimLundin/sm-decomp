@@ -95,7 +95,9 @@ are not current production acceptance and must be labelled as historical evidenc
 responsibility to its exact recorded Difference cut and field. With `SM_CACHE`, `SM_ROM` and
 `SM_AUDIO_NATIVE` set, `python3 tools/check_mutants.py` first requires a Pass, temporarily
 applies each fault, restores the source byte for byte, then requires the original complete
-receipt again, including its digest and counts. Full pull-request, scheduled and manual CI
+receipt again, including its digest and counts. Each fault's `before` text must match its
+file exactly once, so a refactor that moves or duplicates a patched line fails Quality's
+fault-runner test and the fault plan before any build. Full pull-request, scheduled and manual CI
 run every fault. A fast-forward to main reuses a successful pull-request verdict for the
 same head and tested tree. Missing evidence runs every fault. The supported responsibility
 inventory comes from the index and reviewed baseline, so omitting an owner fails the check.

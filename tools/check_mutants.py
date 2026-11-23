@@ -130,16 +130,24 @@ def passed(result: tuple[int, str], case: str) -> bool:
     observed = receipt(output, case)
     return code == 0 and observed is not None and observed.get("outcome") == {"status": "pass"}
 
+def require_unique_anchor(fault: Fault, source: bytes) -> None:
+    """A refactor of the patched lines can drift an anchor; it must still name one place."""
+    before = fault.before.encode()
+    if not before or before == fault.after.encode() or source.count(before) != 1:
+        raise ValueError(f"fault {fault.name} must replace one unique changed fragment of {fault.file}")
+
+def validate_anchors(root: Path, faults: Sequence[Fault]) -> None:
+    for fault in faults:
+        require_unique_anchor(fault, source_path(root, fault.file).read_bytes())
+
 def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
                 vanilla: Path | None = None, inputs: FrozenInputs | None = None) -> bool:
     if inputs is not None:
         inputs.check(root)
     path = source_path(root, fault.file)
     original = path.read_bytes()
-    before, after = fault.before.encode(), fault.after.encode()
-    if not before or before == after or original.count(before) != 1:
-        raise ValueError("fault must replace one unique changed fragment")
-    mutated = original.replace(before, after, 1)
+    require_unique_anchor(fault, original)
+    mutated = original.replace(fault.before.encode(), fault.after.encode(), 1)
     try:
         path.write_bytes(mutated)
         code, output = run_case(root, fault.case)
@@ -208,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
         raise ValueError("fault names must be nonempty and unique")
     validate_coverage(root, roster)
+    validate_anchors(root, roster)
     if args.command:
         partitions = partition_faults(roster)
         if args.command == "plan":

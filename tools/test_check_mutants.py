@@ -251,6 +251,45 @@ field = "audio.reply0"
             with self.assertRaises(ValueError):
                 validate_coverage(root, [changed, *faults[1:]])
 
+    def test_every_anchor_names_one_place_in_its_source(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        with (root / "tools/mutants.toml").open("rb") as stream:
+            faults = [Fault(**row) for row in tomllib.load(stream)["fault"]]
+        for fault in faults:
+            with self.subTest(fault=fault.name, file=fault.file):
+                self.assertEqual(source_path(root, fault.file).read_bytes().count(fault.before.encode()), 1)
+
+    def test_a_drifted_anchor_stops_the_plan_before_any_build(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source = root / "crates/game/src/production.rs"
+            source.parent.mkdir(parents=True)
+            config = root / "tools/mutants.toml"
+            config.parent.mkdir()
+            config.write_text('''[[fault]]
+name = "zero"
+responsibility = "audio"
+file = "crates/game/src/production.rs"
+before = "measured"
+after = "zero"
+case = "audio/example"
+cut = 3
+field = "audio.reply0"
+''', encoding="utf-8", newline="\n")
+            for text, unique in [(b"let elapsed = measured;\n", True), (b"let elapsed = sampled;\n", False),
+                                 (b"let a = measured;\nlet b = measured;\n", False)]:
+                source.write_bytes(text)
+                with self.subTest(source=text), \
+                     patch.object(check_mutants, "__file__", str(root / "tools/check_mutants.py")), \
+                     patch("check_mutants.validate_coverage"), \
+                     patch("check_mutants.build_executable") as build, redirect_stdout(StringIO()):
+                    if unique:
+                        self.assertEqual(check_mutants.main(["plan"]), 0)
+                    else:
+                        with self.assertRaises(ValueError):
+                            check_mutants.main(["plan"])
+                    build.assert_not_called()
+
     def test_source_restores_after_runner_exception(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
