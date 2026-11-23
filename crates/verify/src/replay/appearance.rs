@@ -145,10 +145,10 @@ fn animation(wram: &[u8], imported: &Imported) -> Result<State, Outcome> {
 
 /// Her kept action, from the movement type her last preparation kept (`0A11`).
 ///
-/// The record keeps a movement type, which several actions share. When it is her pose's own,
-/// her pose's action is the one kept. A spin and a wall jump are types of their own, and only
-/// whether she spins reads the kept action; any other type of an earlier pose names no one
-/// action, so her State can't be decoded.
+/// The record keeps a movement type, which several actions share. The seed takes her pose's
+/// action when the type is her pose's, or the spin's or the wall jump's for their own types;
+/// any other type is Unsupported. Every frame these cases play is prepared before drawing reads
+/// the kept action, so the seed's value is carried and never read.
 fn kept_action(wram: &[u8], content: &Content, current: Action) -> Result<Action, Outcome> {
     let kept = wram
         .get(0x0a11)
@@ -197,7 +197,9 @@ fn kept_action(wram: &[u8], content: &Content, current: Action) -> Result<Action
 
 /// The cannon delay (`0AAA`: eligible controls left, `2 - word`) and the colour sequences
 /// (`0A72`: the visor delay in its low byte, twice the visor's entry in its high; `0B62`: two
-/// source units a charge-glow picture).
+/// source units a charge-glow picture). Other effects reuse that storage, so the glow decode
+/// holds for the ordinary charge sequence only; it is enough here because the sequences are
+/// carried and never compared.
 fn remembered(wram: &[u8]) -> Result<(CannonDelay, ColourSequences), Outcome> {
     let cannon = 2u16
         .checked_sub(word(wram, 0x0aaa)?)

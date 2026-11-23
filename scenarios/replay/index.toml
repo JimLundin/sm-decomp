@@ -262,12 +262,12 @@ content = "player-rom-import"
 inputs = "preceding-cut-appearance-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["appearance.step", "appearance.time-left", "appearance.boost-stage", "appearance.laps-left"], outputs = [] }
 checkpoints = true
-limits = ["unchanged dry standing figure", "one ordinary animation update per advancing gameplay tick", "movement, equipment and liquid producers externally admitted", "appearance sound and drawing opportunities outside comparison", "upstream timing and downstream pixels unproved"]
+limits = ["unchanged dry standing figure", "one ordinary animation update per advancing gameplay tick", "movement, equipment and liquid producers externally admitted", "appearance sound and drawing opportunities outside comparison", "her kept action, cannon delay and colour sequences decoded once from the start record, carried and not compared", "upstream timing and downstream pixels unproved"]
 
 [[case.borrowed]]
 dependency = "appearance.movement-equipment-liquid-and-controller"
 provider = "preceding-cut-standing-interval"
-fields = ["appearance.figure", "movement.standing_restart", "controller.held", "controller.bindings", "progress.equipment", "progress.energy", "liquid.slowdown", "sound.queue_count"]
+fields = ["appearance.figure", "movement.standing_restart", "controller.held", "controller.bindings", "progress.equipment", "progress.energy", "liquid.slowdown", "sound.queue_count", "appearance.activities (cinematic, boss, special colour time)", "appearance.charge", "controller.shoot_held"]
 phase = "preceding-record-cut"
 claim = "unchanged figure, equipment and zero slowdown certify preceding-cut values; movement and producer timing unproved"
 
@@ -504,13 +504,13 @@ responsibilities = ["movement", "appearance", "camera"]
 content = "player-rom-import"
 inputs = "connected-ordinary-inputs"
 checkpoints = true
-limits = ["Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved."]
+limits = ["Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings, the owners active at her stride (cinematic, boss, special colour time) and her shot's charge remain borrowed; her kept action, cannon delay and colour sequences are decoded once at the start, carried and not compared. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved."]
 expectations = { provider = "pinned-record-cache", fields = ["movement.state.complete", "movement.position.x", "movement.position.y", "appearance.step", "appearance.time-left", "appearance.boost-stage", "appearance.laps-left", "appearance.playing", "camera.view.x.pixel", "camera.view.x.fraction", "camera.view.y.pixel", "camera.view.y.fraction", "camera.remembered.x.pixel", "camera.remembered.x.fraction", "camera.remembered.y.pixel", "camera.remembered.y.fraction", "camera.vertical-fraction"], outputs = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"] }
 
 [[case.borrowed]]
 dependency = "unselected current ordinary stimuli"
 provider = "authenticated-connected-ordinary-v1"
-fields = ["controls", "items", "parity", "energy", "queue occupancy", "Contact guards", "geometry and current actors", "camera room settings"]
+fields = ["controls", "items", "parity", "energy", "queue occupancy", "the owners active at her stride and her shot's charge", "geometry and current actors", "camera room settings"]
 phase = "actual current source opportunity"
 claim = "Reviewed same-family inputs; selected movement, playhead, playing Figure, Ahead and Camera are retained production outputs."
 
@@ -526,13 +526,13 @@ responsibilities = ["movement", "appearance", "camera"]
 content = "player-rom-import"
 inputs = "connected-ordinary-inputs"
 checkpoints = true
-limits = ["Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Reached Air/Solid/Floor Surface only; all support checks remain unseated. Control hardware/bindings, equipment, parity/clock, energy/health, liquid, actors, room scripts, camera tuning and sound transport remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved."]
+limits = ["Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings, the owners active at her stride (cinematic, boss, special colour time) and her shot's charge remain borrowed; her kept action, cannon delay and colour sequences are decoded once at the start, carried and not compared. Reached Air/Solid/Floor Surface only; all support checks remain unseated. Control hardware/bindings, equipment, parity/clock, energy/health, liquid, actors, room scripts, camera tuning and sound transport remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved."]
 expectations = { provider = "pinned-record-cache", fields = ["movement.state.complete", "movement.position.x", "movement.position.y", "appearance.step", "appearance.time-left", "appearance.boost-stage", "appearance.laps-left", "appearance.playing", "camera.view.x.pixel", "camera.view.x.fraction", "camera.view.y.pixel", "camera.view.y.fraction", "camera.remembered.x.pixel", "camera.remembered.x.fraction", "camera.remembered.y.pixel", "camera.remembered.y.fraction", "camera.vertical-fraction"], outputs = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"] }
 
 [[case.borrowed]]
 dependency = "unselected current ordinary stimuli"
 provider = "authenticated-connected-run-slope-v1"
-fields = ["controls", "items", "parity", "energy", "queue occupancy", "Contact guards", "geometry and current actors", "camera room settings"]
+fields = ["controls", "items", "parity", "energy", "queue occupancy", "the owners active at her stride and her shot's charge", "geometry and current actors", "camera room settings"]
 phase = "actual current source opportunity"
 claim = "Reviewed same-family inputs; selected movement, playhead, playing Figure, Ahead and Camera are retained production outputs."
 
@@ -554,7 +554,7 @@ limits = ["full early coordinates, exploration and 15 Map cells at both opportun
 [[case.borrowed]]
 dependency = "unselected current ordinary and Map producers"
 provider = "authenticated-movement-early-map-v1"
-fields = ["locked controls and bindings", "current equipment, liquid, Contact guards, energy and queue occupancy", "origin terrain and current eligible actor boxes in search order", "Camera room settings", "Map area, room, clock, power and event predicates"]
+fields = ["locked controls and bindings", "current equipment, liquid, the owners active at her stride, her shot's charge, energy and queue occupancy", "origin terrain and current eligible actor boxes in search order", "Camera room settings", "Map area, room, clock, power and event predicates"]
 phase = "each actual input use from controller through the first Camera carry and second early Map"
 claim = "Movement, Appearance, Camera carry and early Map run the selected production owners with independently qualified external stimuli."
 

@@ -354,8 +354,9 @@ identity separate from the first witness. The same borrowed producers and omitte
 The scoped early mini-map witness starts once at cut 78 of the room-seeded Ceres row.
 At 79 and 80 the HUD plays its whole frame, its mini-map read at movement's position after her
 moves, before the aim step and pose change, from the frame's outcome. It compares both exact early axes, the complete explored
-bitmap and the fifteen mini-map cells. Cut 79 also compares complete Movement, Appearance with
-Figure, and Camera against the independent carried record. Cut 80 plays its whole frame, into
+bitmap and the fifteen mini-map cells. Cut 79 also compares complete Movement, her animation's four
+quantities with Figure, and Camera against the independent carried record; the rest of her
+appearance State is carried and not compared. Cut 80 plays its whole frame, into
 the later spinning pose, and compares only the map. The ordinary and restored executions
 compare both frames, and a frame without the map's inputs is rejected before any change.
 

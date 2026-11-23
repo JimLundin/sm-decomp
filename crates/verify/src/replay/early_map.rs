@@ -559,8 +559,9 @@ fn map_observations(
     ]
 }
 
-/// Her animation's four quantities, which the completed carry compares: the first map frame's
-/// record is the comparison's only capture of her appearance.
+/// Her animation's four quantities, which the completed carry compares. The cannon delay and
+/// the colour sequences have no producer in this loop, and her kept action can be decoded only
+/// from its movement type, so the rest of her appearance State is carried, not compared.
 struct AnimationPin;
 impl canonical::model::Pinned for AnimationPin {
     type State = samus_appearance::State;
