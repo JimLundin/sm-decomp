@@ -40,17 +40,18 @@ both answers are U1's. The music's is decoded from the music's queue as the fram
 it: the queue takes one step at the frame of work's start (an entry whose delay runs out is
 played and leaves the queue), then the music is ready when no entry is left (41 of 41 cached
 waiting frames of work, `chain-any-0005-E06B` among them, 25 frames of work into Ridley's room).
-U1 owns the queue's step. The indexed first-entry witness ends after the two silence offers and
-Hold. On the next native cut all three effect FIFOs are empty while Action and Ambient remain
-AwaitCue. The integrated physical sender and occupancy-readiness handoff remains outstanding.
+U1 owns the queue's step. No indexed case witnesses the first-entry Quieting requests until the
+played run carries the sound queue; until then the played run borrows the sounds sent and the
+music ready at each cut.
 
-### G5. The cost of each frame of work (T1)
+### G5. When each frame of work's work is done (T1)
 
-T1 owns the cost of each frame of work, by the passage's cost event: `FadeStep`, `BuildRoom`,
-`FetchTiles`, `FetchContents` and `Other`. The passage is the largest stretch of lag on every
-Ceres rung (25 of the 40 frames of each fade, and 60 to 70 frames of the loading, are overruns).
-The contents' cost is bounded above only: its frame of work then waits for the slide, which the
-passage owns, and in every cached passage it ended with the slide.
+Whether the work of a frame of work is done by its frame's end is the lag cut, a borrowed input
+until T1 models the platform (MODEL §1 decision 35); the passage reports no cost of its own. The
+passage is the largest stretch of lag on every Ceres rung (25 of the 40 frames of each fade, and
+60 to 70 frames of the loading, are overruns). The contents' fetch has no cut of its own: its
+frame of work then waits for the slide, which the passage owns, and in every cached passage it
+ended with the slide.
 
 ### G6. Her sounds at the door and at the end (samus-appearance)
 

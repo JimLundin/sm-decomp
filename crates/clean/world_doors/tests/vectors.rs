@@ -9,9 +9,9 @@ mod vectors {
     use serde::Deserialize;
     use types::{Checked, Colour, Fixed, Heading, Pair, Parts, Position, Px, Set, fixed};
     use world_doors::{
-        Activity, Arrival, Axis, CATALOGUE, COLOURS, ColourGroup, Cost, CostEvent, Doors, Exports,
-        FadeTime, Fetching, Finishing, HerSound, Inputs, Palette, Passage, Phase, RoomCall,
-        RoomSound, Rules, Scene, SlideScreen, WorkFrames, catalogue,
+        Activity, Arrival, Axis, CATALOGUE, COLOURS, ColourGroup, Doors, Exports, FadeTime,
+        Fetching, Finishing, HerSound, Inputs, Palette, Passage, Phase, RoomCall, RoomSound, Rules,
+        Scene, SlideScreen, WorkFrames, catalogue,
     };
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-doors.toml");
@@ -190,7 +190,6 @@ mod vectors {
         calls: Vec<CallName>,
         sounds: Vec<SoundName>,
         her_sounds: Vec<HerSoundName>,
-        cost: Option<CostName>,
         finished: bool,
         restart: bool,
         screen: Option<ScreenName>,
@@ -259,16 +258,6 @@ mod vectors {
         AtTheDoor,
         #[serde(rename = "spin again")]
         SpinAgain,
-    }
-
-    #[derive(Deserialize, Clone, Copy)]
-    enum CostName {
-        BuildRoom,
-        FadeStep,
-        FetchContents,
-        FetchTiles,
-        Other,
-        Play,
     }
 
     #[derive(Deserialize, Clone, Copy)]
@@ -569,18 +558,6 @@ mod vectors {
         })
     }
 
-    const fn cost(name: Option<CostName>) -> Cost {
-        match name {
-            None => Cost::OwnWait,
-            Some(CostName::Play) => Cost::Play,
-            Some(CostName::BuildRoom) => Cost::Event(CostEvent::BuildRoom),
-            Some(CostName::FadeStep) => Cost::Event(CostEvent::FadeStep),
-            Some(CostName::FetchContents) => Cost::Event(CostEvent::FetchContents),
-            Some(CostName::FetchTiles) => Cost::Event(CostEvent::FetchTiles),
-            Some(CostName::Other) => Cost::Event(CostEvent::Other),
-        }
-    }
-
     fn finishing(after: &AfterRecord) -> Finishing {
         let screen = after.screen.map(|name| match name {
             ScreenName::FrontAndSprites => SlideScreen::FrontAndSprites,
@@ -684,11 +661,6 @@ mod vectors {
             "her_sounds",
             format!("{:?}", her_sound(&after.her_sounds)),
             format!("{:?}", report.her_sound),
-        );
-        check(
-            "cost",
-            format!("{:?}", cost(after.cost)),
-            format!("{:?}", report.cost),
         );
         check(
             "finished",

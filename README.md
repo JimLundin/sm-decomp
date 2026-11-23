@@ -181,7 +181,7 @@ Model implementation and vectors are separate from the replay evidence above.
 | world-blocks | W2 (in progress) | in progress | 4 | 100 | 2,395 | 2,074 | 1.15 |
 | samus-appearance | S5 (in progress) | in progress | 9 | 186 | 3,351 | 2,149 | 1.56 |
 | boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 1,299 | 1,150 | 1.13 |
-| world-doors | R1 (in progress) | in progress | 1 | 70 | 3,374 | 2,912 | 1.16 |
+| world-doors | R1 (in progress) | in progress | 1 | 70 | 3,223 | 2,875 | 1.12 |
 | samus-health | H1 (in progress) | in progress | 2 | 27 | 489 | 299 | 1.64 |
 | game-time | G1 (in progress) | in progress | 1 | 11 | 298 | 187 | 1.59 |
 | world-quake | R3 (in progress) | in progress | 1 | 7 | 145 | 62 | 2.33 |

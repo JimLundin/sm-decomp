@@ -22,10 +22,10 @@ the CRE bitsets, and each enemy slot's id and frame counter. They were read over
 logs were then read to pin the fade's arithmetic, the alignment's rounding, the vertical doors,
 the nudge, the IRQ's commands and the music queue.
 
-The reference model, `$TEMP/collab/r1-fix/ref/passage.py` (`step`: one frame), is run over the
-dumps by `ref/model3.py`: from the touch's record it steps every frame, with the recorded timing
-as T1's input (below), and compares what the table lists. Its inputs from the records: the sound
-queues' emptiness at the last frame of work (`0643`..`0648`), the music's readiness from the
+The per-frame model, `$TEMP/collab/r1-fix/ref/passage.py` (`step`: one frame), is run over the
+dumps by `ref/model3.py`: from the touch's record it steps every frame, with the recorded lag
+cut as the work done (below), and compares what the table lists. Its inputs from the records: the
+sound queues' emptiness at the last frame of work (`0643`..`0648`), the music's readiness from the
 music queue (below), the timer (`0943`), the CRE bitsets (`07B1 | 07B3` bit 0), the doorway's
 arrival (`0791`, `0927`, `0929`, `092B`, `092D`), the new room's target colours (`7EC200`) during
 `Brightening`, and, at the frame `Arriving` ends, the colours the loading wrote to sprite palettes
@@ -57,16 +57,17 @@ The 29 colour misses are G2's two writers. Over the ten Ceres passages alone: 1,
 frames, 457 of 457 phases, 445 of 457 colour frames (the 12 of row 10). The loading's writes
 taken as input: 182 colours over 17 passages.
 
-`ref/vecrun2.py` runs every vector through the same `step`: 70 of 70 agree. `ref/vecgen2.py`
-writes the vector file and refuses to unless the 15 vectors below, worked by hand from the
-spec's rules and not from `step`, agree with it (they do).
+No figure above compares a field the spec no longer states. The vectors' reference model is
+`$TEMP/collab/doors-no-cost-lane/ref/passage.py` (`step`: one frame), written from the spec's
+arms; `ref/run.py VECTORS` runs every vector through it: 70 of 70 agree, every field of every
+`after`. The 15 vectors below were worked by hand from the spec's rules and not from `step`.
 
 ### Vectors worked by hand
 
 - `leaving` (Quieting, TheFades, WhatRuns): the always-lit `5EF7` and the icon `3DEF` keep their
   colour as goal, the other `7FFF` and the timer's `0210` (timer not running) go to `0000`; the
-  enemies run and all is drawn; the silence and the held sounds, `AtTheDoor`; cost `Other`, a
-  finished frame, no restart.
+  enemies run and all is drawn; the silence and the held sounds, `AtTheDoor`; a finished
+  frame, no restart.
 - `fade-half` (Fading): `1A6B` toward `0000` at `t` 7, `d` 12, divisor 6: red 11:
   `⌊(2816 − ⌊2816 / 6⌋) / 256⌋` = 9; green 19: `⌊(4864 − 810) / 256⌋` = 15; blue 6:
   `⌊(1536 − 256) / 256⌋` = 5, so `15E9`. `0421` toward `7FFF`: each channel 1 to
@@ -78,9 +79,9 @@ spec's rules and not from `step`, agree with it (they do).
 - `set-off-right` (SettingOff, Sliding, Carrying): the arrival's x `0100` less 256 is `0000`, the
   step makes it `0004`; her x `00EC.0000` + `0.C800` = `00EC.C800`; seen `00EC`; slide 1.
 - `place-right` (WhereSheLands, Arriving): x `0004` + `EC` = `00F0`, y `0000` + `94` = `0094`,
-  subpixels kept; the slide doesn't step on the placing frame; `FetchTiles`, cost `FetchTiles`.
+  subpixels kept; the slide doesn't step on the placing frame; `FetchTiles`.
 - `slide-down` (Sliding, Carrying, FinishedFrames): y `0240.8000` + `1.8000` = `0242.0000`, the
-  view `0250` + 4 = `0254`; a finished frame and a restart though T1 is asked nothing.
+  view `0250` + 4 = `0254`; a finished frame and a restart, the work done not read.
 - `slide-adjusted-down-end` (Sliding, F5): with 41 frames, frame 41: she `0280.8000` +
   `1.8000` = `0282.0000`; the view `02BC` + 4 = `02C0`, then onto the arrival `0300`; she lands,
   `Landing(0)`.
@@ -100,9 +101,9 @@ spec's rules and not from `step`, agree with it (they do).
 
 ### Mutants
 
-Each a one-line change to `passage.py` (`MUTANT`), run over the 70 vectors by
-`vecrun2.py TOML NAME...`; every one dies. The first six hard-code a Parameter value on one way
-or one fade only:
+Each a one-line change to the per-frame model's `passage.py` (`MUTANT`), run over the 70
+vectors by `vecrun2.py TOML NAME...`; every one dies, on a field the vectors still hold. The first
+six hard-code a Parameter value on one way or one fade only:
 
 | Mutant | Killed by |
 | --- | --- |
@@ -173,19 +174,19 @@ frames: `05B6` steps, `05B5` the HUD's count; the slide's screen: `$212C` = 11h 
 | the music ready | the music queue at the record before the frame of work, after one step of `$80:8F0C` (run by the HDMA object handler `$88:84B9` at the main loop's start, `$82:894B`): if the music timer `063F` is 1, the entry at the start index `063B` leaves; ready when every timer `0629`..`0637` is then 0 (`$80:8EF4`) | 41 of 41 waiting frames of work |
 | either room keeps the items dark | `(07B3 | 07B1) & 1` after `$82:DDF1` (the destination's CRE bitset and the previous) | read by `$82:E221`, `$80:9773`, `$80:97DC` |
 | the timer | `0943` ≠ 0 | |
-| the work done | the record's cut is `Requested` | T1; see the contract below |
+| the work done | the record's cut is `Requested` | the borrowed lag cut; see below |
 
-**T1's contract.** The passage names a cost event for each frame of work: `FadeStep` (each
-`$E2DB` and `$E737` call, with the enemies' run inside it), `BuildRoom` (`$E36E`: the room
-and state headers `$82:DE6F`, `$82:DEF2`, the effects `$88:82C1`, the level, scrolls and CRE
-`$82:EA73`), `FetchTiles` (`$E3C0` after the placing: the tileset's
-decompression and VRAM uploads), `FetchContents` (`$E4A9` up to `$82:E524`), and `Other` (every
-other function: one frame on record). T1 answers, per frame, whether that cost is spent. It
-reports only the work's cost: the slide's wait (`$82:E526`) is the passage's, so a T1 fitted from
-the records must not take `FetchContents`'s record length (the wait) as its cost; the records
-bound that cost by the slide's end only. Nor does T1 own the forced finished frames
-(`FinishedFrames`): the IRQ's door commands own them. Until T1 exists, the harness decodes
-"the work done" as the cut being `Requested`, for every cost event.
+**The work done, borrowed (MODEL §1 decision 35).** The harness decodes "the work done" as
+the cut being `Requested`, on every frame of work but `Arriving`'s own wait. The slide's wait
+(`$82:E526`) is the passage's, so the contents' fetch (`$E4A9` up to `$82:E524`) has no cut of its
+own: every NMI through it is a lag NMI, and the records bound it by the slide's end only (the
+played run takes it done on its first frame). The forced finished frames (`FinishedFrames`) are
+the IRQ's door commands', not the lag cut's. The frames of work a T1 would later time are each
+function's call: the fades `$E2DB` and `$E737` (with the enemies' run inside), the room's
+building `$E36E` (the room and state headers `$82:DE6F`, `$82:DEF2`, the effects `$88:82C1`, the
+level, scrolls and CRE `$82:EA73`), the tiles' fetch `$E3C0` after the placing (the tileset's
+decompression and VRAM uploads), and every other function, one frame on record. The spec names
+none of these as a report: no reader of the passage reads one before T1.
 
 **The HUD's colour groups** (`TheFades`; the importer's, by palette index; `7EC000 + 2 ×
 index`): always lit 9, 10 (BG3 palette 2 colours 1, 2), 13, 14 (palette 3 colours 1, 2), 17 to 19
@@ -241,6 +242,16 @@ palette 4 colour 4).
   both, and the timer's drawing); `chain-any-0006-E0B5` has the timer running and the bit set,
   and its timer colours fade.
 - **Leaving also clears the save station's used flag** `1E75` (`$82:E1C7`): P2's.
+- **`PassageTime` and `FinishedFrames` are behaviour, not cost bookkeeping.** Each decides
+  State or output bytes at an NMI cut. `PassageTime`'s course is the phase at every cut, and with
+  it the colours, the camera and her position: the model holds it on 785 of 785 frames of work
+  against the do-nothing model's 44, with the work done read only as the borrowed lag cut (the
+  played run reads it per cut, `finished(current)`). `FinishedFrames` is the frame counter
+  `05B6` stepping and the HUD's count `05B5` at each cut: 2,893 of 2,893 frames each, against
+  1,815 and 2,750; its forced frames come from the IRQ's door commands, so they differ from the
+  lag cut on every overrun frame of the slide, the landing and the music's wait. A cost event
+  naming which function's work a frame of work is would serve only a T1 that times it; no reader
+  of the passage reads one, so the spec states none.
 
 ## The harness (for the integrator)
 
@@ -260,9 +271,8 @@ palette 4 colour 4).
   sounds held (`05F5`), the mini-map (`05F7`), the enemies' runs (each slot's `0FA4`: none steps
   when they don't run), and the library-1 sound at the first and last frames of work as G6's rule
   picks it (samus-appearance's, until its spec owns it).
-- **Not comparable on records, vectors only:** the cost event (T1 has no record of its own), the
-  room's calls (R2's effects are compared in R2), the animated tiles' and the projectiles' runs,
-  what is drawn and the timer's drawing (OAM is not in the lean records), and the slide's screen
+- **Not comparable on records, vectors only:** the room's calls (R2's effects are compared in
+  R2), the animated tiles' and the projectiles' runs, what is drawn and the timer's drawing (OAM is not in the lean records), and the slide's screen
   (`$212C` is not recorded).
 - **Masked, with their writer:** colours 113 to 115 in `boss-kraid-defeated` (Kraid's corpse, at
   each enemy run); colours 41 to 46 in `chain-any-0010-DF8D` from its first `Brightening` frame of
@@ -318,4 +328,4 @@ gameplay), so no area has `old` for the guideline comparison (MODEL §1 decision
 
 - Area passage: TheTouch, PassageTime, FinishedFrames, Quieting, TheFades, Fading, Squaring, Building, SettingOff, Sliding, Carrying, Arriving, WhereSheLands, Landing, SheKeepsHerMotion, WhatRuns
 
-Budget: 37.5 × 77.7 units = 2,912 (passage 2,912)
+Budget: 37.5 × 76.7 units = 2,875 (passage 2,875)

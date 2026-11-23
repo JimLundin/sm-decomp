@@ -5,8 +5,7 @@ use types::{Heading, Position, Set, px, set_of};
 
 use crate::colours::{ColourGroup, FadeTime, Palette, fade, head_for_dark, light_visor};
 use crate::io::{
-    Activity, Cost, CostEvent, Exports, Finishing, HerSound, Inputs, Report, RoomCall, RoomSound,
-    Scene, SlideScreen,
+    Activity, Exports, Finishing, HerSound, Inputs, Report, RoomCall, RoomSound, Scene, SlideScreen,
 };
 use crate::passage::{
     Arrival, Doors, Fetching, LAST_BEFORE_THE_SLIDE, LAST_LANDING, Passage, Phase, WorkFrames,
@@ -42,13 +41,13 @@ impl Passage {
     /// One frame of the passage. Two clocks run in it (`PassageTime`):
     /// - every frame, whatever the work, at the frame's start: she is placed as `Arriving`
     ///   begins, and on each frame after the slide takes a frame (`Arriving`, `Sliding`);
-    /// - then the frame of work in progress, which ends this frame when the platform says its
-    ///   cost is spent, or, with no cost, when the slide has ended; only when it ends does the
-    ///   phase's entry act and the phase move on. Until then nothing else moves.
+    /// - then the frame of work in progress, which ends this frame when its work is done, or,
+    ///   for the wait on the slide, when the slide has ended; only when it ends does the phase's
+    ///   entry act and the phase move on. Until then nothing else moves.
     fn step(mut self, mut scene: Scene, inputs: &Inputs, rules: &Rules) -> Exports {
         let finishes_anyway = self.phase.finishes_anyway();
-        let event = self.phase.cost_event();
-        let mut report = Report::of_passage(event.map_or(Cost::OwnWait, Cost::Event));
+        let waits_for_slide = self.phase.waits_for_slide();
+        let mut report = Report::of_passage();
 
         // Every frame, whatever the work: the placing, then the slide.
         if let Phase::Arriving { placed, fetching } = self.phase {
@@ -64,8 +63,12 @@ impl Passage {
             }
         }
 
-        // Each frame of work: done when its cost is spent, or, with none, as the slide ends.
-        let work_ends = event.map_or_else(|| self.slide_ended(rules), |_| inputs.work_done);
+        // Each frame of work: done when its work is done, or, waiting for the slide, as it ends.
+        let work_ends = if waits_for_slide {
+            self.slide_ended(rules)
+        } else {
+            inputs.work_done
+        };
         report.finishing = if finishes_anyway {
             Finishing::Restarts(SlideScreen::below_the_hud(inputs.items_dark))
         } else if work_ends {
@@ -331,30 +334,17 @@ impl Phase {
         )
     }
 
-    /// `PassageTime`: the cost event of this phase's frame of work, or none for the wait on the
-    /// slide's end, of which the platform is asked nothing.
-    const fn cost_event(self) -> Option<CostEvent> {
-        match self {
-            Self::Darkening(_) | Self::Brightening(_) => Some(CostEvent::FadeStep),
-            Self::BeforeTheSlide(n) if n.get() == 1 => Some(CostEvent::BuildRoom),
-            Self::Arriving {
-                fetching: Fetching::Tiles,
-                ..
-            } => Some(CostEvent::FetchTiles),
-            Self::Arriving {
-                fetching: Fetching::Contents,
-                ..
-            } => Some(CostEvent::FetchContents),
+    /// `PassageTime`: whether this phase's frame of work waits on its own for the slide's end
+    /// (`Arriving`, fetching `Done`): the work done isn't read, and it ends on the frame the slide
+    /// does.
+    const fn waits_for_slide(self) -> bool {
+        matches!(
+            self,
             Self::Arriving {
                 fetching: Fetching::Done,
                 ..
-            } => None,
-            Self::BeforeTheSlide(_)
-            | Self::Landing(_)
-            | Self::Music { .. }
-            | Self::Quieting { .. }
-            | Self::Squaring => Some(CostEvent::Other),
-        }
+            }
+        )
     }
 
     /// `WhatRuns`: what runs or is drawn on this phase's frame of work. While the room is lit,

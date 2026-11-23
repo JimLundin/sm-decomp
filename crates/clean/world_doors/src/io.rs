@@ -34,8 +34,8 @@ pub struct Scene {
 pub struct Inputs {
     /// She touched a door to a room this frame (samus-movement), read in play only (`TheTouch`).
     pub touched: bool,
-    /// The work of the frame of work in progress, of the cost event the passage names, is done
-    /// by this frame's end (the platform, `PassageTime`).
+    /// The work of the frame of work in progress is done by this frame's end (the platform's lag
+    /// cut, `PassageTime`).
     pub work_done: bool,
     /// Every sound request so far has been sent (audio, `Quieting`).
     pub sounds_sent: bool,
@@ -110,33 +110,6 @@ pub enum HerSound {
     SpinAgain,
 }
 
-/// The cost event of a frame of work, the passage's report to the platform (`PassageTime`).
-/// Listed alphabetically.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CostEvent {
-    /// `BeforeTheSlide(1)`: the next room built.
-    BuildRoom,
-    /// A step of a fade.
-    FadeStep,
-    /// `Arriving`, fetching `Contents`.
-    FetchContents,
-    /// `Arriving`, fetching `Tiles`.
-    FetchTiles,
-    /// Any other frame of work.
-    Other,
-}
-
-/// What the platform is told of a frame's cost.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Cost {
-    /// Play runs: no passage, so the frame's cost is play's own.
-    Play,
-    /// The passage waits on its own, for the slide's end: the platform is asked nothing.
-    OwnWait,
-    /// The cost event of the frame of work in progress.
-    Event(CostEvent),
-}
-
 /// What is shown below the HUD on a frame that restarts the HUD's frame count (`FinishedFrames`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SlideScreen {
@@ -173,8 +146,6 @@ pub struct Report {
     pub room_sounds: Set<RoomSound>,
     /// The request to her sounds this frame, if any.
     pub her_sound: Option<HerSound>,
-    /// What the platform is told of this frame's cost.
-    pub cost: Cost,
     /// Whether this is a finished frame.
     pub finishing: Finishing,
     /// The mini-map is turned on this frame (the HUD's input `the mini-map turned on`).
@@ -188,23 +159,22 @@ impl Report {
     /// A frame of play: nothing of the passage's runs, and it is a finished frame.
     #[must_use]
     pub fn play() -> Self {
-        Self::blank(false, Cost::Play, Finishing::Finished)
+        Self::blank(false, Finishing::Finished)
     }
 
-    /// A frame of a passage at this cost, before its frame of work and its finishing are known.
-    pub(crate) fn of_passage(cost: Cost) -> Self {
-        Self::blank(true, cost, Finishing::Overrun)
+    /// A frame of a passage, before its frame of work and its finishing are known.
+    pub(crate) fn of_passage() -> Self {
+        Self::blank(true, Finishing::Overrun)
     }
 
     /// A frame on which nothing is run, called, asked for or moved.
-    fn blank(passing: bool, cost: Cost, finishing: Finishing) -> Self {
+    fn blank(passing: bool, finishing: Finishing) -> Self {
         Self {
             passing,
             runs: Set::default(),
             call: None,
             room_sounds: Set::default(),
             her_sound: None,
-            cost,
             finishing,
             minimap_on: false,
             layer_2: None,

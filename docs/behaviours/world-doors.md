@@ -34,11 +34,11 @@ left it. The passage then sets it (§1.4); the camera doesn't run during the pas
 **What it reads from audio (U1).** Whether the sound requests it waits on have all been sent
 (`Quieting`), and whether the new room's music is ready (`Landing`).
 
-**What it reads from the platform (T1).** The cost of each frame of work the passage does, by its
-cost event (`PassageTime`): T1 answers, each frame, whether the work of the frame of work in
-progress is done. The passage owns the rest of its timing: the counted frames of work, the waits,
-the slide's wait and the finished frames (`PassageTime`, `FinishedFrames`). Until T1 models the
-costs, the lock's recorded timing gives them, as it does for every domain the free run plays.
+**What it reads from the platform (T1).** Whether the work of the frame of work in progress is
+done by this frame's end (`PassageTime`): the lag cut, a borrowed input until T1 models the
+platform; the lock's recorded timing gives it, as it does for every domain the free run plays.
+The passage owns the rest of its timing: the counted frames of work, the waits, the slide's wait
+and the finished frames (`PassageTime`, `FinishedFrames`).
 
 **What the other domains must carry unchanged across the passage.** Samus's State in
 samus-movement, but for her position, which the passage moves (§1.4): her pose, facing, speeds,
@@ -110,7 +110,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | the escape's timer running | `bool` (B8) | `TheFades`, `WhatRuns` |
 | the sounds sent | `bool`: every sound request so far has been sent (U1) | `Quieting` |
 | the music ready | `bool`: no track waits in the queue of tracks, as this frame of work finds it (U1) | `Landing` |
-| the work done | `bool`: the work of the frame of work in progress, of the cost event the passage names, is done by this frame's end (T1, or the lock's recorded timing) | `PassageTime` |
+| the work done | `bool`: the work of the frame of work in progress is done by this frame's end (the lag cut: the lock's recorded timing, borrowed until T1) | `PassageTime` |
 
 ### 1.4 What it reports (Outputs)
 
@@ -118,8 +118,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | --- | --- | --- |
 | passing | `bool`: from the frame after the touch to the last frame of `Brightening`; while it holds, her motion, the camera, the blocks' run (world-blocks' `TheScriptsRun` is paused), the HUD and play time don't run | every domain; output |
 | what runs | per frame of work: the enemies, their projectiles, the animated tiles, what is drawn, the escape's timer drawn, each a `bool` (`WhatRuns`) | C1, R4, samus-appearance, B8 |
-| the cost event | per frame: `CostEvent` (`BuildRoom`, `FadeStep`, `FetchContents`, `FetchTiles`, `Other`, listed alphabetically), or none while the passage waits on its own (`PassageTime`) | T1 |
-| a finished frame | `bool`, per frame (`FinishedFrames`) | the Tick, T1 |
+| a finished frame | `bool`, per frame (`FinishedFrames`) | the Tick |
 | the frame count restarts | `bool`, per frame: the HUD's frame count is 0 before this frame counts (`FinishedFrames`) | H2 |
 | the slide's screen | on the frames that restart the count: what is shown below the HUD, `FrontAndSprites` or `Sprites` (`FinishedFrames`) | the video encoder (E2) |
 | her position | x, y: `P.S`, set by `WhereSheLands` and `Carrying` | samus-movement; output |
@@ -168,19 +167,15 @@ R2 owns what each does and in what order; the passage owns when.
 ### PassageTime
 - kind: timing.
 - summary: the passage takes a counted number of frames of work in each phase, a frame of work
-  ends when T1 says its cost is spent, and the slide runs one step every frame whatever the work.
-- params: none (the costs are T1's).
+  ends on the frame its work is done, and the slide runs one step every frame whatever the work.
+- params: none (when the work is done is an input).
 - switch: Fixed.
-- Each frame of work has a cost event, the passage's report to T1: a frame of work of `Darkening`
-  or `Brightening` → `FadeStep`; of `BeforeTheSlide(1)` → `BuildRoom`; of `Arriving` fetching
-  `Tiles` → `FetchTiles`, fetching `Contents` → `FetchContents`; any other → `Other`
-  [work-pending, building, place-right, loading-waits, settle]
 - A frame whose work isn't done → the phase and its data stay, and nothing but the placing and
   the slide moves [work-pending, place-pending, work-pending-slide]
 - A frame whose work is done → the phase's entry below acts, in that frame [silence-sent,
   dark-step, prepare, building, settle]
-- `Arriving`, fetching `Done` → no cost: T1 is asked nothing, and the frame of work ends on the
-  frame the slide ends (`Arriving`) [slide-left, slide-end]
+- `Arriving`, fetching `Done` → the work done isn't read: the frame of work ends on the frame the
+  slide ends (`Arriving`) [slide-left, slide-end]
 - The course, in frames of work:
 
 Cells: phase, frames of work, next phase
@@ -199,9 +194,9 @@ Cells: phase, frames of work, next phase
 - So with every frame of work done in its frame, she lands 65 frames after the view sets off
   for a slide left or right, and the rest of the course is 37 frames of work, plus the waits,
   each at least one: the sounds, the squaring and the music.
-- T1's costs are long: in the cached rows each fade takes 37 to 45 frames, the room's building 7
-  to 18, the tiles' fetch 21 to 51, and the whole passage 161 to 226 frames, of which the slide
-  is 64. The contents' fetch always ended before the slide did.
+- The work is slow on record: in the cached rows each fade takes 37 to 45 frames, the room's
+  building 7 to 18, the tiles' fetch 21 to 51, and the whole passage 161 to 226 frames, of which
+  the slide is 64. The contents' fetch always ended before the slide did.
 - checked: oracle (every frame of 18 passages in the cached rows); constructed.
 
 ### FinishedFrames
@@ -308,7 +303,7 @@ Cells: phase, frames of work, next phase
   slide's still frame 0 is made; `BeforeTheSlide(1)` [prepare-up]
 - `BeforeTheSlide(0)`, another way → a frame of work that does nothing; `BeforeTheSlide(1)`
   [prepare]
-- `BeforeTheSlide(1)` → the next room is built (`BuildRoom`, cost `BuildRoom`);
+- `BeforeTheSlide(1)` → the next room is built (`BuildRoom`);
   `BeforeTheSlide(2)` [building]
 - `BeforeTheSlide(2)` → the view sets off (`SettingOff`) [set-off-right]
 - checked: oracle (18 buildings in the cached rows, each one frame of work, 7 to 18 frames);
@@ -485,8 +480,8 @@ Cells: phase, frames of work, next phase
 - **The room's loading (R2):** what each of the room's calls (§1.5) loads, and in what order, and
   the new room's colours; the colours it and the enemies write straight to the screen while it
   is dark; the HUD's `a boss encountered` (interface-hud), on entering the room of a boss.
-- **The platform (T1):** the cost of each frame of work by its cost event (`PassageTime`); until
-  it is modelled, the lock's recorded timing.
+- **The platform (T1):** whether each frame of work's work is done by its frame's end
+  (`PassageTime`); until it is modelled, the lock's recorded timing, a borrowed input.
 - **The backgrounds:** layer 2's place over the arrival view, by the room's rates; the passage
   only moves it with the slide.
 - **The video encoder (E2):** the tile layers drawn as the view slides, and their scroll

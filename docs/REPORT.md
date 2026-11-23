@@ -176,7 +176,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 100 |
 | samus-appearance | 3,351 | 2,149 | 1.56 | 1.06 | 32 % (over 25 %) | 1,525 | 1,456 | 186 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 56 |
-| world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 70 |
+| world-doors | 3,223 | 2,875 | 1.12 | 1.08 | 4 % | - | 950 | 70 |
 | samus-health | 489 | 299 | 1.64 | 1.61 | 2 % | - | 246 | 27 |
 | game-time | 298 | 187 | 1.59 | 1.59 | 0 % | - | 60 | 11 |
 | world-quake | 145 | 62 | 2.33 | 2.13 | 9 % | - | 95 | 7 |
@@ -361,13 +361,13 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean/world_doors/src/catalogue.rs` | - | tables and types | 17 | 45 | 111 | 497 | 1 | 0 | 0 | 164 |
 | `crates/clean/world_doors/src/colours.rs` | passage | logic | 459 | 480 | 141 | 13 | 49 | 20 | 14 | 91 |
-| `crates/clean/world_doors/src/io.rs` | - | tables and types | 82 | 154 | 424 | 0 | 0 | 0 | 0 | 122 |
-| `crates/clean/world_doors/src/lib.rs` | - | logic | 0 | 108 | 0 | 0 | 0 | 0 | 0 | 17 |
+| `crates/clean/world_doors/src/io.rs` | - | tables and types | 70 | 137 | 369 | 0 | 0 | 0 | 0 | 106 |
+| `crates/clean/world_doors/src/lib.rs` | - | logic | 0 | 104 | 0 | 0 | 0 | 0 | 0 | 16 |
 | `crates/clean/world_doors/src/passage.rs` | passage | tables and types | 47 | 107 | 237 | 25 | 2 | 0 | 0 | 69 |
 | `crates/clean/world_doors/src/rules.rs` | - | tables and types | 45 | 90 | 107 | 36 | 2 | 0 | 0 | 47 |
-| `crates/clean/world_doors/src/step.rs` | passage | logic | 2,173 | 2,213 | 3 | 12 | 169 | 101 | 92 | 339 |
+| `crates/clean/world_doors/src/step.rs` | passage | logic | 2,034 | 2,083 | 3 | 12 | 169 | 85 | 92 | 328 |
 | `crates/clean/world_doors/src/view.rs` | passage | logic | 553 | 655 | 62 | 105 | 11 | 24 | 0 | 129 |
-| total | | | 3,374 | 3,852 | 1,085 | 688 | 233 | 145 | 105 | 978 |
+| total | | | 3,223 | 3,701 | 1,030 | 688 | 233 | 129 | 105 | 950 |
 
 ### samus-health
 
@@ -428,14 +428,14 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | world-blocks | 1,076 | 725 | 351 | 399 |
 | samus-appearance | 1,456 | 874 | 582 | 559 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
-| world-doors | 978 | 402 | 576 | 562 |
+| world-doors | 950 | 386 | 564 | 537 |
 | samus-health | 246 | 58 | 188 | 82 |
 | game-time | 60 | 0 | 60 | 50 |
 | world-quake | 95 | 43 | 52 | 24 |
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
 | shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,415 | 1,225 | 190 | 274 |
-| total | 15,502 | 7,994 | 7,508 | 7,029 |
+| total | 15,474 | 7,978 | 7,496 | 7,003 |
 
 ## Spec, budget and fit by area
 
@@ -585,11 +585,11 @@ Spec [`docs/behaviours/world-doors.md`](behaviours/world-doors.md), k = 37.5. Ol
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| passage | 16 | 77.7 | 2,912 | - | 3,231 | 1.11 |
-| shared (in no area) | | | | | 143 | |
-| total | 16 | 77.7 | 2,912 | - | 3,374 | 1.16 |
+| passage | 16 | 76.7 | 2,875 | - | 3,091 | 1.08 |
+| shared (in no area) | | | | | 132 | |
+| total | 16 | 76.7 | 2,875 | - | 3,223 | 1.12 |
 
-Area fit 1.11: the areas' score, 3,231, ÷ the budget. Shared code 143, its share of the model 4 %.
+Area fit 1.08: the areas' score, 3,091, ÷ the budget. Shared code 132, its share of the model 4 %.
 
 ### samus-health
 
@@ -700,7 +700,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | production and exact services | 38 | 4,444 | 26,662 | 26,742 | 7,220 | 1,037 | 1,914 | 3,184 | 385 | 5,577 |
 | bridges | 6 | 898 | 5,389 | 5,276 | 594 | 377 | 617 | 303 | 78 | 903 |
-| rebuilt models, shared types included | 120 | 7,029 | 42,172 | 50,377 | 21,495 | 18,081 | 2,447 | 2,051 | 985 | 15,502 |
+| rebuilt models, shared types included | 120 | 7,003 | 42,021 | 50,226 | 21,440 | 18,081 | 2,447 | 2,035 | 985 | 15,474 |
 
 ## Domain graph
 
@@ -2013,18 +2013,18 @@ graph LR
 | --- | --- | --- | --- | ---: | ---: |
 | `catalogue.rs` | - | The catalogue: one behaviour for each entry of the spec, with its kind, its switch and how it is checked. | `enum BehaviourId (16)`, `struct Behaviour`, `const CATALOGUE`, `fn catalogue` | 17 | 164 |
 | `colours.rs` | passage | The screen's colours as the passage reads and sets them: the dark colours it heads for, the fade's steps toward the colours headed for, and her visor's colour as she lands. | `const COLOURS`, `enum ColourGroup (5)`, `struct Palette`, `fn head_for_dark`, `fn light_visor`, `struct FadeTime`, `fn fade`, `FadeTime::{START, is_last, next}`, 5 private | 459 | 91 |
-| `io.rs` | - | What a frame brings the doors and what the doors answer it. | `struct Scene`, `struct Inputs`, `enum Activity (6)`, `enum RoomCall (8)`, `enum RoomSound (3)`, `enum HerSound (2)`, `enum CostEvent (5)`, `enum Cost (3)`, `enum SlideScreen (2)`, `enum Finishing (3)`, `struct Report`, `struct Exports`, `Report::{play, of_passage}`, 1 private | 82 | 122 |
-| `lib.rs` | - | The world-doors model, built from its behaviour spec alone: the passage through a door to a room, from the frame after she touches it until play goes on in the next room. | - | 0 | 17 |
+| `io.rs` | - | What a frame brings the doors and what the doors answer it. | `struct Scene`, `struct Inputs`, `enum Activity (6)`, `enum RoomCall (8)`, `enum RoomSound (3)`, `enum HerSound (2)`, `enum SlideScreen (2)`, `enum Finishing (3)`, `struct Report`, `struct Exports`, `Report::{play, of_passage}`, 1 private | 70 | 106 |
+| `lib.rs` | - | The world-doors model, built from its behaviour spec alone: the passage through a door to a room, from the frame after she touches it until play goes on in the next room. | - | 0 | 16 |
 | `passage.rs` | passage | The passage's state: what a caller holds from one frame to the next, saves and restores, and builds at any value the spec allows to start play part-way. | `enum Doors (2)`, `struct Passage`, `enum Phase (8)`, `enum Fetching (3)`, `const LAST_BEFORE_THE_SLIDE`, `const LAST_LANDING`, `struct WorkFrames`, `struct Arrival`, `Passage::START`, `WorkFrames::{FIRST, new, get, next}` | 47 | 69 |
 | `rules.rs` | - | The tuning values the spec lists as parameters, with the spec's values as their default. | `enum Axis (2)`, `struct Rules`, `Axis::of`, `impl Default for Rules`, 6 private | 45 | 47 |
-| `step.rs` | passage | The step: one frame of the doors, from the state a caller holds and what the frame brings to what the frame answers. | `Doors::step`, 18 private | 2,173 | 339 |
+| `step.rs` | passage | The step: one frame of the doors, from the state a caller holds and what the frame brings to what the frame answers. | `Doors::step`, 18 private | 2,034 | 328 |
 | `view.rs` | passage | Where the passage puts the view and her: the moves along the way she leaves, the squaring, the set-off, and where she is placed, lands and steps clear. | `fn toward`, `fn plus`, `fn pixels`, `fn at_pixels`, `fn squared`, `fn setting_off`, `fn place`, `fn settled`, `fn stepped_clear`, 11 private | 553 | 129 |
 
 Its crate root exports:
 
 - from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`, `catalogue`
 - from `colours`: `COLOURS`, `ColourGroup`, `FadeTime`, `Palette`
-- from `io`: `Activity`, `Cost`, `CostEvent`, `Exports`, `Finishing`, `HerSound`, `Inputs`, `Report`, `RoomCall`, `RoomSound`, `Scene`, `SlideScreen`
+- from `io`: `Activity`, `Exports`, `Finishing`, `HerSound`, `Inputs`, `Report`, `RoomCall`, `RoomSound`, `Scene`, `SlideScreen`
 - from `passage`: `Arrival`, `Doors`, `Fetching`, `LAST_BEFORE_THE_SLIDE`, `LAST_LANDING`, `Passage`, `Phase`, `WorkFrames`
 - from `rules`: `Axis`, `Rules`
 

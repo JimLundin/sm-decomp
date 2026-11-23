@@ -68,8 +68,8 @@ pub const CATALOGUE: <BehaviourId as Enum>::Array<Behaviour> = [
     Behaviour {
         id: BehaviourId::PassageTime,
         summary: "the passage takes a counted number of frames of work in each phase, a frame of \
-                  work ends when the platform says its cost is spent, and the slide runs one step \
-                  every frame whatever the work",
+                  work ends on the frame its work is done, and the slide runs one step every \
+                  frame whatever the work",
         kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
