@@ -649,7 +649,7 @@ disk or on the web is out of reach. So:
   (§1 decision 12). The root declares the approved dependencies, from that list, in a clean
   crate's `Cargo.toml`; implementer commits change its code. They contain **no address, bank,
   RAM, ROM-code or original routine name anywhere, comments included.** `data` stays on the observer side and turns
-  ROM bytes into the clean types at the edge. `tools/check_crate_rules.sh` enforces both rules in CI.
+  ROM bytes into the clean types at the edge. `deny.toml` (`cargo deny check bans`) enforces the dependency rule and `tools/check_crate_rules.sh` the address rule, both in CI.
 - **No addresses where an implementer can see them.** `Source:` lines live only in the observer's
   `docs/behaviours/<domain>.decode.md`. The spec carries behaviour ids, rules, parameters and
   vectors. The catalogue carries ids, summaries, kinds and switches.

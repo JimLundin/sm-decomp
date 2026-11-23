@@ -301,7 +301,7 @@ for a clip when its domain gives the pose a key.
 
 The key is the clean room's `types::Pose`, which carries every part §2 lists;
 `data::assets::samus::key` re-exports it beside the dress, so `data` depends on `types`
-(`tools/check_crate_rules.sh`).
+(`deny.toml`, checked by `cargo deny check bans`).
 
 `SamusAssets::clip(key, dress)` finds a pose's clip. A pose that has no sprites of its own is
 shown by its nearest (the air turns' one sprite for down-forward and down is the down one,
@@ -324,7 +324,7 @@ All importers live in one crate, `import`, which depends on `data`. `data` keeps
 and no ROM layout: `rom`, `compression`, `address_map` and the decoders move into `import`
 family by family, private to it once their format lands. `tools`, `verify` and `app` (for the
 player's ROM at startup) depend on `import`; `game` and `runtime` may not, and
-`tools/check_crate_rules.sh` checks it, so "only the importer knows the layout" is a build
+`deny.toml` checks it (`cargo deny check bans`), so "only the importer knows the layout" is a build
 error rather than a review rule. Samus's importer is `import::samus`. The decoded tables of
 `data::pose` it reads stay in `data` while the engine loads them too (`game::pose::Content`
 holds her pose definitions, transitions, spritemaps and tiles); they move into `import` when
