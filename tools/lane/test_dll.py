@@ -120,6 +120,22 @@ def build_env(definition: Path) -> dict[str, str]:
     return env
 
 
+def export_definition(directory: Path) -> Path:
+    """The definition file that disables GNU PE auto-export of Rust's internal symbols.
+
+    Its path is in the flags, and cargo rebuilds every crate when the flags change, so every
+    lane's output directory shares the one in their parent: a lane whose target/ is a copy of
+    another's build (worktree.sh) then reuses it."""
+    definition = directory / "exports.def"
+    content = b"EXPORTS\nmain\n"
+    if definition.is_file() and definition.read_bytes() == content:
+        return definition
+    partial = directory / f"exports.def.{os.getpid()}"
+    partial.write_bytes(content)
+    os.replace(partial, definition)
+    return definition
+
+
 def artifacts(stdout: str, selected: list[Target]) -> dict[Target, Path]:
     """The harness built for each selected target, from cargo's JSON messages."""
     by_source = {(target[3], target[1], target[2]): target for target in selected}
@@ -175,10 +191,8 @@ def main() -> int:
     except (OSError, subprocess.CalledProcessError, ValueError, SystemExit):
         print("test_dll: target discovery failed")
         return 2
-    definition = out / "exports.def"
     try:
-        # A definition file disables GNU PE auto-export of Rust's internal symbols.
-        definition.write_text("EXPORTS\nmain\n", encoding="ascii", newline="\n")
+        definition = export_definition(out.parent)
     except OSError:
         print("test_dll: infrastructure failed: export preparation")
         return 2

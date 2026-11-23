@@ -161,6 +161,25 @@ class CoverageTests(unittest.TestCase):
                 flags = test_dll.build_env(definition)["CARGO_ENCODED_RUSTFLAGS"]
             self.assertEqual(flags.split("\x1f"), expected)
 
+    def test_lanes_share_one_definition_so_a_copied_build_stays_fresh(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            flags = []
+
+            def run(command, **kwargs):
+                flags.append(kwargs["env"]["CARGO_ENCODED_RUSTFLAGS"])
+                return subprocess.CompletedProcess(command, 0, "")
+
+            for lane in ["lane-a", "lane-b"]:
+                with patch.object(sys, "argv", ["test_dll.py", "cargo", str(parent / lane), "sample"]), \
+                     patch.object(test_dll, "targets", return_value=[("sample", "--lib", "", parent)]), \
+                     patch.object(test_dll.subprocess, "run", side_effect=run), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(test_dll.main(), 2)  # Nothing was built.
+            self.assertEqual(len(flags), 2)
+            self.assertEqual(flags[0], flags[1])
+            self.assertEqual((parent / "exports.def").read_bytes(), b"EXPORTS\nmain\n")
+
     def test_artifacts_map_each_harness_to_its_package_and_target(self):
         a, b = Path("/invented/a"), Path("/invented/b")
         selected = [("a", "--lib", "", a), ("a", "--test", "vectors", a), ("b", "--test", "vectors", b),
@@ -269,7 +288,7 @@ class CoverageTests(unittest.TestCase):
             root = Path(directory)
             with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample"]), \
                  patch.object(test_dll, "targets", return_value=[("sample", "--lib", "", root)]), \
-                 patch.object(Path, "write_text", side_effect=OSError()), \
+                 patch.object(Path, "write_bytes", side_effect=OSError()), \
                  patch.object(test_dll.subprocess, "run") as run, \
                  contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(test_dll.main(), 2)

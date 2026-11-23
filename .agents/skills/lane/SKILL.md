@@ -11,7 +11,11 @@ for startup reading. Engineering tasks do not load the round procedure unless th
 
 ## Set up
 
-1. `git fetch -q origin && git worktree add -b <branch> <path> <base>`, with the base your brief names.
+1. `git fetch -q origin && bash tools/lane/worktree.sh add <branch> <path> <base>`, with the base
+   your brief names. It hard-links the build state of the seed, one worktree at `$TEMP/sm-seed`
+   built at main, so your first build compiles only what your base changes since the seed, and
+   your `target/` costs disk only for what you rebuild. Without a seed it says so and your first
+   build is cold. It dates your tracked files 2000-01-01; that is how unchanged ones stay built.
 2. Done when `git log -1` shows your base and `git status` is clean.
 
 ## Your role
@@ -39,7 +43,9 @@ role skill your brief names. For engineering work, follow the task route in AGEN
 - For every commit, run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`.
 - Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]`. On Windows, Defender blocks
   fresh test executables (exit 126), so it links each test target as a DLL and runs it through
-  Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`). This is
+  Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`,
+  `SM_TEST_JOBS`). One cargo run builds every named crate's targets, and the suites run at once,
+  so name all the crates in one call. This is
   for local machines only, never CI; elsewhere it is `cargo test`. Doc tests run only in CI. The
   replay tests execute recorded cases, so build them optimised with `CARGO_PROFILE_TEST_OPT_LEVEL=3`.
 - Behaviour: run the affected indexed cases, then the complete required replay baseline as
@@ -85,7 +91,13 @@ under the commit rules above.
 ## Resources
 
 - Keep about 30 GB of disk free (`df -h .`). Delete `target/` only for a finished or abandoned
-  lane; remove finished worktrees with `git worktree remove --force <path>` then `git worktree prune`.
+  lane; remove a finished worktree with `bash tools/lane/worktree.sh remove <path>`, which also
+  deletes its `target/` and its test-DLL folder under `$TEMP/sm-test-dll`.
+- The seed is the one shared build state, about one lane's size. The root refreshes it at main
+  off-hours with `bash tools/lane/worktree.sh seed`, when no lane is being set up and no lane's
+  tests are running. Artifacts a refresh replaces stay on disk while a lane still links them, so
+  remove finished lanes. Never point two worktrees at one target directory: cargo judges
+  freshness by each worktree's source times, so one lane can run what the other built.
 - Never judge liveness by file age or wipe a shared scratch folder.
 - GitHub Free runs 20 jobs at once across all repositories. Push a head once and let its CI finish
   unless you are fixing its failure: a new commit cancels the running gate.
