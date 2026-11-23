@@ -488,6 +488,8 @@ fn bottom_half(movement: MovementType, pose: PoseId, frame: AnimationFrame) -> B
     }
 }
 
+pub mod palettes;
+
 #[cfg(test)]
 mod tests;
 

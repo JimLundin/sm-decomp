@@ -2,6 +2,7 @@
 //!
 //! Each asset's importer, which reads the ROM's layout once, sits beside its records.
 
+pub mod actors;
 pub mod art;
 pub mod audio;
 pub mod fingerprint;

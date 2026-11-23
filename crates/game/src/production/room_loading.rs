@@ -157,6 +157,7 @@ mod tests {
             tileset: TilesetId(tileset),
             back: data::assets::world::Back::Level,
             plms: data::plm::PlmPopulation::default(),
+            enemies: Vec::new(),
         }
     }
 

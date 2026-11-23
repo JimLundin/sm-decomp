@@ -5,7 +5,8 @@
 //! default; and the doorways their doors lead through, by our [`DoorwayId`].
 //!
 //! `import::world` builds it from the ROM; the engine reads only this. It holds what the
-//! engine reads of a room today: a version's PLMs, tileset and layer 2, and the room's doors.
+//! engine reads of a room today: a version's PLMs, tileset, layer 2 and enemy graphics, and the
+//! room's doors.
 //! A record names other content by our ids, never by where the original keeps it.
 
 pub mod doorways;
@@ -13,6 +14,7 @@ pub mod rooms;
 
 pub use types::{BossKind, Event, Fixed, Heading, Item, Pair, Px, Set};
 
+use crate::assets::actors::EnemyGraphics;
 use crate::id::{DoorwayId, RoomId, TilesetId};
 use crate::plm::PlmPopulation;
 use crate::room::{Area, Screens, Scrollers};
@@ -113,6 +115,8 @@ pub struct Version {
     pub back: Back,
     /// The PLMs it places, and the scroll changes they make.
     pub plms: PlmPopulation,
+    /// The species it loads, in order, each with its sprite palette row.
+    pub enemies: Vec<EnemyGraphics>,
 }
 
 /// A version a condition chooses.
@@ -263,6 +267,7 @@ mod tests {
                 entries: Vec::new(),
                 scroll_changes: Vec::new(),
             },
+            enemies: Vec::new(),
         };
         Room {
             id,

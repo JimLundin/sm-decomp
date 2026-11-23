@@ -132,6 +132,13 @@ pub enum WorldError {
     UnregisteredTileset(RoomId),
     /// A version of the room is chosen by a boss bit that names no boss kind.
     UnknownBoss(RoomId),
+    /// A version of the room loads a graphics set that doesn't import.
+    Enemies {
+        /// The room.
+        room: RoomId,
+        /// Why.
+        error: crate::actors::ActorsError,
+    },
     /// A doorway's arrival record isn't fully present in the image.
     Arrival {
         /// The doorway.
@@ -315,7 +322,7 @@ fn from_decoded(
         .map(|entry| {
             Ok(Conditional {
                 condition: condition(id, entry.condition)?,
-                version: version(id, entry.state)?,
+                version: version(rom, id, entry.state)?,
             })
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -331,7 +338,7 @@ fn from_decoded(
         item_lighting: item_lighting(decoded.cre),
         doors,
         conditional,
-        default: version(id, decoded.default)?,
+        default: version(rom, id, decoded.default)?,
     })
 }
 
@@ -367,7 +374,7 @@ fn condition(room: RoomId, condition: room::Condition) -> Result<world::Conditio
 }
 
 /// The version a decoded state of room `room` loads.
-fn version(room: RoomId, state: RoomState) -> Result<Version, WorldError> {
+fn version(image: Lorom<'_>, room: RoomId, state: RoomState) -> Result<Version, WorldError> {
     let index = TilesetIndex(state.tileset);
     let tileset = TILESETS
         .iter()
@@ -382,6 +389,8 @@ fn version(room: RoomId, state: RoomState) -> Result<Version, WorldError> {
         tileset,
         back,
         plms: state.plms,
+        enemies: crate::actors::graphics_set(image, state.enemy_set)
+            .map_err(|error| WorldError::Enemies { room, error })?,
     })
 }
 

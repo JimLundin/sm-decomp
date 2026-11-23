@@ -102,7 +102,7 @@ are variants of it that share what they share.
 Of these, `data::assets::world` holds today what the engine reads of a room: `World`, with its
 rooms and the `Doorway`s their doors lead through (each names the room it leads into), and
 `Room` with its place, size, scrollers and doors, and its versions with the tileset, layer 2
-(`Back`) and PLMs of each. Ids come from registries: rooms from `world::rooms` (slice 0's room,
+(`Back`), PLMs and enemy graphics of each. Ids come from registries: rooms from `world::rooms` (slice 0's room,
 Ceres's six and the rooms their doors lead to), doorways from `world::doorways` (every doorway
 those rooms' doors lead through), tilesets from `data::assets::tilesets` (those their versions
 draw from); `import::world` maps the original's room headers, door headers and tileset indices
@@ -151,9 +151,12 @@ says whether a tileset uses the shared elements from where the world's rooms dra
 original loads them outside Ceres). The engine draws the level's blocks from the records'
 looks; `game::exact::art` encodes looks, sheets and palettes back to the tile table's words,
 VRAM's planar tiles and colour RAM's words, and the verifier checks every record against the
-bytes it was imported from. Still to come: the shared elements' sheet, `TileQuirks`, the
-palette effects and tile animations, Samus's palettes, and the uploads themselves, which the
-oracle's seed holds until room loading (R2) makes them.
+bytes it was imported from. `data::assets::samus::palettes` holds her suits' palettes and
+her shots' palette for each combination of the four beams that colour them, which
+`import::samus::palettes` builds. Still to come: the shared elements' sheet, `TileQuirks`,
+the palette effects and tile animations, her colour sequences, the round trip of her
+palettes, and the uploads themselves, which the oracle's seed holds until room loading (R2)
+makes them.
 
 ### 3.3 Programs (A1)
 
@@ -174,6 +177,12 @@ family. The importer maps each opcode to a step, and a pointer argument to a typ
 
 A species is an Aseprite file (sheet, tags, slices for hitboxes) with its numbers beside it.
 Figures keep the piece order the OAM stream sees.
+
+`data::assets::actors` holds today each registered species' palette, the common sprites' and
+the flashing enemies' palettes and the Ceres doors' two colour sets, with the species registry.
+A version's `enemies` is its `EnemyGraphicsSet`: the species it loads, in order, each with its
+sprite palette row. `import::actors` builds both and refuses a species no id stands for or a
+row past the eight. Their round trip is still to come.
 
 `data::assets::projectile` holds the uncharged power beam's content. `PowerBeam` owns the
 shared `samus::SpriteSheet` shape, a complete typed heading map of flight clips, a common

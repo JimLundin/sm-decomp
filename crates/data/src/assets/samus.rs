@@ -5,6 +5,7 @@
 
 pub mod key;
 pub mod map;
+pub mod palettes;
 
 use crate::pose::PoseId;
 use crate::spritemap::{SpriteAttributes, Spritemap};
