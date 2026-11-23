@@ -35,7 +35,6 @@ pub struct Content {
     pub movement: MovementContent,
     pub clips: game::samus_appearance_bridge::Clips,
     slopes: Slopes,
-    poses: Poses,
     rom: Rom,
 }
 
@@ -73,7 +72,6 @@ impl Content {
             movement,
             clips,
             slopes,
-            poses,
             rom,
         })
     }
@@ -710,23 +708,6 @@ pub fn reached(outcome: &samus_movement::Outcome) -> Observation {
         field: "movement.reached".to_owned(),
         bytes: encode_reached(&reached),
     }
-}
-
-/// A read selects imported ordinary semantic pose/action content, with matching body code.
-pub(super) fn ordinary_body(wram: &[u8], content: &Content) -> Result<bool, Outcome> {
-    let id = PoseId(word(wram, source::SAMUS_POSE)?);
-    let Some(key) = map::key_of(id) else {
-        return Ok(false);
-    };
-    let Some(definition) = content.poses.get(id) else {
-        return Ok(false);
-    };
-    // The actual current body word is read at the movement dispatch, not spin history.
-    let body = wram
-        .get(0x0a1f)
-        .copied()
-        .ok_or_else(|| data_failure(None, "opportunity body read"))?;
-    Ok(u8::from(definition.movement) == body && content.movement.radius(key).is_some())
 }
 
 #[cfg(test)]

@@ -288,15 +288,8 @@ at7..10. Production derives Ceres proximity from held movement whole pixels befo
 movement. Both owners and all outputs commit atomically. No separate writable position receipt
 or record refresh exists. Both scoped and connected recipes call the same adapters.
 
-Its external ordinary opportunities come from the reviewed passive capture pinned by
-[movement-opportunities-capture-manifest.toml](../scenarios/replay/movement-opportunities-capture-manifest.toml),
-[provenance](../scenarios/replay/movement-opportunities-capture-pins.toml) and
-[first-record manifest](../scenarios/replay/movement-opportunities-first-record-manifest.toml).
-`tools/ci/fetch_movement_opportunities.sh` fetches the immutable encrypted evidence into the
-`movement-opportunities-v1` child of the `--native` directory. Rust admission checks file integrity,
-independent input-record alignment, requested cut identity, exact ordered completed work and
-all actual-read premises. Missing evidence is DataFailure; incompatible intact opportunities
-are Unsupported. Expected observations never supply these facts.
+Each cut plays one frame from the preceding cut's independently observed controls, world
+and actors. The case compares at frame cuts and admits no evidence from inside the frame.
 
 Prior cuts6..9 must have empty interactive rosters before any actor geometry is decoded. World,
 controls, equipment, appearance ahead feedback, station stage and actor scheduling remain

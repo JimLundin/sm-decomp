@@ -424,13 +424,6 @@ checkpoints = false
 limits = ["only carried prior whole-pixel movement to door proximity integrated", "complete outputs retained but only declared position and door fields compared", "unselected producers remain external", "prior roster empty; current actor selection and timing unproved", "appearance ahead remains external feedback", "no durable Ceres codec, pixels, app, power-on or played-alone claim"]
 
 [[case.borrowed]]
-dependency = "movement.opportunity"
-provider = "reviewed-passive-capture-v1"
-fields = ["ordinary.completed-update", "ordinary.controls", "ordinary.unforced-body", "ordinary.post-pose-update"]
-phase = "interval-ending-current-cut"
-claim = "pinned raw files aligned independently to input cache; exact one ordered update and all actual-read predicates; cuts7..10 only"
-
-[[case.borrowed]]
 dependency = "movement.external-neighbours"
 provider = "preceding-cut-independent-observations"
 fields = ["world.blocks", "world.interactive_roster", "appearance.figure", "appearance.playhead", "appearance.boost", "controller.held", "controller.pressed", "progress.equipment", "mode.cinematic", "clock.parity", "elevator.moving"]

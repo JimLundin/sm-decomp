@@ -23,7 +23,6 @@ enum Context {
     MovementCeres {
         slot: ceres::Slot,
         content: Arc<super::movement::Content>,
-        evidence: super::opportunity::Evidence,
     },
     Weapons(Arc<weapons::Content>),
     ShotInputs(
@@ -81,40 +80,19 @@ struct Recipe {
     rules: ProductionRules,
 }
 
-fn connected_recipe(
-    case: &Case,
-    wram: &[u8],
-    sources: &Sources,
-    cache: &Cache,
-) -> Result<Recipe, Outcome> {
-    let lock =
-        std::fs::read(&sources.lock).map_err(|_| data_failure(None, "opportunity source lock"))?;
-    if crate::lock::Sha256::of(&lock).to_string()
-        != "d12b9153c73a2eb79e6de12eea3b4e6ea0ebf5101a0673d4cb61f2ffaf84dd71"
-    {
-        return Err(data_failure(None, "reviewed opportunity lock provenance"));
-    }
+fn connected_recipe(case: &Case, wram: &[u8], sources: &Sources) -> Result<Recipe, Outcome> {
     let slot = ceres::Slot::try_from(
         case.actor_slot
             .ok_or_else(|| data_failure(None, "connected Ceres slot"))?,
     )?;
     let content = Arc::new(super::movement::Content::load(&sources.rom)?);
-    let evidence = super::opportunity::admit(
-        &sources.native.join("movement-opportunities-v1"),
-        cache,
-        &content,
-    )?;
     let seed = ProductionSeed::MovementCeres(Box::new(game::production::MovementCeresState {
         movement: canonical::model::Model(super::movement::seed(wram)?),
         ceres: ceres::seed(wram, slot)?,
     }));
     let production_content = ProductionContent::MovementCeres(content.movement.clone());
     Ok(Recipe {
-        source: Context::MovementCeres {
-            slot,
-            content,
-            evidence,
-        },
+        source: Context::MovementCeres { slot, content },
         actual: Actual::MovementCeres { last: None },
         seed,
         content: production_content,
@@ -211,7 +189,7 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
     }
 
     if case.responsibilities == [Responsibility::Movement, Responsibility::Ceres] {
-        return connected_recipe(case, wram, sources, cache);
+        return connected_recipe(case, wram, sources);
     }
     let (source, actual, seed, content, rules) = match case.responsibilities.as_slice() {
         [Responsibility::Ceres] => {
@@ -415,12 +393,7 @@ impl Inputs {
                     inputs: inputs.current(cut)?,
                 })
             }
-            Context::MovementCeres {
-                slot,
-                content,
-                evidence,
-            } => {
-                evidence.require(cut)?;
+            Context::MovementCeres { slot, content } => {
                 if !super::movement::roster_slots(&prior.wram)?.is_empty() {
                     return Err(Outcome::Unsupported {
                         cut: Some(cut),
