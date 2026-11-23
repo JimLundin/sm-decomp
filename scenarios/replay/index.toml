@@ -1237,30 +1237,30 @@ profile = "reference"
 responsibilities = ["health", "appearance", "hud"]
 content = "hud-reference"
 inputs = "native-health-tail-inputs"
-expectations = { provider = "native-health-tail-observations", fields = ["health.tail.state", "health.tail.impact", "health.tail.active_close", "appearance.drawing.energy", "hud.gauge.refresh"], outputs = ["health.tail.warning_request", "hud.gauge.words"] }
+expectations = { provider = "native-health-tail-observations", fields = ["health.tail.state", "appearance.drawing.energy", "hud.gauge.refresh"], outputs = ["health.tail.warning_request", "health.tail.protection_drawn", "hud.gauge.words"] }
 checkpoints = true
-limits = ["Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the external delivery", "Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver", "Drawing compares current energy, protection and committed energy history; hurt flash and visible rendering require their own producers", "HUD compares all sixteen CPU-side gauge words; IRQ, VRAM and full Frame timing require separate proof", "auxiliary native cut window outside the played-alone milestone"]
+limits = ["compared at the two frame cuts after the origin; reads inside the frame are not compared", "Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the frame's tail impact", "Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver", "Drawing compares its committed energy history; hurt flash and visible rendering require their own producers", "HUD compares all sixteen CPU-side gauge words; IRQ and VRAM require separate proof", "auxiliary native cut window outside the played-alone milestone"]
 
 [[case.borrowed]]
-dependency = "health.tail-actor"
+dependency = "health.tail-impact"
 provider = "independent-scoped-ceres-tail-actor-offer"
-fields = ["current-protection-read", "single-pre-debit-whole-energy-delivery"]
-phase = "actor-query-before-maintenance"
-claim = "external actor receives carried Health protection; native protected return has no second delivery"
+fields = ["tail-impact-per-frame"]
+phase = "each-frame"
+claim = "Ridley's eligible tail impact on the first frame and none on the second; Health decides whether it lands on its carried protection"
 
 [[case.borrowed]]
-dependency = "health.tail-maintenance-and-close"
+dependency = "health.frame-admission"
 provider = "independent-native-health-opportunity"
-fields = ["running-time", "equipped-varia", "equipped-gravity", "one-active-close-after-status"]
-phase = "maintenance-through-late-close"
-claim = "externally qualified scheduling and equipment; Health decides all carried values"
+fields = ["running-time", "equipped-varia", "equipped-gravity"]
+phase = "each-frame"
+claim = "externally qualified clock and equipment; Health decides all carried values"
 
 [[case.borrowed]]
 dependency = "hud.tail-neighbours"
 provider = "independent-native-hud-tail-opportunities"
 fields = ["hud-clock", "quiet-item-controls", "stock-at-start", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers", "main-gameplay-countdown"]
-phase = "one whole HUD frame after the second Drawing read"
-claim = "unselected neighbour inputs only; the status bar reads whole energy from carried Health; her stock as the first frame begins is the origin record's and as the second begins the first frame's drawn stock; the origin's main gameplay runs the escape countdown"
+phase = "each frame, after Health"
+claim = "unselected neighbour inputs only; the status bar reads whole energy from the frame's Health; her stock as the first frame begins is the origin record's and as the second begins the first frame's drawn stock; the origin's main gameplay runs the escape countdown"
 
 [[case]]
 id = "gameplay-sound/passage-hold"

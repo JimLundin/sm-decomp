@@ -1,14 +1,16 @@
-//! One authenticated Health origin and bounded, independently observed actor ingress.
+//! One authenticated Health origin and its independently observed frames, compared at frame cuts.
 
 use std::path::Path;
 
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
     ProductionSeed,
-    health_tail::{Content, Context, HudFrame, Input, Output, State},
+    health_tail::{Content, Context, Frame, Output, State},
 };
 use game::state::owned::OwnedState;
-use samus_health::{EnergyAmount, EnergyLoss, ProtectionFrames, Rules, Warning, WholeEnergy};
+use samus_health::{
+    EnergyAmount, EnergyLoss, ProtectionFrames, Rules, TailImpact, Warning, WholeEnergy,
+};
 use serde::Deserialize;
 
 use super::{
@@ -32,6 +34,8 @@ pub(super) const CUTS: [u64; 2] = [993, 994];
 
 const CONTEXT_PIN: &str = "8ca15c6669c31e4605046a10fefd772fed5a2a3f4f842aeef2a7655c791e49cf";
 const EXPECTED_PIN: &str = "813b6b8d06f6826b78925ae426278f288d7329f9167c8492d018667ebb9b6884";
+// Whole energy the eligible Ceres tail delivers; any other delivery is not this scope's.
+const CERES_TAIL_DAMAGE: u16 = 15;
 const OFFER_PIN: &str = "23b8deabfaa84f7129bf4f46b36f1027c53a3e067b9d2115a12b8e476b7e568c";
 
 #[derive(Deserialize)]
@@ -82,14 +86,7 @@ struct Delivery {
     damage_whole: u16,
 }
 
-#[derive(Clone, Copy)]
-struct Opportunity {
-    maintenance: Context,
-    delivery: Option<u16>,
-    hud: HudFrame,
-}
-
-pub(super) struct Inputs(Vec<Opportunity>);
+pub(super) struct Inputs(Vec<Frame>);
 
 fn read<T: serde::de::DeserializeOwned>(
     source: &Path,
@@ -133,57 +130,50 @@ impl Inputs {
             return Err(data_failure(Some(ORIGIN), "Health tail origin WRAM pin"));
         }
         let hud = hud_inputs::load(native, &contexts.initial_wram_sha256, origin_wram)?;
-        let opportunities = contexts_at_cut
+        let frames = contexts_at_cut
             .into_iter()
             .zip(offers_at_cut)
             .zip(hud)
-            .map(
-                |((context, offer), hud)| match offer.actor_protection_access {
-                    ProtectionAccess::ReadCurrent => Opportunity {
-                        maintenance: Context {
-                            time_stopped: context.time_stopped,
-                            varia: context.varia_suit,
-                            gravity: context.gravity_suit,
-                        },
-                        delivery: offer.delivery.map(|delivery| delivery.damage_whole),
-                        hud,
+            .zip(0..)
+            .map(|(((context, offer), hud), played)| {
+                let ProtectionAccess::ReadCurrent = offer.actor_protection_access;
+                let tail = match offer.delivery {
+                    None => TailImpact::Absent,
+                    Some(Delivery {
+                        damage_whole: CERES_TAIL_DAMAGE,
+                    }) => TailImpact::EligibleCeresTail,
+                    Some(_) => {
+                        return Err(data_failure(Some(offer.end_cut), "Health tail delivery"));
+                    }
+                };
+                Ok(Frame {
+                    played,
+                    context: Context {
+                        time_stopped: context.time_stopped,
+                        varia: context.varia_suit,
+                        gravity: context.gravity_suit,
                     },
-                },
-            )
-            .collect();
-        Ok(Self(opportunities))
+                    tail,
+                    hud,
+                })
+            })
+            .collect::<Result<_, _>>()?;
+        Ok(Self(frames))
     }
 
-    pub(super) fn advance(
-        &self,
-        production: &mut Production,
-        cut: u64,
-    ) -> Result<Vec<Output>, Outcome> {
-        let opportunity = CUTS
+    pub(super) fn advance(&self, production: &mut Production, cut: u64) -> Result<Output, Outcome> {
+        let frame = CUTS
             .iter()
             .position(|at| *at == cut)
             .and_then(|index| self.0.get(index))
-            .ok_or_else(|| data_failure(Some(cut), "Health tail runtime opportunity"))?;
-        let steps = Self::steps(*opportunity).collect::<Vec<_>>();
-        advance(production, cut, &steps)
-    }
-
-    fn steps(opportunity: Opportunity) -> impl Iterator<Item = Input> {
-        core::iter::once(Input::Protection(opportunity.maintenance))
-            .chain(opportunity.delivery.map(Input::Impact))
-            .chain([
-                Input::Maintenance,
-                Input::FirstDrawingRead,
-                Input::SecondDrawingRead,
-                Input::Status(opportunity.hud),
-                Input::ActiveClose,
-            ])
+            .ok_or_else(|| data_failure(Some(cut), "Health tail frame"))?;
+        advance(production, cut, frame)
     }
 }
 
-fn advance(production: &mut Production, cut: u64, steps: &[Input]) -> Result<Vec<Output>, Outcome> {
+fn advance(production: &mut Production, cut: u64, frame: &Frame) -> Result<Output, Outcome> {
     let ProductionOutputs::HealthTail(output) = production
-        .advance(AdvanceInput::HealthTail(steps))
+        .advance(AdvanceInput::HealthTail(frame))
         .map_err(|fault| production_failure(cut, fault))?
     else {
         return Err(data_failure(Some(cut), "Health tail output scope"));

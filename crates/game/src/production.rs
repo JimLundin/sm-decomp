@@ -119,8 +119,8 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
-    /// One admitted scoped Health opportunity or current owner read.
-    HealthTail(&'a [health_tail::Input]),
+    /// One whole scoped Health frame and its Drawing and HUD consumers.
+    HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
     Connected {
         /// Complete current inputs; selected feedback is derived internally.
@@ -207,8 +207,8 @@ pub enum AdvanceInput<'a> {
 /// Fresh complete outputs from the selected entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionOutputs {
-    /// A live scoped Health or consumer publication.
-    HealthTail(Vec<health_tail::Output>),
+    /// One scoped Health frame's requests and gauge redraw.
+    HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
     Connected(Box<connected::Outputs>),
     /// Every movement receipt, including requests and placements.
@@ -287,8 +287,8 @@ pub enum Unsupported {
     WeaponImpactSound,
     /// The passage first-entry sound sequence is outside its qualified arm.
     PassageAudio,
-    /// The scoped actor, Maintenance or late consumer opportunity is unavailable.
-    HealthTailOpportunity,
+    /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
+    HealthTailFrame,
     /// A frame of play the HUD leaves out.
     Hud(interface_hud::UnsupportedFrame),
     /// A produced Appearance request has no selected receiver mapping.

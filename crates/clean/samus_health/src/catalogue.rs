@@ -8,11 +8,12 @@ use types::{Checked, Kind, Switch};
 pub enum BehaviourId {
     /// Accumulated periodic loss reduces energy once.
     PeriodicLoss,
-    /// An eligible unprotected Ceres tail hit takes energy and grants protection.
+    /// An eligible Ceres tail hit, judged on protection as the frame starts, takes energy
+    /// and grants protection.
     TailHit,
-    /// Protection ages at the close of active gameplay.
+    /// Protection is drawn as the frame's hit left it, then spends one frame.
     ProtectionTime,
-    /// Whole energy determines warning transitions after loss.
+    /// Whole energy after the frame's hit and loss decides the warning.
     LowEnergyWarning,
 }
 
@@ -41,13 +42,13 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// Exhaustive catalogue with shared metadata. Integration admission contrasts
-/// are not model coverage.
+/// The catalogue entry for each spec entry. Integration admission contrasts are not
+/// model coverage.
 ///
-/// `R-maintenance-current` witnesses Maintenance without a loss or warning
-/// transition. `R-tail-hit` and `R-tail-protected` witness contact and aging.
-/// Constructed vectors contrast arithmetic, warning thresholds, duplicate
-/// contact and expiry.
+/// `R-maintenance-current` witnesses a frame without a loss or warning change.
+/// `R-tail-hit` and `R-tail-protected` witness a hit and protection spending.
+/// Constructed vectors contrast arithmetic, warning thresholds, a hit during
+/// protection and expiry.
 #[must_use]
 pub const fn behaviour(id: BehaviourId) -> Behaviour {
     match id {
@@ -67,7 +68,7 @@ pub const fn behaviour(id: BehaviourId) -> Behaviour {
         },
         BehaviourId::ProtectionTime => Behaviour {
             id: BehaviourId::ProtectionTime,
-            summary: "protection spends one frame at the end of each admitted active gameplay opportunity.",
+            summary: "protection spends one frame in each admitted frame, after the frame's hit.",
             kind: Kind::Timing,
             switch: Switch::Fixed,
             checked: Checked::ByVectors,

@@ -175,7 +175,7 @@ impl ActualReader {
                 Self::HealthTail,
                 InputReader::HealthTail(_),
                 ProductionOutputs::HealthTail(outputs),
-            ) => super::health_tail::actual(production, &outputs, cut),
+            ) => super::health_tail::actual(production, outputs),
             (
                 Self::MovementTouchdown(retained),
                 InputReader::MovementTouchdown(_),

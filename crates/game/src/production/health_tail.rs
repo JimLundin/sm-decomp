@@ -1,4 +1,5 @@
-//! Current Health, Drawing history and ordinary HUD in an admitted tail-contact opportunity.
+//! Current Health, Drawing's energy history and the ordinary HUD in the scoped Ceres tail, played
+//! one whole frame at a time.
 
 use super::{AdmissionFault, ProductionFault, Unsupported, hud::HudPin};
 use canonical::{
@@ -12,66 +13,12 @@ use interface_hud::{
 };
 use samus_health::{ProtectionFrames, Rules, TailImpact, WarningSound};
 
-const CERES_TAIL_OFFER: u16 = 15;
-
-/// Complete health quantities; delivery and neighbouring qualification stay outside this pin.
+/// Complete health quantities; neighbouring qualification stays outside this pin.
 pub struct HealthPin;
 impl Pinned for HealthPin {
     type State = samus_health::State;
     const NAME: &'static str = "production-current-samus-health";
     const SHAPE: u64 = 0x2FD6_C95A_B0A2_9544;
-}
-
-/// Drawing's signed comparison of current and previously drawn energy.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum EnergyChange {
-    /// Current whole energy is lower at the Drawing read.
-    Decreased,
-    /// The current whole energy equals the previous Drawing history.
-    Held,
-    /// The signed comparison admits an increase.
-    Increased,
-}
-
-/// Current whole Health energy and the Drawing history compared with it.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct EnergyRead {
-    /// Current whole energy read from Health.
-    pub current: u16,
-    /// Prior Drawing energy before the second read commits it.
-    pub previous: u16,
-    /// The comparison at the first Drawing read.
-    pub change: EnergyChange,
-}
-
-impl EnergyRead {
-    pub(in crate::production) const fn compare(
-        health: &samus_health::State,
-        previous: u16,
-    ) -> Self {
-        let current = health.energy.whole.get();
-        let change = if current.wrapping_sub(previous) & (1 << 15) != 0 {
-            EnergyChange::Decreased
-        } else if current == previous {
-            EnergyChange::Held
-        } else {
-            EnergyChange::Increased
-        };
-        Self {
-            current,
-            previous,
-            change,
-        }
-    }
-
-    pub(in crate::production) const fn read_and_commit(
-        health: &samus_health::State,
-        previous: &mut u16,
-    ) -> u16 {
-        let current = health.energy.whole.get();
-        *previous = current;
-        current
-    }
 }
 
 /// Checked HUD content for the scoped caller.
@@ -85,7 +32,7 @@ pub struct Content {
     pub map: interface_hud::HerMap,
 }
 
-/// The independently observed running clock and equipment for Maintenance.
+/// The independently observed clock and equipment that admit a frame to Health.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Context {
     /// The current clock is stopped.
@@ -107,11 +54,9 @@ pub struct MapInput {
     pub map_collected: bool,
 }
 
-/// The HUD's neighbours' facts for its whole frame, read once the frame's Health is known.
+/// The HUD's neighbours' facts for its whole frame.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct HudFrame {
-    /// Number of completed opportunities since admission.
-    pub opportunity: u64,
     /// The frame count as the frame begins.
     pub frame: FrameCount,
     /// Her stock as the frame begins.
@@ -130,82 +75,55 @@ pub struct HudFrame {
     pub countdown: CountdownRuns,
 }
 
-/// The next causal action at a supported scoped gameplay opportunity.
+/// One whole frame's independently observed inputs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Input {
-    /// Answer the actor's current query and admit the actual Maintenance context.
-    Protection(Context),
-    /// Deliver the external actor's actual whole-energy argument.
-    Impact(u16),
-    /// Complete the admitted Health Maintenance and Warning opportunity.
-    Maintenance,
-    /// First Drawing energy consumer, with prior Drawing history.
-    FirstDrawingRead,
-    /// Second Drawing energy consumer commits the new history.
-    SecondDrawingRead,
-    /// The HUD plays its whole frame, its status bar reading current Health.
-    Status(HudFrame),
-    /// Independently qualified active protection ageing after status.
-    ActiveClose,
+pub struct Frame {
+    /// Frames played since admission, which must match the carried count.
+    pub played: u64,
+    /// The clock and equipment that admit the frame.
+    pub context: Context,
+    /// Ridley's tail impact this frame.
+    pub tail: TailImpact,
+    /// The HUD's neighbours this frame.
+    pub hud: HudFrame,
 }
 
-/// One output at each actual read or owner transition.
+/// One played frame's outputs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Output {
-    /// Current complete Health at the actor's query.
-    Protection(samus_health::State),
-    /// Current complete Health after a delivered impact.
-    Impact(samus_health::State),
-    /// Current Health and its request to the Warning receiver.
-    Maintenance(samus_health::State, WarningSound),
-    /// The live energy comparison and protection at the first Drawing read.
-    FirstDrawingRead(EnergyRead, ProtectionFrames),
-    /// Whole energy, newly committed Drawing history and protection.
-    SecondDrawingRead(u16, u16, ProtectionFrames),
-    /// Live energy, previous cache and whether the shown energy cache refreshed.
-    Status(u16, u16, bool),
-    /// Protection after the single qualified close.
-    ActiveClose(ProtectionFrames),
+pub struct Output {
+    /// Health's request to the Warning receiver.
+    pub warning_sound: WarningSound,
+    /// The protection Drawing reads for the flash after damage.
+    pub protection_drawn: ProtectionFrames,
+    /// Whether the HUD redrew its energy gauge.
+    pub gauge_redrawn: bool,
 }
 
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-enum Phase {
-    ActorQuery,
-    ActorDelivery,
-    ActorDelivered,
-    FirstDrawingRead,
-    SecondDrawingRead,
-    Status,
-    ActiveClose,
-}
-
-/// Complete carried owners and the next opportunity, including suspended actor delivery.
+/// Complete carried owners from one authenticated origin.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct State {
     origin_identity: [u8; 32],
     health: Model<HealthPin>,
     hud: Model<HudPin>,
-    previous_draw_energy: u16,
-    completed: u64,
-    phase: Phase,
+    drawn_energy: u16,
+    played: u64,
 }
 
 impl State {
-    /// Admit one origin before any selected work.
+    /// Admit one origin before any frame.
     #[must_use]
     pub const fn new(
         origin_identity: [u8; 32],
         health: samus_health::State,
         hud: HudState,
-        previous_draw_energy: u16,
+        drawn_energy: u16,
     ) -> Self {
         Self {
             origin_identity,
             health: Model(health),
             hud: Model(hud),
-            previous_draw_energy,
-            completed: 0,
-            phase: Phase::ActorQuery,
+            drawn_energy,
+            played: 0,
         }
     }
 
@@ -228,22 +146,55 @@ impl State {
         self.health.0
     }
 
-    /// Most recent committed Drawing energy.
+    /// The whole energy Drawing last drew, which it compares with the next frame's.
     #[must_use]
-    pub const fn previous_draw_energy(&self) -> u16 {
-        self.previous_draw_energy
+    pub const fn drawn_energy(&self) -> u16 {
+        self.drawn_energy
+    }
+
+    /// Plays one whole frame: Health, then Drawing's energy history, then the HUD's frame of
+    /// play reading the frame's Health. Nothing is committed unless the whole frame is
+    /// supported.
+    pub(super) fn advance(
+        &mut self,
+        content: &Content,
+        rules: Rules,
+        frame: &Frame,
+    ) -> Result<Output, ProductionFault> {
+        let Context {
+            time_stopped,
+            varia,
+            gravity,
+        } = frame.context;
+        if frame.played != self.played || time_stopped || varia || gravity {
+            return Err(missing());
+        }
+        let health = self.health.0.play_frame(frame.tail, &rules);
+        let energy = health.state.energy.whole.get();
+        let hud = self.hud_frame(content, &frame.hud, energy)?;
+        let played = self.played.checked_add(1).ok_or_else(missing)?;
+        let gauge_redrawn = hud.shown.energy != self.hud.0.shown.energy;
+        self.health = Model(health.state);
+        self.hud = Model(hud);
+        self.drawn_energy = energy;
+        self.played = played;
+        Ok(Output {
+            warning_sound: health.warning_sound,
+            protection_drawn: health.protection_drawn,
+            gauge_redrawn,
+        })
     }
 
     /// The HUD's whole frame. The scope holds a quiet HUD: nothing selected or highlighted,
     /// the mini-map off, the item controls released and no event raised.
     fn hud_frame(
-        &mut self,
+        &self,
         content: &Content,
         input: &HudFrame,
-    ) -> Result<Output, ProductionFault> {
+        energy: u16,
+    ) -> Result<HudState, ProductionFault> {
         let prior = &self.hud.0;
-        if input.opportunity != self.completed
-            || prior.selection != Selection::None
+        if prior.selection != Selection::None
             || prior.shown.highlighted.is_some()
             || prior.mini_map != MiniMapPower::Off
             || input.controls.select != SelectButton::NotPressed
@@ -251,10 +202,6 @@ impl State {
         {
             return Err(missing());
         }
-        let energy = Energy {
-            now: self.health.0.energy.whole.get(),
-            capacity: input.capacity,
-        };
         let mut hud = prior.clone();
         let outputs = hud
             .frame_of_play(
@@ -274,7 +221,10 @@ impl State {
                     },
                     mother_brain_falls: false,
                     status: Status {
-                        energy,
+                        energy: Energy {
+                            now: energy,
+                            capacity: input.capacity,
+                        },
                         reserve: input.reserve,
                         ammunition: input.ammunition,
                     },
@@ -289,86 +239,10 @@ impl State {
         if !outputs.events.is_empty() {
             return Err(missing());
         }
-        let shown_before = prior.shown.energy;
-        let redrawn = hud.shown.energy != shown_before;
-        self.hud = Model(hud);
-        Ok(Output::Status(energy.now, shown_before, redrawn))
-    }
-
-    pub(super) fn advance(
-        &mut self,
-        content: &Content,
-        rules: Rules,
-        inputs: &[Input],
-    ) -> Result<Vec<Output>, ProductionFault> {
-        inputs
-            .iter()
-            .map(|step| self.step(content, rules, step))
-            .collect()
-    }
-
-    fn step(
-        &mut self,
-        content: &Content,
-        rules: Rules,
-        input: &Input,
-    ) -> Result<Output, ProductionFault> {
-        let (next, output) = match (self.phase, input) {
-            (Phase::ActorQuery, Input::Protection(clock_and_suits))
-                if !clock_and_suits.time_stopped
-                    && !clock_and_suits.varia
-                    && !clock_and_suits.gravity =>
-            {
-                (Phase::ActorDelivery, Output::Protection(self.health.0))
-            }
-            (Phase::ActorDelivery, Input::Impact(CERES_TAIL_OFFER)) => {
-                self.health.0.tail_contact(TailImpact::EligibleCeresTail);
-                (Phase::ActorDelivered, Output::Impact(self.health.0))
-            }
-            (Phase::ActorDelivery | Phase::ActorDelivered, Input::Maintenance) => {
-                let warning = self.health.0.health_opportunity(&rules);
-                (
-                    Phase::FirstDrawingRead,
-                    Output::Maintenance(self.health.0, warning),
-                )
-            }
-            (Phase::FirstDrawingRead, Input::FirstDrawingRead) => {
-                let read = EnergyRead::compare(&self.health.0, self.previous_draw_energy);
-                (
-                    Phase::SecondDrawingRead,
-                    Output::FirstDrawingRead(read, self.health.0.protection),
-                )
-            }
-            (Phase::SecondDrawingRead, Input::SecondDrawingRead) => {
-                let energy =
-                    EnergyRead::read_and_commit(&self.health.0, &mut self.previous_draw_energy);
-                (
-                    Phase::Status,
-                    Output::SecondDrawingRead(
-                        energy,
-                        self.previous_draw_energy,
-                        self.health.0.protection,
-                    ),
-                )
-            }
-            (Phase::Status, Input::Status(hud)) => {
-                (Phase::ActiveClose, self.hud_frame(content, hud)?)
-            }
-            (Phase::ActiveClose, Input::ActiveClose) => {
-                self.completed = self.completed.checked_add(1).ok_or_else(missing)?;
-                self.health.0.close_active_opportunity();
-                (
-                    Phase::ActorQuery,
-                    Output::ActiveClose(self.health.0.protection),
-                )
-            }
-            _ => return Err(missing()),
-        };
-        self.phase = next;
-        Ok(output)
+        Ok(hud)
     }
 }
 
 const fn missing() -> ProductionFault {
-    ProductionFault::Unsupported(Unsupported::HealthTailOpportunity)
+    ProductionFault::Unsupported(Unsupported::HealthTailFrame)
 }

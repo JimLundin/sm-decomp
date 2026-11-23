@@ -1,6 +1,7 @@
-//! Current energy, tail-hit protection and warning requests for qualified gameplay.
-//! Gameplay and contact eligibility, loss production, pickups, drawing history and
-//! playback belong to neighboring owners, not to this model.
+//! Samus's current energy, her protection after Ridley's tail hits her in Ceres, and the
+//! low-energy warning, played one whole frame at a time by [`State::play_frame`].
+//! Which frames are admitted, tail overlap and eligibility, loss production, pickups,
+//! drawing history and playback belong to neighbouring owners, not to this model.
 
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +32,7 @@ impl WholeEnergy {
         }
     }
 
-    /// Reads the whole count without selecting a health opportunity.
+    /// The whole count.
     #[must_use]
     pub const fn get(self) -> u16 {
         self.0
@@ -68,7 +69,16 @@ impl EnergyAmount {
         fraction: 0,
     };
 
-    /// Spec: `PeriodicLoss`. Exact fractional borrowing, with an empty-energy clamp.
+    /// Spec: `TailHit`. Whole energy taken with a floor of zero; the fraction is kept.
+    const fn less_whole(self, damage: WholeEnergy) -> Self {
+        Self {
+            whole: WholeEnergy(self.whole.0.saturating_sub(damage.0)),
+            fraction: self.fraction,
+        }
+    }
+
+    /// Spec: `PeriodicLoss`. Exact fractional borrowing, with an empty-energy clamp: a
+    /// difference below zero leaves zero whole and zero fraction.
     const fn reduced_by(self, loss: EnergyLoss) -> Self {
         let borrow = self.fraction < loss.fraction;
         if self.whole.0 < loss.whole.0 || (self.whole.0 == loss.whole.0 && borrow) {
@@ -96,7 +106,7 @@ pub struct EnergyLoss {
 }
 
 impl EnergyLoss {
-    /// Spec: `PeriodicLoss`. Every completed opportunity consumes the entire pending loss.
+    /// Spec: `PeriodicLoss`. Every frame consumes the entire pending loss.
     pub const ZERO: Self = Self {
         whole: WholeEnergy::ZERO,
         fraction: 0,
@@ -112,10 +122,9 @@ pub enum Warning {
     On,
 }
 
-/// Spec: `LowEnergyWarning`. Audio request for this completed opportunity only.
+/// Spec: `LowEnergyWarning`. The frame's warning sound: a request to audio for that frame only.
 ///
-/// Scheduling, delivery and audible playback are external responsibilities.
-#[must_use = "handle the warning sound request; State has already been updated"]
+/// Scheduling, delivery and audible playback are audio's.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum WarningSound {
     /// Leaves any existing warning request unchanged; does not request stopping playback.
@@ -126,15 +135,16 @@ pub enum WarningSound {
     Stop,
 }
 
-/// Spec: `TailHit`. Contact input from Ridley's owner, which decides overlap and eligibility.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Spec: `TailHit`. The frame's tail impact, from Ridley, who decides overlap and eligibility.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TailImpact {
-    /// Ridley supplies no eligible hit, including when he skips checking overlap.
+    /// No eligible hit this frame, including when Ridley skips checking overlap.
     Absent,
-    /// Ridley supplies the eligible Ceres tail hit, worth 15 whole energy.
+    /// Ridley's eligible Ceres tail hit, worth 15 whole energy.
     EligibleCeresTail,
 }
 
+/// Spec: `TailHit`. Whole energy an eligible Ceres tail hit takes.
 const CERES_TAIL_DAMAGE: WholeEnergy = WholeEnergy(15);
 
 /// Spec: `TailHit`, `ProtectionTime`. Remaining protection in active gameplay frames.
@@ -158,10 +168,15 @@ impl ProtectionFrames {
         }
     }
 
-    /// Reads the current remaining count without spending a frame.
+    /// The remaining count.
     #[must_use]
     pub const fn get(self) -> u8 {
         self.0
+    }
+
+    /// Spec: `ProtectionTime`. One frame less, with a floor of zero.
+    const fn spent_one(self) -> Self {
+        Self(self.0.saturating_sub(1))
     }
 }
 
@@ -179,21 +194,46 @@ impl From<ProtectionFrames> for u8 {
     }
 }
 
+impl Warning {
+    /// Spec: `LowEnergyWarning`. Judges whole energy against the threshold: entering low
+    /// energy turns the warning On and requests Start, leaving it turns it Off and requests
+    /// Stop, and a warning already matching requests None. Fractions do not count.
+    const fn judged(self, whole: WholeEnergy, rules: Rules) -> (Self, WarningSound) {
+        let low = whole.0 <= rules.warning_threshold.0;
+        match (self, low) {
+            (Self::Off, true) => (Self::On, WarningSound::Start),
+            (Self::On, false) => (Self::Off, WarningSound::Stop),
+            (Self::Off, false) | (Self::On, true) => (self, WarningSound::None),
+        }
+    }
+}
+
 /// Spec: `PeriodicLoss`, `TailHit`, `ProtectionTime`, `LowEnergyWarning`.
 ///
-/// Complete independently writable owner State. Serializing it preserves both
-/// fractions, pending loss, warning state and remaining protection.
+/// Health's complete State, which a caller may set to any allowed value, read, save and
+/// restore. Reading it changes nothing; only [`State::play_frame`] moves it on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
-    /// The sole current-energy authority. Animation and Drawing read it live;
-    /// the gauge reads `energy.whole`. Reads do not select an opportunity.
+    /// Current energy, the one live energy. The HUD gauge shows its whole count.
     pub energy: EnergyAmount,
-    /// Loss supplied explicitly by its external owner.
+    /// Pending periodic loss, supplied by the hazards and actions that cause it.
     pub pending_loss: EnergyLoss,
-    /// The last requested warning state.
+    /// The warning last requested, whether or not audio played it.
     pub warning: Warning,
-    /// Live protection for Ridley's contact check and Drawing. Reads do not age it.
+    /// Remaining protection, which Ridley's contact reads as the frame starts.
     pub protection: ProtectionFrames,
+}
+
+/// One played frame: Health's State as the frame leaves it, and the frame's outputs.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PlayedFrame {
+    /// State as the frame leaves it, which the HUD gauge and drawing read.
+    pub state: State,
+    /// Spec: `LowEnergyWarning`. The frame's request to audio.
+    pub warning_sound: WarningSound,
+    /// Spec: `ProtectionTime`. Remaining protection after the frame's hit, before the frame
+    /// spends one: what drawing reads for the flash after damage, that frame.
+    pub protection_drawn: ProtectionFrames,
 }
 
 /// Spec: `LowEnergyWarning`. Adjustable whole-energy threshold; fractions do not affect it.
@@ -211,53 +251,44 @@ impl Rules {
 }
 
 impl State {
-    /// Spec: `TailHit`. Presents Ridley's contact before Maintenance in an admitted opportunity.
+    /// Plays one admitted frame (time Running, neither suit; the caller refuses any other
+    /// frame before calling), from this State as the frame starts and the frame's tail
+    /// impact. Every rule applies every frame, in this order:
     ///
-    /// An eligible impact still cannot land while protection is positive. A hit
-    /// reduces only whole energy (to a floor of zero) and grants protection now,
-    /// so another contact check sees it immediately. Fraction, pending loss and
-    /// warning are untouched.
-    pub const fn tail_contact(&mut self, impact: TailImpact) {
-        if matches!(impact, TailImpact::EligibleCeresTail) && self.protection.0 == 0 {
-            self.energy.whole =
-                WholeEnergy(self.energy.whole.0.saturating_sub(CERES_TAIL_DAMAGE.0));
-            self.protection = ProtectionFrames::TAIL_GRANT;
+    /// 1. `TailHit`, judged on protection as the frame starts;
+    /// 2. `PeriodicLoss`, on the energy the hit left;
+    /// 3. `LowEnergyWarning`, on whole energy after both;
+    /// 4. `ProtectionTime`: protection is drawn as the hit left it, then spends one frame.
+    #[must_use]
+    pub const fn play_frame(self, tail: TailImpact, rules: &Rules) -> PlayedFrame {
+        let (energy, protection_drawn) = self.tail_hit(tail);
+        let energy = energy.reduced_by(self.pending_loss);
+        let (warning, warning_sound) = self.warning.judged(energy.whole, *rules);
+        PlayedFrame {
+            state: Self {
+                energy,
+                pending_loss: EnergyLoss::ZERO,
+                warning,
+                protection: protection_drawn.spent_one(),
+            },
+            warning_sound,
+            protection_drawn,
         }
     }
 
-    /// Spec: `ProtectionTime`. Closes one admitted active gameplay opportunity.
-    ///
-    /// Call once, after contact, Maintenance, Drawing and the gauge. This alone
-    /// spends a protection frame; a contact at one remaining frame is still blocked.
-    pub const fn close_active_opportunity(&mut self) {
-        self.protection = ProtectionFrames(self.protection.0.saturating_sub(1));
-    }
-
-    /// Spec: `PeriodicLoss`, `LowEnergyWarning`. Runs Maintenance for an already
-    /// qualified opportunity. It does not age protection.
-    ///
-    /// Loss is applied and consumed before comparing whole energy to the threshold.
-    /// State is mutated immediately, even if the returned sound request is ignored.
-    /// `WarningSound::None` leaves any existing warning request unchanged; it is not
-    /// a request to stop playback. Restoring `Warning::On` does not automatically
-    /// resend Start: a warning still matching low energy returns None. Scheduling,
-    /// delivery and playback remain external.
-    /// Qualification for running time with neither damage-reducing suit is external;
-    /// callers must reject unsupported contexts before calling this operation.
-    pub const fn health_opportunity(&mut self, rules: &Rules) -> WarningSound {
-        self.energy = self.energy.reduced_by(self.pending_loss);
-        self.pending_loss = EnergyLoss::ZERO;
-        let next_warning = if self.energy.whole.0 <= rules.warning_threshold.0 {
-            Warning::On
+    /// Spec: `TailHit`. An eligible tail impact lands only when no protection remains as the
+    /// frame starts: it takes 15 whole energy (floor zero, fraction kept) and grants 96
+    /// frames of protection. Otherwise energy and protection stay as they are. Gives the
+    /// energy and the protection the frame goes on with.
+    const fn tail_hit(self, tail: TailImpact) -> (EnergyAmount, ProtectionFrames) {
+        let lands = matches!(tail, TailImpact::EligibleCeresTail) && self.protection.0 == 0;
+        if lands {
+            (
+                self.energy.less_whole(CERES_TAIL_DAMAGE),
+                ProtectionFrames::TAIL_GRANT,
+            )
         } else {
-            Warning::Off
-        };
-        let sound = match (self.warning, next_warning) {
-            (Warning::Off, Warning::On) => WarningSound::Start,
-            (Warning::On, Warning::Off) => WarningSound::Stop,
-            (Warning::Off, Warning::Off) | (Warning::On, Warning::On) => WarningSound::None,
-        };
-        self.warning = next_warning;
-        sound
+            (self.energy, self.protection)
+        }
     }
 }

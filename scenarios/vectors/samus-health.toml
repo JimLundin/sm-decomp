@@ -1,12 +1,14 @@
-# Vectors for samus-health.md. Each vector is one health opportunity.
-# Before and after carry complete State, including remaining protection.
-# Tail vectors also name the candidate impacts in order,
-# current whole energy immediately before maintenance, and the live pair offered to Drawing.
-# Each tail vector closes one active opportunity. An empty list supplies no eligible hit.
-# The protected recorded actor check supplies no candidate because it skips overlap.
-# The duplicate construction supplies two candidates within one opportunity.
+# Vectors for samus-health.md. Each vector is one whole admitted frame: Health's State as
+# the frame starts (before) and as the frame leaves it (after), complete with remaining
+# protection, and the frame's outputs.
+# tail_impact is the frame's tail impact from Ridley: "EligibleCeresTail" (15 whole energy)
+# or "Absent"; omitted, it is Absent. The protected recorded frame supplies Absent because
+# Ridley skips overlap while protection is positive; C-tail-repeat and C-tail-last-frame
+# construct an overlap during protection.
+# protection_drawn is the frame's protection while drawn; where it is omitted it is not
+# compared. The energy drawn is after's current energy.
 # Energy and pending fractions are integer multiples of 1/65536 energy.
-# inputs qualify a supported opportunity; wider values are IntegrationAdmission
+# inputs qualify a supported frame; wider values are IntegrationAdmission
 # evidence only, never clean model inputs or catalogue credit.
 # sound: None/Start/Stop, a request, not proof of audible playback.
 # Optional rules overrides warning_threshold (reference 30).
@@ -196,9 +198,8 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 39, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 sound = "Start"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
-before_maintenance_whole = 24
-drawing = { energy_whole = 24, protection = 96 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+protection_drawn = 96
 
 [[vector]]
 id = "R-tail-protected"
@@ -207,21 +208,9 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 94 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [] }
-before_maintenance_whole = 24
-drawing = { energy_whole = 24, protection = 95 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "Absent" }
+protection_drawn = 95
 continues = "R-tail-hit"
-
-[[vector]]
-id = "C-tail-duplicate"
-source = "constructed"
-entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 47, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
-after = { energy_whole = 32, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
-sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15, 15] }
-before_maintenance_whole = 32
-drawing = { energy_whole = 32, protection = 96 }
 
 [[vector]]
 id = "C-tail-fraction-and-loss"
@@ -230,9 +219,8 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 48, energy_fraction = 7, pending_whole = 2, pending_fraction = 8, warning = "Off", protection = 0 }
 after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 sound = "Start"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
-before_maintenance_whole = 33
-drawing = { energy_whole = 30, protection = 96 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+protection_drawn = 96
 
 [[vector]]
 id = "C-tail-clamp"
@@ -241,9 +229,8 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 14, energy_fraction = 21, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 after = { energy_whole = 0, energy_fraction = 21, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
-before_maintenance_whole = 0
-drawing = { energy_whole = 0, protection = 96 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+protection_drawn = 96
 
 [[vector]]
 id = "C-tail-last-frame"
@@ -252,9 +239,8 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 1 }
 after = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
-before_maintenance_whole = 52
-drawing = { energy_whole = 52, protection = 1 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+protection_drawn = 1
 
 [[vector]]
 id = "C-tail-after-expiry"
@@ -263,10 +249,20 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 after = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
-before_maintenance_whole = 37
-drawing = { energy_whole = 37, protection = 96 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+protection_drawn = 96
 continues = "C-tail-last-frame"
+
+[[vector]]
+id = "C-tail-repeat"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
+after = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 94 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+protection_drawn = 95
+continues = "C-tail-after-expiry"
 
 [[vector]]
 id = "C-tail-no-impact"
@@ -275,6 +271,5 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 70, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 after = { energy_whole = 70, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [] }
-before_maintenance_whole = 70
-drawing = { energy_whole = 70, protection = 0 }
+inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "Absent" }
+protection_drawn = 0

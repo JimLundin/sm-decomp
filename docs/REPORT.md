@@ -87,7 +87,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | sender-offer/deny-explosion | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
 | movement/soft-touchdown-57 | Pass | 1 | 0 | 1 | 8 | 2 | 1 |
 | movement/soft-touchdown-124 | Pass | 1 | 0 | 1 | 8 | 2 | 1 |
-| health/ceres-tail-drawing-gauge | Pass | 2 | 0 | 2 | 52 | 34 | 2 |
+| health/ceres-tail-drawing-gauge | Pass | 2 | 0 | 2 | 18 | 36 | 2 |
 | gameplay-sound/passage-hold | Pass | 1 | 0 | 1 | 1 | 5 | 1 |
 | gameplay-sound/passage-hold-shoot-held | Pass | 1 | 0 | 1 | 1 | 5 | 1 |
 
@@ -138,7 +138,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **sender-offer/deny-explosion** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
 - **movement/soft-touchdown-57** witnesses samus-movement/MovesAsShePosed, samus-movement/PoseFitAfterMoves, samus-movement/AcceptedFloorResponse, samus-movement/TouchdownRequests, audio-transport/OfferAcceptance. Limits: one ordinary Movement opportunity through the Contact offer and separate Appearance publication; Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots; the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service; the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope; no native actor candidate visitation or individual terrain cell identities compared.
 - **movement/soft-touchdown-124** witnesses samus-movement/MovesAsShePosed, samus-movement/PoseFitAfterMoves, samus-movement/AcceptedFloorResponse, samus-movement/TouchdownRequests, audio-transport/OfferAcceptance. Limits: one ordinary Movement opportunity through the Contact offer and separate Appearance publication; Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots; the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service; the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope; no native actor candidate visitation or individual terrain cell identities compared.
-- **health/ceres-tail-drawing-gauge** witnesses samus-health/TailHit, samus-health/PeriodicLoss, samus-health/LowEnergyWarning, samus-health/ProtectionTime, interface-hud/EnergyGauge. Limits: Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the external delivery; Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver; Drawing compares current energy, protection and committed energy history; hurt flash and visible rendering require their own producers; HUD compares all sixteen CPU-side gauge words; IRQ, VRAM and full Frame timing require separate proof; auxiliary native cut window outside the played-alone milestone.
+- **health/ceres-tail-drawing-gauge** witnesses samus-health/TailHit, samus-health/PeriodicLoss, samus-health/LowEnergyWarning, samus-health/ProtectionTime, interface-hud/EnergyGauge. Limits: compared at the two frame cuts after the origin; reads inside the frame are not compared; Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the frame's tail impact; Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver; Drawing compares its committed energy history; hurt flash and visible rendering require their own producers; HUD compares all sixteen CPU-side gauge words; IRQ and VRAM require separate proof; auxiliary native cut window outside the played-alone milestone.
 - **gameplay-sound/passage-hold** witnesses world-doors/Quieting, samus-appearance/AtTheDoor, audio-transport/OfferAcceptance. Limits: scoped at the touched doorway and through Hold before sender service; the held-shoot control changes the Appearance operand and leaves the actual Ambient offer and Hold; native cut 184 corroborates FIFO-empty while AwaitCue; actor and drawing work, clock, physical sender service and music readiness remain outside the production claim.
 - **gameplay-sound/passage-hold-shoot-held** witnesses world-doors/Quieting, samus-appearance/AtTheDoor, audio-transport/OfferAcceptance. Limits: scoped at the touched doorway and through Hold before sender service; the held-shoot control changes the Appearance operand and leaves the actual Ambient offer and Hold; native cut 184 corroborates FIFO-empty while AwaitCue; actor and drawing work, clock, physical sender service and music readiness remain outside the production claim.
 
@@ -181,7 +181,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | samus-appearance | 3,351 | 2,149 | 1.56 | 1.06 | 32 % (over 25 %) | 1,525 | 1,456 | 186 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 56 |
 | world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 70 |
-| samus-health | 418 | 299 | 1.40 | 1.37 | 2 % | - | 221 | 27 |
+| samus-health | 489 | 299 | 1.64 | 1.61 | 2 % | - | 246 | 27 |
 | game-time | 298 | 187 | 1.59 | 1.59 | 0 % | - | 60 | 11 |
 | world-quake | 145 | 62 | 2.33 | 2.13 | 9 % | - | 95 | 7 |
 | game-random | 130 | 162 | 0.80 | 0.80 | 0 % | - | 58 | 11 |
@@ -378,8 +378,8 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean/samus_health/src/catalogue.rs` | - | tables and types | 8 | 35 | 81 | 157 | 0 | 0 | 3 | 58 |
-| `crates/clean/samus_health/src/lib.rs` | current-energy | logic | 410 | 563 | 350 | 46 | 14 | 0 | 0 | 163 |
-| total | | | 418 | 598 | 431 | 203 | 14 | 0 | 3 | 221 |
+| `crates/clean/samus_health/src/lib.rs` | current-energy | logic | 481 | 642 | 383 | 46 | 10 | 16 | 0 | 188 |
+| total | | | 489 | 677 | 464 | 203 | 10 | 16 | 3 | 246 |
 
 ### game-time
 
@@ -433,13 +433,13 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | samus-appearance | 1,456 | 874 | 582 | 559 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 978 | 402 | 576 | 562 |
-| samus-health | 221 | 58 | 163 | 70 |
+| samus-health | 246 | 58 | 188 | 82 |
 | game-time | 60 | 0 | 60 | 50 |
 | world-quake | 95 | 43 | 52 | 24 |
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
 | shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,415 | 1,225 | 190 | 274 |
-| total | 15,477 | 7,994 | 7,483 | 7,017 |
+| total | 15,502 | 7,994 | 7,508 | 7,029 |
 
 ## Spec, budget and fit by area
 
@@ -601,12 +601,12 @@ Spec [`docs/behaviours/samus-health.md`](behaviours/samus-health.md), k = 37.5. 
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| current-energy | 2 | 5.0 | 187 | - | 410 | 2.19 |
+| current-energy | 2 | 5.0 | 187 | - | 481 | 2.57 |
 | protection | 2 | 3.0 | 112 | - | 0 | 0.00 |
 | shared (in no area) | | | | | 8 | |
-| total | 4 | 8.0 | 299 | - | 418 | 1.40 |
+| total | 4 | 8.0 | 299 | - | 489 | 1.64 |
 
-Area fit 1.37: the areas' score, 410, ÷ the budget. Shared code 8, its share of the model 2 %.
+Area fit 1.61: the areas' score, 481, ÷ the budget. Shared code 8, its share of the model 2 %.
 
 ### game-time
 
@@ -685,7 +685,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-health | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-health | replay provider | 3 | 3,434 | 3,693 | 708 | 87 | 112 | 277 | 14 | 795 |
+| samus-health | replay provider | 3 | 2,801 | 3,041 | 694 | 87 | 106 | 234 | 0 | 655 |
 | game-time | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | game-time | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-quake | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -694,7 +694,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 38,983 | 38,093 | 3,271 | 1,672 | 2,858 | 3,516 | 418 | 6,462 |
+| total | | | 38,350 | 37,441 | 3,257 | 1,672 | 2,852 | 3,473 | 404 | 6,322 |
 
 ## Engine services
 
@@ -702,9 +702,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 40 | 4,896 | 29,375 | 29,470 | 7,796 | 1,058 | 2,061 | 3,517 | 457 | 6,146 |
+| production and exact services | 40 | 4,825 | 28,953 | 29,056 | 7,657 | 1,057 | 2,007 | 3,505 | 436 | 6,039 |
 | bridges | 6 | 898 | 5,389 | 5,276 | 594 | 377 | 617 | 303 | 78 | 903 |
-| rebuilt models, shared types included | 120 | 7,017 | 42,101 | 50,298 | 21,462 | 18,081 | 2,451 | 2,035 | 985 | 15,477 |
+| rebuilt models, shared types included | 120 | 7,029 | 42,172 | 50,377 | 21,495 | 18,081 | 2,447 | 2,051 | 985 | 15,502 |
 
 ## Domain graph
 
@@ -2087,7 +2087,7 @@ graph LR
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
 | `catalogue.rs` | - | Spec entry metadata, separate from health decisions. | `enum BehaviourId (4)`, `struct Behaviour`, `fn behaviour`, `BehaviourId::ALL` | 8 | 58 |
-| `lib.rs` | current-energy | Current energy, tail-hit protection and warning requests for qualified gameplay. | `const MAX_WHOLE_ENERGY`, `const REFERENCE_WARNING_THRESHOLD`, `struct WholeEnergy`, `struct EnergyAmount`, `struct EnergyLoss`, `enum Warning (2)`, `enum WarningSound (3)`, `enum TailImpact (2)`, `struct ProtectionFrames`, `struct State`, `struct Rules`, `WholeEnergy::{ZERO, new, get}`, `EnergyAmount::ZERO`, `EnergyLoss::ZERO`, `ProtectionFrames::{ZERO, TAIL_GRANT, new, get}`, `Rules::REFERENCE`, `State::{tail_contact, close_active_opportunity, health_opportunity}`, `impl TryFrom<u16> for WholeEnergy`, `impl From<WholeEnergy> for u16`, `impl TryFrom<u8> for ProtectionFrames`, `impl From<ProtectionFrames> for u8`, 2 private | 410 | 163 |
+| `lib.rs` | current-energy | Samus's current energy, her protection after Ridley's tail hits her in Ceres, and the low-energy warning, played one whole frame at a time by [`State::play_frame`]. | `const MAX_WHOLE_ENERGY`, `const REFERENCE_WARNING_THRESHOLD`, `struct WholeEnergy`, `struct EnergyAmount`, `struct EnergyLoss`, `enum Warning (2)`, `enum WarningSound (3)`, `enum TailImpact (2)`, `struct ProtectionFrames`, `struct State`, `struct PlayedFrame`, `struct Rules`, `WholeEnergy::{ZERO, new, get}`, `EnergyAmount::ZERO`, `EnergyLoss::ZERO`, `ProtectionFrames::{ZERO, TAIL_GRANT, new, get}`, `Rules::REFERENCE`, `State::play_frame`, `impl TryFrom<u16> for WholeEnergy`, `impl From<WholeEnergy> for u16`, `impl TryFrom<u8> for ProtectionFrames`, `impl From<ProtectionFrames> for u8`, 6 private | 481 | 188 |
 
 Its crate root exports:
 
@@ -2101,9 +2101,7 @@ WholeEnergy::new(value: u16) -> Option<Self>
 WholeEnergy::get(self) -> u16
 ProtectionFrames::new(frames: u8) -> Option<Self>
 ProtectionFrames::get(self) -> u8
-State::tail_contact(&mut self, impact: TailImpact)
-State::close_active_opportunity(&mut self)
-State::health_opportunity(&mut self, rules: &Rules) -> WarningSound
+State::play_frame(self, tail: TailImpact, rules: &Rules) -> PlayedFrame
 ```
 
 Shared types it takes from `types`: `Checked`, `Kind`, `Switch`. Other crates it uses: `serde`.
@@ -2474,7 +2472,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/connected.rs` | names it | `HudState` | 1,133 | 248 |
 | interface-hud | `crates/game/src/production/content.rs` | names it | `HudPictures` | 285 | 99 |
 | interface-hud | `crates/game/src/production/entries.rs` | names it | `Boss`, `FrameInputs`, `FrameOutputs`, `HudPictures`, `HudState`, `OutOfPlayInputs`, `Place`, `Rules` | 1,581 | 295 |
-| interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `HudState`, `MiniMapInputs`, `MiniMapPower`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 1,090 | 295 |
+| interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `HudState`, `MiniMapInputs`, `MiniMapPower`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 668 | 188 |
 | interface-hud | `crates/game/src/production/hud.rs` | bridge | `Flip`, `HudState`, `Place` | 148 | 35 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | interface-hud | `crates/game/src/production.rs` | names it | `FrameOutputs`, `HudState`, `UnsupportedFrame` | 3,201 | 585 |
@@ -2510,4 +2508,4 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-doors | `crates/game/src/production/room_loading.rs` | names it | `COLOURS`, `Palette`, `RoomCall` | 1,226 | 187 |
 | world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 3,201 | 585 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 99 |
-| samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 1,090 | 295 |
+| samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 668 | 188 |

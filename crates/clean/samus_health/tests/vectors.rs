@@ -1,8 +1,8 @@
-//! Model vectors and complete owner-state restoration tests.
+//! Every vector played through the whole-frame step, and save-and-restore checks.
 
 use samus_health::{
-    BehaviourId, EnergyAmount, EnergyLoss, ProtectionFrames, Rules, State, TailImpact, Warning,
-    WarningSound, WholeEnergy, behaviour,
+    BehaviourId, EnergyAmount, EnergyLoss, PlayedFrame, ProtectionFrames, Rules, State, TailImpact,
+    Warning, WarningSound, WholeEnergy, behaviour,
 };
 use serde::Deserialize;
 use types::{Checked, Kind, Switch};
@@ -25,8 +25,7 @@ struct Vector {
     after: Option<Snapshot>,
     sound: Option<WarningSound>,
     inputs: Context,
-    before_maintenance_whole: Option<WholeEnergy>,
-    drawing: Option<Drawing>,
+    protection_drawn: Option<ProtectionFrames>,
     rules: Option<RuleOverrides>,
     continues: Option<String>,
     evidence_kind: Option<EvidenceKind>,
@@ -37,13 +36,6 @@ struct Vector {
 #[serde(deny_unknown_fields)]
 struct RuleOverrides {
     warning_threshold: WholeEnergy,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
-struct Drawing {
-    energy_whole: WholeEnergy,
-    protection: ProtectionFrames,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -92,7 +84,7 @@ impl From<Snapshot> for State {
 struct Context {
     time: Time,
     suit: Suit,
-    tail_impacts: Option<Vec<u16>>,
+    tail_impact: Option<TailImpact>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -131,135 +123,48 @@ impl Vector {
     }
 }
 
-fn checkpoint(state: State, continued: &mut State, label: &str) -> TestResult {
-    assert_eq!(*continued, state, "{label}: restored path differs");
-    *continued = restored(state)?;
-    assert_eq!(*continued, state, "{label}: snapshot differs");
-    Ok(())
-}
-
-fn verify_contact(vector: &Vector, actual: &mut State, fresh: &mut State) -> TestResult {
-    let Some(impacts) = &vector.inputs.tail_impacts else {
-        assert!(vector.before_maintenance_whole.is_none());
-        assert!(vector.drawing.is_none());
-        return Ok(());
-    };
-    let before = *actual;
-    if impacts.is_empty() {
-        actual.tail_contact(TailImpact::Absent);
-        fresh.tail_contact(TailImpact::Absent);
-        assert_eq!(*actual, before, "{} absent impact", vector.id);
-        checkpoint(*actual, fresh, "absent contact")?;
+impl Vector {
+    /// The frame's tail impact; omitted, it is Absent.
+    fn tail_impact(&self) -> TailImpact {
+        self.inputs.tail_impact.unwrap_or(TailImpact::Absent)
     }
-    for impact in impacts {
-        assert_eq!(*impact, 15, "{} unknown tail impact", vector.id);
-        let before_contact = *actual;
-        actual.tail_contact(TailImpact::EligibleCeresTail);
-        fresh.tail_contact(TailImpact::EligibleCeresTail);
-        if before_contact.protection != ProtectionFrames::ZERO {
-            assert_eq!(*actual, before_contact, "{} blocked contact", vector.id);
-        }
-        checkpoint(*actual, fresh, "eligible candidate")?;
+
+    fn play(&self, start: State) -> PlayedFrame {
+        start.play_frame(self.tail_impact(), &self.rules())
     }
-    assert_eq!(
-        Some(actual.energy.whole),
-        vector.before_maintenance_whole,
-        "{} before Maintenance",
-        vector.id
-    );
-    assert_eq!(
-        actual.energy.fraction, before.energy.fraction,
-        "{} contact fraction",
-        vector.id
-    );
-    assert_eq!(
-        actual.pending_loss, before.pending_loss,
-        "{} contact pending loss",
-        vector.id
-    );
-    assert_eq!(
-        actual.warning, before.warning,
-        "{} contact warning",
-        vector.id
-    );
-    Ok(())
 }
 
-fn verify_drawing(vector: &Vector, actual: State, fresh: &mut State) -> TestResult {
-    let Some(expected) = vector.drawing else {
-        assert!(vector.inputs.tail_impacts.is_none());
-        return Ok(());
-    };
-    assert!(vector.inputs.tail_impacts.is_some());
-    // Drawing reads the pair live and owns its history. The later gauge reads
-    // the same authority, not that history. Neither read mutates health.
-    let drawing = Drawing {
-        energy_whole: actual.energy.whole,
-        protection: actual.protection,
-    };
-    assert_eq!(drawing, expected, "{} Drawing", vector.id);
-    assert_eq!(
-        (fresh.energy, fresh.protection),
-        (actual.energy, actual.protection)
-    );
-    checkpoint(actual, fresh, "after Drawing")?;
-    assert_eq!(
-        (actual.energy.whole, actual.protection),
-        (expected.energy_whole, expected.protection),
-        "{} late gauge",
-        vector.id
-    );
-    assert_eq!(fresh.energy.whole, expected.energy_whole);
-    checkpoint(actual, fresh, "after gauge")
-}
+/// Plays the vector's frame from `start` (which must be its before) and from a saved and
+/// restored copy of it, checks both against the vector, and gives the State it leaves.
+fn verify_frame(vector: &Vector, start: State) -> Result<State, Box<dyn std::error::Error>> {
+    let id = &vector.id;
+    assert_eq!(start, State::from(vector.before), "{id} before");
+    let restored_start = restored(start)?;
+    assert_eq!(restored_start, start, "{id} restored before");
 
-fn verify_opportunity(
-    vector: &Vector,
-    mut actual: State,
-) -> Result<State, Box<dyn std::error::Error>> {
+    let played = vector.play(start);
+    assert_eq!(vector.play(restored_start), played, "{id} restored frame");
     let expected = State::from(vector.after.ok_or("admitted vector lacks after")?);
-    let rules = vector.rules();
-    assert_eq!(
-        actual,
-        State::from(vector.before),
-        "{} carried input",
-        vector.id
-    );
-    let mut fresh = restored(actual)?;
-    assert_eq!(fresh, actual, "{} restored input", vector.id);
-    verify_contact(vector, &mut actual, &mut fresh)?;
-
-    let protection = actual.protection;
-    let sound = actual.health_opportunity(&rules);
-    assert_eq!(Some(sound), vector.sound, "{} request", vector.id);
-    assert_eq!(
-        fresh.health_opportunity(&rules),
-        sound,
-        "{} restored request",
-        vector.id
-    );
-    assert_eq!(
-        actual.protection, protection,
-        "{} Maintenance does not age protection",
-        vector.id
-    );
-    checkpoint(actual, &mut fresh, "after Maintenance")?;
-
-    verify_drawing(vector, actual, &mut fresh)?;
-    if vector.inputs.tail_impacts.is_some() {
-        actual.close_active_opportunity();
-        fresh.close_active_opportunity();
+    assert_eq!(played.state, expected, "{id} after");
+    assert_eq!(Some(played.warning_sound), vector.sound, "{id} sound");
+    if let Some(drawn) = vector.protection_drawn {
+        assert_eq!(played.protection_drawn, drawn, "{id} protection drawn");
     }
-    assert_eq!(actual, expected, "{} completed State", vector.id);
-    checkpoint(actual, &mut fresh, "completed opportunity")?;
+    assert_eq!(restored(played.state)?, played.state, "{id} restored after");
+
+    // The loss is consumed once: a following frame without a hit neither spends it again
+    // nor requests a sound.
+    let next = played.state.play_frame(TailImpact::Absent, &vector.rules());
     assert_eq!(
-        fresh.health_opportunity(&rules),
-        WarningSound::None,
-        "{} later Maintenance request",
-        vector.id
+        (
+            next.state.energy,
+            next.state.pending_loss,
+            next.warning_sound
+        ),
+        (played.state.energy, EnergyLoss::ZERO, WarningSound::None),
+        "{id} following frame"
     );
-    assert_eq!(fresh, actual, "{} loss consumed once", vector.id);
-    Ok(actual)
+    Ok(played.state)
 }
 
 #[test]
@@ -287,20 +192,19 @@ fn samus_health_admitted_vectors() -> TestResult {
         assert_eq!(vector.inputs.time, Time::Running);
         assert_eq!(vector.inputs.suit, Suit::Neither);
         assert_eq!(vector.unsupported, None);
-        verify_opportunity(vector, State::from(vector.before))?;
+        verify_frame(vector, State::from(vector.before))?;
         if let Some(previous_id) = &vector.continues {
+            // The chain: the previous frame's State carries into this one, as it is and
+            // through a save and restore.
             let previous = admitted
                 .iter()
                 .find(|v| &v.id == previous_id)
                 .ok_or("unknown continuation")?;
             assert_eq!(previous.source, vector.source);
-            let carried = verify_opportunity(previous, State::from(previous.before))?;
+            let carried = verify_frame(previous, State::from(previous.before))?;
             let fresh = restored(carried)?;
             assert_eq!(fresh, carried);
-            assert_eq!(
-                verify_opportunity(vector, carried)?,
-                verify_opportunity(vector, fresh)?
-            );
+            assert_eq!(verify_frame(vector, carried)?, verify_frame(vector, fresh)?);
         }
     }
     for id in BehaviourId::ALL {
@@ -335,9 +239,8 @@ fn integration_admission_metadata_is_not_model_coverage() -> TestResult {
         assert!(vector.sound.is_none());
         assert!(vector.rules.is_none());
         assert!(vector.continues.is_none());
-        assert!(vector.inputs.tail_impacts.is_none());
-        assert!(vector.before_maintenance_whole.is_none());
-        assert!(vector.drawing.is_none());
+        assert!(vector.inputs.tail_impact.is_none());
+        assert!(vector.protection_drawn.is_none());
         assert_eq!(vector.source, Source::Constructed);
         // Only validate evidence shape. No qualification implementation, operation
         // call, successful no-op claim or behavior credit is made here.
@@ -372,15 +275,11 @@ fn check_independent_loss(mut state: State, pending: u16, fraction: u16) -> Test
         let rules = Rules {
             warning_threshold: WholeEnergy::try_from(threshold)?,
         };
-        let mut original = state;
         fresh = restored(state)?;
-        assert_eq!(
-            fresh.health_opportunity(&rules),
-            original.health_opportunity(&rules)
-        );
-        assert_eq!(fresh, original);
-        assert_eq!(original.pending_loss, EnergyLoss::ZERO);
-        assert_eq!(restored(original)?, original);
+        let played = state.play_frame(TailImpact::Absent, &rules);
+        assert_eq!(fresh.play_frame(TailImpact::Absent, &rules), played);
+        assert_eq!(played.state.pending_loss, EnergyLoss::ZERO);
+        assert_eq!(restored(played.state)?, played.state);
     }
     Ok(())
 }
@@ -403,8 +302,8 @@ fn independent_quantities_and_fresh_complete_restoration() -> TestResult {
 /// Spec: `PeriodicLoss`, `LowEnergyWarning`. Constructed model regression, not
 /// recorded evidence or integration admission. Fractions are in 1/65536 energy.
 #[test]
-fn excess_fractional_loss_clears_nonzero_starting_fraction() {
-    let mut state = State {
+fn excess_fractional_loss_clears_nonzero_starting_fraction() -> TestResult {
+    let state = State {
         energy: EnergyAmount {
             whole: WholeEnergy::ZERO,
             fraction: 1,
@@ -417,11 +316,11 @@ fn excess_fractional_loss_clears_nonzero_starting_fraction() {
         protection: ProtectionFrames::TAIL_GRANT,
     };
 
-    // This public operation receives an already qualified Running/NeitherSuit
-    // opportunity. Its expected result is independent of another model call.
-    let sound = state.health_opportunity(&Rules::REFERENCE);
+    // An admitted Running/NeitherSuit frame without a tail impact. Its expected result is
+    // independent of another model call.
+    let played = state.play_frame(TailImpact::Absent, &Rules::REFERENCE);
     assert_eq!(
-        state,
+        played.state,
         State {
             energy: EnergyAmount {
                 whole: WholeEnergy::ZERO,
@@ -432,10 +331,12 @@ fn excess_fractional_loss_clears_nonzero_starting_fraction() {
                 fraction: 0,
             },
             warning: Warning::On,
-            protection: ProtectionFrames::TAIL_GRANT,
+            protection: ProtectionFrames::new(95).ok_or("95 frames is in range")?,
         }
     );
-    assert_eq!(sound, WarningSound::Start);
+    assert_eq!(played.warning_sound, WarningSound::Start);
+    assert_eq!(played.protection_drawn, ProtectionFrames::TAIL_GRANT);
+    Ok(())
 }
 
 #[test]

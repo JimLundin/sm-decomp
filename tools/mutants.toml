@@ -258,48 +258,44 @@ cut = 124
 field = "sender.queue"
 
 [[fault]]
-name = "health-tail-stale-drawing-energy"
-responsibility = "health"
-file = "crates/game/src/production/health_tail.rs"
-before = '''let read = EnergyRead::compare(&self.health.0, self.previous_draw_energy);'''
-after = '''let mut stale = self.health.0;
-                stale.energy.whole = samus_health::WholeEnergy::new(self.previous_draw_energy).ok_or_else(missing)?;
-                let read = EnergyRead::compare(&stale, self.previous_draw_energy);'''
-case = "health/ceres-tail-drawing-gauge"
-cut = 993
-field = "appearance.drawing.first_energy"
-
-[[fault]]
-name = "health-tail-age-before-drawing"
-responsibility = "health"
-file = "crates/game/src/production/health_tail.rs"
-before = '''let warning = self.health.0.health_opportunity(&rules);'''
-after = '''let warning = self.health.0.health_opportunity(&rules);
-                self.health.0.close_active_opportunity();'''
-case = "health/ceres-tail-drawing-gauge"
-cut = 993
-field = "health.maintenance.protection"
-
-[[fault]]
 name = "health-tail-impact-not-delivered"
 responsibility = "health"
 file = "crates/game/src/production/health_tail.rs"
-before = '''self.health.0.tail_contact(TailImpact::EligibleCeresTail);'''
-after = '''self.health.0.tail_contact(TailImpact::Absent);'''
+before = '''let health = self.health.0.play_frame(frame.tail, &rules);'''
+after = '''let health = self.health.0.play_frame(TailImpact::Absent, &rules);'''
 case = "health/ceres-tail-drawing-gauge"
 cut = 993
-field = "health.impact.protection"
+field = "health.protection"
 
 [[fault]]
 name = "health-tail-stale-history-commit"
 responsibility = "health"
 file = "crates/game/src/production/health_tail.rs"
-before = '''let energy =
-                    EnergyRead::read_and_commit(&self.health.0, &mut self.previous_draw_energy);'''
-after = '''let energy = self.previous_draw_energy;'''
+before = '''self.drawn_energy = energy;'''
+after = '''let _ = energy;'''
 case = "health/ceres-tail-drawing-gauge"
 cut = 993
-field = "appearance.drawing.second_energy"
+field = "appearance.drawing.energy"
+
+[[fault]]
+name = "health-tail-gauge-reads-energy-before-the-frame"
+responsibility = "health"
+file = "crates/game/src/production/health_tail.rs"
+before = '''let hud = self.hud_frame(content, &frame.hud, energy)?;'''
+after = '''let hud = self.hud_frame(content, &frame.hud, self.health.0.energy.whole.get())?;'''
+case = "health/ceres-tail-drawing-gauge"
+cut = 993
+field = "hud.gauge.shown"
+
+[[fault]]
+name = "health-tail-warning-request-dropped"
+responsibility = "health"
+file = "crates/game/src/production/health_tail.rs"
+before = '''warning_sound: health.warning_sound,'''
+after = '''warning_sound: WarningSound::None,'''
+case = "health/ceres-tail-drawing-gauge"
+cut = 993
+field = "health.warning.request"
 
 [[fault]]
 name = "passage-silences-swapped"

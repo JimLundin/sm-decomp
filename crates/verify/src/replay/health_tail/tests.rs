@@ -1,7 +1,5 @@
 use std::{env, path::PathBuf};
 
-use game::production::health_tail::EnergyChange;
-
 use super::*;
 use crate::replay::{index::Index, runner};
 
@@ -31,7 +29,7 @@ fn restored(at: &Production, content: &ProductionContent, rules: &ProductionRule
 
 #[test]
 #[ignore = "uses the authenticated Health and HUD tail fixture"]
-fn every_health_tail_semantic_stop_restores_exactly() {
+fn every_health_tail_frame_restores_exactly() {
     let AdmittedCase {
         production,
         content,
@@ -52,33 +50,11 @@ fn every_health_tail_semantic_stop_restores_exactly() {
         Err(game::production::AdmissionFault::ContentChanged)
     ));
     let mut direct = production;
-    for (cut, opportunity) in CUTS.into_iter().zip(inputs.0) {
-        let steps = Inputs::steps(opportunity).collect::<Vec<_>>();
-        let mut complete = direct.clone();
-        let expected = advance(&mut complete, cut, &steps).unwrap();
-        let change = if cut == CUTS[0] {
-            EnergyChange::Decreased
-        } else {
-            EnergyChange::Held
-        };
-        assert!(expected.iter().any(
-            |output| matches!(output, Output::FirstDrawingRead(read, _) if read.change == change)
-        ));
-        for split in 0..=steps.len() {
-            let (prefix, suffix) = steps.split_at(split);
-            let mut stopped = direct.clone();
-            let published = advance(&mut stopped, cut, prefix).unwrap();
-            let mut resumed = restored(&stopped, &content, &rules);
-            let continued = advance(&mut resumed, cut, suffix).unwrap();
-            assert!(
-                published
-                    .into_iter()
-                    .chain(continued)
-                    .eq(expected.iter().copied())
-            );
-            assert!(resumed.eq(&complete));
-        }
-        direct = complete;
+    for cut in CUTS {
+        let mut resumed = restored(&direct, &content, &rules);
+        let expected = inputs.advance(&mut direct, cut).unwrap();
+        assert!(inputs.advance(&mut resumed, cut).unwrap().eq(&expected));
+        assert!(resumed.eq(&direct));
     }
 }
 
@@ -87,8 +63,6 @@ fn every_health_tail_semantic_stop_restores_exactly() {
 fn constructed_protected_duplicate_preserves_complete_carried_health() {
     let AdmittedCase {
         mut production,
-        content,
-        rules,
         inputs: InputReader::HealthTail(inputs),
         ..
     } = fixture().1
@@ -97,36 +71,21 @@ fn constructed_protected_duplicate_preserves_complete_carried_health() {
     };
     let [hit_cut, protected_cut] = CUTS;
     inputs.advance(&mut production, hit_cut).unwrap();
-    let [hit, protected] = inputs.0.as_slice() else {
+    assert!(owner(&production).unwrap().health().protection != ProtectionFrames::ZERO);
+    let [hit, quiet] = inputs.0.as_slice() else {
         panic!("native scope schedule");
     };
-    let offer = hit.delivery.unwrap();
-    let native_steps = Inputs::steps(*protected).collect::<Vec<_>>();
-    let (actor_read, regular_suffix) = native_steps.split_at(1);
-    advance(&mut production, protected_cut, actor_read).unwrap();
-    let current = owner(&production).unwrap().health();
-    assert!(current.protection != ProtectionFrames::ZERO);
-
-    let mut restored = restored(&production, &content, &rules);
-    for candidate in [&mut production, &mut restored] {
-        let before = candidate.clone();
-        assert!(matches!(
-            candidate.advance(AdvanceInput::HealthTail(&[Input::ActiveClose])),
-            Err(game::production::ProductionFault::Unsupported(_))
-        ));
-        assert!((*candidate).eq(&before));
-        let output = advance(candidate, protected_cut, &[Input::Impact(offer)]).unwrap();
-        assert!(output.eq(&[Output::Impact(current)]));
-        assert!(owner(candidate).unwrap().health().eq(&current));
-    }
-    let direct = advance(&mut production, protected_cut, regular_suffix).unwrap();
-    let resumed = advance(&mut restored, protected_cut, regular_suffix).unwrap();
-    assert!(resumed.eq(&direct));
-    assert!(restored.eq(&production));
-    assert!(resumed.iter().any(|output| matches!(
-        output,
-        Output::Maintenance(_, samus_health::WarningSound::None)
-    )));
+    assert_eq!(hit.tail, TailImpact::EligibleCeresTail);
+    let mut duplicate = production.clone();
+    let native = advance(&mut production, protected_cut, quiet).unwrap();
+    let repeated = Frame {
+        tail: TailImpact::EligibleCeresTail,
+        ..*quiet
+    };
+    let protected = advance(&mut duplicate, protected_cut, &repeated).unwrap();
+    assert!(protected.eq(&native));
+    assert!(duplicate.eq(&production));
+    assert_eq!(native.warning_sound, samus_health::WarningSound::None);
 }
 
 #[test]
@@ -163,7 +122,7 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
             contents.origin_identity,
             original.health(),
             powered_on_hud,
-            original.previous_draw_energy(),
+            original.drawn_energy(),
         ))),
         other_content,
         rules,
@@ -176,8 +135,8 @@ fn dormant_off_map_inputs_preserve_the_native_gauge_and_map() {
     ));
     assert!(powered_on.eq(&before));
 
-    for opportunity in &mut inputs.0 {
-        let map = &mut opportunity.hud.map;
+    for frame in &mut inputs.0 {
+        let map = &mut frame.hud.map;
         map.position = types::Pair {
             x: u16::MAX,
             y: u16::MAX,
@@ -239,21 +198,20 @@ fn equal_energy_preserves_the_stale_gauge() {
         scoped.origin_identity,
         current.health(),
         stale_hud,
-        current.previous_draw_energy(),
+        current.drawn_energy(),
     );
     let mut constructed =
         Production::admit(ProductionSeed::HealthTail(Box::new(state)), content, rules).unwrap();
-    let [_, mut quiet] = inputs.0[..] else {
+    let [_, quiet] = inputs.0[..] else {
         panic!("native scope schedule");
     };
-    quiet.hud.opportunity = 0;
-    let steps = Inputs::steps(quiet).collect::<Vec<_>>();
-    let outputs = advance(&mut constructed, protected_cut, &steps).unwrap();
-    assert!(
-        outputs
-            .iter()
-            .any(|output| matches!(output, Output::Status(_, _, false)))
-    );
+    let output = advance(
+        &mut constructed,
+        protected_cut,
+        &Frame { played: 0, ..quiet },
+    )
+    .unwrap();
+    assert!(!output.gauge_redrawn);
     assert!(
         observations::gauge_words(owner(&constructed).unwrap().hud())
             .unwrap()

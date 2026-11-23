@@ -3457,3 +3457,10 @@ source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10
 identity = "movement/soft-touchdown-124"
 before_values = [1, 8, 2, 0, 0, 0, 1, 1, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 0614c4ce5e3cbf79b4e72744ae2c7586184042add75d3cf2680948c8045479ee; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "4af75708c045704897ea53dd3597f03ae3867418321f5c62a871f601e4e81394"
+identity = "health/ceres-tail-drawing-gauge"
+before_values = [2, 52, 34, 0, 0, 0, 22, 2, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 0345dc79f797532037ee67fd82280e3ebd4495c5095e0e80e3c186fb1c2fff77; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

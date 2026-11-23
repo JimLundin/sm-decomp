@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "9b957b024fcf76615cf0e91e89ed154d11a7ea6106dcc2a4e9fa77a5a4c0acb8"
+index_sha256 = "d46c3c602f65fcddd9eb027544f81ebf429b67c9e7f1774786801cfd402eeee9"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -908,16 +908,16 @@ pending_restorations = 0
 id = "health/ceres-tail-drawing-gauge"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "0345dc79f797532037ee67fd82280e3ebd4495c5095e0e80e3c186fb1c2fff77"
+observation_sha256 = "43c329ddc13e967ef054892bb4631e0d281217e1dee234696294ae8bf49fba2e"
 
 [case.counts]
 cuts = 2
-fields = 52
-outputs = 34
+fields = 18
+outputs = 36
 publications = 0
 replies = 0
 null_cuts = 0
-null_fields = 22
+null_fields = 7
 restorations = 2
 pending_boundaries = 0
 pending_restorations = 0

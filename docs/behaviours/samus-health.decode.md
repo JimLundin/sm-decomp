@@ -6,10 +6,22 @@ excludes source structure, hardware accounting and native coordinates.
 
 ## Sources by entry
 
-Bank log [90](https://patrickjohnston.org/bank/90), pinned SHA-256
-`0b1aa7a6e6e839d6dd3e96543509f6508620105f9448bf5854eba1568db66290`.
+### The frame's order
+
+Bank log [82](https://patrickjohnston.org/bank/82), page SHA-256
+`a925e5aca5ee4596616fad8ff0c3f628bc86451ab583bb704a26f5ac412417f6` as fetched on
+2026-11-23. Main gameplay at `$82:8B44..8BB8` runs, in order, the Samus current-state
+handler (`$90:E692`), Samus/projectile interaction, the main enemy routine (`$A0:8FD4`,
+where Ridley's tail contact runs), the Samus new-state handler (`$90:E722`, where
+periodic loss and the warning run), drawing (`$A0:884D`), the HUD (`$80:9B44`), and
+last the hurt-timer decrement (`$A0:9169`). This is the spec's "Order that matters":
+hit, loss, warning, drawing, then protection spent. The spec states it as one
+whole-frame step; the routine boundaries stay here.
 
 ### PeriodicLoss
+
+Bank log [90](https://patrickjohnston.org/bank/90), pinned SHA-256
+`0b1aa7a6e6e839d6dd3e96543509f6508620105f9448bf5854eba1568db66290`.
 
 Source: `$90:E9CE..EA44` establishes whole/fraction subtraction, borrow, signed-negative
 clamp and clearing pending damage. This round admits only running time and neither
@@ -69,7 +81,9 @@ begin 0, grant 96, Drawing 96, close 95. At 994 it is begin 95, Drawing 95, clos
 The native bus witness includes the physical word load and read-modify-write
 against the same word. The adjacent decrement for knockback is separate.
 This source speaks for the active frame tail; it does not admit stopped time,
-other grants or resets.
+other grants or resets. The count both Drawing markers read is the spec's
+protection while drawn: 96 at 993 and 95 at 994, the `protection_drawn` of
+R-tail-hit and R-tail-protected.
 
 ### Drawing and status
 
@@ -130,16 +144,18 @@ in this reached interval.
 R-maintenance-current observes the native `postRTI9232 -> postRTI9233` interval.
 The selected row context is `chain-any-0003-DFD7`, whose selected case uses native
 seed input and local end cut 1. No equivalence between that local cut and native
-video numbering is inferred. Its before/after health snapshots are reconstructed
-at the actual maintenance owner opportunities, not treated as frame endpoints.
-Both current energy components are written even though the reached pending loss
-is zero. Scalar output equality alone cannot establish completed work.
+video numbering is inferred. Its before/after health snapshots were reconstructed at the maintenance
+opportunities. They are also the State at the frame's two cuts: the interval runs
+from one NMI return to the next, and the adjacent captures below show Maintenance is
+the interval's only Health writer. So the vector is one whole frame. Both current
+energy components are written even though the reached pending loss is zero. Scalar
+output equality alone cannot establish completed work.
 
-The vector file holds 16 model vectors (one recorded, 15 constructed) and three
-separate `IntegrationAdmission` contrasts. Every constructed expected result is
+The periodic-loss and warning vectors are 16 model vectors (one recorded, 15
+constructed); the file also holds three separate `IntegrationAdmission` contrasts. Every constructed expected result is
 worked by the spec's arithmetic: borrowing one fractional unit from 31 whole gives
 30 whole plus 65535 fractional units; equal fractions do not borrow; overspending
-sets both components to zero. A second opportunity consumes zero, whereas restoration
+sets both components to zero. A second frame consumes zero, whereas restoration
 before that loss repeats it. The reference uses a combined integer energy amount,
 independent of the component arithmetic used to work the expected vectors.
 It agrees with all 16 model vectors. The do-nothing comparison matches five;
@@ -150,8 +166,8 @@ and integration proof. Those DTO contrasts are not a completed model checkpoint 
 
 The independently pinned recovered row cache covers local cuts 0..183: 184 records
 and 183 eligible adjacent pairs. Reference health compatibility and null equality
-both match all 183 pairs. This provides no gain and no health opportunity selection
-proof; the reference must not manufacture gameplay opportunities from these records.
+both match all 183 pairs. This provides no gain and no proof of which frames admit Health; the reference
+must not manufacture admitted frames from these records.
 
 ### Auxiliary Ceres contact and protected carry
 
@@ -165,13 +181,15 @@ The native access trace SHA-256 is
 `cd926656dabb61c12f32ab5af50773756066cc102f912febc9dc0b88b770f6de`.
 The capsule's independent controls realign all three full WRAM, CPU, latch and pad
 cuts to the pinned cache and reconstruct 37 scoped writes. The later Health
-reference reads those same operands and compares the carried before/after result,
-pre-Maintenance energy and Drawing values. The reference agrees with both native
-opportunities direct and restored. The do-nothing comparison agrees with neither.
+reference read those same operands and compared the carried before/after result,
+pre-Maintenance energy and Drawing values. The vectors keep the cut State and the
+protection both Drawing markers read; the energy both Drawing markers read equals
+the State at the frame's end. The reference agrees with both frames direct and
+restored. The do-nothing comparison agrees with neither.
 
-The expanded set has 24 model vectors (3 recorded and 21 constructed) and 3
-admission contrasts. The reference matches all 24; the do-nothing comparison
-matches 6. The duplicate, fraction-clearing, early-age, omitted-age, stale-energy,
+The file has 24 model vectors (3 recorded and 21 constructed) and 3 admission
+contrasts. The whole-frame reference (below) matches all 24; the do-nothing
+comparison matches 6. In the earlier staged reference the duplicate, fraction-clearing, early-age, omitted-age, stale-energy,
 borrow, repeated pending-loss and warning-threshold controls fail. Trace controls
 also reject stale protection at contact, wrong equipment at the actual impact,
 a changed grant, a changed late count, stale Drawing energy and early timer
@@ -188,6 +206,11 @@ NMI, both current drawing interrupts and the returned no-hurt actor operation.
 The adjacent actor reads the same invincibility word at +43,020 ticks.
 Neither Animation branch reads whole energy. Its first physical read in the
 adjacent interval occurs at Maintenance, +108,126 ticks after the native return.
+With the frame's order above (animation in the current-state handler, before the
+enemy routine and Maintenance), Appearance's animation reads Health's State as the
+frame starts. That placement of animation is an inference from this capture and the
+bank 82 order; no recorded Ceres hit frame shows `Breathing` reading energy, so no
+vector checks it.
 
 The private adjacent source manifest has SHA-256
 `b3f99e3019a7c238f992ee5fb24aa25e686c7e068b3248972c3efd8339a1803d`.
@@ -197,39 +220,92 @@ WRAM across both native returns. The checked controller
 schedule and origin identify the finite borrowed context. Only the first
 production Maintenance supplies the carried Health result.
 
+## The whole-frame step
+
+MODEL §1 decisions 35 and 36 leave intra-frame timing to T1. The spec now states
+Health as one step per frame: the frame's tail impact and admission in, Health's
+State as the frame leaves it, the warning sound and protection while drawn out. The
+staged surface it replaces had three caller-sequenced entries within one frame (the
+tail contact, Maintenance and the active close), which existed to stage Health for
+the Ceres tail sequencer.
+
+The catalogue keeps its four entries (PeriodicLoss, TailHit, ProtectionTime,
+LowEnergyWarning) and their eight arms; none existed only for staging. Removed or
+reworded text, and where each rule lives now:
+
+- "A Maintenance call, a Drawing read, a repeated contact check or a display
+  interrupt never spends a protection frame": removed; only the frame step spends
+  protection, already stated at ProtectionTime's arm and "Reading State changes
+  nothing" (Memory and boundary).
+- "The optional tail impact and the completion of an active gameplay opportunity
+  are distinct from Maintenance": removed; the tail impact is the frame's input
+  (Memory and boundary) and spending protection is ProtectionTime's arm.
+- "The model may always be queried for current energy": moved to "Reading State
+  changes nothing" (Memory and boundary).
+- Old "Order that matters", Ridley sees the protection carried into contact: moved
+  to TailHit's arms ("as the frame starts") and the header's Reads.
+- The hit takes energy and grants protection before Maintenance judges the warning:
+  already stated at "Order that matters" (hit, loss, warning) and LowEnergyWarning's
+  arms ("after the frame's hit and loss").
+- Both Drawing reads and the late gauge see the maintained energy: moved to "Order
+  that matters" (drawing and the gauge read the energy the frame leaves).
+- Protection granted by contact stays live through Drawing and ages after it: moved
+  to ProtectionTime's arm as the output protection while drawn.
+- 95 after a hit, one remaining frame still blocks, a hit lands after expiry:
+  already stated at TailHit's arms and "Order that matters".
+- Animation can read current energy before periodic loss: moved to "Order that
+  matters" (animation reads State as the frame starts).
+- Appearance's previous drawing energy and the flash after damage are not Health's:
+  already stated at the header's "Leaves to others"; repeated in "Order that matters".
+
+The value another domain read part-way through the frame, protection at Drawing, is
+the named output protection while drawn. Energy at Drawing and at the gauge equals
+the State the frame leaves, and Ridley and animation read the State as the frame
+starts, so neither needs an output.
+
+Vectors: 27 to 27 (24 model vectors, 3 admission contrasts). Dropped: C-tail-duplicate,
+two eligible impacts within one frame, which tested only the staged contact entry
+(the frame's tail impact is one input, and a hit already blocks any later overlap). Added in its place, converted to a whole
+frame: C-tail-repeat, an eligible overlap on the frame after a hit (continuing
+C-tail-after-expiry), blocked by the 95 frames left. Every tail vector's
+`tail_impacts` list became the single `tail_impact`, its `drawing` pair became
+`protection_drawn` (each drawn energy equalled its `after` energy), and
+`before_maintenance_whole`, energy between the staged entries, was dropped; no
+neighbour reads that value. The 16 periodic-loss and warning vectors and the 3
+contrasts are unchanged.
+
+Reference: `$TEMP/collab/health-wf-units/reference.py`, one step per frame on a
+combined-integer energy, agrees with all 24 model vectors and checks every
+`continues` chain; the do-nothing step matches 6 of 24. Mutants rejected
+(`mutants.py`): ageing before the hit (17 of 24 pass), protection drawn after ageing
+(17), the warning judged before the hit (20), and a hit ignoring protection (22).
+
 ## Harness contract
 
-Call the actual production health entry with carried complete State, selected by
-actual running-time and equipped-suit producers. Seed once from the independent
-record. Compare whole/fraction current energy, whole/fraction pending damage and
-warning, and warning request when independently observed. There are no scalar masks.
-Do not seed from the oracle after the first observation or feed HUD history back into
-health. Native executing write evidence is private causal qualification, not a clean
-model input or an alternative production clock.
+Call the actual production health step once per admitted frame with carried complete
+State, admitted by actual running-time and equipped-suit producers. Seed once from
+the independent record. Compare at each frame cut whole/fraction current energy,
+whole/fraction pending damage, warning and protection, and the warning request when
+independently observed. There are no scalar masks. Do not seed from the oracle after
+the first observation or feed HUD history back into health.
 
 Warning audio playback is skipped until the audio producer/acceptance contract is
 proved; only requests and warning State are health outputs. Whole-frame comparison
-must name any intervening health writers and qualify their real owner exchanges.
-Animation reads earlier current energy, Drawing later current energy; Appearance's
-previous-draw energy stays separate. Missing pending-loss accumulation, pickups,
-alternate protection sources, reserves, refill or death remains Unsupported. A scope ending
-before such a required neighbor does not claim that neighbor implemented.
-All six scalar quantities need complete set/read/save/restore checks and a
-checkpoint continuation over repeated opportunities. Never infer the zero-loss
-operation was omitted because its final scalar values match its initial values.
+must name any other health writer in the frame and qualify its real owner exchange.
+Appearance's previous-draw energy stays separate. Missing pending-loss accumulation,
+pickups, alternate protection sources, reserves, refill or death remains Unsupported.
+A scope ending before such a required neighbor does not claim that neighbor
+implemented. All six scalar quantities need complete set/read/save/restore checks and
+a checkpoint continuation over repeated frames. Never infer the zero-loss frame was
+omitted because its final scalar values match its initial values.
 
-For the Ceres tail segment, source the eligible impact before applying any mutation
-and carry Health through Maintenance, both later Drawing reads, status and the
-actual active-frame close. The active close schedules one model ageing operation;
-it cannot seed the value, use the zero-timer frame-tail profile, or substitute the
-escape clock. Feed the same carried protection to actor contact. Seed once at
-992, continue directly and from a checkpoint after 993, and compare complete
-Health State, the warning request, energy and history at both Drawing opportunities,
-and late gauge change and hold. Add scoped wrong controls for duplicate impact,
-stale current energy and early ageing. If the post-adjustment amount is borrowed,
-declare that scope and give no actor producer credit. Wider actor behavior, physical
-Drawing output and VRAM publication require their own qualification. Keep the
-indexed previous Maintenance and retained-time requirements.
+For the Ceres tail frames, the frame's tail impact comes from Ridley's owner, or is a
+declared borrowed input with no actor producer credit. Feed Ridley's contact the
+protection as the frame starts. Seed once at cut 992, play 993 and 994 directly and
+from a checkpoint after 993, and compare complete Health State and the warning
+request at each cut, and protection while drawn where Appearance's drawing consumes
+it. Wider actor behavior, physical Drawing output, the gauge and VRAM publication
+require their own owners' comparisons.
 
 ## Budget
 
@@ -247,7 +323,8 @@ k = 37.5 weighted tokens per spec unit, the frozen coefficient.
 
 Budget counter: four entries, eight arms, no cell terms or counted operators.
 The counter reports 8.0 units and 299 weighted tokens after conversion by area
-(current-energy 187, protection 112). A private std-only CLI wrapper calls the
+(current-energy 187, protection 112), before and after the whole-frame step: the
+step removed prose and vector fields, no arm. A private std-only CLI wrapper calls the
 byte-identical `verify::spec_units` implementation. The previous periodic Health
 owner is retained and extended. At fixed base
 `0ede0e619848bc630c24bf45c853136c276d49fe` the production Health and frame-tail

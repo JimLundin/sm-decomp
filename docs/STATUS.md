@@ -130,15 +130,15 @@ cases remain held boundaries and require no fault credit until they have reviewe
 ## Scoped Ceres tail contact
 
 The indexed `health/ceres-tail-drawing-gauge` case starts from the authenticated native cut
-992. Its input-only scoped actor requests current protection twice and delivers one impact
-before Maintenance on the first opportunity. Current Health carries energy, pending loss,
-warning and protection between those reads. Drawing commits its own energy history, ordinary
-HUD status publishes the CPU gauge, and the qualified late close ages protection before the
-next actor query. The scoped and retained Drawing callers share the live energy comparison
-and fresh energy-history commit. The retained caller also qualifies controls and rendering.
-Both opportunities compare independent observations, including all sixteen
-gauge words. The protected duplicate and a stale gauge with current shown energy are separate
-constructed controls. Physical gauge writes require separate timing and publication evidence.
+992 and plays the next two frames whole. Each frame's borrowed inputs are Ridley's tail impact
+(an eligible hit on the first frame, none on the second), the clock and equipment that admit
+the frame, and the HUD's neighbours. Each frame plays Health once
+(`samus_health::State::play_frame`), commits Drawing's energy history from the frame's Health,
+and plays the HUD's one frame of play, its status bar reading the frame's whole energy. Each
+cut compares Health's complete State, Drawing's energy history, the gauge's shown energy and
+redraw, the Warning request, the protection Drawing reads and all sixteen CPU gauge words
+against independent observations. Reads inside the frame are not compared. A protected repeat
+of the hit and a stale gauge with current shown energy are separate constructed controls.
 
 The actor's geometry and hit selection, the Warning receiver, and Drawing's hurt-flash and
 rendering producers require separate admission. The scope includes two auxiliary cuts and

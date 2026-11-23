@@ -1,5 +1,5 @@
-//! The HUD's independently observed neighbours at each opportunity: released controls, the
-//! powered-off map's premises and the late status values.
+//! The HUD's independently observed neighbours in each frame: released controls, the
+//! powered-off map's premises and the status values as the frame ends.
 
 use std::path::Path;
 
@@ -107,7 +107,7 @@ enum Absent {
     None,
 }
 
-/// Each opportunity's HUD frame. Her stock as the first frame begins is the origin record's;
+/// Each frame's HUD inputs. Her stock as the first frame begins is the origin record's;
 /// as the second begins, the stock the first frame's status bar drew.
 pub(super) fn load(
     native: &Path,
@@ -131,24 +131,18 @@ pub(super) fn load(
     {
         return Err(data_failure(None, "Health tail HUD origin and schedule"));
     }
-    // The origin is main gameplay and the HUD opportunities are its next two frames, so the
+    // The origin is main gameplay and the HUD frames are its next two, so the
     // scene runs the escape countdown in each.
     let countdown = hud::countdown_runs(origin_wram, origin_wram)?;
     let [first, next] = source.tape.opportunity;
-    let first = inputs(
-        first,
-        0,
-        hud::stock_at_start(origin_wram)?.counts,
-        countdown,
-    )?;
+    let first = inputs(first, hud::stock_at_start(origin_wram)?.counts, countdown)?;
     let drawn = EnumMap::from_fn(|ammo| first.ammunition.of(ammo).count);
-    let next = inputs(next, 1, drawn, countdown)?;
+    let next = inputs(next, drawn, countdown)?;
     Ok([first, next])
 }
 
 fn inputs(
     observed: Opportunity,
-    opportunity: u64,
     counts_at_start: EnumMap<Ammo, u16>,
     countdown: CountdownRuns,
 ) -> Result<HudFrame, Outcome> {
@@ -180,7 +174,7 @@ fn inputs(
     {
         return Err(data_failure(
             Some(end_cut),
-            "Health tail HUD opportunity premises",
+            "Health tail HUD frame premises",
         ));
     }
     let stock = |[count, capacity]: [u16; 2]| Stock { count, capacity };
@@ -193,7 +187,6 @@ fn inputs(
     let pair = |[x, y]: [u16; 2]| Pair { x, y };
     let [x, y] = map.room_cell;
     Ok(HudFrame {
-        opportunity,
         frame: FrameCount(frame_count),
         stock_at_start: StockAtStart {
             counts: counts_at_start,

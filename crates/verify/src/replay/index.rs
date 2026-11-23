@@ -270,22 +270,19 @@ pub enum ObservationId {
     /// Complete finished ordinary Camera state.
     #[serde(rename = "camera.ordinary-completion")]
     MapCarryCamera,
-    /// Complete Health snapshots at the actor query and Maintenance.
+    /// Complete Health at the frame cut.
     #[serde(rename = "health.tail.state")]
     HealthTailState,
-    /// Complete Health after the one actual delivered impact.
-    #[serde(rename = "health.tail.impact")]
-    HealthTailImpact,
-    /// Live protection at the actual late close.
-    #[serde(rename = "health.tail.active_close")]
-    HealthTailClose,
     /// The Warning request, before any receiver.
     #[serde(rename = "health.tail.warning_request")]
     HealthTailWarning,
-    /// Both live Health reads and the carried Drawing history.
+    /// The protection Drawing reads for the flash after damage, before the frame spends one.
+    #[serde(rename = "health.tail.protection_drawn")]
+    HealthTailDrawnProtection,
+    /// Drawing's energy history at the frame cut.
     #[serde(rename = "appearance.drawing.energy")]
     DrawingEnergy,
-    /// Energy read and cached redraw disposition at status.
+    /// The gauge's shown energy at the frame cut and whether the frame redrew it.
     #[serde(rename = "hud.gauge.refresh")]
     GaugeRefresh,
     /// All sixteen CPU-side gauge words.
@@ -744,7 +741,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::LiveSoundAccepted
         | O::LiveSoundFifo => Responsibility::AudioSender,
         O::LiveSoundHold => Responsibility::Doors,
-        O::HealthTailState | O::HealthTailImpact | O::HealthTailClose | O::HealthTailWarning => {
+        O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
         }
         O::TouchdownClip
@@ -919,10 +916,9 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "enemy-interactions/ContactAllowed"
         | "enemy-interactions/BoxOverlap"
         | "enemy-interactions/FirstPowerShot" => &[O::ContactConsumedMarkers],
-        "samus-health/PeriodicLoss" => &[O::HealthTailState],
-        "samus-health/TailHit" => &[O::HealthTailState, O::HealthTailImpact],
+        "samus-health/PeriodicLoss" | "samus-health/TailHit" => &[O::HealthTailState],
+        "samus-health/ProtectionTime" => &[O::HealthTailState, O::HealthTailDrawnProtection],
         "samus-health/LowEnergyWarning" => &[O::HealthTailState, O::HealthTailWarning],
-        "samus-health/ProtectionTime" => &[O::HealthTailState, O::HealthTailClose],
         "interface-hud/EnergyGauge" => &[O::GaugeRefresh, O::GaugeWords],
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow"
             if provider == InputProvider::EarlyMapInputs =>
@@ -1340,15 +1336,13 @@ fn health_tail_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
         && case.checkpoints
         && case.expectations.output_cut.is_none()
-        && case.expectations.fields
+        && case.expectations.fields == [O::HealthTailState, O::DrawingEnergy, O::GaugeRefresh]
+        && case.expectations.outputs
             == [
-                O::HealthTailState,
-                O::HealthTailImpact,
-                O::HealthTailClose,
-                O::DrawingEnergy,
-                O::GaugeRefresh,
+                O::HealthTailWarning,
+                O::HealthTailDrawnProtection,
+                O::GaugeWords,
             ]
-        && case.expectations.outputs == [O::HealthTailWarning, O::GaugeWords]
 }
 
 fn scope_valid(case: &Case) -> bool {
