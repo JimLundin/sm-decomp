@@ -7,7 +7,7 @@ use super::{
 use audio_transport::{CueId, QueueAllowance};
 use canonical::Canonical;
 use data::assets::world::Doorway;
-use samus_appearance::{Charge, Opportunity, SoundQueue, SoundRequest};
+use samus_appearance::{Charge, PassageEntry, SoundQueue, SoundRequest};
 use types::{Action, Pair};
 use world_doors::{Arrival, Doors, HerSound, Inputs, Passage, Phase, RoomSound, Rules, Scene};
 
@@ -171,13 +171,12 @@ impl State {
         {
             return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
         }
-        let opportunity = Opportunity::PassageEntry {
+        let quieting = super::animation::passage_entry(PassageEntry {
             current: content.movement,
             shoot_held: shoot.0,
             charge: content.charge,
-        }
-        .read();
-        let offer = if let Some(sound) = opportunity.sound {
+        });
+        let offer = if let Some(sound) = quieting {
             if sound != SoundRequest::SamusSilence
                 || sound.queue() != SoundQueue::Samus
                 || sound.max_waiting() != 15

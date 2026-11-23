@@ -193,11 +193,14 @@ sender, including the seed reply. Each native case has one independent seed.
 
 The two Magnet Stairs windows start at their own locked predecessors. Each decodes Movement's
 complete prior state and committed figure and supplies the observed controls, prior terrain and
-two solid actors in their current Movement-entry order. The scoped caller runs Movement and
-pose fit. It sends the actual Land request to the Contact FIFO with the producer's allowance and
+two solid actors in their current Movement-entry order. The scoped caller plays Movement's whole
+frame. It sends the actual Land request to the Contact FIFO with the producer's allowance and
 current suppression, then passes the separate graphics opportunity and selected figure to the
-dry Appearance arm. The replay compares the floor clip, ordered fit, accepted response,
-Contact offer and Appearance clear publication. The scoped Contact owner stops after the offer.
+dry Appearance arm. The replay compares her landing position and vertical speed, her downward
+travel after the floor clips it, her position after her moves (where the pose fit starts), the
+accepted response, the Contact offer and Appearance clear publication. The requested downward
+distance, the fit's result and its clearance tests happen inside the frame, have no whole-frame
+counterpart and are not compared. The scoped Contact owner stops after the offer.
 The next native service-entry snapshot independently corroborates its FIFO. The pinned bracket
 contains no intervening Contact offer or service, and the case advances neither the intervening
 clock nor the service. The offer and clear command count as two scoped outputs. The publication
@@ -323,17 +326,16 @@ Ceres continuation, pixels, application, power-on or played-alone coverage follo
 ## Carried ordinary movement, appearance and camera
 
 The connected ordinary witness starts once at cut6 and compares nine actual opportunities
-through cut15 in one production owner. Complete Movement, the four Appearance quantities,
-the playing Figure and all nine Camera components are observed, along with four directional
-travels per opportunity. Ahead reads retained playing state before motion; actual movement
-completion publishes the accepted pose before selected-clip initialization; Camera follows
-actual finished movement and retains its history.
+through cut15 in one production owner, which steps each model once per frame in the played
+owner's order. Complete Movement, the four Appearance quantities, the playing Figure and all
+nine Camera components are observed, along with four directional travels per frame. Ahead reads
+the retained playing state before her moves; Appearance plays her stride, the animation update
+and the pose selection from movement's outcome; Camera follows the finished movement and
+retains its history.
 
 The separately checked current source has five clip holds, four advances, its first wrap at
-cut14 and one marked Contact at cut10. Complete returned Contact graphics, Footstep requests
-and Appearance receipts survive internal yields and delivered-history retirement. The indexed
-case checks ordinary cut continuations; the separate production test restores every internal
-semantic yield and rejects changes to its retained current inputs atomically.
+cut14 and one marked Contact at cut10, with its graphical contact and Footstep request. The
+indexed case checks each cut's continuation from a checkpoint.
 
 Controls, equipment, liquid, energy, occupancy, Contact guards, current terrain and actors,
 and room settings are authenticated borrowed stimuli. Actor lifecycle, receiver execution,
@@ -346,19 +348,17 @@ The second ordinary witness admits once at cut126 and carries the same selected 
 cut142. It exercises current Run release and resumed growth, alternating Forward/DownForward
 aim selection and its extra horizontal move, and reached non-square Floor/Surface terrain.
 Its floor factors, vertical surface responses and unseated support checks are bounded witnesses;
-stepped and ceiling terrain remain unsupported. Complete ordinary and internal yield restoration
-uses the same production entry. The stale-Run fault is caught at cut141's complete movement State.
+stepped and ceiling terrain remain unsupported. The stale-Run fault is caught at cut141's complete movement State.
 The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its admission and source
 identity separate from the first witness. The same borrowed producers and omitted consumers apply.
 
 The scoped early mini-map witness starts once at cut 78 of the room-seeded Ceres row.
-At 79 and 80 the staged HUD reads the actual Movement position after Contact and before
-Animation and pose placement. It compares both exact early axes, the complete explored bitmap
-and the fifteen mini-map cells. Cut 79 also compares complete Movement, Appearance with Figure,
-and Camera against the independent carried record. The second opportunity stops at the early
-mini-map before the later spinning pose. The ordinary and restored executions compare both
-opportunities. A separate checkpoint immediately after the first map resumes through its
-late carry, with altered map premises rejected before any change.
+At 79 and 80 the staged HUD reads movement's position after her moves, before the aim step and
+pose change, from the frame's outcome. It compares both exact early axes, the complete explored
+bitmap and the fifteen mini-map cells. Cut 79 also compares complete Movement, Appearance with
+Figure, and Camera against the independent carried record. Cut 80 plays its whole frame, into
+the later spinning pose, and compares only the map. The ordinary and restored executions
+compare both frames, and a frame without the map's inputs is rejected before any change.
 
 The [early mini-map fixture](../tools/ci/fetch_movement_early_map.sh) supplies the independently
 qualified current collision roster, control, room, clock and other borrowed inputs. Late HUD

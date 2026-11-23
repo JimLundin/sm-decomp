@@ -418,17 +418,17 @@ pub(super) fn actual(
     outputs: Option<&connected::Outputs>,
 ) -> Vec<Observation> {
     let mut fields = vec![
-        state_observation(state.movement.state()),
+        state_observation(&state.movement.0),
         Observation::quantity(
             "movement.position.x",
-            i64::from(state.movement.state().position.x.0),
+            i64::from(state.movement.0.position.x.0),
         ),
         Observation::quantity(
             "movement.position.y",
-            i64::from(state.movement.state().position.y.0),
+            i64::from(state.movement.0.position.y.0),
         ),
     ];
-    fields.extend(appearance::initial(state.appearance.model.0.state, content));
+    fields.extend(appearance::initial(state.appearance.0, content));
     fields.push(playing_observation(state.playing.0));
     fields.extend(camera::initial(&state.camera.0));
     for (direction, name) in [
@@ -439,9 +439,7 @@ pub(super) fn actual(
     ] {
         fields.push(Observation::quantity(
             name,
-            outputs
-                .and_then(|out| out.movement.as_ref())
-                .map_or(0, |out| i64::from(out.travelled[direction].0.0)),
+            outputs.map_or(0, |out| i64::from(out.movement.travelled[direction].0.0)),
         ));
     }
     fields
@@ -486,119 +484,6 @@ mod tests {
         assert!(result.passed());
     }
     #[test]
-    #[ignore = "private connected source, cache and player ROM"]
-    fn connected_every_semantic_yield_restores_without_repeating_intents() {
-        yield_restorations("connected-ordinary/carried-running-camera");
-    }
-    #[test]
-    #[ignore = "private connected source, cache and player ROM"]
-    fn connected_run_slope_every_semantic_yield_restores_without_repeating_intents() {
-        yield_restorations("connected-ordinary/run-release-floor-aim");
-    }
-    fn yield_restorations(id: &str) {
-        use game::production::connected::{Advance, Progress};
-        use game::production::{AdvanceInput, Production, ProductionOutputs};
-        use game::state::owned::OwnedState;
-        let index = index();
-        let case = index.cases.iter().find(|case| case.id.0 == id).unwrap();
-        let sources = sources();
-        let admitted = super::super::recorded::admit(case, &sources).unwrap();
-        let content = super::Content {
-            movement: super::movement::Content::load(&sources.rom).unwrap(),
-            appearance: super::appearance::Content::load(&sources.rom).unwrap(),
-        };
-        let inputs = super::Inputs::load(
-            &sources.native.join(super::fixture(case).unwrap()),
-            &content,
-        )
-        .unwrap();
-        let mut production = admitted.production;
-        let mut boundaries = 0usize;
-        let mut movement_offers = 0usize;
-        let mut appearance_answers = 0usize;
-        let mut rejected_changes = 0usize;
-        let mut max_history = 0usize;
-        for cut in case.first_cut().unwrap()..=case.end.cut_inclusive {
-            let input = inputs.current(cut).unwrap();
-            let mut reference = production.clone();
-            let ProductionOutputs::Connected(expected) = reference
-                .advance(AdvanceInput::Connected {
-                    inputs: input,
-                    advance: Advance::Opportunity,
-                })
-                .unwrap()
-            else {
-                panic!()
-            };
-            let mut sounds = Vec::new();
-            let mut graphics = Vec::new();
-            let mut receipts = Vec::new();
-            loop {
-                let ProductionOutputs::Connected(output) = production
-                    .advance(AdvanceInput::Connected {
-                        inputs: input,
-                        advance: Advance::Yield,
-                    })
-                    .unwrap()
-                else {
-                    panic!()
-                };
-                sounds.extend(output.sounds);
-                graphics.extend(output.graphics);
-                receipts.extend(output.appearance_receipts);
-                let OwnedState::Connected(state) = production.state() else {
-                    panic!()
-                };
-                max_history = max_history.max(state.appearance.model.0.steps.len());
-                if let game::production::movement_work::Movement::Work(work) = &state.movement {
-                    movement_offers =
-                        movement_offers.saturating_add(usize::from(work.model.0.offered.is_some()));
-                }
-                appearance_answers = appearance_answers
-                    .saturating_add(usize::from(state.appearance.model.0.pending.is_some()));
-                let saved = production.save().unwrap();
-                let restored =
-                    Production::restore(&saved, admitted.content.clone(), admitted.rules.clone())
-                        .unwrap();
-                let equal_owners = restored == production;
-                assert!(equal_owners);
-                if output.progress == Progress::Complete {
-                    assert_eq!(output.movement, expected.movement);
-                    assert_eq!(output.camera, expected.camera);
-                    production = restored;
-                    break;
-                }
-                let mut changed = input.clone();
-                changed.energy = changed.energy.wrapping_add(1);
-                let mut rejected = restored.clone();
-                assert!(
-                    rejected
-                        .advance(AdvanceInput::Connected {
-                            inputs: &changed,
-                            advance: Advance::Yield
-                        })
-                        .is_err()
-                );
-                let equal_owners = rejected == restored;
-                assert!(equal_owners);
-                rejected_changes = rejected_changes.saturating_add(1);
-                production = restored;
-                boundaries = boundaries.saturating_add(1);
-            }
-            assert_eq!(sounds, expected.sounds);
-            assert_eq!(graphics, expected.graphics);
-            assert_eq!(receipts, expected.appearance_receipts);
-            let equal_owners = production == reference;
-            assert!(equal_owners);
-        }
-        assert!(movement_offers > 0 && appearance_answers > 0 && boundaries == rejected_changes);
-        // Every opportunity retires only delivered history; no cross-opportunity growth remains.
-        assert!(max_history < 32);
-        diagnostic(format_args!(
-            "CONNECTED_PENDING id={id} boundaries={boundaries} movement_offers={movement_offers} appearance_answers={appearance_answers} changed_inputs_rejected={rejected_changes} max_history={max_history}"
-        ));
-    }
-    #[test]
     #[ignore = "complete private pinned cache, native fixtures and player ROM"]
     fn connected_complete_index_preserves_all_reviewed_floors() {
         let snapshot = super::super::index::IndexSnapshot::parse(include_str!(
@@ -634,7 +519,7 @@ mod tests {
     fn connected_marked_contact_and_first_wrap_have_complete_publications() {
         use game::production::ProductionOutputs;
         use game::state::owned::OwnedState;
-        use samus_appearance::{GraphicalContact, PublishedSound, Receipt, SoundRequest};
+        use samus_appearance::{FrameSound, GraphicalContact, SoundRequest};
         let index = index();
         let sources = sources();
         let case = index
@@ -650,7 +535,7 @@ mod tests {
             let OwnedState::Connected(before) = admitted.production.state() else {
                 panic!()
             };
-            let playhead = before.appearance.model.0.state.playhead;
+            let playhead = before.appearance.0.playhead;
             let contact = GraphicalContact {
                 figure: before.playing.0,
                 playhead,
@@ -664,9 +549,8 @@ mod tests {
             };
             let expected_contact = (cut == 10).then_some(contact);
             let expected_sound =
-                (cut == 10).then_some(PublishedSound::Appearance(SoundRequest::Footstep));
-            let graphics_match =
-                output.graphics == expected_contact.into_iter().collect::<Vec<_>>();
+                (cut == 10).then_some(FrameSound::Opportunity(SoundRequest::Footstep));
+            let graphics_match = output.contact == expected_contact;
             if !graphics_match {
                 diagnostic(format_args!(
                     "CONNECTED_PUBLICATION_DIFFERENCE cut={cut} field=appearance.graphics"
@@ -680,30 +564,10 @@ mod tests {
                 ));
             }
             assert!(sounds_match);
-            let Some(Receipt::Appearance {
-                input:
-                    samus_appearance::AppearanceRead::Contact {
-                        figure,
-                        playhead: read_playhead,
-                        ..
-                    },
-                output: receipt_output,
-                ..
-            }) = output.appearance_receipts.first()
-            else {
-                panic!()
-            };
-            let current_inputs_retained = *figure == contact.figure && *read_playhead == playhead;
-            assert!(current_inputs_retained);
-            assert_eq!(receipt_output.contact, expected_contact);
-            assert_eq!(
-                receipt_output.sound,
-                (cut == 10).then_some(SoundRequest::Footstep)
-            );
             let OwnedState::Connected(after) = admitted.production.state() else {
                 panic!()
             };
-            let step = after.appearance.model.0.state.playhead.step;
+            let step = after.appearance.0.playhead.step;
             if step == playhead.step {
                 holds += 1;
             } else {

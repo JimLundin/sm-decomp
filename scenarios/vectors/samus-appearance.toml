@@ -1004,12 +1004,13 @@ before = { step = 0, left = 2, stage = 3, laps = 1 }
 inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, vertical_speed = "+0000.C400" }
 after = { step = 0, left = 1, stage = 0, laps = 0 }
 
-
-# Appearance opportunities are independent of [[vector]] animation updates.
-# Each [[opportunity]] has kind Contact, PoseSelected, NormalDraw or PassageEntry;
-# inputs explicitly supply every guard used by that opportunity, expected lists semantic
-# sounds and graphical contact, and before/after compare unchanged animation quantities.
-# Contact uses retained inputs.stage, matching before.stage, rather than a boosting flag.
+# Each [[opportunity]] checks one rule of the frame's sounds (spec section 9) alone, apart
+# from the [[vector]] animation update: kind Contact (the stride), PoseSelected (the pose she
+# takes), NormalDraw or PassageEntry; inputs supply every value the rule reads, expected lists
+# its semantic sounds and graphical contact, and before/after show that the rule leaves the
+# four animation quantities as they were. Contact reads her step, time left and stage as the
+# frame starts: inputs.step, inputs.left and inputs.stage match before; the stage stands in for
+# a boosting flag.
 # Contact content is invented, including recorded guard cases; ROM content is harness-only.
 [contact_content.invented_stride]
 steps = ["13", "2", "7", "rest", "again 0"]
@@ -1080,8 +1081,8 @@ id = "C-contact-early"
 source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
+before = { step = 2, left = 2, stage = 0, laps = 0 }
+after = { step = 2, left = 2, stage = 0, laps = 0 }
 inputs = { movement = "Running", step = 2, left = 2, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
 expected = { sounds = [], contact = false }
 
@@ -1090,8 +1091,8 @@ id = "C-contact-zero"
 source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
+before = { step = 2, left = 0, stage = 0, laps = 0 }
+after = { step = 2, left = 0, stage = 0, laps = 0 }
 inputs = { movement = "Running", step = 2, left = 0, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
 expected = { sounds = [], contact = false }
 
@@ -1100,8 +1101,8 @@ id = "C-contact-unmarked"
 source = "constructed"
 kind = "Contact"
 entries = ["FootContact"]
-before = { step = 2, left = 1, stage = 0, laps = 0 }
-after = { step = 2, left = 1, stage = 0, laps = 0 }
+before = { step = 1, left = 1, stage = 0, laps = 0 }
+after = { step = 1, left = 1, stage = 0, laps = 0 }
 inputs = { movement = "Running", step = 1, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
 expected = { sounds = [], contact = false }
 
@@ -1435,10 +1436,11 @@ after = { step = 2, left = 1, stage = 0, laps = 0 }
 inputs = { current = "Running", shoot_held = false, charge = 0 }
 expected = { sounds = ["SamusSilence"], contact = false }
 
-
-# A work combines already-checked opportunities in the order named here; this is a
-# composition check, not a required clean interface. The animation_vector runs once.
-# sounds, contact and all four after quantities are explicit expected outputs.
+# An [[appearance_work]] is one frame that combines already-checked rules: its animation_vector
+# (optional) is the frame's one animation update, and its opportunities are the frame's other
+# sound rules. sounds lists the frame's requests in the order of spec section 9.2; contact and
+# all four after quantities are its other expected outputs. This is a composition check, not a
+# required clean interface.
 [[appearance_work]]
 id = "C-branch-and-end"
 source = "constructed"
@@ -1488,95 +1490,8 @@ after = { step = 2, left = 1, stage = 0, laps = 0 }
 inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = true }
 expected = { sounds = [], contact = false }
 
-# Additive suspended-update format; ordinary vector/opportunity/appearance_work cases unchanged.
-# Each suspended_update names base_kind (Animation, Opportunity, Work) and the matching base id.
-# Inherit its complete inputs, invented content, rules/defaults and expected ordinary outputs.
-# observations is a checked subsequence of semantic receipts, never a required interface shape.
-# Compare every ordinary output too. save_points="AllOfferedAndCompleted" means save before
-# every offered decision and after every completed receipt in the whole update; retain all
-# four animation quantities, pending answer, actual figures/inputs, consumed opportunity/input
-# position and every completed sound/graphic output. Restore and compare COMPLETE State and
-# outputs with uninterrupted updating, preserving order and one actual animation update.
-# rules explicitly repeats base overrides. Old and selected clip holds are invented content.
-
-[[suspended_update]]
-id = "C-op-kept-clip"
-source = "constructed"
-base_kind = "Animation"
-base = "C-kept-run"
-entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StartingClip", "ClipPlays"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="ClipPlaying", clip="run", step=2, left=3, answer="CountDown" },
- { event="ClipPlayed", step=2, left=2, stage=0, laps=0 },
- { event="SelectedClip", clip="ball", answer="KeepPlayhead", step=2, left=2 },
- { event="ClipInitialized", step=2, left=2, stage=0, laps=0 }
-]
-
-[[suspended_update]]
-id = "C-op-current-play"
-source = "constructed"
-base_kind = "Animation"
-base = "C-start-after-count"
-entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StartingClip", "ClipPlays"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="ClipPlaying", clip="jump", step=3, left=6, answer="CountDown" },
- { event="ClipPlayed", step=3, left=5, stage=0, laps=0 },
- { event="SelectedClip", clip="fall", answer="StartFirst", step=0, left=9 },
- { event="ClipInitialized", step=0, left=9, stage=0, laps=0 }
-]
-
-[[suspended_update]]
-id = "C-op-restart-play"
-source = "constructed"
-base_kind = "Animation"
-base = "C-restart"
-entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StandingRestart", "ClipPlays"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="StandingRestart", before_step=4, before_left=1, step=0, left=16 },
- { event="ClipPlaying", clip="stand", step=0, left=16, answer="CountDown" },
- { event="ClipPlayed", step=0, left=15, stage=0, laps=0 }
-]
-
-[[suspended_update]]
-id = "C-op-restart-adjusted"
-source = "constructed"
-base_kind = "Animation"
-base = "C-restart-adjusted"
-entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StandingRestart", "ClipPlays"]
-rules = { restart_hold=25 }
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="StandingRestart", before_step=3, before_left=6, step=0, left=25 },
- { event="ClipPlaying", clip="stand", step=0, left=25, answer="CountDown" },
- { event="ClipPlayed", step=0, left=24, stage=0, laps=0 }
-]
-
-[[suspended_update]]
-id = "C-op-contact-order"
-source = "constructed"
-base_kind = "Work"
-base = "C-contact-and-start"
-entries = ["SuspendedAppearance", "FootContact", "SpinStarts"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="ContactRead", step=2, left=1, stage=0, laps=0, contact=true, sounds=["Footstep"] },
- { event="SelectionRead", sounds=["PlainSpin"], step=2, left=1, stage=0, laps=0 }
-]
-
-[[suspended_update]]
-id = "C-op-contact-suppressed"
-source = "constructed"
-base_kind = "Opportunity"
-base = "C-contact-cinematic"
-entries = ["SuspendedAppearance", "FootContact"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="ContactRead", step=2, left=1, stage=0, laps=0, contact=true, sounds=[] }
-]
-
+# running to running aimed up-forward as the clip moves on to step 2: kept, with the hold the
+# running clip gave it (5), not the ball clip's step 2 hold (9)
 [[vector]]
 id = "C-kept-run-advance"
 source = "constructed"
@@ -1585,93 +1500,21 @@ before = { step=1, left=1 }
 inputs = { pose="Upright Running Right Forward", clip="run", pose_after="Upright Running Right UpForward", clip_after="ball" }
 after = { step=2, left=5, stage=0, laps=0 }
 
-[[suspended_update]]
-id = "C-op-kept-advance"
-source = "constructed"
-base_kind = "Animation"
-base = "C-kept-run-advance"
-entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StartingClip", "ClipPlays"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="ClipPlaying", clip="run", step=1, left=1, answer="Advance" },
- { event="ClipPlayed", step=2, left=5, stage=0, laps=0 },
- { event="SelectedClip", clip="ball", answer="KeepPlayhead", step=2, left=5 },
- { event="ClipInitialized", step=2, left=5, stage=0, laps=0 }
-]
-
-# Changed-resume schema: resume_case inherits base starting State, content, Rules and earlier completed work.
-# The old base after-result is not an expectation after a changed input. Compare expected
-# and complete resumed State/outputs with uninterrupted execution that receives this same
-# changed input at its actual semantic opportunity.
-# boundary identifies an actual semantic opportunity; selection_replace supplies the new
-# actual accepted figure/clip only from this boundary onward. contact_replace supplies current
-# suppressors for an unmade read; it cannot repeat or recompute an already completed contact.
-# Current playing is already complete at the selection boundaries and retains the old clip.
-# restoration requires serializing all complete interrupted work, provider/opportunity/output
-# progress, dropping originals and deserializing fresh instances at each supported point.
-
-[[resume_case]]
-id = "C-resume-selection-before"
-source = "constructed"
-base_kind = "Animation"
-base = "C-kept-run-advance"
-entries = ["SuspendedAppearance", "StartingClip", "ClipPlays"]
-boundary = { opportunity="SelectedClip", point="BeforeDecision" }
-selection_replace = { pose="Upright Falling Right Forward", clip="fall" }
-restoration = "SerializeDropDeserialize"
-expected = { played_step=2, played_left=5, selected_pose="Upright Falling Right Forward", answer="StartFirst", step=0, left=9, stage=0, laps=0, initialization_effects=1 }
-
-[[resume_case]]
-id = "C-resume-selection-after"
-source = "constructed"
-base_kind = "Animation"
-base = "C-kept-run-advance"
-entries = ["SuspendedAppearance", "StartingClip", "ClipPlays"]
-boundary = { opportunity="SelectedClip", point="AfterDecisionBeforeEffect" }
-selection_replace = { pose="Upright Falling Right Forward", clip="fall" }
-restoration = "SerializeDropDeserialize"
-expected = { played_step=2, played_left=5, selected_pose="Upright Running Right UpForward", answer="KeepPlayhead", step=2, left=5, stage=0, laps=0, initialization_effects=1 }
-
-[[resume_case]]
-id = "C-resume-contact-before"
-source = "constructed"
-base_kind = "Opportunity"
-base = "C-contact"
-entries = ["SuspendedAppearance", "FootContact"]
-boundary = { opportunity="Contact", point="BeforeRead" }
-contact_replace = { cinematic=true }
-restoration = "SerializeDropDeserialize"
-expected = { sounds=[], graphics=1, contact_reads=1, step=2, left=1, stage=0, laps=0 }
-
-[[resume_case]]
-id = "C-resume-contact-after"
-source = "constructed"
-base_kind = "Opportunity"
-base = "C-contact"
-entries = ["SuspendedAppearance", "FootContact"]
-boundary = { opportunity="Contact", point="AfterCompletedRead" }
-contact_replace = { cinematic=true }
-restoration = "SerializeDropDeserialize"
-expected = { sounds=["Footstep"], graphics=1, contact_reads=1, step=2, left=1, stage=0, laps=0 }
-
-# Cannon readiness histories (appearance spec section 11).
-# [[cannon_readiness]] is additive; it does not change any existing vector.
-# initial_delay and expected_delay are 0..2 eligible control observations left.
-# Each steps element is controls/choose_controls/complete_controls, initialize,
-# draw, skip, outside_selection, unrelated or save_restore. Controls carry the
-# actual before/after selected item identities, independently of one-shot mode
-# and switched. A draw observes only expected_may_follow; all other operations
-# compare complete readiness and pending/consumed actual-control progress.
-# SerializeDropDeserializeAtEveryBoundary requires fresh restored instances
-# before a choice, with its retained answer, and after its completed effects.
+# Cannon readiness histories (appearance spec section 10).
+# initial_delay and expected_delay are 0..2 frames of eligible item controls left.
+# Each steps element is one of: controls, a frame's item controls, with the before/after
+# selected item identities those controls start from and leave, independently of one-shot mode
+# and switched; skip, a frame whose controls don't run; initialize; outside_selection, a
+# selection change outside item controls; unrelated; draw, the picture of her gun reading the
+# readiness as the frame leaves it. Every step compares the delay (expected_delay) and whether
+# the cannon may follow (expected_may_follow).
 # The R histories use RAM observations only; no game content or source encoding.
 
 [[cannon_readiness]]
 id = "C-cannon-change"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
@@ -1682,9 +1525,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-deselect"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "Missiles", item_after = "None", eligible = true, switched = true, expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
@@ -1695,9 +1537,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-rechange"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
   { kind = "controls", item_before = "Missiles", item_after = "SuperMissiles", eligible = true, expected_delay = 1, expected_may_follow = false },
@@ -1708,9 +1549,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-same-event"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "None", item_after = "None", eligible = true, switched = true, expected_delay = 0, expected_may_follow = true },
   { kind = "draw", expected_delay = 0, expected_may_follow = true },
@@ -1719,9 +1559,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-mode-only"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, one_shot_before = true, one_shot_after = false, switched = true, expected_delay = 0, expected_may_follow = true },
   { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, one_shot_before = false, one_shot_after = true, expected_delay = 0, expected_may_follow = true },
@@ -1730,9 +1569,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-ready"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "Grapple", item_after = "Grapple", eligible = true, switched = true, expected_delay = 0, expected_may_follow = true },
   { kind = "controls", item_before = "Xray", item_after = "Xray", eligible = true, expected_delay = 0, expected_may_follow = true },
@@ -1742,9 +1580,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-disabled"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = false, expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
@@ -1753,9 +1590,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-skipped"
 source = "constructed"
-entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonReadinessReset", "CannonItemDelay"]
 initial_delay = 2
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "skip", expected_delay = 2, expected_may_follow = false },
   { kind = "draw", expected_delay = 2, expected_may_follow = false },
@@ -1766,9 +1602,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-frozen"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "None", item_after = "None", eligible = false, world_paused = true, expected_delay = 1, expected_may_follow = false },
   { kind = "controls", item_before = "None", item_after = "None", eligible = true, world_paused = true, expected_delay = 0, expected_may_follow = true },
@@ -1777,9 +1612,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-initialize"
 source = "constructed"
-entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonReadinessReset", "CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "initialize", expected_delay = 2, expected_may_follow = false },
   { kind = "draw", expected_delay = 2, expected_may_follow = false },
@@ -1792,9 +1626,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-reset-during-wait"
 source = "constructed"
-entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonReadinessReset", "CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "initialize", expected_delay = 2, expected_may_follow = false },
   { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
@@ -1804,9 +1637,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-unrelated"
 source = "constructed"
-entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonReadinessReset", "CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "unrelated", event = "PoseChange", expected_delay = 1, expected_may_follow = false },
   { kind = "unrelated", event = "ClipChange", expected_delay = 1, expected_may_follow = false },
@@ -1818,9 +1650,8 @@ steps = [
 [[cannon_readiness]]
 id = "C-cannon-external-drop"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "outside_selection", item_before = "Missiles", item_after = "None", expected_delay = 0, expected_may_follow = true },
   { kind = "draw", expected_delay = 0, expected_may_follow = true },
@@ -1828,54 +1659,21 @@ steps = [
 ]
 
 [[cannon_readiness]]
-id = "C-cannon-retained-change"
+id = "C-cannon-drop-after-change"
 source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
-  { kind = "choose_controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 0, expected_may_follow = true },
-  { kind = "draw", expected_delay = 0, expected_may_follow = true },
-  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
-  { kind = "outside_selection", item_before = "Missiles", item_after = "None", expected_delay = 0, expected_may_follow = true },
-  { kind = "complete_controls", expected_delay = 1, expected_may_follow = false },
-  { kind = "save_restore", expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "outside_selection", item_before = "Missiles", item_after = "None", expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
-]
-
-[[cannon_readiness]]
-id = "C-cannon-retained-same"
-source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
-initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
-steps = [
-  { kind = "choose_controls", item_before = "Missiles", item_after = "Missiles", eligible = true, one_shot_before = true, one_shot_after = false, switched = true, expected_delay = 1, expected_may_follow = false },
-  { kind = "save_restore", expected_delay = 1, expected_may_follow = false },
-  { kind = "complete_controls", expected_delay = 0, expected_may_follow = true },
-  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
-  { kind = "draw", expected_delay = 0, expected_may_follow = true },
-]
-
-[[cannon_readiness]]
-id = "C-cannon-save-ready"
-source = "constructed"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
-initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
-steps = [
-  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
-  { kind = "draw", expected_delay = 0, expected_may_follow = true },
-  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
-  { kind = "draw", expected_delay = 0, expected_may_follow = true },
 ]
 
 [[cannon_readiness]]
 id = "R-cannon-select"
 source = "chain-0059-A293:428"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, switched = true, expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
@@ -1884,9 +1682,8 @@ steps = [
 [[cannon_readiness]]
 id = "R-cannon-follow"
 source = "chain-0059-A293:429"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, switched = false, expected_delay = 0, expected_may_follow = true },
   { kind = "draw", expected_delay = 0, expected_may_follow = true },
@@ -1895,9 +1692,8 @@ steps = [
 [[cannon_readiness]]
 id = "R-cannon-same-item"
 source = "chain-0059-A293:20"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "None", item_after = "None", eligible = true, switched = true, expected_delay = 0, expected_may_follow = true },
   { kind = "draw", expected_delay = 0, expected_may_follow = true },
@@ -1906,9 +1702,8 @@ steps = [
 [[cannon_readiness]]
 id = "R-cannon-lag"
 source = "boss-kraid-defeated:800"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 1
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "skip", expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
@@ -1917,38 +1712,35 @@ steps = [
 [[cannon_readiness]]
 id = "R-cannon-deselect"
 source = "area-maridia:255"
-entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+entries = ["CannonItemDelay"]
 initial_delay = 0
-restoration = "SerializeDropDeserializeAtEveryBoundary"
 steps = [
   { kind = "controls", item_before = "Grapple", item_after = "None", eligible = true, switched = true, expected_delay = 1, expected_may_follow = false },
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
 ]
 
-# Ordinary dry palette histories (spec section 12).
-# Each history starts from complete palette metadata and both ordered colour banks.
+# Ordinary dry palette histories (spec section 11). Each history is one frame's palette
+# opportunity, from the three sequence quantities and both ordered colour banks before it.
 # Each invented fixture names a red level. Slot i (0 through 255) has RGB components
 # [red, i % 32, i // 32]. All slots within a bank and all fixtures are distinguishable.
 # A recorded witness observes both complete banks privately; substitute the invented patterns
 # for the unexported colours and the supplied valid figure and position for geometry.
-# The recorded admission, metadata and application count are checked at the bounded opportunity.
-# The shared observations are actual current inputs for a Running Power figure in standard
+# The recorded admission and sequence quantities are checked at the frame's opportunity.
+# The shared observations are the frame's inputs for a Running Power figure in standard
 # room colours, with absent surfaces, a dormant tether, the screw attack switched off and no
 # active colour effects. "action" is the figure's action and always agrees with "figure".
-# A history supplies its current valid figure/position. Its optional "observed" table replaces
-# named shared observations (each key already present) before admission; other fields
-# override shared inputs.
-# A pending check reads before metadata and the latest value of both palettes, with no
-# application yet. Each palette_updates item applies a separate shared-palette change
-# while pending. Check both full palettes after each update, and again after restore.
-# Restoring drops the prior owner and reconstructs the full state and progress at the named cuts.
-# After completion compare after metadata, both banks against their latest values, no requests, and
-# the number of applications even if before equals after. Animation and cannon are unchanged.
+# A history supplies its valid figure/position. Its optional "observed" table replaces
+# named shared observations (each key already present); other fields override shared inputs.
+# palettes names the banks' fixtures before the frame. Each optional palette_updates item is a
+# change another producer makes to one bank in the same frame; after the frame each bank holds
+# its latest colours.
+# Compare after the frame: the three quantities (after), both banks, no requests, and
+# applications, 1 when the frame applied the reset (even if before equals after), 0 when it
+# refused. Animation and cannon are unchanged.
 # Each [[boundary]] starts from its based_on history, observed table included. Its
-# "replacements" are independent cases changing shared observations before admission; a
+# "replacements" are independent cases, each changing shared observations of that frame; a
 # replacement's "figure", when present, replaces the history's figure with one that agrees with
 # its action.
-# "later_change" replaces the neighbour after an opportunity is already pending.
 
 [ordinary_dry_colours.observations]
 action = "Running"
@@ -1989,14 +1781,12 @@ applications = 1
 [[ordinary_dry_colours.history]]
 id = "C-ordinary-stale"
 source = "constructed"
-entries = ["OrdinaryDryColours", "RetainedDryColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Running Left Forward Striding"
 position = [36, 184]
 before = { visor_delay = 19, visor_step = 2, charge_glow_position = 4 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
-restore = ["Unobserved", "Pending", "Completed"]
-later_change = { room_colours = "RedBackground", weapon_charging = true }
 applications = 1
 
 [[ordinary_dry_colours.history]]
@@ -2013,19 +1803,18 @@ applications = 1
 [[ordinary_dry_colours.history]]
 id = "C-ordinary-already-ready"
 source = "constructed"
-entries = ["OrdinaryDryColours", "RetainedDryColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Running Right Forward Striding"
 position = [68, 250]
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "target"]
-restore = ["Unobserved", "Pending", "Completed"]
 applications = 1
 
 [[ordinary_dry_colours.history]]
 id = "C-ordinary-shared-colours"
 source = "constructed"
-entries = ["OrdinaryDryColours", "RetainedDryColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Running Right Forward Striding"
 position = [89, 134]
 before = { visor_delay = 91, visor_step = 1, charge_glow_position = 5 }
@@ -2035,7 +1824,6 @@ palette_updates = [
     { bank = "current", colours = "different_current" },
     { bank = "target", colours = "different_target" },
 ]
-restore = ["Unobserved", "Pending", "Completed"]
 applications = 1
 
 [[ordinary_dry_colours.history]]
@@ -2131,15 +1919,13 @@ applications = 1
 [[ordinary_dry_colours.history]]
 id = "C-ordinary-spin-stale"
 source = "constructed"
-entries = ["OrdinaryDryColours", "RetainedDryColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Spinning Right Forward"
 position = [44, 203]
 observed = { action = "Spinning" }
 before = { visor_delay = 4, visor_step = 5, charge_glow_position = 3 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
-restore = ["Unobserved", "Pending", "Completed"]
-later_change = { screw_attack = true, speed_glow = true }
 applications = 1
 
 [[ordinary_dry_colours.history]]
@@ -2157,14 +1943,13 @@ applications = 1
 [[ordinary_dry_colours.history]]
 id = "C-ordinary-jump-stale"
 source = "constructed"
-entries = ["OrdinaryDryColours", "RetainedDryColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Jumping Left Forward Striding"
 position = [12, 60]
 observed = { action = "Jumping" }
 before = { visor_delay = 200, visor_step = 4, charge_glow_position = 5 }
 after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "target"]
-restore = ["Pending"]
 applications = 1
 
 [[ordinary_dry_colours.history]]

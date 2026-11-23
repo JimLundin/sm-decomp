@@ -53,13 +53,10 @@ pub struct Choice {
     pub aim_step: bool,
     /// `ShrinkingLowersHer`: the look down the pose starts with.
     pub lower: Option<Lowers>,
-    /// Spec: `AnimationEnds`. True when an animation end selected this pose rather than
-    /// giving way to ordinary pose selection.
-    /// The pose is accepted as selected, even if the supplied body is taller: it bypasses
-    /// body-fit consideration, clearance, refusal, substitution and fit placement
-    /// (`PerformedBodyFit`). Pose initialization and the end's effects still run.
-    /// A selected turn or landing end supplies held-jump history (`Jumping`), but does not
-    /// by itself count as accepted floor contact (`AcceptedFloorResponse`).
+    /// `AnimationEnds`: her animation's end handed this pose over, rather than giving way. She
+    /// takes it without pose fit, however tall its body; the end's own effects still come. A
+    /// turn's or a landing's end counts for jump held through (`Jumping`), and is no floor
+    /// contact (`AcceptedFloorResponse`).
     pub handed_over: bool,
 }
 

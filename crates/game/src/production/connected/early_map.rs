@@ -1,4 +1,4 @@
-//! The quiet early mini-map, following actual Movement and Contact.
+//! The quiet early mini-map, at her position after her moves.
 
 use super::Fault;
 use crate::production::hud::Hud;
@@ -37,19 +37,6 @@ pub(super) struct State {
 }
 
 impl State {
-    pub(super) fn holds_applied(&self, input: Inputs<'_>) -> bool {
-        input.controls == (SelectButton::NotPressed, CancelButton::NotPressed)
-            && (self.hud.state().mini_map == MiniMapPower::On) == input.enabled
-            && self.hud.frame_count() == Some(input.frame)
-            && self.hud.applied_map().is_some_and(|answer| {
-                answer.inputs.room == input.room
-                    && &answer.inputs.map == input.map
-                    && answer.inputs.map_collected == input.map_collected
-                    && &answer.pictures == input.pictures
-                    && &answer.rules == input.rules
-            })
-    }
-
     pub(super) fn begin(&mut self, input: Inputs<'_>) -> Result<(), Fault> {
         if input.controls != (SelectButton::NotPressed, CancelButton::NotPressed)
             || self.hud.state().selection != Selection::None
@@ -76,10 +63,9 @@ impl State {
 
     pub(super) fn publish(
         &mut self,
-        movement: &samus_movement::Samus,
+        position: types::Position,
         input: Inputs<'_>,
     ) -> Result<(), Fault> {
-        let position = movement.position;
         if self.position.is_some()
             || self.hud.opportunity() != Some(HudOpportunity::MiniMapUpdate)
             || !self.hud.choose_map(

@@ -1,19 +1,16 @@
-//! The four persistent animation quantities: her step, the time left on it, the boost stage
-//! and the laps left. A caller may build each at any value the spec allows, read it back, and
-//! keep it between frames as `update` left it.
-//!
-//! Spec: `CannonItemDelay`, `RetainedCannonReadiness`. Animation [`State`] is only part of the
-//! complete persistent appearance owner, [`Look`](crate::Look), which also carries independent
-//! [`CannonDelay`](crate::CannonDelay). Keep cannon readiness alongside animation; it cannot be
-//! reconstructed from animation or the selected item. Interrupted callers also preserve the
-//! actual [`CannonObservation`](crate::CannonObservation), interrupted animation work, the
-//! independently retained prepared action and their own input/read/output delivery progress.
+//! What her appearance remembers from one frame to the next: the four animation quantities
+//! (her step, the time left on it, the boost stage and the laps left), the cannon selection
+//! delay, and her colour sequences. A caller may build each at any value the spec allows, read
+//! it back, save and restore it, and gives it back to the next frame as `update` left it.
 
 use core::num::NonZeroU8;
 
+use serde::{Deserialize, Serialize};
 use types::BoostStage;
 
+use crate::cannon::CannonDelay;
 use crate::clip::{Clip, Frames, Hold, Instruction, Slowdown, Step};
+use crate::colours::ColourSequences;
 
 /// Spec: `ClipPlays`, `BoostStages`. How the time left and the laps left run out: the count less
 /// 1, while that is above 0; at 0 or below the count is over. So 1 left and none left are over
@@ -45,8 +42,7 @@ impl Playhead {
     /// Her clip on `step`, with `hold` lengthened by each of `slowdowns` as the time left. A
     /// control has no hold, so she rests on it with no time left, however slow the liquid
     /// (`ClipControls`).
-    #[must_use]
-    pub fn on(step: Step, hold: Option<Hold>, slowdowns: &[Slowdown]) -> Self {
+    pub(crate) fn on(step: Step, hold: Option<Hold>, slowdowns: &[Slowdown]) -> Self {
         let time_left = hold.map_or(Frames::NONE, |hold| {
             slowdowns
                 .iter()
@@ -57,8 +53,7 @@ impl Playhead {
 
     /// Spec: `ClipPlays`. The time left runs down by a frame: while some is left she stays on her
     /// step, and once it is over the clip moves on to the step after it.
-    #[must_use]
-    pub fn run_down(self, clip: &Clip) -> RunDown {
+    pub(crate) fn run_down(self, clip: &Clip) -> RunDown {
         if let Some(left) = less_one(self.time_left.0) {
             return RunDown::Stays(Self {
                 time_left: Frames(left),
@@ -112,8 +107,7 @@ pub enum LapsLeft {
 impl LapsLeft {
     /// Spec: `BoostStages`. The laps left once she has run a lap: less 1, while that is above 0;
     /// none once the stage has lasted its laps.
-    #[must_use]
-    pub fn after_lap(self) -> Option<Laps> {
+    pub(crate) fn after_lap(self) -> Option<Laps> {
         match self {
             Self::WithBooster(laps) => less_one(laps.count()).and_then(Laps::new),
             Self::WithoutBooster => None,
@@ -124,16 +118,10 @@ impl LapsLeft {
 /// Spec: `ClipPlays`, `BoostStages`. The four persistent animation quantities: her step,
 /// the time left, the boost stage and the laps left.
 ///
-/// This is the animation part of [`Look`](crate::Look), not the complete persistent appearance
-/// owner. Spec: `CannonItemDelay`, `RetainedCannonReadiness`. Callers retaining the whole look
-/// must also keep its independent cannon readiness. On interruption, preserve the actual
-/// [`CannonObservation`](crate::CannonObservation), interrupted animation work and caller-owned
-/// input/read/output delivery progress alongside that look.
-///
 /// The end, whether her spin has turned far, where the clip of the pose she takes starts, the
-/// slowdowns and what her moves did are each worked out within the frame; they are not extra
-/// persistent animation quantities.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+/// slowdowns and what her moves did are each worked out within the frame; they are not
+/// remembered.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct State {
     /// Her step and the time left on it.
     pub playhead: Playhead,
@@ -141,4 +129,21 @@ pub struct State {
     pub stage: BoostStage,
     /// The laps the stage still lasts.
     pub laps_left: LapsLeft,
+}
+
+/// Her appearance State: all her appearance remembers from one frame to the next.
+///
+/// Spec: `CannonItemDelay`, `OrdinaryDryColours`. The cannon selection delay and the colour
+/// sequences are memories of their own: neither can be rebuilt from her animation, the selected
+/// item or the palettes, so a caller keeping her look keeps all three. The current and target
+/// palettes are not here: their producers and consumers share them, and this domain neither
+/// reads nor writes them.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct AppearanceState {
+    /// Her animation's four quantities.
+    pub animation: State,
+    /// The cannon selection delay.
+    pub cannon: CannonDelay,
+    /// The visor delay, the visor's entry and the charge glow's position.
+    pub colours: ColourSequences,
 }

@@ -1,4 +1,5 @@
-//! Ordinary dry-movement sequence preparation, independent of the shared palette banks.
+//! Her colour sequences during ordinary dry movement: the visor and charge-glow sequences,
+//! readied without touching the shared current and target palettes.
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,8 @@ pub struct ColourSequences {
     pub charge_glow_position: ChargeGlowPosition,
 }
 
+/// Spec: `OrdinaryDryColours`. The sequences as the ordinary reset leaves them: one eligible
+/// palette tick of visor delay, the visor's entry 3 (its fourth), the charge glow reset.
 const ORDINARY_READY: ColourSequences = ColourSequences {
     visor_delay: VisorDelay(1),
     visor_step: VisorStep(3),
@@ -161,11 +164,11 @@ fn admits_dry_movement(figure: Figure, screw_attack: ScrewAttack) -> bool {
             .any(|&(action, premise)| action == figure.pose.action && premise.holds(screw_attack))
 }
 
-/// Spec: `OrdinaryDryColours`. Complete known facts from the actual palette opportunity.
+/// Spec: `OrdinaryDryColours`. Every owner's current fact at the frame's palette opportunity.
 ///
-/// Movement supplies a valid selected figure and its position; equipment supplies the current
-/// suit answer and progress the screw attack's, not predictions. Do not construct these facts
-/// when any owner answer is unknown.
+/// Movement supplies her selected figure and its position; equipment the suit selection made
+/// for this frame, and progress whether the screw attack is switched on now. Where an owner
+/// cannot supply its fact, the opportunity is `PaletteOpportunity::Unrecognized` instead.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DryColourFacts {
     /// Current figure after selection.
@@ -197,68 +200,50 @@ impl DryColourFacts {
     }
 }
 
-/// The actual palette opportunity is outside the supported ordinary dry-movement arm.
+/// The frame's palette opportunity, if it has one.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct UnsupportedDryColours;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-enum DryColourProgress {
-    Unobserved,
-    Pending(DryColourFacts),
-    Completed,
+pub enum PaletteOpportunity {
+    /// The frame has no palette opportunity, or only draws: the reset is not considered.
+    Absent,
+    /// The opportunity, with every owner's current fact.
+    Observed(DryColourFacts),
+    /// The opportunity, with a current fact its owner could not supply or that is not one of the
+    /// recognized values: the reset is unsupported.
+    Unrecognized,
 }
 
-/// Spec: `RetainedDryColours`. Work for one actual palette opportunity.
+/// What the frame's palette opportunity did with the ordinary reset.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DryColourReset {
+    /// The frame had no palette opportunity.
+    NoOpportunity,
+    /// The reset applied, even if the sequences were already as it leaves them.
+    Applied,
+    /// The opportunity is outside the ordinary dry-movement arm: the caller reports it
+    /// unsupported, and the sequences are as they were.
+    Unsupported,
+}
+
+/// Spec: `OrdinaryDryColours`. The frame's palette opportunity, after movement has selected her
+/// figure and position and the suit has been selected, and before health maintenance and the
+/// frame's drawing and palette upload.
 ///
-/// Save it alongside the sequence state, the authoritative palettes and the rest of the caller's
-/// look and input/delivery progress. It never takes ownership of the movement or palette inputs.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DryColourWork(DryColourProgress);
-
-impl DryColourWork {
-    /// Start this only for a new actual palette opportunity, never a redraw or a retry.
-    pub const UNOBSERVED: Self = Self(DryColourProgress::Unobserved);
-
-    /// Spec: `OrdinaryDryColours`. After selection and before health maintenance, observe the
-    /// current facts, the screw attack's included. Pass `None` when a required fact or valid
-    /// colour bank could not be supplied. A refusal leaves progress unchanged. `Ok(false)` means
-    /// this work was already observed: its retained facts stand, whatever is passed now.
-    /// Neither sequence state nor colours are changed here.
-    ///
-    /// # Errors
-    /// Returns `UnsupportedDryColours` for unobserved work outside the ordinary arm.
-    pub fn observe(
-        &mut self,
-        facts: Option<DryColourFacts>,
-    ) -> Result<bool, UnsupportedDryColours> {
-        if *self != Self::UNOBSERVED {
-            return Ok(false);
+/// An admitted opportunity sets the visor delay to 1, the visor to its entry 3 and the charge
+/// glow to its reset position, whatever they were; any other leaves them as they were. Neither
+/// way reads or writes a colour of the current or target palette, nor asks for a sound, a
+/// graphic or a hardware request.
+#[must_use]
+pub fn ordinary_dry_colours(
+    sequences: ColourSequences,
+    opportunity: PaletteOpportunity,
+) -> (ColourSequences, DryColourReset) {
+    match opportunity {
+        PaletteOpportunity::Absent => (sequences, DryColourReset::NoOpportunity),
+        PaletteOpportunity::Observed(facts) if facts.admits_ordinary_reset() => {
+            (ORDINARY_READY, DryColourReset::Applied)
         }
-        let facts = facts
-            .filter(DryColourFacts::admits_ordinary_reset)
-            .ok_or(UnsupportedDryColours)?;
-        self.0 = DryColourProgress::Pending(facts);
-        Ok(true)
-    }
-
-    /// Inspect the retained actual facts while the reset is pending, without advancing it.
-    #[must_use]
-    pub const fn pending(&self) -> Option<&DryColourFacts> {
-        match &self.0 {
-            DryColourProgress::Pending(facts) => Some(facts),
-            DryColourProgress::Unobserved | DryColourProgress::Completed => None,
+        PaletteOpportunity::Observed(_) | PaletteOpportunity::Unrecognized => {
+            (sequences, DryColourReset::Unsupported)
         }
-    }
-
-    /// Spec: `RetainedDryColours`. Apply an admitted reset once, without consulting later
-    /// facts. Returns whether a completion took place, even if the sequences were already ready.
-    /// This changes only sequence state: no palette access, sound, graphic or hardware request.
-    pub const fn complete(&mut self, sequences: &mut ColourSequences) -> bool {
-        if !matches!(self.0, DryColourProgress::Pending(_)) {
-            return false;
-        }
-        *sequences = ORDINARY_READY;
-        self.0 = DryColourProgress::Completed;
-        true
     }
 }

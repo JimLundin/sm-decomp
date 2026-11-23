@@ -1,16 +1,24 @@
-//! Exercise the same palette authority across actual observation, completion and fresh restore.
+//! The ordinary dry palette histories and their refusal boundaries, each a frame with a palette
+//! opportunity played through the one update. The shared current and target palettes are the
+//! caller's, saved and restored with her appearance State.
+
 use core::num::Wrapping;
 use std::collections::BTreeMap;
 
 use samus_appearance::{
-    CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences, DryColourFacts, DryColourWork,
-    Figure, GrappleActivity, LiquidLevel, Look, Palette, Palettes, RoomColours, ScrewAttack, Suit,
-    SuspendedAppearance, UnsupportedDryColours, VisorDelay, VisorStep,
+    AppearanceState, CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences,
+    DryColourFacts, DryColourReset, Figure, Frame, FrameOutputs, GrappleActivity, LiquidLevel,
+    PaletteOpportunity, RoomColours, Rules, ScrewAttack, Suit, VisorDelay, VisorStep, update,
 };
 use serde::{Deserialize, Serialize};
-use types::{Colour, Pair, px};
+use types::{Colour, PALETTE_SLOTS, Pair, Palette, Palettes, px};
 
-use super::{ACTIONS, behaviour, figure, named, read_file, suspended_vectors::make_work};
+use super::{
+    ACTIONS, Library, VectorContent, bare_frame, behaviour, figure, named, read_file, state,
+};
+
+/// The levels of each colour channel, 0 to 31: the invented fixtures' slot pattern.
+const LEVELS: u16 = 32;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -25,30 +33,32 @@ impl ColourVectors {
     pub(super) fn entries(&self) -> impl Iterator<Item = &str> {
         self.history
             .iter()
-            .flat_map(|h| h.entries.iter().map(String::as_str))
+            .flat_map(|history| history.entries.iter().map(String::as_str))
     }
 
+    /// An invented bank: slot `i` holds red at the fixture's level, green `i % 32` and blue
+    /// `i / 32`, so every slot and every fixture differs.
     fn palette(&self, name: &str) -> Palette {
         let red = *self
             .invented_palettes
             .get(name)
-            .expect("named invented bank");
-        assert!(red < 32);
-        Palette(std::array::from_fn(|i| {
-            let i = u16::try_from(i).expect("palette slot");
-            Colour::from_channels([red, i % 32, i / 32])
+            .unwrap_or_else(|| panic!("no invented bank {name}"));
+        assert!(red < LEVELS, "{name}: red within a channel");
+        Palette(std::array::from_fn(|slot| {
+            let slot = u16::try_from(slot).expect("a palette slot");
+            Colour::from_channels([red, slot % LEVELS, slot / LEVELS])
         }))
     }
 
-    /// The current facts of a history: the shared observations, then the history's own
-    /// `observed` table, then `replacement`, each replacing keys already present. A boundary
-    /// case's `figure`, given separately, replaces the history's figure.
-    fn facts(
+    /// The frame's palette opportunity for `history`: the shared observations, then the
+    /// history's own `observed` table, then `replacement`, each replacing keys already present.
+    /// A boundary case's `figure`, given apart, replaces the history's figure.
+    fn opportunity(
         &self,
         history: &History,
         figure_text: Option<&str>,
         replacement: &toml::Table,
-    ) -> Option<DryColourFacts> {
+    ) -> PaletteOpportunity {
         let mut input = self.observations.clone();
         for (key, value) in history.observed.iter().chain(replacement) {
             assert!(
@@ -60,7 +70,7 @@ impl ColourVectors {
         let input: Observations = toml::Value::Table(input)
             .try_into()
             .expect("known observations");
-        input.facts(
+        input.opportunity(
             figure(figure_text.unwrap_or(&history.figure)),
             history.position,
         )
@@ -82,10 +92,6 @@ struct History {
     palettes: [String; 2],
     applications: usize,
     #[serde(default)]
-    restore: Vec<Cut>,
-    #[serde(default)]
-    later_change: toml::Table,
-    #[serde(default)]
     palette_updates: Vec<PaletteUpdate>,
 }
 
@@ -98,22 +104,16 @@ struct Sequences {
 }
 
 impl From<Sequences> for ColourSequences {
-    fn from(v: Sequences) -> Self {
+    fn from(given: Sequences) -> Self {
         Self {
-            visor_delay: VisorDelay(v.visor_delay),
-            visor_step: VisorStep(v.visor_step),
-            charge_glow_position: ChargeGlowPosition(v.charge_glow_position),
+            visor_delay: VisorDelay(given.visor_delay),
+            visor_step: VisorStep(given.visor_step),
+            charge_glow_position: ChargeGlowPosition(given.charge_glow_position),
         }
     }
 }
 
-#[derive(Clone, Copy, Deserialize, PartialEq, Eq)]
-enum Cut {
-    Unobserved,
-    Pending,
-    Completed,
-}
-
+/// A change another producer makes to one bank in the frame.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct PaletteUpdate {
@@ -134,9 +134,14 @@ struct Boundary {
     id: String,
     source: String,
     based_on: String,
-    outcome: String,
+    outcome: Outcome,
     applications: usize,
     replacements: Vec<toml::Table>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+enum Outcome {
+    Unsupported,
 }
 
 /// A boundary case: its figure, if it names one, and its changed shared observations.
@@ -172,19 +177,23 @@ struct Observations {
     hit_colour_pulse: bool,
 }
 
+/// An owner's fact the file gives as unavailable.
+const UNAVAILABLE: &str = "Unavailable";
+
 impl Observations {
-    fn facts(&self, figure: Figure, [x, y]: [u16; 2]) -> Option<DryColourFacts> {
+    /// The opportunity these observations make, with `figure` where `position` says: one whose
+    /// owners couldn't supply a fact is unrecognized.
+    fn opportunity(&self, figure: Figure, [x, y]: [u16; 2]) -> PaletteOpportunity {
         assert_eq!(
             figure.pose.action,
             named(ACTIONS, &self.action),
             "the observed action agrees with the figure"
         );
-        let room = &self.room_colours;
-        let grapple = &self.grapple;
-        if room == "Unavailable" || grapple == "Unavailable" {
-            return None;
+        let (room, grapple) = (&self.room_colours, &self.grapple);
+        if room == UNAVAILABLE || grapple == UNAVAILABLE {
+            return PaletteOpportunity::Unrecognized;
         }
-        Some(DryColourFacts {
+        PaletteOpportunity::Observed(DryColourFacts {
             figure,
             position: Pair {
                 x: px(Wrapping(x)),
@@ -225,144 +234,123 @@ impl Observations {
     }
 }
 
-/// A caller's complete save, including unrelated work with its retained receipts and the
-/// authoritative banks. The opportunity identity is the history's caller-owned ID.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-struct Run {
-    opportunity: String,
-    look: Look,
-    appearance: SuspendedAppearance,
-    sequences: ColourSequences,
+/// What a caller keeps between frames for her colours: her whole appearance State and the
+/// shared current and target palettes, saved and restored together.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Kept {
+    appearance: AppearanceState,
     palettes: Palettes,
-    current: Option<DryColourFacts>,
-    work: DryColourWork,
-    palette_updates_consumed: usize,
-    applications: usize,
 }
 
-fn saved(run: &Run) -> String {
-    toml::to_string(run).expect("complete palette opportunity serializes")
+/// `kept` saved whole with serde, and restored fresh from the saved text alone, the same.
+fn restored(kept: &Kept) -> Kept {
+    let text = toml::to_string(kept).expect("the State and palettes save");
+    let fresh: Kept = toml::from_str(&text).expect("the State and palettes restore");
+    assert_eq!(toml::to_string(&fresh).expect("restored saves"), text);
+    fresh
 }
 
-fn fresh(run: Run) -> Run {
-    let text = saved(&run);
-    drop(run);
-    let restored = toml::from_str(&text).expect("fresh palette and look owners deserialize");
-    assert_eq!(saved(&restored), text);
-    restored
-}
-
-fn checkpoint(run: Run, cuts: &[Cut], cut: Cut) -> Run {
-    if cuts.contains(&cut) { fresh(run) } else { run }
-}
-
-fn start(file: &super::VectorFile, h: &History) -> Run {
-    let vectors = &file.ordinary_dry_colours;
-    let mut appearance = make_work(file, "Work", "C-contact-and-start");
-    appearance.finish();
-    let [current, target] = &h.palettes;
-    let facts = vectors
-        .facts(h, None, &toml::Table::new())
-        .expect("known ordinary facts");
-    assert_eq!(facts.figure, figure(&h.figure));
-    Run {
-        opportunity: h.id.clone(),
-        look: Look {
-            animation: appearance.state,
+/// Where a palette history starts: its sequences, its banks, and an animation and cannon its
+/// frame leaves alone.
+fn start(vectors: &ColourVectors, history: &History) -> Kept {
+    let [current, target] = &history.palettes;
+    restored(&Kept {
+        appearance: AppearanceState {
+            animation: state(2, 3, 1, 1),
             cannon: CannonDelay::INITIAL,
+            colours: history.before.into(),
         },
-        appearance,
-        sequences: h.before.into(),
         palettes: Palettes {
             current: vectors.palette(current),
             target: vectors.palette(target),
         },
-        current: Some(facts),
-        work: DryColourWork::UNOBSERVED,
-        palette_updates_consumed: 0,
-        applications: 0,
-    }
+    })
 }
 
-fn update_banks(run: &mut Run, vectors: &ColourVectors, h: &History, expected: &mut Palettes) {
-    while let Some(update) = h.palette_updates.get(run.palette_updates_consumed) {
+/// Plays the frame of `opportunity` from `kept`: the frame's other producers write the banks
+/// they write, and the opportunity readies or leaves her sequences. Gives what the caller then
+/// keeps, restored, and the frame's outputs.
+fn play_frame(
+    mut kept: Kept,
+    opportunity: PaletteOpportunity,
+    updates: &[PaletteUpdate],
+    vectors: &ColourVectors,
+    library: &Library,
+) -> (Kept, FrameOutputs) {
+    for update in updates {
         let colours = vectors.palette(&update.colours);
         match update.bank {
-            Bank::Current => {
-                run.palettes.current = colours.clone();
-                expected.current = colours;
-            }
-            Bank::Target => {
-                run.palettes.target = colours.clone();
-                expected.target = colours;
-            }
+            Bank::Current => kept.palettes.current = colours,
+            Bank::Target => kept.palettes.target = colours,
         }
-        run.palette_updates_consumed = run.palette_updates_consumed.saturating_add(1);
-        assert_eq!(
-            &run.palettes, expected,
-            "{}: both full banks after each write",
-            h.id
-        );
-        assert_eq!(run.sequences, h.before.into());
-        assert_eq!(run.applications, 0);
+    }
+    let frame = Frame {
+        palette: opportunity,
+        ..bare_frame()
+    };
+    let content = VectorContent {
+        clips: Vec::new(),
+        paces: &library.paces,
+    };
+    let (appearance, outputs) = update(kept.appearance, &frame, &content, &Rules::VANILLA);
+    let after = restored(&Kept {
+        appearance,
+        palettes: kept.palettes,
+    });
+    (after, outputs)
+}
+
+/// The frame's applications of the reset: 1 where it applied, 0 where it was refused.
+fn applications(outputs: &FrameOutputs) -> usize {
+    match outputs.dry_colours {
+        DryColourReset::Applied => 1,
+        DryColourReset::Unsupported | DryColourReset::NoOpportunity => 0,
     }
 }
 
-fn complete(run: &mut Run) {
-    if run.work.complete(&mut run.sequences) {
-        run.applications = run.applications.saturating_add(1);
-    }
+/// The frame asks for nothing and leaves her animation and cannon as they were.
+fn check_quiet(before: &Kept, after: &Kept, outputs: &FrameOutputs, id: &str) {
+    assert!(outputs.sounds.is_empty(), "{id}: no requests");
+    assert_eq!(outputs.contact, None, "{id}: no graphics");
+    assert_eq!(outputs.ahead, None, "{id}: no animation update");
+    assert_eq!(
+        after.appearance.animation, before.appearance.animation,
+        "{id}: animation"
+    );
+    assert_eq!(
+        after.appearance.cannon, before.appearance.cannon,
+        "{id}: cannon"
+    );
 }
 
-fn run_history(file: &super::VectorFile, h: &History, cuts: &[Cut]) -> Run {
-    let vectors = &file.ordinary_dry_colours;
-    let mut run = start(file, h);
-    let mut expected_palettes = run.palettes.clone();
-    let look = run.look;
-    let appearance = run.appearance.clone();
-    assert!(!run.work.complete(&mut run.sequences));
-    run = checkpoint(run, cuts, Cut::Unobserved);
-    let actual = run.current;
-    assert_eq!(run.work.observe(run.current), Ok(true));
-    assert_eq!(run.sequences, h.before.into());
-    assert_eq!(run.palettes, expected_palettes);
-    assert_eq!(run.applications, 0);
-    assert_eq!(run.work.pending().copied(), actual);
-    // A neighbour changes while the reset is pending, the screw attack among them: the work
-    // keeps the facts it admitted and is not re-decided from the newer ones.
-    run.current = vectors.facts(h, None, &h.later_change);
-    if !h.later_change.is_empty() {
-        assert_ne!(run.current, actual, "{}: later_change changes a fact", h.id);
+fn run_history(vectors: &ColourVectors, history: &History, library: &Library) {
+    let id = &history.id;
+    let before = start(vectors, history);
+    let mut expected_palettes = before.palettes.clone();
+    for update in &history.palette_updates {
+        let colours = vectors.palette(&update.colours);
+        match update.bank {
+            Bank::Current => expected_palettes.current = colours,
+            Bank::Target => expected_palettes.target = colours,
+        }
     }
-    update_banks(&mut run, vectors, h, &mut expected_palettes);
-    run = checkpoint(run, cuts, Cut::Pending);
-    assert_eq!(run.work.observe(run.current), Ok(false));
-    assert_eq!(run.work.pending().copied(), actual);
-    assert_eq!(run.sequences, h.before.into());
-    assert_eq!(run.palettes, expected_palettes);
-    assert_eq!(run.applications, 0);
-    let later = run.current;
-    complete(&mut run);
-    assert_eq!(run.applications, h.applications);
-    run = checkpoint(run, cuts, Cut::Completed);
-    assert_eq!(run.work.observe(actual), Ok(false));
-    let mut later_sequences = h.before.into();
-    assert!(!run.work.complete(&mut later_sequences));
-    assert_eq!(
-        later_sequences,
-        h.before.into(),
-        "completed work cannot write again"
+    let opportunity = vectors.opportunity(history, None, &toml::Table::new());
+    let (after, outputs) = play_frame(
+        before.clone(),
+        opportunity,
+        &history.palette_updates,
+        vectors,
+        library,
     );
-    assert_eq!(run.sequences, h.after.into());
-    assert_eq!(run.palettes, expected_palettes);
-    assert_eq!(run.applications, h.applications);
-    assert_eq!(run.look, look);
-    assert_eq!(run.appearance, appearance);
     assert_eq!(
-        run.current, later,
-        "selected figure and live facts remain available"
+        after.appearance.colours,
+        history.after.into(),
+        "{id}: the three quantities"
     );
-    run
+    assert_eq!(after.palettes, expected_palettes, "{id}: both whole banks");
+    assert_eq!(after.palettes.current.0.len(), PALETTE_SLOTS, "{id}");
+    assert_eq!(applications(&outputs), history.applications, "{id}");
+    check_quiet(&before, &after, &outputs, id);
 }
 
 #[test]
@@ -371,23 +359,18 @@ fn run_history(file: &super::VectorFile, h: &History, cuts: &[Cut]) -> Run {
     reason = "report the number of supplied palette histories"
 )]
 fn every_ordinary_palette_history() {
-    let (file, _, _) = read_file();
-    for h in &file.ordinary_dry_colours.history {
-        assert_ne!(h.source, "");
-        for entry in &h.entries {
+    let (file, library) = read_file();
+    let vectors = &file.ordinary_dry_colours;
+    for history in &vectors.history {
+        assert_ne!(history.source, "", "{}", history.id);
+        for entry in &history.entries {
             behaviour(entry);
         }
-        let uninterrupted = run_history(&file, h, &[]);
-        assert_eq!(
-            run_history(&file, h, &h.restore),
-            uninterrupted,
-            "{}: complete restored result",
-            h.id
-        );
+        run_history(vectors, history, &library);
     }
     println!(
         "{} ordinary dry colour histories passed",
-        file.ordinary_dry_colours.history.len()
+        vectors.history.len()
     );
 }
 
@@ -396,56 +379,50 @@ fn every_ordinary_palette_history() {
     clippy::print_stdout,
     reason = "report the number of independent palette refusals"
 )]
-fn changed_current_facts_refuse_without_progress() {
-    let (file, _, _) = read_file();
+fn every_refusal_boundary_leaves_everything() {
+    let (file, library) = read_file();
     let vectors = &file.ordinary_dry_colours;
     assert!(!vectors.boundary.is_empty(), "boundary sets are supplied");
     let mut refusals = 0_usize;
     for boundary in &vectors.boundary {
-        assert_ne!(boundary.source, "");
-        assert_eq!(boundary.outcome, "Unsupported");
-        let h = vectors
+        assert_ne!(boundary.source, "", "{}", boundary.id);
+        assert_eq!(boundary.outcome, Outcome::Unsupported, "{}", boundary.id);
+        let history = vectors
             .history
             .iter()
-            .find(|h| h.id == boundary.based_on)
-            .expect("base history");
-        let admitted = run_history(&file, h, &[]);
-        assert_eq!(admitted.applications, h.applications);
+            .find(|history| history.id == boundary.based_on)
+            .unwrap_or_else(|| panic!("{}: no history {}", boundary.id, boundary.based_on));
         for replacement in &boundary.replacements {
+            let case = format!("{}: {replacement:?}", boundary.id);
             let (figure_text, observations) = boundary_case(replacement);
-            let mut run = fresh(start(&file, h));
-            run.current = vectors.facts(h, figure_text.as_deref(), &observations);
-            let before = saved(&run);
+            let opportunity = vectors.opportunity(history, figure_text.as_deref(), &observations);
+            let before = start(vectors, history);
+            let (after, outputs) = play_frame(before.clone(), opportunity, &[], vectors, &library);
+            assert_eq!(outputs.dry_colours, DryColourReset::Unsupported, "{case}");
+            assert_eq!(applications(&outputs), boundary.applications, "{case}");
             assert_eq!(
-                run.work.observe(run.current),
-                Err(UnsupportedDryColours),
-                "{}: {replacement:?}",
-                boundary.id
+                after, before,
+                "{case}: the State and both banks as they were"
             );
-            complete(&mut run);
-            assert_eq!(run.applications, boundary.applications);
-            assert_eq!(saved(&run), before, "refusal must not consume progress");
-            assert_eq!(run.work, DryColourWork::UNOBSERVED);
+            check_quiet(&before, &after, &outputs, &case);
             refusals = refusals.saturating_add(1);
         }
     }
     println!(
-        "{refusals} independent ordinary colour boundary refusals passed in {} sets",
+        "{refusals} independent ordinary colour refusals passed in {} sets",
         vectors.boundary.len()
     );
 }
 
 #[test]
-fn palette_import_rejects_unrepresentable_colours_and_incomplete_banks() {
+fn palettes_restore_only_whole_and_representable() {
     assert!(Colour::new(0x8000).is_none());
-    assert!(Palette::try_from(vec![Colour::BLACK; 255]).is_err());
-    assert!(Palette::try_from(vec![Colour::BLACK; 257]).is_err());
-    let (file, _, _) = read_file();
-    let run = start(
-        &file,
-        file.ordinary_dry_colours.history.first().expect("history"),
-    );
-    let text = saved(&run);
-    assert!(text.contains("current = [1,"));
-    assert!(toml::from_str::<Run>(&text.replace("current = [1,", "current = [32768,")).is_err());
+    assert!(Palette::try_from(vec![Colour::BLACK; PALETTE_SLOTS - 1]).is_err());
+    assert!(Palette::try_from(vec![Colour::BLACK; PALETTE_SLOTS + 1]).is_err());
+    let (file, _) = read_file();
+    let vectors = &file.ordinary_dry_colours;
+    let kept = start(vectors, vectors.history.first().expect("a history"));
+    let text = toml::to_string(&kept).expect("the State and palettes save");
+    assert!(text.contains("current = [1,"), "{text}");
+    assert!(toml::from_str::<Kept>(&text.replace("current = [1,", "current = [32768,")).is_err());
 }

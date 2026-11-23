@@ -357,9 +357,10 @@ graphics (splashes, dust, `$90:80E6`, `$90:A413`), and the echoes' pictures. Old
 
 `tools/cleanroom/scan.sh` on the spec and the vectors: 0 (address-form 0, address-known 0, name 0,
 enum-order 0, ram-field 0, single-routine 0, entry-point 0, route 0). `score_scan.sh`: 0.
-`scan.sh --mirror` on the spec and these notes: 2 of 19 entries single-routine (10 %, limit
-30 %), 0 unsourced. FootContact and SpinStarts each have one source mechanism; the spec
-states their observable opportunities and leaves the public API form to the implementer.
+`scan.sh --mirror` on the spec and these notes: 4 of 22 entries single-routine (18 %, limit
+30 %), 1 unsourced. FootContact, SpinStarts,
+CannonItemDelay and CannonReadinessReset each have one source mechanism; the spec states their
+observable rules and leaves the public API form to the implementer.
 
 **Invented content (decision 13).** `invented_check.py` tokenises the vectors' clips and every
 game clip the importer reads (251) into shown holds and control kinds, and flags a vector clip
@@ -389,19 +390,18 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 56.7 units = 2,125 (clip 1,525, moves 225, run 375), 21 entries, 52 arms,
-157 vectors.
+Budget: 37.5 × 57.3 units = 2,149 (clip 1,300, moves 225, run 375, cannon 212, palette 37),
+22 entries, 52 arms, 186 vectors.
 
 Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.
 
 - Area clip: 1.4, ClipPlays, ClipControls, Breathing, ClipEnds, WallJumpBranch, HandOverSlowdown,
-  StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor, PerformedAnimationDecisions,
-  SuspendedAppearance
+  StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor
 - Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
 - Area run: RunPace, BoostStages, BoostingLap
-- Area cannon: CannonItemDelay, CannonReadinessReset, RetainedCannonReadiness
-- Area palette (old 183): OrdinaryDryColours, RetainedDryColours
+- Area cannon: CannonItemDelay, CannonReadinessReset
+- Area palette (old 183): OrdinaryDryColours
 
 
 ## Stride, spin and passage sound opportunities
@@ -566,84 +566,63 @@ Ceres opening157 and firing157 families. `snapshot_reference.py` exercises captu
 effects, hold, locked preparation, repeated normal drawing and body-only inanimate drawing;
 pose-history substitution and frame-start substitution faults fail their named cases.
 
-## Causal animation observations and continuation
+## The whole-frame update
 
-`PerformedAnimationDecisions` and `SuspendedAppearance` observe the existing animation rules and
-section6 order. Sources/RAM mapping remain the entries for move-driven playhead changes,
-`ClipPlays`, `RunPace`, `BoostStages`, `StartingClip`, `HandOverSlowdown` and section9's independent
-contact/selection opportunities. No animation rule or palette/liquid/echo producer is added.
+MODEL §1 decision 35 compares owners' State and output bytes at each NMI cut and leaves
+intra-frame bus timing to T1. The spec therefore states the domain as a direct update of one
+frame: the four animation quantities, cannon readiness and the three colour-sequence quantities
+the frame leaves, with the frame's outputs. It exposes none of the original's query points and no
+resumable part-frame update. The catalogue holds 22 entries.
 
-The existing public `Ahead::of` and read-only contact/pose-selected opportunities supply their
-current named answers. The whole public `update` currently combines earlier move-driven
-changes, current-clip play, selected-clip initialization and dash loss. Complete pre-effect
-observation therefore requires a confined interface amendment. Exact Rust form is left to the
-implementer; ordinary and suspended execution must use the same existing rule implementation.
-No expected future figure or second `update` supplies the earlier playing answer.
+**Values read part-way through the frame, as whole-frame outputs** (spec §1.1):
 
-### Invented vectors and proof
+- *The end and turned far*, read by samus-movement before its step: already given ahead from
+  the frame's start (§6). Evidence: §Requests to samus-movement; the harness reads both from
+  record N.
+- *Graphical contact*, read by part 2 for the stride's splash or dust in the same frame: the
+  stride's contact opportunity. Evidence: §Stride sources, the contact read sits after her
+  running movement and before the animation update, and reads the frame-start step and time
+  left (the update has not yet run).
+- *Cannon may follow*, read by the picture of her gun later in the frame: the delay as the
+  frame's item controls leave it. Evidence: §Cannon sources, controls at `$90:DCDD` in the
+  normal and demo handlers, the drawing read at `$90:C5C4..C5F7` after them in the same frame;
+  chain-0059-A293 428 to 430.
+- *Colour sequences*, read by drawing and palette upload later in the frame: the three
+  quantities as the frame's palette opportunity leaves them. Evidence: §Ordinary dry palette
+  preparation, the opportunity sits between the selected-pose work and Health Maintenance, and
+  video and colour transitions read later.
+- *The frame's sounds*, read by the sound domain: one ordered list (§9.2), the stride's, the
+  animation update's, the spin start's, drawing's; a passage's first entry adds `AtTheDoor`'s
+  before drawing's. The order is the frame's own: the stride's contact in running movement
+  (`$90:A3E5`), then the current clip's play, where `WallJumpBranch` and `BoostStages` ask, then
+  the selected pose's initialisation (`$91:F624..F757`), then normal drawing (`$90:EB35`), as
+  §Stride sources gives them; `AtTheDoor`'s request precedes the sound hold and that frame's
+  drawing.
 
-The additive `suspended_update` schema inherits existing Animation, Opportunity or Work cases,
-including complete content, Rules, input and ordinary output comparisons. All added appearance
-cases are invented. C-op-kept-clip compares countdown before running-to-running KeepPlayhead;
-C-kept-run-advance adds the ordinary case that moves from step1 to step2 of the old running clip
-with its invented hold5, while the selected clip's corresponding hold is9. C-op-kept-advance
-observes the current-clip advance and keeps its resulting hold5. This distinguishes actual
-playing from an anticipated selected figure or restored earlier playhead.
+No other domain reads a value of this domain between those points: the HUD's early mini-map
+reads samus-movement's position, not appearance.
 
-C-op-current-play counts the old jumping clip down before starting the actual falling clip.
-C-op-restart-play and its adjusted version show the actual restart hold before countdown,
-including altered restart Rules. C-op-contact-order preserves Footstep then PlainSpin from two
-independent read-only opportunities, with the complete animation State unchanged. A suppressed
-contact retains its graphics. These composed read-only cases are not an extra animation update.
+**Harness note.** The comparison is per frame, from record N to record N+1 (§The harness),
+with the masks named there. No vector compares part-frame work. Indexed replay cites
+`ClipPlays` and `AtTheDoor` from this domain.
 
-The private timing-opportunities-479/reference.py derives the observation quantities directly
-from inherited inputs, named Rules and invented clips, without importing the model or using
-expected future State. Each checked quantity and adjacent observed order has a caught comparison mutant. Evaluation
-faults substitute the future clip for current playing and repeat/reverse contact/selection;
-the checks catch these actual evaluation changes. No event-list roundtrip is claimed as
-continuation proof. These are independent selected-observation checks, not actual
-model/production checkpoint proof.
-The confined implementation must exercise every actual offered/completed opportunity, including
-unlisted ones, and compare complete State, sound/graphic order and input/output progress with
-ordinary execution. Existing ordinary/opportunity/work vectors retain every result.
+**Vectors.** 186: 99 animation frames, 45 single-rule sound cases, 2 combined frames, 19
+cannon histories (each step a frame's controls, a skip, an initialization, an outside drop, an
+unrelated event or a drawing), 19 palette histories and 2 refusal boundaries. In the palette
+histories `palette_updates` are another producer's writes in the reset's frame, and
+`applications` whether that frame applied the reset.
 
-### Integration obligations
-
-At contact, production supplies the actual stride figure/playhead and fresh owner suppressors;
-at selection it supplies the actual selected figures. Playing consumes the current clip after
-its earlier move changes; initialization consumes the completed playing result and actual
-accepted selection. Boost stage can be read fresh at multiple real opportunities without
-advancing animation. Prepared movement history stays caller-owned, saved independently of pose
-history. Mutable borrowed environment/colour/cinematic/sound premises require actual freshness.
-The selected source timing arms, source initialization context, exact costs and hardware
-continuation remain outside this model. Palette/graphics/sound transport, publication
-materializations, complete runtime codec/atomic rollback and indexed replay/null/fault proof
-remain explicit integration obligations.
-
-### Changed-resume and serialized restoration witnesses
-
-The additive `resume_case` pairs change an external semantic premise before its actual request
-or decision, and after its actual answer but before dependent effects. Future unanswered inputs
-are fresh; an already returned/local chosen answer is retained with its causal inputs and
-applied once. Before/after pairs prevent accepting both premature caching and late recomputation.
-All content/world quantities are invented. There is no source hardware guard or timing result
-in this schema. Complete interrupted work and provider/output progress must serialize, the
-original objects must be discarded, and a fresh deserialized instance must reproduce every
-query/effect/output exactly once. Clone-only equality cannot satisfy these tests.
-
-Movement replaces the slope-bearing world after ordinary travel, either before floor support
-querying or after its actual lifted answer. Appearance replaces actual accepted selection after
-current-clip playing, either before or after selected initialization was decided, and changes a
-contact suppressor either before its read or after its completed publication. Missing production
-freshness remains an integration limitation; these clean observations retain model totality.
-
-The private `timing-opportunities-479/reference_v2.py` continues a selected semantic reference
-calculation after serializing and discarding its interrupted instance. Six changed-resume
-cases agree; eight evaluation faults catch caching unmade floor/selection/suppression inputs,
-requerying/recomputing actual retained answers, repeating a completed contact and omitting a
-pending answer during restoration. These are selected reference decisions, not a claim that
-actual clean model State or all ordinary vectors have been serialized and replayed. The
-confined implementation retains that complete actual-model proof obligation.
+**Reference model.** `$TEMP/collab/round-appearance-whole-frame-scratch/reference.py`, written
+from the spec's whole-frame rules, without the model. It agrees with every vector: animation
+99/99, opportunities 45/45, frames 2/2, cannon 19/19 (57 steps), palette 50/50 (19 histories
+and 31 refused cases). A do-nothing model agrees on 0/99, 21/45, 0/2, 7/19 and 31/50. Eleven
+planted faults each fail: the end read after the moves (8 vectors), the boosting lap's quirk
+off (3), no kept rows (4), no hand-over slowdown (3), stage 3 silencing contact (1), the
+frame's sound order reversed (2 frames), a switch event restarting the delay (4 histories), a
+drop restarting it (1), the frame-end selection in place of the controls' (1,
+C-cannon-drop-after-change), a screw-attack spin admitted (2) and other producers' palette
+writes lost (1). Per-frame record agreement for the same rules is stated in §The harness,
+§Cannon selection readiness and §Ordinary dry palette preparation.
 
 ## Cannon selection readiness
 
@@ -678,11 +657,10 @@ a frame counter that may cross a lag cut at another point.
 - `CannonReadinessReset`: `$91:E00D..E027` initializes Samus for starting at Ceres/Zebes or
   loading a demo, clearing `$0A02..0E0B`, including the readiness word. Pose initialization
   at `$91:F433..FB07` is a different operation and supplies no reset of this quantity.
-- `RetainedCannonReadiness`: `$90:C5C4..C5F7` reads readiness before the selected HUD item,
-  while the cannon is not already opening/closing. `$90:C5EE` compares against ready; when
-  readiness is absent it does not change the open disposition. Source observations happen
-  inside the current operation; interruption must retain the actual selected-input answer
-  and update it once, without rebuilding it from a later selection.
+- *Cannon may follow* (the frame's output, spec §1.1 and §10): `$90:C5C4..C5F7` reads
+  readiness before the selected HUD item, while the cannon is not already opening/closing,
+  later in the frame than the controls. `$90:C5EE` compares against ready; when readiness is
+  absent it does not change the open disposition.
 
 | Semantic quantity | Source | Validation-only encoding |
 | --- | --- | --- |
@@ -702,8 +680,8 @@ The model decides its representation and updates. Source branches belong here, n
 
 ### Vectors, reference proof and limits
 
-The additive `cannon_readiness` table supplies 16 constructed and five recorded histories.
-It leaves every existing ordinary, sound, opportunity and changed-resume vector untouched.
+The `cannon_readiness` table supplies 14 constructed and five recorded histories, each a
+sequence of frames (§The whole-frame update).
 
 | Recorded vector | Preceding record | Compared record | Witness |
 | --- | --- | --- | --- |
@@ -715,10 +693,9 @@ It leaves every existing ordinary, sound, opportunity and changed-resume vector 
 
 Private observer evidence lives at `retained-time-479/cannon-readiness-observer/`:
 `OBSERVATIONS.private.toml`, `RECORD-PROOF.private.toml`, `watch.py`, `reference.py` and
-`prove_records.py`. The reference agrees with all 21 histories, including 91 complete
-serialize/drop/deserialize boundaries; 11 faults distinguish missing or immediate updates,
-event/mode comparison, aging ineligible/skipped/draw work, the wrong reset delay, early
-chosen effects, lost pending input and selection drops incorrectly restarting delay.
+`prove_records.py`, the record proof. The whole-frame reference (§The whole-frame update)
+agrees with all 19 histories, and its cannon faults (a switch event restarting the delay, a
+drop restarting it, the frame-end selection in place of the controls') each fail.
 
 The carried scoped reference agrees on 26,608 observations over 63 contiguous segments;
 the same segments' do-nothing owner agrees on 24,526. It includes 123 changed-control
@@ -731,12 +708,12 @@ from inferring the control answer from end-of-frame selection; constructed exter
 histories cover the unchanged clock. Out-of-play boundaries and uninitialized source words
 are outside this scoped record comparison, not silently passing cases.
 
-Initialization's full two-observation history, mode-only changes, interruption and pending-input
-replacement are constructed from source-qualified rules, not claimed as recorded histories.
+Initialization's full two-observation history, mode-only changes and a drop after changed
+controls are constructed from source-qualified rules, not claimed as recorded histories.
 Cannon opening/closing animation, pictures, the open-target table, charge/palette switch effects
 and arbitrary corrupted source words are outside this amendment. Source initialization resets
 readiness, but an ordinary pose/clip change or room passage without reinitializing Samus does not.
-No ordinary or suspended animation contract changes, and no new timing-profile admission is claimed.
+No animation contract changes, and no timing-profile admission is claimed.
 
 ## Ordinary dry palette preparation
 
@@ -790,9 +767,9 @@ are serialized in the vectors.
   `$88:807D/$88:8081` place BG1/BG2 and sprites on the main screen and BG3 on the subscreen.
   Its red and orange setups supply the alternative classes. The source check binds these
   to the visor decision and validates the backdrop literal stores independently.
-- `RetainedDryColours`: constructed whole-owner observation, pending and completed cuts.
-  For indexed replay, physical work and effect delivery need their own actual opportunity
-  identity and progress. The reference checks the semantic reset's once-only completion.
+- *Colour sequences* (the frame's output, spec §1.1 and §11): the three quantities as the
+  opportunity leaves them, which the frame's later drawing and palette upload read. The
+  whole-frame reference checks that a frame applies the reset at most once.
 
 | Semantic quantity | Source mapping |
 | --- | --- |
@@ -812,9 +789,9 @@ are serialized in the vectors.
 
 ### Harness, causality and limits
 
-Compare the three metadata quantities at entry, pending and completion. Compare all 256
-entries of each independently retained palette, the absence of recolouring requests, and
-the actual completion count. Neither colour bank is read or written by the source interval.
+Compare the three metadata quantities before and after the frame's opportunity. Compare all
+256 entries of each palette, the absence of recolouring requests, and whether the frame
+applied the reset. Neither colour bank is read or written by the source interval.
 The observed reset performs both stores once and leaves three already-ready metadata
 quantities equal. Do-nothing matches all three recorded metadata values, but misses the
 observed application. The stale reset vectors are constructed contrasts, independently of
@@ -843,13 +820,12 @@ scroll predicate and the room's empty palette-object return each have different 
 from the required current observations.
 
 `one-frame-479/palette-evidence/ref-v2.py --record` runs the observer reference and
-source record check. Five histories, nine restore cuts, and 16 unsupported alternatives
-pass, with 17 caught faults. Across constructed and recorded histories the metadata
+source record check. Five histories and 16 unsupported alternatives pass, with 17 caught
+faults. Across constructed and recorded histories the metadata
 comparison is 15/15 versus 6/15 for do-nothing. The strictly recorded comparison remains
 3/3 for both, and one application versus zero for do-nothing. The constructed shared
-palette history changes current and target colours independently while the reset is
-pending, restores the latest full banks and metadata into a fresh authority, and compares
-both updated banks at completion. Each of the 1,024 invented colours identifies its
+palette history changes current and target colours independently in the reset's frame and
+compares both updated banks after it. Each of the 1,024 invented colours identifies its
 fixture and slot. Restoring retired colours, rotating four slots, swapping positions and
 swapping banks each fail. Only the source witness checks actual physical sites and
 complete preserved source banks. Runtime integration must still prove the required indexed
@@ -890,7 +866,8 @@ to 182 rest on the lean records and the code path above. The stale-reset vectors
 actions are therefore original and constructed, as for Running.
 
 The reference (`$TEMP/collab/night-20261122/observer-colours-scratch/ref-v3.py --record ROW`)
-passes 18 histories, 13 restore cuts and 31 unsupported alternatives, with 20 caught faults.
+passes 18 histories and 31 unsupported alternatives, with 20 caught faults; the whole-frame
+reference (§The whole-frame update) passes all 19 histories.
 They include admitting a screw-attack spin, refusing every spin and the previous Running-only
 admission. Across histories the metadata comparison is 54/54 fields against 24/54 for
 do-nothing and 18/18 histories against 8/18. Over the record it admits 182/182 compared
@@ -903,8 +880,7 @@ cuts above with the same declared fields as `R-ordinary-run-colours`.
 ### Palette budget
 
 The old implementation is the palette area of the [domain inventory](../architecture/domains.md):
-183 tokens for `samus_palette`, using its old-engine baseline. The bounded entries contribute 3.0 units (one arm for
-OrdinaryDryColours and two for RetainedDryColours). The admitted actions widen the one
-OrdinaryDryColours arm without a new outcome, so the units are unchanged. At k = 37.5 the
-increment is 112.5.
+183 tokens for `samus_palette`, using its old-engine baseline. The bounded entry contributes 1.0 unit (one arm for
+OrdinaryDryColours). The admitted actions widen the one OrdinaryDryColours arm without a new
+outcome, so the units are unchanged. At k = 37.5 the increment is 37.5.
 The general active colour effects remain outside this allowance.

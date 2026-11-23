@@ -411,11 +411,7 @@ fn command_queries_round_trip_typed_contracts_and_reviewed_requirements() {
     for (flag, selector) in [
         ("--case", "movement/W15"),
         ("--rule", travel),
-        ("--rule", "samus-movement/MotionAttempts"),
-        ("--rule", "samus-movement/ReachedEnemyCandidates"),
-        ("--rule", "samus-movement/PerformedCollisionTests"),
-        ("--rule", "samus-movement/PerformedSupportChecks"),
-        ("--rule", "samus-movement/PerformedBodyFit"),
+        ("--rule", "samus-movement/TouchedCells"),
         ("--path", "crates/clean/samus_movement/src/travel.rs"),
     ] {
         let mut args = prefix.clone();

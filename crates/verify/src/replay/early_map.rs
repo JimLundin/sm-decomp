@@ -11,7 +11,7 @@ use crate::{
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
     ProductionSeed,
-    connected::{self as production, Advance, early_map as map},
+    connected::{self as production, early_map as map},
 };
 use game::state::owned::OwnedState;
 
@@ -248,7 +248,7 @@ const FIRST_MAP: u64 = ORIGIN + 1;
 const SECOND_MAP: u64 = FIRST_MAP + 1;
 const EARLY_FIELDS: usize = 4;
 
-// Only the first opportunity runs the late owners to a compared completion.
+// Only the first map frame's owners are compared beside the map.
 pub(super) const fn field_count(case: &super::index::Case, cuts: usize) -> Option<usize> {
     match cuts {
         0 => Some(0),
@@ -344,7 +344,7 @@ pub(super) fn admit(sources: &Sources) -> Result<AdmittedCase, Outcome> {
 }
 
 impl InputTape {
-    fn input(&self, cut: u64, advance: Advance) -> Result<AdvanceInput<'_>, Outcome> {
+    fn input(&self, cut: u64) -> Result<AdvanceInput<'_>, Outcome> {
         let index = index(cut)?;
         let current = self
             .current
@@ -366,7 +366,6 @@ impl InputTape {
                 pictures: &self.hud.pictures,
                 rules: &self.rules,
             },
-            advance,
         })
     }
 
@@ -376,14 +375,7 @@ impl InputTape {
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
         production
-            .advance(self.input(
-                cut,
-                if cut == FIRST_MAP {
-                    Advance::Opportunity
-                } else {
-                    Advance::EarlyMap
-                },
-            )?)
+            .advance(self.input(cut)?)
             .map_err(|fault| super::production_failure(cut, fault))
     }
 }
@@ -554,10 +546,7 @@ pub(super) fn actual(
         .ok_or_else(|| data_failure(None, "early Map owner"))?;
     let position = match (position, cut) {
         (Some(position), _) => position,
-        (None, None) => [
-            state.movement.state().position.x.0,
-            state.movement.state().position.y.0,
-        ],
+        (None, None) => [state.movement.0.position.x.0, state.movement.0.position.y.0],
         (None, Some(cut)) => return Err(data_failure(Some(cut), "early Map publication")),
     };
     let grid = game::production::hud::tilemap(hud)
@@ -573,18 +562,11 @@ pub(super) fn actual(
         hud::explored_bitmap(hud),
         window,
     ));
-    if let Some(cut) = cut
-        && state.pending() != (cut == SECOND_MAP)
-    {
-        return Err(data_failure(
-            Some(cut),
-            "early Map selected completion boundary",
-        ));
-    }
-    if !state.pending() {
+    // The second map frame's owners have no independent capture, so only its map is compared.
+    if cut != Some(SECOND_MAP) {
         fields.extend(carry(CompletedOwners {
-            movement: state.movement.state(),
-            appearance: state.appearance.model.0.state,
+            movement: &state.movement.0,
+            appearance: state.appearance.0,
             playing: state.playing.0,
             camera: state.camera.0,
         }));
@@ -598,7 +580,7 @@ mod tests {
 
     #[test]
     #[ignore = "requires the pinned record cache, ROM and early Map fixture"]
-    fn early_map_resume_keeps_the_live_choice_and_late_carry() {
+    fn early_map_restores_between_frames_and_refuses_a_missing_map() {
         let sources = Sources {
             cache: std::env::var_os("SM_CACHE").unwrap().into(),
             rom: std::env::var_os("SM_ROM").unwrap().into(),
@@ -625,47 +607,25 @@ mod tests {
         };
         let mut direct = production.clone();
         let mut restored = restore(&production);
-        restored
-            .advance(inputs.input(FIRST_MAP, Advance::EarlyMap).unwrap())
-            .unwrap();
-        let at_map = restored.clone();
-        restored = restore(&restored);
-        assert!(PartialEq::eq(&restored, &at_map));
-
         let AdvanceInput::ConnectedMap {
-            inputs: current,
-            mut map,
-            ..
-        } = inputs.input(FIRST_MAP, Advance::Opportunity).unwrap()
+            inputs: current, ..
+        } = inputs.input(FIRST_MAP).unwrap()
         else {
             panic!("early Map advance")
         };
-        map.frame.0 = map.frame.0.wrapping_add(1);
+        let before = restored.clone();
         assert!(matches!(
-            restored.advance(AdvanceInput::ConnectedMap {
-                inputs: current,
-                map,
-                advance: Advance::Opportunity
-            }),
+            restored.advance(AdvanceInput::Connected { inputs: current }),
             Err(game::production::ProductionFault::Connected(
                 production::Fault::HudMap
             )),
         ));
-        assert!(PartialEq::eq(&restored, &at_map));
-        assert!(matches!(
-            restored.advance(AdvanceInput::Connected {
-                inputs: current,
-                advance: Advance::Opportunity
-            }),
-            Err(game::production::ProductionFault::Connected(
-                production::Fault::HudMap
-            )),
-        ));
-        assert!(PartialEq::eq(&restored, &at_map));
+        assert!(PartialEq::eq(&restored, &before));
 
         for cut in [FIRST_MAP, SECOND_MAP] {
             inputs.advance(&mut direct, cut).unwrap();
             inputs.advance(&mut restored, cut).unwrap();
+            restored = restore(&restored);
             let check = expected.read(cut).unwrap();
             let direct_fields = actual(&direct, Some(cut)).unwrap();
             let restored_fields = actual(&restored, Some(cut)).unwrap();

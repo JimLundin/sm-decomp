@@ -1,7 +1,5 @@
 # sprite_before_movement is shared Sprite of the prior selected figure; default Plain.
 # It is independent of items. New body content for a substituted/refused choice is explicit.
-# after.collision_tests is the ordered performed leading-edge work: cell=[column,row],
-# direction, purpose, and vertical_motion for moves left or right only. Empty means no tests.
 # Output delta: cinematic_active defaults false. after.floor_response is "None" or
 # { kind, speed }, after.touchdown_requests is ordered, and touchdown_graphics is the opportunity.
 # cannon_heading / previous_cannon_heading: optional imported FiringDirection for the new and old
@@ -47,8 +45,8 @@
 #   - stepped: one stepped block: block = [x, y], its top-left corner; quarters = two strings, its
 #     upper 8 px row of quarters then its lower one, each exactly two characters from the left,
 #     and each character "#" (a solid 8 px quarter) or "." (air); no other character is allowed.
-#   - enemies: an ordered list of eligible solid boxes, each with centre/radius as enemy below.
-#     A candidate identity is its ordinal in this list, starting at zero; no raw roster is input.
+#   - enemies: an ordered list of solid enemies, each with centre/radius as enemy below, in the
+#     order the world gives them (spec `SolidEnemies`).
 #   - enemy: one solid enemy: centre = [x, y] in px; radius = [x, y], its half-width and half-height
 #     in px (its box is centre - radius to centre + radius, measured as her body's box is, spec §8).
 #   - elevator_moving: true when she stands on an elevator that is moving (spec §1.3).
@@ -133,6 +131,9 @@
 #   only where given. A kick also shows in next_pose, whose action is then `WallJumping`.
 #   placed: the y a placement put her at this frame, a P.S quantity, or "none" where nothing placed
 #   her (spec §1, `PoseFitAfterMoves` and `ShrinkingLowersHer`); compared only where given.
+#   position_after_moves: her position after her moves, [x, y] as position, before the aim
+#   change's step and the pose change move her (spec §1, `MovesAsShePosed`); compared only where
+#   given.
 #   rising: whether she is rising at the frame's end, true or false (spec `RisingAndFalling`'s
 #   output); compared only where given. jump_held and landed_or_ended: jump held through's two
 #   parts at the frame's end, as before gives them (spec §1.2); compared only where given.
@@ -193,13 +194,13 @@
 [[vector]]
 id = "C-cap"
 source = "constructed"
-entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "BlocksStopFlush", "AimingAndShooting"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "BlocksStopFlush", "AimingAndShooting", "MovesAsShePosed"]
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.E000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0102.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000", travelled = { left = "+0000.0000", right = "+0002.C000", up = "+0000.0000", down = "+0000.0000" } }
+after = { position = ["0102.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000", travelled = { left = "+0000.0000", right = "+0002.C000", up = "+0000.0000", down = "+0000.0000" }, position_after_moves = ["0102.C000", "010B.FFFF"] }
 
 [[vector]]
 id = "C-cap-exact"
@@ -2221,13 +2222,13 @@ after = { position = ["01DE.E000", "00D2.3BFF"], speed_x = "+0001.6000", speed_y
 [[vector]]
 id = "C-elevator"
 source = "constructed"
-entries = ["RidingTheElevator"]
+entries = ["RidingTheElevator", "MovesAsShePosed"]
 world = { elevator_moving = true }
 before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
 pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000", speed_y_after_moves = "+0000.0000" }
+after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000", speed_y_after_moves = "+0000.0000", position_after_moves = ["0100.0000", "0101.4000"] }
 
 # C-screen-skid: facing the screen counts as right (spec §2). She starts skidding, a leftward
 # speed facing the screen, with nothing held. She doesn't move and keeps her speed, and standing
@@ -2705,14 +2706,14 @@ after = { position = ["0435.0000", "00AB.FFFF"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "C-fit-ceiling"
 source = "constructed"
-entries = ["PoseFitAfterMoves", "TouchedCells", "PadChart", "RisingAndFalling"]
+entries = ["PoseFitAfterMoves", "TouchedCells", "PadChart", "RisingAndFalling", "MovesAsShePosed"]
 world = { ceiling_bottom = 240 }
 before = { position = ["0100.0000", "00FA.8000"], speed_y = "+0000.0000" }
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.1C00", placed = "0100.8000", reached = [{ cell = [240, 224], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }] }
+after = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.1C00", placed = "0100.8000", reached = [{ cell = [240, 224], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }, { cell = [240, 256], way = "Look" }, { cell = [256, 256], way = "Look" }], position_after_moves = ["0100.0000", "00FA.8000"] }
 
 # Crouched on a floor with a ceiling at her head, a take-off finds no room on either side: she
 # stays crouched (crouched Still), with no rise, no lift and no push.
@@ -2930,14 +2931,14 @@ after = { position = ["0100.0000", "0110.FFFF"], speed_y = "+0001.A400", rising 
 [[vector]]
 id = "C-fit-land-tunnel"
 source = "constructed"
-entries = ["PoseFitAfterMoves", "Landing", "WhatHerMovesMet", "DriftInTheAir", "BlocksStopFlush"]
+entries = ["PoseFitAfterMoves", "Landing", "WhatHerMovesMet", "DriftInTheAir", "BlocksStopFlush", "MovesAsShePosed"]
 world = { floor_top = 288, ceiling_bottom = 256 }
 before = { position = ["0100.0000", "0112.0000"], speed_x = "+0001.6000", speed_y = "+0003.0000" }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0003.1C00", placed = "0110.0000", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
+after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0003.1C00", placed = "0110.0000", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }, position_after_moves = ["0101.6000", "0114.FFFF"] }
 
 # The landing crouched instead, on (spec `PoseFitAfterMoves`, `Jumping`):
 # - C-fit-land-tunnel-held: the same frame with jump held at a count of 3. The crouch taken
@@ -3921,7 +3922,7 @@ after = { position = ["0100.0000", "010B.1C00"], speed_y = "+0001.3800", rising 
 [[vector]]
 id = "C-shrink-floor"
 source = "constructed"
-entries = ["ShrinkingLowersHer", "TouchedCells", "PadChart", "DriftInTheAir", "RisingAndFalling"]
+entries = ["ShrinkingLowersHer", "TouchedCells", "PadChart", "DriftInTheAir", "RisingAndFalling", "MovesAsShePosed"]
 items = ["MorphBall"]
 world = { floor_top = 160 }
 before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400", dashing = true }
@@ -3930,7 +3931,7 @@ next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5,
 pad = ["run", "right", "down"]
 jump_pressed = false
 pressed = ["right", "down"]
-after = { position = ["056C.DFFF", "0099.FFFF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", reached = [{ cell = [1392, 128], way = "Right" }, { cell = [1392, 144], way = "Right" }, { cell = [1376, 160], way = "Look" }] }
+after = { position = ["056C.DFFF", "0099.FFFF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", reached = [{ cell = [1392, 128], way = "Right" }, { cell = [1392, 144], way = "Right" }, { cell = [1376, 160], way = "Look" }], position_after_moves = ["056C.DFFF", "0094.B7FF"] }
 
 # A spin reversed in its first frame skids: she keeps travelling the old way against her new facing.
 
@@ -5870,7 +5871,7 @@ after = { position = ["0103.E000", "010B.FFFF"], speed_x = "+0002.C000", dash = 
 [[vector]]
 id = "C-adj-aim-step"
 source = "constructed"
-entries = ["TravelledDistances", "AimingAndShooting"]
+entries = ["TravelledDistances", "AimingAndShooting", "MovesAsShePosed"]
 rules = { aim_step = "0003.0000" }
 world = { floor_top = 288 }
 before = { position = ["0100.4000", "010B.FFFF"], speed_x = "-0002.C000" }
@@ -5879,7 +5880,7 @@ next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5
 pad = ["left", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
-after = { position = ["00FA.8000", "010B.FFFF"], speed_x = "-0002.C000", dash = "0000.0000", travelled = { left = "-0002.C000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
+after = { position = ["00FA.8000", "010B.FFFF"], speed_x = "-0002.C000", dash = "0000.0000", travelled = { left = "-0002.C000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" }, position_after_moves = ["00FD.8000", "010B.FFFF"] }
 
 [[vector]]
 id = "C-adj-elevator"
@@ -6533,81 +6534,33 @@ after = { floor_response = { kind = "GroundedBallStops", speed = "+0002.1C00" },
 
 
 [[vector]]
-id = "C-work-move-zero"
+id = "C-touch-stop-first"
 source = "constructed"
-entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
-world = {  }
-before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "-0001.0000" }
-pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
-next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
-pad = ["right"]
-jump_pressed = false
-after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
-
-[[vector]]
-id = "C-work-move-nonzero"
-source = "constructed"
-entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
-world = {  }
-before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0001.0000" }
-pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
-next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
-pad = ["right"]
-jump_pressed = false
-after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "Nonzero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "Nonzero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "Nonzero" }, { cell = [2, 3], direction = "Down", purpose = "OrdinaryMove" }] }
-
-[[vector]]
-id = "C-work-air-zero"
-source = "constructed"
-entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
-world = {  }
-before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
-next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
-pad = ["right"]
-jump_pressed = false
-after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
-
-[[vector]]
-id = "C-work-no-raw-reads"
-source = "constructed"
-entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
-world = {  }
-before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
-pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
-next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
-pad = ["right"]
-jump_pressed = false
-after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
-
-[[vector]]
-id = "C-work-stop-first"
-source = "constructed"
-entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+entries = ["RisingAndFalling", "DriftInTheAir", "TouchedCells", "BlocksStopFlush"]
 world = { wall_right = 48 }
 before = { position = ["002B.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
 next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
 pad = ["right"]
 jump_pressed = false
-after = { collision_tests = [{ cell = [3, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
+after = { reached = [{ cell = [48, 16], way = "Right" }] }
 
 [[vector]]
-id = "C-work-enemy-first"
+id = "C-touch-enemy-first"
 source = "constructed"
-entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+entries = ["RisingAndFalling", "DriftInTheAir", "TouchedCells", "SolidEnemies"]
 world = { enemy = { centre = [50, 40], radius = [2, 19] } }
 before = { position = ["002B.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
 next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
 pad = ["right"]
 jump_pressed = false
-after = { collision_tests = [] }
+after = { reached = [] }
 
 [[vector]]
-id = "C-work-fit"
+id = "C-touch-fit-looks"
 source = "constructed"
-entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves", "PerformedCollisionTests"]
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves", "TouchedCells"]
 world = { floor_top = 192 }
 before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E401" }
 pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
@@ -6615,12 +6568,12 @@ next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [
 pad = []
 jump_pressed = false
 cinematic_active = false
-after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "OrdinaryMove" }, { cell = [2, 9], direction = "Up", purpose = "FitRoomAbove" }, { cell = [2, 12], direction = "Down", purpose = "FitRoomBelow" }, { cell = [2, 9], direction = "Up", purpose = "FitFarClearance" }] }
+after = { reached = [{ cell = [32, 192], way = "Down" }, { cell = [32, 144], way = "Look" }, { cell = [32, 192], way = "Look" }, { cell = [32, 144], way = "Look" }] }
 
 [[vector]]
-id = "C-work-lowering"
+id = "C-touch-lowering-look"
 source = "constructed"
-entries = ["PerformedCollisionTests", "FollowingTheGround", "ShrinkingLowersHer", "PadChart"]
+entries = ["FollowingTheGround", "ShrinkingLowersHer", "PadChart", "TouchedCells"]
 world = { floor_top = 192 }
 before = { position = ["0028.0000", "00AB.FFFF"] }
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
@@ -6628,12 +6581,12 @@ next_pose = { body = "Crouched", action = "Crouching", facing = "Right", radius 
 pad = ["down"]
 pressed = ["down"]
 jump_pressed = false
-after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "GroundFollowing" }, { cell = [2, 11], direction = "Down", purpose = "BodyLowering" }] }
+after = { reached = [{ cell = [32, 192], way = "Down" }, { cell = [32, 176], way = "Look" }] }
 
 [[vector]]
-id = "C-work-near-wall"
+id = "C-touch-near-wall-look"
 source = "constructed"
-entries = ["TouchdownRequests", "WallJump", "RisingAndFalling", "PerformedCollisionTests", "TouchedCells"]
+entries = ["TouchdownRequests", "WallJump", "RisingAndFalling", "TouchedCells"]
 rules = { gravity = "+0000.0000" }
 world = { solid_block = [48, 32] }
 before = { position = ["0028.0000", "0028.0000"] }
@@ -6643,7 +6596,7 @@ lead_in = [{ pose = { body = "Upright", action = "Spinning", facing = "Left", ra
 pad = ["left", "jump"]
 jump_pressed = true
 spin_turned_far = true
-after = { collision_tests = [{ cell = [2, 1], direction = "Left", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Left", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Left", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [3, 1], direction = "Right", purpose = "NearWallReach" }, { cell = [3, 2], direction = "Right", purpose = "NearWallReach" }] }
+after = { reached = [{ cell = [32, 16], way = "Left" }, { cell = [32, 32], way = "Left" }, { cell = [32, 48], way = "Left" }, { cell = [48, 16], way = "Look" }, { cell = [48, 32], way = "Look" }] }
 
 
 [[vector]]
@@ -6765,9 +6718,9 @@ after = { floor_response = "None", touchdown_requests = ["SamusLandedOrWallJumpe
 cinematic_active = true
 
 [[vector]]
-id = "C-work-aim-change"
+id = "C-touch-aim-step"
 source = "constructed"
-entries = ["PerformedCollisionTests", "AimingAndShooting", "FollowingTheGround", "MovesAsShePosed", "TouchedCells"]
+entries = ["AimingAndShooting", "FollowingTheGround", "MovesAsShePosed", "TouchedCells"]
 world = { floor_top = 192 }
 before = { position = ["0028.0000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
@@ -6775,151 +6728,154 @@ next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [
 pad = ["run", "right", "aim_down"]
 pressed = ["aim_down"]
 jump_pressed = false
-after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "GroundFollowing" }, { cell = [2, 9], direction = "Right", purpose = "AimChange", vertical_motion = "ExactlyZero" }, { cell = [2, 10], direction = "Right", purpose = "AimChange", vertical_motion = "ExactlyZero" }, { cell = [2, 11], direction = "Right", purpose = "AimChange", vertical_motion = "ExactlyZero" }] }
+after = { reached = [{ cell = [32, 192], way = "Down" }, { cell = [32, 144], way = "Right" }, { cell = [32, 160], way = "Right" }, { cell = [32, 176], way = "Right" }], position = ["0029.0000", "00AB.FFFF"], position_after_moves = ["0028.0000", "00AB.FFFF"] }
 
-# Complete constructed movement-entry work witnesses.
-# world.enemies is an ordered list of eligible solid boxes, each { centre, radius }.
-# Candidate identity is its ordinal in the supplied list, starting at zero.
-# after.movement_work is ordered motion/support/fit data. start/centre are wrapping
-# coordinates in 1/65536 px; intended/accepted are signed 1/65536 px; radius, cell and
-# candidate gap use pixels (cell uses column,row). Support placement and fit placement
-# use signed whole pixels. Empty work does not establish absent caller roster work.
-# body_fit.checks lists only actual enemy or block clearance requests; their order matters.
-# Each clearance carries world, purpose, direction, intended, start, radius, result and room.
-# For SolidEnemies additionally publish supplied_count/candidates; for Blocks publish only geometry/result/room.
-# room is nonnegative whole-pixel ClearanceRoom, not signed accepted travel. Optional placement uses "None".
-# Ordinary horizontal intended follows move_limit but precedes terrain slope shortening.
+[[vector]]
+id = "C-after-moves-screen-edge"
+source = "constructed"
+entries = ["MovesAsShePosed", "AimingAndShooting", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["00FF.0000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = ["run", "right", "aim_down"]
+pressed = ["aim_down"]
+jump_pressed = false
+after = { position = ["0100.0000", "00AB.FFFF"], position_after_moves = ["00FF.0000", "00AB.FFFF"] }
+
+# Constructed whole frames: ordered solid enemies, the horizontal limit before a slope's
+# factor, facing the screen, standing, the aim step and pose fit.
 
 [[vector]]
 id = "C-attempt-running-empty"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SlopesCarry", "FollowingTheGround"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] } }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0103.C000", "0109.FFFF"], speed_x = "+0002.C000", movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 180224, supplied_count = 0, candidates = [], accepted = 180224, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [17022976, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [17022976, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [17022976, 17432575], radius = [5, 21], intended = 65536, supplied_count = 0, candidates = [], accepted = 0, result = "TerrainStopped" } }], collision_tests = [{ direction = "Right", purpose = "OrdinaryMove", cell = [16, 15], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 16], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 17], vertical_motion = "ExactlyZero" }, { direction = "Down", purpose = "GroundFollowing", cell = [15, 17] }, { direction = "Down", purpose = "GroundFollowing", cell = [16, 17] }], seated = false }
+after = { position = ["0103.C000", "0109.FFFF"], speed_x = "+0002.C000", seated = false }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-running-touch"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SlopesCarry", "FollowingTheGround", "SolidEnemies"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] }, enemies = [{ centre = [260, 294], radius = [8, 8] }] }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0103.C000", "0109.0000"], speed_x = "+0002.C000", movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 180224, supplied_count = 1, candidates = [{ candidate = 0, centre = [260, 294], radius = [8, 8], result = "AlreadyOverlapping", gap = -10 }], accepted = 180224, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [17022976, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [17022976, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [17022976, 17432575], radius = [5, 21], intended = 65536, supplied_count = 1, candidates = [{ candidate = 0, centre = [260, 294], radius = [8, 8], result = "Touching", gap = 0 }], accepted = 0, result = "EnemyStopped" } }], collision_tests = [{ direction = "Right", purpose = "OrdinaryMove", cell = [16, 15], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 16], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 17], vertical_motion = "ExactlyZero" }], seated = true }
+after = { position = ["0103.C000", "0109.0000"], speed_x = "+0002.C000", seated = true }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-running-miss-touch"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SlopesCarry", "FollowingTheGround", "SolidEnemies"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] }, enemies = [{ centre = [260, 340], radius = [8, 8] }, { centre = [260, 294], radius = [8, 8] }] }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0103.C000", "0109.0000"], speed_x = "+0002.C000", movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 180224, supplied_count = 2, candidates = [{ candidate = 0, centre = [260, 340], radius = [8, 8], result = "Miss" }, { candidate = 1, centre = [260, 294], radius = [8, 8], result = "AlreadyOverlapping", gap = -10 }], accepted = 180224, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [17022976, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [17022976, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [17022976, 17432575], radius = [5, 21], intended = 65536, supplied_count = 2, candidates = [{ candidate = 0, centre = [260, 340], radius = [8, 8], result = "Miss" }, { candidate = 1, centre = [260, 294], radius = [8, 8], result = "Touching", gap = 0 }], accepted = 0, result = "EnemyStopped" } }], collision_tests = [{ direction = "Right", purpose = "OrdinaryMove", cell = [16, 15], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 16], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 17], vertical_motion = "ExactlyZero" }], seated = true }
+after = { position = ["0103.C000", "0109.0000"], speed_x = "+0002.C000", seated = true }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-running-gap-touch"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SlopesCarry", "FollowingTheGround", "SolidEnemies"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] }, enemies = [{ centre = [260, 295], radius = [8, 8] }, { centre = [260, 294], radius = [8, 8] }] }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0103.C000", "010A.FFFF"], speed_x = "+0002.C000", movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 180224, supplied_count = 2, candidates = [{ candidate = 0, centre = [260, 295], radius = [8, 8], result = "Miss" }, { candidate = 1, centre = [260, 294], radius = [8, 8], result = "AlreadyOverlapping", gap = -10 }], accepted = 180224, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [17022976, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [17022976, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [17022976, 17432575], radius = [5, 21], intended = 65536, supplied_count = 2, candidates = [{ candidate = 0, centre = [260, 295], radius = [8, 8], result = "StopsAtGap", gap = 1 }], accepted = 65536, result = "EnemyStopped" } }], collision_tests = [{ direction = "Right", purpose = "OrdinaryMove", cell = [16, 15], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 16], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 17], vertical_motion = "ExactlyZero" }], seated = true }
+after = { position = ["0103.C000", "010A.FFFF"], speed_x = "+0002.C000", seated = true }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-running-touch-gap"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SlopesCarry", "FollowingTheGround", "SolidEnemies"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14] }, enemies = [{ centre = [260, 294], radius = [8, 8] }, { centre = [260, 295], radius = [8, 8] }] }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0103.C000", "0109.0000"], speed_x = "+0002.C000", movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 180224, supplied_count = 2, candidates = [{ candidate = 0, centre = [260, 294], radius = [8, 8], result = "AlreadyOverlapping", gap = -10 }, { candidate = 1, centre = [260, 295], radius = [8, 8], result = "Miss" }], accepted = 180224, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [17022976, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [17022976, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [17022976, 17432575], radius = [5, 21], intended = 65536, supplied_count = 2, candidates = [{ candidate = 0, centre = [260, 294], radius = [8, 8], result = "Touching", gap = 0 }], accepted = 0, result = "EnemyStopped" } }], collision_tests = [{ direction = "Right", purpose = "OrdinaryMove", cell = [16, 15], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 16], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 17], vertical_motion = "ExactlyZero" }], seated = true }
+after = { position = ["0103.C000", "0109.0000"], speed_x = "+0002.C000", seated = true }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-request-stages"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "BlocksStopFlush", "SlopesSlowTheWalk", "TravelledDistances", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SlopesCarry", "FollowingTheGround", "BlocksStopFlush", "SlopesSlowTheWalk", "TravelledDistances"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14], factor = "0.80" } }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0101.E000", "0109.FFFF"], speed_x = "+0002.C000", travelled = { left = "+0000.0000", right = "+0000.E000", up = "+0000.0000", down = "+0000.0000" }, movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 114688, supplied_count = 0, candidates = [], accepted = 57344, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [16900096, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [16900096, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [16900096, 17432575], radius = [5, 21], intended = 65536, supplied_count = 0, candidates = [], accepted = 0, result = "TerrainStopped" } }], collision_tests = [{ direction = "Right", purpose = "OrdinaryMove", cell = [16, 15], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 16], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "OrdinaryMove", cell = [16, 17], vertical_motion = "ExactlyZero" }, { direction = "Down", purpose = "GroundFollowing", cell = [15, 17] }, { direction = "Down", purpose = "GroundFollowing", cell = [16, 17] }], seated = false }
+after = { position = ["0101.E000", "0109.FFFF"], speed_x = "+0002.C000", travelled = { left = "+0000.0000", right = "+0000.E000", up = "+0000.0000", down = "+0000.0000" }, seated = false }
 rules = { move_limit = 1 }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-screen"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves"]
 world = { floor_top = 192 }
 before = { position = ["002B.4000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] }
 pad = []
 pressed = []
 jump_pressed = false
-after = { position = ["002B.4000", "00AB.FFFF"], movement_work = [], collision_tests = [], movement_skip = "FacingPlayer" }
+after = { position = ["002B.4000", "00AB.FFFF"] }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-idle-empty"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves"]
 world = { floor_top = 192 }
 before = { position = ["002B.4000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
 pad = []
 pressed = []
 jump_pressed = false
-after = { position = ["002B.4000", "00AB.FFFF"], movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [2834432, 11272191], radius = [5, 21], intended = 0, supplied_count = 0, candidates = [], accepted = 0, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [2834432, 11272191], radius = [5, 21], cell = [2, 11], result = "NoSlope", placement = 0 } }, { support = { surface = "Ceiling", centre = [2834432, 11272191], radius = [5, 21], cell = [2, 9], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [2834432, 11272191], radius = [5, 21], intended = 65536, supplied_count = 0, candidates = [], accepted = 0, result = "TerrainStopped" } }], collision_tests = [{ direction = "Down", purpose = "GroundFollowing", cell = [2, 12] }] }
+after = { position = ["002B.4000", "00AB.FFFF"] }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-idle-zero-touch"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves"]
 world = { floor_top = 192, enemies = [{ centre = [50, 171], radius = [2, 8] }] }
 before = { position = ["002B.4000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
 pad = []
 pressed = []
 jump_pressed = false
-after = { position = ["002B.4000", "00AB.FFFF"], movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [2834432, 11272191], radius = [5, 21], intended = 0, supplied_count = 1, candidates = [{ candidate = 0, centre = [50, 171], radius = [2, 8], result = "Touching", gap = 0 }], accepted = 0, result = "EnemyStopped" } }, { support = { surface = "Floor", centre = [2834432, 11206656], radius = [5, 21], cell = [2, 11], result = "NoSlope", placement = 0 } }, { support = { surface = "Ceiling", centre = [2834432, 11206656], radius = [5, 21], cell = [2, 9], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [2834432, 11206656], radius = [5, 21], intended = 65536, supplied_count = 1, candidates = [{ candidate = 0, centre = [50, 171], radius = [2, 8], result = "Miss" }], accepted = 0, result = "TerrainStopped" } }], collision_tests = [{ direction = "Down", purpose = "GroundFollowing", cell = [2, 12] }] }
+after = { position = ["002B.4000", "00AB.FFFF"] }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-aim-no-growth"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "AimingAndShooting", "PoseFitAfterMoves"]
 world = { floor_top = 192 }
 before = { position = ["002B.4000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
 pad = ["run", "right", "aim_down"]
 pressed = ["aim_down"]
 jump_pressed = false
-after = { position = ["002C.4000", "00AB.FFFF"], movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [2834432, 11272191], radius = [5, 21], intended = 0, supplied_count = 0, candidates = [], accepted = 0, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [2834432, 11272191], radius = [5, 21], cell = [2, 11], result = "NoSlope", placement = 0 } }, { support = { surface = "Ceiling", centre = [2834432, 11272191], radius = [5, 21], cell = [2, 9], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [2834432, 11272191], radius = [5, 21], intended = 65536, supplied_count = 0, candidates = [], accepted = 0, result = "TerrainStopped" } }, { motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "AimChange", start = [2834432, 11272191], radius = [5, 21], intended = 65536, supplied_count = 0, candidates = [], accepted = 65536, result = "Unobstructed" } }, { body_fit = { old_radius = [5, 21], new_radius = [5, 21], centre = [2899968, 11272191], result = "NoGrowth", placement = "None" } }], collision_tests = [{ direction = "Down", purpose = "GroundFollowing", cell = [2, 12] }, { direction = "Right", purpose = "AimChange", cell = [3, 9], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "AimChange", cell = [3, 10], vertical_motion = "ExactlyZero" }, { direction = "Right", purpose = "AimChange", cell = [3, 11], vertical_motion = "ExactlyZero" }] }
+after = { position = ["002C.4000", "00AB.FFFF"] }
 next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-fit-push"
 source = "constructed"
-entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves", "PerformedCollisionTests", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit"]
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
 world = { floor_top = 192 }
 before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E401" }
 pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
@@ -6927,13 +6883,13 @@ next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [
 pad = []
 jump_pressed = false
 cinematic_active = false
-after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "OrdinaryMove" }, { cell = [2, 9], direction = "Up", purpose = "FitRoomAbove" }, { cell = [2, 12], direction = "Down", purpose = "FitRoomBelow" }, { cell = [2, 9], direction = "Up", purpose = "FitFarClearance" }], position = ["0028.0000", "00AB.FFFF"], movement_work = [{ motion = { world = "EnemiesThenBlocks", purpose = "OrdinaryMove", direction = "Down", start = [2621440, 11403263], radius = [5, 19], intended = 254977, accepted = 0, candidates = [], supplied_count = 0, result = "TerrainStopped" } }, { body_fit = { old_radius = [5, 19], new_radius = [5, 21], centre = [2621440, 11403263], checks = [{ world = "SolidEnemies", direction = "Up", purpose = "FitRoomAbove", intended = -131072, start = [2621440, 11403263], radius = [5, 19], supplied_count = 0, candidates = [], room = 2, result = "Unobstructed" }, { world = "SolidEnemies", direction = "Down", purpose = "FitRoomBelow", intended = 131072, start = [2621440, 11403263], radius = [5, 19], supplied_count = 0, candidates = [], room = 2, result = "Unobstructed" }, { world = "Blocks", direction = "Up", purpose = "FitRoomAbove", intended = -131072, start = [2621440, 11403263], radius = [5, 19], room = 2, stopped = false, result = "Unobstructed" }, { world = "Blocks", direction = "Down", purpose = "FitRoomBelow", intended = 131072, start = [2621440, 11403263], radius = [5, 19], room = 0, stopped = true, result = "TerrainStopped" }, { world = "Blocks", direction = "Up", purpose = "FitFarClearance", intended = -131072, start = [2621440, 11403263], radius = [5, 19], room = 2, stopped = false, result = "Unobstructed" }], result = "PushedAway", placement = -2 } }] }
+after = { position = ["0028.0000", "00AB.FFFF"] }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-fit-substitute"
 source = "constructed"
-entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
 world = { floor_top = 192, ceiling_bottom = 160 }
 before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E400" }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
@@ -6941,26 +6897,26 @@ next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [
 pad = []
 jump_pressed = false
 cinematic_active = false
-after = { pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }, floor_response = "None", touchdown_requests = [], touchdown_graphics = false, position = ["0028.0000", "00B0.FFFF"], movement_work = [{ motion = { world = "EnemiesThenBlocks", purpose = "OrdinaryMove", direction = "Right", start = [2621440, 11862015], radius = [5, 12], intended = 0, accepted = 0, candidates = [], supplied_count = 0, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [2621440, 11862015], radius = [5, 12], cell = [2, 11], result = "NoSlope", placement = 0 } }, { support = { surface = "Ceiling", centre = [2621440, 11862015], radius = [5, 12], cell = [2, 10], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", purpose = "OrdinaryMove", direction = "Down", start = [2621440, 11862015], radius = [5, 12], intended = 254976, accepted = 0, candidates = [], supplied_count = 0, result = "TerrainStopped" } }, { body_fit = { old_radius = [5, 12], new_radius = [5, 21], centre = [2621440, 11862015], checks = [{ world = "SolidEnemies", direction = "Up", purpose = "FitRoomAbove", intended = -589824, start = [2621440, 11862015], radius = [5, 12], supplied_count = 0, candidates = [], room = 9, result = "Unobstructed" }, { world = "SolidEnemies", direction = "Down", purpose = "FitRoomBelow", intended = 589824, start = [2621440, 11862015], radius = [5, 12], supplied_count = 0, candidates = [], room = 9, result = "Unobstructed" }, { world = "Blocks", direction = "Up", purpose = "FitRoomAbove", intended = -524288, start = [2621440, 11862015], radius = [5, 12], room = 8, stopped = false, result = "Unobstructed" }, { world = "Blocks", direction = "Up", purpose = "FitRoomAbove", intended = -589824, start = [2621440, 11862015], radius = [5, 12], room = 8, stopped = true, result = "TerrainStopped" }, { world = "Blocks", direction = "Down", purpose = "FitRoomBelow", intended = 524288, start = [2621440, 11796480], radius = [5, 12], room = 0, stopped = true, result = "TerrainStopped" }], result = "CrouchedInstead", placement = -4 } }], collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "OrdinaryMove" }, { cell = [2, 10], direction = "Up", purpose = "FitRoomAbove" }, { cell = [2, 9], direction = "Up", purpose = "FitRoomAbove" }, { cell = [2, 12], direction = "Down", purpose = "FitRoomBelow" }] }
+after = { pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }, floor_response = "None", touchdown_requests = [], touchdown_graphics = false, position = ["0028.0000", "00B0.FFFF"] }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-fit-refuse"
 source = "constructed"
-entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir", "AcceptedFloorResponse", "TouchdownRequests", "PoseFitAfterMoves", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir", "AcceptedFloorResponse", "TouchdownRequests", "PoseFitAfterMoves"]
 world = { floor_top = 288, ceiling_bottom = 272 }
 before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000", bounces = 2 }
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 21] }
 pad = []
 jump_pressed = false
-after = { pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }, floor_response = "None", touchdown_requests = [], touchdown_graphics = false, position = ["0100.0000", "0119.FFFF"], movement_work = [{ motion = { world = "EnemiesThenBlocks", purpose = "OrdinaryMove", direction = "Right", start = [16777216, 18284544], radius = [5, 7], intended = 0, accepted = 0, candidates = [], supplied_count = 0, result = "Unobstructed" } }, { support = { surface = "Floor", centre = [16777216, 18284544], radius = [5, 7], cell = [16, 17], result = "NoSlope", placement = 0 } }, { support = { surface = "Ceiling", centre = [16777216, 18284544], radius = [5, 7], cell = [16, 17], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", purpose = "OrdinaryMove", direction = "Down", start = [16777216, 18284544], radius = [5, 7], intended = 212992, accepted = 131072, candidates = [], supplied_count = 0, result = "TerrainStopped" } }, { body_fit = { old_radius = [5, 7], new_radius = [5, 21], centre = [16777216, 18481151], checks = [{ world = "SolidEnemies", direction = "Up", purpose = "FitRoomAbove", intended = -917504, start = [16777216, 18481151], radius = [5, 7], supplied_count = 0, candidates = [], room = 14, result = "Unobstructed" }, { world = "SolidEnemies", direction = "Down", purpose = "FitRoomBelow", intended = 917504, start = [16777216, 18481151], radius = [5, 7], supplied_count = 0, candidates = [], room = 14, result = "Unobstructed" }, { world = "Blocks", direction = "Up", purpose = "FitRoomAbove", intended = -524288, start = [16777216, 18481151], radius = [5, 7], room = 2, stopped = true, result = "TerrainStopped" }, { world = "Blocks", direction = "Down", purpose = "FitRoomBelow", intended = 524288, start = [16777216, 18415616], radius = [5, 7], room = 0, stopped = true, result = "TerrainStopped" }], result = "Refused", placement = "None" } }], collision_tests = [{ cell = [15, 18], direction = "Down", purpose = "OrdinaryMove" }, { cell = [15, 16], direction = "Up", purpose = "FitRoomAbove" }, { cell = [15, 18], direction = "Down", purpose = "FitRoomBelow" }] }
+after = { pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }, floor_response = "None", touchdown_requests = [], touchdown_graphics = false, position = ["0100.0000", "0119.FFFF"] }
 frame = "Even"
 
 [[vector]]
 id = "C-attempt-taller-animation-handover"
 source = "constructed"
-entries = ["AnimationEnds", "PoseFitAfterMoves", "MotionAttempts", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests"]
+entries = ["AnimationEnds", "PoseFitAfterMoves"]
 world = { floor_top = 192 }
 before = { position = ["0028.0000", "00AD.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 19], landed_from = "Jump" }
@@ -6971,176 +6927,22 @@ jump_pressed = false
 animation_ends = "EndUnlessJump"
 cinematic_active = false
 frame = "Even"
-after = { position = ["0028.0000", "00AD.FFFF"], pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }, speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", handed_over = true, jump_held = 0, landed_or_ended = true, floor_response = "None", touchdown_requests = [], touchdown_graphics = false, pending_aim = "None", movement_work = [{ motion = { world = "EnemiesThenBlocks", purpose = "OrdinaryMove", direction = "Right", start = [2621440, 11403263], radius = [5, 19], intended = 0, accepted = 0, supplied_count = 0, candidates = [], result = "Unobstructed" } }, { support = { surface = "Floor", centre = [2621440, 11403263], radius = [5, 19], cell = [2, 11], result = "NoSlope", placement = 0 } }, { support = { surface = "Ceiling", centre = [2621440, 11403263], radius = [5, 19], cell = [2, 9], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", purpose = "GroundFollowing", direction = "Down", start = [2621440, 11403263], radius = [5, 19], intended = 65536, accepted = 0, supplied_count = 0, candidates = [], result = "TerrainStopped" } }], collision_tests = [{ direction = "Down", purpose = "GroundFollowing", cell = [2, 12] }], seated = false }
+after = { position = ["0028.0000", "00AD.FFFF"], pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }, speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", handed_over = true, jump_held = 0, landed_or_ended = true, floor_response = "None", touchdown_requests = [], touchdown_graphics = false, pending_aim = "None", seated = false }
 
 [[vector]]
 id = "C-attempt-slope-enemy-before-factor"
 source = "constructed"
-entries = ["SlopesCarry", "FollowingTheGround", "BlocksStopFlush", "SlopesSlowTheWalk", "TravelledDistances", "MotionAttempts", "ReachedEnemyCandidates", "PerformedSupportChecks", "PerformedBodyFit", "PerformedCollisionTests", "SolidEnemies", "WallsAndCeilings", "WhatHerMovesMet", "PoseFitAfterMoves"]
+entries = ["SlopesCarry", "FollowingTheGround", "BlocksStopFlush", "SlopesSlowTheWalk", "TravelledDistances", "SolidEnemies", "WallsAndCeilings", "WhatHerMovesMet", "PoseFitAfterMoves"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14], factor = "0.80" }, enemies = [{ centre = [265, 294], radius = [2, 8] }] }
 before = { position = ["0101.0000", "010A.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0102.0000", "0109.FFFF"], speed_x = "+0000.0000", pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }, seated = false, movement_work = [{ motion = { world = "EnemiesThenBlocks", direction = "Right", purpose = "OrdinaryMove", start = [16842752, 17498111], radius = [5, 21], intended = 114688, supplied_count = 1, candidates = [{ candidate = 0, centre = [265, 294], radius = [2, 8], result = "StopsAtGap", gap = 1 }], accepted = 65536, result = "EnemyStopped" } }, { support = { surface = "Floor", centre = [16908288, 17498111], radius = [5, 21], cell = [16, 17], result = "Lifted", placement = -1 } }, { support = { surface = "Ceiling", centre = [16908288, 17432575], radius = [5, 21], cell = [16, 15], result = "NoSlope", placement = 0 } }, { motion = { world = "EnemiesThenBlocks", direction = "Down", purpose = "GroundFollowing", start = [16908288, 17432575], radius = [5, 21], intended = 65536, supplied_count = 1, candidates = [{ candidate = 0, centre = [265, 294], radius = [2, 8], result = "Miss" }], accepted = 0, result = "TerrainStopped" } }, { body_fit = { old_radius = [5, 21], new_radius = [5, 21], centre = [16908288, 17432575], result = "NoGrowth", placement = "None" } }], collision_tests = [{ direction = "Down", purpose = "GroundFollowing", cell = [15, 17] }, { direction = "Down", purpose = "GroundFollowing", cell = [16, 17] }] }
+after = { position = ["0102.0000", "0109.FFFF"], speed_x = "+0000.0000", pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }, seated = false }
 rules = { move_limit = 1 }
 frame = "Even"
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
 
-# Additive suspended-update format (existing vector cases are unchanged).
-# Each suspended_update inherits the complete ordinary vector named by base, including
-# defaults, body content, world, inputs, rules and all ordinary expected outputs.
-# observations names semantic receipts in performed order. Each expected observation is
-# { event, ...quantities }; quantities use the existing P.S notation and pose vocabulary.
-# Observations are a checked subsequence, not the entire update or a mandated interface shape.
-# Ordinary tests still check the base result and complete State against uninterrupted execution.
-# save_points="AllOfferedAndCompleted": save before every offered decision and after every
-# completed receipt across the ENTIRE update, not only this observed subsequence. Restore
-# complete owned State, pending decision, retained quantities, query/input cursor and ordered
-# output progress. Finish and compare complete State and every output with uninterrupted work.
-# rules, when present, explicitly repeat the base's overrides for the opportunity test.
-# An altered externally supplied premise at resume must be revalidated before dependent work;
-# no pending answer may be silently recomputed and no completed query/publication repeated.
-
-[[suspended_update]]
-id = "C-op-run"
-source = "constructed"
-base = "C-cap"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "SpeedBuildsAndBrakes", "WordwiseTopSpeed"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="SpeedBuilding", before="0001.E000", step="0000.3000", sum="0002.1000", top="0002.C000", answer="WordwiseCapped" },
- { event="SpeedBuilt", speed="0002.C000" },
- { event="HorizontalDisplacement", intended="+0002.C000", retained_total="0002.C000" },
- { event="GroundPull", retained_total="0002.C000", extra="0001.0000", intended="+0003.C000" }
-]
-
-[[suspended_update]]
-id = "R-op-run"
-source = "item-morph-ball:704"
-base = "R2"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "Dash", "SpeedBuildsAndBrakes", "FollowingTheGround"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="DashBuilding", before="0000.F000", gain="0000.1000", cap="0002.0000", answer="Gain" },
- { event="DashBuilt", dash="0001.0000" },
- { event="SpeedBuilding", before="0002.C000", step="0000.3000", sum="0002.F000", top="0002.C000", answer="WordwiseCapped" },
- { event="SpeedBuilt", speed="0002.C000" },
- { event="HorizontalDisplacement", intended="-0003.C000", retained_total="0003.C000" },
- { event="GroundPull", retained_total="0003.C000", extra="0001.0000", intended="+0004.C000" }
-]
-
-[[suspended_update]]
-id = "C-op-stop-pull"
-source = "constructed"
-base = "C-aim-enemy-stop"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "FollowingTheGround", "SolidEnemies"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="HorizontalDisplacement", intended="+0002.C000", retained_total="0002.C000" },
- { event="HorizontalResult", accepted="+0002.0000", result="EnemyStopped", current_speed="0000.0000", current_dash="0000.0000" },
- { event="GroundPull", retained_total="0002.C000", extra="0001.0000", intended="+0003.C000" }
-]
-
-[[suspended_update]]
-id = "C-op-aim-substitute"
-source = "constructed"
-base = "C-aim-short"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "AimingAndShooting", "PoseFitAfterMoves"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="PoseChoice", action="Running", aim="DownForward", disposition="Ordinary" },
- { event="AimTravel", intended="+0001.0000" },
- { event="AimResult", result="TerrainStopped", action="AgainstWall", aim="DownForward" },
- { event="BodyFit", action="AgainstWall", answer="NoGrowth", old_radius=[5,21], selected_radius=[5,21] },
- { event="PoseInitialized", action="AgainstWall", aim="DownForward" }
-]
-
-[[suspended_update]]
-id = "C-op-support-placement"
-source = "constructed"
-base = "C-attempt-running-empty"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "PerformedSupportChecks", "SlopesCarry"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="SupportResult", surface="Floor", before_y="010A.FFFF", after_y="0109.FFFF", answer="Lifted" },
- { event="SupportConsidered", surface="Ceiling", centre_y="0109.FFFF" },
- { event="GroundPull", retained_total="0002.C000", extra="0001.0000", intended="+0001.0000", seated=true }
-]
-
-[[suspended_update]]
-id = "C-op-aim-fit"
-source = "constructed"
-base = "C-attempt-aim-no-growth"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "PerformedBodyFit", "AimingAndShooting"]
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="PoseChoice", action="Running", aim="DownForward", disposition="Ordinary" },
- { event="AimTravel", intended="+0001.0000" },
- { event="BodyFit", action="Running", answer="NoGrowth", old_radius=[5,21], selected_radius=[5,21] },
- { event="PoseInitialized", action="Running", aim="DownForward" }
-]
-
-[[suspended_update]]
-id = "C-op-adjusted-aim"
-source = "constructed"
-base = "C-adj-aim-step"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "AimingAndShooting"]
-rules = { aim_step="0003.0000" }
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="PoseChoice", action="Running", aim="DownForward", disposition="Ordinary" },
- { event="AimTravel", intended="-0003.0000" },
- { event="PoseInitialized", action="Running", aim="DownForward" }
-]
-
-[[suspended_update]]
-id = "C-op-adjusted-dash"
-source = "constructed"
-base = "C-adj-dash-gain"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "Dash"]
-rules = { dash_gain="0000.2000" }
-save_points = "AllOfferedAndCompleted"
-observations = [
- { event="DashBuilding", before="0001.0000", gain="0000.2000", cap="0002.0000", answer="Gain" },
- { event="DashBuilt", dash="0001.2000" },
- { event="HorizontalDisplacement", intended="+0003.E000", retained_total="0003.E000" }
-]
-
-# Changed-resume schema: resume_case inherits base starting State, content, Rules and earlier completed work.
-# The old base after-result is not an expectation after a changed world. Compare expected
-# and the complete resumed State/outputs with uninterrupted execution that receives the same
-# input change at the same actual semantic opportunity.
-# boundary identifies the actual semantic request, not a concrete model method or stage enum.
-# world_replace replaces the supplied world from that moment onward. Expected earlier work
-# remains from the inherited fixture; expected checks the changed later semantic observations.
-# BeforeQuery has no returned answer; AfterAnswerBeforeEffect has the actual answer retained.
-# restoration requires serialized complete interrupted work plus provider/output progress,
-# dropping all original objects and restoring fresh instances, at this and every ordinary
-# offered/completed point. All effects/queries/publications remain once-only.
-
-[[resume_case]]
-id = "C-resume-floor-before"
-source = "constructed"
-base = "C-attempt-running-empty"
-entries = ["SuspendedMovement", "PerformedSupportChecks", "FollowingTheGround"]
-boundary = { purpose="Support", surface="Floor", point="BeforeQuery" }
-world_replace = { floor_top=288 }
-restoration = "SerializeDropDeserialize"
-expected = { floor_answer="NoSlope", floor_after_y="010A.FFFF", ceiling_centre_y="010A.FFFF", intended_pull="+0003.C000", floor_queries=1, ceiling_queries=1 }
-
-[[resume_case]]
-id = "C-resume-floor-after"
-source = "constructed"
-base = "C-attempt-running-empty"
-entries = ["SuspendedMovement", "PerformedSupportChecks", "FollowingTheGround"]
-boundary = { purpose="Support", surface="Floor", point="AfterAnswerBeforeEffect" }
-world_replace = { floor_top=288 }
-restoration = "SerializeDropDeserialize"
-expected = { floor_answer="Lifted", floor_after_y="0109.FFFF", ceiling_centre_y="0109.FFFF", intended_pull="+0001.0000", floor_queries=1, ceiling_queries=1 }
-
-
-# Independent ordinary bases for changed-decision suspension regressions.
 [[vector]]
 id = "C-answer-fall"
 source = "constructed"
@@ -7162,77 +6964,3 @@ pose = { body="Upright", action="Jumping", facing="Right", radius=[5,21] }
 pad = ["jump"]
 jump_pressed = false
 after = { position=["0100.0000", "007F.0000"], speed_y="-0000.E400", rising=true }
-
-# Additive decision_change_case format. All existing vector/suspended_update/resume_case
-# tables retain their original meaning. base supplies complete ordinary start/content/world.
-# boundary.entry and boundary.decision name a semantic existing rule's choice, never an
-# implementation stage, API call or serializer field. BeforeChoice changes a genuinely unmade
-# decision's supplied premises; AfterChoiceBeforeEffect preserves an actual chosen answer.
-# For VerticalSpeedGrowth, required_world identifies the completed actual preceding move:
-# retain its returned travel/stop/work, apply it once, and never query it again. The later
-# speed choice is offered only after that actual result, with no early prediction/caching.
-# change supplies named Rules/pad replacements from the boundary onward; other inputs remain
-# inherited. expected checks the offered answer and once-only completed quantities.
-# The base's ordinary after-result applies only when inputs remain unchanged. Changed cases
-# compare complete State/all ordered outputs with a no-save run receiving the same semantic
-# input changes at the same actual decisions (ordinary_equivalence), never with future expected
-# pose/State used as a selector. The unchanged ordinary entry also matches the base.
-# restoration saves complete movement plus caller provider/input/query/publication progress,
-# drops original objects and restores fresh ones at every offered/completed opportunity
-# across the entire update, not merely this changed boundary. Deny unknown fields.
-# Matching query counts are per direction/purpose request, not raw block callback counts.
-# supplied_poses adds imported body content for newly reachable poses under changed premises.
-# rising in a RiseEnds record says its actual answer keeps the rise, not that an unfinished
-# whole-frame rising output has already been published.
-
-[[decision_change_case]]
-id = "C-answer-speed-current"
-source = "constructed"
-base = "C-answer-fall"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
-boundary = { entry="RisingAndFalling", decision="VerticalSpeedGrowth", point="BeforeChoice" }
-required_world = { direction="Down", purpose="OrdinaryMove", result="Unobstructed", accepted="+0001.0000", after_position=["0100.0000", "0081.0000"] }
-change = { rules={ gravity="0002.0000" } }
-expected = { before_speed="+0001.0000", chosen_speed="+0003.0000", completed_speed="+0003.0000", matching_world_queries=1 }
-restoration = "SerializeDropDeserialize"
-save_points = "AllOfferedAndCompleted"
-ordinary_equivalence = "SameActualDecisionInputs"
-
-[[decision_change_case]]
-id = "C-answer-speed-held"
-source = "constructed"
-base = "C-answer-fall"
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
-boundary = { entry="RisingAndFalling", decision="VerticalSpeedGrowth", point="AfterChoiceBeforeEffect" }
-required_world = { direction="Down", purpose="OrdinaryMove", result="Unobstructed", accepted="+0001.0000", after_position=["0100.0000", "0081.0000"] }
-change = { rules={ gravity="0002.0000" } }
-expected = { before_speed="+0001.0000", chosen_speed="+0001.1C00", completed_speed="+0001.1C00", matching_world_queries=1 }
-restoration = "SerializeDropDeserialize"
-save_points = "AllOfferedAndCompleted"
-ordinary_equivalence = "SameActualDecisionInputs"
-
-[[decision_change_case]]
-id = "C-answer-rise-current"
-source = "constructed"
-base = "C-answer-rise"
-supplied_poses = [{ body="Upright", action="Falling", facing="Right", radius=[5,21] }]
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
-boundary = { entry="RisingAndFalling", decision="RiseEnds", point="BeforeChoice" }
-change = { pad=[] }
-expected = { before_speed="-0001.0000", chosen_speed="+0000.0000", completed_speed="+0000.0000", rising=false }
-restoration = "SerializeDropDeserialize"
-save_points = "AllOfferedAndCompleted"
-ordinary_equivalence = "SameActualDecisionInputs"
-
-[[decision_change_case]]
-id = "C-answer-rise-held"
-source = "constructed"
-base = "C-answer-rise"
-supplied_poses = [{ body="Upright", action="Falling", facing="Right", radius=[5,21] }]
-entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
-boundary = { entry="RisingAndFalling", decision="RiseEnds", point="AfterChoiceBeforeEffect" }
-change = { pad=[] }
-expected = { before_speed="-0001.0000", chosen_speed="-0001.0000", completed_speed="-0001.0000", rising=true }
-restoration = "SerializeDropDeserialize"
-save_points = "AllOfferedAndCompleted"
-ordinary_equivalence = "SameActualDecisionInputs"

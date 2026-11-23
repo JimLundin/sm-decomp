@@ -117,21 +117,20 @@ fn complete_ordinary_call_and_publication_lifetimes() {
         .samus
         .step(&frame, &content, &Rules::default())
         .unwrap();
-    // Fresh complete outputs are delivered at step completion, not recovered from final pose.
+    // The whole frame's outputs come out of the one call, not recovered from her final pose.
     caller.travels.travels = outcome.travelled;
     if let Some(aim) = outcome.pending_aim {
         caller.pending_aim = Some(aim);
     }
     assert_eq!(caller.pending_aim, None);
-    let timing_reads = (
-        &outcome.movement_work,
-        outcome.movement_skip,
-        &outcome.collision_tests,
-    );
-    assert_ne!(timing_reads.0.as_slice(), []);
-    assert_eq!(timing_reads.1, None);
     let world_reads = (&outcome.inside, &outcome.reached);
     assert_ne!(world_reads.0.as_slice(), []);
+    assert_ne!(world_reads.1.as_slice(), []);
+    // Standing with right pressed she runs: her moves leave her where she stood, and the aim
+    // change's step then takes her 1 px on, which the mini-map sees a frame later.
+    let minimap_reads = outcome.position_after_moves;
+    assert_eq!(minimap_reads.x, Wrapping(0x002B_4000));
+    assert_eq!(caller.samus.position.x, Wrapping(0x002C_4000));
     let sound_reads = &outcome.touchdown_requests; // Transport preserves order and repeats.
     assert_eq!(sound_reads.as_slice(), []);
     let appearance_reads = (

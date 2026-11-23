@@ -34387,3 +34387,51 @@ witness_case_ids = ["gameplay-sound/passage-hold"]
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries the sound queue, Weapons and the Ceres door actor. The frame production path it exercised is removed."
 lost_observations = ["gameplay-sound/shot-opening-no-fire: its compared cuts (1), fields (1) and outputs (5) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement-native-occupied-first-search"
+before_values = [1, 7, 0, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["movement-native-occupied-first-search"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and samus-movement now plays a whole frame with no intra-frame work receipts. The same case, start, end and production path keep movement.reached.complete and movement.inside, and pass with observation digest e6285ef8cf435fe051f23d6807f56a2240ee671c7c93315c27d3562c0cf885ae. The removed fields compared the original's work inside the frame."
+lost_observations = ["movement-native-occupied-first-search: movement.motion.0.request is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-occupied-first-search: movement.motion.0.enemy_search.candidates is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-occupied-first-search: movement.work is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-occupied-first-search: movement.collision_tests is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-occupied-first-search: movement.skip is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement-native-enemy-stop-terrain-absence"
+before_values = [1, 8, 0, 0, 0, 0, 2, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["movement-native-enemy-stop-terrain-absence"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and samus-movement now plays a whole frame with no intra-frame work receipts. The same case, start, end and production path keep movement.reached.complete and movement.inside, and pass with observation digest a708befc6fe097336e3a813cfd8bd83eb91df9b918722367d5b16764de9e9f3f. The removed fields compared the original's work inside the frame."
+lost_observations = ["movement-native-enemy-stop-terrain-absence: movement.motion.0.ordinary_terrain_tests, the count of terrain tests inside the first move, is not compared; it is the original's work inside the frame, which the whole-frame model does not expose. The property it witnessed, that the enemy-stopped move reaches no terrain, is still compared through movement.reached.complete, where the movement-required-enemy-input-omitted fault fails.", "movement-native-enemy-stop-terrain-absence: movement.motion.0.request is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-enemy-stop-terrain-absence: movement.motion.0.enemy_search.candidates is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-enemy-stop-terrain-absence: movement.work is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-enemy-stop-terrain-absence: movement.collision_tests is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose.", "movement-native-enemy-stop-terrain-absence: movement.skip is not compared: it reported the original's work inside the frame, which the whole-frame model does not expose."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement/soft-touchdown-57"
+before_values = [1, 8, 2, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["movement/soft-touchdown-57"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and samus-movement now plays a whole frame with no intra-frame work receipts. The same case, start, end and production path keep position, vertical speed, floor response, sender queue and progress, the touchdown offer and graphics, and pass with observation digest 93460f62ba24016aa472abc9463c2aad8e9bfb59b8d15ddeaa52ea83814ff0a0. movement.touchdown.floor_clip and movement.touchdown.body_fit stay compared, from the whole-frame outputs: the floor clip as her downward travel after collision (TravelledDistances), the body fit as her position after her moves, where the fit starts (MovesAsShePosed). The parts removed from them compared the original's work inside the frame."
+lost_observations = ["movement/soft-touchdown-57: movement.touchdown.floor_clip no longer compares the requested downward distance or the move's stop result; they are the original's work inside the frame, which the whole-frame model does not expose. The clipped distance is still compared.", "movement/soft-touchdown-57: movement.touchdown.body_fit no longer compares the fit's result, her old and new radii or the five ordered clearance tests; they are the original's work inside the frame, which the whole-frame model does not expose. The centre the fit starts from is still compared, and her position after the fit is compared as movement.position."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "8b55d2c63143389f95dda0a860f089a687d8bb234dc6b89d17a5e42f1586a10c"
+identity = "movement/soft-touchdown-124"
+before_values = [1, 8, 2, 0, 0, 0, 1, 1, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "replaced"
+witness_case_ids = ["movement/soft-touchdown-124"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and samus-movement now plays a whole frame with no intra-frame work receipts. The same case, start, end and production path keep position, vertical speed, floor response, sender queue and progress, the touchdown offer and graphics, and pass with observation digest 61234828319f13f241c5bd9dcc17ff5a9eb20d92a11b8485a3f2606c9604d975. movement.touchdown.floor_clip and movement.touchdown.body_fit stay compared, from the whole-frame outputs: the floor clip as her downward travel after collision (TravelledDistances), the body fit as her position after her moves, where the fit starts (MovesAsShePosed). The parts removed from them compared the original's work inside the frame."
+lost_observations = ["movement/soft-touchdown-124: movement.touchdown.floor_clip no longer compares the requested downward distance or the move's stop result; they are the original's work inside the frame, which the whole-frame model does not expose. The clipped distance is still compared.", "movement/soft-touchdown-124: movement.touchdown.body_fit no longer compares the fit's result, her old and new radii or the five ordered clearance tests; they are the original's work inside the frame, which the whole-frame model does not expose. The centre the fit starts from is still compared, and her position after the fit is compared as movement.position."]

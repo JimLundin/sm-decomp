@@ -195,8 +195,7 @@ impl ActualReader {
                 InputReader::NativeSearch(_),
                 ProductionOutputs::Movement(outputs),
             ) => {
-                let mut fields = super::native_search::actual(&outputs);
-                fields.extend(super::full_movement::actual(&outputs)?);
+                let fields = super::touched_cells::actual(&outputs)?;
                 *retained = Some(Box::new(outputs));
                 Ok(fields)
             }
@@ -270,11 +269,7 @@ impl ActualReader {
             Self::HealthTail => super::health_tail::initial(production),
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
-            Self::NativeSearch(_) => {
-                let mut fields = super::native_search::initial();
-                fields.extend(super::full_movement::initial()?);
-                Ok(fields)
-            }
+            Self::NativeSearch(_) => super::touched_cells::initial(),
             Self::Recorded(actual) => actual.initial(production),
             Self::Audio {
                 publications,

@@ -39,15 +39,12 @@ Every quantity here is something the player sees or can measure frame by frame.
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
 | accepted floor response | optional `FloorResponse`, carrying the response kind and signed `VerticalSpeed` in 1/65536 px/frame immediately before that response | a touchdown, bounce or continued turn has different sound and motion | output (sound transport and samus-appearance); `AcceptedFloorResponse` |
-| performed movement decisions | ordered `MovementWork`, with `MotionAttempt`, `SupportCheck` and `BodyFitConsideration`; coordinates and signed travel in 1/65536 px, body half-sizes and placements in whole px, cells in column/row units | checking travel, support and body clearance consumes time even when no leading-edge cell is reached | output (CPU timing); `MotionAttempts`, `PerformedSupportChecks`, `PerformedBodyFit` |
-| reached eligible enemy | `CandidateIndex`, its ordinal in the supplied ordered boxes, starting at zero; centre and body half-sizes in px; `CandidateResult` (`Miss`, `AlreadyOverlapping`, `Touching`, `StopsAtGap`), carrying the signed pixel gap where the target reaches it | different enemies can stop the same travel at different gaps | output (CPU timing); `ReachedEnemyCandidates` |
-| ordinary movement skipped | optional `MotionSkipReason` (`FacingPlayer`), for the admitted frame only | facing the player without a moving elevator makes no ordinary travel or support request | output (CPU timing); `MotionAttempts` |
-| performed collision tests | ordered `CollisionTests`, each with named purpose, `Direction`, tested `Cell` and horizontal `VerticalMotionAtTest` (`ExactlyZero` or `Nonzero`) where applicable | collision work consumes time and can delay sound and the next displayed frame | output (CPU timing); `PerformedCollisionTests` |
 | touchdown cue opportunities | ordered named `SoundRequest`s, each with its sound identity, library and queue allowance | touchdown and ending a spin can sound separately | output (sound transport); `TouchdownRequests` |
 | touchdown graphics opportunity | `bool` | a touchdown can start dust or a splash when appearance admits it | output (samus-appearance); `TouchdownRequests` |
 | transition firing aim | optional `FiringDirection`, defined below; a publication, not a distance | a shot made while her pose changes keeps the intended gun direction | output (weapons-projectiles `CannonOrigin` through caller-held pending aim) |
 | latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
+| her position after her moves | x, y: `P.S` | the mini-map shows the cell her moves leave her in, before the aim change's step and the pose change move her, so a step or a push that takes her across a screen's edge shows there a frame later | output (the mini-map of the HUD's domain reads it; each frame works it out, so it isn't State); `MovesAsShePosed` |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround`; output (samus-appearance reads `vertical speed after her moves`, §1.4) |
@@ -263,11 +260,13 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Carrying on along the ground, braking would take her below zero → she stops (horizontal speed
   0) and follows the pad again [original only]
 - Standing, crouched or against the wall → the pad doesn't move her: she moves by her dash only,
-  then halts (horizontal speed 0, dash 0, following the pad) [R77, R47, R49, R107, R18]
+  then halts (horizontal speed 0, dash 0, following the pad) [R77, R47, R49, R107, R18,
+  C-attempt-idle-empty, C-attempt-idle-zero-touch]
 - While her body changes shape, or as the ball at rest on the ground following the pad with a
   vertical motion (a vertical speed, or falling at 0: §1.2, `FollowingTheGround`) → she moves by
   her dash only and keeps both speeds [R48, R89, R128, R129, BG1, BG2]
-- Facing the screen → she doesn't move at all and keeps her speeds [C-elevator, C-screen-skid]
+- Facing the screen → she doesn't move at all and keeps her speeds: no move, no ground pull and
+  no slope's lift or push [C-elevator, C-screen-skid, C-attempt-screen]
 - The ball at rest on the ground, following the pad, with no vertical motion → it moves by its
   dash only and halts after that move [R43]
 - The ball at rest, braking or skidding → it rolls like running, with its own speeds, and keeps
@@ -477,7 +476,8 @@ axis. These are named choices, not angles rounded to a movement direction.
   (`PoseFollows` items 2 and 3), as a running pose other than the one she is in (running with
   another aim, but also from standing, from a landing, or from any pose whose pad chart row leads
   into running) → she moves 1 px forward, by the facing she had at the frame's start, after that
-  frame's moves and the ground pull, without a speed change [A1, W12, W17, W18]
+  frame's moves and the ground pull, without a speed change [A1, W12, W17, W18,
+  C-attempt-aim-no-growth, C-touch-aim-step]
 - Running, the pad chart's let-go row keeping her running pose (no other row fits and her
   horizontal speed at the frame's start isn't 0, `PadChart`) → the kept pose counts as chosen: she
   moves the 1 px forward on top of the braking move, every frame she brakes so, the frame her dash
@@ -679,14 +679,26 @@ axis. These are named choices, not angles rounded to a movement direction.
   into a crouch: no record has her upright on the ground and falling at 0).
 
 ### MovesAsShePosed
-- kind: timing.
-- summary: a frame's moves follow the pose she started it in.
+- kind: timing and output.
+- summary: a frame's moves follow the pose she started it in, and the frame reports where they
+  leave her.
 - params: none.
 - switch: none.
 - The frame she changes pose → she still moves as the pose at the frame's start says: what she is
   doing, her speeds, and what a landing or a fall does, come from the pose at the frame's start
   [J1, J2, A1, W12, W14]
-- checked: oracle (J1, J2, A1).
+- Each frame → it reports `her position after her moves` (§1): where her horizontal move, the
+  near-wall test, the ground pull or her vertical move, and the elevator's descent leave her,
+  before the aim change's step (`AimingAndShooting`) and before the pose change's push, lift and
+  lowering (`PoseFitAfterMoves`, `ShrinkingLowersHer`) [C-after-moves-screen-edge,
+  C-touch-aim-step, C-adj-aim-step, C-fit-ceiling, C-fit-land-tunnel, C-shrink-floor, C-cap,
+  C-elevator]
+- So on a frame without a step, a push, a lift or a lowering it is her position at the frame's
+  end (C-cap, C-elevator), and otherwise it differs from it by them: standing still at 00FF.0000
+  with the pad asking to run, her moves leave her at 00FF.0000 and the step takes her to
+  0100.0000 (C-after-moves-screen-edge).
+- checked: oracle (J1, J2, A1); constructed (C-after-moves-screen-edge and the other vectors that
+  give `position_after_moves`).
 
 ### PoseFitAfterMoves
 - kind: timing and mechanic.
@@ -740,7 +752,8 @@ axis. These are named choices, not angles rounded to a movement direction.
 - Something on one side only → the far side is looked at once more for `g − room` (blocks at her
   old size; for a push from a solid enemy, solid enemies at her new size), and unstopped, she is
   pushed away from it by `g − room` in whole px, keeping the subpixel her looks left: up from what
-  is below her, down from what is above her [PF1, PF2, PF3, U1, C-fit-ceiling]
+  is below her, down from what is above her [PF1, PF2, PF3, U1, C-fit-ceiling,
+  C-attempt-fit-push]
 - So on a floor with nothing above, her feet stay where they were: a body that grows by n px
   raises her centre by n px.
 - A block and a solid enemy on the same side → the enemy's far-side look comes first and can
@@ -748,11 +761,11 @@ axis. These are named choices, not angles rounded to a movement direction.
   the enemy were not there [C-fit-land-refused, C-fit-land-pushed]
 - That far-side look stopped, or something above her and something below her (blocks or solid
   enemies, in any mix) with her old body under 8 px half-height (the ball) → the change is
-  refused [C-fit-ball-tunnel, C-fit-land-refused]
+  refused [C-fit-ball-tunnel, C-fit-land-refused, C-attempt-fit-refuse]
 - Something above her and something below her, her old body 8 px half-height or more → she takes
   crouched `Still` instead, aim `Forward`, facing as before the change; with an old body shorter
   than the crouch she rises by the difference, her feet staying where they were, and there is no
-  other push [C-fit-tunnel, C-fit-land-tunnel]
+  other push [C-fit-tunnel, C-fit-land-tunnel, C-attempt-fit-substitute]
 - A block on one side and a solid enemy on the other → each side's far-side look runs first, as
   in the one-side case (the enemy's, then the block's), and either one stopped refuses the change
   before the crouch or the ball's refusal is reached [C-fit-step-enemy]
@@ -872,7 +885,7 @@ axis. These are named choices, not angles rounded to a movement direction.
 - switch: parameter.
 - Each frame in the air → she moves vertically by her vertical speed, then it grows downward,
   `vy + 0.1C00` (rising, the pull takes 0.1C00 off her upward speed) [R7, R53, R70, R92, R109,
-  R3]
+  R3, C-answer-fall, C-answer-rise]
 - Falling, her speed's pixel part exactly 5, `= 5` → it stops growing [C-fallcap-b,
   C-fallcap-past]
 - So it settles at 5.1400 (4.F800 + 0.1C00, C-fallcap-a), and a speed of 5.1400 to 5.FFFF keeps
@@ -1130,139 +1143,6 @@ axis. These are named choices, not angles rounded to a movement direction.
   even when both name `SpinEnded`; the landing allowance is 6, independent of normal
   drawing's allowance. The caller preserves their order and any repeated identity.
 - checked: constructed.
-
-### PerformedCollisionTests
-- kind: output.
-- summary: report the movement work that can delay sound and display.
-- params: none.
-- switch: none.
-- A collision test that actually evaluates a cell for a move or look → report that cell,
-  its direction and its semantic purpose: ordinary movement, aim change, ground following, near-wall
-  reach, body-fit room above or below, body-fit clearance on the far side, or body lowering.
-  Cells not tested because an enemy or an earlier cell stopped the search are absent
-  [C-work-stop-first, C-work-enemy-first, C-work-fit, C-work-lowering, C-work-near-wall, C-work-aim-change]
-- A movement or look of exactly zero distance → no leading-edge cell tests; an enemy can
-  still stop it as `SolidEnemies` says [C-work-air-zero, C-work-enemy-first]
-- A horizontal ordinary or aim-change move → its tests retain whether the vertical speed
-  is exactly zero at that move. The condition describes the performed move rather than
-  whether she is physically on the ground; it is not reconstructed from a frame's final speed
-  [C-work-move-zero, C-work-move-nonzero, C-work-aim-change]
-- An airborne horizontal move at zero vertical speed → `ExactlyZero`, without claiming
-  physical ground contact [C-work-air-zero]
-- A look → retain its tested direction and purpose, even though `TouchedCells` reports
-  the reaction's way as `Look`; the reaction's way and the performed work are separate
-  meanings [C-work-fit, C-work-lowering]
-- A direct seating/read of a slope or the cells inside her body that does not evaluate a
-  leading-edge move/look → no leading-edge collision test
-  [C-work-no-raw-reads]
-- The report describes actual performed tests, in their observable order. It contains no
-  CPU addresses, elapsed times or instruction identities. CPU timing consumes the semantic
-  work; this domain does not assign a cost to a test.
-- checked: constructed.
-
-### MotionAttempts
-- kind: timing.
-- summary: actual requests to test travel remain observable even when no block cell is reached.
-- params: none.
-- switch: none.
-- A movement or clearance is actually requested → publish its purpose, direction, signed
-  intended travel, starting centre and body half-sizes, requested world and named result, in
-  performed order. Ordinary movement reports accepted signed travel; clearance reports allowed
-  whole-pixel room. An actual enemy search also reports its supplied count and considered boxes [C-attempt-running-empty,
-  C-attempt-running-touch, C-attempt-idle-empty, C-attempt-idle-zero-touch, C-attempt-fit-push]
-- A request has exactly zero travel or an enemy stops it before blocks → it remains a performed
-  request, with its reached candidates; an empty leading-edge test list does not remove it
-  [C-attempt-idle-empty, C-attempt-idle-zero-touch, C-attempt-running-touch]
-- Facing the player with the elevator inactive → no ordinary movement request or support check;
-  publish that admission reason [C-attempt-screen]
-- A selected body requires enemy clearance and block clearance → retain the distinct requests
-  and the geometry each actually used, including the block looks of eight pixels before a
-  longer look and the far-side look where admitted [C-attempt-fit-push,
-  C-attempt-fit-substitute, C-attempt-fit-refuse]
-- Intended travel is the actual distance submitted for that request, after any applicable
-  movement limit and before terrain shortens it on a slope. It differs from the speed-derived
-  move intent and from accepted travel (`TravelledDistances`). Terrain uses the unshortened
-  request to choose its leading-edge line. With a one-pixel whole-part limit and a half-factor
-  slope, `2.C000` speed-derived travel requests `1.C000` and accepts `0.E000`
-  [C-attempt-request-stages]. `Unobstructed` means no stopping contact; slope shortening can
-  still make accepted travel smaller than intended.
-- An ordinary request considers enemies → judge their reach using the complete submitted
-  travel before terrain applies any slope factor. An enemy stop skips terrain and its shortening. With a
-  one-pixel whole-part limit, a half-factor slope and an eligible enemy one pixel ahead,
-  the `1.C000` request stops at the enemy gap of one pixel; it does not become a `0.E000`
-  enemy request [C-attempt-slope-enemy-before-factor].
-- Ordinary movement considers enemies then blocks. An enemy-only or block-only clearance
-  retains that requested world explicitly. Enemy clearance carries `CandidateCount` and its
-  considered boxes, even for an empty search; block-only clearance omits candidate fields
-  because that world does not consider enemies. Every clearance carries its own purpose, direction, signed
-  requested distance, starting centre, body half-sizes, named result and `ClearanceRoom`.
-  Clearance room is not ordinary accepted travel [C-attempt-fit-push,
-  C-attempt-fit-substitute, C-attempt-fit-refuse].
-- These are measured decisions, not elapsed durations. Existing behaviours decide whether
-  travel is requested and how it is stopped; publication preserves their results.
-- The motion result is `MotionResult` (`Unobstructed`, `EnemyStopped`, `TerrainStopped`).
-  The requested world is `RequestedWorld` (`Blocks`, `EnemiesThenBlocks`, `SolidEnemies`).
-  Supplied eligible-box count is `CandidateCount`, in boxes. A clearance's allowed room is
-  `ClearanceRoom`, in whole pixels. Each is a fresh publication read by CPU timing.
-- checked: constructed (the cited complete-frame vectors); complete native attempt coverage 0.
-
-### ReachedEnemyCandidates
-- kind: timing.
-- summary: only the eligible enemy boxes actually considered during a request are reported.
-- params: none.
-- switch: none.
-- A request considers eligible enemies → publish each supplied candidate's identity and box,
-  in supplied order, with its geometric result: missed target, already overlapping, touching
-  or stopping at a positive gap [C-attempt-running-miss-touch, C-attempt-running-gap-touch]
-- A candidate touches or stops travel → it ends that request's candidate search; later supplied
-  candidates are absent from the considered list, even if one would stop travel sooner
-  [C-attempt-running-gap-touch, C-attempt-running-touch-gap]
-- A request has no supplied eligible enemy → publish an empty considered list for that actual
-  request [C-attempt-running-empty, C-attempt-idle-empty, C-attempt-fit-push]
-- The supplied order contains eligible boxes, as the caller provides them. Selecting that
-  population and testing excluded actors' eligibility are the caller's work.
-- checked: constructed (the cited complete-frame vectors); complete native candidate coverage 0.
-
-### PerformedSupportChecks
-- kind: timing and mechanic.
-- summary: floor and ceiling support are separate world decisions after ordinary horizontal motion.
-- params: none.
-- switch: none.
-- Ordinary horizontal motion completes, including zero travel or an enemy stop → publish the
-  floor support check then the ceiling support check, each with its actual centre, body
-  half-sizes, centre-column cell, surface result and placement; a check with no effect remains
-  present [C-attempt-running-touch, C-attempt-running-empty, C-attempt-idle-zero-touch]
-- The floor check places her → the ceiling check uses that placed centre
-  [C-attempt-running-empty, C-attempt-running-touch]
-- An aim change steps her forward → that step adds no floor or ceiling support checks
-  [C-attempt-aim-no-growth]
-- An ordinary nonzero vertical move reaches blocks → the previous seated condition clears before
-  its new support result; an enemy stop before blocks retains it
-  [C-attempt-running-empty, C-attempt-running-touch, C-attempt-running-gap-touch]
-- Ordinary vertical travel of zero retains seating, as `BlocksStopFlush` says. A body-fit
-  clearance does not clear seating merely because its requested distance is nonzero.
-  The nonzero-fit seating distinction is original-only pending a complete seated-fit witness.
-  Support outcomes and their exact placements are the existing `SlopesCarry` rules.
-- checked: constructed (the cited complete-frame vectors).
-
-### PerformedBodyFit
-- kind: timing.
-- summary: the actual consideration of a selected new body is observable, including no growth.
-- params: none.
-- switch: none.
-- Ordinary pose selection actually considers a changed target that does not face the player
-  for fit → publish the old and selected body half-sizes,
-  the actual centre at consideration, and its decision: no growth, growth clear, pushed away,
-  refused, or crouched instead; retain each actual clearance and selected placement
-  [C-attempt-aim-no-growth, C-attempt-fit-push, C-attempt-fit-substitute, C-attempt-fit-refuse]
-- No new-body consideration is admitted → publish no fit consideration
-  [C-attempt-running-empty, C-attempt-screen, C-attempt-idle-empty]. An animation end that
-  hands over its pose always bypasses consideration, clearance and fit placement, even when
-  supplied body content makes that target taller [C-attempt-taller-animation-handover].
-- `PoseFitAfterMoves` decides its clearances, refusal, substitution and placement. Its
-  publication is distinct from ordinary accepted travel and preserves their existing order.
-- checked: constructed (the cited complete-frame vectors); mixed/stepped full-receipt coverage 0.
-
 
 ### Landing
 - kind: mechanic.
@@ -1679,12 +1559,11 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - Its end handing over its pose → the frame reports `handed over` (§1.4) [W16, C-landing-aimed-jump,
   C-turn-end-plain]
 - So with no end, or an end that gives way, it doesn't (R-turn-gives-way, C-landing-gives-way).
-- An end handing over its pose → accept that pose without body-fit consideration, clearance,
-  refusal, substitution or fit placement, including when supplied body content makes it taller.
-  Initialization and the end's ordinary effects still
-  run. An end that gives way uses the ordinary selection and fitting rules. With imported game
-  body sizes and animation endings no handed-over pose grows; this content fact does not limit
-  the bypass rule [C-attempt-taller-animation-handover]
+- An end handing over its pose → she takes that pose without pose fit: no looks, no push, no
+  refusal or crouch instead, and no placement, also where the body the caller gives for it is
+  taller. The end's own effects still come. An end that gives way is fitted as any chosen pose
+  is. In the game no handed-over pose is taller than the one before it, which doesn't limit the
+  rule [C-attempt-taller-animation-handover]
 - So an end never ends her dashing at the pose change: of the effects an end hands over only a
   turn's takes her dash, and a turn's own moves have already ended her dashing (`Dashing`,
   C-dash-turn-moves).
@@ -1886,10 +1765,22 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - A solid enemy in a move's path → it decides that move alone: she stops against it and no block
   stops her, even a nearer one, so the move can end with her edge overlapping a block; blocks stop
   her only on a path free of solid enemies (`BlocksStopFlush`) [original only]
+- Several solid enemies → the world gives them in an order, and the first in that order that she
+  reaches and doesn't already overlap decides the move as above, even where a later one would
+  stop her sooner; the ones after it play no part [C-attempt-running-miss-touch,
+  C-attempt-running-gap-touch, C-attempt-running-touch-gap]
+- A horizontal move → enemies judge it by its whole length after the horizontal limit
+  (`BlocksStopFlush`), before a sloped floor shortens it (`SlopesSlowTheWalk`); an enemy that
+  stops it leaves no shortening [C-attempt-slope-enemy-before-factor]
+- So with a limit of 1 px, a 0.80 floor and an enemy 1 px ahead, a 2.C000 run is judged as 1.C000
+  and stops at the 1 px gap; shortened first, to 0.E000, it would miss the enemy
+  (C-attempt-slope-enemy-before-factor).
 - checked: oracle (W13, a landing on one 2 px below and the fit's look touching it; W20,
   running on one; CE1, a skid braked to 0 beside one); constructed (C-enemy-ahead,
   C-enemy-adjacent, C-enemy-down, C-enemy-overlap, C-aim-enemy, C-aim-enemy-stop,
-  C-skid-zero-enemy).
+  C-skid-zero-enemy, C-touch-enemy-first; the order of several, C-attempt-running-miss-touch,
+  C-attempt-running-gap-touch, C-attempt-running-touch-gap; the move before a slope's factor,
+  C-attempt-slope-enemy-before-factor).
 
 ### SlopesCarry
 - kind: mechanic.
@@ -1901,7 +1792,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - Seated, an ordinary vertical move of more than 0 reaches blocks → she is no longer on a slope;
   an enemy stopping it before blocks retains her seat [C-seat-lift, C-seat-none,
   C-attempt-running-touch, C-attempt-running-empty]
-- A move of exactly 0 leaves her seated (`BlocksStopFlush`). Three things seat her: the check
+- A move of exactly 0 leaves her seated (`BlocksStopFlush`), and so does a look, pose fit's or
+  the shrink's, whatever its distance (original only). Three things seat her: the check
   after every horizontal move (below), a downward move stopped by a stepped block, and a look down
   that a stepped block stops. So a frame's pull is 1 px when that frame's horizontal move seated
   her, or the previous frame's pull or look down stopped on a stepped block.
@@ -2014,6 +1906,10 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   C-slope-fall-walk, C-slope-walk-left]
 - So a leftward move's length rounds up. 1.7000 at 0.C0 is 1.1400, 4.C000 at 0.D8 is 4.0200, and
   0.C000 at 0.C0 is 0.9000; a factor of 1.00 still cuts the move to a multiple of 0.0100.
+- A move the horizontal limit cuts (`BlocksStopFlush`) → the factor shortens the limited move:
+  with a limit of 1 px and a factor of 0.80, a 2.C000 move is limited to 1.C000 and shortened to
+  0.E000 [C-attempt-request-stages]
+- Solid enemies judge the move before it is shortened (`SolidEnemies`).
 - A sloped ceiling never shortens the move, nor does a sloped floor with any vertical speed but 0
   (C-slope-walk-ceiling, C-slope-walk-air).
 - The cells that count are those `TouchedCells` names for the move: the leading edge's column at
@@ -2027,7 +1923,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - checked: harness (S1 samus-input-poses:512, S2 r01:717; the moves of r01:625-630 at 0.C0 and of
   r06:123-126 at 0.D8, aim steps included); constructed (C-slope-turn-walk and C-slope-fall-walk,
   S1's and S2's rules over an invented room, C-slope-walk-left, C-slope-walk-air,
-  C-slope-walk-ceiling).
+  C-slope-walk-ceiling; the limit before the factor, C-attempt-request-stages).
 
 ### TouchedCells
 - kind: output.
@@ -2042,7 +1938,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   her vertical move, the aim change's step, the elevator's 1 px), then each look of the pose change
   (pose fit's block looks, `PoseFitAfterMoves`, in the order given there, or the look of
   `ShrinkingLowersHer`) → in the order they happen, the cells of her leading edge's line at the
-  move's target, the line `BlocksStopFlush` names [C-touch-run, C-touch-wall, C-near-wall-item]
+  move's target, the line `BlocksStopFlush` names [C-touch-run, C-touch-wall, C-near-wall-item,
+  C-touch-aim-step, C-touch-near-wall-look, C-touch-fit-looks, C-touch-lowering-look]
 - A horizontal move → the column of her leading edge at the target, in each row her body spans
   where she stands before the move, top row first [C-touch-run, C-touch-wall]
 - A vertical move → the row of her leading edge at the target, in each column her body spans
@@ -2063,9 +1960,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   cell that changes the scrolling, a door to a room, spikes) do, as for a move [C-near-wall-item]
 - The world answers a reacting cell's solid-or-air for a look as for a move (`OtherBlockKinds`).
 - The first cell that stops her → the report ends there: the cells after it on the line are not
-  reached [C-touch-wall, C-kind-spikes, C-kind-reacting-solid]
+  reached [C-touch-wall, C-kind-spikes, C-kind-reacting-solid, C-touch-stop-first]
 - A move of exactly 0, or a move or a look that a solid enemy decides (`SolidEnemies`) → it
-  reaches no cells: pose fit's enemy looks reach none [C-touch-inside-twice]
+  reaches no cells: pose fit's enemy looks reach none [C-touch-inside-twice, C-touch-enemy-first]
 - A cell that stands for another (`OtherBlockKinds`) → it is reported as the cell it stands for
   [C-kind-stand-in]
 - **The cells she is inside.** Once each frame, before her moves, from her position at the frame's
@@ -2082,8 +1979,10 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - checked: harness (W15: the near-wall test reaches item-morph-ball's item cell, and the game
   picks the item up); original only (area-brinstar's scrolling cells; W15's pose-fit looks);
   constructed (C-near-wall-item, W15's cells over an invented room, C-touch-run, C-touch-wall,
-  C-touch-fall-odd, C-touch-inside-twice, the C-kind vectors, and the looks' cells in
-  C-fit-ceiling, C-fit-step-ceiling and C-shrink-floor).
+  C-touch-fall-odd, C-touch-inside-twice, C-touch-stop-first, C-touch-enemy-first,
+  C-touch-aim-step, the C-kind vectors, and the looks' cells in C-fit-ceiling,
+  C-fit-step-ceiling, C-shrink-floor, C-touch-fit-looks, C-touch-lowering-look and
+  C-touch-near-wall-look).
 
 ### OtherBlockKinds
 - kind: mechanic.
@@ -2187,11 +2086,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 
 ## 11. Open questions
 
-- With more than one solid enemy in a move's reach, the first qualifying enemy in the supplied
-  order decides (`SolidEnemies`): one she already overlaps is skipped. Constructed complete-frame
-  witnesses check multiple supplied boxes, rejected prefixes, first accepted stops and reversed
-  order (`C-attempt-running-miss-touch`, `C-attempt-running-gap-touch`,
-  `C-attempt-running-touch-gap`). Complete native candidate-order receipts remain unproved.
+- With more than one solid enemy in a move's reach, the first in the world's order that she
+  reaches decides (`SolidEnemies`): constructed vectors check it (C-attempt-running-miss-touch,
+  C-attempt-running-gap-touch, C-attempt-running-touch-gap); no recorded vector does yet.
 
 - Answered: an animation's end neither brings nor cancels the extra pixel of
   `AimingAndShooting`; the step follows the pose the pad chart and her moves chose.
@@ -2272,94 +2169,3 @@ acts on her motion as below. These rules are Samus's; other actors get their own
     by that speed under the pull, where the unaimed crouched turn keeps the speed without moving by
     it, as the spec says of every pose on the ground. The records have the aimed crouched turns only
     with no vertical motion, where the two move alike; open until the oracle shows one.
-
-## 12. Observing and suspending ordinary movement
-
-This extends the observations of existing rules, not their choices or numbers. The ordinary
-frame remains one update. The implementation chooses how to offer and retain its decisions;
-these opportunities do not expose internal control flow. Timing and external scheduling belong
-to the caller, and never choose a movement answer.
-
-| Quantity | Units and domain meaning | Read by |
-| --- | --- | --- |
-| pending movement decision | named existing rule, its current semantic inputs, its intended world request or the actual answer already chosen/returned; speed/travel in 1/65536 px/frame or px, poses as section2, bodies in px | output (timing); completion of that decision |
-| horizontal amount before a stop | magnitude of speed plus dash in 1/65536 px, including wrapping carries; held for this update only | FollowingTheGround |
-| choice before aim and accepted choice | poses and ordinary/handover disposition; the latter includes any aim or fit substitution/refusal | AimingAndShooting, PoseFitAfterMoves, PoseFollows; output (appearance) |
-| interrupted ordinary movement | complete current movement State, pending decision and still-needed prior quantities, completed ordered requests/outputs and consumed input position | output (caller save/restore); continuation of this update |
-
-These are transient update quantities, not extra memory after a completed frame. The caller can
-save and restore an interrupted update in full; complete movement State retains every quantity
-of section1.2. An answer already chosen or returned cannot be changed by supplying different completion inputs.
-Mutable external premises for a decision not yet made must be current when that decision is made;
-a caller that cannot establish them must defer that work without publishing its effects.
-
-A returned world answer owns the travel, stop and performed world work it actually resolved.
-Applying it is not permission to choose and apply a later speed rule without first offering that
-rule's actual chosen answer. A genuinely later unmade speed decision reads fresh premises when
-it is offered; after that choice, changed completion premises cannot alter its answer or effect.
-Do not choose that future answer early merely to retain it. In particular, the speed growth after
-an airborne move is observable before its effect, with the completed travel retained independently
-of that speed answer. These boundaries preserve the existing ordinary arithmetic and ordering;
-they add no new movement rule, cost or scheduler.
-
-### PerformedMotionDecisions
-- kind: timing.
-- summary: the actual decisions that build motion, test the world and select her pose are observable before their dependent effects.
-- params: none; the observed rules retain their existing parameters and content.
-- switch: none.
-- An ordinary update reaches a speed, dash, displacement, support, world-test, aim, fit or pose-effect decision → offer the actual named rule and current operands before its effect; a world request is offered before querying, its actual returned answer after querying and before dependent effects, and a local chosen answer before applying it [C-op-run, C-op-stop-pull, C-op-aim-substitute, C-op-support-placement, C-op-aim-fit]
-- Completing an offered decision → apply its answer once and report the actual resulting quantities and ordered outputs before offering a decision that consumes them [C-op-run, C-op-stop-pull, C-op-aim-substitute, C-op-support-placement, C-op-aim-fit, C-answer-speed-current, C-answer-speed-held, C-answer-rise-current, C-answer-rise-held]
-- checked: constructed (the opportunity vectors above); recorded ordinary quantities (R-op-run); adjusted ordinary rules (C-op-adjusted-aim).
-
-A world request offers its intended geometry and purpose without predicting the answer. Completing
-a request queries the actual World once; its returned answer is then observable before the model
-applies dependent State changes. Suspension after that answer retains it without querying again.
-A local offered answer comes from the same existing rule as ordinary updating. Its name describes
-the rule's outcome, not a branch in another program. Speed-building reads the dash effect already
-completed; displacement reads the speed effect already completed. The retained horizontal amount
-comes from those actual quantities before a stop, independent of accepted travel or halted Run.
-Ground following reads it only after actual support checks, with seating and any placement as
-SlopesCarry already defines. Every support and world answer precedes effects that consume it;
-its considered candidates and performed cells keep the existing request order.
-
-The actual pose choice before aim is observable with the earlier motion result. An aim stop can
-change that choice; fit reads the changed choice and reports what she really takes. Pose
-initialization and response/row effects report their actual accepted pose and quantities, rather
-than a desired or final-frame pose. Appearance reads the actual selected figure and decides its
-own clip initialization. No animation playhead becomes movement State.
-
-### SuspendedMovement
-- kind: timing.
-- summary: suspension preserves a movement decision and all earlier work without repeating it.
-- params: none.
-- switch: none.
-- Suspend an offered decision before its effect, or suspend after a completed decision → serialize complete current movement, the uncompleted request or actual answer if any, earlier quantities still needed, completed requests/outputs and input progress; discard the original interrupted instance and deserialize into a fresh instance whose restoration completes the same update with identical final State and ordered outputs as uninterrupted updating [C-op-run, C-op-stop-pull, C-op-aim-substitute, C-op-support-placement, C-op-aim-fit, R-op-run, C-op-adjusted-aim, C-op-adjusted-dash]
-- A world premise changes after earlier work but before an actual support query → query the current world once and use its fresh answer for placement and the subsequent pull [C-resume-floor-before]
-- A world premise changes after the actual support answer, before applying its effect → retain and apply that already returned answer once, with no second query; later unmade queries read the new world [C-resume-floor-after]
-- A speed-growth premise changes after movement's returned world answer but before that later speed choice → retain the world answer, query it no second time, and offer the speed answer from the current premise before its effect [C-answer-speed-current]
-- A speed-growth or rise-ending premise changes after its actual local answer was chosen → apply that retained answer once; neither recompute it nor hide another unoffered choice in its completion [C-answer-speed-held, C-answer-rise-held]
-- checked: constructed and recorded-input opportunity cases above, with every offered/completed opportunity used as a save point.
-
-The ordinary entry completes these same rules without suspension. Observation and saving do not
-advance movement, consume another world answer or repeat a publication. A completed update cannot
-resume as though it had uncompleted effects. The model's complete State and ordinary outputs must
-remain unchanged for every existing vector, including nonselected poses and world responses.
-
-Opportunity vectors use the additive `suspended_update` format documented in the existing
-[samus-movement vectors](../../scenarios/vectors/samus-movement.toml). Their base cases retain
-all ordinary start/content/input/result checks. These observations add no CPU costs, interrupt
-rules, environment owner or gameplay dispatch mechanism.
-
-The changed-resume cases distinguish a request not yet answered from an actual retained answer.
-C-resume-floor-before removes the slope before the floor query: no lift, an unseated 3.C000 pull.
-C-resume-floor-after removes it after its actual lifted answer: apply that lift, then query the
-ceiling in the new world and retain the seated one-pixel pull. Prematurely cached future answers
-and recomputed returned answers are both incorrect. Missing production freshness still belongs
-to production; these are total answers to the supplied changed world, not Unsupported rules.
-
-Every all-opportunity save test serializes the complete interrupted work and caller-held input,
-query and output progress, discards the original objects, then deserializes into fresh objects.
-A clone or in-memory checkpoint is insufficient. All pending requests/answers, still-needed
-quantities, complete movement and completed outputs survive. Resuming performs each world query,
-State effect and output publication once. The tests compare all of them, not only the listed
-observation subsequence. No serializer layout, stage enum or method list is prescribed.

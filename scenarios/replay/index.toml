@@ -450,7 +450,7 @@ kind = "scoped"
 row = "chain-any-0003-DFD7"
 start = { source = "native-opportunity", path = "native-search-inputs-v1", sha256 = "2adee318fb765d39da0fcb85a16a326de3c84522946df2b37811fe52782a880c", video_frame = 9233, source_start_index = 424, source_completion_index = 4283 }
 end = { cut_inclusive = 9233 }
-rules = ["samus-movement/MotionAttempts", "samus-movement/ReachedEnemyCandidates", "samus-movement/PerformedCollisionTests", "samus-movement/PerformedSupportChecks", "samus-movement/PerformedBodyFit"]
+rules = ["samus-movement/TouchedCells"]
 profile = "reference"
 responsibilities = ["movement"]
 content = "player-rom-import"
@@ -458,11 +458,10 @@ inputs = "native-search-inputs"
 checkpoints = true
 limits = [
   "Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.",
-  "Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared; Motion ordinal0 also retains complete request and ordered considered candidate semantics.",
-  "One Miss candidate is order-insensitive; the separate derived enemy-stop witness checks forbidden ordinary-right terrain absence. Elapsed CPU timing remains unproved.",
+  "The complete ordered reached cells and the inside cells are compared. The original's work inside the step (motion, support and fit work, collision tests, the first request's enemy candidates, skip status) has no whole-frame counterpart and is not compared. Elapsed CPU timing remains unproved.",
   "Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change."
 ]
-expectations = { provider = "native-complete-movement-work", fields = ["movement.motion.0.request", "movement.motion.0.enemy_search.candidates", "movement.work", "movement.collision_tests", "movement.reached.complete", "movement.inside", "movement.skip"], outputs = [] }
+expectations = { provider = "native-complete-movement-work", fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
 
 [[case.borrowed]]
 dependency = "complete scoped seed and ordinary opportunity"
@@ -480,9 +479,9 @@ claim = "Fixed existing typed converters and player ROM content supply the clean
 [[case.borrowed]]
 dependency = "complete independent movement observations"
 provider = "independently reviewed native-search-work-v2 source projection"
-fields = ["ordered Motion Support BodyFit", "nested BodyFit checks", "complete CollisionTests", "complete reached", "complete inside", "movement skip"]
+fields = ["complete reached", "complete inside"]
 phase = "selector424 through complete movement return"
-claim = "Frozen source-only projection retains zero-effect Support and no-growth BodyFit; expectations are read after production and never supply input or State."
+claim = "Frozen source-only projection; its reached and inside cells are read after production and never supply input or State."
 
 [[case]]
 id = "movement-native-enemy-stop-terrain-absence"
@@ -490,7 +489,7 @@ kind = "scoped"
 row = "derived-chain-any-0003-touch"
 start = { source = "native-opportunity", path = "native-search-order-v1", sha256 = "e6e41959d1d4ee9b9f8c811642849a18bc23a6a1df91f0acbedda613d2b1de73", video_frame = 9233, source_start_index = 424, source_completion_index = 4052 }
 end = { cut_inclusive = 9233 }
-rules = ["samus-movement/PerformedCollisionTests", "samus-movement/MotionAttempts", "samus-movement/ReachedEnemyCandidates", "samus-movement/PerformedSupportChecks", "samus-movement/PerformedBodyFit"]
+rules = ["samus-movement/TouchedCells"]
 profile = "reference"
 responsibilities = ["movement"]
 content = "player-rom-import"
@@ -498,11 +497,10 @@ inputs = "native-search-inputs"
 checkpoints = true
 limits = [
   "Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.",
-  "Independent Motion ordinal0 is the unique ordinary-right request; compare its forbidden ordinary-right CollisionTests first, then its complete request and ordered considered candidate semantics.",
-  "Native enemy stop skips ordinary terrain while retaining separate support and later downward terrain. The production fault omits the required eligible enemy input/stage, exposing actual forbidden terrain work; no internal clean-model reorder mutant was executed.",
-  "Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared. Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically."
+  "The complete ordered reached cells and the inside cells are compared, as the enemy stop leaves them. The original's work inside the step (the ordinary-right terrain tests the stop skips, motion, support and fit work, the first request's enemy candidates, skip status) has no whole-frame counterpart and is not compared.",
+  "Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically."
 ]
-expectations = { provider = "native-complete-movement-work", fields = ["movement.motion.0.ordinary_terrain_tests", "movement.motion.0.request", "movement.motion.0.enemy_search.candidates", "movement.work", "movement.collision_tests", "movement.reached.complete", "movement.inside", "movement.skip"], outputs = [] }
+expectations = { provider = "native-complete-movement-work", fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
 
 [[case.borrowed]]
 dependency = "derived complete scoped seed and unique ordinary-right opportunity"
@@ -521,9 +519,9 @@ claim = "Native drawing-queue changes are retained. Idempotent zero SPEED_BOOSTE
 [[case.borrowed]]
 dependency = "complete independent movement observations"
 provider = "independently reviewed native-search-work-v2 source projection"
-fields = ["ordered Motion Support BodyFit", "nested BodyFit checks", "complete CollisionTests", "complete reached", "complete inside", "movement skip"]
+fields = ["complete reached", "complete inside"]
 phase = "selector424 through complete movement return"
-claim = "Frozen source-only projection retains zero-effect Support and no-growth BodyFit; expectations are read after production and never supply input or State."
+claim = "Frozen source-only projection; its reached and inside cells are read after production and never supply input or State."
 
 [[case]]
 id = "connected-ordinary/carried-running-camera"
@@ -582,7 +580,7 @@ content = "player-rom-import"
 inputs = "early-map-inputs"
 checkpoints = true
 expectations = { provider = "native-early-map", fields = ["hud.explored", "hud.map-window", "movement.position.x", "movement.position.y", "movement.ordinary-completion", "appearance.ordinary-completion", "camera.ordinary-completion"], outputs = [] }
-limits = ["full early coordinates, exploration and 15 Map cells at both opportunities", "cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity", "cut 80 ends before Animation and later Spinning pose", "selected HUD work ends at early Map, before status", "physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved"]
+limits = ["full early coordinates, exploration and 15 Map cells at both opportunities", "cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity", "cut 80 plays its whole frame, into a later Spinning pose, and compares only the early Map, read at her position after her moves", "at cut 80 her position after her moves equals her position at the frame's end, so that cut does not tell the two apart; cut 79 does, where the early-map-reads-end-position fault fails", "selected HUD work ends at the early Map, before status", "physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved"]
 
 [[case.borrowed]]
 dependency = "unselected current ordinary and Map producers"
@@ -1169,7 +1167,7 @@ kind = "scoped"
 row = "chain-any-0003-DFD7"
 start = { source = "cache-cut", frame = 56 }
 end = { cut_inclusive = 57 }
-rules = ["samus-movement/PoseFitAfterMoves", "samus-movement/AcceptedFloorResponse", "samus-movement/TouchdownRequests", "audio-transport/OfferAcceptance"]
+rules = ["samus-movement/MovesAsShePosed", "samus-movement/PoseFitAfterMoves", "samus-movement/AcceptedFloorResponse", "samus-movement/TouchdownRequests", "audio-transport/OfferAcceptance"]
 profile = "reference"
 responsibilities = ["movement", "appearance", "audio-sender"]
 content = "player-rom-import"
@@ -1198,7 +1196,7 @@ kind = "scoped"
 row = "chain-any-0003-DFD7"
 start = { source = "cache-cut", frame = 123 }
 end = { cut_inclusive = 124 }
-rules = ["samus-movement/PoseFitAfterMoves", "samus-movement/AcceptedFloorResponse", "samus-movement/TouchdownRequests", "audio-transport/OfferAcceptance"]
+rules = ["samus-movement/MovesAsShePosed", "samus-movement/PoseFitAfterMoves", "samus-movement/AcceptedFloorResponse", "samus-movement/TouchdownRequests", "audio-transport/OfferAcceptance"]
 profile = "reference"
 responsibilities = ["movement", "appearance", "audio-sender"]
 content = "player-rom-import"

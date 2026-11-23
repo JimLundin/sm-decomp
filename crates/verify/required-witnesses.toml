@@ -5,7 +5,7 @@ native_search = [
     "replay::native_search::tests::native_search_expected_failure_preserves_complete_executed_state_and_output",
     "replay::native_search::tests::native_search_corrupt_inputs_refuse_before_execution",
     "replay::native_search::tests::native_search_actual_query_refusal_retains_complete_state_and_output",
-    "replay::native_search::tests::native_search_null_and_candidate_only_omission_are_distinct",
+    "replay::native_search::tests::native_search_null_and_one_cell_omission_are_distinct",
     "replay::native_search::tests::native_search_production_fault_receipt",
     "replay::native_search::tests::native_touch_expected_failure_preserves_complete_executed_state_and_output",
     "replay::native_search::tests::native_touch_contract",
@@ -13,8 +13,6 @@ native_search = [
 
 connected = [
     "replay::connected::tests::connected_common_runner",
-    "replay::connected::tests::connected_every_semantic_yield_restores_without_repeating_intents",
-    "replay::connected::tests::connected_run_slope_every_semantic_yield_restores_without_repeating_intents",
     "replay::connected::tests::connected_marked_contact_and_first_wrap_have_complete_publications",
 ]
 
@@ -40,7 +38,7 @@ touchdown = [
     "replay::movement_touchdown::tests::repeated_contact_opportunity_refuses_after_restore",
 ]
 
-early_map = ["replay::early_map::tests::early_map_resume_keeps_the_live_choice_and_late_carry"]
+early_map = ["replay::early_map::tests::early_map_restores_between_frames_and_refuses_a_missing_map"]
 
 health_tail = [
     "replay::health_tail::tests::every_health_tail_semantic_stop_restores_exactly",

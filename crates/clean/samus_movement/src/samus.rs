@@ -1,14 +1,14 @@
 //! Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows
 //! beyond her quantities: its outputs, for the caller to act on.
 
-use crate::collide::{Moved, Stop};
+use crate::collide::{Bounds, Moved, Probe, Stop};
 use crate::jump_held::JumpHeld;
 use crate::run::Dashing;
 use crate::run::Run;
 use crate::tick::Frame;
 use crate::vertical::Vertical;
 use types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
-use types::{Set, Sprite, Touch, button::SHOOT};
+use types::{Set, Sprite, Touch, ZERO, button::SHOOT};
 
 /// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each
 /// frame's start up to the spin carried on, where it stays.
@@ -38,10 +38,11 @@ impl Spin {
     }
 }
 
-/// Spec: `SlopesCarry`, `PerformedSupportChecks`. Remembered slope seating.
+/// `SlopesCarry`: whether she is seated on a slope, which makes her ground pull 1 px.
 ///
-/// Zero travel, enemy-before-block stops and fit clearances retain it. A nonzero ordinary
-/// vertical move reaching blocks clears it before any new stepped-block seating.
+/// A move of exactly 0, a vertical move a solid enemy stops before blocks, and every look
+/// leave it as it is. Any other vertical move clears it, before a stepped block that stops it
+/// seats her again.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Seat {
     /// She is not on a slope.
@@ -108,33 +109,28 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
 
 /// What a frame shows beyond her quantities: its outputs, for the caller to act on.
 ///
-/// The camera reads `skidding`, `placed` and `rising`; samus-appearance the outputs §1.4 gives for
-/// her animation, `dashing_after_moves`, `dash_began`, `dash_lost`, `handed_over`,
-/// `heading_down` and `vertical_speed_after_moves`, with her pose and vertical speed at the
-/// frame's end, `standing_animation` and `wall_test`.
+/// The camera reads `skidding`, `placed` and `rising`; the HUD's mini-map
+/// `position_after_moves`; samus-appearance the outputs §1.4 gives for her animation,
+/// `dashing_after_moves`, `dash_began`, `dash_lost`, `handed_over`, `heading_down` and
+/// `vertical_speed_after_moves`, with her pose and vertical speed at the frame's end,
+/// `standing_animation`, `wall_test`, `floor_response` and `touchdown_graphics`; sound transport
+/// `touchdown_requests`; the world `inside` and `reached`; weapons `pending_aim` and `travelled`.
+/// Each is the frame's own, not State.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[expect(
     clippy::struct_excessive_bools,
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
 )]
 pub struct Outcome {
-    /// Spec: `MotionAttempts`, `ReachedEnemyCandidates`, `PerformedSupportChecks`,
-    /// `PerformedBodyFit`. Fresh ordered work for CPU timing at completion of the step.
-    pub movement_work: Vec<types::MovementWork>,
-    /// Spec: `MotionAttempts`. No ordinary request admitted, not a request of zero travel.
-    pub movement_skip: Option<types::MotionSkipReason>,
-    /// Spec: `AcceptedFloorResponse`. Actual accepted response with its pre-response speed,
-    /// never manufactured from final pose or handover/jump-held history.
+    /// Spec: `AcceptedFloorResponse`. The floor response accepted this frame, with her vertical
+    /// speed just before it, if any.
     pub floor_response: Option<types::FloorResponse>,
-    /// Spec: `TouchdownRequests`. Ordered opportunities; preserve repeated identities when
-    /// appending appearance's subsequent normal-drawing requests. Transport admits them.
+    /// Spec: `TouchdownRequests`. The touchdown's sound requests, in order; appearance's later
+    /// requests go after them, repeated identities kept. Transport decides what plays.
     pub touchdown_requests: Vec<types::SoundRequest>,
-    /// Spec: `TouchdownRequests`. Permission to evaluate appearance's graphics rules, not
-    /// a claim that dust or splash is visible; cinematic can suppress sounds independently.
+    /// Spec: `TouchdownRequests`. Permission for appearance to weigh its own dust and splash
+    /// rules, not a claim that either shows; cinematic silences the sounds alone.
     pub touchdown_graphics: bool,
-    /// Spec: `PerformedCollisionTests`. Actual ordered leading-edge work, including test
-    /// directions for looks, separate from reached reaction identities and without cost.
-    pub collision_tests: types::CollisionTests,
     /// Spec: `TransitionFiringAim`. Fresh optional cannon direction from the actual pose change.
     /// On `None`, the caller keeps earlier pending aim; this is not retained movement State.
     pub pending_aim: Option<types::FiringDirection>,
@@ -158,6 +154,10 @@ pub struct Outcome {
     /// if any: pose fit moved her, or a change of shape started, a placement of 0 px included.
     /// The camera's scroll measures her vertical move from it.
     pub placed: Option<Fixed>,
+    /// §1, `MovesAsShePosed`: where her moves (the horizontal move, the near-wall test, the
+    /// ground pull or her vertical move, the elevator's descent) leave her, before the aim
+    /// change's step and the pose change's push, lift and lowering. The mini-map reads it.
+    pub position_after_moves: Position,
     /// §1, `RisingAndFalling`: she is rising at the frame's end: a rise in the air (a rise at 0
     /// and the frame whose pull spends it included), or an upward speed she keeps on the ground.
     pub rising: bool,
@@ -169,11 +169,8 @@ pub struct Outcome {
     /// §1.4, `Dashing`: she was dashing at the frame's start or from a run in her moves, and
     /// isn't at the frame's end. A run into a wall that starts her dashing reports both.
     pub dash_lost: bool,
-    /// Spec: `AnimationEnds`, `PerformedBodyFit`. True when an animation end hands over its
-    /// pose rather than giving way. The pose is accepted without fit consideration, clearance,
-    /// or fit placement, even when the supplied target is taller.
-    /// This does not report floor contact. A turn or landing animation that hands over counts
-    /// toward next frame's held-jump history (`Jumping`) even without floor contact.
+    /// §1.4, `AnimationEnds`: her animation's end handed over her pose this frame, rather than
+    /// giving way. A handed-over pose is taken without pose fit, however tall its body.
     pub handed_over: bool,
     /// §1.4, `RisingAndFalling`: she is heading down as her moves leave her, before what they
     /// met acts and before the pose change: falling (in the air, or on the ground at 0), or
@@ -218,6 +215,24 @@ impl Samus {
     /// nothing else of hers changes that frame.
     pub(crate) fn rides_the_elevator(&self, f: &Frame) -> bool {
         self.pose.facing == Facing::Screen && f.elevator_moving
+    }
+
+    /// §1.3 body size: her box, about her centre, in the body of the pose she is in.
+    pub(crate) fn bounds(&self, f: &Frame) -> Bounds {
+        Bounds {
+            at: self.position,
+            r: (f.body)(self.pose),
+        }
+    }
+
+    /// `SlopesSlowTheWalk`: a horizontal move made with her vertical speed exactly 0 is a walk,
+    /// which a sloped floor shortens; any other is a plain move.
+    pub(crate) fn horizontal_probe(&self) -> Probe {
+        if self.vertical.speed == ZERO {
+            Probe::Walk
+        } else {
+            Probe::Move
+        }
     }
 
     /// She takes what a move or a look did to her: a move puts her where it left her; a look

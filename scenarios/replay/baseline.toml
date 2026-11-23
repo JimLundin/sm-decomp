@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "e722507cef1f5af062ad686793d5958f10e198c85aa7575e7ceddba8f72cafa9"
+index_sha256 = "bd17d5632768daa25c3229c2c35a46cfd67d6b4ea2ee04e00eb35e47650bdce0"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -336,16 +336,16 @@ observation_sha256 = "2b18d2768c7961fff569672e3f2c145cc3d660e2f44c876416731caf9d
 id = "movement-native-occupied-first-search"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "99e1733ec6efbb203b0da3689af59a5134b0f46f43503b40637890284d7db9f7"
+observation_sha256 = "e6285ef8cf435fe051f23d6807f56a2240ee671c7c93315c27d3562c0cf885ae"
 
 [case.counts]
 cuts = 1
-fields = 7
+fields = 2
 outputs = 0
 publications = 0
 replies = 0
 null_cuts = 0
-null_fields = 1
+null_fields = 0
 restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
@@ -354,16 +354,16 @@ pending_restorations = 0
 id = "movement-native-enemy-stop-terrain-absence"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "6d0c0a70ded3f4271fff3c7469af80de1602ca9a2e47c78942c1cbd18fd82f08"
+observation_sha256 = "a708befc6fe097336e3a813cfd8bd83eb91df9b918722367d5b16764de9e9f3f"
 
 [case.counts]
 cuts = 1
-fields = 8
+fields = 2
 outputs = 0
 publications = 0
 replies = 0
 null_cuts = 0
-null_fields = 2
+null_fields = 0
 restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
@@ -872,7 +872,7 @@ pending_restorations = 0
 id = "movement/soft-touchdown-57"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "eae0e49cfe829b7d3257c4f7e1c46956e6b325a2f44925b8724d3d0ee6e444c8"
+observation_sha256 = "93460f62ba24016aa472abc9463c2aad8e9bfb59b8d15ddeaa52ea83814ff0a0"
 
 [case.counts]
 cuts = 1
@@ -890,7 +890,7 @@ pending_restorations = 0
 id = "movement/soft-touchdown-124"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "0614c4ce5e3cbf79b4e72744ae2c7586184042add75d3cf2680948c8045479ee"
+observation_sha256 = "61234828319f13f241c5bd9dcc17ff5a9eb20d92a11b8485a3f2606c9604d975"
 
 [case.counts]
 cuts = 1

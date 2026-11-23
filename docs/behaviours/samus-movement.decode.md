@@ -2280,17 +2280,19 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
 - Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
   DriftInTheAir, Moonfall, WallJump, Landing, AcceptedFloorResponse, TouchdownRequests, WordwiseTopSpeed,
-  PerformedMotionDecisions, SuspendedMovement, 1.2, 9
-- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer, PerformedBodyFit
+  1.2, 9
+- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
 - Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
   AnimationEnds
 - Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
-  SlopesSlowTheWalk, TouchedCells, PerformedCollisionTests, MotionAttempts, ReachedEnemyCandidates,
-  PerformedSupportChecks, OtherBlockKinds
+  SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 37.5 × 287.7 units = 10,786 (motion 4,387, pose fit 762, pose chart 2,412, collision 3,225).
-The official counter reports 117.0 motion units, 20.3 pose-fit units, 64.3 pose-chart units
-and 86.0 collision units for this output contract. Old-code baselines and k above are unchanged.
+Budget: 37.5 × 264.7 units = 9,923 (motion 4,162, pose fit 687, pose chart 2,412, collision 2,662).
+The official counter reports 111.0 motion units, 18.3 pose-fit units, 64.3 pose-chart units
+and 71.0 collision units for the direct whole-frame step, from 287.7 (117.0, 20.3, 64.3, 86.0)
+with the seven timing entries: they held 27.0 units, and the rules moved out of them and the
+position after her moves add 4.0 (`MovesAsShePosed` 1.0 → 2.0, `SolidEnemies` 10.0 → 12.0,
+`SlopesSlowTheWalk` 2.7 → 3.7). Old-code baselines and k above are unchanged.
 
 From the spec's §7 (the pose chart), moved with the header's:
 
@@ -2385,12 +2387,12 @@ gap (`$A0:AB22`..`$A0:AB80`) return immediately with the first qualifying entry.
 nearest-contact comparison. The caller must preserve the supplied order. Constructed complete-
 frame witnesses `C-attempt-running-miss-touch`, `C-attempt-running-gap-touch` and
 `C-attempt-running-touch-gap` check rejected prefixes, first accepted stops and reversed
-eligible-box order. Native complete candidate-order receipts remain unproved.
+eligible-box order (`SolidEnemies`). No recorded vector has two enemies in one move's reach.
 
 
-## Accepted responses and performed collision tests
+## Accepted responses and touchdown requests
 
-### Source and semantic mapping
+### Sources
 
 `AcceptedFloorResponse` publishes actual movement responses rather than an end-cut contact
 word. Upright and ball responses are deferred until the proposed pose survives fit;
@@ -2400,7 +2402,7 @@ the move at `$90:A640`; the pre-clear speed must be retained at that response, n
 from `vertical_speed_after_moves`. Turning and grounded-ball contact map to no-change in
 `$90:E676`, so their floor stop does not call the touchdown cue writer. Ground following
 `$90:923F` is not a landing. These distinctions are the existing `Landing`/`FollowingTheGround`
-rules; publication does not change their response or ordering.
+rules.
 
 `TouchdownRequests`: `$91:F010` calls `$91:F046` before its response. Old movement
 and old pose are `$0A23`/`$0A20`. `$91:F056` gates the ending sound on cinematic activity;
@@ -2424,23 +2426,8 @@ graphics opportunity neither promises visible dust nor bypasses those rules. Mov
 owns the sound opportunities; samus-appearance part 2 owns the graphical admission. The
 bounded Ceres bridge must respect the opportunity without inventing dust.
 
-`PerformedCollisionTests`: `$94:9515`/`$94:952C` are the leading-edge cell evaluations;
-`$94:9543` scans horizontal rows; `$94:959E`/`$94:95F5` scan vertical columns in the
-parity-selected order. They are not upward/downward purpose identities. The reaction-facing direction is not the physical direction of a fit look. Its signed
-whole/fraction test displacement and source call purpose independently establish that direction.
-Actual sampled call stacks distinguish ordinary horizontal movement `$90:938F`/`$90:93CA`,
-aim movement `$91:EB48`, ordinary vertical `$90:942D`/`$90:945B`, fit room above
-`$91:FE4C`, fit room below `$91:FE64`, and the fit far-clearance checks `$91:FF2B`/`$91:FF58`.
-All fit calls use `$94:96AB`; its short first look and continued look belong to the same
-semantic room/clearance purpose. Lowering `$91:ECDA` and near-wall reach `$94:967F` are
-covered by invented vectors; neither is inferred from a native aggregate remainder.
-
 Horizontal slope scaling consumes exactly-zero vertical whole and fraction at the actual
-move (`SlopesSlowTheWalk`), regardless of ground phase. The clean `hmove` selects `Walk`
-on that predicate but `Bounds::axis` reports both `Walk` and `Move` as `Way::Move`, losing
-it. `Probe::Blocks` similarly becomes directionless `Way::Look`. Reaction-facing `TouchedCells`
-keeps its semantics; a performed-work publication retains the additional direction/purpose.
-Direct slope seating and inside-body reads are not leading-edge cell evaluations.
+move (`SlopesSlowTheWalk`), regardless of ground phase.
 
 ### Native harness and independent reference
 
@@ -2450,28 +2437,6 @@ whole below 5 and fraction nonzero. The cue found at the prior library-3 next sl
 `SamusLandedOrWallJumped`, allowance 6. Cut 157 separately offers `CeresDoorOpening`; it
 is not the landing cue. No collision word or pose-history field injects these events.
 
-Read-only native capture `native-full-on-v15-query-context`, outside the repository,
-preserves entry/dispatch stack and exact speed predicates. Recorder proof holds 184 ordinary
-records and CPU/WRAM pins, 185 clock/APURAM states, 1,037 equal entry/dispatch contexts,
-and 140 CPU sound events/764 publications with tail excluded. Its source-classified native
-prefix covers 773 horizontal evaluations (534 ordinary, 239 aim) and 264 vertical
-evaluations (230 ordinary, 34 fit). The fit subset is 11 above-room, 15 below-room and
-8 far-clearance evaluations; no lowering occurs in this native prefix.
-
-Horizontal actual zero predicates: 544 zero, 229 nonzero; all 239 aim evaluations are zero.
-No prefix frame has both horizontal conditions. With native capture N ending at cache cut N,
-frame-start speed inference is wrong for 6 evaluations at captures 18/83; end-cut inference
-is wrong for 19 at 16/18/57/80/83/124. The rise-end writers are `$90:8FDC`/`$90:9046`/`$90:90C4`;
-a reachable invented jump-release vector checks the zero-speed horizontal move before that
-frame's pull. No air-landing-aim mixed example or ordering change is assumed.
-
-The bounded independent Python references live outside the repository: 30 output vectors
-match 30 (null matches 4), and 10 work vectors match 10 (null matches 1). Existing 359 movement
-vectors and 64 pose-step groups remain structurally identical. Five independent semantic
-fault modes are rejected: total-speed admission, cinematic graphical suppression, lost
-horizontal-zero condition, lost fit work and aim cells mislabeled as ordinary movement. This is a reference for the output delta,
-not an independent full movement model. The full landed baseline remains a separate suite.
-
 Prior selected-sprite witnesses cover mismatched current items, SpaceJump and OtherSuit,
 and both wall-jump sprite choices. A proper refused oversized ball target and an accepted
 crouching substitute separately prove that selected contact is not accepted touchdown.
@@ -2479,41 +2444,9 @@ crouching substitute separately prove that selected contact is not accepted touc
 The zero pre-response boundary vector uses a nonzero actual move with adjusted gravity;
 a zero-distance move never evaluates blocks and cannot manufacture a touchdown.
 Vectors contain only invented geometry and RAM-like observations; native content remains in
-the importer-backed harness. No timestamps, CPU addresses, sampled stacks or raw bank data
-are clean-model inputs. The source-derived numerical slope workload audit belongs to CPU
-timing and is not a movement algorithm or a timing prediction proof.
+the importer-backed harness.
 
-### Remaining interface limits
-
-- The checked ordinary caller's actual gameplay receipt matches native cell identities,
-  classes, complete order, directions and semantic purposes across all 183 prefix cuts:
-  773 horizontal, 230 ordinary vertical and 34 fit evaluations, 1,037 total. Independent
-  native entry contexts prove all 773 horizontal conditions (544 exactly zero, 229 nonzero)
-  and fit purposes (11 room-above, 15 room-below, 8 far-clearance). The ordinary vertical
-  caller stacks distinguish 108 ground-following from 122 ordinary moves, without ambiguity.
-  The engine's frozen pre-movement content independently classifies each published cell:
-  870 plain air, 77 common solid, 87 slope, 3 door. Native query contexts never enter production.
-  A null empty-work receipt matches no cut; removing horizontal conditions fails at cut 0.
-- Actual performed tests are published directly by the model and retained in gameplay
-  outputs. Raw `World::block` reads or frame-boundary speed inference cannot replace them.
-- The appearance consumer's general landing graphical admission is outside this output
-  delta; Ceres' delete-slots behavior is source-proven. Other areas need that owner before
-  claiming complete atmospheric effects.
-- Native prefix has no extension chains, near-wall reach or lowering. Their wider CPU
-  workload costs and other movement consumers are not established by this receipt.
-
-### Aim-purpose and fit boundary receipts
-
-`C-work-aim-change` enters the ordinary movement step from upright Still, right-facing,
-with run/right/aim-down held and aim-down newly pressed. Ground following evaluates
-cell (2,12) first. The pad selects Running DownForward; `$91:EADE..EB48` then performs
-its one-pixel rightward aim step. At centre (40,171.FFFF), half-size (5,21), the aim
-step evaluates column 2, rows 9,10,11, in that order, each Right/AimChange/ExactlyZero.
-The prior Still pose produces no ordinary horizontal leading-edge cells; its zero-distance
-ordinary request and support checks remain actual work. The independent work
-reference rejects an aim-purpose mutant at this case alone. Library and allowance
-metadata of each request remain mandatory production comparison fields; checking only
-the vector's identity list would not prove transport admission.
+### Pose fit's cases
 
 Independent source/geometry re-derivation of the fit cases uses `$91:FE4C/FE64` for
 the two growth looks, `$91:FFA7` for the old-half-height threshold, and `$91:FE82`,
@@ -2530,49 +2463,30 @@ geometry reference derives both choices from input geometry and supplied body si
 before comparing the output; it agrees2/2. No expected pose or output is an input
 to its decision. These invented sizes are not a claim that vanilla ball landing grows.
 
-`C-work-lowering` supplies Down newly pressed as well as held: the ordinary pad chart
+`C-touch-aim-step` starts upright Still, right-facing, with run, right and aim down held and
+aim down newly pressed. Ground following reaches cell (32,192) first. The pad selects Running
+DownForward; `$91:EADE..EB48` then makes its one-pixel rightward aim step. At centre
+(40,171.FFFF), half-size (5,21), the step's line is column 32, rows 144, 160 and 176, in that
+order, each reached Right. The prior Still pose makes a horizontal move of 0, which reaches no
+cell.
+
+`C-touch-lowering-look` supplies Down newly pressed as well as held: the ordinary pad chart
 lookup `$91:81A9..82D9` tests required new presses, including non-jump buttons. Holding
 Down alone does not select its crouching target. This witness therefore starts crouching
-through the existing pad rule, then performs the body-lowering look; its expected cells
-and ordering remain unchanged. The bounded work reference now requires that press before
-publishing this lowering look. Removing the press rejects this case's expected work.
+through the existing pad rule, then makes the lowering look, whose one cell it compares.
 
-## Actual movement decisions before leading-edge cells
+## Whole frames over solid enemies, slopes and pose fit
 
-### Source closure and the caller boundary
+The `C-attempt-*` vectors are complete constructed frames. Each compares where the frame leaves
+her (position, speeds, pose, seat, floor response and touchdown requests, as it gives them).
 
 The ordinary standing path calls horizontal travel at `$90:A3CA` → `$90:9348`/`$90:934C`
 and ground following at `$90:A3CD` → `$90:923F`. There is no zero-distance guard before
 the horizontal request. Both completion paths of `$90:8EA9`..`$90:8F1F` call or tail-call
 the left/right world request, including zero travel. Screen poses 0/9B branch at
 `$90:A389`/`$90:A38E` through `$90:A392`; inactive elevator `$0E18` at `$90:A395` takes
-`$90:A3A8` to `$90:A3E3` without horizontal, vertical or support work.
-
-Solid motion iterates `$17EC` using cursor `$17AA` at `$A0:A9CA`/`$A0:A9CD` and tests
-the FFFF terminator at `$A0:A9D0`/`$A0:A9D3`. An interactive member is eligible when
-frozen (`$0F9E`, `$A0:A9DC`/`$A0:A9DF`) or solid to Samus (`$0F86` bit15,
-`$A0:A9E1`/`$A0:A9E7`). Continuation `$A0:AB81` reaches `$A0:AABF`..`$A0:AAC5`,
-increments the cursor twice and returns to the next supplied identity at `$A0:A9CA`.
-Touching `$A0:AAC8` and positive-gap `$A0:AB23` each return before the next candidate;
-the first accepted eligible box decides, without a nearest-contact comparison.
-
-The clean candidate identity is an ordinal in the supplied eligible boxes, not a new
-actor-slot input. The caller selects beginning-of-frame interactive membership before
-movement (`$82:8B47`, `$A0:8EB6` → `$A0:8F40`) and qualifies current frozen/solid
-properties. Excluded actors still incur original selection/eligibility work. That caller
-writer and its CPU-timing consumer are missing proof obligations; an empty eligible list
-does not prove absent roster work. See the owning selection contract in
-[boss-ceres-ridley](boss-ceres-ridley.decode.md#the-harness-for-the-integrator).
-
-Original eligibility is evaluated per actual request, not established by the engine's eager
-once-per-world filtering. The future caller retains ordered interactive members and their
-admitted current properties, plus an eligible-ordinal-to-roster-member mapping. Each movement
-request's considered eligible results identify the reached raw prefix: excluded members before
-an accepted stop count; all members and the terminator count on exhaustion; neither suffix
-members nor the terminator are reached after an accepted stop. Eligible misses and negative
-gaps continue the cursor. `CandidateCount` alone cannot recover that prefix. This is a caller
-writer/CPU-timing consumer obligation, with native complete roster coverage0; raw roster and
-eligibility properties remain outside the clean movement interface.
+`$90:A3A8` to `$90:A3E3` without a horizontal move, a pull or a slope check
+(`SpeedBuildsAndBrakes`, C-attempt-screen).
 
 Horizontal support `$94:87F4`..`$94:89AF` checks floor then ceiling, using the placed
 centre for the second check. Setters `$94:8887`/`$94:8916` seat her; this support path has
@@ -2580,67 +2494,22 @@ no seated-clear writer. Ordinary vertical terrain clears seating at `$94:976F`.
 Enemy-result branches after `$90:9408`/`$90:9449` return before terrain `$90:942D`/
 `$90:945B`; thus a seated body stopped by an enemy retains seating. The fit-block path
 `$94:96AB`..`$94:9762` has no such clear and calls bounds/query/clipping helpers rather
-than the ordinary terrain entry. A nonzero fit look is not sufficient to clear seating.
-
-Ordinary fit consideration follows `$91:F404` and `$91:FDAE`; unchanged targets and
-animation handovers that reach `$91:F433` directly do not manufacture a consideration.
-Same-height actual aim selection uses `$91:EADE`..`$91:EB48`; no growth produces no
-clearance while retaining that real body-size decision. Growth keeps the existing
-`PoseFitAfterMoves` enemy-before-block look order and the independently derived eight-
-pixel preliminary look, refusal threshold, fractional writes and selected placements.
-
-The one-pixel right aim request from x002B.4000 with horizontal half-size5 targets
-x002C.4000. The inclusive right edge is48, so `$94:9543` (`$94:955E`..`$94:957C`)
-evaluates column3, not the starting centre column2. The y span150..191 gives rows9..11.
-`C-attempt-aim-no-growth` carries that complete request geometry.
-`C-work-aim-change` starts at x0028.0000; its aim target is0029.0000 and right edge45,
-so that separate witness evaluates column2 with the same vertical rows.
+than the ordinary terrain entry. A nonzero fit look is not sufficient to clear seating
+(`SlopesCarry`: a look never ends her seat).
 
 `C-attempt-fit-push` begins a straight jump, following the pad with neither side held,
 not a take-off. `$90:A431` calls `$90:8FB3`; the ordinary forward straight-jump pose
 branches at `$90:8FC9` to `$90:8FDC`, bypassing `$90:8FD3`'s horizontal call and its
-support checks. Take-off poses4B/4C and55..5A are different inputs. The actual first
-request is its downward travel; the accepted floor stop and following growth fit remain.
-The bounded full-entry reference checks inherited collision fields as well as work,
-using this admission and target-edge arithmetic instead of a fixed cell column.
-
-### Proof and limits
-
-Fifteen complete constructed frame-entry witnesses compare every added work field and
-their derived positions: six Running slope/enemy cases, a three-stage request case, four
-idle/screen/aim cases, three actual floor-contact growth-fit cases and a taller animation
-handover. The bounded independent Python reference
-agrees15/15, against do-nothing0/15; an empty-work-only comparison agrees1/15.
-Eleven full-field faults are rejected: lost motion, candidate, candidate order, support,
-body fit, seated lifetime, absent-motion reason, fit centre, enemy count, raw intent and
-post-slope travel substituted for requested travel. Primitive references are separate:
-attempt7/7, support6/6, seated lifetime6/6, flat fit7/7; they are not full-step proof.
-Two actual source-law faults additionally fail the complete taller-handover and slope/enemy
-witnesses: forcing fit on the animation branch changes its y, and shortening before enemy
-reach changes the accepted x. Both isolated reference mutations restore byte-exactly.
-
-Native complete attempt/candidate/roster receipt coverage is0. The retained1,037 query
-evaluations prove existing leading-edge cells, not no-cell attempts, support admission,
-empty candidate searches or absent roster work. No new captures or oracle substitutions
-are used. Mixed/stepped complete fit receipts and broader forced movement remain unproved;
-their existing behaviour vectors and source rules are preserved. This bounded delta is
-not a full movement-State model, native timing prediction or a new free-run floor.
-
-The unforced caller boundary remains: ordinary movement does not accept external travel.
-Ground following's external-Y guard at `$90:923F` skips the ordinary pull on nonzero
-`$0B5C`/`$0B5A`; verifier pushed-state masking remains independent. No public force input
-is added to encode that original guard.
-
-### Request publication stage and clearance shape
+support checks. Take-off poses4B/4C and55..5A are different inputs. Its first move is
+the downward one; the floor stop and the growth's fit follow.
 
 Speed-derived ordinary horizontal travel is bounded before its world request on the admitted
 speed path: `$90:8ECB`/`$90:8F05` call `$90:E4AD`; `$90:E4CA` compares the whole part with16,
 and `$90:E4D1` returns15 without clearing the fractional word. The ensuing enemy requests
-at `$90:9366`/`$90:93B4` precede terrain calls `$90:938F`/`$90:93CA`. Preparatory caller
-paths retain their actual admitted request; publication does not reconstruct it from speed.
-The terrain handler `$94:8FD4` reaches `$94:84D6`, which changes distance `$12`/`$14` while
+at `$90:9366`/`$90:93B4` precede terrain calls `$90:938F`/`$90:93CA`. The terrain handler
+`$94:8FD4` reaches `$94:84D6`, which changes distance `$12`/`$14` while
 preserving target `$20` used by the leading-edge scan `$94:9543` (`$94:9551`/`$94:955C`).
-Thus intended request travel precedes slope shortening; `TravelledDistances` remains the
+Thus the limited move precedes slope shortening; `TravelledDistances` remains the
 signed accepted travel after shortening or collision, excluding independent subpixel snaps.
 
 `C-attempt-slope-enemy-before-factor` uses the same Running start, whole-part limit1 and
@@ -2650,144 +2519,129 @@ strictly below summed radii7, and Y separation28 is below29. The starting gap is
 stops accepted travel1 before terrain. At the placed x258, floor support lifts1; the following
 downward request misses this enemy across X (separation7 equals summed radii7), reaches the
 slope and accepts0. The horizontal stop halts her run and selects AgainstWall, whose unchanged
-height gives a real no-growth consideration. Final centre0102.0000/0109.FFFF; speed0. Terrain
-cells are only Down(15,17),(16,17). Shortening before the enemy instead misses it horizontally
-and gives0101.E000, a source rule violation, not an accepted alternate request stage.
+height needs no fit. Final centre0102.0000/0109.FFFF; speed0. Shortening before the enemy
+instead misses it horizontally and gives0101.E000, a source rule violation.
 
 `C-attempt-taller-animation-handover` supplies invented Landing half-height19 and Still21,
-centre0028.0000/00AD.FFFF, no pad and EndUnlessJump. Old-body horizontal0, two support checks
-and ground pull1 run first; the pull hits floor192 and accepts0. `$91:EBB3` then calls `$91:F433`
-directly, so there is no `$91:FDAE` consideration or clearance despite growth2. The centre
-stays00AD.FFFF with the selected taller body; fitting would incorrectly raise it to00AB.FFFF.
-The only leading cell is GroundFollowing Down(2,12). The constructed body callback has no
-target-height bound; this does not claim a growing vanilla animation or external POST entry.
+centre0028.0000/00AD.FFFF, no pad and EndUnlessJump. Old-body horizontal0, the two slope checks
+and ground pull1 come first; the pull hits floor192 and accepts0. `$91:EBB3` then calls `$91:F433`
+directly, so there is no `$91:FDAE` fit despite growth2. The centre stays00AD.FFFF with the
+selected taller body; fitting would incorrectly raise it to00AB.FFFF. The constructed body has
+no height bound; this does not claim a growing vanilla animation.
 
 `C-attempt-request-stages` uses the ordinary Running `C-seat-lift` entry with adjusted whole-
 part limit1 and world factor `0.80` (hex1/256, exactly one half). Speed-derived2.C000 becomes
 request1.C000 before terrain; the reached slope accepts0.E000. Floor support lifts1 and seats
 her; the ground pull1 reaches terrain, accepts0 and clears the seat. Final position is
-0101.E000/0109.FFFF, speed remains2.C000 and rightward accepted travel is0.E000. All five
-leading-edge cells and the complete work geometry/order are expected. Raw-intent and post-
-slope-intent publication faults fail this case's request-distance field.
+0101.E000/0109.FFFF, speed remains2.C000 and rightward accepted travel is0.E000.
 
-The vector field `body_fit` names an actual selected-body consideration, including its centre
-after the aim step for `C-attempt-aim-no-growth`. Each clearance names its requested world.
-Enemy-only clearance carries supplied eligible count and considered boxes; block-only clearance
-does not invent an enemy search. Both carry geometry, signed requested distance, purpose, named
-result and nonnegative whole-pixel room. This room is not signed ordinary accepted travel.
-The field name avoids a literal score-vocabulary collision; checker rules are unchanged.
+## Her position after her moves
 
-## Causal ordinary movement observations
+**What the original does.** The frame's Samus code (`$90:E725`) runs the movement handler
+(`$90:E731` → `$90:E94B`), then updates the mini-map (`$90:E734` → `$90:A91B`), then the timer
+handler, her animation, the hit interruption, the pose the collision result sets
+(`$91:E8B6`) and the pose change (`$91:EB88`). The aim step (`$91:EADE`), pose fit's push
+(`$91:F404` → `$91:FDAE`), the crouch take-off's lift (`$91:FC8A`) and the lowering
+(`$91:ECDA`) all run inside `$91:EB88`, so the mini-map reads her position (`0AF6`, `0AFA`)
+after the horizontal move, the near-wall test, the pull or vertical move and the elevator's
+descent, and before all four. `$91:E8B6` writes only the prospective pose; the hit interruption
+is knockback's, out of scope (§10).
 
-`PerformedMotionDecisions` and `SuspendedMovement` observe the existing rules; they introduce no
-new movement arm. Sources and RAM mapping remain those of `SpeedBuildsAndBrakes`,
-`WordwiseTopSpeed`, `Dash`, `FollowingTheGround`, `AimingAndShooting`, `PoseFitAfterMoves`,
-`PoseFollows`, and the performed work entries above. The same quantities are read at their actual
-opportunities, rather than using the final `Outcome` to authorize preceding effects.
+**The records show the two positions differ.** interface-hud's decode notes (§How the spec was
+made; §Ceres's free run) give the evidence: over the first cache, 8 pose-change frames
+(chain-0012 769, chain-0057 65, chain-0059 263, chain-0097 155, 429 and 518,
+samus-grapple-walljump 53, samus-screw-attack 524) show the mini-map's cell from before the pose
+change moved her across a screen's edge, and every one matches with record N's position; on the
+Ceres rows, chain-any-0005-E06B record 37 runs right with her pose changing every frame, x 250
+at N and 256 at N+1, and the window and the explored cells show her room's first screen. The
+qualified capture of chain-any-0003-DFD7 cuts 127 and 128 sees her position at the map's read
+and at the cut differ in pixels, though not in block or screen. So the value is specified, as
+`her position after her moves` (§1, `MovesAsShePosed`), not left to the cut: the end-of-frame
+position would put the mini-map a frame early on each of those frames. The caches the lane has
+hold only chain-any-0003-DFD7, so the 8 frames and record 37 are taken from those notes, not
+re-run.
 
-The accepted private selector-s3-v1 source contract qualifies the reached orchestration at
-historical source7fd1efeb77ae649b6d204f261b6da5efc4cfc292. Its immutable manifest is
-7e0a12e68dc683f5256cf104e9cef6be95cda7f60ff0b34c14b09e332753d1e8. Selected query semantics remain
-in movement-cost-contract-549/packet-v8, manifest
-1219a7a17f47a3c731024005d9fa9eef17d96ae0c6e437e8141b7b0a803aba08.
-Both are source evidence only. Hardware profiles, intrinsic bills, source dispatch and private
-encoding guards do not belong in these clean observations or their vectors.
+**Vectors.** No record captures her position at the map's read (the hit on `$90:A91B` peeks
+nothing), so every vector that gives `position_after_moves` is constructed, its value worked
+from the spec: C-after-moves-screen-edge (the step across x 256), C-touch-aim-step and
+C-adj-aim-step (a step), C-fit-ceiling (a push down), C-fit-land-tunnel (the crouch instead),
+C-shrink-floor (a lowering), C-cap and C-elevator (no step, push, lift or lowering).
 
-### Vector meaning and reference
+**Harness.** interface-hud's interim mask (her position at the mini-map's turn) retires by
+reading this output on the frames the mini-map runs, as interface-hud's notes name, with
+chain-any-0005-E06B record 37 and the 13 rows they list as its check.
 
-The existing TOML now adds `suspended_update` cases. Each inherits an existing complete ordinary
-fixture, including its supplied world/content and ordinary result; the strict reader must check
-both ordinary vectors and the new observations. The observed list is a semantic subsequence,
-not a prescribed sequence of interface calls. Save/restore is checked at every offered and
-completed decision of the entire actual update, not merely at listed observations. Complete
-Samus, the pending decision and still-needed prior quantities, consumed world/input progress,
-completed queries and output publications must agree with uninterrupted execution. Reusing a
-completed effect cannot produce another query or publication.
+## The direct whole-frame step
 
-R-op-run inherits item-morph-ball:704 (R2). Its original speed/dash observations and ordinary
-result remain recorded; the new intermediate arithmetic observations are independently derived
-from those RAM quantities and named Rules, not claimed as new recorded cuts. All other added
-movement opportunity cases are invented. C-op-stop-pull's enemy geometry stops a 2.C000 intended
-move at 2.0000, clearing Run; its subsequent unseated pull still requests 3.C000. The test does
-not identify accepted travel with the retained total. C-op-support-placement instead applies
-the actual slope lift before the ceiling support read, and its seated pull is one pixel.
+The step is one whole frame: its outputs are State at the frame's end and the outputs §1 and
+§1.4 name, ordered where they are lists (the touchdown requests, `TouchdownRequests`; the cells,
+`TouchedCells`). Bus-cycle timing within the frame is T1's (MODEL §1 decision 35), so the spec
+names no work list, no query point and no saved partial frame.
 
-C-op-aim-substitute starts with ordinary motion unobstructed, then the separate one-pixel aim
-step reaches the wall. Fit and initialization read AgainstWall, not the earlier Running wish.
-C-op-aim-fit has an actual no-growth fit with explicit equal-sized bodies. C-op-adjusted-aim and
-C-op-adjusted-dash inherit adjusted Rules cases, proving that the new observation follows the
-actual changed aim distance and dash gain. No fixture position or final pose selects production.
+**Where each removed arm went.** Every arm of the removed entries, checked against the rest of
+the spec:
 
-The private independent reference is timing-opportunities-479/reference.py. It reads ordinary
-inputs/content and calculates new observation quantities without importing a clean model or
-reading expected State to select an answer. It preserves wordwise signed-wrapping tests,
-fractional carries and original world geometry. Its comparison-sensitivity mutations corrupt every checked quantity and adjacent observed
-order. Evaluation faults replace retained pull with stopped Run, substitute the future clip
-for current playing, and repeat/reverse contact/selection work; the checks catch all four.
-No event-list roundtrip is claimed as continuation proof. Complete actual Samus continuation
-remains unproved; that proof belongs to the confined implementation and indexed
-production integration. The ordinary model must still pass every pre-existing vector.
+- `PerformedCollisionTests`: the cells a move or look reaches, the first stop ending them, a move
+  of 0 reaching none and a look's way are already stated at `TouchedCells` (its converted
+  vectors below); the purposes, the vertical-motion tag and "no leading-edge test" for the slope
+  checks and the inside cells were timing only.
+- `MotionAttempts`: facing the screen moves her not at all, already stated at
+  `SpeedBuildsAndBrakes` (now citing C-attempt-screen); pose fit's enemy and block looks, the
+  8 px look and the far-side look, already stated at `PoseFitAfterMoves`; enemies before blocks,
+  already stated at `SolidEnemies`; the terrain line at the unshortened target, already stated at
+  `SlopesSlowTheWalk`; the limit before the factor, moved to `SlopesSlowTheWalk`
+  (C-attempt-request-stages); enemies judging the limited move before the factor and an enemy
+  stop leaving no shortening, moved to `SolidEnemies` (C-attempt-slope-enemy-before-factor). The
+  publication, its order and its named results were timing only.
+- `ReachedEnemyCandidates`: the first enemy in the world's order that she reaches deciding, even
+  where a later one would stop her sooner, moved to `SolidEnemies` (C-attempt-running-miss-touch,
+  C-attempt-running-gap-touch, C-attempt-running-touch-gap); the considered list and the empty
+  list were timing only.
+- `PerformedSupportChecks`: floor then ceiling, the ceiling read at the lifted centre, already
+  stated at `SlopesCarry`; an aim step adds no slope check, already stated at
+  `AimingAndShooting` (C-aim-slope); an enemy stop keeping her seat, already stated at
+  `SlopesCarry`; a look never ending her seat, moved to `SlopesCarry` (original only, as it
+  was).
+- `PerformedBodyFit`: the fit's outcomes, already stated at `PoseFitAfterMoves` (now citing
+  C-attempt-fit-push, C-attempt-fit-substitute, C-attempt-fit-refuse); an animation's end
+  bypassing fit, already stated at `AnimationEnds` (C-attempt-taller-animation-handover).
+- `PerformedMotionDecisions` and `SuspendedMovement`, with §12: the order the frame's rules act
+  in (dash, then speed, then the move; the ground pull from the speed before a stop; the slope
+  checks before the pull; the aim step after the moves; fit before the pose's effects) is already
+  stated at `Dash`, `SpeedBuildsAndBrakes`, `WallsAndCeilings`, `FollowingTheGround`,
+  `SlopesCarry`, `AimingAndShooting` and `PoseFitAfterMoves`; offering, completing, saving and
+  resuming a partial frame were timing only.
 
-### Admission and integration limits
+**Vectors.** Dropped, as they test only the removed surface: the 8 `suspended_update`,
+2 `resume_case` and 4 `decision_change_case` tables (their whole-frame bases stay: C-cap, R2,
+C-aim-enemy-stop, C-aim-short, C-attempt-running-empty, C-attempt-aim-no-growth, C-adj-aim-step, C-adj-dash-gain,
+C-answer-fall, C-answer-rise; a changed gravity is C-adj-gravity's, a rise let go R91's and
+E2's), and four `[[vector]]`s that compared only the work list's tags over cells other vectors
+reach: C-work-move-zero, C-work-move-nonzero, C-work-air-zero and C-work-no-raw-reads.
+Converted, comparing the cells `TouchedCells` reports instead of the work list:
+C-work-stop-first, -enemy-first, -fit, -lowering, -near-wall and -aim-change, now
+C-touch-stop-first, C-touch-enemy-first, C-touch-fit-looks, C-touch-lowering-look,
+C-touch-near-wall-look and C-touch-aim-step (the cells are the work list's, at their corners, with
+the way the move or look reached them; C-touch-aim-step also compares her position). Kept, with
+the work fields stripped and cited by the arms above: the 16 `C-attempt-*` vectors. Added:
+`after.position_after_moves` on C-cap, C-elevator, C-fit-ceiling, C-fit-land-tunnel,
+C-shrink-floor, C-adj-aim-step and C-touch-aim-step, and the new C-after-moves-screen-edge. The
+file holds 413 vectors, 64 pose steps and 7 distance histories, against 416, 64 and 7 and the 14
+timing tables before.
 
-The model stays total for admitted typed input/content. Missing source-qualified timing arms
-are rejected by production, not by a new model capability switch. Source initialization guards
-are production's obligation; do not add source cells to movement or appearance State.
-Dispatcher, environment, frame-clock, raw enemy-membership and math readiness remain selected
-actual owners or explicitly borrowed inputs with their producer exclusions named. Pending
-mutable premises require freshness at resume. A completed movement response cannot grant
-permission for earlier world work. Scope-specific borrowed providers must retain their cursor
-with the recipe. Runtime codecs, atomic Unsupported rollback, intrinsic costs, hardware
-continuation, output materializations and common indexed replay/null/fault proof remain pending.
+**The reference model.** The landed model, with a scratch patch that reads her position when
+the frame reaches the pose choice (or the frame's end where nothing is chosen) and a vector test
+that compares
+`position_after_moves`, in a scratch worktree, never committed. On this file every vector, pose
+step and distance history passes: 413 of 413, 64 of 64, 7 of 7. On the 8 vectors that give
+`position_after_moves` it agrees 8 of 8; a model that does nothing (her start position) agrees 3,
+and one that reports her end-of-frame position 2 (C-cap, C-elevator), so the output is not the
+frame's end. Behaviour is otherwise unchanged, so the landed model's per-frame agreement over the
+records holds as the notes above give it; no record holds the position at the map's read.
 
-### Changed-resume and serialized restoration witnesses
-
-The additive `resume_case` pairs change an external semantic premise before its actual request
-or decision, and after its actual answer but before dependent effects. Future unanswered inputs
-are fresh; an already returned/local chosen answer is retained with its causal inputs and
-applied once. Before/after pairs prevent accepting both premature caching and late recomputation.
-All content/world quantities are invented. There is no source hardware guard or timing result
-in this schema. Complete interrupted work and provider/output progress must serialize, the
-original objects must be discarded, and a fresh deserialized instance must reproduce every
-query/effect/output exactly once. Clone-only equality cannot satisfy these tests.
-
-Movement replaces the slope-bearing world after ordinary travel, either before floor support
-querying or after its actual lifted answer. Appearance replaces actual accepted selection after
-current-clip playing, either before or after selected initialization was decided, and changes a
-contact suppressor either before its read or after its completed publication. Missing production
-freshness remains an integration limitation; these clean observations retain model totality.
-
-The private `timing-opportunities-479/reference_v2.py` continues a selected semantic reference
-calculation after serializing and discarding its interrupted instance. Six changed-resume
-cases agree; eight evaluation faults catch caching unmade floor/selection/suppression inputs,
-requerying/recomputing actual retained answers, repeating a completed contact and omitting a
-pending answer during restoration. These are selected reference decisions, not a claim that
-actual clean model State or all ordinary vectors have been serialized and replayed. The
-confined implementation retains that complete actual-model proof obligation.
-
-
-### Later speed choices and retained world answers
-
-The new `decision_change_case` pairs clarify the existing section12 contract rather than change
-ordinary choices/arithmetic. `C-answer-fall` is invented upright falling at one pixel/frame in
-Air. The returned downward move accepts one pixel and places her at y0081.0000. Growth then adds
-reference gravity0.1C00, yielding1.1C00. Changed gravity2.0000 before the later speed choice
-chooses3.0000; changed gravity after that actual choice still completes1.1C00. Neither boundary
-permits another world query or an expected future speed/pose as admission.
-
-`C-answer-rise` is invented upright Jumping, rising at one pixel/frame with jump held. Releasing
-before the rise-ending choice yields speed0 and a fall; releasing only after its actual chosen
-answer keeps the rise at that completion. These quantities precede later ordinary speed growth.
-The unchanged full frame rises one pixel and grows speed to-0.E400. All four cases require
-complete serialization/drop/fresh restore at every actual offered/completed opportunity,
-comparing complete State/ordered outputs with a no-save run receiving the same inputs at the
-same actual decisions. Existing ordinary vectors remain unchanged.
-
-The observer's invented API probe reproduced choosing growth inside retained world-answer
-completion from replacement Rules, without an offered speed answer. Collision was retained
-without another query. Do not cache unmade future answers early: the later speed choice is fresh
-when offered, and its actual chosen answer is retained afterwards. The private assessment/probe
-are `timing-opportunities-479/movement-contract-assessment.md` and `movement-observer-probe`;
-the independent boundary arithmetic check is `movement-retained-answer-reference.py` there.
-These regressions add no recorded-source coverage, intrinsic Exposure or production freshness/
-atomic publication claim; those remain with the existing source/integration owners.
+**Harness note.** Nothing the spec removed is compared. `movement-native-occupied-first-search`
+and `movement-native-enemy-stop-terrain-absence` compare `movement.reached.complete` and
+`movement.inside`; `movement/soft-touchdown-57` and `-124` compare position, vertical speed,
+the floor response, the sender offer and the graphics. The replay transition records the
+request, work, test, skip, body-fit and floor-clip fields they no longer compare. The mini-map's
+early read takes `her position after her moves` from the step's output.

@@ -1,6 +1,10 @@
 //! Checked immutable animation content and the clean appearance entry.
 
-use samus_appearance::{Clip, Content, Figure, Inputs, Paces, Rules, State};
+use samus_appearance::{
+    AppearanceState, CannonDelay, CannonEvent, ChargeGlowPosition, Clip, ColourSequences, Content,
+    Figure, Frame, FrameOutputs, FrameSound, Inputs, Pace, Paces, PaletteOpportunity, PassageEntry,
+    Rules, Selection, State, Stride, VisorDelay, VisorStep,
+};
 use types::AnimationSound;
 
 /// One imported semantic figure and its complete clip.
@@ -54,33 +58,6 @@ impl AppearanceContent {
             .find(|entry| entry.figure == figure)
             .map(|entry| &entry.clip)
     }
-
-    /// Bind current-playing and actual accepted-selection content to interrupted work.
-    /// Call again with fresh owner inputs before an unmade selection decision.
-    ///
-    /// # Errors
-    /// Either actual figure has no admitted clip.
-    pub fn animation_inputs(
-        &self,
-        inputs: Inputs,
-        selected_from: Figure,
-        rules: Rules,
-    ) -> Result<samus_appearance::AnimationInputs, ClipFault> {
-        let current_clip = self
-            .get(inputs.figure)
-            .ok_or(ClipFault::Missing(inputs.figure))?;
-        let selected_clip = self
-            .get(inputs.figure_after)
-            .ok_or(ClipFault::Missing(inputs.figure_after))?;
-        Ok(samus_appearance::AnimationInputs {
-            inputs,
-            current_clip: current_clip.clone(),
-            selected_from,
-            selected_clip: selected_clip.clone(),
-            paces: self.paces.clone(),
-            rules,
-        })
-    }
 }
 
 struct ClipProvider<'a> {
@@ -104,13 +81,47 @@ impl Content for ClipProvider<'_> {
     }
 }
 
-pub(super) fn advance(
+/// The parts of a frame of her appearance these owners play. Her item controls and the palette
+/// opportunity have no owner in these loops: the frame skips the controls and has no palette
+/// opportunity, so neither changes.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(super) struct Parts {
+    /// Her stride, before the animation update.
+    pub stride: Option<Stride>,
+    /// The animation update, with movement's results.
+    pub animation: Option<Inputs>,
+    /// Her pose selection.
+    pub selection: Option<Selection>,
+}
+
+/// The cannon delay and colour sequences of a frame that neither runs her item controls nor
+/// meets a palette opportunity: the update gives both back as they came, so any value does,
+/// and neither is kept.
+const UNOWNED: (CannonDelay, ColourSequences) = (
+    CannonDelay::INITIAL,
+    ColourSequences {
+        visor_delay: VisorDelay(0),
+        visor_step: VisorStep(0),
+        charge_glow_position: ChargeGlowPosition(0),
+    },
+);
+
+/// Play one frame of her animation through the clean appearance entry.
+///
+/// # Errors
+/// A figure the frame shows has no admitted clip; `state` is unchanged.
+pub(super) fn play(
     state: &mut State,
     content: &AppearanceContent,
     rules: &Rules,
-    inputs: &Inputs,
-) -> Result<Option<AnimationSound>, ClipFault> {
-    for figure in [inputs.figure, inputs.figure_after] {
+    parts: Parts,
+) -> Result<FrameOutputs, ClipFault> {
+    let shown = parts
+        .animation
+        .iter()
+        .flat_map(|inputs| [inputs.figure, inputs.figure_after])
+        .chain(parts.stride.map(|stride| stride.figure));
+    for figure in shown {
         if content.get(figure).is_none() {
             return Err(ClipFault::Missing(figure));
         }
@@ -126,10 +137,112 @@ pub(super) fn advance(
             contacts: std::collections::BTreeSet::new(),
         },
     };
-    let (next, sound) = samus_appearance::update(*state, inputs, &provider, rules);
+    let (cannon, colours) = UNOWNED;
+    let frame = Frame {
+        cannon: CannonEvent::ControlsSkipped,
+        stride: parts.stride,
+        animation: parts.animation,
+        selection: parts.selection,
+        palette: PaletteOpportunity::Absent,
+        passage: None,
+        drawing: None,
+    };
+    let before = AppearanceState {
+        animation: *state,
+        cannon,
+        colours,
+    };
+    let (after, outputs) = samus_appearance::update(before, &frame, &provider, rules);
     if let Some(figure) = provider.missing.get() {
         return Err(ClipFault::Missing(figure));
     }
-    *state = next;
-    Ok(sound)
+    *state = after.animation;
+    Ok(outputs)
+}
+
+/// Play one frame's animation update alone, giving the sound it asks for, if any.
+///
+/// # Errors
+/// A figure the frame shows has no admitted clip; `state` is unchanged.
+pub(super) fn advance(
+    state: &mut State,
+    content: &AppearanceContent,
+    rules: &Rules,
+    inputs: &Inputs,
+) -> Result<Option<AnimationSound>, ClipFault> {
+    let outputs = play(
+        state,
+        content,
+        rules,
+        Parts {
+            animation: Some(*inputs),
+            ..Parts::default()
+        },
+    )?;
+    Ok(outputs.sounds.into_iter().find_map(|sound| match sound {
+        FrameSound::Animation(sound) => Some(sound),
+        FrameSound::Opportunity(_) => None,
+    }))
+}
+
+/// A frame's content when it shows no figure: a frame without a stride or an animation update
+/// reads no clip and no pace.
+struct NoFigure {
+    clip: Clip,
+    paces: Paces,
+}
+
+impl Content for NoFigure {
+    fn clip(&self, _: &Figure) -> &Clip {
+        &self.clip
+    }
+
+    fn paces(&self) -> &Paces {
+        &self.paces
+    }
+}
+
+/// The sound her first entry into a passage asks for: a frame whose only appearance part is the
+/// passage entry, her animation frozen at the door. The entry reads no tuning.
+pub(super) fn passage_entry(entry: PassageEntry) -> Option<samus_appearance::SoundRequest> {
+    let content = NoFigure {
+        clip: Clip {
+            instructions: Vec::new(),
+            kick: None,
+            fast_fall: None,
+            rising: None,
+            contacts: std::collections::BTreeSet::new(),
+        },
+        paces: Paces {
+            plain: Pace(Vec::new()),
+            boosted: enum_map::EnumMap::from_fn(|_| Pace(Vec::new())),
+        },
+    };
+    let (cannon, colours) = UNOWNED;
+    let frame = Frame {
+        cannon: CannonEvent::ControlsSkipped,
+        stride: None,
+        animation: None,
+        selection: None,
+        palette: PaletteOpportunity::Absent,
+        passage: Some(entry),
+        drawing: None,
+    };
+    let state = AppearanceState {
+        animation: State {
+            playhead: samus_appearance::Playhead {
+                step: samus_appearance::Step::FIRST,
+                time_left: samus_appearance::Frames::NONE,
+            },
+            stage: types::BoostStage::Stage0,
+            laps_left: samus_appearance::LapsLeft::WithoutBooster,
+        },
+        cannon,
+        colours,
+    };
+    let (_, outputs) = samus_appearance::update(state, &frame, &content, &Rules::VANILLA);
+    outputs.sounds.into_iter().find_map(|sound| match sound {
+        FrameSound::Opportunity(request) => Some(request),
+        FrameSound::Animation(_) => None,
+    })
 }

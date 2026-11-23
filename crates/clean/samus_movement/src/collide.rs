@@ -33,7 +33,7 @@ const FLUSH: u16 = u16::MAX;
 const FAR_PAST: Px = Wrapping(17);
 
 /// `BlocksStopFlush`: a body's box, her centre and half-sizes.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Bounds {
     /// Her centre.
     pub at: Position,
@@ -42,7 +42,7 @@ pub struct Bounds {
 }
 
 /// What stopped a move.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Stop {
     /// `BlocksStopFlush`'s solid block, a stepped block met any way but downward, or
     /// `SlopesCarry`'s sloped surface.
@@ -55,7 +55,7 @@ pub enum Stop {
 }
 
 /// What a move or a look is tested against, and the way its cells are reported (`TouchedCells`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Probe {
     /// `SlopesSlowTheWalk`: a horizontal move made with her vertical speed exactly 0, which a
     /// sloped floor at her leading edge shortens; else as a move.
@@ -72,7 +72,7 @@ pub enum Probe {
 
 /// Where a move leaves her, what stopped it, and how far it got in whole px (a look's room). A
 /// look doesn't move her: it leaves her where she was, with what it wrote to her as a stop would.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Moved {
     /// Her position.
     pub to: Position,
@@ -87,6 +87,15 @@ pub struct Moved {
 /// `BlocksStopFlush`: whether a move goes right or down, the way positions grow.
 const fn grows(h: Heading) -> bool {
     matches!(h, Heading::Right | Heading::Down)
+}
+
+/// The way a signed vertical distance goes: up below zero, else down.
+pub fn vertical_heading(by: Fixed) -> Heading {
+    if by.negative() {
+        Heading::Up
+    } else {
+        Heading::Down
+    }
 }
 
 /// `BlocksStopFlush`: the cell a pixel is in, along one axis.
@@ -135,7 +144,7 @@ fn onward(h: Heading) -> Px {
 
 /// `BlocksStopFlush`: one move or look along its axis (`Tick::go` makes it), in the parts of it
 /// its stops read, each worked out once where the move starts (`Bounds::axis`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Axis {
     /// The way she moves.
     heading: Heading,
@@ -143,8 +152,6 @@ pub struct Axis {
     probe: Probe,
     /// `TouchedCells`: the way its cells are reported: a walk's or a move's direction, or a look.
     way: Way,
-    /// Spec: `PerformedCollisionTests`. Each request owns its purpose.
-    purpose: types::CollisionPurpose,
     /// The move (`SlopesCarry`: a sloped floor's stop counts its pixel part, not the carry).
     dist: Fixed,
     /// Unshortened terrain target after the horizontal limit.
@@ -163,13 +170,7 @@ impl Bounds {
     /// `BlocksStopFlush`: a move of `dist` from this box heading `heading`, tested as `probe`
     /// says: the box's parts along the axis and across it. `TouchedCells`: a walk or a move
     /// reports its cells with its direction, anything else with the way `Look`.
-    pub const fn axis(
-        self,
-        heading: Heading,
-        dist: Fixed,
-        probe: Probe,
-        purpose: types::CollisionPurpose,
-    ) -> Axis {
+    pub const fn axis(self, heading: Heading, dist: Fixed, probe: Probe) -> Axis {
         let ((from, across), (ra, rc)) = (self.at.along(heading), self.r.along(heading));
         let way = if matches!(probe, Probe::Walk | Probe::Move) {
             Way::Move(heading)
@@ -180,7 +181,6 @@ impl Bounds {
             heading,
             probe,
             way,
-            purpose,
             dist,
             terrain_target: None,
             from,
@@ -259,7 +259,7 @@ impl Axis {
     /// stops her. The centres must be closer than the half-sizes summed on both axes, along the
     /// move at her reach: her box at the move's end pushed 1 px on, moving left or up unless the
     /// end's subpixel is 0, right or down unless both her start's and the move's are 0.
-    fn enemy(&self, e: &Hitbox) -> (types::CandidateResult, Option<Moved>) {
+    fn enemy(&self, e: &Hitbox) -> Option<Moved> {
         let ((ea, ec), (era, erc)) = (e.centre.along(self.heading), e.radius.along(self.heading));
         let gap = self.ahead(ea) - era - self.ra;
         let push = if grows(self.heading) {
@@ -271,25 +271,14 @@ impl Axis {
         let near = |a: Px, b: Px, sum: Px| (a - b).0.cast_signed().unsigned_abs() < sum.0;
         let reached =
             near(reach, ea, self.ra + era) && near(self.across.pixel(), ec, self.rc + erc);
-        if !reached {
-            return (types::CandidateResult::Miss, None);
-        }
-        if below_zero(gap) {
-            return (
-                types::CandidateResult::AlreadyOverlapping(types::PixelGap(gap)),
-                None,
-            );
+        if !reached || below_zero(gap) {
+            return None;
         }
         let mut moved = self.put(gap, self.from.sub(), Some(Stop::Enemy));
         if gap == NONE {
             moved.to.y = moved.to.y.with_sub(0);
         }
-        let result = if gap == NONE {
-            types::CandidateResult::Touching
-        } else {
-            types::CandidateResult::StopsAtGap(types::PixelGap(gap))
-        };
-        (result, Some(moved))
+        Some(moved)
     }
 
     /// `BlocksStopFlush`, `SlopesCarry`: what a block on her leading edge's line, the `k`th
@@ -384,7 +373,7 @@ impl Tick<'_> {
     /// edge heading `h` (her bottom edge for a floor, her top edge for a ceiling), how many rows
     /// past the air row next to its surface that edge is, where the cell is a sloped surface
     /// facing that way and the edge is on that air row or past it.
-    fn sloped(&self, b: Bounds, h: Heading) -> (bool, Option<Px>) {
+    fn sloped(&self, b: Bounds, h: Heading) -> Option<Px> {
         let at = Pair {
             x: b.at.x.pixel(),
             y: edge(b.at.y.pixel(), b.r.y, h),
@@ -393,10 +382,9 @@ impl Tick<'_> {
             x: cell(at.x),
             y: cell(at.y),
         }) else {
-            return (false, None);
+            return None;
         };
-        let facing = (surface.faces == SlopeFaces::Floor) == (h == Heading::Down);
-        (facing, past(surface, h, at))
+        past(surface, h, at)
     }
 
     /// `TouchedCells`: the cells she is inside, from her box at the frame's start: her centre
@@ -441,52 +429,23 @@ impl Tick<'_> {
         }
     }
 
-    /// `SolidEnemies`: the first qualifying enemy in supplied order decides the move, if any;
-    /// enemies she already overlaps are skipped.
-    fn enemies(&self, a: &Axis) -> (types::EnemySearch, Option<Moved>) {
-        let supplied = self.world.solid_enemies();
-        let mut search = types::EnemySearch {
-            supplied_count: types::CandidateCount(supplied.len()),
-            candidates: Vec::new(),
-        };
-        for (index, e) in supplied.iter().enumerate() {
-            let (result, moved) = a.enemy(e);
-            search.candidates.push(types::EnemyCandidate {
-                candidate: types::CandidateIndex(index),
-                centre: e.centre,
-                radius: e.radius,
-                result,
-            });
-            if moved.is_some() {
-                return (search, moved);
-            }
-        }
-        (search, None)
+    /// `SolidEnemies`: the first enemy in the world's order that she reaches and doesn't already
+    /// overlap decides the move, if any; the ones after it play no part.
+    fn enemies(&self, a: &Axis) -> Option<Moved> {
+        self.world.solid_enemies().iter().find_map(|e| a.enemy(e))
     }
 
     /// `BlocksStopFlush`, `SolidEnemies`, `TouchedCells`: a move along axis `a`, tested as its
     /// probe says: where it leaves her, and what stopped it; its cells go to the frame's report.
-    /// The speed-derived intent first receives the horizontal whole-part limit, its fraction
-    /// kept. `MotionAttempts` publishes that signed request before `SlopesSlowTheWalk`
-    /// shortens accepted travel, and terrain retains the unshortened target line. Enemies
-    /// judge the complete limited request before any factor is applied. An enemy stop skips
-    /// terrain altogether. The first qualifying enemy in supplied order decides, not
-    /// necessarily the nearest; blocks stop her
-    /// only on a path free of qualifying enemies. A move of exactly 0 meets
-    /// a solid enemy she touches as any move does, and nothing else (`blocks`).
+    /// Solid enemies judge the whole move first (`SlopesSlowTheWalk` shortens it only after,
+    /// and an enemy that stops it leaves no shortening and no cells); blocks stop her only on a
+    /// path free of solid enemies, a sloped floor's line found from the unshortened target. A
+    /// move of exactly 0 meets a solid enemy she touches as any move does, and nothing else.
     pub fn go(&mut self, mut a: Axis) -> Moved {
-        let intended = a.signed_travel(a.dist);
         a.terrain_target = Some(a.to());
-        let (world, enemy_search, enemy_stop) = match a.probe {
-            Probe::Blocks => (types::RequestedWorld::Blocks, None, None),
-            Probe::Enemies => {
-                let (search, stop) = self.enemies(&a);
-                (types::RequestedWorld::SolidEnemies, Some(search), stop)
-            }
-            Probe::Walk | Probe::Move | Probe::NearWall => {
-                let (search, stop) = self.enemies(&a);
-                (types::RequestedWorld::EnemiesThenBlocks, Some(search), stop)
-            }
+        let enemy_stop = match a.probe {
+            Probe::Blocks => None,
+            Probe::Enemies | Probe::Walk | Probe::Move | Probe::NearWall => self.enemies(&a),
         };
         let stopped = enemy_stop.or_else(|| {
             if a.probe == Probe::Enemies {
@@ -495,36 +454,13 @@ impl Tick<'_> {
                 self.blocks(&mut a)
             }
         });
-        let moved = stopped.unwrap_or_else(|| {
+        stopped.unwrap_or_else(|| {
             let mut moved = a.put(a.ahead(a.to().pixel()), a.to().sub(), None);
-            // Spec: TravelledDistances. No stop: the limit and walk factors already determined
-            // the complete accepted travel, independently of position wrapping or alignment.
+            // `TravelledDistances`: unstopped, the move travels its whole limited and shortened
+            // distance, whatever wrapping or alignment does to her position.
             moved.accepted = a.signed_travel(a.dist);
             moved
-        });
-        let result = match moved.stop {
-            None => types::MotionResult::Unobstructed,
-            Some(Stop::Enemy) => types::MotionResult::EnemyStopped,
-            Some(Stop::Flat | Stop::Seats) => types::MotionResult::TerrainStopped,
-        };
-        let effect = if a.way == Way::Look {
-            types::RequestEffect::Clearance(types::ClearanceRoom(moved.gone))
-        } else {
-            types::RequestEffect::Travel(moved.accepted)
-        };
-        self.movement_work
-            .push(types::MovementWork::Motion(types::MotionAttempt {
-                purpose: a.purpose,
-                direction: a.heading,
-                world,
-                start: Pair::from_along(a.heading, a.from, a.across),
-                radius: Pair::from_along(a.heading, a.ra, a.rc),
-                intended,
-                enemy_search,
-                effect,
-                result,
-            }));
-        moved
+        })
     }
 
     /// `BlocksStopFlush`: the cells of her leading edge's line at the target; the first that
@@ -536,24 +472,6 @@ impl Tick<'_> {
             return None;
         }
         self.line(a).into_iter().find_map(|(k, at)| {
-            // Spec: PerformedCollisionTests. Record evaluation here, not from reached
-            // reactions or raw slope/inside reads. Enemy and earlier-cell stops never get here.
-            let vertical_motion =
-                if !a.heading.vertical() && matches!(a.probe, Probe::Walk | Probe::Move) {
-                    Some(if a.probe == Probe::Walk {
-                        types::VerticalMotionAtTest::ExactlyZero
-                    } else {
-                        types::VerticalMotionAtTest::Nonzero
-                    })
-                } else {
-                    None
-                };
-            self.collision_tests.push(types::CollisionTest {
-                cell: at,
-                direction: a.heading,
-                purpose: a.purpose,
-                vertical_motion,
-            });
             let (block, at) = self.resolve(at);
             self.reached.push(Touch {
                 cell: at,
@@ -565,35 +483,43 @@ impl Tick<'_> {
         })
     }
 
-    /// Spec: `PerformedSupportChecks`. Retain a surface read even when it does not place her.
-    pub(crate) fn support(&mut self, b: Bounds, h: Heading) -> Option<Px> {
-        let at = Cell {
-            x: cell(b.at.x.pixel()),
-            y: cell(edge(b.at.y.pixel(), b.r.y, h)),
-        };
-        let is_floor = h == Heading::Down;
-        let (slope, raw) = self.sloped(b, h);
-        let placement = raw.filter(|p| !is_floor || *p != NONE);
-        let result = match (slope, placement, is_floor) {
-            (false, _, _) => types::SupportResult::NoSlope,
-            (_, None, _) => types::SupportResult::NoPlacement,
-            (_, Some(_), true) => types::SupportResult::Lifted,
-            (_, Some(_), false) => types::SupportResult::PushedDown,
-        };
-        let by = placement.unwrap_or(NONE) * if is_floor { -ONE } else { ONE };
-        self.movement_work
-            .push(types::MovementWork::Support(types::SupportCheck {
-                surface: if is_floor {
-                    types::SupportSurface::Floor
-                } else {
-                    types::SupportSurface::Ceiling
-                },
-                centre: b.at,
-                radius: b.r,
-                cell: at,
-                result,
-                placement: types::PlacementDistance(by),
-            }));
-        placement
+    /// `BlocksStopFlush`: a horizontal move or test of `dist` heading `heading` from box `b`,
+    /// limited to the longest horizontal move in whole px, its subpixel part kept.
+    pub(crate) fn sideways(
+        &mut self,
+        b: Bounds,
+        heading: Heading,
+        dist: Fixed,
+        probe: Probe,
+    ) -> Moved {
+        let limit = fixed(self.rules.move_limit, dist.sub());
+        self.go(b.axis(heading, dist.min(limit), probe))
+    }
+
+    /// A vertical move or look by the signed distance `by` from box `b`. `PoseFitAfterMoves`: a
+    /// block look of the long look's length or more is stopped by whatever a look of that
+    /// length would stop, with the room that look found; only where nothing stops it is it the
+    /// look of its own distance, whose cells then follow the long look's.
+    pub(crate) fn up_or_down(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
+        let (heading, dist, long) = (vertical_heading(by), by.size(), self.rules.long_look);
+        if probe == Probe::Blocks && dist >= long {
+            let first = self.go(b.axis(heading, long, probe));
+            if first.stop.is_some() {
+                return first;
+            }
+        }
+        self.go(b.axis(heading, dist, probe))
+    }
+
+    /// `SlopesCarry`: the check after a horizontal move, of the floor (`h` down) or the ceiling
+    /// (`h` up), each asking the one cell at her centre column and that edge's row. A sloped
+    /// floor with her bottom edge in its solid part lifts her, by whole pixels, until it is on
+    /// the last air row; a sloped ceiling with her top edge in its solid part or on the first
+    /// air row under it pushes her down to that row, 0 px included. Returns the signed whole
+    /// pixels it moves her, where it does: that seats her.
+    pub(crate) fn slope_check(&self, b: Bounds, h: Heading) -> Option<Px> {
+        let floor = h == Heading::Down;
+        let past = self.sloped(b, h).filter(|p| !floor || *p != NONE)?;
+        Some(past * if floor { -ONE } else { ONE })
     }
 }
