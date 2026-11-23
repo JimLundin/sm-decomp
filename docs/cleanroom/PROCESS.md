@@ -242,6 +242,17 @@ room to spare, and GitHub's limit of 20 concurrent jobs. At most one round is in
 domain. The root names each lane to Jim when it starts, and reports its result when it ends.
 Within that limit, the dependencies below decide what may overlap.
 
+**Parallel lanes don't share files** (Jim, 2026-11-23). A rebase after main has moved costs a
+rebuild and a re-proof on this machine, which can wipe out the time running in parallel saved.
+So before a lane starts, its brief lists the files it will change, and lanes running at once
+change disjoint files. A file that most work passes through belongs to one lane at a time: the
+played owner and its runner, `tools/mutants.toml` and STATUS. Other lanes don't edit it. They
+hand their entries for it (a planted fault, a STATUS paragraph) to the root, who adds them when
+the lane lands. When two pieces of work need the same file, they run one after the other in a
+single lane, or the second starts from the first's branch and lands after it. The lane with the
+most work in flight lands first, and shorter lanes start from it. Generated pages (REPORT, the
+README status) are regenerated at landing, never merged by hand.
+
 **Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
 writes nothing, and the integrator works outside the clean crates.
 

@@ -80,7 +80,7 @@ ROM-derived bytes never go in commits or logs.
 17. A round: spec, brief, spec gate (first spec or a new mechanism), launch, implement,
     import, blind review (first round or when asked), integrate, round gate, land as one
     commit ([PROCESS](cleanroom/PROCESS.md#a-round), decision 20).
-18. As many lanes as disk and CI hold, one round in flight per domain
+18. As many lanes as disk and CI hold, on disjoint files, one round in flight per domain
     ([PROCESS](cleanroom/PROCESS.md#what-can-run-at-once)).
 18a. Lane sub-agents default to GPT-6.2 Sol ([PROCESS](cleanroom/PROCESS.md#roles)).
 19. Shift end stops new scope; active work finishes. New rounds start nightly; off-hours
