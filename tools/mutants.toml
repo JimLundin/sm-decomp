@@ -406,3 +406,43 @@ after = "work_done: finished(current),"
 case = "played chain-any-0003-DFD7 0 300"
 cut = 300
 field = "doors.colours.screen"
+
+[[fault]]
+name = "played-health-tail-lands"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = ".play_frame(samus_health::TailImpact::Absent, &rules.health);"
+after = ".play_frame(samus_health::TailImpact::EligibleCeresTail, &rules.health);"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "health.energy.whole"
+
+[[fault]]
+name = "played-hud-state-held"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "hud: Model(hud_state),"
+after = "hud: self.hud.clone(),"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 8
+field = "hud.map-window"
+
+[[fault]]
+name = "played-hud-frame-count-late"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "frame: hud.frame,"
+after = "frame: FrameCount(hud.frame.0.wrapping_add(1)),"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 7
+field = "hud.map-window"
+
+[[fault]]
+name = "played-hud-energy-not-health"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "now: health.energy.whole.get(),"
+after = "now: health.energy.whole.get().wrapping_sub(1),"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "hud.status-bar"

@@ -26,7 +26,14 @@ The rung measure is the number of cuts a room plays alone from its seed.
 [`verify::replay::played`](../crates/verify/src/replay/played.rs) admits the whole-frame
 owner [`game::production::played`](../crates/game/src/production/played.rs) once from the seed
 record. Each frame of play it steps her clip's look ahead, `Samus::step`, the animation update,
-the camera and the doors, once each, in any pose with imported content. A frame whose moves
+the camera and the doors, once each, in any pose with imported content. Each frame of play
+starts with her health (samus-health's whole frame, with no tail impact: no Ridley is in the
+loop) and ends, after her moves, with the HUD's frame of play. The HUD reads her position after
+her moves, the energy Health leaves and its held neighbours. While a passage runs, the HUD takes
+its step outside play, turned on when the doors turn the mini-map on. The run also compares
+Health's State (energy, pending loss, warning, protection) and the HUD's State (the mini-map's
+window, the status bar, the explored cells, the values last shown, the selection and the
+mini-map's off) at every cut, each part by name. A frame whose moves
 reach a door to a room plays out whole; from the next, while the passage runs, the doors step
 alone and move her position, the view, where the camera last saw her and the colours. As each
 of the passage's calls is done, the room's loading
@@ -79,10 +86,9 @@ timing is T1's: absolute master-tick clocks, ordered hardware callbacks, ordered
 access, the Contact latches at post-RTI clocks and Random's ordered device transfers. No
 indexed case compares them, and production has no frame caller that schedules them.
 
-The played-alone run carries Movement, Appearance, Camera and Doors from the M0 seed. The HUD,
-Health, Random and Haze fields at those frames are covered only by their models' vectors and
-by the scoped `health/ceres-tail-drawing-gauge`, `hud/stationary-map-blink` and
-`connected-ordinary/early-mini-map` cases, until their owners join the loop. Weapons, Contact,
+The played-alone run carries Movement, Appearance, Camera, Doors, the colours, Health and the
+HUD from the M0 seed. The Random and Haze fields at those frames are covered only by their
+models' vectors until their owners join the loop. Weapons, Contact,
 the sound queue and the Ceres door actor at the opening shot wait for the loop in the same way.
 The [transition](../scenarios/replay/transition.toml) records each retired frame case, the
 owners its cut-level fields wait for and the indexed cases that still witness part of it.
