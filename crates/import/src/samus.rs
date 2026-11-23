@@ -37,16 +37,6 @@ pub struct Tables<'a> {
     pub graphics: &'a Graphics,
 }
 
-/// Imported assets and the exact upload identities assigned at this import edge.
-/// Native definition identity stays outside the asset format and gameplay model.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ImportedAssets {
-    /// Samus's immutable sprite sheet and clips in the engine's format.
-    pub assets: SamusAssets,
-    /// Actual definition-to-upload assignments, retained from pool insertion.
-    pub upload_bindings: BTreeMap<TileDefinitionId, TilesId>,
-}
-
 /// Why the assets don't import.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ImportError {
@@ -89,19 +79,12 @@ const FIRST_TRANSITION: u16 = 0x35;
 ///
 /// [`ImportError`] if a table doesn't decode or the graphics aren't in the image.
 pub fn import(rom: Lorom<'_>) -> Result<SamusAssets, ImportError> {
-    import_with_bindings(rom).map(|imported| imported.assets)
-}
-
-/// Import assets while preserving the actual native-to-asset upload identity map.
-/// # Errors
-/// A table does not decode or a required graphics span is unavailable.
-pub fn import_with_bindings(rom: Lorom<'_>) -> Result<ImportedAssets, ImportError> {
     let poses = Poses::load(rom).map_err(ImportError::Poses)?;
     let delays = AnimationDelays::load(rom, &poses).map_err(ImportError::Animation)?;
     let spritemaps = SamusSpritemaps::load(rom).map_err(ImportError::Spritemaps)?;
     let tiles = SamusTiles::load(rom, &delays, &poses).map_err(ImportError::Address)?;
     let graphics = Graphics::load(rom, GRAPHICS_BANKS).map_err(ImportError::Address)?;
-    from_tables_with_bindings(Tables {
+    from_tables(Tables {
         poses: &poses,
         delays: &delays,
         spritemaps: &spritemaps,
@@ -117,13 +100,6 @@ pub fn import_with_bindings(rom: Lorom<'_>) -> Result<ImportedAssets, ImportErro
 /// [`ImportError`] if one of her poses has no definition or delay list, or a frame's
 /// graphics aren't there.
 pub fn from_tables(tables: Tables<'_>) -> Result<SamusAssets, ImportError> {
-    from_tables_with_bindings(tables).map(|imported| imported.assets)
-}
-
-/// Import decoded tables and retain their actual upload-pool assignments.
-/// # Errors
-/// Missing pose, delay, end or checked graphics content.
-pub fn from_tables_with_bindings(tables: Tables<'_>) -> Result<ImportedAssets, ImportError> {
     let mut pools = Pools::default();
     let clips = map::MAP
         .iter()
@@ -158,18 +134,15 @@ pub fn from_tables_with_bindings(tables: Tables<'_>) -> Result<ImportedAssets, I
             })
         })
         .collect::<Result<_, ImportError>>()?;
-    Ok(ImportedAssets {
-        assets: SamusAssets {
-            sheet: SpriteSheet {
-                sprites: pools.sprites,
-                uploads: pools.uploads,
-            },
-            clips,
-            unkeyed,
-            running: holds(tables.delays.running()).collect(),
-            chest: CHEST,
+    Ok(SamusAssets {
+        sheet: SpriteSheet {
+            sprites: pools.sprites,
+            uploads: pools.uploads,
         },
-        upload_bindings: pools.upload_ids,
+        clips,
+        unkeyed,
+        running: holds(tables.delays.running()).collect(),
+        chest: CHEST,
     })
 }
 
@@ -492,58 +465,3 @@ pub mod palettes;
 
 #[cfg(test)]
 mod tests;
-
-#[cfg(test)]
-mod binding_tests {
-    use super::*;
-    use data::pose::tiles::{GraphicsRef, TileDefinition};
-
-    #[test]
-    fn upload_pool_retains_insertion_identity_for_equal_payloads() {
-        let definition = TileDefinition {
-            source: GraphicsRef {
-                bank: 0x9b,
-                offset: 0x8000,
-            },
-            first: 2,
-            second: 2,
-        };
-        let poses = Poses::default();
-        let delays = AnimationDelays::default();
-        let spritemaps = SamusSpritemaps::default();
-        let tiles = SamusTiles::new(
-            Vec::new(),
-            vec![
-                definition,
-                TileDefinition {
-                    source: GraphicsRef {
-                        offset: 0x8004,
-                        ..definition.source
-                    },
-                    ..definition
-                },
-            ],
-        );
-        let graphics = Graphics::new(vec![(0x9b, vec![1, 2, 3, 4, 1, 2, 3, 4])]);
-        let tables = Tables {
-            poses: &poses,
-            delays: &delays,
-            spritemaps: &spritemaps,
-            tiles: &tiles,
-            graphics: &graphics,
-        };
-        let mut pools = Pools::default();
-        assert_eq!(pools.upload(tables, TileDefinitionId(1)), Ok(TilesId(0)));
-        assert_eq!(pools.upload(tables, TileDefinitionId(0)), Ok(TilesId(1)));
-        assert_eq!(pools.upload(tables, TileDefinitionId(1)), Ok(TilesId(0)));
-        assert_eq!(pools.uploads.len(), 2);
-        assert_eq!(pools.uploads[0], pools.uploads[1]);
-        assert_eq!(
-            pools.upload_ids,
-            BTreeMap::from([
-                (TileDefinitionId(0), TilesId(1)),
-                (TileDefinitionId(1), TilesId(0))
-            ])
-        );
-    }
-}
