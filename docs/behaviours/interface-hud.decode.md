@@ -297,9 +297,10 @@ takes the same outcome tags as its record (`checktw.py`).
 | R17 | r01 55 | as R16 | C-R17 |
 | R18 | samus-ceres-push 2 | MiniMapStill (off), EnergyGauge | C-R18 |
 
-Each case starts from record N's State (§State) and takes record N+1's inputs (§Inputs); none is
-in a mask. The harness already runs every record pair, so these are frames it must match by
-name: a named case that is skipped or masked is a harness defect.
+Each case starts from record N's State (§State) and takes record N+1's inputs (§Inputs), but her
+stock as the frame begins from record N; none is in a mask. In R9 to R12 and R15 her stock is
+the same at N and N+1 (§The whole frame, Reference). The harness already runs every record
+pair, so these are frames it must match by name: a named case that is skipped or masked is a harness defect.
 
 ## Round 2's gate, the spec's side (adversary 57, S1-S4)
 
@@ -1016,3 +1017,19 @@ fail: Select reading the counts as the frame ends (C-select-stock-at-start), the
 the controls read after the drop (C-shot-cancels) and one answer for several countdown frames
 (C-countdown-repeat). Every rule but `CyclingItems`' stock is unchanged, so the per-frame
 agreement over the records (§How the spec was made, §The harness) stands; it was not re-run.
+`CyclingItems`' stock is the one input that moved from record N+1 to record N, so its oracle
+cases were checked on the words it reads: in CI's lean record cache (the `CACHE_ASSET` pinned in
+`verify.yml`), the chain of each case's row was decoded to its WRAM at records N and N+1, and
+`09C6`, `09CA`, `09CE` and `09A2` compared. They are equal at N and N+1 in all five, so her stock
+as the frame begins is the stock the cases were matched on, and each keeps its recorded result:
+
+| Case | Row, records N and N+1 | `09C6`, `09CA`, `09CE`, `09A2` | Oracle case |
+| --- | --- | --- | --- |
+| R9 | area-maridia 392, 393 | equal | kept |
+| R10 | chain-0097-ACF0 661, 662 | equal | kept |
+| R11 | area-maridia 395, 396 | equal | kept |
+| R12 | chain-0220-D017 91, 92 | equal | kept |
+| R15 | chain-0232-D5A7 268, 269 | equal | kept |
+
+The record index was confirmed on the same pairs: `09D2` differs at N and N+1 in all five (each
+is a Select press) and is equal at area-maridia 391 and 392.
