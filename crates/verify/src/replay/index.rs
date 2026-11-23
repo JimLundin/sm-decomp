@@ -1588,7 +1588,10 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         return case.kind == CaseKind::Scoped
             && matches!(
                 case.responsibilities.as_slice(),
-                [Responsibility::Blocks | Responsibility::Doors | Responsibility::AudioSender]
+                [Responsibility::Blocks
+                    | Responsibility::Doors
+                    | Responsibility::AudioSender
+                    | Responsibility::Appearance]
             )
             && case.rules.is_empty()
             && observations.is_empty()

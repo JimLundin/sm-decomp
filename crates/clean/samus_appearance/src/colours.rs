@@ -1,8 +1,8 @@
-//! Ordinary dry-run sequence preparation, independent of the shared palette banks.
+//! Ordinary dry-movement sequence preparation, independent of the shared palette banks.
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
-use types::{Action, Position, Set};
+use types::{Action, Body, LandedFrom, Position, Set, Turn};
 
 use crate::inputs::Figure;
 
@@ -18,7 +18,7 @@ pub struct VisorStep(pub usize);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChargeGlowPosition(pub usize);
 
-/// Spec: `OrdinaryRunColours`. Persistent sequence state, separate from shared colours.
+/// Spec: `OrdinaryDryColours`. Persistent sequence state, separate from shared colours.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ColourSequences {
     /// Delay before the visor sequence advances.
@@ -92,16 +92,88 @@ pub enum ColourEffect {
     HitColourPulse,
 }
 
-/// Spec: `OrdinaryRunColours`. Complete known facts from the actual palette opportunity.
+/// Spec: `OrdinaryDryColours`. Whether the screw attack is switched on, from the items switched
+/// on (progress), as it stands at the palette opportunity. Not the figure's sprite.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ScrewAttack {
+    /// The screw attack is switched off, or not taken.
+    Off,
+    /// The screw attack is switched on.
+    On,
+}
+
+/// What an admitted dry movement asks of the screw attack observation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ScrewAttackPremise {
+    /// The movement is admitted whether the screw attack is on or off.
+    Either,
+    /// The movement is admitted only while the screw attack is switched off.
+    SwitchedOff,
+}
+
+impl ScrewAttackPremise {
+    const fn holds(self, screw_attack: ScrewAttack) -> bool {
+        match self {
+            Self::Either => true,
+            Self::SwitchedOff => matches!(screw_attack, ScrewAttack::Off),
+        }
+    }
+}
+
+// Spec: `OrdinaryDryColours`, its Admission paragraph. These two items are the one place that
+// decides which figures the ordinary reset admits; nothing else names an action or a body.
+
+/// Only an upright figure is admitted: the spec refuses any action of a crouched or ball figure,
+/// and the spring ball is a ball.
+const ADMITTED_BODY: Body = Body::Upright;
+
+/// The admitted dry movements of an upright figure, each with its screw-attack premise.
+///
+/// Every action not listed is refused: falling, crouching, morphing, unmorphing, rolling, taking
+/// off, standing up, pressing against a wall, wall jumps, turns on the ground, in a fall or in a
+/// moonwalk's jump, and landing from a spin or a wall jump. A spin is admitted only while the
+/// screw attack is off. Admitting or refusing one more action is adding or removing its line.
+const ADMITTED_DRY_MOVEMENTS: &[(Action, ScrewAttackPremise)] = &[
+    // Running [R-ordinary-run-colours].
+    (Action::Running, ScrewAttackPremise::Either),
+    // Standing still [R-ordinary-still-colours].
+    (Action::Still, ScrewAttackPremise::Either),
+    // Moonwalking [R-ordinary-moonwalk-colours].
+    (Action::Moonwalking, ScrewAttackPremise::Either),
+    // A straight jump [R-ordinary-jump-colours].
+    (Action::Jumping, ScrewAttackPremise::Either),
+    // Turning in a straight jump.
+    (Action::Turning(Turn::Jump), ScrewAttackPremise::Either),
+    // Landing from a straight jump.
+    (
+        Action::Landing(LandedFrom::Jump),
+        ScrewAttackPremise::Either,
+    ),
+    // A spin, only with the screw attack off.
+    (Action::Spinning, ScrewAttackPremise::SwitchedOff),
+];
+
+/// Whether this figure is an admitted dry movement under the current screw attack observation.
+fn admits_dry_movement(figure: Figure, screw_attack: ScrewAttack) -> bool {
+    figure.pose.body == ADMITTED_BODY
+        && ADMITTED_DRY_MOVEMENTS
+            .iter()
+            .any(|&(action, premise)| action == figure.pose.action && premise.holds(screw_attack))
+}
+
+/// Spec: `OrdinaryDryColours`. Complete known facts from the actual palette opportunity.
 ///
 /// Movement supplies a valid selected figure and its position; equipment supplies the current
-/// suit answer, not a prediction. Do not construct these facts when any owner answer is unknown.
+/// suit answer and progress the screw attack's, not predictions. Do not construct these facts
+/// when any owner answer is unknown.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RunColourFacts {
+pub struct DryColourFacts {
     /// Current figure after selection.
     pub figure: Figure,
     /// Current position after movement and selection.
     pub position: Position,
+    /// Whether the screw attack is currently switched on.
+    pub screw_attack: ScrewAttack,
     /// Current suit selection.
     pub suit: Suit,
     /// Actual room colour treatment.
@@ -114,9 +186,9 @@ pub struct RunColourFacts {
     pub effects: Set<ColourEffect>,
 }
 
-impl RunColourFacts {
+impl DryColourFacts {
     fn admits_ordinary_reset(&self) -> bool {
-        self.figure.pose.action == Action::Running
+        admits_dry_movement(self.figure, self.screw_attack)
             && self.suit == Suit::Power
             && self.room_colours == RoomColours::Standard
             && self.levels.values().all(|present| !present)
@@ -125,67 +197,68 @@ impl RunColourFacts {
     }
 }
 
-/// The actual palette opportunity is outside the supported ordinary dry-run arm.
+/// The actual palette opportunity is outside the supported ordinary dry-movement arm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct UnsupportedRunColours;
+pub struct UnsupportedDryColours;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-enum RunColourProgress {
+enum DryColourProgress {
     Unobserved,
-    Pending(RunColourFacts),
+    Pending(DryColourFacts),
     Completed,
 }
 
-/// Spec: `RetainedRunColours`. Work for one actual palette opportunity.
+/// Spec: `RetainedDryColours`. Work for one actual palette opportunity.
 ///
 /// Save it alongside the sequence state, the authoritative palettes and the rest of the caller's
 /// look and input/delivery progress. It never takes ownership of the movement or palette inputs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RunColourWork(RunColourProgress);
+pub struct DryColourWork(DryColourProgress);
 
-impl RunColourWork {
+impl DryColourWork {
     /// Start this only for a new actual palette opportunity, never a redraw or a retry.
-    pub const UNOBSERVED: Self = Self(RunColourProgress::Unobserved);
+    pub const UNOBSERVED: Self = Self(DryColourProgress::Unobserved);
 
-    /// Spec: `OrdinaryRunColours`. After selection and before health maintenance, observe the
-    /// current facts. Pass `None` when a required fact or valid colour bank could not be supplied.
-    /// A refusal leaves progress unchanged. `Ok(false)` means this work was already observed.
+    /// Spec: `OrdinaryDryColours`. After selection and before health maintenance, observe the
+    /// current facts, the screw attack's included. Pass `None` when a required fact or valid
+    /// colour bank could not be supplied. A refusal leaves progress unchanged. `Ok(false)` means
+    /// this work was already observed: its retained facts stand, whatever is passed now.
     /// Neither sequence state nor colours are changed here.
     ///
     /// # Errors
-    /// Returns `UnsupportedRunColours` for unobserved work outside the ordinary arm.
+    /// Returns `UnsupportedDryColours` for unobserved work outside the ordinary arm.
     pub fn observe(
         &mut self,
-        facts: Option<RunColourFacts>,
-    ) -> Result<bool, UnsupportedRunColours> {
+        facts: Option<DryColourFacts>,
+    ) -> Result<bool, UnsupportedDryColours> {
         if *self != Self::UNOBSERVED {
             return Ok(false);
         }
         let facts = facts
-            .filter(RunColourFacts::admits_ordinary_reset)
-            .ok_or(UnsupportedRunColours)?;
-        self.0 = RunColourProgress::Pending(facts);
+            .filter(DryColourFacts::admits_ordinary_reset)
+            .ok_or(UnsupportedDryColours)?;
+        self.0 = DryColourProgress::Pending(facts);
         Ok(true)
     }
 
     /// Inspect the retained actual facts while the reset is pending, without advancing it.
     #[must_use]
-    pub const fn pending(&self) -> Option<&RunColourFacts> {
+    pub const fn pending(&self) -> Option<&DryColourFacts> {
         match &self.0 {
-            RunColourProgress::Pending(facts) => Some(facts),
-            RunColourProgress::Unobserved | RunColourProgress::Completed => None,
+            DryColourProgress::Pending(facts) => Some(facts),
+            DryColourProgress::Unobserved | DryColourProgress::Completed => None,
         }
     }
 
-    /// Spec: `RetainedRunColours`. Apply an admitted reset once, without consulting later
+    /// Spec: `RetainedDryColours`. Apply an admitted reset once, without consulting later
     /// facts. Returns whether a completion took place, even if the sequences were already ready.
     /// This changes only sequence state: no palette access, sound, graphic or hardware request.
     pub const fn complete(&mut self, sequences: &mut ColourSequences) -> bool {
-        if !matches!(self.0, RunColourProgress::Pending(_)) {
+        if !matches!(self.0, DryColourProgress::Pending(_)) {
             return false;
         }
         *sequences = ORDINARY_READY;
-        self.0 = RunColourProgress::Completed;
+        self.0 = DryColourProgress::Completed;
         true
     }
 }

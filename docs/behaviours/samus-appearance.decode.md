@@ -401,7 +401,7 @@ together, not split by area.
 - Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
 - Area run: RunPace, BoostStages, BoostingLap
 - Area cannon: CannonItemDelay, CannonReadinessReset, RetainedCannonReadiness
-- Area palette (old 183): OrdinaryRunColours, RetainedRunColours
+- Area palette (old 183): OrdinaryDryColours, RetainedDryColours
 
 
 ## Stride, spin and passage sound opportunities
@@ -738,7 +738,7 @@ and arbitrary corrupted source words are outside this amendment. Source initiali
 readiness, but an ordinary pose/clip change or room passage without reinitializing Samus does not.
 No ordinary or suspended animation contract changes, and no new timing-profile admission is claimed.
 
-## Ordinary dry-run palette preparation
+## Ordinary dry palette preparation
 
 ### Responsibility and recorded opportunity
 
@@ -763,13 +763,22 @@ are serialized in the vectors.
 
 ### Sources and exact mapping
 
-- `OrdinaryRunColours`: bank 90's ordinary pose work and palette opportunity, followed by
+- `OrdinaryDryColours`: bank 90's ordinary pose work and palette opportunity, followed by
   Health Maintenance. Bank 91's palette path `$91:D6F7..D705` reaches the inactive charge
   reset at `$91:D7B0`, the visor decision `$91:D83F..D8A4` and the ordinary unchanged-colour
   path in `$91:D9B2` onward. The standard-room visor reset is the store at `$91:D8A0`.
   The red and orange alternatives admit separate source branches through `$91:D856..D867`,
   which decrement the sequence delay and may advance the sequence. Their future colour output
   belongs to the corresponding unqualified effects.
+  The action enters only after that reset: special type zero dispatches to `$91:D9B2`, whose
+  dry path reaches the movement-type test at `$91:D9DA..D9E8`. Spin jumping (`$91:D9F7`)
+  tests screw attack in the equipped items (`$09A2` bit `0008h`); without it, and for every
+  other movement type except wall jumping (`$91:DA0B`), control reaches the speed-boost test at
+  `$91:D9EA` and returns carry set at `$91:D9F5`, so the suit palette load at `$91:D717` is
+  skipped and neither bank is written. With screw attack, the spin either loads a screw-attack
+  palette and advances its own frame (`$91:DA1B..DA41`), clears that frame at animation step
+  zero (`$91:DA43`), or returns carry clear from step `1Bh` on and loads the suit palette, so
+  that spin stays unsupported. Wall jumping is not reached by the opening.
 - Suit selection: bank 90 tests the currently enabled Gravity and Varia items in that order and
   produces the neutral Power or the Varia/Gravity selection. The packet checks those item tests,
   branch destinations and latch stores independently of the palette snapshot. The output of
@@ -781,7 +790,7 @@ are serialized in the vectors.
   `$88:807D/$88:8081` place BG1/BG2 and sprites on the main screen and BG3 on the subscreen.
   Its red and orange setups supply the alternative classes. The source check binds these
   to the visor decision and validates the backdrop literal stores independently.
-- `RetainedRunColours`: constructed whole-owner observation, pending and completed cuts.
+- `RetainedDryColours`: constructed whole-owner observation, pending and completed cuts.
   For indexed replay, physical work and effect delivery need their own actual opportunity
   identity and progress. The reference checks the semantic reset's once-only completion.
 
@@ -796,7 +805,8 @@ are serialized in the vectors.
 | dormant or busy grapple | `$0D32`, bounded semantic decoder as above |
 | room colour treatment | `$1982`, standard/red/orange only, as above |
 | water and lava levels | `$195E`, `$1962`, absent when the corresponding signed surface is negative |
-| current figure and position | `$0A1C`, `$0A1F`, `$0AFA` plus one immutable pose geometry read. The bottom calculation uses current pose and current vertical pixel position. Dry admitted poses and positions give the same palette outcome |
+| current figure and position | `$0A1C`, `$0A1F`, `$0AFA` plus one immutable pose geometry read. The bottom calculation uses current pose and current vertical pixel position. Dry admitted poses and positions give the same palette outcome. The admitted upright actions are movement types 0 (Still and Landing(Jump) poses), 1 (Running), 2 (Jumping), 3 (Spinning), `10h` (Moonwalking) and `17h` (Turning(Jump)) |
+| screw attack | `$09A2` bit `0008h`, read only for movement types 3 and `14h` |
 | speed glow and hit colour pulse | `$0B3E`, `$0A48`, each inactive at zero in the bounded proof |
 | current and target palettes | `$C000..C1FF`, `$C200..C3FF`, both complete ordered RGB555 palettes. Source checks preserve every byte. Admit this RGB555 representation only if all 512 high bits are clear at the edge; otherwise report unsupported. The recorded state meets that condition |
 
@@ -846,9 +856,55 @@ complete preserved source banks. Runtime integration must still prove the requir
 replay and the current unsupported frame boundary. The wider colour effects remain outside
 this amendment.
 
+### Actions the opening reaches
+
+`opening:N` in the vectors names cut N of row `chain-any-0003-DFD7` (native return N + 1).
+The census reads the local lean row (`lean.bin` SHA-256
+`4ec15ff682cca809452753bf1b4019afaffffd6072f1c18b16390d169595ce4a`, `hits.txt`
+`e3155233c94009c8a636f384d294bd3c7d37bbf119fa1a645afdec3eeae2ad0f`). A cut has a palette
+opportunity when the watched pose-update PC `91eb88` hits in it. Through the 184-return
+opening, cuts 0 to 182 have one opportunity each (183). Cut 183 is in door transition, game
+state `0Bh`, and has none; its target bank changes outside the opportunity.
+
+| Action (pose codes) | First cut | Opportunities |
+| --- | --- | --- |
+| Running (`09`, `0A`, `0F`, `11`, `12`) | 0 | 94 |
+| Spinning (`19`, `1A`) | 16 (request 17) | 14 |
+| Jumping (`14`, `17`, `18`, `4E`, `51`, `52`) | 29 | 59 |
+| Turning(Jump) (`2F`, `30`) | 36 | 12 |
+| Landing(Jump) (`A4`, `A5`) | 57 | 2 |
+| Still (`07`) | 156 | 1 |
+| Moonwalking (`4A`) | 157 | 1 |
+
+Every opportunity has the same neighbours: Power suit (`$0A74` zero), standard room
+treatment (`$1982` = 2), both surfaces negative, grapple at `$C4F0`, `$0B18`, `$0CD0`,
+`$0ACC`, `$0A4A`, `$0B3E` and `$0A48` zero, and screw attack absent. Visor and charge words
+are `0601h` and zero at every cut, and neither bank changes between consecutive cuts 0 to 183.
+The records therefore show same-value stores only. The passive instruction capture
+`opening-clock-source-480/airborne-source/instructions.bin` (SHA-256
+`8834307cf304fa80a354cd77368ba6da3e6c13ae01697aa6ce8990ba00fc89d6`) shows the executed path
+for cuts 0 to 57: every opportunity runs the charge reset (`$91:D7B0`), the visor store
+(`$91:D8A0`), the not-boosting test and carry-set return, never `$91:D717`. The 13 spin
+opportunities in cuts 16 to 28 also run the spin branch and fall to the not-screw path. Cuts 58
+to 182 rest on the lean records and the code path above. The stale-reset vectors for the new
+actions are therefore original and constructed, as for Running.
+
+The reference (`$TEMP/collab/night-20261122/observer-colours-scratch/ref-v3.py --record ROW`)
+passes 18 histories, 13 restore cuts and 31 unsupported alternatives, with 20 caught faults.
+They include admitting a screw-attack spin, refusing every spin and the previous Running-only
+admission. Across histories the metadata comparison is 54/54 fields against 24/54 for
+do-nothing and 18/18 histories against 8/18. Over the record it admits 182/182 compared
+opportunities (cuts 1 to 182), against 93/182 for the Running-only rule and 0 applications for
+do-nothing. Metadata agrees 546/546 fields for both the model and do-nothing, since every store
+is same-value. Both banks are unchanged at 182/182, and each recorded history matches its cut's
+action. For indexed replay, the integrator compares the opening's palette opportunities at the
+cuts above with the same declared fields as `R-ordinary-run-colours`.
+
 ### Palette budget
 
 The old implementation is the palette area of the [domain inventory](../architecture/domains.md):
 183 tokens for `samus_palette`, using its old-engine baseline. The bounded entries contribute 3.0 units (one arm for
-OrdinaryRunColours and two for RetainedRunColours). At k = 37.5 the increment is 112.5.
+OrdinaryDryColours and two for RetainedDryColours). The admitted actions widen the one
+OrdinaryDryColours arm without a new outcome, so the units are unchanged. At k = 37.5 the
+increment is 112.5.
 The general active colour effects remain outside this allowance.

@@ -10,8 +10,8 @@ use canonical::{
 };
 use data::timing::{Profile, Template, TemplateEffect};
 use samus_appearance::{
-    ColourEffect, ColourSequences, GrappleActivity, RoomColours, RunColourFacts, RunColourWork,
-    Suit,
+    ColourEffect, ColourSequences, DryColourFacts, DryColourWork, GrappleActivity, RoomColours,
+    ScrewAttack, Suit,
 };
 
 pub(super) const WORK: timing::WorkId = timing::WorkId(1311);
@@ -24,9 +24,9 @@ impl Pinned for SequencesPin {
 }
 pub(super) struct WorkPin;
 impl Pinned for WorkPin {
-    type State = RunColourWork;
-    const NAME: &'static str = "frame-run-colour-work";
-    const SHAPE: u64 = 12_316_330_425_330_898_311;
+    type State = DryColourWork;
+    const NAME: &'static str = "frame-dry-colour-work";
+    const SHAPE: u64 = 7_504_778_159_706_439_500;
 }
 // Fixed-length encoding preserves the shared clean palette's complete slot order.
 // The clean bank's variable-length validation cannot run during canonical schema tracing.
@@ -86,7 +86,7 @@ impl Palette {
             origin: Some(Admission { origin }),
             sequences: Model(sequences),
             palettes: palettes.into(),
-            work: Model(RunColourWork::UNOBSERVED),
+            work: Model(DryColourWork::UNOBSERVED),
             current_bank,
             completed: false,
         }
@@ -151,7 +151,7 @@ impl Palette {
     }
 
     pub(super) const fn retire_opportunity(&mut self) {
-        self.work.0 = RunColourWork::UNOBSERVED;
+        self.work.0 = DryColourWork::UNOBSERVED;
         self.completed = false;
     }
 
@@ -164,7 +164,7 @@ impl Palette {
         let pending = self.work.0.pending().is_some();
         active.next().is_some() == pending
             && active.next().is_none()
-            && self.completed == (!pending && self.work.0 != RunColourWork::UNOBSERVED)
+            && self.completed == (!pending && self.work.0 != DryColourWork::UNOBSERVED)
             && self
                 .palettes
                 .current
@@ -193,8 +193,35 @@ impl Contract {
     }
 }
 
+/// Facts for a qualified Power-suit dry opportunity in a standard room with a dormant grapple.
+/// The screw attack is the frame's switched-on equipment seeded at the origin, not live progress.
+fn dry_facts(
+    figure: samus_appearance::Figure,
+    position: types::Position,
+    equipment: &types::Set<types::Item>,
+    speed_glow: bool,
+) -> DryColourFacts {
+    let screw_attack = if equipment[types::Item::ScrewAttack] {
+        ScrewAttack::On
+    } else {
+        ScrewAttack::Off
+    };
+    let mut effects = types::Set::default();
+    effects[ColourEffect::SpeedGlow] = speed_glow;
+    DryColourFacts {
+        figure,
+        position,
+        screw_attack,
+        suit: Suit::Power,
+        room_colours: RoomColours::Standard,
+        levels: types::Set::default(),
+        grapple: GrappleActivity::Dormant,
+        effects,
+    }
+}
+
 impl State {
-    fn palette_facts(&self, content: &Content) -> Result<RunColourFacts, ProductionFault> {
+    fn palette_facts(&self, content: &Content) -> Result<DryColourFacts, ProductionFault> {
         let contract = content.samus_palette.as_ref().ok_or_else(missing)?;
         let palette = self.samus_palette.as_ref().ok_or_else(missing)?;
         let Caller::PlayerContinuation {
@@ -239,18 +266,15 @@ impl State {
             return Err(missing());
         }
         let look = &self.appearance.model.0.state;
-        let mut effects = types::Set::default();
-        effects[ColourEffect::SpeedGlow] = look.stage != types::BoostStage::Stage0
+        let speed_glow = look.stage != types::BoostStage::Stage0
             || look.laps_left != samus_appearance::LapsLeft::WithoutBooster;
-        Ok(RunColourFacts {
-            figure: self.playing_figure.0,
-            position: samus.position,
-            suit: Suit::Power,
-            room_colours: RoomColours::Standard,
-            levels: types::Set::default(),
-            grapple: GrappleActivity::Dormant,
-            effects,
-        })
+        // Both preparations consumed the same switched-on items, checked equal above.
+        Ok(dry_facts(
+            self.playing_figure.0,
+            samus.position,
+            &suit.dependency.equipment,
+            speed_glow,
+        ))
     }
 
     pub(super) fn advance_palette(&mut self, content: &Content) -> Result<(), ProductionFault> {
@@ -303,8 +327,66 @@ mod shape_tests {
     fn frame_palette_shapes() {
         let shapes = (
             canonical::model::shape::<ColourSequences>(),
-            canonical::model::shape::<RunColourWork>(),
+            canonical::model::shape::<DryColourWork>(),
         );
         assert_eq!(shapes, (Ok(SequencesPin::SHAPE), Ok(WorkPin::SHAPE)));
+    }
+}
+
+#[cfg(test)]
+mod screw_attack_tests {
+    use super::*;
+    use samus_appearance::{
+        ChargeGlowPosition, Figure, UnsupportedDryColours, VisorDelay, VisorStep,
+    };
+    use types::{Action, Aim, Body, Facing, Gun, Item, Legs, Pair, Pose, Set, Sprite, ZERO};
+
+    const STALE: ColourSequences = ColourSequences {
+        visor_delay: VisorDelay(6),
+        visor_step: VisorStep(1),
+        charge_glow_position: ChargeGlowPosition(4),
+    };
+
+    fn spin_with(screw_attack: bool) -> DryColourFacts {
+        let spin = Figure {
+            pose: Pose {
+                body: Body::Upright,
+                action: Action::Spinning,
+                facing: Facing::Right,
+                aim: Aim::Forward,
+                gun: Gun::Stowed,
+                legs: Legs::Together,
+            },
+            sprite: Sprite::Plain,
+        };
+        let mut equipment = Set::default();
+        equipment[Item::ScrewAttack] = screw_attack;
+        dry_facts(spin, Pair { x: ZERO, y: ZERO }, &equipment, false)
+    }
+
+    #[test]
+    fn a_spin_with_the_screw_attack_switched_on_is_refused() {
+        let mut work = DryColourWork::UNOBSERVED;
+        assert_eq!(
+            work.observe(Some(spin_with(true))),
+            Err(UnsupportedDryColours)
+        );
+        assert_eq!(work, DryColourWork::UNOBSERVED);
+    }
+
+    #[test]
+    fn a_spin_without_the_screw_attack_gets_the_reset() {
+        let mut work = DryColourWork::UNOBSERVED;
+        assert_eq!(work.observe(Some(spin_with(false))), Ok(true));
+        let mut sequences = STALE;
+        assert!(work.complete(&mut sequences));
+        assert_eq!(
+            sequences,
+            ColourSequences {
+                visor_delay: VisorDelay(1),
+                visor_step: VisorStep(3),
+                charge_glow_position: ChargeGlowPosition(0),
+            }
+        );
     }
 }

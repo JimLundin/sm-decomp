@@ -56,6 +56,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | blocks/missing-requests | Unsupported at None: independent complete block seed and ordered reaction requests | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | doors/missing-passage-inputs | Unsupported at None: independent complete passage seed and opportunity-time inputs | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | audio-sender/missing-service-inputs | Unsupported at None: independent CPU sender seed and ordered queue/service inputs | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
+| appearance/dry-colours-opening-actions | Unsupported at None: actual palette opportunities past the admitted opening returns | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | movement-native-occupied-first-search | Pass | 1 | 0 | 1 | 7 | 0 | 1 |
 | movement-native-enemy-stop-terrain-absence | Pass | 1 | 0 | 1 | 8 | 0 | 1 |
 | frame/steady-haze-through-layer-blend | Unsupported at Some(4): Frame(RandomPreparation) | 4 | 0 | unaccepted prefix | 23 | 0 | 4 |
@@ -114,6 +115,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **blocks/missing-requests** declares no rule witness. Limits: independent complete block seed and ordered reaction requests unavailable; boundary holds unsupported; no behaviour Pass.
 - **doors/missing-passage-inputs** declares no rule witness. Limits: independent complete passage seed and opportunity-time inputs unavailable; boundary holds unsupported; no behaviour Pass.
 - **audio-sender/missing-service-inputs** declares no rule witness. Limits: independent CPU sender seed and ordered queue/service inputs unavailable; boundary holds unsupported; no behaviour Pass.
+- **appearance/dry-colours-opening-actions** declares no rule witness. Limits: actual palette opportunities past the admitted opening returns unavailable: production carries the frame through cut 8, and this row declares every palette opportunity in cuts 9 to 182, one per cut; they include Running at 9 to 15 and 158 to 182, the spin's steps at 16 to 28, the left spin at 80, Turning(Jump) in pose 30 at 106 to 111 and the landings at 57 and 124; at every declared cut compare visor delay, visor step and charge-glow position before and after, the application count and both unchanged colour banks; the first divergence to expect is the first Spinning, Jumping, Turning(Jump), Landing(Jump), Still or Moonwalking opportunity: cuts 16, 29, 36, 57, 156 and 157; the screw attack is off at every opportunity, so this row never reaches a spin with the screw attack on; the screw attack comes from the frame's equipment seeded once at the origin, not the live progress owner, so an item change mid-run would not be noticed; boundary holds unsupported; no behaviour Pass.
 - **movement-native-occupied-first-search** witnesses samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedCollisionTests, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared; Motion ordinal0 also retains complete request and ordered considered candidate semantics.; One Miss candidate is order-insensitive; the separate derived enemy-stop witness checks forbidden ordinary-right terrain absence. Elapsed CPU timing remains unproved.; Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change..
 - **movement-native-enemy-stop-terrain-absence** witnesses samus-movement/PerformedCollisionTests, samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.; Independent Motion ordinal0 is the unique ordinary-right request; compare its forbidden ordinary-right CollisionTests first, then its complete request and ordered considered candidate semantics.; Native enemy stop skips ordinary terrain while retaining separate support and later downward terrain. The production fault omits the required eligible enemy input/stage, exposing actual forbidden terrain work; no internal clean-model reorder mutant was executed.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared. Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically..
 - **frame/steady-haze-through-layer-blend** witnesses world-haze/HazeHolds. Limits: quiet ordinary Steady Haze in the retained room; Haze Finish and LayerBlend without IRQ or hardware callbacks; stage-local indices 0–3 compare Music, Haze retain, Haze Finish and LayerBlend; index 4 holds the actual Random preparation dependency.
@@ -212,7 +214,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 76 |
 | interface-hud | 4,715 | 2,749 | 1.72 | 0.85 | 50 % (over 25 %) | 2,742 | 1,721 | 126 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 100 |
-| samus-appearance | 4,506 | 2,562 | 1.76 | 0.90 | 49 % (over 25 %) | 1,525 | 1,827 | 184 |
+| samus-appearance | 4,577 | 2,562 | 1.79 | 0.93 | 48 % (over 25 %) | 1,525 | 1,866 | 199 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 56 |
 | world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 70 |
 | samus-health | 418 | 299 | 1.40 | 1.37 | 2 % | - | 221 | 27 |
@@ -362,9 +364,9 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | `crates/clean/samus_appearance/src/cannon.rs` | cannon | tables and types | 168 | 230 | 220 | 76 | 5 | 0 | 0 | 99 |
 | `crates/clean/samus_appearance/src/catalogue.rs` | - | tables and types | 0 | 18 | 122 | 807 | 0 | 0 | 0 | 238 |
 | `crates/clean/samus_appearance/src/clip.rs` | clip | tables and types | 231 | 383 | 461 | 59 | 0 | 0 | 0 | 136 |
-| `crates/clean/samus_appearance/src/colours.rs` | palette | tables and types | 202 | 276 | 380 | 25 | 4 | 0 | 0 | 113 |
+| `crates/clean/samus_appearance/src/colours.rs` | palette | tables and types | 273 | 366 | 446 | 102 | 7 | 0 | 0 | 151 |
 | `crates/clean/samus_appearance/src/inputs.rs` | - | tables and types | 63 | 155 | 262 | 22 | 2 | 0 | 0 | 78 |
-| `crates/clean/samus_appearance/src/lib.rs` | - | logic | 0 | 238 | 0 | 0 | 0 | 0 | 0 | 38 |
+| `crates/clean/samus_appearance/src/lib.rs` | - | logic | 0 | 240 | 0 | 0 | 0 | 0 | 0 | 39 |
 | `crates/clean/samus_appearance/src/moves.rs` | moves | logic | 196 | 287 | 0 | 0 | 1 | 0 | 27 | 40 |
 | `crates/clean/samus_appearance/src/opportunity.rs` | - | logic | 476 | 611 | 352 | 62 | 12 | 17 | 5 | 195 |
 | `crates/clean/samus_appearance/src/play.rs` | clip | logic | 755 | 826 | 3 | 0 | 43 | 46 | 49 | 110 |
@@ -377,7 +379,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | `crates/clean/samus_appearance/src/state.rs` `fn after_lap` | run | logic | 33 | 39 | 0 | 0 | 0 | 0 | 0 | 6 |
 | `crates/clean/samus_appearance/src/suspended.rs` | - | logic | 1,436 | 1,380 | 482 | 33 | 96 | 202 | 11 | 398 |
 | `crates/clean/samus_appearance/src/update.rs` | - | logic | 148 | 203 | 3 | 0 | 5 | 0 | 10 | 29 |
-| total | | | 4,506 | 5,735 | 2,720 | 1,671 | 206 | 278 | 124 | 1,827 |
+| total | | | 4,577 | 5,827 | 2,786 | 1,748 | 209 | 278 | 124 | 1,866 |
 
 ### boss-ceres-ridley
 
@@ -467,7 +469,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | run-progress | 437 | 182 | 255 | 136 |
 | interface-hud | 1,721 | 741 | 980 | 786 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
-| samus-appearance | 1,827 | 898 | 929 | 751 |
+| samus-appearance | 1,866 | 936 | 930 | 763 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 978 | 402 | 576 | 562 |
 | samus-health | 221 | 58 | 163 | 70 |
@@ -476,7 +478,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
 | shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,545 | 1,355 | 190 | 274 |
-| total | 17,703 | 8,279 | 9,424 | 8,771 |
+| total | 17,742 | 8,317 | 9,425 | 8,783 |
 
 ## Spec, budget and fit by area
 
@@ -602,11 +604,11 @@ Spec [`docs/behaviours/samus-appearance.md`](behaviours/samus-appearance.md), k 
 | moves | 5 | 6.0 | 225 | - | 196 | 0.87 |
 | run | 3 | 10.0 | 375 | - | 270 | 0.72 |
 | cannon | 3 | 8.7 | 325 | - | 168 | 0.52 |
-| palette | 2 | 3.0 | 112 | 183 | 202 | 1.80 |
+| palette | 2 | 3.0 | 112 | 183 | 273 | 2.44 |
 | shared (in no area) | | | | | 2,190 | |
-| total | 26 | 68.3 | 2,562 | 1,525 | 4,506 | 1.76 |
+| total | 26 | 68.3 | 2,562 | 1,525 | 4,577 | 1.79 |
 
-Area fit 0.90: the areas' score, 2,316, ÷ the budget. Shared code 2,190, its share of the model 49 % (over 25 %).
+Area fit 0.93: the areas' score, 2,387, ÷ the budget. Shared code 2,190, its share of the model 48 % (over 25 %).
 
 ### boss-ceres-ridley
 
@@ -716,7 +718,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | interface-hud | replay provider | 3 | 4,755 | 4,446 | 758 | 344 | 320 | 574 | 16 | 909 |
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-appearance | bridge | 3 | 3,056 | 3,133 | 329 | 45 | 264 | 171 | 0 | 529 |
+| samus-appearance | bridge | 3 | 3,113 | 3,208 | 329 | 45 | 265 | 171 | 0 | 549 |
 | samus-appearance | replay provider | 2 | 2,558 | 2,507 | 130 | 30 | 136 | 248 | 26 | 371 |
 | boss-ceres-ridley | bridge | 1 | 2,222 | 2,307 | 199 | 32 | 113 | 133 | 15 | 410 |
 | boss-ceres-ridley | replay provider | 1 | 1,331 | 1,506 | 17 | 113 | 33 | 72 | 60 | 251 |
@@ -732,7 +734,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 1 | 995 | 1,076 | 175 | 33 | 77 | 32 | 0 | 206 |
 | world-haze | bridge | 3 | 3,119 | 3,263 | 398 | 62 | 96 | 401 | 49 | 638 |
 | world-haze | replay provider | 1 | 2,773 | 2,894 | 279 | 19 | 182 | 102 | 0 | 476 |
-| total | | | 66,228 | 64,466 | 6,296 | 2,143 | 4,705 | 6,411 | 641 | 11,274 |
+| total | | | 66,284 | 64,541 | 6,296 | 2,143 | 4,706 | 6,411 | 641 | 11,294 |
 
 ## Engine services
 
@@ -741,8 +743,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | production and exact services | 126 | 37,625 | 225,753 | 183,041 | 29,016 | 2,401 | 13,804 | 53,258 | 3,613 | 34,546 |
-| bridges | 19 | 4,775 | 28,648 | 27,685 | 2,974 | 525 | 2,153 | 3,075 | 309 | 4,964 |
-| rebuilt models, shared types included | 123 | 8,771 | 52,625 | 58,554 | 24,243 | 18,574 | 3,633 | 3,811 | 1,016 | 17,703 |
+| bridges | 19 | 4,784 | 28,705 | 27,760 | 2,974 | 525 | 2,155 | 3,075 | 309 | 4,984 |
+| rebuilt models, shared types included | 123 | 8,783 | 52,696 | 58,646 | 24,309 | 18,651 | 3,636 | 3,811 | 1,016 | 17,742 |
 
 ## Domain graph
 
@@ -1872,9 +1874,9 @@ graph LR
 | `cannon.rs` | cannon | Persistent cannon readiness, independent of animation and HUD mode. | `enum SelectedItem (6)`, `enum ControlEligibility (2)`, `struct ItemControlAnswer`, `struct CannonDelay`, `struct Look`, `enum CannonObservation (3)`, `CannonDelay::{INITIAL, new, remaining, may_follow, controls_completed, initialize}`, `CannonObservation::{choose, complete}`, 2 private | 168 | 99 |
 | `catalogue.rs` | - | The catalogue: one behaviour per entry of the spec. | `enum BehaviourId (26)`, `struct Behaviour`, `const CATALOGUE` | 0 | 238 |
 | `clip.rs` | clip | Her clips and the run's paces: the content the importer supplies, as typed values. | `struct Step`, `struct Frames`, `struct Hold`, `struct Slowdown`, `struct Branch`, `enum Instruction (2)`, `enum Control (6)`, `struct Clip`, `struct Pace`, `struct Paces`, `Step::{FIRST, SECOND, next, before}`, `Frames::{NONE, LAST, slowed}`, `Hold::{LONGEST, new, frames}`, `Slowdown::{MOST, NONE, new}`, `Control::end`, `Clip::{at, hold}`, `Pace::hold`, `impl TryFrom<u8> for Hold`, `impl TryFrom<u8> for Slowdown`, 1 private | 231 | 136 |
-| `colours.rs` | palette | Ordinary dry-run sequence preparation, independent of the shared palette banks. | `struct VisorDelay`, `struct VisorStep`, `struct ChargeGlowPosition`, `struct ColourSequences`, `enum Suit (3)`, `enum RoomColours (3)`, `enum GrappleActivity (2)`, `enum LiquidLevel (2)`, `enum ColourEffect (6)`, `struct RunColourFacts`, `struct UnsupportedRunColours`, `struct RunColourWork`, `RunColourWork::{UNOBSERVED, observe, pending, complete}`, 3 private | 202 | 113 |
+| `colours.rs` | palette | Ordinary dry-movement sequence preparation, independent of the shared palette banks. | `struct VisorDelay`, `struct VisorStep`, `struct ChargeGlowPosition`, `struct ColourSequences`, `enum Suit (3)`, `enum RoomColours (3)`, `enum GrappleActivity (2)`, `enum LiquidLevel (2)`, `enum ColourEffect (6)`, `enum ScrewAttack (2)`, `struct DryColourFacts`, `struct UnsupportedDryColours`, `struct DryColourWork`, `DryColourWork::{UNOBSERVED, observe, pending, complete}`, 8 private | 273 | 151 |
 | `inputs.rs` | - | What a frame reads, each from the domain that owns it. | `struct Figure`, `trait Content`, `enum MoveEvent (4)`, `enum Dash (3)`, `struct Liquid`, `struct Inputs`, `struct SoundsWaiting`, `Liquid::NONE`, `SoundsWaiting::{MOST, NONE, new, count}`, `impl TryFrom<u8> for SoundsWaiting` | 63 | 78 |
-| `lib.rs` | - | The samus-appearance model, built from its behaviour spec alone: her animation's timing, appearance opportunities and independent cannon readiness. | - | 0 | 38 |
+| `lib.rs` | - | The samus-appearance model, built from its behaviour spec alone: her animation's timing, appearance opportunities and independent cannon readiness. | - | 0 | 39 |
 | `moves.rs` | moves | What her moves do to her clip, before the time runs down. | `fn standing_restart`, `fn wall_jump_ready`, `fn fast_fall`, `fn rising_hold` | 196 | 40 |
 | `opportunity.rs` | - | Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. | `enum ContactSuppressor (3)`, `enum CinematicActivity (2)`, `struct Charge`, `enum SoundRequest (6)`, `enum SoundQueue (2)`, `struct GraphicalContact`, `struct OpportunityOutput`, `enum Opportunity (4)`, `Charge::{MOST, QUIET_CUTOFF, new, frames}`, `SoundRequest::{queue, max_waiting}`, `Opportunity::read`, `impl TryFrom<u16> for Charge`, 5 private | 476 | 195 |
 | `play.rs` | clip | Her clip plays: the time runs down, and when it is over the clip moves on as its steps say. | `fn play`, 5 private | 755 | 110 |
@@ -1891,7 +1893,7 @@ Its crate root exports:
 - from `cannon`: `CannonDelay`, `CannonObservation`, `ControlEligibility`, `ItemControlAnswer`, `Look`, `SelectedItem`
 - from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
 - from `clip`: `Branch`, `Clip`, `Control`, `Frames`, `Hold`, `Instruction`, `Pace`, `Paces`, `Slowdown`, `Step`
-- from `colours`: `ChargeGlowPosition`, `ColourEffect`, `ColourSequences`, `GrappleActivity`, `LiquidLevel`, `RoomColours`, `RunColourFacts`, `RunColourWork`, `Suit`, `UnsupportedRunColours`, `VisorDelay`, `VisorStep`
+- from `colours`: `ChargeGlowPosition`, `ColourEffect`, `ColourSequences`, `DryColourFacts`, `DryColourWork`, `GrappleActivity`, `LiquidLevel`, `RoomColours`, `ScrewAttack`, `Suit`, `UnsupportedDryColours`, `VisorDelay`, `VisorStep`
 - from `inputs`: `Content`, `Dash`, `Figure`, `Inputs`, `Liquid`, `MoveEvent`, `SoundsWaiting`
 - from `opportunity`: `Charge`, `CinematicActivity`, `ContactSuppressor`, `GraphicalContact`, `Opportunity`, `OpportunityOutput`, `SoundQueue`, `SoundRequest`
 - from `rules`: `Rules`
@@ -1921,9 +1923,9 @@ Control::end(self) -> Option<ClipEnd>
 Clip::at(&self, step: Step) -> Option<Instruction>
 Clip::hold(&self, step: Step) -> Option<Hold>
 Pace::hold(&self, step: Step) -> Option<Hold>
-RunColourWork::observe(&mut self, facts: Option<RunColourFacts>) -> Result<bool, UnsupportedRunColours>
-RunColourWork::pending(&self) -> Option<&RunColourFacts>
-RunColourWork::complete(&mut self, sequences: &mut ColourSequences) -> bool
+DryColourWork::observe(&mut self, facts: Option<DryColourFacts>) -> Result<bool, UnsupportedDryColours>
+DryColourWork::pending(&self) -> Option<&DryColourFacts>
+DryColourWork::complete(&mut self, sequences: &mut ColourSequences) -> bool
 SoundsWaiting::new(waiting: u8) -> Option<Self>
 SoundsWaiting::count(self) -> u8
 Charge::new(frames: u16) -> Option<Self>
@@ -2693,7 +2695,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/frame/post_down_caller.rs` | names it | `Frames`, `PublishedSound`, `Receipt`, `SoundQueue`, `SoundRequest` | 5,712 | 786 |
 | samus-appearance | `crates/game/src/production/frame/rendering_stage.rs` | names it | `AppearanceRead`, `Figure`, `Receipt`, `Step`, `WorkStep` | 4,049 | 619 |
 | samus-appearance | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Figure` | 3,936 | 546 |
-| samus-appearance | `crates/game/src/production/frame/samus_palette.rs` | bridge | `ColourEffect`, `ColourSequences`, `GrappleActivity`, `LapsLeft`, `Liquid`, `RoomColours`, `RunColourFacts`, `RunColourWork`, `Suit` | 1,373 | 257 |
+| samus-appearance | `crates/game/src/production/frame/samus_palette.rs` | bridge | `ColourEffect`, `ColourSequences`, `DryColourFacts`, `DryColourWork`, `Figure`, `GrappleActivity`, `LapsLeft`, `Liquid`, `RoomColours`, `ScrewAttack`, `Suit` | 1,430 | 277 |
 | samus-appearance | `crates/game/src/production/frame/state.rs` | names it | `Ahead`, `AppearanceRead`, `Clip`, `Figure` | 2,099 | 392 |
 | samus-appearance | `crates/game/src/production/frame/suffix_caller.rs` | names it | `Figure`, `Step` | 8,138 | 1,232 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 431 | 102 |

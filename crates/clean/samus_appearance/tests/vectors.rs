@@ -46,7 +46,7 @@ mod vectors {
         suspended_update: Vec<suspended_vectors::SuspendedVector>,
         resume_case: Vec<suspended_vectors::ResumeCase>,
         cannon_readiness: Vec<cannon_vectors::CannonHistory>,
-        ordinary_run_colours: colour_vectors::ColourVectors,
+        ordinary_dry_colours: colour_vectors::ColourVectors,
     }
 
     #[derive(Deserialize)]
@@ -965,7 +965,7 @@ mod vectors {
                     .iter()
                     .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
             )
-            .chain(file.ordinary_run_colours.entries().map(behaviour))
+            .chain(file.ordinary_dry_colours.entries().map(behaviour))
             .collect();
         let missing: Vec<BehaviourId> = CATALOGUE
             .iter()

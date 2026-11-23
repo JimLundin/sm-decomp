@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "817f396e136f5dd48aa5c91ba44deba749b610f721a741b7279a7e844f813761"
+index_sha256 = "6bbda07d0e7eeb693e1d38911f06097e7bcf807ac1296ddf4f4401115b4433aa"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -275,6 +275,24 @@ pending_restorations = 0
 id = "audio-sender/missing-service-inputs"
 claim = "boundary"
 expected = { status = "unsupported", dependency = "independent CPU sender seed and ordered queue/service inputs" }
+observation_sha256 = ""
+
+[case.counts]
+cuts = 0
+fields = 0
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "appearance/dry-colours-opening-actions"
+claim = "boundary"
+expected = { status = "unsupported", dependency = "actual palette opportunities past the admitted opening returns" }
 observation_sha256 = ""
 
 [case.counts]

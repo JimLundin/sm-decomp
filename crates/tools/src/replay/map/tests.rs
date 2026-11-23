@@ -244,7 +244,7 @@ fn empty_rule_boundaries_and_native_and_power_on_starts_remain_distinct() {
         .iter()
         .filter(|view| view.declaration.rules.is_empty())
         .collect();
-    assert_eq!(empty.len(), 3);
+    assert_eq!(empty.len(), 4);
     assert!(empty.iter().all(|view| view.declared_relevance.is_empty()
         && view.reviewed_requirement.claim == Claim::Boundary));
     let checkpoint = views

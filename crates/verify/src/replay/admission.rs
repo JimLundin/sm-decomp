@@ -49,6 +49,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             [Responsibility::AudioSender] => {
                 "independent CPU sender seed and ordered queue/service inputs"
             }
+            [Responsibility::Appearance] => {
+                "actual palette opportunities past the admitted opening returns"
+            }
             _ => return Err(data_failure(None, "unavailable provider scope")),
         };
         return Err(Outcome::Unsupported {

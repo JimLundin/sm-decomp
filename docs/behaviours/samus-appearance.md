@@ -10,7 +10,7 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 ## Header
 
 **Scope.** Part 1 of the domain "how Samus looks": her animation's timing, its sound opportunities (§9),
-when her cannon may follow the selected item (§11), and the ordinary dry-run palette opportunity (§12).
+when her cannon may follow the selected item (§11), and the ordinary dry palette opportunity (§12).
 Her sprite and colours belong to the same domain because the player sees one figure.
 The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -782,7 +782,7 @@ compare readiness after every operation. Existing ordinary, opportunity and chan
 vectors retain their inputs and results. The implementation chooses the interface and shape;
 no source counter, callback, method list or original state encoding is specified.
 
-## 12. Samus's colours during an ordinary dry run
+## 12. Samus's colours during ordinary dry movement
 
 Appearance owns the visor sequence and charge-glow position, alongside animation and
 cannon readiness. The complete state at this opportunity includes both ordered palettes.
@@ -798,12 +798,12 @@ at their exact slots and emits no colour replacement, graphics, sound or hardwar
 
 | Quantity | Type and units | Read by |
 | --- | --- | --- |
-| visor delay | `VisorDelay`, 0 to 255 eligible palette ticks remaining | `OrdinaryRunColours`; visor sequence |
-| visor sequence position | `VisorStep`, entry in the visor's colour sequence, numbered from zero | `OrdinaryRunColours`; visor sequence |
-| charge-glow position | `ChargeGlowPosition`, a picture in the charge glow's sequence, numbered from zero, with zero the reset position | `OrdinaryRunColours`; charge-glow sequence |
+| visor delay | `VisorDelay`, 0 to 255 eligible palette ticks remaining | `OrdinaryDryColours`; visor sequence |
+| visor sequence position | `VisorStep`, entry in the visor's colour sequence, numbered from zero | `OrdinaryDryColours`; visor sequence |
+| charge-glow position | `ChargeGlowPosition`, a picture in the charge glow's sequence, numbered from zero, with zero the reset position | `OrdinaryDryColours`; charge-glow sequence |
 | current colours | `Palette`, 256 ordered RGB colours with 0 to 31 levels per component | output (video and colour transitions) |
 | target colours | `Palette`, 256 ordered RGB colours with 0 to 31 levels per component | output (colour transitions) |
-| actual palette opportunity progress | before observation, a pending admitted observation, or completed for the same opportunity | `RetainedRunColours`; continuation |
+| actual palette opportunity progress | before observation, a pending admitted observation, or completed for the same opportunity | `RetainedDryColours`; continuation |
 
 A caller can supply and read back the entire palette state, including when the palettes
 are stored in a shared owner. A complete save and restore preserves both palettes at their
@@ -818,14 +818,15 @@ completion that leaves the values equal. It does not count colour writes or fram
 
 | Observation | Type and owner | Read by |
 | --- | --- | --- |
-| selected figure and position | valid current pose including `Action`, and current position in pixels/subpixels, from Movement after selection | `OrdinaryRunColours` |
-| current suit selection | `Suit` (Power, Varia or Gravity), the actual equipment-dependent selection supplied for current use | `OrdinaryRunColours` |
-| room colour treatment | `RoomColours` (standard, red background or orange background), from room effects | `OrdinaryRunColours` |
-| water and magma levels | independently present or absent, from room effects and the current Environment | `OrdinaryRunColours` |
-| grapple activity | dormant or busy, from Grapple | `OrdinaryRunColours` |
-| lingering glow after firing and weapon charging | independently inactive or active, from the shot/charge owners | `OrdinaryRunColours` |
-| appearance override and special colouring | independently inactive or active, from the current colour-effect owners | `OrdinaryRunColours` |
-| speed glow and hit colour pulse | independently inactive or active, from current boost activity and the damage appearance owner | `OrdinaryRunColours` |
+| selected figure and position | valid current pose including `Body` and `Action`, and current position in pixels/subpixels, from Movement after selection | `OrdinaryDryColours` |
+| screw attack | switched on or off, from the items switched on (progress) | `OrdinaryDryColours` |
+| current suit selection | `Suit` (Power, Varia or Gravity), the actual equipment-dependent selection supplied for current use | `OrdinaryDryColours` |
+| room colour treatment | `RoomColours` (standard, red background or orange background), from room effects | `OrdinaryDryColours` |
+| water and magma levels | independently present or absent, from room effects and the current Environment | `OrdinaryDryColours` |
+| grapple activity | dormant or busy, from Grapple | `OrdinaryDryColours` |
+| lingering glow after firing and weapon charging | independently inactive or active, from the shot/charge owners | `OrdinaryDryColours` |
+| appearance override and special colouring | independently inactive or active, from the current colour-effect owners | `OrdinaryDryColours` |
+| speed glow and hit colour pulse | independently inactive or active, from current boost activity and the damage appearance owner | `OrdinaryDryColours` |
 
 Use the current suit selection. With Gravity enabled it is Gravity, otherwise with Varia
 enabled it is Varia, otherwise it is Power. A value once observed before a current selection
@@ -833,31 +834,35 @@ cannot stand for the completed selection, even if it describes the same suit. Si
 facts such as a camera's tether-related scrolling status or which layers haze blends do not establish
 the grapple or room effects observations above.
 
-### OrdinaryRunColours
+### OrdinaryDryColours
 
 - kind: mechanic.
-- summary: during an ordinary dry run the visor and charge-glow sequences are readied while the present and target colours stay as they were.
+- summary: during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were.
 - params: none.
 - switch: none.
-- An actual palette opportunity observes a current valid Running figure in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Preserve all 256 current and 256 target colours at their positions, even with different valid running poses, positions or initial palettes [R-ordinary-run-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready].
-- checked: oracle (recorded application and preservation, R-ordinary-run-colours); original and constructed (stale reset and varied inputs).
+- An actual palette opportunity observes a current valid upright figure that is running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Preserve all 256 current and 256 target colours at their positions, even with different valid poses of those actions, positions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump].
+- checked: oracle (recorded application and preservation for each admitted action, R-ordinary-run-colours to R-ordinary-moonwalk-colours); original and constructed (stale reset and varied inputs).
 
 **Admission.** The surrounding caller reports unsupported for an actual palette opportunity
-outside this arm: other actions or suits, water or magma present, busy grapple, active stored
+outside this arm: other actions (among them falling, crouching, the morph and spring balls,
+taking off, standing up, wall jumps, turning on the ground or in a fall, landing from a spin
+or a wall jump, and any action of a crouched or ball figure), a spin while the screw attack is
+switched on, other suits, water or magma present, busy grapple, active stored
 glow, weapon charging, special colouring, appearance override, speed glow or hit colour pulse, and
 unrecognized or unavailable current facts or unrepresentable colours. Red and orange room backgrounds can advance the
 visor sequence clock and are outside the ordinary reset. The attempt leaves the palette and
 application progress unchanged on refusal. Idle time, skipped opportunities and observation
-or drawing alone do not apply this rule. `C-ordinary-boundary` changes each premise independently.
+or drawing alone do not apply this rule. `C-ordinary-boundary` changes each premise of a run
+independently, and `C-ordinary-spin-boundary` the premises of a spin, the screw attack included.
 
-### RetainedRunColours
+### RetainedDryColours
 
 - kind: timing.
 - summary: one actual ordinary palette opportunity survives interruption and applies its reset once.
 - params: none.
 - switch: none.
-- The palette opportunity is admitted but its effects are pending → the complete prior palette state is still readable. Retain the actual admitted observation across suspension so a newer neighbouring value cannot substitute for the one already observed. Before observation the caller must still ask the current owners [C-ordinary-stale, C-ordinary-boundary].
-- The admitted opportunity's effects complete → publish the reset and preserved palettes once. Saving, restoring, inspecting or continuing a completed opportunity does not apply it again. Save and restore the complete state and applicable progress at unobserved, pending and completed cuts, then compare the continued result with an uninterrupted execution [C-ordinary-stale, C-ordinary-already-ready, C-ordinary-shared-colours].
+- The palette opportunity is admitted but its effects are pending → the complete prior palette state is still readable. Retain the actual admitted observation across suspension so a newer neighbouring value cannot substitute for the one already observed. Before observation the caller must still ask the current owners [C-ordinary-stale, C-ordinary-spin-stale, C-ordinary-boundary, C-ordinary-spin-boundary].
+- The admitted opportunity's effects complete → publish the reset and preserved palettes once. Saving, restoring, inspecting or continuing a completed opportunity does not apply it again. Save and restore the complete state and applicable progress at unobserved, pending and completed cuts, then compare the continued result with an uninterrupted execution [C-ordinary-stale, C-ordinary-already-ready, C-ordinary-shared-colours, C-ordinary-spin-stale, C-ordinary-jump-stale].
 - checked: constructed (interruption, changed neighbours and independent writes to both palettes).
 
 **Order that matters.** Observe this opportunity after the current selected figure, position

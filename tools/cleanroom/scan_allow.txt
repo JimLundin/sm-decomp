@@ -264,3 +264,6 @@ pixel column         # the surface depth at each geometric column of a block
 list empty           # an empty collection has no members
 not beam             # equipment excluding beams and tanks
 block touch          # blocks reacting to Samus touching them
+
+# Samus appearance: player-term phrases from the colour model's documentation.
+fall moonwalk        # player-term wording: turns in a fall or in a moonwalk's jump

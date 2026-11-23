@@ -3,14 +3,14 @@ use core::num::Wrapping;
 use std::collections::BTreeMap;
 
 use samus_appearance::{
-    CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences, Figure, GrappleActivity,
-    LiquidLevel, Look, Palette, Palettes, RoomColours, RunColourFacts, RunColourWork, Suit,
-    SuspendedAppearance, UnsupportedRunColours, VisorDelay, VisorStep,
+    CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences, DryColourFacts, DryColourWork,
+    Figure, GrappleActivity, LiquidLevel, Look, Palette, Palettes, RoomColours, ScrewAttack, Suit,
+    SuspendedAppearance, UnsupportedDryColours, VisorDelay, VisorStep,
 };
 use serde::{Deserialize, Serialize};
-use types::{Action, Colour, Pair, px};
+use types::{Colour, Pair, px};
 
-use super::{behaviour, figure, named, read_file, suspended_vectors::make_work};
+use super::{ACTIONS, behaviour, figure, named, read_file, suspended_vectors::make_work};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -18,7 +18,7 @@ pub(super) struct ColourVectors {
     observations: toml::Table,
     invented_palettes: BTreeMap<String, u16>,
     history: Vec<History>,
-    boundary: Boundary,
+    boundary: Vec<Boundary>,
 }
 
 impl ColourVectors {
@@ -40,18 +40,30 @@ impl ColourVectors {
         }))
     }
 
-    fn facts(&self, history: &History, replacement: &toml::Table) -> Option<RunColourFacts> {
+    /// The current facts of a history: the shared observations, then the history's own
+    /// `observed` table, then `replacement`, each replacing keys already present. A boundary
+    /// case's `figure`, given separately, replaces the history's figure.
+    fn facts(
+        &self,
+        history: &History,
+        figure_text: Option<&str>,
+        replacement: &toml::Table,
+    ) -> Option<DryColourFacts> {
         let mut input = self.observations.clone();
-        for (key, value) in replacement {
+        for (key, value) in history.observed.iter().chain(replacement) {
             assert!(
                 input.insert(key.clone(), value.clone()).is_some(),
-                "unknown replacement {key}"
+                "{}: unknown replacement {key}",
+                history.id
             );
         }
         let input: Observations = toml::Value::Table(input)
             .try_into()
             .expect("known observations");
-        input.facts(figure(&history.figure), history.position)
+        input.facts(
+            figure(figure_text.unwrap_or(&history.figure)),
+            history.position,
+        )
     }
 }
 
@@ -63,6 +75,8 @@ struct History {
     entries: Vec<String>,
     figure: String,
     position: [u16; 2],
+    #[serde(default)]
+    observed: toml::Table,
     before: Sequences,
     after: Sequences,
     palettes: [String; 2],
@@ -125,6 +139,17 @@ struct Boundary {
     replacements: Vec<toml::Table>,
 }
 
+/// A boundary case: its figure, if it names one, and its changed shared observations.
+fn boundary_case(replacement: &toml::Table) -> (Option<String>, toml::Table) {
+    let mut observations = replacement.clone();
+    let figure = observations.remove("figure").map(|text| {
+        text.as_str()
+            .expect("a boundary figure is written as text")
+            .to_owned()
+    });
+    (figure, observations)
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 #[expect(
@@ -133,6 +158,7 @@ struct Boundary {
 )]
 struct Observations {
     action: String,
+    screw_attack: bool,
     suit: Suit,
     room_colours: String,
     water_present: bool,
@@ -147,25 +173,27 @@ struct Observations {
 }
 
 impl Observations {
-    fn facts(&self, mut figure: Figure, [x, y]: [u16; 2]) -> Option<RunColourFacts> {
-        figure.pose.action = match self.action.as_str() {
-            "Running" => Action::Running,
-            "Standing" => Action::Still,
-            other => panic!("unknown action {other}"),
-        };
+    fn facts(&self, figure: Figure, [x, y]: [u16; 2]) -> Option<DryColourFacts> {
+        assert_eq!(
+            figure.pose.action,
+            named(ACTIONS, &self.action),
+            "the observed action agrees with the figure"
+        );
         let room = &self.room_colours;
         let grapple = &self.grapple;
         if room == "Unavailable" || grapple == "Unavailable" {
             return None;
         }
-        if figure.pose.action == Action::Still {
-            figure.pose.legs = types::Legs::Together;
-        }
-        Some(RunColourFacts {
+        Some(DryColourFacts {
             figure,
             position: Pair {
                 x: px(Wrapping(x)),
                 y: px(Wrapping(y)),
+            },
+            screw_attack: if self.screw_attack {
+                ScrewAttack::On
+            } else {
+                ScrewAttack::Off
             },
             suit: self.suit,
             room_colours: named(
@@ -206,8 +234,8 @@ struct Run {
     appearance: SuspendedAppearance,
     sequences: ColourSequences,
     palettes: Palettes,
-    current: Option<RunColourFacts>,
-    work: RunColourWork,
+    current: Option<DryColourFacts>,
+    work: DryColourWork,
     palette_updates_consumed: usize,
     applications: usize,
 }
@@ -229,12 +257,12 @@ fn checkpoint(run: Run, cuts: &[Cut], cut: Cut) -> Run {
 }
 
 fn start(file: &super::VectorFile, h: &History) -> Run {
-    let vectors = &file.ordinary_run_colours;
+    let vectors = &file.ordinary_dry_colours;
     let mut appearance = make_work(file, "Work", "C-contact-and-start");
     appearance.finish();
     let [current, target] = &h.palettes;
     let facts = vectors
-        .facts(h, &toml::Table::new())
+        .facts(h, None, &toml::Table::new())
         .expect("known ordinary facts");
     assert_eq!(facts.figure, figure(&h.figure));
     Run {
@@ -250,7 +278,7 @@ fn start(file: &super::VectorFile, h: &History) -> Run {
             target: vectors.palette(target),
         },
         current: Some(facts),
-        work: RunColourWork::UNOBSERVED,
+        work: DryColourWork::UNOBSERVED,
         palette_updates_consumed: 0,
         applications: 0,
     }
@@ -287,7 +315,7 @@ fn complete(run: &mut Run) {
 }
 
 fn run_history(file: &super::VectorFile, h: &History, cuts: &[Cut]) -> Run {
-    let vectors = &file.ordinary_run_colours;
+    let vectors = &file.ordinary_dry_colours;
     let mut run = start(file, h);
     let mut expected_palettes = run.palettes.clone();
     let look = run.look;
@@ -300,7 +328,12 @@ fn run_history(file: &super::VectorFile, h: &History, cuts: &[Cut]) -> Run {
     assert_eq!(run.palettes, expected_palettes);
     assert_eq!(run.applications, 0);
     assert_eq!(run.work.pending().copied(), actual);
-    run.current = vectors.facts(h, &h.later_change);
+    // A neighbour changes while the reset is pending, the screw attack among them: the work
+    // keeps the facts it admitted and is not re-decided from the newer ones.
+    run.current = vectors.facts(h, None, &h.later_change);
+    if !h.later_change.is_empty() {
+        assert_ne!(run.current, actual, "{}: later_change changes a fact", h.id);
+    }
     update_banks(&mut run, vectors, h, &mut expected_palettes);
     run = checkpoint(run, cuts, Cut::Pending);
     assert_eq!(run.work.observe(run.current), Ok(false));
@@ -339,7 +372,7 @@ fn run_history(file: &super::VectorFile, h: &History, cuts: &[Cut]) -> Run {
 )]
 fn every_ordinary_palette_history() {
     let (file, _, _) = read_file();
-    for h in &file.ordinary_run_colours.history {
+    for h in &file.ordinary_dry_colours.history {
         assert_ne!(h.source, "");
         for entry in &h.entries {
             behaviour(entry);
@@ -353,8 +386,8 @@ fn every_ordinary_palette_history() {
         );
     }
     println!(
-        "{} ordinary run colour histories passed",
-        file.ordinary_run_colours.history.len()
+        "{} ordinary dry colour histories passed",
+        file.ordinary_dry_colours.history.len()
     );
 }
 
@@ -365,34 +398,40 @@ fn every_ordinary_palette_history() {
 )]
 fn changed_current_facts_refuse_without_progress() {
     let (file, _, _) = read_file();
-    let vectors = &file.ordinary_run_colours;
-    let boundary = &vectors.boundary;
-    assert_ne!(boundary.source, "");
-    assert_eq!(boundary.outcome, "Unsupported");
-    let h = vectors
-        .history
-        .iter()
-        .find(|h| h.id == boundary.based_on)
-        .expect("base history");
-    let admitted = run_history(&file, h, &[]);
-    for replacement in &boundary.replacements {
-        let mut run = fresh(start(&file, h));
-        run.current = vectors.facts(h, replacement);
-        let before = saved(&run);
-        assert_eq!(
-            run.work.observe(run.current),
-            Err(UnsupportedRunColours),
-            "{}: {replacement:?}",
-            boundary.id
-        );
-        complete(&mut run);
-        assert_eq!(run.applications, boundary.applications);
-        assert_eq!(saved(&run), before, "refusal must not consume progress");
+    let vectors = &file.ordinary_dry_colours;
+    assert!(!vectors.boundary.is_empty(), "boundary sets are supplied");
+    let mut refusals = 0_usize;
+    for boundary in &vectors.boundary {
+        assert_ne!(boundary.source, "");
+        assert_eq!(boundary.outcome, "Unsupported");
+        let h = vectors
+            .history
+            .iter()
+            .find(|h| h.id == boundary.based_on)
+            .expect("base history");
+        let admitted = run_history(&file, h, &[]);
+        assert_eq!(admitted.applications, h.applications);
+        for replacement in &boundary.replacements {
+            let (figure_text, observations) = boundary_case(replacement);
+            let mut run = fresh(start(&file, h));
+            run.current = vectors.facts(h, figure_text.as_deref(), &observations);
+            let before = saved(&run);
+            assert_eq!(
+                run.work.observe(run.current),
+                Err(UnsupportedDryColours),
+                "{}: {replacement:?}",
+                boundary.id
+            );
+            complete(&mut run);
+            assert_eq!(run.applications, boundary.applications);
+            assert_eq!(saved(&run), before, "refusal must not consume progress");
+            assert_eq!(run.work, DryColourWork::UNOBSERVED);
+            refusals = refusals.saturating_add(1);
+        }
     }
-    assert_eq!(admitted.applications, h.applications);
     println!(
-        "{} independent ordinary colour boundary refusals passed",
-        boundary.replacements.len()
+        "{refusals} independent ordinary colour boundary refusals passed in {} sets",
+        vectors.boundary.len()
     );
 }
 
@@ -404,7 +443,7 @@ fn palette_import_rejects_unrepresentable_colours_and_incomplete_banks() {
     let (file, _, _) = read_file();
     let run = start(
         &file,
-        file.ordinary_run_colours.history.first().expect("history"),
+        file.ordinary_dry_colours.history.first().expect("history"),
     );
     let text = saved(&run);
     assert!(text.contains("current = [1,"));

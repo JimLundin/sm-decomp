@@ -54,10 +54,10 @@ pub enum BehaviourId {
     CannonReadinessReset,
     /// Actual chosen controls complete readiness once and survive restoration.
     RetainedCannonReadiness,
-    /// An ordinary dry run readies the visor and charge glow without changing either palette.
-    OrdinaryRunColours,
+    /// Ordinary dry movement readies the visor and charge glow without changing either palette.
+    OrdinaryDryColours,
     /// An admitted palette reset survives interruption and completes once.
-    RetainedRunColours,
+    RetainedDryColours,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -261,14 +261,14 @@ pub const CATALOGUE: [Behaviour; 26] = [
         checked: Checked::ByVectors,
     },
     Behaviour {
-        id: BehaviourId::OrdinaryRunColours,
-        summary: "during an ordinary dry run the visor and charge-glow sequences are readied while the present and target colours stay as they were",
+        id: BehaviourId::OrdinaryDryColours,
+        summary: "during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {
-        id: BehaviourId::RetainedRunColours,
+        id: BehaviourId::RetainedDryColours,
         summary: "one actual ordinary palette opportunity survives interruption and applies its reset once",
         kind: Kind::Timing,
         switch: Switch::Fixed,

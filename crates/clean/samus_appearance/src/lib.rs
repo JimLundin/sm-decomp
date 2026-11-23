@@ -3,7 +3,7 @@
 //!
 //! Retain [`Look`] for animation and cannon readiness: its `animation` is [`State`],
 //! the four animation quantities, and its `cannon` is the independent [`CannonDelay`].
-//! For ordinary dry-run colours, also retain [`ColourSequences`] and the shared [`Palettes`].
+//! For ordinary dry-movement colours, also retain [`ColourSequences`] and the shared [`Palettes`].
 //! Spec: `CannonItemDelay`, `RetainedCannonReadiness`. Keeping animation alone is not enough
 //! to preserve the whole look; cannon readiness cannot be reconstructed from animation or HUD
 //! selection. It advances only at actual eligible item-control completion, not animation or
@@ -192,18 +192,28 @@
 //! are not readiness inputs. Neither readiness update nor inspection advances animation
 //! or publishes a sound/graphic.
 
-//! # Ordinary dry-run colours
+//! # Ordinary dry-movement colours
 //!
-//! Spec: `OrdinaryRunColours`, `RetainedRunColours`. For each actual palette opportunity,
-//! carry [`RunColourWork::UNOBSERVED`] until the current figure, position and suit are selected.
-//! Before health maintenance, gather the actual neighbour answers in [`RunColourFacts`] and call
-//! [`RunColourWork::observe`]. Report unsupported if admission fails; a skipped opportunity needs
-//! no call. While admitted work is pending, consumers still read the old [`ColourSequences`].
+//! Spec: `OrdinaryDryColours`, `RetainedDryColours`. For each actual palette opportunity,
+//! carry [`DryColourWork::UNOBSERVED`] until the current figure, position and suit are selected.
+//! Before health maintenance, gather the actual neighbour answers in [`DryColourFacts`],
+//! including whether the screw attack is switched on now ([`ScrewAttack`], from progress), and
+//! call [`DryColourWork::observe`].
+//!
+//! The reset admits an upright figure that is running, standing still, moonwalking, in a
+//! straight jump, turning in one or landing from one, or spinning while the screw attack is off,
+//! with every neighbour fact ordinary. `Err(UnsupportedDryColours)` means the opportunity is
+//! outside that arm: report it unsupported; the work, sequences and palettes are left as they
+//! were. A skipped opportunity needs no call. Once observed, the work keeps the facts it
+//! admitted: a later screw attack, suit or effect change does not alter or cancel it.
+//!
+//! While admitted work is pending, consumers still read the old [`ColourSequences`].
 //! Other colour owners can write either bank in the same shared [`Palettes`] at any time.
-//! [`RunColourWork::complete`] publishes the prepared sequences once, before later drawing or
-//! palette upload. It needs neither fresh facts nor palette access. Video reads the current bank;
-//! transitions can also read the target bank. No figure, animation, cannon or other look work is
-//! consumed, and there are no requests to deliver from the reset.
+//! [`DryColourWork::complete`] publishes the prepared sequences once, before later drawing or
+//! palette upload; it returns `true` only for that completion. It needs neither fresh facts nor
+//! palette access. Video reads the current bank; transitions can also read the target bank. No
+//! figure, animation, cannon or other look work is consumed, and there are no requests to
+//! deliver from the reset.
 //!
 //! Save the sequences, both live banks, and the work together with the selected figure, the
 //! rest of the look and caller-owned opportunity and delivery progress. Restore fresh instances
@@ -219,8 +229,9 @@ pub use cannon::{
 mod clip;
 mod colours;
 pub use colours::{
-    ChargeGlowPosition, ColourEffect, ColourSequences, GrappleActivity, LiquidLevel, RoomColours,
-    RunColourFacts, RunColourWork, Suit, UnsupportedRunColours, VisorDelay, VisorStep,
+    ChargeGlowPosition, ColourEffect, ColourSequences, DryColourFacts, DryColourWork,
+    GrappleActivity, LiquidLevel, RoomColours, ScrewAttack, Suit, UnsupportedDryColours,
+    VisorDelay, VisorStep,
 };
 pub use types::{PALETTE_SLOTS, Palette, Palettes};
 mod inputs;

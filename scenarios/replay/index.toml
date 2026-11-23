@@ -385,6 +385,21 @@ checkpoints = false
 limits = ["independent CPU sender seed and ordered queue/service inputs unavailable", "boundary holds unsupported; no behaviour Pass"]
 
 [[case]]
+id = "appearance/dry-colours-opening-actions"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 8 }
+end = { cut_inclusive = 182 }
+rules = []
+profile = "reference"
+responsibilities = ["appearance"]
+content = "player-rom-import"
+inputs = "unavailable"
+expectations = { provider = "pinned-record-cache", fields = [], outputs = [] }
+checkpoints = false
+limits = ["actual palette opportunities past the admitted opening returns unavailable: production carries the frame through cut 8, and this row declares every palette opportunity in cuts 9 to 182, one per cut", "they include Running at 9 to 15 and 158 to 182, the spin's steps at 16 to 28, the left spin at 80, Turning(Jump) in pose 30 at 106 to 111 and the landings at 57 and 124", "at every declared cut compare visor delay, visor step and charge-glow position before and after, the application count and both unchanged colour banks", "the first divergence to expect is the first Spinning, Jumping, Turning(Jump), Landing(Jump), Still or Moonwalking opportunity: cuts 16, 29, 36, 57, 156 and 157", "the screw attack is off at every opportunity, so this row never reaches a spin with the screw attack on", "the screw attack comes from the frame's equipment seeded once at the origin, not the live progress owner, so an item change mid-run would not be noticed", "boundary holds unsupported; no behaviour Pass"]
+
+[[case]]
 id = "integrated/missing-dependency-closure"
 kind = "integrated"
 row = "chain-any-0003-DFD7"

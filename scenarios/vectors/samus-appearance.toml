@@ -1925,26 +1925,32 @@ steps = [
   { kind = "draw", expected_delay = 1, expected_may_follow = false },
 ]
 
-# Ordinary dry-run palette histories (spec section 12).
+# Ordinary dry palette histories (spec section 12).
 # Each history starts from complete palette metadata and both ordered colour banks.
 # Each invented fixture names a red level. Slot i (0 through 255) has RGB components
 # [red, i % 32, i // 32]. All slots within a bank and all fixtures are distinguishable.
 # A recorded witness observes both complete banks privately; substitute the invented patterns
-# for the unexported colours and the supplied valid Running figure and position for geometry.
+# for the unexported colours and the supplied valid figure and position for geometry.
 # The recorded admission, metadata and application count are checked at the bounded opportunity.
 # The shared observations are actual current inputs for a Running Power figure in standard
-# room colours, with absent surfaces, a dormant tether and no active colour effects.
-# A history supplies its current valid figure/position; other fields override shared inputs.
+# room colours, with absent surfaces, a dormant tether, the screw attack switched off and no
+# active colour effects. "action" is the figure's action and always agrees with "figure".
+# A history supplies its current valid figure/position. Its optional "observed" table replaces
+# named shared observations (each key already present) before admission; other fields
+# override shared inputs.
 # A pending check reads before metadata and the latest value of both palettes, with no
 # application yet. Each palette_updates item applies a separate shared-palette change
 # while pending. Check both full palettes after each update, and again after restore.
 # Restoring drops the prior owner and reconstructs the full state and progress at the named cuts.
 # After completion compare after metadata, both banks against their latest values, no requests, and
 # the number of applications even if before equals after. Animation and cannon are unchanged.
-# "replacements" are independent cases changing one shared observation before admission.
+# Each [[boundary]] starts from its based_on history, observed table included. Its
+# "replacements" are independent cases changing shared observations before admission; a
+# replacement's "figure", when present, replaces the history's figure with one that agrees with
+# its action.
 # "later_change" replaces the neighbour after an opportunity is already pending.
 
-[ordinary_run_colours.observations]
+[ordinary_dry_colours.observations]
 action = "Running"
 suit = "Power"
 room_colours = "Standard"
@@ -1957,21 +1963,22 @@ override_colours = false
 special_colours = false
 speed_glow = false
 hit_colour_pulse = false
+screw_attack = false
 
-[ordinary_run_colours.invented_palettes]
+[ordinary_dry_colours.invented_palettes]
 current = 1
 target = 2
 different_current = 3
 different_target = 4
 
-[[ordinary_run_colours.history]]
+[[ordinary_dry_colours.history]]
 id = "R-ordinary-run-colours"
-source = "recorded palette opportunity"
+source = "opening:0"
 # Observed: all shared observations above, including Running action, current suit and
 # all admitted neighbour facts. Also observed: before and after metadata, applications,
 # and unchanged colours at every slot of both banks.
 # Invented: the detailed figure (apart from Running action), position and palette fixtures.
-entries = ["OrdinaryRunColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Running Left Forward Striding"
 position = [121, 152]
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
@@ -1979,10 +1986,10 @@ after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["current", "target"]
 applications = 1
 
-[[ordinary_run_colours.history]]
+[[ordinary_dry_colours.history]]
 id = "C-ordinary-stale"
 source = "constructed"
-entries = ["OrdinaryRunColours", "RetainedRunColours"]
+entries = ["OrdinaryDryColours", "RetainedDryColours"]
 figure = "Upright Running Left Forward Striding"
 position = [36, 184]
 before = { visor_delay = 19, visor_step = 2, charge_glow_position = 4 }
@@ -1992,10 +1999,10 @@ restore = ["Unobserved", "Pending", "Completed"]
 later_change = { room_colours = "RedBackground", weapon_charging = true }
 applications = 1
 
-[[ordinary_run_colours.history]]
+[[ordinary_dry_colours.history]]
 id = "C-ordinary-other-stride"
 source = "constructed"
-entries = ["OrdinaryRunColours"]
+entries = ["OrdinaryDryColours"]
 figure = "Upright Running Right Forward Striding"
 position = [215, 63]
 before = { visor_delay = 0, visor_step = 5, charge_glow_position = 2 }
@@ -2003,10 +2010,10 @@ after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
 palettes = ["different_current", "different_target"]
 applications = 1
 
-[[ordinary_run_colours.history]]
+[[ordinary_dry_colours.history]]
 id = "C-ordinary-already-ready"
 source = "constructed"
-entries = ["OrdinaryRunColours", "RetainedRunColours"]
+entries = ["OrdinaryDryColours", "RetainedDryColours"]
 figure = "Upright Running Right Forward Striding"
 position = [68, 250]
 before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
@@ -2015,10 +2022,10 @@ palettes = ["different_current", "target"]
 restore = ["Unobserved", "Pending", "Completed"]
 applications = 1
 
-[[ordinary_run_colours.history]]
+[[ordinary_dry_colours.history]]
 id = "C-ordinary-shared-colours"
 source = "constructed"
-entries = ["OrdinaryRunColours", "RetainedRunColours"]
+entries = ["OrdinaryDryColours", "RetainedDryColours"]
 figure = "Upright Running Right Forward Striding"
 position = [89, 134]
 before = { visor_delay = 91, visor_step = 1, charge_glow_position = 5 }
@@ -2031,14 +2038,211 @@ palette_updates = [
 restore = ["Unobserved", "Pending", "Completed"]
 applications = 1
 
-[ordinary_run_colours.boundary]
+[[ordinary_dry_colours.history]]
+id = "R-ordinary-spin-colours"
+source = "opening:16"
+# Observed: the Spinning action and every shared observation above, before and after
+# metadata, applications, and unchanged colours at every slot of both banks.
+# Invented: the figure's detail apart from its action, the position and palette fixtures.
+entries = ["OrdinaryDryColours"]
+figure = "Upright Spinning Right Forward"
+position = [118, 141]
+observed = { action = "Spinning" }
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "R-ordinary-jump-colours"
+source = "opening:29"
+# Observed: the Jumping action and every shared observation above, before and after
+# metadata, applications, and unchanged colours at every slot of both banks.
+# Invented: the figure's detail apart from its action, the position and palette fixtures.
+entries = ["OrdinaryDryColours"]
+figure = "Upright Jumping Right Down"
+position = [140, 97]
+observed = { action = "Jumping" }
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "R-ordinary-jump-turn-colours"
+source = "opening:36"
+# Observed: the Turning(Jump) action and every shared observation above, before and after
+# metadata, applications, and unchanged colours at every slot of both banks.
+# Invented: the figure's detail apart from its action, the position and palette fixtures.
+entries = ["OrdinaryDryColours"]
+figure = "Upright Turning(Jump) Left Forward"
+position = [151, 88]
+observed = { action = "Turning(Jump)" }
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "R-ordinary-landing-colours"
+source = "opening:57"
+# Observed: the Landing(Jump) action and every shared observation above, before and after
+# metadata, applications, and unchanged colours at every slot of both banks.
+# Invented: the figure's detail apart from its action, the position and palette fixtures.
+entries = ["OrdinaryDryColours"]
+figure = "Upright Landing(Jump) Left Forward"
+position = [102, 152]
+observed = { action = "Landing(Jump)" }
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "R-ordinary-still-colours"
+source = "opening:156"
+# Observed: the Still action and every shared observation above, before and after
+# metadata, applications, and unchanged colours at every slot of both banks.
+# Invented: the figure's detail apart from its action, the position and palette fixtures.
+entries = ["OrdinaryDryColours"]
+figure = "Upright Still Right DownForward"
+position = [77, 152]
+observed = { action = "Still" }
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "R-ordinary-moonwalk-colours"
+source = "opening:157"
+# Observed: the Moonwalking action and every shared observation above, before and after
+# metadata, applications, and unchanged colours at every slot of both banks.
+# Invented: the figure's detail apart from its action, the position and palette fixtures.
+entries = ["OrdinaryDryColours"]
+figure = "Upright Moonwalking Left Forward"
+position = [79, 152]
+observed = { action = "Moonwalking" }
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-spin-stale"
+source = "constructed"
+entries = ["OrdinaryDryColours", "RetainedDryColours"]
+figure = "Upright Spinning Right Forward"
+position = [44, 203]
+observed = { action = "Spinning" }
+before = { visor_delay = 4, visor_step = 5, charge_glow_position = 3 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+restore = ["Unobserved", "Pending", "Completed"]
+later_change = { screw_attack = true, speed_glow = true }
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-spin-other-way"
+source = "constructed"
+entries = ["OrdinaryDryColours"]
+figure = "Upright Spinning Left Forward SpaceJump"
+position = [230, 17]
+observed = { action = "Spinning" }
+before = { visor_delay = 0, visor_step = 0, charge_glow_position = 1 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["different_current", "different_target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-jump-stale"
+source = "constructed"
+entries = ["OrdinaryDryColours", "RetainedDryColours"]
+figure = "Upright Jumping Left Forward Striding"
+position = [12, 60]
+observed = { action = "Jumping" }
+before = { visor_delay = 200, visor_step = 4, charge_glow_position = 5 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["different_current", "target"]
+restore = ["Pending"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-jump-turn-stale"
+source = "constructed"
+entries = ["OrdinaryDryColours"]
+figure = "Upright Turning(Jump) Right Forward"
+position = [161, 33]
+observed = { action = "Turning(Jump)" }
+before = { visor_delay = 3, visor_step = 2, charge_glow_position = 4 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "different_target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-landing-stale"
+source = "constructed"
+entries = ["OrdinaryDryColours"]
+figure = "Upright Landing(Jump) Right Forward"
+position = [99, 190]
+observed = { action = "Landing(Jump)" }
+before = { visor_delay = 255, visor_step = 1, charge_glow_position = 2 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-still-stale"
+source = "constructed"
+entries = ["OrdinaryDryColours"]
+figure = "Upright Still Left Up"
+position = [5, 120]
+observed = { action = "Still" }
+before = { visor_delay = 2, visor_step = 1, charge_glow_position = 2 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["different_current", "different_target"]
+applications = 1
+
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-moonwalk-stale"
+source = "constructed"
+entries = ["OrdinaryDryColours"]
+figure = "Upright Moonwalking Right UpForward"
+position = [180, 72]
+observed = { action = "Moonwalking" }
+before = { visor_delay = 9, visor_step = 0, charge_glow_position = 1 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+# A straight jump with the screw attack switched on is admitted as without it:
+# the stale delay 7, entry 5 and glow position 2 become delay 1, entry 3 and position 0.
+[[ordinary_dry_colours.history]]
+id = "C-ordinary-screw-jump"
+source = "constructed"
+entries = ["OrdinaryDryColours"]
+figure = "Upright Jumping Right Forward"
+position = [140, 88]
+observed = { action = "Jumping", screw_attack = true }
+before = { visor_delay = 7, visor_step = 5, charge_glow_position = 2 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["different_current", "target"]
+applications = 1
+
+[[ordinary_dry_colours.boundary]]
 id = "C-ordinary-boundary"
 source = "constructed"
 based_on = "C-ordinary-stale"
 outcome = "Unsupported"
 applications = 0
 replacements = [
-    { action = "Standing" },
+    { action = "Falling", figure = "Upright Falling Left Forward" },
+    { action = "TakingOff", figure = "Upright TakingOff Left Forward" },
+    { action = "Turning(Ground)", figure = "Upright Turning(Ground) Left Forward" },
+    { action = "Landing(Spin)", figure = "Upright Landing(Spin) Left Forward" },
+    { action = "WallJumping", figure = "Upright WallJumping Left Forward" },
+    { action = "Still", figure = "Crouched Still Left Forward" },
+    { action = "Still", figure = "Ball Still Left Forward" },
     { suit = "Gravity" },
     { suit = "Varia" },
     { room_colours = "RedBackground" },
@@ -2052,6 +2256,24 @@ replacements = [
     { weapon_charging = true },
     { override_colours = true },
     { special_colours = true },
+    { speed_glow = true },
+    { hit_colour_pulse = true },
+]
+
+[[ordinary_dry_colours.boundary]]
+id = "C-ordinary-spin-boundary"
+source = "constructed"
+based_on = "C-ordinary-spin-stale"
+outcome = "Unsupported"
+applications = 0
+replacements = [
+    { screw_attack = true },
+    { screw_attack = true, figure = "Upright Spinning Right Forward ScrewAttack" },
+    { suit = "Varia" },
+    { room_colours = "OrangeBackground" },
+    { water_present = true },
+    { grapple = "Busy" },
+    { weapon_charging = true },
     { speed_glow = true },
     { hit_colour_pulse = true },
 ]
