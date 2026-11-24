@@ -152,8 +152,6 @@ pub enum InputProvider {
     PrecedingCutMovementInputs,
     /// Independent prior facts plus observed external Ceres run scheduling.
     PrecedingCutCeresInputs,
-    /// Reviewed ordinary opportunities and external neighbours for the position connection.
-    CertifiedMovementCeresInputs,
     /// Independent prior facts while captured camera producers remain unchanged.
     PrecedingCutCameraInputs,
     /// Independent cannon/terrain facts and bounded watched actor opportunities.
@@ -873,32 +871,6 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
     })
 }
 
-fn connected_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    use ObservationId as O;
-
-    case.kind == CaseKind::Integrated
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::CertifiedMovementCeresInputs
-        && case.row == "chain-any-0003-DFD7"
-        && matches!(case.start, Start::CacheCut { frame: 6 })
-        && case.end.cut_inclusive == 10
-        && case.actor_slot == Some(0)
-        && !case.checkpoints
-        && !case.borrowed.is_empty()
-        && case.expectations.outputs.is_empty()
-        && *observations
-            == BTreeSet::from([
-                O::PositionX,
-                O::PositionY,
-                O::CeresPhase,
-                O::CeresWait,
-                O::CeresFigure,
-                O::CeresShown,
-                O::CeresSolid,
-            ])
-}
-
 fn native_search_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     let source = match &case.start {
@@ -1131,9 +1103,6 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             Responsibility::Appearance,
             Responsibility::Camera,
         ] => ordinary_provider_valid(case, observations),
-        [Responsibility::Movement, Responsibility::Ceres] => {
-            connected_provider_valid(case, observations)
-        }
         [
             Responsibility::Movement,
             Responsibility::Appearance,
@@ -1227,9 +1196,7 @@ fn health_tail_provider_valid(case: &Case) -> bool {
 fn scope_valid(case: &Case) -> bool {
     let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
     if owners.len() != case.responsibilities.len()
-        || (case.actor_slot.is_some()
-            && case.responsibilities != [Responsibility::Ceres]
-            && case.responsibilities != [Responsibility::Movement, Responsibility::Ceres])
+        || (case.actor_slot.is_some() && case.responsibilities != [Responsibility::Ceres])
     {
         return false;
     }

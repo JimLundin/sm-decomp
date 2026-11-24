@@ -5,16 +5,16 @@
 //! loads is the one the doorway leads to, in the version progress chooses as she comes in
 //! through it.
 
-use boss_ceres_ridley::{ColourSet, Stage};
+use boss_ceres_ridley::{CeresDoor, ColourSet, DoorKind, Stage};
 use data::assets::actors::{self, Actors, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
 use data::assets::samus::palettes::SamusPalettes;
 use data::assets::tilesets::Tilesets;
-use data::assets::world::{self, World};
+use data::assets::world::{self, CeresDoorKind, World};
 use data::id::DoorwayId;
 use data::room::Area;
 use run_progress::{EnteredRoom, Progress, RoomStates, Version};
-use types::Item;
+use types::{Item, Side};
 use world_doors::{COLOURS, Palette, RoomCall};
 
 /// The rooms, tilesets and sprite colours a passage loads from.
@@ -54,6 +54,8 @@ pub enum LoadFault {
     Beams,
     /// The version loads a species that has no palette of its own.
     Species(data::id::SpeciesId),
+    /// The version places a Ceres actor that a later piece of the station models.
+    LaterCeresActor,
 }
 
 /// The screen's first sprite row: the sprite rows follow the eight background rows.
@@ -104,6 +106,30 @@ pub fn load(
             | RoomCall::ReadLiquid,
         ) => Ok(()),
     }
+}
+
+/// The Ceres doors the room `through` leads to places as its contents are fetched, in its order
+/// of its enemies, each as a room's start places it (`RoomStart`).
+///
+/// # Errors
+/// A doorway or room the content lacks, or a Ceres actor of a later piece, places none.
+pub fn ceres_doors(
+    through: DoorwayId,
+    run: Run<'_>,
+    rooms: &Rooms,
+) -> Result<Vec<CeresDoor>, LoadFault> {
+    version(rooms, through, run.progress)?
+        .ceres_doors
+        .iter()
+        .map(|placed| {
+            let (kind, facing) = match placed.kind {
+                CeresDoorKind::Door(facing) => (DoorKind::Door, facing),
+                CeresDoorKind::ShaftDoor => (DoorKind::ShaftDoor, Side::Left),
+                CeresDoorKind::Later => return Err(LoadFault::LaterCeresActor),
+            };
+            Ok(CeresDoor::place(kind, facing, placed.position, run.ceres).door)
+        })
+        .collect()
 }
 
 /// Fetching the contents, in the original's order, so a later row wins where two share one:
@@ -270,6 +296,7 @@ mod tests {
                 species: CERES_DOOR,
                 row: SpriteRow::new(2).unwrap(),
             }],
+            ceres_doors: Vec::new(),
         }
     }
 

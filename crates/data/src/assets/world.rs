@@ -5,14 +5,14 @@
 //! default; and the doorways their doors lead through, by our [`DoorwayId`].
 //!
 //! `import::world` builds it from the ROM; the engine reads only this. It holds what the
-//! engine reads of a room today: a version's PLMs, tileset, layer 2 and enemy graphics, and the
-//! room's doors.
+//! engine reads of a room today: a version's PLMs, tileset, layer 2, enemy graphics and Ceres
+//! doors, and the room's doors.
 //! A record names other content by our ids, never by where the original keeps it.
 
 pub mod doorways;
 pub mod rooms;
 
-pub use types::{BossKind, Event, Fixed, Heading, Item, Pair, Px, Set};
+pub use types::{BossKind, Event, Fixed, Heading, Item, Pair, Px, Set, Side};
 
 use crate::assets::actors::EnemyGraphics;
 use crate::id::{DoorwayId, RoomId, TilesetId};
@@ -117,6 +117,29 @@ pub struct Version {
     pub plms: PlmPopulation,
     /// The species it loads, in order, each with its sprite palette row.
     pub enemies: Vec<EnemyGraphics>,
+    /// The station's door actors it places, in the room's order of its enemies.
+    pub ceres_doors: Vec<CeresDoorPlacement>,
+}
+
+/// A Ceres door actor as a room's start places it: what it is and where.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CeresDoorPlacement {
+    /// What it is.
+    pub kind: CeresDoorKind,
+    /// The centre of its box in the room.
+    pub position: Pair<Px>,
+}
+
+/// What a Ceres door actor is. Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CeresDoorKind {
+    /// A door between two rooms, opening the way it faces.
+    Door(Side),
+    /// An actor of the doors' species that a later piece of the station models: the door of
+    /// Ridley's room, the shaft's cover or the getaway's walls.
+    Later,
+    /// The shaft's door, facing left.
+    ShaftDoor,
 }
 
 /// A version a condition chooses.
@@ -268,6 +291,7 @@ mod tests {
                 scroll_changes: Vec::new(),
             },
             enemies: Vec::new(),
+            ceres_doors: Vec::new(),
         };
         Room {
             id,

@@ -34819,3 +34819,15 @@ witness_case_ids = ["sender-offer/repeat-at-five"]
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35), and the sender keeps no CPU time, reply or pending service. The same window plays one frame through production's audio owner with its offers and a cadence of no audio turn and no service, as the constructed control states, on a silent transport that holds the recorded sender. It compares the same queue and progress with the same observation digest and counts."
 lost_observations = ["sender-offer/repeat-at-five: the seed's CPU time and reply are no longer part of the constructed start."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "6ff7510b4330a2f3c22e2c0af375282b65cb5dca12b36ea3e2145f98cc9db90a"
+identity = "movement-ceres/carried-position-proximity"
+before_values = [4, 28, 0, 0, 0, 0, 15, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["ceres/door-closes-after-departure"]
+test_ids = []
+reason = "The played-alone run carries the room's Ceres doors with movement, from the seed through the passage into the next room: each door runs once a frame through CeresDoor::run, reading where she was at the end of the last frame, and her motion meets the doors that were solid as the frame began. It compares her position and every door's phase, wait, figure, shown and solid at every finished cut of chain-any-0003-DFD7, cuts 1 to 344 from cut 0 and 7 to 344 from cut 6. The movement-ceres production path it exercised is removed."
+lost_observations = ["movement-ceres/carried-position-proximity: its compared cuts (4) and fields (28) are not an indexed obligation. The played-alone run is a diagnostic that compares them, and ceres/door-closes-after-departure carries only its own declared fields and cuts."]

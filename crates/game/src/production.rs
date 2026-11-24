@@ -19,9 +19,7 @@ pub mod health_tail;
 pub mod hud;
 mod immutable;
 mod movement;
-mod movement_ceres;
 pub mod movement_touchdown;
-pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
 pub mod played;
 pub mod room_loading;
 pub mod sender;
@@ -47,8 +45,6 @@ pub enum Scope {
     Movement,
     /// Ordinary Movement carried through Contact and touchdown graphics.
     MovementTouchdown,
-    /// Movement position consumed by one Ceres door.
-    MovementCeres,
     /// Audio transport, one frame at a time.
     Audio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
@@ -80,8 +76,6 @@ pub enum ProductionSeed {
     Movement(samus_movement::Samus),
     /// Movement, preceding Figure and the current audio transport.
     MovementTouchdown(Box<movement_touchdown::State>),
-    /// Both complete owners admitted at the same boundary.
-    MovementCeres(Box<MovementCeresState>),
     /// Complete audio transport State; restoration never initializes it.
     Audio(Box<audio_transport::State>),
     /// Full ordinary power shot/trail/spacing state.
@@ -117,15 +111,6 @@ pub enum AdvanceInput<'a> {
         inputs: &'a connected::inputs::Inputs,
         /// Current early map premises.
         map: connected::early_map::Inputs<'a>,
-    },
-    /// One independently admitted ordinary opportunity for connected owners.
-    MovementCeres {
-        /// External movement dependencies.
-        frame: samus_movement::Frame<'a>,
-        /// External collision geometry and reaction permissions.
-        world: &'a dyn types::World,
-        /// Unselected Ceres producers; proximity is derived from held movement.
-        ceres: CeresContext,
     },
     /// Every changing movement dependency must be supplied by its producer or admitted source.
     Movement {
@@ -189,8 +174,6 @@ pub enum ProductionOutputs {
     Movement(samus_movement::Outcome),
     /// Movement and completed touchdown consumer publications.
     MovementTouchdown(Box<movement_touchdown::Outputs>),
-    /// Complete outputs committed with both owners.
-    MovementCeres(Box<MovementCeresOutputs>),
     /// The frame played; its published replies are read back from the held State.
     Audio,
     /// Every weapons request and supplied contact receipt.
@@ -339,7 +322,6 @@ impl Production {
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
-            ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
             ProductionSeed::Blocks(_) => Scope::Blocks,
@@ -359,17 +341,6 @@ impl Production {
                 content.movement.validate()?;
                 state.validate(content).map_err(AdmissionFault::Connected)?;
                 OwnedState::Connected(state)
-            }
-            (
-                ProductionSeed::MovementCeres(state),
-                ProductionContent::MovementCeres(content),
-                ProductionRules::MovementCeres { .. },
-            ) => {
-                content.validate()?;
-                if content.pose(state.movement.0.pose).is_none() {
-                    return Err(AdmissionFault::MissingPose(state.movement.0.pose));
-                }
-                OwnedState::MovementCeres(state)
             }
             (
                 ProductionSeed::MovementTouchdown(state),
@@ -422,7 +393,6 @@ impl Production {
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
-            OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
             OwnedState::Blocks(_) => Scope::Blocks,
@@ -475,18 +445,6 @@ impl Production {
                     .advance_with_map(inputs, content, rules, Some(map))
                     .map_err(ProductionFault::Connected)?,
             )),
-            (
-                OwnedState::MovementCeres(state),
-                ProductionContent::MovementCeres(content),
-                ProductionRules::MovementCeres { movement, ceres },
-                AdvanceInput::MovementCeres {
-                    frame,
-                    world,
-                    ceres: neighbours,
-                },
-            ) => ProductionOutputs::MovementCeres(Box::new(movement_ceres::advance(
-                state, content, movement, ceres, &frame, world, neighbours,
-            )?)),
             (
                 OwnedState::MovementTouchdown(state),
                 ProductionContent::MovementTouchdown(content, audio),
@@ -543,7 +501,6 @@ impl Production {
             OwnedState::Connected(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
-            | OwnedState::MovementCeres(_)
             | OwnedState::WeaponsContact(_)
             | OwnedState::Blocks(_)
             | OwnedState::Camera(_)
@@ -569,8 +526,7 @@ impl Production {
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
-            OwnedState::MovementCeres(_)
-            | OwnedState::Blocks(_)
+            OwnedState::Blocks(_)
             | OwnedState::Progress(_)
             | OwnedState::Hud(_)
             | OwnedState::Ceres(_)
@@ -648,9 +604,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         }
         Scope::HealthTail => canonical::model::pin_holds::<health_tail::HealthPin>()
             .and_then(|()| canonical::model::pin_holds::<hud::HudPin>()),
-        Scope::Movement | Scope::MovementCeres => {
-            canonical::model::pin_holds::<crate::state::owned::MovementPin>()
-        }
+        Scope::Movement => canonical::model::pin_holds::<crate::state::owned::MovementPin>(),
         Scope::MovementTouchdown => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
                 .and_then(|()| canonical::model::pin_holds::<movement::FigurePin>())

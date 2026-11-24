@@ -57,7 +57,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             | Responsibility::Progress,
         ]
         | [Responsibility::Weapons, Responsibility::Contact]
-        | [Responsibility::Movement, Responsibility::Ceres]
         | [
             Responsibility::Movement,
             Responsibility::Appearance,

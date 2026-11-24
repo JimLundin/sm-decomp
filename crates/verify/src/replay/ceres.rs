@@ -11,11 +11,18 @@ use types::{Pair, Side};
 #[derive(Clone, Copy)]
 pub(super) struct Slot(u16);
 
+impl Slot {
+    /// Its place among the enemy slots.
+    pub(super) const fn index(self) -> u16 {
+        self.0
+    }
+}
+
 impl TryFrom<u16> for Slot {
     type Error = Outcome;
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
-        if value < 32 {
+        if value < SLOTS {
             Ok(Self(value))
         } else {
             Err(data_failure(None, "Ceres actor slot"))
@@ -37,8 +44,24 @@ fn unsupported(dependency: &str) -> Outcome {
     }
 }
 
+/// The species word a Ceres door's slot holds.
+const SPECIES: u16 = 0xE23F;
+/// The enemy slots.
+const SLOTS: u16 = 32;
+
+/// The slots that hold a Ceres door, in the room's order of its enemies.
+pub(super) fn doors(wram: &[u8]) -> Result<Vec<Slot>, Outcome> {
+    let mut doors = Vec::new();
+    for slot in (0..SLOTS).map(Slot) {
+        if word(wram, slot, source::ENEMY_SPECIES)? == SPECIES {
+            doors.push(slot);
+        }
+    }
+    Ok(doors)
+}
+
 fn identity(wram: &[u8], slot: Slot) -> Result<(DoorKind, Side), Outcome> {
-    if word(wram, slot, source::ENEMY_SPECIES)? != 0xE23F {
+    if word(wram, slot, source::ENEMY_SPECIES)? != SPECIES {
         return Err(unsupported("Ceres door actor identity"));
     }
     match word(wram, slot, source::ENEMY_PARAMETER_1)? {
@@ -251,23 +274,6 @@ pub(super) fn initial(state: &CeresDoor) -> Vec<Observation> {
 
 pub(super) fn actual(state: &CeresDoor, _outputs: &Run) -> Vec<Observation> {
     initial(state)
-}
-
-pub(super) fn context(wram: &[u8], slot: Slot) -> Result<game::production::CeresContext, Outcome> {
-    identity(wram, slot)?;
-    let stage = match source::CERES_STATUS
-        .read(wram)
-        .map_err(|_| data_failure(None, "Ceres station stage"))?
-    {
-        0 => Stage::Calm,
-        1 => Stage::Getaway,
-        _ => return Err(unsupported("Ceres escape random and shake producers")),
-    };
-    Ok(game::production::CeresContext {
-        stage,
-        random: 0,
-        shake_frames_left: 0,
-    })
 }
 
 #[cfg(test)]

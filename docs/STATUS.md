@@ -52,6 +52,19 @@ through its effects. The comparison is at frame cuts; it does not compare intra-
 timing. While she follows the pad the game keeps no way for her run of its own, so her run's way
 is compared only while she carries on, and otherwise through her position.
 
+The room's Ceres doors (boss-ceres-ridley's `CeresDoor`) play in the loop too. Their State is
+decoded once from the seed record, each door in the room's order of its enemies, and carried
+with nothing fed back. Each frame of play runs every door once through `CeresDoor::run`, before
+her moves, reading where she was at the end of the last frame and the station's stage. Her
+motion meets the boxes of the doors that were solid as the frame began, after the held actor
+boxes. In a passage the doors run on the frames of work the passage says the enemies run.
+Fetching the next room's contents lets the last room's doors go and places the next room's
+from the imported world: the version her progress chooses lists the Ceres doors its enemy
+population places. The run compares how many doors the room holds, and each door's phase, wait, figure,
+shown and solid, by its place (`ceres.0.phase`), at every cut whose frame of work finished,
+since a lag cut can find the room's enemies part-built. The escape refuses the frame: its
+shakes read the random numbers and the screen's shaking, which are not in the loop.
+
 Lag is borrowed until the platform's costs are modelled (MODEL decision 35); `BORROWED` names
 it. The runner reads one fact per cut from the record: whether the NMI found the frame's work
 finished. A lag NMI finds it part-done, so the game commits no new picture (the screen keeps the
@@ -77,7 +90,8 @@ dispatched with the target `played`. It is a diagnostic, not yet an indexed obli
 Two planted faults in the fault matrix stop that run at a recorded cut. A pad one frame stale
 fails the runner's pad alignment check at cut 2, and a camera State held rather than carried
 differs at cut 1 in `camera.view.x.fraction`. Each plays cuts 1 to 41 of the M0 row, a span
-the run holds.
+the run holds. Among the later ones, the Ceres doors' State held rather than carried differs at
+cut 1 in `ceres.0.wait`.
 
 ## Intra-frame timing and the played-alone run
 
@@ -302,22 +316,6 @@ compositor's checks need. `tools cache-lean` turns a full tier into a lean one.
 8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
 passes `--watch-pcs` too, for the `hits.txt` the independent causal input providers can read.
 `ORACLE` names the oracle command (the Python DLL runner where Defender blocks executables).
-
-## The movement/Ceres connection
-
-The indexed `movement-ceres/carried-position-proximity` case admits complete movement and slot0
-Ceres owners together at cut6 of `chain-any-0003-DFD7`, then compares positions and five door fields
-at7..10. Production derives Ceres proximity from held movement whole pixels before advancing
-movement. Both owners and all outputs commit atomically. No separate writable position receipt
-or record refresh exists. Both scoped and connected recipes call the same adapters.
-
-Each cut plays one frame from the preceding cut's independently observed controls, world
-and actors. The case compares at frame cuts and admits no evidence from inside the frame.
-
-Prior cuts6..9 must have empty interactive rosters before any actor geometry is decoded. World,
-controls, equipment, appearance ahead feedback, station stage and actor scheduling remain
-external. The case proves only this position connection and its declared comparisons; no durable
-Ceres continuation, pixels, application, power-on or played-alone coverage follows.
 
 ## Carried ordinary movement, appearance and camera
 

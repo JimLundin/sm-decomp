@@ -1,8 +1,9 @@
 //! One whole frame of Samus, in any pose, or of a passage.
 //!
-//! A frame of play steps her health, her clip's look ahead, her moves, her animation, the
-//! camera following her, the HUD, then the doors. While a passage is under way, the doors step
-//! alone and the HUD takes its step outside play.
+//! A frame of play steps her health, the room's Ceres doors, her clip's look ahead, her moves,
+//! her animation, the camera following her, the HUD, then the doors to other rooms. While a
+//! passage is under way, the doors to other rooms step alone, the Ceres doors run on the frames
+//! the passage runs the enemies, and the HUD takes its step outside play.
 //!
 //! Each model is stepped once through its own whole-frame entry. Movement reports what animation
 //! reads "as her moves leave her, before the pose change", so stepping movement whole and then
@@ -17,6 +18,10 @@
 //! Health plays first. Her animation reads the energy the frame's tail hit leaves, before the
 //! frame's loss; no Ridley is in this loop, so that is the energy the frame starts with. The
 //! HUD plays after her moves, reading her position after them and the energy Health leaves.
+//!
+//! The Ceres doors run before she moves, reading where she was at the end of the last frame;
+//! her motion meets the boxes of those that were solid as the frame began. Fetching the next
+//! room's contents lets the last room's doors go and places its own.
 
 use super::animation::{self, AppearanceContent};
 use super::camera_semantic;
@@ -26,6 +31,7 @@ use super::health_tail::HealthPin;
 use super::hud::HudPin;
 use super::room_loading::{self, LoadFault, Rooms};
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
+use boss_ceres_ridley::{CeresDoor, Stage};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
@@ -36,9 +42,9 @@ use interface_hud::{
 };
 use samus_appearance::{Dash, Figure, MoveEvent};
 use samus_movement::{Dashing, StandingAnimation, WallTest};
-use types::{Action, Facing, Item, Pair, Parts, Pose, Set};
+use types::{Action, Facing, Hitbox, Item, Pair, Parts, Pose, Set};
 use world_camera::{RememberedPosition, ViewPosition};
-use world_doors::{Arrival, COLOURS, ColourGroup, Doors, Palette, Scene};
+use world_doors::{Activity, Arrival, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scene};
 
 /// The figure she is drawn in as the frame starts.
 pub struct FigurePin;
@@ -80,6 +86,8 @@ pub struct Rules {
     pub health: samus_health::Rules,
     /// HUD parameters.
     pub hud: interface_hud::Rules,
+    /// The Ceres doors' parameters.
+    pub ceres: boss_ceres_ridley::Rules,
 }
 
 /// A door to another room, from the room's content: the cell she touches, the doorway it
@@ -174,6 +182,8 @@ pub struct State {
     pub hud: Model<HudPin>,
     /// Where her room sits on her map.
     pub map_room: interface_hud::Room,
+    /// The room's Ceres doors, in its order of its enemies.
+    pub ceres_doors: Vec<CeresDoor>,
 }
 
 /// What one frame published.
@@ -189,6 +199,8 @@ pub struct Outputs {
     pub health: Option<samus_health::PlayedFrame>,
     /// The HUD's frame of play; none while a passage runs.
     pub hud: Option<FrameOutputs>,
+    /// Each Ceres door's run, in order; none on a frame the enemies don't run.
+    pub ceres_doors: Vec<boss_ceres_ridley::Run>,
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -212,6 +224,9 @@ pub enum Fault {
     NewArea,
     /// The HUD refused the frame: its scene only shows the countdown.
     Hud,
+    /// The station's escape: the doors' shakes read the random numbers and the screen's
+    /// shaking, which aren't in this loop.
+    Escape,
 }
 
 impl State {
@@ -240,7 +255,16 @@ impl State {
             .play_frame(samus_health::TailImpact::Absent, &rules.health);
         let room = camera_room(&inputs.camera)?;
         let start = self.figure.0;
-        let (samus, outcome) = self.moves(inputs, content, rules)?;
+        // The doors run before she moves, but her motion meets them as they block when the
+        // frame began.
+        let ceres = run_doors(
+            &self.ceres_doors,
+            &self.movement.0,
+            passing.ceres,
+            &rules.ceres,
+        )?;
+        let world = WithDoors::new(&inputs.geometry, &self.ceres_doors);
+        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
         let after = Figure {
             pose: samus.pose,
             sprite: outcome.sprite,
@@ -311,6 +335,7 @@ impl State {
             health: Model(health.state),
             hud: Model(hud_state),
             map_room: self.map_room,
+            ceres_doors: ceres.iter().map(|run| run.door).collect(),
         };
         Ok(Outputs {
             movement: Some(outcome),
@@ -318,6 +343,7 @@ impl State {
             doors: doors.report,
             health: Some(health),
             hud: Some(hud_outputs),
+            ceres_doors: ceres,
         })
     }
 
@@ -325,6 +351,7 @@ impl State {
     fn moves(
         &self,
         inputs: &Inputs,
+        world: &dyn types::World,
         content: &Content,
         rules: &Rules,
     ) -> Result<(samus_movement::Samus, samus_movement::Outcome), Fault> {
@@ -357,7 +384,7 @@ impl State {
             cannon_heading: &heading,
         };
         let outcome = samus
-            .step(&frame, &inputs.geometry, &rules.movement)
+            .step(&frame, world, &rules.movement)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
         missing_body
             .get()
@@ -384,18 +411,39 @@ impl State {
             camera: view,
             mut palette,
         } = exports.scene;
+        let ceres = if exports.report.runs[Activity::Enemies] {
+            run_doors(
+                &self.ceres_doors,
+                &self.movement.0,
+                passing.ceres,
+                &rules.ceres,
+            )?
+        } else {
+            Vec::new()
+        };
+        let mut ceres_doors = if ceres.is_empty() {
+            self.ceres_doors.clone()
+        } else {
+            ceres.iter().map(|run| run.door).collect()
+        };
         if let Some(doorway) = self.doorway {
+            let run = room_loading::Run {
+                progress: passing.progress,
+                ceres: passing.ceres,
+            };
             room_loading::load(
                 exports.report.call,
                 doorway.through,
-                room_loading::Run {
-                    progress: passing.progress,
-                    ceres: passing.ceres,
-                },
+                run,
                 &content.rooms,
                 &mut palette,
             )
             .map_err(Fault::Load)?;
+            // The next room's contents let the last room's doors go and place its own.
+            if exports.report.call == Some(RoomCall::FetchContents) {
+                ceres_doors = room_loading::ceres_doors(doorway.through, run, &content.rooms)
+                    .map_err(Fault::Load)?;
+            }
         }
         let kept = camera.seen();
         self.movement.0.position = her;
@@ -407,6 +455,7 @@ impl State {
             }));
         self.palette = palette;
         self.doors = exports.doors;
+        self.ceres_doors = ceres_doors;
         self.hud.0.out_of_play(&OutOfPlayInputs {
             mini_map_turned_on: exports.report.minimap_on,
             new_area: NewArea::SameArea,
@@ -424,6 +473,7 @@ impl State {
             doors: exports.report,
             health: None,
             hud: None,
+            ceres_doors: ceres,
         })
     }
 }
@@ -556,6 +606,64 @@ pub(super) fn animation_inputs(
         activities: inputs.activities,
         shoot_held: inputs.held.any(types::button::SHOOT),
         charge: inputs.charge,
+    }
+}
+
+/// One run of each of the room's Ceres doors, in its order of its enemies, reading where she
+/// was at the end of the last frame.
+fn run_doors(
+    doors: &[CeresDoor],
+    her: &samus_movement::Samus,
+    stage: Stage,
+    rules: &boss_ceres_ridley::Rules,
+) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
+    if stage == Stage::Escape && !doors.is_empty() {
+        return Err(Fault::Escape);
+    }
+    let inputs = boss_ceres_ridley::Inputs {
+        her: Pair {
+            x: her.position.x.pixel(),
+            y: her.position.y.pixel(),
+        },
+        stage,
+        // Outside the escape no door reads the random number or the screen's shaking.
+        random: 0,
+        shake_frames_left: 0,
+    };
+    Ok(doors.iter().map(|door| door.run(&inputs, rules)).collect())
+}
+
+/// The room's geometry, with the Ceres doors that block her after its other solid actors.
+struct WithDoors<'a> {
+    geometry: &'a super::world::MovementWorld,
+    solid: Vec<Hitbox>,
+}
+
+impl<'a> WithDoors<'a> {
+    fn new(geometry: &'a super::world::MovementWorld, doors: &[CeresDoor]) -> Self {
+        let blocking = doors.iter().filter(|door| door.phase.solid());
+        Self {
+            geometry,
+            solid: types::World::solid_enemies(geometry)
+                .iter()
+                .cloned()
+                .chain(blocking.map(|door| door.hitbox()))
+                .collect(),
+        }
+    }
+}
+
+impl types::World for WithDoors<'_> {
+    fn block(&self, cell: types::Cell) -> types::Block {
+        types::World::block(self.geometry, cell)
+    }
+
+    fn lets_through(&self, cell: types::Cell, way: types::Way) -> bool {
+        types::World::lets_through(self.geometry, cell, way)
+    }
+
+    fn solid_enemies(&self) -> &[Hitbox] {
+        &self.solid
     }
 }
 

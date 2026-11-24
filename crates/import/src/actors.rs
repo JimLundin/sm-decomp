@@ -4,7 +4,7 @@
 //! A species' header names its palette; the graphics set a room state names lists the species
 //! it loads, each with the sprite palette row it draws with there. The common sprites' and
 //! the flashing enemies' palettes sit at fixed places, and the Ceres doors' two colour sets
-//! beside their species' code.
+//! beside their species' code. A room state's enemy population places the Ceres doors.
 
 use data::assets::actors::{
     Actors, BLUE_BRINSTAR_FACE_BLOCK, CERES_DOOR, CERES_RIDLEY, CeresDoorColours, DoorShades,
@@ -12,8 +12,11 @@ use data::assets::actors::{
     SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
+use data::assets::world::{CeresDoorKind, CeresDoorPlacement, Pair, Side};
+use data::enemy::{EnemyError, SpeciesKey};
 use data::id::SpeciesId;
 use data::rom::{AddressError, Lorom, RomAddress};
+use std::num::Wrapping;
 
 /// The original's place for each registered species, in id order: its header's pointer in the
 /// species bank, which a graphics set names it by.
@@ -22,7 +25,7 @@ const PLACES: [(SpeciesId, u16); 10] = [
     (ELEVATOR, 0xd73f),
     (BLUE_BRINSTAR_FACE_BLOCK, 0xea7f),
     (SUPER_SIDEHOPPER, 0xd9bf),
-    (CERES_DOOR, 0xe23f),
+    (CERES_DOOR, CERES_DOOR_PLACE),
     (CERES_RIDLEY, 0xe13f),
     (SIDEHOPPER, 0xd93f),
     (GEEGA, 0xf253),
@@ -30,6 +33,8 @@ const PLACES: [(SpeciesId, u16); 10] = [
     (ROACH, 0xd87f),
 ];
 
+/// The Ceres doors' header, which their placements name them by.
+const CERES_DOOR_PLACE: u16 = 0xe23f;
 /// The species headers' bank.
 const SPECIES_BANK: u8 = 0xa0;
 /// Where a header holds its palette's pointer, and its bank.
@@ -93,6 +98,35 @@ pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
             escape: shades(doors.escape),
         },
     })
+}
+
+/// The Ceres door actors the enemy population at `at`, a room state's, places, in its order.
+///
+/// A door's first parameter names what it is: a door facing right or left, or the shaft's
+/// door; any other value is an actor a later piece of the station models.
+///
+/// # Errors
+///
+/// [`EnemyError`] when the population runs outside the image or its bank.
+pub fn ceres_doors(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<CeresDoorPlacement>, EnemyError> {
+    let door = SpeciesKey(CERES_DOOR_PLACE);
+    Ok(data::enemy::population(rom, at)?
+        .placements
+        .iter()
+        .filter(|placed| placed.species == door)
+        .map(|placed| CeresDoorPlacement {
+            kind: match placed.parameter_1 {
+                0 => CeresDoorKind::Door(Side::Right),
+                1 => CeresDoorKind::Door(Side::Left),
+                4 => CeresDoorKind::ShaftDoor,
+                _ => CeresDoorKind::Later,
+            },
+            position: Pair {
+                x: Wrapping(placed.x),
+                y: Wrapping(placed.y),
+            },
+        })
+        .collect())
 }
 
 /// The graphics set at `at`, a room state's: each species it loads, in order, with its row.

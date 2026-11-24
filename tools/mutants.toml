@@ -119,19 +119,6 @@ cut = 11
 field = "audio.reply3"
 
 [[fault]]
-name = "movement-ceres-door-centre-substitution"
-responsibility = "ceres"
-file = "crates/game/src/production/movement_ceres.rs"
-before = '''her: types::Pair {
-            x: state.movement.0.position.x.pixel(),
-            y: state.movement.0.position.y.pixel(),
-        },'''
-after = "her: state.ceres.position,"
-case = "movement-ceres/carried-position-proximity"
-cut = 9
-field = "ceres.phase"
-
-[[fault]]
 name = "movement-inside-cells-omitted"
 responsibility = "movement"
 file = "crates/game/src/production/movement.rs"
@@ -446,3 +433,13 @@ after = "now: health.energy.whole.get().wrapping_sub(1),"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "hud.status-bar"
+
+[[fault]]
+name = "played-ceres-doors-held"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "ceres_doors: ceres.iter().map(|run| run.door).collect(),"
+after = "ceres_doors: self.ceres_doors.clone(),"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "ceres.0.wait"

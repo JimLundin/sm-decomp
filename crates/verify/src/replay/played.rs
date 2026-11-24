@@ -16,7 +16,9 @@ use super::compare::{CompareFault, Observation, compare};
 use super::index::ObservationId;
 use super::readers::record;
 use super::result::Outcome;
-use super::{Sources, appearance, camera, connected, data_failure, health_tail, hud, movement};
+use super::{
+    Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement,
+};
 use crate::cache::Cache;
 use crate::lock::{Lock, RowId};
 use crate::source;
@@ -43,7 +45,7 @@ pub const SEED_HELD: &[&str] = &[
     "the owners active at her stride: a cinematic, a boss, special colour time",
     "her shot's charge, which no frame of play reads",
     "cinematic and elevator status",
-    "room geometry, doors and actor boxes",
+    "room geometry and the boxes of actors other than the Ceres doors",
     "camera room settings and lead",
     "escape timer",
     "passage sounds sent and music ready",
@@ -309,6 +311,14 @@ fn expected(
             goal: colours(wram, GOAL_COLOURS)?,
         }));
     }
+    if finished(record) {
+        fields.extend(door_observations(
+            ceres::doors(wram)?
+                .into_iter()
+                .map(|slot| ceres::expected(wram, slot))
+                .collect::<Result<_, _>>()?,
+        ));
+    }
     fields.extend(health_parts(&health_tail::decode(wram, None)?));
     fields.extend(hud_parts(hud::expected(wram, hud)?));
     Ok(fields)
@@ -328,6 +338,37 @@ fn health_parts(health: &samus_health::State) -> [Observation; 6] {
         ("health.protection", u16::from(health.protection.get())),
     ]
     .map(|(field, value)| Observation::quantity(field, i64::from(value)))
+}
+
+/// The room's Ceres doors by part, each named by its place in the room's order of its enemies,
+/// after how many there are, so a difference names the door and the part that differ.
+fn door_observations(doors: Vec<Vec<Observation>>) -> Vec<Observation> {
+    let count = i64::try_from(doors.len()).unwrap_or(i64::MAX);
+    let mut fields = vec![Observation::quantity("ceres.doors", count)];
+    for (place, parts) in doors.into_iter().enumerate() {
+        fields.extend(parts.into_iter().map(|part| Observation {
+            field: part.field.replacen("ceres.", &format!("ceres.{place}."), 1),
+            bytes: part.bytes,
+        }));
+    }
+    fields
+}
+
+/// The seed room's Ceres doors, decoded once from the seed record. Her motion meets each one
+/// as the loop carries it, so none may stand among the actor boxes held from the seed too.
+fn seed_doors(seed: &[u8]) -> Result<Vec<boss_ceres_ridley::CeresDoor>, Outcome> {
+    let slots = ceres::doors(seed)?;
+    let roster = movement::roster_slots(seed)?;
+    if slots.iter().any(|slot| roster.contains(&slot.index())) {
+        return Err(Outcome::Unsupported {
+            cut: None,
+            dependency: "played seed holds a Ceres door among the held actor boxes".into(),
+        });
+    }
+    slots
+        .into_iter()
+        .map(|slot| ceres::seed(seed, slot))
+        .collect()
 }
 
 /// The mini-map's window: rows 0 to 2, columns 26 to 30 of the HUD's 32 columns.
@@ -489,6 +530,7 @@ impl<'a> Run<'a> {
         let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
         let hud = hud::Content::load(path)?;
         let (map_room, area) = room.map;
+        let ceres_doors = seed_doors(&seed.wram)?;
         Ok(Self {
             state: played::State {
                 movement: Model(movement::seed(&seed.wram)?),
@@ -504,6 +546,7 @@ impl<'a> Run<'a> {
                 health: Model(health_tail::decode(&seed.wram, None)?),
                 hud: Model(hud::decode_state(&seed.wram)?),
                 map_room,
+                ceres_doors,
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
@@ -520,6 +563,7 @@ impl<'a> Run<'a> {
                 doors: world_doors::Rules::default(),
                 health: samus_health::Rules::REFERENCE,
                 hud: interface_hud::Rules::default(),
+                ceres: boss_ceres_ridley::Rules::default(),
             },
             room,
             content,
@@ -684,6 +728,11 @@ fn actual(
     )));
     if finished {
         fields.extend(colour_observations(&state.palette));
+    }
+    if finished {
+        fields.extend(door_observations(
+            state.ceres_doors.iter().map(ceres::initial).collect(),
+        ));
     }
     fields.extend(health_parts(&state.health.0));
     fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));

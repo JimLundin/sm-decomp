@@ -83,8 +83,6 @@ pub enum ProductionContent {
     /// Checked body and cannon content shared by the live touchdown caller, and the audio
     /// content its Contact offer is played with.
     MovementTouchdown(MovementContent, Box<super::audio::Content>),
-    /// Checked movement content with fixed clean Ceres geometry.
-    MovementCeres(MovementContent),
     /// Checked effect clips, song graph and the resources they name.
     Audio(Box<super::audio::Content>),
     /// Checked imported ordinary power assets.
@@ -116,13 +114,6 @@ pub enum ProductionRules {
     Movement(samus_movement::Rules),
     /// Existing Movement rules; the Contact owner uses fixed transport rules.
     MovementTouchdown(samus_movement::Rules),
-    /// Complete parameters for both connected owners.
-    MovementCeres {
-        /// Movement tuning.
-        movement: samus_movement::Rules,
-        /// Ceres tuning.
-        ceres: boss_ceres_ridley::Rules,
-    },
     /// Transport has fixed catalogue rules.
     Audio,
     /// The existing power model's tuning parameters.

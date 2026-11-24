@@ -384,36 +384,6 @@ checkpoints = false
 limits = ["complete production dependency closure unavailable", "boundary holds unsupported; no behaviour Pass"]
 
 [[case]]
-id = "movement-ceres/carried-position-proximity"
-kind = "integrated"
-row = "chain-any-0003-DFD7"
-actor_slot = 0
-start = { source = "cache-cut", frame = 6 }
-end = { cut_inclusive = 10 }
-rules = ["samus-movement/MovesAsShePosed", "boss-ceres-ridley/Waiting", "boss-ceres-ridley/SheIsNear", "boss-ceres-ridley/Polling", "boss-ceres-ridley/Closing", "boss-ceres-ridley/Shown", "boss-ceres-ridley/Solid"]
-profile = "reference"
-responsibilities = ["movement", "ceres"]
-content = "player-rom-import"
-inputs = "certified-movement-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["movement.position.x", "movement.position.y", "ceres.phase", "ceres.wait", "ceres.figure", "ceres.shown", "ceres.solid"], outputs = [] }
-checkpoints = false
-limits = ["only carried prior whole-pixel movement to door proximity integrated", "complete outputs retained but only declared position and door fields compared", "unselected producers remain external", "prior roster empty; current actor selection and timing unproved", "appearance ahead remains external feedback", "each cut interval is taken as one ordinary movement frame (no lag cut, no forced pose), not proved until T1", "no durable Ceres codec, pixels, app, power-on or played-alone claim"]
-
-[[case.borrowed]]
-dependency = "movement.external-neighbours"
-provider = "preceding-cut-independent-observations"
-fields = ["world.blocks", "world.interactive_roster", "appearance.figure", "appearance.playhead", "appearance.boost", "controller.held", "controller.pressed", "progress.equipment", "mode.cinematic", "clock.parity", "elevator.moving"]
-phase = "preceding-record-cut"
-claim = "prior cuts6..9 empty roster enforced before geometry; appearance ahead, world, controls, equipment and actor scheduling external"
-
-[[case.borrowed]]
-dependency = "ceres.stage-and-actor-run"
-provider = "preceding-stage-and-adjacent-counter-identity"
-fields = ["station.stage", "actor.identity", "actor.position", "actor.framework_counter"]
-phase = "preceding-stage-current-run-validation"
-claim = "Calm and Getaway only; one external run, immutable selected identity and placement; no selected phase, figure or flags are inputs"
-
-[[case]]
 id = "movement-native-occupied-first-search"
 kind = "scoped"
 row = "chain-any-0003-DFD7"

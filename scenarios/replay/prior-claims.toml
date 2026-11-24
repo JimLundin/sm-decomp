@@ -3681,3 +3681,10 @@ source_sha256 = "57b65c39bb085927ced97536cdc143e5942f5244efe36042399c81ae4adae88
 identity = "sender-offer/repeat-at-five"
 before_values = [1, 2, 0, 0, 0, 0, 1, 1, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 3e60c70c2adf854ca5044b33231d489632234f83626ea6c3518385d081c85f04; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "6ff7510b4330a2f3c22e2c0af375282b65cb5dca12b36ea3e2145f98cc9db90a"
+identity = "movement-ceres/carried-position-proximity"
+before_values = [4, 28, 0, 0, 0, 0, 15, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 2b18d2768c7961fff569672e3f2c145cc3d660e2f44c876416731caf9dc37f13; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

@@ -55,8 +55,6 @@ pub enum OwnedState {
     Movement(Model<MovementPin>),
     /// Current Movement, Figure and audio transport at an ordinary opportunity.
     MovementTouchdown(Box<crate::production::movement_touchdown::State>),
-    /// Complete owners connected by held movement position.
-    MovementCeres(Box<crate::production::MovementCeresState>),
     /// The complete audio transport between frames.
     Audio(Model<AudioPin>),
     /// Current power shots and late contact consumption.

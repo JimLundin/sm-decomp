@@ -16,7 +16,7 @@ fn audio_state_shape_remains_pinned() {
 use super::*;
 use crate::state::owned::OwnedState;
 use core::num::Wrapping;
-use types::{Block, Pair, Pose, Set, Sprite};
+use types::{Block, Pair, Set, Sprite};
 
 mod audio_checkpoint;
 mod continuation;
@@ -49,19 +49,6 @@ pub(super) fn movement() -> (Production, ProductionContent, ProductionRules) {
     )
     .unwrap();
     (production, content, rules)
-}
-
-fn frame() -> samus_movement::Frame<'static> {
-    const fn body(_: Pose) -> types::Radius {
-        Pair {
-            x: Wrapping(5),
-            y: Wrapping(21),
-        }
-    }
-    const fn heading(_: Pose) -> Option<types::FiringDirection> {
-        None
-    }
-    stimuli().frame(&body, &heading)
 }
 
 pub(super) fn stimuli() -> MovementInputs {
@@ -233,105 +220,4 @@ fn restore_refuses_other_rules_content_and_previous_state_schema() {
             canonical::DecodeError::SchemaMismatch { .. }
         ))
     ));
-}
-
-#[test]
-fn connected_late_movement_failure_rolls_back_both_owners_and_all_outputs() {
-    let (_, content, _) = movement();
-    let ProductionContent::Movement(content) = content else {
-        panic!()
-    };
-    let mut samus = fixtures::samus();
-    samus.pose = data::assets::samus::map::MAP
-        .iter()
-        .find(|entry| entry.key.facing == types::Facing::Screen)
-        .unwrap()
-        .key;
-    let door = boss_ceres_ridley::CeresDoor {
-        kind: boss_ceres_ridley::DoorKind::Door,
-        facing: types::Side::Left,
-        position: Pair {
-            x: Wrapping(400),
-            y: Wrapping(100),
-        },
-        phase: boss_ceres_ridley::Phase::Open {
-            wait: boss_ceres_ridley::Wait::new(1).unwrap(),
-        },
-    };
-    let mut production = Production::admit(
-        ProductionSeed::MovementCeres(Box::new(MovementCeresState {
-            movement: Model(samus),
-            ceres: door,
-        })),
-        ProductionContent::MovementCeres(content),
-        ProductionRules::MovementCeres {
-            movement: samus_movement::Rules::default(),
-            ceres: boss_ceres_ridley::Rules::default(),
-        },
-    )
-    .unwrap();
-    let before = production.clone();
-    let neighbours = CeresContext {
-        stage: boss_ceres_ridley::Stage::Calm,
-        random: 0,
-        shake_frames_left: 0,
-    };
-    let run = door.run(
-        &boss_ceres_ridley::Inputs {
-            her: Pair {
-                x: Wrapping(100),
-                y: Wrapping(100),
-            },
-            stage: neighbours.stage,
-            random: 0,
-            shake_frames_left: 0,
-        },
-        &boss_ceres_ridley::Rules::default(),
-    );
-    assert_ne!(run.door, door);
-    let world = empty_world();
-    assert_eq!(
-        production.advance(AdvanceInput::MovementCeres {
-            frame: samus_movement::Frame {
-                elevator_moving: true,
-                ..frame()
-            },
-            world: &world,
-            ceres: neighbours
-        }),
-        Err(ProductionFault::Unsupported(Unsupported::ElevatorBody))
-    );
-    assert_eq!(production, before);
-    assert_eq!(
-        production.advance(AdvanceInput::Missing(Scope::MovementCeres)),
-        Err(ProductionFault::Unsupported(Unsupported::MissingInput(
-            Scope::MovementCeres
-        )))
-    );
-    assert_eq!(production, before);
-    let mut reference = before;
-    let expected = reference
-        .advance(AdvanceInput::MovementCeres {
-            frame: frame(),
-            world: &world,
-            ceres: neighbours,
-        })
-        .unwrap();
-    let actual = production
-        .advance(AdvanceInput::MovementCeres {
-            frame: frame(),
-            world: &world,
-            ceres: neighbours,
-        })
-        .unwrap();
-    assert_eq!(actual, expected);
-    assert_eq!(production, reference);
-    let ProductionOutputs::MovementCeres(outputs) = actual else {
-        panic!()
-    };
-    assert_eq!(outputs.ceres, run);
-    assert_eq!(
-        production.save(),
-        Err(SaveFault::Unsupported(Scope::MovementCeres))
-    );
 }

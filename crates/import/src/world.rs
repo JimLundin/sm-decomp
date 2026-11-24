@@ -139,6 +139,13 @@ pub enum WorldError {
         /// Why.
         error: crate::actors::ActorsError,
     },
+    /// A version of the room places its enemies from a population that doesn't decode.
+    Population {
+        /// The room.
+        room: RoomId,
+        /// Why.
+        error: data::enemy::EnemyError,
+    },
     /// A doorway's arrival record isn't fully present in the image.
     Arrival {
         /// The doorway.
@@ -391,6 +398,8 @@ fn version(image: Lorom<'_>, room: RoomId, state: RoomState) -> Result<Version, 
         plms: state.plms,
         enemies: crate::actors::graphics_set(image, state.enemy_set)
             .map_err(|error| WorldError::Enemies { room, error })?,
+        ceres_doors: crate::actors::ceres_doors(image, state.enemy_population)
+            .map_err(|error| WorldError::Population { room, error })?,
     })
 }
 
