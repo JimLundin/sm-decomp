@@ -7,7 +7,7 @@ Credits and licences for the tools and data the project uses are [below](#credit
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid
 cargo build --profile verify -p tools     # the verifiers: target/verify/tools
-bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links and the README
+bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links; tests and fault plan for what changed
 ```
 
 The tests are the `cargo test` line of Quality (`.github/workflows/quality.yml`), which names
@@ -69,8 +69,8 @@ power-on: the frames the reviewed played runs of
 [`scenarios/replay/played.toml`](../scenarios/replay/played.toml) hold, over the milestone and
 rungs of [`docs/architecture/domains.toml`](architecture/domains.toml). Its tests hold each listed
 run to the lock; the root changes a run there when a reviewed played run changes it.
-`tools/check_readme.sh`, in Quality and `tools/lane/gate.sh`, fails when the README differs from
-what the tree generates.
+`tools/check_readme.sh` in Quality, and verify's lib tests, which `tools/lane/gate.sh` runs when
+the README's inputs change, fail when the README differs from what the tree generates.
 
 The report is printed, not committed:
 

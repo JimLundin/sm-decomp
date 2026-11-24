@@ -41,8 +41,10 @@ role skill your brief names. For engineering work, follow the task route in AGEN
 ## Prove it
 
 - For every commit, run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`. It
-  runs the clean-room and lane tools' self-tests only when your branch changes them, and
-  `cargo deny` where cargo-deny is installed; CI's Quality runs both.
+  runs verify's lib tests (the report, the README and the played runs), the planted faults' plan,
+  the rule owners and the clean-room and lane tools' self-tests only when your branch changes their
+  subject since `SM_GATE_BASE` (origin/main unless set; a stacked branch sets its base), and
+  `cargo deny` where cargo-deny is installed. A failing check names its finding.
 - Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]`. On Windows, Defender blocks
   fresh test executables (exit 126), so it links each test target as a DLL and runs it through
   Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`,
