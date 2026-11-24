@@ -31,7 +31,7 @@ model needs a change, report it as a finding for the next round.
    the same change. Retain independently useful content, codecs and exact encoding by responsibility.
 6. **Register and validate.** Update the report's model/provider mapping, run the source gate and
    complete indexed replay baseline as [lane](../lane/SKILL.md#prove-it) specifies. The root regenerates
-   measured reports after independent review. Done when Quality and every required case hold.
+   the README after independent review. Done when Quality and every required case hold.
 7. **Report.** Give the production interface, per-case outcomes and compared observations, null
    evidence, continuations, first divergences, fault proof, explicit coverage losses and missing
    dependencies, removed owners and exact head. The root assesses size after independent review.

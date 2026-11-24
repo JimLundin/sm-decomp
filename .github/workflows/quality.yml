@@ -88,8 +88,8 @@ jobs:
         run: env -u RUSTC_BOOTSTRAP -u CARGO_UNSTABLE_CHECKSUM_FRESHNESS bash tools/vendor_nobuild_check.sh
       - name: Keep every relative Markdown link and anchor valid
         run: sh tools/check_doc_links.sh
-      - name: Keep docs/REPORT.md what tools report generates
-        run: bash tools/check_report.sh
+      - name: Keep README.md what tools report --write generates
+        run: bash tools/check_readme.sh
       - name: Test the shared and parallel replay entrypoints
         run: bash tools/ci/replay_test.sh && bash tools/ci/replay_parallel_test.sh
       - name: Test the verification jobs' input lists and fingerprints

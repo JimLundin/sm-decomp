@@ -26,7 +26,7 @@ replay=(crates/game/src/lib.rs crates/verify/required-witnesses.toml scenarios/r
   tools/ci/replay.sh tools/ci/replay_parallel.sh tools/ci/required_witnesses.py
   tools/ci/fetch_audio_native.sh tools/check_mutants.py tools/mutants.toml
   tools/oracle/lsnes_server.lua docs/architecture/domains.toml docs/behaviours/world-camera.md
-  docs/REPORT.md README.md)
+  README.md)
 for job in content replay faults-0; do
   for path in "${common[@]}"; do reads "$job" "$path" || no "$job does not read $path"; done
 done

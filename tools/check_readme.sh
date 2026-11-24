@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# check_report.sh: docs/REPORT.md, docs/timeline.svg and README.md are
-# what `tools report` generates for this tree (verify::report).
-# A stale page fails with the one command that regenerates them all. On Windows, where Defender
+# check_readme.sh: README.md is what `tools report --write` generates for this tree
+# (verify::report), and the report measured beside it still generates.
+# A stale README fails with the one command that regenerates it. On Windows, where Defender
 # blocks the tools executable, the same check runs as verify's lib test through
 # tools/lane/run_tests.sh. Override: CARGO (the cargo to run).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
-    exec bash tools/lane/run_tests.sh --suite lib verify -- report::tests::committed_report_is_current --exact
+    exec bash tools/lane/run_tests.sh --suite lib verify -- report::tests::committed_readme_is_current --exact
     ;;
   *) exec "${CARGO:-cargo}" run --locked -q -p tools --bin tools -- report --check ;;
 esac

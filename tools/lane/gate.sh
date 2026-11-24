@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Local source gate: the formatting, lint, dependency, crate-rule, doc-link and report checks of
-# Quality, and the tools' self-tests when the branch changes their subject. Only the report check
-# links (verify's lib test, tools/check_report.sh); CI runs the other tests.
+# Local source gate: the formatting, lint, dependency, crate-rule, doc-link and README checks of
+# Quality, and the tools' self-tests when the branch changes their subject. Only the README check
+# links (verify's lib test, tools/check_readme.sh); CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 # They don't wait on each other's build locks: each clippy pass has its own target directory, and
-# the report check links its test for an explicit target triple (tools/lane/test_dll.py).
+# the README check links its test for an explicit target triple (tools/lane/test_dll.py).
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR. Off Windows the toolchain is the cargo on
 # PATH, which rustup points at rust-toolchain.toml's channel.
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
@@ -18,7 +18,7 @@ esac
 O="${SM_GATE_DIR:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1
 O_resolved=$(cd "$O" && pwd -P)
-checks=(fmt clippy clean-clippy deny crate-rules self-tests doc-links report)
+checks=(fmt clippy clean-clippy deny crate-rules self-tests doc-links readme)
 cleanup() {
   "${SM_PY:-python3}" - "$O" "$O_resolved" "${checks[@]}" <<'PY'
 import pathlib
@@ -63,7 +63,7 @@ start crate-rules bash tools/check_crate_rules.sh
 # The self-tests of the clean-room and lane tools, only for what this branch changes since main.
 CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh origin/main
 start doc-links sh tools/check_doc_links.sh
-CARGO="$R/cargo" SM_RUST_BIN="$R" start report bash tools/check_report.sh
+CARGO="$R/cargo" SM_RUST_BIN="$R" start readme bash tools/check_readme.sh
 wait
 
 passed fmt || fail "FMT FAIL"
@@ -89,7 +89,7 @@ if ! passed self-tests; then
   cat "$O/self-tests.log"
 fi
 passed doc-links || fail "DOC LINKS FAIL"
-passed report || fail "REPORT OR README STATUS STALE: run cargo run -p tools --bin tools -- report --write"
+passed readme || fail "README STALE: run cargo run -p tools --bin tools -- report --write"
 if [ "$ok" -eq 1 ]; then
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
 else

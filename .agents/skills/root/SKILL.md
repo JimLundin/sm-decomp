@@ -24,7 +24,7 @@ barrier; every other role does one step.
 5. **Relay** to Jim: what the step found, what you decided, and what comes next. Lead with the
    ladder (the lowest rung's integrated proof and what it still needs) and the indexed cases'
    results, with scoped and whole-movie claims kept separate; give size as one line of the round's delta, a diagnostic (MODEL §1
-   decision 19), and cite `docs/REPORT.md` once a change lands.
+   decision 19), and cite `tools report` at the landed head once a change lands.
 6. **Record** the step in the coordination log (`$TEMP/collab/reviews/coord-log.md`): heads,
    verdicts, and the queue so a fresh root can resume from the log alone. When another root takes over, point its [handoff](../handoff/SKILL.md)
    to that record and the first open action.
@@ -120,7 +120,7 @@ the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_b
 ## Landing
 
 Before landing a round, complete [PROCESS step 11](../../../docs/cleanroom/PROCESS.md#a-round):
-update its domain registration and regenerate measured reports after review. The spec, import
+update its domain registration and regenerate the README after review. The spec, import
 and integration land together. Land one change at a time by fast-forward through
 `tools/lane/land.sh` only after CI is green: Quality, content and replay.
 The commands below apply to rounds and other work.

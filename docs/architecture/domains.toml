@@ -13,7 +13,7 @@
 # a domain past "not-started" names at least one model.
 #
 # A domain's `reads` are the ids of the domains whose exports it reads: the domain graph, which
-# the report draws in docs/REPORT.md with an arrow from each exporter to its reader. Most are
+# `tools report` draws with an arrow from each exporter to its reader. Most are
 # stated in domains.md §3 (its Reads / exports column, a scope that names the other domain's
 # output, or the bosses' paragraph); a read the plan only implies, by a scope that needs the
 # other domain's output or a Depends entry, has an `# Inferred:` comment above it saying why.

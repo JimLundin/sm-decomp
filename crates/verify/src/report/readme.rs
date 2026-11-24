@@ -12,7 +12,7 @@ use std::path::Path;
 use serde::Deserialize;
 
 use super::plan::{Plan, seed};
-use super::timeline::seed_frame;
+use super::seeds::seed_frame;
 use super::{COMMAND, grouped, read};
 use crate::lock::{Lock, Row, RowId, Start};
 
@@ -292,6 +292,49 @@ fn frame(value: u64) -> String {
     usize::try_from(value).map_or_else(|_| value.to_string(), grouped)
 }
 
+/// The cells of a progress bar: [`BAR`] wide in a monospace font, whatever the count.
+const BAR: u64 = 40;
+
+/// `count` of `total` as a bar of [`BAR`] cells, filled ones first, rounded down: only the whole
+/// total fills them all, and a count above none fills at least one, so neither end is overstated.
+fn bar(count: u64, total: u64) -> String {
+    let filled = if count == 0 {
+        0
+    } else {
+        count
+            .min(total)
+            .saturating_mul(BAR)
+            .checked_div(total)
+            .map_or(0, |cells| cells.max(1))
+    };
+    (0..BAR)
+        .map(|cell| if cell < filled { '█' } else { '░' })
+        .collect()
+}
+
+/// The README's figures of `total` frames as aligned bars, each with its count and percentage.
+fn bars(figures: &[(&str, u64)], total: u64) -> String {
+    let label = figures
+        .iter()
+        .map(|(name, _)| name.len())
+        .max()
+        .unwrap_or_default();
+    let of = frame(total);
+    let mut out = String::from("```text\n");
+    for (name, count) in figures {
+        let _ = writeln!(
+            out,
+            "{name:<label$}  {}  {:>width$} of {of}  {:>6}",
+            bar(*count, total),
+            frame(*count),
+            percent(*count, total),
+            width = of.len()
+        );
+    }
+    out.push_str("```\n");
+    out
+}
+
 /// The README for the tree at `root`.
 ///
 /// # Errors
@@ -316,20 +359,18 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
         frame(total)
     );
     let passes = passing(&runs, 0, total);
-    let _ = writeln!(
-        out,
-        "- **Frames that pass:** {} of {} ({}), every frame some reviewed run holds, counted once.",
-        frame(passes),
-        frame(total),
-        percent(passes, total)
-    );
     let start = from_start(&runs, total);
-    let _ = write!(
-        out,
-        "- **Continuous from power-on:** {} of {} ({}), with nothing fed back.",
-        frame(start.held),
-        frame(total),
-        percent(start.held, total)
+    out.push_str(&bars(
+        &[
+            ("Frames that pass", passes),
+            ("Continuous from power-on", start.held),
+        ],
+        total,
+    ));
+    out.push_str(
+        "\n- **Frames that pass:** every frame some reviewed run holds, counted once.\n\
+         - **Continuous from power-on:** the frames held back to back from power-on, with nothing \
+         fed back.",
     );
     match &start.stop {
         Some(why) => {
@@ -373,15 +414,15 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
         );
     }
     out.push_str(
-        "\nThe full evidence is in [the rebuild report](docs/REPORT.md); building and checking \
-         it is in [BUILDING](docs/BUILDING.md).\n",
+        "\nBuilding and checking it, and the command that prints the models' sizes and the \
+         indexed replay evidence, are in [BUILDING](docs/BUILDING.md).\n",
     );
     Ok(out)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{FromStart, PLAYED, Run, Stop, from_start, listed, passing, percent};
+    use super::{FromStart, PLAYED, Run, Stop, bar, bars, from_start, listed, passing, percent};
 
     /// A run seeded at movie frame `seed` that held `held` frames.
     fn run(seed: u64, held: u64, power_on: bool) -> Run {
@@ -454,6 +495,34 @@ mod tests {
                 held: 100,
                 stop: None
             }
+        );
+    }
+
+    #[test]
+    fn a_bar_fills_its_share_of_the_total() {
+        let filled = |bar: &str| bar.chars().filter(|&cell| cell == '█').count();
+        let empty = bar(0, 15_196);
+        assert_eq!((filled(&empty), empty.chars().count()), (0, 40));
+        // 2,136 of 15,196 is 5.6 cells, rounded down.
+        assert_eq!(filled(&bar(2_136, 15_196)), 5);
+        assert!(bar(2_136, 15_196).starts_with("█████░"));
+        // One frame shows; one frame short of the whole doesn't fill the bar.
+        assert_eq!(filled(&bar(1, 15_196)), 1);
+        assert_eq!(filled(&bar(15_195, 15_196)), 39);
+        assert_eq!(bar(15_196, 15_196), "█".repeat(40));
+        assert_eq!(filled(&bar(0, 0)), 0);
+    }
+
+    #[test]
+    fn the_bars_line_up_with_their_counts() {
+        assert_eq!(
+            bars(&[("Passing", 2_136), ("From start", 0)], 15_196),
+            format!(
+                "```text\nPassing     {}   2,136 of 15,196   14.1%\nFrom start  {}       0 of \
+                 15,196    0.0%\n```\n",
+                bar(2_136, 15_196),
+                bar(0, 15_196)
+            )
         );
     }
 

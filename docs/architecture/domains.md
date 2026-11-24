@@ -22,8 +22,8 @@ Current production owns complete clean model State and advances selected respons
 through `game::production::Production`, which `verify::replay` invokes. The application refuses
 unsupported power-on. Old tick, pose, actor, PLM and shadow-State gameplay owners are removed. Required missing
 history, lifecycle, room loading or timing is unsupported. Actual adapter and retained service
-inventory is in [the report](../REPORT.md#engine-services), and indexed acceptance is in
-[replay evidence](../REPORT.md#replay-evidence).
+inventory is in the Engine services section that `tools report` prints, and indexed acceptance is
+in its replay evidence ([BUILDING](../BUILDING.md#the-readme-and-the-report)).
 
 The following snapshot is historical planning evidence at the spine named above, not current
 executable capability or acceptance. Its fixed figures and module names are retained to explain
@@ -46,7 +46,7 @@ Totals: `game` 36,856, `data` 25,412, `runtime` 8,351, clean models 8,666, `type
 ### `crates/game`
 
 The modules at the planning spine. They are not the current executable tree. Current retained
-services and production adapters are in [the rebuild report](../REPORT.md#engine-services).
+services and production adapters are in the Engine services section `tools report` prints.
 
 | Module | What it does, what it covers |
 | --- | --- |
@@ -446,7 +446,7 @@ plan declares required fields and outputs, including video or APU observations w
 The milestone needs every compared cut and output byte. Current reporting separates scoped,
 integrated and whole-movie evidence and keeps expected Unsupported boundaries distinct from
 completed behaviour. Borrowed sources, excluded consumers and lost historical claims remain
-visible in [replay evidence](../REPORT.md#replay-evidence) and the
+visible in the replay evidence `tools report` prints and the
 [transition ledger](../../scenarios/replay/transition.toml).
 
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
@@ -569,5 +569,5 @@ and review, not implementation, set the pace.
     rows.
 
 The plan's domains, their waves, their progress and the rounds landed are data in
-[domains.toml](domains.toml), from which `verify::report` draws the report's domain graph and the
+[domains.toml](domains.toml), from which `verify::report` draws the domain graph `tools report` prints and the
 README's stretches.

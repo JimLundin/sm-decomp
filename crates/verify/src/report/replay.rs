@@ -117,32 +117,6 @@ impl Snapshot {
             Rule names identify intended witnesses, not a count of proven rules.\n",
         );
     }
-
-    pub(super) fn svg(&self) -> String {
-        let height = 90usize.saturating_add(self.rows.len().saturating_mul(32));
-        let mut out = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1100\" height=\"{height}\" viewBox=\"0 0 1100 {height}\" role=\"img\" aria-labelledby=\"title description\">\n\
-            <title id=\"title\">Indexed replay requirements</title>\n\
-            <desc id=\"description\">Each line is an independent case scope. Counts do not represent whole-movie coverage.</desc>\n\
-            <rect width=\"1100\" height=\"{height}\" fill=\"#fcfcfb\"/>\n\
-            <g font-family=\"sans-serif\" font-size=\"14\" fill=\"#202020\">\n\
-            <text x=\"20\" y=\"28\" font-size=\"19\">Indexed replay requirements</text>\n\
-            <text x=\"20\" y=\"52\">Separate scopes; compared cuts are not whole-movie progress.</text>\n"
-        );
-        for (index, (case, floor)) in self.rows().enumerate() {
-            let y = 82usize.saturating_add(index.saturating_mul(32));
-            let label = format!(
-                "{} | {} | {} | {} compared cuts",
-                case.id.0,
-                kind_label(case.kind),
-                outcome(&floor.expected),
-                floor.counts.cuts
-            );
-            let _ = writeln!(out, "<text x=\"20\" y=\"{y}\">{}</text>", xml(&label));
-        }
-        out.push_str("</g>\n</svg>\n");
-        out
-    }
 }
 
 const fn kind_label(kind: CaseKind) -> &'static str {
@@ -165,11 +139,4 @@ fn outcome(outcome: &Outcome) -> String {
 
 fn cell(text: &str) -> String {
     text.replace('|', "&#124;").replace(['\r', '\n'], " ")
-}
-
-fn xml(text: &str) -> String {
-    text.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
 }

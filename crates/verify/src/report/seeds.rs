@@ -1,8 +1,6 @@
-//! Independent movie seed coordinates used to describe the plan's target.
+//! The movie frames of the recorded room seeds, which place the plan's milestone and rungs.
 
 use std::path::Path;
-
-pub(super) const SVG: &str = "docs/timeline.svg";
 
 pub(super) fn seed_frame(root: &Path, capture: &str, wanted: u32) -> Result<usize, String> {
     let path = format!("movies/room-seeds-{capture}.csv");

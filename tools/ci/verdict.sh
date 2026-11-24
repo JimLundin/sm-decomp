@@ -32,8 +32,8 @@ reads() {
     # Agents' instructions: no crate, test or CI tool a verification job runs opens them.
     .agents/* | AGENTS.md) return 1 ;;
     # The clean crates' tests include_str! the behaviour specs, and verify's report reads the
-    # specs, their notes and REPORT.md.
-    docs/behaviours/* | docs/REPORT.md) ;;
+    # specs and their notes.
+    docs/behaviours/*) ;;
     # The other prose docs: no include_str!, test or CI tool reads them.
     docs/*.md) return 1 ;;
   esac

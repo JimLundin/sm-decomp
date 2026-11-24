@@ -182,8 +182,8 @@ Each step names its owner, what it waits for, and its done-condition.
     in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
     domain's `status` when its work starts or ends), deletes the crate's line from
     `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
-    trunk's check refuses a listed crate with none), and regenerates `docs/REPORT.md` and the
-    README (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
+    trunk's check refuses a listed crate with none), and regenerates the README
+    (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
     it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
     the branch's tree on `origin/main`, its subject the root's, its body each part under its role
     (spec, model, integration) with its own body indented under it, every `Role:` and
@@ -258,8 +258,8 @@ played owner and its runner, `tools/mutants.toml` and STATUS. Other lanes don't 
 hand their entries for it (a planted fault, a STATUS paragraph) to the root, who adds them when
 the lane lands. When two pieces of work need the same file, they run one after the other in a
 single lane, or the second starts from the first's branch and lands after it. The lane with the
-most work in flight lands first, and shorter lanes start from it. Generated pages (REPORT, the
-README) are regenerated at landing, never merged by hand.
+most work in flight lands first, and shorter lanes start from it. The generated README is
+regenerated at landing, never merged by hand.
 
 **Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
 writes nothing, and the integrator works outside the clean crates.
@@ -351,8 +351,8 @@ both passes recommend keeping the existing design, record the reasoning and clos
 Work is scheduled in one session a night, from 20:00 to 08:00 local time, with its planning and
 review included. Each session has three parts:
 
-1. **Planning.** The root reads the last session's review, REPORT and the queue, chooses the
-   session's rounds and lanes within the limits above, and writes the plan down before any lane
+1. **Planning.** The root reads the last session's review, `tools report` and the queue, chooses
+   the session's rounds and lanes within the limits above, and writes the plan down before any lane
    starts, as a session issue selecting the bounded [work items](#work-items) (MODEL §1
    decisions 27 and 31). Work goes only to the lowest rung of the ladder
    not yet reached (decisions 18 and 24): the items it still needs, then the indexed replay cases' first

@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 
 use super::lines::code_lines;
 use super::plan::{PLAN, Plan, undeclared};
-use super::{DOMAINS, PATH, baseline, check, current_at, fit, generate, grouped, read};
+use super::readme::PATH;
+use super::{DOMAINS, baseline, check, current_at, fit, generate, grouped, read};
 
 /// The repository root, from this crate's manifest.
 fn root() -> &'static Path {
@@ -12,19 +13,19 @@ fn root() -> &'static Path {
 }
 
 #[test]
-fn committed_report_is_current() {
+fn committed_readme_is_current() {
     assert_eq!(check(root()), Ok(()));
 }
 
 #[test]
-fn a_changed_report_is_stale() {
-    let fresh = "# Rebuild report\n\n| a | 1 |\n";
+fn a_changed_readme_is_stale() {
+    let fresh = "# sm-decomp\n\n| a | 1 |\n";
     assert_eq!(current_at(PATH, fresh, fresh), Ok(()));
     assert_eq!(
         current_at(PATH, &fresh.replace('\n', "\r\n"), fresh),
         Ok(())
     );
-    assert!(current_at(PATH, "# Rebuild report\n\n| a | 2 |\n", fresh).is_err());
+    assert!(current_at(PATH, "# sm-decomp\n\n| a | 2 |\n", fresh).is_err());
     assert!(current_at(PATH, "", fresh).is_err());
 }
 
