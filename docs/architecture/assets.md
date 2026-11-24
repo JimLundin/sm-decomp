@@ -262,7 +262,7 @@ interpolation, envelopes, echo and output rate may be modern.
 
 The SRAM file is not ROM content and has no importer. P2's model writes a `SaveFile` (progress,
 inventory, map, the station, the play time); `exact::sram` encodes it to the original's three
-slots, their checksums and complements, and our versioned `PlayerSave` (ARCHITECTURE §9.5)
+slots, their checksums and complements, and our versioned `PlayerSave` (ARCHITECTURE §9)
 holds the same record in our own file.
 
 ## 4. Samus's sheet and clips

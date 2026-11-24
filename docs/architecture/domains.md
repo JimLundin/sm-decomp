@@ -242,7 +242,7 @@ Two rules hold for the platform work whatever lane carries it:
 
 T1 owns platform timing; no production path schedules time inside a frame yet. The audio
 cadence each frame borrows until then is described in
-[ARCHITECTURE §6.5](ARCHITECTURE.md#65-named-cpu-costs).
+[ARCHITECTURE §6](ARCHITECTURE.md#6-the-tick).
 
 ### E1: where sprite drawing stands, and its second lane
 

@@ -1,9 +1,5 @@
 # Principles
 
-[MODEL §1 decisions 32 and 33](MODEL.md#1-the-goal-and-what-is-exact) govern current indexed production replay
-and previous-gameplay removal. The reviewed
-[transition](../cleanroom/PROCESS.md#replay-transition) records replacement claims and losses.
-
 Jim agreed these principles on 2026-11-05. Every decision in [ARCHITECTURE.md](ARCHITECTURE.md)
 cites the principles it follows; [MODEL.md](MODEL.md) applies them to the game code. "How we know"
 is a check that runs or a question a reviewer asks, never a line count.
@@ -63,8 +59,8 @@ implementations of game behaviour.
 
 **P8. All state is explicit plain data, and a Tick is a function of State and input.** Nothing lives
 in globals, in caches that outlive a Tick, or in another process.
-*How we know:* on every green row, Checkpoint → restore → advance gives the same digests, and a
-one-field mutant is reported at the right Tick and stream.
+*How we know:* an indexed case's checkpoint continuation gives the same results as the run it
+was saved from, and a one-field mutant is reported at the right cut and field.
 
 **P9. Name the original's mechanisms. Don't emulate them, and don't flatten them away.** Its waits,
 interrupt work, instruction lists and limits become typed engine concepts, not a CPU model and not
@@ -77,8 +73,9 @@ Scoped and integrated cases use the same entry and runner. Compared cuts and out
 match; missing dependencies stay unsupported. *How we know:* reports separate completed
 behaviour from held unsupported boundaries and disclose borrowed inputs.
 
-**P11. Every check must be able to fail.** Every gate stream has a mutant that must fail it, and so
-does the decoder. Every exclusion is a named LEGACY row. A surviving mutant is red.
+**P11. Every check must be able to fail.** Every supported responsibility has a planted fault that
+must fail its indexed case (`tools/mutants.toml`). Every exclusion is a named LEGACY row. A
+surviving mutant is red.
 
 **P12. The reference shares no code with the engine, and every difference is named.** The unmodified
 ROM runs on emulators we don't share code with. No tolerances, no unnamed masks: a difference between
@@ -92,8 +89,7 @@ while the old code still ran.)
 **P14. Verified speed is a requirement from the first slice.** Every landing reports Ticks/s. (At
 about 20 Ticks/s, verification once throttled all other work.)
 
-**P15. Prove a design end to end on a thin slice before going broad.** Slice 0 runs open, step, the
-renderer and headless replay, green, before a second cluster; one lane builds the spine.
+**P15. Prove a design end to end on a thin slice before going broad.**
 
 **P16. Size is a cost, and a general mechanism needs real users.** Prefer data over code and one
 mechanism over per-case code. A generic layer is built when its second real user exists. Each domain
@@ -134,8 +130,7 @@ and RAM addresses appear only in `data`'s import tables and in verification.
 
 **K2. Make invalid states unrepresentable, including progress through time.** A routine that spans
 Ticks is an explicit typed cursor: no async, no generators, no flag that means "half done".
-*How we know:* every Tick-spanning routine is a variant of the closed `Frame` enum. Review question:
-"which variant owns this field?"
+*How we know:* review question: "which variant owns this field?"
 
 **K3. Concrete context types, not host traits.** A domain receives a struct of disjoint borrows. A
 trait needs two real implementations or a derive. A trait that exists so one system can host another

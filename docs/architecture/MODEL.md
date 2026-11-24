@@ -20,7 +20,7 @@ Jim's decisions, 2026-11-06:
    shape.
 3. **Uncompared leftovers.** Hardware leftovers that no game rule reads and no player sees, such
    as DMA registers after a transfer, are not compared. They leave the State and the decoder and
-   are listed by name in [ARCHITECTURE §11](ARCHITECTURE.md#11-the-engine--oracle-comparison-contract).
+   are listed by name in [ARCHITECTURE §11.6](ARCHITECTURE.md#116-what-isnt-compared-by-name).
 
 Jim's decisions, 2026-11-07:
 
