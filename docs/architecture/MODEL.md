@@ -141,8 +141,8 @@ Jim's decisions, 2026-11-11:
     the next milestone. A divergence is localised by sparse checkpoints over the whole run, then dense ones
     over the range they narrow it to. The harnesses, the free-run gate's rows and lockstep serve
     this milestone; the plan's waves are ordered toward it
-    ([domains.md §4](domains.md#4-order)), and `tools report` shows it as the first row of the
-    README's status, from the milestone in [domains.toml](domains.toml).
+    ([domains.md §4](domains.md#4-order)), and the README counts its frames that pass, from the
+    milestone in [domains.toml](domains.toml) and the reviewed played runs.
 15. **A model stays total; content is checked at the edge.** A model doesn't refuse content or
     rules outside its spec. A value with a range the spec gives is a checked newtype; relations
     between fields and the shape of content are checked by the importer, outside the clean

@@ -419,14 +419,15 @@ outside Ceres's three species. 413 frames lag, 141 of them before the intro.
 Not needed for it: S3, S6, S7, W3, H3, F1, F3, the enemy families and the other bosses (Ceres
 Ridley shares Ridley's code; B9 may reuse B8's model, not the reverse). The Landing Site's
 content is the next milestone's: W2's door caps and scroll PLM, R3's rain, R4's rain tiles,
-lightning and the gunship's glow, F4's gunship. `tools report` shows the milestone as the
-README's first row, from `[milestone]` in [domains.toml](domains.toml): the stretch's frames, how
-many the engine plays alone today and which of these items are not done.
+lightning and the gunship's glow, F4's gunship. The README counts the milestone's frames that
+pass, from `[milestone]` in [domains.toml](domains.toml) and the reviewed played runs of
+[played.toml](../../scenarios/replay/played.toml): every frame some run holds, and the frames
+held back to back from power-on.
 
 **The ladder** (MODEL §1 decision 18). The milestone's number can't move until the opening's
 cinematics, the CPU side of sound and modelled lag exist, so shorter stretches of the same movie
 come first, each played alone from its first seed, as `[[rung]]` in
-[domains.toml](domains.toml) and a table under the milestone's row in the README:
+[domains.toml](domains.toml) and a row each in the README's table of frames that pass:
 
 | Rung | Stretch | Adds over the rung before |
 | --- | --- | --- |
@@ -449,11 +450,11 @@ visible in [replay evidence](../REPORT.md#replay-evidence) and the
 [transition ledger](../../scenarios/replay/transition.toml).
 
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
-the first step whose prerequisites hold. The README, under the ladder, gives that rung's
-order from [domains.toml](domains.toml)'s edges: what can start, what waits on which unstarted
-work, and what runs ahead of work it needs. The edges are platform work's `before` and the
-domains a domain reads, within the rung's needs; work outside them doesn't count, since nothing
-outside the needs starts (MODEL §1 decision 24).
+the first step whose prerequisites hold. That rung's order comes from
+[domains.toml](domains.toml)'s edges: what can start, what waits on which unstarted work, and
+what runs ahead of work it needs. The edges are platform work's `before` and the domains a
+domain reads, within the rung's needs; work outside them doesn't count, since nothing outside
+the needs starts (MODEL §1 decision 24).
 
 1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,195) are recorded
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock
@@ -568,4 +569,5 @@ and review, not implementation, set the pace.
     rows.
 
 The plan's domains, their waves, their progress and the rounds landed are data in
-[domains.toml](domains.toml), from which `verify::report` writes the README's status.
+[domains.toml](domains.toml), from which `verify::report` draws the report's domain graph and the
+README's stretches.

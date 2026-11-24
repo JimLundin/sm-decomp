@@ -1,8 +1,9 @@
 //! Generated progress from the indexed replay baseline, with clean model structure and size.
 
 pub mod lines;
+mod plan;
+mod readme;
 mod replay;
-mod status;
 mod structure;
 mod timeline;
 
@@ -22,12 +23,6 @@ pub const USAGE: &str = "tools report [--write | --check]";
 pub const PATH: &str = "docs/REPORT.md";
 /// The one command that regenerates the committed report, from the repository root.
 pub const COMMAND: &str = "cargo run -p tools --bin tools -- report --write";
-/// The README, from the repository root, whose status the report's command writes too.
-pub const README: &str = "README.md";
-/// The line before the README's status.
-const STATUS_BEGIN: &str = "<!-- status:begin -->";
-/// The line after the README's status.
-const STATUS_END: &str = "<!-- status:end -->";
 /// The old engine's density in weighted tokens per code line, which turns a score into lines:
 /// about 5.5 to 7, measured on samus-movement's old code at `c7f927ab6` and the camera's at
 /// `cfa5b8144`.
@@ -874,7 +869,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
     })
 }
 
-/// What the tree holds, measured once for the report and the README's status.
+/// What the tree holds, measured once for the report and the README.
 struct Tree {
     /// The shared types' files.
     shared_files: Vec<File>,
@@ -887,7 +882,7 @@ struct Tree {
     /// Current committed replay requirements, validated against the complete index.
     replay: replay::Snapshot,
     /// The whole-game plan, checked against the rebuilt domains.
-    plan: status::Plan,
+    plan: plan::Plan,
 }
 
 impl Tree {
@@ -915,7 +910,7 @@ impl Tree {
         let engine = measure(root, &engine)?;
         let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
         let rebuilt = names.iter().copied().collect();
-        let plan = status::Plan::parse(&read(&root.join(status::PLAN))?, &rebuilt)?;
+        let plan = plan::Plan::parse(&read(&root.join(plan::PLAN))?, &rebuilt)?;
         let replay = replay::Snapshot::read(root)?;
         Ok(Self {
             shared_files,
@@ -988,7 +983,7 @@ fn report(tree: &Tree) -> String {
     areas(&mut out, domains);
     adapters_and_providers(&mut out, domains);
     engine_section(&mut out, tree);
-    status::graph_section(&mut out, &tree.plan);
+    plan::graph_section(&mut out, &tree.plan);
     structure::section(&mut out, tree);
     out
 }
@@ -1319,44 +1314,41 @@ fn engine_section(out: &mut String, tree: &Tree) {
 /// The pages the tree at `root` generates, measured once.
 struct Pages {
     report: String,
-    /// The README's status.
-    status: String,
+    /// The README.
+    readme: String,
     /// The timeline's picture.
     svg: String,
 }
 
 /// The pages the tree at `root` generates; none while a clean crate or its bridge uses a clean
-/// crate its domains don't read (`status::undeclared`).
+/// crate its domains don't read (`plan::undeclared`).
 fn pages(root: &Path) -> Result<Pages, String> {
     let tree = Tree::measure(root)?;
-    status::undeclared(root, &tree.plan)?;
+    plan::undeclared(root, &tree.plan)?;
     Ok(Pages {
         report: report(&tree),
-        status: status::status(root, &tree)?,
+        readme: readme::page(root, &tree.plan)?,
         svg: tree.replay.svg(),
     })
 }
 
-/// The committed report's and the README status's staleness: an error naming the command that
-/// regenerates them when either differs from what the tree at `root` generates.
+/// The committed pages' staleness: an error naming the command that regenerates them when the
+/// report, the timeline's picture or the README differs from what the tree at `root` generates.
 ///
 /// # Errors
 ///
-/// The regeneration command when the report or the README's status is stale or missing, or why
-/// they can't be generated.
+/// The regeneration command when a page is stale or missing, or why they can't be generated.
 pub fn check(root: &Path) -> Result<(), String> {
     let pages = pages(root)?;
-    let committed = fs::read_to_string(root.join(PATH)).unwrap_or_default();
-    current(&committed, &pages.report)?;
-    let svg = fs::read_to_string(root.join(timeline::SVG)).unwrap_or_default();
-    current_at(timeline::SVG, &svg, &pages.svg)?;
-    let readme = fs::read_to_string(root.join(README)).unwrap_or_default();
-    status_current(&readme, &pages.status)
-}
-
-/// Whether the committed report is the fresh one; a checkout's CRLF line endings don't count.
-fn current(committed: &str, fresh: &str) -> Result<(), String> {
-    current_at(PATH, committed, fresh)
+    for (path, fresh) in [
+        (PATH, &pages.report),
+        (timeline::SVG, &pages.svg),
+        (readme::PATH, &pages.readme),
+    ] {
+        let committed = fs::read_to_string(root.join(path)).unwrap_or_default();
+        current_at(path, &committed, fresh)?;
+    }
+    Ok(())
 }
 
 /// Whether the committed page at `path` is the fresh one; CRLF line endings don't count.
@@ -1370,40 +1362,12 @@ fn current_at(path: &str, committed: &str, fresh: &str) -> Result<(), String> {
     }
 }
 
-/// Whether the README's status, between its markers, is the fresh one; CRLF doesn't count.
-fn status_current(readme: &str, fresh: &str) -> Result<(), String> {
-    let readme = readme.replace("\r\n", "\n");
-    if status_section(&readme) == Some(fresh) {
-        Ok(())
-    } else {
-        Err(format!(
-            "{README}'s status is stale: regenerate it with `{COMMAND}` from the repository root"
-        ))
-    }
-}
-
-/// The text between the README's status markers.
-fn status_section(readme: &str) -> Option<&str> {
-    let (_, after) = readme.split_once(STATUS_BEGIN)?;
-    let (section, _) = after.split_once(STATUS_END)?;
-    Some(section)
-}
-
-/// `readme` with `status` between its markers, and the text around them kept.
-fn with_status(readme: &str, status: &str) -> Result<String, String> {
-    let readme = readme.replace("\r\n", "\n");
-    let missing = || format!("{README}: no `{STATUS_BEGIN}` line before a `{STATUS_END}` line");
-    let (before, after) = readme.split_once(STATUS_BEGIN).ok_or_else(missing)?;
-    let (_, rest) = after.split_once(STATUS_END).ok_or_else(missing)?;
-    Ok(format!("{before}{STATUS_BEGIN}{status}{STATUS_END}{rest}"))
-}
-
 /// Prints the report for the tree in the current directory; with `--write`, writes it to
-/// [`PATH`] and the status into [`README`]; with `--check`, fails when either is stale.
+/// [`PATH`], with the timeline's picture and the README; with `--check`, fails when any is stale.
 ///
 /// # Errors
 ///
-/// The usage on a wrong command line, why the report can't be generated or written, or
+/// The usage on a wrong command line, why the pages can't be generated or written, or
 /// [`check`]'s error.
 pub fn run(args: &[String]) -> Result<String, String> {
     let root = Path::new(".");
@@ -1411,20 +1375,24 @@ pub fn run(args: &[String]) -> Result<String, String> {
         [] => generate(root),
         [flag] if flag == "--write" => {
             let pages = pages(root)?;
-            fs::write(root.join(PATH), pages.report).map_err(|e| format!("{PATH}: {e}"))?;
-            fs::write(root.join(timeline::SVG), pages.svg)
-                .map_err(|e| format!("{}: {e}", timeline::SVG))?;
-            let readme = with_status(&read(&root.join(README))?, &pages.status)?;
-            fs::write(root.join(README), readme).map_err(|e| format!("{README}: {e}"))?;
+            for (path, page) in [
+                (PATH, pages.report),
+                (timeline::SVG, pages.svg),
+                (readme::PATH, pages.readme),
+            ] {
+                fs::write(root.join(path), page).map_err(|e| format!("{path}: {e}"))?;
+            }
             Ok(format!(
-                "wrote {PATH}, {} and {README}'s status\n",
-                timeline::SVG
+                "wrote {PATH}, {} and {}\n",
+                timeline::SVG,
+                readme::PATH
             ))
         }
         [flag] if flag == "--check" => check(root).map(|()| {
             format!(
-                "{PATH}, {} and {README}'s status are current\n",
-                timeline::SVG
+                "{PATH}, {} and {} are current\n",
+                timeline::SVG,
+                readme::PATH
             )
         }),
         _ => Err(USAGE.to_owned()),

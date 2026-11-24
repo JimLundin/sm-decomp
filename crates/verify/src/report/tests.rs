@@ -3,10 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use super::lines::code_lines;
-use super::status::{PLAN, Plan, undeclared};
-use super::{
-    DOMAINS, baseline, check, current, fit, generate, grouped, read, status_current, with_status,
-};
+use super::plan::{PLAN, Plan, undeclared};
+use super::{DOMAINS, PATH, baseline, check, current_at, fit, generate, grouped, read};
 
 /// The repository root, from this crate's manifest.
 fn root() -> &'static Path {
@@ -21,35 +19,13 @@ fn committed_report_is_current() {
 #[test]
 fn a_changed_report_is_stale() {
     let fresh = "# Rebuild report\n\n| a | 1 |\n";
-    assert_eq!(current(fresh, fresh), Ok(()));
-    assert_eq!(current(&fresh.replace('\n', "\r\n"), fresh), Ok(()));
-    assert!(current("# Rebuild report\n\n| a | 2 |\n", fresh).is_err());
-    assert!(current("", fresh).is_err());
-}
-
-#[test]
-fn a_changed_status_is_stale() {
-    let fresh = "\n| rounds | 1 |\n";
-    let readme = "# Title\n\n<!-- status:begin -->\n| rounds | 1 |\n<!-- status:end -->\n\nMore.\n";
-    assert_eq!(status_current(readme, fresh), Ok(()));
-    assert_eq!(status_current(&readme.replace('\n', "\r\n"), fresh), Ok(()));
-    // The text around the markers is the README's own.
+    assert_eq!(current_at(PATH, fresh, fresh), Ok(()));
     assert_eq!(
-        status_current(&readme.replace("More.", "Other."), fresh),
+        current_at(PATH, &fresh.replace('\n', "\r\n"), fresh),
         Ok(())
     );
-    assert!(status_current(&readme.replace("| 1 |", "| 2 |"), fresh).is_err());
-    assert!(status_current("# Title\n", fresh).is_err());
-}
-
-#[test]
-fn the_status_goes_between_the_markers() {
-    let readme = "# Title\n<!-- status:begin -->\nold\n<!-- status:end -->\nMore.\n";
-    assert_eq!(
-        with_status(readme, "\nnew\n").as_deref(),
-        Ok("# Title\n<!-- status:begin -->\nnew\n<!-- status:end -->\nMore.\n")
-    );
-    assert!(with_status("# Title\n<!-- status:end -->\n", "\nnew\n").is_err());
+    assert!(current_at(PATH, "# Rebuild report\n\n| a | 2 |\n", fresh).is_err());
+    assert!(current_at(PATH, "", fresh).is_err());
 }
 
 #[test]
@@ -372,63 +348,6 @@ samus_movement = { path = \"../samus_movement\" }
 ",
     );
     assert!(fixture.check(reads).is_err());
-}
-
-#[test]
-fn a_rungs_work_waits_only_on_unstarted_work_it_needs_before_it() {
-    let rebuilt = BTreeSet::from(["world-camera"]);
-    let domain = |id: &str, extra: &str| {
-        format!(
-            "[[domain]]\nid = \"{id}\"\nname = \"d\"\narea = \"world\"\nwave = 0\nrounds = 1\n{extra}"
-        )
-    };
-    let platform = |id: &str, extra: &str| {
-        format!("[[platform]]\nid = \"{id}\"\nname = \"p\"\nwave = 0\nlanes = 1\n{extra}")
-    };
-    let text = [
-        String::from("[[model]]\nname = \"world-camera\"\nrounds = 1\n"),
-        // CAM is under way, though the format before it hasn't started.
-        domain(
-            "CAM",
-            "model = \"world-camera\"\nstatus = \"in-progress\"\nreads = [\"R1\", \"W3\"]\n",
-        ),
-        // R1 reads CAM, which has started, and waits for AF1; W1 reads R1 and waits for it.
-        domain("R1", "reads = [\"CAM\"]\n"),
-        domain("W1", "reads = [\"R1\", \"W3\"]\n"),
-        // W3 is outside the rung, so nothing waits on it.
-        domain("W3", ""),
-        platform("AF0", "status = \"in-progress\"\nbefore = [\"AF1\"]\n"),
-        platform("AF1", "before = [\"R1\", \"CAM\"]\n"),
-        platform("V3", ""),
-        platform("E1", "status = \"done\"\n"),
-        String::from(
-            "[milestone]\nname = \"m\"\nmovie = \"any\"\nends = \"any:12\"\n\
-             needs = [\"CAM\", \"R1\", \"W1\", \"W3\", \"AF0\", \"AF1\", \"V3\", \"E1\"]\n",
-        ),
-    ]
-    .concat();
-    let plan = Plan::parse(&text, &rebuilt).unwrap();
-    let needs: Vec<String> = ["CAM", "R1", "W1", "AF0", "AF1", "V3", "E1"]
-        .map(String::from)
-        .to_vec();
-    assert_eq!(
-        plan.order(&needs).sentence(),
-        "**can start:** AF1, V3. **waiting:** R1 on AF1; W1 on R1. \
-         **in progress ahead of work it needs:** CAM on AF1, R1"
-    );
-    // Once AF1 starts, R1 can start, and W1 still waits for it.
-    let started = text.replace(
-        "before = [\"R1\", \"CAM\"]\n",
-        "before = [\"R1\", \"CAM\"]\nstatus = \"in-progress\"\n",
-    );
-    let plan = Plan::parse(&started, &rebuilt).unwrap();
-    assert_eq!(
-        plan.order(&needs).sentence(),
-        "**can start:** R1, V3. **waiting:** W1 on R1. \
-         **in progress ahead of work it needs:** CAM on R1"
-    );
-    let done: Vec<String> = vec![String::from("E1")];
-    assert_eq!(plan.order(&done).sentence(), "nothing left to start");
 }
 
 #[test]

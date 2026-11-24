@@ -1,0 +1,41 @@
+# The reviewed played runs of the milestone's movie: each a lock row of
+# scenarios/locks/lsnes.toml played by the engine alone from a seed cut, with the movie's pads and
+# nothing fed back, compared at every frame cut (verify::replay::played). `tools report` turns
+# them into the README's progress in movie frames (verify::report::readme); its tests fail when a
+# run disagrees with the lock. The root changes a run here when a reviewed played run changes it.
+#
+# [[run]]: `row` the lock row; `start` the seed cut; `end` the last cut asked for; `held` the
+# cuts after the seed whose compared fields all matched; `stop` "end" when every cut through
+# `end` held, else { failed = "the first difference, missing owner or bad data" } at cut
+# start + held + 1.
+#
+# In movie frames: a row's cut c is movie frame f + c, f its seed's `movie_frame` in
+# movies/room-seeds-<capture>.csv, or 0 for a row from power-on, so a row's cut 0 is the frame
+# after the previous row's last cut. `seed_frame` is the seed cut's frame, `frames` the first and
+# last frame the run held, and `power_on` whether it starts from the console's power-on, frame 0;
+# the report's tests check all three against the lock.
+
+movie = "any"
+
+# Ceres's third room, M0's stretch, across its door to the fourth's seed.
+# PR #744, in flight, raises this run's back to back to 786; the root changes it when that lands.
+[[run]]
+row = "chain-any-0003-DFD7"
+start = 0
+end = 344
+held = 344
+stop = "end"
+seed_frame = 9232
+frames = [9233, 9576]
+power_on = false
+
+# Ceres's fourth room alone, from its own seed.
+[[run]]
+row = "chain-any-0004-E021"
+start = 0
+end = 263
+held = 263
+stop = "end"
+seed_frame = 9577
+frames = [9578, 9840]
+power_on = false

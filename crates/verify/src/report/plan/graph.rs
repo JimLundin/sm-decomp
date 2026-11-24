@@ -232,7 +232,6 @@ mod tests {
                     .map(|domain| domain.id.as_str())
                     .eq(["R3"])
             );
-            assert_eq!(plan.stage(name), Stage::InProgress);
         }
         assert!(
             plan.holding("game-time")

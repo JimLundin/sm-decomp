@@ -1,0 +1,466 @@
+//! The README: the project's thesis and its progress in frames of the milestone's movie, counted
+//! from the reviewed played runs of [`PLAYED`].
+//!
+//! A lock row's cut c is movie frame f + c, f its seed's movie frame, or 0 for a row from
+//! power-on, so a row's cut 0 is the frame after the previous row's last cut. A run seeded at
+//! frame s that held h cuts holds frames s + 1 through s + h. The milestone's frames are 1
+//! through the frame of the seed that ends it; frame 0 is power-on.
+
+use std::fmt::Write as _;
+use std::path::Path;
+
+use serde::Deserialize;
+
+use super::plan::{Plan, seed};
+use super::timeline::seed_frame;
+use super::{COMMAND, grouped, read};
+use crate::lock::{Lock, Row, RowId, Start};
+
+/// The README, from the repository root.
+pub(super) const PATH: &str = "README.md";
+/// The reviewed played runs, from the repository root.
+pub(super) const PLAYED: &str = "scenarios/replay/played.toml";
+/// The lock whose rows the runs play.
+const LOCK: &str = "scenarios/locks/lsnes.toml";
+
+/// What the project is for: MODEL §1 and RULES, "The goal and its measure".
+const THESIS: &str = "**The goal** is to model Super Metroid's behaviour, all of it, as named behaviours, so \
+each one can be reproduced exactly, adjusted (the space jump timing), added (respin) or removed \
+(lag). In the end only this engine runs. The emulator, running the original, unmodified ROM, is \
+the oracle that proves the vanilla behaviours exact: every compared frame cut and output byte \
+matches.";
+
+/// The played-runs file.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Listed {
+    /// The movie the runs play, the milestone's.
+    movie: String,
+    #[serde(default)]
+    run: Vec<Listing>,
+}
+
+/// A run as the file states it: in cuts of its lock row, and in movie frames for its reviewer.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Listing {
+    /// The lock row played.
+    row: String,
+    /// The seed cut.
+    start: u64,
+    /// The last cut asked for, counted from the row's cut 0; it may lie in the rows that follow
+    /// back to back.
+    end: u64,
+    /// The cuts after the seed whose compared fields all matched.
+    held: u64,
+    stop: Stop,
+    /// The seed cut's movie frame.
+    seed_frame: u64,
+    /// The first and last movie frame held; none when it held none.
+    frames: Option<[u64; 2]>,
+    /// Whether it starts from the console's power-on, frame 0.
+    power_on: bool,
+}
+
+/// Where a reviewed run stopped.
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+enum Stop {
+    /// Every cut it asked for held.
+    End,
+    /// The first difference, missing owner or bad data, at the cut after the last it held.
+    Failed(String),
+}
+
+/// A reviewed played run, in movie frames.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Run {
+    /// The lock row played.
+    row: String,
+    /// The seed cut.
+    start: u64,
+    /// The seed cut's movie frame.
+    seed: u64,
+    /// The frames held after the seed.
+    held: u64,
+    stop: Stop,
+    /// Whether the seed is power-on.
+    power_on: bool,
+}
+
+impl Run {
+    /// The first and last movie frame it held; none when it held none.
+    fn frames(&self) -> Option<(u64, u64)> {
+        (self.held > 0).then(|| {
+            (
+                self.seed.saturating_add(1),
+                self.seed.saturating_add(self.held),
+            )
+        })
+    }
+}
+
+/// The reviewed runs of `movie`, each checked against the lock.
+///
+/// # Errors
+///
+/// Why the file, the lock or a seed can't be read, or the first run the lock contradicts.
+fn runs(root: &Path, movie: &str) -> Result<Vec<Run>, String> {
+    listed(root, &read(&root.join(PLAYED))?, movie)
+}
+
+/// The runs `text` lists for `movie`, each checked against the lock under `root`.
+fn listed(root: &Path, text: &str, movie: &str) -> Result<Vec<Run>, String> {
+    let listed: Listed = toml::from_str(text).map_err(|e| format!("{PLAYED}: {e}"))?;
+    if listed.movie != movie {
+        return Err(format!(
+            "{PLAYED}: the runs play {}, not the milestone's {movie}",
+            listed.movie
+        ));
+    }
+    let lock = Lock::parse(&read(&root.join(LOCK))?).map_err(|e| format!("{LOCK}: {e}"))?;
+    listed
+        .run
+        .iter()
+        .map(|listing| checked(root, &lock, movie, listing))
+        .collect()
+}
+
+/// Whether `row` plays `movie`: its seed's capture is the movie's, or, from power-on, its id
+/// starts with the movie's name.
+fn of_movie(row: &Row, movie: &str) -> bool {
+    match &row.start {
+        Start::PowerOn => row.id.0.split('-').next() == Some(movie),
+        Start::Seed { capture, .. } => capture.split('-').next() == Some(movie),
+    }
+}
+
+/// The movie frame of the seed `index` of `capture`.
+fn frame_at(root: &Path, (capture, index): (&str, u32)) -> Result<u64, String> {
+    u64::try_from(seed_frame(root, capture, index)?).map_err(|e| format!("{capture}:{index}: {e}"))
+}
+
+/// The movie frame of `row`'s cut 0.
+fn first_frame(root: &Path, row: &Row) -> Result<u64, String> {
+    match &row.start {
+        Start::PowerOn => Ok(0),
+        Start::Seed { capture, index } => frame_at(root, (capture, *index)),
+    }
+}
+
+/// The cuts that follow `row`'s cut 0 back to back: its own, and those of the rows of its capture
+/// whose seeds come next with no frame between. A row from power-on has only its own.
+fn reach(root: &Path, lock: &Lock, row: &Row, first: u64) -> Result<u64, String> {
+    let mut cuts = row.frames.0;
+    let Start::Seed { capture, index } = &row.start else {
+        return Ok(cuts);
+    };
+    let mut next = *index;
+    loop {
+        next = next.saturating_add(1);
+        let wanted = Start::Seed {
+            capture: capture.clone(),
+            index: next,
+        };
+        let Some(following) = lock.rows.iter().find(|other| other.start == wanted) else {
+            return Ok(cuts);
+        };
+        if first_frame(root, following)? != first.saturating_add(cuts) {
+            return Ok(cuts);
+        }
+        cuts = cuts.saturating_add(following.frames.0);
+    }
+}
+
+/// `listing` as a run, when the lock agrees with every figure it states.
+fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<Run, String> {
+    let wrong = |what: String| {
+        format!(
+            "{PLAYED}: {} from cut {}: {what}",
+            listing.row, listing.start
+        )
+    };
+    let row = lock
+        .row(&RowId(listing.row.clone()))
+        .ok_or_else(|| wrong(format!("no such row in {LOCK}")))?;
+    if !of_movie(row, movie) {
+        return Err(wrong(format!("not a row of the {movie} movie")));
+    }
+    let first = first_frame(root, row)?;
+    let cuts = reach(root, lock, row, first)?;
+    if listing.start >= listing.end || listing.end >= cuts {
+        return Err(wrong(format!(
+            "asks for cuts {} to {}, outside the {cuts} it can play back to back",
+            listing.start, listing.end
+        )));
+    }
+    let asked = listing.end.saturating_sub(listing.start);
+    let stopped = match &listing.stop {
+        Stop::End => listing.held == asked,
+        Stop::Failed(_) => listing.held < asked,
+    };
+    if listing.held > asked || !stopped {
+        return Err(wrong(format!(
+            "holds {} of the {asked} cuts it asks for, which its stop {:?} contradicts",
+            listing.held, listing.stop
+        )));
+    }
+    let run = Run {
+        row: listing.row.clone(),
+        start: listing.start,
+        seed: first.saturating_add(listing.start),
+        held: listing.held,
+        stop: listing.stop.clone(),
+        power_on: row.start == Start::PowerOn && listing.start == 0,
+    };
+    if listing.seed_frame != run.seed {
+        return Err(wrong(format!("seeds at movie frame {}", run.seed)));
+    }
+    if listing.frames != run.frames().map(<[u64; 2]>::from) {
+        return Err(wrong(format!("holds movie frames {:?}", run.frames())));
+    }
+    if listing.power_on != run.power_on {
+        return Err(wrong(format!("power_on is {}", run.power_on)));
+    }
+    Ok(run)
+}
+
+/// The frames after `after` through `through` that some run holds, each counted once.
+fn passing(runs: &[Run], after: u64, through: u64) -> u64 {
+    let mut spans: Vec<(u64, u64)> = runs
+        .iter()
+        .filter_map(Run::frames)
+        .map(|(from, to)| (from.max(after.saturating_add(1)), to.min(through)))
+        .filter(|(from, to)| from <= to)
+        .collect();
+    spans.sort_unstable();
+    let mut counted = 0_u64;
+    let mut uncounted = after.saturating_add(1);
+    for (from, to) in spans {
+        let from = from.max(uncounted);
+        if from <= to {
+            counted = counted.saturating_add(to.saturating_sub(from).saturating_add(1));
+            uncounted = to.saturating_add(1);
+        }
+    }
+    counted
+}
+
+/// The frames held back to back from power-on, with nothing fed back.
+#[derive(Debug, PartialEq, Eq)]
+struct FromStart {
+    /// How many.
+    held: u64,
+    /// Why the frame after them failed; none when they reach the milestone's end.
+    stop: Option<String>,
+}
+
+/// The longest reviewed run from power-on, within the milestone's `total` frames.
+fn from_start(runs: &[Run], total: u64) -> FromStart {
+    let Some(run) = runs
+        .iter()
+        .filter(|run| run.power_on)
+        .max_by_key(|run| run.held)
+    else {
+        return FromStart {
+            held: 0,
+            stop: Some(String::from(
+                "power-on is not played, as no reviewed run starts there",
+            )),
+        };
+    };
+    let held = run.held.min(total);
+    let stop = (held < total).then(|| match &run.stop {
+        Stop::Failed(why) => why.clone(),
+        Stop::End => format!("the reviewed run of `{}` ends there", run.row),
+    });
+    FromStart { held, stop }
+}
+
+/// `count` of `total` as a percentage to a tenth.
+fn percent(count: u64, total: u64) -> String {
+    let tenths = count
+        .saturating_mul(1000)
+        .saturating_add(total / 2)
+        .checked_div(total)
+        .unwrap_or(0);
+    format!("{}.{}%", tenths / 10, tenths % 10)
+}
+
+/// A movie frame or a count as the README writes it.
+fn frame(value: u64) -> String {
+    usize::try_from(value).map_or_else(|_| value.to_string(), grouped)
+}
+
+/// The README for the tree at `root`.
+///
+/// # Errors
+///
+/// Why the plan's seeds, the lock or the played runs can't be read, or the first run the lock
+/// contradicts.
+pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
+    let milestone = plan.milestone();
+    let total = frame_at(root, milestone.end()?)?;
+    let runs = runs(root, &milestone.movie)?;
+    let mut out = format!(
+        "# sm-decomp\n\n{THESIS}\n\n<!-- Generated by `{COMMAND}` from {PLAYED}, the lock and \
+         the plan (`verify::report::readme`); never edit it by hand. -->\n\n## Progress\n\n"
+    );
+    let _ = writeln!(
+        out,
+        "The milestone is **{}**: the {}% movie from power-on through frame {}. A frame passes \
+         when the engine, playing alone from a recorded seed on the movie's pads, matches every \
+         compared field at its cut.\n",
+        milestone.name,
+        milestone.movie,
+        frame(total)
+    );
+    let passes = passing(&runs, 0, total);
+    let _ = writeln!(
+        out,
+        "- **Frames that pass:** {} of {} ({}), every frame some reviewed run holds, counted once.",
+        frame(passes),
+        frame(total),
+        percent(passes, total)
+    );
+    let start = from_start(&runs, total);
+    let _ = write!(
+        out,
+        "- **Continuous from power-on:** {} of {} ({}), with nothing fed back.",
+        frame(start.held),
+        frame(total),
+        percent(start.held, total)
+    );
+    match &start.stop {
+        Some(why) => {
+            let _ = writeln!(
+                out,
+                " It stops at frame {}: {why}.",
+                frame(start.held.saturating_add(1))
+            );
+        }
+        None => out.push('\n'),
+    }
+    if let Some((run, (from, to))) = runs
+        .iter()
+        .filter_map(|run| Some((run, run.frames()?)))
+        .max_by_key(|(run, _)| run.held)
+    {
+        let _ = writeln!(
+            out,
+            "- **Longest continuous run from any seed:** frames {} to {} ({} frames), `{}` from \
+             its cut {}.",
+            frame(from),
+            frame(to),
+            frame(run.held),
+            run.row,
+            run.start
+        );
+    }
+    out.push_str("\n| Stretch | Movie frames | Frames that pass |\n| --- | --- | ---: |\n");
+    for rung in plan.rungs() {
+        let after = frame_at(root, seed(&rung.starts)?)?;
+        let through = frame_at(root, seed(&rung.ends)?)?;
+        let _ = writeln!(
+            out,
+            "| {} {} | {} to {} | {} of {} |",
+            rung.id,
+            rung.name,
+            frame(after.saturating_add(1)),
+            frame(through),
+            frame(passing(&runs, after, through)),
+            frame(through.saturating_sub(after))
+        );
+    }
+    out.push_str(
+        "\nThe full evidence is in [the rebuild report](docs/REPORT.md); building and checking \
+         it is in [BUILDING](docs/BUILDING.md).\n",
+    );
+    Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FromStart, PLAYED, Run, Stop, from_start, listed, passing, percent};
+
+    /// A run seeded at movie frame `seed` that held `held` frames.
+    fn run(seed: u64, held: u64, power_on: bool) -> Run {
+        Run {
+            row: String::from("row"),
+            start: 0,
+            seed,
+            held,
+            stop: Stop::Failed(String::from("a difference")),
+            power_on,
+        }
+    }
+
+    #[test]
+    fn the_committed_runs_agree_with_the_lock() {
+        let root = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+        let text = std::fs::read_to_string(root.join(PLAYED)).unwrap_or_default();
+        let runs = listed(root, &text, "any");
+        assert!(runs.as_ref().is_ok_and(|runs| !runs.is_empty()), "{runs:?}");
+        // Each figure a run states is held to the lock: its row, its cuts within the rows it
+        // plays back to back, its stop, its seed's frame, the frames it held and power-on.
+        for (from, to) in [
+            (
+                "row = \"chain-any-0003-DFD7\"",
+                "row = \"chain-any-0003-NONE\"",
+            ),
+            ("held = 344", "held = 345"),
+            ("held = 344", "held = 343"),
+            ("end = 344", "end = 20000"),
+            ("seed_frame = 9232", "seed_frame = 9231"),
+            ("frames = [9233, 9576]", "frames = [9233, 9577]"),
+            ("power_on = false", "power_on = true"),
+            ("movie = \"any\"", "movie = \"100\""),
+        ] {
+            assert!(text.contains(from), "{from}");
+            assert!(
+                listed(root, &text.replacen(from, to, 1), "any").is_err(),
+                "{to}"
+            );
+        }
+    }
+
+    #[test]
+    fn frames_that_pass_count_each_frame_once() {
+        // Two overlapping runs and one beside them: frames 11 to 30 and 41 to 45.
+        let runs = [run(10, 15, false), run(20, 10, false), run(40, 5, false)];
+        assert_eq!(passing(&runs, 0, 100), 25);
+        // A stretch counts only its own frames, after its seed through its end.
+        assert_eq!(passing(&runs, 20, 42), 12);
+        assert_eq!(passing(&[run(10, 0, false)], 0, 100), 0);
+        assert_eq!(passing(&[], 0, 100), 0);
+    }
+
+    #[test]
+    fn only_a_run_from_power_on_counts_from_the_start() {
+        let seeded = run(10, 50, false);
+        let none = from_start(std::slice::from_ref(&seeded), 100);
+        assert_eq!(none.held, 0);
+        assert!(none.stop.is_some());
+        assert_eq!(
+            from_start(&[seeded, run(0, 7, true), run(0, 3, true)], 100),
+            FromStart {
+                held: 7,
+                stop: Some(String::from("a difference"))
+            }
+        );
+        assert_eq!(
+            from_start(&[run(0, 120, true)], 100),
+            FromStart {
+                held: 100,
+                stop: None
+            }
+        );
+    }
+
+    #[test]
+    fn percentages_round_to_a_tenth() {
+        assert_eq!(percent(607, 15_196), "4.0%");
+        assert_eq!(percent(0, 15_196), "0.0%");
+        assert_eq!(percent(15_196, 15_196), "100.0%");
+    }
+}

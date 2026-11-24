@@ -55,18 +55,19 @@ On a Windows host that blocks new executables, the hosted command above runs the
 
 ## The status and the report
 
-The README's status and [the rebuild report](REPORT.md) are generated together from the tree:
+The README and [the rebuild report](REPORT.md) are generated together from the tree:
 
 ```sh
 cargo run -p tools --bin tools -- report --write
 ```
 
-writes `docs/REPORT.md`, the timeline's picture `docs/timeline.svg` and the README's text between
-`<!-- status:begin -->` and `<!-- status:end -->`. `tools/check_report.sh`, in Quality and
-`tools/lane/gate.sh`, fails when any of them differs from what the tree generates. The report describes the current clean models and indexed replay claims. Its replay results
-separate scoped, integrated and whole-movie witnesses and distinguish supported behaviour
-from expected unsupported boundaries. Historical claims have explicit transition dispositions.
-The status reads the plan's domains, their waves,
-their progress and the rounds landed from
-[`docs/architecture/domains.toml`](architecture/domains.toml), which the root changes in the
-commit that lands a round.
+writes `docs/REPORT.md`, the timeline's picture `docs/timeline.svg` and the whole `README.md`.
+`tools/check_report.sh`, in Quality and `tools/lane/gate.sh`, fails when any of them differs from
+what the tree generates. The report describes the current clean models and indexed replay
+claims. Its replay results separate scoped, integrated and whole-movie witnesses and distinguish
+supported behaviour from expected unsupported boundaries. Historical claims have explicit
+transition dispositions. The README states the project's thesis and its progress in frames of
+the milestone's movie: the frames the reviewed played runs of
+[`scenarios/replay/played.toml`](../scenarios/replay/played.toml) hold, over the milestone and
+rungs of [`docs/architecture/domains.toml`](architecture/domains.toml). The report's tests hold
+each listed run to the lock; the root changes a run there when a reviewed played run changes it.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check_report.sh: docs/REPORT.md, docs/timeline.svg and README.md's status between its markers are
+# check_report.sh: docs/REPORT.md, docs/timeline.svg and README.md are
 # what `tools report` generates for this tree (verify::report).
 # A stale page fails with the one command that regenerates them all. On Windows, where Defender
 # blocks the tools executable, the same check runs as verify's lib test through

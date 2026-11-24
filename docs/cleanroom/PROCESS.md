@@ -183,7 +183,7 @@ Each step names its owner, what it waits for, and its done-condition.
     domain's `status` when its work starts or ends), deletes the crate's line from
     `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
     trunk's check refuses a listed crate with none), and regenerates `docs/REPORT.md` and the
-    README's status (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
+    README (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
     it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
     the branch's tree on `origin/main`, its subject the root's, its body each part under its role
     (spec, model, integration) with its own body indented under it, every `Role:` and
@@ -259,7 +259,7 @@ hand their entries for it (a planted fault, a STATUS paragraph) to the root, who
 the lane lands. When two pieces of work need the same file, they run one after the other in a
 single lane, or the second starts from the first's branch and lands after it. The lane with the
 most work in flight lands first, and shorter lanes start from it. Generated pages (REPORT, the
-README status) are regenerated at landing, never merged by hand.
+README) are regenerated at landing, never merged by hand.
 
 **Within a round:** steps 8 and 9 run together. Both need only the import; the blind reviewer
 writes nothing, and the integrator works outside the clean crates.
