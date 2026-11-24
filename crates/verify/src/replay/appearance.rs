@@ -145,53 +145,38 @@ fn animation(wram: &[u8], imported: &Imported) -> Result<State, Outcome> {
 
 /// Her kept action, from the movement type her last preparation kept (`0A11`).
 ///
-/// The record keeps a movement type, which several actions share. The seed takes her pose's
-/// action when the type is her pose's, or the spin's or the wall jump's for their own types;
-/// any other type is Unsupported. Every frame these cases play is prepared before drawing reads
-/// the kept action, so the seed's value is carried and never read.
+/// The record keeps a movement type, which several actions may share. The seed takes her pose's
+/// action when the type is her pose's; otherwise the one action of every pose of hers whose
+/// definition has that type. A type her poses share between actions is Unsupported. Every frame
+/// these cases play is prepared before drawing reads the kept action, so the seed's value is
+/// carried and never read.
 fn kept_action(wram: &[u8], content: &Content, current: Action) -> Result<Action, Outcome> {
     let kept = wram
         .get(0x0a11)
         .copied()
         .and_then(|kept| MovementType::try_from(kept).ok())
         .ok_or_else(|| data_failure(None, "kept movement type"))?;
-    let posed = content
-        .poses
-        .get(PoseId(word(wram, 0x0a1c)?))
-        .ok_or_else(|| data_failure(None, "kept movement type pose"))?
-        .movement;
-    if kept == posed {
+    let movement = |pose| {
+        content
+            .poses
+            .get(pose)
+            .map(|definition| definition.movement)
+            .ok_or_else(|| data_failure(None, "kept movement type pose"))
+    };
+    if movement(PoseId(word(wram, 0x0a1c)?))? == kept {
         return Ok(current);
     }
-    match kept {
-        MovementType::SpinJumping => Ok(Action::Spinning),
-        MovementType::WallJumping => Ok(Action::WallJumping),
-        MovementType::Standing
-        | MovementType::Running
-        | MovementType::NormalJumping
-        | MovementType::MorphBallOnGround
-        | MovementType::Crouching
-        | MovementType::Falling
-        | MovementType::Unused07
-        | MovementType::MorphBallFalling
-        | MovementType::Unused09
-        | MovementType::KnockbackOrCrystalFlashEnding
-        | MovementType::Unused0B
-        | MovementType::Unused0C
-        | MovementType::Unused0D
-        | MovementType::TurningAroundOnGround
-        | MovementType::CrouchingTransition
-        | MovementType::Moonwalking
-        | MovementType::SpringBallOnGround
-        | MovementType::SpringBallInAir
-        | MovementType::SpringBallFalling
-        | MovementType::RanIntoWall
-        | MovementType::Grappling
-        | MovementType::TurningAroundJumping
-        | MovementType::TurningAroundFalling
-        | MovementType::DamageBoost
-        | MovementType::GrabbedByDraygon
-        | MovementType::Shinespark => Err(unsupported("appearance kept action of an earlier pose")),
+    let mut actions = Vec::new();
+    for entry in &data::assets::samus::map::MAP {
+        if movement(entry.id)? == kept && !actions.contains(&entry.key.action) {
+            actions.push(entry.key.action);
+        }
+    }
+    match actions.as_slice() {
+        [action] => Ok(*action),
+        _ => Err(unsupported(
+            "appearance kept movement type of no single action",
+        )),
     }
 }
 

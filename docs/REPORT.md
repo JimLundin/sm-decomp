@@ -670,7 +670,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-appearance | bridge | 2 | 1,643 | 1,660 | 130 | 36 | 194 | 49 | 0 | 268 |
-| samus-appearance | replay provider | 1 | 2,108 | 2,307 | 19 | 160 | 92 | 111 | 66 | 351 |
+| samus-appearance | replay provider | 1 | 2,194 | 2,395 | 19 | 30 | 110 | 93 | 66 | 335 |
 | boss-ceres-ridley | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | boss-ceres-ridley | replay provider | 1 | 1,250 | 1,452 | 29 | 115 | 38 | 32 | 50 | 248 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -685,7 +685,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 42,399 | 41,961 | 3,805 | 1,994 | 3,287 | 3,578 | 477 | 7,174 |
+| total | | | 42,484 | 42,049 | 3,805 | 1,864 | 3,304 | 3,560 | 477 | 7,158 |
 
 ## Engine services
 
