@@ -1,10 +1,7 @@
 # Domain plan: the rest of Super Metroid as clean-room domains
 
-Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` weighted scores
-(the wire-cam `size.dll`, the same counter as the specs' baselines). Raw per-file output:
-`$TEMP/collab/reviews/sz_all.txt` (today's engine) and `sz_old.txt` (the whole-game port,
-`crates/sm_game/src` in git history, verification and tests excluded); per-module sums
-`mods.txt` and `oldmods.txt`.
+The plan of the clean-room domains toward the milestone. Sizes are `tools size` weighted scores
+measured at `e458a3d5d`, when the earlier engine code they cite still ran.
 
 ## 0. The answer in three lines
 
@@ -16,77 +13,13 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
 - [STATUS](../STATUS.md) defines current progress and its evidence;
   [PROCESS](../cleanroom/PROCESS.md#what-can-run-at-once) governs lane limits and concurrency.
 
-## 1. The current engine and the planning baseline
+## 1. The current engine
 
 Current production owns complete clean model State and advances selected responsibilities
 through `game::production::Production`, which `verify::replay` invokes. The application refuses
-unsupported power-on. Old tick, pose, actor, PLM and shadow-State gameplay owners are removed. Required missing
-history, lifecycle, room loading or timing is unsupported. Actual adapter and retained service
+unsupported power-on. Required missing history, lifecycle, room loading or timing is unsupported. Actual adapter and retained service
 inventory is in the Engine services section that `tools report` prints, and indexed acceptance is
 in its replay evidence ([BUILDING](../BUILDING.md#the-readme-and-the-report)).
-
-The following snapshot is historical planning evidence at the spine named above, not current
-executable capability or acceptance. Its fixed figures and module names are retained to explain
-the plan's original estimates. Current source and proof are described by
-[ARCHITECTURE](ARCHITECTURE.md) and [STATUS](../STATUS.md).
-
-### Historical engine snapshot
-
-The engine runs **slice 0 only**: the rooms `data::room` loads for `area-brinstar` (the
-elevator ride into Brinstar and a short walk) and `item-morph-ball` (the Morph Ball Room, with
-its item, message box and about 370 lag Ticks). Free-run gate green pairs: area-brinstar
-vram/cgram/oam/sram/ppu/timing, item-morph-ball sram/timing. Lockstep: area-brinstar 476/476,
-item-morph-ball 1372/1427 Ticks equal (54 video, 1 each elevator/projectiles/room). No doors,
-no second room in a run. `app` is an empty `main` (2.5). The **domain harnesses** (game-time,
-samus-movement, camera) run on oracle frames of any room, so the clean domains are proven far
-beyond the slice (32 rows, 18,331 frames), but only per frame, re-seeded.
-
-Totals: `game` 36,856, `data` 25,412, `runtime` 8,351, clean models 8,666, `types` 467.
-
-### `crates/game`
-
-The modules at the planning spine. They are not the current executable tree. Current retained
-services and production adapters are in the Engine services section `tools report` prints.
-
-| Module | What it does, what it covers |
-| --- | --- |
-| `state` | the State schema: samus, room (D4 reset struct), slots (D12, cursor D13), strand, video (D5), sram, hud, projectile, atmospheric |
-| `tick`, `session`, `nmi` | the main strand's dispatcher in the original's order; the Session and Tick begin and end; the NMI's commit or lag, pad latch and counters |
-| `intent` | the per-Tick intents: `SpriteDraw`, `TileWrite` (overlay rows, block rows), `LayerExposure` |
-| `exact` (`oam`, `tilemap`, `ppu`) | the encoder from intents to the original's bytes: the OAM buffer; the VRAM write queue, the scrolling DMAs and the message box's direct overlay writes; the message box's PPU set-up |
-| `commit` | the NMI's video commit points |
-| `lines` | the scan-out skeleton (HUD split, HDMA not yet) |
-| `samus_movement_bridge`, `world_camera_bridge`, `world_blocks_bridge`, `interface_hud_bridge`, `run_progress_bridge` (bridges) | each clean model's contact with the engine's State |
-| `plm` (+draw, item_gfx) | spawning a room's PLMs, the items' triggers and the PLM pass; the PLM draw as `TileWrite` block rows; item GFX load. Slice 0's PLMs only |
-| `enemy` (+drawing, eye, face_block, instructions) | processing window and per-slot bookkeeping, the instruction-list runner, drawing by layer; species: the elevator, the Morph Ball Room's eye, the Blue Brinstar face block |
-| `projectile` | Samus's projectiles: cooldown, the power beam's flight and block checks, instruction lists. No other beam, missiles, bombs |
-| `message_box` (+video) | the item pickup box as a strand frame with its lag waits; its rows as overlay writes; its BG3 scroll HDMA channel |
-| `scrolling` | the BG scrolls follow the camera, and the block lines they bring into view (`LayerExposure`) |
-| `bg_graphics` | the level lookup: each exposed or changed block's look |
-| `collision` (+inside, solid_enemy) | the room she meets; block-inside reactions; solid enemies |
-| `pose`, `animation` | what's left of the pose input and change outside the model; her animation delay lists |
-| `samus_drawing`, `samus_palette` | her clip's frame into the sprite buffer; the visor |
-| `atmospheric` | splashes, bubbles, dust (4 slots) |
-| `game_time`, `rng`, `model` | play time; the RNG word; the pixel and subpixel numbers motion counts in |
-
-No sound (only CPU-side hooks named), no doors, no pause, no front end, no damage, no HDMA.
-
-### `crates/data` (25,412)
-
-`assets` 6,431 (Samus's sheet and clips importer, decision 4), `pose` 4,381, `enemy` 3,825
-(headers and instruction-list decode), `room` 2,022 and `level` 1,915 (rooms of the slice,
-level data, slopes), `map` 1,043, `rom` 998, `span` 947, `plm` 798, `compression` 785,
-`message` 688, `tileset` 544, `spritemap` 374, `digest` 191, the rest under 110. The decoders
-are general where cheap (compression, level, spritemaps); the content loaded is slice 0's.
-
-### `crates/runtime` (8,351)
-
-The line compositor (D17): backgrounds (mode 1, mode 7 code present), sprites, colour math,
-windows; between-line changes only. No sound backend, no storage.
-
-### The clean models (8,666)
-
-`clean/samus_movement` 7,160 (+8,118 data), `clean/world_camera` 1,506 (+535 data).
 
 ## 2. What the real game has that the engine lacks
 
@@ -95,29 +28,29 @@ partly transpiled; it is an upper bound). Calibration: samus-movement's clean mo
 of that port's player movement, collision and transitions (57k), the camera 0.19 of its room
 scrolls (7.8k). So **clean ≈ 0.12-0.2 × old port**. Banks from the bank-log index.
 
-| System | Banks | Old port | Clean estimate | In the engine |
-| --- | --- | ---: | ---: | --- |
-| Bosses (Spore Spawn, Torizos, Kraid, Crocomire, Phantoon, Botwoon, Draygon, Ridley x2, Mother Brain, baby metroid, zebetites, statues) | A4-A7, A9, AA, B3, AD | ~175k | 25-35k | none |
-| Enemy projectiles (most belong to bosses) | 86, 8D | 65k | 8-13k | none |
-| Enemy species (~170) and the framework (spawn, process, contact, vulnerability, freeze, death, drops, corpses) | A0-A3, A8, B2-B4 | ~150k + 35k | 25-35k | 3 species, the framework partly |
-| Front end and menus (boot, title, intro, file select, options, pause map and equipment, game over, demos) | 81, 82, 8B, 8C, 8E, B5, B6 | ~110k (menus 49k, scene part) | 15-22k | none |
-| Cinematics (Ceres, the escape, gunship, ending, credits, Mode 7) | 8B, 8C, 95-99 | ~50k | 8-10k | none |
-| Doors, elevators and room loading | 82, 83, 8F | ~40k | 5-8k | none (elevator ride only) |
-| Block reactions and PLMs | 84, 94 | ~30k | 5-6k | slice 0's |
-| Samus's beams and weapons, power bomb | 90, 93, 94, 88 | ~37k | 5-7k | power beam |
-| Room FX (liquids' levels, rain, fog, heat, animated tiles, palette FX, HDMA objects, x-ray cone, sky scroll) | 87, 88, 89, 8A, 8D | ~48k | 7-9k | none |
-| Samus remaining (liquids, booster, shinespark, grapple, knockback, damage, death, palette, look) | 90, 91, 94, 9B | ~30k | 5-7k | animation, drawing, visor |
-| HUD, message boxes, dialogue | 80, 85 | ~15k | 2-3k | slice 0's |
-| Saves, progress, inventory | 81, 82 | ~9k | 1.5k | SRAM image |
-| Audio (CPU side; the old port emulated the SPC) | 80, CF-DF, the SPC driver | 3k CPU side | CPU 1k; the sequencer clean room (U2) | none |
-| Slowdown and loading time (the cost model, D9) | all | n/a | table-driven | recorded NMI timing |
+| System | Banks | Old port | Clean estimate |
+| --- | --- | ---: | ---: |
+| Bosses (Spore Spawn, Torizos, Kraid, Crocomire, Phantoon, Botwoon, Draygon, Ridley x2, Mother Brain, baby metroid, zebetites, statues) | A4-A7, A9, AA, B3, AD | ~175k | 25-35k |
+| Enemy projectiles (most belong to bosses) | 86, 8D | 65k | 8-13k |
+| Enemy species (~170) and the framework (spawn, process, contact, vulnerability, freeze, death, drops, corpses) | A0-A3, A8, B2-B4 | ~150k + 35k | 25-35k |
+| Front end and menus (boot, title, intro, file select, options, pause map and equipment, game over, demos) | 81, 82, 8B, 8C, 8E, B5, B6 | ~110k (menus 49k, scene part) | 15-22k |
+| Cinematics (Ceres, the escape, gunship, ending, credits, Mode 7) | 8B, 8C, 95-99 | ~50k | 8-10k |
+| Doors, elevators and room loading | 82, 83, 8F | ~40k | 5-8k |
+| Block reactions and PLMs | 84, 94 | ~30k | 5-6k |
+| Samus's beams and weapons, power bomb | 90, 93, 94, 88 | ~37k | 5-7k |
+| Room FX (liquids' levels, rain, fog, heat, animated tiles, palette FX, HDMA objects, x-ray cone, sky scroll) | 87, 88, 89, 8A, 8D | ~48k | 7-9k |
+| Samus remaining (liquids, booster, shinespark, grapple, knockback, damage, death, palette, look) | 90, 91, 94, 9B | ~30k | 5-7k |
+| HUD, message boxes, dialogue | 80, 85 | ~15k | 2-3k |
+| Saves, progress, inventory | 81, 82 | ~9k | 1.5k |
+| Audio (CPU side; the old port emulated the SPC) | 80, CF-DF, the SPC driver | 3k CPU side | CPU 1k; the sequencer clean room (U2) |
+| Slowdown and loading time (the cost model, D9) | all | n/a | table-driven |
 
 Infrastructure in the old port (encoding, checkpoints, owners, RAM views, ~110k) is not
 behaviour and has no counterpart here.
 
 ## 3. The domains
 
-Rules used to cut them (MODEL §4): a domain is verifiable alone. Two corollaries that keep the
+Rules used to cut them (MODEL §5): a domain is verifiable alone. Two corollaries that keep the
 list from collapsing into one domain:
 
 - **Modes partition frames.** When one domain hands Samus over to another for whole frames
@@ -128,8 +61,7 @@ list from collapsing into one domain:
   Where it does (a contact this frame changes her motion this frame) the two merge or the
   boundary moves to an event the earlier one exports.
 
-"Rows" says whether the 32 cached rows (`$TEMP/collab/more-caches/cache`) exercise it,
-or which rows of `scenarios/locks/lsnes.toml` (635 rows, 445,583 frames, 520 chain rows
+"Rows" says whether the cached rows exercise it, or which rows of `scenarios/locks/lsnes.toml` (635 rows, 445,583 frames, 520 chain rows
 over 197 rooms of the 100% and any% routes) must be cached. "New" means no lock row covers it.
 Rounds are pipeline rounds (observer spec + adversary + implementer + integrator + gap answer).
 
@@ -222,10 +154,10 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | AF5 | Scenes, before F2, F4 and E4: title, intro (text pages, demo input), file select and the start menu, the flights, the explosion, Mode 7 planes, line tables; later the ending, credits, game over, options and attract demos | 4 |
 | A3 | Sound in our own format ([assets.md §3.7](assets.md#37-sound-a3)), before U2: samples decoded at import to PCM, instruments, songs as tracks of typed events, song sets and sound effects; no SNES sound format leaves the importer | 3 |
 | T1 | **Slowdown and loading time** (D9): the cost model that replaces recorded NMI timing | 6+ |
-| U1 | **Audio**: the CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks, and D18's driver model of the replies the game reads through the ports), compared exactly on the `apu` stream and `apu_log` in every record | 3 rounds |
-| U2 | **The music and sound sequencer**, clean room (MODEL §1 decision 23): which song and sound effect play, and which note of which instrument starts and stops on which voice at each tick, over A3's records; specced from the oracle's sound chip and compared exactly on those events per tick | 10 rounds |
+| U1 | **Audio**: the CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks, and D18's driver model of the replies the game reads through the ports), compared at its boundary with gameplay: the requests and the replies the game reads, at frame cuts (MODEL §1 decision 37) | 3 rounds |
+| U2 | **The music and sound sequencer**, clean room (MODEL §1 decision 23): which song and sound effect play, and which note of which instrument starts and stops on which voice at each tick, over A3's records; specced from the oracle's sound chip; its events per tick are a separate comparison stream that gates no rung (decision 37) | 10 rounds |
 | E6 | The mixer in `runtime`: plays U2's events over A3's PCM samples with modern interpolation, envelopes, echo and output rate; its audio out is not compared ([LEGACY](../LEGACY.md#the-engine-planned-differences-from-the-original)) | 1 |
-| V1 | Tooling: a domain free-run harness; RNG draws per consumer from `hits`; a compressed record cache tier | 3 |
+| V1 | Tooling: independent observation inputs, such as RNG draws per consumer from `hits` | 3 |
 | V2 | The whole-movie run: the engine from power-on through a movie's inputs alone, compared at sparse checkpoints, then at dense ones over the range they narrow a divergence to | 2 |
 
 Two rules hold for the platform work whatever lane carries it:
@@ -244,43 +176,37 @@ T1 owns platform timing; no production path schedules time inside a frame yet. T
 cadence each frame borrows until then is described in
 [ARCHITECTURE §6](ARCHITECTURE.md#6-the-tick).
 
-### E1: where sprite drawing stands, and its second lane
+### E1: sprite drawing
 
 Every sprite the engine draws is a `game::intent::SpriteDraw`: pieces, each with its place on
 the screen at full precision (`ScreenPoint`, `i32`), its look (picture, palette, priority,
 flips: `data::spritemap::SpriteAttributes`) and its placing (`Mapped(size)`, a spritemap's
 piece, or `Lone`, a small sprite placed by itself). `exact::oam` is the one encoder: X to nine
 bits and Y to eight, the high table's bits, the 128-entry wrap for mapped pieces, the lone
-sprite's low table only and no wrap, and the frame's clear and hide. Its three producers are
-Samus's body (`samus_drawing`), the atmospheric graphics and the enemies (`enemy::drawing`);
-each builds the draw and the caller writes it where the original wrote its sprites, so the
-order of the entries is the original's. The enemy's tile and palette base (`SpriteBase`, the
-carry from the tile into the palette) stays with the enemy: the piece holds the look it gives.
+sprite's low table only and no wrap, and the frame's clear and hide. Each producer's caller
+writes its draw where the original wrote its sprites, so the order of the entries is the
+original's; the weapons owner's flying shots are one ([STATUS](../STATUS.md)). What is left, in
+this order:
 
-The second lane carries, in this order:
-
-1. **The intent view (D16).** The Tick's draws, kept where `NmiBatch::draw_sprites` encodes
-   them, go out with the Tick (`TickOutput`, or `game::view::describe`), and a check holds that
-   the kept draws, encoded again from an empty buffer, give the frame's OAM. *Risk:* draws are
-   made per main-loop pass, not per Tick: a lag Tick has none and shows the previous; the view
-   must say which pass a picture is from.
-2. **Samus-appearance part 2's bridge (S5).** The clean model says which clip frame shows and where
-   (and the flicker); the bridge turns it into the draw through the assets, as
-   `samus_drawing::body` does now, and `samus_drawing` goes. No sprite type joins `types`:
-   a model names clips and frames, never sprites ([DESIGN](../cleanroom/DESIGN.md)). *Risk:*
-   the chest sprite is her body's one `Lone` piece (`SamusAssets::chest`); the bridge keeps it
-   between the top half and the bottom half, where the `oam` stream sees its entry.
-3. **The writers not yet drawn**, each with its domain: Samus's projectiles and their trails
-   (the `projectiles` field group and the `oam` stream of item-morph-ball), the arm cannon, the
-   charge flare and the echoes, then enemy projectiles and sprite objects. Each is a producer of
-   `SpriteDraw`; none adds an encoder rule unless the original writes OAM another way.
+1. **The intent view (D16).** A frame's draws go out with it, and a check holds that the kept
+   draws, encoded again from an empty buffer, give the frame's OAM. Draws are made per main-loop
+   pass, not per frame: a lag frame has none and shows the previous, so the view says which pass
+   a picture is from.
+2. **Samus's body (S5).** samus-appearance says which clip frame shows and where (and the
+   flicker); its bridge turns that into the draw through the assets. No sprite type joins
+   `types`: a model names clips and frames, never sprites ([DESIGN](../cleanroom/DESIGN.md)).
+   The chest sprite is her body's one `Lone` piece (`SamusAssets::chest`), between the top half
+   and the bottom half, where the `oam` stream sees its entry.
+3. **The other writers**, each with its domain: the arm cannon, the charge flare and the echoes,
+   the atmospheric graphics, the enemies, enemy projectiles and sprite objects. Each is a
+   producer of `SpriteDraw`; none adds an encoder rule unless the original writes OAM another way.
 4. **The encoder's open rules**, each a named rule in `exact::oam` or a LEGACY entry: a lone
    sprite past the table's end (the original writes it into the high table; here it is
    dropped), the enemies' extended spritemaps and graphical offsets (with AF3), and margin draws
-   for the wide renderer (a producer that culls to the screen, as the atmospheric graphics do,
-   draws past it on request; the encoder never sees those pieces).
+   for the wide renderer (a producer that culls to the screen draws past it on request; the
+   encoder never sees those pieces).
 
-### E2: where tile writing stands, and what is left
+### E2: tile writing
 
 A write to a background layer is a `game::intent::TileWrite`: where it lands, in the layer's
 own terms, and the looks it writes there. Each cell's look is a `TilemapEntry` (picture,
@@ -295,60 +221,40 @@ without the ring.
 `exact::tilemap::TileQueue` is the encoder for the VRAM write queue. The overlay's rows are one
 upload read from the HUD's buffer. A block row is clipped to the blocks the ring holds and
 placed in BG1's two screens, with the screen swap BG1's scroll offset makes. Its top cells are
-queued before its bottom cells, and a row that runs off its screen is split onto the other (the
-screen split of tilemap rows). It is read from the PLM draw's buffer, which a pass fills from
-its start. The queue's capacity drops a row whole. Its producers are the HUD (`interface_hud_bridge`, the
-model's grid as the overlay's rows 1 to 3) and the PLM pass (`plm::draw::Drawing`, a changed
-block's look from `bg_graphics::block_look`). Each caller writes where the original queued, so
-the queue keeps the original's order.
+queued before its bottom cells, and a row that runs off its screen is split onto the other. The
+queue's capacity drops a row whole. Each caller writes where the original queued, so the queue
+keeps the original's order.
 
 A line of blocks the camera brings into view is a `game::intent::LayerExposure`: the layer, a
 column (16 blocks down) or a row (17 across), its first block in the layer's level and the
 background's block it lands on. The two differ because the BG scroll adds the scroll offset to
-the layer's position, so the intent carries both. `scrolling::exposures` decides the lines from
-the layers' blocks and the ones they last exposed (`camera.drawn`), layer 2 only on an axis where
-BG2 shows its level. `bg_graphics` is only the level lookup (`exposed_looks`, `block_look`): the
-original's index multiply, the level buffer's tail and fill, the item GFX entries and the flips.
-`exact::tilemap::expose` places a line on the ring (each BG's two screens, BG2's the room's
-tilemap gap before BG1's, the column part that wraps to the screen's top and the row part that
-wraps to the other screen) and builds it into the layer's column or row buffer
-(`video.batch.level`), counting a request; `exact::tilemap::commit_exposures` is the NMI's
-scrolling DMAs. The buffers stay State decoded from work RAM, so a lag frame carries them and
-their request counts to the next NMI.
+the layer's position, so the intent carries both. `exact::tilemap::expose` places a line on the
+ring (each BG's two screens, BG2's the room's tilemap gap before BG1's, the column part that
+wraps to the screen's top and the row part that wraps to the other screen) and builds it into
+the layer's column or row buffer, counting a request; `exact::tilemap::commit_exposures` is the
+NMI's scrolling DMAs. The buffers are State, so a lag frame carries them and their request
+counts to the next NMI.
 
-What is left of scrolling:
+The message box writes the PPU itself while the NMI lags. Its rows are `OverlayRows` writes
+through the encoder's direct entry: `exact::tilemap::write_now` places the rows on the overlay
+at once and leaves DMA 1's registers as the box's own DMA does, since the next NMI's uploads
+start from them. The backup is a read-back (D5), `exact::tilemap::read_now`, and a cell gives
+its word back exactly, so cells VRAM held stale come back stale. `exact::ppu` holds the box's
+PPU set-up and the way back.
 
-1. **The lookup's stale reads** (docs/LEGACY.md: a block past the level data, a tile past the
-   tile tables) stay with the lookup, not the encoder.
-2. **The exposures in the intent view (D16)**, with E1's second lane: the Tick's exposures go
-   out with it, and the wide renderer draws a line from its `level` without the ring.
-3. **Who decides the lines.** `scrolling::exposures` is engine code over the engine's camera
-   State; the camera's clean model exports layer 1's position and nothing about lines. When R4
-   brings layer 2's own motion and the BG scrolls into a domain, the exposure goes with it as an
-   output, and the camera's interface gains it then, not before.
-4. **Mode 7 and time frozen** (`scrolling`'s open notes), with the rooms that use them, and the
-   room load's whole-screen draw with R1, as more producers of `LayerExposure` or a
-   screen-sized shape of it.
+What is left:
 
-The message box writes the PPU itself while the NMI lags, around the batch. Its blank box, its
-message's rows (the borders around the message, with the special button's letter) and its
-restore are each an `OverlayRows` write, the overlay's shape of `TileWrite`, through the
-encoder's direct entry: `exact::tilemap::write_now` places the rows on the overlay at once and
-leaves DMA 1's registers as the box's own DMA does (its buffer's address run on past the rows,
-the indirect fields cleared), since the next NMI's uploads start from them. The backup is a
-read-back (D5), `exact::tilemap::read_now`, made where the box makes it. The restore writes the
-backup's words as cells, and a cell gives its word back exactly, so cells VRAM held stale come
-back stale. `exact::ppu` holds the box's PPU set-up and the way back: the text colours, the
-playfield it shows over, the black backdrop and BG3's scroll.
-
-What is left of the message box's video: its BG3 Y scroll HDMA channel (`message_box::video`),
-its scroll table and HDMA's enable and restore, which go with E3's HDMA channels; and the save
-prompt's yes and no, with H3.
-
-R1 and R4 export tile writes onto the ring the scrolling lane settled. The PLM draw's open
-shapes go with W2 and A1, each as more `TileWrite` shapes or the row shape repeated: the draw
-instructions that draw a column or more than one row, and the buffer's index restarting at a
-pickup's resume (`plm::resume`'s open note).
+1. **The producers**: the HUD's overlay rows (H2), the block rows of W2 and A1 (including the
+   draw instructions that draw a column or more than one row), the message box (H3) and the
+   lines the camera exposes. The camera's clean model exports layer 1's position and nothing
+   about lines; when R4 brings layer 2's own motion and the BG scrolls into a domain, the
+   exposure goes with it as an output, and the camera's interface gains it then.
+2. **The lookup's stale reads** ([LEGACY](../LEGACY.md): a block past the level data, a tile past
+   the tile tables) stay with the content's lookup, not the encoder.
+3. **The exposures in the intent view (D16)**, with E1's first item.
+4. **Mode 7 and time frozen**, with the rooms that use them, and the room load's whole-screen
+   draw with R1, as more producers of `LayerExposure` or a screen-sized shape of it; the message
+   box's BG3 Y scroll HDMA channel with E3's HDMA channels.
 
 ## 4. Order
 
@@ -409,7 +315,7 @@ outside Ceres's three species. 413 frames lag, 141 of them before the intro.
 | R4 | the palette FX runner, which the title, the intro and both flights use; no animated tiles, and Ceres's rooms have no palette FX |
 | F2 | boot, the title, file select, the start menu and the intro, its demo input included |
 | F4 | the flight to Ceres, the elevator's end, Ceres goes boom, the flight to Zebes |
-| U1 | the sound requests of every stretch and the replies the game reads through the ports, compared on the `apu` stream; the driver's uploads (411,621 APU port writes over the stretch) are not compared, their time is T1's, and the music and effects they start are U2's (wave 5) |
+| U1 | the sound requests of every stretch and the replies the game reads through the ports, compared at frame cuts (decision 37); the driver's uploads (411,621 APU port writes over the stretch) are not compared, their time is T1's, and the music and effects they start are U2's (wave 5) |
 | E1, E2, A1 | sprites, tile writes, instruction lists as assets (PLM, enemy, projectile, palette FX, HDMA and cinematic object lists) |
 | AF0, AF1, AF2, AF4a, AF5 | the content in our own formats: Ceres's rooms and tilesets, the palettes, the HUD and mini-map art, the title, intro, file select, the flights and the explosion |
 | E3, E4 | HDMA objects in every stretch but boot, the shaft's and Ridley room's mode switch per line; mode 7 in the title, both flights, the shaft, Ridley's getaway and the explosion |
@@ -476,11 +382,8 @@ the needs starts (MODEL §1 decision 24).
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).
 
-**Wave 0.** V1 and V3 retain their planning purpose: independent observation inputs and
-production replay admission for the lowest rung. Separate domain free-run, gate and lockstep
-executors are retired. Their reviewed replacements and lost claims are in the transition
-ledger. Follow-up work is selected from actual indexed boundaries and clean-room spec gaps,
-not the old floor files. Priority and dependency IDs below remain the plan's.
+**Wave 0.** V1 and V3: independent observation inputs and production replay admission for the
+lowest rung. Follow-up work is selected from actual indexed boundaries and clean-room spec gaps.
 
 **Wave 1 (on the cached rows, 4-5 lanes):** S2 (4), S5 (3) with E1, H2 (2) with E2, W2 (5)
 with A1, P1 (1); AF0, then AF1 and AF2, AF1 first converting slice 0's rooms with no change in
@@ -506,29 +409,19 @@ checked against the ROM by the importer. About 66 rounds.
 **Wave 5:** U2 (10) over A3, with E6 to hear it; S3 (2), S6 (3), S7 (2), F1 (5), F3 (1). About
 23 rounds.
 
-**Total:** about 155 clean-room rounds and 45-55 platform lanes, against about 13 done so far
-(samus-movement's 12, the camera's 1). Units per round need to average about 30 (the camera did
-42 in one round; samus-movement 17 a round while the method was settling). If the round's fixed
-cost (export, adversary twice, canaries, landing one at a time) doesn't fall, root integration
-and review, not implementation, set the pace.
+**Total:** about 155 clean-room rounds and 45-55 platform lanes. Units per round need to
+average about 30. If the round's fixed cost (export, adversary, canaries, landing one at a time)
+doesn't fall, root integration and review, not implementation, set the pace.
 
 ## 5. Risks and proposals
 
-1. **Scale.** About 20 times what's done. The fixed cost per round is the bottleneck.
+1. **Scale.** The fixed cost per round is the bottleneck.
    *Proposal:* batch arms per round (target 40-60 units); let adversaries gate a family's
    spec once, with per-species deltas; integrators land per wave, not per round.
-2. **Audio.** The music is played by the game's own sound driver on the sound chip. Settled
-   (MODEL §1 decision 23): no code of the game runs, is emulated or is ported. The CPU side (U1:
-   requests, handshakes, the queue and the replies the game reads through the ports) is
-   compared exactly on the `apu` stream; the driver program's upload bytes are a leftover, not
-   compared, and the upload's time is T1's. A clean-room sequencer (U2) plays songs,
-   instruments, PCM samples and sound effects imported into our own format (A3), and is
-   compared exactly on its events per tick: which note of which instrument starts and stops on
-   which voice. A modern mixer in `runtime` (E6) plays them; the audio out is not compared.
-   *The risk:* a sequencer specced from port logs and the sound chip's key-on and key-off is a
-   project of its own (perhaps 8-12 rounds), and the oracle needs a stream of those events; the
-   sequencer's spec must name what it does with a song (tempo, notes, envelopes, effects),
-   never the driver's command bytes or routines.
+2. **Audio** (decisions 23 and 37). A sequencer specced from port logs and the sound chip's
+   key-on and key-off is a project of its own (perhaps 8-12 rounds), and the oracle needs a
+   stream of those events; the sequencer's spec must name what it does with a song (tempo,
+   notes, envelopes, effects), never the driver's command bytes or routines.
 3. **Bosses and scripted behaviour.** Long instruction lists with many custom steps, multipart
    enemies, rare branches (Mother Brain's phases) and 65k of enemy-projectile code in the old
    port. Records reach few branches. *Proposal:* B1+B2 first to fix the phase table; record
@@ -542,31 +435,23 @@ and review, not implementation, set the pace.
    (show a frame, move, play a sound, spawn, wait for a condition), the importer maps opcodes
    to them outside the clean room, and the adversary checks the vocabulary once per family (A1)
    before any family uses it.
-5. **The engine can't free-run past slice 0 until doors land.** Every new domain is proven
-   only per frame (re-seeded), which MODEL §4 calls insufficient, and "delete the old code"
-   applies only to slice 0's modules. *Proposal:* V1's domain free-run now; R1+R2 early (wave 2).
-6. **One RNG across domains.** Enemies, drops and bosses draw from one word in slot order; a
-   domain's harness can't know its draws without the others'. *Proposal:* watch the RNG step in
-   `hits` (the record already supports watched addresses) to give each consumer its draws;
-   the order of consumers is an "order that matters" entry, owned by the Tick.
-7. **Slowdown and loading time.** Frame counts depend on the original's CPU time (door loads,
+5. **One RNG across domains.** Enemies, drops and bosses draw from one sequence in slot order
+   (G2's `game-random`). *Proposal:* watch the RNG step in `hits` (the record already supports
+   watched addresses) to give each consumer its draws; the order of consumers is an "order that
+   matters" entry, owned by the frame.
+6. **Slowdown and loading time.** Frame counts depend on the original's CPU time (door loads,
    explosions, many enemies). A cost is a property of the original's code, which the clean
    room can't see. *Proposal:* T1 as an observer-fitted table of named costs per event,
    measured from the records' `bank_instructions` and overruns, verified on the `timing`
-   stream; recorded NMI timing stays the Tick input until it holds.
-8. **Within-frame feedback forces merges.** A contact this frame changing her motion this
-   frame, by MODEL §4's rule, merges domains and could grow a "combat" mega-domain. *Proposal:*
+   stream; lag stays a borrowed input until it holds (decision 35).
+7. **Within-frame feedback forces merges.** A contact this frame changing her motion this
+   frame, by MODEL §5's rule, merges domains and could grow a "combat" mega-domain. *Proposal:*
    the two corollaries in §3 (modes partition frames, events as exports), and check each
    boundary's verifiability in the spec review, before the implementer starts.
-9. **The budget has no baseline for new domains.** "Smaller than the old code" needs old code;
-   most domains have none in today's engine. The archive's port is so verbose (0.12-0.2) that
-   it is a weak bar. *Proposal:* k × units only (k frozen at 36), with the archive's score
-   reported as a ceiling; a goal question only if Jim wants a stricter bar.
-10. **Disk.** A cached frame is about 206 KB; the whole lock would be about 92 GB. *Proposal:*
-    cache per domain (20-40 rows each), and V1's compressed tier (WRAM deltas compress well).
-11. **Recordings missing.** The pause screen, the attract demos and the intro have no lock row;
-    the 100% chains may cover pausing (check before recording). Rare boss phases need segment
-    rows.
+8. **Disk.** The lean record cache is about 2 KB a frame ([ORACLE §6](../ORACLE.md#6-commands));
+   cache per domain (20-40 rows each).
+9. **Recordings missing.** The pause screen and the attract demos have no lock row; the 100%
+   chains may cover pausing (check before recording). Rare boss phases need segment rows.
 
 The plan's domains, their waves, their progress and the rounds landed are data in
 [domains.toml](domains.toml), from which `verify::report` draws the domain graph `tools report` prints and the
