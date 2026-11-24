@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Local source gate: the formatting, lint, dependency, crate-rule and doc-link checks of Quality,
-# and, each only when the branch (committed since origin/main, or in the working tree) changes its
+# and, each only when the branch (committed since its base, or in the working tree) changes its
 # subject: the tools' self-tests; verify's lib tests, which hold the README, the report, the
 # played runs and the vectors' pins to the tree; the planted faults' anchors and coverage
 # (tools/check_mutants.py plan, which runs no fault); and the adjusted vectors' rule owners
@@ -8,8 +8,10 @@
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 # They don't wait on each other's build locks: each clippy pass has its own target directory, and
 # verify's lib tests link for an explicit target triple (tools/lane/test_dll.py).
-# Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR. Off Windows the toolchain is the cargo on
-# PATH, which rustup points at rust-toolchain.toml's channel.
+# Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR, SM_GATE_BASE (the base,
+# default origin/main; a stacked branch names the branch it builds on). Off Windows the toolchain
+# is the cargo on PATH, which rustup points at rust-toolchain.toml's channel.
+BASE=${SM_GATE_BASE:-origin/main}
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
@@ -47,10 +49,10 @@ fail() { echo "$1"; ok=0; }
 # Starts check $1 in the background; its output goes to $O/$1.log and its status to $O/$1.status.
 start() { local name=$1; shift; { "$@" >"$O/$name.log" 2>&1; echo $? >"$O/$name.status"; } & }
 passed() { [ "$(cat "$O/$1.status" 2>/dev/null)" = 0 ]; }
-# Whether the branch changes any of the paths: committed since it left origin/main, or not yet
+# Whether the branch changes any of the paths: committed since it left BASE, or not yet
 # committed (untracked files included).
 changed() {
-  ! git diff --quiet origin/main...HEAD -- "$@" || [ -n "$(git status --porcelain -- "$@")" ]
+  ! git diff --quiet "$BASE...HEAD" -- "$@" || [ -n "$(git status --porcelain -- "$@")" ]
 }
 # Records check $1 as passed without running it, its subject unchanged.
 skip() { echo skipped >"$O/$1.log"; echo 0 >"$O/$1.status"; }
@@ -72,7 +74,7 @@ else
 fi
 start crate-rules bash tools/check_crate_rules.sh
 # The self-tests of the clean-room and lane tools, only for what this branch changes since main.
-CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh origin/main
+CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh "$BASE"
 start doc-links sh tools/check_doc_links.sh
 # What verify's lib tests read: the README and the report it measures (the crates, the specs and
 # their vectors, the domain plan), the replay index and the played runs, and the build's inputs.
@@ -133,7 +135,7 @@ if ! passed owners; then
   tail -n 5 "$O/owners.log"
 fi
 for check in verify-lib faults owners; do
-  ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since origin/main"
+  ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since $BASE"
 done
 if [ "$ok" -eq 1 ]; then
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
