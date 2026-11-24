@@ -44,8 +44,8 @@ jobs:
           JOB: ${{ github.job }}
           WORKER: ${{ matrix.worker }}
           TARGET: ${{ inputs.target }}
-          # Cold main producers (scheduled, or a full manual run on main) always do the work.
-          COLD: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.target == '') }}
+          # Scheduled and dispatched runs always do the work, so their diagnostics print.
+          COLD: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
         run: bash tools/ci/verdict.sh step
       # Main pushes restore recent compatible builds and publish this clean revision.
       # Scheduled and manual-main producers stay cold. Other refs only restore.

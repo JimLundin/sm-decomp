@@ -2,34 +2,33 @@
 # verdict.sh: a verification job reruns only when something it reads has changed (#741).
 #
 # A job's fingerprint hashes the mode and object id of every tracked file it reads at the tested
-# commit, the job's name (with its fault worker and dispatched target) and the runner image. The
-# workflow files, this script and the pinned assets' SHA-256s (in verify.yml and tools/ci) are
-# tracked inputs like any other. When a job's work passes, its last step saves a cache entry
+# commit, the job's name (with its fault worker) and the runner image. The workflow files, this
+# script and the pinned assets' SHA-256s (in verify.yml and tools/ci) are tracked inputs like any
+# other. When a job's work passes, its last step saves a cache entry
 # verdict-JOB-FINGERPRINT-RUN-ATTEMPT and is named "Record the JOB verdict FINGERPRINT".
 #
 # The cache entries only index candidate runs: a later job trusts a candidate run after checking
 # with the Actions API that it is this repository's CI, that it tested a commit whose inputs for
-# JOB are the same as ours (so it ran this same workflow and script), and that its step "Record
-# the JOB verdict FINGERPRINT" succeeded, which it does only after the job's work passed. A forged
-# entry can only name a run that really did the work. Delete a job's entries (gh cache delete) to
-# force its rerun.
+# JOB are the same as ours (so it ran these same workflows and this script), and that JOB's own
+# check (verify / replay) passed with its step "Record the JOB verdict FINGERPRINT", which runs
+# only after the job's work passed. A forged entry can only name a run that really did the work.
+# Scheduled and dispatched runs always do the work, so their diagnostics print; a dispatched
+# target records no verdict. Delete a job's entries (gh cache delete) to force its rerun.
 #
 #   verdict.sh inputs JOB [TREE]       the tracked paths JOB reads at TREE (default HEAD)
 #   verdict.sh tree JOB [TREE]         the SHA-256 of those paths' ls-tree entries
 #   verdict.sh fingerprint JOB [TREE]  the tree hash, JOB and the runner image
 #   verdict.sh find JOB FINGERPRINT    the id of a run that passed JOB at FINGERPRINT; exit 1 if none
 #   verdict.sh step                    in a job: reuse a verdict or say why the work runs
-# JOB is content, replay or faults-WORKER, with @TARGET for a dispatched target (replay@played).
+# JOB is content, replay or faults-WORKER.
 set -uo pipefail
 
 # Whether JOB reads PATH. Everything is an input unless the job provably never reads it.
 reads() {
   local job=$1 path=$2
   case $path in
-    # The workflows that run the jobs and the script that judges them.
-    .github/workflows/ci.yml | .github/workflows/verify.yml | tools/ci/verdict.sh) return 0 ;;
-    # Quality's own workflow; no verification job runs it.
-    .github/workflows/quality.yml) return 1 ;;
+    # The workflows of every job in the run, and the script that judges them.
+    .github/workflows/* | tools/ci/verdict.sh) return 0 ;;
     # Agents' instructions: no crate, test or CI tool a verification job runs opens them.
     .agents/* | AGENTS.md) return 1 ;;
     # The clean crates' tests include_str! the behaviour specs, and verify's report reads the
@@ -38,7 +37,7 @@ reads() {
     # The other prose docs: no include_str!, test or CI tool reads them.
     docs/*.md) return 1 ;;
   esac
-  case ${job%%@*} in
+  case $job in
     # cargo test -p data -p import: their sources, the workspace manifests and vendor/ under
     # crates/, vendor/ and the root, and the ROM at run time. No data or import source or test
     # names a file under these.
@@ -70,6 +69,14 @@ fingerprint() {
     sha256sum | cut -d' ' -f1
 }
 
+# JOB's check name in a CI run: verify / content, verify / replay, verify / faults (WORKER).
+check() {
+  case $1 in
+    faults-*) echo "verify / faults (${1#faults-})" ;;
+    *) echo "verify / $1" ;;
+  esac
+}
+
 # Whether run RUN attempt ATTEMPT passed JOB's work at FINGERPRINT on inputs whose hash is TREE.
 proven() {
   local run=$1 attempt=$2 job=$3 fp=$4 tree=$5 repo=$GITHUB_REPOSITORY tested
@@ -82,8 +89,10 @@ proven() {
     timeout 120 git fetch -q --no-tags --depth=1 --filter=blob:none origin "$tested" || return 1
   [ "$(tree_hash "$job" "$tested")" = "$tree" ] || return 1
   local passed
-  passed=$(timeout 30 gh api "repos/$repo/actions/runs/$run/attempts/$attempt/jobs?per_page=100" --jq \
-    "[.jobs[].steps[] | select(.name == \"Record the $job verdict $fp\" and .conclusion == \"success\")] | length") ||
+  # Only JOB's own check counts, and only when it passed: any other job could name a step so.
+  passed=$(timeout 30 gh api "repos/$repo/actions/runs/$run/attempts/$attempt/jobs?per_page=100" --jq "[
+    .jobs[] | select(.name == \"$(check "$job")\" and .conclusion == \"success\") | .steps[]
+    | select(.name == \"Record the $job verdict $fp\" and .conclusion == \"success\")] | length") ||
     return 1
   [ "$passed" -ge 1 ] 2>/dev/null
 }
@@ -102,21 +111,24 @@ find_verdict() {
   return 1
 }
 
-# In a verification job: name it, fingerprint it, and reuse a passing verdict unless this is a
-# cold main producer (scheduled, or a manual full run on main), which always does the work.
+# In a verification job: name it, fingerprint it, and reuse a passing verdict unless the run is
+# scheduled or dispatched (COLD=true), which always does the work.
 step() {
   local job=${JOB:?} fp run url
   [ -n "${WORKER:-}" ] && job+="-$WORKER"
-  [ -n "${TARGET:-}" ] && job+="@$(printf '%s' "$TARGET" | tr -c 'A-Za-z0-9_.:-' _)"
   echo "job=$job" >>"$GITHUB_OUTPUT"
   if ! fp=$(fingerprint "$job"); then
     echo "::warning::$job: no fingerprint, so the work runs and no verdict is recorded"
     return 0
   fi
+  if [ -n "${TARGET:-}" ]; then
+    echo "$job at $fp: a dispatched target does its work and records no verdict"
+    return 0
+  fi
   echo "fingerprint=$fp" >>"$GITHUB_OUTPUT"
   printf '%s %s\n' "$job" "$fp" >"$RUNNER_TEMP/verdict"
   if [ "${COLD:-false}" = true ]; then
-    echo "$job at $fp: a cold main producer always does the work"
+    echo "$job at $fp: a scheduled or dispatched run always does its work"
   elif run=$(find_verdict "$job" "$fp"); then
     url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run"
     echo "reused=$run" >>"$GITHUB_OUTPUT"
