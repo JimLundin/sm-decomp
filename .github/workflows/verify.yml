@@ -215,13 +215,17 @@ jobs:
               chain-any-0003-DFD7 "$start" 344 --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc \
               --lock scenarios/locks/lsnes.toml
           done
-      - name: Play the Ceres rows back to back from the M0 room's seed
-        # Diagnostic: passes each door into the next row's room; prints cuts held and the stop.
+      - name: Play every reviewed played run
+        # Diagnostic: each run of scenarios/replay/played.toml, passing each door into the next
+        # row's room; prints cuts held and the stop, to compare with the run's `held` and `stop`.
         if: steps.verdict.outputs.reused == '' && inputs.target == 'played'
         run: |
-          cargo run --quiet --locked --profile verify -p tools --bin tools -- replay played \
-            chain-any-0003-DFD7 0 3000 --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc \
-            --lock scenarios/locks/lsnes.toml
+          awk -F' = ' '/^row = /{gsub(/"/,"",$2); r=$2} /^start = /{s=$2} /^end = /{print r, s, $2}' \
+            scenarios/replay/played.toml | while read -r row start end; do
+            cargo run --quiet --locked --profile verify -p tools --bin tools -- replay played \
+              "$row" "$start" "$end" --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc \
+              --lock scenarios/locks/lsnes.toml < /dev/null
+          done
       - name: Check the required witnesses and indexed replay against the reviewed baseline
         if: steps.verdict.outputs.reused == '' && inputs.target == ''
         env: *witness_env
