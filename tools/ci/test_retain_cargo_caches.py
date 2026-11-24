@@ -55,12 +55,12 @@ class RetentionTests(unittest.TestCase):
                    cache(6, prefix=PREFIXES[0] + "extra-"), cache(7, revision="invalid")]
         self.assertEqual([entry.id for entry in candidates(entries, PREFIXES[:1], CURRENT)], [1])
 
-    def test_missing_job_prevents_all_deletion(self):
-        api = Api("owner/repo", "test-token")
-        with patch.object(api, "inventory", return_value=[cache(1)]), patch.object(api, "request") as request:
-            with self.assertRaises(ValueError):
-                api.prune(PREFIXES, CURRENT)
-            request.assert_not_called()
+    def test_a_job_that_reused_its_verdict_keeps_its_family(self):
+        # A job that reused a verdict built nothing, so its family has no current entry.
+        entries = [cache(1, revision="b" * 40), cache(2, revision="c" * 40), cache(3),
+                   cache(4, PREFIXES[1], "b" * 40), cache(5, PREFIXES[1], "c" * 40),
+                   cache(6, PREFIXES[1], "d" * 40)]
+        self.assertEqual([entry.id for entry in candidates(entries, PREFIXES, CURRENT)], [1])
 
     def test_creation_time_orders_not_access_time_and_ties_are_deterministic(self):
         entries = [cache(1, revision="b" * 40), cache(2, revision="c" * 40), cache(3)]

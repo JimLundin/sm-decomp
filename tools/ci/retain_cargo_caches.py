@@ -20,7 +20,10 @@ class Cache:
 
 
 def candidates(caches: list[Cache], prefixes: list[str], revision: str) -> list[Cache]:
-    """Plan all deletions before performing any; incomplete publication preserves all."""
+    """Plan all deletions before performing any; a family without this revision's entry keeps all.
+
+    A job that reused a passing verdict (tools/ci/verdict.sh) built and published nothing.
+    """
     # Inventory pages can overlap as other runs access caches during pagination.
     unique: dict[int, Cache] = {}
     for cache in caches:
@@ -34,7 +37,7 @@ def candidates(caches: list[Cache], prefixes: list[str], revision: str) -> list[
                   and re.fullmatch(re.escape(prefix) + r"[0-9a-f]{40}", cache.key)]
         current = [cache for cache in family if cache.key == prefix + revision]
         if not current:
-            raise ValueError("current clean cache is not published for every job")
+            continue
         ordered = sorted(family, key=lambda cache: (cache.created, cache.id), reverse=True)
         keep = {cache.id for cache in ordered[:2]} | {cache.id for cache in current}
         remove.extend(cache for cache in ordered if cache.id not in keep)
