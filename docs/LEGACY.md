@@ -1,9 +1,9 @@
 # Legacy register
 
-This register names current differences and proof limits. Removed executable gameplay is
-available through git history; its former fallback claims are accounted for in the
-[replay transition](../scenarios/replay/transition.toml). Add or remove a current difference in
-the same change as the implementation. Replay case limits name narrower witness claims.
+This register names current differences from the original and proof limits. Add or remove a
+difference in the same change as the implementation. Replay case limits name narrower witness
+claims; removed gameplay's former claims are in the
+[replay transition](../scenarios/replay/transition.toml).
 
 ## Audio transport production inputs
 
@@ -53,8 +53,7 @@ The following limits belong to retained clean models or content readers:
   [the animation input domain](behaviours/samus-appearance.md#15-the-inputs-domain).
 - **Samus's motion in the demos.** The clean movement end-of-animation handover follows its
   play contract. The original demo handler can hand over regardless of a jump on the last
-  frame. Demo integration and movement outside the model's poses remain unsupported;
-  no old handler supplies the missing behaviour.
+  frame. Demo integration and movement outside the model's poses remain unsupported.
 - **The HUD spec's defined domain.** Missile counts and capacities are limited to 999,
   super missiles and power bombs to 99. An unselected one-shot item is not representable.
   Outside-map cells follow the stated blank, uncharted and unexplored rule, except the named
@@ -90,8 +89,7 @@ The following limits belong to retained clean models or content readers:
 
 ## The engine: memory a model keeps that the engine can't hold yet
 
-Production holds the selected clean State itself. No old writable state mirror fills a gap.
-Some clean States lack complete serialization; their live entry remains usable while save or
+Production holds the selected clean State itself. Some clean States lack complete serialization; their live entry remains usable while save or
 restore reports unavailable codec support. No partial observed-field checkpoint is a complete
 continuation claim.
 
@@ -107,12 +105,11 @@ The selected weapons/contact recipe holds full clean shot, trail and spacing Sta
 the existing clean weapons owner and applies ordered current Ceres-door contact opportunities.
 Its quiet geometry capability is intentionally bounded. Borrowed control, aim, camera and actor
 opportunities limit the proof. Required terrain reactions, general actor policy, passage,
-sound delivery or downstream drawing remain unsupported or explicitly excluded; no old
-projectile or actor runner fills them. Indexed witnesses state the actual compared outputs.
+sound delivery or downstream drawing remain unsupported or explicitly excluded. Indexed witnesses state the actual compared outputs.
 
 ## The engine: slots it carries but doesn't run
 
-Production retains no inert old enemy or PLM slots. Independently admitted solid geometry is
+Production holds no enemy or PLM slots. Independently admitted solid geometry is
 a scoped input, not proof of AI, population changes or lifecycle. Required missing owners fail
 explicitly rather than carrying raw words forward as simulated behaviour.
 
@@ -137,10 +134,9 @@ Imported content can retain named unknown variants where the original tolerates 
 `data::pose::PoseFacing::Unknown(u8)` preserves an unused pose's facing byte;
 `data::level::ScrollArea::Unknown(u8)` preserves an unknown scroll byte. These representations
 alone establish no successful production capability. Selected admission validates actual
-content requirements; removed writeback/slot/DMA mirrors provide no fallback.
+content requirements.
 
 ## The oracle
-
 
 - **`LEGACY(verifier)`** in `crates/oracle/src/streams.rs`: the `Definition::Legacy` streams, which
   compare with the old lock `scenarios/lock.toml` while `oracle corpus` still reads it, zero the WRAM

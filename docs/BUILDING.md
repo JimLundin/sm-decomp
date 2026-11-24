@@ -7,11 +7,11 @@ Credits and licences for the tools and data the project uses are in [CREDITS](CR
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid
 cargo build --profile verify -p tools     # the verifiers: target/verify/tools
-cargo test -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools \
-  -p oracle_record -p types -p samus_movement -p world_blocks \
-  -p world_camera -p interface_hud -p run_progress -p samus_appearance
 bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links and the README
 ```
+
+The tests are the `cargo test` line of Quality (`.github/workflows/quality.yml`), which names
+every crate but `oracle`.
 
 The application currently refuses power-on with an explicit missing-production-owner result.
 Building it does not imply playable boot or whole-movie support. Use indexed scoped cases to
@@ -28,7 +28,8 @@ with Zig 0.15.2 and prints the directory to put on `LIBRARY_PATH`. On a Windows 
 fresh test executables, run tests with `tools/lane/run_tests.sh <crate>...`.
 
 CI (`.github/workflows/ci.yml`) runs Quality (format, lints, tests, the crate rules, doc links and
-the README) and verification jobs for the ROM content tests and the complete indexed replay baseline. [STATUS](STATUS.md) shows how to run them locally.
+the README) and verification jobs for the ROM content tests and the complete indexed replay
+baseline. [STATUS](STATUS.md) shows how to run them locally.
 
 ## Run one verification check
 
@@ -80,5 +81,4 @@ cargo run -p tools --bin tools -- report
 prints the current clean models' size, budget and fit by domain and area, their lines, the
 bridges, replay providers and engine services, the indexed replay evidence, the domain graph and
 each model's structure. Its replay results separate scoped, integrated and whole-movie witnesses
-and distinguish supported behaviour from expected unsupported boundaries. Historical claims have
-explicit transition dispositions.
+and distinguish supported behaviour from expected unsupported boundaries.

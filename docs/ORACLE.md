@@ -15,8 +15,8 @@ comments cite.
 
 Every backend is a complete SNES: the 65816 on the master-clock beam, DMA and HDMA, NMI and IRQ
 timing, auto-joypad, per-line PPU, and the SPC700 and DSP running the game's own sound driver.
-With a running beam no ROM patch is needed, so `OracleId::patches` is empty. An oracle that
-needed patches, or shared code with the engine, proved little in earlier attempts.
+With a running beam no ROM patch is needed, so `OracleId::patches` is empty: the oracle runs
+the unpatched ROM and shares no code with the engine (PRINCIPLES P12).
 
 | Backend | What | How it is linked |
 | --- | --- | --- |
@@ -295,7 +295,6 @@ them with `verify::decode`, every fact is `"unevaluated"` and doesn't block gree
 | d | record every row twice, compare, merge | done: 635 rows in `lsnes.toml`, 642 with the seven movie rows of `scenes-v1` |
 | e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-f612aa96b26daf8d`) |
 | f | `verify::lock`: the reader and the per-(row, stream) comparison | done |
-| g | historical free-run gate | retired at reviewed production replay cutover; replacements and losses are in [the transition ledger](../scenarios/replay/transition.toml) |
 
 ### Step a1: the cut plan
 
@@ -422,12 +421,22 @@ pins differ from the lock row. The **full tier** (`--cache-pictures`) is `OUT/<r
 every `FrameRecord` with its picture in `oracle_record::codec`'s encoding, and `index.txt`. The
 **lean tier** (the default) is `lean.bin`, each record without its picture and its five memories
 as the bytes that changed since the frame before, whole every 256th frame
-(`oracle_record::lean`), and `lean.txt`: about a hundredth of the bytes. Replay observations that need no picture use the lean tier when available, with the
-full tier otherwise; `tools cache-lean LOCK FROM TO ROW...` writes full rows again as lean ones.
-A row recorded with
+(`oracle_record::lean`), and `lean.txt` with the lock pins: about 2 KB a frame against the full
+tier's 330 KB. Replay observations that need no picture use the lean tier when available, with
+the full tier otherwise; only the compositor's checks need the pictures. `tools cache-lean LOCK
+FROM TO ROW...` writes full rows again as lean ones. A row recorded with
 `--watch-pcs` also has `hits.txt`: `# watched` and the addresses, then `frame pc line dot peek`
 per hit. The hits stay out of `records.bin`, so a row recorded again with watches has the same
 records byte for byte, and `verify::cache::Cache::record` puts each frame's hits back.
+
+**Making the record cache.** `oracle corpus ROM scenarios/lock.toml DATA --oracle lsnes
+--native-seeds BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` plays the row's frame
+pads from its native seed and writes its lean tier, `lean.txt` last. `DATA` is the old lock's
+decrypted bundles (corpus still reads each row's seed and movie name there).
+`tools/oracle/record_caches.sh ROWS BUNDLE DATA ROM CACHE [JOBS]` does it for a list of rows,
+8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
+passes `--watch-pcs` too, for the `hits.txt` the independent causal input providers read.
+`ORACLE` names the oracle command (the Python DLL runner where Defender blocks executables).
 
 ## 7. Data: the ROM, bundles and the cipher
 
@@ -471,17 +480,13 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   Locally, build a cdylib exporting `sm_oracle_run(argc, argv)` around `oracle::cli::main` and call it
   from Python with ctypes, as `tools/lane/test_dll.py` does for tests. Only `$TEMP` allows executables.
   A DLL in use can't be relinked: build under a new name. CI runs ordinary binaries. A registry
-  crate with a build script is used through its copy in `vendor/`, the script's output baked in by
-  `tools/vendor_nobuild.sh` and patched in by the root `Cargo.toml`; CI's
-  `tools/vendor_nobuild_check.sh` holds each copy to the real script.
-- **lsnes processes started together** used to race on `%APPDATA%/lsnes`; each now has its own
-  config directory. A killed lsnes usually shows as `took no request`.
-- **lsnes crashes (fixed):** a cut callback that unregistered itself while lsnes dispatched it made
-  lsnes call a freed entry (`attempt to call a nil value`, then death, "the exit at step 18068"). The
-  cut callback now stays on the NMI handler's RTI. Unregistering from another callback is clean but
-  runs at 7 frames/s instead of 44.
-- **Old records:** lsnes records cut before the RTI fix (`9777b468a`) or the PC fix (`2da4d4ae6`,
-  record bytes 34-35) differ from new ones; re-cut before mixing them.
+  crate with a build script is used through its baked copy in `vendor/` ([crates](../crates/README.md)).
+- **A killed lsnes** usually shows as `took no request`.
+- **A callback that unregisters itself** while lsnes dispatches it makes lsnes call a freed entry
+  (`attempt to call a nil value`, then death), so the cut callback stays on the NMI handler's RTI.
+  Unregistering from another callback is clean but runs at 7 frames/s instead of 44.
+- **Records cut before** the RTI fix (`9777b468a`) or the PC fix (`2da4d4ae6`, record bytes
+  34-35) differ from current ones; re-cut them before mixing.
 - **Each request gets exactly one record.** Reading requests in `on_input`, or emitting at every
   RTI, desyncs the protocol. A previewed pad must come with the next step, or the server quits.
 - **Mesen** keeps the cartridge SRAM in `Saves/`; clear it before every run.
@@ -498,7 +503,7 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   bundle retires that file, `corpus.toml`, `coverage.toml`, `route-*.toml` and `LEGACY(verifier)`.
 - LakeSnes past any% 35175: fit the line-0 HDMA pause on both emulators, then fix 0005 ((q)).
 - DMA bytes under forced blank are counted only at the cut; a per-write INIDISP check is needed ((a)).
-- `oracle` and `oracle_record` tests don't run in CI yet.
+- `oracle`'s tests don't run in CI yet (Quality runs `oracle_record`'s).
 - The 100% chain rows' pads, one frame early against the movie (§5, step b1): re-cut them from
   the movie at each seed record's frame counter and re-lock those rows.
 - `lsnes.toml`'s `server` pin (`833e4df9...`) is the SHA-256 of an older `lsnes_server.lua`; the
