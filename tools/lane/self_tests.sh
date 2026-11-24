@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # self_tests.sh [BASE]: the clean-room and lane tools' self-tests (export, launch, canary, blind
-# copy, import, squash, worktree, and the code check, score scan and adjusted vectors), at once,
-# at most one per processor, each reported in a fixed order. With BASE, only when the branch
+# copy, import, squash, worktree, the gate, and the code check, score scan and adjusted vectors),
+# at once, at most one per processor, each reported in a fixed order. With BASE, only when the branch
 # changes their subject since BASE: tools/cleanroom/ or tools/lane/, and for the import's self-test
 # also the toolchain, the workspace manifests and the shared types, whose clippy runs it holds.
 # Without BASE (main pushes and scheduled runs) all run. Run from the repository root; exit 1
@@ -15,7 +15,7 @@ tests=()
 if changed tools/cleanroom tools/lane; then
   tests=(tools/cleanroom/launch_test.sh tools/cleanroom/code_check_test.sh
     tools/cleanroom/canary_test.sh tools/cleanroom/score_scan_test.sh tools/lane/squash_test.sh
-    tools/lane/worktree_test.sh tools/cleanroom/blind_copy_test.sh
+    tools/lane/worktree_test.sh tools/lane/gate_test.sh tools/cleanroom/blind_copy_test.sh
     tools/cleanroom/adjusted_vectors_test.sh)
 fi
 # The import self-test builds a throwaway worktree cold (about seven minutes).

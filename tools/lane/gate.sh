@@ -12,6 +12,11 @@
 # default origin/main; a stacked branch names the branch it builds on). Off Windows the toolchain
 # is the cargo on PATH, which rustup points at rust-toolchain.toml's channel.
 BASE=${SM_GATE_BASE:-origin/main}
+# Every subject check compares with BASE, so one that doesn't resolve stops the gate.
+git rev-parse --verify -q "$BASE^{commit}" >/dev/null || {
+  echo "GATE: the base $BASE is not a commit here; set SM_GATE_BASE to the one the branch builds on"
+  exit 2
+}
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
@@ -46,13 +51,17 @@ PY
 }
 trap 'cleanup || true' EXIT
 fail() { echo "$1"; ok=0; }
+# Prints the lines on stdin, which name a failing check $1's finding, or when there are none the
+# log's last lines, so a failure always shows a reason.
+reason() { head -20 | grep . || tail -n 5 "$O/$1.log"; }
 # Starts check $1 in the background; its output goes to $O/$1.log and its status to $O/$1.status.
 start() { local name=$1; shift; { "$@" >"$O/$name.log" 2>&1; echo $? >"$O/$name.status"; } & }
 passed() { [ "$(cat "$O/$1.status" 2>/dev/null)" = 0 ]; }
 # Whether the branch changes any of the paths: committed since it left BASE, or not yet
 # committed (untracked files included).
 changed() {
-  ! git diff --quiet "$BASE...HEAD" -- "$@" || [ -n "$(git status --porcelain -- "$@")" ]
+  ! git diff --quiet "$BASE...HEAD" -- "$@" ||
+    [ -n "$(git status --porcelain --untracked-files=all -- "$@")" ]
 }
 # Records check $1 as passed without running it, its subject unchanged.
 skip() { echo skipped >"$O/$1.log"; echo 0 >"$O/$1.status"; }
@@ -97,19 +106,22 @@ if changed tools/cleanroom/adjusted_rule_owners tools/cleanroom/adjusted_probe_t
 else skip owners; fi
 wait
 
-passed fmt || fail "FMT FAIL"
+if ! passed fmt; then
+  fail "FMT FAIL"
+  grep '^Diff in' "$O/fmt.log" | reason fmt
+fi
 if ! passed clippy; then
   fail "CLIPPY FAIL"
-  grep -E '^(error|warning)|-->' "$O/clippy.log" | head -10
+  grep -E '^(error|warning)|-->' "$O/clippy.log" | head -10 | reason clippy
 fi
 if ! passed clean-clippy; then
   fail "CLEAN CLIPPY FAIL"
-  grep -E '^(error|warning)|-->' "$O/clean-clippy.log" | head -10
+  grep -E '^(error|warning)|-->' "$O/clean-clippy.log" | head -10 | reason clean-clippy
 fi
 [ -n "$deny" ] || echo "DENY SKIPPED: no cargo-deny here; CI's Quality runs cargo deny check bans"
 if ! passed deny; then
   fail "DENY FAIL"
-  grep -E -A6 '^error' "$O/deny.log" | head -20
+  grep -E -A6 '^error' "$O/deny.log" | reason deny
 fi
 if ! passed crate-rules; then
   fail "CRATE RULES FAIL"
@@ -119,12 +131,15 @@ if ! passed self-tests; then
   fail "SELF TESTS FAIL"
   cat "$O/self-tests.log"
 fi
-passed doc-links || fail "DOC LINKS FAIL"
+if ! passed doc-links; then
+  fail "DOC LINKS FAIL"
+  reason doc-links <"$O/doc-links.log"
+fi
 if ! passed verify-lib; then
   fail "VERIFY LIB FAIL"
   # Each failing test, then where each panicked with the panic's first line.
   { grep -E '^test .* FAILED$|^test_dll:' "$O/verify-lib.log"
-    grep -A1 'panicked at' "$O/verify-lib.log" | grep -v '^--$'; } | head -20
+    grep -A1 'panicked at' "$O/verify-lib.log" | grep -v '^--$'; } | reason verify-lib
   ! grep -q 'committed_readme_is_current .* FAILED' "$O/verify-lib.log" ||
     echo "README STALE: run cargo run -p tools --bin tools -- report --write"
 fi
@@ -134,7 +149,7 @@ if ! passed faults; then
 fi
 if ! passed owners; then
   fail "OWNERS FAIL: tools/cleanroom/adjusted_vectors_run.py --owners"
-  grep '^adjusted_vectors_run: ' "$O/owners.log"
+  grep '^adjusted_vectors_run: ' "$O/owners.log" | reason owners
 fi
 for check in verify-lib faults owners; do
   ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since $BASE"
