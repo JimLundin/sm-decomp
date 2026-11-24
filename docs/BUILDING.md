@@ -93,13 +93,29 @@ echo "$sum  $TEMP/$asset" | sha256sum --check
 SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
 export SM_SEED_PASSPHRASE
 mkdir -p "$SM_CACHE"
+set -o pipefail   # a failed decrypt must not leave a partial cache unnoticed
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
   -in "$TEMP/$asset" | tar -xJ -C "$SM_CACHE"
 rm "$TEMP/$asset"
 ```
 
-The fixtures some indexed cases also read (`SM_AUDIO_NATIVE` and the rest) come the same way
-from the `tools/ci/fetch_*.sh` scripts that `verify.yml` runs, each given the ROM and a folder.
+The native fixtures some indexed cases also read come from the `tools/ci/fetch_*.sh` scripts
+that `verify.yml`'s replay job runs, each given the ROM and one folder. `fetch_audio_native.sh`
+needs `AUDIO_NATIVE_ASSET` and `AUDIO_NATIVE_SHA256`, pinned beside the cache's in `verify.yml`:
+
+```sh
+export AUDIO_NATIVE_ASSET=$(sed -n "s/^ *AUDIO_NATIVE_ASSET: //p" .github/workflows/verify.yml | head -1 | tr -d '"')
+export AUDIO_NATIVE_SHA256=$(sed -n "s/^ *AUDIO_NATIVE_SHA256: //p" .github/workflows/verify.yml | head -1 | tr -d '"')
+native=$TEMP/collab/audio-native
+for f in audio_native sender_offers movement_touchdown connected_ordinary connected_run_slope \
+  movement_early_map shot_contact native_search_packets health_tail; do
+  bash tools/ci/fetch_$f.sh rom/sm.smc "$native" || break
+done
+```
+
+Then point the variables of `verify.yml`'s witness environment at it: `SM_AUDIO_NATIVE` and
+`SM_CONNECTED_SOURCE` at the folder, `SM_SEARCH_PACKET` at `$native/native-search-inputs-v1`,
+`SM_TOUCH_PACKET` at `$native/native-search-order-v1`, and the rest as that list names them.
 
 **The seed** is the warm build new lanes start from: `bash tools/lane/worktree.sh seed` once, and
 again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
@@ -110,6 +126,27 @@ the launch denies the session every place beside the export's path, the home aro
 root included, and empties its environment; its header says what it denies and why. The session
 needs an API key: `ANTHROPIC_API_KEY` in the environment, an `apiKeyHelper` in
 `~/.claude/settings.json` that names absolute paths, or `CLEANROOM_AUTH`.
+
+### Before any confined session on the box
+
+The Linux confinement is pattern rules over this machine's paths until it is proven, so before
+the first clean-room lane there:
+
+- **Exports go outside the home.** Make a root such as `/cleanroom`, owned by you, and set
+  `CLEANROOM_ROOT=/cleanroom`. The launch then denies the home and the temporary folder whole, as
+  Windows does, instead of naming their entries at launch, which misses anything created in them
+  during a session.
+- **The key goes through a helper.** Keep it in a file only you can read (`chmod 600`) and put
+  `"apiKeyHelper": "cat /home/you/.config/anthropic/key"` in `~/.claude/settings.json`, so the
+  CLI holds the key and its children's environment doesn't. `ANTHROPIC_API_KEY` passes it to every
+  `cargo test` the session runs.
+- **Prove searches from above the export are refused.** The probe's CHECKs 29 to 31 grep from `/`
+  and from the home and glob `**/AGENTS.md` from the home; each must be refused or find nothing
+  outside the export.
+- **Prefer confinement by the operating system.** The rules confine the CLI's tools, not the
+  processes it starts: `cargo test` and git can read any file you can. On Linux bubblewrap or
+  landlock around the session can deny those reads and the network outright; that is the
+  barrier to build before relying on the pattern rules alone.
 
 ### First run on the box
 
@@ -129,16 +166,21 @@ needs an API key: `ANTHROPIC_API_KEY` in the environment, an `apiKeyHelper` in
    done
    ```
 
-3. The launch probe and the canary ([launch.sh](../tools/cleanroom/launch.sh)'s header):
+3. The launch probe and the canary ([launch.sh](../tools/cleanroom/launch.sh)'s header). On a
+   fresh box the canary means something only once the forbidden sources are there to plant:
+   copy them under `$TEMP` where `canary.sh` looks (`c4a/logs*`, `banklogs`, `collab/reviews`,
+   `bank*`) or name them in `CANARY_ALSO`, and check `canary.sh list` shows them before the
+   probe counts. Its CHECKs 1 to 3 name files there.
 
    ```sh
    bash tools/cleanroom/canary.sh plant
+   bash tools/cleanroom/canary.sh list
    CLEANROOM_ALLOW_MISSING=1 bash tools/cleanroom/export.sh launch-probe
-   t=~/.cleanroom/transcripts/probe.jsonl
-   CLEANROOM_DRY_RUN=1 bash tools/cleanroom/launch.sh --probe ~/cleanroom/launch-probe "$t"
-   bash tools/cleanroom/launch.sh --probe ~/cleanroom/launch-probe "$t"
-   bash tools/cleanroom/canary.sh check "$t" ~/cleanroom/launch-probe
-   rm -rf ~/cleanroom/launch-probe
+   ex=${CLEANROOM_ROOT:-$HOME/cleanroom}/launch-probe t=~/.cleanroom/transcripts/probe.jsonl
+   CLEANROOM_DRY_RUN=1 bash tools/cleanroom/launch.sh --probe "$ex" "$t"
+   bash tools/cleanroom/launch.sh --probe "$ex" "$t"
+   bash tools/cleanroom/canary.sh check "$t" "$ex"
+   rm -rf "$ex"
    ```
 
    The dry run writes the lane record and stops: read its `settings.json` deny list and
