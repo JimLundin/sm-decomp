@@ -63,7 +63,7 @@ use crate::production::hud::HudPin;
 use crate::production::room_loading::{LoadFault, Rooms};
 use crate::production::shaft::LightsFault;
 use crate::state::owned::CameraPin;
-use boss_ceres_ridley::{Lights, RidleyPlacing, RidleyRun};
+use boss_ceres_ridley::{Lights, RidleyContent, RidleyPlacing, RidleyRun};
 use canonical::model::Model;
 use interface_hud::{FrameOutputs, HerMap, HudPictures};
 use passage::Passing;
@@ -88,6 +88,8 @@ pub struct Content {
     pub map: HerMap,
     /// Her place across the new game's start room, x in pixels.
     pub start_x: types::Px,
+    /// Ceres Ridley's eye's steps and his body's colour sets.
+    pub ridley: RidleyContent,
 }
 
 /// The tuning each model reads.
@@ -187,8 +189,11 @@ pub enum Fault {
     Escape,
     /// The shaft's lights could not be shown.
     Lights(LightsFault),
-    /// Ridley has woken: his fight is a later piece's.
-    RidleyAwake,
+    /// Ridley has turned tangible: his tail's touch, which hurts her and knocks her back, is a
+    /// later piece's.
+    RidleyTangible,
+    /// Ridley has taken off: his flight is a later piece's.
+    RidleyFlying,
     /// A colour of the baby's content has more than 15 bits.
     BabyColours,
     /// Her suit's content is not sixteen colours of 15 bits.
@@ -202,8 +207,8 @@ impl State {
     ///
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
-    /// room inputs, the escape with Ceres doors in the room ([`Fault::Escape`]), Ridley awake
-    /// ([`Fault::RidleyAwake`]), and a next room that doesn't load, such as one placing an
+    /// room inputs, the escape with Ceres doors in the room ([`Fault::Escape`]), Ridley tangible
+    /// ([`Fault::RidleyTangible`]), and a next room that doesn't load, such as one placing an
     /// actor no owner here places ([`LoadFault::OtherActors`]).
     pub fn step(
         &mut self,

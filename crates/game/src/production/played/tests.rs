@@ -192,6 +192,16 @@ pub(super) fn content() -> Content {
         hud: HudPictures::default(),
         map: HerMap::default(),
         start_x: Wrapping(0x80),
+        ridley: boss_ceres_ridley::RidleyContent {
+            eye_steps: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::EyeColours(
+                [types::Colour::BLACK; 3],
+            )])
+            .unwrap(),
+            body_sets: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::BodyColours(
+                [types::Colour::BLACK; 11],
+            )])
+            .unwrap(),
+        },
     }
 }
 

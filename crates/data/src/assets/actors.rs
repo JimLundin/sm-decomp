@@ -68,6 +68,8 @@ impl SpriteRow {
     pub const RIDLEY_DOOR: Self = Self(2);
     /// The palette of the baby Ridley holds.
     pub const BABY: Self = Self(3);
+    /// Ridley's second palette in Ceres, which his body's fade sets with his own.
+    pub const RIDLEY_SECOND: Self = Self(1);
 
     /// Row `row`, if there is one.
     #[must_use]
@@ -140,8 +142,15 @@ impl BeaconColours {
 /// A colour set of the baby Ridley holds: colours 1 to 15 of its palette.
 pub type BabyShades = [Colour; ROW_COLOURS - 1];
 
-/// The colours of Ridley's room in Ceres as he is placed, and the baby's colour sets.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// A colour set of Ceres Ridley's eye: colours 12 to 14 of his palette.
+pub type EyeShades = [Colour; 3];
+
+/// A colour set of Ceres Ridley's body: colours 1 to 11 of his two palettes.
+pub type BodyShades = [Colour; 11];
+
+/// The colours of Ridley's room in Ceres as he is placed, the baby's colour sets, and the sets
+/// his eye and his body fade in through as he wakes.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CeresRidleyColours {
     /// The goal colours of the door's own palette, row [`SpriteRow::RIDLEY_DOOR`].
     pub door: Palette,
@@ -155,6 +164,10 @@ pub struct CeresRidleyColours {
     pub glow2: BabyShades,
     /// Its third.
     pub glow3: BabyShades,
+    /// His eye's steps, in the order it shows them, each the eye's colour set it names.
+    pub eye_steps: Vec<EyeShades>,
+    /// His body's colour sets, in the order it shows them.
+    pub body_sets: Vec<BodyShades>,
 }
 
 /// The colours of the sprites other than hers.

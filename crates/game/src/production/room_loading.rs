@@ -887,6 +887,7 @@ mod tests {
                     glow1: [Colour(0x00c3); 15],
                     glow2: [Colour(0x00c4); 15],
                     glow3: [Colour(0x00c5); 15],
+                    ..CeresRidleyColours::default()
                 },
                 ..Actors::default()
             },

@@ -499,6 +499,142 @@ left). It compares phase, wait, figure, shown, solid and drawn-with-Ridley (`0FA
 | K6, K7 | `chain-any-0006-E0B5`:65, 145 | K-calm, K-cries |
 | K8, K9, K10 | `chain-any-0006-E0B5`:151, 207, 5 | K-glow-next, K-glow-last, K-fidget-next |
 
+## Part 4a, Ceres Ridley wakes
+
+### How it was made
+
+Behaviour first, from CI's lean record cache, row `chain-any-0006-E0B5` cuts 512-867 (his waking
+to the run he turns to fly), read per frame by scratch readers of the lean tier
+(`$TEMP/collab/fight-753/scratch/`, local only: `dump.py`, `ev.py`, `pal.py`, `cases.py`,
+`runs.py`, `oam.py`): his slot 0 (`0FA8`, `0FB0`, `0FB2`, `0F86`, `0F8E`, `0F92`, `0F94`,
+`0F7A`/`0F7E`), `7E7804`, `7E781E`, the baby's words, the current palette and CGRAM. His frame
+count `0FA4` steps by one on every frame 505-870, so every frame is a run. The bank log A6
+(`$A389..A4D5`, `$D467`, `$E269`, `$E2AA`, `$E30A`, `$E4BE`, `$E4CA`, `$E517`, `$E690`) then named
+the steps and pinned the numbers.
+
+The reference model, `$TEMP/collab/fight-753/scratch/model4a.py` (it borrows part 3's baby from
+`$TEMP/collab/ceres-748/scratch/model3.py`), decodes him at cut N and steps him once to N+1 with
+the game's content (read from the bank log into a local scratch module, never committed):
+- `chain-any-0006-E0B5` 513-867: 355 runs; the phase with its count, runs, wait, figure and the
+  figure's runs agree on 355 (at 867 only the phase `Flying`, the rest being part 4c's);
+  do-nothing 0. Tangible (`0F86` bit `0400h` clear), moving (`7E7804` = 1), roaring (`7E781E`
+  non-zero), his look (`0F8E`, but at 867) and his position: 355 of 355.
+- His colours, 355 of 355 runs: on a run the model names an eye set, sprite palette 7 colours
+  Ch..Eh hold that set's colours (exactly, against the bank log's data) in the current palette
+  and in CGRAM; on a run it names a body set, sprite palettes 1 and 7 colours 1..Bh hold it; on
+  every other run those colours are unchanged.
+- The baby, part 3's rules: 355 of 355 (do-nothing 0); one cry, at 767.
+- `model4a.py vectors` runs the 29 F- vectors: 29 of 29 agree; part 3's `model3.py vectors`
+  still agrees on its 15 Ridley vectors.
+
+### State (the RAM mapping)
+
+| Spec | RAM | Notes |
+| --- | --- | --- |
+| `Awake` | `0FA8` = `$A389`, `0FB0` = 0 | part 3's `$A377` sets it at the wake, `chain-any-0006-E0B5`:512 |
+| `EyeFading`, steps shown `n` | `0FA8` `$A389`, `0FB0` = `n` | `0FB2` counts to 1 and is cleared on the same run (the eye's pace, 1, is fixed); `0FB0` negative returns at once (never seen) |
+| `BodyFading`, sets `s`, runs `t` | `0FA8` `$A3DF`, `0FB0` = 22 × `s` (bytes into `$E30A`), `0FB2` = `t` | the end is `0FB0` ≥ `160h` after the write: 16 sets of 11 colours |
+| `ReadyToRoar`, wait | `0FA8` `$A455`, `0FB2` | `DEC`/`BPL`: roars at −1 |
+| `Roaring`, wait | `0FA8` `$A478`, `0FB2` = `FCh` at the start | Ceres only: the Norfair branch (`079F` = 2) fades the room's background instead and is not this domain's |
+| the roar's figure and runs | `0F92` = `$E698`, `$E69E`, `$E6A2`, `$E6A6`, `$E6AC` for figures 1 to 5; runs = length − `0F94` + 1 | list `$E690`, facing left (`7E7820` = 0, `$E517` falls through); figure 5 is `0001,E983` then sleep (`$812F`) at `$E6AC` |
+| `Flying` | `0FA8` `$A354` | set with list `$E91D`, wings `7E7810`/`7E7812` = 8, tail neutral (`$D3D9`, `7E2000` = 1), `0FB0` = 0: part 4c's |
+| `Rest`, `Open`, `Wide` | `0F8E` `$E983`, `$E9C7`, `$E9E9` | the facing-right figures (`$E9A5`, `$EA0B`, `$EA2D`, list `$E6AE`) are Norfair's |
+| tangible | `0F86` bit `0400h` clear (`3C00h` to `3800h` at 609) | |
+| moving | `7E7804` = 1 (`$A3D7`) | from then the main AI no longer draws the baby itself; the graphics hook does |
+| roaring | `7E781E` = `59h` (`$E4BE`) to 0 (`$E4CA`) | read by `$A6:D2C1` (tail whip sound) and `$B674` (fireballs) |
+| the eye's steps | `$A6:E269`, 64 bytes then `FFh` | each × 6 indexes `$E2AA` |
+| the eye's colour sets | `$A6:E2AA`, 16 sets of 3 colours | to `7EC1F8..7EC1FD` |
+| the body's colour sets | `$A6:E30A`, 16 sets of 11 colours | to `7EC122..7EC137` and `7EC1E2..7EC1F7` |
+| his second palette | sprite palette 1 (`7EC120..7EC13F`) | the palette he is drawn in is sprite palette 7, the doors' (part 3) |
+
+### Outputs
+
+| Spec | RAM / code |
+| --- | --- |
+| the eye's colours | current sprite palette 7 colours Ch..Eh (`$A3B5..A3C9`); no target palette is written |
+| the body's colours | current sprite palettes 1 and 7 colours 1..Bh (`$A3FD..A419`) |
+| the fight's music | `$80:8FC1` with A = 5 (`$A44D`), `chain-any-0006-E0B5`:609 |
+| the roar | `$80:90CB` with A = `59h`, library 2, limit 6 (`$E4BE`), `chain-any-0006-E0B5`:620 |
+| tangible | `0F86` &= `FBFFh` (`$A432`) |
+
+Sprite palette 1 is drawn by none of his sprites in 0006 (OAM at 620 and 700 uses palettes 0, 2, 3,
+4 and 7); the screen's colours still hold it, so it is an output.
+
+### Sources per entry
+
+| Entry | Sources |
+| --- | --- |
+| EyeFadesIn | `$A6:A389..A3DE`, `$E269`, `$E2AA` |
+| BodyFadesIn | `$A6:A3DF..A454`, `$E30A` |
+| ReadyToRoar | `$A6:A455..A477`, `$D467` |
+| Roars | `$A6:A478`, `$A4AC..A4D5`, `$E690`, `$E4BE`, `$E4CA`, `$E517` |
+
+### Findings behind the spec's choices
+
+- **The step table and the two colour lists are content.** The eye's 64 steps name 16 sets (the
+  first 16 steps walk the sets from black to full, then 48 hold the last); the body's 16 sets run
+  black to full. Their lengths come from the content, so the spec states the hand-overs as "every
+  step shown" and "the last set", and the vectors use invented, shorter content.
+- **The eye's first step changes nothing on screen** (0006:513): the game's first step names the
+  black set. The colours change from 514 to 528 and hold from 529.
+- **The body's first run shows no set** (578): the run that ends the eye's fade (577) starts the
+  body's with its runs at 0, so the first set shows on 579 and the 16th on 609.
+- **The roar's figure list is run by the framework's instruction step in the original**; the spec
+  keeps the look in the domain, as part 3 does for `Rest`. The list is set with its timer at 1, so
+  figure 1 shows on the run the roar starts (614).
+- **The hand-over at 867** sets the flying list, the wings and the tail in the same run; the spec
+  gives that run to part 4c, and the model compares only the phase there.
+- **Rows past this part, by later part:** the contact hits at 609, 705, 801, 897 and 993 (part 4b,
+  H1 `TailHit`; her knockback, samus-movement; her hurt colours, sprite palette 4, samus-appearance);
+  his nine hurt flashes from her beam, 651-857 (drawing only, no palette write: C1 and a later part);
+  his flight from 867 (part 4c).
+
+### The harness (for the integrator)
+
+- **Rows:** `chain-any-0006-E0B5` 512-866 for this part (867 for the phase `Flying` only).
+- **Compared per run:** `0FA8` through the phases above, `0FB0` and `0FB2` as the phase's count,
+  runs or wait, `0F92`/`0F94` as the roar's figure and runs while `Roaring`, `0F8E` through the
+  looks, `0F86` bit `0400h`, `7E7804`, `7E781E` non-zero; the baby as part 3; the screen's sprite
+  palette 7 colours 1..Eh and sprite palette 1 colours 1..Bh on every run.
+- **Sounds** (the fight's music, track 5; the roar `59h`): produced, not compared (MODEL
+  decision 37).
+- **Skipped:** `0F94` outside the roar (it wraps, as part 3); the drawing; `7E2000..2FFF` and the
+  wings' words (part 4b and 4c); her energy, position and colours from 609 (other domains).
+
+**How the played frame runs it:**
+1. Production (`crates/game/src/production/played/ridley.rs`, `run`) steps him through this
+   part's phases. The run that makes him tangible is refused (`Fault::RidleyTangible`): his
+   tail's touch is part 4b's. A run that starts `Flying` is refused (`Fault::RidleyFlying`,
+   part 4c).
+2. His colours go to the screen as the baby's do (`production/ridley.rs`, `show_eye` and
+   `show_body`): the eye's set to sprite palette 7 colours 12-14, the body's set to sprite
+   palettes 1 and 7 colours 1-11, at once.
+3. The verify reader (`crates/verify/src/replay/ridley.rs`) decodes `$A389` with `0FB0`, `$A3DF`,
+   `$A455`, `$A478` with the figure from `0F92`/`0F94`, and `$A354` as `Flying`.
+4. The importer brings in the eye's step table (`$E269`, to its `FFh` before the eye's sets),
+   the eye's 16 colour sets (`$E2AA`) and the body's 16 colour sets (`$E30A`) as content of
+   Ceres Ridley; no ROM bytes in the vectors or the crate.
+5. The vector harness, `crates/clean/boss_ceres_ridley/tests/vectors.rs`, parses the F- form
+   (`content`, the new phases and `ridley_after` fields).
+
+Played alone, room 6 (`chain-any-0006-E0B5`) holds through cut 538, the eye's first 26 of its 64
+steps; it stops at cut 539 in `movement.pose`, her crouched turn ending (samus-movement's). The
+body's fade, his readying, his roar and the two refusals hold by the vectors and the production
+tests only. Past them the first contact hit, at 609, needs part 4b, S4 knockback and
+samus-appearance's hurt colours.
+
+### The harness cases
+
+| Case | Row:frame | Vectors |
+| --- | --- | --- |
+| F1, F2, F3, F4 | `chain-any-0006-E0B5`:513, 514, 576, 577 | F-eye-first, F-eye-step, F-eye-last, F-eye-done |
+| F5, F6, F7, F8 | `chain-any-0006-E0B5`:578, 579, 607, 609 | F-body-wait, F-body-first, F-body-set, F-body-last |
+| F9, F10, F11 | `chain-any-0006-E0B5`:610, 613, 614 | F-ready-counts, F-ready-last, F-ready-roars |
+| F12, F13, F14 | `chain-any-0006-E0B5`:615, 620, 628 | F-roar-counts, F-roar-opens, F-roar-wide |
+| F15, F16, F17 | `chain-any-0006-E0B5`:724, 732, 733 | F-roar-shuts, F-roar-rests, F-roar-held |
+| F18, F19, F20, F21 | `chain-any-0006-E0B5`:866, 867, 767, 700 | F-roar-last, F-roar-flies, F-baby-cries, F-roar-wide-counts |
+| H7 | `chain-any-0006-E0B5`:513-609 | the eye's and the body's sets with the game's content (indexed replay) |
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -509,7 +645,7 @@ samus-movement. There is no old code: the engine carries the doors unrun
 (`EnemyBody::Unmodelled`, LEGACY "slots it carries but doesn't run") and has nothing for the pad,
 the cover, the beacon or the platform, nor for the door of Ridley's room, the walls or Ridley
 (`LoadFault::LaterCeresActor`), so no area has `old`, and there is no old-code guideline to
-compare (MODEL §1 decision 19).
+compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking.
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
@@ -517,5 +653,6 @@ compare (MODEL §1 decision 19).
 - Area lights: BeaconCycles, PlatformTurns
 - Area ridley-door: RidleyRoomStart, SlamShut, LockedIn, DrawnWithRidley, GetawayWalls
 - Area ridley: RidleyPlaced, RidleyWaits, BabyHeld, BabyFidgets, BabyCries
+- Area ridley-wakes: EyeFadesIn, BodyFadesIn, ReadyToRoar, Roars
 
-Budget: 37.5 × 84.3 units = 3,161 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700)
+Budget: 37.5 × 101.0 units = 3,786 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625)

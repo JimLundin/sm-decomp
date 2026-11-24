@@ -1,4 +1,4 @@
-# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; part 2 and part 3 below).
+# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; parts 2, 3 and 4a below).
 #
 # Format
 # - Each [[vector]] is one run of one door, from its state at the run's start to its state at the
@@ -1495,3 +1495,341 @@ entries = ["BabyCries"]
 ridley = { phase = "Waiting", wait = 305, look = "Rest", position = [186, 169] }
 baby = { routine = "Glow", step = 11, runs = 9 }
 ridley_after = { phase = "Waiting", wait = 304, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, colours = "Rest" }
+
+# ================================================================ part 4a: Ceres Ridley wakes
+#
+# Format of the part-4a vectors (spec §13), ids F-: one run of him and the baby, in part 3's
+# Ridley form (ridley, baby, random, ridley_after), with:
+# - content (invented, every F- vector): eye_steps, the eye's steps in order, each the number of
+#   the eye's colour set it names (0 up); body_sets, how many colour sets the body's fade has.
+# - ridley.phase and ridley_after.phase also "Awake" (part 3's: no step shown), "EyeFading"
+#   (steps: the eye's steps shown), "BodyFading" (sets: the body's sets shown; runs: the runs
+#   since its last set), "ReadyToRoar" (wait), "Roaring" (wait; figure, 1 to 5; figure_runs, its
+#   runs shown, absent for figure 5) and, in ridley_after only, "Flying" (no look: part 4c's).
+# - look also "Open" or "Wide".
+# - ridley_after also holds: tangible, moving, roaring, music (the fight's music asked for) and
+#   roar (the roar's sound asked for, queue limit 6), bools; eye_colours, the number of the eye's
+#   colour set shown, absent for none; body_colours, which of the body's sets is shown, 1 up,
+#   absent for none. shown and solid are part 3's: he is shown and never stops her motion;
+#   tangible says whether her touch and her shots meet him.
+# - rules may hold pace (runs, BodyFadesIn). Without it: pace 2.
+# - The content is invented: five eye steps naming sets 3, 2, 1, 1 and 0 (one step for the
+#   one-step cases), and four body sets, where the game has 64 steps and 16 sets. The recorded
+#   cases F1 to F21 (whose rows and frames the observer keeps) are moved onto it: a case at the
+#   game's last step or set is the invented content's last. His place, the baby and the random
+#   numbers are the records'.
+
+[[vector]]
+# recorded case F1: his first run awake: the eye's first step, its set
+id = "F-eye-first"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Awake", look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 6, runs = 6 }
+random = "E9CA"
+ridley_after = { phase = "EyeFading", steps = 1, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 6, runs = 7, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 3 }
+
+[[vector]]
+# recorded case F2: the eye's second step, a new set
+id = "F-eye-step"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 6, runs = 7 }
+random = "9203"
+ridley_after = { phase = "EyeFading", steps = 2, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 6, runs = 8, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 2 }
+
+[[vector]]
+# a step that names the set the last one did (as the game's from its 17th step on)
+id = "F-eye-same-set"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 3, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 2, runs = 5 }
+ridley_after = { phase = "EyeFading", steps = 4, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 2, runs = 6, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 1 }
+
+[[vector]]
+# recorded case F3: the eye's last step shown
+id = "F-eye-last"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 4, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 4, runs = 9 }
+random = "6CEF"
+ridley_after = { phase = "EyeFading", steps = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 4, runs = 10, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 0 }
+
+[[vector]]
+# recorded case F4: every step shown: the body's fade begins, no colours; he moves
+id = "F-eye-done"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 5, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 4, runs = 10 }
+random = "21BC"
+ridley_after = { phase = "BodyFading", sets = 0, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 5, runs = 1, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# content of one step (no row): awake, its one step
+id = "F-eye-one-step"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [2], body_sets = 4 }
+ridley = { phase = "Awake", look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+ridley_after = { phase = "EyeFading", steps = 1, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 2 }
+
+[[vector]]
+# content of one step (no row): the next run, the body's fade
+id = "F-eye-one-step-done"
+source = "constructed"
+entries = ["EyeFadesIn"]
+content = { eye_steps = [2], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 2 }
+ridley_after = { phase = "BodyFading", sets = 0, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 3, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F5: the body's first run: no set yet
+id = "F-body-wait"
+source = "constructed"
+entries = ["BodyFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 0, runs = 0, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 5, runs = 1 }
+random = "A9BD"
+ridley_after = { phase = "BodyFading", sets = 0, runs = 1, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 5, runs = 2, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F6: the body's second run: its first set
+id = "F-body-first"
+source = "constructed"
+entries = ["BodyFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 0, runs = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 5, runs = 2 }
+random = "51C2"
+ridley_after = { phase = "BodyFading", sets = 1, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 5, runs = 3, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false, body_colours = 1 }
+
+[[vector]]
+# recorded case F7: a set short of the last (the game's 15th of 16)
+id = "F-body-set"
+source = "constructed"
+entries = ["BodyFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 2, runs = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 7, runs = 10 }
+random = "945F"
+ridley_after = { phase = "BodyFading", sets = 3, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false, body_colours = 3 }
+
+[[vector]]
+# recorded case F8: the last set: tangible, the fight's music, ready with a wait of 4
+id = "F-body-last"
+source = "constructed"
+entries = ["BodyFadesIn", "EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 3, runs = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 2 }
+ridley_after = { phase = "ReadyToRoar", wait = 4, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 3, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = true, roar = false, body_colours = 4 }
+
+[[vector]]
+# pace 3 (no row): the second run after a set shows none
+id = "F-body-adjusted-wait"
+source = "constructed"
+entries = ["BodyFadesIn"]
+rules = { pace = 3 }
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 1, runs = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 3, runs = 4 }
+ridley_after = { phase = "BodyFading", sets = 1, runs = 2, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 5, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# pace 3 (no row): the third run shows the next set
+id = "F-body-adjusted-set"
+source = "constructed"
+entries = ["BodyFadesIn"]
+rules = { pace = 3 }
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 1, runs = 2, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 3, runs = 5 }
+ridley_after = { phase = "BodyFading", sets = 2, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 6, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false, body_colours = 2 }
+
+[[vector]]
+# pace 3 (no row): the last set on its third run
+id = "F-body-adjusted-last"
+source = "constructed"
+entries = ["BodyFadesIn"]
+rules = { pace = 3 }
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 3, runs = 2, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 3, runs = 6 }
+ridley_after = { phase = "ReadyToRoar", wait = 4, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 7, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = true, roar = false, body_colours = 4 }
+
+[[vector]]
+# pace 1 (no row): a set on every run, its first on the body's first run
+id = "F-body-pace-one"
+source = "constructed"
+entries = ["BodyFadesIn"]
+rules = { pace = 1 }
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 0, runs = 0, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 1, runs = 1 }
+ridley_after = { phase = "BodyFading", sets = 1, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 2, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false, body_colours = 1 }
+
+[[vector]]
+# recorded case F9: tangible, his wait counts down
+id = "F-ready-counts"
+source = "constructed"
+entries = ["ReadyToRoar", "EyeFadesIn"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "ReadyToRoar", wait = 4, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 3 }
+random = "9372"
+ridley_after = { phase = "ReadyToRoar", wait = 3, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 4, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F10: his wait down to 0
+id = "F-ready-last"
+source = "constructed"
+entries = ["ReadyToRoar"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "ReadyToRoar", wait = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 6 }
+random = "1FB9"
+ridley_after = { phase = "ReadyToRoar", wait = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 7, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F11: his wait over: the roar, its first figure, wait 252
+id = "F-ready-roars"
+source = "constructed"
+entries = ["ReadyToRoar"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "ReadyToRoar", wait = 0, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 7 }
+random = "9FAE"
+ridley_after = { phase = "Roaring", wait = 252, figure = 1, figure_runs = 1, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 8, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F12: the roar's first figure counts its second run
+id = "F-roar-counts"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 252, figure = 1, figure_runs = 1, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 8 }
+random = "1F77"
+ridley_after = { phase = "Roaring", wait = 251, figure = 1, figure_runs = 2, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 9, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F13: the first figure shown its 6 runs: jaws open, the roar heard
+id = "F-roar-opens"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 247, figure = 1, figure_runs = 6, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 1, runs = 3 }
+random = "5880"
+ridley_after = { phase = "Roaring", wait = 246, figure = 2, figure_runs = 1, look = "Open", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 4, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = true }
+
+[[vector]]
+# recorded case F14: jaws wide
+id = "F-roar-wide"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 239, figure = 2, figure_runs = 8, look = "Open", position = [186, 169] }
+baby = { routine = "Fidget", step = 2, runs = 1 }
+random = "1578"
+ridley_after = { phase = "Roaring", wait = 238, figure = 3, figure_runs = 1, look = "Wide", position = [186, 169], baby = { routine = "Fidget", step = 2, runs = 2, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false }
+
+[[vector]]
+# recorded case F21: the wide figure, its 73rd run
+id = "F-roar-wide-counts"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 167, figure = 3, figure_runs = 72, look = "Wide", position = [186, 169] }
+baby = { routine = "Fidget", step = 1, runs = 3 }
+random = "D9A1"
+ridley_after = { phase = "Roaring", wait = 166, figure = 3, figure_runs = 73, look = "Wide", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 4, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false }
+
+[[vector]]
+# recorded case F15: wide its 96 runs: open again
+id = "F-roar-shuts"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 143, figure = 3, figure_runs = 96, look = "Wide", position = [186, 169] }
+baby = { routine = "Fidget", step = 3, runs = 7 }
+random = "4529"
+ridley_after = { phase = "Roaring", wait = 142, figure = 4, figure_runs = 1, look = "Open", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 8, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false }
+
+[[vector]]
+# recorded case F16: open its 8 runs: at rest, roaring no more
+id = "F-roar-rests"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 135, figure = 4, figure_runs = 8, look = "Open", position = [186, 169] }
+baby = { routine = "Fidget", step = 4, runs = 5 }
+random = "D301"
+ridley_after = { phase = "Roaring", wait = 134, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 4, runs = 6, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F17: the rest held
+id = "F-roar-held"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 134, figure = 5, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 4, runs = 6 }
+random = "2016"
+ridley_after = { phase = "Roaring", wait = 133, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 4, runs = 7, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F18: the roar's wait down to 0
+id = "F-roar-last"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 1, figure = 5, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 3, runs = 7 }
+random = "A8EE"
+ridley_after = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 8, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F19: the roar's wait over: he takes off
+id = "F-roar-flies"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 3, runs = 8 }
+random = "4DB7"
+ridley_after = { phase = "Flying", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 9, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# wait 0 with his jaws still wide (no row): he takes off all the same
+id = "F-roar-flies-early"
+source = "constructed"
+entries = ["Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 0, figure = 3, figure_runs = 10, look = "Wide", position = [186, 169] }
+baby = { routine = "Fidget", step = 2, runs = 2 }
+ridley_after = { phase = "Flying", position = [186, 169], baby = { routine = "Fidget", step = 2, runs = 3, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+
+[[vector]]
+# recorded case F20: the baby cries and glows as he sits after his roar
+id = "F-baby-cries"
+source = "constructed"
+entries = ["Roars", "BabyCries", "BabyFidgets"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 100, figure = 5, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 7, runs = 10 }
+random = "FC6C"
+ridley_after = { phase = "Roaring", wait = 99, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = true, colours = "Glow1", tangible = true, moving = true, roaring = false, music = false, roar = false }
+

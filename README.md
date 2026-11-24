@@ -9,13 +9,13 @@
 The milestone is **Power-on through Ceres**: the any% movie from power-on through frame 15,196. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-Frames that pass          ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   2,629 of 15,196   17.3%
+Frames that pass          ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   2,655 of 15,196   17.5%
 Continuous from power-on  █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     270 of 15,196    1.8%
 ```
 
 - **Frames that pass:** every frame some reviewed run holds, counted once.
 - **Continuous from power-on:** the frames held back to back from power-on, with nothing fed back. It stops at frame 271: TitleBegins.
-- **Longest continuous run from any seed:** frames 8,316 to 10,674 (2,359 frames), `any-ceres-arrival` from its cut 0.
+- **Longest continuous run from any seed:** frames 8,316 to 10,700 (2,385 frames), `any-ceres-arrival` from its cut 0.
 
 ### By stretch
 
@@ -29,7 +29,7 @@ The movie in the stretches being worked, in the order it plays; the first not ye
 | The flight to Ceres | 7,513 to 8,315 | `░░░░░░░░░░░░░░░░░░░░` 0 of 803 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Her arrival | 8,316 to 8,538 | ✓ all 223 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Rooms 1 to 5 | 8,539 to 10,162 | ✓ all 1,624 | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
-| Ridley's room | 10,163 to 11,772 | `██████░░░░░░░░░░░░░░` 512 of 1,610 | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
+| Ridley's room | 10,163 to 11,772 | `██████░░░░░░░░░░░░░░` 538 of 1,610 | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
 | The escape | 11,773 to 13,236 | `░░░░░░░░░░░░░░░░░░░░` 0 of 1,464 | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 | The explosion and the flight to Zebes | 13,237 to 15,196 | `░░░░░░░░░░░░░░░░░░░░` 0 of 1,960 | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 
@@ -41,6 +41,6 @@ The plan's ladder of shorter stretches toward the milestone ([domains.md §4](do
 | --- | --- | ---: |
 | M0 Ceres's third room, across its door | 9,233 to 9,577 | 345 of 345 |
 | M1 Ceres's rooms 1 to 5, down to Ridley's door | 8,539 to 10,162 | 1,624 of 1,624 |
-| M2 Ceres with Ridley and the escape | 8,539 to 13,072 | 2,136 of 4,534 |
+| M2 Ceres with Ridley and the escape | 8,539 to 13,072 | 2,162 of 4,534 |
 
 Building and checking it, and the command that prints the models' sizes and the indexed replay evidence, are in [BUILDING](docs/BUILDING.md).

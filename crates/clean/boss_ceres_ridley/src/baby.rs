@@ -6,6 +6,8 @@ use core::num::Wrapping;
 use enum_map::{Array, Enum};
 use types::{Pair, Px};
 
+use crate::shown::{FigureLength, ShownFigure};
+
 /// `BabyHeld`: the baby is held 16 px left of him.
 const HOLD_LEFT: Px = Wrapping(16);
 /// `BabyHeld`: and 22 px down.
@@ -201,15 +203,6 @@ impl BabyFigure {
         }
     }
 
-    /// How many runs it shows: its length.
-    #[must_use]
-    pub const fn length(self) -> u8 {
-        match self {
-            Self::Fidget(_) => FIDGET_RUNS,
-            Self::Glow(figure) => figure.row().runs,
-        }
-    }
-
     /// The turn the routine takes once this figure has shown its length.
     ///
     /// `BabyFidgets`: a fidget's figure gives way to the next. `BabyCries`: after the last,
@@ -234,6 +227,16 @@ impl BabyFigure {
     }
 }
 
+impl FigureLength for BabyFigure {
+    /// `BabyFidgets`, `BabyCries`: a fidget's figure shows 10 runs; a glow's, its row's.
+    fn length(self) -> u8 {
+        match self {
+            Self::Fidget(_) => FIDGET_RUNS,
+            Self::Glow(figure) => figure.row().runs,
+        }
+    }
+}
+
 /// `BabyCries`: the end of a fidget: with an odd random number the fidget starts again, quiet;
 /// with an even one the baby cries and starts to glow.
 const fn fidget_over(random: u16) -> BabyTurn {
@@ -247,60 +250,19 @@ const fn fidget_over(random: u16) -> BabyTurn {
     }
 }
 
-/// A figure of the routine and how many runs it has shown so far, 1 to its length.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ShownFigure {
-    /// The figure.
-    figure: BabyFigure,
-    /// The runs it has shown.
-    runs: u8,
-}
-
-impl ShownFigure {
-    /// The figure shown this many runs, or none for 0 or past its length.
-    #[must_use]
-    pub const fn new(figure: BabyFigure, runs: u8) -> Option<Self> {
-        if runs != 0 && runs <= figure.length() {
-            Some(Self { figure, runs })
-        } else {
-            None
-        }
-    }
-
-    /// The figure.
-    #[must_use]
-    pub const fn figure(self) -> BabyFigure {
-        self.figure
-    }
-
-    /// The runs it has shown.
-    #[must_use]
-    pub const fn runs(self) -> u8 {
-        self.runs
-    }
-
-    /// `BabyFidgets`: the figure shown one run more, while it has shown fewer than its length;
-    /// none once it has shown them all.
-    fn one_run_more(self) -> Option<Self> {
-        self.runs
-            .checked_add(1)
-            .and_then(|runs| Self::new(self.figure, runs))
-    }
-}
-
 /// The baby's routine: where it is in its fidget or its glow.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BabyRoutine {
     /// Before its first run.
     New,
     /// Showing one of its figures.
-    Showing(ShownFigure),
+    Showing(ShownFigure<BabyFigure>),
 }
 
 impl BabyRoutine {
     /// The routine at its figure's first run.
     const fn starting(figure: BabyFigure) -> Self {
-        Self::Showing(ShownFigure { figure, runs: 1 })
+        Self::Showing(ShownFigure::first_run(figure))
     }
 
     /// Which of its figures the baby draws; none while it is new.
@@ -308,7 +270,7 @@ impl BabyRoutine {
     pub const fn look(self) -> Option<BabyLook> {
         match self {
             Self::New => None,
-            Self::Showing(shown) => Some(shown.figure.look()),
+            Self::Showing(shown) => Some(shown.figure().look()),
         }
     }
 
@@ -318,7 +280,7 @@ impl BabyRoutine {
         match self {
             Self::New => BabyTurn::quiet(BabyFigure::Fidget(FidgetFigure::Zero)),
             Self::Showing(shown) => shown.one_run_more().map_or_else(
-                || shown.figure.after(random),
+                || shown.figure().after(random),
                 |shown| BabyTurn {
                     routine: Self::Showing(shown),
                     cry: None,

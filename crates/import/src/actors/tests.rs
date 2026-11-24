@@ -87,6 +87,9 @@ fn every_registered_species_and_the_shared_palettes_import_from_the_rom() {
     let actors = import(rom.lorom()).unwrap();
     let elevator = actors.species(data::assets::actors::ELEVATOR).unwrap();
     assert_eq!(elevator.palette, None);
+    // Ceres Ridley's eye fades in over 64 steps, his body over 16 sets.
+    assert_eq!(actors.ceres_ridley.eye_steps.len(), 64);
+    assert_eq!(actors.ceres_ridley.body_sets.len(), 16);
     for &(id, name) in &SPECIES {
         assert_eq!(
             actors.species(id).map(|species| species.id),
@@ -127,4 +130,51 @@ fn the_beacon_takes_the_first_six_colours_of_each_sixteen_byte_row() {
         let expected: Vec<_> = (0..6).map(|colour| Colour(row * 0x100 + colour)).collect();
         assert_eq!(set.to_vec(), expected, "row {row}");
     }
+}
+
+#[test]
+fn ridleys_eye_steps_hold_the_sets_they_name_and_his_body_its_sixteen_sets() {
+    // Invented words: set s's colour c is s × 100h + c, so a wrong stride or count shows.
+    let sets = |colours: u16| -> Vec<u8> {
+        (0..16u16)
+            .flat_map(|set| (0..colours).map(move |colour| set * 0x100 + colour))
+            .flat_map(u16::to_le_bytes)
+            .collect()
+    };
+    let mut image = image(EYE_STEPS, &[2, 0, 2, END_OF_STEPS]);
+    for (at, bytes) in [(EYE_SETS, sets(3)), (BODY_SETS, sets(11))] {
+        let offset = Lorom::new(&image).file_offset(at).unwrap();
+        image[offset..][..bytes.len()].copy_from_slice(&bytes);
+    }
+    let set = |set: u16, colours: u16| -> Vec<_> {
+        (0..colours)
+            .map(|colour| Colour(set * 0x100 + colour))
+            .collect()
+    };
+    let ridley = ceres_ridley_colours(Lorom::new(&image)).unwrap();
+    let steps: Vec<_> = ridley.eye_steps.iter().map(|step| step.to_vec()).collect();
+    assert_eq!(steps, [set(2, 3), set(0, 3), set(2, 3)]);
+    assert_eq!(ridley.body_sets.len(), 16);
+    assert_eq!(ridley.body_sets[15].to_vec(), set(15, 11));
+
+    // A step naming a set past the sixteen, or no step at all, is refused.
+    for steps in [[16, END_OF_STEPS], [END_OF_STEPS, 0]] {
+        let offset = Lorom::new(&image).file_offset(EYE_STEPS).unwrap();
+        image[offset..][..2].copy_from_slice(&steps);
+        assert_eq!(
+            ceres_ridley_colours(Lorom::new(&image)),
+            Err(ActorsError::EyeSteps)
+        );
+    }
+    // Steps naming sets with no end byte before the eye's sets are refused, though the
+    // sets' bytes would read as more steps and an end byte comes later.
+    let offset = Lorom::new(&image).file_offset(EYE_STEPS).unwrap();
+    let space = usize::from(EYE_SETS.offset - EYE_STEPS.offset);
+    image[offset..][..space].fill(1);
+    let after = Lorom::new(&image).file_offset(BODY_SETS).unwrap() + 2 * 11 * 16;
+    image[after] = END_OF_STEPS;
+    assert_eq!(
+        ceres_ridley_colours(Lorom::new(&image)),
+        Err(ActorsError::EyeSteps)
+    );
 }

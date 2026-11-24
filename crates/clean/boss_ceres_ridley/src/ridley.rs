@@ -1,20 +1,23 @@
-//! Ceres Ridley as she enters his room: placed at his place in the dark with the baby in his
-//! hold, and waiting a fixed while once the door's passage is over, until he wakes. His fight
-//! from his waking on is a later piece's.
+//! Ceres Ridley as she enters his room and as he wakes: placed at his place in the dark with the
+//! baby in his hold, waiting a fixed while once the door's passage is over, then waking: his eye
+//! lights up, his body fades in, and tangible he roars before he takes off. His flight is a
+//! later piece's.
 //!
 //! The caller holds a [`CeresRidley`] between frames and steps it on the frame the room places
 //! him ([`CeresRidley::place`]) and on each frame he runs ([`CeresRidley::run`]): whether a
-//! door's passage is under way and the random number are all he reads. On a frame he
-//! doesn't run the caller doesn't step him, and nothing of him or the baby changes.
+//! door's passage is under way, the random number and his content are all he reads. On a frame
+//! he doesn't run the caller doesn't step him, and nothing of him or the baby changes.
 
 use core::num::Wrapping;
 
 use types::{Pair, Px};
 
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
-use crate::ridley_wait::RidleyWait;
+use crate::ridley_phase::{FightMusic, RidleyPhase, RoarSound};
+use crate::roar::RidleyLook;
 use crate::rules::Rules;
 use crate::station::Stage;
+use crate::waking::{BodyColours, EyeColours, RidleyContent};
 
 /// `RidleyPlaced`: his place, whatever the room's content says.
 const PLACE: Pair<Px> = Pair {
@@ -22,36 +25,17 @@ const PLACE: Pair<Px> = Pair {
     y: Wrapping(169),
 };
 
-/// Where he is in his waiting. Listed alphabetically; the order means nothing.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RidleyPhase {
-    /// His waiting is over: a later piece runs him.
-    Awake,
-    /// Placed, the door's passage into his room still under way.
-    Holding,
-    /// Waiting in the dark, the passage over.
-    Waiting {
-        /// The runs left before the one he wakes on.
-        wait: RidleyWait,
-    },
-}
-
-/// The figure he is drawn with as he waits. Which sprites it is belongs to his content.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RidleyLook {
-    /// At rest, facing left.
-    Rest,
-}
-
-/// Ceres Ridley as she enters his room: the state a caller holds from one frame to the next.
+/// Ceres Ridley in his room: the state a caller holds from one frame to the next.
 ///
-/// He is shown and passable: the framework draws his look at his position, in colours that stay
-/// black until he wakes; she, her touch and her shots go through him, and he doesn't hurt her.
+/// He is shown and never stops her motion: the framework draws his look at his position, in
+/// colours that stay black until he wakes. Until he turns tangible (`RidleyPhase::tangible`),
+/// her touch and her shots go through him too.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CeresRidley {
-    /// Where he is in his waiting.
+    /// Where he is, from his placing to his take-off.
     pub phase: RidleyPhase,
-    /// The figure he is drawn with; none before his first run.
+    /// The figure he is drawn with; none before his first run, and none from his take-off on,
+    /// when his next part gives it.
     pub look: Option<RidleyLook>,
     /// Where he is drawn and the baby held, in whole pixels.
     pub position: Pair<Px>,
@@ -129,6 +113,14 @@ pub struct RidleyRun {
     pub cry: Option<BabyCry>,
     /// The colour set the screen takes in the baby's palette, if any.
     pub colours: Option<BabyColours>,
+    /// The eye's colour set the screen takes, if any (`EyeFadesIn`).
+    pub eye_colours: Option<EyeColours>,
+    /// The body's colour set the screen takes, if any (`BodyFadesIn`).
+    pub body_colours: Option<BodyColours>,
+    /// The fight's music, for audio, on the run he turns tangible (`BodyFadesIn`).
+    pub music: Option<FightMusic>,
+    /// The roar's sound, for audio, on the run it is heard (`Roars`).
+    pub roar: Option<RoarSound>,
 }
 
 /// A look drawn at a position.
@@ -153,7 +145,8 @@ pub struct RidleyDrawing {
 impl CeresRidley {
     /// He is shown: the framework draws his look at his position.
     pub const SHOWN: bool = true;
-    /// He is passable: she, her touch and her shots go through him.
+    /// He never stops her motion; whether her touch and her shots meet him is whether he is
+    /// tangible (`RidleyPhase::tangible`).
     pub const SOLID: bool = false;
 
     /// `RidleyPlaced`: the room places him as she enters, unless he is beaten, when he isn't
@@ -182,21 +175,33 @@ impl CeresRidley {
     }
 
     /// One run of him, on a frame he runs, reading whether a door's passage is under way as he
-    /// runs (the door passage) and the frame's random number, as the doors read it. He waits
-    /// (`RidleyWaits`), takes his look `Rest`, and the baby runs in his hold (`BabyHeld`,
-    /// `BabyFidgets`, `BabyCries`).
+    /// runs (the door passage), the frame's random number, as the doors read it, and his
+    /// content. He moves on by his phase (`RidleyWaits`, `EyeFadesIn`, `BodyFadesIn`,
+    /// `ReadyToRoar`, `Roars`) and takes its look, and the baby runs in his hold, whatever his
+    /// phase (`BabyHeld`, `BabyFidgets`, `BabyCries`). His position doesn't change.
     #[must_use]
-    pub fn run(self, passage_under_way: bool, random: u16, rules: &Rules) -> RidleyRun {
+    pub fn run(
+        self,
+        passage_under_way: bool,
+        random: u16,
+        content: &RidleyContent,
+        rules: &Rules,
+    ) -> RidleyRun {
         let baby = self.baby.run(self.position, random);
+        let phase = self.phase.run(passage_under_way, content, rules);
         RidleyRun {
             ridley: Self {
-                phase: self.phase.waited(passage_under_way, rules),
-                look: Some(RidleyLook::Rest),
+                phase: phase.phase,
+                look: phase.look,
                 baby: baby.baby,
                 ..self
             },
             cry: baby.cry,
             colours: baby.colours,
+            eye_colours: phase.eye,
+            body_colours: phase.body,
+            music: phase.music,
+            roar: phase.roar,
         }
     }
 
@@ -214,25 +219,6 @@ impl CeresRidley {
                 .look()
                 .zip(self.baby.position)
                 .map(|(look, position)| Drawn { look, position }),
-        }
-    }
-}
-
-impl RidleyPhase {
-    /// `RidleyWaits`: he holds while a door's passage is under way; once it is over he starts
-    /// his wait, the first frame counted, and counts it down a run at a time; on the run he
-    /// finds it at 0 he wakes. So he wakes on the `w + 1`-th run after the passage. Awake, a
-    /// later piece runs him, and this one leaves him awake.
-    fn waited(self, passage_under_way: bool, rules: &Rules) -> Self {
-        match self {
-            Self::Holding if passage_under_way => Self::Holding,
-            Self::Holding => Self::Waiting {
-                wait: rules.wake.first_count(),
-            },
-            Self::Waiting { wait } => wait
-                .counted_down()
-                .map_or(Self::Awake, |wait| Self::Waiting { wait }),
-            Self::Awake => Self::Awake,
         }
     }
 }

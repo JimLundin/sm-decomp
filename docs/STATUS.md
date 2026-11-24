@@ -178,8 +178,17 @@ at once, compared as `doors.colours.screen`, and its cry is produced and not com
 drawing, his look, the baby's and the doors he draws closed, is produced for drawing and not
 compared. The run compares whether he is placed and his phase, wait, look, position and the
 baby's routine, runs and position (`ridley.phase`, `ridley.baby.routine`) at every cut whose
-frame of work finished. His waking is a later piece's: a frame he would run awake stops the run
-(`Fault::RidleyAwake`). Her going backwards, which the camera reads, is her skid or her moonwalk
+frame of work finished. His waking (boss-ceres-ridley §13) runs in the played frame. His content,
+the eye's 64 steps and the body's 16 colour sets, is imported and checked once. The eye's set
+goes to the screen at once on colours 12 to 14 of sprite row 7 (the body's would go to colours 1
+to 11 of rows 7 and 1), compared as `doors.colours.screen`; the run also compares his count,
+runs, the roar's figure and its runs, his look, and whether he is tangible, moving and roaring,
+read from his slot's properties and his words. What is played is his eye's fade, its first 26 of
+64 steps (room 6's cuts 513 to 538). The body's fade, his wait, his roar, his turning tangible,
+moving and roaring, and the two refusals (`Fault::RidleyTangible`, his tail's touch being part
+4b's, and `Fault::RidleyFlying`, part 4c's) are reached by no played cut: they hold by the
+vectors and the production tests only. The fight's music and the roar are produced and not
+compared. Her going backwards, which the camera reads, is her skid or her moonwalk
 (world-camera's `LeadingHer`); room 6's moonwalk at its left edge is the first played frame
 that tells the moonwalk apart, at cut 352.
 
@@ -196,12 +205,12 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 512 from its
-seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,136 cuts, through
-rooms 2 to 5 and on to cut 512 of `chain-any-0006-E0B5`; from `chain-any-0002-DF8D` they hold
-1,724 cuts, from `chain-any-0003-DFD7` 1,442, from `chain-any-0004-E021` 1,097 and from
-`chain-any-0005-E06B` 833, each to the same stop. That stop is Ridley waking at room 6's cut 512:
-the next frame he runs is his fight's, a later piece (`RidleyAwake`).
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 538 from its
+seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,162 cuts, through
+rooms 2 to 5 and on to cut 538 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,468;
+from her arrival (`any-ceres-arrival`, below) they hold 2,385. Each stops at room 6's cut 539 in
+`movement.pose`: her crouched turn, begun at 535, ends a frame later in production than in the
+record, a samus-movement case whose amendment is specced and imported (knockback's round).
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 

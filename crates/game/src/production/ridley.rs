@@ -1,18 +1,28 @@
-//! Ceres Ridley as she enters his room (boss-ceres-ridley part 3), in the played frame: what his
-//! placing hands the HUD, and the baby's colours on the screen.
+//! Ceres Ridley in the played frame (boss-ceres-ridley parts 3 and 4a): what his placing hands
+//! the HUD, his content in the model's terms, and the baby's colours and his own on the screen.
 //!
 //! He runs first of the room's enemies, on each frame they run; the door of his room runs
 //! after him. Fetching his room's contents places him.
 
-use boss_ceres_ridley::{BabyColours, Boss, CeresDoor, CeresRidley, RidleyDrawing};
+use boss_ceres_ridley::{
+    BabyColours, BodyColours, Boss, CeresDoor, CeresRidley, EyeColours, FadeSets, RidleyContent,
+    RidleyDrawing,
+};
 use data::assets::actors::{BabyShades, CeresRidleyColours, SpriteRow};
-use data::assets::art::ROW_COLOURS;
+use data::assets::art::{Colour, ROW_COLOURS};
 use world_doors::Palette;
 
 /// The screen's first sprite row: the sprite rows follow the eight background rows.
 const SPRITE_ROW: usize = 8;
+/// The palette he is drawn in, the doors' in his room.
+const HIS_ROW: SpriteRow = SpriteRow::CERES_DOORS;
+/// The first of his palette's colours his eye's sets cover.
+const EYE_FIRST: usize = 12;
+/// The first colour of a sprite row that shows: colour 0 is transparent.
+const FIRST_SHOWN: usize = 1;
 
-/// A colour of the baby's content has more than 15 bits.
+/// A colour of his content or the baby's has more than 15 bits, or one of his fades has no
+/// colour set.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ColourFault;
 
@@ -21,6 +31,48 @@ pub struct ColourFault;
 pub const fn encountered(boss: Boss) -> interface_hud::Boss {
     match boss {
         Boss::CeresRidley => interface_hud::Boss::RidleyInCeres,
+    }
+}
+
+/// His content as the model reads it: the eye's steps and the body's colour sets, imported.
+///
+/// # Errors
+/// [`ColourFault`] for a colour past 15 bits, or a fade with no set.
+pub fn content(colours: &CeresRidleyColours) -> Result<RidleyContent, ColourFault> {
+    Ok(RidleyContent {
+        eye_steps: fade(&colours.eye_steps, EyeColours)?,
+        body_sets: fade(&colours.body_sets, BodyColours)?,
+    })
+}
+
+/// A fade's sets, each colour checked, in the model's terms.
+fn fade<const N: usize, T: Copy>(
+    sets: &[[Colour; N]],
+    set: fn([types::Colour; N]) -> T,
+) -> Result<FadeSets<T>, ColourFault> {
+    let sets = sets
+        .iter()
+        .map(|shades| checked(shades).map(set))
+        .collect::<Result<Vec<_>, _>>()?;
+    FadeSets::new(sets).ok_or(ColourFault)
+}
+
+/// These content colours as the screen's, each within 15 bits.
+fn checked<const N: usize>(shades: &[Colour; N]) -> Result<[types::Colour; N], ColourFault> {
+    let mut colours = [types::Colour::BLACK; N];
+    for (colour, shade) in colours.iter_mut().zip(shades) {
+        *colour = types::Colour::new(shade.0).ok_or(ColourFault)?;
+    }
+    Ok(colours)
+}
+
+/// The screen shows `colours` at once in sprite row `row`, from its colour `from` on.
+fn show(palette: &mut Palette, row: SpriteRow, from: usize, colours: &[types::Colour]) {
+    let mut rows = palette.screen.as_chunks_mut::<ROW_COLOURS>().0.iter_mut();
+    if let Some(row) = rows.nth(SPRITE_ROW.saturating_add(usize::from(row.get()))) {
+        for (colour, &shown) in row.iter_mut().skip(from).zip(colours) {
+            *colour = shown;
+        }
     }
 }
 
@@ -40,16 +92,21 @@ pub fn show_baby(
         BabyColours::Glow3 => &content.glow3,
         BabyColours::Rest => &content.rest,
     };
-    let mut screen = palette.screen;
-    let mut rows = screen.as_chunks_mut::<ROW_COLOURS>().0.iter_mut();
-    if let Some(row) = rows.nth(SPRITE_ROW + usize::from(SpriteRow::BABY.get())) {
-        // Colour 0 of a sprite row is transparent; the set is colours 1 to 15.
-        for (colour, shade) in row.iter_mut().skip(1).zip(shades) {
-            *colour = types::Colour::new(shade.0).ok_or(ColourFault)?;
-        }
-    }
-    palette.screen = screen;
+    show(palette, SpriteRow::BABY, FIRST_SHOWN, &checked(shades)?);
     Ok(())
+}
+
+/// `EyeFadesIn`: the screen shows the eye's set at once on colours 12 to 14 of his palette.
+pub fn show_eye(colours: EyeColours, palette: &mut Palette) {
+    show(palette, HIS_ROW, EYE_FIRST, &colours.0);
+}
+
+/// `BodyFadesIn`: the screen shows the body's set at once on colours 1 to 11 of his palette
+/// and of his second.
+pub fn show_body(colours: BodyColours, palette: &mut Palette) {
+    for row in [HIS_ROW, SpriteRow::RIDLEY_SECOND] {
+        show(palette, row, FIRST_SHOWN, &colours.0);
+    }
 }
 
 /// What Ridley's drawing draws: him and the baby, and the door of his room while it is drawn

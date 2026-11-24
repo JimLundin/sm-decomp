@@ -4,19 +4,20 @@
 
 #[cfg(test)]
 mod vectors {
-    use core::num::{NonZeroU16, Wrapping};
+    use core::num::{NonZeroU8, NonZeroU16, Wrapping};
 
     use boss_ceres_ridley::{
         AlternatingLook, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
-        BehaviourId, Boss, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind, DoorPalette,
-        FadeSteps, FidgetFigure, Figure, FigureLook, GlowFigure, Inputs, Lights, LightsInputs, Pad,
-        PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase, Quarter, RidleyLook, RidleyPhase,
-        RidleyWait, Rules, Shake, ShakeLayers, ShakeStart, ShownFigure, Stage, Wait, WakeWait,
-        catalogue,
+        BehaviourId, BodyColours, Boss, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind,
+        DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Figure, FigureLook, GlowFigure,
+        Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase,
+        Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyWait, RoarFigure,
+        RoarWait, Rules, Shake, ShakeLayers, ShakeStart, ShownFigure, Stage, TimedRoarFigure, Wait,
+        WakeWait, catalogue,
     };
     use enum_map::Enum;
     use serde::Deserialize;
-    use types::{Checked, Pair, Px, Side};
+    use types::{Checked, Colour, Pair, Px, Side};
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/boss-ceres-ridley.toml");
 
@@ -55,6 +56,7 @@ mod vectors {
         ridley: Option<RidleyRow>,
         baby: Option<BabyRow>,
         passing: Option<bool>,
+        content: Option<ContentRow>,
         ridley_after: Option<RidleyAfter>,
         // The pad and the cover.
         arrival: Option<[u16; 2]>,
@@ -84,6 +86,7 @@ mod vectors {
                 || self.ridley.is_some()
                 || self.baby.is_some()
                 || self.passing.is_some()
+                || self.content.is_some()
                 || self.ridley_after.is_some()
         }
 
@@ -187,6 +190,7 @@ mod vectors {
         rhythm: Option<u16>,
         slam: Option<u16>,
         wake: Option<u16>,
+        pace: Option<u8>,
     }
 
     #[derive(Deserialize)]
@@ -536,6 +540,9 @@ mod vectors {
             wake: row.wake.map_or(reference.wake, |frames| {
                 WakeWait::new(frames).expect("a wake is 1 to 32,768 frames")
             }),
+            pace: row.pace.map_or(reference.pace, |runs| {
+                NonZeroU8::new(runs).expect("a pace is 1 to 255 runs")
+            }),
         }
     }
 
@@ -775,8 +782,47 @@ mod vectors {
     struct RidleyRow {
         phase: RidleyPhaseName,
         wait: Option<u16>,
+        steps: Option<u16>,
+        sets: Option<u16>,
+        runs: Option<u8>,
+        figure: Option<u8>,
+        figure_runs: Option<u8>,
         look: Option<RidleyLookName>,
         position: [u16; 2],
+    }
+
+    impl RidleyRow {
+        /// What its phase carries, as the vector names it.
+        const fn cells(&self) -> PhaseCells {
+            PhaseCells {
+                wait: self.wait,
+                steps: self.steps,
+                sets: self.sets,
+                runs: self.runs,
+                figure: self.figure,
+                figure_runs: self.figure_runs,
+            }
+        }
+    }
+
+    /// What a phase of Ridley carries, each absent where the phase carries none.
+    #[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
+    struct PhaseCells {
+        wait: Option<u16>,
+        steps: Option<u16>,
+        sets: Option<u16>,
+        runs: Option<u8>,
+        figure: Option<u8>,
+        figure_runs: Option<u8>,
+    }
+
+    /// The invented content of a part-4a vector: the eye's steps, each the number of the set it
+    /// names, and how many sets the body's fade has.
+    #[derive(Deserialize, Clone)]
+    #[serde(deny_unknown_fields)]
+    struct ContentRow {
+        eye_steps: Vec<u16>,
+        body_sets: u16,
     }
 
     #[derive(Deserialize)]
@@ -805,6 +851,11 @@ mod vectors {
         present: Option<bool>,
         phase: Option<RidleyPhaseName>,
         wait: Option<u16>,
+        steps: Option<u16>,
+        sets: Option<u16>,
+        runs: Option<u8>,
+        figure: Option<u8>,
+        figure_runs: Option<u8>,
         look: Option<RidleyLookName>,
         position: Option<[u16; 2]>,
         baby: Option<BabyAfter>,
@@ -817,18 +868,32 @@ mod vectors {
         room_colours: Option<bool>,
         cry: Option<bool>,
         colours: Option<BabyColoursName>,
+        tangible: Option<bool>,
+        moving: Option<bool>,
+        roaring: Option<bool>,
+        music: Option<bool>,
+        roar: Option<bool>,
+        eye_colours: Option<u16>,
+        body_colours: Option<u16>,
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
     enum RidleyPhaseName {
         Awake,
+        BodyFading,
+        EyeFading,
+        Flying,
         Holding,
+        ReadyToRoar,
+        Roaring,
         Waiting,
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
     enum RidleyLookName {
+        Open,
         Rest,
+        Wide,
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -853,32 +918,194 @@ mod vectors {
         Rest,
     }
 
+    /// The roar's first four figures, in their order.
+    const TIMED_ROAR_FIGURES: [TimedRoarFigure; 4] = [
+        TimedRoarFigure::First,
+        TimedRoarFigure::Second,
+        TimedRoarFigure::Third,
+        TimedRoarFigure::Fourth,
+    ];
+
+    /// The roar's fifth figure, held, with no runs.
+    const FIFTH_ROAR_FIGURE: u8 = 5;
+
+    const fn roar_figure_number(figure: TimedRoarFigure) -> u8 {
+        match figure {
+            TimedRoarFigure::First => 1,
+            TimedRoarFigure::Second => 2,
+            TimedRoarFigure::Third => 3,
+            TimedRoarFigure::Fourth => 4,
+        }
+    }
+
+    /// The roar's figure a vector's `figure` and `figure_runs` name.
+    fn roar_figure(number: Option<u8>, runs: Option<u8>) -> RoarFigure {
+        let number = number.expect("a roar names its figure");
+        if number == FIFTH_ROAR_FIGURE {
+            return RoarFigure::Fifth;
+        }
+        let figure = TIMED_ROAR_FIGURES
+            .into_iter()
+            .find(|&figure| roar_figure_number(figure) == number)
+            .unwrap_or_else(|| panic!("figure {number} is not 1 to 5"));
+        RoarFigure::Timed(
+            ShownFigure::new(figure, runs.expect("figures 1 to 4 name their runs"))
+                .expect("runs are 1 to the figure's length"),
+        )
+    }
+
+    fn roar_figure_cells(figure: RoarFigure) -> (Option<u8>, Option<u8>) {
+        match figure {
+            RoarFigure::Timed(shown) => {
+                (Some(roar_figure_number(shown.figure())), Some(shown.runs()))
+            }
+            RoarFigure::Fifth => (Some(FIFTH_ROAR_FIGURE), None),
+        }
+    }
+
+    /// A wait of `ReadyToRoar` or `Roaring`, as the vector names it.
+    fn runs_left(wait: Option<u16>) -> u8 {
+        wait.and_then(|runs| u8::try_from(runs).ok())
+            .expect("his wait is named, in runs, 0 to 255")
+    }
+
+    /// Builds the phase a vector's `ridley` names; reading it back must give the same cells, so
+    /// each phase names only what it carries.
     fn ridley_phase(row: &RidleyRow) -> RidleyPhase {
-        let waiting = row.phase == RidleyPhaseName::Waiting;
-        assert_eq!(waiting, row.wait.is_some(), "a wait for Waiting only");
-        match row.phase {
+        let cells = row.cells();
+        let phase = match row.phase {
             RidleyPhaseName::Awake => RidleyPhase::Awake,
+            RidleyPhaseName::BodyFading => RidleyPhase::BodyFading {
+                sets: cells.sets.expect("a body's fade names its sets"),
+                runs: cells.runs.expect("a body's fade names its runs"),
+            },
+            RidleyPhaseName::EyeFading => RidleyPhase::EyeFading {
+                steps: cells
+                    .steps
+                    .and_then(NonZeroU16::new)
+                    .expect("an eye's fade names its steps, 1 up"),
+            },
+            RidleyPhaseName::Flying => RidleyPhase::Flying,
             RidleyPhaseName::Holding => RidleyPhase::Holding,
+            RidleyPhaseName::ReadyToRoar => RidleyPhase::ReadyToRoar {
+                wait: ReadyWait::new(runs_left(cells.wait)).expect("ready's wait is 0 to 4"),
+            },
+            RidleyPhaseName::Roaring => RidleyPhase::Roaring {
+                wait: RoarWait::new(runs_left(cells.wait)).expect("the roar's wait is 0 to 252"),
+                figure: roar_figure(cells.figure, cells.figure_runs),
+            },
             RidleyPhaseName::Waiting => RidleyPhase::Waiting {
-                wait: row
+                wait: cells
                     .wait
                     .and_then(RidleyWait::new)
                     .expect("his wait is 0 to 32,767"),
             },
+        };
+        assert_eq!(
+            ridley_phase_row(phase),
+            (row.phase, cells),
+            "a phase names only what it carries"
+        );
+        phase
+    }
+
+    fn ridley_phase_row(phase: RidleyPhase) -> (RidleyPhaseName, PhaseCells) {
+        let none = PhaseCells::default();
+        match phase {
+            RidleyPhase::Awake => (RidleyPhaseName::Awake, none),
+            RidleyPhase::BodyFading { sets, runs } => (
+                RidleyPhaseName::BodyFading,
+                PhaseCells {
+                    sets: Some(sets),
+                    runs: Some(runs),
+                    ..none
+                },
+            ),
+            RidleyPhase::EyeFading { steps } => (
+                RidleyPhaseName::EyeFading,
+                PhaseCells {
+                    steps: Some(steps.get()),
+                    ..none
+                },
+            ),
+            RidleyPhase::Flying => (RidleyPhaseName::Flying, none),
+            RidleyPhase::Holding => (RidleyPhaseName::Holding, none),
+            RidleyPhase::ReadyToRoar { wait } => (
+                RidleyPhaseName::ReadyToRoar,
+                PhaseCells {
+                    wait: Some(wait.runs().into()),
+                    ..none
+                },
+            ),
+            RidleyPhase::Roaring { wait, figure } => {
+                let (figure, figure_runs) = roar_figure_cells(figure);
+                (
+                    RidleyPhaseName::Roaring,
+                    PhaseCells {
+                        wait: Some(wait.runs().into()),
+                        figure,
+                        figure_runs,
+                        ..none
+                    },
+                )
+            }
+            RidleyPhase::Waiting { wait } => (
+                RidleyPhaseName::Waiting,
+                PhaseCells {
+                    wait: Some(wait.runs()),
+                    ..none
+                },
+            ),
         }
     }
 
-    fn ridley_phase_row(phase: RidleyPhase) -> (RidleyPhaseName, Option<u16>) {
-        match phase {
-            RidleyPhase::Awake => (RidleyPhaseName::Awake, None),
-            RidleyPhase::Holding => (RidleyPhaseName::Holding, None),
-            RidleyPhase::Waiting { wait } => (RidleyPhaseName::Waiting, Some(wait.runs())),
+    const fn ridley_look(name: RidleyLookName) -> RidleyLook {
+        match name {
+            RidleyLookName::Open => RidleyLook::Open,
+            RidleyLookName::Rest => RidleyLook::Rest,
+            RidleyLookName::Wide => RidleyLook::Wide,
         }
     }
 
     const fn ridley_look_name(look: RidleyLook) -> RidleyLookName {
         match look {
+            RidleyLook::Open => RidleyLookName::Open,
             RidleyLook::Rest => RidleyLookName::Rest,
+            RidleyLook::Wide => RidleyLookName::Wide,
+        }
+    }
+
+    // ------------------------------------------------------------ Ridley's content
+
+    /// The colour a vector's invented content gives the set of this number: every colour of
+    /// the set is it, so the set shown reads back as its number.
+    fn numbered_colour(number: u16) -> Colour {
+        Colour::new(number).expect("a set's number is a colour")
+    }
+
+    /// The content a vector's `content` names: each eye step holds the set it names, and the
+    /// body's sets are numbered from 1.
+    fn ridley_content(row: &ContentRow) -> RidleyContent {
+        let eye_steps = row
+            .eye_steps
+            .iter()
+            .map(|&set| EyeColours(core::array::from_fn(|_| numbered_colour(set))))
+            .collect();
+        let body_sets = (1..=row.body_sets)
+            .map(|set| BodyColours(core::array::from_fn(|_| numbered_colour(set))))
+            .collect();
+        RidleyContent {
+            eye_steps: FadeSets::new(eye_steps).expect("the eye has at least one step"),
+            body_sets: FadeSets::new(body_sets).expect("the body has at least one set"),
+        }
+    }
+
+    /// The content part 3's vectors run with, which name none: a stand-in of one eye step and
+    /// one body set, which part 3's phases never read.
+    fn stand_in_content() -> ContentRow {
+        ContentRow {
+            eye_steps: vec![0],
+            body_sets: 1,
         }
     }
 
@@ -945,10 +1172,15 @@ mod vectors {
 
     /// Ridley's state as a vector's `ridley_after` reads it, and that he is shown and passable.
     fn ridley_after(ridley: CeresRidley) -> RidleyAfter {
-        let (phase, wait) = ridley_phase_row(ridley.phase);
+        let (phase, cells) = ridley_phase_row(ridley.phase);
         RidleyAfter {
             phase: Some(phase),
-            wait,
+            wait: cells.wait,
+            steps: cells.steps,
+            sets: cells.sets,
+            runs: cells.runs,
+            figure: cells.figure,
+            figure_runs: cells.figure_runs,
             look: ridley.look.map(ridley_look_name),
             position: Some(point_row(ridley.position)),
             baby: Some(baby_after(ridley.baby)),
@@ -961,7 +1193,12 @@ mod vectors {
     /// `RidleyPlaced`: the room places him, or doesn't once he is beaten; either way the vector
     /// reads each of the placing's outputs.
     fn ridley_placed(vector: &Vector) -> RidleyAfter {
-        assert!(vector.ridley.is_none() && vector.baby.is_none() && vector.passing.is_none());
+        assert!(
+            vector.ridley.is_none()
+                && vector.baby.is_none()
+                && vector.passing.is_none()
+                && vector.content.is_none()
+        );
         assert!(
             vector.random.is_none(),
             "the placing reads no random number"
@@ -988,7 +1225,8 @@ mod vectors {
         }
     }
 
-    /// One run of him and the baby from the vector's `ridley` and `baby`.
+    /// One run of him and the baby from the vector's `ridley` and `baby`, with its content. A
+    /// part-4a vector, which names its content, reads his waking's outputs too.
     fn ridley_run(vector: &Vector) -> RidleyAfter {
         assert!(
             vector.beaten.is_none(),
@@ -1001,22 +1239,42 @@ mod vectors {
             .expect("a run starts from the baby's state");
         let ridley = CeresRidley {
             phase: ridley_phase(row),
-            look: row.look.map(|RidleyLookName::Rest| RidleyLook::Rest),
+            look: row.look.map(ridley_look),
             position: point(row.position),
             baby: Baby {
                 routine: routine(baby),
                 position: None,
             },
         };
+        let content = vector.content.clone().unwrap_or_else(stand_in_content);
         let run = ridley.run(
             vector.passing.unwrap_or(false),
             vector.random(),
+            &ridley_content(&content),
             &rules(&vector.rules),
         );
-        RidleyAfter {
+        let part_3 = RidleyAfter {
             cry: Some(run.cry.is_some()),
             colours: run.colours.map(baby_colours_name),
             ..ridley_after(run.ridley)
+        };
+        if vector.content.is_none() {
+            return part_3;
+        }
+        let phase = run.ridley.phase;
+        RidleyAfter {
+            tangible: Some(phase.tangible()),
+            moving: Some(phase.moving()),
+            roaring: Some(phase.roaring()),
+            music: Some(run.music.is_some()),
+            roar: Some(run.roar.is_some()),
+            eye_colours: run
+                .eye_colours
+                .map(|EyeColours([colour, ..])| colour.bits()),
+            body_colours: run
+                .body_colours
+                .map(|BodyColours([colour, ..])| colour.bits()),
+            ..part_3
         }
     }
 

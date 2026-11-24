@@ -1,7 +1,7 @@
-//! The station's tuning values, the doors', the shaft's and Ridley's: every number a Parameter
-//! entry of the spec lists.
+//! The station's tuning values, the doors', the shaft's and Ridley's, his waking's included:
+//! every number a Parameter entry of the spec lists.
 
-use core::num::{NonZeroU16, Wrapping};
+use core::num::{NonZeroU8, NonZeroU16, Wrapping};
 
 use types::Px;
 
@@ -50,6 +50,10 @@ const SLAM: Wait = Wait::new(SLAM_FRAMES).expect("the slam's hold is 2 frames, n
 const WAKE_FRAMES: u16 = 512;
 /// `RidleyWaits`: Ridley's wait, 512 frames.
 const WAKE: WakeWait = WakeWait::new(WAKE_FRAMES).expect("the wait is 512, from 1 to 32,768");
+/// `BodyFadesIn`: the pace, in runs a set.
+const PACE_RUNS: u8 = 2;
+/// `BodyFadesIn`: the pace, 2 runs a set.
+const PACE: NonZeroU8 = NonZeroU8::new(PACE_RUNS).expect("the pace is 2 runs, not 0");
 
 /// The station's tuning values. Its default holds the spec's values; another value is an
 /// adjusted game.
@@ -81,13 +85,16 @@ pub struct Rules {
     pub slam: Wait,
     /// `RidleyWaits`: how long Ridley waits in the dark once the passage into his room is over.
     pub wake: WakeWait,
+    /// `BodyFadesIn`: the pace, the runs his body shows each of its colour sets for as it fades
+    /// in; a rule from 1 to 255 runs.
+    pub pace: NonZeroU8,
 }
 
 impl Default for Rules {
     /// The spec's values: reach 48 px, poll 2 frames, hold 5 frames, a strong shake below 128 in
     /// 4,096, the small shake 1 px for 2 frames and the strong 3 px for 4; the pad's wait 60
     /// frames, the floor 72 px and the beacon's rhythm 8 frames a step; the slam's hold 2
-    /// frames and Ridley's wait 512 frames.
+    /// frames, Ridley's wait 512 frames and his body's pace 2 runs a set.
     fn default() -> Self {
         Self {
             reach: REACH,
@@ -101,6 +108,7 @@ impl Default for Rules {
             rhythm: RHYTHM,
             slam: SLAM,
             wake: WAKE,
+            pace: PACE,
         }
     }
 }

@@ -63,6 +63,14 @@ pub enum BehaviourId {
     BabyFidgets,
     /// At the end of each fidget the baby, one time in two, cries and glows.
     BabyCries,
+    /// Once awake his eye lights up out of the dark, a step each run.
+    EyeFadesIn,
+    /// Then his body fades in, a set every few runs; with the last he turns tangible.
+    BodyFadesIn,
+    /// Tangible, he holds still a moment before he roars.
+    ReadyToRoar,
+    /// He roars, shuts his jaws and sits; then he takes off.
+    Roars,
 }
 
 /// A catalogue entry.
@@ -80,8 +88,9 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// How many entries the spec has: the doors' eleven, the shaft's seven and Ridley's room's ten.
-const ENTRIES: usize = 28;
+/// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten and
+/// his waking's four.
+const ENTRIES: usize = 32;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -303,6 +312,36 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
     Behaviour {
         id: BehaviourId::BabyCries,
         summary: "at the end of each fidget the baby, one time in two, cries and glows",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::EyeFadesIn,
+        summary: "once awake his eye lights up out of the dark, one step of its fade each run",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BodyFadesIn,
+        summary: "then his body fades in from black, one colour set every few runs; with \
+                          its last set he turns tangible and the fight's music starts",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ReadyToRoar,
+        summary: "tangible, he holds still a moment before he roars",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Roars,
+        summary: "he opens his jaws and roars, shuts them, and sits until his roar's wait \
+                          runs out; then he takes off",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

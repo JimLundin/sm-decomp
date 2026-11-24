@@ -296,6 +296,7 @@ impl<'a> Run<'a> {
         let start = import::start::import(image.lorom())
             .map_err(|_| data_failure(None, "played new game's start"))?;
         let rooms = seed::rooms(&image)?;
+        let ridley = ridley::content(&rooms.actors.ceres_ridley)?;
         // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
         let (room, state) = if arrival::seed(&seed.wram)?.preparing() {
             start::admit(&seed.wram, &start, &rooms)?
@@ -314,6 +315,7 @@ impl<'a> Run<'a> {
                 hud: hud.pictures,
                 map: hud.map_of(area)?.clone(),
                 start_x: core::num::Wrapping(start.her.0),
+                ridley,
             },
             rules: played::Rules {
                 movement: samus_movement::Rules::default(),

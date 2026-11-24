@@ -40,6 +40,12 @@
 //! he hands the rest of the game ([`RidleyPlacing`]); a run, with the baby's cry and colours
 //! ([`RidleyRun`]).
 //!
+//! **Ceres Ridley wakes.** His waiting over, his eye lights up out of the dark, then his body
+//! fades in; with its last colours he turns tangible and the fight's music starts. A moment
+//! later he roars, shuts his jaws and sits a while before he takes off. The same
+//! [`CeresRidley::run`] carries him through it, reading his content ([`RidleyContent`]): the
+//! run answers with his eye's and body's colours, the fight's music and the roar's sound too.
+//!
 //! The tuning values of all of them are in [`Rules`], whose default holds the spec's values.
 
 mod baby;
@@ -53,13 +59,17 @@ mod pad;
 mod pad_wait;
 mod phase;
 mod ridley;
+mod ridley_phase;
 mod ridley_wait;
+mod roar;
 mod rules;
+mod shown;
 mod station;
+mod waking;
 
 pub use baby::{
     Baby, BabyColours, BabyCry, BabyFigure, BabyLook, BabyRoutine, BabyRun, FidgetFigure,
-    GlowFigure, ShownFigure,
+    GlowFigure,
 };
 pub use catalogue::{Behaviour, BehaviourId, catalogue};
 pub use door::{BOX_RADIUS, CeresDoor, DoorKind, OpeningSound, Placement, Run};
@@ -71,9 +81,13 @@ pub use pad::{Cover, Pad, PadAndCover, PadAndCoverFigures, PadAndCoverStep, PadF
 pub use pad_wait::PadWait;
 pub use phase::{Phase, Quarter, Wait};
 pub use ridley::{
-    Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyLook, RidleyPhase,
-    RidleyPlacing, RidleyRun, RoomColours, ShakeStop,
+    Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyPlacing, RidleyRun,
+    RoomColours, ShakeStop,
 };
+pub use ridley_phase::{FightMusic, RidleyPhase, RoarSound};
 pub use ridley_wait::{RidleyWait, WakeWait};
+pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
+pub use shown::{FigureLength, ShownFigure};
 pub use station::{ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeStart, Stage};
+pub use waking::{BodyColours, EyeColours, FadeSets, ReadyWait, RidleyContent, RoarWait, RunsLeft};

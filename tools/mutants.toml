@@ -641,3 +641,13 @@ after = "arrival: screens_arrival::Rules { rhythm: types::arrival::FadeFrames::N
 case = "played any-ceres-arrival 0 222"
 cut = 192
 field = "arrival.fade-count"
+
+[[fault]]
+name = "played-ridley-eye-not-shown"
+responsibility = "played"
+file = "crates/game/src/production/played/ridley.rs"
+before = "ridley::show_eye(colours, palette);"
+after = "let _ = colours;"
+case = "played chain-any-0006-E0B5 0 538"
+cut = 514
+field = "doors.colours.screen"

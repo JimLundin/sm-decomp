@@ -7,9 +7,9 @@
 //! beside their species' code. A room state's enemy population places the Ceres doors.
 
 use data::assets::actors::{
-    Actors, BLUE_BRINSTAR_FACE_BLOCK, BabyShades, BeaconColours, CERES_DOOR, CERES_RIDLEY,
-    CeresDoorColours, CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, GEEGA,
-    MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
+    Actors, BLUE_BRINSTAR_FACE_BLOCK, BeaconColours, CERES_DOOR, CERES_RIDLEY, CeresDoorColours,
+    CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, EyeShades, GEEGA, MORPH_BALL_EYE,
+    ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
 use data::assets::world::{CeresDoorKind, CeresDoorPlacement, Pair, Side};
@@ -60,6 +60,16 @@ const BABY_SETS: [RomAddress; 4] = [
     RomAddress::new(0xa6, 0xe22d),
     RomAddress::new(0xa6, 0xe24b),
 ];
+/// Ridley's eye's steps, a byte each naming one of the eye's colour sets, up to the byte that
+/// ends them; the eye's colour sets follow.
+const EYE_STEPS: RomAddress = RomAddress::new(0xa6, 0xe269);
+const END_OF_STEPS: u8 = 0xff;
+/// The eye's colour sets, each of 3 colours.
+const EYE_SETS: RomAddress = RomAddress::new(0xa6, 0xe2aa);
+/// The body's colour sets, each of 11 colours, in the order it shows them.
+const BODY_SETS: RomAddress = RomAddress::new(0xa6, 0xe30a);
+/// How many colour sets the eye and the body each have.
+const FADE_SETS: usize = 16;
 /// Where a bank's ROM half starts.
 const ROM_HALF: u16 = 0x8000;
 /// The bytes of a palette row: a word a colour.
@@ -74,6 +84,9 @@ pub enum ActorsError {
     Unregistered(RomAddress),
     /// A graphics set gives a species a palette row past the eight.
     Row(RomAddress),
+    /// Ridley's eye has no steps, its steps have no end byte before its sets, or a step names a
+    /// colour set past them.
+    EyeSteps,
 }
 
 impl From<AddressError> for ActorsError {
@@ -82,11 +95,13 @@ impl From<AddressError> for ActorsError {
     }
 }
 
-/// Every registered species' palette, the shared sprite palettes and the Ceres doors' colours.
+/// Every registered species' palette, the shared sprite palettes, the Ceres doors' colours and
+/// Ceres Ridley's.
 ///
 /// # Errors
 ///
-/// [`ActorsError::Address`] when a table is outside the image.
+/// [`ActorsError::Address`] when a table is outside the image, [`ActorsError::EyeSteps`] when
+/// Ridley's eye's steps don't each name one of its sets.
 pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
     let species = PLACES
         .iter()
@@ -229,18 +244,28 @@ pub fn graphics_set(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<EnemyGraphics>
     }
 }
 
-/// Ridley's room's colours in Ceres and the baby's four colour sets, each of colours 1 to 15.
-fn ceres_ridley_colours(rom: Lorom<'_>) -> Result<CeresRidleyColours, AddressError> {
-    let baby = |at: RomAddress| -> Result<BabyShades, AddressError> {
-        let bytes = rom.read(at, 2 * (ROW_COLOURS - 1))?;
-        let mut shades = [Colour::default(); ROW_COLOURS - 1];
-        for (shade, &word) in shades.iter_mut().zip(bytes.as_chunks::<2>().0) {
-            *shade = Colour(u16::from_le_bytes(word));
-        }
-        Ok(shades)
-    };
+/// Ridley's room's colours in Ceres, the baby's four colour sets, each of colours 1 to 15, and
+/// the sets his eye and his body fade in through, the eye's by its steps.
+fn ceres_ridley_colours(rom: Lorom<'_>) -> Result<CeresRidleyColours, ActorsError> {
     let [rest, glow1, glow2, glow3] = BABY_SETS;
+    let eye_sets: Vec<EyeShades> = colour_sets(rom, EYE_SETS)?;
+    // The steps and their end byte sit between the steps' start and the eye's sets.
+    let space = usize::from(EYE_SETS.offset.saturating_sub(EYE_STEPS.offset));
+    let bytes = rom.read(EYE_STEPS, space)?;
+    let end = bytes
+        .iter()
+        .position(|&step| step == END_OF_STEPS)
+        .ok_or(ActorsError::EyeSteps)?;
+    let eye_steps = bytes
+        .iter()
+        .take(end)
+        .map(|&step| eye_sets.get(usize::from(step)).copied())
+        .collect::<Option<Vec<_>>>()
+        .filter(|steps| !steps.is_empty())
+        .ok_or(ActorsError::EyeSteps)?;
     Ok(CeresRidleyColours {
+        eye_steps,
+        body_sets: colour_sets(rom, BODY_SETS)?,
         door: palette(rom, RIDLEY_ROOM)?,
         baby: palette(
             rom,
@@ -248,11 +273,34 @@ fn ceres_ridley_colours(rom: Lorom<'_>) -> Result<CeresRidleyColours, AddressErr
                 .advance(ROW_BYTES)
                 .ok_or(AddressError::PastEnd(RIDLEY_ROOM))?,
         )?,
-        rest: baby(rest)?,
-        glow1: baby(glow1)?,
-        glow2: baby(glow2)?,
-        glow3: baby(glow3)?,
+        rest: colour_set(rom, rest)?,
+        glow1: colour_set(rom, glow1)?,
+        glow2: colour_set(rom, glow2)?,
+        glow3: colour_set(rom, glow3)?,
     })
+}
+
+/// The colour set at `at`: `N` little-endian colour words.
+fn colour_set<const N: usize>(rom: Lorom<'_>, at: RomAddress) -> Result<[Colour; N], AddressError> {
+    let bytes = rom.read(at, N.saturating_mul(2))?;
+    let mut shades = [Colour::default(); N];
+    for (shade, &word) in shades.iter_mut().zip(bytes.as_chunks::<2>().0) {
+        *shade = Colour(u16::from_le_bytes(word));
+    }
+    Ok(shades)
+}
+
+/// The fade's [`FADE_SETS`] colour sets of `N` colours each, one after another from `at`.
+fn colour_sets<const N: usize>(
+    rom: Lorom<'_>,
+    at: RomAddress,
+) -> Result<Vec<[Colour; N]>, AddressError> {
+    (0..FADE_SETS)
+        .map(|set| {
+            let place = at.advance(N.saturating_mul(2).saturating_mul(set));
+            colour_set(rom, place.ok_or(AddressError::PastEnd(at))?)
+        })
+        .collect()
 }
 
 /// The palette row at `at`: 16 little-endian colour words.

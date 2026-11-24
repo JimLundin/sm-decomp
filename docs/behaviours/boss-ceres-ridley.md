@@ -836,3 +836,144 @@ this spec allows and read it back.
 - `Glow(11)` shown its 9 runs → `Fidget(0)`, 1 run, its colours `Rest` [K-glow-last]
 - So every 80 runs, one time in two, it cries and glows for 62 runs.
 - checked: oracle (recorded cases K6 to K9, every chance in the cached rows); constructed.
+
+## 13. Part 4a, Ceres Ridley wakes
+
+His waiting over (`RidleyWaits`), Ridley's eye lights up out of the dark: over about a second
+it brightens to its full colour and holds. Then his body fades in from black, a little every
+other frame, for about half a second. As his body reaches its full colours he turns tangible and
+the fight's music starts. A moment later he opens his jaws and roars, his jaws wide for over a
+second and a half, then shuts them and sits a while before he takes off. The baby goes on as
+part 3 says, held, fidgeting and now and then crying.
+
+**What this part reads and leaves.** It reads nothing beyond part 3's inputs (§12.3), the random
+number for the baby, and the content: his eye's steps and colour sets and his body's colour sets
+(§13.1). It hands the screen his colours, the enemy framework (C1) that he is tangible, audio
+(U1) the fight's music and the roar, and his next part the moment he takes off. Left to others:
+his tail and wings, which move from his body's fade on, and the hit his tail gives her (part 4b,
+with health's `TailHit`, H1); her knockback (samus-movement) and her hurt colours
+(samus-appearance); her shots against him and his flash when they hit (C1 and a later part);
+his flight (part 4c); drawing his figures (C1, as in §12).
+
+**Running.** As in §10: the caller steps him on each frame he runs; on a frame he doesn't run,
+nothing of him or the baby changes. His position doesn't change in this part. Runs below are
+the frames he runs.
+
+### 13.1 What the player can tell
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| his phase | `RidleyPhase`, part 3's and, listed alphabetically: `BodyFading`, `EyeFading`, `Flying` (his roar over: part 4c runs him), `ReadyToRoar`, `Roaring`. Part 3's `Awake` is his eye's fade with no step shown | which colours change, when he is tangible, when he roars | every entry of this part |
+| the eye's steps shown | count, 1 to the eye's steps' count, while `EyeFading` | how bright his eye is | `EyeFadesIn` |
+| the body's sets shown | count, 0 to the body's sets' count less 1, while `BodyFading` | how far his body has faded in | `BodyFadesIn` |
+| the body's runs | runs since his body last took a set, or since its fade began, 0 to `p` − 1, while `BodyFading` | when it takes its next set | `BodyFadesIn` |
+| his wait | runs, 0 to 4 while `ReadyToRoar`, 0 to 252 while `Roaring` | when he roars, when he takes off | `ReadyToRoar`, `Roars` |
+| the roar's figure | `RoarFigure`, 1 to 5 (`Roars`), with its runs: how many runs it has been shown, 1 to its length; the fifth has no length and no runs | his look, whether he is roaring | `Roars` |
+| his look | `RidleyLook`: part 3's `Rest`, and `Open` (his jaws open) and `Wide` (his jaws wide, roaring), all facing left | which figure is drawn | output (drawing) |
+| the eye's steps | content: a list of at least one step, each naming one of the eye's colour sets; the game's has 64 | how his eye brightens | `EyeFadesIn` |
+| the eye's colour sets | content: sets of three colours | his eye's colours | output |
+| the body's colour sets | content: a list of at least one set of eleven colours, in order; the game's has 16 | how his body fades in | `BodyFadesIn` |
+
+### 13.2 What he remembers: state a caller can hold
+
+His phase with its count, runs, wait, or roar's figure and that figure's runs; his look and
+position; and the baby as part 3 says (§12.2): nothing else. Whether he is tangible, moving or
+roaring follows from his phase (§13.4). A caller can build him in any state this part allows and
+read it back.
+
+### 13.3 What he reads (Inputs)
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| the random number | 16-bit, as part 3 (§12.3) | the baby (`BabyCries`) |
+| his content | the eye's steps, the eye's colour sets and the body's colour sets (§13.1), imported | `EyeFadesIn`, `BodyFadesIn` |
+
+### 13.4 What he reports (Outputs)
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| the eye's colours | none, or one of the eye's colour sets: the screen shows it at once on colours 12 to 14 of the palette he is drawn in (the doors', §12.4) | the screen's colours (the renderer) |
+| the body's colours | none, or one of the body's colour sets: the screen shows it at once on colours 1 to 11 of the palette he is drawn in and of his second palette, which none of his figures in this part uses | the screen's colours (the renderer) |
+| tangible | `bool`: phase `ReadyToRoar`, `Roaring` or `Flying`; before, she, her touch and her shots go through him (§12) | the enemy framework (C1): her touch and her shots; his tail's hit (part 4b) |
+| moving | `bool`: any phase from `BodyFading` on: his tail and wings move, and the baby is drawn with them | his tail and wings (part 4b); drawing (C1) |
+| roaring | `bool`: phase `Roaring` with the roar's figure 2, 3 or 4 | his tail's whip sound and his fireballs (parts 4b and 4c) |
+| the fight's music | a request, on the run he turns tangible | audio (U1) |
+| the roar | a sound, with a queue limit of 6, on the run the roar's second figure starts | audio (U1) |
+| taking off | phase `Flying`: from that run on part 4c runs him | part 4c |
+| his drawing | his look at his position, and the baby as in §12.4 | drawing (C1) |
+
+### EyeFadesIn
+- kind: mechanic.
+- summary: once awake his eye lights up out of the dark, one step of its fade each run.
+- params: the eye's steps and colour sets (content, §13.1).
+- switch: Fixed.
+- A run, `Awake` → `EyeFading`, 1 step shown; the eye's colours: the set the first step names
+  [F-eye-first, F-eye-one-step]
+- A run, `EyeFading`, `n` steps shown, `n` under the steps' count → `n + 1` steps shown; the
+  eye's colours: the set step `n + 1` names, the same set as the last run's or not [F-eye-step,
+  F-eye-same-set, F-eye-last]
+- A run, `EyeFading`, every step shown → `BodyFading`, 0 sets shown, 0 runs; no colours; moving
+  from this run on [F-eye-done, F-eye-one-step-done]
+- Every run before `Roaring` → his look `Rest` [F-eye-first, F-body-last, F-ready-counts]
+- So with the game's 64 steps his body's fade begins on the 65th run after he wakes.
+- checked: oracle (recorded cases F1 to F4, every run of the fade in the cached rows);
+  constructed.
+
+### BodyFadesIn
+- kind: mechanic and parameter.
+- summary: then his body fades in from black, one colour set every `p` runs; with its last set
+  he turns tangible and the fight's music starts.
+- params: the pace, `p` = 2 runs; a rule from 1 to 255. The body's colour sets (content).
+- switch: **Parameter**, the pace (params).
+- A run, `BodyFading`, its runs + 1 under `p` → its runs one more; no colours [F-body-wait,
+  F-body-adjusted-wait]
+- A run, `BodyFading`, its runs + 1 = `p`, `s` sets shown, `s + 1` under the sets' count →
+  `s + 1` sets shown, 0 runs; the body's colours: set `s + 1` [F-body-first, F-body-set,
+  F-body-adjusted-set, F-body-pace-one]
+- A run, `BodyFading`, its runs + 1 = `p`, `s + 1` the sets' count → `ReadyToRoar`, wait 4; the
+  body's colours: the last set; tangible from this run on; the fight's music [F-body-last,
+  F-body-adjusted-last]
+- So the game's 16 sets at the pace 2 take 32 runs: the first shows on the body's 2nd run, the
+  last, with the music, on its 32nd.
+- checked: oracle (recorded cases F5 to F8, every run of the fade in the cached rows);
+  constructed (the adjusted pace).
+
+### ReadyToRoar
+- kind: mechanic.
+- summary: tangible, he holds still a moment before he roars.
+- params: the wait, 4 runs (set by `BodyFadesIn`); the roar's wait, 252 runs.
+- switch: Fixed.
+- A run, `ReadyToRoar`, wait over 0 → wait one less [F-ready-counts, F-ready-last]
+- A run, `ReadyToRoar`, wait 0 → `Roaring`, wait 252, the roar's figure 1, its first run
+  [F-ready-roars]
+- So he starts his roar on the 5th run after he turns tangible.
+- checked: oracle (recorded cases F9 to F11); constructed.
+
+### Roars
+- kind: mechanic.
+- summary: he opens his jaws and roars, shuts them, and sits until his roar's wait runs out;
+  then he takes off.
+- params: the roar's figures, in order, with their lengths in runs: 1 `Rest` 6, 2 `Open` 8,
+  3 `Wide` 96, 4 `Open` 8, 5 `Rest`, held for the rest of the roar.
+- switch: Fixed.
+- A run, `Roaring`, wait over 0 → wait one less, and its figure moves on as the next arms say
+  [F-roar-counts, F-roar-last]
+- The same, its figure shown fewer runs than its length → one run more [F-roar-counts,
+  F-roar-wide-counts]
+- The same, figure 1 shown its 6 runs → figure 2, its first run; the roar [F-roar-opens]
+- The same, figure 2 or 3 shown its length → the next figure, its first run [F-roar-wide,
+  F-roar-shuts]
+- The same, figure 4 shown its 8 runs → figure 5 [F-roar-rests]
+- The same, figure 5 → figure 5 [F-roar-held]
+- A run, `Roaring`, wait 0 → `Flying`, whatever the figure; his figure and all he does on this
+  run and after are part 4c's [F-roar-flies, F-roar-flies-early]
+- Every run, `Roaring` → his look, the figure's [F-roar-counts, F-roar-opens, F-roar-wide,
+  F-roar-shuts, F-roar-rests, F-roar-held]
+- So the roar is heard on the roar's 7th run, his jaws are wide from its 15th run for 96 runs,
+  he stops roaring on its 119th and takes off on its 254th.
+- checked: oracle (recorded cases F12 to F21, every run of the roar in the cached rows);
+  constructed.
+
+**The baby goes on.** On every run of this part the baby runs as part 3's `BabyHeld`,
+`BabyFidgets` and `BabyCries` say, and its colours and cry are reported as in §12.4; every F-
+vector carries it [F-baby-cries].

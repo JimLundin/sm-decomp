@@ -24,3 +24,5 @@ rhythm = ["BeaconCycles"]
 slam = ["SlamShut"]
 # RidleyWaits: docs/behaviours/boss-ceres-ridley.md:782
 wake = ["RidleyWaits"]
+# BodyFadesIn: docs/behaviours/boss-ceres-ridley.md:922
+pace = ["BodyFadesIn"]
