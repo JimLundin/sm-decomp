@@ -31,7 +31,8 @@
 #   list       the sources currently planted.
 set -euo pipefail
 private=${CLEANROOM_PRIVATE:-$HOME/.cleanroom}
-temp=$(cygpath -u "${TEMP:-/tmp}" 2>/dev/null || echo "${TEMP:-/tmp}")
+temp=${TEMP:-${TMPDIR:-/tmp}}
+temp=$(cygpath -u "$temp" 2>/dev/null || echo "$temp")
 die() { echo "canary: $*" >&2; exit 2; }
 
 words="samus speed velocity momentum position pose jump fall gravity run walk dash morph ball

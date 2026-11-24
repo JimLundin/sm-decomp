@@ -87,12 +87,13 @@ For the two confined roles, the brief is also part of the barrier:
 
 From a checkout of `main`:
 1. `bash tools/cleanroom/canary.sh plant`.
-2. `bash tools/cleanroom/export.sh DOMAIN C:/cleanroom/DOMAIN`, adding `-c COMMIT` when the
-   spec is an amendment still on its branch.
-3. `bash tools/cleanroom/launch.sh C:/cleanroom/DOMAIN BRIEF TRANSCRIPT`, with the transcript
+2. `bash tools/cleanroom/export.sh DOMAIN`, adding `-c COMMIT` when the spec is an amendment
+   still on its branch. It writes `ROOT/DOMAIN`, ROOT `$CLEANROOM_ROOT` (default `C:/cleanroom`
+   on Windows, `~/cleanroom` elsewhere).
+3. `bash tools/cleanroom/launch.sh ROOT/DOMAIN BRIEF TRANSCRIPT`, with the transcript
    under `~/.cleanroom/transcripts/`. Done on `LAUNCH OK` and `CANARY CLEAN`.
 4. Read the session's report: the last `result` event of the transcript.
-5. `bash tools/cleanroom/import.sh C:/cleanroom/DOMAIN lane/<domain>-rN`. Done on `IMPORT OK`:
+5. `bash tools/cleanroom/import.sh ROOT/DOMAIN lane/<domain>-rN`. Done on `IMPORT OK`:
    `code_check.sh` passes and both clippy runs pass over every clean crate. On `IMPORT CLIPPY
    FAIL`, commit a mechanical fix yourself, right after the import, as `[exact]` with
    `Role: root` and the lint it answers, so the squashed commit records it under your role.

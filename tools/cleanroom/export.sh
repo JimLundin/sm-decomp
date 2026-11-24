@@ -4,8 +4,9 @@
 #
 # The export is a fresh repository holding one commit: the entries of allowlist.txt taken by
 # `git archive` from COMMIT (default HEAD), plus the generated files. It has no history, no other
-# ref, no remote and no alternates, and DEST (default C:/cleanroom/DOMAIN) must lie outside the
-# project's directories. The script ends by asserting all of that.
+# ref, no remote and no alternates, and DEST must lie outside the project's directories. The
+# script ends by asserting all of that. DEST defaults to ROOT/DOMAIN, ROOT the exports' root:
+# $CLEANROOM_ROOT, else C:/cleanroom on Windows and ~/cleanroom elsewhere.
 #
 # The clean workspace shape, inside the export and in this repository alike:
 #   Cargo.toml                         generated: members below, the root's [workspace.lints]
@@ -33,7 +34,11 @@ commit=HEAD
 [ $# -ge 1 ] || die "usage: export.sh [-c COMMIT] DOMAIN [DEST]"
 domain=$1
 check_domain "$domain"
-dest=${2:-C:/cleanroom/$domain}
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*) windows=1 root_default=C:/cleanroom ;;
+  *) windows=0 root_default=$HOME/cleanroom ;;
+esac
+dest=${2:-${CLEANROOM_ROOT:-$root_default}/$domain}
 src=$(git rev-parse --show-toplevel)
 sha=$(git rev-parse --verify "$commit^{commit}")
 
@@ -51,7 +56,8 @@ done < <(git worktree list --porcelain | sed -n 's/^worktree //p')
 for proj in "$(dirname "$main")"/sm-decomp*; do
   [ -d "$proj" ] && under "$dest" "$(cd "$proj" && pwd -P)" && die "$dest is inside $proj"
 done
-temp=$(cygpath -u "${TEMP:-/tmp}" 2>/dev/null || echo "${TEMP:-/tmp}")
+temp=${TEMP:-${TMPDIR:-/tmp}}
+[ "$windows" = 0 ] || temp=$(cygpath -u "$temp")
 [ -d "$temp/collab" ] && under "$dest" "$(cd "$temp/collab" && pwd -P)" && die "$dest is inside $temp/collab"
 
 # Copy the allowlisted entries that exist in COMMIT. A missing spec or vector file stops the
@@ -148,6 +154,23 @@ fi
 # The clean crates' clippy configuration: the root's test allowances and the G5 ceilings.
 git show "$sha:tools/cleanroom/clippy.toml" >"$dest/clippy.toml"
 
+# How the tests run: the runner launch.sh names in the brief, on Windows as a Python command
+# because the machine blocks test executables, elsewhere as one bare command running cargo test.
+rules_first="It first checks two of
+  DESIGN.md's rules, modules importing in one direction only and no struct that only wraps one
+  call's arguments, and names each place that breaks one;"
+if [ "$windows" = 1 ]; then
+  tests_bullet="- \`cargo test\` builds the tests but cannot run them: this machine blocks the test executables.
+  Run the tests with the one command your brief gives, a Python interpreter on a fixed runner
+  outside this directory, exactly as written and with nothing added. $rules_first then it links each test target of the
+  clean crates as a library, runs it and prints libtest's output. A broken rule fails the run as
+  a failed test does. No other Python is allowed."
+else
+  tests_bullet="- Run the tests with the one command your brief gives, a fixed runner outside this directory,
+  exactly as written and with nothing added. $rules_first then it runs \`cargo test\` for each test target of the
+  clean crates and prints libtest's output. A broken rule fails the run as a failed test does.
+  No Python is allowed."
+fi
 
 cat >"$dest/CLEANROOM.md" <<EOF
 # Clean room: $domain
@@ -173,13 +196,7 @@ disassemblies or annotated listings); if you recognise something from such a sou
   directory and inside the two crates.
 - Check with \`cargo check\`, \`cargo clippy --all-targets -- -D warnings\` and \`cargo fmt --check\`,
   each as its own command.
-- \`cargo test\` builds the tests but cannot run them: this machine blocks the test executables.
-  Run the tests with the one command your brief gives, a Python interpreter on a fixed runner
-  outside this directory, exactly as written and with nothing added. It first checks two of
-  DESIGN.md's rules, modules importing in one direction only and no struct that only wraps one
-  call's arguments, and names each place that breaks one; then it links each test target of the
-  clean crates as a library, runs it and prints libtest's output. A broken rule fails the run as
-  a failed test does. No other Python is allowed.
+$tests_bullet
 - Report a gap you can't explain, with the vector, the field, the expected and actual values and
   the spec entry you suspect.
 EOF
