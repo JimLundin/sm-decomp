@@ -12,7 +12,7 @@ from unittest.mock import patch
 from typing import Any
 
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  candidates, check_domain, completed_test, parameter_entries, probe, prove, probe_test, rule_owners, test_command)
+                                  candidates, check_domain, check_domain_owners, completed_test, parameter_entries, probe, prove, probe_test, rule_owners, test_command)
 
 SPEC = """\
 ### Fixed
@@ -328,6 +328,31 @@ class AdjustedVectors(unittest.TestCase):
                 with self.assertRaises(CannotProbe):
                     prove(path, ["Step", "Margin"], model(path), owners)
                 self.assertEqual(path.read_bytes(), original)
+
+    def test_the_owners_check_refuses_an_unowned_override_and_runs_no_test(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            spec = root / "docs/behaviours/demo.md"
+            spec.parent.mkdir(parents=True)
+            spec.write_text(SPEC, newline="\n")
+            path = root / "scenarios/vectors/demo.toml"
+            path.parent.mkdir(parents=True)
+            path.write_text(vector('id = "shared"\nentries = ["Step", "Margin"]\n'
+                                   'rules = { step = 3, margin = 9 }\nbefore = 2\nafter = 5\n'),
+                            newline="\n")
+            metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
+            metadata.parent.mkdir(parents=True)
+            with patch("adjusted_vectors_run.subprocess.run") as run:
+                for owners, refused in (('step = ["Step"]\n', True),
+                                        ('step = ["Step"]\nmargin = ["Margin"]\n', False)):
+                    with self.subTest(owners=owners):
+                        metadata.write_text("[owners]\n" + owners, newline="\n")
+                        if refused:
+                            with self.assertRaises(CannotProbe):
+                                check_domain_owners(root, "demo")
+                        else:
+                            check_domain_owners(root, "demo")
+                run.assert_not_called()
 
     def test_a_shared_rule_owner_is_proven_only_by_separate_entry_witnesses(self) -> None:
         text = vector('id = "step"\nentries = ["Step"]\nrules = { step = 3 }\n'

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Local source gate: the formatting, lint, dependency, crate-rule, doc-link and README checks of
-# Quality, and the tools' self-tests when the branch changes their subject. Only the README check
-# links (verify's lib test, tools/check_readme.sh); CI runs the other tests.
+# Local source gate: the formatting, lint, dependency, crate-rule and doc-link checks of Quality,
+# and, each only when the branch (committed since origin/main, or in the working tree) changes its
+# subject: the tools' self-tests; verify's lib tests, which hold the README, the report, the
+# played runs and the vectors' pins to the tree; the planted faults' anchors and coverage
+# (tools/check_mutants.py plan, which runs no fault); and the adjusted vectors' rule owners
+# (tools/cleanroom/adjusted_vectors_run.py --owners, which runs no test). CI runs the other tests.
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 # They don't wait on each other's build locks: each clippy pass has its own target directory, and
-# the README check links its test for an explicit target triple (tools/lane/test_dll.py).
+# verify's lib tests link for an explicit target triple (tools/lane/test_dll.py).
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR. Off Windows the toolchain is the cargo on
 # PATH, which rustup points at rust-toolchain.toml's channel.
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
@@ -18,7 +21,7 @@ esac
 O="${SM_GATE_DIR:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1
 O_resolved=$(cd "$O" && pwd -P)
-checks=(fmt clippy clean-clippy deny crate-rules self-tests doc-links readme)
+checks=(fmt clippy clean-clippy deny crate-rules self-tests doc-links verify-lib faults owners)
 cleanup() {
   "${SM_PY:-python3}" - "$O" "$O_resolved" "${checks[@]}" <<'PY'
 import pathlib
@@ -44,6 +47,14 @@ fail() { echo "$1"; ok=0; }
 # Starts check $1 in the background; its output goes to $O/$1.log and its status to $O/$1.status.
 start() { local name=$1; shift; { "$@" >"$O/$name.log" 2>&1; echo $? >"$O/$name.status"; } & }
 passed() { [ "$(cat "$O/$1.status" 2>/dev/null)" = 0 ]; }
+# Whether the branch changes any of the paths: committed since it left origin/main, or not yet
+# committed (untracked files included).
+changed() {
+  ! git diff --quiet origin/main...HEAD -- "$@" || [ -n "$(git status --porcelain -- "$@")" ]
+}
+# Records check $1 as passed without running it, its subject unchanged.
+skip() { echo skipped >"$O/$1.log"; echo 0 >"$O/$1.status"; }
+skipped() { [ "$(cat "$O/$1.log" 2>/dev/null)" = skipped ]; }
 
 start fmt "$R/cargo" fmt --all --check
 start clippy "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -D warnings
@@ -63,7 +74,25 @@ start crate-rules bash tools/check_crate_rules.sh
 # The self-tests of the clean-room and lane tools, only for what this branch changes since main.
 CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh origin/main
 start doc-links sh tools/check_doc_links.sh
-CARGO="$R/cargo" SM_RUST_BIN="$R" start readme bash tools/check_readme.sh
+# What verify's lib tests read: the README and the report it measures (the crates, the specs and
+# their vectors, the domain plan), the replay index and the played runs, and the build's inputs.
+if changed crates scenarios docs/behaviours docs/architecture/domains.toml README.md Cargo.toml \
+  Cargo.lock rust-toolchain.toml; then
+  SM_RUST_BIN="$R" start verify-lib bash tools/lane/run_tests.sh --suite lib verify
+else skip verify-lib; fi
+# The planted faults' manifest and runner, the sources check_mutants.py lets a fault patch, and the
+# replay cases whose responsibilities each fault witnesses.
+if changed tools/mutants.toml tools/check_mutants.py crates/game/src/production \
+  crates/game/src/production.rs crates/verify/src/replay/played.rs scenarios/replay/index.toml \
+  scenarios/replay/baseline.toml; then
+  start faults "${SM_PY:-python3}" -I tools/check_mutants.py plan
+else skip faults; fi
+# The rule owners, the specs' Parameter entries, the vectors' overrides and the clean crates that
+# make a domain probed.
+if changed tools/cleanroom/adjusted_rule_owners tools/cleanroom/adjusted_probe_tests.toml \
+  tools/cleanroom/adjusted_vectors_run.py scenarios/vectors docs/behaviours crates/clean; then
+  start owners "${SM_PY:-python3}" -I tools/cleanroom/adjusted_vectors_run.py --owners
+else skip owners; fi
 wait
 
 passed fmt || fail "FMT FAIL"
@@ -89,7 +118,23 @@ if ! passed self-tests; then
   cat "$O/self-tests.log"
 fi
 passed doc-links || fail "DOC LINKS FAIL"
-passed readme || fail "README STALE: run cargo run -p tools --bin tools -- report --write"
+if ! passed verify-lib; then
+  fail "VERIFY LIB FAIL"
+  grep -E '^test .* FAILED$|panicked at|^test_dll:' "$O/verify-lib.log" | head -20
+  ! grep -q 'committed_readme_is_current .* FAILED' "$O/verify-lib.log" ||
+    echo "README STALE: run cargo run -p tools --bin tools -- report --write"
+fi
+if ! passed faults; then
+  fail "FAULTS FAIL: tools/check_mutants.py plan"
+  tail -n 5 "$O/faults.log"
+fi
+if ! passed owners; then
+  fail "OWNERS FAIL: tools/cleanroom/adjusted_vectors_run.py --owners"
+  tail -n 5 "$O/owners.log"
+fi
+for check in verify-lib faults owners; do
+  ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since origin/main"
+done
 if [ "$ok" -eq 1 ]; then
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
 else

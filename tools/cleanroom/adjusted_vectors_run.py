@@ -31,8 +31,9 @@ cannot credit an override ignored by its ordinary vector. A selected run must co
 exactly one nonignored test with the declared name. Linked files lacking selection refuse
 probing. No dependent reference, expectation or override is edited.
 
-Usage: adjusted_vectors_run.py [DOMAIN...], from the repository root; with no DOMAIN, every
-spec with a vector file and a clean crate. Exit 1 when an entry has adjusted vectors and none
+Usage: adjusted_vectors_run.py [--owners] [DOMAIN...], from the repository root; with no
+DOMAIN, every spec with a vector file and a clean crate. --owners checks only the ownership and
+test selection a probe needs, and runs no test: tools/lane/gate.sh's form. Exit 1 when an entry has adjusted vectors and none
 depends on its rules; 2 when a domain can't be probed (its test fails as committed, or fails
 the control); else 0. An entry no vector adjusts is listed and left to adjusted_vectors.sh,
 which gates it at the domain's spec round.
@@ -212,6 +213,17 @@ class Unadjusted:
 Verdict = Proven | Unproven | Unadjusted
 
 
+def check_owners(text: str, entries: list[str], owners: dict[str, frozenset[str]]) -> None:
+    """Each override of each adjusted vector has one reviewed owner among the vector's entries,
+    and every owner is a Parameter entry of the spec."""
+    for candidate in candidates(text):
+        for rule in vectors(text)[candidate.index]["rules"]:
+            if rule not in owners or not owners[rule] or not owners[rule].issubset(entries):
+                raise CannotProbe(f"{candidate.id}: missing or unknown owner for {rule}")
+            if len(owners[rule].intersection(candidate.entries)) > 1:
+                raise CannotProbe(f"{candidate.id}: ambiguous owners for {rule}")
+
+
 def prove(path: Path, entries: list[str], run: Callable[[], bool],
           owners: dict[str, frozenset[str]],
           run_probe: Callable[[], bool] | None = None) -> dict[str, Verdict]:
@@ -226,12 +238,7 @@ def prove(path: Path, entries: list[str], run: Callable[[], bool],
     else:
         run_probe = run
     adjusting_candidates = candidates(text)
-    for candidate in adjusting_candidates:
-        for rule in vectors(text)[candidate.index]["rules"]:
-            if rule not in owners or not owners[rule] or not owners[rule].issubset(entries):
-                raise CannotProbe(f"{candidate.id}: missing or unknown owner for {rule}")
-            if len(owners[rule].intersection(candidate.entries)) > 1:
-                raise CannotProbe(f"{candidate.id}: ambiguous owners for {rule}")
+    check_owners(text, entries, owners)
     depending: dict[tuple[str, str], bool] = {}
 
     def depends(candidate: Candidate, entry: str) -> bool:
@@ -403,12 +410,27 @@ def domains(root: Path) -> list[str]:
     )
 
 
+def check_domain_owners(root: Path, domain: str) -> None:
+    """The ownership and test selection a probe of the domain needs, checked running no test."""
+    spec = (root / "docs/behaviours" / f"{domain}.md").read_text(encoding="utf-8")
+    text = (root / "scenarios/vectors" / f"{domain}.toml").read_text(encoding="utf-8")
+    probe_test(root, domain, text)
+    check_owners(text, parameter_entries(spec), rule_owners(root, domain, bool(candidates(text))))
+    print(f"adjusted: {domain}: every adjusted vector's overrides have a reviewed owner")
+
+
 def main(arguments: list[str]) -> int:
     root = Path.cwd()
+    owners_only = arguments[:1] == ["--owners"]
+    if owners_only:
+        arguments = arguments[1:]
     unproven = 0
     try:
         for domain in arguments or domains(root):
-            unproven += check_domain(root, domain)
+            if owners_only:
+                check_domain_owners(root, domain)
+            else:
+                unproven += check_domain(root, domain)
     except CannotProbe as error:
         print(f"adjusted_vectors_run: {error}", file=sys.stderr)
         return 2
