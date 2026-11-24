@@ -14,7 +14,7 @@ use crate::rows::{
     AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, Class, Doing, Drift, Effect, Entering, FORWARD,
     FORWARD_AIM, Footing, KEEP_POSE, LOWERS_NOTHING, Moves, NO_CHANGE, Next, NextFacing, Row,
     RowId, Situation, TO_CROUCHING, TO_FALLING, TO_JUMPING, TO_MOONWALKING, TO_MORPHING,
-    TO_RUNNING, TO_SPINNING, TO_STILL, TO_TAKING_OFF, TO_TURNING, Test, UDA, UP_AIM, UP_DOWN, Was,
+    TO_RUNNING, TO_SPINNING, TO_STILL, TO_TAKING_OFF, TO_TURNING, Test, UDA, UP_AIM, UP_DOWN,
 };
 use crate::rules::Gait;
 use types::button::{self as key, AIM_DOWN, AIM_UP, DOWN, LEFT, RIGHT, SHOOT, UP};
@@ -64,18 +64,17 @@ const GROUND_TURNS: &[Action] = &[
 /// The change of action's own effects, whatever brought the change.
 ///
 /// `Jumping`: starting a straight jump (upright) or a fall, from any action but that one, with
-/// a dash she carries on along her facing, else she follows the pad. `WallJump` (§1.2): a spin
-/// that followed a wall jump is carried on. `ShrinkingLowersHer`: unmorphing, the one change of
-/// shape a ball starts, ends a bounce she is in.
+/// a dash she carries on along her facing, else she follows the pad. `ShrinkingLowersHer`:
+/// unmorphing, the one change of shape a ball starts, ends a bounce she is in.
 pub static ENTERING: &[Entering] = &[
     Entering {
         into: &[(Body::Crouched, Action::Unmorphing)],
-        from: Was::AnyBut(&[Action::Unmorphing]),
+        not_from: &[Action::Unmorphing],
         effect: Effect::EndsTheBounce,
     },
     Entering {
         into: &[(Body::Upright, Action::Jumping)],
-        from: Was::AnyBut(&[Action::Jumping]),
+        not_from: &[Action::Jumping],
         effect: Effect::Launch,
     },
     Entering {
@@ -84,13 +83,8 @@ pub static ENTERING: &[Entering] = &[
             (Body::Ball, Action::Falling),
             (Body::SpringBall, Action::Falling),
         ],
-        from: Was::AnyBut(&[Action::Falling]),
+        not_from: &[Action::Falling],
         effect: Effect::Launch,
-    },
-    Entering {
-        into: &[(Body::Upright, Action::Spinning)],
-        from: Was::OneOf(&[Action::WallJumping]),
-        effect: Effect::SpinOn,
     },
 ];
 
@@ -698,6 +692,7 @@ static RUNNING: Situation = Situation {
             needs: &[Test::Moving],
             effects: &[Effect::AsRunning],
             aim_step: true,
+            part_of_the_last: true,
             ..NO_CHANGE
         },
     ],
@@ -867,6 +862,25 @@ static STRAIGHT_JUMP: Situation = Situation {
                 Test::Not(&Test::Held(NAMED)),
             ],
             beats: &[RowId::GunStowedJumpHeld],
+            ..NO_CHANGE
+        },
+        // The chart's last row for a straight jump gives two outcomes: at a horizontal speed of
+        // 0 at the frame's start, aimed `Up`, `UpForward` or `DownForward`, she strides forward;
+        // else she keeps her pose. A row has one next pose, so the cell is two rows. This one
+        // names no button: every other fitting row outranks it, so it is used only where the
+        // last row would be.
+        Row {
+            id: RowId::AnythingElseAtRestAimed,
+            needs: &[
+                Test::Not(&Test::Moving),
+                Test::Aimed(&[Aim::Up, Aim::UpForward, Aim::DownForward]),
+            ],
+            next: Next {
+                legs: Some(Legs::Striding),
+                ..TO_JUMPING
+            },
+            effects: &[Effect::AsRunning],
+            part_of_the_last: true,
             ..NO_CHANGE
         },
     ],
@@ -1207,6 +1221,7 @@ const BALL_IN_THE_AIR: &[Row] = &[
         id: RowId::OffTheGroundWithTheSpringBall,
         needs: &[Test::Body(&[Body::SpringBall])],
         effects: &[Effect::Halt],
+        part_of_the_last: true,
         ..NO_CHANGE
     },
 ];
@@ -1509,6 +1524,7 @@ static WALL_JUMPING: Situation = Situation {
             id: RowId::AnythingElseWithTheSpin,
             needs: &[Test::With(&[Item::ScrewAttack, Item::SpaceJump])],
             next: TO_SPINNING,
+            part_of_the_last: true,
             ..NO_CHANGE
         },
     ],

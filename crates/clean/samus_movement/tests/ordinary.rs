@@ -79,7 +79,10 @@ fn complete_ordinary_call_and_publication_lifetimes() {
                 phase: samus_movement::Phase::Ground,
                 bounces: samus_movement::Bounces::None,
             },
-            spin: samus_movement::Spin::Off,
+            choices: samus_movement::Choices {
+                latest: samus_movement::Chosen::Other,
+                before: samus_movement::Chosen::Other,
+            },
             seat: samus_movement::Seat::Unseated,
             jump_held: samus_movement::JumpHeld::NONE,
         },
@@ -92,7 +95,7 @@ fn complete_ordinary_call_and_publication_lifetimes() {
     };
     let encoded = toml::to_string(&initial).unwrap();
     let mut caller: Checkpoint = toml::from_str(&encoded).unwrap();
-    assert_eq!(caller, initial); // Phase, carry, spin, seat, held-jump and dashing all restored.
+    assert_eq!(caller, initial); // Phase, carry, choices, seat, held-jump and dashing all restored.
     let firing_reads = (caller.travels.travels, caller.pending_aim);
     assert_eq!(firing_reads.1, Some(FiringDirection::UpFacingLeft));
     // Weapons consumes preceding memory before the ordinary interval clears it.

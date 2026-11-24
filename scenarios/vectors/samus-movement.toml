@@ -67,8 +67,11 @@
 #   held through's count, 0 to 65535, and landed_or_ended (optional, default false): whether the
 #   frame before she landed or a turn's or a landing's animation ended (spec §1.2, jump held
 #   through, which a caller starting mid-play gives). A missing quantity is 0. The start is
-#   always a moment where she remembers nothing the quantities don't show (spec §1.2), with two
+#   always a moment where she remembers nothing the quantities don't show (spec §1.2), with these
 #   exceptions: falling, which no lead-in in scope reaches, jump held through and dashing.
+#   A start in a spin or a wall jump has that pose chosen once (spec §1.2, a spin carried on): the
+#   choice before it neither a spin nor a wall jump, so a spin start is carried on only after her
+#   next choice, and a spin taken from a wall jump start is carried on.
 #   dashing (optional, default false): whether she is dashing at the start (spec §1.2, `Dashing`);
 #   a start with a dash and dashing false has a dash she is to lose (spec `Dash`), so a recorded
 #   start's dashing is its record's, and a constructed start that keeps its dash gives true.
@@ -156,12 +159,12 @@
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
 #   standing, running or moonwalking, a take-off becoming a jump, (M1) a turn's end into a spin,
-#   (RW1, MT1) a spin reversed, (MT1) a spin becoming a straight jump and that jump's turn, and
+#   (RW1, MT1, SK1) a spin reversed, (MT1) a spin becoming a straight jump and that jump's turn, and
 #   (JH1-JH4) a landing from a straight jump or a fall and (JH4) a turn in a fall and its end.
 #   In RW1 the near-wall test writes her x subpixel after the move in its checked frame (spec
 #   `WallJump`).
-#   J1-J3, A1 and WK1 check a frame whose pose changes (a jump start, a take-off, an aim change, a
-#   wall jump's kick) and give its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
+#   J1-J3, A1, WK1 and LG1 check a frame whose pose changes (a jump start, a take-off, an aim
+#   change, a wall jump's kick, a straight jump's let-go at 0) and give its next_pose; PF1 checks a crouch take-off, whose body grows; SH1-SH3 check the frame a
 #   crouch or a morph begins, whose body shrinks. No recorded vector comes from a frame run by
 #   a bomb jump or a grapple release. The W vectors (item-morph-ball, the integration gaps 10-16)
 #   check frames the Tick met there. Most end in a pose other than the one they start in, or grow
@@ -3022,6 +3025,35 @@ pad = []
 jump_pressed = false
 after = { position = ["0108.0000", "0103.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0003.1C00", placed = "none", jump_held = 0, landed_or_ended = false, pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] } }
 
+# C-fit-land-refused-spin: what a choice records is the pose she ends in (spec `WallJump`).
+# C-fit-land-refused's world with a solid block on her left (its right face 256, 3 px of air beside
+# her left edge 259). She starts in a spin, chosen once (a start in a spin, above). Each of the two
+# lead-in frames, nothing held, goes as C-fit-land-refused: she chooses a landing, pose fit refuses
+# it, and she ends in the spin, so the choice records the spin: from the frame after the first, the
+# spin is carried on. She stays stopped on the enemy at 0103.0000 (the first frame's move stops 2 px
+# down, the later ones at once), and the pull grows her speed by 0.1C00 a frame: 3.1C00, 3.3800,
+# 3.5400. The checked frame holds right, the side she faces, and chooses the refused landing again:
+# the test looks left, finds the block within 8 px and readies, writing her x subpixel 0 (x
+# 0108.0000, horizontal speed 0). Had the landing chosen been recorded, the spin would not be
+# carried on: no test, Neither.
+
+[[vector]]
+id = "C-fit-land-refused-spin"
+source = "constructed"
+entries = ["WallJump", "PoseFitAfterMoves", "Landing", "SolidEnemies", "DriftInTheAir"]
+world = { slope_floor = { block = [256, 272], surface = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, stepped = { block = [256, 240], quarters = ["##", ".."] }, enemy = { centre = [264, 279], radius = [8, 8] }, solid_block = [240, 256] }
+before = { position = ["0108.0000", "0101.0000"], speed_y = "+0003.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["right"]
+jump_pressed = false
+pressed = ["right"]
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+after = { position = ["0108.0000", "0103.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0003.5400", wall_test = "Readied", pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] } }
+
 # C-fit-land-pushed: C-fit-land-refused without the stepped block. The block's far-side look up of
 # 7 px meets air, so the push is by the block's room, as if the enemy were not there: up 9 - 2 =
 # 7 px, to 00FC.0000, placed there (the frame's start subpixel 0). She lands: her speeds stop and
@@ -3970,6 +4002,180 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 pad = ["right"]
 jump_pressed = false
 after = { position = ["003B.0000", "044C.DFFF"], speed_x = "-0000.E000", dash = "0000.0000", speed_y = "+0000.7000", wall_test = "Readied", dashing = false, heading_down = true }
+
+# WS1 (chain-any-0002-DF8D 23 to 26): she takes a spin from a run (the frame ending at 24), the
+# next frame holds jump and run alone, so the spin's last row chooses the spin again, and the
+# checked frame, left and right held, finds the wall on her right: the spin is carried on two
+# frames after she took it (`WallJump`), the test readies and writes her x subpixel FFFF without
+# moving her (00A9.8BFF after the move). The world stands in for the room: the floor she ran on
+# and a wall whose face is 2 px past her right edge after the move.
+
+[[vector]]
+id = "WS1"
+source = "chain-any-0002-DF8D:26"
+entries = ["WallJump", "Jumping", "DriftInTheAir", "RisingAndFalling", "PadChart"]
+world = { floor_top = 208, wall_right = 176 }
+before = { position = ["009E.0BFF", "00BB.FFFF"], speed_x = "+0002.C000", dash = "0002.0000", speed_y = "+0000.0000", dashing = true }
+lead_in = [
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = true },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "left", "right"]
+jump_pressed = false
+pressed = ["left", "right"]
+after = { position = ["00A9.FFFF", "00B2.5BFF"], speed_x = "+0001.6000", dash = "0002.0000", speed_y = "-0004.A800", wall_test = "Readied" }
+
+# C-spin-named-row (WallJump's other side): WS1 with the middle frame holding forward and jump.
+# That row keeps her spin as it is, so nothing is chosen: the choice before her latest
+# is still the run, the spin is not carried on, and the checked frame runs no test: no readying
+# and no write, so her x is the move's, 00A6.2BFF + 1.6000 + 2.0000 = 00A9.8BFF. The middle
+# frame's drift is WS1's (the step cut to the top speed, or forward held: carrying on at 1.6000),
+# so her speeds and y are WS1's.
+
+[[vector]]
+id = "C-spin-named-row"
+source = "constructed"
+entries = ["WallJump", "PadChart"]
+world = { floor_top = 208, wall_right = 176 }
+before = { position = ["009E.0BFF", "00BB.FFFF"], speed_x = "+0002.C000", dash = "0002.0000", speed_y = "+0000.0000", dashing = true }
+lead_in = [
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = true },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "left", "right"]
+jump_pressed = false
+pressed = ["left"]
+after = { position = ["00A9.8BFF", "00B2.5BFF"], speed_x = "+0001.6000", dash = "0002.0000", speed_y = "-0004.A800", wall_test = "Neither" }
+
+# C-spin-ceiling (WallJump, a ceiling's kept spin is a choice): C-spin-named-row started
+# A.2000 px further left, so that she takes the spin and holds forward and jump for four frames
+# before the checked frame reaches the same x. None of the four chooses (her row keeps the spin by
+# name), but the fourth one's rise meets a ceiling 48 px above the floor: the take-off's 4.E000 has
+# lost 0.1C00 a frame, so her top goes 175, 171, 166, 161 and would go to 157 (y 00A9.27FF); the
+# ceiling at 160 stops her flush at y 00AC.0000 and ends the rise, and keeps her spin as a choice.
+# The checked frame is the frame after it: the spin is carried on, left and right held, so the test
+# finds the wall 2 px past her right edge and readies (x 00A9.8BFF moved, its subpixel written
+# FFFF). She falls from 0: she doesn't move vertically, and ends at +0.1C00. x: the run's frame
+# moves 2.C000 + 2.0000, each spin frame 1.6000 + 2.0000, so 0093.EBFF + 4.C000 + 5 x 3.6000.
+
+[[vector]]
+id = "C-spin-ceiling"
+source = "constructed"
+entries = ["WallJump", "WhatHerMovesMet", "WallsAndCeilings", "PadChart"]
+world = { floor_top = 208, ceiling_bottom = 160, wall_right = 176 }
+before = { position = ["0093.EBFF", "00BB.FFFF"], speed_x = "+0002.C000", dash = "0002.0000", speed_y = "+0000.0000", dashing = true }
+lead_in = [
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = true },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "left", "right"]
+jump_pressed = false
+pressed = ["left"]
+after = { position = ["00A9.FFFF", "00AC.0000"], speed_x = "+0001.6000", dash = "0002.0000", speed_y = "+0000.1C00", wall_test = "Readied" }
+
+# C-spin-no-ceiling (C-spin-ceiling's other side): the same frames with no ceiling. Nothing chooses
+# after the take-off, so the spin isn't carried on, no test runs and nothing is written: x
+# 00A9.8BFF, Neither. Her rise goes on: y 00A9.27FF - 4.7000 = 00A4.B7FF, and the pull takes the
+# upward speed to 4.5400.
+
+[[vector]]
+id = "C-spin-no-ceiling"
+source = "constructed"
+entries = ["WallJump", "WhatHerMovesMet", "WallsAndCeilings", "PadChart"]
+world = { floor_top = 208, wall_right = 176 }
+before = { position = ["0093.EBFF", "00BB.FFFF"], speed_x = "+0002.C000", dash = "0002.0000", speed_y = "+0000.0000", dashing = true }
+lead_in = [
+  { pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = true },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["run", "jump", "left", "right"]
+jump_pressed = false
+pressed = ["left"]
+after = { position = ["00A9.8BFF", "00A4.B7FF"], speed_x = "+0001.6000", dash = "0002.0000", speed_y = "-0004.5400", wall_test = "Neither" }
+
+# SK1 (chain-any-0006-E0B5 8 to 10): spinning right at speed 0 and rising, she presses left: the
+# spin reversed, a skid of zero. The checked frame holds left, the side she now faces: braking
+# takes the skid below zero, so it ends at 0 and she carries on along her facing (`DriftInTheAir`).
+# A frame's end shows only speed 0 and no skid; the carrying on is the replay's `movement.run`
+# at cut 10.
+
+[[vector]]
+id = "SK1"
+source = "chain-any-0006-E0B5:10"
+entries = ["DriftInTheAir", "TurningRound", "RisingAndFalling"]
+world = {}
+before = { position = ["002C.1000", "0068.0FFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["jump", "left"], jump_pressed = false, pressed = ["left"] },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump", "left"]
+jump_pressed = false
+after = { position = ["002C.1000", "0060.2BFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0003.C800", skidding = false }
+
+# C-spin-skid-end-let-go (the other side): SK1's skid of zero in an invented spin, ended with
+# jump alone held, not the side she faces: she stops drifting, following the pad, at speed 0,
+# with no move and no skid. Her y: -3.0000 then -2.E400 a frame (each frame moves by its speed,
+# then gravity adds 0.1C00), 0080.0000 to 007A.1C00. Every way out of a spin decides
+# anew whether she carries on (`Jumping`, `Landing`, `WallJump`), so no later frame tells this
+# from SK1's carrying on at 0; the replay's `movement.run` does.
+
+[[vector]]
+id = "C-spin-skid-end-let-go"
+source = "constructed"
+entries = ["DriftInTheAir", "TurningRound"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0003.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["jump", "left"], jump_pressed = false, pressed = ["left"] },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "007A.1C00"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0002.C800", skidding = false }
+
+# LG1 (chain-any-0006-E0B5 24 to 25): a straight jump aimed down-forward, falling, nothing held,
+# her horizontal speed 0 at the frame's start: the let-go row takes `Jumping`, `Forward`,
+# striding (`PadChart`).
+
+[[vector]]
+id = "LG1"
+source = "chain-any-0006-E0B5:25"
+entries = ["PadChart", "RisingAndFalling", "DriftInTheAir"]
+world = {}
+before = { position = ["001A.D000", "003F.EFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.7000" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "DownForward", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["001A.D000", "0040.5FFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.8C00" }
+
+# C-jump-letgo-moving (the other side): LG1's frame at an invented speed of 0.8000 leftward,
+# following the pad. Her speed at the frame's start isn't 0, so the let-go row keeps the pose
+# aimed down-forward; with no side held she stops drifting at once: speed 0, no move, and "as
+# running" finds the speed brought to 0, so she follows the pad. Her y moves by +0.7000 to
+# 0100.7000 and the speed grows to +0.8C00.
+
+[[vector]]
+id = "C-jump-letgo-moving"
+source = "constructed"
+entries = ["PadChart", "DriftInTheAir"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.7000" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "DownForward", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { pose = { body = "Upright", action = "Jumping", facing = "Left", aim = "DownForward", radius = [5, 19] }, position = ["0100.0000", "0100.7000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.8C00" }
 
 # The integration gaps 10-16 (lane/wire-tick, the Tick on the model): item-morph-ball's frames, the
 # record N before, N's pad, N+1 after (source names N+1).

@@ -276,8 +276,6 @@ pub enum Effect {
     /// `Jumping`: the change into a straight jump or a fall: with a dash she carries on along
     /// her facing, else she follows the pad.
     Launch,
-    /// `WallJump` (§1.2): the change from a wall jump into a spin: the spin is carried on.
-    SpinOn,
     /// `AnimationEnds`: the unmorph's end hands over the crouch, a pose on the ground, in the
     /// air too: she comes to the ground there, her vertical speed kept (`FollowingTheGround`).
     ComesToTheGround,
@@ -289,35 +287,23 @@ pub enum Effect {
 /// A change of action's own effect, whatever brought the change.
 ///
 /// The pad chart, what her moves met or an animation's end: a pose whose body and action are
-/// one of `into`, taken from a pose whose action is as `from` says (never the actions it
-/// changes into), brings `effect` after the chosen row's own.
+/// one of `into`, taken from a pose whose action is any but `not_from` (the actions it changes
+/// into), brings `effect` after the chosen row's own.
 pub struct Entering {
     /// The bodies and actions it changes into.
     pub into: &'static [(Body, Action)],
-    /// The actions it changes from.
-    pub from: Was,
+    /// The actions it isn't taken from: whatever the set of actions holds, but these.
+    pub not_from: &'static [Action],
     /// What it brings.
     pub effect: Effect,
 }
 
-/// The actions a change of action's own effect is taken from (`Entering::from`).
-#[derive(Clone, Copy)]
-pub enum Was {
-    /// One of these.
-    OneOf(&'static [Action]),
-    /// Any action but these: whatever the set of actions holds, but these.
-    AnyBut(&'static [Action]),
-}
-
 impl Entering {
-    /// `Jumping`, `WallJump`: whether the change from action `was` into pose `now` brings it.
+    /// `Jumping`, `ShrinkingLowersHer`: whether the change from action `was` into pose `now`
+    /// brings it.
     #[must_use]
     pub fn on(&self, was: Action, now: Pose) -> bool {
-        let from = match self.from {
-            Was::OneOf(actions) => actions.contains(&was),
-            Was::AnyBut(actions) => !actions.contains(&was),
-        };
-        from && self.into.contains(&(now.body, now.action))
+        !self.not_from.contains(&was) && self.into.contains(&(now.body, now.action))
     }
 }
 
@@ -347,6 +333,10 @@ pub struct Row {
     /// `AimingAndShooting`: its kept running pose counts as chosen, bringing the aim change's
     /// step.
     pub aim_step: bool,
+    /// `PadChart`, `WallJump`: it is a part of its situation's last row, whose cell gives more
+    /// than one outcome, so the chart gives that part a row of its own; like the last row, it
+    /// chooses her pose anew whatever pose it gives.
+    pub part_of_the_last: bool,
 }
 
 /// A row's identity: its first cell in §7's tables, the Pad cell for the pad chart's rows. It is
@@ -447,6 +437,9 @@ pub enum RowId {
     AnythingElseMoving,
     /// Running's "anything else, or nothing held", her horizontal speed at the frame's start 0.
     AnythingElseAtRest,
+    /// A straight jump's "anything else, or nothing held", her horizontal speed at the frame's
+    /// start 0, aimed `Up`, `UpForward` or `DownForward`.
+    AnythingElseAtRestAimed,
     /// A ball's "anything else, or nothing held: on the ground".
     AnythingElseOnTheGround,
     /// A ball's "in the air, without the spring ball".
@@ -528,6 +521,7 @@ pub const NO_CHANGE: Row = Row {
     beats: &[],
     beats_unless: &[],
     aim_step: false,
+    part_of_the_last: false,
 };
 
 /// "kept": her pose stays as it is.

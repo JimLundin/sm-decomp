@@ -70,10 +70,11 @@ that type share, and refused where they share none; poses outside her map are no
 limit of the decode, though the kept action is carried and no frame these runs play reads it. The run compares those
 owners with the record at every NMI return and stops at the first difference or the first
 unsupported pose or content. Room facts with no selected producer yet are read once from the
-seed and held; `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model
-history the record cannot tell apart in a spin's first two frames, so it is compared only
-through its effects. The comparison is at frame cuts; it does not compare intra-frame bus
-timing. While she follows the pad the game keeps no way for her run of its own, so her run's way
+seed and held; `SEED_HELD` names them, and each is a missing owner. Her choices of her pose,
+whether her latest and the one before it left her in a spin or a wall jump, are read from the
+record's pose history (the old and old-old poses' movement types, which the game shifts only on
+a frame that chooses) and compared at every cut as `movement.choices`. The comparison is at frame
+cuts; it does not compare intra-frame bus timing. While she follows the pad the game keeps no way for her run of its own, so her run's way
 is compared only while she carries on, and otherwise through her position.
 
 The room's Ceres doors (boss-ceres-ridley's `CeresDoor`) play in the loop too. Their State is
@@ -140,12 +141,14 @@ the last cut of the row before, and the run's cuts count on through it. The seed
 geometry, door cells and camera room are held from the seed; each room a passage brings her
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
-lets her go at cut 101, and she leaves by room 1's door. Played back to back, the Ceres rows
-from `chain-any-0001-DF45` hold 437 cuts, to cut 26 of `chain-any-0002-DF8D` (run cut 438,
-`movement.position`), from `chain-any-0002-DF8D` hold 25 cuts (cut 26, `movement.position`), from `chain-any-0003-DFD7`
-hold 786 cuts, through `chain-any-0004-E021` and on to cut 178 of `chain-any-0005-E06B`, and
-from `chain-any-0004-E021` hold 441 cuts to the same stop. That stop is the passage to Ridley's
-room fetching its contents, which place a Ceres actor of a later piece (`LaterCeresActor`).
+lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
+281 cuts. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 1,480 cuts, through
+rooms 2, 3 and 4 and on to cut 178 of `chain-any-0005-E06B`; from `chain-any-0002-DF8D` they
+hold 1,068 cuts, from `chain-any-0003-DFD7` 786 and from `chain-any-0004-E021` 441, each to the
+same stop. That stop is the passage to Ridley's room fetching its contents, which place a Ceres
+actor of a later piece (`LaterCeresActor`). Ridley's room's own row, `chain-any-0006-E0B5`, is
+refused at its seed: an actor of the doors' species there is neither a door nor the shaft's
+overlay (`Ceres actor kind`).
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 

@@ -64,7 +64,7 @@ pub fn opportunities(
         return (Vec::new(), graphics);
     }
     let mut requests = Vec::new();
-    if matches!(prior_action, Action::Spinning | Action::WallJumping) {
+    if prior_action.spins() {
         let identity = if prior_action == Action::Spinning
             && frame.sprite_before_movement == Sprite::ScrewAttack
         {

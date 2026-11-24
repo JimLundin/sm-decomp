@@ -165,7 +165,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | audio-transport | 2,796 | 1,962 | 1.43 | 1.42 | 0 % | 0 | 566 | 77 |
 | enemy-interactions | 264 | 362 | 0.73 | 0.73 | 0 % | - | 170 | 30 |
 | weapons-projectiles | 4,035 | 2,062 | 1.96 | 1.94 | 1 % | 2,605 | 1,081 | 81 |
-| samus-movement | 10,896 | 9,923 | 1.10 | 0.90 | 18 % | 12,724 | 4,428 | 484 |
+| samus-movement | 11,081 | 9,974 | 1.11 | 0.91 | 18 % | 12,724 | 4,483 | 493 |
 | world-camera | 1,932 | 1,962 | 0.98 | 0.83 | 15 % | 2,274 | 675 | 103 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 76 |
 | interface-hud | 2,855 | 2,412 | 1.18 | 0.90 | 24 % | 2,742 | 1,193 | 108 |
@@ -214,26 +214,26 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean/samus_movement/src/catalogue.rs` | - | tables and types | 0 | 13 | 136 | 1,055 | 0 | 0 | 0 | 286 |
-| `crates/clean/samus_movement/src/change.rs` | pose chart | logic | 1,120 | 1,324 | 40 | 0 | 44 | 17 | 44 | 189 |
-| `crates/clean/samus_movement/src/change.rs` `fn apply` | motion | logic | 251 | 256 | 0 | 0 | 8 | 0 | 6 | 24 |
+| `crates/clean/samus_movement/src/change.rs` | pose chart | logic | 1,146 | 1,344 | 40 | 0 | 47 | 17 | 44 | 192 |
+| `crates/clean/samus_movement/src/change.rs` `fn apply` | motion | logic | 239 | 244 | 0 | 0 | 8 | 0 | 6 | 23 |
 | `crates/clean/samus_movement/src/chart/table.rs` | pose chart | tables and types | 0 | 65 | 28 | 1,298 | 0 | 0 | 0 | 289 |
-| `crates/clean/samus_movement/src/chart.rs` | pose chart | logic | 958 | 1,071 | 143 | 0 | 44 | 17 | 0 | 150 |
+| `crates/clean/samus_movement/src/chart.rs` | pose chart | logic | 1,041 | 1,162 | 177 | 0 | 46 | 17 | 0 | 170 |
 | `crates/clean/samus_movement/src/collide.rs` | collision | logic | 2,333 | 2,458 | 220 | 23 | 137 | 59 | 25 | 338 |
 | `crates/clean/samus_movement/src/fit.rs` | pose fit | logic | 674 | 784 | 65 | 0 | 14 | 36 | 39 | 118 |
 | `crates/clean/samus_movement/src/jump_held.rs` | motion | logic | 239 | 325 | 71 | 14 | 8 | 12 | 5 | 59 |
-| `crates/clean/samus_movement/src/lib.rs` | - | logic | 0 | 189 | 0 | 0 | 0 | 0 | 0 | 33 |
-| `crates/clean/samus_movement/src/moves.rs` | - | logic | 1,309 | 1,319 | 39 | 0 | 61 | 138 | 41 | 180 |
-| `crates/clean/samus_movement/src/rows.rs` | pose chart | tables and types | 294 | 398 | 878 | 376 | 5 | 13 | 0 | 360 |
+| `crates/clean/samus_movement/src/lib.rs` | - | logic | 0 | 191 | 0 | 0 | 0 | 0 | 0 | 33 |
+| `crates/clean/samus_movement/src/moves.rs` | - | logic | 1,294 | 1,302 | 39 | 0 | 61 | 138 | 41 | 179 |
+| `crates/clean/samus_movement/src/rows.rs` | pose chart | tables and types | 267 | 369 | 862 | 380 | 5 | 13 | 0 | 353 |
 | `crates/clean/samus_movement/src/rules.rs` | - | tables and types | 328 | 399 | 444 | 365 | 3 | 38 | 0 | 217 |
-| `crates/clean/samus_movement/src/run.rs` | motion | logic | 931 | 1,057 | 129 | 0 | 58 | 37 | 0 | 166 |
-| `crates/clean/samus_movement/src/samus.rs` | motion | logic | 342 | 467 | 344 | 0 | 8 | 30 | 0 | 130 |
-| `crates/clean/samus_movement/src/situation.rs` | pose chart | tables and types | 114 | 254 | 349 | 6,483 | 12 | 0 | 0 | 1,471 |
+| `crates/clean/samus_movement/src/run.rs` | motion | logic | 1,040 | 1,146 | 129 | 0 | 64 | 67 | 19 | 175 |
+| `crates/clean/samus_movement/src/samus.rs` | motion | logic | 370 | 509 | 377 | 0 | 10 | 42 | 0 | 150 |
+| `crates/clean/samus_movement/src/situation.rs` | pose chart | tables and types | 114 | 252 | 349 | 6,519 | 12 | 0 | 0 | 1,483 |
 | `crates/clean/samus_movement/src/step.rs` | motion | logic | 364 | 446 | 0 | 0 | 0 | 12 | 5 | 52 |
 | `crates/clean/samus_movement/src/tick.rs` | motion | tables and types | 28 | 84 | 130 | 0 | 0 | 0 | 7 | 32 |
-| `crates/clean/samus_movement/src/touchdown.rs` | - | logic | 270 | 294 | 18 | 29 | 27 | 0 | 0 | 65 |
+| `crates/clean/samus_movement/src/touchdown.rs` | - | logic | 262 | 286 | 18 | 29 | 27 | 0 | 0 | 65 |
 | `crates/clean/samus_movement/src/travel.rs` | - | logic | 72 | 110 | 58 | 0 | 3 | 0 | 0 | 34 |
 | `crates/clean/samus_movement/src/vertical.rs` | motion | logic | 1,271 | 1,470 | 127 | 0 | 41 | 27 | 24 | 235 |
-| total | | | 10,896 | 12,783 | 3,219 | 9,643 | 472 | 435 | 194 | 4,428 |
+| total | | | 11,081 | 12,959 | 3,270 | 9,683 | 485 | 477 | 213 | 4,483 |
 
 ### world-camera
 
@@ -411,7 +411,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,456 | 2,452 | 4,349 | 185 | 35 | 0 | 0 | 1,263 |
+| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,472 | 2,476 | 4,352 | 185 | 35 | 0 | 0 | 1,269 |
 
 ## Lines
 
@@ -420,7 +420,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | audio-transport | 566 | 42 | 524 | 466 |
 | enemy-interactions | 170 | 170 | 0 | 44 |
 | weapons-projectiles | 1,081 | 418 | 663 | 673 |
-| samus-movement | 4,428 | 2,655 | 1,773 | 1,816 |
+| samus-movement | 4,483 | 2,660 | 1,823 | 1,847 |
 | world-camera | 675 | 238 | 437 | 322 |
 | run-progress | 437 | 182 | 255 | 136 |
 | interface-hud | 1,193 | 659 | 534 | 476 |
@@ -433,8 +433,8 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | world-quake | 95 | 43 | 52 | 24 |
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
-| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,263 | 1,073 | 190 | 243 |
-| total | 14,872 | 8,044 | 6,828 | 6,246 |
+| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,269 | 1,079 | 190 | 245 |
+| total | 14,933 | 8,055 | 6,878 | 6,280 |
 
 ## Spec, budget and fit by area
 
@@ -483,14 +483,14 @@ Spec [`docs/behaviours/samus-movement.md`](behaviours/samus-movement.md), k = 37
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| motion | 18 | 111.0 | 4,162 | 4,019 | 3,425 | 0.82 |
+| motion | 18 | 112.0 | 4,200 | 4,019 | 3,550 | 0.85 |
 | pose fit | 2 | 18.3 | 687 | 1,549 | 674 | 0.98 |
-| pose chart | 6 | 64.3 | 2,412 | 2,263 | 2,486 | 1.03 |
+| pose chart | 6 | 64.7 | 2,425 | 2,263 | 2,569 | 1.06 |
 | collision | 8 | 71.0 | 2,662 | 4,893 | 2,333 | 0.88 |
-| shared (in no area) | | | | | 1,979 | |
-| total | 34 | 264.7 | 9,923 | 12,724 | 10,896 | 1.10 |
+| shared (in no area) | | | | | 1,956 | |
+| total | 34 | 266.0 | 9,974 | 12,724 | 11,081 | 1.11 |
 
-Area fit 0.90: the areas' score, 8,918, ÷ the budget. Shared code 1,979, its share of the model 18 %.
+Area fit 0.91: the areas' score, 9,125, ÷ the budget. Shared code 1,956, its share of the model 18 %.
 
 ### world-camera
 
@@ -666,7 +666,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | weapons-projectiles | bridge | 1 | 1,409 | 1,347 | 68 | 240 | 208 | 37 | 0 | 226 |
 | weapons-projectiles | replay provider | 2 | 4,889 | 4,628 | 331 | 130 | 360 | 495 | 59 | 752 |
 | samus-movement | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-movement | replay provider | 3 | 6,656 | 6,680 | 526 | 286 | 346 | 715 | 61 | 1,147 |
+| samus-movement | replay provider | 3 | 6,694 | 6,715 | 535 | 290 | 347 | 720 | 61 | 1,156 |
 | world-camera | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -691,7 +691,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 41,935 | 41,698 | 3,807 | 1,865 | 3,125 | 3,536 | 484 | 7,107 |
+| total | | | 41,973 | 41,733 | 3,816 | 1,869 | 3,126 | 3,540 | 484 | 7,116 |
 
 ## Engine services
 
@@ -701,7 +701,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | production and exact services | 37 | 4,314 | 25,883 | 26,120 | 6,892 | 1,009 | 1,702 | 3,115 | 373 | 5,372 |
 | bridges | 7 | 934 | 5,602 | 5,566 | 657 | 377 | 622 | 317 | 78 | 962 |
-| rebuilt models, shared types included | 123 | 6,246 | 37,479 | 47,036 | 20,533 | 18,069 | 1,837 | 1,291 | 798 | 14,872 |
+| rebuilt models, shared types included | 123 | 6,280 | 37,679 | 47,236 | 20,587 | 18,109 | 1,850 | 1,332 | 817 | 14,933 |
 
 ## Domain graph
 
@@ -1180,22 +1180,22 @@ graph LR
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
 | `catalogue.rs` | - | One entry per spec entry: what the player sees, its kind and its switch. | `enum BehaviourId (34)`, `struct Behaviour`, `const CATALOGUE` | 0 | 286 |
-| `change.rs` | pose chart; `fn apply` in motion | `PoseFollows`: the pose change, once her moves are made. | `struct PoseChange`, `fn transition_firing_aim`, `Samus::{take_pose, apply}`, `Effect::lets_go`, 6 private | 1,371 | 213 |
+| `change.rs` | pose chart; `fn apply` in motion | `PoseFollows`: the pose change, once her moves are made. | `struct PoseChange`, `fn transition_firing_aim`, `Samus::{take_pose, apply}`, `Effect::lets_go`, 6 private | 1,385 | 215 |
 | `chart/table.rs` | pose chart | The rows of `WhatHerMovesMet` and of `AnimationEnds` (§7), read in order, the first that fits. | `const MOVES_MET`, `const STEP_BLOCKED`, `const ANIMATION_ENDS`, 1 private | 0 | 289 |
-| `chart.rs` | pose chart | §7: the pose chart's reader. | `struct Moment`, `struct Choice`, `Choice::{instead, blocked}`, `Moment::{next_pose, choose}`, 11 private | 958 | 150 |
+| `chart.rs` | pose chart | §7: the pose chart's reader. | `struct Moment`, `struct Choice`, `enum Decider (5)`, `Choice::{chooses_anew, instead, blocked}`, `Moment::{next_pose, choose}`, 11 private | 1,041 | 170 |
 | `collide.rs` | collision | Tilemap collision (`BlocksStopFlush`, `SolidEnemies`, `SlopesCarry`, `TouchedCells`, `OtherBlockKinds`): one axis at a time, against the room's grid of 16 px cells and the solid enemies' boxes. | `struct Bounds`, `enum Stop (3)`, `enum Probe (5)`, `struct Moved`, `fn vertical_heading`, `struct Axis`, `Bounds::axis`, `Tick::{inside, go, sideways, up_or_down, slope_check}`, 32 private | 2,333 | 338 |
 | `fit.rs` | pose fit | `PoseFitAfterMoves`: when the pose she takes has a taller body, she looks up and down for room and is pushed clear of what is above or below her, or the change is refused or becomes a crouch. | `fn crouched`, `enum Fitted (4)`, `Fitted::{moved, takes_the_change}`, `Samus::fit`, 7 private | 674 | 118 |
 | `jump_held.rs` | motion | `Jumping`, jump held through (§1.2): jump held through a landing, or through the end of a turn or of a landing, counts as a press for the pad chart the next frame, so she takes off again without pressing it. | `enum FrameBefore (2)`, `struct JumpHeld`, `JumpHeld::{NONE, pressed, then}`, `FrameBefore::left_behind`, 2 private | 239 | 59 |
 | `lib.rs` | - | The samus-movement model, built from its behaviour spec alone: a character controller for Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels. | - | 0 | 33 |
-| `moves.rs` | - | `MovesAsShePosed`: a frame's moves, as the pose she starts it in says: her horizontal move and the slope checks after it, the near-wall test, then the ground pull or her vertical move; facing the screen, the elevator's descent or nothing. | `struct MovesMade`, `Samus::make_moves`, 7 private | 1,309 | 180 |
-| `rows.rs` | pose chart | The pose chart's vocabulary (§7). | `const FORWARD`, `const BACK`, `fn seen`, `enum Doing (14)`, `enum Drift (5)`, `enum Moves (5)`, `enum Footing (4)`, `struct Situation`, `struct Class`, `enum Test (13)`, `struct Aiming`, `enum NextFacing (3)`, `struct Next`, `enum Effect (13)`, `struct Entering`, `enum Was (2)`, `struct Beat`, `struct Row`, `enum RowId (76)`, `const AIM`, `const UP_DOWN`, `const UDA`, `const NO_CHANGE`, `const KEEP_POSE`, `const TO_STILL`, `const LOWERS_NOTHING`, `const TO_RUNNING`, `const TO_JUMPING`, `const TO_FALLING`, `const TO_SPINNING`, `const TO_TAKING_OFF`, `const TO_MOONWALKING`, `const TO_CROUCHING`, `const TO_MORPHING`, `const TO_TURNING`, `const FORWARD_AIM`, `const UP_AIM`, `const AIM_UP_ELSE_DOWN`, `const DOWN_TO_FORWARD`, `enum Met (5)`, `Next::pose_from`, `Entering::on` | 294 | 360 |
+| `moves.rs` | - | `MovesAsShePosed`: a frame's moves, as the pose she starts it in says: her horizontal move and the slope checks after it, the near-wall test, then the ground pull or her vertical move; facing the screen, the elevator's descent or nothing. | `struct MovesMade`, `Samus::make_moves`, 7 private | 1,294 | 179 |
+| `rows.rs` | pose chart | The pose chart's vocabulary (§7). | `const FORWARD`, `const BACK`, `fn seen`, `enum Doing (14)`, `enum Drift (5)`, `enum Moves (5)`, `enum Footing (4)`, `struct Situation`, `struct Class`, `enum Test (13)`, `struct Aiming`, `enum NextFacing (3)`, `struct Next`, `enum Effect (12)`, `struct Entering`, `struct Beat`, `struct Row`, `enum RowId (77)`, `const AIM`, `const UP_DOWN`, `const UDA`, `const NO_CHANGE`, `const KEEP_POSE`, `const TO_STILL`, `const LOWERS_NOTHING`, `const TO_RUNNING`, `const TO_JUMPING`, `const TO_FALLING`, `const TO_SPINNING`, `const TO_TAKING_OFF`, `const TO_MOONWALKING`, `const TO_CROUCHING`, `const TO_MORPHING`, `const TO_TURNING`, `const FORWARD_AIM`, `const UP_AIM`, `const AIM_UP_ELSE_DOWN`, `const DOWN_TO_FORWARD`, `enum Met (5)`, `Next::pose_from`, `Entering::on` | 267 | 353 |
 | `rules.rs` | - | The tuning parameters the model reads: one `Rules` a caller holds, whose `Default` is the vanilla game, the spec's numbers. | `enum SpeedCap (2)`, `enum Gait (7)`, `struct Limits`, `struct Speeds`, `enum Lowers (3)`, `struct WithItem`, `struct Bounce`, `struct Rules`, `WithItem::of`, `Rules::{limits, lowers, cap, rise_speed}`, `impl Default for Rules`, 1 private | 328 | 217 |
-| `run.rs` | motion | Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash, dashing). | `enum Carry (2)`, `enum Dashing (2)`, `enum Stride (4)`, `fn running_with_run_held`, `struct Run`, `Run::{halt, skids, turn_round, end_skid, as_running, meet, launch, moving, dash_for_moves, stride}`, 7 private | 931 | 166 |
-| `samus.rs` | motion | Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows beyond her quantities: its outputs, for the caller to act on. | `enum Spin (4)`, `enum Seat (2)`, `enum WallTest (3)`, `enum StandingAnimation (2)`, `fn sprite`, `struct Outcome`, `struct Samus`, `Spin::then`, `StandingAnimation::of`, `Samus::{rides_the_elevator, bounds, horizontal_probe, take_result}` | 342 | 130 |
-| `situation.rs` | pose chart | Her situation, classified once a frame from her pose at its start (`MovesAsShePosed`). | `struct UnknownPose`, `fn classify`, `static ENTERING`, `static CLASSES`, 47 private | 114 | 1,471 |
+| `run.rs` | motion | Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash, dashing). | `enum Carry (2)`, `enum Dashing (2)`, `enum Stride (4)`, `fn running_with_run_held`, `struct Run`, `Run::{halt, skids, turn_round, end_skid, as_running, meet, launch, moving, dash_for_moves, stride}`, 8 private | 1,040 | 175 |
+| `samus.rs` | motion | Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows beyond her quantities: its outputs, for the caller to act on. | `enum Chosen (2)`, `struct Choices`, `enum Seat (2)`, `enum WallTest (3)`, `enum StandingAnimation (2)`, `fn sprite`, `struct Outcome`, `struct Samus`, `Choices::{starting_in, then, carried_on}`, `StandingAnimation::of`, `Samus::{rides_the_elevator, bounds, horizontal_probe, take_result}`, 1 private | 370 | 150 |
+| `situation.rs` | pose chart | Her situation, classified once a frame from her pose at its start (`MovesAsShePosed`). | `struct UnknownPose`, `fn classify`, `static ENTERING`, `static CLASSES`, 47 private | 114 | 1,483 |
 | `step.rs` | motion | One whole frame, in the order the spec gives it (`PoseFollows`, `MovesAsShePosed`): the cells she is inside; what she does and how she moves, as the pose she starts it in says; what her moves met; the pose she takes; and what she remembers for the next frame. | `Samus::step` | 364 | 52 |
 | `tick.rs` | motion | One frame's play: what the frame brings from the player and the world (§1.3), and the room, the rules and the cells reached that the frame's moves and looks share (`TouchedCells`). | `struct Frame`, `struct Tick`, `Tick::new` | 28 | 32 |
-| `touchdown.rs` | - | Spec: `TouchdownRequests`. | `fn opportunities`, 4 private | 270 | 65 |
+| `touchdown.rs` | - | Spec: `TouchdownRequests`. | `fn opportunities`, 4 private | 262 | 65 |
 | `travel.rs` | - | Spec: `TravelledDistances`. | `enum TravelKind (5)`, `struct TravelledDistances`, `TravelledDistances::{fresh, refresh, record}`, `impl Default for TravelledDistances` | 72 | 34 |
 | `vertical.rs` | motion | Her vertical motion as a value of its own (§1 vertical speed and bounces, §1.2 falling at 0 and the moonfall). | `enum Phase (5)`, `struct Vertical`, `enum Course (3)`, `enum Contact (4)`, `Contact::rises`, `Vertical::{on_ground, has_motion, rising, heading_down, jump, end_rise, space_jump, enter_spin_from_a_turn, come_to_the_ground, course, grow, floor_stop, end_move, meet_in_moves, contact, meet, end_bounce}`, 6 private | 1,271 | 235 |
 
@@ -1207,7 +1207,7 @@ Its crate root exports:
 - from `rows`: `Met`
 - from `rules`: `Bounces`, `Rules`, `SpeedCap`, `WithItem`
 - from `run`: `Carry`, `Dashing`, `Run`
-- from `samus`: `Outcome`, `Samus`, `Seat`, `Spin`, `StandingAnimation`, `WallTest`
+- from `samus`: `Choices`, `Chosen`, `Outcome`, `Samus`, `Seat`, `StandingAnimation`, `WallTest`
 - from `situation`: `UnknownPose`
 - from `tick`: `Frame`
 - from `travel`: `TravelKind`, `TravelledDistances`
@@ -1225,6 +1225,7 @@ Rules::limits(&self, gait: Gait) -> Limits
 Rules::lowers(&self, by: Lowers) -> Fixed
 Rules::cap(&self, speed: Fixed, top: Fixed) -> Fixed
 Rules::rise_speed(&self, base: WithItem, items: &Set<Item>, dash: Fixed) -> Fixed
+Choices::starting_in(pose: Pose) -> Self
 Samus::step(&mut self, frame: &Frame, world: &dyn World, rules: &Rules) -> Result<Outcome, UnknownPose>
 TravelledDistances::fresh() -> Self
 TravelledDistances::refresh(&mut self)

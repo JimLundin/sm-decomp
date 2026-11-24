@@ -541,3 +541,14 @@ after = "Finishing::Overrun => count.wrapping_add(1),"
 case = "played chain-any-0001-DF45 0 300"
 cut = 253
 field = "finished-frames"
+
+[[fault]]
+name = "played-movement-choices-forgotten"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "let outcome = samus"
+after = '''samus.choices = samus_movement::Choices::starting_in(samus.pose);
+        let outcome = samus'''
+case = "played chain-any-0002-DF8D 0 30"
+cut = 26
+field = "movement.choices"

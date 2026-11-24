@@ -18,16 +18,17 @@
 movie = "any"
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
-# floor and lets her go, and she leaves by the room's door; played on into the second room with no
-# new seed, until her moves there differ, which samus-movement's next round owns.
+# floor and lets her go, and she leaves by the room's door; played on through the second, third
+# and fourth rooms and into the fifth with no new seed, until the fifth room's contents place the
+# door to Ridley's room, a piece of the station not yet owned.
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
 end = 3000
-held = 437
-stop = { failed = "movement.position" }
+held = 1480
+stop = { failed = "Load(LaterCeresActor)" }
 seed_frame = 8538
-frames = [8539, 8975]
+frames = [8539, 10018]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -39,6 +40,17 @@ held = 411
 stop = "end"
 seed_frame = 8538
 frames = [8539, 8949]
+power_on = false
+
+# Ceres's second room alone, from its own seed: her spins carried on by her choices of pose.
+[[run]]
+row = "chain-any-0002-DF8D"
+start = 0
+end = 281
+held = 281
+stop = "end"
+seed_frame = 8950
+frames = [8951, 9231]
 power_on = false
 
 # Ceres's third room, played on through the fourth and into the fifth with no new seed, until

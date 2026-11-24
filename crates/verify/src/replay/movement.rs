@@ -12,9 +12,13 @@ use data::rom::Rom;
 use game::production::world::{Boundary, MovementWorld};
 use game::production::{MovementContent, PoseContent};
 use samus_movement::{
-    Bounces, Carry, Dashing, FrameBefore, JumpHeld, Phase, Run, Samus, Seat, Spin, Vertical,
+    Bounces, Carry, Choices, Chosen, Dashing, FrameBefore, JumpHeld, Phase, Run, Samus, Seat,
+    Vertical,
 };
 use types::{Action, Buttons, Fixed, Item, Parity, Pose, Position, Radius, Set, Side, Turn, ZERO};
+
+/// The movement types a spin carried on counts as spins: spin jumping (3) and wall jumping (14h).
+const SPIN_MOVEMENT_TYPES: [u8; 2] = [0x03, 0x14];
 
 fn word(wram: &[u8], source: WramWord) -> Result<u16, Outcome> {
     source
@@ -128,9 +132,22 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
         2 => Bounces::Twice,
         _ => return Err(data_failure(None, "movement bounce count")),
     };
-    let previous_type = source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE
-        .read(wram)
-        .map_err(|_| data_failure(None, "movement spin history"))?;
+    // `$91:EBF8` shifts the pose history only when a choice is made: the old pose's movement
+    // type is what her latest choice recorded, the old-old one what the choice before it did.
+    let chosen = |source: source::WramByte| -> Result<Chosen, Outcome> {
+        let movement_type = source
+            .read(wram)
+            .map_err(|_| data_failure(None, source.name))?;
+        Ok(if SPIN_MOVEMENT_TYPES.contains(&movement_type) {
+            Chosen::Spin
+        } else {
+            Chosen::Other
+        })
+    };
+    let choices = Choices {
+        latest: chosen(source::SAMUS_PREV_MOVEMENT_TYPE2)?,
+        before: chosen(source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE)?,
+    };
     Ok(Samus {
         position: Position {
             x: fixed(wram, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?,
@@ -161,11 +178,7 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
             bounces,
         },
         pose,
-        spin: if pose.action == Action::Spinning && [3, 20].contains(&previous_type) {
-            Spin::CarriedOn
-        } else {
-            Spin::Off
-        },
+        choices,
         seat: match word(wram, source::SAMUS_SLOPE_ADJUSTED)? {
             0 => Seat::Unseated,
             1 => Seat::Seated,

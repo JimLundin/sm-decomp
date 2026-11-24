@@ -58,13 +58,45 @@ pub struct Choice {
     /// turn's or a landing's end counts for jump held through (`Jumping`), and is no floor
     /// contact (`AcceptedFloorResponse`).
     pub handed_over: bool,
+    /// `PoseFollows`, `WallJump`: what decided the pose.
+    pub decided_by: Decider,
+}
+
+/// `PoseFollows`: what decided a frame's pose, which `WallJump` reads for whether the frame
+/// chooses her pose anew.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Decider {
+    /// Her animation's end handed it over (`AnimationEnds`).
+    AnimationEnd,
+    /// What her moves met (`WhatHerMovesMet`).
+    MovesMet,
+    /// A pad chart row other than her situation's last (`PadChart`).
+    PadRow,
+    /// Her situation's last row, or a part of its cell the chart gives a row of its own
+    /// (`PadChart`).
+    LastRow,
+    /// Nothing: the elevator's ride keeps the pose she has (`RidingTheElevator`).
+    Nothing,
 }
 
 impl Choice {
-    /// `PoseFollows`, `PoseFitAfterMoves`, `AimingAndShooting`: a pose she ends in instead of the
-    /// one chosen (the pose she had, where the change is refused; crouched `Still`; against the
-    /// wall, where the aim change's step is blocked), which brings none of the chosen pose's
-    /// effects: no step, no lowering and no effect on her speeds and dash.
+    /// `WallJump`: whether this choice chooses her pose anew, from `had`, her pose at the
+    /// frame's start. It does where the pose chosen is another (a take-off and a spin reversed
+    /// included: her facing is part of her pose), where her situation's last row decides,
+    /// whatever pose it gives, and where what her moves met decides, a kept pose included (a
+    /// ceiling stopping a spin's rise chooses the spin again). A row whose next pose is the one
+    /// she is in, with nothing met that decides, chooses nothing, and so does the elevator's
+    /// ride.
+    #[must_use]
+    pub fn chooses_anew(&self, had: Pose) -> bool {
+        self.pose != had || matches!(self.decided_by, Decider::LastRow | Decider::MovesMet)
+    }
+
+    /// `PoseFollows`, `PoseFitAfterMoves`, `AimingAndShooting`, `RidingTheElevator`: a pose that
+    /// nothing decided, which brings no step, no lowering and no effect on her speeds and dash:
+    /// the pose she has on the elevator's ride, or one she ends in instead of the one chosen
+    /// (the pose she had, where the change is refused; crouched `Still`; against the wall, where
+    /// the aim change's step is blocked).
     #[must_use]
     pub const fn instead(pose: Pose) -> Self {
         Self {
@@ -73,6 +105,7 @@ impl Choice {
             aim_step: false,
             lower: None,
             handed_over: false,
+            decided_by: Decider::Nothing,
         }
     }
 
@@ -194,8 +227,8 @@ impl Reading<'_> {
 
     /// `PadChart`, `Aiming`: a row's choice, the pose it leads to from hers and its effects;
     /// `AimingAndShooting`: a running pose other than hers, or her running pose a row counts as
-    /// chosen, brings the aim change's step.
-    fn choice(&self, row: &Row) -> Choice {
+    /// chosen, brings the aim change's step. `decided_by` is what the row is of.
+    fn choice(&self, row: &Row, decided_by: Decider) -> Choice {
         let aim = row.next.aim.iter().find(|a| self.fits(a.when));
         let pose = row.next.pose_from(self.pose, aim.map(|a| a.aim));
         Choice {
@@ -204,17 +237,23 @@ impl Reading<'_> {
             aim_step: pose.action == Action::Running && (pose != self.pose || row.aim_step),
             lower: row.next.lower,
             handed_over: false,
+            decided_by,
         }
     }
 
-    /// `PadChart`: the one row of her situation that fits and no other fitting row beats (the
-    /// chart's test proves there is at most one), else its last row.
-    fn pad_chart(&self) -> &'static Row {
+    /// `PadChart`: the choice of the one row of her situation that fits and no other fitting
+    /// row beats (the chart's test proves there is at most one), else of its last row.
+    fn pad_chart(&self) -> Choice {
         let s = self.situation;
         let fit: Vec<&'static Row> = s.rows.iter().filter(|r| self.fits(r.needs)).collect();
-        fit.iter()
-            .find(|row| !fit.iter().any(|other| self.beats(other, row)))
-            .map_or(&s.last, |r| r)
+        let won = fit
+            .iter()
+            .find(|row| !fit.iter().any(|other| self.beats(other, row)));
+        match won {
+            Some(row) if !row.part_of_the_last => self.choice(row, Decider::PadRow),
+            Some(row) => self.choice(row, Decider::LastRow),
+            None => self.choice(&s.last, Decider::LastRow),
+        }
     }
 
     /// `WhatHerMovesMet`, `AnimationEnds`: the first of a table's rows that fits.
@@ -229,10 +268,10 @@ impl Reading<'_> {
     /// where an animation's end hands over the pose: the end neither brings nor cancels it
     /// (`AimingAndShooting`).
     fn choose(&self) -> Choice {
-        let pad_chart = self.choice(self.pad_chart());
+        let pad_chart = self.pad_chart();
         let by_moves = self
             .first(table::MOVES_MET)
-            .map_or(pad_chart, |r| self.choice(r));
+            .map_or(pad_chart, |r| self.choice(r, Decider::MovesMet));
         let ends = self
             .moment
             .animation_ends
@@ -242,7 +281,7 @@ impl Reading<'_> {
             .map_or(by_moves, |r| Choice {
                 aim_step: by_moves.aim_step,
                 handed_over: true,
-                ..self.choice(r)
+                ..self.choice(r, Decider::AnimationEnd)
             })
     }
 }

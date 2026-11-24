@@ -5,7 +5,7 @@
 use crate::collide::{Moved, Probe, Stop, vertical_heading};
 use crate::rows::{Doing, Footing, Met, Moves, Situation};
 use crate::run::{Dashing, Stride, running_with_run_held};
-use crate::samus::{Samus, Seat, Spin, WallTest};
+use crate::samus::{Samus, Seat, WallTest};
 use crate::tick::Tick;
 use crate::travel::TravelledDistances;
 use crate::vertical::Course;
@@ -35,13 +35,12 @@ pub struct MovesMade {
 
 impl Samus {
     /// `MovesAsShePosed`: the frame's moves. At the frame's start a rise ends where it does
-    /// (`RisingAndFalling`) and the spin counts on (`WallJump`). Facing the screen she makes
+    /// (`RisingAndFalling`). Facing the screen she makes
     /// no move of her own, but a moving elevator carries her down (`RidingTheElevator`).
     /// `WhatHerMovesMet`: a wall stop while running wins over walking off a ledge, once that
     /// walk off has acted on her vertical motion.
     pub(crate) fn make_moves(&mut self, situation: &Situation, t: &mut Tick) -> MovesMade {
         self.vertical.end_rise(situation.doing, t.frame.pad);
-        self.spin = self.spin.then(situation.doing == Doing::Spinning);
         let mut made = MovesMade {
             met: None,
             floor_stop: None,
@@ -145,13 +144,13 @@ impl Samus {
         }
     }
 
-    /// `WallJump`: the near-wall test, in a spin carried on holding a side: a test move of the
-    /// wall reach away from the side held, which doesn't move her but writes as a stop would.
-    /// A wall near her readies the jump until the spin has turned far, and then, with jump
-    /// pressed, she kicks off.
+    /// `WallJump`: the near-wall test, in a spin carried on (her pose at the frame's start)
+    /// holding a side: a test move of the wall reach away from the side held, which doesn't move
+    /// her but writes as a stop would. A wall near her readies the jump until the spin has
+    /// turned far, and then, with jump pressed, she kicks off.
     fn near_wall(&mut self, t: &mut Tick) -> WallTest {
         let (pad, frame) = (t.frame.pad, t.frame);
-        if self.spin != Spin::CarriedOn || !pad.any(SIDES) {
+        if !self.choices.carried_on(self.pose) || !pad.any(SIDES) {
             return WallTest::Neither;
         }
         let heading = if pad.any(LEFT) {

@@ -93,7 +93,8 @@ frames (the vectors' format), never by a value in its start, with three exceptio
   C-held-edge, C-held-wrap).
   A vector gives them as `before.jump_held` and `before.landed_or_ended`, and compares them as
   `after.jump_held` and `after.landed_or_ended` (C-held-landed).
-- **A spin carried on**, which can ready a wall jump (`WallJump`).
+- **A spin carried on**, which can ready a wall jump (`WallJump`). A start in a spin or a wall
+  jump has that pose chosen once, the choice before it neither a spin nor a wall jump.
 - **Dashing** (`Dashing`): whether she is dashing, from a run with run held until something
   ends it. Like jump held through it is State a caller gives and reads back, in any pose and
   with any dash: a vector gives it as `before.dashing` (default false) and compares it as
@@ -258,7 +259,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   moves along her facing [R2, R61, R76, R95, R97, C-cap]
 - Carrying on along the ground → she brakes instead, `speed − 0.8000` a frame [R133, R1, R87]
 - Carrying on along the ground, braking would take her below zero → she stops (horizontal speed
-  0) and follows the pad again [original only]
+  0) and follows the pad again; a spin's skid ends as `DriftInTheAir` says [original only]
 - Standing, crouched or against the wall → the pad doesn't move her: she moves by her dash only,
   then halts (horizontal speed 0, dash 0, following the pad) [R77, R47, R49, R107, R18,
   C-attempt-idle-empty, C-attempt-idle-zero-touch]
@@ -985,6 +986,10 @@ axis. These are named choices, not angles rounded to a movement direction.
   frame → she carries on (a skid stays a skid) and moves [R9, R10, R100, R101, R102, W14]
 - A spin jump otherwise → she stops drifting: horizontal speed 0, following the pad, and she moves
   by her dash alone [R125, R7]
+- A spin skidding, the brake taking the skid below zero this frame → the skid ends at horizontal
+  speed 0, with no speed-up step that frame, and the frame goes on as for a spin not skidding:
+  holding the side she now faces, she carries on along it; otherwise she stops drifting,
+  following the pad [SK1, C-spin-skid-end-let-go]
 - "Reached her top speed this frame" means the step was cut to the top speed: `WordwiseTopSpeed`
   gave her the top speed instead of the sum (`Exact`: the sum was over it). A step that lands
   exactly on the top speed keeps her speed, so it hasn't reached it, and with neither forward held
@@ -992,7 +997,9 @@ axis. These are named choices, not angles rounded to a movement direction.
 - Through a wall jump → she always drifts, carrying on along her facing [R4, R30, R38, R73]
 - Left and right both held → her drift reads it as the side she faces held, never as back held,
   so a spin carries on [R102]
-- checked: oracle.
+- checked: oracle (SK1, chain-any-0006-E0B5:10, a spin's skid of zero ended holding the side she
+  faces: carrying on at 0 shows only in the replay's compare of her State); constructed
+  (C-spin-skid-end-let-go, ended holding no side).
 
 ### Moonfall
 - kind: quirk.
@@ -1040,10 +1047,25 @@ axis. These are named choices, not angles rounded to a movement direction.
 - A test move of 8 px towards a wall, from where her x is after this frame's move, would be
   stopped (`BlocksStopFlush`, `SolidEnemies`) → the wall is near her: fewer than 8 px of air
   between her edge and the wall; readying and the kick use this same test [RW1, C-near-wall-item]
-- A spin she was already in two frames earlier, or one that followed a wall jump, facing either
-  way (a reversal keeps it) → it is carried on (§1.2) [RW1, P8]
-- RW1 readies in the frame after a reversal. Reversing needs no such memory: any spin can be
-  reversed from its first frame, and the reversal always skids (`TurningRound`).
+- Her pose is chosen anew on a frame, and only on one, where: (1) the pose chosen (`PoseFollows`)
+  is another, a take-off and a spin reversed included (her facing is part of her pose); (2) the
+  pad chart row is her situation's last row, whatever pose it gives; or (3) what her moves met
+  decides her pose (`WhatHerMovesMet`), a kept pose included, so a ceiling that stops a spin's
+  rise chooses the spin again. A frame whose fitting row's next pose is the one she is in (in a
+  spin, forward held, with jump or not) and whose moves meet nothing that decides chooses nothing.
+  Whether a frame chooses is decided by the pose chosen, but what the choice records is the pose
+  she ends in once pose fit (`PoseFitAfterMoves`) has taken or refused it: a landing refused in a
+  spin records the spin [C-fit-land-refused-spin]
+- A spin whose choice before her latest one was a spin or a wall jump, facing either way → it is
+  carried on (§1.2), from the frame after that latest choice [RW1, P8, WS1, C-spin-named-row,
+  C-spin-ceiling, C-spin-no-ceiling, C-fit-land-refused-spin]
+- So the frame she takes a spin counts: with the next frame choosing the spin again (its last
+  row, or a reversal), she is carried on two frames after she took it (WS1); while she holds
+  forward the spin isn't chosen again and isn't carried on (C-spin-named-row), until a ceiling
+  stops her rise: from the frame after it she is carried on (C-spin-ceiling; without the ceiling
+  she isn't, C-spin-no-ceiling; record only: samus-walljump-16 43 to 46). RW1 readies in the frame
+  after a reversal. Reversing needs no such memory: any spin can be reversed from its first frame,
+  and the reversal always skids (`TurningRound`).
 - Spinning in a spin carried on, holding a side, the test looks away from the side held
   (left held: for a wall on her right; otherwise right held: on her left) → the test runs, on
   every frame that has both: on a frame that readies, on every frame after the spin has turned
@@ -1071,9 +1093,11 @@ axis. These are named choices, not angles rounded to a movement direction.
 - checked: oracle (samus-walljump-16, -22, -28, samus-grapple-walljump, item-morph-ball's leftward
   spin jumps; samus-walljump-16:46-47: readied in one frame, kicked off in the next; RW1: the
   readying frame writes her x subpixel 0 against the wall on her left, in the frame after the
-  spin is reversed, and the frame reports the readying); harness (W15, item-morph-ball:817, the
-  test's cells reached in the room); constructed (C-near-wall-item, the test's cells reached over
-  an invented room; C-walljump-hijump, WK1's kick with hi-jump, at 5.8000); original
+  spin is reversed, and the frame reports the readying; WS1, chain-any-0002-DF8D:26: readied two
+  frames after she took the spin, the frame between choosing it again); harness (W15,
+  item-morph-ball:817, the test's cells reached in the room); constructed (C-near-wall-item, the
+  test's cells reached over an invented room; C-walljump-hijump, WK1's kick with hi-jump, at
+  5.8000; C-spin-named-row, WS1 with the frame between keeping the spin by its row: no test); original
   only (no test without a spin carried on or without a
   side held: no vector checks a spin near a wall lacking either).
 
@@ -1345,7 +1369,7 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | | up, down or an aim button held; beats forward held, shoot held and jump held | `Jumping`, air aim | none |
 | | back held; beats every other row naming one button | `Turning` in a jump | `TurningRound` |
 | | aiming `Down`: jump held, and no other button a row names; beats jump held | kept | none |
-| | anything else, or nothing held (with the gun drawn, jump alone too) | kept | as running |
+| | anything else, or nothing held (with the gun drawn, jump alone too) | kept while her horizontal speed at the frame's start isn't 0; when it is 0, aimed `Up`, `UpForward` or `DownForward`: `Jumping`, `Forward`, striding, else kept | as running |
 | spinning | shoot pressed | `Jumping`, `Forward`, gun drawn | none |
 | | shoot with up, down or an aim button held; beats forward and jump held | `Jumping`, aim `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward` | none |
 | | forward and jump held | kept | none |
@@ -1445,8 +1469,11 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - A moonwalk's jump, whatever aim button is held → it turns with the moonwalk's own aim [original
   only]
 - The let-go effect "as running" (running, taking off, a straight jump) is decided by her
-  horizontal speed at the frame's start, like the running row's pose, and acts after the frame's
-  move (`PoseFollows`).
+  horizontal speed at the frame's start, like the running and straight jump rows' pose, and acts
+  after the frame's move (`PoseFollows`).
+- So a straight jump aimed down-forward and let go at a standstill strides forward (LG1), and at
+  any other speed keeps its aim (C-jump-letgo-moving); taking off, the let-go row keeps her pose
+  at any speed.
 - "As running", her horizontal speed at the frame's start not 0, and still not 0 after the
   frame's move → the dash joins her horizontal speed (dash 0) and she carries on, braking
   (`SpeedBuildsAndBrakes`) [AS1, AS2]
@@ -1458,13 +1485,15 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   then points rightward along her facing (§2, C-screen-skid).
 - checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, L1, L2, U1, and R133 and
   R141 of `TurningRound`; R102 for left and right both held in a spin; AS1 to AS4 for the
-  let-go effect, AS4 the run at 0 that stands following the pad; R-walljump-letgo, a wall jump's
+  let-go effect, AS4 the run at 0 that stands following the pad; LG1, a straight jump's let-go at
+  0; R-walljump-letgo, a wall jump's
   let-go into the screw attack's spin, keeping her speed; CE2, a turn from facing the screen;
   CE3, the moonwalk's turn holding the way she walks; CE4, a crouched turn's skid); constructed
   (C-chart-a to C-chart-j; C-screen-skid, a skid ended facing the screen; C-screen-turn and
   C-screen-jump, a side held and jump pressed facing the screen; C-moonwalk-turn;
   C-crouch-turn-skid; C-walljump-letgo-space and C-walljump-letgo-plain, the wall jump's let-go
-  with space jump and with neither item); original only (the other rows with left and right
+  with space jump and with neither item; C-jump-letgo-moving, a straight jump's let-go moving);
+  original only (the other rows with left and right
   both held).
 
 ### Aiming
@@ -1507,14 +1536,14 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | | turning: any `Turning`, upright or crouched (in a jump, in a fall, or on the ground as she sinks over a drop) | kept: the upright and spinning rows above are not for a turn, and the landing adds no pad row; the turn's own rows apply as on any frame of it (`PadChart`) | `Landing`: only her vertical motion stops; her vertical speed is kept |
 | no floor (walking off a ledge, `FollowingTheGround`) | upright or crouched on the ground | upright `Falling`, facing kept, `Forward` | `FollowingTheGround`'s fall |
 | | a ball | ball `Falling`, facing kept | `FollowingTheGround`'s fall |
-| a ceiling | rising | kept | `WallsAndCeilings` |
+| a ceiling | rising | kept, a choice of her pose (`WallJump`) | `WallsAndCeilings` |
 
 
 - Cells: a wall (a wall stop); a block or solid enemy in the way of the aim change's step; a wall
   near her as she presses jump; a floor (landing); no floor (walking off a ledge); a ceiling; in
   any pose, a running pose other than hers chosen; upright, in a straight jump or falling;
   spinning or wall jumping; a ball, bouncing; a ball, coming to rest; turning; upright or crouched
-  on the ground; a ball; rising; facing kept; with the aim of the running pose chosen; (`Down` becomes
+  on the ground; a ball; rising; kept, a choice of her pose; facing kept; with the aim of the running pose chosen; (`Down` becomes
   `Forward`); `WallsAndCeilings`; `AimingAndShooting`; `WallJump`'s kick;
   `Landing`; `Landing`'s bounce; `Landing`: only her vertical motion stops; her vertical speed is
   kept; `FollowingTheGround`'s fall.
@@ -2096,8 +2125,10 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   she faces the screen, so the elevator carries her on top of `RidingTheElevator`'s 1 px. That
   carry belongs to the elevator's own lane; C-elevator checks her own 1 px alone.
 
-1. "A spin she was already in two frames earlier" (`WallJump`) is not yet traced against a record: it
-   may count pose changes rather than frames.
+1. Answered: a spin carried on (`WallJump`) counts choices of her pose, not frames: the frame she
+   takes the spin is one, a frame whose row keeps the spin by name is none (WS1,
+   C-spin-named-row), and a ceiling that stops her rise is one (C-spin-ceiling). A choice records
+   the pose she ends in, a refused landing's the spin (C-fit-land-refused-spin).
 2. Answered: the pose chart's steps are §7's `pose_step` vectors. In the motion vectors her pose
    changes by a jump, a fall, a turn from the ground or a spin reversed; for pose fit, by a
    landing, a take-off, standing up and unmorphing (PF1-PF3, U1, the C-fit vectors); and for

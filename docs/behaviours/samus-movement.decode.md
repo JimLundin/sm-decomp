@@ -2287,12 +2287,13 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
 - Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 37.5 × 264.7 units = 9,923 (motion 4,162, pose fit 687, pose chart 2,412, collision 2,662).
+Budget: 37.5 × 265.7 units = 9,961 (motion 4,200, pose fit 687, pose chart 2,412, collision 2,662).
 The official counter reports 111.0 motion units, 18.3 pose-fit units, 64.3 pose-chart units
 and 71.0 collision units for the direct whole-frame step, from 287.7 (117.0, 20.3, 64.3, 86.0)
 with the seven timing entries: they held 27.0 units, and the rules moved out of them and the
 position after her moves add 4.0 (`MovesAsShePosed` 1.0 → 2.0, `SolidEnemies` 10.0 → 12.0,
-`SlopesSlowTheWalk` 2.7 → 3.7). Old-code baselines and k above are unchanged.
+`SlopesSlowTheWalk` 2.7 → 3.7). #738's `DriftInTheAir` arm adds 1.0 (motion 111.0 → 112.0).
+Old-code baselines and k above are unchanged.
 
 From the spec's §7 (the pose chart), moved with the header's:
 
@@ -2645,3 +2646,111 @@ and `movement-native-enemy-stop-terrain-absence` compare `movement.reached.compl
 the floor response, the sender offer and the graphics. The replay transition records the
 request, work, test, skip, body-fit and floor-clip fields they no longer compare. The mini-map's
 early read takes `her position after her moves` from the step's output.
+
+## Ceres rows: the spin's choices, a spin's skid ending, the straight jump's let-go (#738)
+
+Three spec gaps the played rows chain-any-0002-DF8D and chain-any-0006-E0B5 stopped at
+(`$TEMP/collab/diagnose-samus-rows/HANDOFF.md`), traced against bank logs 90 and 91 and the
+records (lock `scenarios/locks/lsnes.toml`, the CI cache's rows).
+
+**1. A spin carried on counts choices of her pose (`WallJump`, §11 question 1).**
+- Sources: `$90:9D38` (the near-wall test's gate: the old-old movement type `0A27` is 3 or 14h);
+  `$90:E695` clears the prospective pose `0A28` to FFFFh each frame before the pose input runs,
+  and `$90:E725` runs the movement handler (with the test, `$90:90BA`) before `$91:EB88`. `$91:EB88`
+  shifts the old poses (`$91:EBF8`: `0A24`/`0A26` from `0A20`/`0A22`, then those from the pose)
+  only on a branch that set a pose; with `0A28` still FFFFh it goes to `$91:EC10` and shifts
+  nothing. `$91:81A9` leaves `0A28` FFFFh where the first fitting transition names her own pose
+  (`$91:81E4`), and `$91:82D9` (no row fits) sets it to her pose. So a let-go row "kept" is a
+  choice and a named row "kept" is none; the test of a frame reads the shifts up to the frame
+  before.
+- Evidence: chain-any-0002-DF8D. At 24 the spin is taken from the run (`0A1C` 19h, `0A24` 09h);
+  the frame ending at 25 reads pad run + jump (no side: the let-go row), `0A28` 19h and `0A24`
+  19h; the frame ending at 26 reads left + right + run + jump (the named row "forward and jump
+  held"), `0A28` FFFFh, and the test readies: `0A96` Bh, `0AF8` FFFFh at x A9h. Over the 63 rows
+  of the CI cache, of 3,823 frames starting in a spin, 642 (32 rows; 582 with a side held) have
+  the spin two frame-starts old, counting the take-off, while `0A27` is not 3 or 14h; none
+  the other way (scratch scan, record words only).
+- A ceiling chooses (spec gate #738, finding 1). `$91:E8B6` runs before `$91:EB88` every frame;
+  on "hit ceiling" (`$90:E606`/`$90:E611`, `0DC6` = 4) `$91:E8E5` sets `0A28` to her own pose
+  (and `0A2E` = 5), so the old poses shift though her row keeps the spin by name. The other
+  results' handlers are a landing or a fall (`$91:E8F2`) and the wall jump (`$91:EABE`); in a
+  spin a landing and the kick give another pose, and a fall sets none (the check below). A spin
+  reversed sets `0A28` to the other facing's spin (another pose).
+- Evidence: samus-walljump-16 43 (also -22 and -28): left + jump facing left, the rise stops
+  with `0B2E`.`0B2C` 0 and no pull, `0A28` 82h, `0A24` 0Ah → 82h, `0A27` 1 → 3; at 46 the
+  reversal frame readies against the wall on her left (`0AF8` 0, `0A96` 1Bh at 47) and she kicks
+  at 48. In the 63 rows the ceiling's mark (`0A2E` = 5 on a kept spin) comes only where the rise
+  stops with no pull that frame (14 frames), the spec's ceiling; the frames whose rise ends at
+  +0.1C00 (the pull acting that frame: a rise ended by `RisingAndFalling`) carry no mark.
+- History check (scratch, record words only, game state 8 on both frames): her remembered choice
+  before the latest, as the spec counts it, against `0A27` being 3 or 14h, on every frame in a
+  spin after a seen take-off. Without the ceiling: 2,556 agree carried on, 759 agree not, 310
+  disagree (5 rows, each from a ceiling frame). With it: 2,866 and 759 agree, 0 disagree.
+- RAM: `0A1C`/`0A1F` pose and type, `0A20`/`0A23` old, `0A24`/`0A27` old-old, `0A28` prospective
+  pose. The replay seeds the spin's memory from `0A27` and does not compare it (`parts` in
+  `crates/verify/src/replay/played.rs`).
+- Integration note: a start in a spin has the spin chosen once (§1.2). The replay's seed
+  (`crates/verify/src/replay/movement.rs`) gives a spin whose `0A27` is not 3 or 14h no memory,
+  and the vector harness's start gives none to every start; both need "chosen once" for a start
+  in a spin or a wall jump.
+- What a choice records (round gate #738, finding 1): `$91:EBE7` writes the prospective pose to
+  `0A1C`; on a refusal `$91:F404` → `$91:FDAE` → `$91:FE85` puts the old pose back (F404 returns
+  carry set), and `$91:EBF8` then shifts `0A20` from `0A1C`: the pose she ends in. Whether the shift
+  runs is decided by `0A28`, the pose chosen. Records (scratch, record words only, game state 8 on
+  both frames): on all 415 frames of the 63 rows whose `0A28` is set and is not the pose she ends in
+  (12 starting in a spin or a wall jump), `0A20` holds the pose she ends in, never `0A28`. The
+  history check above, with such a frame counted as a choice recording either pose, still gives
+  2,866 and 759 agree, 0 disagree: no recorded frame refuses a landing in a spin, so
+  C-fit-land-refused-spin (constructed) is the case that tells them apart.
+- A start in a wall jump (finding 2): taking a spin out of a wall jump shifts the wall jump's pose
+  to `0A24`, so `0A27` is 14h on the spin's first frame: 29 of 29 such frames in the 63 rows
+  (e.g. chain-0043-9AD9 25, 83h → 1Ah). The spin is carried on, as from a start in a spin.
+
+**2. A spin's skid ending (`DriftInTheAir`, written once there; `SpeedBuildsAndBrakes` points
+to it).**
+- Sources: `$90:9069` → `$90:9B1F`: in mode 1 (`0B4A`, a skid) the brake below zero sets the
+  speed 0 and mode 0 and returns carry clear (`$90:9069` runs it once: no speed-up step that
+  frame); `$90:906E` then finds mode ≠ 1 and goes to the
+  facing test, `$90:9076`: holding the side she faces → `$90:90A5`, mode 0 → 2 (carrying on);
+  otherwise `$90:9093`, speed 0, mode 0. `$90:8EA9` moves her along her facing in modes 0 and 2.
+- Evidence: chain-any-0006-E0B5 8 → 10: at 9 the spin is reversed by left at speed 0 (`0B4A` 1,
+  `0B46`.`0B48` 0); the frame ending at 10 reads left + jump (facing left) and ends `0B4A` 2 at
+  speed 0. SK1.
+- Observability: every way out of a spin decides anew whether she carries on (a straight jump
+  or fall by `Jumping`'s start, a landing, the kick), and a spin decides it each frame from the
+  pad, so no later frame of hers tells carrying on at 0 from following the pad. Only her State
+  does: the replay's `movement.run` at 0006:10. SK1 and C-spin-skid-end-let-go check the frame's
+  quantities.
+
+**3. The straight jump's let-go at speed 0 (`PadChart`).**
+- Sources: `$91:82D9` → `$91:8304`: movement type 2 (normal jumping, take-offs included) gives
+  the decelerate command, which at a base speed `0B46`.`0B48` of 0 becomes stop and consults the
+  pose definitions' let-go pose (`$91:B62B` column); FFh keeps the pose. That column names the
+  striding jump (51h, 52h) for the straight jumps aimed up, up-forward and down-forward (15h,
+  16h, 69h-6Ch), and FFh for the others (13h, 14h, 17h, 18h, 4Dh, 4Eh, 51h, 52h) and for every
+  take-off (4Bh, 4Ch, 55h-5Ah). The speed read is the frame's start: the pose input runs first
+  (`$90:E6B3`). So taking off's last row is not the same: it keeps her pose at any speed.
+- Evidence: chain-any-0006-E0B5 22 → 25: aim down pressed in the spin gives 6Ch at 23; the frame
+  ending at 24 lets go at 1.6000 (kept, `0A2E` 1, speed 0 after); the frame ending at 25 lets go
+  at 0: `0A2E` 2, pose 52h. LG1.
+
+**Harness note.** No new compare. The replay compares the spin's effects through position and
+the near-wall test's subpixel (0002:26), `movement.run` with its carrying on (0006:10) and
+`movement.pose` (0006:25). Vectors: WS1, SK1, LG1 recorded; C-spin-named-row,
+C-spin-skid-end-let-go, C-jump-letgo-moving constructed, worked from the routines above.
+
+**The reference model.** The landed model with a scratch patch, never committed: the spin's
+memory advanced by choices (a choice is a pose other than hers, or her situation's last row),
+the spin's skid end as above, and the straight jump's at-rest row; plus the diagnosis's scratch
+runner fixes for 0006's seed (the kept action, the seed's presses). Vectors: 419 of 419, pose
+steps and distance histories all pass; the landed model fails WS1 and LG1 (417), and the frame
+count with the take-off counted fails C-spin-named-row (418). Rows, played alone from cut 0:
+0002 holds 281 of 281 cuts to its end (landed: stops at 26); 0006 holds 35 and stops at cut 36,
+`movement.pose`, a landing from the striding jump outside these rules (landed with the runner
+fixes: stops at 10). Its spin memory matches the game's (`0A27` ∈ {3, 14h}) at every cut she
+spins: 31 of 31 (0002) and 22 of 22 (0006). A do-nothing model holds 0 cuts in either row: her
+x moves at cut 1.
+
+**Budget.** `tools spec-units` (scratch, against main's spec): 264.7 → 265.7 units (+1.0, the
+`DriftInTheAir` arm; `WallJump`'s carried-on arm is replaced one for one, and `PadChart`'s rule is
+a table cell), budget 9,923 → 9,961.

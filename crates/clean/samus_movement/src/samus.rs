@@ -10,31 +10,60 @@ use crate::vertical::Vertical;
 use types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
 use types::{Set, Sprite, Touch, ZERO, button::SHOOT};
 
-/// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each
-/// frame's start up to the spin carried on, where it stays.
+/// `WallJump` (§1.2 a spin carried on): what one choice of her pose recorded, as far as a spin
+/// carried on reads it.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
-pub enum Spin {
-    /// Not spinning.
-    Off,
-    /// In the spin's first frame.
-    First,
-    /// In its second frame.
-    Second,
-    /// A spin carried on: in it two frames earlier (this its third frame or later), or one that
-    /// followed a wall jump. It can ready a wall jump.
-    CarriedOn,
+pub enum Chosen {
+    /// A spin or a wall jump (`Action::spins`).
+    Spin,
+    /// Any other pose.
+    Other,
 }
 
-impl Spin {
-    /// `WallJump`: the frame's start counts one frame more of a spin, up to the spin carried on,
-    /// or none.
-    pub(crate) const fn then(self, spinning: bool) -> Self {
-        match (spinning, self) {
-            (false, _) => Self::Off,
-            (true, Self::Off) => Self::First,
-            (true, Self::First) => Self::Second,
-            (true, Self::Second | Self::CarriedOn) => Self::CarriedOn,
+impl Chosen {
+    /// What a choice that leaves her in `pose` records.
+    const fn of(pose: Pose) -> Self {
+        if pose.action.spins() {
+            Self::Spin
+        } else {
+            Self::Other
         }
+    }
+}
+
+/// `WallJump` (§1.2 a spin carried on): what her latest two choices of her pose recorded.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Choices {
+    /// What her latest choice recorded.
+    pub latest: Chosen,
+    /// What the choice before that recorded.
+    pub before: Chosen,
+}
+
+impl Choices {
+    /// §1.2 a spin carried on: a start has the pose she starts in (`pose`) chosen once, the
+    /// choice before it neither a spin nor a wall jump.
+    #[must_use]
+    pub const fn starting_in(pose: Pose) -> Self {
+        Self {
+            latest: Chosen::of(pose),
+            before: Chosen::Other,
+        }
+    }
+
+    /// The choices once a choice leaves her in `pose`: it is her latest, and her latest before
+    /// it.
+    pub(crate) const fn then(self, pose: Pose) -> Self {
+        Self {
+            latest: Chosen::of(pose),
+            before: self.latest,
+        }
+    }
+
+    /// `WallJump`: in `pose`, she is in a spin carried on: a spin whose choice before her latest
+    /// one was a spin or a wall jump, facing either way. It can ready a wall jump.
+    pub(crate) fn carried_on(self, pose: Pose) -> bool {
+        pose.action == Action::Spinning && self.before == Chosen::Spin
     }
 }
 
@@ -94,7 +123,7 @@ impl StandingAnimation {
 /// facing the screen, the other suit's sprite with varia or gravity; else plain.
 #[must_use]
 pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
-    let spin = matches!(pose.action, Action::Spinning | Action::WallJumping);
+    let spin = pose.action.spins();
     let suit = items[Item::VariaSuit] || items[Item::GravitySuit];
     if spin && items[Item::ScrewAttack] {
         Sprite::ScrewAttack
@@ -201,8 +230,8 @@ pub struct Samus {
     pub vertical: Vertical,
     /// What the player sees her doing (§2): body, action, facing, aim, gun and legs.
     pub pose: Pose,
-    /// `WallJump`: how long she has been in a spin.
-    pub spin: Spin,
+    /// `WallJump`: what she last chose of her pose, and before that.
+    pub choices: Choices,
     /// `SlopesCarry`: whether she is seated on a slope.
     pub seat: Seat,
     /// `Jumping`: how long jump has stayed held, and whether she landed or an animation ended

@@ -6,19 +6,20 @@ use std::num::NonZeroU8;
 use types::{Pair, Pose};
 
 pub(in crate::production) fn samus() -> samus_movement::Samus {
+    let pose = Pose {
+        body: types::Body::Upright,
+        action: types::Action::Falling,
+        facing: types::Facing::Right,
+        aim: types::Aim::Forward,
+        gun: types::Gun::Stowed,
+        legs: types::Legs::Together,
+    };
     samus_movement::Samus {
         position: Pair {
             x: Wrapping(100 * 65536),
             y: Wrapping(100 * 65536),
         },
-        pose: Pose {
-            body: types::Body::Upright,
-            action: types::Action::Falling,
-            facing: types::Facing::Right,
-            aim: types::Aim::Forward,
-            gun: types::Gun::Stowed,
-            legs: types::Legs::Together,
-        },
+        pose,
         run: samus_movement::Run {
             speed: Wrapping(0),
             way: types::Side::Right,
@@ -31,7 +32,7 @@ pub(in crate::production) fn samus() -> samus_movement::Samus {
             phase: samus_movement::Phase::Falling,
             bounces: samus_movement::Bounces::None,
         },
-        spin: samus_movement::Spin::Off,
+        choices: samus_movement::Choices::starting_in(pose),
         seat: samus_movement::Seat::Unseated,
         jump_held: samus_movement::JumpHeld::NONE,
     }

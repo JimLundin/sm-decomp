@@ -786,10 +786,9 @@ fn colours(wram: &[u8], at: usize) -> Result<[types::Colour; world_doors::COLOUR
 }
 
 /// Her movement State by part, so a difference names the part that differs; the encoding is
-/// only compared, never logged. Her spin's frame count is the model's own history: the record
-/// keeps it as the last different pose's type and cannot tell its first two frames apart, so
-/// it is not compared here. Its effects (a reversal's skid, a wall jump readied) reach the
-/// compared pose, run and vertical motion in later cuts.
+/// only compared, never logged. Her choices of her pose are compared as `movement.choices`:
+/// `movement::seed` reads them from the record's old and old-old pose types, which the game
+/// shifts only on a frame that chooses.
 fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
     let part = |field: &str, value: String| Observation {
         field: field.into(),
@@ -800,6 +799,7 @@ fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
         part("movement.run", run(&samus.run)),
         part("movement.vertical", format!("{:?}", samus.vertical)),
         part("movement.seat", format!("{:?}", samus.seat)),
+        part("movement.choices", format!("{:?}", samus.choices)),
         part("movement.jump-held", format!("{:?}", samus.jump_held)),
         part("movement.position", format!("{:?}", samus.position)),
     ]

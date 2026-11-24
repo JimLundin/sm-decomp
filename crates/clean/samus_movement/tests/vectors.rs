@@ -12,8 +12,8 @@
 use core::cell::RefCell;
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, CATALOGUE, Carry, Dashing, Direction, DirectionalTravels, Frame, FrameBefore,
-    JumpHeld, Met, Moment, Outcome, Phase, Rules, Run, Samus, Seat, SpeedCap, Spin, TravelDistance,
+    Bounces, CATALOGUE, Carry, Choices, Dashing, Direction, DirectionalTravels, Frame, FrameBefore,
+    JumpHeld, Met, Moment, Outcome, Phase, Rules, Run, Samus, Seat, SpeedCap, TravelDistance,
     TravelKind, TravelledDistances, Vertical, WallTest,
 };
 use serde::Deserialize;
@@ -1603,7 +1603,7 @@ fn start(before: &Before, pose: Pose) -> Samus {
             bounces,
         },
         pose,
-        spin: Spin::Off,
+        choices: Choices::starting_in(pose),
         seat: Seat::Unseated,
         jump_held,
     }

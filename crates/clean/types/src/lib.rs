@@ -349,6 +349,15 @@ pub enum Action {
     WallJumping,
 }
 
+impl Action {
+    /// Whether this is a spin: a spin jump (`Spinning`), or a wall jump (`WallJumping`), a spin
+    /// of its own.
+    #[must_use]
+    pub const fn spins(self) -> bool {
+        matches!(self, Self::Spinning | Self::WallJumping)
+    }
+}
+
 /// Her aim, the arm's direction: a part of her pose.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Aim {

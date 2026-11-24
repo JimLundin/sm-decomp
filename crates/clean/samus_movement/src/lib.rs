@@ -9,7 +9,7 @@
 //! `rules` the tuning parameters and `catalogue` the spec's entries.
 //!
 //! A caller holds a `Samus`, every part of her state public (her `Run` with its `Dashing`,
-//! `Vertical`, pose, `Spin`, `Seat` and `JumpHeld`), and steps her a `Frame` at a time
+//! `Vertical`, pose, `Choices`, `Seat` and `JumpHeld`), and steps her a `Frame` at a time
 //! (`Samus::step`) in a `World` under `Rules` (every tuning value the spec's entries list as a
 //! parameter, `Rules::default()` the vanilla game's), reading the frame's `Outcome` (what it gives the
 //! camera, the world and her animation, §1, §1.4 and `TouchedCells`, her sprite as the shared
@@ -32,7 +32,8 @@
 //! # An ordinary call
 //!
 //! Restore the caller's complete serde `Samus` (position, pose, `Run`, `Vertical` with its
-//! bounces and phase, `Spin`, `Seat` and `JumpHeld`). Before the frame's moves, weapons read the
+//! bounces and phase, `Choices`, `Seat` and `JumpHeld`); a start mid-play with no history
+//! gives `Choices::starting_in` its pose. Before the frame's moves, weapons read the
 //! caller-held `TravelledDistances` and pending firing aim; the cannon pass clears pending aim.
 //! Appearance's first half supplies the frame's clip end and spin-turned-far result, and the
 //! sprite it selected before movement; progress supplies the items switched on, the mode
@@ -107,7 +108,7 @@ pub use jump_held::{FrameBefore, JumpHeld};
 pub use rows::Met;
 pub use rules::{Bounces, Rules, SpeedCap, WithItem};
 pub use run::{Carry, Dashing, Run};
-pub use samus::{Outcome, Samus, Seat, Spin, StandingAnimation, WallTest};
+pub use samus::{Choices, Chosen, Outcome, Samus, Seat, StandingAnimation, WallTest};
 pub use situation::UnknownPose;
 pub use tick::Frame;
 pub use vertical::{Phase, Vertical};

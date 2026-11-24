@@ -4,8 +4,8 @@
 
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, Carry, Dashing, Direction, DirectionalTravels, FrameBefore, JumpHeld, Phase, Run,
-    Samus, Seat, Spin, TravelDistance, TravelKind, TravelledDistances, Vertical,
+    Bounces, Carry, Choices, Chosen, Dashing, Direction, DirectionalTravels, FrameBefore, JumpHeld,
+    Phase, Run, Samus, Seat, TravelDistance, TravelKind, TravelledDistances, Vertical,
 };
 use serde::{Deserialize, Serialize};
 use types::{Action, Aim, Body, Facing, Gun, LandedFrom, Legs, Position, Side, Turn};
@@ -45,7 +45,10 @@ fn saved_movement() -> SavedMovement {
                 gun: Gun::Stowed,
                 legs: Legs::Together,
             },
-            spin: Spin::CarriedOn,
+            choices: Choices {
+                latest: Chosen::Other,
+                before: Chosen::Spin,
+            },
             seat: Seat::Seated,
             jump_held: JumpHeld {
                 frames: Wrapping(32777),

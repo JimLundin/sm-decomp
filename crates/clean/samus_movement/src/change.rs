@@ -10,7 +10,7 @@ use crate::moves::MovesMade;
 use crate::rows::{Effect, Met, Situation};
 use crate::rules::Lowers;
 use crate::run::Dashing;
-use crate::samus::{Samus, Spin};
+use crate::samus::Samus;
 use crate::situation::ENTERING;
 use crate::tick::{Frame, Tick};
 use crate::vertical::Contact;
@@ -41,7 +41,8 @@ impl Samus {
     /// (`moves`). The pose is chosen; a running pose other than hers brings the aim change's
     /// step (`AimingAndShooting`); pose fit takes the pose, refuses it or takes the crouch
     /// instead (`PoseFitAfterMoves`), and none of the chosen pose's effects come with the last
-    /// two. She takes the pose, a change of shape lowers her (`ShrinkingLowersHer`) and a
+    /// two. She takes the pose she ends in, and a frame whose pose chosen chooses anew records
+    /// it in her choices (`WallJump`). A change of shape lowers her (`ShrinkingLowersHer`) and a
     /// placement puts her; then her moves' contact acts (`Landing`, `WallJump`), and then the
     /// change's effects (`PadChart`, `AnimationEnds`).
     pub(crate) fn take_pose(
@@ -64,6 +65,13 @@ impl Samus {
         let (accepted, fitted) = self.fit_choice(stepped, t);
         let contact = contact.filter(|_| fitted.takes_the_change());
         self.pose = accepted.pose;
+        // `WallJump`: her choices move on here alone. Whether the frame chooses is the pose
+        // chosen's to say; what the choice records is the pose she ends in, once the aim
+        // change's step and pose fit have taken or refused it (a landing refused in a spin
+        // records the spin).
+        if chosen.chooses_anew(start.pose) {
+            self.choices = self.choices.then(self.pose);
+        }
         let pending_aim = transition_firing_aim(start.pose, accepted.pose, t.frame);
         if let Some(lower) = accepted.lower {
             self.lower(lower, t);
@@ -260,7 +268,6 @@ impl Samus {
             Effect::Halt => self.run.halt(),
             Effect::Moonfall => self.vertical.enter_spin_from_a_turn(self.run.dash, t),
             Effect::Launch => self.run.launch(pose.facing),
-            Effect::SpinOn => self.spin = Spin::CarriedOn,
             Effect::ComesToTheGround => self.vertical.come_to_the_ground(),
             Effect::EndsTheBounce => self.vertical.end_bounce(),
             Effect::LiftIfUnaimed | Effect::TurnRoundIfFacingChanges => {}

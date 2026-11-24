@@ -348,20 +348,20 @@ id = "connected-ordinary/carried-running-camera"
 claim = "behaviour"
 expected = { status = "pass" }
 counts = { cuts = 9, fields = 153, outputs = 36, publications = 0, replies = 0, null_cuts = 0, null_fields = 92, restorations = 9, pending_boundaries = 0, pending_restorations = 0 }
-observation_sha256 = "e3ece86289758b83462b54712825a78389e4c5504a2e9ce186da225989a2fcac"
+observation_sha256 = "f7a311ea12cf1a43ead91f1243c9c6b56f74741b72df244716ec908ac98a15d0"
 
 [[case]]
 id = "connected-ordinary/run-release-floor-aim"
 claim = "behaviour"
 expected = { status = "pass" }
 counts = { cuts = 16, fields = 272, null_cuts = 0, null_fields = 143, outputs = 64, pending_boundaries = 0, pending_restorations = 0, publications = 0, replies = 0, restorations = 16 }
-observation_sha256 = "87211bf9f0ad6e49edd3d5181beeefaedf2175ff58cb53fcb515734b048ea40c"
+observation_sha256 = "1c6cda698f452deda35f082b580164e32337b157039c07c1eeedbd5569fa71b0"
 
 [[case]]
 id = "connected-ordinary/early-mini-map"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "b4b0eaa9f33657fa80f7060f3479ed57e87eea2a75f1555eaec61db32f8ff9de"
+observation_sha256 = "6b1ceffd16a6132a70917df628cdb0fc2e1b2cb9f22c6cacd3b771ee2b51c017"
 
 [case.counts]
 cuts = 2
