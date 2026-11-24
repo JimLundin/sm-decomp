@@ -388,6 +388,9 @@ next permitted start. The existing lane limits, clean-room roles, mandatory proo
 landing still apply. An explicit stop or pause from Jim takes precedence. A real external blocker
 is reported with the unfinished work and concrete next step in a handoff; the work stays pending
 and resumes when unblocked. Shift end alone is never a reason to leave work pending.
+A session ends clean (Jim, 2026-11-24): landed and superseded branches are deleted on the remote
+and locally, with their worktrees, as the root skill's landing steps say, so the remote holds `main`
+and the branches of work still in flight.
 
 Outside working hours new rounds wait for the nightly session. New work goes to the project's
 structure: tooling, movie captures, optimisations, and long computations that don't fit a session, within

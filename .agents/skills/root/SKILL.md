@@ -140,6 +140,11 @@ The commands below apply to rounds and other work.
    hand: its exit 2 (not ready) never ends on a red run, which is its exit 4.
 5. Bundles: check the lane's SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data FILE`,
    confirm its size with `gh release view ci-data`, and commit the new pin. Only encrypted bundles.
+6. Clean up (Jim, 2026-11-24). Once a change lands, delete its branches on the remote and locally,
+   and remove its worktrees and export folders. A spec or import branch goes as soon as a later
+   branch holds its commits (`git cherry` shows them all as `-`). Run the same sweep at each
+   session's end: the remote then holds `main` and only branches with work in flight, and every
+   local branch has a worktree or work in flight.
 
 ## Jim
 
