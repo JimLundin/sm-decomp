@@ -17,6 +17,7 @@ game_random = { path = "../clean/game_random" }
 game_time = { path = "../clean/game_time" }
 world_quake = { path = "../clean/world_quake" }
 world_haze = { path = "../clean/world_haze" }
+screens_arrival = { path = "../clean/screens_arrival" }
 samus_health = { path = "../clean/samus_health" }
 run_progress = { path = "../clean/run_progress" }
 samus_appearance = { path = "../clean/samus_appearance" }

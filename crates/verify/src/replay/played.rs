@@ -15,12 +15,13 @@
 //! This file holds the run and the order in which the owners' fields are compared, which is
 //! the order a difference is reported in. Each owner's seed, record reading and compared fields
 //! live in its own module: `samus`, `passage`, `colours`, `ceres_doors`, `ridley`, `shaft`,
-//! `health`, `hud` and `frame`, with `station` the station's State; the camera's are the camera
-//! replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the facts held
-//! from the seed, and `rows` the chain of rows a run plays through. A row from the
+//! `health`, `hud`, `frame` and `arrival`, with `station` the station's State; the camera's are
+//! the camera replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the
+//! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
 //! console's power-on plays the front end alone, from its own power-on State with no seed:
 //! `power_on`.
 
+mod arrival;
 mod ceres_doors;
 mod colours;
 mod frame;
@@ -34,6 +35,7 @@ mod rows;
 mod samus;
 mod seed;
 mod shaft;
+mod start;
 mod station;
 
 use super::compare::{CompareFault, Observation, compare};
@@ -70,6 +72,8 @@ pub const SEED_HELD: &[&str] = &[
     "passage sounds sent",
     "progress, which chooses the next room's version, her suit and her beams, and whether the station's boss is beaten",
     "Ceres station stage, but where Ridley's placing sets it",
+    "the HUD as the load flow puts it up for a new game, held as she arrives and not compared then, but the mini-map's power, which her arrival shows",
+    "from a new game's seed: the platform's counts of finished frames and the random number, which run on through the preparation",
 ];
 
 /// Inputs read from the record at each cut, because their owner is outside the rungs
@@ -80,6 +84,7 @@ pub const BORROWED: &[&str] = &[
     "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
     "the random number as a passage's frame begins: no owner here draws it through a passage",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
+    "the start ready: the frame a new game's start is made ready (R2 and C1's loading, T1's lag)",
 ];
 
 /// Where a played run stopped.
@@ -118,6 +123,7 @@ fn expected(
     content: &appearance::Content,
     hud: &super::hud::Content,
     hud_settled: bool,
+    counted: bool,
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
@@ -142,6 +148,7 @@ fn expected(
         fields.extend(hud::parts(super::hud::expected(wram, hud)?));
     }
     fields.extend(frame::expected(wram)?);
+    fields.extend(arrival::expected(wram, counted)?);
     Ok(fields)
 }
 
@@ -171,6 +178,7 @@ fn actual(
         fields.extend(hud::parts(super::hud::initial(&state.hud.0, hud)?));
     }
     fields.extend(frame::actual(state.frame));
+    fields.extend(arrival::actual(state.arrival));
     Ok(fields)
 }
 
@@ -208,7 +216,13 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         .map_err(|_| data_failure(None, "record lock file"))?;
     let lock =
         crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
-    let mut rows = rows::Rows::open(&lock, &sources.cache, row)?;
+    // The lock is the repository's `scenarios/locks/<oracle>.toml`, under the tables of seeds.
+    let root = sources
+        .lock
+        .ancestors()
+        .nth(3)
+        .ok_or_else(|| data_failure(None, "played lock path"))?;
+    let mut rows = rows::Rows::open(&lock, root, &sources.cache, row)?;
     let id = crate::lock::RowId(row.to_owned());
     if lock
         .row(&id)
@@ -279,28 +293,19 @@ impl<'a> Run<'a> {
     ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played ROM image");
         let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
+        let start = import::start::import(image.lorom())
+            .map_err(|_| data_failure(None, "played new game's start"))?;
         let rooms = seed::rooms(&image)?;
-        let (room, seeded) = seed::room(&seed.wram, content, &rooms.world)?;
-        let samus = samus::seed(&seed.wram, &content.appearance)?;
+        // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
+        let (room, state) = if arrival::seed(&seed.wram)?.preparing() {
+            start::admit(&seed.wram, &start, &rooms)?
+        } else {
+            Self::seeded(seed, content, &rooms)?
+        };
         let hud = super::hud::Content::load(path)?;
-        let (map_room, area) = room.map;
-        let ceres_doors = ceres_doors::seed(&seed.wram)?;
+        let (_, area) = room.map;
         Ok(Self {
-            state: played::State {
-                samus,
-                camera: Model(camera::seed(&seed.wram, &camera::Content)?),
-                passage: played::passage::State {
-                    doors: Doors::Play,
-                    doorway: None,
-                    room: seeded,
-                    map_room,
-                },
-                palette: colours::palette(&seed.wram)?,
-                health: Model(health_tail::decode(&seed.wram, None)?),
-                hud: Model(super::hud::decode_state(&seed.wram)?),
-                frame: frame::seed(&seed.wram)?,
-                station: station::seed(&seed.wram, ceres_doors, room.ceres)?,
-            },
+            state,
             played: played::Content {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
@@ -308,6 +313,7 @@ impl<'a> Run<'a> {
                 rooms,
                 hud: hud.pictures,
                 map: hud.map_of(area)?.clone(),
+                start_x: core::num::Wrapping(start.her.0),
             },
             rules: played::Rules {
                 movement: samus_movement::Rules::default(),
@@ -317,12 +323,41 @@ impl<'a> Run<'a> {
                 health: samus_health::Rules::REFERENCE,
                 hud: interface_hud::Rules::default(),
                 ceres: boss_ceres_ridley::Rules::default(),
+                arrival: screens_arrival::Rules::REFERENCE,
             },
             room,
             content,
             hud,
             row,
         })
+    }
+
+    /// The held facts and State as a seed in play holds them.
+    fn seeded(
+        seed: &FrameRecord,
+        content: &connected::Content,
+        rooms: &game::production::room_loading::Rooms,
+    ) -> Result<(seed::Room, played::State), Outcome> {
+        let (room, seeded) = seed::room(&seed.wram, content, &rooms.world)?;
+        let (map_room, _) = room.map;
+        let ceres_doors = ceres_doors::seed(&seed.wram)?;
+        let state = played::State {
+            samus: samus::seed(&seed.wram, &content.appearance)?,
+            camera: Model(camera::seed(&seed.wram, &camera::Content)?),
+            passage: played::passage::State {
+                doors: Doors::Play,
+                doorway: None,
+                room: seeded,
+                map_room,
+            },
+            palette: colours::palette(&seed.wram)?,
+            health: Model(health_tail::decode(&seed.wram, None)?),
+            hud: Model(super::hud::decode_state(&seed.wram)?),
+            frame: frame::seed(&seed.wram)?,
+            station: station::seed(&seed.wram, ceres_doors, room.ceres)?,
+            arrival: arrival::seed(&seed.wram)?,
+        };
+        Ok((room, state))
     }
 
     /// Play the interval ending at `cut` and compare its owners with the record at `cut`.
@@ -333,14 +368,20 @@ impl<'a> Run<'a> {
         current: &FrameRecord,
         cut: u64,
     ) -> Result<(), Outcome> {
+        // While a new game's start is made ready no frame of play reads the pad, and the
+        // preparation's own waits for the frame's end are its lag.
+        let preparing = self.state.arrival.preparing();
         // The movie's pad is the input; the game's own latch only checks its alignment, so a
         // stale or early pad is a harness fault rather than a model difference.
-        if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
+        if !preparing
+            && polled(previous)
+            && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held
+        {
             return Err(data_failure(None, "played pad alignment"));
         }
         let doors = self.state.passage.doors;
         // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
-        if doors == Doors::Play && !finished(current) {
+        if !preparing && doors == Doors::Play && !finished(current) {
             return Err(Outcome::Unsupported {
                 cut: None,
                 dependency: "lag cut in play (T1)".into(),
@@ -369,6 +410,7 @@ impl<'a> Run<'a> {
                 Doors::Play => None,
                 Doors::Passing(_) => Some(frame::random(&previous.wram)?),
             },
+            start: arrival::start(&previous.wram, &current.wram)?,
         };
         let hud_frame = hud::frame(&self.room.hud, controller);
         self.state
@@ -377,11 +419,45 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        let (expected, actual) = if self.state.arrival.preparing() {
+            // The preparation's working values are its own: only the arrival and the random
+            // number are the run's.
+            let mut expected = arrival::expected(&current.wram, false)?;
+            expected.push(frame::random_observation(frame::random(&current.wram)?));
+            let mut actual = arrival::actual(self.state.arrival);
+            actual.push(frame::random_observation(self.state.frame.random));
+            (expected, actual)
+        } else {
+            if preparing {
+                // She arrives: the load flow puts the HUD up, which no owner here does, so it
+                // is held from the record and not compared on this cut; the mini-map's power is
+                // her arrival's.
+                self.state.hud =
+                    Model(start::hud_put_up(&current.wram, self.state.hud.0.mini_map)?);
+            }
+            self.compared(current, hud_settled && !preparing, cut)?
+        };
+        compare(&expected, &actual).map_err(|fault| match fault {
+            CompareFault::Difference(field) => Outcome::Difference { cut, field },
+            CompareFault::EmptyExpected
+            | CompareFault::DuplicateField(_)
+            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
+        })
+    }
+
+    /// Every owner's fields at `current`, as the record and as the played State hold them.
+    fn compared(
+        &self,
+        current: &FrameRecord,
+        hud_settled: bool,
+        cut: u64,
+    ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let expected = expected(
             current,
             &self.content.appearance,
             &self.hud,
             hud_settled,
+            arrival::counted(self.state.arrival),
             self.row,
             cut,
         )?;
@@ -392,12 +468,7 @@ impl<'a> Run<'a> {
             finished(current),
             hud_settled,
         )?;
-        compare(&expected, &actual).map_err(|fault| match fault {
-            CompareFault::Difference(field) => Outcome::Difference { cut, field },
-            CompareFault::EmptyExpected
-            | CompareFault::DuplicateField(_)
-            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
-        })
+        Ok((expected, actual))
     }
 }
 
@@ -432,6 +503,25 @@ mod tests {
             let report = super::play(&sources, row, 0, 3000).unwrap();
             diagnostic(format_args!(
                 "PLAYED_ALONE row={} start={} held={} stop={:?}",
+                report.row, report.start, report.held, report.stop
+            ));
+        }
+    }
+
+    /// A new game's arrival at Ceres from the intro's last frame: alone to its last cut, then on
+    /// into Ceres's first room and the rooms she enters. `SM_PLAYED_END` asks for one end.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn ceres_arrival_played_alone_and_on() {
+        let sources = sources();
+        let ends = std::env::var("SM_PLAYED_END")
+            .ok()
+            .and_then(|end| end.parse().ok())
+            .map_or_else(|| vec![222, 3223], |end| vec![end]);
+        for end in ends {
+            let report = super::play(&sources, "any-ceres-arrival", 0, end).unwrap();
+            diagnostic(format_args!(
+                "PLAYED_ALONE row={} start={} end={end} held={} stop={:?}",
                 report.row, report.start, report.held, report.stop
             ));
         }

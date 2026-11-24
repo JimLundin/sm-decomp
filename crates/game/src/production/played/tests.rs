@@ -96,6 +96,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
                 number: types::RandomNumber(0),
             },
         },
+        arrival: arrival::State::PLAYING,
     }
 }
 
@@ -190,6 +191,7 @@ pub(super) fn content() -> Content {
         },
         hud: HudPictures::default(),
         map: HerMap::default(),
+        start_x: Wrapping(0x80),
     }
 }
 
@@ -202,6 +204,7 @@ pub(super) fn rules() -> Rules {
         health: samus_health::Rules::REFERENCE,
         hud: interface_hud::Rules::default(),
         ceres: boss_ceres_ridley::Rules::default(),
+        arrival: screens_arrival::Rules::REFERENCE,
     }
 }
 
@@ -230,6 +233,7 @@ pub(super) fn play_with(
         timer_running: false,
         progress: &progress,
         random: None,
+        start: arrival::Readiness::NotYet,
     };
     state.station.stage = ceres;
     state.step(&inputs(held), &passing, &hud_frame(), content, &rules())

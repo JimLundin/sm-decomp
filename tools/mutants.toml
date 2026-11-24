@@ -631,3 +631,13 @@ after = "const RULES: Rules = Rules { hold: screens_boot::HoldFrames(119), ..Rul
 case = "played any-power-on 0 270"
 cut = 33
 field = "power-on.hold"
+
+[[fault]]
+name = "played-arrival-fade-rhythm-off-by-one"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "arrival: screens_arrival::Rules::REFERENCE,"
+after = "arrival: screens_arrival::Rules { rhythm: types::arrival::FadeFrames::NONE },"
+case = "played any-ceres-arrival 0 222"
+cut = 192
+field = "arrival.fade-count"

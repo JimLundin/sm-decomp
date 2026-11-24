@@ -1,29 +1,32 @@
 //! The lock rows a run plays through, and their records.
 
 use crate::cache::Cache;
-use crate::lock::{Lock, Row, RowId, Start};
+use crate::lock::{Lock, Row, RowId};
 use crate::replay::readers::record;
 use crate::replay::{data_failure, result::Outcome};
+use crate::report::seeds;
 use oracle_record::FrameRecord;
 use std::path::Path;
 
 /// The lock rows a run plays through: its own, then each row that continues it, reached as the
-/// run reaches it. A row continues another when both start from one capture's seeds, its own
-/// the next, so its cut 0 is the video frame after the other's last cut; the run's cuts count
-/// on through it.
+/// run reaches it. A row continues another when its seed's movie frame is the one after the
+/// other's last cut, from whichever capture of the movie; the run's cuts count on through it.
 struct Chain<'a> {
     lock: &'a Lock,
+    /// The repository, whose tables of seeds give their movie frames.
+    root: &'a Path,
     /// Each row reached so far, with the run's cut its own cut 0 is.
     reached: Vec<(u64, &'a Row)>,
 }
 
 impl<'a> Chain<'a> {
-    fn new(lock: &'a Lock, row: &str) -> Result<Self, Outcome> {
+    fn new(lock: &'a Lock, root: &'a Path, row: &str) -> Result<Self, Outcome> {
         let row = lock
             .row(&RowId(row.to_owned()))
             .ok_or_else(|| data_failure(None, "played lock row"))?;
         Ok(Self {
             lock,
+            root,
             reached: vec![(0, row)],
         })
     }
@@ -44,22 +47,11 @@ impl<'a> Chain<'a> {
                     .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
                 return Ok((place, own));
             }
-            let following = self
-                .following(row)
+            let following = seeds::following(self.root, self.lock, row)
+                .map_err(|_| data_failure(Some(cut), "played seed frames"))?
                 .ok_or_else(|| data_failure(Some(cut), "played row continuing the last row"))?;
             self.reached.push((next, following));
         }
-    }
-
-    /// The row whose seed is the next of `row`'s capture.
-    fn following(&self, row: &Row) -> Option<&'a Row> {
-        let Start::Seed { capture, index } = &row.start else {
-            return None;
-        };
-        let next = index.checked_add(1)?;
-        self.lock.rows.iter().find(|candidate| {
-            matches!(&candidate.start, Start::Seed { capture: own, index: at } if own == capture && *at == next)
-        })
     }
 }
 
@@ -72,9 +64,16 @@ pub(super) struct Rows<'a> {
 }
 
 impl<'a> Rows<'a> {
-    pub(super) fn open(lock: &'a Lock, cache: &'a Path, row: &str) -> Result<Self, Outcome> {
+    /// The rows from `row` on, their records in `cache` and their seeds' movie frames in the
+    /// tables of `root`.
+    pub(super) fn open(
+        lock: &'a Lock,
+        root: &'a Path,
+        cache: &'a Path,
+        row: &str,
+    ) -> Result<Self, Outcome> {
         Ok(Self {
-            chain: Chain::new(lock, row)?,
+            chain: Chain::new(lock, root, row)?,
             cache,
             opened: Vec::new(),
         })
@@ -115,7 +114,8 @@ mod tests {
         let frames = |id: &str| lock.row(&RowId(id.into())).unwrap().frames.0;
         let first = frames("chain-any-0003-DFD7");
         let second = frames("chain-any-0004-E021");
-        let mut chain = super::Chain::new(&lock, "chain-any-0003-DFD7").unwrap();
+        let root = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+        let mut chain = super::Chain::new(&lock, root, "chain-any-0003-DFD7").unwrap();
         assert_eq!(chain.place(0).unwrap(), (0, 0));
         assert_eq!(chain.place(first - 1).unwrap(), (0, first - 1));
         assert_eq!(
@@ -142,5 +142,26 @@ mod tests {
             chain.place(u64::MAX - 1).is_err(),
             "no row continues the capture's last"
         );
+    }
+
+    /// The new game's arrival ends one capture's seeds and Ceres's first room begins another's:
+    /// the room's seed is the movie frame after the arrival's last cut, so the run goes on into it.
+    #[test]
+    fn a_run_goes_on_into_the_row_of_another_capture_seeded_at_the_next_movie_frame() {
+        use crate::lock::{Lock, RowId};
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../scenarios/locks/lsnes.toml"
+        );
+        let lock = Lock::parse(&std::fs::read_to_string(path).unwrap()).unwrap();
+        let arrival = lock
+            .row(&RowId("any-ceres-arrival".into()))
+            .unwrap()
+            .frames
+            .0;
+        let root = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+        let mut chain = super::Chain::new(&lock, root, "any-ceres-arrival").unwrap();
+        assert_eq!(chain.place(arrival).unwrap(), (1, 0));
+        assert_eq!(chain.reached[1].1.id.0, "chain-any-0001-DF45");
     }
 }

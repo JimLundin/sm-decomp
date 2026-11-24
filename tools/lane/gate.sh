@@ -72,7 +72,7 @@ start clippy "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -
 # The clean crates under the clean room's ceilings (G5): tools/cleanroom/clippy.toml, the export's.
 # Clippy fingerprints CLIPPY_CONF_DIR, so this pass keeps its own target directory; sharing one
 # would re-check `types` and everything that depends on it in both passes on every run.
-CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" start clean-clippy "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze -p screens_boot --all-targets --no-deps -- -D warnings
+CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" start clean-clippy "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze -p screens_boot -p screens_arrival --all-targets --no-deps -- -D warnings
 # The dependency rules (deny.toml). cargo-deny is a prebuilt binary, found on PATH or in cargo's
 # bin directory; where it is missing the gate says so and CI's Quality holds the rules.
 deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny")

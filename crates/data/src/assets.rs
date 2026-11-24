@@ -8,5 +8,6 @@ pub mod audio;
 pub mod fingerprint;
 pub mod projectile;
 pub mod samus;
+pub mod start;
 pub mod tilesets;
 pub mod world;

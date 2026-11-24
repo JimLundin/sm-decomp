@@ -30,6 +30,30 @@ seed_frame = 0
 frames = [1, 270]
 power_on = true
 
+# A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
+# made ready, she arrives on the elevator's pad at the top of the shaft, and the picture comes up.
+[[run]]
+row = "any-ceres-arrival"
+start = 0
+end = 222
+held = 222
+stop = "end"
+seed_frame = 8315
+frames = [8316, 8537]
+power_on = false
+
+# The arrival, played on into Ceres's first room and through the second to fifth into Ridley's
+# with no new seed, until Ridley wakes, a piece of the station not yet owned.
+[[run]]
+row = "any-ceres-arrival"
+start = 0
+end = 3223
+held = 2359
+stop = { failed = "RidleyAwake" }
+seed_frame = 8315
+frames = [8316, 10674]
+power_on = false
+
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
 # floor and lets her go, and she leaves by the room's door; played on through the second, third,
 # fourth and fifth rooms and into Ridley's with no new seed, the door slamming shut behind her,

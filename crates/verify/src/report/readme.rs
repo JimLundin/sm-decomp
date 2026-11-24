@@ -15,7 +15,7 @@ use std::path::Path;
 use serde::Deserialize;
 
 use super::plan::{Plan, seed};
-use super::seeds::seed_frame;
+use super::seeds::{following, seed_frame};
 use super::{COMMAND, grouped, read};
 use crate::lock::{Lock, Row, RowId, Start};
 
@@ -134,13 +134,13 @@ fn listed(root: &Path, text: &str, movie: &str) -> Result<Vec<Run>, String> {
 fn of_movie(row: &Row, movie: &str) -> bool {
     match &row.start {
         Start::PowerOn => row.id.0.split('-').next() == Some(movie),
-        Start::Seed { capture, .. } => capture.split('-').next() == Some(movie),
+        Start::Seed { capture, .. } => super::seeds::movie(capture) == Some(movie),
     }
 }
 
 /// The movie frame of the seed `index` of `capture`.
 fn frame_at(root: &Path, (capture, index): (&str, u32)) -> Result<u64, String> {
-    u64::try_from(seed_frame(root, capture, index)?).map_err(|e| format!("{capture}:{index}: {e}"))
+    seed_frame(root, capture, index)
 }
 
 /// The movie frame of `row`'s cut 0.
@@ -151,28 +151,19 @@ fn first_frame(root: &Path, row: &Row) -> Result<u64, String> {
     }
 }
 
-/// The cuts that follow `row`'s cut 0 back to back: its own, and those of the rows of its capture
-/// whose seeds come next with no frame between. A row from power-on has only its own.
-fn reach(root: &Path, lock: &Lock, row: &Row, first: u64) -> Result<u64, String> {
+/// The cuts that follow `row`'s cut 0 back to back, reached as far as past cut `wanted`: its
+/// own, and those of the rows that follow it with no frame between, from whichever capture of
+/// the movie. A row from power-on has only its own.
+fn reach(root: &Path, lock: &Lock, row: &Row, wanted: u64) -> Result<u64, String> {
     let mut cuts = row.frames.0;
-    let Start::Seed { capture, index } = &row.start else {
-        return Ok(cuts);
-    };
-    let mut next = *index;
-    loop {
-        next = next.saturating_add(1);
-        let wanted = Start::Seed {
-            capture: capture.clone(),
-            index: next,
-        };
-        let Some(following) = lock.rows.iter().find(|other| other.start == wanted) else {
-            return Ok(cuts);
-        };
-        if first_frame(root, following)? != first.saturating_add(cuts) {
-            return Ok(cuts);
-        }
-        cuts = cuts.saturating_add(following.frames.0);
+    let mut last = row;
+    while cuts <= wanted
+        && let Some(next) = following(root, lock, last)?
+    {
+        cuts = cuts.saturating_add(next.frames.0);
+        last = next;
     }
+    Ok(cuts)
 }
 
 /// `listing` as a run, when the lock agrees with every figure it states.
@@ -190,7 +181,7 @@ fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<R
         return Err(wrong(format!("not a row of the {movie} movie")));
     }
     let first = first_frame(root, row)?;
-    let cuts = reach(root, lock, row, first)?;
+    let cuts = reach(root, lock, row, listing.end)?;
     if listing.start >= listing.end || listing.end >= cuts {
         return Err(wrong(format!(
             "asks for cuts {} to {}, outside the {cuts} it can play back to back",

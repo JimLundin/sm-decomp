@@ -29,8 +29,11 @@ Jim's decisions, 2026-11-07:
    are: a pose by its parts (body, action, aim, gun), not by the original's pose id. An importer
    at the edge reads the ROM's layout once and writes our format; it is the only code that knows
    that layout, and it sits outside the clean room. The clean room defining a new layout is
-   desirable. The assets come from the player's ROM and are never committed. The format and its
-   importer: [assets.md](assets.md).
+   desirable. The assets come from the player's ROM and are never committed. Where a value the
+   content needs is held only as an instruction's operand (a scene's step, a sign, a wrap), the
+   importer may read that operand after checking the instruction around it, and refuses any
+   other code: that is extracting content, not running the game's code (2026-11-24). The format
+   and its importer: [assets.md](assets.md).
 5. **Size is counted in logical tokens, on one weighted score of the model's logic** (a
    guideline, decision 19). The game's data (the values of constants and statics, and imported
    assets) and type declarations are reported beside the logic, not counted against it:

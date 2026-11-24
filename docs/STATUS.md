@@ -239,6 +239,25 @@ case `movement-ceres/carried-position-proximity` lost its gating obligation, whi
 diagnostic played run compares but does not gate. That loss is accepted until the played run
 is indexed.
 
+### Her arrival at Ceres
+
+Her arrival at Ceres (screens-arrival, F4's first piece) plays alone from the intro's last frame
+(`any-ceres-arrival`, seed movie frame 8,315): 222 of 222 cuts, and on into Ceres's first room
+with no new seed, 2,359 cuts back to back to Ridley's waking (movie frames 8,316 to 10,674). A
+seed in the preparation holds the intro's RAM, so the run builds State from the start: the shaft
+loaded by the room's loading with its two Ceres doors and the shaft's overlay and the colours the
+fade in heads for (her row the start's own), a fresh Samus at the start's place, the camera at the
+start's view, her health as a new file starts it, a blank HUD. From the seed come the new file's
+progress, energy and items and the other held facts, and the platform's frame counts and the
+random number, which run on through the preparation. Through the preparation (cuts 1-191) the run
+compares the screen's brightness and the random number; the stage follows the borrowed readiness
+("the start ready", R2/C1's loading with T1's lag). From cut 192 every owner is compared, but the
+HUD at cut 192: the load flow's start-up of the HUD is held from the record there, all but the
+mini-map's power, which her arrival sets and is compared from 193 (an interface-hud amendment for
+the HUD's start-up is queued). The fade in (193-222) is play, then PictureBrightens and
+PlayBegins; the brightness and the fade's count are compared. Planted fault: the fade's rhythm 0
+for 1 fails at cut 192, `arrival.fade-count`.
+
 ### From power-on
 
 From the console's power-on, `any-power-on` plays the front end alone

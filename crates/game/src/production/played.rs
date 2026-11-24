@@ -10,10 +10,11 @@
 //! and `hud` her energy and the HUD, [`passage`] her room, its doors to other rooms and the
 //! passage through them, [`station`] the order of the Ceres station's actors and their State,
 //! with `ridley` Ridley and the baby, `ceres_doors` the Ceres doors and `shaft` the shaft's pad
-//! and lights, and [`frame`] the counts of frames and the random number. The screen's colours
-//! are the doors model's [`Palette`], which the passage, the lights and the baby each set in
-//! turn. The fixture every owner's tests build State from is `tests`. Ahead of
-//! room play, [`front_end`] is which part of the game runs, from the console's power-on.
+//! and lights, [`frame`] the counts of frames and the random number, and [`arrival`] her
+//! arrival as a new game begins. The screen's colours are the doors model's [`Palette`], which
+//! the passage, the lights and the baby each set in turn. The fixture every owner's tests build
+//! State from is `tests`. Ahead of room play, [`front_end`] is which part of the game runs, from
+//! the console's power-on.
 //!
 //! Each model is stepped once through its own whole-frame entry. The frame commits every owner
 //! together or none.
@@ -32,7 +33,12 @@
 //! While the elevator's pad holds her, her moves and her animation don't run, and the pad sets
 //! her height after her frame. Each frame of work begins by drawing the game's random number
 //! once.
+//!
+//! While a new game's start is made ready no frame of play runs; on the frame it is ready she
+//! arrives. Each frame of the fade in after is a frame of play, and the fade takes its step
+//! after it.
 
+pub mod arrival;
 mod camera;
 mod ceres_doors;
 pub mod frame;
@@ -80,6 +86,8 @@ pub struct Content {
     pub hud: HudPictures,
     /// Her map of the area she is in.
     pub map: HerMap,
+    /// Her place across the new game's start room, x in pixels.
+    pub start_x: types::Px,
 }
 
 /// The tuning each model reads.
@@ -99,6 +107,8 @@ pub struct Rules {
     pub hud: interface_hud::Rules,
     /// The Ceres doors' and Ceres Ridley's parameters.
     pub ceres: boss_ceres_ridley::Rules,
+    /// The arrival's parameters.
+    pub arrival: screens_arrival::Rules,
 }
 
 /// Each owner's State, carried frame to frame.
@@ -123,6 +133,8 @@ pub struct State {
     pub station: station::State,
     /// The counts of finished frames and the game's random number.
     pub frame: frame::State,
+    /// Her arrival as a new game begins: the preparation, the fade in, or play.
+    pub arrival: arrival::State,
 }
 
 /// What one frame published.
@@ -179,6 +191,8 @@ pub enum Fault {
     RidleyAwake,
     /// A colour of the baby's content has more than 15 bits.
     BabyColours,
+    /// Her suit's content is not sixteen colours of 15 bits.
+    SuitColours,
 }
 
 impl State {
@@ -199,6 +213,9 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
+        if self.arrival.preparing() {
+            return self.prepare(passing, content, rules);
+        }
         if matches!(self.passage.doors, Doors::Passing(_)) {
             return self.pass(passing, content, rules);
         }
@@ -247,6 +264,7 @@ impl State {
         self.hud = Model(hud_state);
         self.station.ran(&enemies);
         self.frame = self.frame.after(doors.report.finishing, random);
+        self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
             movement: her.outcome,
             sounds: her.sounds,

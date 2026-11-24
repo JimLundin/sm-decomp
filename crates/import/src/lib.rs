@@ -7,5 +7,6 @@ pub mod audio;
 pub mod cache;
 pub mod projectile;
 pub mod samus;
+pub mod start;
 pub mod tileset;
 pub mod world;

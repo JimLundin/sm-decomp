@@ -61,6 +61,9 @@ pub struct Passing<'a> {
     /// number as the last frame left it, which replaces the one State carries. None where
     /// State's own is the game's. The frame draws it once as its work begins.
     pub random: Option<types::RandomSequence>,
+    /// The start's loading's, with the platform's lag: whether a new game's start is made ready
+    /// this frame.
+    pub start: super::arrival::Readiness,
 }
 
 /// What audio answers the passage.

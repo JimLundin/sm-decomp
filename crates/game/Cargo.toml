@@ -20,6 +20,7 @@ samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
 enemy_interactions = { path = "../clean/enemy_interactions" }
 game_random = { path = "../clean/game_random" }
+screens_arrival = { path = "../clean/screens_arrival" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 screens_boot = { path = "../clean/screens_boot" }
 types = { path = "../clean/types" }

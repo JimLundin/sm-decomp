@@ -1,0 +1,217 @@
+# Test vectors for docs/behaviours/screens-arrival.md (her arrival at Ceres as a new game begins).
+#
+# Format
+# - Each [[vector]] is one frame of the arrival, from its state as the frame begins to its state
+#   as the frame ends: id; source ("recorded" or "constructed"); entries (the spec's behaviours it
+#   exercises); rules (optional); before; inputs (optional); after; output (optional);
+#   continues (optional), the id of the vector whose after is this one's before, the next frame.
+# - rules (optional): the reference rules this vector overrides: rhythm, frames (PictureBrightens's
+#   d). A vector without rules runs the reference one: rhythm 1.
+# - before and after: stage, "Preparing", "FadingIn" or "Playing"; level, 0 to 15; screen,
+#   "Blanked" or "Shown"; count, the fade's count in frames (spec §1.1).
+# - inputs (optional; absent means the preparation is not done): start_ready, bool; arrival_x, her x
+#   across the start room, 16-bit px in hex; suit, her suit's sixteen colours, in order;
+#   colours, the screen's goal colours, given as default = { goal } for every colour not listed
+#   and at = [{ index, goal }] for the listed ones. Colours are 15-bit, in hex. The colours as
+#   they stand are not an input: the arrival sets every one of them.
+# - output (optional; absent means none but the brightness, which is after's level and screen):
+#   arrives = [x, y], her place as she arrives, 16-bit px in hex, standing still and facing the
+#   screen; pad = [x, y], the place the arrival hands the pad (boss-ceres-ridley PadPlaced);
+#   map_shown, bool; play_begins, bool;
+#   colours (only where inputs has colours): now = [{ index, now }] for the listed colours and
+#   others = "goal" or "kept", what every colour not listed shows now; goal = "kept", the goal
+#   colours as they were.
+# - Positions and colours are invented: no start's x and no colour is the game's. The recorded
+#   cases (named by row and frame elsewhere) keep the stage, the brightness and
+#   the count as recorded and move her x to an invented place.
+
+# The preparation: the screen dark while the start is made ready.
+
+[[vector]]
+id = "R-setup"
+source = "recorded"
+entries = ["StartsInTheDark"]
+before = { stage = "Preparing", level = 0, screen = "Blanked", count = 1 }
+after = { stage = "Preparing", level = 0, screen = "Blanked", count = 1 }
+
+[[vector]]
+id = "C-setup-lit"
+source = "constructed"
+entries = ["StartsInTheDark"]
+before = { stage = "Preparing", level = 9, screen = "Shown", count = 4 }
+inputs = { start_ready = false, arrival_x = "0140" }
+after = { stage = "Preparing", level = 9, screen = "Shown", count = 4 }
+
+# The arrival.
+
+[[vector]]
+id = "R-arrival"
+source = "recorded"
+entries = ["ArrivesAtTheTop"]
+before = { stage = "Preparing", level = 0, screen = "Blanked", count = 1 }
+inputs = { start_ready = true, arrival_x = "0140" }
+after = { stage = "FadingIn", level = 0, screen = "Blanked", count = 1 }
+output = { arrives = ["0140", "0000"], pad = ["0140", "0000"], map_shown = true, play_begins = false }
+
+[[vector]]
+id = "C-arrival-adjusted"
+source = "constructed"
+entries = ["ArrivesAtTheTop"]
+rules = { rhythm = 3 }
+before = { stage = "Preparing", level = 0, screen = "Blanked", count = 0 }
+inputs = { start_ready = true, arrival_x = "0038" }
+after = { stage = "FadingIn", level = 0, screen = "Blanked", count = 3 }
+output = { arrives = ["0038", "0000"], pad = ["0038", "0000"], map_shown = true, play_begins = false }
+
+[[vector]]
+id = "C-arrival-lit"
+source = "constructed"
+entries = ["ArrivesAtTheTop"]
+before = { stage = "Preparing", level = 6, screen = "Shown", count = 9 }
+inputs = { start_ready = true, arrival_x = "FFF0" }
+after = { stage = "FadingIn", level = 6, screen = "Shown", count = 1 }
+output = { arrives = ["FFF0", "0000"], pad = ["FFF0", "0000"], map_shown = true, play_begins = false }
+
+[[vector]]
+id = "C-arrival-colours"
+source = "constructed"
+entries = ["ArrivesAtTheTop"]
+before = { stage = "Preparing", level = 0, screen = "Blanked", count = 1 }
+after = { stage = "FadingIn", level = 0, screen = "Blanked", count = 1 }
+
+[vector.inputs]
+start_ready = true
+arrival_x = "0140"
+suit = ["0000", "7FFF", "1111", "2222", "3333", "4444", "5555", "6666", "0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008"]
+
+[vector.inputs.colours]
+default = { goal = "2108" }
+at = [
+    { index = 0, goal = "7C00" },
+    { index = 41, goal = "03E0" },
+    { index = 191, goal = "0C1D" },
+    { index = 192, goal = "0000" },
+    { index = 193, goal = "6318" },
+    { index = 207, goal = "0C63" },
+    { index = 208, goal = "5294" },
+    { index = 223, goal = "3DEF" },
+    { index = 255, goal = "7FFF" },
+]
+
+[vector.output]
+arrives = ["0140", "0000"]
+pad = ["0140", "0000"]
+map_shown = true
+play_begins = false
+others = "goal"
+goal = "kept"
+now = [
+    { index = 0, now = "7C00" },
+    { index = 41, now = "03E0" },
+    { index = 191, now = "0C1D" },
+    { index = 192, now = "0000" },
+    { index = 193, now = "7FFF" },
+    { index = 194, now = "1111" },
+    { index = 195, now = "2222" },
+    { index = 196, now = "3333" },
+    { index = 197, now = "4444" },
+    { index = 198, now = "5555" },
+    { index = 199, now = "6666" },
+    { index = 200, now = "0001" },
+    { index = 201, now = "0002" },
+    { index = 202, now = "0003" },
+    { index = 203, now = "0004" },
+    { index = 204, now = "0005" },
+    { index = 205, now = "0006" },
+    { index = 206, now = "0007" },
+    { index = 207, now = "0008" },
+    { index = 208, now = "5294" },
+    { index = 223, now = "0000" },
+    { index = 255, now = "7FFF" },
+]
+
+# The fade in.
+
+[[vector]]
+id = "R-first-frame"
+source = "recorded"
+entries = ["PictureBrightens", "PlayBegins"]
+before = { stage = "FadingIn", level = 0, screen = "Blanked", count = 1 }
+after = { stage = "FadingIn", level = 0, screen = "Blanked", count = 0 }
+output = { play_begins = false }
+
+[[vector]]
+id = "R-first-step"
+source = "recorded"
+entries = ["PictureBrightens", "PlayBegins"]
+before = { stage = "FadingIn", level = 0, screen = "Blanked", count = 0 }
+after = { stage = "FadingIn", level = 1, screen = "Shown", count = 1 }
+output = { play_begins = false }
+continues = "R-first-frame"
+
+[[vector]]
+id = "R-step-mid"
+source = "recorded"
+entries = ["PictureBrightens", "PlayBegins"]
+before = { stage = "FadingIn", level = 7, screen = "Shown", count = 0 }
+after = { stage = "FadingIn", level = 8, screen = "Shown", count = 1 }
+output = { play_begins = false }
+
+[[vector]]
+id = "R-last-step"
+source = "recorded"
+entries = ["PictureBrightens", "PlayBegins"]
+before = { stage = "FadingIn", level = 14, screen = "Shown", count = 0 }
+after = { stage = "Playing", level = 15, screen = "Shown", count = 0 }
+output = { play_begins = true }
+
+[[vector]]
+id = "C-count-adjusted"
+source = "constructed"
+entries = ["PictureBrightens", "PlayBegins"]
+rules = { rhythm = 3 }
+before = { stage = "FadingIn", level = 4, screen = "Shown", count = 3 }
+after = { stage = "FadingIn", level = 4, screen = "Shown", count = 2 }
+output = { play_begins = false }
+
+[[vector]]
+id = "C-step-adjusted"
+source = "constructed"
+entries = ["PictureBrightens", "PlayBegins"]
+rules = { rhythm = 3 }
+before = { stage = "FadingIn", level = 4, screen = "Shown", count = 0 }
+after = { stage = "FadingIn", level = 5, screen = "Shown", count = 3 }
+output = { play_begins = false }
+
+[[vector]]
+id = "C-step-from-shown"
+source = "constructed"
+entries = ["PictureBrightens", "PlayBegins"]
+rules = { rhythm = 0 }
+before = { stage = "FadingIn", level = 0, screen = "Shown", count = 0 }
+after = { stage = "FadingIn", level = 1, screen = "Shown", count = 0 }
+output = { play_begins = false }
+
+[[vector]]
+id = "C-full-shown"
+source = "constructed"
+entries = ["PictureBrightens", "PlayBegins"]
+before = { stage = "FadingIn", level = 15, screen = "Shown", count = 0 }
+after = { stage = "Playing", level = 15, screen = "Shown", count = 0 }
+output = { play_begins = true }
+
+[[vector]]
+id = "C-full-blanked"
+source = "constructed"
+entries = ["PictureBrightens", "PlayBegins"]
+before = { stage = "FadingIn", level = 15, screen = "Blanked", count = 0 }
+after = { stage = "FadingIn", level = 15, screen = "Blanked", count = 1 }
+output = { play_begins = false }
+
+[[vector]]
+id = "C-playing"
+source = "constructed"
+entries = ["PlayBegins"]
+before = { stage = "Playing", level = 15, screen = "Shown", count = 0 }
+after = { stage = "Playing", level = 15, screen = "Shown", count = 0 }
+output = { play_begins = true }

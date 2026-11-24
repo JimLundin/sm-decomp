@@ -4,7 +4,7 @@ pub mod lines;
 mod plan;
 mod readme;
 mod replay;
-mod seeds;
+pub(crate) mod seeds;
 mod structure;
 
 #[cfg(test)]
@@ -436,6 +436,15 @@ const DOMAINS: &[Domain] = &[
                 area: "loading",
             },
         ],
+    },
+    // The start it reads and the report it gives are the domain's shared code.
+    Domain {
+        name: "screens-arrival",
+        bridge: None,
+        adapters: &[],
+        providers: &[],
+        areas: &[("arrival", &["arrive.rs"]), ("fade", &["fade.rs"])],
+        apart: &[],
     },
 ];
 

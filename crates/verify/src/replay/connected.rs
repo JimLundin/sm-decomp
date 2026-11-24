@@ -214,6 +214,24 @@ pub(super) fn seed_inputs(
     geometry: game::production::world::MovementWorld,
 ) -> Result<connected::inputs::Inputs, Outcome> {
     dry_and_bound(seed, seed, seed)?;
+    held_inputs(
+        seed,
+        items,
+        appearance::activities(seed)?,
+        geometry,
+        camera_input(seed)?,
+    )
+}
+
+/// The seed-held inputs with the run's `activities`, `geometry` and `camera`: the rest read
+/// from `seed`, its sound queue, her energy and her shot's charge.
+pub(super) fn held_inputs(
+    seed: &[u8],
+    items: types::Set<types::Item>,
+    activities: types::Set<samus_appearance::Activity>,
+    geometry: game::production::world::MovementWorld,
+    camera: CameraInputs,
+) -> Result<connected::inputs::Inputs, Outcome> {
     let queue = |at: usize| {
         seed.get(at)
             .copied()
@@ -229,12 +247,12 @@ pub(super) fn seed_inputs(
         liquid: samus_appearance::Liquid::NONE,
         sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
             .ok_or_else(|| data_failure(None, "seed queue occupancy"))?,
-        activities: appearance::activities(seed)?,
+        activities,
         // Held from the seed like the room's facts: only a passage's first entry reads it, and
         // no frame these inputs play has one.
         charge: appearance::charge(seed)?,
         geometry,
-        camera: camera_input(seed)?,
+        camera,
         activity: Activity::Inactive,
     })
 }

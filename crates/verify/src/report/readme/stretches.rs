@@ -207,9 +207,8 @@ mod tests {
             ("Rooms 1 to 5", "any-boundary:1"),
             ("Ridley's room", "any-boundary:6"),
         ] {
-            let seeded = seed(opened_by)
-                .and_then(|(capture, index)| seed_frame(root(), capture, index))
-                .map(|frame| u64::try_from(frame).unwrap_or_default());
+            let seeded =
+                seed(opened_by).and_then(|(capture, index)| seed_frame(root(), capture, index));
             let first = all
                 .iter()
                 .find(|stretch| stretch.name == name)

@@ -87,6 +87,8 @@ pub enum LoadFault {
     DoorRule(DoorRule),
     /// A slope block names a shape the slopes don't hold.
     Slope,
+    /// The new game's start room, or the version it starts in, is not in the world.
+    Start,
     /// The level doesn't make geometry: its size or a chain of stand-ins.
     Geometry,
 }
@@ -219,13 +221,6 @@ pub fn ceres_actors(
     rooms: &Rooms,
 ) -> Result<CeresActors, LoadFault> {
     let version = version(rooms, through, run.progress)?;
-    let placed = placed(version, run);
-    let owned = |species| {
-        species == actors::CERES_DOOR || (version.ceres_ridley && species == actors::CERES_RIDLEY)
-    };
-    if !version.enemies.iter().all(|loaded| owned(loaded.species)) {
-        return Err(LoadFault::OtherActors);
-    }
     let rule = rooms
         .world
         .doorway(through)
@@ -233,6 +228,18 @@ pub fn ceres_actors(
         .rule;
     if !matches!(rule, DoorRule::Nothing | DoorRule::FromCeresElevatorShaft) {
         return Err(LoadFault::DoorRule(rule));
+    }
+    actors_of(version, run)
+}
+
+/// The Ceres actors `version` places, refusing another actor or a setup no owner here runs.
+fn actors_of(version: &world::Version, run: Run<'_>) -> Result<CeresActors, LoadFault> {
+    let placed = placed(version, run);
+    let owned = |species| {
+        species == actors::CERES_DOOR || (version.ceres_ridley && species == actors::CERES_RIDLEY)
+    };
+    if !version.enemies.iter().all(|loaded| owned(loaded.species)) {
+        return Err(LoadFault::OtherActors);
     }
     if !matches!(
         version.setup,
@@ -270,6 +277,17 @@ pub fn room(
 ) -> Result<Room, LoadFault> {
     let version = version(rooms, through, run.progress)?;
     let room = entered(rooms, through)?;
+    built(room, version, rooms, before)
+}
+
+/// What play reads of `room` built in `version`, with the scroll areas past its screens kept
+/// from `before`.
+fn built(
+    room: &world::Room,
+    version: &world::Version,
+    rooms: &Rooms,
+    before: &CameraInputs,
+) -> Result<Room, LoadFault> {
     let unplaced = |kind| matches!(kind, PlmKind::Item(..) | PlmKind::Unmodelled { .. });
     if version
         .plms
@@ -464,6 +482,82 @@ pub fn map_room(room: &world::Room) -> interface_hud::Room {
     }
 }
 
+/// What a new game's start loads of the room it starts in, `room`: what play reads of it, the
+/// Ceres actors it places, and the colours the fade in heads for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Started {
+    /// What play reads of the room.
+    pub room: Room,
+    /// Its Ceres actors.
+    pub actors: CeresActors,
+    /// The colours a fade heads for.
+    pub goal: [types::Colour; COLOURS],
+    /// Where the room sits on her map, and its area.
+    pub map: (interface_hud::Room, Area),
+}
+
+/// A new game's start in `room`, entered by no door, with the start's own colours for her row
+/// `her_row`.
+///
+/// The colours the fade heads for are black, then the tileset's from the first colour, then
+/// what fetching the room's contents sets, but for her suit's row: as the game starts, that
+/// takes the start's own (`her_row`), not her suit's.
+///
+/// # Errors
+/// A room the world lacks, or what a passage's loading of it refuses.
+pub fn start(
+    room: data::id::RoomId,
+    run: Run<'_>,
+    rooms: &Rooms,
+    her_row: &[Colour; ROW_COLOURS],
+) -> Result<Started, LoadFault> {
+    let room = rooms.world.room(room).ok_or(LoadFault::Start)?;
+    let version = version_of(room, None, run.progress)?.ok_or(LoadFault::Start)?;
+    let mut palette = Palette {
+        screen: [types::Colour::BLACK; COLOURS],
+        goal: [types::Colour::BLACK; COLOURS],
+    };
+    let tileset = rooms
+        .tilesets
+        .get(version.tileset)
+        .ok_or(LoadFault::Tileset)?;
+    let colours = tileset.palettes.0.iter().flat_map(|row| row.0);
+    for (goal, colour) in palette.goal.iter_mut().zip(colours) {
+        *goal = types::Colour::new(colour.0).ok_or(LoadFault::Colour)?;
+    }
+    contents(version, run, rooms, &mut palette)?;
+    if let Some(row) = suit_row(&mut palette.goal) {
+        for (goal, colour) in row.iter_mut().zip(her_row) {
+            *goal = types::Colour::new(colour.0).ok_or(LoadFault::Colour)?;
+        }
+    }
+    Ok(Started {
+        room: built(
+            room,
+            version,
+            rooms,
+            &CameraInputs {
+                screens: Vec::new(),
+                size: [0, 0],
+                heights: [0, 0],
+                lead: Lead::Ahead,
+            },
+        )?,
+        actors: actors_of(version, run)?,
+        goal: palette.goal,
+        map: (map_room(room), room.place.area),
+    })
+}
+
+/// Her suit's row of `goal`.
+fn suit_row(goal: &mut [types::Colour; COLOURS]) -> Option<&mut [types::Colour; ROW_COLOURS]> {
+    goal.as_chunks_mut::<ROW_COLOURS>()
+        .0
+        .iter_mut()
+        .skip(SPRITE_ROW)
+        .nth(usize::from(SpriteRow::SUIT.get()))
+}
+
 /// The room `through` leads to.
 fn entered(rooms: &Rooms, through: DoorwayId) -> Result<&world::Room, LoadFault> {
     rooms
@@ -520,19 +614,28 @@ fn contents(
         };
         set(&mut goal, row, 1, shades)?;
     }
+    set(&mut goal, SpriteRow::SUIT, 0, &suit(rooms, inventory).0)?;
+    palette.screen = screen;
+    palette.goal = goal;
+    Ok(())
+}
+
+/// Her suit's colours as it stands: the gravity suit's over the varia suit's over the power
+/// suit's.
+#[must_use]
+pub fn suit<'a>(
+    rooms: &'a Rooms,
+    inventory: &run_progress::Inventory,
+) -> &'a data::assets::art::Palette {
     let suits = &rooms.samus.suits;
     let on = &inventory.items_switched_on;
-    let suit = if on[Item::GravitySuit] {
+    if on[Item::GravitySuit] {
         &suits.gravity
     } else if on[Item::VariaSuit] {
         &suits.varia
     } else {
         &suits.power
-    };
-    set(&mut goal, SpriteRow::SUIT, 0, &suit.0)?;
-    palette.screen = screen;
-    palette.goal = goal;
-    Ok(())
+    }
 }
 
 /// `RidleyPlaced`: his room's colours, the goal the passage's fade brings the screen to. Each
@@ -582,6 +685,20 @@ fn version<'a>(
     progress: &Progress,
 ) -> Result<&'a world::Version, LoadFault> {
     let room = entered(rooms, through)?;
+    version_of(room, Some(types::Entrance(through.0)), progress)?.ok_or(LoadFault::Room(through))
+}
+
+/// The version of `room` that loads as she comes in by `entered_by`, or with no entrance as a
+/// game starts in it: the first whose condition holds for `progress`, or the default; none for
+/// a version the room lacks.
+///
+/// # Errors
+/// A room in an area progress has no place for.
+fn version_of<'a>(
+    room: &'a world::Room,
+    entered_by: Option<types::Entrance>,
+    progress: &Progress,
+) -> Result<Option<&'a world::Version>, LoadFault> {
     let conditions: Vec<_> = room
         .conditional
         .iter()
@@ -589,16 +706,18 @@ fn version<'a>(
         .collect();
     let entered = EnteredRoom {
         area: area(room.place.area)?,
-        entered_by: Some(types::Entrance(through.0)),
+        entered_by,
     };
-    match (RoomStates {
-        conditional: &conditions,
-    })
-    .choose(progress, entered)
-    {
-        Version::Conditional(place) => room.version(place).ok_or(LoadFault::Room(through)),
-        Version::Default => Ok(&room.default),
-    }
+    Ok(
+        match (RoomStates {
+            conditional: &conditions,
+        })
+        .choose(progress, entered)
+        {
+            Version::Conditional(place) => room.version(place),
+            Version::Default => Some(&room.default),
+        },
+    )
 }
 
 /// A version's condition in progress's terms; a doorway is the entrance of the same number.
@@ -876,6 +995,50 @@ mod tests {
         assert_eq!(palette.screen, lit(0));
         let palette = loaded(RoomCall::FetchTiles, OTHER).unwrap();
         assert_eq!(palette.goal[..16], lit(0x0011)[..16]);
+    }
+
+    #[test]
+    fn a_new_games_start_loads_its_default_version_with_her_row_its_own() {
+        let her_row = [Colour(0x0123); 16];
+        let started = super::start(
+            ROOM,
+            Run {
+                progress: &run_progress::Progress::default(),
+                ceres: boss_ceres_ridley::Stage::Calm,
+            },
+            &rooms(),
+            &her_row,
+        )
+        .unwrap();
+        let colours = |bits| [types::Colour::new(bits).unwrap(); 16];
+        let goal = &started.goal;
+        // Entered by no door, the default version's tileset: colours 0 to 15, then black.
+        assert_eq!(goal[..16], lit(0x0011)[..16]);
+        assert_eq!(goal[16..128], lit(0)[16..128]);
+        assert_eq!(row(goal, 0), colours(0x0044));
+        assert_eq!(row(goal, 2), colours(0x0100 | CERES_DOOR.0));
+        assert_eq!(
+            row(goal, 4),
+            colours(0x0123),
+            "her row is the start's own, not her suit's"
+        );
+        assert_eq!(row(goal, 5), colours(0x0055));
+        assert_eq!(started.actors.doors.len(), 1);
+        assert_eq!(started.room.doorways.len(), 1);
+        assert_eq!(started.map.1, Area::Ceres);
+        assert_eq!(
+            super::start(
+                RoomId(9),
+                Run {
+                    progress: &run_progress::Progress::default(),
+                    ceres: boss_ceres_ridley::Stage::Calm,
+                },
+                &rooms(),
+                &her_row,
+            )
+            .map(|_| ()),
+            Err(LoadFault::Start)
+        );
     }
 
     #[test]

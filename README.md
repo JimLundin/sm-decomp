@@ -9,13 +9,13 @@
 The milestone is **Power-on through Ceres**: the any% movie from power-on through frame 15,196. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-Frames that pass          ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   2,406 of 15,196   15.8%
+Frames that pass          ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   2,629 of 15,196   17.3%
 Continuous from power-on  █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     270 of 15,196    1.8%
 ```
 
 - **Frames that pass:** every frame some reviewed run holds, counted once.
 - **Continuous from power-on:** the frames held back to back from power-on, with nothing fed back. It stops at frame 271: TitleBegins.
-- **Longest continuous run from any seed:** frames 8,539 to 10,674 (2,136 frames), `chain-any-0001-DF45` from its cut 0.
+- **Longest continuous run from any seed:** frames 8,316 to 10,674 (2,359 frames), `any-ceres-arrival` from its cut 0.
 
 ### By stretch
 
@@ -27,7 +27,7 @@ The movie in the stretches being worked, in the order it plays; the first not ye
 | **Next: The title and menus** | 271 to 568 | `░░░░░░░░░░░░░░░░░░░░` 0 of 298 | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | The intro | 569 to 7,512 | `░░░░░░░░░░░░░░░░░░░░` 0 of 6,944 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | The flight to Ceres | 7,513 to 8,315 | `░░░░░░░░░░░░░░░░░░░░` 0 of 803 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Her arrival | 8,316 to 8,538 | `░░░░░░░░░░░░░░░░░░░░` 0 of 223 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Her arrival | 8,316 to 8,538 | ✓ all 223 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Rooms 1 to 5 | 8,539 to 10,162 | ✓ all 1,624 | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
 | Ridley's room | 10,163 to 11,772 | `██████░░░░░░░░░░░░░░` 512 of 1,610 | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
 | The escape | 11,773 to 13,236 | `░░░░░░░░░░░░░░░░░░░░` 0 of 1,464 | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |

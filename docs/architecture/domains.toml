@@ -98,6 +98,10 @@ rounds = 1
 name = "screens-boot"
 rounds = 1
 
+[[model]]
+name = "screens-arrival"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -362,6 +366,8 @@ wave = 3
 rounds = 5
 # Inferred: B8 for the escape's end, Ceres's explosion.
 reads = ["B8"]
+model = ["screens-arrival"]
+status = "in-progress"
 
 [[domain]]
 id = "R3"
