@@ -96,7 +96,16 @@ $TOOLS replay played chain-any-0003-DFD7 0 344 \
 ```
 
 It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by cut and field or
-dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
+dependency name only. An end past the row's last cut plays on through the rows that continue it,
+the same capture's next seeds, without a new seed: each row's cut 0 is the video frame after
+the last cut of the row before, and the run's cuts count on through it. The room facts the run
+holds from its seed (her room's geometry, its doors' cells and its camera screens) have no
+owner for the room a passage brings her into, so the run stops at that room's first frame of
+play as `played room she enters`; the map room and the Ceres doors follow the room from the
+imported world. Played back to back, the Ceres rows from `chain-any-0001-DF45` stop at its
+cut 0 (her arrival's lock), from `chain-any-0002-DF8D` hold 25 cuts (cut 26,
+`movement.position`), and from `chain-any-0003-DFD7` and `chain-any-0004-E021` hold their
+rows and stop at the next row's cut 0 for the room she enters. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
 Eighteen planted faults in the fault matrix, those of the responsibility `played`, stop that

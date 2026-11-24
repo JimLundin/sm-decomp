@@ -11,7 +11,7 @@ use verify::replay::{
 
 mod map;
 
-pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       tools replay played ROW START END --cache CACHE --rom ROM --lock LOCK\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
+pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       tools replay played ROW START END --cache CACHE --rom ROM --lock LOCK (END may pass ROW into the rows that continue it)\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
 
 struct Options {
     ids: Vec<CaseId>,

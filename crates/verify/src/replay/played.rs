@@ -20,7 +20,7 @@ use super::{
     Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement,
 };
 use crate::cache::Cache;
-use crate::lock::{Lock, RowId};
+use crate::lock::{Lock, Row, RowId, Start};
 use crate::source;
 use canonical::model::Model;
 use data::{assets::world, rom::Rom, room::RoomKey};
@@ -511,24 +511,84 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
     }
 }
 
-/// Play `row` from its cut `start` through `end` inclusive with the movie's pads alone.
+/// The lock rows a run plays through: its own, then each row that continues it, opened as the
+/// run reaches it. A row continues another when both start from one capture's seeds, its own
+/// the next, so its cut 0 is the video frame after the other's last cut; the run's cuts count
+/// on through it.
+struct Rows<'a> {
+    lock: &'a Lock,
+    cache: &'a Path,
+    /// Each row opened so far, with the run's cut its own cut 0 is.
+    opened: Vec<(u64, &'a Row, Cache)>,
+}
+
+impl<'a> Rows<'a> {
+    fn open(lock: &'a Lock, cache: &'a Path, row: &str) -> Result<Self, Outcome> {
+        let row = lock
+            .row(&RowId(row.to_owned()))
+            .ok_or_else(|| data_failure(None, "played lock row"))?;
+        Ok(Self {
+            lock,
+            cache,
+            opened: vec![(0, row, Self::cache(cache, row)?)],
+        })
+    }
+
+    fn cache(root: &Path, row: &Row) -> Result<Cache, Outcome> {
+        Cache::open(root, row).map_err(|_| data_failure(None, "record cache pins"))
+    }
+
+    /// The record at the run's `cut`, opening the rows that continue the run up to it.
+    fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
+        loop {
+            let (first, row, cache) = self
+                .opened
+                .last()
+                .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
+            let next = first.saturating_add(row.frames.0);
+            if cut < next {
+                let own = cut.checked_sub(*first);
+                return own.map_or_else(
+                    || Err(data_failure(Some(cut), "played rows")),
+                    |own| record(cache, own),
+                );
+            }
+            let following = self
+                .following(row)
+                .ok_or_else(|| data_failure(Some(cut), "played row continuing the last row"))?;
+            self.opened
+                .push((next, following, Self::cache(self.cache, following)?));
+        }
+    }
+
+    /// The row whose seed is the next of `row`'s capture.
+    fn following(&self, row: &Row) -> Option<&'a Row> {
+        let Start::Seed { capture, index } = &row.start else {
+            return None;
+        };
+        let next = index.checked_add(1)?;
+        self.lock.rows.iter().find(|candidate| {
+            matches!(&candidate.start, Start::Seed { capture: own, index: at } if own == capture && *at == next)
+        })
+    }
+}
+
+/// Play `row` from its cut `start` through `end` inclusive with the movie's pads alone. Cuts
+/// past the row's last go on through the rows that continue it, without a new seed.
 ///
 /// # Errors
-/// Missing or mismatched lock, cache or content refuse the run before any cut is played.
+/// Missing or mismatched lock, cache or content refuse the run before any cut is played, and a
+/// cut past every row that continues the run, or a row that doesn't follow on, stops it.
 pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report, Outcome> {
     let text = std::fs::read_to_string(&sources.lock)
         .map_err(|_| data_failure(None, "record lock file"))?;
     let lock = Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
-    let locked = lock
-        .row(&RowId(row.to_owned()))
-        .ok_or_else(|| data_failure(None, "played lock row"))?;
-    let cache =
-        Cache::open(&sources.cache, locked).map_err(|_| data_failure(None, "record cache pins"))?;
+    let mut rows = Rows::open(&lock, &sources.cache, row)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let seed = record(&cache, start)?;
+    let seed = rows.record(start)?;
     let report = |held, stop| Report {
         row: row.to_owned(),
         start,
@@ -546,7 +606,10 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     let mut held = 0;
     let mut previous = seed;
     for cut in start.saturating_add(1)..=end {
-        let current = record(&cache, cut)?;
+        let current = rows.record(cut)?;
+        if current.video_frame != previous.video_frame.wrapping_add(1) {
+            return Err(data_failure(Some(cut), "played rows join"));
+        }
         if let Err(outcome) = run.step(controller, &previous, &current, cut) {
             return Ok(report(held, Stop::At(at(cut, outcome))));
         }
@@ -566,6 +629,8 @@ struct Run<'a> {
     content: &'a connected::Content,
     hud: hud::Content,
     row: &'a str,
+    /// A passage has brought her into another room, whose held facts the run doesn't have.
+    entered: bool,
 }
 
 impl<'a> Run<'a> {
@@ -621,6 +686,7 @@ impl<'a> Run<'a> {
             content,
             hud,
             row,
+            entered: false,
         })
     }
 
@@ -647,6 +713,16 @@ impl<'a> Run<'a> {
                 dependency: "lag cut in play (T1)".into(),
             });
         }
+        // The room's geometry, its doors' cells and its camera screens are the seed room's;
+        // no owner yet loads them for the room a passage brings her into.
+        if self.entered && self.state.doors == Doors::Play {
+            return Err(Outcome::Unsupported {
+                cut: None,
+                dependency: "played room she enters: its geometry, door cells and camera screens"
+                    .into(),
+            });
+        }
+        let passing_before = matches!(self.state.doors, Doors::Passing(_));
         let mut inputs = self.room.inputs.clone();
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
@@ -680,6 +756,7 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        self.entered |= passing_before && self.state.doors == Doors::Play;
         if polled(current) {
             self.room.counter = self.room.counter.wrapping_add(1);
         }
