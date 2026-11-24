@@ -1,5 +1,5 @@
-//! The station around the doors: its stage, the doors' two colour sets and the shakes they
-//! start.
+//! The station around the doors and the shaft: its stage, the doors' two colour sets and the
+//! shakes they start.
 
 /// The station's stage, which progress and the escape supply. Listed alphabetically; the order
 /// means nothing.

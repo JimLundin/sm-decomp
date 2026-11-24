@@ -659,3 +659,332 @@ door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
 before = { phase = "Open", wait = 1 }
 her = ["016D", "009C"]
 after = { phase = "Open", wait = 4, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+# ================================================================ part 2: the shaft as she arrives
+#
+# Format of the part-2 vectors (spec §7 to §9). They have no door, before, her, random, shaking or
+# after; instead:
+# - Every position, height and count in part 2 is a 16-bit number written in decimal.
+# - arrival (placing vectors): [x, y], her position in pixels when the arrival places the pad.
+# - pad (optional, absent when gone): wait, frames; position = [x, y], pixels; look, "First"
+#   or "Second", absent for none (spec §7, `PadLook`). cover (optional, absent when gone):
+#   [x, y], pixels. her_y: her y, px, when they run (spec §7.3).
+# - shaft_after: her_y, held (bool), pad and cover as above, after one step of the pad and the
+#   cover: one run of the pad and then the cover, or the placing. drawn (optional, compared when
+#   present): the figures that step reports (spec §7.4): pad = { look, position } as above, and
+#   cover = [x, y], each absent for none.
+# - lights: one step of the beacon and the platform, on a frame the shaft's overlay runs (spec
+#   §7.3): count, the count of finished frames; fade_steps (optional, default 0), the steps a
+#   door's fade has taken when the overlay runs, 0 to 14; stage (optional, default "Calm"),
+#   "Calm", "Getaway" or "Escape" (spec §1.3, §7.3).
+# - lights_after: step, 0 to 7, the beacon's step, absent for none; platform, "First" or
+#   "Second", absent for none (spec §7, `PlatformLook`).
+# - rules (optional): wait (frames, PadWaits), floor (px, PadCarries), rhythm (frames a step,
+#   BeaconCycles). Without rules: wait 60, floor 72, rhythm 8.
+# - Positions are invented: the recorded cases (A1 to A7, B1, P1, P2, whose rows and frames the
+#   observer keeps) are moved to x = 320 with their heights kept, since the heights are the
+#   rule's. Frame counts are the records' (B1, B3, B4, P1, P2) or invented.
+
+# ---------------------------------------------------------------- the pad's placing
+
+[[vector]]
+# recorded case A1: the arrival places the pad and the cover with her at height 0
+id = "E-placed"
+source = "constructed"
+entries = ["PadPlaced"]
+placing = true
+arrival = [320, 0]
+shaft_after = { her_y = 0, held = true, pad = { wait = 60, position = [320, 28] }, cover = [320, 97] }
+
+[[vector]]
+# placed with her above the room's top: the pad's height wraps
+id = "E-placed-low"
+source = "constructed"
+entries = ["PadPlaced"]
+placing = true
+arrival = [512, 65520]
+shaft_after = { her_y = 65520, held = true, pad = { wait = 60, position = [512, 12] }, cover = [512, 97] }
+
+[[vector]]
+# wait 10: the pad is placed with a wait of 10
+id = "E-placed-adjusted"
+source = "constructed"
+entries = ["PadPlaced", "PadWaits"]
+rules = { wait = 10 }
+placing = true
+arrival = [320, 0]
+shaft_after = { her_y = 0, held = true, pad = { wait = 10, position = [320, 28] }, cover = [320, 97] }
+
+[[vector]]
+# recorded case A1, the first of the steps after the arrival: the placing draws neither the pad
+# (no look) nor the cover
+id = "E-placed-drawn"
+source = "constructed"
+entries = ["PadPlaced"]
+placing = true
+arrival = [320, 0]
+shaft_after = { her_y = 0, held = true, pad = { wait = 60, position = [320, 28] }, cover = [320, 97], drawn = {} }
+
+[[vector]]
+# recorded case A2, the next step: the first run, on the frame after the placing, draws the
+# pad's first look and the cover where it was placed
+id = "E-first-drawn"
+source = "constructed"
+entries = ["PadWaits", "PadFlickers"]
+pad = { wait = 60, position = [320, 28] }
+cover = [320, 97]
+her_y = 0
+shaft_after = { her_y = 0, held = true, pad = { wait = 59, position = [320, 28], look = "First" }, cover = [320, 97], drawn = { pad = { look = "First", position = [320, 28] }, cover = [320, 97] } }
+
+# ---------------------------------------------------------------- the wait
+
+[[vector]]
+# recorded case A2: the first run counts the wait and takes the first look
+id = "E-first-run"
+source = "constructed"
+entries = ["PadWaits", "PadFlickers"]
+pad = { wait = 60, position = [320, 28] }
+cover = [320, 97]
+her_y = 0
+shaft_after = { her_y = 0, held = true, pad = { wait = 59, position = [320, 28], look = "First" }, cover = [320, 97] }
+
+[[vector]]
+# recorded case A3: counting, the first look turns to the second
+id = "E-wait-counts"
+source = "constructed"
+entries = ["PadWaits", "PadFlickers"]
+pad = { wait = 29, position = [320, 28], look = "First" }
+cover = [320, 97]
+her_y = 0
+shaft_after = { her_y = 0, held = true, pad = { wait = 28, position = [320, 28], look = "Second" }, cover = [320, 97] }
+
+[[vector]]
+# recorded case A4: wait 2 drops to 1; she doesn't move yet
+id = "E-wait-two"
+source = "constructed"
+entries = ["PadWaits", "PadFlickers"]
+pad = { wait = 2, position = [320, 28], look = "Second" }
+cover = [320, 97]
+her_y = 0
+shaft_after = { her_y = 0, held = true, pad = { wait = 1, position = [320, 28], look = "First" }, cover = [320, 97] }
+
+[[vector]]
+# recorded case A5: wait 1 runs out and the same run lowers her her first pixel
+id = "E-wait-last"
+source = "constructed"
+entries = ["PadWaits", "PadCarries", "PadFlickers"]
+pad = { wait = 1, position = [320, 28], look = "First" }
+cover = [320, 97]
+her_y = 0
+shaft_after = { her_y = 1, held = true, pad = { wait = 0, position = [320, 28], look = "Second" }, cover = [320, 97] }
+
+# ---------------------------------------------------------------- the carry
+
+[[vector]]
+# recorded case A6: wait 0, one pixel down; the pad is drawn 28 below where she stood
+id = "E-carry"
+source = "constructed"
+entries = ["PadWaits", "PadCarries", "PadFlickers", "CoverHides"]
+pad = { wait = 0, position = [320, 28], look = "Second" }
+cover = [320, 97]
+her_y = 1
+shaft_after = { her_y = 2, held = true, pad = { wait = 0, position = [320, 29], look = "First" }, cover = [320, 97] }
+
+[[vector]]
+# recorded case A7: from 71 to the floor at 72; the cover sees her there and is gone
+id = "E-carry-to-floor"
+source = "constructed"
+entries = ["PadCarries", "PadFlickers", "CoverHides"]
+pad = { wait = 0, position = [320, 98], look = "Second" }
+cover = [320, 97]
+her_y = 71
+shaft_after = { her_y = 72, held = true, pad = { wait = 0, position = [320, 99], look = "First" } }
+
+[[vector]]
+# recorded case A8: at the floor, the pad leaves her there, ends and lets her go
+id = "E-floor"
+source = "constructed"
+entries = ["PadCarries"]
+pad = { wait = 0, position = [320, 99], look = "First" }
+her_y = 72
+shaft_after = { her_y = 72, held = false }
+
+[[vector]]
+# past the floor (lower on the screen): she is put on it at once, and the cover goes
+id = "E-below-floor"
+source = "constructed"
+entries = ["PadCarries", "CoverHides"]
+pad = { wait = 0, position = [320, 283], look = "First" }
+cover = [320, 97]
+her_y = 256
+shaft_after = { her_y = 72, held = false }
+
+[[vector]]
+# 32,767 past the floor (lower on the screen), by the 16-bit difference: on the floor at once
+id = "E-wrap-below"
+source = "constructed"
+entries = ["PadCarries"]
+pad = { wait = 0, position = [320, 32866], look = "Second" }
+her_y = 32839
+shaft_after = { her_y = 72, held = false }
+
+[[vector]]
+# 32,768 past the floor, by the 16-bit difference: counts as above it, lowered as any other
+id = "E-wrap-above"
+source = "constructed"
+entries = ["PadCarries", "PadFlickers"]
+pad = { wait = 0, position = [320, 32867], look = "Second" }
+her_y = 32840
+shaft_after = { her_y = 32841, held = true, pad = { wait = 0, position = [320, 32868], look = "First" } }
+
+[[vector]]
+# floor 40: at 40 the pad lets her go (with 72 it would lower her)
+id = "E-floor-adjusted"
+source = "constructed"
+entries = ["PadCarries"]
+rules = { floor = 40 }
+pad = { wait = 0, position = [320, 67], look = "First" }
+her_y = 40
+shaft_after = { her_y = 40, held = false }
+
+[[vector]]
+# floor 40: from 39 to 40, and the cover goes there
+id = "E-floor-adjusted-above"
+source = "constructed"
+entries = ["PadCarries", "CoverHides"]
+rules = { floor = 40 }
+pad = { wait = 0, position = [320, 66], look = "First" }
+cover = [320, 97]
+her_y = 39
+shaft_after = { her_y = 40, held = true, pad = { wait = 0, position = [320, 67], look = "Second" } }
+
+# ---------------------------------------------------------------- the cover alone
+
+[[vector]]
+# the pad gone, the cover sees her on the floor and goes
+id = "E-cover-alone"
+source = "constructed"
+entries = ["CoverHides"]
+cover = [768, 97]
+her_y = 72
+shaft_after = { her_y = 72, held = false }
+
+[[vector]]
+# the pad gone, her anywhere but the floor: the cover stays
+id = "E-cover-stays"
+source = "constructed"
+entries = ["CoverHides"]
+cover = [768, 97]
+her_y = 48
+shaft_after = { her_y = 48, held = false, cover = [768, 97] }
+
+[[vector]]
+# floor 40: the cover goes with her at 40 (with 72 it would stay)
+id = "E-cover-adjusted"
+source = "constructed"
+entries = ["CoverHides", "PadCarries"]
+rules = { floor = 40 }
+cover = [768, 97]
+her_y = 40
+shaft_after = { her_y = 40, held = false }
+
+# ---------------------------------------------------------------- the beacon and the platform
+
+[[vector]]
+# recorded case B1: count 7848, step 5; the platform's first look
+id = "B-step"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 7848 }
+lights_after = { step = 5, platform = "First" }
+
+[[vector]]
+# count 7858, step 6; the platform's second look
+id = "B-step-next"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 7858 }
+lights_after = { step = 6, platform = "Second" }
+
+[[vector]]
+# the count's last value: step 7
+id = "B-step-wrap"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 65535 }
+lights_after = { step = 7, platform = "Second" }
+
+[[vector]]
+# during the getaway the beacon goes on
+id = "B-getaway"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 19, stage = "Getaway" }
+lights_after = { step = 2, platform = "Second" }
+
+[[vector]]
+# a door's fade has taken its first step: no step; the platform still turns
+id = "B-fade"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 4, fade_steps = 1 }
+lights_after = { platform = "First" }
+
+[[vector]]
+# the fade's last frame of work, 14 steps taken: no step; the platform's second look
+id = "B-fade-last"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 7863, fade_steps = 14 }
+lights_after = { platform = "Second" }
+
+[[vector]]
+# the escape: a later piece owns the shaft then, so no step and no look (calm, count 40 would
+# give step 5 and the first look)
+id = "B-escape"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 40, stage = "Escape" }
+lights_after = {}
+
+[[vector]]
+# recorded case B3: the screen's brightness coming up at the arrival is no door's fade: step 0
+id = "B-arrival"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 7810 }
+lights_after = { step = 0, platform = "Second" }
+
+[[vector]]
+# recorded case B4's counts: 8159 finished frames, step 3; the HUD's frame count there, 1 after
+# a door, would give step 0
+id = "B-count-not-hud"
+source = "constructed"
+entries = ["BeaconCycles", "PlatformTurns"]
+lights = { count = 8159 }
+lights_after = { step = 3, platform = "Second" }
+
+[[vector]]
+# rhythm 4: count 20 is step 5 (with 8 it would be 2)
+id = "B-rhythm-adjusted"
+source = "constructed"
+entries = ["BeaconCycles"]
+rules = { rhythm = 4 }
+lights = { count = 20 }
+lights_after = { step = 5, platform = "First" }
+
+[[vector]]
+# recorded case P1: count 7841, the platform's first look
+id = "P-first"
+source = "constructed"
+entries = ["PlatformTurns", "BeaconCycles"]
+lights = { count = 7841 }
+lights_after = { step = 4, platform = "First" }
+
+[[vector]]
+# recorded case P2: count 7842, the platform's second look
+id = "P-second"
+source = "constructed"
+entries = ["PlatformTurns", "BeaconCycles"]
+lights = { count = 7842 }
+lights_after = { step = 4, platform = "Second" }

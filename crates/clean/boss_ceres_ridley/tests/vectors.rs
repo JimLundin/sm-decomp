@@ -1,14 +1,15 @@
-//! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, and checks
-//! the catalogue against the vectors. Every table refuses a key it doesn't know, and every name
-//! must be one the spec gives.
+//! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, the doors'
+//! and the shaft's, and checks the catalogue against the vectors. Every table refuses a key it
+//! doesn't know, and every name must be one the spec gives.
 
 #[cfg(test)]
 mod vectors {
-    use core::num::Wrapping;
+    use core::num::{NonZeroU16, Wrapping};
 
     use boss_ceres_ridley::{
-        BehaviourId, CeresDoor, ColourSet, DoorKind, Figure, FigureLook, Inputs, Phase, Quarter,
-        Rules, Shake, Stage, Wait, catalogue,
+        AlternatingLook, BeaconStep, BehaviourId, CeresDoor, ColourSet, Cover, DoorKind, FadeSteps,
+        Figure, FigureLook, Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep,
+        PadFigure, PadWait, Phase, Quarter, Rules, Shake, Stage, Wait, catalogue,
     };
     use serde::Deserialize;
     use types::{Checked, Pair, Px, Side};
@@ -21,6 +22,8 @@ mod vectors {
         vector: Vec<Vector>,
     }
 
+    /// A vector of either part: the doors' fields, or the shaft's (the pad and the cover, or the
+    /// lights). Which part it is follows from the result it names.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Vector {
@@ -31,15 +34,105 @@ mod vectors {
         entries: Vec<String>,
         #[serde(default)]
         rules: RulesRow,
-        door: DoorRow,
+        // The doors.
+        door: Option<DoorRow>,
         before: Option<PhaseRow>,
         her: Option<[String; 2]>,
-        #[serde(default)]
-        stage: StageName,
+        stage: Option<StageName>,
         random: Option<String>,
-        #[serde(default)]
-        shaking: u16,
-        after: After,
+        shaking: Option<u16>,
+        after: Option<After>,
+        // The pad and the cover.
+        arrival: Option<[u16; 2]>,
+        pad: Option<PadRow>,
+        cover: Option<[u16; 2]>,
+        her_y: Option<u16>,
+        shaft_after: Option<ShaftAfter>,
+        // The lights.
+        lights: Option<LightsRow>,
+        lights_after: Option<LightsAfter>,
+    }
+
+    impl Vector {
+        /// Whether the vector names any of the doors' own fields.
+        const fn names_doors(&self) -> bool {
+            self.door.is_some()
+                || self.before.is_some()
+                || self.her.is_some()
+                || self.stage.is_some()
+                || self.random.is_some()
+                || self.shaking.is_some()
+                || self.after.is_some()
+        }
+
+        /// Whether the vector names any of the pad's and the cover's own fields.
+        const fn names_pad(&self) -> bool {
+            self.arrival.is_some()
+                || self.pad.is_some()
+                || self.cover.is_some()
+                || self.her_y.is_some()
+                || self.shaft_after.is_some()
+        }
+
+        /// Whether the vector names any of the lights' own fields.
+        const fn names_lights(&self) -> bool {
+            self.lights.is_some() || self.lights_after.is_some()
+        }
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    #[serde(deny_unknown_fields)]
+    struct PadRow {
+        wait: u16,
+        position: [u16; 2],
+        look: Option<TurnName>,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct ShaftAfter {
+        her_y: u16,
+        held: bool,
+        pad: Option<PadRow>,
+        cover: Option<[u16; 2]>,
+        drawn: Option<DrawnRow>,
+    }
+
+    /// The figures a step of the pad and the cover reports, each absent for none.
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct DrawnRow {
+        pad: Option<PadFigureRow>,
+        cover: Option<[u16; 2]>,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct PadFigureRow {
+        look: TurnName,
+        position: [u16; 2],
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct LightsRow {
+        count: u16,
+        fade_steps: Option<u8>,
+        stage: Option<StageName>,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct LightsAfter {
+        step: Option<u16>,
+        platform: Option<TurnName>,
+    }
+
+    /// The pad's look and the platform's look alike.
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum TurnName {
+        First,
+        Second,
     }
 
     #[derive(Deserialize)]
@@ -57,6 +150,9 @@ mod vectors {
         strong_below: Option<u16>,
         small: Option<ShakeRow>,
         strong: Option<ShakeRow>,
+        wait: Option<u16>,
+        floor: Option<u16>,
+        rhythm: Option<u16>,
     }
 
     #[derive(Deserialize)]
@@ -320,6 +416,11 @@ mod vectors {
             strong_below: row.strong_below.unwrap_or(reference.strong_below),
             small: row.small.map_or(reference.small, shake),
             strong: row.strong.map_or(reference.strong, shake),
+            pad_wait: row.wait.map_or(reference.pad_wait, pad_wait),
+            floor: row.floor.map_or(reference.floor, Wrapping),
+            rhythm: row.rhythm.map_or(reference.rhythm, |frames| {
+                NonZeroU16::new(frames).expect("a rhythm is at least 1 frame")
+            }),
         }
     }
 
@@ -356,16 +457,23 @@ mod vectors {
         }
     }
 
+    fn door_row(vector: &Vector) -> &DoorRow {
+        vector
+            .door
+            .as_ref()
+            .expect("a doors' vector names its door")
+    }
+
+    fn door_stage(vector: &Vector) -> Stage {
+        stage(vector.stage.unwrap_or_default())
+    }
+
     /// `RoomStart`, `TheDoorsColours`: the room places the door; it reads nothing of her.
     fn placed(vector: &Vector) -> After {
         assert!(vector.before.is_none() && vector.her.is_none() && vector.random.is_none());
-        let model = door(&vector.door, Phase::Placed);
-        let placement = CeresDoor::place(
-            model.kind,
-            model.facing,
-            model.position,
-            stage(vector.stage),
-        );
+        let model = door(door_row(vector), Phase::Placed);
+        let placement =
+            CeresDoor::place(model.kind, model.facing, model.position, door_stage(vector));
         after(placement.door, false, None, Some(placement.colours))
     }
 
@@ -375,12 +483,162 @@ mod vectors {
         let her = vector.her.as_ref().expect("a run reads where she was");
         let inputs = Inputs {
             her: position(her),
-            stage: stage(vector.stage),
+            stage: door_stage(vector),
             random: vector.random.as_deref().map_or(0, hex),
-            shake_frames_left: vector.shaking,
+            shake_frames_left: vector.shaking.unwrap_or(0),
         };
-        let answer = door(&vector.door, phase(before)).run(&inputs, &rules(&vector.rules));
+        let answer = door(door_row(vector), phase(before)).run(&inputs, &rules(&vector.rules));
         after(answer.door, answer.sound.is_some(), answer.shake, None)
+    }
+
+    /// The doors' vector's check: what the model answers against its `after`.
+    fn check_door(vector: &Vector, expected: &After) -> Option<String> {
+        assert!(!vector.names_pad() && !vector.names_lights());
+        let actual = if vector.placing {
+            placed(vector)
+        } else {
+            run(vector)
+        };
+        (actual != *expected)
+            .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
+    }
+
+    // ------------------------------------------------------------ the pad and the cover
+
+    /// Part 2 writes its positions in decimal.
+    const fn point([x, y]: [u16; 2]) -> Pair<Px> {
+        Pair {
+            x: Wrapping(x),
+            y: Wrapping(y),
+        }
+    }
+
+    const fn point_row(point: Pair<Px>) -> [u16; 2] {
+        [point.x.0, point.y.0]
+    }
+
+    fn pad_wait(frames: u16) -> PadWait {
+        PadWait::new(frames).expect("a pad's wait is 0 to 32,768")
+    }
+
+    const fn look(name: TurnName) -> AlternatingLook {
+        match name {
+            TurnName::First => AlternatingLook::First,
+            TurnName::Second => AlternatingLook::Second,
+        }
+    }
+
+    const fn look_turn_name(look: AlternatingLook) -> TurnName {
+        match look {
+            AlternatingLook::First => TurnName::First,
+            AlternatingLook::Second => TurnName::Second,
+        }
+    }
+
+    fn pad(row: PadRow) -> Pad {
+        Pad {
+            wait: pad_wait(row.wait),
+            position: point(row.position),
+            look: row.look.map(look),
+        }
+    }
+
+    fn pad_row(pad: Pad) -> PadRow {
+        PadRow {
+            wait: pad.wait.frames(),
+            position: point_row(pad.position),
+            look: pad.look.map(look_turn_name),
+        }
+    }
+
+    const fn pad_figure_row(figure: PadFigure) -> PadFigureRow {
+        PadFigureRow {
+            look: look_turn_name(figure.look),
+            position: point_row(figure.position),
+        }
+    }
+
+    /// The pad and the cover a vector's `pad` and `cover` build.
+    fn pad_and_cover(vector: &Vector) -> PadAndCover {
+        PadAndCover {
+            pad: vector.pad.map(pad),
+            cover: vector.cover.map(|position| Cover {
+                position: point(position),
+            }),
+        }
+    }
+
+    /// The step a pad's and cover's vector names: the placing, or one run of the pad and then
+    /// the cover.
+    fn pad_step(vector: &Vector) -> PadAndCoverStep {
+        let rules = rules(&vector.rules);
+        if vector.placing {
+            assert!(vector.pad.is_none() && vector.cover.is_none() && vector.her_y.is_none());
+            let arrival = vector.arrival.expect("a placing names the arrival");
+            PadAndCover::arrival(point(arrival), &rules)
+        } else {
+            assert!(vector.arrival.is_none());
+            let her_y = vector.her_y.expect("a run reads her height");
+            pad_and_cover(vector).run(Wrapping(her_y), &rules)
+        }
+    }
+
+    /// The pad's and the cover's vector's check: its step against its `shaft_after`, the
+    /// figures drawn compared where it names them.
+    fn check_pad(vector: &Vector, expected: &ShaftAfter) -> Option<String> {
+        assert!(!vector.names_doors() && !vector.names_lights());
+        let step = pad_step(vector);
+        let state = step.pad_and_cover;
+        let actual = ShaftAfter {
+            her_y: step.her_y.0,
+            held: state.holds_her(),
+            pad: state.pad.map(pad_row),
+            cover: state.cover.map(|cover| point_row(cover.position)),
+            drawn: expected.drawn.as_ref().map(|_| DrawnRow {
+                pad: step.figures.pad.map(pad_figure_row),
+                cover: step.figures.cover.map(point_row),
+            }),
+        };
+        (actual != *expected)
+            .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
+    }
+
+    // ------------------------------------------------------------ the lights
+
+    /// What a vector's `lights` give a step of the lights.
+    fn lights_inputs(row: &LightsRow) -> LightsInputs {
+        LightsInputs {
+            finished_frames: row.count,
+            fade_steps_taken: FadeSteps::new(row.fade_steps.unwrap_or(0))
+                .expect("a fade takes 0 to 14 steps"),
+            stage: stage(row.stage.unwrap_or_default()),
+        }
+    }
+
+    /// The lights' vector's check: one step of the lights against its `lights_after`.
+    fn check_lights(vector: &Vector, expected: &LightsAfter) -> Option<String> {
+        assert!(!vector.names_doors() && !vector.names_pad() && !vector.placing);
+        let row = vector
+            .lights
+            .as_ref()
+            .expect("a lights vector names its lights");
+        let lights = Lights::step(lights_inputs(row), &rules(&vector.rules));
+        let actual = LightsAfter {
+            step: lights.beacon.map(BeaconStep::place),
+            platform: lights.platform.map(look_turn_name),
+        };
+        (actual != *expected)
+            .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
+    }
+
+    /// The vector's check, by the result it names; exactly one.
+    fn check(vector: &Vector) -> Option<String> {
+        match (&vector.after, &vector.shaft_after, &vector.lights_after) {
+            (Some(after), None, None) => check_door(vector, after),
+            (None, Some(after), None) => check_pad(vector, after),
+            (None, None, Some(after)) => check_lights(vector, after),
+            _ => panic!("{}: a vector names exactly one result", vector.id),
+        }
     }
 
     fn entry(name: &str) -> BehaviourId {
@@ -402,13 +660,7 @@ mod vectors {
                 vector.entries.iter().for_each(|name| {
                     entry(name);
                 });
-                let actual = if vector.placing {
-                    placed(vector)
-                } else {
-                    run(vector)
-                };
-                (actual != vector.after)
-                    .then(|| format!("{}: expected {:?}, got {actual:?}", vector.id, vector.after))
+                check(vector)
             })
             .collect();
         assert!(failures.is_empty(), "{}", failures.join("\n"));

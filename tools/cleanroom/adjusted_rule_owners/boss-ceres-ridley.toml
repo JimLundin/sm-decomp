@@ -14,3 +14,9 @@ strong_below = ["EscapeShakes"]
 small = ["EscapeShakes"]
 # EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 strong = ["EscapeShakes"]
+# PadWaits: docs/behaviours/boss-ceres-ridley.md:488
+wait = ["PadWaits"]
+# PadCarries: docs/behaviours/boss-ceres-ridley.md:501
+floor = ["PadCarries"]
+# BeaconCycles: docs/behaviours/boss-ceres-ridley.md:546
+rhythm = ["BeaconCycles"]

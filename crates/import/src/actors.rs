@@ -7,9 +7,9 @@
 //! beside their species' code. A room state's enemy population places the Ceres doors.
 
 use data::assets::actors::{
-    Actors, BLUE_BRINSTAR_FACE_BLOCK, CERES_DOOR, CERES_RIDLEY, CeresDoorColours, DoorShades,
-    ELEVATOR, EnemyGraphics, GEEGA, MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species,
-    SpriteRow, ZOOMER,
+    Actors, BLUE_BRINSTAR_FACE_BLOCK, BeaconColours, CERES_DOOR, CERES_RIDLEY, CeresDoorColours,
+    DoorShades, ELEVATOR, EnemyGraphics, GEEGA, MORPH_BALL_EYE, ROACH, SIDEHOPPER,
+    SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
 use data::assets::world::{CeresDoorKind, CeresDoorPlacement, Pair, Side};
@@ -47,6 +47,8 @@ const ENTRY_BYTES: usize = 4;
 /// The common sprites' palette and the flashing enemies' white palette.
 const COMMON: RomAddress = RomAddress::new(0x9a, 0x81a0);
 const FLASH: RomAddress = RomAddress::new(0x9a, 0xfc00);
+/// The Ceres shaft beacon's colour sets.
+const BEACON: RomAddress = RomAddress::new(0xa6, 0xf871);
 /// Where a bank's ROM half starts.
 const ROM_HALF: u16 = 0x8000;
 /// The bytes of a palette row: a word a colour.
@@ -97,7 +99,22 @@ pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
             calm: shades(doors.calm),
             escape: shades(doors.escape),
         },
+        beacon: beacon(rom)?,
     })
+}
+
+/// The shaft beacon's colour sets: its table holds a row of eight colours for each step, whose
+/// first six are the step's set.
+fn beacon(rom: Lorom<'_>) -> Result<BeaconColours, AddressError> {
+    const ROW: usize = 8;
+    let bytes = rom.read(BEACON, 2 * ROW * BeaconColours::STEPS)?;
+    let mut sets = [[Colour::default(); BeaconColours::SHADES]; BeaconColours::STEPS];
+    for (set, row) in sets.iter_mut().zip(bytes.as_chunks::<2>().0.chunks(ROW)) {
+        for (colour, &word) in set.iter_mut().zip(row) {
+            *colour = Colour(u16::from_le_bytes(word));
+        }
+    }
+    Ok(BeaconColours { sets })
 }
 
 /// The Ceres door actors the enemy population at `at`, a room state's, places, in its order.
@@ -132,14 +149,16 @@ pub fn ceres_doors(
         .collect()
 }
 
-/// What a Ceres door actor's first parameter names it: 2, 3, 5 and 6 are the door of Ridley's
-/// room, the shaft's cover and the getaway's walls, which later pieces of the station model.
+/// What a Ceres door actor's first parameter names it: 2 is the shaft's overlay; 3, 5 and 6
+/// are the door of Ridley's room and the getaway's walls, which later pieces of the station
+/// model.
 const fn ceres_door_kind(parameter: u16) -> Option<CeresDoorKind> {
     match parameter {
         0 => Some(CeresDoorKind::Door(Side::Right)),
         1 => Some(CeresDoorKind::Door(Side::Left)),
+        2 => Some(CeresDoorKind::ShaftOverlay),
         4 => Some(CeresDoorKind::ShaftDoor),
-        2 | 3 | 5 | 6 => Some(CeresDoorKind::Later),
+        3 | 5 | 6 => Some(CeresDoorKind::Later),
         _ => None,
     }
 }
@@ -225,4 +244,7 @@ mod tests;
 // row; the species' palette is 20h bytes at the header's `+2` pointer in its `+Ch` bank, set
 // at target colours `$7E:C300 + 20h * row`. Bank $82 log, `$82:E139`: the common sprites'
 // palette `$9A:81A0` to target sprite palette 5, the flashing enemies' `$9A:FC00` to sprite
-// palette 0. The Ceres doors' sets are `data::palette`'s.
+// palette 0. The Ceres doors' sets are `data::palette`'s. Bank $A6 log, the Ceres door
+// overlay's beacon `$A6:F850`: the table `$A6:F871`, 8 rows of 8 colours (the step
+// times 10h bytes), the first 6 of a row written to the
+// palette buffer `$7E:C052` (colours 29h to 2Eh).

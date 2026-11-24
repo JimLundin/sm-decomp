@@ -23,6 +23,10 @@
 //! The Ceres doors run before she moves, reading where she was at the end of the last frame;
 //! her motion meets the boxes of those that were solid as the frame began. Fetching the next
 //! room's contents lets the last room's doors go and places its own.
+//!
+//! In the Ceres shaft as she arrives, the elevator's pad holds her: while it does, her moves
+//! and her animation don't run, and the pad sets her height after her frame. The shaft's
+//! overlay, run with the room's enemies, steps the lights, whose beacon sets screen colours.
 
 use super::animation::{self, AppearanceContent};
 use super::camera_semantic;
@@ -31,8 +35,9 @@ use super::content::MovementContent;
 use super::health_tail::HealthPin;
 use super::hud::HudPin;
 use super::room_loading::{self, LoadFault, Rooms};
+use super::shaft::{self, LightsFault};
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
-use boss_ceres_ridley::{CeresDoor, Stage};
+use boss_ceres_ridley::{CeresDoor, Lights, PadAndCover, Stage};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
@@ -46,7 +51,8 @@ use samus_movement::{Dashing, StandingAnimation, WallTest};
 use types::{Action, Facing, Hitbox, Item, Pair, Parts, Pose, Set};
 use world_camera::{RememberedPosition, ViewPosition};
 use world_doors::{
-    Activity, Arrival, COLOURS, ColourGroup, Doors, Finishing, Palette, RoomCall, Scene,
+    Activity, Arrival, COLOURS, ColourGroup, Doors, Finishing, Palette, Passage, Phase, RoomCall,
+    Scene,
 };
 
 /// The figure she is drawn in as the frame starts.
@@ -200,6 +206,13 @@ pub struct State {
     /// The game's count of finished frames, in eight bits, which the HUD reads as the frame
     /// begins.
     pub frame: FrameCount,
+    /// The count of finished frames in sixteen bits, which nothing restarts; the shaft's lights
+    /// read it.
+    pub finished_frames: u16,
+    /// The Ceres shaft's elevator pad and the cover below it.
+    pub pad_and_cover: PadAndCover,
+    /// The room places the Ceres shaft's overlay, which shows the lights.
+    pub shaft_overlay: bool,
 }
 
 /// What one frame published.
@@ -217,6 +230,8 @@ pub struct Outputs {
     pub hud: Option<FrameOutputs>,
     /// Each Ceres door's run, in order; none on a frame the enemies don't run.
     pub ceres_doors: Vec<boss_ceres_ridley::Run>,
+    /// What the shaft's lights show; none on a frame its overlay doesn't run.
+    pub lights: Option<Lights>,
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -241,8 +256,10 @@ pub enum Fault {
     /// The HUD refused the frame: its scene only shows the countdown.
     Hud,
     /// The station's escape: the doors' shakes read the random numbers and the screen's
-    /// shaking, which aren't in this loop.
+    /// shaking, which aren't in this loop, and a later piece owns the shaft's overlay.
     Escape,
+    /// The shaft's lights could not be shown.
+    Lights(LightsFault),
 }
 
 impl State {
@@ -275,15 +292,83 @@ impl State {
             .0
             .play_frame(samus_health::TailImpact::Absent, &rules.health);
         let room = camera_room(&self.room.camera)?;
-        let start = self.figure.0;
         // The doors run before she moves, but her motion meets them as they block when the
         // frame began.
         let ceres = run_doors(
             &self.ceres_doors,
+            self.shaft_overlay,
             &self.movement.0,
             passing.ceres,
             &rules.ceres,
         )?;
+        let mut palette = self.palette;
+        let lights = self.lights(passing.ceres, content, rules, &mut palette)?;
+        let her = if self.pad_and_cover.holds_her() {
+            Her::held(self)
+        } else {
+            self.her_frame(inputs, content, rules)?
+        };
+        let mut samus = her.samus;
+        let pad_and_cover = shaft::run_pad(self.pad_and_cover, &mut samus, &rules.ceres);
+
+        let mut camera = self.camera.0;
+        camera_semantic::step(
+            &mut camera,
+            rules.camera.get(),
+            &world_camera::Frame {
+                samus: her.seen_by_camera(&samus),
+                room: &room,
+                lead: lead(self.room.camera.lead),
+                time_stopped: false,
+            },
+        );
+
+        let touched = her.touched(&self.room.doorways);
+        if touched.is_some_and(|doorway| doorway.map_room.is_none()) {
+            return Err(Fault::NewArea);
+        }
+        let mut hud_state = self.hud.0.clone();
+        let hud_outputs = hud_state
+            .frame_of_play(
+                &rules.hud,
+                &content.hud,
+                &hud_inputs(hud, self, &samus, her.after_moves(), health.state, content),
+            )
+            .map_err(|_| Fault::Hud)?;
+        let doors = self.doors.step(
+            scene(&samus, &camera, &palette),
+            &doors_inputs(touched.is_some(), touched, passing, content),
+            &rules.doors,
+        );
+
+        // Her room and where it sits on her map stay as they are through a frame of play.
+        self.movement = Model(samus);
+        self.appearance = Model(her.appearance);
+        self.figure = Model(her.figure);
+        self.pad_and_cover = pad_and_cover;
+        self.camera = Model(camera);
+        self.doors = doors.doors;
+        self.doorway = touched;
+        self.palette = doors.scene.palette;
+        self.health = Model(health.state);
+        self.hud = Model(hud_state);
+        self.ceres_doors = ceres.iter().map(|run| run.door).collect();
+        self.frame = counted(self.frame, doors.report.finishing);
+        self.finished_frames = finished(self.finished_frames, doors.report.finishing);
+        Ok(Outputs {
+            movement: her.outcome,
+            sounds: her.sounds,
+            doors: doors.report,
+            health: Some(health),
+            hud: Some(hud_outputs),
+            ceres_doors: ceres,
+            lights,
+        })
+    }
+
+    /// Her own frame: her moves, then her animation from what they report.
+    fn her_frame(&self, inputs: &Inputs, content: &Content, rules: &Rules) -> Result<Her, Fault> {
+        let start = self.figure.0;
         let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
         let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
         let after = Figure {
@@ -305,67 +390,31 @@ impl State {
                 Fault::Clip(figure)
             }
         })?;
-
-        let mut camera = self.camera.0;
-        camera_semantic::step(
-            &mut camera,
-            rules.camera.get(),
-            &world_camera::Frame {
-                samus: camera_semantic::completed_samus(&samus, &outcome),
-                room: &room,
-                lead: lead(self.room.camera.lead),
-                time_stopped: false,
-            },
-        );
-
-        let touched = self
-            .room
-            .doorways
-            .iter()
-            .find(|doorway| {
-                outcome
-                    .reached
-                    .iter()
-                    .any(|touch| touch.cell == doorway.cell)
-            })
-            .copied();
-        if touched.is_some_and(|doorway| doorway.map_room.is_none()) {
-            return Err(Fault::NewArea);
-        }
-        let mut hud_state = self.hud.0.clone();
-        let hud_outputs = hud_state
-            .frame_of_play(
-                &rules.hud,
-                &content.hud,
-                &hud_inputs(hud, self, &samus, &outcome, health.state, content),
-            )
-            .map_err(|_| Fault::Hud)?;
-        let doors = self.doors.step(
-            scene(&samus, &camera, &self.palette),
-            &doors_inputs(touched.is_some(), touched, passing, content),
-            &rules.doors,
-        );
-
-        // Her room and where it sits on her map stay as they are through a frame of play.
-        self.movement = Model(samus);
-        self.appearance = Model(appearance);
-        self.figure = Model(after);
-        self.camera = Model(camera);
-        self.doors = doors.doors;
-        self.doorway = touched;
-        self.palette = doors.scene.palette;
-        self.health = Model(health.state);
-        self.hud = Model(hud_state);
-        self.ceres_doors = ceres.iter().map(|run| run.door).collect();
-        self.frame = counted(self.frame, doors.report.finishing);
-        Ok(Outputs {
-            movement: Some(outcome),
+        Ok(Her {
+            samus,
+            outcome: Some(outcome),
+            appearance,
+            figure: after,
             sounds: shown.sounds,
-            doors: doors.report,
-            health: Some(health),
-            hud: Some(hud_outputs),
-            ceres_doors: ceres,
         })
+    }
+
+    /// The shaft's lights, on a frame the room's enemies run: with the overlay in the room, the
+    /// beacon's step sets the colours it names.
+    fn lights(
+        &self,
+        stage: Stage,
+        content: &Content,
+        rules: &Rules,
+        palette: &mut Palette,
+    ) -> Result<Option<Lights>, Fault> {
+        if !self.shaft_overlay {
+            return Ok(None);
+        }
+        let lights = shaft::lights(self.finished_frames, self.doors, stage, &rules.ceres)
+            .map_err(Fault::Lights)?;
+        shaft::show(lights, &content.rooms.actors.beacon, palette).map_err(Fault::Lights)?;
+        Ok(Some(lights))
     }
 
     /// Her moves, after her clip's look ahead from the figure she starts the frame in.
@@ -421,8 +470,15 @@ impl State {
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
         let camera = self.camera.0;
+        let brightening = brightening(self.doors, passing);
+        let mut before = self.palette;
+        let early_lights = if brightening {
+            self.lights(passing.ceres, content, rules, &mut before)?
+        } else {
+            None
+        };
         let exports = self.doors.step(
-            scene(&self.movement.0, &camera, &self.palette),
+            scene(&self.movement.0, &camera, &before),
             &doors_inputs(false, self.doorway, passing, content),
             &rules.doors,
         );
@@ -432,9 +488,11 @@ impl State {
             camera: view,
             mut palette,
         } = exports.scene;
-        let ceres = if exports.report.runs[Activity::Enemies] {
+        let enemies = exports.report.runs[Activity::Enemies];
+        let ceres = if enemies {
             run_doors(
                 &self.ceres_doors,
+                self.shaft_overlay,
                 &self.movement.0,
                 passing.ceres,
                 &rules.ceres,
@@ -442,54 +500,36 @@ impl State {
         } else {
             Vec::new()
         };
+        let lights = if brightening {
+            early_lights
+        } else if enemies {
+            self.lights(passing.ceres, content, rules, &mut palette)?
+        } else {
+            None
+        };
+        let mut moved = self.movement.0;
+        moved.position = her;
+        let pad_and_cover = if exports.report.runs[Activity::Projectiles] {
+            shaft::run_pad(self.pad_and_cover, &mut moved, &rules.ceres)
+        } else {
+            self.pad_and_cover
+        };
         let mut ceres_doors = if ceres.is_empty() {
             self.ceres_doors.clone()
         } else {
             ceres.iter().map(|run| run.door).collect()
         };
-        let mut built = None;
-        if let Some(doorway) = self.doorway {
-            let run = room_loading::Run {
-                progress: passing.progress,
-                ceres: passing.ceres,
-            };
-            room_loading::load(
-                exports.report.call,
-                doorway.through,
-                run,
-                &content.rooms,
-                &mut palette,
-            )
-            .map_err(Fault::Load)?;
-            match exports.report.call {
-                // Building the next room replaces what play reads of hers.
-                Some(RoomCall::BuildRoom) => {
-                    built = Some(
-                        room_loading::room(doorway.through, run, &content.rooms, &self.room.camera)
-                            .map_err(Fault::Load)?,
-                    );
-                }
-                // The next room's contents let the last room's doors go and place its own.
-                Some(RoomCall::FetchContents) => {
-                    ceres_doors = room_loading::ceres_doors(doorway.through, run, &content.rooms)
-                        .map_err(Fault::Load)?;
-                }
-                None
-                | Some(
-                    RoomCall::LeaveRoom
-                    | RoomCall::DrawTopRow
-                    | RoomCall::FetchTiles
-                    | RoomCall::AnimateTiles
-                    | RoomCall::PlayMusic
-                    | RoomCall::ReadLiquid,
-                ) => {}
-            }
-        }
-        if let Some(room) = built {
+        let loaded = self.load(exports.report.call, passing, content, &mut palette)?;
+        if let Some(room) = loaded.room {
             self.room = room;
         }
+        if let Some(placed) = loaded.actors {
+            ceres_doors = placed.doors;
+            self.shaft_overlay = placed.shaft_overlay;
+        }
         let kept = camera.seen();
-        self.movement.0.position = her;
+        self.movement.0 = moved;
+        self.pad_and_cover = pad_and_cover;
         self.camera.0 = camera
             .with_view(ViewPosition(view))
             .with_remembered(RememberedPosition(Pair {
@@ -500,6 +540,7 @@ impl State {
         self.doors = exports.doors;
         self.ceres_doors = ceres_doors;
         self.frame = counted(self.frame, exports.report.finishing);
+        self.finished_frames = finished(self.finished_frames, exports.report.finishing);
         self.hud.0.out_of_play(&OutOfPlayInputs {
             mini_map_turned_on: exports.report.minimap_on,
             new_area: NewArea::SameArea,
@@ -518,7 +559,139 @@ impl State {
             health: None,
             hud: None,
             ceres_doors: ceres,
+            lights,
         })
+    }
+
+    /// What the passage's call `call` loads of the next room, as its work is done: the colours
+    /// it sets, the room it builds and the Ceres actors it places.
+    fn load(
+        &self,
+        call: Option<RoomCall>,
+        passing: &Passing<'_>,
+        content: &Content,
+        palette: &mut Palette,
+    ) -> Result<Loaded, Fault> {
+        let mut loaded = Loaded {
+            room: None,
+            actors: None,
+        };
+        let Some(doorway) = self.doorway else {
+            return Ok(loaded);
+        };
+        let run = room_loading::Run {
+            progress: passing.progress,
+            ceres: passing.ceres,
+        };
+        room_loading::load(call, doorway.through, run, &content.rooms, palette)
+            .map_err(Fault::Load)?;
+        match call {
+            // Building the next room replaces what play reads of hers.
+            Some(RoomCall::BuildRoom) => {
+                loaded.room = Some(
+                    room_loading::room(doorway.through, run, &content.rooms, &self.room.camera)
+                        .map_err(Fault::Load)?,
+                );
+            }
+            // The next room's contents let the last room's Ceres actors go and place its own.
+            Some(RoomCall::FetchContents) => {
+                loaded.actors = Some(
+                    room_loading::ceres_actors(doorway.through, run, &content.rooms)
+                        .map_err(Fault::Load)?,
+                );
+            }
+            None
+            | Some(
+                RoomCall::LeaveRoom
+                | RoomCall::DrawTopRow
+                | RoomCall::FetchTiles
+                | RoomCall::AnimateTiles
+                | RoomCall::PlayMusic
+                | RoomCall::ReadLiquid,
+            ) => {}
+        }
+        Ok(loaded)
+    }
+}
+
+/// What a passage's call loaded of the next room.
+struct Loaded {
+    /// The room building it gives, which replaces hers.
+    room: Option<Room>,
+    /// The Ceres actors fetching its contents places, which replace the last room's.
+    actors: Option<room_loading::CeresActors>,
+}
+
+/// As the colours come up, the enemies run before the fade takes its step, so the beacon's
+/// colours go in first; that frame of work runs them whenever its work is done.
+const fn brightening(doors: Doors, passing: &Passing<'_>) -> bool {
+    passing.work_done
+        && matches!(
+            doors,
+            Doors::Passing(Passage {
+                phase: Phase::Brightening(_),
+                ..
+            })
+        )
+}
+
+/// Her own frame's results: her movement, its outcome, her appearance, the figure she shows and
+/// the sounds it asks for.
+struct Her {
+    samus: samus_movement::Samus,
+    /// None while the pad holds her.
+    outcome: Option<samus_movement::Outcome>,
+    appearance: samus_appearance::AppearanceState,
+    figure: Figure,
+    sounds: Vec<samus_appearance::SoundOffer>,
+}
+
+impl Her {
+    /// While the pad holds her, her frame changes nothing of her.
+    const fn held(state: &State) -> Self {
+        Self {
+            samus: state.movement.0,
+            outcome: None,
+            appearance: state.appearance.0,
+            figure: state.figure.0,
+            sounds: Vec::new(),
+        }
+    }
+
+    /// What the camera reads of her, at `samus` as the frame leaves her. While the pad holds
+    /// her nothing placed her, and she neither goes backwards nor rises.
+    fn seen_by_camera(&self, samus: &samus_movement::Samus) -> world_camera::Samus {
+        self.outcome.as_ref().map_or(
+            world_camera::Samus {
+                position: samus.position,
+                placed: None,
+                facing: samus.pose.facing,
+                backwards: false,
+                rising: false,
+            },
+            |outcome| camera_semantic::completed_samus(samus, outcome),
+        )
+    }
+
+    /// The door to another room her moves reached, if any; none while the pad holds her.
+    fn touched(&self, doorways: &[Doorway]) -> Option<Doorway> {
+        let outcome = self.outcome.as_ref()?;
+        doorways
+            .iter()
+            .find(|doorway| {
+                outcome
+                    .reached
+                    .iter()
+                    .any(|touch| touch.cell == doorway.cell)
+            })
+            .copied()
+    }
+
+    /// Where her moves leave her, which the mini-map reads.
+    fn after_moves(&self) -> types::Position {
+        self.outcome
+            .as_ref()
+            .map_or(self.samus.position, |outcome| outcome.position_after_moves)
     }
 }
 
@@ -527,7 +700,7 @@ fn hud_inputs<'a>(
     hud: &HudFrame,
     state: &State,
     samus: &samus_movement::Samus,
-    outcome: &samus_movement::Outcome,
+    after_moves: types::Position,
     health: samus_health::State,
     content: &'a Content,
 ) -> FrameInputs<'a> {
@@ -546,8 +719,8 @@ fn hud_inputs<'a>(
             runs: true,
             turned_on: false,
             position: Pair {
-                x: outcome.position_after_moves.x.pixel().0,
-                y: outcome.position_after_moves.y.pixel().0,
+                x: after_moves.x.pixel().0,
+                y: after_moves.y.pixel().0,
             },
             room: state.map_room,
             map: &content.map,
@@ -595,6 +768,14 @@ const fn counted(frame: FrameCount, finishing: Finishing) -> FrameCount {
         Finishing::Overrun => frame,
         Finishing::Finished => FrameCount(frame.0.wrapping_add(1)),
         Finishing::Restarts(_) => FrameCount(1),
+    }
+}
+
+/// The count of finished frames after a frame: every frame but one whose work overran counts.
+const fn finished(count: u16, finishing: Finishing) -> u16 {
+    match finishing {
+        Finishing::Overrun => count,
+        Finishing::Finished | Finishing::Restarts(_) => count.wrapping_add(1),
     }
 }
 
@@ -679,14 +860,15 @@ const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
 }
 
 /// One run of each of the room's Ceres doors, in its order of its enemies, reading where she
-/// was at the end of the last frame.
+/// was at the end of the last frame. In the escape a later piece owns the shaft's overlay.
 fn run_doors(
     doors: &[CeresDoor],
+    shaft_overlay: bool,
     her: &samus_movement::Samus,
     stage: Stage,
     rules: &boss_ceres_ridley::Rules,
 ) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
-    if stage == Stage::Escape && !doors.is_empty() {
+    if stage == Stage::Escape && (shaft_overlay || !doors.is_empty()) {
         return Err(Fault::Escape);
     }
     let inputs = boss_ceres_ridley::Inputs {

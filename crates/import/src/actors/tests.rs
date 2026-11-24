@@ -104,7 +104,7 @@ fn a_ceres_door_actor_is_named_by_its_first_parameter_and_no_other_value_imports
         [
             Some(CeresDoorKind::Door(Side::Right)),
             Some(CeresDoorKind::Door(Side::Left)),
-            Some(CeresDoorKind::Later),
+            Some(CeresDoorKind::ShaftOverlay),
             Some(CeresDoorKind::Later),
             Some(CeresDoorKind::ShaftDoor),
             Some(CeresDoorKind::Later),
@@ -113,4 +113,18 @@ fn a_ceres_door_actor_is_named_by_its_first_parameter_and_no_other_value_imports
         ]
     );
     assert_eq!(ceres_door_kind(0xffff), None);
+}
+
+#[test]
+fn the_beacon_takes_the_first_six_colours_of_each_sixteen_byte_row() {
+    // Invented words: row r's colour c is r × 100h + c, so a wrong stride or count shows.
+    let words = (0..8u16).flat_map(|row| (0..8u16).map(move |colour| row * 0x100 + colour));
+    let bytes: Vec<u8> = words.flat_map(u16::to_le_bytes).collect();
+    assert_eq!(bytes.len(), 8 * 16);
+    let image = image(BEACON, &bytes);
+    let sets = beacon(Lorom::new(&image)).unwrap().sets;
+    for (row, set) in (0..).zip(sets) {
+        let expected: Vec<_> = (0..6).map(|colour| Colour(row * 0x100 + colour)).collect();
+        assert_eq!(set.to_vec(), expected, "row {row}");
+    }
 }

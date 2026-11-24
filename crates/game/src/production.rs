@@ -23,6 +23,7 @@ pub mod movement_touchdown;
 pub mod played;
 pub mod room_loading;
 pub mod sender;
+pub mod shaft;
 #[cfg(test)]
 mod tests;
 pub mod weapons;

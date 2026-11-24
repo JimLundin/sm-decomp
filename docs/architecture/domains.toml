@@ -60,7 +60,7 @@ rounds = 10
 
 [[model]]
 name = "boss-ceres-ridley"
-rounds = 1
+rounds = 2
 
 [[model]]
 name = "world-doors"

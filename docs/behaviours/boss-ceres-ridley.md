@@ -1,9 +1,11 @@
-# Ceres Ridley and the escape, part 1, the Ceres doors: behaviour spec
+# Ceres Ridley and the escape, parts 1 and 2, the Ceres doors and the shaft as she arrives: behaviour spec
 
 What the player sees the doors of the Ceres station do: a closed door that slides open as Samus
 comes near and shuts behind her once she has gone, the hiss it makes as it opens, the door in the
 shaft that becomes a wall once Ridley has fled, and the station shaking during the escape, which the
-doors start. Written behaviour first, from the oracle's records over time. Vectors:
+doors start; and, as a new game begins, the elevator's pad lowering her down the shaft and
+letting her go, the shaft's beacon pulsing and its platform turning. Written behaviour first,
+from the oracle's records over time. Vectors:
 [`scenarios/vectors/boss-ceres-ridley.toml`](../../scenarios/vectors/boss-ceres-ridley.toml).
 
 ## Header
@@ -11,10 +13,20 @@ doors start. Written behaviour first, from the oracle's records over time. Vecto
 **Scope: the first of the domain's pieces.** The plan's B8, Ceres Ridley and the escape, is
 specced in pieces, each verifiable on its own. This piece is the Ceres doors: the doors between
 Ceres's rooms (each faces left or right), the shaft's door (a door before the getaway, a wall
-after it), and the shaking the doors start during the escape. Later pieces add the rest of the
-station's own actors: the door of Ridley's room (a later piece); the shaft's
-cover and its rumble before the station blows up; the getaway's two walls; Ceres Ridley himself and
-his getaway; the escape's steam; the falling debris and the dust.
+after it), and the shaking the doors start during the escape. The second piece (§7 to §9) is the
+shaft as she arrives: the elevator's pad that holds her, lowers her and lets her go, the cover
+over the shaft's floor below it, the beacon's colours and the platform's turning look before the
+escape. Later pieces add the rest of the station's own actors: the door of Ridley's room; the
+shaft's rumble before the station blows up and its beacon during the escape; the getaway's two
+walls; Ceres Ridley himself and his getaway; the escape's steam; the falling debris and the dust.
+
+**What the second piece reads and leaves.** It reads her position from samus-movement (§7.3),
+the moment the arrival places the pad, which frames the pad and the cover run and which the
+shaft's overlay runs (the enemy framework, C1; the caller steps each piece on those frames,
+§7.3), the count of finished frames (the coordinator of time, T1), how far a door's fade has
+got (the door passage, world-doors) and the station's stage. It hands samus-movement her height
+while the pad carries her and whether she is held (§7.4); her pose as she arrives, what her frame does while
+she is held, and the arrival itself are not this domain's (§5).
 
 **What it reads from samus-movement:** her position, in whole pixels, as it was at the end of the
 last frame (§1.3). Nothing else of her.
@@ -49,9 +61,9 @@ things it needs belong to every enemy, so they are the framework's, not this spe
 
 **Not in this spec** (§6 names who supplies each): the framework's four parts above; what the
 shake does to the view and how it counts down (R3); the sound queue and what happens to a request
-it can't hold (audio, U1); fading the doors' colours in with the room (the palettes, R4); the
-room's other enemies, and the door of Ridley's room, the shaft's cover and the getaway's walls
-(later pieces).
+it can't hold (audio, U1); fading the doors' colours in with the room (the door passage,
+world-doors); the room's other enemies, and the door of Ridley's room and the getaway's walls
+(later pieces). The shaft's overlay is part 2's (§7).
 
 **Notation.** Positions are whole pixels, x rightward and y downward, each a 16-bit number written
 in hex (`0123`). A door's position is the centre of its box. Frames are frames the door runs
@@ -133,7 +145,7 @@ back: a vector's `before` builds it and its `after` reads it.
 | its figure | a figure (§1), or none, from its phase and facing | output: drawing |
 | a sound | the doors' opening sound, with a queue limit of 6, or none (`Opening`) | output: audio (U1) |
 | a shake | none, or a shake of the whole view, both backgrounds and the enemies, moving diagonally: 1 px for 2 frames, or 3 px for 4 frames (`EscapeShakes`) | output: the screen's shaking (R3) |
-| the doors' colours | when the room places a door: which of the doors' two colour sets, `Calm` or `Escape`, the palette they are drawn with takes (`TheDoorsColours`); the 15 colours of each set are the doors' content | output: the palettes (R4) |
+| the doors' colours | when the room places a door: which of the doors' two colour sets, `Calm` or `Escape`, the palette they are drawn with takes (`TheDoorsColours`); the 15 colours of each set are the doors' content | output: the passage's fade brings the screen to them (world-doors) |
 
 ---
 
@@ -318,6 +330,11 @@ back: a vector's `before` builds it and its `after` reads it.
 - The doors run in the room's order of its enemies, and a shake one starts is in the frames left
   the next one reads (`EscapeShakes`).
 - The opening sound is asked for in the run that takes `Opening(1)`'s figure.
+- Part 2: the pad and the cover run after her own frame (§7.3). So on the pad's last run she is
+  let go after her frame, and her own motion first runs the next frame; the view and the HUD
+  that frame see the height the pad left her at.
+- Part 2: the pad runs before the cover, so on the frame the pad sets her on the floor the cover
+  sees her there and is gone the same frame (`CoverHides`).
 
 ## 5. Out of scope, and who supplies it
 
@@ -327,11 +344,34 @@ back: a vector's `before` builds it and its `after` reads it.
 - **The screen's shaking (R3):** moving the view and the enemies with each shake, and counting its
   frames down.
 - **Audio (U1):** the sound queue and its limit.
-- **The palettes (R4):** fading the doors' colours in with the room.
+- **The door passage (world-doors):** fading the doors' colours in with the room; its fade's
+  steps, which the beacon reads (§7.3); which of a passage's frames run the enemies, and so the
+  shaft's overlay (`WhatRuns`).
 - **The random numbers:** the number and when it steps.
 - **Progress and the escape (P1, B8's later pieces):** the station's stage.
-- **Later pieces of B8:** the door of Ridley's room; the shaft's
-  cover and its rumble; the getaway's walls.
+- **Later pieces of B8:** the door of Ridley's room; the shaft's rumble and its beacon during
+  the escape; the getaway's walls.
+- **The arrival (the new game, P2, and Samus's arrival, F4):** starting the game in the shaft,
+  setting her where she stands and her pose facing the screen, the room's music; the moment it
+  places the pad (§7.3). Before that the room is loaded (R2); after it the screen's brightness
+  comes up, a step every two frames, with no colour changed: that is not a door's fade, and the
+  beacon steps through it (§7.3).
+- **Her frame while she is held (samus-movement, samus-appearance):** while the pad holds her
+  (§7.4), nothing of her moves or changes but what the pad does to her height; the mini-map
+  still follows her (the HUD, H2).
+- **Drawing the pad and the cover (C1, AF3):** their figures at their positions, relative to the
+  camera; which sprites each figure is (content).
+- **The shaft's overlay itself (C1, AF3):** placing it with the shaft's other enemies, from the
+  shaft's content (no other room has it); running it (§7); drawing its one figure, which never
+  changes, every frame at its place; it has no contact: nothing she does touches it. Which
+  sprites its figure is, and bringing them in with the shaft, are content.
+- **The beacon's colours and the platform's two looks (content):** the eight sets of six colours
+  and the two pictures are the shaft's content; this domain names which one shows. Showing a
+  colour set on the screen is the renderer's; putting the platform's look on the screen is
+  the line and plane effects' (E4).
+- **The count of finished frames (the coordinator of time, T1):** counting the frames the game
+  finishes, and which frames finish (lag). It is not the HUD's frame count (interface-hud), which
+  counts mod 256 and starts again at each door (world-doors' `FinishedFrames`).
 
 ## 6. Open questions
 
@@ -340,3 +380,200 @@ back: a vector's `before` builds it and its `after` reads it.
    other beam families remain outside that first piece.
 2. `Getaway` with a door of this piece placed: no row places one in that stage (the getaway happens
    in Ridley's room, whose door is a later piece). The arms that read it follow the original.
+3. Part 2: the pad's placing is recorded once (the arrival); her height there is 0. Heights below
+   the floor at placing, and a pad placed in a room other than the shaft, are no row's: the arms
+   that read them follow the original's arithmetic.
+4. Part 2: the shaft's rumble, a later piece, owns the beacon and the platform in the escape;
+   this piece shows no step and no look in the escape (`BeaconCycles`, `PlatformTurns`) and
+   states them for the stages `Calm` and `Getaway` only. Answered for that piece from the records:
+   when the shaft starts in the escape (she comes back to it), the overlay's first run steps the
+   beacon and the platform once, by the counts of `BeaconCycles` and `PlatformTurns`, and from its next run
+   the rumble takes over from them.
+
+---
+
+## 7. Part 2, the shaft as she arrives: what the player can tell
+
+A new game starts with her at the top of the shaft, on the elevator's pad, facing the screen.
+For a second nothing moves but the shaft's lights. Then the pad lowers her one pixel a frame
+to the shaft's floor, 72 px down, and lets her go: from the next frame she plays. Below the pad,
+a cover hides the shaft's floor until she stands on it. Before the escape the beacon's lights
+pulse through a cycle of colours and the platform below turns.
+
+**Notation.** Part 2 writes its positions, heights and counts in decimal; y is downward, so
+the floor at 72 px is below her start at 0.
+
+**Running.** Part 2 is two pieces, and the caller steps each on its own schedule (§7.3).
+- **The pad and the cover** (§8) hold state. They run once on each frame of play, and on each
+  frame of the room's fade-in, the pad first; running them is the enemy framework's projectile
+  runner (C1, AF3), as running the doors is its enemy runner (Header). The caller steps them on
+  the frame the arrival places them and on each frame they run. On a frame they don't run it
+  doesn't step them, and nothing of them changes. The fade-in starts on the frame after the
+  arrival and runs them on each of its frames, so their first run is always the next frame's.
+- **The beacon and the platform** (§9) remember nothing. They are the shaft's overlay's: one of
+  the shaft's enemies, neither a door nor a wall, which the shaft's content alone places. The
+  framework runs it on each frame the enemies run (Header, Running); during a door's passage
+  those are only the passage's frames of work that run the enemies (world-doors, `WhatRuns`),
+  every third frame in the recorded passages. The caller steps them on each frame the overlay
+  runs. On a frame it doesn't run, and in every other room, the caller doesn't step them: no
+  beacon step and no platform look, and the screen keeps what it shows.
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| the pad | present or gone | whether she is held and the pad is drawn | every entry of §8 |
+| the pad's wait | frames, 0 to the wait `w` (`PadWaits`): the runs before it starts lowering her; 0 once it has | when she starts down | `PadWaits` |
+| the pad's position | x, y: px, 16-bit | where the pad is drawn | output (drawing) |
+| the pad's look | `PadLook`: `First` or `Second`, or none before its first run | which of its two figures is drawn | `PadFlickers`; output (drawing) |
+| the cover | present or gone | whether the cover is drawn | `CoverHides` |
+| the cover's position | x, y: px, 16-bit | where the cover is drawn | output (drawing) |
+| the beacon's step | 0 to 7: the place in its cycle of eight colour sets, or none | the beacon's colours | output (the screen's colours) |
+| the platform's look | `PlatformLook`: `First` or `Second`, or none (`PlatformTurns`) | which of its two pictures shows | output (the planes, E4) |
+
+### 7.2 What it remembers: state a caller can hold
+
+The pad (present or gone, its wait, its position and its look) and the cover (present or gone,
+its position): nothing else. A caller can build either in any state this spec allows and read it
+back; a vector's `before` builds them and its `after` reads them. Whether she is held follows
+from the pad. The beacon's step and the platform's look have no memory: each follows from the
+count of finished frames on the frame it is shown.
+
+### 7.3 What it reads (Inputs)
+
+**The pad and the cover.** The caller steps them on the frame the arrival places them and on each
+frame they run (§7, Running); a step reads one of these two.
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| the arrival places the pad | an event, with her position then: x, y, px, 16-bit (the arrival, §5) | `PadPlaced` |
+| her height | y: px, 16-bit: on a frame they run, her position's y after her own frame (samus-movement) | `PadCarries`, `CoverHides` |
+
+**The beacon and the platform.** The caller steps them on each frame the shaft's overlay runs (§7,
+Running); a step reads all three.
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| the count of finished frames | frames, 16-bit, wrapping: the frames the game has finished (a lag frame isn't one) as the last frame left it; it never starts again, at a door or anywhere, unlike the HUD's frame count (T1, §5) | `BeaconCycles`, `PlatformTurns` |
+| the fade's steps taken | steps, 0 to 14: how many steps of a door's fade (world-doors' `Fading`, `t` 0 to `d + 2`) the passage has taken when the overlay runs. 0 outside a door's fade, including the screen's brightness coming up at the arrival (§5), and on a passage's frames before its fade; in `Darkening(t)` the passage takes its step before the enemies run, so `t + 1`; in `Brightening(t)` after them, so `t`, 0 on the fade in's first frame of work | `BeaconCycles` |
+| the station's stage | `Stage` (§1.3) | `BeaconCycles`, `PlatformTurns` |
+
+### 7.4 What it reports (Outputs)
+
+A step of the pad and the cover reports the first three; a step of the beacon and the platform,
+the last two.
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| she is held | `bool`: the pad is present | samus-movement and samus-appearance (§5); output |
+| her height | y: px, 16-bit, as the pad leaves it | samus-movement, as her position; the view and the HUD that frame |
+| the pad's and the cover's figures and positions | the pad's look, or the cover, at its position; none while gone, and the cover none on the frame it is placed, until its first run (`PadPlaced`) | output: drawing (C1) |
+| the beacon's step | 0 to 7, or none (`BeaconCycles`) | output: the screen's colours take the step's colour set (the renderer); none leaves them as they are |
+| the platform's look | `PlatformLook`, or none (`PlatformTurns`) | output: the planes (E4); none leaves the picture as it is |
+
+## 8. The pad and the cover
+
+### PadPlaced
+- kind: mechanic.
+- summary: the arrival puts the pad under her and the cover below it, and from then on she is
+  held.
+- params: the wait `w` (`PadWaits`); the pad 28 px below her; the cover 97 px down the room.
+- switch: Fixed.
+- The arrival places the pad, with her at `(x, y)` → the pad present, its wait `w`, its position
+  `(x, (y + 28) mod 2^16)`, no look; the cover present at `(x, 97)`, with no figure until its
+  first run; she is held [E-placed, E-placed-low, E-placed-adjusted, E-placed-drawn]
+- So neither runs on the frame it is placed, and that frame draws neither. Their first run is the
+  next frame's (§7, Running): it draws the pad's first look and the cover at its position
+  (E-first-run, E-first-drawn).
+- checked: oracle (the arrival, recorded case A1); constructed.
+
+### PadWaits
+- kind: parameter.
+- summary: the pad holds her still for a second before it starts to lower her.
+- params: the wait, `w` = 60 frames; a rule from 0 to 32,768 frames.
+- switch: **Parameter**, the wait (params).
+- A run with the pad's wait over 1 → the wait drops by one; her height and the pad's position
+  stay as they are [E-first-run, E-first-drawn, E-wait-counts, E-wait-two]
+- A run with the pad's wait 1 or 0 → the wait is 0, and the pad lowers her in this run
+  (`PadCarries`) [E-wait-last, E-carry]
+- So her first pixel down is on the pad's `w`-th run, `w` frames after its placing
+  (E-placed-adjusted, E-wait-last).
+- checked: oracle (recorded cases A2 to A5); constructed (the adjusted wait).
+
+### PadCarries
+- kind: mechanic and parameter.
+- summary: each run once its wait is over, the pad lowers her one pixel and is drawn 28 px below
+  where she stood, until she stands on the shaft's floor; then it lets her go.
+- params: the floor, `f` = 72 px.
+- switch: **Parameter**, the floor (params).
+- A run that lowers her, with her height `y` and `(y − f) mod 2^16` 32,768 or more → the pad's
+  position becomes `(x, (y + 28) mod 2^16)`, her height `y + 1` [E-wait-last, E-carry,
+  E-carry-to-floor, E-wrap-above, E-floor-adjusted-above]
+- A run that lowers her, with `(y − f) mod 2^16` under 32,768 → her height becomes `f`, the pad is
+  gone and she is no longer held [E-floor, E-below-floor, E-wrap-below, E-floor-adjusted]
+- So she reaches the floor on one run and is let go on the next: from 71 px a run sets her at
+  72, and the run after leaves her there and ends the pad (E-carry-to-floor, E-floor).
+- So a `y` past the floor's (lower on the screen) by less than 32,768 puts her on the floor at
+  once, and one past it by 32,768 or more counts as above it and is lowered as any other
+  (E-below-floor, E-wrap-below, E-wrap-above).
+- The pad's x never changes.
+- checked: oracle (recorded cases A5 to A8, every run of the pad in the cached rows);
+  constructed (the wrap, the heights past the floor, the adjusted floor).
+
+### PadFlickers
+- kind: mechanic.
+- summary: the pad's two figures take turns, one each run.
+- params: none.
+- switch: Fixed.
+- A run that leaves the pad present, its look `First` → its look `Second` [E-wait-counts,
+  E-wait-last, E-floor-adjusted-above]
+- A run that leaves the pad present, its look `Second` or none → its look `First`
+  [E-first-run, E-first-drawn, E-wait-two, E-carry, E-carry-to-floor, E-wrap-above]
+- checked: oracle (every run of the pad in the cached rows).
+
+### CoverHides
+- kind: mechanic.
+- summary: the cover hides the shaft's floor below the pad until she stands on the floor.
+- params: the floor `f` (`PadCarries`).
+- switch: Fixed.
+- A run of the cover with her height `f` → the cover is gone [E-carry-to-floor, E-cover-alone,
+  E-cover-adjusted, E-below-floor, E-floor-adjusted-above]
+- A run of the cover with any other height → the cover stays where it is [E-carry,
+  E-wait-last, E-cover-stays]
+- So the cover goes on the frame she reaches the floor, one frame before the pad (§4).
+- checked: oracle (every run of the cover in the cached rows); constructed.
+
+## 9. The beacon and the platform
+
+### BeaconCycles
+- kind: mechanic and parameter.
+- summary: before the escape, the shaft's beacon steps through its cycle of eight colour sets,
+  one step every few frames, except once a door's fade has taken a step.
+- params: the rhythm, `r` = 8 frames a step; a rule from 1 to 65,535 frames.
+- switch: **Parameter**, the rhythm (params).
+- A step with the stage `Escape` → no step: a later piece of the station owns the shaft in the
+  escape (open question 4) [B-escape]
+- A step with the stage `Calm` or `Getaway`, the fade's steps taken 0 → the beacon shows
+  step `(count / r) mod 8` of its cycle, with `count` the count of finished frames and `/`
+  dropping the remainder [B-step, B-step-next, B-step-wrap, B-getaway, B-rhythm-adjusted,
+  B-arrival, B-count-not-hud]
+- The same with the fade's steps taken 1 or more → no step: the beacon's colours are left as
+  the fade makes them [B-fade, B-fade-last]
+- So the beacon moves on every `r` frames; where its content repeats a colour set, the screen
+  shows no change at that step.
+- checked: oracle (every frame of the shaft before the escape in the cached rows); constructed
+  (the wrap, the fade, the adjusted rhythm, the escape).
+
+### PlatformTurns
+- kind: mechanic.
+- summary: before the escape, the platform below the shaft shows its two looks in turn, two
+  frames each.
+- params: none.
+- switch: Fixed.
+- A step with the stage `Escape` → no look: a later piece of the station owns the shaft in the
+  escape (open question 4) [B-escape]
+- A step with the stage `Calm` or `Getaway`, `(count / 2) mod 2` 0 → the platform's look
+  `First` [P-first, B-fade]
+- The same with `(count / 2) mod 2` 1 → the platform's look `Second` [P-second, B-getaway,
+  B-fade-last]
+- So the platform turns while a door's fade is under way too (B-fade, B-fade-last).
+- checked: oracle (every frame of the shaft before the escape in the cached rows); constructed
+  (the escape).

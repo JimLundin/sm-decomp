@@ -462,18 +462,22 @@ file = "crates/game/src/production/played.rs"
 before = '''
         let ceres = run_doors(
             &self.ceres_doors,
+            self.shaft_overlay,
             &self.movement.0,
             passing.ceres,
             &rules.ceres,
         )?;
-        let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
-        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
-'''
+        let mut palette'''
 after = '''
-        let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
-        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
-        let ceres = run_doors(&self.ceres_doors, &samus, passing.ceres, &rules.ceres)?;
-'''
+        let moved = self.her_frame(inputs, content, rules)?.samus;
+        let ceres = run_doors(
+            &self.ceres_doors,
+            self.shaft_overlay,
+            &moved,
+            passing.ceres,
+            &rules.ceres,
+        )?;
+        let mut palette'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "ceres.0.phase"
@@ -497,3 +501,43 @@ after = "drop(room);"
 case = "played chain-any-0003-DFD7 0 786"
 cut = 348
 field = "movement.position"
+
+[[fault]]
+name = "played-pad-carry-dropped"
+responsibility = "played"
+file = "crates/game/src/production/shaft.rs"
+before = "samus.position.y = types::fixed(step.her_y, samus.position.y.sub());"
+after = "drop(step.her_y);"
+case = "played chain-any-0001-DF45 0 41"
+cut = 29
+field = "movement.position"
+
+[[fault]]
+name = "played-beacon-reads-the-count-after-the-frame"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "shaft::lights(self.finished_frames, self.doors, stage, &rules.ceres)"
+after = "shaft::lights(self.finished_frames.wrapping_add(1), self.doors, stage, &rules.ceres)"
+case = "played chain-any-0001-DF45 0 41"
+cut = 7
+field = "doors.colours.screen"
+
+[[fault]]
+name = "played-beacon-ignores-the-fade"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "shaft::lights(self.finished_frames, self.doors, stage, &rules.ceres)"
+after = "shaft::lights(self.finished_frames, Doors::Play, stage, &rules.ceres)"
+case = "played chain-any-0001-DF45 0 300"
+cut = 257
+field = "doors.colours.screen"
+
+[[fault]]
+name = "played-finished-frames-count-overruns"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "Finishing::Overrun => count,"
+after = "Finishing::Overrun => count.wrapping_add(1),"
+case = "played chain-any-0001-DF45 0 300"
+cut = 253
+field = "finished-frames"

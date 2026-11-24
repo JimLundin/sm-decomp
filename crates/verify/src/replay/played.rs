@@ -17,7 +17,7 @@ use super::index::ObservationId;
 use super::readers::record;
 use super::result::Outcome;
 use super::{
-    Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement,
+    Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement, shaft,
 };
 use crate::cache::Cache;
 use crate::lock::{Lock, Row, RowId, Start};
@@ -113,7 +113,7 @@ impl Controller {
     }
 }
 
-/// The frame counter's parity: the game counts each NMI that reads the pad.
+/// Her parity: that of the count of finished frames as the frame begins.
 const fn parity(counter: u16) -> Parity {
     if counter & 1 == 0 {
         Parity::Even
@@ -161,7 +161,6 @@ struct Room {
     sounds_sent: bool,
     progress: run_progress::Progress,
     ceres: boss_ceres_ridley::Stage,
-    counter: u16,
     /// The HUD's neighbours outside the loop.
     hud: HudHeld,
     /// Where her room sits on her map, and the area it is in.
@@ -183,9 +182,6 @@ fn room(
     content: &connected::Content,
     world: &world::World,
 ) -> Result<(Room, played::Room), Outcome> {
-    if let Some(refused) = locked(seed)? {
-        return Err(refused);
-    }
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator || hud::time_stopped(seed)? {
         return Err(Outcome::Unsupported {
@@ -222,29 +218,8 @@ fn room(
                 });
             }
         },
-        counter: word(seed, source::NMI_FRAME_COUNTER_WORD)?,
     };
     Ok((held, played))
-}
-
-/// Samus's new-state handler, a bank $90 routine pointer: `$E8DC` while the game holds her
-/// locked, as the station's elevator pad lowers her into room 1 on arrival.
-const SAMUS_NEW_STATE_HANDLER: source::WramWord = source::WramWord {
-    name: "SAMUS_NEW_STATE_HANDLER",
-    offset: 0x0A44,
-};
-const LOCKED_HANDLER: u16 = 0xe8dc;
-
-/// While she is locked, her moves, her clip and her pose input don't run; the lock and the
-/// pad that carries her belong to the pad and arrival owners, which aren't in the loop.
-fn locked(wram: &[u8]) -> Result<Option<Outcome>, Outcome> {
-    Ok(
-        (word(wram, SAMUS_NEW_STATE_HANDLER)? == LOCKED_HANDLER).then(|| Outcome::Unsupported {
-            cut: None,
-            dependency: "her frame locked at the arrival (the pad and arrival owners, B8/F4)"
-                .into(),
-        }),
-    )
 }
 
 type Doorways = (
@@ -324,9 +299,14 @@ fn expected(
                 .collect::<Result<_, _>>()?,
         ));
     }
+    fields.extend(shaft::observations(&shaft::pad_and_cover(wram)?));
     fields.extend(health_parts(&health_tail::decode(wram, None)?));
     fields.extend(hud_parts(hud::expected(wram, hud)?));
     fields.push(frame_count_observation(hud::frame_count(wram)?));
+    fields.push(finished_frames_observation(word(
+        wram,
+        source::NMI_FRAME_COUNTER_WORD,
+    )?));
     Ok(fields)
 }
 
@@ -436,6 +416,11 @@ const GOAL_COLOURS: usize = 0xc200;
 /// The game's count of finished frames, which the HUD reads as the next frame begins.
 fn frame_count_observation(frame: interface_hud::FrameCount) -> Observation {
     Observation::quantity("frame-count", i64::from(frame.0))
+}
+
+/// The count of finished frames in sixteen bits, which nothing restarts.
+fn finished_frames_observation(count: u16) -> Observation {
+    Observation::quantity("finished-frames", i64::from(count))
 }
 
 fn passing_observation(passing: bool) -> Observation {
@@ -678,6 +663,9 @@ impl<'a> Run<'a> {
                 room: seeded,
                 ceres_doors,
                 frame: hud::frame_count(&seed.wram)?,
+                finished_frames: word(&seed.wram, source::NMI_FRAME_COUNTER_WORD)?,
+                pad_and_cover: shaft::pad_and_cover(&seed.wram)?,
+                shaft_overlay: ceres::shaft_overlay(&seed.wram)?,
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
@@ -726,7 +714,7 @@ impl<'a> Run<'a> {
         let mut inputs = self.room.inputs.clone();
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
-        inputs.parity = parity(self.room.counter);
+        inputs.parity = parity(self.state.finished_frames);
         let passing = played::Passing {
             work_done: finished(current) || fetching_contents(self.state.doors),
             audio: played::PassageAudio {
@@ -755,9 +743,6 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        if polled(current) {
-            self.room.counter = self.room.counter.wrapping_add(1);
-        }
         let expected = expected(current, &self.content.appearance, &self.hud, self.row, cut)?;
         let actual = actual(
             &self.state,
@@ -862,9 +847,11 @@ fn actual(
             state.ceres_doors.iter().map(ceres::initial).collect(),
         ));
     }
+    fields.extend(shaft::observations(&state.pad_and_cover));
     fields.extend(health_parts(&state.health.0));
     fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));
     fields.push(frame_count_observation(state.frame));
+    fields.push(finished_frames_observation(state.finished_frames));
     Ok(fields)
 }
 
@@ -989,6 +976,21 @@ mod tests {
             let report = super::play(&sources, row, 0, 3000).unwrap();
             diagnostic(format_args!(
                 "PLAYED_ALONE row={} start={} held={} stop={:?}",
+                report.row, report.start, report.held, report.stop
+            ));
+        }
+    }
+
+    /// Ceres's first room from her arrival: alone to its last cut, then on through the rooms
+    /// she enters.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn ceres_room_one_played_alone_and_on() {
+        let sources = sources();
+        for end in [411, 3000] {
+            let report = super::play(&sources, "chain-any-0001-DF45", 0, end).unwrap();
+            diagnostic(format_args!(
+                "PLAYED_ALONE row={} start={} end={end} held={} stop={:?}",
                 report.row, report.start, report.held, report.stop
             ));
         }

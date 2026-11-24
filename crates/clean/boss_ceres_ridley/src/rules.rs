@@ -1,5 +1,11 @@
-//! The doors' tuning values: every number a Parameter entry of the spec lists.
+//! The station's tuning values, the doors' and the shaft's: every number a Parameter entry of
+//! the spec lists.
 
+use core::num::{NonZeroU16, Wrapping};
+
+use types::Px;
+
+use crate::pad_wait::PadWait;
 use crate::phase::Wait;
 use crate::station::Shake;
 
@@ -25,9 +31,19 @@ const STRONG: Shake = Shake {
     strength: 3,
     length: 4,
 };
+/// `PadWaits`: the pad's wait, in frames.
+const PAD_WAIT_FRAMES: u16 = 60;
+/// `PadWaits`: the pad's wait, 60 frames.
+const PAD_WAIT: PadWait = PadWait::new(PAD_WAIT_FRAMES).expect("the wait is 60, within 32,768");
+/// `PadCarries`: the shaft's floor, 72 px down the room.
+const FLOOR: Px = Wrapping(72);
+/// `BeaconCycles`: the rhythm, in frames a step.
+const RHYTHM_FRAMES: u16 = 8;
+/// `BeaconCycles`: the rhythm, 8 frames a step.
+const RHYTHM: NonZeroU16 = NonZeroU16::new(RHYTHM_FRAMES).expect("the rhythm is 8 frames, not 0");
 
-/// The doors' tuning values. Its default holds the spec's values; another value is an adjusted
-/// game.
+/// The station's tuning values. Its default holds the spec's values; another value is an
+/// adjusted game.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Rules {
     /// `SheIsNear`: a door sees her when she was under this many pixels from it on both axes.
@@ -44,11 +60,20 @@ pub struct Rules {
     pub small: Shake,
     /// `EscapeShakes`: the strong shake.
     pub strong: Shake,
+    /// `PadWaits`: the wait, the runs the pad holds her still before it starts to lower her; a
+    /// rule from 0 to 32,768 frames.
+    pub pad_wait: PadWait,
+    /// `PadCarries`, `CoverHides`: the shaft's floor, the height the pad sets her down at.
+    pub floor: Px,
+    /// `BeaconCycles`: the rhythm, the frames the beacon shows each step of its cycle; a rule
+    /// from 1 to 65,535 frames.
+    pub rhythm: NonZeroU16,
 }
 
 impl Default for Rules {
     /// The spec's values: reach 48 px, poll 2 frames, hold 5 frames, a strong shake below 128 in
-    /// 4,096, the small shake 1 px for 2 frames and the strong 3 px for 4.
+    /// 4,096, the small shake 1 px for 2 frames and the strong 3 px for 4; the pad's wait 60
+    /// frames, the floor 72 px and the beacon's rhythm 8 frames a step.
     fn default() -> Self {
         Self {
             reach: REACH,
@@ -57,6 +82,9 @@ impl Default for Rules {
             strong_below: STRONG_BELOW,
             small: SMALL,
             strong: STRONG,
+            pad_wait: PAD_WAIT,
+            floor: FLOOR,
+            rhythm: RHYTHM,
         }
     }
 }

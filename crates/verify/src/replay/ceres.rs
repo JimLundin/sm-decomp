@@ -49,15 +49,33 @@ const SPECIES: u16 = 0xE23F;
 /// The enemy slots.
 const SLOTS: u16 = 32;
 
-/// The slots that hold a Ceres door, in the room's order of its enemies.
+/// The first parameter that makes an actor of the doors' species the shaft's overlay.
+const SHAFT_OVERLAY: u16 = 2;
+
+/// The slots that hold a Ceres door, in the room's order of its enemies: the actors of the
+/// doors' species but the shaft's overlay.
 pub(super) fn doors(wram: &[u8]) -> Result<Vec<Slot>, Outcome> {
     let mut doors = Vec::new();
     for slot in (0..SLOTS).map(Slot) {
-        if word(wram, slot, source::ENEMY_SPECIES)? == SPECIES {
+        if word(wram, slot, source::ENEMY_SPECIES)? == SPECIES
+            && word(wram, slot, source::ENEMY_PARAMETER_1)? != SHAFT_OVERLAY
+        {
             doors.push(slot);
         }
     }
     Ok(doors)
+}
+
+/// Whether a slot holds the shaft's overlay, which shows the shaft's lights.
+pub(super) fn shaft_overlay(wram: &[u8]) -> Result<bool, Outcome> {
+    for slot in (0..SLOTS).map(Slot) {
+        if word(wram, slot, source::ENEMY_SPECIES)? == SPECIES
+            && word(wram, slot, source::ENEMY_PARAMETER_1)? == SHAFT_OVERLAY
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn identity(wram: &[u8], slot: Slot) -> Result<(DoorKind, Side), Outcome> {

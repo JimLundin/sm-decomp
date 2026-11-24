@@ -56,8 +56,11 @@ stage, and refuses a version placing any other actor, whose box no owner here pl
 room's setup and the door's own code are not run: the world names each by what it does
 (`RoomSetup`, `DoorRule`), and fetching the contents refuses each that no owner models as a
 named Unsupported (`LoadFault::RoomSetup`, `LoadFault::DoorRule`). It lets through only what
-changes nothing play reads: no code, and the station's haze (`RoomSetup::CeresHaze`), the setup
-of the rooms on 0003's path to 0005, which only blends a backdrop colour over the screen. Fetching
+changes nothing play reads: no code; the station's haze (`RoomSetup::CeresHaze`), the setup
+of the rooms on 0001's and 0003's paths, which only blends a backdrop colour over the screen;
+and the way out of the station's elevator room (`DoorRule::FromCeresElevatorShaft`), which
+only turns the screen out of its rotating view: it sets the mode 7 flag and the PPU's fake mode,
+which no loop owner produces and the run does not compare. The way into it is still refused. Fetching
 the contents also shows her shots' palette for the beams she has switched on at once. Each later
 cut's only new input is the movie's pad from the preceding vblank. The controller starts as the
 seed leaves it, with the game's last read and the buttons that went down at it, so a button
@@ -89,6 +92,30 @@ shakes read the random numbers and the screen's shaking, which are not in the lo
 request for its opening sound is produced but not compared: it belongs to the audio boundary
 (MODEL decision 37), whose owner is not in the loop yet.
 
+The Ceres shaft as she arrives (boss-ceres-ridley part 2) plays in room 1. The elevator's pad
+and the cover below it (`PadAndCover`) are decoded once from the seed record, from their enemy
+projectile slots, and carried. A seed whose lock on her disagrees with the pad's presence is
+refused. They run once each frame of play, and on each frame of work a passage runs the
+projectiles, after her own frame. While the pad holds her, her moves and her animation don't
+run, and its run sets her height; the camera then reads her where the pad leaves her, with
+nothing placing her, and the HUD's mini-map where her own frame left her. She is let go after
+her frame on the pad's last run. The run compares the pad (its wait, position and look) and the
+cover's position at every cut (`shaft.pad`, `shaft.cover`); their figures are drawing and are
+not compared. The shaft's overlay is the actor of the doors' species the seed record or the
+next room's contents place with first parameter 2. On each frame the room's enemies run, it
+steps the lights (`Lights::step`) with the count of finished frames, the doors' fade's steps
+taken and the station's stage; the beacon's step sets the six screen colours its imported
+colour set names, compared as `doors.colours.screen`. The platform's look is the planes', which
+the loop doesn't draw: it is produced and not compared. As the colours come up the lights run before
+the fade's step, and read its steps taken without it; no record yet shows that order or that
+case in a played run, since room 1 is not entered by a door before the escape, so unit tests
+alone check them. In the escape a later piece owns the
+overlay, so a room holding it refuses the frame (`Fault::Escape`). The count of finished frames
+in sixteen bits, which nothing restarts, is the played owner's: carried from the seed's value,
+it counts each frame the doors report finished or restarting, so the borrowed lag decides it.
+It is compared as `finished-frames` at every cut, and her parity is its parity as the frame
+begins.
+
 Lag is borrowed until the platform's costs are modelled (MODEL decision 35); `BORROWED` names
 it. The runner reads one fact per cut from the record: whether the NMI found the frame's work
 finished. A lag NMI finds it part-done, so the game commits no new picture (the screen keeps the
@@ -98,14 +125,8 @@ fetch is the exception, borrowed as done on its first frame. Its work waits on i
 so every NMI through it is a lag NMI, and none says when its colours were set. The record shows
 them set within the slide and the visor lit as the slide ends, and only a fetch done before
 the slide's end does that. Its first frame is the earliest such frame. The colours are
-compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. The
-game's frame counter, and so her parity, counts each NMI that reads the pad. A lag cut in play
-is still a named stop: the M0 row has none, so no record yet shows how it plays. So is a seed
-in the lock in which the game holds her while room 1's elevator pad lowers her on arrival: her
-moves, her clip and her pose input don't run, and the lock and the pad's carry belong to the pad
-and arrival owners (domains B8 and F4), which aren't in the loop. `chain-any-0001-DF45` is
-refused at its seed for it. Only the seed is read for the lock: a later cut entering it shows
-as the difference it makes.
+compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. A
+lag cut in play is still a named stop: the M0 row has none, so no record yet shows how it plays.
 
 ```sh
 $TOOLS replay played chain-any-0003-DFD7 0 344 \
@@ -117,17 +138,19 @@ dependency name only. An end past the row's last cut plays on through the rows t
 the same capture's next seeds, without a new seed: each row's cut 0 is the video frame after
 the last cut of the row before, and the run's cuts count on through it. The seed room's
 geometry, door cells and camera room are held from the seed; each room a passage brings her
-into is built from the imported world, with its map room and its Ceres doors. Played back to
-back, the Ceres rows from `chain-any-0001-DF45` stop at its cut 0 (her arrival's lock), from
-`chain-any-0002-DF8D` hold 25 cuts (cut 26, `movement.position`), from `chain-any-0003-DFD7`
+into is built from the imported world, with its map room and its Ceres doors. Played alone,
+`chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
+lets her go at cut 101, and she leaves by room 1's door. Played back to back, the Ceres rows
+from `chain-any-0001-DF45` hold 437 cuts, to cut 26 of `chain-any-0002-DF8D` (run cut 438,
+`movement.position`), from `chain-any-0002-DF8D` hold 25 cuts (cut 26, `movement.position`), from `chain-any-0003-DFD7`
 hold 786 cuts, through `chain-any-0004-E021` and on to cut 178 of `chain-any-0005-E06B`, and
 from `chain-any-0004-E021` hold 441 cuts to the same stop. That stop is the passage to Ridley's
 room fetching its contents, which place a Ceres actor of a later piece (`LaterCeresActor`).
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Nineteen planted faults in the fault matrix, those of the responsibility `played`, stop that
-run at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
+Twenty-three planted faults in the fault matrix, those of the responsibility `played`, stop
+that run, or the run of `chain-any-0001-DF45` from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
 cut 17 in `movement.jump-held`, played from the M0 row's cut 16. A frame on which the doors
@@ -135,7 +158,13 @@ restart the frame count counted on instead differs at cut 238 in `frame-count`. 
 geometry, doors and camera room kept after a passage builds the next differ, played back to back
 from the M0 row's seed, at cut 348 (the next row's cut 3) in `movement.position`. Of the Ceres doors' faults,
 their State held rather than carried differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
-than before differs at cut 7 in `ceres.0.phase`.
+than before differs at cut 7 in `ceres.0.phase`. In room 1, the pad's carry dropped from her
+height differs at cut 29 in `movement.position`; the beacon reading the count as the frame
+leaves it differs at cut 7, and reading no fade's steps at cut 257, in `doors.colours.screen`;
+and a frame whose work overran counted as finished differs at cut 253 in `finished-frames`. The
+beacon reading the HUD's count instead holds all 411 cuts: it reads bits 3 to 5 of the count,
+which the two counts share until a passage restarts the HUD's, and no frame of the overlay
+follows a restart before the escape.
 
 The M0 row never shows a door blocking her: a fault that drops the doors' boxes from what her
 motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play. Only the unit
@@ -152,7 +181,7 @@ access, the Contact latches at post-RTI clocks and Random's ordered device trans
 indexed case compares them, and production has no frame caller that schedules them.
 
 The played-alone run carries Movement, Appearance, Camera, Doors, the colours, Health and the
-HUD from the M0 seed. The Random and Haze fields at those frames are covered only by their
+HUD from the M0 seed, and in room 1 the shaft's pad, cover and lights. The Random and Haze fields at those frames are covered only by their
 models' vectors until their owners join the loop. Weapons, Contact,
 the sound queue and the Ceres door actor at the opening shot wait for the loop in the same way.
 The [transition](../scenarios/replay/transition.toml) records each retired frame case, the

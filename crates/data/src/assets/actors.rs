@@ -1,7 +1,7 @@
 //! The colours of the sprites other than hers (docs/architecture/assets.md §3.4).
 //!
-//! Each species' palette, the palettes every room's sprites share, and the Ceres doors' two
-//! colour sets; with the species registry.
+//! Each species' palette, the palettes every room's sprites share, the Ceres doors' two
+//! colour sets and the Ceres shaft beacon's; with the species registry.
 //!
 //! The ids are ours: `import::actors` maps the original's species places to them, and the
 //! registry holds no ROM bytes. They are dense (D15): a species' id is its place in
@@ -113,6 +113,26 @@ pub struct CeresDoorColours {
     pub escape: DoorShades,
 }
 
+/// A set of the beacon's colours, in the order the screen holds them.
+pub type BeaconShades = [Colour; BeaconColours::SHADES];
+
+/// The Ceres shaft's beacon: the colour set of each step of its cycle, and where on the screen
+/// they go. The shaft's overlay, an actor of the doors' species, steps it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BeaconColours {
+    /// Each step's colour set, by its place in the cycle.
+    pub sets: [BeaconShades; Self::STEPS],
+}
+
+impl BeaconColours {
+    /// The steps of the beacon's cycle.
+    pub const STEPS: usize = 8;
+    /// The colours a set holds.
+    pub const SHADES: usize = 6;
+    /// The screen colour a set's first colour goes to: background row 2's colour 9.
+    pub const FIRST: usize = 41;
+}
+
 /// The colours of the sprites other than hers.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Actors {
@@ -124,6 +144,8 @@ pub struct Actors {
     pub flash: Palette,
     /// The Ceres doors' colour sets.
     pub ceres_doors: CeresDoorColours,
+    /// The colour sets the Ceres shaft's beacon steps through.
+    pub beacon: BeaconColours,
 }
 
 impl Actors {

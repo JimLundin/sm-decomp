@@ -175,10 +175,12 @@ pub enum CeresDoorKind {
     /// A door between two rooms, opening the way it faces.
     Door(Side),
     /// An actor of the doors' species that a later piece of the station models: the door of
-    /// Ridley's room, the shaft's cover or the getaway's walls.
+    /// Ridley's room or the getaway's walls.
     Later,
     /// The shaft's door, facing left.
     ShaftDoor,
+    /// The shaft's overlay, which shows the shaft's beacon and its platform.
+    ShaftOverlay,
 }
 
 /// A version a condition chooses.

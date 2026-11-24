@@ -2,7 +2,7 @@
 //! is checked.
 
 use enum_map::{Enum, EnumMap};
-use types::{Checked, Kind, Switch};
+use types::{Checked, Kind, Switch, by_member};
 
 /// A behaviour of the spec, by its entry id.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
@@ -29,6 +29,20 @@ pub enum BehaviourId {
     EscapeShakes,
     /// The doors' palette takes the calm or the escape colours.
     TheDoorsColours,
+    /// The arrival puts the pad under her and the cover below it; she is held.
+    PadPlaced,
+    /// The pad holds her still for a second before it lowers her.
+    PadWaits,
+    /// The pad lowers her a pixel a run to the shaft's floor, then lets her go.
+    PadCarries,
+    /// The pad's two figures take turns.
+    PadFlickers,
+    /// The cover hides the shaft's floor until she stands on it.
+    CoverHides,
+    /// Before the escape, the beacon steps through its colour sets.
+    BeaconCycles,
+    /// Before the escape, the platform shows its two looks in turn.
+    PlatformTurns,
 }
 
 /// A catalogue entry.
@@ -46,105 +60,160 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-impl BehaviourId {
-    /// This entry's behaviour, as the spec gives it.
-    #[must_use]
-    pub const fn behaviour(self) -> Behaviour {
-        match self {
-            Self::Waiting => Behaviour {
-                id: Self::Waiting,
-                summary: "a door counts its wait off by one each run, and steps when it runs out",
-                kind: Kind::Mechanic,
-                switch: Switch::Fixed,
-                checked: Checked::ByVectors,
-            },
-            Self::SheIsNear => Behaviour {
-                id: Self::SheIsNear,
-                summary: "a door sees her when she was within a set distance of its position on \
+/// How many entries the spec has: the doors' eleven and the shaft's seven.
+const ENTRIES: usize = 18;
+
+/// Every entry's behaviour, as the spec gives it, one row for each entry.
+const BEHAVIOURS: [Behaviour; ENTRIES] = [
+    Behaviour {
+        id: BehaviourId::Waiting,
+        summary: "a door counts its wait off by one each run, and steps when it runs out",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SheIsNear,
+        summary: "a door sees her when she was within a set distance of its position on \
                           both axes at the end of the last frame",
-                kind: Kind::Mechanic,
-                switch: Switch::Parameter,
-                checked: Checked::ByVectors,
-            },
-            Self::RoomStart => Behaviour {
-                id: Self::RoomStart,
-                summary: "a door placed by a room's start is shown and solid with no figure for \
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RoomStart,
+        summary: "a door placed by a room's start is shown and solid with no figure for \
                           its first frame, then hidden and passable until it chooses, two frames \
                           later, to stand open or closed",
-                kind: Kind::Mechanic,
-                switch: Switch::Fixed,
-                checked: Checked::ByVectors,
-            },
-            Self::Polling => Behaviour {
-                id: Self::Polling,
-                summary: "a door that is closed or open looks for her every few frames",
-                kind: Kind::Mechanic,
-                switch: Switch::Parameter,
-                checked: Checked::ByVectors,
-            },
-            Self::Opening => Behaviour {
-                id: Self::Opening,
-                summary: "a closed door that sees her hisses and slides open over four figures, \
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Polling,
+        summary: "a door that is closed or open looks for her every few frames",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Opening,
+        summary: "a closed door that sees her hisses and slides open over four figures, \
                           staying solid until it is open; then it is hidden and she can pass",
-                kind: Kind::Mechanic,
-                switch: Switch::Parameter,
-                checked: Checked::ByVectors,
-            },
-            Self::Closing => Behaviour {
-                id: Self::Closing,
-                summary: "an open door that no longer sees her shows itself again and slides shut \
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Closing,
+        summary: "an open door that no longer sees her shows itself again and slides shut \
                           over four figures, without a sound and without looking for her until \
                           it is closed",
-                kind: Kind::Mechanic,
-                switch: Switch::Parameter,
-                checked: Checked::ByVectors,
-            },
-            Self::ShaftWall => Behaviour {
-                id: Self::ShaftWall,
-                summary: "once Ridley has fled, the shaft's door is an unseen wall",
-                kind: Kind::Mechanic,
-                switch: Switch::Fixed,
-                checked: Checked::ByVectors,
-            },
-            Self::Solid => Behaviour {
-                id: Self::Solid,
-                summary: "a door blocks in the phases that show it, and as the wall; hidden doors \
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ShaftWall,
+        summary: "once Ridley has fled, the shaft's door is an unseen wall",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Solid,
+        summary: "a door blocks in the phases that show it, and as the wall; hidden doors \
                           that are open or starting let her through",
-                kind: Kind::Mechanic,
-                switch: Switch::Fixed,
-                checked: Checked::ByVectors,
-            },
-            Self::Shown => Behaviour {
-                id: Self::Shown,
-                summary: "a door is shown in the phases it is solid in, except the wall; it is \
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Shown,
+        summary: "a door is shown in the phases it is solid in, except the wall; it is \
                           drawn with its phase's figure",
-                kind: Kind::Mechanic,
-                switch: Switch::Fixed,
-                checked: Checked::ByVectors,
-            },
-            Self::EscapeShakes => Behaviour {
-                id: Self::EscapeShakes,
-                summary: "during the escape, each door keeps the station shaking: whenever the \
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::EscapeShakes,
+        summary: "during the escape, each door keeps the station shaking: whenever the \
                           screen is still, a door's run starts a small shake, and now and then a \
                           strong one",
-                kind: Kind::Mechanic,
-                switch: Switch::Parameter,
-                checked: Checked::ByVectors,
-            },
-            Self::TheDoorsColours => Behaviour {
-                id: Self::TheDoorsColours,
-                summary: "when a room with doors starts, the doors' palette takes the doors' \
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TheDoorsColours,
+        summary: "when a room with doors starts, the doors' palette takes the doors' \
                           colours, another set during the escape",
-                kind: Kind::Mechanic,
-                switch: Switch::Fixed,
-                checked: Checked::ByVectors,
-            },
-        }
-    }
-}
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PadPlaced,
+        summary: "the arrival puts the pad under her and the cover below it, and from \
+                          then on she is held",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PadWaits,
+        summary: "the pad holds her still for a second before it starts to lower her",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PadCarries,
+        summary: "each run once its wait is over, the pad lowers her one pixel and is \
+                          drawn 28 px below where she stood, until she stands on the shaft's \
+                          floor; then it lets her go",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PadFlickers,
+        summary: "the pad's two figures take turns, one each run",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CoverHides,
+        summary: "the cover hides the shaft's floor below the pad until she stands on \
+                          the floor",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BeaconCycles,
+        summary: "before the escape, the shaft's beacon steps through its cycle of eight \
+                          colour sets, one step every few frames, except once a door's fade has \
+                          taken a step",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PlatformTurns,
+        summary: "before the escape, the platform below the shaft shows its two looks in \
+                          turn, two frames each",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+];
 
-/// The catalogue: every entry's behaviour.
+/// The catalogue: every entry's behaviour, keyed by its id. Each row names its entry; the
+/// vector test checks that every entry has its own row.
 #[must_use]
 pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
-    EnumMap::from_fn(BehaviourId::behaviour)
+    by_member(BEHAVIOURS, |behaviour| behaviour.id)
 }

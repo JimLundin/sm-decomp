@@ -23,6 +23,7 @@ mod recorded;
 pub mod result;
 mod runner;
 mod sender_offer;
+mod shaft;
 mod shot_drawing;
 mod touched_cells;
 mod weapons;

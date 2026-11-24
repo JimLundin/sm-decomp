@@ -1,4 +1,4 @@
-# Ceres Ridley and the escape, part 1, the Ceres doors: decode notes
+# Ceres Ridley and the escape, parts 1 and 2, the Ceres doors and the shaft as she arrives: decode notes
 
 For the observer, the adversary, the integrator and the domain harness's decoder only.
 Implementers never see this file (MODEL §5). It holds every source the spec draws on: the
@@ -87,7 +87,7 @@ figures; no vector carries them.
 | --- | --- | --- |
 | the opening sound | `$80:914D` with A = `2Ch`: sound library 3, at most 6 queued | the port write (`$2143` = `2Ch`) lands 0 to 5 frames after the run, as the queue sends it (U1): rows 1, 3, 4, 8, 9, 10 in the run's frame, 2, 5, 7 later |
 | a shake | `1840` timer, `183E` type: small = timer 2, type `14h` (BG1, BG2 and enemies, 1 px, diagonal); strong = timer 4, type `1Ah` (3 px) | |
-| the doors' colours | target palette `7EC3E2..7EC3FF` (sprite palette 7, colours 1 to Fh) by `$A9:D2F6` from `$A6:F4EE` (calm) or `$A6:F50E` (escape) | at the door's init; the door transition's fade brings `CGRAM` to them (R4) |
+| the doors' colours | target palette `7EC3E2..7EC3FF` (sprite palette 7, colours 1 to Fh) by `$A9:D2F6` from `$A6:F4EE` (calm) or `$A6:F50E` (escape) | at the door's init; the door transition's fade brings `CGRAM` to them (world-doors' `TheFades`; Ceres has no R4 palette FX) |
 | shown, figure | the enemy drawing queue, then OAM | C1's drawing and the sprite encoder |
 | solid | the interactive list (`17EC`) and `$A0:A8F0`'s solid-enemy collision | C1's. Main gameplay builds the list (`$82:8B47`, `$A0:8EB6` → `$A0:8F40`, intangible excluded) before her state handler, her projectiles' interaction (`$A0:9785`) and the main enemy routine (`$82:8B65`), so her solid motion uses the selected beginning-of-frame membership (spec §4); shots instead use current per-processing-actor pre-AI contact properties (see [enemy-interactions](enemy-interactions.decode.md)); the drawing (`$A0:884D`) runs after, with the door as it is after its run |
 
@@ -135,8 +135,9 @@ figures; no vector carries them.
   each door's run starts (a shake not started leaves them to R3, which counts `1840` down;
   frames where R3 doesn't count are not the door's).
 - **The sound:** one `2Ch` request per `Opening(1)`; matched to the APU port stream by U1's queue.
-- **Skipped, and why:** parameters 2 (the shaft's cover), 3 (Ridley's room door), 5 and 6 (the
-  getaway's walls) are later pieces of B8, so their slots stay `EnemyBody::Unmodelled`; `0FA4`
+- **Skipped, and why:** parameter 2 (the shaft's overlay, the pre-explosion door overlay, whose
+  beacon and platform are part 2's), 3 (Ridley's room door), 5 and 6 (the getaway's walls) are
+  later pieces of B8, so their slots stay `EnemyBody::Unmodelled`; `0FA4`
   itself and the drawing (C1). The frame a room's doors are placed is compared: the model places
   each door from the loader's slot, kind, facing and position.
 - **Masks:** the shake on a door-passage frame with one running (the passage's room set-up clears
@@ -213,6 +214,135 @@ replacing the runner and drawing later, on four conditions:
 
 The remaining edge is the figure → sprite mapping, which goes in the bridge or AF3.
 
+## Part 2, the shaft as she arrives
+
+### How it was made
+
+Behaviour first, from CI's lean record cache (`$TEMP/collab/ci-cache/rows`): `any-ceres-arrival`
+frames 185-222 and `chain-any-0001-DF45` cuts 0-300, read per frame by a scratch reader of the
+lean tier (`$TEMP/collab/ceres-739/lean.py`, local only): her handlers, position and pose, the
+projectile slots, the enemy slots, the frame counter, the palette buffer, CGRAM and VRAM. The
+bank logs (86, 90, 82, A6) were then read to name the actors and pin the arithmetic: the
+floor's signed compare, the wait's count, the beacon's table index.
+
+The reference model, `$TEMP/collab/ceres-739/model.py`, steps the pad and the cover by the
+spec's rules from record N−1 to N (her height at N−1: her own frame doesn't move her while she
+is held), on frames of game state 7 or 8, and compares the pad (present, wait, x, y, look), the
+cover (present, x, y), her `0AFA` and whether she is held, at N:
+- `any-ceres-arrival` 193-222: 30 of 30 frames agree; a do-nothing model agrees on 0.
+- `chain-any-0001-DF45` 1-101: 101 of 101; do-nothing 0.
+- The beacon and the platform (gate fixes, `$TEMP/collab/ceres-739/fixtools/lights.py`), with
+  the overlay's runs (a slot with id `E23F`, parameter `0FB4` = 2, whose `0FA4` advanced) and the
+  fade's steps taken (`7EC400` at N when `099C` at N−1 is `$E2DB`, the fade out, else at N−1) as
+  inputs, `093F` under 2. The beacon against the palette buffer `7EC052..5D` and the table
+  `$A6:F871` row directly; the platform against the VRAM words first seen for each look:
+  - `any-ceres-arrival`: 30 runs, 30 steps match; platform 30 of 30. 192 frames without the
+    overlay or a fade: 189 unchanged; frames 3, 25 (loading) and 192 (the arrival) are other
+    writers'.
+  - `chain-any-0001-DF45`: 266 runs: 252 steps match, 14 runs with the fade's steps 1 to 14 and
+    none of them writes a table row; platform 266 of 266. 80 frames without the overlay or a fade
+    (the passage's idle frames and room 2): 79 unchanged; cut 322 is room 2's loading (VRAM).
+  - `chain-any-0002-DF8D`: no overlay; 202 frames without a fade, 202 unchanged.
+  - The do-nothing model (keep the last colours and picture) agrees with 26 and 225 of the
+    beacon's steps and 15 and 125 of the platform's looks.
+- `model.py vectors` runs every part-2 vector: 30 of 30 agree.
+
+### State (the RAM mapping)
+
+| Spec | RAM | Notes |
+| --- | --- | --- |
+| the pad | enemy projectile slot 22h: id `19B9` = `$86:A387` (Ceres elevator pad); 0 when gone | spawned last, so the highest slot |
+| the pad's wait | the projectile's timer `1B21` (`1AFF + 22h`) | 3Ch at the spawn (`$86:A2FB`) |
+| the pad's position | `1A6D`, `1AB5` (`1A4B`, `1A93` + 22h) | x from `0AF6` at the spawn |
+| the pad's look | spritemap `1B8D`: `8000h` none (spawned), `$B1BA` `First`, `$B1D0` `Second`; the list pointer `1B69` `$A291` / `$A295` with them | the list `$86:A28D`: two spritemaps, one frame each, looping |
+| the cover | slot 20h: id `19B7` = `$86:A395` (the pad's level data concealer); position `1A6B`, `1AB3` (61h, `$86:A31E`); spritemap `1B8B` = `$846D` | |
+| held | `0A42` = `$E8CD` (RTL) and `0A44` = `$E8DC` (locked: contact damage index normal, mini-map) | set by `$90:F1E9`; at the pad's end `$90:F2CA` sets `$E695` and `$E8AA` (Ceres: normal, then the escape's time-up check) |
+| her height | `0AFA` | `0AFC` (subpixel) stays 0 |
+| the beacon's step | the palette buffer `7EC052..7EC05D` (BG palette 2, colours 9h-Eh), CGRAM 29h-2Eh | from the table `$A6:F871`, 8 rows of 8 colours (10h bytes, the step × 10h), the first 6 written to colours 29h-2Eh; rows 0 and 7, 1 and 6, 2 and 5, 3 and 4 are equal |
+| the platform's look | VRAM `060Eh..0611h` (the mode 7 tilemap) | `$A6:F900`: `$F904` `First`, `$F90E` `Second` |
+
+### Inputs and order
+
+| Spec | RAM / code | Notes |
+| --- | --- | --- |
+| the arrival | Samus command 8 (`$90:F1E9`), at `any-ceres-arrival` frame 192 (game state `1Fh` to 7) | sets `0A1C` = 0 (facing forward), `0AFA` = 0, spawns `$A387` then `$A395`, enables the mini-map (`05F7`), plays the room's music: the pose, the music and the mini-map are §5's |
+| her height | `0AFA` when the projectile handler runs | main gameplay `$82:8B44`: Samus current state handler (`8B58`), enemies (`8B65`), new state handler (`8B69`), then the projectile handler (`8B6D`); the scrolling (`8B8A`) and the HUD after |
+| when the lights are stepped | the Ceres door (`E23F`) with parameter 2, slot 0 in `DF45`, runs (`$A6:F765` → `$A6:F7BD`) | the function `$A6:F72B` + 2 × parameter (`$A6:F6E5`); the other Ceres doors run `$F76B`/`$F770`, so no other room steps the beacon. In the passage the enemies run in `$82:E29E`, `$E2DB` and `$E737` only: row 0001 cuts 254, 257, ... 291 |
+| the count of finished frames | `05B6` at record N−1 | incremented in NMI (`$80:95F4`) only when the frame's work was done; never reset. The HUD's frame count is `05B5` (8-bit, `$80:95F1`), which the door passage resets; the beacon at cut 8 reads `1EA8` (record 7) |
+| the fade's steps taken | `7EC400` (palette change numerator, world-doors' `t`) non-zero | `$A6:F854`. Fade out `$82:E2DB` advances the colours (`$82:D961` → `$DA02`, which increments the numerator) before the enemies, fade in `$82:E737` after them; the reset to 0 at the end (`$DA0F`). The arrival's fade in (game state 7) is brightness only and leaves it 0 (arrival 193-221) |
+| the stage | `093F` 0 or 1; 2 or more (and `8000h`) `Escape` | at 2 or more the overlay's function turns to the rumble (`$A6:F7C1`), a later piece, which owns every escape frame of the shaft, its first run's step included |
+
+Projectile order: the handler runs the slots from 22h down, so the pad before the cover: at row
+0001 cut 100 the pad set her at 48h and the cover saw it the same frame.
+
+### Sources per entry
+
+| Entry | Sources |
+| --- | --- |
+| PadPlaced | `$90:F1E9`; `$86:A2EE`, `$86:A301`, `$86:A31B`; the headers `$86:A387`, `$86:A395` |
+| PadWaits | `$86:A328`..`$86:A332` (decrement if non-zero; return while positive) |
+| PadCarries | `$86:A334`..`$86:A363` (`CMP #$0049`, `BMI`: the signed compare on `y + 1 − 49h`, i.e. `y − 48h`); `$90:F2CA` |
+| PadFlickers | `$86:A28D` |
+| CoverHides | `$86:A364` (`CMP #$0048`, equal), `$86:A299` |
+| BeaconCycles | `$A6:F7BD` → `$A6:F850` (`05B6 & 38h`, `$A9:D2E4`), the table `$A6:F871`; the door slot of parameter 2 (`0FB4` = 2, slot 0 in `DF45`) runs it; `$A6:F854` (the numerator) |
+| the overlay's figure (§5) | instruction list `$A6:F610`: intangible (`$F68B`), spritemap `$A6:F921`, looping; tiles `$A6:F739` at the init |
+| PlatformTurns | `$A6:F8F1`, `$A6:F900`, `$80:8B4F` |
+
+### Findings behind the spec's choices
+
+- **The stop the diagnosis didn't predict.** From row 0001's seed with her lock modelled, the
+  first stop is the beacon at cut 8 (CGRAM 29h-2Eh), not the pad at cut 29; the beacon is also
+  the `doors.colours.screen` stop at cut 104 from seed 101. So the beacon is in this piece.
+- **Held** is the pad's presence: she is locked by the arrival on the frame it places the pad and
+  unlocked by the pad's last run, and nothing else locks or unlocks her in these frames.
+- **Placed, not run.** The pad's timer is 3Ch at frame 192 and 3Bh at 193: the spawn comes after
+  the projectile handler's run that frame.
+- **The wait at 0.** A timer of 0 skips the decrement and carries; a timer of 1 decrements to 0
+  and carries in the same run (cut 29). Both are `PadWaits`' second arm.
+- **The wait's range.** `DEC`/`BPL` is signed: a wait of 32,769 or more would carry on its first
+  run and keep a non-zero wait, so the rule `w` is bounded at 32,768.
+- **The cover's figure.** Its spritemap is `8000h` at frame 192 (in forced blank) and `$846D`
+  from its first run, so the placing reports no figure for it.
+- **No frame without a run follows the arrival.** `any-ceres-arrival` 193 to 222: game state 7
+  (the fade-in) from 192, then 8 at 222; `05B6` rises by one a frame (no lag frame), and the
+  pad's timer falls 59 to 30, one a frame, with its spritemap turning each frame. The fade-in's
+  routine runs the projectile handler on each of its frames. So the cover's undrawn frame is the
+  placing frame only (E-placed-drawn, E-first-drawn); the pieces' split needs no rest input.
+- **When the lights are stepped.** On a frame the overlay doesn't run the caller doesn't step
+  them: `chain-any-0001-DF45`:253 (the passage's `$E2DB` frame, count 8093) leaves the buffer
+  and the tilemap unchanged (B2, formerly the vector B-not-run, retired with the input).
+- **The escape (open question 4).** A room start in the escape still sets `$F7BD`: its first run
+  steps the beacon and the platform, then switches to the rumble `$F7C1` → `$F7DC`; the rumble
+  ends at `$F850` with no stage check (`$A6:F7EA`), and `$F67F` writes the stage `8000h`.
+  Recorded at `chain-any-0010-DF8D` frame 239 (the fade in's first frame of work, `7EC400` 0):
+  the buffer takes the table row for step 0 and the function becomes `$F7DC`.
+
+### The harness (for the integrator)
+
+- **Compared per frame** the projectiles run (game state 7 or 8): the pad's and the cover's slot
+  words above, `0AFA`, `0A42`/`0A44` as held or not; per frame the enemies run (slot 0's `0FA4`
+  advanced, slot 0 of `DF45` with parameter 2), with `093F` under 2: CGRAM 29h-2Eh against the
+  step's colour set, unless the fade's steps taken are non-zero (world-doors' fade is the writer
+  then), and VRAM `060Eh..0611h` against the look; on other frames both unchanged, but for the
+  room's loading and world-doors' fade, each masked under its writer. The shaft's frames with
+  `093F` 2 or more (`chain-any-0010-DF8D` from 239) are outside this piece's claim (B-escape).
+- **Harness cases** with the game's content, loaded by the importer: H3, the beacon's eight
+  colour sets (`chain-any-0001-DF45` cuts 1-250); H4, the platform's two looks (the same cuts).
+- **Skipped:** the pad's and the cover's drawing (C1); her pose and her frame while held (§5).
+
+**Recorded cases** behind the part-2 vectors (x moved to 0140, heights kept):
+
+| Case | Row:frame | Vectors |
+| --- | --- | --- |
+| A1, A2 | `any-ceres-arrival`:192, 193 | E-placed, E-placed-drawn; E-first-run, E-first-drawn |
+| A3, A4, A5 | `chain-any-0001-DF45`:1, 28, 29 | E-wait-counts, E-wait-two, E-wait-last |
+| A6, A7, A8 | `chain-any-0001-DF45`:30, 100, 101 | E-carry, E-carry-to-floor, E-floor |
+| B1 | `chain-any-0001-DF45`:8 | B-step |
+| B2 | `chain-any-0001-DF45`:253 (no run in the passage) | none: the caller doesn't step the lights |
+| B3 | `any-ceres-arrival`:193 (the brightness fade in) | B-arrival |
+| B4 | `chain-any-0001-DF45`:350 (`05B6` 8159, `05B5` 1) | B-count-not-hud (its counts) |
+| P1, P2 | `chain-any-0001-DF45`:1, 2 | P-first, P-second |
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -220,10 +350,13 @@ the budget. `tools spec-units` reads k and the areas here.
 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on
 samus-movement. There is no old code: the engine carries the doors unrun
-(`EnemyBody::Unmodelled`, LEGACY "slots it carries but doesn't run"), so no area has `old`, and
-there is no old-code guideline to compare (MODEL §1 decision 19).
+(`EnemyBody::Unmodelled`, LEGACY "slots it carries but doesn't run") and has nothing for the pad,
+the cover, the beacon or the platform, so no area has `old`, and there is no old-code guideline
+to compare (MODEL §1 decision 19).
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
+- Area shaft: PadPlaced, PadWaits, PadCarries, PadFlickers, CoverHides
+- Area lights: BeaconCycles, PlatformTurns
 
-Budget: 37.5 × 30.7 units = 1,150 (doors 950, station 200)
+Budget: 37.5 × 50.3 units = 1,887 (doors 950, station 200, shaft 462, lights 275)

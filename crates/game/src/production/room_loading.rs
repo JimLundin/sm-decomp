@@ -130,34 +130,48 @@ pub fn load(
     }
 }
 
-/// The Ceres doors the room `through` leads to places as its contents are fetched.
+/// The Ceres actors a room places as its contents are fetched.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CeresActors {
+    /// Its Ceres doors, in its order of its enemies.
+    pub doors: Vec<CeresDoor>,
+    /// It places the shaft's overlay, which shows the shaft's lights.
+    pub shaft_overlay: bool,
+}
+
+/// The Ceres doors and the shaft's overlay the room `through` leads to places as its contents
+/// are fetched.
 ///
-/// They come in its order of its enemies, each as a room's start places it (`RoomStart`). They
-/// are the only actors it places: her motion meets no other actor's box in it. The doorway's
-/// rule and the version's setup run then too, and only those that change nothing play reads
-/// are let through: none, and the station's haze, which only blends a colour over the screen.
+/// The doors come in its order of its enemies, each as a room's start places it (`RoomStart`).
+/// They and the overlay, which has no box, are the only actors it places: her motion meets no
+/// other actor's box in it. The doorway's rule and the version's setup run then too, and only
+/// those that change nothing play reads are let through: none; the way out of the station's
+/// elevator room, which only turns the screen out of its rotating view; and the station's haze,
+/// which only blends a colour over the screen.
 ///
 /// # Errors
 /// A doorway or room the content lacks, a Ceres actor of a later piece, another actor, or
 /// another door rule or setup, places none.
-pub fn ceres_doors(
+pub fn ceres_actors(
     through: DoorwayId,
     run: Run<'_>,
     rooms: &Rooms,
-) -> Result<Vec<CeresDoor>, LoadFault> {
+) -> Result<CeresActors, LoadFault> {
     let version = version(rooms, through, run.progress)?;
-    let doors = version
-        .ceres_doors
-        .iter()
-        .map(|placed| {
-            let (kind, facing) = match placed.kind {
-                CeresDoorKind::Door(facing) => (DoorKind::Door, facing),
-                CeresDoorKind::ShaftDoor => (DoorKind::ShaftDoor, Side::Left),
-                CeresDoorKind::Later => return Err(LoadFault::LaterCeresActor),
-            };
-            Ok(CeresDoor::place(kind, facing, placed.position, run.ceres).door)
-        })
-        .collect::<Result<_, _>>()?;
+    let mut shaft_overlay = false;
+    let mut doors = Vec::new();
+    for placed in &version.ceres_doors {
+        let (kind, facing) = match placed.kind {
+            CeresDoorKind::Door(facing) => (DoorKind::Door, facing),
+            CeresDoorKind::ShaftDoor => (DoorKind::ShaftDoor, Side::Left),
+            CeresDoorKind::ShaftOverlay => {
+                shaft_overlay = true;
+                continue;
+            }
+            CeresDoorKind::Later => return Err(LoadFault::LaterCeresActor),
+        };
+        doors.push(CeresDoor::place(kind, facing, placed.position, run.ceres).door);
+    }
     if version
         .enemies
         .iter()
@@ -170,13 +184,16 @@ pub fn ceres_doors(
         .doorway(through)
         .ok_or(LoadFault::Room(through))?
         .rule;
-    if rule != DoorRule::Nothing {
+    if !matches!(rule, DoorRule::Nothing | DoorRule::FromCeresElevatorShaft) {
         return Err(LoadFault::DoorRule(rule));
     }
     if !matches!(version.setup, RoomSetup::Nothing | RoomSetup::CeresHaze) {
         return Err(LoadFault::RoomSetup(version.setup));
     }
-    Ok(doors)
+    Ok(CeresActors {
+        doors,
+        shaft_overlay,
+    })
 }
 
 /// The room `through` leads to, as building it leaves it for play, with the scroll areas past
@@ -538,6 +555,7 @@ const fn area(area: Area) -> Result<types::Area, LoadFault> {
 mod tests {
     use super::{LoadFault, Rooms, Run, load, room};
     use crate::production::connected::inputs::{CameraInputs, Lead, Screen};
+    use core::num::Wrapping;
     use data::assets::actors::{
         Actors, CERES_DOOR, CeresDoorColours, EnemyGraphics, Species, SpriteRow,
     };
@@ -545,12 +563,13 @@ mod tests {
     use data::assets::samus::palettes::{BeamPalette, SamusPalettes, Suits};
     use data::assets::tilesets::{Tileset, Tilesets};
     use data::assets::world::{
-        Arrival, Conditional, Door, DoorRule, Doorway, Heading, ItemLighting, MapPlace, Pair, Room,
-        RoomSetup, ScreenCoordinate, Version, World,
+        Arrival, CeresDoorKind, Conditional, Door, DoorRule, Doorway, Heading, ItemLighting,
+        MapPlace, Pair, Room, RoomSetup, ScreenCoordinate, Version, World,
     };
     use data::id::{DoorwayId, RoomId, SpeciesId, TilesetId};
     use data::level::{Block, ScrollArea};
     use data::room::{Area, Screens, Scrollers};
+    use types::Side;
     use world_doors::{COLOURS, Palette, RoomCall};
 
     const ROOM: RoomId = RoomId(1);
@@ -652,6 +671,7 @@ mod tests {
                     calm: [Colour(0x0066); 15],
                     escape: [Colour(0x0077); 15],
                 },
+                ..Actors::default()
             },
             slopes: data::level::slope::Slopes::default(),
             samus: SamusPalettes {
@@ -829,10 +849,10 @@ mod tests {
         shut.setup = RoomSetup::CeresHazeDoorShut;
         let rooms = rooms_of(shut, version(0));
         assert_eq!(
-            super::ceres_doors(CHOSEN, run, &rooms),
+            super::ceres_actors(CHOSEN, run, &rooms),
             Err(LoadFault::RoomSetup(RoomSetup::CeresHazeDoorShut))
         );
-        assert_eq!(super::ceres_doors(OTHER, run, &rooms), Ok(Vec::new()));
+        assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
         let mut rooms = rooms;
         rooms.world = World::new(
             rooms.world.rooms().cloned().collect(),
@@ -848,8 +868,58 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            super::ceres_doors(OTHER, run, &rooms),
+            super::ceres_actors(OTHER, run, &rooms),
             Err(LoadFault::DoorRule(DoorRule::ToCeresElevatorShaft))
+        );
+        // The way out of the elevator room only turns the screen out of its rotating view.
+        rooms.world = World::new(
+            rooms.world.rooms().cloned().collect(),
+            [CHOSEN, OTHER]
+                .map(|id| {
+                    let mut doorway = *rooms.world.doorway(id).unwrap();
+                    doorway.rule = DoorRule::FromCeresElevatorShaft;
+                    doorway
+                })
+                .to_vec(),
+        )
+        .unwrap();
+        assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
+    }
+
+    fn no_actors() -> super::CeresActors {
+        super::CeresActors {
+            doors: Vec::new(),
+            shaft_overlay: false,
+        }
+    }
+
+    #[test]
+    fn the_shafts_overlay_is_placed_and_a_later_pieces_actor_refused() {
+        let placed = |kind| data::assets::world::CeresDoorPlacement {
+            kind,
+            position: types::Pair {
+                x: Wrapping(128),
+                y: Wrapping(64),
+            },
+        };
+        let progress = run_progress::Progress::default();
+        let run = Run {
+            progress: &progress,
+            ceres: boss_ceres_ridley::Stage::Calm,
+        };
+        let mut shaft = version(1);
+        shaft.ceres_doors = vec![
+            placed(CeresDoorKind::ShaftOverlay),
+            placed(CeresDoorKind::Door(Side::Left)),
+        ];
+        let actors = super::ceres_actors(CHOSEN, run, &rooms_of(shaft, version(0))).unwrap();
+        assert!(actors.shaft_overlay);
+        assert_eq!(actors.doors.len(), 1);
+        let mut ridley = version(1);
+        ridley.ceres_doors = vec![placed(CeresDoorKind::Later)];
+        assert_eq!(
+            super::ceres_actors(CHOSEN, run, &rooms_of(ridley, version(0))),
+            Err(LoadFault::LaterCeresActor)
         );
     }
 
@@ -864,10 +934,10 @@ mod tests {
         };
         let rooms = rooms_of(other, version(0));
         assert_eq!(
-            super::ceres_doors(CHOSEN, run, &rooms),
+            super::ceres_actors(CHOSEN, run, &rooms),
             Err(LoadFault::OtherActors)
         );
-        assert_eq!(super::ceres_doors(OTHER, run, &rooms), Ok(Vec::new()));
+        assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
     }
 
     #[test]
