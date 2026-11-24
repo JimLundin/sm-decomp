@@ -2,8 +2,8 @@
 
 Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` weighted scores
 (the wire-cam `size.dll`, the same counter as the specs' baselines). Raw per-file output:
-`$TEMP/collab/reviews/sz_all.txt` (today's engine) and `sz_old.txt` (the whole-game port at
-`archive/old-engine`, `crates/sm_game/src`, verification and tests excluded); per-module sums
+`$TEMP/collab/reviews/sz_all.txt` (today's engine) and `sz_old.txt` (the whole-game port,
+`crates/sm_game/src` in git history, verification and tests excluded); per-module sums
 `mods.txt` and `oldmods.txt`.
 
 ## 0. The answer in three lines
@@ -90,7 +90,7 @@ windows; between-line changes only. No sound backend, no storage.
 
 ## 2. What the real game has that the engine lacks
 
-Sized by the whole-game port at `archive/old-engine` (`sm_game`, 1.04 M weighted, verbose and
+Sized by the earlier whole-game port (`crates/sm_game` in git history, 1.04 M weighted, verbose and
 partly transpiled; it is an upper bound). Calibration: samus-movement's clean model is about 0.13
 of that port's player movement, collision and transitions (57k), the camera 0.19 of its room
 scrolls (7.8k). So **clean ≈ 0.12-0.2 × old port**. Banks from the bank-log index.

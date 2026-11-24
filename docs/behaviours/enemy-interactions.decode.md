@@ -159,7 +159,7 @@ k = 37.5 weighted tokens per spec unit.
 The reusable bridge applies returned consumption to the complete owned W1 State. The checked
 ordinary runtime calls it per processing actor before that actor's protection decrement and AI.
 The C1 model is stateless; the engine keeps the projectile owner and the transient ordinary pass.
-No old-engine deletion baseline is available for this new contact model. The replaced verifier
+No deletion baseline from earlier engine code is available for this new contact model. The replaced verifier
 contact helper is accounted separately from production model and bridge code.
 
 ### Translated observation provenance

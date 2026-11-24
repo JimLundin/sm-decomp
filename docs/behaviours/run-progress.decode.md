@@ -487,7 +487,7 @@ fair bar.
   the domain: one item, no beams, tanks, doors, maps, stations or percentage. Only its rooms cut is
   complete: `Condition::holds` and `Room::select` handle all 9 condition kinds the ROM's list uses
   and the first-that-holds choice, like for like with `RoomStates`.
-- The whole-game port (tag `archive/old-engine`, 2,421.25 over `progress.rs`,
+- The whole-game port (`crates/sm_game`, in git history; 2,421.25 over `progress.rs`,
   `gameplay_flag_state.rs`, `item_pickups.rs`) is no ceiling: `progress.rs` (1,350) is mostly RAM
   compatibility plumbing, with a 192 clump penalty; `item_pickups.rs` (844.25) carries W3's
   drawing and message table, a 172 depth penalty, and the energy domain's `restore`;
@@ -505,7 +505,7 @@ duplication priced, clumps off; through the DLL `$TEMP/collab/progress-r8/tools.
 
 | Area | Cut | Score | Logic | Types | Data | Depth | Code lines | Before (2026-11-08) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| equipment | `crates/sm_game/src/item_pickups.rs` at `archive/old-engine`: `PickupKind`, `Loadout`, `Supply`, `Inventory`, and `Inventory::collect`'s first `match` (the state arms), without the `VisualUpdate`/message match and `restore` (`$TEMP/collab/progress-spec/archive_cut/equipment_collect.rs`) | 231.75 | 211 | 143 | 12 | 40.75 | 72 | 253.5 |
+| equipment | `crates/sm_game/src/item_pickups.rs` of the whole-game port: `PickupKind`, `Loadout`, `Supply`, `Inventory`, and `Inventory::collect`'s first `match` (the state arms), without the `VisualUpdate`/message match and `restore` (`$TEMP/collab/progress-spec/archive_cut/equipment_collect.rs`) | 231.75 | 211 | 143 | 12 | 40.75 | 72 | 253.5 |
 | rooms | `data/src/room.rs` at spine `387640758`: `Item`, `Condition`, `Progress`, `Condition::holds`, `Room::select` (`$TEMP/collab/progress-spec/old/states.rs`) | 185.25 | 209 | 147 | 0 | 3.75 | 54 | 197.25 |
 
 Both fell under the v2 weights: a match that maps one value to another is a lookup, counted as
@@ -531,7 +531,7 @@ together; the 2026-11-08 figures (the quality-terms counter built from spine `38
 Not counted: the state condition decoder `condition()` in `data/src/room.rs` (the importer's), the
 HUD's and mini-map's reads (`hud.rs`, `mini_map.rs`: their domains').
 
-The whole-game port as a whole, at the tag `archive/old-engine` (`crates/sm_game/src`, cut to
+The whole-game port as a whole (`crates/sm_game/src`, in git history, cut to
 `$TEMP/collab/progress-spec/archive`): `progress.rs` 1,350, `gameplay_flag_state.rs` 227,
 `item_pickups.rs` 844.25, 2,421.25 in all, 386 code lines (no ceiling, above); under score v2
 (`5e2e4ee51`) 1,285, 247 and 808.25, 2,340.25 in all;

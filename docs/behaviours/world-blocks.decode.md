@@ -646,7 +646,7 @@ Lines by `$TEMP/collab/scripts/code_lines.py` over the three cuts. Not counted: 
 code as 1,252 and scroll's as 1,145; breakables has none.
 
 **The ceiling** (decode-only; the plan's proposal for domains without old code): the whole-game
-port at `archive/old-engine` holds this part's mechanism in `room_mechanisms/scheduler.rs` (1,161),
+port (`crates/sm_game`, in git history) holds this part's mechanism in `room_mechanisms/scheduler.rs` (1,161),
 `commands.rs` (4,739), `creation.rs` (1,817), `rules/scroll_setup.rs` (482),
 `projectile_block_reactions.rs` (1,717) and `player_collision/inside.rs` (914): 10,830, shared with
 the other three parts (`$TEMP/collab/reviews/sz_old.txt`).

@@ -82,8 +82,8 @@ Jim's decisions, 2026-11-07:
    fit (the areas' score ÷ the budget) and its shared share (the code in no area ÷ the model)
    apart, and a shared share over 25 % is a finding.
 8. **The repository shows only the current state** (Jim, 2026-11-08). Old code or docs kept only
-   for comparison are deleted; a comparison uses git history (the tag `archive/old-engine`, or the
-   commit before a deletion). When a clean model replaces engine code, the integrator deletes the
+   for comparison are deleted; a comparison uses git history (the commit before a
+   deletion). When a clean model replaces engine code, the integrator deletes the
    old code in the same lane, and a baseline cites the commit it was measured at. The engine code
    of domains not yet rebuilt is current, and goes as each domain is replaced. Decision 33
    supersedes this retention route under the reviewed replay transition.
@@ -676,8 +676,8 @@ that was a RAM word, and a result type that existed only because the original sp
 
 **What the implementer may read:** the clean room's design, its domain's spec and vectors, the
 localiser's output, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
-`verify/src/{decode,source,strand}.rs` (they hold WRAM addresses), the old module it replaces, and
-history before the tag `archive/old-engine`.
+`verify/src/{decode,source}.rs` (they hold WRAM addresses), the old module it replaces, and
+git history.
 
 **No fitting to the oracle (review R6).**
 - Every literal and every branch in the clean model traces to a `BehaviourId`, and values come from
@@ -779,7 +779,7 @@ commit `c1b3ea3`, `docs/architecture/MODEL-REVIEW.md`.
   decision 3.
 - **One short rules file, and ask Jim only goal trade-offs (rule 23).** Broken by 44 docs
   (16,000 lines) and old skills next to the new code. The repository now holds only this
-  engine's docs and code; the history is in git (tag `archive/old-engine`).
+  engine's docs and code; the history is in git.
 
 **From the first pilot (2026-11-07): the thesis's faulty assumptions.** The honest harness showed the
 first Samus-movement model was no better than a step that does nothing. These assumptions were wrong:

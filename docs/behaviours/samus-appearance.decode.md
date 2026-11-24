@@ -1021,7 +1021,7 @@ cuts above with the same declared fields as `R-ordinary-run-colours`.
 ### Palette budget
 
 The old implementation is the palette area of the [domain inventory](../architecture/domains.md):
-183 tokens for `samus_palette`, using its old-engine baseline. The bounded entry contributes 1.0 unit (one arm for
+183 tokens for `samus_palette`, using the earlier engine's baseline. The bounded entry contributes 1.0 unit (one arm for
 OrdinaryDryColours). The admitted actions widen the one OrdinaryDryColours arm without a new
 outcome, so the units are unchanged. At k = 37.5 the increment is 37.5.
 The general active colour effects remain outside this allowance.
