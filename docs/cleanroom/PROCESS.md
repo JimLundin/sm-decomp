@@ -7,16 +7,16 @@ who sees what. The rules it relies on live elsewhere, and are linked where they 
 - [MODEL §5](../architecture/MODEL.md#5-how-the-work-is-planned): what a leak is, and the spec
   template;
 - [DESIGN](DESIGN.md): the coding standards;
-- [MODEL §4](../architecture/MODEL.md#4-the-reference-domain-samuss-motion) and §1 decision 7: the
-  score and the budget, a diagnostic since decision 19; [size-budget](../architecture/size-budget.md),
-  the study behind them.
+- [MODEL §4](../architecture/MODEL.md#4-size-the-score-its-gates-and-its-lints) and §1
+  decisions 7 and 19: the score and the budget, a guideline;
+  [size-budget](../architecture/size-budget.md), how spec units are counted.
 
 ## Replay transition
 
 [MODEL §1 decisions 32 and 33](../architecture/MODEL.md#1-the-goal-and-what-is-exact) are the
 source of truth for indexed production replay and removal policy. The one-time replacement
 of previous acceptance definitions is recorded in `scenarios/replay/transition.toml`, with
-exact prior claims in `scenarios/replay/prior-claims.toml`. The round's roles, clean-room barrier, review and root-only landing remain.
+exact prior claims in `scenarios/replay/prior-claims.toml`.
 
 A replacement of production or acceptance requires a bounded work plan and independent review of:
 
@@ -36,8 +36,7 @@ and the measured replacement proof. Scoped cases
 prove only their stated scope; full-engine and milestone claims still need integrated replay.
 Vectors, unit tests and localisation checks remain useful development evidence. Required
 missing behaviour is reported as `Unsupported`, so removing an old owner cannot silently turn
-its responsibility into a successful no-op. The plan stays within the lowest rung's needs;
-authorisation of this direction does not start unrelated behaviour rounds.
+its responsibility into a successful no-op.
 
 ## Roles
 
@@ -162,14 +161,13 @@ Each step names its owner, what it waits for, and its done-condition.
    Missing neighbours can be independently observed inputs of a scoped production case, with
    their ownership and timing explicitly unproved. Required missing integrated producers remain
    Unsupported and are named in the domain's gaps. Previous gameplay never supplies them.
-10. **Round gate** (adversary), in two parts so that review stays off the critical path
-    (Jim, 2026-11-23). The spec-and-model part starts at step 7's import, alongside
+10. **Round gate** (adversary), in two parts so that review stays off the critical path. The spec-and-model part starts at step 7's import, alongside
     integration: the spec delta, the model's leaks and shape, and the blind review when it ran.
     The integration part reads the landing PR's diff while its CI runs. A finding that only
     corrects wording (stale docs, a gaps line, a ledger record's description, a missing limit) is
     fixed by the root on the landing branch and re-read by the adversary in the same pass; a
     finding that changes what a spec rule says, a vector, the model or a replay outcome goes to
-    its owner as before. The two parts together read the leaks, the spec delta
+    its owner. The two parts together read the leaks, the spec delta
     when step 3 didn't gate it, replay provider independence, carried production State, case
     outcomes and first differences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (replay provider, adapter),
@@ -178,7 +176,7 @@ Each step names its owner, what it waits for, and its done-condition.
     [Code Health review](#coordinator-code-health-review) below.
     Size does not change the adversary's verdict; every non-size gate remains mandatory.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
-    together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
+    together. On the round's branch the root adds one to the model's `rounds`
     in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
     domain's `status` when its work starts or ends), deletes the crate's line from
     `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
@@ -244,13 +242,13 @@ of implementer and independent-reviewer material, and relays only concrete shape
 
 ## What can run at once
 
-**A manageable amount** (Jim, 2026-11-08; widened 2026-11-23). The root runs as many lanes at
+**A manageable amount.** The root runs as many lanes at
 once as the machine and CI hold: disk for each building lane's own `target/` (about 5 GB) with
 room to spare, and GitHub's limit of 20 concurrent jobs. At most one round is in flight per
 domain. The root names each lane to Jim when it starts, and reports its result when it ends.
 Within that limit, the dependencies below decide what may overlap.
 
-**Parallel lanes don't share files** (Jim, 2026-11-23). A rebase after main has moved costs a
+**Parallel lanes don't share files.** A rebase after main has moved costs a
 rebuild and a re-proof on this machine, which can wipe out the time running in parallel saved.
 So before a lane starts, its brief lists the files it will change, and lanes running at once
 change disjoint files. A file that most work passes through belongs to one lane at a time: the
@@ -358,8 +356,7 @@ review included. Each session has three parts:
    not yet reached (decisions 18 and 24): the items it still needs, then the indexed replay cases' first
    differences on its rows. A round or lane outside the rung's needs list doesn't start; the
    planted faults and the gain over null (decisions 24 and 25) run alongside.
-2. **Implementation.** The loop below runs the plan: rounds and lanes start, land and report as
-   they do today.
+2. **Implementation.** Rounds and lanes run the plan, under the loop below.
 3. **Review.** New scope stops in the last part of the session. The root completes the work
    already in flight under the rule below and writes the session's review on the plan's issue:
    what landed, the figures before and after, what the gates found, and what the next session
@@ -382,7 +379,7 @@ and resumes when unblocked. Shift end alone is never a reason to leave work pend
 Outside working hours new rounds wait for the nightly session. New work goes to the project's
 structure: tooling, movie captures, optimisations, and long computations that don't fit a session, within
 the rung's needs (decision 24). Independent short tasks may run in parallel within the
-three-lane limit, supervised by the root (Jim, 2026-11-13). Each task starts fresh, finishes
+lane limits above, supervised by the root (decision 28). Each task starts fresh, finishes
 with a handoff and lands like any other change; the root reviews and lands one change at a time.
 
 ## The loop
@@ -396,5 +393,3 @@ with a handoff and lands like any other change; the root reviews and lands one c
   records it, and the observer answers it in the spec. The model is never tuned to a record.
 - A finding is fixed by its owner: the observer owns spec and vectors, the implementer the clean
   crates, the integrator the adapter and replay provider, the root briefs and landing.
-- Old code and documents kept only for comparison are deleted. A comparison uses git history
-  (MODEL §1 decision 8).

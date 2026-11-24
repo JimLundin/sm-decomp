@@ -16,12 +16,13 @@ Every required indexed replay holds its reviewed outcome, observation digest and
 Quality passes. Historical claim changes are explicit in the reviewed replay transition.
 The root alone lands on main, one change at a time through `tools/lane/land.sh`, by fast-forward
 onto a head whose CI passed: no merge commits or force pushes. It alone uploads to ci-data and
-posts to issues; lanes push only their own branch. Text is UTF-8/LF.
+posts to issues; lanes push only their own branch
+([landing](../.agents/skills/root/SKILL.md#landing)). Text is UTF-8/LF.
 
 Checks assert behaviour, not wording: never match on panic or error text. The verifier doesn't
 decide engine behaviour. Docs and comments describe the code as it is now: no history, lane names
 or PR numbers; say why a surprising thing holds. Data goes in `.toml` or `.rs`, never JSON.
-ROM-derived bytes never go in commits or logs.
+ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the-rom-bundles-and-the-cipher)).
 
 ## The goal and its measure
 
@@ -37,7 +38,8 @@ ROM-derived bytes never go in commits or logs.
    [transition](cleanroom/PROCESS.md#replay-transition)).
 5. Every indexed case holds its reviewed outcome, observation digest and counts; an expected
    Unsupported boundary remains Unsupported ([STATUS](STATUS.md)).
-6. Size is counted as a guideline; the root records cut or proceed after review (decision 19).
+6. Size is counted as a guideline; the root records cut or proceed after review (decision 19,
+   the score: [MODEL §4](architecture/MODEL.md#4-size-the-score-its-gates-and-its-lints)).
 6a. The lowest rung's needs list is a limit: nothing outside it starts (decision 24).
 6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
     planted fault makes it fail (decisions 24, 25). The process freezes once that holds (26).
@@ -73,7 +75,8 @@ ROM-derived bytes never go in commits or logs.
 ## The clean room
 
 13. Implementers never see the original; the export, scans and canaries enforce it
-    ([MODEL §5](architecture/MODEL.md#5-how-the-work-is-planned)).
+    ([MODEL §5](architecture/MODEL.md#5-how-the-work-is-planned)). A domain is verifiable on
+    its own and planned by mechanism (MODEL §5).
 14. Structure leaks, perceivable quantities don't (MODEL §5, "What counts as a leak").
 15. Implementers and independent reviewers are blind to size (decisions 10 and 11).
 16. Vectors hold RAM observations and invented content only (decision 13).
@@ -92,8 +95,5 @@ ROM-derived bytes never go in commits or logs.
 20. The root decides a cut from independent findings and the size guideline (decision 19,
     [PROCESS](cleanroom/PROCESS.md#the-loop)).
 20a. Close each delivered feature with its [feature architecture review](cleanroom/PROCESS.md#feature-architecture-review).
-21. The root alone lands on `main`, by fast-forward through `tools/lane/land.sh`
-    ([AGENTS](../AGENTS.md), [root](../.agents/skills/root/SKILL.md#landing)).
 22. Commits: one change, a title naming its area that says what is true afterwards, its kind
     last ([lane](../.agents/skills/lane/SKILL.md#commit-rules)).
-23. ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the-rom-bundles-and-the-cipher)).

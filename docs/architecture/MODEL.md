@@ -1,10 +1,8 @@
 # The behaviour model
 
-This note sets the shape of the engine's game code. Current implementation follows decisions
-32 and 33: indexed production replay replaces separate acceptance executors, and missing
-behaviour stays unsupported. Earlier decision text is retained as the decision record; where
-32 or 33 supersedes it, the current rule is the later decision. Its changes to ARCHITECTURE and PRINCIPLES are
-made there, and where they disagree this note wins. It follows Jim's decisions, recorded in §1.
+This note sets the shape of the engine's game code and records Jim's decisions (§1). Where it
+and another project document disagree, this note wins; where a later decision supersedes an
+earlier one, the later one rules.
 
 ## 1. The goal, and what is exact
 
@@ -22,7 +20,7 @@ Jim's decisions, 2026-11-06:
    shape.
 3. **Uncompared leftovers.** Hardware leftovers that no game rule reads and no player sees, such
    as DMA registers after a transfer, are not compared. They leave the State and the decoder and
-   are listed by name in §11.6 of ARCHITECTURE.
+   are listed by name in [ARCHITECTURE §11](ARCHITECTURE.md#11-the-engine--oracle-comparison-contract).
 
 Jim's decisions, 2026-11-07:
 
@@ -30,77 +28,62 @@ Jim's decisions, 2026-11-07:
    and the rest of the game's content get a format of our own that names things by what they
    are: a pose by its parts (body, action, aim, gun), not by the original's pose id. An importer
    at the edge reads the ROM's layout once and writes our format; it is the only code that knows
-   that layout. The clean room defining a new layout is desirable. Loading assets is part of
-   rebuilding the game; reading them through the ROM's layout was a shortcut. The assets come
-   from the player's ROM and are never committed. The importer, which has to know the original,
-   is outside the clean room. The format and its importer: [assets.md](assets.md).
-5. **Size is counted in logical tokens, held on one weighted score of the model's logic.** The
-   game's data (the values of constants and statics, and imported assets) is reported beside the
-   logic, not counted against it (§4). So are type declarations: defining shapes is to be
-   promoted, not taxed. The score weighs each logic token by what the code's priorities make of
-   it, so that a lower score means better code, not churn: forms that hold no behaviour are
-   free, a function signature is half, a `true` or `false` is double (§4). An exhaustive lookup,
-   a table the compiler checks, is data like a constant's rows (Jim, 2026-11-11). Two quality
-   terms compose with those weights: depth (Q1), so nested decisions cost more than a flat
-   dispatch, and duplication, so a decision written twice costs more than one shared step
-   (Jim, 2026-11-11; §4).
-   Hard lints on the clean crates refuse what no weight can price: ceilings in the clean
-   room's clippy configuration (G5), an argument object (G6) and a module cycle (G7).
-   The integrator's bridge is reported apart and not counted against the model, which its
-   implementer didn't write (Jim, 2026-11-07).
+   that layout, and it sits outside the clean room. The clean room defining a new layout is
+   desirable. The assets come from the player's ROM and are never committed. The format and its
+   importer: [assets.md](assets.md).
+5. **Size is counted in logical tokens, on one weighted score of the model's logic** (a
+   guideline, decision 19). The game's data (the values of constants and statics, and imported
+   assets) and type declarations are reported beside the logic, not counted against it:
+   defining shapes is to be promoted, not taxed. The score weighs each logic token by what the
+   code's priorities make of it, so that a lower score means better code, not churn: forms that
+   hold no behaviour are free, a function signature is half, a `true` or `false` is double. An
+   exhaustive lookup, a table the compiler checks, is data like a constant's rows (Jim,
+   2026-11-11). Two quality terms compose with those weights: depth (Q1), so nested decisions
+   cost more than a flat dispatch, and duplication, so a decision written twice costs more than
+   one shared step (Jim, 2026-11-11). Hard lints refuse what no weight can price (G5 to G7). The
+   integrator's bridge is reported apart and not counted against the model. The rules are §4's.
 6. **Code a modern developer would expect.** The engine and its assets take the shapes a developer
    of a 2D pixel-art game today expects: a character controller stepped at a fixed timestep,
    state machines whose moves are table rows, input as actions, tilemap collision with per-tile
    shapes, sprite sheets and animation clips, and events returned rather than side effects.
    Where the original's exact behaviour departs from those shapes, the shape stays and the
    departure is a named quirk. The clean room's version is in
-   [docs/cleanroom/DESIGN.md](../cleanroom/DESIGN.md).
+   [DESIGN](../cleanroom/DESIGN.md).
 7. **The budget comes from the spec's units.** A domain's size budget is k weighted tokens per
-   spec unit. k is defined as the old code's score per unit times 0.55, computed once, on the first
-   domain, with the official counters (`tools spec-units`, `tools size`), then frozen and tested
-   out of sample on the next domain (Jim, 2026-11-07: re-derived under this definition when the
-   official count replaced the study's hand estimate of 24). Each area's budget is k × its units,
-   and the old code no longer bounds it: it stays beside the budget for reference (Jim,
-   2026-11-10: "Drop the caps", since a cap at 70% of the old code gave new behaviour no budget).
-   A spec unit is one condition→outcome
-   rule ("arm"), plus a third for each term a data table makes the code interpret and a third for
-   each operator in an exact formula; table rows, parameters, enum values, prose and vectors
-   don't count. The budget moves by k per unit when the spec gains or loses behaviour, and is
-   frozen at each implementer export. The spec never states it: k, the areas, their old code and
-   its commit are in the `## Budget` section of the domain's decode notes, which `tools
-   spec-units` and `tools report` read (decision 10). The budget is an indicator, not a wall
-   (Jim, 2026-11-08):
-   the fit is score ÷ budget, by area and in total, and above 1 the excess costs in proportion to
-   how far over, as a penalty for comparing alternatives and rounds, never as a gate. We look for
-   a reasonable optimum of logic against specification, and stop compacting when a round's gain
+   spec unit, in every area: k × its units. k was computed once, on the first domain, as the old
+   code's score per unit times 0.55 with the official counters (`tools spec-units`, `tools
+   size`), then frozen (§4). The old code no longer bounds a budget; it stays beside it for
+   reference. A spec unit is one condition→outcome rule ("arm"), plus a third for each term a
+   data table makes the code interpret and a third for each operator in an exact formula; table
+   rows, parameters, enum values, prose and vectors don't count ([size-budget](size-budget.md)).
+   The budget moves by k per unit when the spec gains or loses behaviour, and is frozen at each
+   implementer export. The spec never states it: k, the areas, their old code and its commit are
+   in the `## Budget` section of the domain's decode notes, which `tools spec-units` and `tools
+   report` read (decision 10). The budget is an indicator, not a wall (Jim, 2026-11-08): the fit
+   is score ÷ budget, by area and in total, and above 1 the excess costs in proportion to how
+   far over, as a penalty for comparing alternatives and rounds, never as a gate. We look for a
+   reasonable optimum of logic against specification, and stop compacting when a round's gain
    in fit is small beside its cost and risk; a form that is worse only to get under the line is
-   not wanted. The old code is a guideline assessed after independent review (decision 19). The study is
-   [size-budget.md](size-budget.md); the weights are §4's, and the template convention that
-   makes the count exact is in §5.
-   Code in no area (state types, inputs, the frame's order, the catalogue) has no units of its
-   own, so it is held by the same k (Jim, 2026-11-11): `tools report` shows each domain's area
-   fit (the areas' score ÷ the budget) and its shared share (the code in no area ÷ the model)
-   apart, and a shared share over 25 % is a finding.
-8. **The repository shows only the current state** (Jim, 2026-11-08). Old code or docs kept only
-   for comparison are deleted; a comparison uses git history (the commit before a
-   deletion). When a clean model replaces engine code, the integrator deletes the
-   old code in the same lane, and a baseline cites the commit it was measured at. The engine code
-   of domains not yet rebuilt is current, and goes as each domain is replaced. Decision 33
-   supersedes this retention route under the reviewed replay transition.
-9. **Audio is rebuilt clean-room too** (Jim, 2026-11-08): a sequencer and a model of the sound
-   chip's DSP, specced in behaviour and verified on the oracle's audio stream, scheduled late; the
-   CPU side (which sound plays when) is modelled with the domains that trigger it. The plan of
-   domains is [domains.md](domains.md). Decision 23 settles how, with a modern mixer in place of
-   the DSP model and sound compared on its timing.
+   not wanted. Code in no area (state types, inputs, the frame's order, the catalogue) has no
+   units of its own, so it is held by the same k (Jim, 2026-11-11): `tools report` shows each
+   domain's area fit and its shared share (the code in no area ÷ the model) apart, and a shared
+   share over 25 % is a finding.
+8. **The repository shows only the current state** (Jim, 2026-11-08). Code or docs kept only
+   for comparison are deleted; a comparison uses git history (the commit before a deletion).
+   When a clean model replaces engine code, the integrator deletes the old code in the same
+   lane, and a baseline cites the commit it was measured at. Decision 33 governs removal of
+   previous gameplay.
+9. **Audio is rebuilt clean-room too** (Jim, 2026-11-08). The CPU side (which sound plays when)
+   is modelled with the domains that trigger it; decisions 23 and 37 settle how audio is built
+   and verified. The plan of domains is [domains.md](domains.md).
 10. **Implementers and independent reviewers are blind to size** (Jim, 2026-11-14).
     Scores, k, budgets, fit, old-code baselines and size verdicts cloud judgement of the model.
     The root counts after independent review; observers maintain the decode notes' Budget
     section. Implementer-facing material (the export, its design note and skill, the spec,
     vectors and every brief) states coding standards only: the lints and ceilings (L1, L2,
     G5 to G7), never measures. Independent reviewers receive the evidence their role needs,
-    with size material withheld (PROCESS, "Who sees what").
-    The budget lives in the Budget section of the decode notes
-    (`tools/cleanroom/move_budget.sh` moves a spec header's there), and
+    with size material withheld ([PROCESS](../cleanroom/PROCESS.md#who-sees-what)).
+    `tools/cleanroom/move_budget.sh` moves a spec header's budget into the decode notes, and
     `tools/cleanroom/score_scan.sh`, with its word list `score_words.txt`, refuses an export
     (`export.sh`), a brief (`scan_brief.sh`) or a trunk file an export would carry
     (`check_crate_rules.sh`) that mentions any of it.
@@ -112,24 +95,21 @@ Jim's decisions, 2026-11-07:
 
 Jim's decisions, 2026-11-09:
 
-12. **Widely used crates where they model the domain.** In Jim's words: "we should in general be
-    in favor of widely used crates... not restrained to only the standard library... When an
-    outside dependency can help us better model the domain we're building, then we should do
-    so." A crate is used when it is widely used and the standard choice for its job, std doesn't
-    cover that job, it helps model the domain, and it builds on the development machine. The
-    root approves each, at an exact version: `tools/cleanroom/allowed_deps.txt` lists those the
+12. **Widely used crates where they model the domain.** In Jim's words: "When an outside
+    dependency can help us better model the domain we're building, then we should do so." A
+    crate is used when it is widely used and the standard choice for its job, std doesn't cover
+    that job, it helps model the domain, and it builds on the development machine. The root
+    approves each, at an exact version: `tools/cleanroom/allowed_deps.txt` lists those the
     clean crates may use, with their kinds and features, and `code_check.sh` refuses the rest.
-    A crate whose build script Defender would block is used through a copy with the script's
-    output baked in (`tools/vendor_nobuild.sh`, the root manifest's `[patch.crates-io]`), which
-    CI holds to the real script's output (`tools/vendor_nobuild_check.sh`).
-13. **Vectors hold RAM observations and invented content only.** Jim chose "invented reactions
-    only" for the blocks spec, then widened it to every domain. A vector carries what the records
-    show of RAM and content made up in our own format to tell the rules apart, never the game's
-    content: no script, table, room's state list, screen, screen kind or cell look taken from the
-    ROM. A recorded case that needs real content becomes a harness case: its row and frame go in
-    the decode notes, the importer loads the content in the integrator's harness, and a
-    constructed vector over invented content carries the rule. Each domain's next observer pass
-    converts its recorded vectors that carry real content.
+    A crate whose build script Defender would block is used through a baked copy in `vendor/`
+    ([crates](../../crates/README.md)).
+13. **Vectors hold RAM observations and invented content only**, in every domain. A vector
+    carries what the records show of RAM and content made up in our own format to tell the rules
+    apart, never the game's content: no script, table, room's state list, screen, screen kind or
+    cell look taken from the ROM. A recorded case that needs real content becomes a harness case:
+    its row and frame go in the decode notes, the importer loads the content in the integrator's
+    replay, and a constructed vector over invented content carries the rule. Each domain's next
+    observer pass converts its recorded vectors that carry real content.
 
 Jim's decisions, 2026-11-11:
 
@@ -138,9 +118,8 @@ Jim's decisions, 2026-11-11:
     oracle, only the movie's inputs, and every compared cut and output byte matches. The first
     target is power-on through Ceres: the any% movie from power-on to frame 15,196, after the
     flight to Zebes and before the Landing Site loads (Jim, 2026-11-12); the Landing Site starts
-    the next milestone. A divergence is localised by sparse checkpoints over the whole run, then dense ones
-    over the range they narrow it to. The harnesses, the free-run gate's rows and lockstep serve
-    this milestone; the plan's waves are ordered toward it
+    the next milestone. A divergence is localised by sparse checkpoints over the whole run, then
+    dense ones over the range they narrow it to. The plan's waves are ordered toward it
     ([domains.md §4](domains.md#4-order)), and the README counts its frames that pass, from the
     milestone in [domains.toml](domains.toml) and the reviewed played runs.
 15. **A model stays total; content is checked at the edge.** A model doesn't refuse content or
@@ -154,12 +133,8 @@ Jim's decisions, 2026-11-11:
 
 Jim's decisions, 2026-11-12, on the review of the project's direction:
 
-17. **A round is judged by the domain free run.** The primary proof (§4) is a domain fed its own
-    State across a row, its neighbours from the records (`verify::harness::free`, platform work
-    V1). A round reports each row's held frames and first divergences beside the per-frame
-    harness, and the free run's floors (`crates/verify/src/harness/free_floors.txt`) never fall.
-    The per-frame harness stays as the localiser: it says where a model goes wrong, never that
-    it is right. Decision 32 supersedes this acceptance path at the reviewed replay cutover.
+17. **A round is judged by its replay over carried State**, not by a per-frame re-seeded
+    harness. Decision 32 sets how.
 18. **A ladder of rungs leads to the milestone.** The headline milestone (decision 14) stays the
     goal, but its stretch is mostly cinematics, front end, lag and the sound driver, so its
     number can't move for weeks. Rungs over shorter stretches of the same movie, Ceres first,
@@ -176,7 +151,8 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     whether to proceed. Proceeding above the guideline needs a recorded reason. Size alone
     neither holds a round nor starts a cut. The root decides cuts from independent findings
     and records why the expected improvement warrants the cost and risk; a cut brief carries
-    concrete shape outcomes, not numeric shaving.
+    concrete shape outcomes, not numeric shaving. A scope change goes to Jim with the numbers,
+    and the lane stops until he answers.
     Exactness, the clean-room barrier, Quality and every non-size gate remain mandatory.
 20. **A round's fixed cost is cut where automation already holds the barrier.** The export,
     the scans, the canaries and `code_check.sh` hold the clean room on every round. The
@@ -187,10 +163,10 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     stays on every round.
 21. **The engine's State holds the models' States.** A bridge that maps the engine's State to
     a model's and back, every frame, costs nearly as much as the model and is thrown away when
-    only this engine runs. A new domain's model owns its State, which the engine holds as is;
-    its bridge answers only the traits the model asks (such as `World`) and turns its outputs
-    into the intents and reports the engine reads. The existing bridges move to this as their
-    domain's next round touches them (platform work E5).
+    only this engine runs. A domain's model owns its State, which the engine holds as is; its
+    bridge answers only the traits the model asks (such as `World`) and turns its outputs into
+    the intents and reports the engine reads. A remaining bridge moves to this when its domain's
+    next round touches it.
 22. **Each rule is stated once.** A rule lives in one place: the decisions here, the round in
     PROCESS, the coding standards in DESIGN. Skills and briefs link to it rather than restating
     it. [RULES](../RULES.md) is the one-page index an agent reads first, with links to where
@@ -203,25 +179,24 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     format reaches our content; every sound has a typed id we own in a committed registry, and
     sm-json-data's names are labels only. A clean-room sequencer, specced in behaviour from the
     oracle's port logs and sound chip, plays them, and a modern mixer in `runtime` turns its
-    events into sound. What is compared exactly is timing: the game's sound requests and the
-    replies it reads through the ports, which change gameplay's timing (ARCHITECTURE D18), and
-    the sequencer's events per tick, which sound or note starts and stops when. The audio out
-    (interpolation, echo, the envelope's shape, the sample rate) is not compared and may be
-    modern, to be adjusted later: "if the spec cannot specify it then we should not restrict
-    ourselves to make it exact... the goal is that we should play the music at the right
-    timing"; LEGACY lists it. The driver program's bytes the boot uploads through the APU ports
-    are a hardware leftover no player sees (decision 3): not compared; the upload's time is a
-    named cost (T1).
+    events into sound. What is compared is timing (decision 37 sets where): the game's sound
+    requests and the replies it reads through the ports, which change gameplay's timing
+    (ARCHITECTURE D18), and the sequencer's events per tick. The audio out (interpolation, echo,
+    the envelope's shape, the sample rate) is not compared and may be modern: "if the spec
+    cannot specify it then we should not restrict ourselves to make it exact... the goal is that
+    we should play the music at the right timing"; LEGACY lists it. The driver program's bytes
+    the boot uploads through the APU ports are a hardware leftover no player sees (decision 3):
+    not compared; the upload's time is a named cost (T1).
 24. **The lowest rung is a limit, not a preference** (Jim, 2026-11-12). While a rung of the
     ladder (decision 18) is the slice, a session starts no round or lane outside its needs list:
     work spread to other parts would only game the measure the slice exists to give. The work
     that makes the checks trustworthy runs alongside, since the rung's number is read through it:
     a model's headline is its gain over a step that does nothing, and planted faults show each
     check can fail (decision 25).
-25. **A check is trusted once it is shown to fail** (Jim, 2026-11-12). Each domain's harness and
-    free run are run against planted one-line faults in its model, and a fault no floor, vector
-    or case catches is a finding against the harness or the rows. This runs in parallel with the
-    rung's work, not ahead of it.
+25. **A check is trusted once it is shown to fail** (Jim, 2026-11-12). Each domain's replay
+    cases are run against planted one-line faults in its model, and a fault no vector or case
+    catches is a finding against the cases. This runs in parallel with the rung's work, not
+    ahead of it.
 26. **The process freezes once the checks are shown to work** (Jim, 2026-11-12). When decision
     25's planted faults are caught on the rung's rows for the domains it needs, and the gain over
     the null model is the headline, the process freezes until the rung is reached: no new rule
@@ -230,25 +205,23 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     plan as an issue at its start and the review on it at its end, so a fresh root or a reviewer
     can resume or audit a session from the repository and its issues alone.
 28. **Off-hours tasks may run in parallel under root supervision** (Jim, 2026-11-13).
-    Independent structural tasks use the existing three-lane limit; the root supervises their
-    work, reviews the evidence and lands one change at a time (PROCESS, "Working hours").
+    Independent structural tasks run within PROCESS's lane limits; the root supervises their
+    work, reviews the evidence and lands one change at a time
+    ([PROCESS](../cleanroom/PROCESS.md#working-hours)).
 29. **A model's State is serialisable, and the engine holds it through serde** (Jim,
-    2026-11-13: "allow the clean state to be serialized"). A clean crate can't derive the
-    engine's codec, so each model's State derives serde's `Serialize` and `Deserialize`, which
-    the clean room already allows ([DESIGN](../cleanroom/DESIGN.md), "State a caller can
+    2026-11-13). A clean crate can't derive the engine's codec, so each model's State derives
+    serde's `Serialize` and `Deserialize` ([DESIGN](../cleanroom/DESIGN.md), "State a caller can
     hold"), and the engine holds it as `canonical::model::Model`, which encodes, decodes and
     diffs it by the codec's own rules. serde shows a type's shape only by reading a value, so
     the engine pins each State's shape and a test holds the pin to the shape traced from the
-    type: a State that changes shape fails it until the pin moves. This is how decision 21's
-    "the engine's State holds the models' States" is done.
-
+    type: a State that changes shape fails it until the pin moves. This is how decision 21 is
+    done.
 30. **CodeScene measures code health during review** (Jim, 2026-11-14). The root measures
     the reviewed code after independent source review and records the findings and their
     disposition alongside the existing evidence. Code Health supplements behavioural proof
     and the size assessment; it sets no score threshold. Implementers and independent
     reviewers receive concrete shape findings, with metric reports kept by the coordinator.
     The procedure is in [PROCESS](../cleanroom/PROCESS.md#coordinator-code-health-review).
-
 31. **Track bounded work beneath the milestone** (Jim, 2026-11-16). The milestone issue
     holds the goal and its measured progress. Work proceeds through smaller issues, each with
     one verifiable outcome, an owner, dependencies, current state and completion evidence.
@@ -256,30 +229,28 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     discovered prerequisite becomes visible work rather than an indefinite extension of the
     same issue. Closing prerequisite issues does not count as frames played alone. The
     procedure is in [PROCESS](../cleanroom/PROCESS.md#work-items).
-
-32. **One authoritative replay process, with explicit scopes** (Jim, 2026-11-16). The
-    target acceptance process is an index of short replay segments witnessing named behaviours,
-    alongside integrated and whole-movie cases. A behaviour catalogue entry names a rule, not a
-    test: one case may witness several behaviours, and a behaviour may need many cases.
-    Scoped and integrated cases use the same runner and admission, advance, comparison and
-    result semantics. Each case selects production responsibilities and invokes the same model
-    and adapter entry used by the engine, carrying their owned State from its admitted start
-    across the segment. No oracle next-state is copied into that owned State, and no verifier-only
-    implementation decides gameplay. Inputs and borrowed stimuli must not be computed from the
-    next expected outcome. Vectors and unit tests remain development checks; they do
-    not form an independent acceptance definition.
+32. **One authoritative replay process, with explicit scopes** (Jim, 2026-11-16). Acceptance
+    is an index of short replay segments witnessing named behaviours, alongside integrated and
+    whole-movie cases. A behaviour catalogue entry names a rule, not a test: one case may
+    witness several behaviours, and a behaviour may need many cases. Scoped and integrated
+    cases use the same runner and admission, advance, comparison and result semantics. Each
+    case selects production responsibilities and invokes the same model and adapter entry used
+    by the engine, carrying their owned State from its admitted start across the segment. No
+    oracle next-state is copied into that owned State, and no verifier-only implementation
+    decides gameplay. Inputs and borrowed stimuli must not be computed from the next expected
+    outcome. Vectors and unit tests remain development checks; they do not form an independent
+    acceptance definition.
     Each case declares its start, inputs, static content, borrowed neighbour stimuli, selected
-    responsibilities, compared fields and outputs, their expectations, and scope limits. If a changing producer is
-    required, the case includes the actual dependency or an explicitly admitted external input
-    and reports the limited claim. Scope selection must not silently omit relevant consumers
-    or claim full engine proof. A movement case can compare motion, pose, contact and intents
-    without pixel compositing: rendering is downstream, and changed movement changes image
-    inputs; such a case proves nothing about unchanged pixels. Integrated and end-to-end cases
-    still check cross-domain contracts, and the whole-movie milestone (decision 14) remains.
-    This supersedes decision 17's separate domain acceptance path and §4's harness progress
-    definition. It requires the same production paths selected by the case, not full-frame
-    rendering in every case. Implementation and the reviewed cutover are governed by
-    [PROCESS](../cleanroom/PROCESS.md#replay-transition); this decision does not claim they exist.
+    responsibilities, compared fields and outputs, their expectations, and scope limits. If a
+    changing producer is required, the case includes the actual dependency or an explicitly
+    admitted external input and reports the limited claim. Scope selection must not silently
+    omit relevant consumers or claim full engine proof. A movement case can compare motion,
+    pose, contact and intents without pixel compositing: rendering is downstream, and changed
+    movement changes image inputs; such a case proves nothing about unchanged pixels.
+    Integrated and end-to-end cases still check cross-domain contracts, and the whole-movie
+    milestone (decision 14) remains. It requires the same production paths selected by the
+    case, not full-frame rendering in every case. Changes to acceptance follow
+    [PROCESS](../cleanroom/PROCESS.md#replay-transition).
 
     Declared replay segments map through their named rules to relevant production model and
     adapter files, with lookup from case to code and code to cases (Jim, 2026-11-17). The
@@ -287,47 +258,32 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     reviewed requirements. File links are navigation metadata, not dynamic coverage or
     exhaustive impact analysis. Queries preserve Unsupported boundaries and coordinate
     meanings, and never change the complete indexed requirements for landing.
-
 33. **Remove previous gameplay owners; fail visibly where behaviour is missing** (Jim,
-    2026-11-16). The target engine runs the clean models without previous executable gameplay
-    as fallback. Inventory all previous behaviour owners, not just a `Legacy` enum: remove their
-    gameplay decision code, state and fallback routes, preserving source through git history.
-    Legitimate content, codecs, exact encoding, scheduling and rendering services may remain
-    after review of their responsibility; their location or age alone does not make them
-    gameplay to delete. Required missing behaviour returns explicit `Unsupported`, never a
-    silent no-op or old-gameplay fallback. This supersedes decision 8's retention of gameplay
-    until each domain is replaced and PROCESS's harness-only landing route. The one-time
-    [transition](../cleanroom/PROCESS.md#replay-transition) reviews replacement coverage and
-    ratchets before cutover; current mandatory gates remain until then. Clean-room roles,
-    root-only landing and lowest-rung prioritisation are unchanged. Approval of this direction
-    does not authorise unrelated rounds.
-
-34. **Prioritize reusable multi-frame coverage** (Jim, 2026-11-19). The next deliverable is
-    a reusable production lifecycle that carries complete State across consecutive frames,
-    proven by representative behaviour and continuation checks. The first retained-time
-    frame remains a required exactness witness: 359,922 independently recorded hardware
-    ticks and 2,295 ordered outputs. Its intermediate tick boundaries are diagnostics,
-    not development progress targets or a requirement to finish that witness before
-    building the reusable lifecycle. This changes the first-frame-first work priority,
-    not exactness, the lowest-rung scope, clean-room roles or current indexed obligations.
-    Additional scoped cases do not establish integrated dependency closure or played-alone
-    frames; borrowed inputs remain explicit and are not counted as modeled producers.
-
+    2026-11-16). The engine runs the clean models without previous executable gameplay as
+    fallback. Every previous behaviour owner's gameplay decision code, state and fallback
+    routes are removed, with source preserved in git history. Legitimate content, codecs, exact
+    encoding, scheduling and rendering services may remain after review of their
+    responsibility; their location or age alone does not make them gameplay to delete.
+    Required missing behaviour returns explicit `Unsupported`, never a silent no-op or
+    old-gameplay fallback. Clean-room roles, root-only landing and lowest-rung prioritisation
+    are unchanged, and this direction authorises no unrelated rounds.
+34. **Prioritize reusable multi-frame coverage** (Jim, 2026-11-19). Production carries
+    complete State across consecutive frames, proven by representative behaviour and
+    continuation checks. Additional scoped cases do not establish integrated dependency closure
+    or played-alone frames; borrowed inputs remain explicit and are not counted as modeled
+    producers. Decision 35 sets what the rungs compare.
 35. **The rungs compare at frame cuts** (Jim, 2026-11-23). Rungs M0–M2 compare the selected
     owners' State and the output bytes at each NMI cut (decision 1), with inputs from the
     movie only. Intra-frame bus-cycle order, absolute master-tick clocks and ordered CPU port
     callbacks belong to T1 and are not required until the headline milestone. A port reply
     that changes gameplay is compared on the frame it is read. A lag cut inside a rung is an
-    explicit borrowed input until T1. This supersedes decision 34's retained-time frame as a
-    required witness for the rungs.
-
+    explicit borrowed input until T1.
 36. **Behaviour work leads** (Jim, 2026-11-23). No new decision here and no new process
     tooling until the frames the engine plays alone from a rung's seed grow over successive
     sessions; work that an existing decision or work item already requires is not new. Each
     session review reports the behaviour share of its commit lines
     ([PROCESS](../cleanroom/PROCESS.md#working-hours)). The transition and prior-claim
     ledgers are pruned once the witness-shaped frame cases retire.
-
 37. **Audio is verified at its boundary with gameplay** (Jim, 2026-11-23). The rungs and the
     milestone compare gameplay State and the boundary between gameplay and audio: the sound
     requests each frame makes, and the audio replies the game reads back (a full queue, music
@@ -343,8 +299,8 @@ code is organised.
 
 ## 2. Layers
 
-The layers separate decisions, their receipts, exact encoding and ordering. Their current
-implementation is clean domain crates plus concrete `game::production` recipes:
+The layers separate decisions, their receipts, exact encoding and ordering. They are the clean
+domain crates plus concrete `game::production` recipes:
 
 | Responsibility | Holds | May name | Never names |
 | --- | --- | --- | --- |
@@ -354,8 +310,8 @@ implementation is clean domain crates plus concrete `game::production` recipes:
 | exact encoding | bytes from actual output intents | intents and encoding formats | gameplay decisions |
 | runtime | downstream composition and presentation | immutable display/audio outputs | writable production State |
 
-`model` decides, `exact` encodes, and production orders selected actual calls. Old `tick`,
-strand and NMI gameplay dispatchers are absent. A missing ordering/clock/consumer rule is an
+`model` decides, `exact` encodes, and production orders selected actual calls. There is no
+gameplay dispatcher outside the recipes: a missing ordering, clock or consumer rule is an
 explicit unsupported dependency, not a service reconstructed outside the clean room.
 
 ## 3. Behaviours are named, catalogued and switchable
@@ -367,7 +323,7 @@ one entry per spec entry, over the shared kinds in `types`. Each entry has:
 pub struct Behaviour {
     pub id: BehaviourId,          // enum variant, e.g. BehaviourId::WordwiseTopSpeed
     pub summary: &'static str,    // what the player sees
-    pub kind: Kind,               // Mechanic | Quirk | Timing (lag, loading) | Output
+    pub kind: Kind,               // Mechanic | Quirk | Timing (lag, loading) | Output | Encoding
     pub switch: Switch,           // Fixed | Toggle | Parameter
     pub checked: Checked,         // ByVectors | OriginalOnly
 }
@@ -382,108 +338,86 @@ the observer's `docs/behaviours/<domain>.decode.md`, which implementers never se
   write queue dropping a draw.
 - **Timing** covers slowdown and loading time.
 - **Output** covers what a step reports beyond its quantities, for its caller to act on (the
-  cells she touched, where the camera follows her from). The encoder's quirks, in `exact`, take a
-  kind of their own when that layer is rebuilt.
+  cells she touched, where the camera follows her from). **Encoding** covers the encoder's
+  quirks.
 
-**Switches are Fixed unless there is a named use (review R7).** Every Toggle is a second code path
-that needs its own tests. `SpeedCap` is a Toggle, as the proof of the thesis. Other entries stay
-Fixed until a consumer asks for them: a Map Rando option, respin, the QoL list. A `Parameter`, a
-value in `Rules`, is cheap and may stay.
+**Switches are Fixed unless there is a named use.** Every Toggle is a second code path that
+needs its own tests. Other entries stay Fixed until a consumer asks for them: a Map Rando
+option, respin, the QoL list. A `Parameter`, a value in `Rules`, is cheap and may stay.
 
-`Rules` (the admitted production profile, ARCHITECTURE §10) carries one value for each switchable behaviour.
-The Reference profile holds the vanilla values, and those are what the oracle checks. A different
-value is an adjusted game. The engine runs it the same way; it just isn't compared.
+`SpeedCap` is the thesis in code, a switchable quirk: `SpeedCap::Wordwise` is vanilla, the
+oracle-checked value (the original compares the pixel and subpixel words separately, so 2.1000
+counts as past a cap of 2.C000); `SpeedCap::Exact` is the corrected rule. A unit test shows the
+two differ on exactly that case, and the Reference profile stays exact.
+
+`Rules` (the admitted production profile, [ARCHITECTURE §10](ARCHITECTURE.md#10-options-and-profiles))
+carries one value for each switchable behaviour. The Reference profile holds the vanilla values,
+and those are what the oracle checks. A different value is an adjusted game. The engine runs it
+the same way; it just isn't compared.
 
 A behaviour's code reads its parameter from `Rules` and its vanilla data from the `data` tables,
-never from a constant buried in a routine. **The catalogue must have teeth:** the model's values come
-from `Rules` (the Reference profile holds the vanilla ones), and a test checks that every
-`BehaviourId` is exercised by at least one vector or recorded frame. Adding a behaviour means adding a catalogue entry, a
-rule value and its model code (a table row, a variant, an encoder rule). It never means editing a
-port.
+never from a constant buried in a routine. **The catalogue must have teeth:** a test checks that
+every `BehaviourId` is exercised by at least one vector or recorded frame. Adding a behaviour
+means adding a catalogue entry, a rule value and its model code (a table row, a variant, an
+encoder rule).
 
-## 4. The reference domain: Samus's motion
+## 4. Size: the score, its gates and its lints
 
-Movement owns `samus_movement::Samus` in production and calls its clean `step` entry.
-Selected frame inputs include controller edges, equipment, animation feedback, cinematic and
-elevator context, parity, pose content and collision geometry. Each changing dependency has
-an actual selected producer or an independently admitted borrowed source.
-
-```mermaid
-flowchart LR
-    A[Pick a movement rule] --> B[Load a short indexed case]
-    B --> C[Advance production movement]
-    C --> D[Compare independent oracle cuts]
-```
-
-Clean outputs include semantic pose, placement, contacts, directional travel and intents.
-A travel-only witness proves only its named travel outputs. Wider movement observations need
-no pixels. They prove no camera application, appearance, blocks, weapons, sound delivery or
-rendering unless those actual consumers are selected. Missing required policy is unsupported.
-
-Admission converts an independent observation once. Production carries complete State across
-the segment. Expected records only supply comparisons; they do not settle pose, restore State
-or manufacture stimuli. A mismatch ends the case. Separate reseeding harnesses and free-run
-restart loops are absent. Catalogue entries name rules, indexed cases witness them, and many
-cases may be required per rule. Unit vectors remain development checks; acceptance uses
-[the single production replay pipeline](../STATUS.md).
-
-### Measurement rules
+The score and k are frozen (decision 19). `tools size PATH...` (`verify::size`) and
+`tools/cleanroom/code_check.sh` apply these rules; after independent review the root records cut
+or proceed ([PROCESS](../cleanroom/PROCESS.md#coordinator-size-assessment)).
 
 - Size is measured **like for like**: the same counter on the old code and the new model. The
   bridge that wires the model into the engine is the integrator's, reported apart and kept small
-  by review, not counted against the model (Jim, 2026-11-07).
-- Size is counted in **logical tokens** (Jim, 2026-11-07), with `tools size PATH...`
-  (`verify::size`): every identifier, keyword, literal, lifetime and operator is one, and so is
-  each bracket pair. Comments, doc comments, layout and tests (`#[cfg(test)]` items, `tests`
-  directories and `tests.rs` files) are free. Lines rewarded cramming and punished types and
-  tables laid out one field to a line; tokens count what the code says.
-- **The rule is held on logic; data is reported beside it** (Jim, 2026-11-07). The values of
-  `const` and `static` items count as data: the game's tables and parameters, such as the pose
-  chart's rows and which sprite shows a pose. The old engine read those from the ROM's layout
-  and so never paid for them; loading them is part of rebuilding the game, so the new engine
-  stating them is not extra logic. A data row must state the game's data. A row that encodes a
-  decision the code would otherwise make is logic, and a review moves it back.
-- **A value that holds behaviour is logic** (Jim, 2026-11-07; rule L3 in the counter; refined by
-  the root, 2026-11-09). A constant's or static's value is data when it is built only from
-  literals (a minus on a literal included), other constants' names, paths to enum variants or
-  unit structs, references to data, struct and tuple-struct literals (with a `..BASE`), arrays
-  (`[a, b]`, `[a; N]`) and tuples, calls of a function or associated function whose every
-  argument is itself data by this rule, and ranges whose two ends are literals or paths
-  (`0x280..0x500`, `A..=B`). So a typed table is data: `Picture::new(0x009)`,
-  `Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None)`, `Count::new(99)`, `Held(Key::Jump)`,
-  `Some(Fixed(3))`; the constructor's body is counted as logic where it is defined. Anything else
-  makes the whole value logic: control flow (`if`, `match`, loops, `?`), a block, a closure, a
-  macro, a method call on a value (`Divisor::new(100).expect(..)`, `.unwrap()`, `.map(..)`), a
-  field or an index (`A.0`, `T[2]`), a turbofish, a cast, a range with an operator or a call at
-  either end (`0..A + 1`, `..16`), and every other operator but a minus on a literal
-  (`A | B << 4`, `-A`). Chart rows are data while they state the spec's chart;
-  L3 and review guard the line. `tools size` and `code_check.sh` apply the same rule, so the
-  import check and the counter agree.
-- **An exhaustive lookup is data** (Jim, 2026-11-11). A table the compiler checks for a missing
-  or repeated member is data as a constant's rows are: the arms of a `match` of two or more arms
-  with no guard, whose every pattern is `_` or keys joined by `|` (a path to a variant or a
-  constant, a literal, or a range of two literals; a tuple variant's fields may hold such
-  patterns in turn, `Outer::A(Inner::B) =>`, so long as nothing is bound) and whose every
-  value is data by L3 and names no local (`K::A => 3`, `0 | 1 => Picture::new(0x009)`), and
-  the rows of `enum_map!` on the same test (`K::A => Speed(2)`). The `match`, its scrutinee
-  and its braces, and the macro's name and brackets, stay logic. A guard, a block arm, a
-  binding, a local, a field, a method call or an operator in any arm keeps a decision there,
-  and the whole `match` stays logic. The rule sits beside L3 in `verify::size` (`lookups`),
-  and `code_check.sh`'s L2 exempts the same values.
-- **Declarations are not counted against the rule** (Jim, 2026-11-07): `tools size` reports the
-  tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as
-  types, on both sides. Defining shapes is what decision 6 asks for. A declaration holds no
-  behaviour; anything that does (an `impl`'s body, a function, a `match` that decides) is
-  logic. A constant's head
-  (`const NAME: T =` and its `;`) is a declaration too.
-- **The rule is held on one weighted score** (Jim, 2026-11-07). `tools size` prints it per file
-  and in total, with the plain logic, types and data columns beside it. Weights, on both sides:
+  by review, not counted against the model.
+- Size is counted in **logical tokens**: every identifier, keyword, literal, lifetime and
+  operator is one, and so is each bracket pair. Comments, doc comments, layout and tests
+  (`#[cfg(test)]` items, `tests` directories and `tests.rs` files) are free. Lines would reward
+  cramming and punish types and tables laid out one field to a line; tokens count what the code
+  says.
+- **The rule is held on logic; data is reported beside it.** The values of `const` and `static`
+  items count as data: the game's tables and parameters, such as the pose chart's rows and which
+  sprite shows a pose. Loading them is part of rebuilding the game, so stating them is not extra
+  logic. A data row must state the game's data. A row that encodes a decision the code would
+  otherwise make is logic, and a review moves it back.
+- **A value that holds behaviour is logic** (rule L3 in the counter). A constant's or static's
+  value is data when it is built only from literals (a minus on a literal included), other
+  constants' names, paths to enum variants or unit structs, references to data, struct and
+  tuple-struct literals (with a `..BASE`), arrays (`[a, b]`, `[a; N]`) and tuples, calls of a
+  function or associated function whose every argument is itself data by this rule, and ranges
+  whose two ends are literals or paths (`0x280..0x500`, `A..=B`). So a typed table is data:
+  `Picture::new(0x009)`, `Tile::new(Picture::new(0x00F), COLOURS_3, Flip::None)`,
+  `Count::new(99)`, `Held(Key::Jump)`, `Some(Fixed(3))`; the constructor's body is counted as
+  logic where it is defined. Anything else makes the whole value logic: control flow (`if`,
+  `match`, loops, `?`), a block, a closure, a macro, a method call on a value
+  (`Divisor::new(100).expect(..)`, `.unwrap()`, `.map(..)`), a field or an index (`A.0`,
+  `T[2]`), a turbofish, a cast, a range with an operator or a call at either end (`0..A + 1`,
+  `..16`), and every other operator but a minus on a literal (`A | B << 4`, `-A`). Chart rows
+  are data while they state the spec's chart; L3 and review guard the line. `tools size` and
+  `code_check.sh` apply the same rule, so the import check and the counter agree.
+- **An exhaustive lookup is data.** A table the compiler checks for a missing or repeated member
+  is data as a constant's rows are: the arms of a `match` of two or more arms with no guard,
+  whose every pattern is `_` or keys joined by `|` (a path to a variant or a constant, a
+  literal, or a range of two literals; a tuple variant's fields may hold such patterns in turn,
+  `Outer::A(Inner::B) =>`, so long as nothing is bound) and whose every value is data by L3 and
+  names no local (`K::A => 3`, `0 | 1 => Picture::new(0x009)`), and the rows of `enum_map!` on
+  the same test (`K::A => Speed(2)`). The `match`, its scrutinee and its braces, and the macro's
+  name and brackets, stay logic. A guard, a block arm, a binding, a local, a field, a method
+  call or an operator in any arm keeps a decision there, and the whole `match` stays logic. The
+  rule sits beside L3 in `verify::size` (`lookups`), and `code_check.sh`'s L2 exempts the same
+  values.
+- **Declarations are not counted against the rule:** `tools size` reports the tokens of
+  item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as types, on
+  both sides. A declaration holds no behaviour; anything that does (an `impl`'s body, a
+  function, a `match` that decides) is logic. A constant's head (`const NAME: T =` and its `;`)
+  is a declaration too.
+- **The rule is held on one weighted score.** `tools size` prints it per file and in total, with
+  the plain logic, types and data columns beside it. Weights, on both sides:
   - **0** for forms that hold no behaviour: `use` items, `mod` declarations, visibility (`pub`,
     `pub(crate)`, `pub(super)`: narrowing or widening it changes no behaviour, and
-    `redundant_pub_crate` keeps it plain), an `impl` header up to its body's `{` (no behaviour
-    lives there; an `impl Trait` in a type is the signature's), a trailing comma before a
-    closing bracket (rustfmt places it), and the `const` of a `const fn`
-    (`missing_const_for_fn` forces it).
+    `redundant_pub_crate` keeps it plain), an `impl` header up to its body's `{` (an `impl
+    Trait` in a type is the signature's), a trailing comma before a closing bracket (rustfmt
+    places it), and the `const` of a `const fn` (`missing_const_for_fn` forces it).
   - **0.5** for a function signature, from `fn` to its body's `{` (or its `;`), so a named step
     costs less than its body inlined twice. `too_many_arguments` and the bool-parameter lints
     keep signatures honest.
@@ -493,10 +427,9 @@ cases may be required per rule. Unit vectors remain development checks; acceptan
 
   A target is set under the same weights as the baseline it is compared with; a reweighted model
   against an old-weight target would be a rule change hidden in a tool change.
-- **Two quality terms compose with the weights** (Jim, 2026-11-07, on the quality-score review;
-  duplication, 2026-11-11). Size-like metrics (Halstead, ABC, cyclomatic, fan-out) track the
-  token count and would count size twice; these two measure what tokens miss. `tools size`
-  prints each term's part of the score in its own column, so every number stays auditable.
+- **Two quality terms compose with the weights.** Size-like metrics (Halstead, ABC, cyclomatic,
+  fan-out) track the token count and would count size twice; these two measure what tokens
+  miss. `tools size` prints each term's part of the score in its own column.
   - **Q1, depth.** A logic token weighs `1 + 0.25 × d` times its weight, `d` the number of blocks
     around it inside a function body that nest: the block of an `if`, an `else`, a loop or a
     let-else, a closure's body (a block or an expression) and a `match` arm written as a block
@@ -516,14 +449,12 @@ cases may be required per rule. Unit vectors remain development checks; acceptan
     add: a pair of parameter types other than `bool` in three or more signatures (a type is the
     first name it holds, primitives included), and a pair of argument expressions (call
     arguments or a struct literal's field values, an expression holding a call, a literal and
-    `..base` left out) at three or more sites. Weighed, they rewarded a bag of references and
-    taxed a shared helper; reported, they point a gate at values that travel together.
+    `..base` left out) at three or more sites. Weighed, they would reward a bag of references
+    and tax a shared helper; reported, they point a gate at values that travel together.
   - **The parameter count is not a term.** A struct of the arguments would game any count, and
     the call sites already price an interface's width.
-  - Measured on the old samus-movement code at `c7f927ab6` and its two cuts: 13,169.75, of which
-    depth is 828.5 and duplication 1,220.75 (clumps would add 337).
-- **Gates refuse what no weight can price** (Jim, 2026-11-07): hard lints on the clean crates,
-  ceilings that yield no score, so nothing is counted twice.
+- **Gates refuse what no weight can price:** hard lints on the clean crates, ceilings that yield
+  no score, so nothing is counted twice.
   - **G5, the clean room's clippy configuration** (`tools/cleanroom/clippy.toml`, which
     `export.sh` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
     clean crates): at most one `bool` parameter (`max-fn-params-bools = 1`), no block nested 5
@@ -536,19 +467,19 @@ cases may be required per rule. Unit vectors remain development checks; acceptan
     the argument lists of calls to that function, with no `impl` (no methods, no trait), and not
     a field's or a variant's type, a return type, a constant's or an alias's type or named in a
     trait. That is a bag of one call's arguments, which a parameter-count rule would reward;
-    the values are passed as they are, or the concept gets a role. It flags the bag rewrite's
-    `Go` and nothing in round 7 or the trunk.
+    the values are passed as they are, or the concept gets a role.
   - **G7, `layering`** (the same scan): a crate's modules name each other in one direction
     only. A file's module is its path; a reference is a path through `crate::`, `super::`,
     `self::` or a child module's name, `use` groups included, and any cycle among them is
     refused, a child naming its parent while the parent reads the child included. It stops
     passing a whole owner (`&Samus`) down to a helper module to shorten its signatures.
-- **k is computed under this score** (decision 7): the old code's score (13,169.75 for
-  samus-movement, at `c7f927ab6`) per unit of the official `tools spec-units` count (193.3), times
-  0.55, is 37.47, and k is 37.5, to one decimal. The decode notes' Budget section states the
-  value and its inputs (decision 10); it is then frozen, and every domain's budget uses it.
-- **Three lints close what no weight can** (Jim, 2026-11-07; L4, 2026-11-11), as
-  `tools/cleanroom/code_check.sh` tags on the clean crates:
+- **k is computed under this score** (decision 7): the old samus-movement code's score
+  (13,169.75 at `c7f927ab6`, of which depth is 828.5 and duplication 1,220.75) per unit of the
+  official `tools spec-units` count (193.3), times 0.55, is 37.47, and k is 37.5, to one
+  decimal. Every domain's budget uses it, stated in its decode notes' Budget section with its
+  inputs (decision 10).
+- **Three lints close what no weight can**, as `tools/cleanroom/code_check.sh` tags on the clean
+  crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
     `#[expect]` carries a `reason = "..."` (`allow_attributes_without_reason` is denied too).
     Outside test code, no attribute may expect, allow or warn a lint that `[workspace.lints]`
@@ -568,44 +499,31 @@ cases may be required per rule. Unit vectors remain development checks; acceptan
     field or a behaviour.
   - **L4, `variant-import`.** No `use` of an enum's variants outside test code (`use
     Kind::{A, B}`, `use Kind::*`, at any depth of a use tree): a variant is named through its
-    enum, so a reader sees which enum a bare name belongs to. A score weight would have priced
-    the import instead, and moved every fit for one domain's habit. Crates that held imports
-    when the rule came are listed in `tools/cleanroom/variant_import_warn.txt`: on the trunk
-    their sites are warnings, the import (`code_check.sh --import`) refuses them in every crate
-    an export holds from that crate's next implementer round on, and a listed crate with none
-    left is a finding, so its line goes with the round.
-
-The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
-no later rule reads and that never reaches output is not State, not decoded and not compared. Once
-the domain is wired in, the free-run gate's green pairs must hold, and the lockstep ratchet and
-localiser show any change against today's engine. Each change is either a fix or a gap.
-- The thesis holds in code. `SpeedCap` is a switchable quirk:
-  - `SpeedCap::Wordwise` is vanilla, the oracle-checked value. The original compares the pixel
-    and subpixel words separately, so 2.1000 counts as past a cap of 2.C000.
-  - `SpeedCap::Exact` is the corrected rule.
-  - A unit test shows the two differ on exactly that case, and the Reference profile stays
-    exact.
-- **Size is still counted** (decision 19). The decode notes' Budget section holds the
+    enum, so a reader sees which enum a bare name belongs to. Crates that still hold such
+    imports are listed in `tools/cleanroom/variant_import_warn.txt`: on the trunk their sites
+    are warnings, the import (`code_check.sh --import`) refuses them in every crate an export
+    holds, and a listed crate with none left is a finding, so its line goes with the round.
+- **The budget beside the score** (decision 19). The decode notes' Budget section holds the
   baseline (the old code's tokens, by area, at a commit) and the budget. The budget is k ×
   units even where it exceeds the baseline: behaviour beyond the old code's scope grows its
-  budget. After independent review the root assesses the guideline and records cut or proceed
-  with the rationale (PROCESS, "Coordinator size assessment"). A scope change still goes to
-  Jim with the numbers, and the lane stops until he answers.
+  budget.
 
 ## 5. How the work is planned
 
 **By mechanism, not by divergence.** A piece of work builds or extends one general mechanism
-that covers a family of behaviours:
-- a rule table;
-- the instruction-list interpreter (`Program<F>`, which enemies have and PLMs need);
-- the collision sweep;
-- an encoder rule.
+that covers a family of behaviours: a rule table, the instruction-list interpreter
+(`Program<F>`, which enemies have and PLMs need), the collision sweep, an encoder rule. Indexed
+production replay is the acceptance check; first differing observations identify *which
+behaviour* is wrong. They don't decide *what code to write*. The order of the work is
+[domains.md §4](domains.md#4-order).
 
-Indexed production replay is the acceptance check; first differing observations identify
-*which behaviour* is wrong. They don't decide *what code to write*.
+**A domain is a unit that can be verified on its own.** Its boundary is one the player sees:
+where the original splits one player-visible behaviour across systems (motion and pose
+selection), the domain spans both. A stand-in that answers from the oracle copies what it
+touches, so it is unverified; a domain that needs one merges with what it stands in for.
 
-**The round**, its steps, roles and who sees what, is [PROCESS](../cleanroom/PROCESS.md): the
-single source of truth for the order of the work. This section holds the rules a round relies on.
+**The round**, its steps, roles and who sees what, is [PROCESS](../cleanroom/PROCESS.md). This
+section holds the rules a round relies on.
 
 **What counts as a leak (Jim, 2026-11-07).** Structure leaks; perceivable quantities don't.
 - **Allowed:** quantities a player can perceive or measure (positions, speeds, timers, counts) and
@@ -614,84 +532,76 @@ single source of truth for the order of the work. This section holds the rules a
   modes; its command and result words; enum orders that match its RAM codes; how its tables are
   indexed; its routine and variable names; and its addresses, in any form.
 
-**An adversary gates the clean room (Jim, 2026-11-07).** An adversary agent reads both the original
-and everything an implementer will see, and tries to prove a leak. It succeeds by finding one. It
-gates a domain's first spec and a spec delta that adds a mechanism (§1 decision 20), and every
-round before it merges. A leak it finds stops the work until it is removed; a reduced leak is not
-a fixed one.
+**An adversary gates the clean room (Jim, 2026-11-07).** An adversary reads both the original
+and everything an implementer will see, and tries to prove a leak; it succeeds by finding one.
+It gates when decision 20 says. A leak it finds stops the work until it is removed; a reduced
+leak is not a fixed one.
 
-**The clean room is enforced by construction, not by trust (Jim, 2026-11-07).** Every leak in the
-pilot came from implementers having the whole repository and being trusted not to open files. A
-sparse checkout is not enough: every worktree shares one object store and every ref, and nothing on
-disk or on the web is out of reach. So:
-- **The implementer works in an export,** not a worktree. It is a fresh repository built by
-  `git archive` from an allowlist (`tools/cleanroom/allowlist.txt`: the clean crates, the clean room's design
-  [docs/cleanroom/DESIGN.md](../cleanroom/DESIGN.md), the domain's
-  spec and vectors, the implementer skill). It has no history, no other refs, no remote and no
-  alternates, and lives outside the project's directories. Results come back as patches, applied by
-  the integrator.
-- **Canaries prove what was read.** Unique tokens are planted in every forbidden source (the bank-log
-  copies, the decode notes, `verify`'s address files, the old code). The implementer's transcript and
-  commits are searched for them after each lane. A canary found is a breach.
+**The clean room is enforced by construction, not by trust (Jim, 2026-11-07).** Every worktree
+shares one object store and every ref, so a sparse checkout is not enough. So:
+- **The implementer works in an export,** not a worktree: a fresh repository built by
+  `tools/cleanroom/export.sh` with `git archive` from an allowlist
+  (`tools/cleanroom/allowlist.txt`: the clean crates, [DESIGN](../cleanroom/DESIGN.md), the
+  domain's spec and vectors, the implementer skill). It has no history, no other refs, no
+  remote and no alternates, and lives outside the project's directories. Results come back as
+  patches, applied by the import.
+- **Canaries prove what was read.** Unique tokens are planted in every forbidden source (the
+  bank-log copies, the decode notes, `verify`'s address files). `tools/cleanroom/canary.sh`
+  searches the implementer's transcript and commits for them after each lane. A canary found is
+  a breach.
 - **Scans run on everything that enters the export or the clean crates**, briefs and commit
-  messages included:
+  messages included (`tools/cleanroom/scan.sh`, `scan_brief.sh`):
   - addresses in every form: `$XX:XXXX`, split bank/offset pairs, `RomAddress`/`Source::bank`, and
     a hashed set of the original's known WRAM and ROM addresses;
   - names, against a lexicon drawn from the bank logs, with a reviewed allowlist of player vocabulary;
   - shape: enums whose variant order equals a RAM code's values, fields decoded as one word copied
     as-is;
-  - routine mirroring: the share of entries with a single routine as source (gated at 30 % or
-    less), and entry points that map to one routine.
+  - routine mirroring (`scan.sh --mirror`): the share of entries with a single routine as source
+    (gated at 30 % or less), and entry points that map to one routine.
 - **Briefs are saved and scanned before the spawn.** The root and the observer are relays too.
-- **The clean crates.** The model, the catalogue and the domain types an implementer needs (speeds,
-  poses as enums, tables as typed records) live in their own crates. Those crates depend on each
-  other, the standard library and the registry crates of `tools/cleanroom/allowed_deps.txt`
-  (§1 decision 12). The root declares the approved dependencies, from that list, in a clean
-  crate's `Cargo.toml`; implementer commits change its code. They contain **no address, bank,
-  RAM, ROM-code or original routine name anywhere, comments included.** `data` stays on the observer side and turns
-  ROM bytes into the clean types at the edge. `deny.toml` (`cargo deny check bans`) enforces the dependency rule and `tools/check_crate_rules.sh` the address rule, both in CI.
+- **The clean crates.** The model, the catalogue and the domain types an implementer needs live
+  in their own crates. They depend on each other, the standard library and the registry crates
+  of `tools/cleanroom/allowed_deps.txt` (decision 12); the root declares those in a clean
+  crate's `Cargo.toml`. They contain **no address, bank, RAM, ROM-code or original routine name
+  anywhere, comments included**; the scans refuse one. `data` stays on the observer side and
+  turns ROM bytes into the clean types at the edge. `deny.toml` holds the dependency rule and
+  `tools/check_crate_rules.sh` refuses SNES address literals in `game`, `runtime` and `app`,
+  both in CI.
 - **No addresses where an implementer can see them.** `Source:` lines live only in the observer's
-  `docs/behaviours/<domain>.decode.md`. The spec carries behaviour ids, rules, parameters and
-  vectors. The catalogue carries ids, summaries, kinds and switches.
-- **Implementers work in an export** (`tools/cleanroom/export.sh`, see above). It holds only the
-  clean crates, the clean room's design, the domain's spec and vectors, and the implementer
-  skill. There is nothing else in it to open, and `tools/cleanroom/canary.sh` checks afterwards what
-  was read.
-- **Only implementer commits change the clean crates.** A check rejects any commit to them that lacks
-  the trailer `Role: implementer`. An integrator who needs a model change asks for it.
+  decode notes. The spec carries behaviour ids, rules, parameters and vectors. The catalogue
+  carries ids, summaries, kinds and switches.
+- **Only implementer commits change the clean crates.** The import refuses any commit to them
+  that lacks the trailer `Role: implementer`. An integrator who needs a model change asks for it.
 
-**The observer works behaviour first (Jim, 2026-11-07).** An observer who reads routines writes a
-spec shaped like them: in the pilot, three entry points that were three routines, a command enum
-that was a RAM word, and a result type that existed only because the original split the work.
+**What the implementer may read:** the clean room's design, its domain's spec and vectors, the
+replay's first differences, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
+`verify/src/{decode,source}.rs` (they hold WRAM addresses), the old module it replaces, and
+git history.
+
+**The observer works behaviour first (Jim, 2026-11-07).** An observer who reads routines writes
+a spec shaped like them.
 - The spec describes **what the player sees** and what the oracle's records show over time, in
   player terms: speeds and positions as they change, how each input changes them, how the world
   stops them.
 - The original's code is consulted only to pin down **exact arithmetic and edge cases** that the
-  records can't settle. Its routine boundaries, call order, internal flags and RAM layout never shape
-  the spec.
-- A domain's boundary is a boundary the player sees. Where the original splits one player-visible
-  behaviour across systems (motion and pose selection), the domain spans both.
-- **The spec review is a gate.** An entry named after its one routine, an entry point that matches a
-  routine, or a type that mirrors a RAM word stops the spec until it is regrouped.
+  records can't settle. Its routine boundaries, call order, internal flags and RAM layout never
+  shape the spec.
+- **The spec review is a gate.** An entry named after its one routine, an entry point that
+  matches a routine, or a type that mirrors a RAM word stops the spec until it is regrouped.
 
-**What the implementer may read:** the clean room's design, its domain's spec and vectors, the
-localiser's output, `data`'s public types, and the model code. **Not:** the bank logs or the asm,
-`verify/src/{decode,source}.rs` (they hold WRAM addresses), the old module it replaces, and
-git history.
-
-**No fitting to the oracle (review R6).**
+**No fitting to the oracle.**
 - Every literal and every branch in the clean model traces to a `BehaviourId`, and values come from
   `Rules` or `data`.
 - The catalogue holds the spec's entries one for one, and a test in the clean crate holds it to
   the vectors: the observer adds an entry to the spec, the implementer to the catalogue.
 - No conditions on frame numbers, positions or room IDs that no spec entry names.
 
-**The spec template (review R4).**
+**The spec template.**
 - **Header:** the domain's scope, what it reads from other domains and what it leaves to them,
-  and its notation. No size: the baseline in tokens, the areas and the budget (R8) go in the
-  `## Budget` section of the decode notes (§1 decisions 7 and 10). The budget line there is the
+  and its notation. No size: the baseline in tokens, the areas and the budget go in the
+  `## Budget` section of the decode notes (decisions 7 and 10). The budget line there is the
   tool's, from the spec's units, with its split by area.
-- **Rules are arms** (§1 decision 7). Each rule is one bullet of the form
+- **Rules are arms** (decision 7). Each rule is one bullet of the form
   `<conditions> → <outcome> [vectors]`; only bullets with `→` count, so explanation, rewording or
   splitting a rule doesn't move the count. Two arms of one entry with the same outcome are one
   arm. An arm counts only if the vectors or recorded frames it cites exist. Each data table has a
@@ -700,109 +610,30 @@ git history.
   samples arms against the original: a padded arm stops the spec as a leak does.
 - **Each quantity:** its units, a domain type (an enum, never ROM codes), and **Read by**: the
   behaviour IDs that read it on a later frame, or "output" if it reaches bytes, or "none". "None"
-  means it isn't State (decision 3). A quantity that is State is one a caller can set to any
-  value the spec allows and read back, so the engine can carry, save and restore it; the spec
-  says so where the model's memory is listed. ROM codes belong in the decode notes.
+  means it isn't State, so it is not decoded or compared (decision 3). A quantity that is State
+  is one a caller can set to any value the spec allows and read back, so the engine can carry,
+  save and restore it; the spec says so where the model's memory is listed. ROM codes belong in
+  the decode notes.
 - **Each entry:** id, kind, summary, rule, params, switch, and **checked** (`oracle (V3, V4)` or
-  `original only`). Its source in the original goes in the observer's
-  `docs/behaviours/<domain>.decode.md`, never in the spec.
+  `original only`). Its source in the original goes in the decode notes, never in the spec.
 - **Not allowed:** headings named after routines; RAM addresses outside the Source line; step lists
   that follow a routine. Order is stated only in "Order that matters", and only where it is
   visible at a cut.
 
-**The RAM-shape report (review R2).** The size report lists, for each domain, the State fields whose
-decode is one WRAM word copied as-is. Each needs a one-line reason in the spec.
-
-**Address check (review R3).** `tools/check_crate_rules.sh` refuses SNES address literals in the
-code of `game`, `runtime` and `app`, and the clean room's scans (`tools/cleanroom/scan.sh`) refuse
-an address anywhere in the clean crates, comments included. Comments in the engine code not yet
-rebuilt still cite the bank logs; they leave with their domain's old code.
-
 **A brief names behaviours and the mechanism** by spec entry IDs (for example: "`BallAtRest`
 coasts like standing; add its row"). It carries no bank-log excerpt and no address, and no score,
-budget or size target (§1 decision 10): a size review's findings go in as shapes to change. A new free
-function named after a routine is a review stop.
-
-**Order** (each domain is proven against the oracle by indexed production witnesses, §4):
-1. **Groundwork:**
-   - the catalogue type and the `Rules` hook;
-   - the numeric quirks once, on the types (signed compare, the word-by-word cap, wrapping
-     moves);
-   - the layer check as a warning.
-2. **Reference domain:** Samus's motion (§4), with indexed production witnesses; collision is part of it
-   (her moves can't be checked without it). Jim, 2026-11-08: it is accepted near its budget after
-   round 12's cut pass (about 7,200 against 6,924, 4% over, substantiated by area: collision and
-   pose fit), rather than compacted further at the cost of worse forms. Then **the camera**
-   (scrolling): it reads her motion's outputs (`camera_from`, the skid), has old code to replace,
-   and is the first domain to test k out of sample.
-3. **Intents and the encoder:**
-   - `SpriteDraw` plus `exact::oam` (Samus, enemies);
-   - `TileWrite` plus `exact::tilemap`, which absorbs `plm/draw.rs`, the mapping in
-     `bg_graphics.rs` and `tilemap_dma.rs`;
-   - the HUD;
-   - the message box.
-4. **Actors:**
-   - `Program<F>` generalised from `enemy/instructions.rs`;
-   - the PLM lists decoded from the ROM, replacing `ItemStep` and the crumble's hand interpreter.
-5. **Leftovers:** remove the uncompared hardware leftovers (decision 3).
-6. **Features resume** in reshaped domains, as mechanisms: sound (C11), the line program (B6),
-   the remaining slice-0 differences.
+budget or size target (decision 10): a size review's findings go in as shapes to change. A new
+free function named after a routine is a review stop.
 
 ## 6. How progress is measured
 
 The headline remains whole-movie acceptance from power-on with movie inputs only, every
-compared cut and output byte matching. Scoped, integrated and whole-movie witnesses are
-reported separately. Borrowed facts are never counted as modeled producers.
+compared cut and output byte matching (decision 14). Scoped, integrated and whole-movie
+witnesses are reported separately. Borrowed facts are never counted as modeled producers.
 
 The replay index defines witness coverage and the committed baseline defines reviewed result,
 count and observation obligations. Every declared cut is accounted for. An expected unsupported
 boundary remains unsupported rather than a successful case. Missing data, empty comparisons
-and unreached outputs do not establish exactness.
-
-The transition ledger names replacement claims and reviewed losses. Former harness and
-lockstep counts are historical evidence. Meaningful planted faults establish whether a witness
-can distinguish incorrect behaviour. [STATUS](../STATUS.md) gives current commands and report
-sources. Coordinator assessments and clean-room rules remain unchanged.
-
-## 7. Lessons
-
-This note answers these lessons from the three attempts so far. The "review R1" to "R10" labels
-refer to an external review of this note (2026-11-06). Its text and the answers are in git history at
-commit `c1b3ea3`, `docs/architecture/MODEL-REVIEW.md`.
-
-**The earlier attempts.** Their rules are in ARCHITECTURE §16; these three apply here:
-- **The transpile is reference only (rule 1).** Attempt 1 transpiled the C, and attempt 2 spent
-  its effort decoupling that transpile. Attempt 3 (this one) kept the rule in name, but the bank
-  logs became the module structure. §1 and §2 make the rule structural, and the two roles (§5)
-  enforce it: the implementer never sees the original.
-- **Nothing exists only for comparison (rule 5).** Broken by the DMA leftovers; fixed by
-  decision 3.
-- **One short rules file, and ask Jim only goal trade-offs (rule 23).** Broken by 44 docs
-  (16,000 lines) and old skills next to the new code. The repository now holds only this
-  engine's docs and code; the history is in git.
-
-**From the first pilot (2026-11-07): the thesis's faulty assumptions.** The honest harness showed the
-first Samus-movement model was no better than a step that does nothing. These assumptions were wrong:
-
-| Assumption | Why it failed | Now |
-| --- | --- | --- |
-| Domains can be cut where the original's code is cut | Motion, pose selection and collision are one behaviour to the player; motion alone can't be checked | A domain is a unit that can be verified on its own (§4) |
-| A stand-in answering from the oracle is a valid test | Whatever it touches is copied, so it is unverified | Copied values are unverified; a domain needing a stand-in merges with what it stands in for |
-| Re-seeding each frame proves behaviour | Errors never accumulate; a model can look 99 % right per frame and still not be the game | The primary proof is a free run (§4) |
-| A match rate means something alone | 99 % was noise against a do-nothing baseline | Every number is reported beside the null model |
-| An observer reading code can write a spec not shaped like it | About 95 % of the spec was the original's structure renamed | The observer works behaviour first; an adversary gates the spec (§5) |
-| A clean room can run on trust | Every channel leaked | It is enforced by construction: an export, canaries, scans (§5) |
-
-**From attempt 3 (2026-11-06):**
-
-| Lesson | Answer |
-| --- | --- |
-| "Fill functions and never reorder" made every domain a routine port (41 % of `game`) | §1 decision 1: exact means cuts and bytes, and structure is the model's |
-| With no intent type, every drawing lane wrote bytes | §2: intents and one encoder; `model` may not name video types |
-| The thesis had no artifact in the code | §3: the catalogue and `Rules` switches |
-| Lanes chose work by the next differing field; tick counts rose while the model didn't | §5: plan by mechanism, with the oracle as the acceptance check; §6: measure behaviours first |
-| A ROM list was hand-coded as an enum (`ItemStep`) | ARCHITECTURE D13: interpreter mandatory |
-| Quirks were re-derived in each routine (16 local signed compares) | §4: once, on the type, named and switchable |
-| Each lane rediscovered context from the bank logs; fixed overhead was about half of each lane | §5: the observer writes it once, and briefs carry the excerpts |
-| Coordinator waves and hourly reviews measured the process, not the goal | the orchestrator holds the design; review happens once per finished mechanism, against §6 |
-| Agents read old docs and old code first and copied their shapes | old code and docs removed from the repository |
+and unreached outputs do not establish exactness. Meaningful planted faults establish whether a
+witness can distinguish incorrect behaviour. The transition ledger names replacement claims and
+reviewed losses. [STATUS](../STATUS.md) gives current commands and report sources.
