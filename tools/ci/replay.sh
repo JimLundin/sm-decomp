@@ -17,3 +17,4 @@ fi
 "${checker[@]}" replay check scenarios/replay/index.toml "${selection[@]}" \
   --baseline scenarios/replay/baseline.toml --cache "${SM_CACHE:-}" --rom "${SM_ROM:-rom/sm.smc}" \
   --native "${SM_AUDIO_NATIVE:-}" --bundle "${SM_BUNDLE:-}" "$@"
+# proof: a comment in a replay input
