@@ -3,14 +3,16 @@
 #   worktree.sh add <branch> <path> <base>  a worktree on a new branch, its target/ seeded
 #   worktree.sh remove <path>               the worktree, its target/ and its test-DLL folder
 #   worktree.sh seed                        builds the one seed at origin/main (the root, off-hours)
-# The seed is one worktree at $SM_SEED_DIR (default $TEMP/sm-seed), built the way lanes build:
+# The seed is one worktree at $SM_SEED_DIR (default $TEMP/sm-seed, $TEMP else $TMPDIR else /tmp),
+# built the way lanes build:
 # the gate, and the game and verify tests at opt-level 3. A new lane takes its build state, so its
 # first build compiles only what differs from the seed.
 #
 # The build state is hard-linked, so a lane costs no disk until it rebuilds something. Cargo and
 # rustc replace an artifact with a new file, which leaves the seed's untouched, but they rewrite
 # dep-info files (`*.d` and the fingerprints) in place, so the lane gets its own copies of those.
-# Where links fail (another volume), or with SM_SEED_COPY=1, everything is copied.
+# Where links fail (another volume, or a tmpfs /tmp on Linux: keep lanes and the seed on one disk
+# file system), or with SM_SEED_COPY=1, everything is copied.
 #
 # Cargo judges a workspace crate fresh when its outputs are newer than its sources. The lane's
 # tracked files are dated 2000-01-01, older than any build, and then the files that differ
@@ -20,13 +22,15 @@
 # what the other built.
 # Overrides: SM_SEED_DIR, SM_SEED_COPY, SM_TEST_DLL_DIR.
 set -euo pipefail
-seed=${SM_SEED_DIR:-$TEMP/sm-seed}
+scratch=${TEMP:-${TMPDIR:-/tmp}}
+seed=${SM_SEED_DIR:-$scratch/sm-seed}
 # The build state worth carrying: clippy's metadata, the clean-room clippy pass's, and the test
-# builds of tools/lane/test_dll.py. Release and verify-profile builds are a lane's own.
+# builds of tools/lane/test_dll.py on Windows (cargo test's are in debug). Release and
+# verify-profile builds are a lane's own.
 parts=(debug clean-clippy x86_64-pc-windows-gnu)
 
-# The test-DLL folder run_tests.sh uses for worktree $1.
-dll_dir() { echo "${SM_TEST_DLL_DIR:-$TEMP/sm-test-dll/$(basename "$1")-$(printf %s "$1" | cksum | cut -d' ' -f1)}"; }
+# The test-DLL folder run_tests.sh uses for worktree $1 on Windows.
+dll_dir() { echo "${SM_TEST_DLL_DIR:-$scratch/sm-test-dll/$(basename "$1")-$(printf %s "$1" | cksum | cut -d' ' -f1)}"; }
 
 # Links seed part $1 into target directory $2, with private copies of the files rewritten in
 # place; fails, leaving nothing, where the file system can't link.

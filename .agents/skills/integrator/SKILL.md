@@ -30,7 +30,9 @@ model needs a change, report it as a finding for the next round.
 5. **Remove replaced execution.** Delete redundant owners, State copies, fallbacks and tests in
    the same change. Retain independently useful content, codecs and exact encoding by responsibility.
 6. **Register and validate.** Update the report's model/provider mapping, run the source gate and
-   complete indexed replay baseline as [lane](../lane/SKILL.md#prove-it) specifies. The root regenerates
+   complete indexed replay baseline as [lane](../lane/SKILL.md#prove-it) specifies. Run crate
+   tests with `tools/lane/run_tests.sh`: on Linux that is `cargo test`; only on Windows does it
+   link the tests as DLLs. The root regenerates
    the README after independent review. Done when Quality and every required case hold.
 7. **Report.** Give the production interface, per-case outcomes and compared observations, null
    evidence, continuations, first divergences, fault proof, explicit coverage losses and missing
