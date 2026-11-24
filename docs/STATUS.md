@@ -81,7 +81,11 @@ them set within the slide and the visor lit as the slide ends, and only a fetch 
 the slide's end does that. Its first frame is the earliest such frame. The colours are
 compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. The
 game's frame counter, and so her parity, counts each NMI that reads the pad. A lag cut in play
-is still a named stop: the M0 row has none, so no record yet shows how it plays.
+is still a named stop: the M0 row has none, so no record yet shows how it plays. So is a seed
+in, or a cut entering, the lock in which the game holds her while room 1's elevator pad lowers
+her on arrival: her moves, her clip and her pose input don't run, and the lock and the pad's
+carry belong to the pad and arrival owners (domains B8 and F4), which aren't in the loop.
+`chain-any-0001-DF45` is refused at its seed for it.
 
 ```sh
 $TOOLS replay played chain-any-0003-DFD7 0 344 \

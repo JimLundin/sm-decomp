@@ -180,6 +180,9 @@ struct HudHeld {
 }
 
 fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, Outcome> {
+    if let Some(refused) = locked(seed)? {
+        return Err(refused);
+    }
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator || hud::time_stopped(seed)? {
         return Err(Outcome::Unsupported {
@@ -215,6 +218,26 @@ fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, 
         },
         counter: word(seed, source::NMI_FRAME_COUNTER_WORD)?,
     })
+}
+
+/// Samus's new-state handler, a bank $90 routine pointer: `$E8DC` while the game holds her
+/// locked, as the station's elevator pad lowers her into room 1 on arrival.
+const SAMUS_NEW_STATE_HANDLER: source::WramWord = source::WramWord {
+    name: "SAMUS_NEW_STATE_HANDLER",
+    offset: 0x0A44,
+};
+const LOCKED_HANDLER: u16 = 0xe8dc;
+
+/// While she is locked, her moves, her clip and her pose input don't run; the lock and the
+/// pad that carries her belong to the pad and arrival owners, which aren't in the loop.
+fn locked(wram: &[u8]) -> Result<Option<Outcome>, Outcome> {
+    Ok(
+        (word(wram, SAMUS_NEW_STATE_HANDLER)? == LOCKED_HANDLER).then(|| Outcome::Unsupported {
+            cut: None,
+            dependency: "her frame locked at the arrival (the pad and arrival owners, B8/F4)"
+                .into(),
+        }),
+    )
 }
 
 /// Where `room` sits on her map, as the HUD reads it.
@@ -610,6 +633,9 @@ impl<'a> Run<'a> {
         if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
             return Err(data_failure(None, "played pad alignment"));
         }
+        if let Some(refused) = locked(&current.wram)? {
+            return Err(refused);
+        }
         // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
         if self.state.doors == Doors::Play && !finished(current) {
             return Err(Outcome::Unsupported {
@@ -831,7 +857,6 @@ mod tests {
             ..Default::default()
         }
     }
-
 
     /// The M0 rung: Ceres's third room from its seed to the door, movie pads only.
     #[test]
