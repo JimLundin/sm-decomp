@@ -122,16 +122,16 @@ status = "in-progress"
 
 [[platform]]
 id = "V1"
-name = "Tooling: domain free run, RNG per consumer, cache tier"
+name = "Tooling: the played-alone runner, RNG per consumer, cache tier"
 wave = 0
 lanes = 3
-# The domain free run is verify::harness::free and the lean cache tier oracle_record::lean; the
-# RNG split remains.
+# The played-alone runner is verify::replay::played and the lean cache tier oracle_record::lean;
+# the RNG split remains.
 status = "in-progress"
 
 [[platform]]
 id = "V3"
-name = "The free-run gate and lockstep start Ceres's chain rows"
+name = "The played-alone run plays Ceres's chain rows back to back"
 wave = 0
 lanes = 1
 
