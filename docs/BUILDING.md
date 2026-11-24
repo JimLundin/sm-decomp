@@ -55,6 +55,97 @@ paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the na
 contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
 On a Windows host that blocks new executables, the hosted command above runs the same test.
 
+## Setting up on Linux
+
+The repository's tools run on Linux as they do on CI's ubuntu-24.04 runner. The Windows
+workarounds (the DLL test runner, the clean room's Python test command) don't apply there:
+`tools/lane/run_tests.sh` is `cargo test`. Only the clone and the GitHub issues carry over from
+another machine; everything below is set up once.
+
+**Tools.** Install rustup; the first `cargo` in the checkout installs the channel and
+components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C toolchain
+(`build-essential`), git, Python 3.13 as `python3.13` or `python3` (the tools call `python3`;
+`SM_PY` overrides it), the [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) as
+`claude` on `PATH`, `gh` logged in (`gh auth login`), `openssl` and `xz-utils`, and optionally
+`shellcheck` and `cargo-deny` 0.22.0, which the gate runs where it is installed.
+
+**Folders.** The tools keep their scratch, the lanes' worktrees and the seed under `$TEMP`
+(else `$TMPDIR`, else `/tmp`). `/tmp` is often a RAM file system and is cleared on reboot, and the
+seed's hard links need the seed and the lanes on one file system, so point `TEMP` at a disk
+folder in your shell's profile, with the record cache's folder beside it:
+
+```sh
+export TEMP=$HOME/scratch SM_CACHE=$HOME/scratch/collab/ci-cache/rows
+mkdir -p "$TEMP/collab"
+```
+
+**The ROM** goes at `rom/sm.smc` (above; `sha1sum rom/sm.smc` checks it).
+
+**The record cache** is CI's, rebuilt from the encrypted asset that `CACHE_ASSET` and
+`CACHE_SHA256` pin in `.github/workflows/verify.yml`, with a key made from the ROM. It lives at
+`$SM_CACHE`, outside `/tmp`, so it survives a reboot; rebuild it when the pin changes:
+
+```sh
+asset=$(sed -n 's/^ *CACHE_ASSET: //p' .github/workflows/verify.yml | head -1)
+sum=$(sed -n 's/^ *CACHE_SHA256: //p' .github/workflows/verify.yml | head -1)
+curl -fL --retry 8 -o "$TEMP/$asset" "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$asset"
+echo "$sum  $TEMP/$asset" | sha256sum --check
+SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
+export SM_SEED_PASSPHRASE
+mkdir -p "$SM_CACHE"
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
+  -in "$TEMP/$asset" | tar -xJ -C "$SM_CACHE"
+rm "$TEMP/$asset"
+```
+
+The fixtures some indexed cases also read (`SM_AUDIO_NATIVE` and the rest) come the same way
+from the `tools/ci/fetch_*.sh` scripts that `verify.yml` runs, each given the ROM and a folder.
+
+**The seed** is the warm build new lanes start from: `bash tools/lane/worktree.sh seed` once, and
+again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
+
+**The clean room.** `tools/cleanroom/export.sh` writes exports under `$CLEANROOM_ROOT` (default
+`~/cleanroom`), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. Off Windows
+the launch denies the session every place beside the export's path, the home around the exports'
+root included, and empties its environment; its header says what it denies and why. The session
+needs an API key: `ANTHROPIC_API_KEY` in the environment, an `apiKeyHelper` in
+`~/.claude/settings.json` that names absolute paths, or `CLEANROOM_AUTH`.
+
+### First run on the box
+
+1. `bash tools/lane/gate.sh` prints `GATE OK`, and `bash tools/lane/self_tests.sh` (all of them,
+   with no base) prints `SELF TESTS OK`. It includes `launch_config_test.sh`, which checks the
+   launch's Linux rules without a session.
+2. The played runs reproduce `scenarios/replay/played.toml`: each prints one `PLAYED_ALONE` line,
+   whose cuts held and stop match its run's `held` and `stop`. Where `tools/lane/played.sh` is on
+   main it runs them; else this loop, as CI's `played` target does:
+
+   ```sh
+   cargo build --locked --profile verify -p tools
+   awk -F' = ' '/^row = /{gsub(/"/,"",$2); r=$2} /^start = /{s=$2} /^end = /{print r, s, $2}' \
+     scenarios/replay/played.toml | while read -r row start end; do
+     target/verify/tools replay played "$row" "$start" "$end" --cache "$SM_CACHE" \
+       --rom rom/sm.smc --lock scenarios/locks/lsnes.toml </dev/null
+   done
+   ```
+
+3. The launch probe and the canary ([launch.sh](../tools/cleanroom/launch.sh)'s header):
+
+   ```sh
+   bash tools/cleanroom/canary.sh plant
+   CLEANROOM_ALLOW_MISSING=1 bash tools/cleanroom/export.sh launch-probe
+   t=~/.cleanroom/transcripts/probe.jsonl
+   CLEANROOM_DRY_RUN=1 bash tools/cleanroom/launch.sh --probe ~/cleanroom/launch-probe "$t"
+   bash tools/cleanroom/launch.sh --probe ~/cleanroom/launch-probe "$t"
+   bash tools/cleanroom/canary.sh check "$t" ~/cleanroom/launch-probe
+   rm -rf ~/cleanroom/launch-probe
+   ```
+
+   The dry run writes the lane record and stops: read its `settings.json` deny list and
+   `env.txt`. The probe passes when it prints `LAUNCH OK launch-probe`, the transcript shows
+   every CHECK refused and every TASK done (TASK 7's runner ends `vector_runner: all targets
+   passed`), and the canary check prints `CANARY CLEAN`.
+
 ## The README and the report
 
 The README is generated from the tree:
