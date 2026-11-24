@@ -1,10 +1,11 @@
 """Run a clean-room export's tests, the one Python a confined implementer may run.
 
+It runs each lib and integration-test target of the clean crates (those under `crates/clean/`)
+in the current directory's workspace. Off Windows that is `cargo test` per target. On Windows
 Defender quarantines freshly linked test `.exe` files but loads DLLs, so `cargo test` cannot
-run in a clean-room session on Windows. This links each lib and integration-test target of the
-clean crates (those under `crates/clean/`) in the current directory's workspace as a DLL and
-calls its libtest `main` in a child interpreter, as tools/lane/test_dll.py does; libtest reads
-its arguments from `GetCommandLineW`, so the child rewrites that buffer first.
+run in a clean-room session there: this links each target as a DLL and calls its libtest `main`
+in a child interpreter, as tools/lane/test_dll.py does; libtest reads its arguments from
+`GetCommandLineW`, so the child rewrites that buffer first.
 
 Before the tests it runs the shape rules import.sh refuses a crate for (shape_scan.awk: G6, a
 struct that only carries one call's arguments, and G7, a cycle of module references) over each
@@ -13,7 +14,8 @@ findings name only their files, lines and modules.
 
 It takes no arguments: launch.sh copies it and the two scan scripts it runs into the lane
 directory, out of the session's reach, writes beside them the absolute path of the awk it runs
-(awk.path), allows exactly `<python> -I <that copy>` and checks their sha256 after the session.
+(awk.path), allows exactly `<python> -I <that copy>` (off Windows, a script that runs it) and
+checks their sha256 after the session.
 """
 
 import json
@@ -127,9 +129,13 @@ def shape_failures(awk: str, crates: list[Path]) -> list[str]:
 
 
 def run_target(cargo: str, workspace: Path, out: Path, target: tuple[str, str, str, Path]) -> str | None:
-    """Links one test target as a DLL and runs it; its failed entry, if it fails."""
+    """Runs one test target, on Windows linked as a DLL; its failed entry, if it fails."""
     crate, kind, name, root = target
     label = f"{crate} {kind} {name}".strip()
+    if os.name != "nt":
+        test = [cargo, "test", "-p", crate, kind, *([name] if name else [])]
+        print(f"     Running {label}", flush=True)
+        return label if subprocess.run(test, cwd=workspace).returncode != 0 else None
     dll = out / f"{crate}-{name or 'lib'}.dll"
     build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
     build += [name] if name else []
@@ -164,8 +170,6 @@ def run(cargo: str, workspace: Path) -> int:
 def main() -> int:
     if len(sys.argv) > 1:
         sys.exit("vector_runner: takes no arguments")
-    if os.name != "nt":
-        sys.exit("vector_runner: for Windows; run cargo test instead")
     cargo = shutil.which("cargo")
     if cargo is None:
         sys.exit("vector_runner: no cargo on PATH")

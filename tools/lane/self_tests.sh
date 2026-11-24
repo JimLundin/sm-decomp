@@ -13,7 +13,7 @@ changed() { [ -z "$base" ] || ! git diff --quiet "$base...HEAD" -- "$@"; }
 
 tests=()
 if changed tools/cleanroom tools/lane; then
-  tests=(tools/cleanroom/launch_test.sh tools/cleanroom/code_check_test.sh
+  tests=(tools/cleanroom/launch_test.sh tools/cleanroom/launch_config_test.sh tools/cleanroom/code_check_test.sh
     tools/cleanroom/canary_test.sh tools/cleanroom/score_scan_test.sh tools/lane/squash_test.sh
     tools/lane/worktree_test.sh tools/lane/gate_test.sh tools/cleanroom/blind_copy_test.sh
     tools/cleanroom/adjusted_vectors_test.sh)
