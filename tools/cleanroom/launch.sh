@@ -19,9 +19,9 @@
 #   - makes a lane directory, $CLEANROOM_PRIVATE/lanes/<timestamp>/ (default ~/.cleanroom), outside
 #     every repository, holding: brief.txt (the brief, ending with the test command),
 #     settings.json (the permission configuration), vector_runner.py, the shape scan it runs
-#     (strip_rust.awk, shape_scan.awk) and their vector_runner.sha256 (the test runner), argv.txt
-#     and env.txt (the exact launch), home/ (the session's empty home and config directory) and
-#     tmp/ (its TEMP);
+#     (strip_rust.awk, shape_scan.awk), the awk it runs them with (awk.path) and their
+#     vector_runner.sha256 (the test runner), argv.txt and env.txt (the exact launch), home/ (the
+#     session's empty home and config directory) and tmp/ (its TEMP);
 #   - runs the CLI with an emptied environment, HOME, USERPROFILE and CLAUDE_CONFIG_DIR pointing at
 #     home/, so no user settings, memory, CLAUDE.md, plugins, skills, hooks, MCP servers or session
 #     history exist for it to load; and with --bare, --restricted, --setting-sources '' and
@@ -35,8 +35,9 @@
 #     `cargo test` links; the runner links the clean crates' tests as DLLs and takes no
 #     arguments), and explicit deny rules for everything the adversary named;
 #   - writes the stream-json transcript to TRANSCRIPT and a copy into the lane directory, then
-#     exits 1 if settings.json, vector_runner.py or its shape scan changed during the session, or
-#     if canary.sh check finds a token or fingerprint in the transcript or the export's history.
+#     exits 1 if settings.json, vector_runner.py, its shape scan or its awk.path changed during the
+#     session, or if canary.sh check finds a token or fingerprint in the transcript or the
+#     export's history.
 #
 # A commit message passes the deny rules when each paragraph is its own `-m` and holds none of
 # ; & | < > $ ~ `..` ` /` `:/` (`git commit -m "Subject" -m "Body." -m "Role: implementer"`).
@@ -126,8 +127,12 @@ cp "$brief" "$lane/brief.txt"
 # quotes (a forward-slash path would meet the `:/` and ` /` deny rules below, which win).
 python=${CLEANROOM_PY:-${LOCALAPPDATA:-$USERPROFILE/AppData/Local}/sm-decomp-tools/python-3.13.7/python.exe}
 [ -f "$python" ] || die "no Python at $python; set CLEANROOM_PY"
-runner_files=(vector_runner.py strip_rust.awk shape_scan.awk)
-for f in "${runner_files[@]}"; do cp "$here/$f" "$lane/$f"; done
+runner_files=(vector_runner.py strip_rust.awk shape_scan.awk awk.path)
+for f in "${runner_files[@]:0:3}"; do cp "$here/$f" "$lane/$f"; done
+# The awk the runner runs, by absolute path as the interpreter is: a bare `awk` on Windows
+# resolves in the export first.
+awk_bin=$(command -v awk) || die "no awk on PATH for the runner's shape scan"
+cygpath -w "$awk_bin" >"$lane/awk.path"
 runner_digest() { (cd "$lane" && sha256sum "${runner_files[@]}"); }
 runner_digest >"$lane/vector_runner.sha256"
 runner_sum=$(cat "$lane/vector_runner.sha256")
@@ -298,7 +303,7 @@ echo "launch: session exited $status; transcript $transcript ($(wc -l <"$transcr
 
 # The configuration is as it was launched.
 [ "$(sha256sum <"$settings")" = "$settings_sum" ] || { echo "LAUNCH BREACH $domain: $settings changed during the session" >&2; exit 1; }
-[ "$(runner_digest)" = "$runner_sum" ] || { echo "LAUNCH BREACH $domain: the runner or its shape scan in $lane changed during the session" >&2; exit 1; }
+[ "$(runner_digest)" = "$runner_sum" ] || { echo "LAUNCH BREACH $domain: the runner, its shape scan or its awk.path in $lane changed during the session" >&2; exit 1; }
 
 # 4. The canary check, on the transcript and on the export's history.
 if ! bash "$here/canary.sh" check "$transcript" "$export_dir"; then

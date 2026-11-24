@@ -36,23 +36,9 @@ else
   grep -q ': variant-import: listed in ' <<<"$out" || fail "a stale list line not named: $out"
 fi
 
-# The vector runner, the confined implementer's one command, refuses each shape fixture with the
-# tag code_check.sh names, and passes the clean one.
-shapes=0
-for dir in "$here"/code_check_fixtures/clean/ "$here"/code_check_fixtures/{argument-object,layering}__*/; do
-  name=$(basename "$dir"); tag=${name%%__*}; shapes=$((shapes + 1))
-  out=$(cd "$here" && "${SM_PY:-python3}" -I -c '
-import shutil, sys
-from pathlib import Path
-sys.path.insert(0, ".")
-from vector_runner import shape_findings
-print("\n".join(shape_findings(shutil.which("awk"), sorted(Path(sys.argv[1]).glob("crates/clean/*/")))))
-' "$dir" 2>&1) || { fail "the runner's shape scan did not run on $name: $out"; continue; }
-  if [ "$name" = clean ]; then
-    [ -z "$out" ] || fail "the runner's shape scan refused the clean fixture: $out"
-  else
-    grep -q ": $tag: " <<<"$out" || fail "the runner's shape scan did not name $tag in $name: $out"
-  fi
-done
-[ "$bad" -eq 0 ] && echo "CODE CHECK FIXTURES OK: clean passes, $n forbidden fixtures each named; L4's warn list holds; the runner's shape scan names $((shapes - 1)) shape fixtures"
+# The vector runner, the confined implementer's one command: a shape fixture fails its run with
+# the tag code_check.sh names and the clean one passes; an awk not pinned outside the export
+# refuses before any test.
+out=$("${SM_PY:-python3}" -I "$here/vector_runner_test.py" 2>&1) || fail "the vector runner's wiring: $out"
+[ "$bad" -eq 0 ] && echo "CODE CHECK FIXTURES OK: clean passes, $n forbidden fixtures each named; L4's warn list holds; the vector runner fails on a shape finding and refuses an unpinned awk"
 exit $bad

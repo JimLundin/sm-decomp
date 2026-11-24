@@ -83,57 +83,82 @@ class Completion(unittest.TestCase):
         # Only preflight dependencies are faked; the launch and completion scripts are real.
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
-            tools = root / "tools"
-            tools.mkdir()
-            export = root / "export"
-            export.mkdir()
-            for name in ["launch.sh", "launch_stream.py"]:
-                shutil.copyfile(HERE / name, tools / name)
-            for name in ["vector_runner.py", "strip_rust.awk", "shape_scan.awk"]:
-                (tools / name).write_text("# Invented runner\n", encoding="utf-8")
-            (tools / "lib.sh").write_text(
-                'die() { echo "$*" >&2; exit 1; }\n'
-                'git_isolated() { case "$2" in rev-list) echo invented-root ;; '
-                'ls-tree) echo crates/clean/demo/src/lib.rs ;; esac; }\n'
-                'model_dirs() { echo crates/clean/demo; }\n'
-                'domain_of() { echo demo; }\n'
-                'check_domain() { :; }\n'
-                'allowlist_section() { echo crates/clean/demo/; }\n',
-                encoding="utf-8", newline="\n",
-            )
-            (tools / "scan_brief.sh").write_text("exit 0\n", encoding="utf-8")
-            (tools / "canary.sh").write_text('echo checked >"$CLEANROOM_PRIVATE/canary-checked"\nexit 0\n', encoding="utf-8")
-            (root / "brief").write_text("Invented brief.\n", encoding="utf-8")
-            (root / "auth").write_text("", encoding="utf-8")
-            cli = root / ("fake.cmd" if os.name == "nt" else "fake.sh")
-            cli.write_text("@echo invented failure 1>&2\n@exit /b 7\n" if os.name == "nt" else "#!/bin/sh\necho invented failure >&2\nexit 7\n", encoding="utf-8", newline="\n")
-            cli.chmod(0o755)
-            env = os.environ.copy()
-            env.pop("FOUNDRY_LMS_TOKEN", None)
-            env.update(CLAUDE_BIN=pathlib.Path(sys.executable).as_posix() if os.name == "nt" else cli.as_posix(), CLEANROOM_PY=pathlib.Path(sys.executable).as_posix(),
-                       CLEANROOM_PRIVATE=(root / "private").as_posix(), CLEANROOM_AUTH=(root / "auth").as_posix(),
-                       CLEANROOM_COMPLETION_SECONDS="0.2")
-            env["USERPROFILE"] = root.as_posix()
-            if os.name != "nt":
-                # launch.sh's Windows path conversion is immaterial to the invented export.
-                binary = root / "bin"
-                binary.mkdir()
-                converter = binary / "cygpath"
-                converter.write_text('#!/bin/sh\nshift\nprintf "%s\\n" "$1"\n', encoding="utf-8")
-                converter.chmod(0o755)
-                env["PATH"] = str(binary) + os.pathsep + env["PATH"]
-            bash = shutil.which("bash")
-            if os.name == "nt":
-                bash = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe")
-            result = subprocess.run([bash, str(tools / "launch.sh"), str(export),
-                                     str(root / "brief"), str(root / "transcript")],
-                                    env=env, capture_output=True, timeout=40)
+            result = launch(root)
             self.assertNotEqual(result.returncode, 0)
             self.assertTrue((root / "private/canary-checked").exists(), result.stderr)
             lanes = list((root / "private/lanes").iterdir())
             self.assertEqual(len(lanes), 1)
             self.assertTrue((lanes[0] / "stderr.txt").read_bytes())
             self.assertEqual((lanes[0] / "transcript.jsonl").read_bytes(), (root / "transcript").read_bytes())
+
+    def test_a_runner_file_changed_in_the_session_is_a_breach(self):
+        # The session stands in for one that edits a runner file in the lane directory, the parent
+        # of its home.
+        for changed in [None, "shape_scan.awk", "awk.path"]:
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as directory:
+                root = pathlib.Path(directory)
+                edit = (f"with open(pathlib.Path(os.environ['USERPROFILE']).parent / {changed!r}, 'a') as f:\n"
+                        "    f.write('changed')\n") if changed else ""
+                result = launch(root, session=(
+                    "import os, pathlib, sys\n"
+                    "transcript = pathlib.Path(sys.argv[sys.argv.index('--transcript') + 1])\n"
+                    "transcript.write_text('', encoding='utf-8')\n" + edit))
+                # A breach stops the launch before the canary check; an unchanged lane passes it.
+                self.assertEqual(result.returncode, 1 if changed else 0, result.stderr)
+                self.assertEqual((root / "private/canary-checked").exists(), not changed, result.stderr)
+
+
+def launch(root, session=None):
+    """Runs the real launch.sh on an invented export in ROOT, its preflight dependencies faked.
+    SESSION, when given, is the Python that stands in for launch_stream.py and the CLI it runs."""
+    tools = root / "tools"
+    tools.mkdir()
+    export = root / "export"
+    export.mkdir()
+    for name in ["launch.sh", "launch_stream.py"]:
+        shutil.copyfile(HERE / name, tools / name)
+    if session is not None:
+        (tools / "launch_stream.py").write_text(session, encoding="utf-8", newline="\n")
+    for name in ["vector_runner.py", "strip_rust.awk", "shape_scan.awk"]:
+        (tools / name).write_text("# Invented runner\n", encoding="utf-8")
+    (tools / "lib.sh").write_text(
+        'die() { echo "$*" >&2; exit 1; }\n'
+        'git_isolated() { case "$2" in rev-list) echo invented-root ;; '
+        'ls-tree) echo crates/clean/demo/src/lib.rs ;; esac; }\n'
+        'model_dirs() { echo crates/clean/demo; }\n'
+        'domain_of() { echo demo; }\n'
+        'check_domain() { :; }\n'
+        'allowlist_section() { echo crates/clean/demo/; }\n',
+        encoding="utf-8", newline="\n",
+    )
+    (tools / "scan_brief.sh").write_text("exit 0\n", encoding="utf-8")
+    (tools / "canary.sh").write_text('echo checked >"$CLEANROOM_PRIVATE/canary-checked"\nexit 0\n', encoding="utf-8")
+    (root / "brief").write_text("Invented brief.\n", encoding="utf-8")
+    (root / "auth").write_text("", encoding="utf-8")
+    cli = root / ("fake.cmd" if os.name == "nt" else "fake.sh")
+    cli.write_text("@echo invented failure 1>&2\n@exit /b 7\n" if os.name == "nt" else "#!/bin/sh\necho invented failure >&2\nexit 7\n", encoding="utf-8", newline="\n")
+    cli.chmod(0o755)
+    env = os.environ.copy()
+    env.pop("FOUNDRY_LMS_TOKEN", None)
+    env.update(CLAUDE_BIN=pathlib.Path(sys.executable).as_posix() if os.name == "nt" else cli.as_posix(), CLEANROOM_PY=pathlib.Path(sys.executable).as_posix(),
+               CLEANROOM_PRIVATE=(root / "private").as_posix(), CLEANROOM_AUTH=(root / "auth").as_posix(),
+               CLEANROOM_COMPLETION_SECONDS="0.2")
+    env["USERPROFILE"] = root.as_posix()
+    if os.name != "nt":
+        # launch.sh's Windows path conversion is immaterial to the invented export.
+        binary = root / "bin"
+        binary.mkdir()
+        converter = binary / "cygpath"
+        converter.write_text('#!/bin/sh\nshift\nprintf "%s\\n" "$1"\n', encoding="utf-8")
+        converter.chmod(0o755)
+        env["PATH"] = str(binary) + os.pathsep + env["PATH"]
+    bash = shutil.which("bash")
+    if os.name == "nt":
+        bash = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe")
+    # A hang guard: a launch takes seconds alone but far longer beside a gate's builds.
+    return subprocess.run([bash, str(tools / "launch.sh"), str(export),
+                           str(root / "brief"), str(root / "transcript")],
+                          env=env, capture_output=True, timeout=180)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ python=${CLEANROOM_PY:-${LOCALAPPDATA:-$USERPROFILE/AppData/Local}/sm-decomp-too
 export CLEANROOM_BASH=$(cygpath -m "${CLEANROOM_BASH:-$(command -v bash)}")
 export CLEANROOM_GIT=$(cygpath -m "${CLEANROOM_GIT:-$(command -v git)}")
 export CLEANROOM_CARGO=$(cygpath -m "${CLEANROOM_CARGO:-$(command -v cargo)}")
+export CLEANROOM_AWK=$(cygpath -m "${CLEANROOM_AWK:-$(command -v awk)}")
 config=$("$python" -I "$here/responses_controller.py" "${probe[@]}" --prepare "$1" "$4" "$2" "$3")
 if [ "$prepare_only" = 1 ]; then printf '%s\n' "$config"; exit 0; fi
 status=0

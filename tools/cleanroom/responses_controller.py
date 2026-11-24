@@ -493,7 +493,7 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         (lane / part).mkdir()
     here = Path(__file__).resolve().parent
     paths = {}
-    for name in ("git", "cargo", "bash"):
+    for name in ("git", "cargo", "bash", "awk"):
         found = os.environ.get("CLEANROOM_" + name.upper()) or shutil.which(name)
         if found is None:
             raise Refused("missing operator executable")
@@ -586,10 +586,12 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
             raise Refused("blind copy contains unreachable objects")
     if not probe:
         operator([paths["bash"], str(here / "scan_brief.sh"), str(brief.resolve(strict=True))], here.parent.parent)
-    # The runner and the shape scan it runs before the tests (vector_runner.py).
-    runner_files = ("vector_runner.py", "strip_rust.awk", "shape_scan.awk")
-    for name in runner_files:
+    # The runner, the shape scan it runs before the tests and the awk it runs it with, by
+    # absolute path (vector_runner.py).
+    runner_files = ("vector_runner.py", "strip_rust.awk", "shape_scan.awk", "awk.path")
+    for name in runner_files[:3]:
         shutil.copyfile(here / name, lane / name)
+    (lane / "awk.path").write_text(paths["awk"] + "\n", encoding="utf-8", newline="\n")
     shutil.copyfile(brief, lane / "brief.txt")
     commands = {
         "code_check": [paths["bash"], str(here / "code_check.sh"), "--import",

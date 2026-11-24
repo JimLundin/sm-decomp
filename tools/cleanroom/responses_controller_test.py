@@ -578,6 +578,17 @@ class Preparation(unittest.TestCase):
                     config = tomllib.loads(path.read_text(encoding="utf-8"))
                     return Broker(export, base / label, config)
                 broker = prepared("implementer", "initial")
+                # The runner's awk is pinned by absolute path, and a changed pin or scan script is
+                # an integrity refusal.
+                lane = base / "initial"
+                self.assertTrue(Path((lane / "awk.path").read_text(encoding="utf-8").strip()).is_file())
+                for name in ("awk.path", "shape_scan.awk"):
+                    original = (lane / name).read_bytes()
+                    (lane / name).write_bytes(original + b"changed\n")
+                    with self.subTest(changed=name), self.assertRaises(Refused):
+                        broker.audit()
+                    (lane / name).write_bytes(original)
+                broker.audit()
                 broker.dispatch("cleanroom", {"action": "write", "path": "crates/clean/demo/tests/new.rs", "text": "//! A new test.\n"})
                 self.assertEqual(json.loads(broker.dispatch("cleanroom", {"action": "add"}))["exit_code"], 0)
                 self.assertIn("crates/clean/demo/tests/new.rs", run("diff", "--cached", "--name-only"))

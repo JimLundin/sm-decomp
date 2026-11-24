@@ -12,8 +12,8 @@ clean crate's library sources, as code_check.sh does, and fails on a finding. DE
 findings name only their files, lines and modules.
 
 It takes no arguments: launch.sh copies it and the two scan scripts it runs into the lane
-directory, out of the session's reach, allows exactly `<python> -I <that copy>` and checks their
-sha256 after the session.
+directory, out of the session's reach, writes beside them the absolute path of the awk it runs
+(awk.path), allows exactly `<python> -I <that copy>` and checks their sha256 after the session.
 """
 
 import json
@@ -25,6 +25,10 @@ from pathlib import Path
 
 # The scripts of code_check.sh's shape rules, beside this runner in the repository and in a lane.
 SHAPE_SCAN = ("strip_rust.awk", "shape_scan.awk")
+# The awk the lane pinned, by absolute path. A bare `awk` on Windows resolves in the working
+# directory, the export, before PATH, where a session could put an `awk.bat`.
+AWK_PIN = "awk.path"
+HERE = Path(__file__).resolve().parent
 
 # The child: rewrite the command line to the DLL alone, then call its libtest main.
 CHILD = """
@@ -83,8 +87,7 @@ def library_sources(crate: Path) -> list[str]:
 
 def shape_findings(awk: str, crates: list[Path]) -> list[str]:
     """code_check.sh's shape findings in each crate, one line each, as `PATH: TAG: DETAIL`."""
-    here = Path(__file__).resolve().parent
-    scripts = [arg for name in SHAPE_SCAN for arg in ("-f", (here / name).as_posix())]
+    scripts = [arg for name in SHAPE_SCAN for arg in ("-f", (HERE / name).as_posix())]
     findings = []
     for crate in crates:
         sources = library_sources(crate)
@@ -101,6 +104,63 @@ def shape_findings(awk: str, crates: list[Path]) -> list[str]:
     return findings
 
 
+def pinned_awk(workspace: Path) -> str:
+    """The awk awk.path names, an absolute path to a file outside the workspace, once the scan
+    scripts it runs are beside the runner."""
+    try:
+        awk = Path((HERE / AWK_PIN).read_text(encoding="utf-8").strip())
+    except OSError:
+        sys.exit(f"vector_runner: no {AWK_PIN} beside the runner to name the awk it runs")
+    if not awk.is_absolute() or not awk.is_file() or awk.resolve().is_relative_to(workspace):
+        sys.exit(f"vector_runner: the pinned awk {awk} is not a file outside the workspace")
+    if not all((HERE / name).is_file() for name in SHAPE_SCAN):
+        sys.exit("vector_runner: no shape scan scripts for the module and argument rules")
+    return str(awk)
+
+
+def shape_failures(awk: str, crates: list[Path]) -> list[str]:
+    """Prints each shape finding; the run's failed entry for them, if any."""
+    shapes = shape_findings(awk, crates)
+    for finding in shapes:
+        print(f"vector_runner: {finding}", flush=True)
+    return [f"shapes ({len(shapes)} findings)"] if shapes else []
+
+
+def run_target(cargo: str, workspace: Path, out: Path, target: tuple[str, str, str, Path]) -> str | None:
+    """Links one test target as a DLL and runs it; its failed entry, if it fails."""
+    crate, kind, name, root = target
+    label = f"{crate} {kind} {name}".strip()
+    dll = out / f"{crate}-{name or 'lib'}.dll"
+    build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
+    build += [name] if name else []
+    build += ["--", "-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}"]
+    print(f"     Running {label} ({dll.name})", flush=True)
+    if subprocess.run(build, cwd=workspace).returncode != 0:
+        return f"{label} (build)"
+    # cargo test runs a target in its package's directory.
+    run = [sys.executable, "-I", "-c", CHILD, str(dll)]
+    return label if subprocess.run(run, cwd=root).returncode != 0 else None
+
+
+def run(cargo: str, workspace: Path) -> int:
+    """The shape rules, then every clean crate test target; 1 when anything fails."""
+    awk = pinned_awk(workspace)
+    target_dir, targets = clean_targets(cargo, workspace)
+    if not targets:
+        sys.exit("vector_runner: no clean crate test targets here")
+    out = target_dir / "vector-runner"
+    out.mkdir(parents=True, exist_ok=True)
+    failed = shape_failures(awk, list(dict.fromkeys(root for *_, root in targets)))
+    for target in targets:
+        if (failure := run_target(cargo, workspace, out, target)) is not None:
+            failed.append(failure)
+    if failed:
+        print("vector_runner: FAILED " + ", ".join(failed), flush=True)
+        return 1
+    print("vector_runner: all targets passed", flush=True)
+    return 0
+
+
 def main() -> int:
     if len(sys.argv) > 1:
         sys.exit("vector_runner: takes no arguments")
@@ -109,41 +169,7 @@ def main() -> int:
     cargo = shutil.which("cargo")
     if cargo is None:
         sys.exit("vector_runner: no cargo on PATH")
-    workspace = Path.cwd().resolve()
-    target_dir, targets = clean_targets(cargo, workspace)
-    if not targets:
-        sys.exit("vector_runner: no clean crate test targets here")
-    out = target_dir / "vector-runner"
-    out.mkdir(parents=True, exist_ok=True)
-    failed = []
-    awk = shutil.which("awk")
-    here = Path(__file__).resolve().parent
-    if awk is None or not all((here / name).is_file() for name in SHAPE_SCAN):
-        sys.exit("vector_runner: no awk or shape scan scripts for the module and argument rules")
-    shapes = shape_findings(awk, list(dict.fromkeys(root for *_, root in targets)))
-    for finding in shapes:
-        print(f"vector_runner: {finding}", flush=True)
-    if shapes:
-        failed.append(f"shapes ({len(shapes)} findings)")
-    for crate, kind, name, root in targets:
-        label = f"{crate} {kind} {name}".strip()
-        dll = out / f"{crate}-{name or 'lib'}.dll"
-        build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
-        build += [name] if name else []
-        build += ["--", "-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}"]
-        print(f"     Running {label} ({dll.name})", flush=True)
-        if subprocess.run(build, cwd=workspace).returncode != 0:
-            failed.append(f"{label} (build)")
-            continue
-        # cargo test runs a target in its package's directory.
-        run = [sys.executable, "-I", "-c", CHILD, str(dll)]
-        if subprocess.run(run, cwd=root).returncode != 0:
-            failed.append(label)
-    if failed:
-        print("vector_runner: FAILED " + ", ".join(failed), flush=True)
-        return 1
-    print("vector_runner: all targets passed", flush=True)
-    return 0
+    return run(cargo, Path.cwd().resolve())
 
 
 if __name__ == "__main__":
