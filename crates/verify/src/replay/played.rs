@@ -17,7 +17,8 @@ use super::index::ObservationId;
 use super::readers::record;
 use super::result::Outcome;
 use super::{
-    Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement, shaft,
+    Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement,
+    ridley, shaft,
 };
 use crate::cache::Cache;
 use crate::lock::{Lock, Row, RowId, Start};
@@ -48,9 +49,9 @@ pub const SEED_HELD: &[&str] = &[
     "the seed room's geometry and the boxes of its actors other than the Ceres doors",
     "the seed room's camera screens, size, scrollers and lead",
     "escape timer",
-    "passage sounds sent and music ready",
-    "progress, which chooses the next room's version, her suit and her beams",
-    "Ceres station stage",
+    "passage sounds sent",
+    "progress, which chooses the next room's version, her suit and her beams, and whether the station's boss is beaten",
+    "Ceres station stage, but where Ridley's placing sets it",
 ];
 
 /// Inputs read from the record at each cut, because their owner is outside the rungs
@@ -58,6 +59,9 @@ pub const SEED_HELD: &[&str] = &[
 pub const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
     "lag: the contents' fetch done on its first frame, within the slide",
+    "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
+    "the random number as a passage's frame begins: no owner here draws it through a passage",
+    "audio: whether a track waits in the queue of tracks as the frame of work begins",
 ];
 
 /// Where a played run stopped.
@@ -147,6 +151,55 @@ const fn fetching_contents(doors: Doors) -> bool {
             ..
         })
     )
+}
+
+/// The contents' fetch under way: from its first frame until the slide ends, the frame of work
+/// is held, so every NMI through it finds the fetch part-done.
+const fn fetch_under_way(doors: Doors) -> bool {
+    matches!(
+        doors,
+        Doors::Passing(Passage {
+            phase: Phase::Arriving {
+                fetching: Fetching::Contents | Fetching::Done,
+                ..
+            },
+            ..
+        })
+    )
+}
+
+/// The music queue's timers, its start index and the music timer.
+const MUSIC_TIMERS: usize = 0x0629;
+const MUSIC_QUEUE_START: source::WramWord = source::WramWord {
+    name: "MUSIC_QUEUE_START",
+    offset: 0x063B,
+};
+const MUSIC_TIMER: source::WramWord = source::WramWord {
+    name: "MUSIC_TIMER",
+    offset: 0x063F,
+};
+/// The entries the music queue holds.
+const MUSIC_ENTRIES: usize = 8;
+
+/// Audio's answer, borrowed: no track waits in the queue of tracks as the frame of work begins.
+/// The main loop's start steps the queue once: with the music timer at 1 the entry at the start
+/// index leaves; the music is ready when every entry's timer is then 0.
+fn music_ready(wram: &[u8]) -> Result<bool, Outcome> {
+    let bad = || data_failure(None, "played music queue");
+    let mut timers = wram
+        .get(MUSIC_TIMERS..)
+        .and_then(|queue| queue.as_chunks::<2>().0.get(..MUSIC_ENTRIES))
+        .ok_or_else(bad)?
+        .iter()
+        .map(|word| u16::from_le_bytes(*word))
+        .collect::<Vec<_>>();
+    if word(wram, MUSIC_TIMER)? == 1 {
+        let start = usize::from(word(wram, MUSIC_QUEUE_START)? / 2) % MUSIC_ENTRIES;
+        if let Some(leaving) = timers.get_mut(start) {
+            *leaving = 0;
+        }
+    }
+    Ok(timers.iter().all(|&timer| timer == 0))
 }
 
 fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
@@ -258,6 +311,7 @@ fn expected(
     record: &FrameRecord,
     content: &appearance::Content,
     hud: &hud::Content,
+    hud_settled: bool,
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
@@ -285,6 +339,10 @@ fn expected(
         }
     };
     fields.push(passing_observation(passing));
+    // In play every draw is the loop's own, so a frame's draws are compared where it finished.
+    if finished(record) && !passing {
+        fields.push(random_observation(random(wram)?));
+    }
     if finished(record) {
         fields.extend(colour_observations(&Palette {
             screen: colours(wram, SCREEN_COLOURS)?,
@@ -295,13 +353,20 @@ fn expected(
         fields.extend(door_observations(
             ceres::doors(wram)?
                 .into_iter()
-                .map(|slot| ceres::expected(wram, slot))
+                .map(|slot| {
+                    let mut parts = ceres::expected(wram, slot)?;
+                    parts.push(ceres::drawn_with_ridley(wram, slot)?);
+                    Ok(parts)
+                })
                 .collect::<Result<_, _>>()?,
         ));
+        fields.extend(ridley::observations(ridley::seed(wram)?.as_ref()));
     }
     fields.extend(shaft::observations(&shaft::pad_and_cover(wram)?));
     fields.extend(health_parts(&health_tail::decode(wram, None)?));
-    fields.extend(hud_parts(hud::expected(wram, hud)?));
+    if hud_settled {
+        fields.extend(hud_parts(hud::expected(wram, hud)?));
+    }
     fields.push(frame_count_observation(hud::frame_count(wram)?));
     fields.push(finished_frames_observation(word(
         wram,
@@ -421,6 +486,17 @@ fn frame_count_observation(frame: interface_hud::FrameCount) -> Observation {
 /// The count of finished frames in sixteen bits, which nothing restarts.
 fn finished_frames_observation(count: u16) -> Observation {
     Observation::quantity("finished-frames", i64::from(count))
+}
+
+/// The game's random number as the record holds it.
+fn random(wram: &[u8]) -> Result<types::RandomSequence, Outcome> {
+    Ok(types::RandomSequence {
+        number: types::RandomNumber(word(wram, source::RANDOM_NUMBER)?),
+    })
+}
+
+fn random_observation(random: types::RandomSequence) -> Observation {
+    Observation::quantity("random", i64::from(random.number.0))
 }
 
 fn passing_observation(passing: bool) -> Observation {
@@ -666,6 +742,9 @@ impl<'a> Run<'a> {
                 finished_frames: word(&seed.wram, source::NMI_FRAME_COUNTER_WORD)?,
                 pad_and_cover: shaft::pad_and_cover(&seed.wram)?,
                 shaft_overlay: ceres::shaft_overlay(&seed.wram)?,
+                ridley: ridley::seed(&seed.wram)?,
+                stage: room.ceres,
+                random: random(&seed.wram)?,
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
@@ -711,19 +790,29 @@ impl<'a> Run<'a> {
                 dependency: "lag cut in play (T1)".into(),
             });
         }
+        // A lag cut through the contents' fetch finds it part-done, and the HUD with it: Ridley's
+        // placing blanks the mini-map within the fetch, which the run takes as done on its first
+        // frame. At every other cut the HUD is as its frame left it.
+        let hud_settled = finished(current) || !fetch_under_way(self.state.doors);
         let mut inputs = self.room.inputs.clone();
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
         inputs.parity = parity(self.state.finished_frames);
         let passing = played::Passing {
+            // The borrowed lag: the last NMI found the frame's work finished, so the next began.
+            work_begun: finished(previous),
             work_done: finished(current) || fetching_contents(self.state.doors),
             audio: played::PassageAudio {
                 sounds_sent: self.room.sounds_sent,
-                music_ready: true,
+                music_ready: music_ready(&previous.wram)?,
             },
             timer_running: self.room.timer_running,
             progress: &self.room.progress,
-            ceres: self.room.ceres,
+            // The borrowed random number, only through a passage; in play the loop carries it.
+            random: match self.state.doors {
+                Doors::Play => None,
+                Doors::Passing(_) => Some(random(&previous.wram)?),
+            },
         };
         let held = &self.room.hud;
         let status = held.status;
@@ -743,12 +832,20 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        let expected = expected(current, &self.content.appearance, &self.hud, self.row, cut)?;
+        let expected = expected(
+            current,
+            &self.content.appearance,
+            &self.hud,
+            hud_settled,
+            self.row,
+            cut,
+        )?;
         let actual = actual(
             &self.state,
             &self.content.appearance,
             &self.hud,
             finished(current),
+            hud_settled,
         )?;
         compare(&expected, &actual).map_err(|fault| match fault {
             CompareFault::Difference(field) => Outcome::Difference { cut, field },
@@ -825,6 +922,7 @@ fn actual(
     content: &appearance::Content,
     hud: &hud::Content,
     finished: bool,
+    hud_settled: bool,
 ) -> Result<Vec<Observation>, Outcome> {
     let samus = &state.movement.0;
     let mut fields = parts(samus);
@@ -839,17 +937,32 @@ fn actual(
         state.doors,
         Doors::Passing(_)
     )));
+    fields.push(random_observation(state.random));
     if finished {
         fields.extend(colour_observations(&state.palette));
     }
     if finished {
         fields.extend(door_observations(
-            state.ceres_doors.iter().map(ceres::initial).collect(),
+            state
+                .ceres_doors
+                .iter()
+                .map(|door| {
+                    let mut parts = ceres::initial(door);
+                    parts.push(ceres::drawn_with_ridley_observation(
+                        ceres::drawn_with_ridley_of(door),
+                    ));
+                    parts
+                })
+                .collect(),
         ));
+        fields.extend(ridley::observations(state.ridley.as_ref()));
     }
+
     fields.extend(shaft::observations(&state.pad_and_cover));
     fields.extend(health_parts(&state.health.0));
-    fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));
+    if hud_settled {
+        fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));
+    }
     fields.push(frame_count_observation(state.frame));
     fields.push(finished_frames_observation(state.finished_frames));
     Ok(fields)
@@ -972,6 +1085,7 @@ mod tests {
             "chain-any-0002-DF8D",
             "chain-any-0003-DFD7",
             "chain-any-0004-E021",
+            "chain-any-0005-E06B",
         ] {
             let report = super::play(&sources, row, 0, 3000).unwrap();
             diagnostic(format_args!(
@@ -994,6 +1108,18 @@ mod tests {
                 report.row, report.start, report.held, report.stop
             ));
         }
+    }
+
+    /// Ridley's room in Ceres from its seed, with Ridley and the baby waiting in the dark.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn ceres_ridleys_room_played_alone() {
+        let sources = sources();
+        let report = super::play(&sources, "chain-any-0006-E0B5", 0, 1785).unwrap();
+        diagnostic(format_args!(
+            "PLAYED_ALONE row={} start={} held={} stop={:?}",
+            report.row, report.start, report.held, report.stop
+        ));
     }
 
     /// The M0 rung: Ceres's third room from its seed to the door, movie pads only.

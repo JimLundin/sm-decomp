@@ -1,10 +1,13 @@
-# Ceres Ridley and the escape, parts 1 and 2, the Ceres doors and the shaft as she arrives: behaviour spec
+# Ceres Ridley and the escape, parts 1 to 3, the Ceres doors, the shaft as she arrives and Ridley's room as she enters: behaviour spec
 
 What the player sees the doors of the Ceres station do: a closed door that slides open as Samus
 comes near and shuts behind her once she has gone, the hiss it makes as it opens, the door in the
 shaft that becomes a wall once Ridley has fled, and the station shaking during the escape, which the
 doors start; and, as a new game begins, the elevator's pad lowering her down the shaft and
-letting her go, the shaft's beacon pulsing and its platform turning. Written behaviour first,
+letting her go, the shaft's beacon pulsing and its platform turning; and, as she enters Ridley's
+room, its door slamming shut behind her and staying locked until Ridley is beaten, the two
+walls his getaway puts up, and Ridley waiting in the dark with the baby, which now and then
+cries and glows. Written behaviour first,
 from the oracle's records over time. Vectors:
 [`scenarios/vectors/boss-ceres-ridley.toml`](../../scenarios/vectors/boss-ceres-ridley.toml).
 
@@ -16,9 +19,20 @@ Ceres's rooms (each faces left or right), the shaft's door (a door before the ge
 after it), and the shaking the doors start during the escape. The second piece (§7 to §9) is the
 shaft as she arrives: the elevator's pad that holds her, lowers her and lets her go, the cover
 over the shaft's floor below it, the beacon's colours and the platform's turning look before the
-escape. Later pieces add the rest of the station's own actors: the door of Ridley's room; the
-shaft's rumble before the station blows up and its beacon during the escape; the getaway's two
-walls; Ceres Ridley himself and his getaway; the escape's steam; the falling debris and the dust.
+escape. The third piece (§10 to §12) is Ridley's room as she enters it: the room's door, which
+slams shut behind her and stays locked until Ridley is beaten; the two walls his getaway puts
+up; and Ceres Ridley placed and waiting, with the baby he holds, until the moment he wakes.
+Later pieces add the rest: Ceres Ridley's fight from his waking on, and his getaway; the
+shaft's rumble before the station blows up and its beacon during the escape; the escape's
+steam; the falling debris and the dust.
+
+**What the third piece reads and leaves.** Its door and walls read what a door reads (§1.3) and
+whether Ridley is beaten (progress, P1). Ridley reads whether a door's passage is under way
+(world-doors) and the random number. It hands the HUD (interface-hud) that a boss is
+encountered, Ridley in Ceres, as he is placed; the rule that turns the mini-map off for it,
+`BossBlanksTheMap`, is the HUD's own. It hands audio (U1) the music's stop and the baby's cry,
+the screen's shaking (R3) the stop of any shake and progress (P1) the stage. Ridley's fight,
+his drawing once he wakes and the getaway that places the walls are later pieces (§5).
 
 **What the second piece reads and leaves.** It reads her position from samus-movement (§7.3),
 the moment the arrival places the pad, which frames the pad and the cover run and which the
@@ -57,13 +71,17 @@ things it needs belong to every enemy, so they are the framework's, not this spe
    before that door runs, as [enemy-interactions](enemy-interactions.md) specifies. Her touch
    has no response. Drawing reads the resulting door state (§4).
 4. **Placing.** When a room starts, the framework places each door from the room's content: its
-   kind, its facing and its position, in the state `RoomStart` names.
+   kind, its facing and its position, in the state `RoomStart` names. The getaway's walls are
+   the exception: Ridley's getaway places them (a later piece), in the same state.
+
+The walls' content, unlike the doors', doesn't make them solid to her: a wall that is solid
+(only ever `Placed`) meets her shots as a blocking door does, and never stops her motion.
 
 **Not in this spec** (§6 names who supplies each): the framework's four parts above; what the
 shake does to the view and how it counts down (R3); the sound queue and what happens to a request
 it can't hold (audio, U1); fading the doors' colours in with the room (the door passage,
-world-doors); the room's other enemies, and the door of Ridley's room and the getaway's walls
-(later pieces). The shaft's overlay is part 2's (§7).
+world-doors); the room's other enemies but Ridley's waiting (§12). The shaft's overlay is part 2's
+(§7).
 
 **Notation.** Positions are whole pixels, x rightward and y downward, each a 16-bit number written
 in hex (`0123`). A door's position is the centre of its box. Frames are frames the door runs
@@ -75,32 +93,47 @@ in hex (`0123`). A door's position is the centre of its box. Frames are frames t
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
-| its kind | `DoorKind`: `Door` or `ShaftDoor` (below) | whether it becomes a wall | `RoomStart`, `ShaftWall` |
+| its kind | `DoorKind`: `Door`, `GetawayWall`, `RidleyDoor` or `ShaftDoor` (below) | whether it becomes a wall, slams shut or stands in for the room's sides | `RoomStart`, `ShaftWall`, `RidleyRoomStart`, `GetawayWalls`, `EscapeShakes`, `TheDoorsColours` |
 | its facing | `Facing`: `Left` or `Right`: the way it opens, the side its figures are drawn for | which figures it shows | every entry that takes a figure |
 | its position | x, y: px, 16-bit | where it is drawn and where its box is; how near she is | `SheIsNear`; output (drawing, solid contact) |
 | its phase | `Phase` (below) | whether it is shown, solid, opening or closing | every entry |
-| its wait | frames, 1 to the larger of the poll and the hold: the frames before its next step; no run ends with a wait of 0 | when it next looks for her or shows its next figure | `Waiting` |
+| its wait | frames, 1 to the largest of the poll, the hold, the slam's hold and 2: the frames before its next step; no run ends with a wait of 0 | when it next looks for her or shows its next figure | `Waiting` |
 
 Its box is 16 px wide and 64 px tall, centred on its position: 8 px to its left and right, 32 px
 up and down. The box is fixed (the doors' content); only whether it is solid changes (`Solid`).
 
 **Kinds**, listed alphabetically (the order means nothing):
 - `Door`: a door between two rooms.
+- `GetawayWall`: one of the two walls Ridley's getaway puts up at the sides of his room, `Left`
+  or `Right`: shown during the getaway only, and never in her way (`GetawayWalls`).
+- `RidleyDoor`: the door of Ridley's room, facing `Right`: it slams shut behind her as the room
+  starts and stays locked until Ridley is beaten; then it is a `Door` (`RidleyRoomStart`,
+  `SlamShut`, `LockedIn`).
 - `ShaftDoor`: the shaft's door: a left-facing door until Ridley's getaway, a wall from then on
   (`ShaftWall`).
 
 **Phases**, listed alphabetically (the order means nothing):
 - `Closed`: shown, solid, its closed figure; it looks for her each time its wait runs out.
 - `Closing(n)`, `n` from 1 to 4: shown, solid, showing the n-th figure of its closing.
+- `Lingering`: the door of Ridley's room just after the room starts: hidden, passable, open.
+- `Locked`: the door of Ridley's room, shut while he lives: hidden, solid; Ridley draws it.
 - `Open`: hidden, passable; it looks for her each time its wait runs out.
 - `Opening(n)`, `n` from 1 to 4: shown, solid, showing the n-th figure of its opening.
 - `Placed`: as the room placed it: shown and solid, with no figure; its first run starts it.
+- `Slammed`: the door of Ridley's room the frame it is shut: shown, solid; Ridley draws it too.
+- `Slamming(n)`, `n` from 1 to 4: shown, solid, showing the n-th figure of its slam.
+- `Standing`: a getaway wall during the getaway: shown, passable.
 - `Starting`: hidden, passable; it looks for her once, when its wait runs out, to choose its first
   phase.
+- `Unseen`: a getaway wall outside the getaway: hidden, passable.
 - `Wall`: the shaft's door once Ridley has fled: hidden, solid.
 
+A getaway wall only ever holds `Placed`, `Standing` or `Unseen`; `Lingering`, `Slamming(n)`,
+`Slammed` and `Locked` belong to the door of Ridley's room alone. Any other pairing of kind and
+phase is not one this spec allows (§1.2).
+
 **Figures**, by look and facing: `Closed`, `Ajar1`, `Ajar2`, `Ajar3` and `Open` (from closed to
-open), each facing `Left` or `Right`, so ten figures. Which sprites each is belongs to the doors'
+open), and `Side` (a getaway wall), each facing `Left` or `Right`, so twelve figures. Which sprites each is belongs to the doors'
 content; this domain only names which one a door holds. Each phase holds one figure:
 
 Cells: phase, look, facing
@@ -114,9 +147,13 @@ Cells: phase, look, facing
 | `Open` | `Open` when it faces right; `Closed` when it faces left |
 | `Closing(1)` to `Closing(4)` | `Open`, `Ajar3`, `Ajar2`, `Ajar1` |
 | `Wall` | `Closed`, facing `Left` |
+| `Lingering` | `Open` |
+| `Slamming(1)` to `Slamming(4)` | `Open`, `Ajar3`, `Ajar2`, `Ajar1` |
+| `Slammed`, `Locked` | `Closed` |
+| `Standing`, `Unseen` | `Side` |
 
 The figure faces the door's way unless the table says otherwise. The figure of a hidden phase
-(`Starting`, `Open`, `Wall`) is never drawn, but the door holds it all the same, and it is
+(`Lingering`, `Locked`, `Open`, `Starting`, `Unseen`, `Wall`) is never drawn by the framework, but the door holds it all the same, and it is
 compared: a vector's `after` names it.
 
 ### 1.2 What it remembers: state a caller can hold
@@ -135,6 +172,7 @@ back: a vector's `before` builds it and its `after` reads it.
 | the station's stage | `Stage`, listed alphabetically: `Calm` (before Ridley's getaway), `Escape` (from the escape's start to the end of Ceres), `Getaway` (Ridley flees, the escape not yet started) | `RoomStart`, `ShaftWall`, `EscapeShakes`, `TheDoorsColours` |
 | the random number | 16-bit: the frame's random number as it stands when the doors run (the random numbers' owner) | `EscapeShakes` |
 | the shake's frames left | frames, 0 to 65,535: how long the screen's current shake has left when this door runs, after any earlier door's start this frame (R3) | `EscapeShakes` |
+| Ridley beaten | `bool`: the station's boss counts as beaten, from the escape's start on (progress, P1), as it stands when the door runs | `LockedIn` |
 
 ### 1.4 What it reports (Outputs)
 
@@ -144,8 +182,9 @@ back: a vector's `before` builds it and its `after` reads it.
 | solid | `bool`, from its phase | output: the framework's solid contact (Header) |
 | its figure | a figure (§1), or none, from its phase and facing | output: drawing |
 | a sound | the doors' opening sound, with a queue limit of 6, or none (`Opening`) | output: audio (U1) |
-| a shake | none, or a shake of the whole view, both backgrounds and the enemies, moving diagonally: 1 px for 2 frames, or 3 px for 4 frames (`EscapeShakes`) | output: the screen's shaking (R3) |
-| the doors' colours | when the room places a door: which of the doors' two colour sets, `Calm` or `Escape`, the palette they are drawn with takes (`TheDoorsColours`); the 15 colours of each set are the doors' content | output: the passage's fade brings the screen to them (world-doors) |
+| a shake | none, or a shake moving diagonally, 1 px for 2 frames or 3 px for 4 frames, of `ShakeLayers` (listed alphabetically): `Back` (the second background and the enemies, not the first background) or `Whole` (both backgrounds and the enemies) (`EscapeShakes`) | output: the screen's shaking (R3) |
+| drawn with Ridley | `bool`, from its phase: Ridley's drawing draws it, closed (`DrawnWithRidley`) | output: Ridley's drawing (§12.4) |
+| the doors' colours | when the room places a door: which of the doors' two colour sets, `Calm` or `Escape`, the palette it is drawn with takes, and which palette, `Doors` (the one the doors share) or `Own` (a palette of its own) (`TheDoorsColours`); the 15 colours of each set are the doors' content | output: the passage's fade brings the screen to them (world-doors) |
 
 ---
 
@@ -266,8 +305,10 @@ back: a vector's `before` builds it and its `after` reads it.
 - Phase `Closed`, `Opening(n)`, `Closing(n)`, `Placed` or `Wall` → solid; the framework's solid
   contact applies to its box (Header) [D-closed-far-stays, D-opening-step, D-closing-step,
   D-start-first-run, D-shaft-wall]
-- Phase `Open` or `Starting` → passable: she, her touch and her shots go through it as through air
-  [D-open-near-stays, D-start-wait]
+- Phase `Slamming(n)`, `Slammed` or `Locked` → solid [R-slam-start, R-slam-last, R-locked]
+- Phase `Open`, `Starting`, `Lingering`, `Standing` or `Unseen` → passable: she, her touch and
+  her shots go through it as through air [D-open-near-stays, D-start-wait, R-first-run,
+  W-first-run, W-hides]
 - Her touch while it is solid does nothing to her or to it (Header, Solid contact; original
   only).
 - checked: oracle (whether it is solid, every frame of the cached rows); original only (her touch); shot selection and consumption are checked by
@@ -282,8 +323,11 @@ back: a vector's `before` builds it and its `after` reads it.
 - Phase `Closed`, `Opening(n)`, `Closing(n)` or `Placed` → shown: its figure is drawn (Header,
   Drawing; `Placed` has none, so nothing is drawn) [D-closed-far-stays, D-opening-step,
   D-closing-step, D-start-first-run]
+- Phase `Slamming(n)`, `Slammed` or `Standing` → shown [R-slam-start, R-slam-last,
+  W-first-run]
 - Phase `Open`, `Starting` or `Wall` → hidden: nothing is drawn [D-open-near-stays, D-start-wait,
   D-shaft-wall]
+- Phase `Lingering`, `Locked` or `Unseen` → hidden [R-first-run, R-locked, W-hides]
 - checked: oracle (whether it is shown, and its figure, every frame of the cached rows).
 
 ## 3. The station
@@ -302,6 +346,9 @@ back: a vector's `before` builds it and its `after` reads it.
   D-shake-wait, D-shake-adjusted-small, D-shake-adjusted-small-pixels]
 - The shake's frames left over 0, or the stage `Calm` or `Getaway` → no shake [D-shake-busy,
   D-shake-calm, D-shake-getaway]
+- A shake a `RidleyDoor` starts, in any phase, is `Back`; any other door's is `Whole`
+  [R-released, R-shake-strong-back, D-shake-strong]
+- A `GetawayWall` never starts a shake [W-hides]
 - So with two doors in a room, the first to run starts the shake and the second, which reads the
   frames left after it, doesn't (§4).
 - checked: oracle (the 860 frames the doors ran in the escape in the cached rows); constructed.
@@ -312,9 +359,12 @@ back: a vector's `before` builds it and its `after` reads it.
   set during the escape.
 - params: none (the two colour sets are the doors' content).
 - switch: Fixed.
-- A door placed, the stage `Calm` → the doors' colours are the `Calm` set [D-placed-calm]
-- A door placed, the stage `Escape` or `Getaway` → they are the `Escape` set [D-placed-escape,
-  D-placed-getaway]
+- A door placed, the stage `Calm` → the doors' colours are the `Calm` set, in the `Doors`
+  palette [D-placed-calm, W-placed]
+- A door placed, the stage `Escape` or `Getaway` → they are the `Escape` set, in the `Doors`
+  palette [D-placed-escape, D-placed-getaway, W-placed-getaway, R-placed-escape]
+- A `RidleyDoor` placed, the stage `Calm` → the `Calm` set, in its `Own` palette: while Ridley is
+  in the room his colours hold the doors' [R-placed-calm]
 - checked: oracle (two harness cases, H1 and H2, whose colours are the game's content);
   constructed (which set).
 
@@ -335,6 +385,9 @@ back: a vector's `before` builds it and its `after` reads it.
   that frame see the height the pad left her at.
 - Part 2: the pad runs before the cover, so on the frame the pad sets her on the floor the cover
   sees her there and is gone the same frame (`CoverHides`).
+- Part 3: in his room Ridley is the first of the enemies, so the door and the walls run after
+  him: the stage and whether he is beaten are as his run that frame leaves them. On the frame the
+  escape starts the door is let go and the walls hide (R-released, W-hides).
 
 ## 5. Out of scope, and who supplies it
 
@@ -349,8 +402,11 @@ back: a vector's `before` builds it and its `after` reads it.
   shaft's overlay (`WhatRuns`).
 - **The random numbers:** the number and when it steps.
 - **Progress and the escape (P1, B8's later pieces):** the station's stage.
-- **Later pieces of B8:** the door of Ridley's room; the shaft's rumble and its beacon during
-  the escape; the getaway's walls.
+- **Later pieces of B8:** Ceres Ridley from his waking on (§12): his fading in, his fight, his
+  getaway, which places the getaway's walls and sets the stage, and his drawing of the door and
+  the baby then; the shaft's rumble and its beacon during the escape.
+- **Progress (P1):** whether Ridley is beaten.
+- **The HUD (interface-hud):** what a boss encountered does to the mini-map (`BossBlanksTheMap`).
 - **The arrival (the new game, P2, and Samus's arrival, F4):** starting the game in the shaft,
   setting her where she stands and her pose facing the screen, the room's music; the moment it
   places the pad (§7.3). Before that the room is loaded (R2); after it the screen's brightness
@@ -378,8 +434,9 @@ back: a vector's `before` builds it and its `after` reads it.
 1. Her touch on a blocking door remains original-only. The recorded ordinary power-shot contact
    is covered by [enemy-interactions](enemy-interactions.md);
    other beam families remain outside that first piece.
-2. `Getaway` with a door of this piece placed: no row places one in that stage (the getaway happens
-   in Ridley's room, whose door is a later piece). The arms that read it follow the original.
+2. `Getaway` with a door placed: no row places one in that stage (Ridley's getaway places its
+   walls the frame before the getaway starts, still `Calm`). The arms that read it follow the
+   original.
 3. Part 2: the pad's placing is recorded once (the arrival); her height there is 0. Heights below
    the floor at placing, and a pad placed in a room other than the shaft, are no row's: the arms
    that read them follow the original's arithmetic.
@@ -389,6 +446,11 @@ back: a vector's `before` builds it and its `after` reads it.
    when the shaft starts in the escape (she comes back to it), the overlay's first run steps the
    beacon and the platform once, by the counts of `BeaconCycles` and `PlatformTurns`, and from its next run
    the rumble takes over from them.
+5. Part 3: no row enters Ridley's room once Ridley is beaten, or in the getaway or the escape: the
+   arms for the door placed then (`RidleyRoomStart`, `TheDoorsColours`) and for Ridley placed
+   once beaten (`RidleyPlaced`) follow the original.
+6. Part 3: where Ridley's drawing puts the door it draws, and how the screen's shake moves it, are
+   his drawing's, a later piece with his fight; nothing here compares a picture.
 
 ---
 
@@ -577,3 +639,200 @@ the last two.
 - So the platform turns while a door's fade is under way too (B-fade, B-fade-last).
 - checked: oracle (every frame of the shaft before the escape in the cached rows); constructed
   (the escape).
+
+---
+
+## 10. Part 3, Ridley's room as she enters: what the player can tell
+
+She comes into Ridley's room by its door. Behind her the door stands open a moment, then
+slams shut in four quick figures and locks: no longer drawn as a door of its own, but drawn by
+Ridley's drawing, and still in her way. The room is dark. Ridley is at his place, but his
+colours are black, so only the baby he holds can be seen; every so often it cries and glows.
+Ridley waits a fixed while from the end of the door's passage, then wakes (a later piece). Once
+he is beaten, as the escape starts, the door is an ordinary door again and lets her out. During
+his getaway two walls stand at the room's sides.
+
+**Running.** The door and the walls are Ceres doors (Header, Running), and in his room they
+run after Ridley, the room's first enemy (§4). The framework runs Ridley on each frame the
+enemies run, the passage's frames of work included; the caller steps him (§12) on the frame the
+room places him and on each frame he runs. On a frame he doesn't run, nothing of him or the baby
+changes.
+
+Part 3's door and walls are the doors' kinds `RidleyDoor` and `GetawayWall`, with the phases
+`Lingering`, `Slamming(n)`, `Slammed`, `Locked`, `Standing` and `Unseen` (§1); they read whether
+Ridley is beaten (§1.3) and report whether Ridley draws the door (§1.4). Part 3 writes its
+positions in hex, as part 1 does.
+
+## 11. The door of Ridley's room and the getaway's walls
+
+### RidleyRoomStart
+- kind: mechanic.
+- summary: the door of Ridley's room, placed as the room starts, stands open behind her a moment.
+- params: the pause, 2 frames.
+- switch: Fixed.
+- `Placed` steps, a `RidleyDoor` → `Lingering`, wait 2, whatever the stage, whether Ridley is
+  beaten and wherever she is [R-first-run, R-first-run-escape]
+- So the door she has come through is hidden and lets her by for its first two frames.
+- checked: oracle (recorded case N2, the room start in the cached rows); constructed.
+
+### SlamShut
+- kind: mechanic and parameter.
+- summary: then it slams shut over four figures, quickly and silently, near her or not.
+- params: the slam's hold, `s` = 2 frames for each figure.
+- switch: **Parameter**, the slam's hold (params).
+- `Lingering` steps → `Slamming(1)`, its wait `s`, no sound [R-slam-start, R-slam-adjusted]
+- `Slamming(n)` steps, `n` under 4 → `Slamming(n + 1)`, its wait `s`, near her or not
+  [R-slam-step, R-slam-near, R-slam-adjusted-step]
+- `Slamming(4)` steps → `Slammed`, wait 1 [R-slam-last, R-slam-adjusted-last]
+- So the door is shut `4 × s` frames after its slam starts, 8, solid from the slam's first
+  figure.
+- checked: oracle (recorded cases N4 to N6, every run of the slam in the cached rows);
+  constructed (the adjusted hold).
+
+### LockedIn
+- kind: mechanic.
+- summary: the shut door stays locked while Ridley lives, looking every 2 frames whether he is
+  beaten; then it is a closed door like any other, which opens as she comes near.
+- params: the lock's look, every 2 frames; the poll `p` (`Polling`).
+- switch: Fixed.
+- `Slammed` steps → `Locked`, wait 2, whether Ridley is beaten or not [R-locked, R-slammed-beaten]
+- `Locked` steps, Ridley not beaten → `Locked`, wait 2, wherever she is [R-locked-again,
+  R-locked-near]
+- `Locked` steps, Ridley beaten → `Closed`, its wait the poll [R-released, R-released-poll]
+- From then on it steps by part 1's arms as a `Door` that faces right: it opens as she comes near,
+  with the opening's sound [R-released-opens]
+- checked: oracle (recorded cases N7 to N11, every run of the lock in the cached rows);
+  constructed.
+
+### DrawnWithRidley
+- kind: mechanic.
+- summary: while the door of Ridley's room is shut, Ridley's drawing draws it.
+- params: none.
+- switch: Fixed.
+- Phase `Slammed` or `Locked` → drawn with Ridley [R-slam-last, R-locked]
+- Any other phase → Ridley doesn't draw it [R-slam-start, R-released]
+- So on the frame it is shut both the framework and Ridley draw it; from the next, he alone.
+- checked: oracle (every run in the cached rows).
+
+### GetawayWalls
+- kind: mechanic.
+- summary: during Ridley's getaway two walls stand at his room's sides; they look for nobody.
+- params: none.
+- switch: Fixed.
+- A `GetawayWall` steps on every run, as its wait is always 1; the stage `Getaway` → `Standing`,
+  wait 1 [W-first-run, W-right, W-standing, W-near]
+- The same, the stage `Calm` or `Escape` → `Unseen`, wait 1 [W-calm, W-hides]
+- So the walls show from their first run in the getaway until the escape starts, and are never
+  in her way.
+- checked: oracle (recorded cases N12 to N15, every run of the walls in the cached rows);
+  constructed.
+
+## 12. Ceres Ridley as she enters
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| his phase | `RidleyPhase`, listed alphabetically: `Awake` (his waiting is over: a later piece runs him), `Holding` (placed, the door's passage still under way), `Waiting` | when he wakes | `RidleyWaits` |
+| his wait | frames, 0 to `w` − 1, while `Waiting` | when he wakes | `RidleyWaits` |
+| his look | `RidleyLook`: `Rest`, facing left; none before his first run | which figure is drawn | output (drawing) |
+| his position | x, y: px, 16-bit | where he is drawn and the baby held | `BabyHeld` |
+| the baby's routine | `BabyRoutine`: `New` (before its first run), `Fidget(i)`, `i` 0 to 7, or `Glow(j)`, `j` 0 to 11, with its runs: how many runs it has shown its figure, 1 to the figure's length | its look, when it cries | `BabyFidgets`, `BabyCries` |
+| the baby's look | `BabyLook`: `First`, `Second` or `Third`; none while `New` | which of its figures is drawn | output (drawing) |
+| the baby's position | x, y: px, 16-bit; none before its first run | where it is drawn | output (drawing) |
+
+He is shown and passable: the framework draws his look at his position, in colours that stay
+black until he wakes; she, her touch and her shots go through him, and he doesn't hurt her.
+
+### 12.2 What he remembers: state a caller can hold
+
+His phase, wait, look and position, and the baby's routine with its runs and its position:
+nothing else. The baby's look follows from its routine. A caller can build him in any state
+this spec allows and read it back.
+
+### 12.3 What he reads (Inputs)
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| Ridley beaten | `bool` (§1.3), as the room places him | `RidleyPlaced` |
+| a passage under way | `bool`: a door's passage is under way as he runs (world-doors' `passing`) | `RidleyWaits` |
+| the random number | 16-bit, as the doors read it (§1.3) | `BabyCries` |
+
+### 12.4 What he reports (Outputs)
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| a boss encountered | Ridley in Ceres, as he is placed | interface-hud (`BossBlanksTheMap`) |
+| the music's stop | a request, as he is placed | audio (U1) |
+| the shake's stop | the screen's shake ends, as he is placed | the screen's shaking (R3) |
+| the stage | `Calm`, as he is placed | progress (P1) |
+| his room's colours | as he is placed, these goal colours: the baby's palette and the `Own` palette of his room's door take what his room's content holds for them; the palette he is drawn in, the doors', turns black, all but its first colour | the passage's fade (world-doors) |
+| the baby's colours | none, or one of the baby's colour sets, listed alphabetically: `Glow1`, `Glow2`, `Glow3`, `Rest`; the screen shows them in the baby's palette at once; the sets are content | the screen's colours (the renderer) |
+| the baby's cry | a sound, with a queue limit of 6, or none | audio (U1) |
+| his drawing | his look at his position, the baby's look at its position, and the door of his room while it is drawn with Ridley (`DrawnWithRidley`) | drawing (C1) |
+
+### RidleyPlaced
+- kind: mechanic.
+- summary: as she enters his room he is placed at his place, in the dark, the baby in his hold;
+  the mini-map goes blank, the music stops and the station stops shaking.
+- params: his place, x 186, y 169 (px, decimal).
+- switch: Fixed.
+- The room places him, Ridley not beaten → `Holding`, no look, at his place whatever the room's
+  content says; the baby `New`; shown and passable; a boss encountered, the music's stop, the
+  shake's stop, the stage `Calm` and the room's colours [K-placed]
+- The room places him, Ridley beaten → he isn't placed, and none of those happen
+  [K-placed-beaten]
+- So he is placed before the door of his room, whose colours follow his (`TheDoorsColours`).
+- checked: oracle (recorded case K1); constructed.
+
+### RidleyWaits
+- kind: mechanic and parameter.
+- summary: once the door's passage into his room is over he waits a fixed while in the dark, then
+  wakes.
+- params: the wait, `w` = 512 frames; a rule from 1 to 32,768.
+- switch: **Parameter**, the wait (params).
+- A run, `Holding`, a passage under way → `Holding` [K-first-run, K-held-elsewhere]
+- A run, `Holding`, no passage under way → `Waiting`, wait `w` − 1 [K-first-wait,
+  K-wait-adjusted, K-wait-adjusted-wake]
+- A run, `Waiting`, wait over 0 → wait one less [K-wait-counts, K-fidget-next]
+- A run, `Waiting`, wait 0 → `Awake`: from this run on a later piece runs him [K-wake]
+- Every run → his look `Rest` [K-first-run]
+- So he wakes on the `w + 1`-th frame he runs after the passage, 512 frames after the first.
+- checked: oracle (recorded cases K2 to K5, every run of him in the cached rows until he
+  wakes); constructed (the adjusted wait).
+
+### BabyHeld
+- kind: mechanic.
+- summary: the baby stays in his hold.
+- params: the hold, 16 px left of him and 22 px down.
+- switch: Fixed.
+- Every run → the baby at `((x − 16) mod 2^16, (y + 22) mod 2^16)`, with `(x, y)` his position
+  [K-first-run, K-held-elsewhere]
+- checked: oracle (every run of him in the cached rows); constructed.
+
+### BabyFidgets
+- kind: mechanic.
+- summary: the baby fidgets through its figures, ten runs each.
+- params: eight figures of 10 runs each, `Fidget(0)` to `Fidget(7)`, their looks `First`,
+  `Second`, `Third`, `Second`, twice over.
+- switch: Fixed.
+- The baby's first run, `New` → `Fidget(0)`, 1 run [K-first-run]
+- A run, its figure shown fewer runs than its length → one run more [K-first-wait,
+  K-wait-counts, K-glow-counts, K-held-elsewhere]
+- A run, `Fidget(i)` shown its 10 runs, `i` under 7 → `Fidget(i + 1)`, 1 run [K-fidget-next]
+- A run, `Fidget(7)` shown its 10 runs → as `BabyCries` says [K-calm, K-cries]
+- checked: oracle (every run of the baby in the cached rows).
+
+### BabyCries
+- kind: mechanic.
+- summary: at the end of each fidget the baby, one time in two, cries and glows.
+- params: the glow, twelve figures `Glow(0)` to `Glow(11)`, lasting 6, 5, 4, 3, 2, 3, 4, 5, 6, 7,
+  8 and 9 runs, their looks `First`, `Second`, `Third`, `Second` three times over and their
+  colour sets `Glow1`, `Glow2`, `Glow3`, `Glow2` three times over.
+- switch: Fixed.
+- `Fidget(7)` shown its 10 runs, the random number odd → `Fidget(0)`, 1 run, no cry [K-calm]
+- `Fidget(7)` shown its 10 runs, the random number even → `Glow(0)`, 1 run; the baby's cry and
+  its colours `Glow1` [K-cries]
+- `Glow(j)` shown its length, `j` under 11 → `Glow(j + 1)`, 1 run, and its colour set
+  [K-glow-next]
+- `Glow(11)` shown its 9 runs → `Fidget(0)`, 1 run, its colours `Rest` [K-glow-last]
+- So every 80 runs, one time in two, it cries and glows for 62 runs.
+- checked: oracle (recorded cases K6 to K9, every chance in the cached rows); constructed.

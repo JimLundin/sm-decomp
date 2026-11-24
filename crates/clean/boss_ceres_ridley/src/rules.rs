@@ -1,5 +1,5 @@
-//! The station's tuning values, the doors' and the shaft's: every number a Parameter entry of
-//! the spec lists.
+//! The station's tuning values, the doors', the shaft's and Ridley's: every number a Parameter
+//! entry of the spec lists.
 
 use core::num::{NonZeroU16, Wrapping};
 
@@ -7,6 +7,7 @@ use types::Px;
 
 use crate::pad_wait::PadWait;
 use crate::phase::Wait;
+use crate::ridley_wait::WakeWait;
 use crate::station::Shake;
 
 /// `SheIsNear`: the reach, in pixels.
@@ -41,6 +42,14 @@ const FLOOR: Px = Wrapping(72);
 const RHYTHM_FRAMES: u16 = 8;
 /// `BeaconCycles`: the rhythm, 8 frames a step.
 const RHYTHM: NonZeroU16 = NonZeroU16::new(RHYTHM_FRAMES).expect("the rhythm is 8 frames, not 0");
+/// `SlamShut`: the slam's hold of each figure, in frames.
+const SLAM_FRAMES: u16 = 2;
+/// `SlamShut`: the slam's hold, 2 frames for each figure.
+const SLAM: Wait = Wait::new(SLAM_FRAMES).expect("the slam's hold is 2 frames, not 0");
+/// `RidleyWaits`: Ridley's wait, in frames.
+const WAKE_FRAMES: u16 = 512;
+/// `RidleyWaits`: Ridley's wait, 512 frames.
+const WAKE: WakeWait = WakeWait::new(WAKE_FRAMES).expect("the wait is 512, from 1 to 32,768");
 
 /// The station's tuning values. Its default holds the spec's values; another value is an
 /// adjusted game.
@@ -68,12 +77,17 @@ pub struct Rules {
     /// `BeaconCycles`: the rhythm, the frames the beacon shows each step of its cycle; a rule
     /// from 1 to 65,535 frames.
     pub rhythm: NonZeroU16,
+    /// `SlamShut`: the wait of each figure of the slam of Ridley's room's door.
+    pub slam: Wait,
+    /// `RidleyWaits`: how long Ridley waits in the dark once the passage into his room is over.
+    pub wake: WakeWait,
 }
 
 impl Default for Rules {
     /// The spec's values: reach 48 px, poll 2 frames, hold 5 frames, a strong shake below 128 in
     /// 4,096, the small shake 1 px for 2 frames and the strong 3 px for 4; the pad's wait 60
-    /// frames, the floor 72 px and the beacon's rhythm 8 frames a step.
+    /// frames, the floor 72 px and the beacon's rhythm 8 frames a step; the slam's hold 2
+    /// frames and Ridley's wait 512 frames.
     fn default() -> Self {
         Self {
             reach: REACH,
@@ -85,6 +99,8 @@ impl Default for Rules {
             pad_wait: PAD_WAIT,
             floor: FLOOR,
             rhythm: RHYTHM,
+            slam: SLAM,
+            wake: WAKE,
         }
     }
 }

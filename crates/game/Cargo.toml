@@ -19,6 +19,7 @@ run_progress = { path = "../clean/run_progress" }
 samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
 enemy_interactions = { path = "../clean/enemy_interactions" }
+game_random = { path = "../clean/game_random" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 types = { path = "../clean/types" }
 data = { path = "../data" }

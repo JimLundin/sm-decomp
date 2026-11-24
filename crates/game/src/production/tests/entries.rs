@@ -130,6 +130,7 @@ fn ceres_run_preserves_opening_sound_and_actual_shake() {
         stage: boss_ceres_ridley::Stage::Escape,
         random: 0,
         shake_frames_left: 0,
+        ridley_beaten: false,
     };
     let ProductionOutputs::Ceres(output) =
         production.advance(AdvanceInput::Ceres(&inputs)).unwrap()
@@ -139,9 +140,12 @@ fn ceres_run_preserves_opening_sound_and_actual_shake() {
     assert_eq!(output.sound, Some(boss_ceres_ridley::OpeningSound));
     assert_eq!(
         output.shake,
-        Some(boss_ceres_ridley::Shake {
-            strength: 3,
-            length: 4
+        Some(boss_ceres_ridley::ShakeStart {
+            shake: boss_ceres_ridley::Shake {
+                strength: 3,
+                length: 4
+            },
+            layers: boss_ceres_ridley::ShakeLayers::Whole,
         })
     );
     assert_eq!(production.state(), &OwnedState::Ceres(output.door));

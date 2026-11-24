@@ -1,5 +1,5 @@
-//! The station around the doors and the shaft: its stage, the doors' two colour sets and the
-//! shakes they start.
+//! The station around the doors, the shaft and Ridley's room: its stage, the doors' two colour
+//! sets and the palettes they go to, and the shakes the doors start.
 
 /// The station's stage, which progress and the escape supply. Listed alphabetically; the order
 /// means nothing.
@@ -44,12 +44,52 @@ pub enum ColourSet {
     Escape,
 }
 
-/// A shake of the whole view, both backgrounds and the enemies, moving diagonally
-/// (`EscapeShakes`). The screen's shaking moves the view and counts its frames down.
+/// Which palette the doors' colour set goes to when a room places a door (`TheDoorsColours`).
+/// Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DoorPalette {
+    /// The palette the doors share.
+    Doors,
+    /// A palette of the door's own: the door of Ridley's room while he is in it, whose colours
+    /// hold the doors' palette.
+    Own,
+}
+
+/// The doors' colours a room's start hands the passage's fade (`TheDoorsColours`): which set,
+/// in which palette.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DoorColours {
+    /// The colour set the palette takes.
+    pub set: ColourSet,
+    /// The palette that takes it.
+    pub palette: DoorPalette,
+}
+
+/// How strong and how long a shake is, moving the view diagonally (`EscapeShakes`). The
+/// screen's shaking moves the view and counts its frames down.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Shake {
     /// How far it moves the view, in pixels.
     pub strength: u16,
     /// How many frames it lasts.
     pub length: u16,
+}
+
+/// What a shake moves (`EscapeShakes`). Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShakeLayers {
+    /// The second background and the enemies, not the first background: the shakes the door
+    /// of Ridley's room starts.
+    Back,
+    /// Both backgrounds and the enemies: the shakes every other door starts.
+    Whole,
+}
+
+/// A shake a door's run starts: how strong and long it is, and what it moves.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ShakeStart {
+    /// How strong and long it is.
+    pub shake: Shake,
+    /// What it moves.
+    pub layers: ShakeLayers,
 }

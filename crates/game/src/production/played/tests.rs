@@ -88,6 +88,11 @@ fn state(doors: Vec<CeresDoor>) -> State {
         finished_frames: 0,
         pad_and_cover: super::shaft::GONE,
         shaft_overlay: false,
+        ridley: None,
+        stage: Stage::Calm,
+        random: types::RandomSequence {
+            number: types::RandomNumber(0),
+        },
     }
 }
 
@@ -209,6 +214,7 @@ fn play_with(
 ) -> Result<Outputs, Fault> {
     let progress = run_progress::Progress::default();
     let passing = Passing {
+        work_begun: true,
         work_done: true,
         audio: PassageAudio {
             sounds_sent: true,
@@ -216,8 +222,9 @@ fn play_with(
         },
         timer_running: false,
         progress: &progress,
-        ceres,
+        random: None,
     };
+    state.stage = ceres;
     state.step(&inputs(held), &passing, &hud_frame(), content, &rules())
 }
 
@@ -246,6 +253,7 @@ fn a_door_that_opens_this_frame_still_blocks_her_moves() {
 #[test]
 fn the_escape_refuses_a_room_with_ceres_doors_and_leaves_state_as_it_was() {
     let mut escaping = state(vec![door(opening_ends())]);
+    escaping.stage = Stage::Escape;
     let before = escaping.clone();
     assert_eq!(
         play(&mut escaping, types::Buttons::default(), Stage::Escape),

@@ -8,14 +8,14 @@
 
 The milestone is **Power-on through Ceres**: the any% movie from power-on through frame 15,196. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
-- **Frames that pass:** 1,480 of 15,196 (9.7%), every frame some reviewed run holds, counted once.
+- **Frames that pass:** 2,136 of 15,196 (14.1%), every frame some reviewed run holds, counted once.
 - **Continuous from power-on:** 0 of 15,196 (0.0%), with nothing fed back. It stops at frame 1: power-on is not played, as no reviewed run starts there.
-- **Longest continuous run from any seed:** frames 8,539 to 10,018 (1,480 frames), `chain-any-0001-DF45` from its cut 0.
+- **Longest continuous run from any seed:** frames 8,539 to 10,674 (2,136 frames), `chain-any-0001-DF45` from its cut 0.
 
 | Stretch | Movie frames | Frames that pass |
 | --- | --- | ---: |
 | M0 Ceres's third room, across its door | 9,233 to 9,577 | 345 of 345 |
-| M1 Ceres's rooms 1 to 5, down to Ridley's door | 8,539 to 10,162 | 1,480 of 1,624 |
-| M2 Ceres with Ridley and the escape | 8,539 to 13,072 | 1,480 of 4,534 |
+| M1 Ceres's rooms 1 to 5, down to Ridley's door | 8,539 to 10,162 | 1,624 of 1,624 |
+| M2 Ceres with Ridley and the escape | 8,539 to 13,072 | 2,136 of 4,534 |
 
 The full evidence is in [the rebuild report](docs/REPORT.md); building and checking it is in [BUILDING](docs/BUILDING.md).

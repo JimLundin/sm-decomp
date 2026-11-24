@@ -9,7 +9,10 @@
 use super::connected::inputs::{CameraInputs, Lead, Screen};
 use super::played::{Doorway, Room};
 use super::world::{Boundary, MovementWorld};
-use boss_ceres_ridley::{CeresDoor, ColourSet, DoorKind, Stage};
+use boss_ceres_ridley::{
+    CeresDoor, CeresRidley, ColourSet, DoorColours, DoorKind, DoorPalette, GoalColours,
+    RidleyPlacing, Stage,
+};
 use core::num::Wrapping;
 use data::assets::actors::{self, Actors, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
@@ -22,7 +25,7 @@ use data::level::{BlockKind, PlmChoice, ScrollArea};
 use data::plm::PlmKind;
 use data::room::Area;
 use run_progress::{EnteredRoom, Progress, RoomStates, Version};
-use types::{Item, Side};
+use types::{BossKind, Item, Side};
 use world_doors::{COLOURS, Palette, RoomCall};
 
 /// The rooms, tilesets and sprite colours a passage loads from.
@@ -43,10 +46,19 @@ pub struct Rooms {
 /// What a room's loading reads of the run.
 #[derive(Clone, Copy, Debug)]
 pub struct Run<'a> {
-    /// Her progress, which chooses the next room's version, her suit and her beams.
+    /// Her progress, which chooses the next room's version, her suit and her beams, and says
+    /// whether the station's boss is beaten.
     pub progress: &'a Progress,
     /// The Ceres station's stage, whose colour set the doors a room places take.
     pub ceres: Stage,
+}
+
+impl Run<'_> {
+    /// Whether the station's boss counts as beaten: Ceres's main boss is defeated.
+    #[must_use]
+    pub fn ridley_beaten(&self) -> bool {
+        self.progress.defeated[types::Area::Ceres][BossKind::MainBoss]
+    }
 }
 
 /// Why the next room did not load.
@@ -64,9 +76,8 @@ pub enum LoadFault {
     Beams,
     /// The version loads a species that has no palette of its own.
     Species(data::id::SpeciesId),
-    /// The version places a Ceres actor that a later piece of the station models.
-    LaterCeresActor,
-    /// The version places actors other than the Ceres doors, whose boxes no owner here places.
+    /// The version places actors other than Ceres Ridley and the Ceres doors, whose boxes no
+    /// owner here places.
     OtherActors,
     /// The version places a PLM whose blocks no owner here places.
     Plm,
@@ -133,50 +144,86 @@ pub fn load(
 /// The Ceres actors a room places as its contents are fetched.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CeresActors {
+    /// Ceres Ridley, its first enemy, as his placing leaves him and what it hands on.
+    pub ridley: Option<RidleyPlacing>,
     /// Its Ceres doors, in its order of its enemies.
     pub doors: Vec<CeresDoor>,
     /// It places the shaft's overlay, which shows the shaft's lights.
     pub shaft_overlay: bool,
 }
 
+/// What a version's start places of the station's actors, in its order of its enemies: Ridley
+/// first, then the doors, each with the colours its start sets.
+struct Placed {
+    ridley: Option<RidleyPlacing>,
+    doors: Vec<CeresDoor>,
+    /// The doors' colours each door actor's start sets, the shaft's overlay's among them.
+    door_colours: Vec<DoorColours>,
+    shaft_overlay: bool,
+}
+
+/// The station's actors `version` places, as its contents are fetched (`RidleyPlaced`,
+/// `RoomStart`, `TheDoorsColours`). The shaft's overlay is an actor of the doors' species:
+/// its start sets the doors' colours as a door's does.
+fn placed(version: &world::Version, run: Run<'_>) -> Placed {
+    let ridley = version
+        .ceres_ridley
+        .then(|| CeresRidley::place(run.ridley_beaten()))
+        .flatten();
+    let mut placed = Placed {
+        ridley,
+        doors: Vec::new(),
+        door_colours: Vec::new(),
+        shaft_overlay: false,
+    };
+    // His placing sets the stage the doors after him read.
+    let stage = ridley.map_or(run.ceres, |ridley| ridley.stage);
+    for door in &version.ceres_doors {
+        let (kind, facing) = match door.kind {
+            CeresDoorKind::Door(facing) => (DoorKind::Door, facing),
+            CeresDoorKind::GetawayWall(side) => (DoorKind::GetawayWall, side),
+            CeresDoorKind::RidleyDoor => (DoorKind::RidleyDoor, Side::Right),
+            CeresDoorKind::ShaftDoor => (DoorKind::ShaftDoor, Side::Left),
+            CeresDoorKind::ShaftOverlay => {
+                placed.shaft_overlay = true;
+                (DoorKind::Door, Side::Left)
+            }
+        };
+        let placement = CeresDoor::place(kind, facing, door.position, stage);
+        placed.door_colours.push(placement.colours);
+        if door.kind != CeresDoorKind::ShaftOverlay {
+            placed.doors.push(placement.door);
+        }
+    }
+    placed
+}
+
 /// The Ceres doors and the shaft's overlay the room `through` leads to places as its contents
 /// are fetched.
 ///
-/// The doors come in its order of its enemies, each as a room's start places it (`RoomStart`).
-/// They and the overlay, which has no box, are the only actors it places: her motion meets no
-/// other actor's box in it. The doorway's rule and the version's setup run then too, and only
-/// those that change nothing play reads are let through: none; the way out of the station's
-/// elevator room, which only turns the screen out of its rotating view; and the station's haze,
-/// which only blends a colour over the screen.
+/// Ceres Ridley comes first, then the doors in its order of its enemies, each as a room's start
+/// places it (`RidleyPlaced`, `RoomStart`). He, the doors and the overlay, which has no box,
+/// are the only actors it places: he is passable, and her motion meets no other actor's box in
+/// it. The doorway's rule and the version's setup run then too, and only those that change
+/// nothing play reads are let through: none; the way out of the station's elevator room, which
+/// only turns the screen out of its rotating view; the station's haze, which only blends a
+/// colour over the screen; and the haze of Ridley's room, which also sets the tile bases and
+/// the screen mode its floor is drawn with.
 ///
 /// # Errors
-/// A doorway or room the content lacks, a Ceres actor of a later piece, another actor, or
-/// another door rule or setup, places none.
+/// A doorway or room the content lacks, another actor, or another door rule or setup, places
+/// none.
 pub fn ceres_actors(
     through: DoorwayId,
     run: Run<'_>,
     rooms: &Rooms,
 ) -> Result<CeresActors, LoadFault> {
     let version = version(rooms, through, run.progress)?;
-    let mut shaft_overlay = false;
-    let mut doors = Vec::new();
-    for placed in &version.ceres_doors {
-        let (kind, facing) = match placed.kind {
-            CeresDoorKind::Door(facing) => (DoorKind::Door, facing),
-            CeresDoorKind::ShaftDoor => (DoorKind::ShaftDoor, Side::Left),
-            CeresDoorKind::ShaftOverlay => {
-                shaft_overlay = true;
-                continue;
-            }
-            CeresDoorKind::Later => return Err(LoadFault::LaterCeresActor),
-        };
-        doors.push(CeresDoor::place(kind, facing, placed.position, run.ceres).door);
-    }
-    if version
-        .enemies
-        .iter()
-        .any(|loaded| loaded.species != actors::CERES_DOOR)
-    {
+    let placed = placed(version, run);
+    let owned = |species| {
+        species == actors::CERES_DOOR || (version.ceres_ridley && species == actors::CERES_RIDLEY)
+    };
+    if !version.enemies.iter().all(|loaded| owned(loaded.species)) {
         return Err(LoadFault::OtherActors);
     }
     let rule = rooms
@@ -187,12 +234,16 @@ pub fn ceres_actors(
     if !matches!(rule, DoorRule::Nothing | DoorRule::FromCeresElevatorShaft) {
         return Err(LoadFault::DoorRule(rule));
     }
-    if !matches!(version.setup, RoomSetup::Nothing | RoomSetup::CeresHaze) {
+    if !matches!(
+        version.setup,
+        RoomSetup::Nothing | RoomSetup::CeresHaze | RoomSetup::CeresRidleyHaze
+    ) {
         return Err(LoadFault::RoomSetup(version.setup));
     }
     Ok(CeresActors {
-        doors,
-        shaft_overlay,
+        ridley: placed.ridley,
+        doors: placed.doors,
+        shaft_overlay: placed.shaft_overlay,
     })
 }
 
@@ -453,17 +504,21 @@ fn contents(
             .ok_or(LoadFault::Species(loaded.species))?;
         set(&mut goal, loaded.row, 0, &own.0)?;
     }
-    if version
-        .enemies
-        .iter()
-        .any(|loaded| loaded.species == actors::CERES_DOOR)
-    {
+    let placed = placed(version, run);
+    if let Some(ridley) = placed.ridley {
+        room_colours(ridley, &rooms.actors.ceres_ridley, &mut goal)?;
+    }
+    for colours in placed.door_colours {
         let doors = &rooms.actors.ceres_doors;
-        let shades = match run.ceres.door_colours() {
+        let shades = match colours.set {
             ColourSet::Calm => &doors.calm,
             ColourSet::Escape => &doors.escape,
         };
-        set(&mut goal, SpriteRow::CERES_DOORS, 1, shades)?;
+        let row = match colours.palette {
+            DoorPalette::Doors => SpriteRow::CERES_DOORS,
+            DoorPalette::Own => SpriteRow::RIDLEY_DOOR,
+        };
+        set(&mut goal, row, 1, shades)?;
     }
     let suits = &rooms.samus.suits;
     let on = &inventory.items_switched_on;
@@ -477,6 +532,28 @@ fn contents(
     set(&mut goal, SpriteRow::SUIT, 0, &suit.0)?;
     palette.screen = screen;
     palette.goal = goal;
+    Ok(())
+}
+
+/// `RidleyPlaced`: his room's colours, the goal the passage's fade brings the screen to. Each
+/// palette takes his room's content, or turns black but for its first colour.
+fn room_colours(
+    ridley: RidleyPlacing,
+    content: &actors::CeresRidleyColours,
+    goal: &mut [types::Colour; COLOURS],
+) -> Result<(), LoadFault> {
+    const BLACK: [Colour; ROW_COLOURS] = [Colour(0); ROW_COLOURS];
+    let colours = ridley.colours;
+    for (palette, row, own) in [
+        (colours.baby, SpriteRow::BABY, &content.baby.0),
+        (colours.door, SpriteRow::RIDLEY_DOOR, &content.door.0),
+        (colours.ridley, SpriteRow::CERES_DOORS, &BLACK),
+    ] {
+        match palette {
+            GoalColours::RoomContent => set(goal, row, 0, own)?,
+            GoalColours::BlackButFirst => set(goal, row, 1, &BLACK)?,
+        }
+    }
     Ok(())
 }
 
@@ -557,7 +634,8 @@ mod tests {
     use crate::production::connected::inputs::{CameraInputs, Lead, Screen};
     use core::num::Wrapping;
     use data::assets::actors::{
-        Actors, CERES_DOOR, CeresDoorColours, EnemyGraphics, Species, SpriteRow,
+        Actors, CERES_DOOR, CERES_RIDLEY, CeresDoorColours, CeresRidleyColours, EnemyGraphics,
+        Species, SpriteRow,
     };
     use data::assets::art::{Colour, Palette as Row, PaletteSet};
     use data::assets::samus::palettes::{BeamPalette, SamusPalettes, Suits};
@@ -597,8 +675,20 @@ mod tests {
                 species: CERES_DOOR,
                 row: SpriteRow::new(2).unwrap(),
             }],
-            ceres_doors: Vec::new(),
+            ceres_doors: vec![placed(CeresDoorKind::Door(Side::Left))],
+            ceres_ridley: false,
             setup: RoomSetup::CeresHaze,
+        }
+    }
+
+    /// A Ceres actor of `kind`, placed at an invented position.
+    fn placed(kind: CeresDoorKind) -> data::assets::world::CeresDoorPlacement {
+        data::assets::world::CeresDoorPlacement {
+            kind,
+            position: types::Pair {
+                x: Wrapping(128),
+                y: Wrapping(64),
+            },
         }
     }
 
@@ -659,7 +749,7 @@ mod tests {
                 ..Tilesets::default()
             },
             actors: Actors {
-                species: (0..=CERES_DOOR.0)
+                species: (0..=CERES_RIDLEY.0)
                     .map(|id| Species {
                         id: SpeciesId(id),
                         palette: Some(Row([Colour(0x0100 | id); 16])),
@@ -670,6 +760,14 @@ mod tests {
                 ceres_doors: CeresDoorColours {
                     calm: [Colour(0x0066); 15],
                     escape: [Colour(0x0077); 15],
+                },
+                ceres_ridley: CeresRidleyColours {
+                    door: Row([Colour(0x00c0); 16]),
+                    baby: Row([Colour(0x00c1); 16]),
+                    rest: [Colour(0x00c2); 15],
+                    glow1: [Colour(0x00c3); 15],
+                    glow2: [Colour(0x00c4); 15],
+                    glow3: [Colour(0x00c5); 15],
                 },
                 ..Actors::default()
             },
@@ -701,6 +799,15 @@ mod tests {
         through: DoorwayId,
         progress: &run_progress::Progress,
     ) -> Result<Palette, LoadFault> {
+        loaded_from(call, through, progress, &rooms())
+    }
+
+    fn loaded_from(
+        call: RoomCall,
+        through: DoorwayId,
+        progress: &run_progress::Progress,
+        rooms: &Rooms,
+    ) -> Result<Palette, LoadFault> {
         let mut palette = Palette {
             screen: lit(0),
             goal: lit(0x0033),
@@ -712,7 +819,7 @@ mod tests {
                 progress,
                 ceres: boss_ceres_ridley::Stage::Calm,
             },
-            &rooms(),
+            rooms,
             &mut palette,
         )
         .map(|()| palette)
@@ -886,22 +993,89 @@ mod tests {
         assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
     }
 
+    /// What the fixture's version places: its one door.
     fn no_actors() -> super::CeresActors {
+        let door = |kind, facing| {
+            boss_ceres_ridley::CeresDoor::place(
+                kind,
+                facing,
+                placed(CeresDoorKind::ShaftDoor).position,
+                boss_ceres_ridley::Stage::Calm,
+            )
+            .door
+        };
         super::CeresActors {
-            doors: Vec::new(),
+            ridley: None,
+            doors: vec![door(boss_ceres_ridley::DoorKind::Door, Side::Left)],
             shaft_overlay: false,
         }
     }
 
+    /// Ridley's room: Ridley and the door of his room.
+    fn ridleys_room() -> Version {
+        let mut ridley = version(1);
+        ridley.ceres_ridley = true;
+        ridley.enemies.push(EnemyGraphics {
+            species: CERES_RIDLEY,
+            row: SpriteRow::new(1).unwrap(),
+        });
+        ridley.ceres_doors = vec![placed(CeresDoorKind::RidleyDoor)];
+        ridley.setup = RoomSetup::CeresRidleyHaze;
+        ridley
+    }
+
     #[test]
-    fn the_shafts_overlay_is_placed_and_a_later_pieces_actor_refused() {
-        let placed = |kind| data::assets::world::CeresDoorPlacement {
-            kind,
-            position: types::Pair {
-                x: Wrapping(128),
-                y: Wrapping(64),
-            },
-        };
+    fn ridleys_room_places_him_first_and_the_door_of_his_room_unless_he_is_beaten() {
+        fn run(progress: &run_progress::Progress) -> Run<'_> {
+            Run {
+                progress,
+                ceres: boss_ceres_ridley::Stage::Calm,
+            }
+        }
+        let mut progress = run_progress::Progress::default();
+        let rooms = rooms_of(ridleys_room(), version(0));
+        let actors = super::ceres_actors(CHOSEN, run(&progress), &rooms).unwrap();
+        let placing = actors.ridley.unwrap();
+        assert_eq!(placing.stage, boss_ceres_ridley::Stage::Calm);
+        assert_eq!(placing.boss, boss_ceres_ridley::Boss::CeresRidley);
+        assert_eq!(actors.doors.len(), 1);
+        assert_eq!(
+            actors.doors[0].kind,
+            boss_ceres_ridley::DoorKind::RidleyDoor
+        );
+        assert_eq!(actors.doors[0].facing, Side::Right);
+        progress.defeated[types::Area::Ceres][types::BossKind::MainBoss] = true;
+        let beaten = super::ceres_actors(CHOSEN, run(&progress), &rooms).unwrap();
+        assert_eq!(beaten.ridley, None);
+        // Ridley's species, loaded where the version doesn't place him, is another actor.
+        let mut unplaced = ridleys_room();
+        unplaced.ceres_ridley = false;
+        assert_eq!(
+            super::ceres_actors(CHOSEN, run(&progress), &rooms_of(unplaced, version(0))),
+            Err(LoadFault::OtherActors)
+        );
+    }
+
+    #[test]
+    fn his_placing_sets_his_rooms_colours_and_the_door_of_his_room_takes_its_own_palette() {
+        let progress = run_progress::Progress::default();
+        let rooms = rooms_of(ridleys_room(), version(0));
+        let goal = loaded_from(RoomCall::FetchContents, CHOSEN, &progress, &rooms)
+            .unwrap()
+            .goal;
+        let colours = |bits| [types::Colour::new(bits).unwrap(); 16];
+        assert_eq!(row(&goal, 1), colours(0x0100 | CERES_RIDLEY.0));
+        // The door's own palette: his room's content, then the doors' calm set over it.
+        assert_eq!(row(&goal, 2)[0], colours(0x00c0)[0]);
+        assert_eq!(row(&goal, 2)[1..], colours(0x0066)[1..]);
+        assert_eq!(row(&goal, 3), colours(0x00c1));
+        // The palette he is drawn in, the doors', black but for its first colour.
+        assert_eq!(row(&goal, 7)[0], colours(0x0033)[0]);
+        assert_eq!(row(&goal, 7)[1..], colours(0)[1..]);
+    }
+
+    #[test]
+    fn the_shafts_overlay_is_placed_and_sets_the_doors_colours() {
         let progress = run_progress::Progress::default();
         let run = Run {
             progress: &progress,
@@ -912,14 +1086,23 @@ mod tests {
             placed(CeresDoorKind::ShaftOverlay),
             placed(CeresDoorKind::Door(Side::Left)),
         ];
-        let actors = super::ceres_actors(CHOSEN, run, &rooms_of(shaft, version(0))).unwrap();
+        let rooms = rooms_of(shaft, version(0));
+        let actors = super::ceres_actors(CHOSEN, run, &rooms).unwrap();
         assert!(actors.shaft_overlay);
         assert_eq!(actors.doors.len(), 1);
-        let mut ridley = version(1);
-        ridley.ceres_doors = vec![placed(CeresDoorKind::Later)];
+        let mut overlay = version(1);
+        overlay.ceres_doors = vec![placed(CeresDoorKind::ShaftOverlay)];
+        let goal = loaded_from(
+            RoomCall::FetchContents,
+            CHOSEN,
+            &progress,
+            &rooms_of(overlay, version(0)),
+        )
+        .unwrap()
+        .goal;
         assert_eq!(
-            super::ceres_actors(CHOSEN, run, &rooms_of(ridley, version(0))),
-            Err(LoadFault::LaterCeresActor)
+            row(&goal, 7)[1..],
+            [types::Colour::new(0x0066).unwrap(); 15]
         );
     }
 

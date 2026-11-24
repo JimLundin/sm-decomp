@@ -43,6 +43,26 @@ pub enum BehaviourId {
     BeaconCycles,
     /// Before the escape, the platform shows its two looks in turn.
     PlatformTurns,
+    /// The door of Ridley's room stands open behind her a moment.
+    RidleyRoomStart,
+    /// Then it slams shut over four figures.
+    SlamShut,
+    /// The shut door stays locked while Ridley lives.
+    LockedIn,
+    /// While the door of Ridley's room is shut, Ridley's drawing draws it.
+    DrawnWithRidley,
+    /// During Ridley's getaway two walls stand at his room's sides.
+    GetawayWalls,
+    /// As she enters his room Ridley is placed in the dark, the baby in his hold.
+    RidleyPlaced,
+    /// Once the passage into his room is over he waits a fixed while, then wakes.
+    RidleyWaits,
+    /// The baby stays in his hold.
+    BabyHeld,
+    /// The baby fidgets through its figures.
+    BabyFidgets,
+    /// At the end of each fidget the baby, one time in two, cries and glows.
+    BabyCries,
 }
 
 /// A catalogue entry.
@@ -60,8 +80,8 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// How many entries the spec has: the doors' eleven and the shaft's seven.
-const ENTRIES: usize = 18;
+/// How many entries the spec has: the doors' eleven, the shaft's seven and Ridley's room's ten.
+const ENTRIES: usize = 28;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -205,6 +225,84 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
         id: BehaviourId::PlatformTurns,
         summary: "before the escape, the platform below the shaft shows its two looks in \
                           turn, two frames each",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RidleyRoomStart,
+        summary: "the door of Ridley's room, placed as the room starts, stands open behind \
+                          her a moment",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SlamShut,
+        summary: "then it slams shut over four figures, quickly and silently, near her or \
+                          not",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::LockedIn,
+        summary: "the shut door stays locked while Ridley lives, looking every 2 frames \
+                          whether he is beaten; then it is a closed door like any other, which \
+                          opens as she comes near",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::DrawnWithRidley,
+        summary: "while the door of Ridley's room is shut, Ridley's drawing draws it",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayWalls,
+        summary: "during Ridley's getaway two walls stand at his room's sides; they look \
+                          for nobody",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RidleyPlaced,
+        summary: "as she enters his room he is placed at his place, in the dark, the baby \
+                          in his hold; the mini-map goes blank, the music stops and the station \
+                          stops shaking",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RidleyWaits,
+        summary: "once the door's passage into his room is over he waits a fixed while in \
+                          the dark, then wakes",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BabyHeld,
+        summary: "the baby stays in his hold",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BabyFidgets,
+        summary: "the baby fidgets through its figures, ten runs each",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BabyCries,
+        summary: "at the end of each fidget the baby, one time in two, cries and glows",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

@@ -1,4 +1,4 @@
-# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors).
+# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; part 2 and part 3 below).
 #
 # Format
 # - Each [[vector]] is one run of one door, from its state at the run's start to its state at the
@@ -988,3 +988,510 @@ source = "constructed"
 entries = ["PlatformTurns", "BeaconCycles"]
 lights = { count = 7842 }
 lights_after = { step = 4, platform = "Second" }
+
+# ================================================================ part 3: Ridley's room as she enters
+#
+# Format of the part-3 vectors (spec §10 to §12).
+# - The door's and the walls' vectors (ids R-, W-) have the part-1 form, with:
+#   - door.kind also "RidleyDoor" (facing "Right") or "GetawayWall" ("Left" or "Right");
+#   - before.phase and after.phase also "Lingering", "Locked", "Slammed", "Slamming" (with step,
+#     1 to 4), "Standing" or "Unseen"; figure.look also "Side";
+#   - beaten (optional, default false): whether Ridley is beaten (spec §1.3);
+#   - after.drawn_with_ridley (optional, default false, compared on every door vector, part 1's
+#     included): whether Ridley's drawing draws the door;
+#   - after.shake.layers (optional, default "Whole"): "Back" or "Whole";
+#   - after.palette (placing only, optional, default "Doors"): "Doors" or "Own".
+#   - rules may also hold slam (frames, SlamShut). Without it: slam 2.
+# - Ridley's vectors (ids K-) have no door, before, her or after; instead:
+#   - ridley_placing = true: the room places him; beaten (optional, default false).
+#   - Otherwise one run of him and the baby: ridley = { phase, wait, look, position }: phase
+#     "Holding", "Waiting" or "Awake"; wait, frames, "Waiting" only; look "Rest", absent for none;
+#     position = [x, y], pixels, 16-bit, in decimal as in part 2. baby = { routine, step,
+#     runs }: routine "New" (no step or runs), "Fidget" (step 0 to 7) or "Glow" (step 0 to 11);
+#     runs, the runs it has shown its
+#     figure, 1 up to the figure's length. passing (optional, default false): a door's passage
+#     under way as he runs. random (optional, default "0000"): as the doors read it.
+#   - ridley_after: present (placing only, bool); phase, wait, look, position as above; baby =
+#     { routine, step, runs, look, position } (look "First", "Second" or "Third", absent with
+#     the position for "New"); shown, solid (bools); placing only: boss (a boss encountered,
+#     Ridley in Ceres), music_stops, shake_stops, stage_calm, room_colours (bools: each output
+#     of RidleyPlaced); runs only: cry (bool), colours (the baby's colour set, "Glow1", "Glow2",
+#     "Glow3" or "Rest", absent for none).
+#   - rules may hold wake (frames, RidleyWaits). Without it: wake 512.
+# - Positions of the door, the walls and her are invented: the recorded cases N1 to N16 and K1
+#   to K10 (whose rows and frames the observer keeps) are moved with her offsets kept. Ridley's
+#   place is the rule's (RidleyPlaced); the random numbers are the records'.
+
+# ---------------------------------------------------------------- the door of Ridley's room
+
+[[vector]]
+# recorded case N1: placed while calm: the calm set, in its own palette
+id = "R-placed-calm"
+source = "constructed"
+entries = ["RoomStart", "TheDoorsColours"]
+placing = true
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Calm", palette = "Own" }
+
+[[vector]]
+# placed in the escape (no row): the escape set, in the doors' palette
+id = "R-placed-escape"
+source = "constructed"
+entries = ["TheDoorsColours"]
+placing = true
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+stage = "Escape"
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Escape", palette = "Doors" }
+
+[[vector]]
+# recorded case N2: its first run, with her near: it stands open, hidden, and lets her by
+id = "R-first-run"
+source = "constructed"
+entries = ["RidleyRoomStart", "Solid", "Shown"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Lingering", wait = 2, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# placed in the escape with Ridley beaten (no row): it still lingers, and shakes the back layer
+id = "R-first-run-escape"
+source = "constructed"
+entries = ["RidleyRoomStart", "EscapeShakes"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0400", "0400"]
+stage = "Escape"
+beaten = true
+random = "0100"
+shaking = 0
+after = { phase = "Lingering", wait = 2, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false, shake = { pixels = 1, frames = 2, layers = "Back" } }
+
+[[vector]]
+# recorded case N3: the pause counts down
+id = "R-linger-wait"
+source = "constructed"
+entries = ["Waiting"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Lingering", wait = 2 }
+her = ["0157", "009C"]
+after = { phase = "Lingering", wait = 1, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case N4: the slam's first figure, shown and solid, silent
+id = "R-slam-start"
+source = "constructed"
+entries = ["SlamShut", "Solid", "Shown", "DrawnWithRidley"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Lingering", wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Slamming", step = 1, wait = 2, figure = { look = "Open", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case N5: the slam's second figure
+id = "R-slam-step"
+source = "constructed"
+entries = ["SlamShut"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slamming", step = 1, wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Slamming", step = 2, wait = 2, figure = { look = "Ajar3", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# far from her too, it slams on
+id = "R-slam-near"
+source = "constructed"
+entries = ["SlamShut"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slamming", step = 2, wait = 1 }
+her = ["0400", "0090"]
+after = { phase = "Slamming", step = 3, wait = 2, figure = { look = "Ajar2", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case N6: shut, for one frame shown by both the framework and Ridley
+id = "R-slam-last"
+source = "constructed"
+entries = ["SlamShut", "Solid", "Shown", "DrawnWithRidley"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slamming", step = 4, wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Slammed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, drawn_with_ridley = true }
+
+[[vector]]
+# recorded case N7: locked: hidden, solid, drawn by Ridley
+id = "R-locked"
+source = "constructed"
+entries = ["LockedIn", "Solid", "Shown", "DrawnWithRidley"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slammed", wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Locked", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = true, sound = false, drawn_with_ridley = true }
+
+[[vector]]
+# Ridley beaten as it is shut (no row): it locks all the same
+id = "R-slammed-beaten"
+source = "constructed"
+entries = ["LockedIn"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slammed", wait = 1 }
+her = ["0157", "009C"]
+beaten = true
+after = { phase = "Locked", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = true, sound = false, drawn_with_ridley = true }
+
+[[vector]]
+# recorded case N8: the lock's wait counts down
+id = "R-locked-wait"
+source = "constructed"
+entries = ["Waiting"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Locked", wait = 2 }
+her = ["0157", "009C"]
+after = { phase = "Locked", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = false, solid = true, sound = false, drawn_with_ridley = true }
+
+[[vector]]
+# recorded case N9: Ridley lives: it looks again in 2 frames
+id = "R-locked-again"
+source = "constructed"
+entries = ["LockedIn"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Locked", wait = 1 }
+her = ["0400", "0400"]
+after = { phase = "Locked", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = true, sound = false, drawn_with_ridley = true }
+
+[[vector]]
+# she at it while Ridley lives: it doesn't open
+id = "R-locked-near"
+source = "constructed"
+entries = ["LockedIn"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Locked", wait = 1 }
+her = ["0148", "0090"]
+after = { phase = "Locked", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = true, sound = false, drawn_with_ridley = true }
+
+[[vector]]
+# recorded case N10: the escape starts, Ridley beaten: let go as a closed door, and the first
+# shake, of the back layer
+id = "R-released"
+source = "constructed"
+entries = ["LockedIn", "EscapeShakes", "DrawnWithRidley"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Locked", wait = 1 }
+her = ["0164", "009C"]
+stage = "Escape"
+beaten = true
+random = "24E5"
+shaking = 0
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 1, frames = 2, layers = "Back" } }
+
+[[vector]]
+# poll 4: let go, it waits the poll
+id = "R-released-poll"
+source = "constructed"
+entries = ["LockedIn", "Polling"]
+rules = { poll = 4 }
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Locked", wait = 1 }
+her = ["0400", "0400"]
+stage = "Escape"
+beaten = true
+shaking = 1
+after = { phase = "Closed", wait = 4, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case N11: let go, it opens for her as any door does, with the opening's sound
+id = "R-released-opens"
+source = "constructed"
+entries = ["LockedIn", "Opening", "EscapeShakes"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0164", "00A1"]
+stage = "Escape"
+beaten = true
+random = "A0C3"
+shaking = 0
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true, shake = { pixels = 1, frames = 2, layers = "Back" } }
+
+[[vector]]
+# recorded case N16: a strong shake of the back layer
+id = "R-shake-strong-back"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Open", wait = 1 }
+her = ["0149", "009C"]
+stage = "Escape"
+beaten = true
+random = "C01A"
+shaking = 0
+after = { phase = "Open", wait = 2, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false, shake = { pixels = 3, frames = 4, layers = "Back" } }
+
+[[vector]]
+# slam 3: the first figure lasts 3 frames
+id = "R-slam-adjusted"
+source = "constructed"
+entries = ["SlamShut"]
+rules = { slam = 3 }
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Lingering", wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Slamming", step = 1, wait = 3, figure = { look = "Open", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# slam 3: so does the fourth
+id = "R-slam-adjusted-step"
+source = "constructed"
+entries = ["SlamShut"]
+rules = { slam = 3 }
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slamming", step = 3, wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Slamming", step = 4, wait = 3, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# slam 3: the shut frame is still 1
+id = "R-slam-adjusted-last"
+source = "constructed"
+entries = ["SlamShut"]
+rules = { slam = 3 }
+door = { kind = "RidleyDoor", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Slamming", step = 4, wait = 1 }
+her = ["0157", "009C"]
+after = { phase = "Slammed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, drawn_with_ridley = true }
+
+# ---------------------------------------------------------------- the getaway's walls
+
+[[vector]]
+# recorded case N12: the getaway places a wall while still calm: the calm set, the doors' palette
+id = "W-placed"
+source = "constructed"
+entries = ["TheDoorsColours"]
+placing = true
+door = { kind = "GetawayWall", facing = "Left", position = ["0100", "0200"] }
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Calm", palette = "Doors" }
+
+[[vector]]
+# placed in the getaway (no row): the escape set
+id = "W-placed-getaway"
+source = "constructed"
+entries = ["TheDoorsColours"]
+placing = true
+door = { kind = "GetawayWall", facing = "Right", position = ["01F0", "0200"] }
+stage = "Getaway"
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Escape", palette = "Doors" }
+
+[[vector]]
+# recorded case N13: its first run in the getaway: shown, passable
+id = "W-first-run"
+source = "constructed"
+entries = ["GetawayWalls", "Solid", "Shown"]
+door = { kind = "GetawayWall", facing = "Left", position = ["0100", "0200"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0112", "01CD"]
+stage = "Getaway"
+after = { phase = "Standing", wait = 1, figure = { look = "Side", facing = "Left" }, shown = true, solid = false, sound = false }
+
+[[vector]]
+# recorded case N13, the right wall
+id = "W-right"
+source = "constructed"
+entries = ["GetawayWalls"]
+door = { kind = "GetawayWall", facing = "Right", position = ["01F0", "0200"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0112", "01CD"]
+stage = "Getaway"
+after = { phase = "Standing", wait = 1, figure = { look = "Side", facing = "Right" }, shown = true, solid = false, sound = false }
+
+[[vector]]
+# recorded case N14: it stays shown through the getaway
+id = "W-standing"
+source = "constructed"
+entries = ["GetawayWalls"]
+door = { kind = "GetawayWall", facing = "Left", position = ["0100", "0200"] }
+before = { phase = "Standing", wait = 1 }
+her = ["0112", "01CD"]
+stage = "Getaway"
+after = { phase = "Standing", wait = 1, figure = { look = "Side", facing = "Left" }, shown = true, solid = false, sound = false }
+
+[[vector]]
+# she at the wall: it looks for nobody
+id = "W-near"
+source = "constructed"
+entries = ["GetawayWalls"]
+door = { kind = "GetawayWall", facing = "Right", position = ["01F0", "0200"] }
+before = { phase = "Standing", wait = 1 }
+her = ["01F0", "0200"]
+stage = "Getaway"
+after = { phase = "Standing", wait = 1, figure = { look = "Side", facing = "Right" }, shown = true, solid = false, sound = false }
+
+[[vector]]
+# recorded case N15: the escape starts: it hides, and starts no shake
+id = "W-hides"
+source = "constructed"
+entries = ["GetawayWalls", "Solid", "Shown", "EscapeShakes"]
+door = { kind = "GetawayWall", facing = "Left", position = ["0100", "0200"] }
+before = { phase = "Standing", wait = 1 }
+her = ["0112", "01CD"]
+stage = "Escape"
+beaten = true
+random = "0000"
+shaking = 0
+after = { phase = "Unseen", wait = 1, figure = { look = "Side", facing = "Left" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# placed and run while calm (no row): hidden
+id = "W-calm"
+source = "constructed"
+entries = ["GetawayWalls"]
+door = { kind = "GetawayWall", facing = "Right", position = ["01F0", "0200"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0112", "01CD"]
+after = { phase = "Unseen", wait = 1, figure = { look = "Side", facing = "Right" }, shown = false, solid = false, sound = false }
+
+# ---------------------------------------------------------------- Ceres Ridley placed and waiting
+
+[[vector]]
+# recorded case K1: placed as she enters: in the dark at his place, the baby not yet run
+id = "K-placed"
+source = "constructed"
+entries = ["RidleyPlaced"]
+ridley_placing = true
+ridley_after = { present = true, phase = "Holding", position = [186, 169], baby = { routine = "New" }, shown = true, solid = false, boss = true, music_stops = true, shake_stops = true, stage_calm = true, room_colours = true }
+
+[[vector]]
+# placed with Ridley beaten (no row): he isn't there, and nothing else happens
+id = "K-placed-beaten"
+source = "constructed"
+entries = ["RidleyPlaced"]
+ridley_placing = true
+beaten = true
+ridley_after = { present = false, boss = false, music_stops = false, shake_stops = false, stage_calm = false, room_colours = false }
+
+[[vector]]
+# recorded case K2: his first run, in the passage: he holds, takes his look, the baby its first
+# figure in his hold
+id = "K-first-run"
+source = "constructed"
+entries = ["RidleyWaits", "BabyHeld", "BabyFidgets"]
+ridley = { phase = "Holding", position = [186, 169] }
+baby = { routine = "New" }
+passing = true
+random = "23D0"
+ridley_after = { phase = "Holding", look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# held elsewhere (no row): the baby 16 px left of him and 22 px below
+id = "K-held-elsewhere"
+source = "constructed"
+entries = ["BabyHeld"]
+ridley = { phase = "Holding", look = "Rest", position = [512, 65520] }
+baby = { routine = "Fidget", step = 2, runs = 3 }
+passing = true
+ridley_after = { phase = "Holding", look = "Rest", position = [512, 65520], baby = { routine = "Fidget", step = 2, runs = 4, look = "Third", position = [496, 6] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K3: the passage over, he starts his wait, the first frame counted
+id = "K-first-wait"
+source = "constructed"
+entries = ["RidleyWaits", "BabyFidgets"]
+ridley = { phase = "Holding", look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 1, runs = 5 }
+random = "FA6A"
+ridley_after = { phase = "Waiting", wait = 511, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 6, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K4: the wait counts down
+id = "K-wait-counts"
+source = "constructed"
+entries = ["RidleyWaits", "BabyFidgets"]
+ridley = { phase = "Waiting", wait = 511, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 1, runs = 6 }
+random = "E523"
+ridley_after = { phase = "Waiting", wait = 510, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 7, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K5: the wait at 0: he wakes
+id = "K-wake"
+source = "constructed"
+entries = ["RidleyWaits"]
+ridley = { phase = "Waiting", wait = 0, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 6, runs = 5 }
+random = "C825"
+ridley_after = { phase = "Awake", look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 6, runs = 6, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# wake 10: the passage over, his wait starts at 9
+id = "K-wait-adjusted"
+source = "constructed"
+entries = ["RidleyWaits"]
+rules = { wake = 10 }
+ridley = { phase = "Holding", look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+ridley_after = { phase = "Waiting", wait = 9, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# wake 1: the passage over, his wait starts at 0, and he wakes on the next run
+id = "K-wait-adjusted-wake"
+source = "constructed"
+entries = ["RidleyWaits"]
+rules = { wake = 1 }
+ridley = { phase = "Holding", look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+ridley_after = { phase = "Waiting", wait = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K10: a figure shown its 10 runs gives way to the next
+id = "K-fidget-next"
+source = "constructed"
+entries = ["BabyFidgets"]
+ridley = { phase = "Waiting", wait = 507, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 1, runs = 10 }
+random = "10D4"
+ridley_after = { phase = "Waiting", wait = 506, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 2, runs = 1, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K6: the fidget over, an odd random number: it starts again, quiet
+id = "K-calm"
+source = "constructed"
+entries = ["BabyCries", "BabyFidgets"]
+ridley = { phase = "Waiting", wait = 447, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 7, runs = 10 }
+random = "1BB5"
+ridley_after = { phase = "Waiting", wait = 446, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K7: the fidget over, an even random number: it cries and starts to glow
+id = "K-cries"
+source = "constructed"
+entries = ["BabyCries"]
+ridley = { phase = "Waiting", wait = 367, look = "Rest", position = [186, 169] }
+baby = { routine = "Fidget", step = 7, runs = 10 }
+random = "667A"
+ridley_after = { phase = "Waiting", wait = 366, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = true, colours = "Glow1" }
+
+[[vector]]
+# the glow's fifth figure, 2 runs long, counts its second run
+id = "K-glow-counts"
+source = "constructed"
+entries = ["BabyCries", "BabyFidgets"]
+ridley = { phase = "Waiting", wait = 300, look = "Rest", position = [186, 169] }
+baby = { routine = "Glow", step = 4, runs = 1 }
+ridley_after = { phase = "Waiting", wait = 299, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 4, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false }
+
+[[vector]]
+# recorded case K8: the glow's first figure shown its 6 runs: the second, and its colours
+id = "K-glow-next"
+source = "constructed"
+entries = ["BabyCries"]
+ridley = { phase = "Waiting", wait = 361, look = "Rest", position = [186, 169] }
+baby = { routine = "Glow", step = 0, runs = 6 }
+random = "FDE1"
+ridley_after = { phase = "Waiting", wait = 360, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 1, runs = 1, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, colours = "Glow2" }
+
+[[vector]]
+# recorded case K9: the glow's last figure shown its 9 runs: its colours back, the fidget again
+id = "K-glow-last"
+source = "constructed"
+entries = ["BabyCries"]
+ridley = { phase = "Waiting", wait = 305, look = "Rest", position = [186, 169] }
+baby = { routine = "Glow", step = 11, runs = 9 }
+ridley_after = { phase = "Waiting", wait = 304, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, colours = "Rest" }

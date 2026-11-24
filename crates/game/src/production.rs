@@ -21,6 +21,7 @@ mod immutable;
 mod movement;
 pub mod movement_touchdown;
 pub mod played;
+pub mod ridley;
 pub mod room_loading;
 pub mod sender;
 pub mod shaft;

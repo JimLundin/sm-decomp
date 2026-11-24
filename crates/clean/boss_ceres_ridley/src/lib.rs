@@ -1,6 +1,6 @@
-//! The boss-ceres-ridley model, built from its behaviour spec alone. Two parts of the Ceres
-//! station so far: the doors, and the shaft as she arrives, itself two pieces. Each piece has
-//! its own state, inputs and outputs, and its caller steps it on its own schedule.
+//! The boss-ceres-ridley model, built from its behaviour spec alone. Three parts of the Ceres
+//! station so far: the doors, the shaft as she arrives, and Ridley's room as she enters. Each
+//! piece has its own state, inputs and outputs, and its caller steps it on its own schedule.
 //!
 //! **The doors.** A Ceres door stands between two of the station's rooms. It slides open as
 //! Samus comes near and shuts behind her once she has gone, hissing as it opens. The shaft's door
@@ -8,7 +8,8 @@
 //! station shaking.
 //!
 //! A caller holds each [`CeresDoor`] between frames. When a room starts, [`CeresDoor::place`]
-//! places it and says which colour set the doors' palette takes. Each frame the enemies run,
+//! places it and says which colour set its palette takes, and which palette. Each frame the
+//! enemies run,
 //! [`CeresDoor::run`] takes the door and what it reads as the frame starts ([`Inputs`]) and
 //! answers with the door as its run leaves it, the sound it asks for and the shake it starts
 //! ([`Run`]).
@@ -27,8 +28,21 @@
 //! what it reads ([`LightsInputs`]) and answers with the beacon's step and the platform's look
 //! ([`Lights`]).
 //!
+//! **Ridley's room as she enters.** Its door is a Ceres door of its own kind: it stands open
+//! behind her a moment, slams shut and stays locked, drawn by Ridley, until he is beaten; then
+//! it is an ordinary door. The two walls his getaway puts up are Ceres doors too, shown during
+//! the getaway only. Ridley waits in the dark with the baby, which now and then cries and
+//! glows, until he wakes.
+//!
+//! Ridley holds state: a caller holds the [`CeresRidley`] between frames and steps it on the
+//! frame the room places him ([`CeresRidley::place`]) and on each frame he runs
+//! ([`CeresRidley::run`]), with what he reads. The placing answers with what
+//! he hands the rest of the game ([`RidleyPlacing`]); a run, with the baby's cry and colours
+//! ([`RidleyRun`]).
+//!
 //! The tuning values of all of them are in [`Rules`], whose default holds the spec's values.
 
+mod baby;
 mod catalogue;
 mod door;
 mod figure;
@@ -38,9 +52,15 @@ mod look;
 mod pad;
 mod pad_wait;
 mod phase;
+mod ridley;
+mod ridley_wait;
 mod rules;
 mod station;
 
+pub use baby::{
+    Baby, BabyColours, BabyCry, BabyFigure, BabyLook, BabyRoutine, BabyRun, FidgetFigure,
+    GlowFigure, ShownFigure,
+};
 pub use catalogue::{Behaviour, BehaviourId, catalogue};
 pub use door::{BOX_RADIUS, CeresDoor, DoorKind, OpeningSound, Placement, Run};
 pub use figure::{Figure, FigureLook};
@@ -50,5 +70,10 @@ pub use look::AlternatingLook;
 pub use pad::{Cover, Pad, PadAndCover, PadAndCoverFigures, PadAndCoverStep, PadFigure};
 pub use pad_wait::PadWait;
 pub use phase::{Phase, Quarter, Wait};
+pub use ridley::{
+    Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyLook, RidleyPhase,
+    RidleyPlacing, RidleyRun, RoomColours, ShakeStop,
+};
+pub use ridley_wait::{RidleyWait, WakeWait};
 pub use rules::Rules;
-pub use station::{ColourSet, Shake, Stage};
+pub use station::{ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeStart, Stage};

@@ -4,8 +4,8 @@ use types::Side;
 
 use crate::phase::{Phase, Quarter};
 
-/// How far open a figure shows the door, from closed to open. Which sprites each is belongs to
-/// the doors' content.
+/// How far open a figure shows the door, from closed to open, or a getaway wall's side. Which
+/// sprites each is belongs to the doors' content.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FigureLook {
     /// Shut.
@@ -18,9 +18,11 @@ pub enum FigureLook {
     Ajar3,
     /// Wide open.
     Open,
+    /// A getaway wall.
+    Side,
 }
 
-/// One of the doors' ten figures: a look, drawn for a door facing left or right.
+/// One of the doors' twelve figures: a look, drawn for a door facing left or right.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Figure {
     /// How far open it shows the door.
@@ -90,7 +92,7 @@ const OPEN_DOOR: Figures = Figures {
 };
 
 /// The figures each phase holds, the spec's table of figures. An opening shows `Ajar1`, `Ajar2`,
-/// `Ajar3` and `Open` and a closing shows them back, so each figure of a closing is the
+/// `Ajar3` and `Open` and a closing or a slam shows them back, so each of their figures is the
 /// opening's from the other end. A starting door holds the closed figure facing right and the
 /// wall the closed figure facing left, whichever way the door faces. A hidden door holds its
 /// figure too, though it is never drawn.
@@ -99,12 +101,18 @@ pub const fn figures(phase: Phase) -> Figures {
     match phase {
         Phase::Placed => Figures::NONE,
         Phase::Starting { .. } => Figures::always(FigureLook::Closed, Side::Right),
-        Phase::Closed { .. } => Figures::facing_its_way(FigureLook::Closed),
+        Phase::Closed { .. } | Phase::Slammed | Phase::Locked { .. } => {
+            Figures::facing_its_way(FigureLook::Closed)
+        }
         Phase::Opening {
             quarter: Quarter::First,
             ..
         }
         | Phase::Closing {
+            quarter: Quarter::Fourth,
+            ..
+        }
+        | Phase::Slamming {
             quarter: Quarter::Fourth,
             ..
         } => Figures::facing_its_way(FigureLook::Ajar1),
@@ -115,12 +123,20 @@ pub const fn figures(phase: Phase) -> Figures {
         | Phase::Closing {
             quarter: Quarter::Third,
             ..
+        }
+        | Phase::Slamming {
+            quarter: Quarter::Third,
+            ..
         } => Figures::facing_its_way(FigureLook::Ajar2),
         Phase::Opening {
             quarter: Quarter::Third,
             ..
         }
         | Phase::Closing {
+            quarter: Quarter::Second,
+            ..
+        }
+        | Phase::Slamming {
             quarter: Quarter::Second,
             ..
         } => Figures::facing_its_way(FigureLook::Ajar3),
@@ -131,8 +147,14 @@ pub const fn figures(phase: Phase) -> Figures {
         | Phase::Closing {
             quarter: Quarter::First,
             ..
-        } => Figures::facing_its_way(FigureLook::Open),
+        }
+        | Phase::Slamming {
+            quarter: Quarter::First,
+            ..
+        }
+        | Phase::Lingering { .. } => Figures::facing_its_way(FigureLook::Open),
         Phase::Open { .. } => OPEN_DOOR,
         Phase::Wall => Figures::always(FigureLook::Closed, Side::Left),
+        Phase::Standing | Phase::Unseen => Figures::facing_its_way(FigureLook::Side),
     }
 }

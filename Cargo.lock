@@ -99,6 +99,7 @@ dependencies = [
  "data",
  "enemy_interactions",
  "enum-map",
+ "game_random",
  "interface_hud",
  "run_progress",
  "samus_appearance",

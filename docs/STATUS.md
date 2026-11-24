@@ -27,13 +27,15 @@ The rung measure is the number of cuts a room plays alone from its seed.
 owner [`game::production::played`](../crates/game/src/production/played.rs) once from the seed
 record. Each frame of play it steps her clip's look ahead, `Samus::step`, the animation update,
 the camera and the doors, once each, in any pose with imported content. Each frame of play
-starts with her health (samus-health's whole frame, with no tail impact: no Ridley is in the
-loop) and ends, after her moves, with the HUD's frame of play. The HUD reads her position after
+starts with her health (samus-health's whole frame, with no tail impact: Ridley's fight is not
+in the loop) and ends, after her moves, with the HUD's frame of play. The HUD reads her position after
 her moves, the energy Health leaves and its held neighbours. While a passage runs, the HUD takes
 its step outside play, turned on when the doors turn the mini-map on. The run also compares
 Health's State (energy, pending loss, warning, protection) and the HUD's State (the mini-map's
 window, the status bar, the explored cells, the values last shown, the selection and the
-mini-map's off) at every cut, each part by name. The game's count of finished frames, which the
+mini-map's off), each part by name: Health at every cut, the HUD at every cut but the lag cuts
+of the contents' fetch, from its first frame to the slide's end, which can find the fetch
+part-done (Ridley's placing blanks the mini-map within it, below). The game's count of finished frames, which the
 HUD reads as a frame begins (her cell's blink), is the played owner's too: a finished frame
 counts it, and each frame on which the doors restart it (world-doors' `FinishedFrames`) counts
 from 0. It is compared as `frame-count` at every cut. A frame whose moves
@@ -51,14 +53,17 @@ does. The blocks PLMs place are set as the room is built, where the original set
 contents are fetched; nothing reads her room between, and a version placing PLMs whose blocks
 no owner places is refused at the build. Fetching the tiles heads the colours for the tileset's. Fetching
 the contents heads the sprite rows for her suit's, the species' the version loads, the common
-sprites' and the flashing enemies' palettes, and the Ceres doors' colour set for the station's
-stage, and refuses a version placing any other actor, whose box no owner here places. The
+sprites' and the flashing enemies' palettes, then Ridley's room's colours where it places him
+and the Ceres doors' colour set for the station's stage in the palette each door's placing names
+(boss-ceres-ridley's `TheDoorsColours`), and refuses a version placing any other actor, whose
+box no owner here places. The
 room's setup and the door's own code are not run: the world names each by what it does
 (`RoomSetup`, `DoorRule`), and fetching the contents refuses each that no owner models as a
 named Unsupported (`LoadFault::RoomSetup`, `LoadFault::DoorRule`). It lets through only what
 changes nothing play reads: no code; the station's haze (`RoomSetup::CeresHaze`), the setup
 of the rooms on 0001's and 0003's paths, which only blends a backdrop colour over the screen;
-and the way out of the station's elevator room (`DoorRule::FromCeresElevatorShaft`), which
+the haze of Ridley's room (`RoomSetup::CeresRidleyHaze`), which also sets the tile bases and
+the screen mode its floor is drawn with, which the loop doesn't draw; and the way out of the station's elevator room (`DoorRule::FromCeresElevatorShaft`), which
 only turns the screen out of its rotating view: it sets the mode 7 flag and the PPU's fake mode,
 which no loop owner produces and the run does not compare. The way into it is still refused. Fetching
 the contents also shows her shots' palette for the beams she has switched on at once. Each later
@@ -88,8 +93,9 @@ Fetching the next room's contents lets the last room's doors go and places the n
 from the imported world: the version her progress chooses lists the Ceres doors its enemy
 population places. The run compares how many doors the room holds, and each door's phase, wait, figure,
 shown and solid, by its place (`ceres.0.phase`), at every cut whose frame of work finished,
-since a lag cut can find the room's enemies part-built. The escape refuses the frame: its
-shakes read the random numbers and the screen's shaking, which are not in the loop. A door's
+since a lag cut can find the room's enemies part-built, with whether Ridley draws it
+(`ceres.0.drawn-with-ridley`). The escape refuses the frame: its shakes read the screen's
+shaking, which is not in the loop. A door's
 request for its opening sound is produced but not compared: it belongs to the audio boundary
 (MODEL decision 37), whose owner is not in the loop yet.
 
@@ -129,6 +135,43 @@ the slide's end does that. Its first frame is the earliest such frame. The colou
 compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. A
 lag cut in play is still a named stop: the M0 row has none, so no record yet shows how it plays.
 
+Two more facts are borrowed, the second only through a passage. Audio's answer to the passage, whether a track waits in
+the queue of tracks as the frame of work begins, is read from the record's music queue as the
+main loop's start steps it once (world-doors' decode); the passage into Ridley's room waits on it
+for 68 frames as his room's music loads; the earlier passages of these rows play as ready. Every
+frame draws the game's random number once (game-random's `AdvanceRandom`) as its work begins,
+whenever the last NMI found the last frame's work finished. In play the played State carries the
+number from the seed and every draw is the loop's; it is compared as `random` at every finished
+cut in play. Through a passage the number before the frame's draw is borrowed, the record's at
+the preceding cut: no owner here models a passage's draws, whose own frames draw it on some
+frames and not others, so a number carried through one falls out of step at the first passage
+(0002's cut 238). The loop carries on from the passage's last borrowed draw.
+
+Ridley's room as she enters (boss-ceres-ridley part 3) plays from room 5's passage into it.
+Fetching the contents of a version whose population places Ceres Ridley places him first
+(`CeresRidley::place`, his own place whatever the placement says, unless progress counts the
+station's boss beaten), then the door of his room (`RidleyDoor`, the first parameter 3). The
+importer names the door actors' first parameters 3, 5 and 6 as the door of his room and the
+getaway's two walls; the walls are placed by his getaway, a later piece, so no population of
+these rows places them. His placing hands on a boss encountered, which the HUD meets outside a
+frame of play (interface-hud's `BossBlanksTheMap`, Ridley in Ceres: no screens explored), its
+one producer here; the stage, which the played State carries from the seed and his placing sets
+(calm); his room's colours, which the contents' fetch writes as the fade's goal (the baby's and
+the door's own palette from his room's imported colours, the doors' palette black but for its
+first colour, then the door's calm set in its own palette); and the music's stop and the shake's
+stop, which are produced and not compared (audio's boundary and the screen's shaking are not in
+the loop). Each frame the room's enemies run, his run comes first, reading whether a passage is
+under way and the frame's random number; the doors run after him reading whether he is beaten
+(progress's, held: no run here beats him). The baby's colour sets go to the screen's sprite row 3
+at once, compared as `doors.colours.screen`, and its cry is produced and not compared. His
+drawing, his look, the baby's and the doors he draws closed, is produced for drawing and not
+compared. The run compares whether he is placed and his phase, wait, look, position and the
+baby's routine, runs and position (`ridley.phase`, `ridley.baby.routine`) at every cut whose
+frame of work finished. His waking is a later piece's: a frame he would run awake stops the run
+(`Fault::RidleyAwake`). Her going backwards, which the camera reads, is her skid or her moonwalk
+(world-camera's `LeadingHer`); room 6's moonwalk at its left edge is the first played frame
+that tells the moonwalk apart, at cut 352.
+
 ```sh
 $TOOLS replay played chain-any-0003-DFD7 0 344 \
   --cache "$CACHE" --rom "$ROM" --lock scenarios/locks/lsnes.toml
@@ -142,18 +185,17 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 1,480 cuts, through
-rooms 2, 3 and 4 and on to cut 178 of `chain-any-0005-E06B`; from `chain-any-0002-DF8D` they
-hold 1,068 cuts, from `chain-any-0003-DFD7` 786 and from `chain-any-0004-E021` 441, each to the
-same stop. That stop is the passage to Ridley's room fetching its contents, which place a Ceres
-actor of a later piece (`LaterCeresActor`). Ridley's room's own row, `chain-any-0006-E0B5`, is
-refused at its seed: an actor of the doors' species there is neither a door nor the shaft's
-overlay (`Ceres actor kind`).
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 512 from its
+seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,136 cuts, through
+rooms 2 to 5 and on to cut 512 of `chain-any-0006-E0B5`; from `chain-any-0002-DF8D` they hold
+1,724 cuts, from `chain-any-0003-DFD7` 1,442, from `chain-any-0004-E021` 1,097 and from
+`chain-any-0005-E06B` 833, each to the same stop. That stop is Ridley waking at room 6's cut 512:
+the next frame he runs is his fight's, a later piece (`RidleyAwake`).
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Twenty-three planted faults in the fault matrix, those of the responsibility `played`, stop
-that run, or the run of `chain-any-0001-DF45` from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
+Thirty planted faults in the fault matrix, those of the responsibility `played`, stop
+that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
 cut 17 in `movement.jump-held`, played from the M0 row's cut 16. A frame on which the doors
@@ -167,10 +209,20 @@ leaves it differs at cut 7, and reading no fade's steps at cut 257, in `doors.co
 and a frame whose work overran counted as finished differs at cut 253 in `finished-frames`. The
 beacon reading the HUD's count instead holds all 411 cuts: it reads bits 3 to 5 of the count,
 which the two counts share until a passage restarts the HUD's, and no frame of the overlay
-follows a restart before the escape.
+follows a restart before the escape. In Ridley's room, played from room 5's seed
+(`chain-any-0005-E06B`), the slam's hold a frame longer differs at cut 288 in `ceres.0.wait`;
+the passage into his room taken as finding the music always ready differs at cut 216 in
+`ceres.0.phase`; Ridley read as no passage under way, so waiting from the passage's fade in, at cut 282 in
+`ridley.phase`; his room's colours a colour out of place at cut 211, the passage's first cut
+whose work finished after the fetch, in `doors.colours.goal`; and the HUD meeting Ridley in
+Norfair rather than in Ceres at cut 211 in `hud.explored`. Played from room 6's seed, the baby's
+colour sets not shown differ at cut 151 in `doors.colours.screen` (its first set, at 145, holds
+the colours the row holds), and the random number not drawn as the frame's work begins at cut 1
+in `random`.
 
 The M0 row never shows a door blocking her: a fault that drops the doors' boxes from what her
-motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play. Only the unit
+motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play; the door of
+Ridley's room locks behind her, out of her way. Only the unit
 test of a door that opens in the frame still blocking her catches it. Retiring the indexed
 case `movement-ceres/carried-position-proximity` lost its gating obligation, which the
 diagnostic played run compares but does not gate. That loss is accepted until the played run
@@ -184,8 +236,10 @@ access, the Contact latches at post-RTI clocks and Random's ordered device trans
 indexed case compares them, and production has no frame caller that schedules them.
 
 The played-alone run carries Movement, Appearance, Camera, Doors, the colours, Health and the
-HUD from the M0 seed, and in room 1 the shaft's pad, cover and lights. The Random and Haze fields at those frames are covered only by their
-models' vectors until their owners join the loop. Weapons, Contact,
+HUD from the M0 seed, in room 1 the shaft's pad, cover and lights, and in Ridley's room Ridley and
+the baby. The frame's draw of the random number is in the loop, and the number before it is
+carried in play, where it is compared, and borrowed only through a passage; the Haze fields, and the Random fields through a passage, are covered only by their models' vectors
+until their owners join the loop. Weapons, Contact,
 the sound queue and the Ceres door actor at the opening shot wait for the loop in the same way.
 The [transition](../scenarios/replay/transition.toml) records each retired frame case, the
 owners its cut-level fields wait for and the indexed cases that still witness part of it.

@@ -105,10 +105,10 @@ fn a_ceres_door_actor_is_named_by_its_first_parameter_and_no_other_value_imports
             Some(CeresDoorKind::Door(Side::Right)),
             Some(CeresDoorKind::Door(Side::Left)),
             Some(CeresDoorKind::ShaftOverlay),
-            Some(CeresDoorKind::Later),
+            Some(CeresDoorKind::RidleyDoor),
             Some(CeresDoorKind::ShaftDoor),
-            Some(CeresDoorKind::Later),
-            Some(CeresDoorKind::Later),
+            Some(CeresDoorKind::GetawayWall(Side::Left)),
+            Some(CeresDoorKind::GetawayWall(Side::Right)),
             None,
         ]
     );

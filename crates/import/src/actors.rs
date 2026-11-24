@@ -7,9 +7,9 @@
 //! beside their species' code. A room state's enemy population places the Ceres doors.
 
 use data::assets::actors::{
-    Actors, BLUE_BRINSTAR_FACE_BLOCK, BeaconColours, CERES_DOOR, CERES_RIDLEY, CeresDoorColours,
-    DoorShades, ELEVATOR, EnemyGraphics, GEEGA, MORPH_BALL_EYE, ROACH, SIDEHOPPER,
-    SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
+    Actors, BLUE_BRINSTAR_FACE_BLOCK, BabyShades, BeaconColours, CERES_DOOR, CERES_RIDLEY,
+    CeresDoorColours, CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, GEEGA,
+    MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
 use data::assets::world::{CeresDoorKind, CeresDoorPlacement, Pair, Side};
@@ -26,7 +26,7 @@ const PLACES: [(SpeciesId, u16); 10] = [
     (BLUE_BRINSTAR_FACE_BLOCK, 0xea7f),
     (SUPER_SIDEHOPPER, 0xd9bf),
     (CERES_DOOR, CERES_DOOR_PLACE),
-    (CERES_RIDLEY, 0xe13f),
+    (CERES_RIDLEY, CERES_RIDLEY_PLACE),
     (SIDEHOPPER, 0xd93f),
     (GEEGA, 0xf253),
     (ZOOMER, 0xdcff),
@@ -35,6 +35,8 @@ const PLACES: [(SpeciesId, u16); 10] = [
 
 /// The Ceres doors' header, which their placements name them by.
 const CERES_DOOR_PLACE: u16 = 0xe23f;
+/// Ceres Ridley's header, which his placement names him by.
+const CERES_RIDLEY_PLACE: u16 = 0xe13f;
 /// The species headers' bank.
 const SPECIES_BANK: u8 = 0xa0;
 /// Where a header holds its palette's pointer, and its bank.
@@ -49,6 +51,15 @@ const COMMON: RomAddress = RomAddress::new(0x9a, 0x81a0);
 const FLASH: RomAddress = RomAddress::new(0x9a, 0xfc00);
 /// The Ceres shaft beacon's colour sets.
 const BEACON: RomAddress = RomAddress::new(0xa6, 0xf871);
+/// Ridley's room's two palette rows in Ceres, the door's own and the baby's.
+const RIDLEY_ROOM: RomAddress = RomAddress::new(0xa6, 0xe16f);
+/// The baby's colour sets: at rest, then the glow's three.
+const BABY_SETS: [RomAddress; 4] = [
+    RomAddress::new(0xa6, 0xe1f1),
+    RomAddress::new(0xa6, 0xe20f),
+    RomAddress::new(0xa6, 0xe22d),
+    RomAddress::new(0xa6, 0xe24b),
+];
 /// Where a bank's ROM half starts.
 const ROM_HALF: u16 = 0x8000;
 /// The bytes of a palette row: a word a colour.
@@ -100,6 +111,7 @@ pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
             escape: shades(doors.escape),
         },
         beacon: beacon(rom)?,
+        ceres_ridley: ceres_ridley_colours(rom)?,
     })
 }
 
@@ -149,16 +161,31 @@ pub fn ceres_doors(
         .collect()
 }
 
-/// What a Ceres door actor's first parameter names it: 2 is the shaft's overlay; 3, 5 and 6
-/// are the door of Ridley's room and the getaway's walls, which later pieces of the station
-/// model.
+/// Whether the enemy population at `at`, a room state's, places Ceres Ridley.
+///
+/// # Errors
+///
+/// [`CeresDoorsError::Population`] when the population runs outside the image or its bank.
+pub fn ceres_ridley(rom: Lorom<'_>, at: RomAddress) -> Result<bool, CeresDoorsError> {
+    let ridley = SpeciesKey(CERES_RIDLEY_PLACE);
+    Ok(data::enemy::population(rom, at)
+        .map_err(CeresDoorsError::Population)?
+        .placements
+        .iter()
+        .any(|placed| placed.species == ridley))
+}
+
+/// What a Ceres door actor's first parameter names it: 2 is the shaft's overlay, 3 the door of
+/// Ridley's room, and 5 and 6 the getaway's walls at his room's left and right.
 const fn ceres_door_kind(parameter: u16) -> Option<CeresDoorKind> {
     match parameter {
         0 => Some(CeresDoorKind::Door(Side::Right)),
         1 => Some(CeresDoorKind::Door(Side::Left)),
         2 => Some(CeresDoorKind::ShaftOverlay),
+        3 => Some(CeresDoorKind::RidleyDoor),
         4 => Some(CeresDoorKind::ShaftDoor),
-        3 | 5 | 6 => Some(CeresDoorKind::Later),
+        5 => Some(CeresDoorKind::GetawayWall(Side::Left)),
+        6 => Some(CeresDoorKind::GetawayWall(Side::Right)),
         _ => None,
     }
 }
@@ -200,6 +227,32 @@ pub fn graphics_set(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<EnemyGraphics>
             .advance(ENTRY_BYTES)
             .ok_or(AddressError::PastEnd(place))?;
     }
+}
+
+/// Ridley's room's colours in Ceres and the baby's four colour sets, each of colours 1 to 15.
+fn ceres_ridley_colours(rom: Lorom<'_>) -> Result<CeresRidleyColours, AddressError> {
+    let baby = |at: RomAddress| -> Result<BabyShades, AddressError> {
+        let bytes = rom.read(at, 2 * (ROW_COLOURS - 1))?;
+        let mut shades = [Colour::default(); ROW_COLOURS - 1];
+        for (shade, &word) in shades.iter_mut().zip(bytes.as_chunks::<2>().0) {
+            *shade = Colour(u16::from_le_bytes(word));
+        }
+        Ok(shades)
+    };
+    let [rest, glow1, glow2, glow3] = BABY_SETS;
+    Ok(CeresRidleyColours {
+        door: palette(rom, RIDLEY_ROOM)?,
+        baby: palette(
+            rom,
+            RIDLEY_ROOM
+                .advance(ROW_BYTES)
+                .ok_or(AddressError::PastEnd(RIDLEY_ROOM))?,
+        )?,
+        rest: baby(rest)?,
+        glow1: baby(glow1)?,
+        glow2: baby(glow2)?,
+        glow3: baby(glow3)?,
+    })
 }
 
 /// The palette row at `at`: 16 little-endian colour words.

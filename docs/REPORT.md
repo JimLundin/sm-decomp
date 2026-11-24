@@ -171,7 +171,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | interface-hud | 2,855 | 2,412 | 1.18 | 0.90 | 24 % | 2,742 | 1,193 | 108 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 100 |
 | samus-appearance | 3,502 | 2,248 | 1.56 | 1.04 | 33 % (over 25 %) | 1,525 | 1,557 | 193 |
-| boss-ceres-ridley | 2,051 | 1,887 | 1.09 | 0.65 | 40 % (over 25 %) | - | 908 | 88 |
+| boss-ceres-ridley | 3,574 | 3,161 | 1.13 | 0.54 | 52 % (over 25 %) | - | 1,618 | 132 |
 | world-doors | 3,223 | 2,875 | 1.12 | 1.08 | 4 % | - | 950 | 70 |
 | samus-health | 489 | 299 | 1.64 | 1.61 | 2 % | - | 246 | 27 |
 | game-time | 298 | 187 | 1.59 | 1.59 | 0 % | - | 60 | 11 |
@@ -337,22 +337,25 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean/boss_ceres_ridley/src/catalogue.rs` | - | tables and types | 17 | 44 | 115 | 560 | 1 | 0 | 0 | 182 |
-| `crates/clean/boss_ceres_ridley/src/door.rs` | doors | logic | 522 | 583 | 165 | 15 | 25 | 51 | 0 | 130 |
-| `crates/clean/boss_ceres_ridley/src/figure.rs` | doors | logic | 310 | 339 | 84 | 50 | 0 | 24 | 0 | 102 |
-| `crates/clean/boss_ceres_ridley/src/inputs.rs` | - | tables and types | 0 | 29 | 51 | 1 | 0 | 0 | 0 | 15 |
+| `crates/clean/boss_ceres_ridley/src/baby.rs` | - | logic | 578 | 712 | 369 | 265 | 24 | 12 | 6 | 276 |
+| `crates/clean/boss_ceres_ridley/src/catalogue.rs` | - | tables and types | 17 | 44 | 135 | 870 | 1 | 0 | 0 | 270 |
+| `crates/clean/boss_ceres_ridley/src/door.rs` | doors | logic | 810 | 884 | 190 | 67 | 45 | 55 | 0 | 188 |
+| `crates/clean/boss_ceres_ridley/src/figure.rs` | doors | logic | 379 | 419 | 86 | 50 | 2 | 12 | 0 | 123 |
+| `crates/clean/boss_ceres_ridley/src/inputs.rs` | - | tables and types | 0 | 29 | 56 | 1 | 0 | 0 | 0 | 16 |
 | `crates/clean/boss_ceres_ridley/src/inputs.rs` `fn she_is_near` | doors | logic | 37 | 48 | 0 | 0 | 0 | 0 | 0 | 3 |
 | `crates/clean/boss_ceres_ridley/src/inputs.rs` `fn gap` | doors | logic | 22 | 29 | 0 | 0 | 0 | 0 | 0 | 3 |
 | `crates/clean/boss_ceres_ridley/src/inputs.rs` `fn escape_shake` | station | logic | 57 | 63 | 0 | 0 | 3 | 0 | 0 | 10 |
-| `crates/clean/boss_ceres_ridley/src/lib.rs` | - | logic | 0 | 146 | 0 | 0 | 0 | 0 | 0 | 22 |
+| `crates/clean/boss_ceres_ridley/src/lib.rs` | - | logic | 0 | 228 | 0 | 0 | 0 | 0 | 0 | 34 |
 | `crates/clean/boss_ceres_ridley/src/lights.rs` | - | logic | 171 | 248 | 144 | 7 | 7 | 0 | 0 | 77 |
 | `crates/clean/boss_ceres_ridley/src/look.rs` | - | tables and types | 7 | 16 | 23 | 16 | 0 | 0 | 0 | 14 |
 | `crates/clean/boss_ceres_ridley/src/pad.rs` | - | logic | 490 | 574 | 234 | 19 | 16 | 40 | 0 | 149 |
 | `crates/clean/boss_ceres_ridley/src/pad_wait.rs` | - | logic | 57 | 81 | 36 | 4 | 2 | 0 | 0 | 21 |
-| `crates/clean/boss_ceres_ridley/src/phase.rs` | doors | logic | 272 | 314 | 123 | 36 | 1 | 24 | 0 | 97 |
-| `crates/clean/boss_ceres_ridley/src/rules.rs` | - | tables and types | 77 | 122 | 139 | 29 | 0 | 0 | 0 | 51 |
-| `crates/clean/boss_ceres_ridley/src/station.rs` | station | tables and types | 14 | 30 | 74 | 36 | 0 | 0 | 0 | 32 |
-| total | | | 2,051 | 2,666 | 1,188 | 773 | 56 | 140 | 0 | 908 |
+| `crates/clean/boss_ceres_ridley/src/phase.rs` | doors | logic | 399 | 429 | 157 | 36 | 0 | 42 | 0 | 133 |
+| `crates/clean/boss_ceres_ridley/src/ridley.rs` | - | tables and types | 284 | 373 | 375 | 36 | 6 | 12 | 0 | 144 |
+| `crates/clean/boss_ceres_ridley/src/ridley_wait.rs` | - | logic | 151 | 149 | 66 | 2 | 3 | 46 | 0 | 45 |
+| `crates/clean/boss_ceres_ridley/src/rules.rs` | - | tables and types | 103 | 155 | 173 | 31 | 0 | 0 | 0 | 60 |
+| `crates/clean/boss_ceres_ridley/src/station.rs` | station | tables and types | 14 | 34 | 166 | 36 | 0 | 0 | 0 | 52 |
+| total | | | 3,574 | 4,515 | 2,210 | 1,440 | 109 | 219 | 6 | 1,618 |
 
 ### world-doors
 
@@ -426,7 +429,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | interface-hud | 1,193 | 659 | 534 | 476 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
 | samus-appearance | 1,557 | 1,017 | 540 | 584 |
-| boss-ceres-ridley | 908 | 294 | 614 | 342 |
+| boss-ceres-ridley | 1,618 | 556 | 1,062 | 596 |
 | world-doors | 950 | 386 | 564 | 537 |
 | samus-health | 246 | 58 | 188 | 82 |
 | game-time | 60 | 0 | 60 | 50 |
@@ -434,7 +437,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
 | shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,269 | 1,079 | 190 | 245 |
-| total | 14,933 | 8,055 | 6,878 | 6,280 |
+| total | 15,643 | 8,317 | 7,326 | 6,534 |
 
 ## Spec, budget and fit by area
 
@@ -571,14 +574,16 @@ Spec [`docs/behaviours/boss-ceres-ridley.md`](behaviours/boss-ceres-ridley.md), 
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| doors | 9 | 25.3 | 950 | - | 1,162 | 1.22 |
-| station | 2 | 5.3 | 200 | - | 71 | 0.35 |
+| doors | 9 | 28.3 | 1,062 | - | 1,647 | 1.55 |
+| station | 2 | 6.3 | 237 | - | 71 | 0.30 |
 | shaft | 5 | 12.3 | 462 | - | 0 | 0.00 |
 | lights | 2 | 7.3 | 275 | - | 0 | 0.00 |
-| shared (in no area) | | | | | 818 | |
-| total | 18 | 50.3 | 1,887 | - | 2,051 | 1.09 |
+| ridley-door | 5 | 11.3 | 425 | - | 0 | 0.00 |
+| ridley | 5 | 18.7 | 700 | - | 0 | 0.00 |
+| shared (in no area) | | | | | 1,856 | |
+| total | 28 | 84.3 | 3,161 | - | 3,574 | 1.13 |
 
-Area fit 0.65: the areas' score, 1,232, ÷ the budget. Shared code 818, its share of the model 40 % (over 25 %).
+Area fit 0.54: the areas' score, 1,718, ÷ the budget. Shared code 1,856, its share of the model 52 % (over 25 %).
 
 ### world-doors
 
@@ -678,7 +683,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | samus-appearance | bridge | 2 | 1,595 | 1,609 | 126 | 36 | 194 | 49 | 0 | 256 |
 | samus-appearance | replay provider | 1 | 2,214 | 2,414 | 19 | 30 | 111 | 93 | 66 | 337 |
 | boss-ceres-ridley | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| boss-ceres-ridley | replay provider | 1 | 1,375 | 1,531 | 35 | 116 | 51 | 74 | 57 | 261 |
+| boss-ceres-ridley | replay provider | 1 | 1,644 | 1,824 | 47 | 163 | 53 | 74 | 64 | 301 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-health | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -691,7 +696,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 41,973 | 41,733 | 3,816 | 1,869 | 3,126 | 3,540 | 484 | 7,116 |
+| total | | | 42,242 | 42,026 | 3,828 | 1,916 | 3,129 | 3,540 | 491 | 7,156 |
 
 ## Engine services
 
@@ -699,9 +704,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 37 | 4,314 | 25,883 | 26,120 | 6,892 | 1,009 | 1,702 | 3,115 | 373 | 5,372 |
+| production and exact services | 38 | 4,513 | 27,079 | 27,340 | 7,075 | 1,032 | 1,789 | 3,213 | 424 | 5,569 |
 | bridges | 7 | 934 | 5,602 | 5,566 | 657 | 377 | 622 | 317 | 78 | 962 |
-| rebuilt models, shared types included | 123 | 6,280 | 37,679 | 47,236 | 20,587 | 18,109 | 1,850 | 1,332 | 817 | 14,933 |
+| rebuilt models, shared types included | 126 | 6,534 | 39,202 | 49,085 | 21,609 | 18,776 | 1,903 | 1,411 | 823 | 15,643 |
 
 ## Domain graph
 
@@ -958,6 +963,7 @@ graph LR
   c_game --> c_canonical
   c_game --> c_data
   c_game --> c_enemy_interactions
+  c_game --> c_game_random
   c_game --> c_interface_hud
   c_game --> c_run_progress
   c_game --> c_samus_appearance
@@ -1908,25 +1914,29 @@ graph LR
 
 ### boss-ceres-ridley
 
-`crates/clean/boss_ceres_ridley`, 12 modules.
+`crates/clean/boss_ceres_ridley`, 15 modules.
 
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| `catalogue.rs` | - | The catalogue: one behaviour for each entry of the spec, with its kind, its switch and how it is checked. | `enum BehaviourId (18)`, `struct Behaviour`, `fn catalogue`, 2 private | 17 | 182 |
-| `door.rs` | doors | A Ceres door: how a room places it, and its run each frame the enemies run. | `const BOX_RADIUS`, `enum DoorKind (2)`, `struct CeresDoor`, `struct Placement`, `struct OpeningSound`, `struct Run`, `DoorKind::becomes_wall`, `OpeningSound::QUEUE_LIMIT`, `CeresDoor::{place, run, figure, hitbox}`, 1 private | 522 | 130 |
-| `figure.rs` | doors | The figures a door holds: which one each phase shows, for each way the door faces. | `enum FigureLook (5)`, `struct Figure`, `struct Figures`, `fn figures`, `Figures::for_door`, 4 private | 310 | 102 |
-| `inputs.rs` | -; `fn she_is_near` in doors, `fn gap` in doors, `fn escape_shake` in station | What a door reads as the frame starts, and the two rules that read only it: whether she is near, and whether the door starts a shake. | `struct Inputs`, `Inputs::{she_is_near, escape_shake}`, 2 private | 116 | 31 |
-| `lib.rs` | - | The boss-ceres-ridley model, built from its behaviour spec alone. | - | 0 | 22 |
+| `baby.rs` | - | The baby Ridley holds as she enters his room: it fidgets through its figures, ten runs each, and at the end of each fidget, one time in two, it cries and glows. | `enum BabyLook (3)`, `enum BabyColours (4)`, `struct BabyCry`, `enum FidgetFigure (8)`, `enum GlowFigure (12)`, `enum BabyFigure (2)`, `struct ShownFigure`, `enum BabyRoutine (2)`, `struct Baby`, `struct BabyRun`, `BabyCry::QUEUE_LIMIT`, `BabyFigure::{look, length}`, `ShownFigure::{new, figure, runs}`, `BabyRoutine::look`, `Baby::{NEW, run}`, 16 private | 578 | 276 |
+| `catalogue.rs` | - | The catalogue: one behaviour for each entry of the spec, with its kind, its switch and how it is checked. | `enum BehaviourId (28)`, `struct Behaviour`, `fn catalogue`, 2 private | 17 | 270 |
+| `door.rs` | doors | A Ceres door: how a room places it, and its run each frame the enemies run. | `const BOX_RADIUS`, `enum DoorKind (4)`, `struct CeresDoor`, `struct Placement`, `struct OpeningSound`, `struct Run`, `OpeningSound::QUEUE_LIMIT`, `CeresDoor::{place, run, figure, hitbox}`, 10 private | 810 | 188 |
+| `figure.rs` | doors | The figures a door holds: which one each phase shows, for each way the door faces. | `enum FigureLook (6)`, `struct Figure`, `struct Figures`, `fn figures`, `Figures::for_door`, 4 private | 379 | 123 |
+| `inputs.rs` | -; `fn she_is_near` in doors, `fn gap` in doors, `fn escape_shake` in station | What a door reads as the frame starts, and the two rules that read only it: whether she is near, and whether the door starts a shake. | `struct Inputs`, `Inputs::{she_is_near, escape_shake}`, 2 private | 116 | 32 |
+| `lib.rs` | - | The boss-ceres-ridley model, built from its behaviour spec alone. | - | 0 | 34 |
 | `lights.rs` | - | The lights, one piece of the shaft as she arrives, which the shaft's overlay shows: the beacon pulsing through its colour sets and the platform below turning. | `struct FadeSteps`, `struct BeaconStep`, `struct LightsInputs`, `struct Lights`, `FadeSteps::{MOST, NONE, new, steps}`, `BeaconStep::{new, place}`, `Lights::step`, 5 private | 171 | 77 |
 | `look.rs` | - | The two looks the pad and the platform each take in turn. | `enum AlternatingLook (2)`, `AlternatingLook::other` | 7 | 14 |
 | `pad.rs` | - | The pad and the cover, one piece of the shaft as she arrives: the elevator's pad that holds her as a new game starts, lowers her down the shaft to its floor and lets her go; and the cover that hides the shaft's floor below it until she stands on it. | `struct Pad`, `struct PadFigure`, `struct Cover`, `struct PadAndCover`, `struct PadAndCoverFigures`, `struct PadAndCoverStep`, `PadAndCover::{arrival, run, holds_her}`, 12 private | 490 | 149 |
 | `pad_wait.rs` | - | The pad's wait: how long the elevator's pad holds her still before it lowers her. | `struct PadWait`, `PadWait::{LONGEST, OVER, new, frames, counted_down}` | 57 | 21 |
-| `phase.rs` | doors | A door's phase: where it stands in its cycle, with what each phase carries (its wait, and how far an opening or a closing has gone), and the tables of which phases are shown and solid. | `struct Wait`, `enum Quarter (4)`, `enum Phase (7)`, `Wait::{new, frames}`, `Quarter::next`, `Phase::{counted_down, shown, solid}`, 2 private | 272 | 97 |
-| `rules.rs` | - | The station's tuning values, the doors' and the shaft's: every number a Parameter entry of the spec lists. | `struct Rules`, `impl Default for Rules`, 13 private | 77 | 51 |
-| `station.rs` | station | The station around the doors and the shaft: its stage, the doors' two colour sets and the shakes they start. | `enum Stage (3)`, `enum ColourSet (2)`, `struct Shake`, `Stage::{ridley_has_fled, door_colours}` | 14 | 32 |
+| `phase.rs` | doors | A door's phase: where it stands in its cycle, with what each phase carries (its wait, and how far an opening or a closing has gone), and the tables of which phases are shown and solid. | `struct Wait`, `enum Quarter (4)`, `enum Phase (13)`, `Wait::{new, frames}`, `Quarter::next`, `Phase::{counted_down, shown, solid, drawn_with_ridley}`, 2 private | 399 | 133 |
+| `ridley.rs` | - | Ceres Ridley as she enters his room: placed at his place in the dark with the baby in his hold, and waiting a fixed while once the door's passage is over, until he wakes. | `enum RidleyPhase (3)`, `enum RidleyLook (1)`, `struct CeresRidley`, `enum Boss (1)`, `struct MusicStop`, `struct ShakeStop`, `enum GoalColours (2)`, `struct RoomColours`, `struct RidleyPlacing`, `struct RidleyRun`, `struct Drawn`, `struct RidleyDrawing`, `CeresRidley::{SHOWN, SOLID, place, run, drawing}`, 3 private | 284 | 144 |
+| `ridley_wait.rs` | - | How long Ridley waits in the dark before he wakes: the wait as a tuning value, and the count he keeps as he waits. | `struct WakeWait`, `struct RidleyWait`, `WakeWait::{LONGEST, new, frames, first_count}`, `RidleyWait::{LONGEST, new, runs, counted_down}` | 151 | 45 |
+| `rules.rs` | - | The station's tuning values, the doors', the shaft's and Ridley's: every number a Parameter entry of the spec lists. | `struct Rules`, `impl Default for Rules`, 17 private | 103 | 60 |
+| `station.rs` | station | The station around the doors, the shaft and Ridley's room: its stage, the doors' two colour sets and the palettes they go to, and the shakes the doors start. | `enum Stage (3)`, `enum ColourSet (2)`, `enum DoorPalette (2)`, `struct DoorColours`, `struct Shake`, `enum ShakeLayers (2)`, `struct ShakeStart`, `Stage::{ridley_has_fled, door_colours}` | 14 | 52 |
 
 Its crate root exports:
 
+- from `baby`: `Baby`, `BabyColours`, `BabyCry`, `BabyFigure`, `BabyLook`, `BabyRoutine`, `BabyRun`, `FidgetFigure`, `GlowFigure`, `ShownFigure`
 - from `catalogue`: `Behaviour`, `BehaviourId`, `catalogue`
 - from `door`: `BOX_RADIUS`, `CeresDoor`, `DoorKind`, `OpeningSound`, `Placement`, `Run`
 - from `figure`: `Figure`, `FigureLook`
@@ -1936,14 +1946,22 @@ Its crate root exports:
 - from `pad`: `Cover`, `Pad`, `PadAndCover`, `PadAndCoverFigures`, `PadAndCoverStep`, `PadFigure`
 - from `pad_wait`: `PadWait`
 - from `phase`: `Phase`, `Quarter`, `Wait`
+- from `ridley`: `Boss`, `CeresRidley`, `Drawn`, `GoalColours`, `MusicStop`, `RidleyDrawing`, `RidleyLook`, `RidleyPhase`, `RidleyPlacing`, `RidleyRun`, `RoomColours`, `ShakeStop`
+- from `ridley_wait`: `RidleyWait`, `WakeWait`
 - from `rules`: `Rules`
-- from `station`: `ColourSet`, `Shake`, `Stage`
+- from `station`: `ColourSet`, `DoorColours`, `DoorPalette`, `Shake`, `ShakeLayers`, `ShakeStart`, `Stage`
 
 The public functions a caller reaches through them:
 
 ```rust
+BabyFigure::look(self) -> BabyLook
+BabyFigure::length(self) -> u8
+ShownFigure::new(figure: BabyFigure, runs: u8) -> Option<Self>
+ShownFigure::figure(self) -> BabyFigure
+ShownFigure::runs(self) -> u8
+BabyRoutine::look(self) -> Option<BabyLook>
+Baby::run(self, ridley: Pair<Px>, random: u16) -> BabyRun
 catalogue() -> EnumMap<BehaviourId, Behaviour>
-DoorKind::becomes_wall(self, stage: Stage) -> bool
 CeresDoor::place(kind: DoorKind, facing: Side, position: Pair<Px>, stage: Stage) -> Placement
 CeresDoor::run(self, inputs: &Inputs, rules: &Rules) -> Run
 CeresDoor::figure(self) -> Option<Figure>
@@ -1967,6 +1985,16 @@ Quarter::next(self) -> Option<Self>
 Phase::counted_down(mut self) -> Option<Self>
 Phase::shown(self) -> bool
 Phase::solid(self) -> bool
+Phase::drawn_with_ridley(self) -> bool
+CeresRidley::place(ridley_beaten: bool) -> Option<RidleyPlacing>
+CeresRidley::run(self, passage_under_way: bool, random: u16, rules: &Rules) -> RidleyRun
+CeresRidley::drawing(&self) -> RidleyDrawing
+WakeWait::new(frames: u16) -> Option<Self>
+WakeWait::frames(self) -> u16
+WakeWait::first_count(self) -> RidleyWait
+RidleyWait::new(runs: u16) -> Option<Self>
+RidleyWait::runs(self) -> u16
+RidleyWait::counted_down(self) -> Option<Self>
 Stage::ridley_has_fled(self) -> bool
 Stage::door_colours(self) -> ColourSet
 ```
@@ -1978,6 +2006,7 @@ Which module uses which, grouped by area (a module's own area, its functions cou
 ```mermaid
 graph LR
   subgraph a_in_no_area["in no area"]
+    m_baby["baby"]
     m_catalogue["catalogue"]
     m_inputs["inputs"]
     m_lib["lib"]
@@ -1985,6 +2014,8 @@ graph LR
     m_look["look"]
     m_pad["pad"]
     m_pad_wait["pad_wait"]
+    m_ridley["ridley"]
+    m_ridley_wait["ridley_wait"]
     m_rules["rules"]
   end
   subgraph a_doors["doors"]
@@ -2003,6 +2034,7 @@ graph LR
   m_figure --> m_phase
   m_inputs --> m_rules
   m_inputs --> m_station
+  m_lib --> m_baby
   m_lib --> m_catalogue
   m_lib --> m_door
   m_lib --> m_figure
@@ -2012,6 +2044,8 @@ graph LR
   m_lib --> m_pad
   m_lib --> m_pad_wait
   m_lib --> m_phase
+  m_lib --> m_ridley
+  m_lib --> m_ridley_wait
   m_lib --> m_rules
   m_lib --> m_station
   m_lights --> m_look
@@ -2020,8 +2054,13 @@ graph LR
   m_pad --> m_look
   m_pad --> m_pad_wait
   m_pad --> m_rules
+  m_ridley --> m_baby
+  m_ridley --> m_ridley_wait
+  m_ridley --> m_rules
+  m_ridley --> m_station
   m_rules --> m_pad_wait
   m_rules --> m_phase
+  m_rules --> m_ridley_wait
   m_rules --> m_station
 ```
 
@@ -2434,33 +2473,33 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | audio-transport | `crates/game/src/production/audio.rs` | bridge | `Content`, `Offer`, `ResidentMusicReply`, `State`, `frame` | 261 | 71 |
 | audio-transport | `crates/game/src/production/movement_touchdown.rs` | names it | `CueId`, `QueueAllowance`, `frame` | 380 | 99 |
 | audio-transport | `crates/game/src/production/sender.rs` | names it | `CueId`, `Offer`, `OfferPermission`, `QueueAllowance` | 245 | 63 |
-| audio-transport | `crates/game/src/production.rs` | names it | `Offer`, `State`, `frame` | 2,295 | 459 |
+| audio-transport | `crates/game/src/production.rs` | names it | `Offer`, `State`, `frame` | 2,295 | 460 |
 | audio-transport | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 58 |
 | enemy-interactions | `crates/game/src/enemy_interactions_bridge.rs` | bridge | - | 234 | 39 |
 | enemy-interactions | `crates/game/src/production/weapons.rs` | bridge | `ContactConditions`, `DoorContact` | 1,955 | 335 |
 | weapons-projectiles | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
-| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 2,295 | 459 |
+| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 2,295 | 460 |
 | weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 58 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
-| samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Outcome`, `Samus` | 280 | 75 |
+| samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Outcome`, `Samus` | 292 | 75 |
 | samus-movement | `crates/game/src/production/connected.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,079 | 232 |
 | samus-movement | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 430 | 105 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 380 | 99 |
-| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 4,068 | 737 |
+| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 4,621 | 824 |
 | samus-movement | `crates/game/src/production/shaft.rs` | names it | `Samus` | 360 | 77 |
-| samus-movement | `crates/game/src/production.rs` | names it | `Outcome`, `Samus`, `UnknownPose` | 2,295 | 459 |
+| samus-movement | `crates/game/src/production.rs` | names it | `Outcome`, `Samus`, `UnknownPose` | 2,295 | 460 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 58 |
-| world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 280 | 75 |
+| world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 292 | 75 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 1,079 | 232 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `Samus`, `ViewPosition` | 4,068 | 737 |
-| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 2,295 | 459 |
+| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `Samus`, `ViewPosition` | 4,621 | 824 |
+| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 2,295 | 460 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 58 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
-| run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 4,068 | 737 |
-| run-progress | `crates/game/src/production/room_loading.rs` | names it | `Condition`, `EnteredRoom`, `Progress`, `RoomStates`, `Version` | 2,930 | 426 |
-| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 2,295 | 459 |
+| run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 4,621 | 824 |
+| run-progress | `crates/game/src/production/room_loading.rs` | names it | `Condition`, `EnteredRoom`, `Progress`, `RoomStates`, `Version` | 3,319 | 485 |
+| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 2,295 | 460 |
 | run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 58 |
 | interface-hud | `crates/game/src/production/connected/early_map.rs` | names it | `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Pair`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 290 | 84 |
 | interface-hud | `crates/game/src/production/connected.rs` | names it | `HudState` | 1,079 | 232 |
@@ -2469,13 +2508,14 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `HudState`, `MiniMapInputs`, `MiniMapPower`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 668 | 188 |
 | interface-hud | `crates/game/src/production/hud.rs` | bridge | `Flip`, `HudState`, `Place` | 148 | 35 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| interface-hud | `crates/game/src/production/played.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `FrameOutputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Status`, `StockAtStart` | 4,068 | 737 |
-| interface-hud | `crates/game/src/production/room_loading.rs` | names it | `Room` | 2,930 | 426 |
-| interface-hud | `crates/game/src/production.rs` | names it | `FrameOutputs`, `HudState`, `UnsupportedFrame` | 2,295 | 459 |
+| interface-hud | `crates/game/src/production/played.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `FrameOutputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Status`, `StockAtStart` | 4,621 | 824 |
+| interface-hud | `crates/game/src/production/ridley.rs` | names it | `Boss` | 243 | 50 |
+| interface-hud | `crates/game/src/production/room_loading.rs` | names it | `Room` | 3,319 | 485 |
+| interface-hud | `crates/game/src/production.rs` | names it | `FrameOutputs`, `HudState`, `UnsupportedFrame` | 2,295 | 460 |
 | interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 58 |
 | world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 1,159 | 230 |
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 2,295 | 459 |
+| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 2,295 | 460 |
 | world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 58 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AnimationContent`, `AppearanceState`, `Clip`, `Figure`, `Frame`, `FrameOutputs`, `FramePart`, `Inputs`, `ItemControls`, `MissingClip`, `Paces`, `PaletteOpportunity`, `Rules`, `update` | 256 | 78 |
 | samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Figure` | 20 | 18 |
@@ -2484,24 +2524,27 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-appearance | `crates/game/src/production/movement.rs` | names it | `Figure` | 430 | 105 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 380 | 99 |
-| samus-appearance | `crates/game/src/production/played.rs` | names it | `Activity`, `Ahead`, `AppearanceState`, `Dash`, `Figure`, `Inputs`, `MissingClip`, `MoveEvent`, `Rules`, `SoundOffer` | 4,068 | 737 |
-| samus-appearance | `crates/game/src/production.rs` | names it | `AppearanceState`, `Frame`, `FrameOutputs` | 2,295 | 459 |
+| samus-appearance | `crates/game/src/production/played.rs` | names it | `Activity`, `Ahead`, `AppearanceState`, `Dash`, `Figure`, `Inputs`, `MissingClip`, `MoveEvent`, `Rules`, `SoundOffer` | 4,621 | 824 |
+| samus-appearance | `crates/game/src/production.rs` | names it | `AppearanceState`, `Frame`, `FrameOutputs` | 2,295 | 460 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `AnimationContent`, `Branch`, `Clip`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,595 | 254 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
 | samus-appearance | `crates/game/src/state/owned.rs` | names it | `AppearanceState` | 0 | 58 |
 | boss-ceres-ridley | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 1,159 | 230 |
-| boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `CeresDoor`, `Inputs`, `Lights`, `PadAndCover`, `Rules`, `Run`, `Stage` | 4,068 | 737 |
-| boss-ceres-ridley | `crates/game/src/production/room_loading.rs` | names it | `CeresDoor`, `ColourSet`, `DoorKind`, `Stage` | 2,930 | 426 |
+| boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `CeresDoor`, `CeresRidley`, `Inputs`, `Lights`, `PadAndCover`, `RidleyPhase`, `RidleyPlacing`, `RidleyRun`, `Rules`, `Run`, `Stage` | 4,621 | 824 |
+| boss-ceres-ridley | `crates/game/src/production/ridley.rs` | names it | `BabyColours`, `Boss`, `CeresDoor`, `CeresRidley`, `RidleyDrawing` | 243 | 50 |
+| boss-ceres-ridley | `crates/game/src/production/room_loading.rs` | names it | `CeresDoor`, `CeresRidley`, `ColourSet`, `DoorColours`, `DoorKind`, `DoorPalette`, `GoalColours`, `RidleyPlacing`, `Stage` | 3,319 | 485 |
 | boss-ceres-ridley | `crates/game/src/production/shaft.rs` | names it | `FadeSteps`, `Lights`, `LightsInputs`, `PadAndCover`, `Rules`, `Stage` | 360 | 77 |
-| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 2,295 | 459 |
+| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 2,295 | 460 |
 | boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 58 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,159 | 230 |
-| world-doors | `crates/game/src/production/played.rs` | names it | `Activity`, `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Finishing`, `Inputs`, `Palette`, `Passage`, `Phase`, `Report`, `RoomCall`, `Rules`, `Scene` | 4,068 | 737 |
-| world-doors | `crates/game/src/production/room_loading.rs` | names it | `Arrival`, `COLOURS`, `Palette`, `RoomCall` | 2,930 | 426 |
+| world-doors | `crates/game/src/production/played.rs` | names it | `Activity`, `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Finishing`, `Inputs`, `Palette`, `Passage`, `Phase`, `Report`, `RoomCall`, `Rules`, `Scene` | 4,621 | 824 |
+| world-doors | `crates/game/src/production/ridley.rs` | names it | `Palette` | 243 | 50 |
+| world-doors | `crates/game/src/production/room_loading.rs` | names it | `Arrival`, `COLOURS`, `Palette`, `RoomCall` | 3,319 | 485 |
 | world-doors | `crates/game/src/production/shaft.rs` | names it | `Doors`, `Palette`, `Passage`, `Phase` | 360 | 77 |
-| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 2,295 | 459 |
+| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 2,295 | 460 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 668 | 188 |
-| samus-health | `crates/game/src/production/played.rs` | names it | `PlayedFrame`, `Rules`, `State`, `TailImpact` | 4,068 | 737 |
+| samus-health | `crates/game/src/production/played.rs` | names it | `PlayedFrame`, `Rules`, `State`, `TailImpact` | 4,621 | 824 |
+| game-random | `crates/game/src/production/played.rs` | names it | `advance_random` | 4,621 | 824 |

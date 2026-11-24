@@ -22,6 +22,9 @@ pub struct Inputs {
     /// How many frames the screen's current shake has left when this door runs, after any
     /// shake an earlier door started this frame.
     pub shake_frames_left: u16,
+    /// Whether the station's boss counts as beaten, from the escape's start on (progress), as it
+    /// stands when the door runs. In his room Ridley runs first, so it is as his run leaves it.
+    pub ridley_beaten: bool,
 }
 
 impl Inputs {
@@ -31,10 +34,10 @@ impl Inputs {
         gap(door.x, self.her.x) < reach && gap(door.y, self.her.y) < reach
     }
 
-    /// `EscapeShakes`: the shake a door's run starts, whether it steps or not. During the escape,
-    /// while the screen is still, it starts the strong shake when the random number's low 12
-    /// bits are under the chance, and the small one otherwise. Calm, in the getaway, or while a
-    /// shake runs, it starts none.
+    /// `EscapeShakes`: how strong and long a shake a door's run starts, whether it steps or not.
+    /// During the escape, while the screen is still, it is the strong shake when the random
+    /// number's low 12 bits are under the chance, and the small one otherwise. Calm, in the
+    /// getaway, or while a shake runs, there is none.
     #[must_use]
     pub const fn escape_shake(&self, rules: &Rules) -> Option<Shake> {
         if !matches!(self.stage, Stage::Escape) || self.shake_frames_left != 0 {

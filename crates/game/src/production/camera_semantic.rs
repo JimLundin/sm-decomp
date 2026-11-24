@@ -75,7 +75,8 @@ pub(super) fn completed_samus(
             .placed
             .map(|placed| types::PlacementY(placed.pixel().0)),
         facing: current.pose.facing,
-        backwards: outputs.skidding,
+        // She goes backwards as she skids or moonwalks; no knockback is in these loops.
+        backwards: outputs.skidding || current.pose.action == types::Action::Moonwalking,
         rising: outputs.rising,
     }
 }

@@ -51,6 +51,9 @@ const SLOTS: u16 = 32;
 
 /// The first parameter that makes an actor of the doors' species the shaft's overlay.
 const SHAFT_OVERLAY: u16 = 2;
+/// The properties' bits for a hidden and an intangible actor.
+const HIDDEN: u16 = 0x0100;
+const INTANGIBLE: u16 = 0x0400;
 
 /// The slots that hold a Ceres door, in the room's order of its enemies: the actors of the
 /// doors' species but the shaft's overlay.
@@ -85,7 +88,10 @@ fn identity(wram: &[u8], slot: Slot) -> Result<(DoorKind, Side), Outcome> {
     match word(wram, slot, source::ENEMY_PARAMETER_1)? {
         0 => Ok((DoorKind::Door, Side::Right)),
         1 => Ok((DoorKind::Door, Side::Left)),
+        3 => Ok((DoorKind::RidleyDoor, Side::Right)),
         4 => Ok((DoorKind::ShaftDoor, Side::Left)),
+        5 => Ok((DoorKind::GetawayWall, Side::Left)),
+        6 => Ok((DoorKind::GetawayWall, Side::Right)),
         _ => Err(unsupported("Ceres actor kind")),
     }
 }
@@ -93,8 +99,21 @@ fn identity(wram: &[u8], slot: Slot) -> Result<(DoorKind, Side), Outcome> {
 fn phase(wram: &[u8], slot: Slot) -> Result<Phase, Outcome> {
     let wait = Wait::new(word(wram, slot, source::ENEMY_INSTRUCTION_TIMER)?)
         .ok_or_else(|| data_failure(None, "Ceres nonzero wait"))?;
+    let slam = |quarter| Phase::Slamming { quarter, wait };
     Ok(match word(wram, slot, source::ENEMY_INSTRUCTION)? {
-        0xF56C | 0xF5BE | 0xF61A => Phase::Placed,
+        0xF56C | 0xF5BE | 0xF61A | 0xF53A | 0xF62A | 0xF634 => Phase::Placed,
+        0xF542 => Phase::Lingering { wait },
+        0xF54A => slam(Quarter::First),
+        0xF54E => slam(Quarter::Second),
+        0xF552 => slam(Quarter::Third),
+        0xF556 => slam(Quarter::Fourth),
+        0xF55C => Phase::Slammed,
+        0xF562 => Phase::Locked { wait },
+        // A getaway wall shows by its properties alone, whichever of its two steps it is at.
+        0xF630 | 0xF63A if word(wram, slot, source::ENEMY_PROPERTIES)? & HIDDEN == 0 => {
+            Phase::Standing
+        }
+        0xF630 | 0xF63A => Phase::Unseen,
         0xF574 | 0xF5C6 => Phase::Starting { wait },
         0xF57C | 0xF5CE => Phase::Open { wait },
         0xF58C | 0xF5DE => Phase::Closing {
@@ -187,6 +206,8 @@ pub(super) fn input(wram: &[u8], slot: Slot) -> Result<Inputs, Outcome> {
         // Neither input is read outside Escape, which admission rejects.
         random: 0,
         shake_frames_left: 0,
+        // He is beaten from the escape's start on, which admission rejects.
+        ridley_beaten: false,
     })
 }
 
@@ -208,17 +229,26 @@ const fn phase_value(value: Phase) -> i64 {
         Phase::Closed { .. } => 3,
         Phase::Opening { quarter: part, .. } => 20_i64.saturating_add(quarter(part)),
         Phase::Wall => 4,
+        Phase::Lingering { .. } => 5,
+        Phase::Locked { .. } => 6,
+        Phase::Slammed => 7,
+        Phase::Slamming { quarter: part, .. } => 30_i64.saturating_add(quarter(part)),
+        Phase::Standing => 8,
+        Phase::Unseen => 9,
     }
 }
 
 const fn wait_value(value: Phase) -> u16 {
     match value {
-        Phase::Placed | Phase::Wall => 1,
+        Phase::Placed | Phase::Wall | Phase::Slammed | Phase::Standing | Phase::Unseen => 1,
         Phase::Starting { wait }
         | Phase::Open { wait }
         | Phase::Closing { wait, .. }
         | Phase::Closed { wait }
-        | Phase::Opening { wait, .. } => wait.frames(),
+        | Phase::Opening { wait, .. }
+        | Phase::Lingering { wait }
+        | Phase::Locked { wait }
+        | Phase::Slamming { wait, .. } => wait.frames(),
     }
 }
 
@@ -236,6 +266,7 @@ const fn figure_value(figure: Option<Figure>) -> i64 {
                 FigureLook::Ajar2 => 3,
                 FigureLook::Ajar3 => 4,
                 FigureLook::Open => 5,
+                FigureLook::Side => 6,
             })
         }
     }
@@ -255,6 +286,8 @@ pub(super) fn expected(wram: &[u8], slot: Slot) -> Result<Vec<Observation>, Outc
         0xFA67 => 13,
         0xFA87 => 14,
         0xFAA7 => 15,
+        0xFACE => 6,
+        0xFB2F => 16,
         _ => return Err(unsupported("Ceres figure observation")),
     };
     let properties = word(wram, slot, source::ENEMY_PROPERTIES)?;
@@ -262,9 +295,25 @@ pub(super) fn expected(wram: &[u8], slot: Slot) -> Result<Vec<Observation>, Outc
         phase_value(phase(wram, slot)?),
         word(wram, slot, source::ENEMY_INSTRUCTION_TIMER)?,
         figure,
-        properties & 0x0100 == 0,
-        properties & 0x0400 == 0,
+        properties & HIDDEN == 0,
+        properties & INTANGIBLE == 0,
     ))
+}
+
+/// Whether the door is drawn with Ridley, as the record holds it: his drawing reads the door's
+/// own flag.
+pub(super) fn drawn_with_ridley(wram: &[u8], slot: Slot) -> Result<Observation, Outcome> {
+    let [_, flag, ..] = source::ENEMY_AI_VARIABLES;
+    Ok(drawn_with_ridley_observation(word(wram, slot, flag)? != 0))
+}
+
+/// Whether the door is drawn with Ridley, as the model leaves it (`DrawnWithRidley`).
+pub(super) const fn drawn_with_ridley_of(state: &CeresDoor) -> bool {
+    state.phase.drawn_with_ridley()
+}
+
+pub(super) fn drawn_with_ridley_observation(drawn: bool) -> Observation {
+    Observation::quantity("ceres.drawn-with-ridley", i64::from(drawn))
 }
 
 fn observations(phase: i64, wait: u16, figure: i64, shown: bool, solid: bool) -> Vec<Observation> {

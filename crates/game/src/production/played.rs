@@ -27,6 +27,13 @@
 //! In the Ceres shaft as she arrives, the elevator's pad holds her: while it does, her moves
 //! and her animation don't run, and the pad sets her height after her frame. The shaft's
 //! overlay, run with the room's enemies, steps the lights, whose beacon sets screen colours.
+//!
+//! In Ridley's room he runs first of the room's enemies, the baby in his hold, and the door of
+//! his room after him. Fetching his room's contents places him: the HUD meets a boss, the
+//! stage is calm and his room's colours are the fade's goal. The baby's colours go to the
+//! screen as it glows. Each frame of work begins by drawing the game's random number once
+//! (game-random's `AdvanceRandom`), which the baby and the doors read. State carries the number;
+//! the caller replaces it where the loop doesn't own every draw, as through a passage.
 
 use super::animation::{self, AppearanceContent};
 use super::camera_semantic;
@@ -34,10 +41,13 @@ use super::connected::inputs::{CameraInputs, Inputs, Lead, Screen};
 use super::content::MovementContent;
 use super::health_tail::HealthPin;
 use super::hud::HudPin;
+use super::ridley;
 use super::room_loading::{self, LoadFault, Rooms};
 use super::shaft::{self, LightsFault};
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
-use boss_ceres_ridley::{CeresDoor, Lights, PadAndCover, Stage};
+use boss_ceres_ridley::{
+    CeresDoor, CeresRidley, Lights, PadAndCover, RidleyPhase, RidleyPlacing, RidleyRun, Stage,
+};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
@@ -95,7 +105,7 @@ pub struct Rules {
     pub health: samus_health::Rules,
     /// HUD parameters.
     pub hud: interface_hud::Rules,
-    /// The Ceres doors' parameters.
+    /// The Ceres doors' and Ceres Ridley's parameters.
     pub ceres: boss_ceres_ridley::Rules,
 }
 
@@ -132,16 +142,21 @@ pub struct Room {
 /// What a frame brings the doors from owners outside this loop.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Passing<'a> {
+    /// The platform's: a frame of work begins in this frame, the last one's work done.
+    pub work_begun: bool,
     /// The platform's: the passage's work in progress is done by this frame's end.
     pub work_done: bool,
     /// Audio's answers.
     pub audio: PassageAudio,
     /// The escape's: its timer is running.
     pub timer_running: bool,
-    /// Her progress, which chooses the next room's version, her suit and her beams.
+    /// Her progress, which chooses the next room's version, her suit and her beams, and says
+    /// whether the station's boss is beaten.
     pub progress: &'a run_progress::Progress,
-    /// The Ceres station's stage, for the colours of the doors the next room places.
-    pub ceres: boss_ceres_ridley::Stage,
+    /// The random numbers' owner's, where this loop doesn't own every draw: the game's random
+    /// number as the last frame left it, which replaces the one State carries. None where
+    /// State's own is the game's. The frame draws it once as its work begins.
+    pub random: Option<types::RandomSequence>,
 }
 
 /// What a frame of play brings the HUD from owners outside this loop.
@@ -213,6 +228,12 @@ pub struct State {
     pub pad_and_cover: PadAndCover,
     /// The room places the Ceres shaft's overlay, which shows the lights.
     pub shaft_overlay: bool,
+    /// Ceres Ridley and the baby, in his room.
+    pub ridley: Option<CeresRidley>,
+    /// The Ceres station's stage, which his placing sets.
+    pub stage: Stage,
+    /// The game's random number as the last frame left it.
+    pub random: types::RandomSequence,
 }
 
 /// What one frame published.
@@ -232,6 +253,11 @@ pub struct Outputs {
     pub ceres_doors: Vec<boss_ceres_ridley::Run>,
     /// What the shaft's lights show; none on a frame its overlay doesn't run.
     pub lights: Option<Lights>,
+    /// Ridley's run, with the baby's cry; none on a frame he doesn't run.
+    pub ridley: Option<RidleyRun>,
+    /// His placing, with the music's stop and the shake's stop it asks for; none on a frame
+    /// that doesn't place him.
+    pub ridley_placed: Option<RidleyPlacing>,
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -260,6 +286,10 @@ pub enum Fault {
     Escape,
     /// The shaft's lights could not be shown.
     Lights(LightsFault),
+    /// Ridley has woken: his fight is a later piece's.
+    RidleyAwake,
+    /// A colour of the baby's content has more than 15 bits.
+    BabyColours,
 }
 
 impl State {
@@ -269,9 +299,9 @@ impl State {
     ///
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
-    /// room inputs, the escape with Ceres doors in the room ([`Fault::Escape`]), and a next
-    /// room that doesn't load, such as one placing a Ceres actor of a later piece
-    /// ([`LoadFault::LaterCeresActor`]).
+    /// room inputs, the escape with Ceres doors in the room ([`Fault::Escape`]), Ridley awake
+    /// ([`Fault::RidleyAwake`]), and a next room that doesn't load, such as one placing an
+    /// actor no owner here places ([`LoadFault::OtherActors`]).
     pub fn step(
         &mut self,
         inputs: &Inputs,
@@ -292,17 +322,11 @@ impl State {
             .0
             .play_frame(samus_health::TailImpact::Absent, &rules.health);
         let room = camera_room(&self.room.camera)?;
-        // The doors run before she moves, but her motion meets them as they block when the
-        // frame began.
-        let ceres = run_doors(
-            &self.ceres_doors,
-            self.shaft_overlay,
-            &self.movement.0,
-            passing.ceres,
-            &rules.ceres,
-        )?;
+        let random = self.drawn(passing);
+        // The enemies run before she moves, but her motion meets the doors as they block when
+        // the frame began.
         let mut palette = self.palette;
-        let lights = self.lights(passing.ceres, content, rules, &mut palette)?;
+        let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;
         let her = if self.pad_and_cover.holds_her() {
             Her::held(self)
         } else {
@@ -352,7 +376,9 @@ impl State {
         self.palette = doors.scene.palette;
         self.health = Model(health.state);
         self.hud = Model(hud_state);
-        self.ceres_doors = ceres.iter().map(|run| run.door).collect();
+        self.ceres_doors = enemies.doors.iter().map(|run| run.door).collect();
+        self.ridley = enemies.ridley.map(|run| run.ridley);
+        self.random = random;
         self.frame = counted(self.frame, doors.report.finishing);
         self.finished_frames = finished(self.finished_frames, doors.report.finishing);
         Ok(Outputs {
@@ -361,9 +387,65 @@ impl State {
             doors: doors.report,
             health: Some(health),
             hud: Some(hud_outputs),
-            ceres_doors: ceres,
+            ceres_doors: enemies.doors,
+            lights: enemies.lights,
+            ridley: enemies.ridley,
+            ridley_placed: None,
+        })
+    }
+
+    /// The random number the frame's enemies read: drawn once as a frame of work begins.
+    fn drawn(&self, passing: &Passing<'_>) -> types::RandomSequence {
+        let mut random = passing.random.unwrap_or(self.random);
+        if passing.work_begun {
+            game_random::advance_random(&mut random);
+        }
+        random
+    }
+
+    /// One run of the room's enemies, in its order: Ridley, then the Ceres doors, then the
+    /// shaft's overlay. The baby's colours and the beacon's go to `palette`.
+    fn enemies(
+        &self,
+        passage_under_way: bool,
+        random: types::RandomSequence,
+        passing: &Passing<'_>,
+        content: &Content,
+        rules: &Rules,
+        palette: &mut Palette,
+    ) -> Result<Enemies, Fault> {
+        let ridley = self
+            .ridley
+            .map(|ridley| run_ridley(ridley, passage_under_way, random, content, rules, palette))
+            .transpose()?;
+        let doors = run_doors(
+            &self.ceres_doors,
+            self.shaft_overlay,
+            &self.movement.0,
+            self.stage,
+            room_loading::Run {
+                progress: passing.progress,
+                ceres: self.stage,
+            }
+            .ridley_beaten(),
+            random,
+            &rules.ceres,
+        )?;
+        let lights = self.lights(content, rules, palette)?;
+        Ok(Enemies {
+            ridley,
+            doors,
             lights,
         })
+    }
+
+    /// Ridley's drawing as the frame leaves him, with the doors he draws; none outside his
+    /// room. It is produced for drawing, which this loop doesn't compare.
+    #[must_use]
+    pub fn ridley_drawing(&self) -> Option<ridley::Drawing> {
+        self.ridley
+            .as_ref()
+            .map(|ridley| ridley::drawing(ridley, &self.ceres_doors))
     }
 
     /// Her own frame: her moves, then her animation from what they report.
@@ -403,7 +485,6 @@ impl State {
     /// beacon's step sets the colours it names.
     fn lights(
         &self,
-        stage: Stage,
         content: &Content,
         rules: &Rules,
         palette: &mut Palette,
@@ -411,7 +492,7 @@ impl State {
         if !self.shaft_overlay {
             return Ok(None);
         }
-        let lights = shaft::lights(self.finished_frames, self.doors, stage, &rules.ceres)
+        let lights = shaft::lights(self.finished_frames, self.doors, self.stage, &rules.ceres)
             .map_err(Fault::Lights)?;
         shaft::show(lights, &content.rooms.actors.beacon, palette).map_err(Fault::Lights)?;
         Ok(Some(lights))
@@ -470,10 +551,11 @@ impl State {
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
         let camera = self.camera.0;
+        let random = self.drawn(passing);
         let brightening = brightening(self.doors, passing);
         let mut before = self.palette;
-        let early_lights = if brightening {
-            self.lights(passing.ceres, content, rules, &mut before)?
+        let early = if brightening {
+            Some(self.enemies(true, random, passing, content, rules, &mut before)?)
         } else {
             None
         };
@@ -488,24 +570,12 @@ impl State {
             camera: view,
             mut palette,
         } = exports.scene;
-        let enemies = exports.report.runs[Activity::Enemies];
-        let ceres = if enemies {
-            run_doors(
-                &self.ceres_doors,
-                self.shaft_overlay,
-                &self.movement.0,
-                passing.ceres,
-                &rules.ceres,
-            )?
-        } else {
-            Vec::new()
-        };
-        let lights = if brightening {
-            early_lights
-        } else if enemies {
-            self.lights(passing.ceres, content, rules, &mut palette)?
-        } else {
-            None
+        let enemies = match early {
+            Some(enemies) => enemies,
+            None if exports.report.runs[Activity::Enemies] => {
+                self.enemies(true, random, passing, content, rules, &mut palette)?
+            }
+            None => Enemies::default(),
         };
         let mut moved = self.movement.0;
         moved.position = her;
@@ -514,18 +584,32 @@ impl State {
         } else {
             self.pad_and_cover
         };
-        let mut ceres_doors = if ceres.is_empty() {
+        let mut ceres_doors = if enemies.doors.is_empty() {
             self.ceres_doors.clone()
         } else {
-            ceres.iter().map(|run| run.door).collect()
+            enemies.doors.iter().map(|run| run.door).collect()
         };
+        let mut ridley = enemies.ridley.map_or(self.ridley, |run| Some(run.ridley));
         let loaded = self.load(exports.report.call, passing, content, &mut palette)?;
         if let Some(room) = loaded.room {
             self.room = room;
         }
+        let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         if let Some(placed) = loaded.actors {
             ceres_doors = placed.doors;
             self.shaft_overlay = placed.shaft_overlay;
+            ridley = placed.ridley.map(|placing| placing.ridley);
+        }
+        if let Some(placing) = ridley_placed {
+            // The HUD meets the boss as his placing hands it on, outside a frame of play.
+            let room = self.doorway.and_then(|doorway| doorway.map_room);
+            self.hud.0.boss_blanks_the_map(
+                &rules.hud,
+                &content.hud,
+                ridley::encountered(placing.boss),
+                room.map_or(self.map_room.cell, |room| room.cell),
+            );
+            self.stage = placing.stage;
         }
         let kept = camera.seen();
         self.movement.0 = moved;
@@ -539,6 +623,8 @@ impl State {
         self.palette = palette;
         self.doors = exports.doors;
         self.ceres_doors = ceres_doors;
+        self.ridley = ridley;
+        self.random = random;
         self.frame = counted(self.frame, exports.report.finishing);
         self.finished_frames = finished(self.finished_frames, exports.report.finishing);
         self.hud.0.out_of_play(&OutOfPlayInputs {
@@ -558,8 +644,10 @@ impl State {
             doors: exports.report,
             health: None,
             hud: None,
-            ceres_doors: ceres,
-            lights,
+            ceres_doors: enemies.doors,
+            lights: enemies.lights,
+            ridley: enemies.ridley,
+            ridley_placed,
         })
     }
 
@@ -581,7 +669,7 @@ impl State {
         };
         let run = room_loading::Run {
             progress: passing.progress,
-            ceres: passing.ceres,
+            ceres: self.stage,
         };
         room_loading::load(call, doorway.through, run, &content.rooms, palette)
             .map_err(Fault::Load)?;
@@ -612,6 +700,14 @@ impl State {
         }
         Ok(loaded)
     }
+}
+
+/// One run of the room's enemies: Ridley's, each Ceres door's and the shaft's lights.
+#[derive(Default)]
+struct Enemies {
+    ridley: Option<RidleyRun>,
+    doors: Vec<boss_ceres_ridley::Run>,
+    lights: Option<Lights>,
 }
 
 /// What a passage's call loaded of the next room.
@@ -866,6 +962,8 @@ fn run_doors(
     shaft_overlay: bool,
     her: &samus_movement::Samus,
     stage: Stage,
+    ridley_beaten: bool,
+    random: types::RandomSequence,
     rules: &boss_ceres_ridley::Rules,
 ) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
     if stage == Stage::Escape && (shaft_overlay || !doors.is_empty()) {
@@ -877,11 +975,34 @@ fn run_doors(
             y: her.position.y.pixel(),
         },
         stage,
-        // Outside the escape no door reads the random number or the screen's shaking.
-        random: 0,
+        random: random.number.0,
+        // Outside the escape no door reads the screen's shaking, and the escape is refused.
         shake_frames_left: 0,
+        // In his room Ridley runs first, and his run in this piece leaves him unbeaten.
+        ridley_beaten,
     };
     Ok(doors.iter().map(|door| door.run(&inputs, rules)).collect())
+}
+
+/// One run of Ridley, the baby in his hold: its colour set goes to the screen at once. Awake,
+/// a later piece runs him.
+fn run_ridley(
+    ridley: CeresRidley,
+    passage_under_way: bool,
+    random: types::RandomSequence,
+    content: &Content,
+    rules: &Rules,
+    palette: &mut Palette,
+) -> Result<RidleyRun, Fault> {
+    if ridley.phase == RidleyPhase::Awake {
+        return Err(Fault::RidleyAwake);
+    }
+    let run = ridley.run(passage_under_way, random.number.0, &rules.ceres);
+    if let Some(colours) = run.colours {
+        ridley::show_baby(colours, &content.rooms.actors.ceres_ridley, palette)
+            .map_err(|ridley::ColourFault| Fault::BabyColours)?;
+    }
+    Ok(run)
 }
 
 /// The room's geometry, with the Ceres doors that block her after its other solid actors.

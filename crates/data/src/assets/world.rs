@@ -156,6 +156,9 @@ pub struct Version {
     pub enemies: Vec<EnemyGraphics>,
     /// The station's door actors it places, in the room's order of its enemies.
     pub ceres_doors: Vec<CeresDoorPlacement>,
+    /// It places Ceres Ridley, who stands at his own place whatever his placement says, as
+    /// the room's first enemy, before its door actors.
+    pub ceres_ridley: bool,
     /// What it runs as its contents are fetched, beyond placing them.
     pub setup: RoomSetup,
 }
@@ -174,9 +177,10 @@ pub struct CeresDoorPlacement {
 pub enum CeresDoorKind {
     /// A door between two rooms, opening the way it faces.
     Door(Side),
-    /// An actor of the doors' species that a later piece of the station models: the door of
-    /// Ridley's room or the getaway's walls.
-    Later,
+    /// One of the two walls Ridley's getaway puts up, at that side of his room.
+    GetawayWall(Side),
+    /// The door of Ridley's room, facing right.
+    RidleyDoor,
     /// The shaft's door, facing left.
     ShaftDoor,
     /// The shaft's overlay, which shows the shaft's beacon and its platform.
@@ -335,6 +339,7 @@ mod tests {
             },
             enemies: Vec::new(),
             ceres_doors: Vec::new(),
+            ceres_ridley: false,
             setup: RoomSetup::Nothing,
         };
         Room {

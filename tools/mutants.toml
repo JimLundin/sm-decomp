@@ -449,7 +449,7 @@ field = "hud.status-bar"
 name = "played-ceres-doors-held"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "self.ceres_doors = ceres.iter().map(|run| run.door).collect();"
+before = "self.ceres_doors = enemies.doors.iter().map(|run| run.door).collect();"
 after = "self.ceres_doors = self.ceres_doors.clone();"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
@@ -460,24 +460,11 @@ name = "played-ceres-doors-read-her-after-moves"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
 before = '''
-        let ceres = run_doors(
-            &self.ceres_doors,
-            self.shaft_overlay,
-            &self.movement.0,
-            passing.ceres,
-            &rules.ceres,
-        )?;
-        let mut palette'''
+        let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;'''
 after = '''
-        let moved = self.her_frame(inputs, content, rules)?.samus;
-        let ceres = run_doors(
-            &self.ceres_doors,
-            self.shaft_overlay,
-            &moved,
-            passing.ceres,
-            &rules.ceres,
-        )?;
-        let mut palette'''
+        let mut moved = self.clone();
+        moved.movement = Model(self.her_frame(inputs, content, rules)?.samus);
+        let enemies = moved.enemies(false, random, passing, content, rules, &mut palette)?;'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "ceres.0.phase"
@@ -516,8 +503,8 @@ field = "movement.position"
 name = "played-beacon-reads-the-count-after-the-frame"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "shaft::lights(self.finished_frames, self.doors, stage, &rules.ceres)"
-after = "shaft::lights(self.finished_frames.wrapping_add(1), self.doors, stage, &rules.ceres)"
+before = "shaft::lights(self.finished_frames, self.doors, self.stage, &rules.ceres)"
+after = "shaft::lights(self.finished_frames.wrapping_add(1), self.doors, self.stage, &rules.ceres)"
 case = "played chain-any-0001-DF45 0 41"
 cut = 7
 field = "doors.colours.screen"
@@ -526,8 +513,8 @@ field = "doors.colours.screen"
 name = "played-beacon-ignores-the-fade"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "shaft::lights(self.finished_frames, self.doors, stage, &rules.ceres)"
-after = "shaft::lights(self.finished_frames, Doors::Play, stage, &rules.ceres)"
+before = "shaft::lights(self.finished_frames, self.doors, self.stage, &rules.ceres)"
+after = "shaft::lights(self.finished_frames, Doors::Play, self.stage, &rules.ceres)"
 case = "played chain-any-0001-DF45 0 300"
 cut = 257
 field = "doors.colours.screen"
@@ -552,3 +539,73 @@ after = '''samus.choices = samus_movement::Choices::starting_in(samus.pose);
 case = "played chain-any-0002-DF8D 0 30"
 cut = 26
 field = "movement.choices"
+
+[[fault]]
+name = "played-ridley-slam-hold-one-longer"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "ceres: boss_ceres_ridley::Rules::default(),"
+after = "ceres: boss_ceres_ridley::Rules { slam: boss_ceres_ridley::Wait::new(3).unwrap_or(boss_ceres_ridley::Rules::default().slam), ..boss_ceres_ridley::Rules::default() },"
+case = "played chain-any-0005-E06B 0 320"
+cut = 288
+field = "ceres.0.wait"
+
+[[fault]]
+name = "played-ridley-waits-in-the-passage"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "Some(self.enemies(true, random, passing, content, rules, &mut before)?)"
+after = "Some(self.enemies(false, random, passing, content, rules, &mut before)?)"
+case = "played chain-any-0005-E06B 0 320"
+cut = 282
+field = "ridley.phase"
+
+[[fault]]
+name = "played-ridley-room-colours-shifted"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "GoalColours::RoomContent => set(goal, row, 0, own)?,"
+after = "GoalColours::RoomContent => set(goal, row, 1, own)?,"
+case = "played chain-any-0005-E06B 0 320"
+cut = 211
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-ridley-met-as-another-boss"
+responsibility = "played"
+file = "crates/game/src/production/ridley.rs"
+before = "Boss::CeresRidley => interface_hud::Boss::RidleyInCeres,"
+after = "Boss::CeresRidley => interface_hud::Boss::RidleyInNorfair,"
+case = "played chain-any-0005-E06B 0 320"
+cut = 211
+field = "hud.explored"
+
+[[fault]]
+name = "played-baby-glow-skipped"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "if let Some(colours) = run.colours {"
+after = "if let Some(colours) = run.colours.filter(|_| false) {"
+case = "played chain-any-0006-E0B5 0 300"
+cut = 151
+field = "doors.colours.screen"
+
+[[fault]]
+name = "played-random-not-drawn"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "if passing.work_begun {"
+after = "if false {"
+case = "played chain-any-0006-E0B5 0 300"
+cut = 1
+field = "random"
+
+[[fault]]
+name = "played-music-always-ready"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "music_ready: music_ready(&previous.wram)?,"
+after = "music_ready: true,"
+case = "played chain-any-0005-E06B 0 320"
+cut = 216
+field = "ceres.0.phase"

@@ -29,7 +29,7 @@ impl Wait {
     }
 }
 
-/// How far an opening or a closing has gone: which of its four figures it shows.
+/// How far an opening, a closing or a slam has gone: which of its four figures it shows.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Quarter {
     /// The first figure.
@@ -43,8 +43,8 @@ pub enum Quarter {
 }
 
 impl Quarter {
-    /// `Opening`, `Closing`: the figure after this one, or none after the fourth, when the
-    /// opening or closing is done.
+    /// `Opening`, `Closing`, `SlamShut`: the figure after this one, or none after the fourth,
+    /// when the opening, closing or slam is done.
     #[must_use]
     pub const fn next(self) -> Option<Self> {
         match self {
@@ -59,8 +59,8 @@ impl Quarter {
 /// A door's phase, with what it carries. Listed alphabetically, as the spec lists them; the
 /// order means nothing.
 ///
-/// `Placed` and `Wall` carry no wait: each steps at every run it gets, which the spec writes as
-/// a wait of 1.
+/// `Placed`, `Slammed`, `Standing`, `Unseen` and `Wall` carry no wait: each steps at every run
+/// it gets, which the spec writes as a wait of 1.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Phase {
     /// Shown and solid, its closed figure; it looks for her each time its wait runs out.
@@ -73,6 +73,16 @@ pub enum Phase {
         /// Which of the closing's figures it shows.
         quarter: Quarter,
         /// The frames before its next figure.
+        wait: Wait,
+    },
+    /// The door of Ridley's room just after the room starts: hidden, passable, open.
+    Lingering {
+        /// The frames before its slam starts.
+        wait: Wait,
+    },
+    /// The door of Ridley's room, shut while he lives: hidden and solid; Ridley draws it.
+    Locked {
+        /// The frames before it next looks whether he is beaten.
         wait: Wait,
     },
     /// Hidden and passable; it looks for her each time its wait runs out.
@@ -89,12 +99,25 @@ pub enum Phase {
     },
     /// As the room placed it: shown and solid, with no figure; its first run starts it.
     Placed,
+    /// The door of Ridley's room the frame it is shut: shown and solid; Ridley draws it too.
+    Slammed,
+    /// The door of Ridley's room slamming shut: shown and solid, without looking for her.
+    Slamming {
+        /// Which of the slam's figures it shows.
+        quarter: Quarter,
+        /// The frames before its next figure.
+        wait: Wait,
+    },
+    /// A getaway wall during the getaway: shown and passable.
+    Standing,
     /// Hidden and passable; it looks for her once, when its wait runs out, to choose its first
     /// phase.
     Starting {
         /// The frames before it looks.
         wait: Wait,
     },
+    /// A getaway wall outside the getaway: hidden and passable.
+    Unseen,
     /// The shaft's door once Ridley has fled: hidden and solid, for good.
     Wall,
 }
@@ -114,36 +137,62 @@ impl Phase {
         match self {
             Self::Closed { wait }
             | Self::Closing { wait, .. }
+            | Self::Lingering { wait }
+            | Self::Locked { wait }
             | Self::Open { wait }
             | Self::Opening { wait, .. }
+            | Self::Slamming { wait, .. }
             | Self::Starting { wait } => Some(wait),
-            Self::Placed | Self::Wall => None,
+            Self::Placed | Self::Slammed | Self::Standing | Self::Unseen | Self::Wall => None,
         }
     }
 
-    /// `Shown`: whether the framework draws the door's figure. The phases that show it are the
-    /// solid ones but the wall.
+    /// `Shown`: whether the framework draws the door's figure: the phases that show a door
+    /// shutting, shut or sliding, the placed door and the standing getaway wall.
     #[must_use]
     pub const fn shown(self) -> bool {
-        match self {
-            Self::Closed { .. } | Self::Closing { .. } | Self::Opening { .. } | Self::Placed => {
-                true
-            }
-            Self::Open { .. } | Self::Starting { .. } | Self::Wall => false,
-        }
-    }
-
-    /// `Solid`: whether the door blocks her, her touch and her shots, as a solid enemy does. The
-    /// open and starting doors let her through as air.
-    #[must_use]
-    pub const fn solid(self) -> bool {
         match self {
             Self::Closed { .. }
             | Self::Closing { .. }
             | Self::Opening { .. }
             | Self::Placed
-            | Self::Wall => true,
-            Self::Open { .. } | Self::Starting { .. } => false,
+            | Self::Slammed
+            | Self::Slamming { .. }
+            | Self::Standing => true,
+            Self::Lingering { .. }
+            | Self::Locked { .. }
+            | Self::Open { .. }
+            | Self::Starting { .. }
+            | Self::Unseen
+            | Self::Wall => false,
         }
+    }
+
+    /// `Solid`: whether the door blocks her, her touch and her shots, as a solid enemy does. The
+    /// open, starting and lingering doors and the getaway's walls let her through as air.
+    #[must_use]
+    pub const fn solid(self) -> bool {
+        match self {
+            Self::Closed { .. }
+            | Self::Closing { .. }
+            | Self::Locked { .. }
+            | Self::Opening { .. }
+            | Self::Placed
+            | Self::Slammed
+            | Self::Slamming { .. }
+            | Self::Wall => true,
+            Self::Lingering { .. }
+            | Self::Open { .. }
+            | Self::Standing
+            | Self::Starting { .. }
+            | Self::Unseen => false,
+        }
+    }
+
+    /// `DrawnWithRidley`: whether Ridley's drawing draws the door, closed: while the door of his
+    /// room is shut. On the frame it is shut the framework draws it too; from the next, he alone.
+    #[must_use]
+    pub const fn drawn_with_ridley(self) -> bool {
+        matches!(self, Self::Slammed | Self::Locked { .. })
     }
 }

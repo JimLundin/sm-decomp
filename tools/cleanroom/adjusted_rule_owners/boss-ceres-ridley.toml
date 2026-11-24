@@ -1,22 +1,26 @@
 # Reviewed ownership of vector-format rule subtrees by Parameter entry.
 # Remove the whole subtree to restore reference semantics at the vector adapter.
 [owners]
-# SheIsNear: docs/behaviours/boss-ceres-ridley.md:158; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# SheIsNear: docs/behaviours/boss-ceres-ridley.md:206; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 reach = ["SheIsNear"]
-# Polling: docs/behaviours/boss-ceres-ridley.md:195; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# Polling: docs/behaviours/boss-ceres-ridley.md:243; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 poll = ["Polling"]
-# Opening: docs/behaviours/boss-ceres-ridley.md:204; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
-# Closing: docs/behaviours/boss-ceres-ridley.md:221; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# Opening: docs/behaviours/boss-ceres-ridley.md:252; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# Closing: docs/behaviours/boss-ceres-ridley.md:269; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 hold = ["Opening", "Closing"]
-# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:331; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 strong_below = ["EscapeShakes"]
-# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:331; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 small = ["EscapeShakes"]
-# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:331; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
 strong = ["EscapeShakes"]
-# PadWaits: docs/behaviours/boss-ceres-ridley.md:488
+# PadWaits: docs/behaviours/boss-ceres-ridley.md:546
 wait = ["PadWaits"]
-# PadCarries: docs/behaviours/boss-ceres-ridley.md:501
+# PadCarries: docs/behaviours/boss-ceres-ridley.md:559
 floor = ["PadCarries"]
-# BeaconCycles: docs/behaviours/boss-ceres-ridley.md:546
+# BeaconCycles: docs/behaviours/boss-ceres-ridley.md:604
 rhythm = ["BeaconCycles"]
+# SlamShut: docs/behaviours/boss-ceres-ridley.md:674
+slam = ["SlamShut"]
+# RidleyWaits: docs/behaviours/boss-ceres-ridley.md:782
+wake = ["RidleyWaits"]

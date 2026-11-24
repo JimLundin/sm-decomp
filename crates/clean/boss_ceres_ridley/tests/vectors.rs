@@ -1,16 +1,20 @@
-//! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, the doors'
-//! and the shaft's, and checks the catalogue against the vectors. Every table refuses a key it
-//! doesn't know, and every name must be one the spec gives.
+//! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, the doors',
+//! the shaft's and Ridley's, and checks the catalogue against the vectors. Every table refuses a
+//! key it doesn't know, and every name must be one the spec gives.
 
 #[cfg(test)]
 mod vectors {
     use core::num::{NonZeroU16, Wrapping};
 
     use boss_ceres_ridley::{
-        AlternatingLook, BeaconStep, BehaviourId, CeresDoor, ColourSet, Cover, DoorKind, FadeSteps,
-        Figure, FigureLook, Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep,
-        PadFigure, PadWait, Phase, Quarter, Rules, Shake, Stage, Wait, catalogue,
+        AlternatingLook, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
+        BehaviourId, Boss, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind, DoorPalette,
+        FadeSteps, FidgetFigure, Figure, FigureLook, GlowFigure, Inputs, Lights, LightsInputs, Pad,
+        PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase, Quarter, RidleyLook, RidleyPhase,
+        RidleyWait, Rules, Shake, ShakeLayers, ShakeStart, ShownFigure, Stage, Wait, WakeWait,
+        catalogue,
     };
+    use enum_map::Enum;
     use serde::Deserialize;
     use types::{Checked, Pair, Px, Side};
 
@@ -22,8 +26,9 @@ mod vectors {
         vector: Vec<Vector>,
     }
 
-    /// A vector of either part: the doors' fields, or the shaft's (the pad and the cover, or the
-    /// lights). Which part it is follows from the result it names.
+    /// A vector of any part: the doors' fields (the door of Ridley's room and the getaway's walls
+    /// among them), the shaft's (the pad and the cover, or the lights), or Ridley's. Which part
+    /// it is follows from the result it names.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Vector {
@@ -34,14 +39,23 @@ mod vectors {
         entries: Vec<String>,
         #[serde(default)]
         rules: RulesRow,
+        // The doors' and Ridley's alike.
+        random: Option<String>,
+        beaten: Option<bool>,
         // The doors.
         door: Option<DoorRow>,
         before: Option<PhaseRow>,
         her: Option<[String; 2]>,
         stage: Option<StageName>,
-        random: Option<String>,
         shaking: Option<u16>,
         after: Option<After>,
+        // Ridley.
+        #[serde(default)]
+        ridley_placing: bool,
+        ridley: Option<RidleyRow>,
+        baby: Option<BabyRow>,
+        passing: Option<bool>,
+        ridley_after: Option<RidleyAfter>,
         // The pad and the cover.
         arrival: Option<[u16; 2]>,
         pad: Option<PadRow>,
@@ -60,9 +74,27 @@ mod vectors {
                 || self.before.is_some()
                 || self.her.is_some()
                 || self.stage.is_some()
-                || self.random.is_some()
                 || self.shaking.is_some()
                 || self.after.is_some()
+        }
+
+        /// Whether the vector names any of Ridley's own fields.
+        const fn names_ridley(&self) -> bool {
+            self.ridley_placing
+                || self.ridley.is_some()
+                || self.baby.is_some()
+                || self.passing.is_some()
+                || self.ridley_after.is_some()
+        }
+
+        /// Whether the vector names a field the doors and Ridley share.
+        const fn names_shared(&self) -> bool {
+            self.random.is_some() || self.beaten.is_some()
+        }
+
+        /// The random number it gives, 0 by default.
+        fn random(&self) -> u16 {
+            self.random.as_deref().map_or(0, hex)
         }
 
         /// Whether the vector names any of the pad's and the cover's own fields.
@@ -148,11 +180,13 @@ mod vectors {
         poll: Option<u16>,
         hold: Option<u16>,
         strong_below: Option<u16>,
-        small: Option<ShakeRow>,
-        strong: Option<ShakeRow>,
+        small: Option<SizeRow>,
+        strong: Option<SizeRow>,
         wait: Option<u16>,
         floor: Option<u16>,
         rhythm: Option<u16>,
+        slam: Option<u16>,
+        wake: Option<u16>,
     }
 
     #[derive(Deserialize)]
@@ -171,8 +205,12 @@ mod vectors {
         wait: u16,
     }
 
-    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
     #[serde(deny_unknown_fields)]
+    #[expect(
+        clippy::struct_excessive_bools,
+        reason = "the vector file's after holds shown, solid, sound and drawn_with_ridley as bools"
+    )]
     struct After {
         phase: PhaseName,
         step: Option<u8>,
@@ -183,6 +221,9 @@ mod vectors {
         sound: bool,
         shake: Option<ShakeRow>,
         colours: Option<ColoursName>,
+        palette: Option<PaletteName>,
+        #[serde(default)]
+        drawn_with_ridley: bool,
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -192,16 +233,42 @@ mod vectors {
         facing: SideName,
     }
 
+    /// A rule's shake: how strong and how long.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(deny_unknown_fields)]
+    struct SizeRow {
+        pixels: u16,
+        frames: u16,
+    }
+
+    /// A shake a door's run starts.
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
     #[serde(deny_unknown_fields)]
     struct ShakeRow {
         pixels: u16,
         frames: u16,
+        #[serde(default)]
+        layers: LayersName,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy, Default)]
+    enum LayersName {
+        Back,
+        #[default]
+        Whole,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum PaletteName {
+        Doors,
+        Own,
     }
 
     #[derive(Deserialize, Clone, Copy)]
     enum KindName {
         Door,
+        GetawayWall,
+        RidleyDoor,
         ShaftDoor,
     }
 
@@ -215,10 +282,16 @@ mod vectors {
     enum PhaseName {
         Closed,
         Closing,
+        Lingering,
+        Locked,
         Open,
         Opening,
         Placed,
+        Slammed,
+        Slamming,
+        Standing,
         Starting,
+        Unseen,
         Wall,
     }
 
@@ -229,6 +302,7 @@ mod vectors {
         Ajar3,
         Closed,
         Open,
+        Side,
     }
 
     #[derive(Deserialize, Default, Clone, Copy)]
@@ -317,36 +391,53 @@ mod vectors {
         }
     }
 
-    /// Builds the phase a vector's `before` names. `Placed` and `Wall` carry no wait: the spec
-    /// writes theirs as 1, and the vector must too.
+    /// Builds the phase a vector's `before` names. `Placed`, `Slammed`, `Standing`, `Unseen` and
+    /// `Wall` carry no wait: the spec writes theirs as 1, and the vector must too.
     fn phase(row: &PhaseRow) -> Phase {
-        let carries_step = matches!(row.phase, PhaseName::Closing | PhaseName::Opening);
+        let carries_step = matches!(
+            row.phase,
+            PhaseName::Closing | PhaseName::Opening | PhaseName::Slamming
+        );
         assert_eq!(
             carries_step,
             row.step.is_some(),
-            "a step for Closing and Opening only"
+            "a step for Closing, Opening and Slamming only"
         );
-        let carries_wait = !matches!(row.phase, PhaseName::Placed | PhaseName::Wall);
-        assert!(carries_wait || row.wait == 1, "Placed and Wall wait 1");
+        let carries_wait = !matches!(
+            row.phase,
+            PhaseName::Placed
+                | PhaseName::Slammed
+                | PhaseName::Standing
+                | PhaseName::Unseen
+                | PhaseName::Wall
+        );
+        assert!(
+            carries_wait || row.wait == 1,
+            "the phases without a wait wait 1"
+        );
+        let wait = wait(row.wait);
         match row.phase {
-            PhaseName::Closed => Phase::Closed {
-                wait: wait(row.wait),
-            },
+            PhaseName::Closed => Phase::Closed { wait },
             PhaseName::Closing => Phase::Closing {
                 quarter: quarter(row.step),
-                wait: wait(row.wait),
+                wait,
             },
-            PhaseName::Open => Phase::Open {
-                wait: wait(row.wait),
-            },
+            PhaseName::Lingering => Phase::Lingering { wait },
+            PhaseName::Locked => Phase::Locked { wait },
+            PhaseName::Open => Phase::Open { wait },
             PhaseName::Opening => Phase::Opening {
                 quarter: quarter(row.step),
-                wait: wait(row.wait),
+                wait,
             },
             PhaseName::Placed => Phase::Placed,
-            PhaseName::Starting => Phase::Starting {
-                wait: wait(row.wait),
+            PhaseName::Slammed => Phase::Slammed,
+            PhaseName::Slamming => Phase::Slamming {
+                quarter: quarter(row.step),
+                wait,
             },
+            PhaseName::Standing => Phase::Standing,
+            PhaseName::Starting => Phase::Starting { wait },
+            PhaseName::Unseen => Phase::Unseen,
             PhaseName::Wall => Phase::Wall,
         }
     }
@@ -359,12 +450,20 @@ mod vectors {
             Phase::Closing { quarter, wait } => {
                 (PhaseName::Closing, Some(step(quarter)), wait.frames())
             }
+            Phase::Lingering { wait } => (PhaseName::Lingering, None, wait.frames()),
+            Phase::Locked { wait } => (PhaseName::Locked, None, wait.frames()),
             Phase::Open { wait } => (PhaseName::Open, None, wait.frames()),
             Phase::Opening { quarter, wait } => {
                 (PhaseName::Opening, Some(step(quarter)), wait.frames())
             }
             Phase::Placed => (PhaseName::Placed, None, 1),
+            Phase::Slammed => (PhaseName::Slammed, None, 1),
+            Phase::Slamming { quarter, wait } => {
+                (PhaseName::Slamming, Some(step(quarter)), wait.frames())
+            }
+            Phase::Standing => (PhaseName::Standing, None, 1),
             Phase::Starting { wait } => (PhaseName::Starting, None, wait.frames()),
+            Phase::Unseen => (PhaseName::Unseen, None, 1),
             Phase::Wall => (PhaseName::Wall, None, 1),
         }
     }
@@ -376,6 +475,7 @@ mod vectors {
             FigureLook::Ajar3 => LookName::Ajar3,
             FigureLook::Closed => LookName::Closed,
             FigureLook::Open => LookName::Open,
+            FigureLook::Side => LookName::Side,
         }
     }
 
@@ -386,17 +486,21 @@ mod vectors {
         }
     }
 
-    const fn shake(row: ShakeRow) -> Shake {
+    const fn shake(row: SizeRow) -> Shake {
         Shake {
             strength: row.pixels,
             length: row.frames,
         }
     }
 
-    const fn shake_row(shake: Shake) -> ShakeRow {
+    const fn shake_row(start: ShakeStart) -> ShakeRow {
         ShakeRow {
-            pixels: shake.strength,
-            frames: shake.length,
+            pixels: start.shake.strength,
+            frames: start.shake.length,
+            layers: match start.layers {
+                ShakeLayers::Back => LayersName::Back,
+                ShakeLayers::Whole => LayersName::Whole,
+            },
         }
     }
 
@@ -404,6 +508,13 @@ mod vectors {
         match colours {
             ColourSet::Calm => ColoursName::Calm,
             ColourSet::Escape => ColoursName::Escape,
+        }
+    }
+
+    const fn palette_name(palette: DoorPalette) -> PaletteName {
+        match palette {
+            DoorPalette::Doors => PaletteName::Doors,
+            DoorPalette::Own => PaletteName::Own,
         }
     }
 
@@ -421,6 +532,10 @@ mod vectors {
             rhythm: row.rhythm.map_or(reference.rhythm, |frames| {
                 NonZeroU16::new(frames).expect("a rhythm is at least 1 frame")
             }),
+            slam: row.slam.map_or(reference.slam, wait),
+            wake: row.wake.map_or(reference.wake, |frames| {
+                WakeWait::new(frames).expect("a wake is 1 to 32,768 frames")
+            }),
         }
     }
 
@@ -428,6 +543,8 @@ mod vectors {
         CeresDoor {
             kind: match row.kind {
                 KindName::Door => DoorKind::Door,
+                KindName::GetawayWall => DoorKind::GetawayWall,
+                KindName::RidleyDoor => DoorKind::RidleyDoor,
                 KindName::ShaftDoor => DoorKind::ShaftDoor,
             },
             facing: side(row.facing),
@@ -436,13 +553,9 @@ mod vectors {
         }
     }
 
-    /// The door as a vector's `after` reads it, with what the run or the placing answered.
-    fn after(
-        door: CeresDoor,
-        sound: bool,
-        shake: Option<Shake>,
-        colours: Option<ColourSet>,
-    ) -> After {
+    /// The door as a vector's `after` reads it, with what its run answered; a placing adds its
+    /// colours.
+    fn after(door: CeresDoor, sound: bool, shake: Option<ShakeStart>) -> After {
         let (phase, step, wait) = phase_row(door.phase);
         After {
             phase,
@@ -453,7 +566,9 @@ mod vectors {
             solid: door.phase.solid(),
             sound,
             shake: shake.map(shake_row),
-            colours: colours.map(colours_name),
+            colours: None,
+            palette: None,
+            drawn_with_ridley: door.phase.drawn_with_ridley(),
         }
     }
 
@@ -468,13 +583,18 @@ mod vectors {
         stage(vector.stage.unwrap_or_default())
     }
 
-    /// `RoomStart`, `TheDoorsColours`: the room places the door; it reads nothing of her.
+    /// `RoomStart`, `TheDoorsColours`: the room places the door; it reads nothing of her, of the
+    /// random number or of Ridley.
     fn placed(vector: &Vector) -> After {
-        assert!(vector.before.is_none() && vector.her.is_none() && vector.random.is_none());
+        assert!(vector.before.is_none() && vector.her.is_none() && !vector.names_shared());
         let model = door(door_row(vector), Phase::Placed);
         let placement =
             CeresDoor::place(model.kind, model.facing, model.position, door_stage(vector));
-        after(placement.door, false, None, Some(placement.colours))
+        After {
+            colours: Some(colours_name(placement.colours.set)),
+            palette: Some(palette_name(placement.colours.palette)),
+            ..after(placement.door, false, None)
+        }
     }
 
     /// One run of the door from its `before`, reading what the vector gives.
@@ -484,22 +604,28 @@ mod vectors {
         let inputs = Inputs {
             her: position(her),
             stage: door_stage(vector),
-            random: vector.random.as_deref().map_or(0, hex),
+            random: vector.random(),
             shake_frames_left: vector.shaking.unwrap_or(0),
+            ridley_beaten: vector.beaten.unwrap_or(false),
         };
         let answer = door(door_row(vector), phase(before)).run(&inputs, &rules(&vector.rules));
-        after(answer.door, answer.sound.is_some(), answer.shake, None)
+        after(answer.door, answer.sound.is_some(), answer.shake)
     }
 
-    /// The doors' vector's check: what the model answers against its `after`.
+    /// The doors' vector's check: what the model answers against its `after`. A placing's
+    /// palette is the doors' where the vector doesn't name one.
     fn check_door(vector: &Vector, expected: &After) -> Option<String> {
-        assert!(!vector.names_pad() && !vector.names_lights());
-        let actual = if vector.placing {
-            placed(vector)
+        assert!(!vector.names_pad() && !vector.names_lights() && !vector.names_ridley());
+        let (actual, expected) = if vector.placing {
+            let expected = After {
+                palette: Some(expected.palette.unwrap_or(PaletteName::Doors)),
+                ..*expected
+            };
+            (placed(vector), expected)
         } else {
-            run(vector)
+            (run(vector), *expected)
         };
-        (actual != *expected)
+        (actual != expected)
             .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
     }
 
@@ -586,7 +712,12 @@ mod vectors {
     /// The pad's and the cover's vector's check: its step against its `shaft_after`, the
     /// figures drawn compared where it names them.
     fn check_pad(vector: &Vector, expected: &ShaftAfter) -> Option<String> {
-        assert!(!vector.names_doors() && !vector.names_lights());
+        assert!(
+            !vector.names_doors()
+                && !vector.names_lights()
+                && !vector.names_ridley()
+                && !vector.names_shared()
+        );
         let step = pad_step(vector);
         let state = step.pad_and_cover;
         let actual = ShaftAfter {
@@ -617,7 +748,13 @@ mod vectors {
 
     /// The lights' vector's check: one step of the lights against its `lights_after`.
     fn check_lights(vector: &Vector, expected: &LightsAfter) -> Option<String> {
-        assert!(!vector.names_doors() && !vector.names_pad() && !vector.placing);
+        assert!(
+            !vector.names_doors()
+                && !vector.names_pad()
+                && !vector.names_ridley()
+                && !vector.names_shared()
+                && !vector.placing
+        );
         let row = vector
             .lights
             .as_ref()
@@ -631,12 +768,283 @@ mod vectors {
             .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
     }
 
+    // ------------------------------------------------------------ Ridley
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct RidleyRow {
+        phase: RidleyPhaseName,
+        wait: Option<u16>,
+        look: Option<RidleyLookName>,
+        position: [u16; 2],
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct BabyRow {
+        routine: RoutineName,
+        step: Option<usize>,
+        runs: Option<u8>,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct BabyAfter {
+        routine: RoutineName,
+        step: Option<usize>,
+        runs: Option<u8>,
+        look: Option<BabyLookName>,
+        position: Option<[u16; 2]>,
+    }
+
+    /// Ridley as a placing or a run leaves him, and what it hands on; each field absent where
+    /// the vector's form leaves it out.
+    #[derive(Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(deny_unknown_fields)]
+    struct RidleyAfter {
+        present: Option<bool>,
+        phase: Option<RidleyPhaseName>,
+        wait: Option<u16>,
+        look: Option<RidleyLookName>,
+        position: Option<[u16; 2]>,
+        baby: Option<BabyAfter>,
+        shown: Option<bool>,
+        solid: Option<bool>,
+        boss: Option<bool>,
+        music_stops: Option<bool>,
+        shake_stops: Option<bool>,
+        stage_calm: Option<bool>,
+        room_colours: Option<bool>,
+        cry: Option<bool>,
+        colours: Option<BabyColoursName>,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum RidleyPhaseName {
+        Awake,
+        Holding,
+        Waiting,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum RidleyLookName {
+        Rest,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum RoutineName {
+        New,
+        Fidget,
+        Glow,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum BabyLookName {
+        First,
+        Second,
+        Third,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum BabyColoursName {
+        Glow1,
+        Glow2,
+        Glow3,
+        Rest,
+    }
+
+    fn ridley_phase(row: &RidleyRow) -> RidleyPhase {
+        let waiting = row.phase == RidleyPhaseName::Waiting;
+        assert_eq!(waiting, row.wait.is_some(), "a wait for Waiting only");
+        match row.phase {
+            RidleyPhaseName::Awake => RidleyPhase::Awake,
+            RidleyPhaseName::Holding => RidleyPhase::Holding,
+            RidleyPhaseName::Waiting => RidleyPhase::Waiting {
+                wait: row
+                    .wait
+                    .and_then(RidleyWait::new)
+                    .expect("his wait is 0 to 32,767"),
+            },
+        }
+    }
+
+    fn ridley_phase_row(phase: RidleyPhase) -> (RidleyPhaseName, Option<u16>) {
+        match phase {
+            RidleyPhase::Awake => (RidleyPhaseName::Awake, None),
+            RidleyPhase::Holding => (RidleyPhaseName::Holding, None),
+            RidleyPhase::Waiting { wait } => (RidleyPhaseName::Waiting, Some(wait.runs())),
+        }
+    }
+
+    const fn ridley_look_name(look: RidleyLook) -> RidleyLookName {
+        match look {
+            RidleyLook::Rest => RidleyLookName::Rest,
+        }
+    }
+
+    /// The baby's routine a vector's `baby` names.
+    fn routine(row: &BabyRow) -> BabyRoutine {
+        let figure = match row.routine {
+            RoutineName::New => {
+                assert!(
+                    row.step.is_none() && row.runs.is_none(),
+                    "a new baby has none"
+                );
+                return BabyRoutine::New;
+            }
+            RoutineName::Fidget => BabyFigure::Fidget(FidgetFigure::from_usize(
+                row.step.expect("a fidget names its step"),
+            )),
+            RoutineName::Glow => BabyFigure::Glow(GlowFigure::from_usize(
+                row.step.expect("a glow names its step"),
+            )),
+        };
+        let runs = row.runs.expect("a figure names its runs");
+        BabyRoutine::Showing(
+            ShownFigure::new(figure, runs).expect("runs are 1 to the figure's length"),
+        )
+    }
+
+    const fn baby_look_name(look: BabyLook) -> BabyLookName {
+        match look {
+            BabyLook::First => BabyLookName::First,
+            BabyLook::Second => BabyLookName::Second,
+            BabyLook::Third => BabyLookName::Third,
+        }
+    }
+
+    const fn baby_colours_name(colours: BabyColours) -> BabyColoursName {
+        match colours {
+            BabyColours::Glow1 => BabyColoursName::Glow1,
+            BabyColours::Glow2 => BabyColoursName::Glow2,
+            BabyColours::Glow3 => BabyColoursName::Glow3,
+            BabyColours::Rest => BabyColoursName::Rest,
+        }
+    }
+
+    /// The baby as a vector's `ridley_after` reads it.
+    fn baby_after(baby: Baby) -> BabyAfter {
+        let (routine, step, runs) = match baby.routine {
+            BabyRoutine::New => (RoutineName::New, None, None),
+            BabyRoutine::Showing(shown) => {
+                let (name, step) = match shown.figure() {
+                    BabyFigure::Fidget(figure) => (RoutineName::Fidget, figure.into_usize()),
+                    BabyFigure::Glow(figure) => (RoutineName::Glow, figure.into_usize()),
+                };
+                (name, Some(step), Some(shown.runs()))
+            }
+        };
+        BabyAfter {
+            routine,
+            step,
+            runs,
+            look: baby.routine.look().map(baby_look_name),
+            position: baby.position.map(point_row),
+        }
+    }
+
+    /// Ridley's state as a vector's `ridley_after` reads it, and that he is shown and passable.
+    fn ridley_after(ridley: CeresRidley) -> RidleyAfter {
+        let (phase, wait) = ridley_phase_row(ridley.phase);
+        RidleyAfter {
+            phase: Some(phase),
+            wait,
+            look: ridley.look.map(ridley_look_name),
+            position: Some(point_row(ridley.position)),
+            baby: Some(baby_after(ridley.baby)),
+            shown: Some(CeresRidley::SHOWN),
+            solid: Some(CeresRidley::SOLID),
+            ..RidleyAfter::default()
+        }
+    }
+
+    /// `RidleyPlaced`: the room places him, or doesn't once he is beaten; either way the vector
+    /// reads each of the placing's outputs.
+    fn ridley_placed(vector: &Vector) -> RidleyAfter {
+        assert!(vector.ridley.is_none() && vector.baby.is_none() && vector.passing.is_none());
+        assert!(
+            vector.random.is_none(),
+            "the placing reads no random number"
+        );
+        let Some(placing) = CeresRidley::place(vector.beaten.unwrap_or(false)) else {
+            return RidleyAfter {
+                present: Some(false),
+                boss: Some(false),
+                music_stops: Some(false),
+                shake_stops: Some(false),
+                stage_calm: Some(false),
+                room_colours: Some(false),
+                ..RidleyAfter::default()
+            };
+        };
+        RidleyAfter {
+            present: Some(true),
+            boss: Some(placing.boss == Boss::CeresRidley),
+            music_stops: Some(true),
+            shake_stops: Some(true),
+            stage_calm: Some(placing.stage == Stage::Calm),
+            room_colours: Some(true),
+            ..ridley_after(placing.ridley)
+        }
+    }
+
+    /// One run of him and the baby from the vector's `ridley` and `baby`.
+    fn ridley_run(vector: &Vector) -> RidleyAfter {
+        assert!(
+            vector.beaten.is_none(),
+            "a run reads nothing of his being beaten"
+        );
+        let row = vector.ridley.as_ref().expect("a run starts from his state");
+        let baby = vector
+            .baby
+            .as_ref()
+            .expect("a run starts from the baby's state");
+        let ridley = CeresRidley {
+            phase: ridley_phase(row),
+            look: row.look.map(|RidleyLookName::Rest| RidleyLook::Rest),
+            position: point(row.position),
+            baby: Baby {
+                routine: routine(baby),
+                position: None,
+            },
+        };
+        let run = ridley.run(
+            vector.passing.unwrap_or(false),
+            vector.random(),
+            &rules(&vector.rules),
+        );
+        RidleyAfter {
+            cry: Some(run.cry.is_some()),
+            colours: run.colours.map(baby_colours_name),
+            ..ridley_after(run.ridley)
+        }
+    }
+
+    /// Ridley's vector's check: his placing or his run against its `ridley_after`.
+    fn check_ridley(vector: &Vector, expected: &RidleyAfter) -> Option<String> {
+        assert!(!vector.names_doors() && !vector.names_pad() && !vector.names_lights());
+        assert!(!vector.placing, "Ridley's placing is ridley_placing");
+        let actual = if vector.ridley_placing {
+            ridley_placed(vector)
+        } else {
+            ridley_run(vector)
+        };
+        (actual != *expected)
+            .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
+    }
+
     /// The vector's check, by the result it names; exactly one.
     fn check(vector: &Vector) -> Option<String> {
-        match (&vector.after, &vector.shaft_after, &vector.lights_after) {
-            (Some(after), None, None) => check_door(vector, after),
-            (None, Some(after), None) => check_pad(vector, after),
-            (None, None, Some(after)) => check_lights(vector, after),
+        match (
+            &vector.after,
+            &vector.shaft_after,
+            &vector.lights_after,
+            &vector.ridley_after,
+        ) {
+            (Some(after), None, None, None) => check_door(vector, after),
+            (None, Some(after), None, None) => check_pad(vector, after),
+            (None, None, Some(after), None) => check_lights(vector, after),
+            (None, None, None, Some(after)) => check_ridley(vector, after),
             _ => panic!("{}: a vector names exactly one result", vector.id),
         }
     }

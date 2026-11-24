@@ -449,6 +449,12 @@ fn version(
     if state.scroll_areas.len() < usize::from(size.width).wrapping_mul(usize::from(size.height)) {
         return Err(WorldError::ScrollSize(room));
     }
+    let ceres_actor = |error| match error {
+        crate::actors::CeresDoorsError::Population(error) => WorldError::Population { room, error },
+        crate::actors::CeresDoorsError::Kind(parameter) => {
+            WorldError::CeresActor { room, parameter }
+        }
+    };
     let setup = SETUPS
         .iter()
         .find_map(|&(pointer, setup)| {
@@ -463,16 +469,10 @@ fn version(
         plms: state.plms,
         enemies: crate::actors::graphics_set(image, state.enemy_set)
             .map_err(|error| WorldError::Enemies { room, error })?,
-        ceres_doors: crate::actors::ceres_doors(image, state.enemy_population).map_err(
-            |error| match error {
-                crate::actors::CeresDoorsError::Population(error) => {
-                    WorldError::Population { room, error }
-                }
-                crate::actors::CeresDoorsError::Kind(parameter) => {
-                    WorldError::CeresActor { room, parameter }
-                }
-            },
-        )?,
+        ceres_doors: crate::actors::ceres_doors(image, state.enemy_population)
+            .map_err(ceres_actor)?,
+        ceres_ridley: crate::actors::ceres_ridley(image, state.enemy_population)
+            .map_err(ceres_actor)?,
         setup,
     })
 }

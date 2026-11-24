@@ -1,4 +1,6 @@
-//! A Ceres door: how a room places it, and its run each frame the enemies run.
+//! A Ceres door: how a room places it, and its run each frame the enemies run. The doors
+//! between rooms, the shaft's door, the door of Ridley's room and the getaway's walls are all
+//! Ceres doors, each of its kind.
 
 use core::num::Wrapping;
 
@@ -6,9 +8,9 @@ use types::{Hitbox, Pair, Px, Radius, Side};
 
 use crate::figure::{Figure, figures};
 use crate::inputs::Inputs;
-use crate::phase::{Phase, Quarter};
+use crate::phase::{Phase, Quarter, Wait};
 use crate::rules::Rules;
-use crate::station::{ColourSet, Shake, Stage};
+use crate::station::{DoorColours, DoorPalette, ShakeLayers, ShakeStart, Stage};
 
 /// `Solid`: a door's box reaches 8 px to the left and right of its position and 32 px up and
 /// down: 16 px wide and 64 px tall. The box is the doors' content and never changes; only
@@ -18,21 +20,84 @@ pub const BOX_RADIUS: Radius = Pair {
     y: Wrapping(32),
 };
 
+/// `RidleyRoomStart`: the pause, in frames.
+const PAUSE_FRAMES: u16 = 2;
+/// `RidleyRoomStart`: the door of Ridley's room stands open behind her for 2 frames.
+const PAUSE: Wait = Wait::new(PAUSE_FRAMES).expect("the pause is 2 frames, not 0");
+/// `LockedIn`: the lock's look, in frames.
+const LOCK_LOOK_FRAMES: u16 = 2;
+/// `LockedIn`: the locked door looks every 2 frames whether Ridley is beaten.
+const LOCK_LOOK: Wait = Wait::new(LOCK_LOOK_FRAMES).expect("the lock's look is 2 frames, not 0");
+
 /// A door's kind. Listed alphabetically; the order means nothing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DoorKind {
     /// A door between two rooms.
     Door,
+    /// One of the two walls Ridley's getaway puts up at the sides of his room: shown during
+    /// the getaway only, and never in her way.
+    GetawayWall,
+    /// The door of Ridley's room, facing right: it slams shut behind her as the room starts and
+    /// stays locked until Ridley is beaten; then it is a `Door`.
+    RidleyDoor,
     /// The shaft's door: a left-facing door until Ridley's getaway, a wall from then on.
     ShaftDoor,
 }
 
 impl DoorKind {
-    /// `ShaftWall`, `RoomStart`: whether a door placed at this stage becomes the wall at its
-    /// first run: the shaft's door, once Ridley has fled.
-    #[must_use]
-    pub const fn becomes_wall(self, stage: Stage) -> bool {
-        matches!(self, Self::ShaftDoor) && stage.ridley_has_fled()
+    /// The phase a placed door of this kind steps into at its first run.
+    ///
+    /// `RoomStart`: a door starts hidden, to look for her once. `ShaftWall`: the shaft's door
+    /// does too, unless Ridley has fled, when it is the wall. `RidleyRoomStart`: the door of
+    /// Ridley's room lingers open, whatever the stage, whether he is beaten and wherever she
+    /// is. `GetawayWalls`: a getaway wall stands or is unseen by the stage.
+    const fn first_phase(self, stage: Stage, rules: &Rules) -> Phase {
+        match self {
+            Self::ShaftDoor if stage.ridley_has_fled() => Phase::Wall,
+            Self::Door | Self::ShaftDoor => Phase::Starting { wait: rules.poll },
+            Self::RidleyDoor => Phase::Lingering { wait: PAUSE },
+            Self::GetawayWall => getaway_wall(stage),
+        }
+    }
+
+    /// `EscapeShakes`: what the shakes a door of this kind starts move: the back layer for the
+    /// door of Ridley's room, the whole view for any other door; a getaway wall starts none.
+    const fn shake_layers(self) -> Option<ShakeLayers> {
+        match self {
+            Self::Door | Self::ShaftDoor => Some(ShakeLayers::Whole),
+            Self::RidleyDoor => Some(ShakeLayers::Back),
+            Self::GetawayWall => None,
+        }
+    }
+
+    /// `TheDoorsColours`: the palette the doors' colours go to when a door of this kind is
+    /// placed: the door of Ridley's room placed while calm takes them in its own palette, since
+    /// while Ridley is in the room his colours hold the doors'; any other, the doors' palette.
+    const fn palette(self, stage: Stage) -> DoorPalette {
+        if matches!((self, stage), (Self::RidleyDoor, Stage::Calm)) {
+            DoorPalette::Own
+        } else {
+            DoorPalette::Doors
+        }
+    }
+}
+
+/// `GetawayWalls`: a getaway wall stands during the getaway and is unseen at any other stage. It
+/// looks for nobody, and steps at every run.
+const fn getaway_wall(stage: Stage) -> Phase {
+    match stage {
+        Stage::Getaway => Phase::Standing,
+        Stage::Calm | Stage::Escape => Phase::Unseen,
+    }
+}
+
+/// `LockedIn`: the locked door, when it looks: while Ridley lives it stays locked, wherever she
+/// is; once he is beaten it is a closed door like any other.
+const fn lock(ridley_beaten: bool, rules: &Rules) -> Phase {
+    if ridley_beaten {
+        Phase::Closed { wait: rules.poll }
+    } else {
+        Phase::Locked { wait: LOCK_LOOK }
     }
 }
 
@@ -40,7 +105,7 @@ impl DoorKind {
 /// facing and position never change; its phase carries the rest.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CeresDoor {
-    /// Whether it becomes a wall.
+    /// Whether it becomes a wall, slams shut or stands in for the room's sides.
     pub kind: DoorKind,
     /// The way it opens, and the side its figures are drawn for.
     pub facing: Side,
@@ -55,8 +120,8 @@ pub struct CeresDoor {
 pub struct Placement {
     /// The door, `Placed`.
     pub door: CeresDoor,
-    /// The colour set the doors' palette takes.
-    pub colours: ColourSet,
+    /// The colour set the door's palette takes, and which palette that is.
+    pub colours: DoorColours,
 }
 
 /// The doors' opening sound, asked for with a queue limit of 6 (`Opening`). What the queue does
@@ -77,12 +142,13 @@ pub struct Run {
     /// The opening sound, if the run asks for it.
     pub sound: Option<OpeningSound>,
     /// The shake the run starts, if any.
-    pub shake: Option<Shake>,
+    pub shake: Option<ShakeStart>,
 }
 
 impl CeresDoor {
     /// `RoomStart`, `TheDoorsColours`: a room's start places the door from the room's content,
-    /// `Placed`, so its first run starts it; the doors' palette takes the stage's colour set.
+    /// `Placed`, so its first run starts it; the door's palette takes the stage's colour set.
+    /// (Ridley's getaway places its walls the same way.)
     #[must_use]
     pub const fn place(
         kind: DoorKind,
@@ -97,7 +163,10 @@ impl CeresDoor {
                 position,
                 phase: Phase::Placed,
             },
-            colours: stage.door_colours(),
+            colours: DoorColours {
+                set: stage.door_colours(),
+                palette: kind.palette(stage),
+            },
         }
     }
 
@@ -106,7 +175,8 @@ impl CeresDoor {
     ///
     /// `Waiting`: while its wait is over 1 the run only counts it off; when it runs out the
     /// door steps. `Opening`: the run that steps into the opening's first figure asks for the
-    /// opening sound. `EscapeShakes`: every run may start a shake, whether it steps or not.
+    /// opening sound. `EscapeShakes`: every run may start a shake, whether it steps or not, of
+    /// what its kind's shakes move.
     #[must_use]
     pub fn run(self, inputs: &Inputs, rules: &Rules) -> Run {
         let counted = self.phase.counted_down();
@@ -121,7 +191,11 @@ impl CeresDoor {
         Run {
             door: Self { phase, ..self },
             sound: (counted.is_none() && opening_starts).then_some(OpeningSound),
-            shake: inputs.escape_shake(rules),
+            shake: self.kind.shake_layers().and_then(|layers| {
+                inputs
+                    .escape_shake(rules)
+                    .map(|shake| ShakeStart { shake, layers })
+            }),
         }
     }
 
@@ -129,10 +203,9 @@ impl CeresDoor {
     fn step(self, inputs: &Inputs, rules: &Rules) -> Phase {
         let near = inputs.she_is_near(self.position, rules.reach);
         match (self.phase, near) {
-            // `ShaftWall`, `RoomStart`: the shaft's door placed once Ridley has fled is a wall.
-            (Phase::Placed, _) if self.kind.becomes_wall(inputs.stage) => Phase::Wall,
-            // `RoomStart`: any other door starts hidden, to look for her once.
-            (Phase::Placed, _) => Phase::Starting { wait: rules.poll },
+            // `RoomStart`, `ShaftWall`, `RidleyRoomStart`, `GetawayWalls`: a placed door's first
+            // run starts it by its kind.
+            (Phase::Placed, _) => self.kind.first_phase(inputs.stage, rules),
             // `RoomStart`, `Polling`: a starting or open door that sees her stands open, silently.
             (Phase::Starting { .. } | Phase::Open { .. }, true) => Phase::Open { wait: rules.poll },
             // `RoomStart`, `Polling`: a starting or closed door that doesn't see her is closed.
@@ -171,6 +244,26 @@ impl CeresDoor {
             }
             // `ShaftWall`: the wall stays a wall.
             (Phase::Wall, _) => Phase::Wall,
+            // `SlamShut`: the lingering door slams shut, silently, near her or not.
+            (Phase::Lingering { .. }, _) => Phase::Slamming {
+                quarter: Quarter::First,
+                wait: rules.slam,
+            },
+            // `SlamShut`: a slam goes on, and once done the door is shut, for one run.
+            (Phase::Slamming { quarter, .. }, _) => {
+                quarter
+                    .next()
+                    .map_or(Phase::Slammed, |quarter| Phase::Slamming {
+                        quarter,
+                        wait: rules.slam,
+                    })
+            }
+            // `LockedIn`: the shut door locks, whether Ridley is beaten or not.
+            (Phase::Slammed, _) => Phase::Locked { wait: LOCK_LOOK },
+            // `LockedIn`: the locked door looks whether Ridley is beaten.
+            (Phase::Locked { .. }, _) => lock(inputs.ridley_beaten, rules),
+            // `GetawayWalls`: a getaway wall stands or is unseen by the stage, at every run.
+            (Phase::Standing | Phase::Unseen, _) => getaway_wall(inputs.stage),
         }
     }
 

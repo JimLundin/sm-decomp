@@ -21,6 +21,7 @@ mod progress;
 mod readers;
 mod recorded;
 pub mod result;
+mod ridley;
 mod runner;
 mod sender_offer;
 mod shaft;

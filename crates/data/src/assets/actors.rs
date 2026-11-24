@@ -62,8 +62,12 @@ impl SpriteRow {
     pub const COMMON: Self = Self(5);
     /// Her shots' palette.
     pub const BEAM: Self = Self(6);
-    /// The Ceres doors' palette, as a room places them.
+    /// The Ceres doors' palette, as a room places them; Ridley's in his room.
     pub const CERES_DOORS: Self = Self(7);
+    /// The own palette of the door of Ridley's room, while he is in it.
+    pub const RIDLEY_DOOR: Self = Self(2);
+    /// The palette of the baby Ridley holds.
+    pub const BABY: Self = Self(3);
 
     /// Row `row`, if there is one.
     #[must_use]
@@ -133,6 +137,26 @@ impl BeaconColours {
     pub const FIRST: usize = 41;
 }
 
+/// A colour set of the baby Ridley holds: colours 1 to 15 of its palette.
+pub type BabyShades = [Colour; ROW_COLOURS - 1];
+
+/// The colours of Ridley's room in Ceres as he is placed, and the baby's colour sets.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CeresRidleyColours {
+    /// The goal colours of the door's own palette, row [`SpriteRow::RIDLEY_DOOR`].
+    pub door: Palette,
+    /// The goal colours of the baby's palette, row [`SpriteRow::BABY`].
+    pub baby: Palette,
+    /// The baby's colours at rest.
+    pub rest: BabyShades,
+    /// The glow's first colour set.
+    pub glow1: BabyShades,
+    /// Its second.
+    pub glow2: BabyShades,
+    /// Its third.
+    pub glow3: BabyShades,
+}
+
 /// The colours of the sprites other than hers.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Actors {
@@ -146,6 +170,8 @@ pub struct Actors {
     pub ceres_doors: CeresDoorColours,
     /// The colour sets the Ceres shaft's beacon steps through.
     pub beacon: BeaconColours,
+    /// Ridley's room's colours in Ceres and the baby's colour sets.
+    pub ceres_ridley: CeresRidleyColours,
 }
 
 impl Actors {

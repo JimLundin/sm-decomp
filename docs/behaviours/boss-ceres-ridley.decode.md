@@ -1,4 +1,4 @@
-# Ceres Ridley and the escape, parts 1 and 2, the Ceres doors and the shaft as she arrives: decode notes
+# Ceres Ridley and the escape, parts 1 to 3, the Ceres doors, the shaft as she arrives and Ridley's room as she enters: decode notes
 
 For the observer, the adversary, the integrator and the domain harness's decoder only.
 Implementers never see this file (MODEL §5). It holds every source the spec draws on: the
@@ -343,6 +343,162 @@ Projectile order: the handler runs the slots from 22h down, so the pad before th
 | B4 | `chain-any-0001-DF45`:350 (`05B6` 8159, `05B5` 1) | B-count-not-hud (its counts) |
 | P1, P2 | `chain-any-0001-DF45`:1, 2 | P-first, P-second |
 
+## Part 3, Ridley's room as she enters
+
+### How it was made
+
+Behaviour first, from CI's lean record cache: `chain-any-0005-E06B` frames 170-320 (the passage
+into Ridley's room `E0B5`, placed at 183-184) and `chain-any-0006-E0B5` frames 0-1785 (the room
+to the passage out), read per frame by scratch readers of the lean tier
+(`$TEMP/collab/ceres-748/scratch/`, local only: `dump.py`, `events.py`, `door.py`, `rid2.py`,
+`cg.py`, `pal.py`): the enemy slots, her position and energy, `093F`, `7ED82E`, `183E`/`1840`,
+`05E5`, `0797`, the baby's words, CGRAM and the palette buffers. The bank log A6 (`$F4EC..FB71`,
+`$A0F5..A388`, `$A2DC..A353`, `$BE93..C04D`) then named the steps and pinned the numbers.
+
+The reference model, `$TEMP/collab/ceres-748/scratch/model3.py`, decodes the door (parameter 3),
+the walls (5, 6) and Ridley (`E13F`, slot 0) at record N and steps each when its `0FA4` advanced
+by one from N to N+1, with her position, `05E5` stepped once (part 1's `rng`), `1840` and `0797`
+at N, and `093F` and `7ED82E` bit 0 at N+1 (Ridley runs first, so the door reads what his run
+left). It compares phase, wait, figure, shown, solid and drawn-with-Ridley (`0FAA`) at N+1:
+- `chain-any-0005-E06B`: 15 runs of the door, 15 agree; do-nothing 0. 121 frames without a run,
+  121 unchanged. The placing at 184 is `Placed`.
+- `chain-any-0006-E0B5`: 2,564 runs of the door and the walls (to the passage's end at 1690),
+  2,564 agree; do-nothing 934. 189 frames without a run, 189 unchanged. The walls' placing at
+  1157 is `Placed`, stage `Calm`.
+- The door's shakes in the escape (`chain-any-0006-E0B5` 1586-1609, game state 8): 24 of 24
+  frames agree on `183E`/`1840` at N+1 (a start: type `1Dh` or `23h`, timer less the frame's
+  count-down; no start: unchanged type, timer down by one).
+- Ridley: `chain-any-0005-E06B` 15 runs, 15 agree; `chain-any-0006-E0B5` 0-512, 512 runs, 512
+  agree (phase, wait, look, the baby's routine and runs); do-nothing 0 and 0. The baby's colours
+  (`7EC162..7EC17F`, sprite palette 3 colours 1-Fh): over the 527 runs the row stays as it was
+  on every run that names no set, and each named set shows the same colours each time it is
+  named (one cry, at 145; its first set, `Glow1`, matches the row as it stood).
+- `model3.py vectors` runs every part-3 vector: 29 of 29 door and wall vectors and 15 of 15
+  Ridley vectors agree.
+
+### State (the RAM mapping)
+
+| Spec | RAM | Notes |
+| --- | --- | --- |
+| `RidleyDoor` | `E23F` with parameter 1 (`0FB4`) = 3 | `0FA8` `$F770` (the escape's shake type `1Dh`) |
+| `GetawayWall` `Left`, `Right` | parameter 5, 6 | `0FA8` `$F7A5`; spawned by `$A6:AA20` at (8, 7Fh) and (F8h, 7Fh) with properties `2800h` (no `8000h`: never solid to her) |
+| `Placed` | `0F92` `$F53A`, `$F62A`, `$F634`; `0F8E` `$804D` | |
+| `Lingering` | `$F542` | intangible, invisible, `$FAA7` |
+| `Slamming(1..4)` | `$F54A`, `$F54E`, `$F552`, `$F556` | `$FAA7`, `$FA87`, `$FA67`, `$FA3D` |
+| `Slammed` | `$F55C` | `0FAA` = 1 (`$F69F`), `$FA13`, visible |
+| `Locked` | `$F562` | invisible, `0FAA` = 1; `$F66A` reads `7ED828 + [079F]` bit 0 |
+| released | `$F6B0` clears `0FAA`, then `$F598` → `$F5A0` (`Closed`); part 1's right-facing table from then on | |
+| `Standing`, `Unseen` | `$F630`, `$F63A`, `0F86` bit `0100h` | `$F7A5` sets invisible, then visible when `093F` = 1 (`LSR`, carry), before the instructions |
+| `Side` | `$FACE` (left), `$FB2F` (right) | |
+| Ridley beaten | `7ED82E` bit 0 (area 6's boss) | set with `093F` = 2 at `chain-any-0006-E0B5`:1586 |
+| the `Own` palette | sprite palette 2 (`0F96` = `0400h`), target `7EC342..7EC35F` | only when `093F` = 0 at the init (`$A6:F6FC`) |
+| `RidleyPhase` | `0FA8`: `$A35B` `Holding`, `$A377` `Waiting`, `$A389` (and later) `Awake` | `$A35B` falls through into `$A377`, so the first run after the passage counts |
+| his wait | `0FB2` | `DEC`/`BPL`: the wake at -1 |
+| `Rest` | `0F8E` `$E983` (list `$E538`, facing left; then sleep, `0F92` `$E540`) | the instruction timer `0F94` wraps through 0 and is not compared |
+| his position | `0F7A`, `0F7E` = `BAh`, `A9h` (`$A6:A1F7`); the population's `ABh` is overwritten | |
+| `BabyRoutine` | `7E7806` (list pointer), `7E7808` (runs, counting up, `$A6:DBCB`) | `$BF31` `New`; `Fidget(0..7)` `$BF35`..`$BF41`, `$BF49`..`$BF55`; `Glow(j)` `$BF61 + 8j` |
+| `BabyLook` | `$BFFD` `First`, `$C018` `Second`, `$C033` `Third` | |
+| the baby's position | `7E8804`, `7E8808` (`$BE9C`) | |
+| the baby's colours | `$E1F1` `Rest`, `$E20F` `Glow1`, `$E22D` `Glow2`, `$E24B` `Glow3`, to sprite palette 3 colours 1-Fh (`$A9:D2E4`, the current colours) | |
+
+### Inputs and order
+
+| Spec | RAM / code | Notes |
+| --- | --- | --- |
+| a passage under way | `0797` (door transition flag) as Ridley runs | set through the passage's last frame of work (`chain-any-0005-E06B`:320, game state 8, still set) |
+| the random number | `05E5` as the baby reads it (`$A6:BFCF`, bit 0, not stepped) | N's stepped once, as part 1's doors |
+| order | slot 0 Ridley, slot 1 the door, slots 2 and 3 the walls | the main AI `$A6:A288` runs his function, then (`093F` = 0, `7E7804` = 0) `$A2DC`: the baby's function, then falls into `$A2F2`, which draws the baby (`$BF1A`) and, with `0FEA` set, the door (`$A329`) |
+
+### Outputs
+
+| Spec | RAM / code |
+| --- | --- |
+| a boss encountered | `$90:A7E2` from the init (`05F7` = 1), `chain-any-0005-E06B`:184; interface-hud's `BossBlanksTheMap` (Ridley in Ceres: no screens) |
+| the music's stop | `$80:8FC1` with 0 |
+| the shake's stop | `183E`, `1840` = 0 |
+| the stage | `093F` = 0 |
+| his room's colours | target sprite palettes 2-3 from `$A6:E16F`; target sprite palette 7 colours 1-Fh = 0 |
+| the baby's cry | `$80:914D` with A = `24h`, library 3, limit 6 |
+| beaten at the placing | `$A6:A101`: `0F86` \|= `0700h` (intangible, invisible, deleted) and return |
+
+### Sources per entry
+
+| Entry | Sources |
+| --- | --- |
+| RidleyRoomStart, SlamShut, LockedIn, DrawnWithRidley | `$A6:F53A..F56B`, `$F66A`, `$F69F`, `$F6B0`, `$F6C5..F72A` |
+| GetawayWalls | `$A6:F62A..F63D`, `$F7A5`, `$AA20` |
+| EscapeShakes (Back) | `$A6:F770`, `$F773` |
+| TheDoorsColours (Own) | `$A6:F6FC..F711` |
+| RidleyPlaced | `$A6:A0F5..A287` |
+| RidleyWaits | `$A6:A288`, `$A35B`, `$A377` |
+| BabyHeld | `$A6:BE9C` |
+| BabyFidgets, BabyCries | `$A6:BF31..BFF8`, `$DBCB`, `$BFC9`, `$BFE1` |
+
+### Findings behind the spec's choices
+
+- **The door alone unblocks nothing.** The passage's load (`chain-any-0005-E06B`:183-184) places
+  Ridley in slot 0 before the door; the played run refuses either. So part 3 holds his placing
+  and waiting too, up to his waking at `chain-any-0006-E0B5`:512 (his function `$A389`; the eye's
+  colours, CGRAM `FCh..FEh`, change from 514).
+- **The baby is drawn while he waits.** With `7E7804` = 0 the main AI jumps into `$A2F2` itself
+  each run, so the baby and the shut door are drawn by his run, without the graphics hook.
+- **The glow is the screen's colours.** `$A9:D2E4` writes the current palette, so the played run's
+  screen colours see the glow (row 0006, 151-207); the fade's goal colours don't change.
+- **Two writers of the `Own` palette.** His init writes target sprite palettes 2-3 (`$E16F`, 20h
+  colours), then the door's init writes palette 2 colours 1-Fh with the calm set; both give the
+  same colours in the records.
+- **The walls are placed while calm** (`chain-any-0006-E0B5`:1157, `093F` 0; it becomes 1 at
+  1158, in Ridley's run before theirs), so their placing writes the calm set to the doors' palette
+  target; the screen's palette 7 then holds his getaway's colours, which a later piece owns.
+- **The door's shake reads the stage after Ridley's run**: at 1586 his run sets `093F` = 2 and
+  `7ED82E` bit 0, and the door, run after him, is let go and shakes on the same frame.
+- **Rows past this piece**: the fight from 0006:512 (fade in, roar, five contact hits at 609,
+  705, 801, 897 and 993, energy 99 to 24, nine hurt flashes of his from 651), the retreat (994), the
+  getaway (1158, `093F` 1, mode 7), the self-destruct text (1270), the escape (1586) and the
+  passage out (1610).
+
+### The harness (for the integrator)
+
+- **Rows:** `chain-any-0005-E06B` from 184 and `chain-any-0006-E0B5` to 512 for Ridley; to 1690
+  for the door and the walls.
+- **Compared per run** (`0FA4` advanced): the door and wall slots' `0F92` through the phase
+  table, `0F94`, `0F8E` through the figures, `0F86` bits `0100h` and `0400h`, `0FAA`; Ridley's
+  `0FA8` through `RidleyPhase`, `0FB2` while waiting, `0F8E`, the baby's `7E7806`, `7E7808`,
+  `7E8804`, `7E8808`; the screen's sprite palette 3 colours 1-Fh on a frame the model names a set.
+  On a frame without a run, all unchanged.
+- **The escape's shakes** as part 1, type `1Dh`/`23h` for the door.
+- **Sounds** (the music's stop, the baby's cry `24h`, the door's opening `2Ch`): produced, not
+  compared (MODEL decision 37).
+- **Skipped:** Ridley's instruction timer `0F94` (it wraps and nothing reads it while he waits);
+  his `0F8C` (written 7FFFh each run); `7E2000..2FFF` (cleared at the init, his later pieces');
+  the drawing.
+
+### The harness cases
+
+| Case | Row:frame | What | Checks |
+| --- | --- | --- | --- |
+| H5 | `chain-any-0005-E06B`:184 | Ridley's room placed while calm: target sprite palettes 2-3 take the room's sets, palette 2 colours 1-Fh the doors' calm set, palette 7 colours 1-Fh black | RidleyPlaced, TheDoorsColours |
+| H6 | `chain-any-0006-E0B5`:145-207 | the baby's four colour sets | BabyCries |
+
+**Recorded cases** behind the part-3 vectors (door at `0140,0090`, the walls at `0100,0200` and
+`01F0,0200`, her offsets kept; Ridley at his place):
+
+| Case | Row:frame | Vectors |
+| --- | --- | --- |
+| N1 | `chain-any-0005-E06B`:184 | R-placed-calm |
+| N2, N3 | `chain-any-0005-E06B`:281, 283 | R-first-run, R-linger-wait |
+| N4, N5, N6 | `chain-any-0005-E06B`:286, 292, 310 | R-slam-start, R-slam-step, R-slam-last |
+| N7, N8, N9 | `chain-any-0005-E06B`:313, 316, 319 | R-locked, R-locked-wait, R-locked-again |
+| N10, N11 | `chain-any-0006-E0B5`:1586, 1588 | R-released, R-released-opens |
+| N12 | `chain-any-0006-E0B5`:1157 | W-placed |
+| N13, N14 | `chain-any-0006-E0B5`:1158, 1159 | W-first-run, W-right, W-standing |
+| N15 | `chain-any-0006-E0B5`:1586 | W-hides |
+| N16 | `chain-any-0006-E0B5`:1610 | R-shake-strong-back |
+| K1, K2 | `chain-any-0005-E06B`:184, 281 | K-placed, K-first-run |
+| K3, K4, K5 | `chain-any-0006-E0B5`:0, 1, 512 | K-first-wait, K-wait-counts, K-wake |
+| K6, K7 | `chain-any-0006-E0B5`:65, 145 | K-calm, K-cries |
+| K8, K9, K10 | `chain-any-0006-E0B5`:151, 207, 5 | K-glow-next, K-glow-last, K-fidget-next |
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -351,12 +507,15 @@ the budget. `tools spec-units` reads k and the areas here.
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on
 samus-movement. There is no old code: the engine carries the doors unrun
 (`EnemyBody::Unmodelled`, LEGACY "slots it carries but doesn't run") and has nothing for the pad,
-the cover, the beacon or the platform, so no area has `old`, and there is no old-code guideline
-to compare (MODEL §1 decision 19).
+the cover, the beacon or the platform, nor for the door of Ridley's room, the walls or Ridley
+(`LoadFault::LaterCeresActor`), so no area has `old`, and there is no old-code guideline to
+compare (MODEL §1 decision 19).
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
 - Area shaft: PadPlaced, PadWaits, PadCarries, PadFlickers, CoverHides
 - Area lights: BeaconCycles, PlatformTurns
+- Area ridley-door: RidleyRoomStart, SlamShut, LockedIn, DrawnWithRidley, GetawayWalls
+- Area ridley: RidleyPlaced, RidleyWaits, BabyHeld, BabyFidgets, BabyCries
 
-Budget: 37.5 × 50.3 units = 1,887 (doors 950, station 200, shaft 462, lights 275)
+Budget: 37.5 × 84.3 units = 3,161 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700)

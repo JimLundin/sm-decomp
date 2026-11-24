@@ -18,17 +18,17 @@
 movie = "any"
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
-# floor and lets her go, and she leaves by the room's door; played on through the second, third
-# and fourth rooms and into the fifth with no new seed, until the fifth room's contents place the
-# door to Ridley's room, a piece of the station not yet owned.
+# floor and lets her go, and she leaves by the room's door; played on through the second, third,
+# fourth and fifth rooms and into Ridley's with no new seed, the door slamming shut behind her,
+# until Ridley wakes, a piece of the station not yet owned.
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
 end = 3000
-held = 1480
-stop = { failed = "Load(LaterCeresActor)" }
+held = 2136
+stop = { failed = "RidleyAwake" }
 seed_frame = 8538
-frames = [8539, 10018]
+frames = [8539, 10674]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -53,16 +53,16 @@ seed_frame = 8950
 frames = [8951, 9231]
 power_on = false
 
-# Ceres's third room, played on through the fourth and into the fifth with no new seed, until
-# the fifth room's contents place the door to Ridley's room, a piece of the station not yet owned.
+# Ceres's third room, played on through the fourth and fifth and into Ridley's with no new seed,
+# until Ridley wakes, a piece of the station not yet owned.
 [[run]]
 row = "chain-any-0003-DFD7"
 start = 0
 end = 3000
-held = 786
-stop = { failed = "Load(LaterCeresActor)" }
+held = 1442
+stop = { failed = "RidleyAwake" }
 seed_frame = 9232
-frames = [9233, 10018]
+frames = [9233, 10674]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -74,4 +74,16 @@ held = 263
 stop = "end"
 seed_frame = 9577
 frames = [9578, 9840]
+power_on = false
+
+# Ridley's room alone, from its own seed: Ridley waits in the dark with the baby, which cries and
+# glows once, until he wakes, a piece of the station not yet owned.
+[[run]]
+row = "chain-any-0006-E0B5"
+start = 0
+end = 1785
+held = 512
+stop = { failed = "RidleyAwake" }
+seed_frame = 10162
+frames = [10163, 10674]
 power_on = false
