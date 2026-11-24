@@ -46,7 +46,7 @@ pub const SEED_HELD: &[&str] = &[
     "her shot's charge, which no frame of play reads",
     "cinematic and elevator status",
     "the seed room's geometry and the boxes of its actors other than the Ceres doors",
-    "the seed room's camera screens, size and scrollers, and the camera's lead",
+    "the seed room's camera screens, size, scrollers and lead",
     "escape timer",
     "passage sounds sent and music ready",
     "progress, which chooses the next room's version, her suit and her beams",

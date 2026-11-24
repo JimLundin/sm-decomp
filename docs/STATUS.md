@@ -46,11 +46,19 @@ version her progress chooses. Building the room gives what play reads of her roo
 version's imported level and scroll areas: what her moves meet (its blocks, with those its
 scroll PLMs and extensions place, and no actor's box), its doors to other rooms by cell, and
 the camera's room (its screens, size and scrollers; the scroll areas past a preset room's
-screens and the camera's lead stay as they were). Fetching the tiles heads the colours for the tileset's. Fetching
+screens stay as they were), and turns the camera's lead back to ahead, as the original's build
+does. The blocks PLMs place are set as the room is built, where the original sets them as its
+contents are fetched; nothing reads her room between, and a version placing PLMs whose blocks
+no owner places is refused at the build. Fetching the tiles heads the colours for the tileset's. Fetching
 the contents heads the sprite rows for her suit's, the species' the version loads, the common
 sprites' and the flashing enemies' palettes, and the Ceres doors' colour set for the station's
-stage, and refuses a version placing any other actor, whose box no owner here places. It also
-shows her shots' palette for the beams she has switched on at once. Each later
+stage, and refuses a version placing any other actor, whose box no owner here places. The
+room's setup and the door's own code are not run: the world names each by what it does
+(`RoomSetup`, `DoorRule`), and fetching the contents refuses each that no owner models as a
+named Unsupported (`LoadFault::RoomSetup`, `LoadFault::DoorRule`). It lets through only what
+changes nothing play reads: no code, and the station's haze (`RoomSetup::CeresHaze`), the setup
+of the rooms on 0003's path to 0005, which only blends a backdrop colour over the screen. Fetching
+the contents also shows her shots' palette for the beams she has switched on at once. Each later
 cut's only new input is the movie's pad from the preceding vblank. The controller starts as the
 seed leaves it, with the game's last read and the buttons that went down at it, so a button
 held through the seed is not pressed again on the first cut. Her kept action, which the

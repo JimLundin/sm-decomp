@@ -353,3 +353,54 @@ fn every_loaded_version_holds_a_block_for_each_of_its_rooms_and_its_screens_scro
         }
     }
 }
+
+#[test]
+fn a_version_short_of_blocks_or_scroll_areas_or_with_unknown_setup_code_is_refused() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let id = DEAD_SCIENTIST_ROOM;
+    let decoded = room::decode(cartridge.lorom(), key(id).unwrap()).unwrap();
+    let import = |change: fn(&mut RoomState)| {
+        let mut state = decoded.default.clone();
+        change(&mut state);
+        version(cartridge.lorom(), id, decoded.size, state).map(|version| version.setup)
+    };
+    assert_eq!(import(|_| {}), Ok(RoomSetup::CeresHaze));
+    assert_eq!(
+        import(|state| {
+            state.layers.layer1.pop();
+        }),
+        Err(WorldError::LevelSize(id))
+    );
+    assert_eq!(
+        import(|state| state.scroll_areas.clear()),
+        Err(WorldError::ScrollSize(id))
+    );
+    assert_eq!(
+        import(|state| state.setup_code = RomAddress::new(ROOM_BANK, 0x8000)),
+        Err(WorldError::UnknownSetup(id))
+    );
+}
+
+#[test]
+fn each_doorway_names_the_rule_its_door_code_runs() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let world = import(cartridge.lorom(), &LOADED).unwrap();
+    for &(id, _) in &DOORWAYS {
+        let rule = world.doorway(id).map(|doorway| doorway.rule);
+        let expected = match id {
+            ELEVATOR_TO_FALLING_TILE => DoorRule::FromCeresElevatorShaft,
+            FALLING_TILE_TO_ELEVATOR => DoorRule::ToCeresElevatorShaft,
+            _ => DoorRule::Nothing,
+        };
+        assert_eq!(rule, Some(expected), "{:?}", doorway_name(id));
+    }
+    let header = RomAddress::new(DOOR_BANK, DOORWAYS[0].1);
+    assert_eq!(
+        door_rule(cartridge.lorom(), header),
+        Some(DoorRule::Nothing)
+    );
+}

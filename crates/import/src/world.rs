@@ -31,8 +31,8 @@ use data::assets::world::rooms::{
     MORPH_BALL_ROOM,
 };
 use data::assets::world::{
-    self, Arrival, Back, Conditional, Doorway, Heading, Inconsistent, Item, MapPlace, Pair, Room,
-    ScreenCoordinate, Version, World,
+    self, Arrival, Back, Conditional, DoorRule, Doorway, Heading, Inconsistent, Item, MapPlace,
+    Pair, Room, RoomSetup, ScreenCoordinate, Version, World,
 };
 use data::id::{DoorwayId, RoomId, TilesetId};
 use data::plm::ScrollLists;
@@ -55,6 +55,9 @@ const PLACES: [(RoomId, u16); 10] = [
 
 /// The bank of the door headers.
 const DOOR_BANK: u8 = 0x83;
+
+/// The bank of the room headers and of the code their states and doors name.
+const ROOM_BANK: u8 = 0x8f;
 
 /// The original's place for each registered doorway: its door header's pointer in the door
 /// bank, which a door list and a doorway's condition name.
@@ -156,6 +159,12 @@ pub enum WorldError {
     },
     /// A version of the room has a level of another size than the room's screens hold.
     LevelSize(RoomId),
+    /// A version of the room has fewer scroll areas than the room has screens.
+    ScrollSize(RoomId),
+    /// A version of the room runs setup code no `RoomSetup` stands for.
+    UnknownSetup(RoomId),
+    /// Passing through the doorway runs door code no `DoorRule` stands for.
+    UnknownDoorRule(DoorwayId),
     /// A doorway's arrival record isn't fully present in the image.
     Arrival {
         /// The doorway.
@@ -258,6 +267,32 @@ fn door_header(rom: Lorom<'_>, list: &room::DoorList, place: usize) -> Option<Ro
     ))
 }
 
+/// The original's door code, by its pointer in the room bank, for each `DoorRule`; no code is 0.
+const DOOR_RULES: [(u16, DoorRule); 3] = [
+    (0, DoorRule::Nothing),
+    (0xe4e0, DoorRule::ToCeresElevatorShaft),
+    (0xe513, DoorRule::FromCeresElevatorShaft),
+];
+
+/// The original's room setup code, by its pointer in the room bank, for each `RoomSetup`.
+const SETUPS: [(u16, RoomSetup); 5] = [
+    (0x91bc, RoomSetup::Nothing),
+    (0x91d5, RoomSetup::Nothing),
+    (0xc96e, RoomSetup::CeresHazeDoorShut),
+    (0xc976, RoomSetup::CeresHaze),
+    (0xc97b, RoomSetup::CeresRidleyHaze),
+];
+
+/// The rule of the door header at `at`: its last word names the door's code. `None` where the
+/// word is outside the image or names code no rule stands for.
+fn door_rule(rom: Lorom<'_>, at: RomAddress) -> Option<DoorRule> {
+    let word = rom.read(at.advance(10)?, 2).ok()?;
+    let pointer = u16::from_le_bytes(*word.as_chunks::<2>().0.first()?);
+    DOOR_RULES
+        .iter()
+        .find_map(|&(known, rule)| (known == pointer).then_some(rule))
+}
+
 /// The passage's content in a door header: direction, destination screens and speed in
 /// 1/256 pixels per frame. A negative speed leaves the passage's own speed in use.
 fn arrival(rom: Lorom<'_>, at: RomAddress) -> Result<Arrival, AddressError> {
@@ -322,6 +357,7 @@ fn from_decoded(
                         room: destination,
                         arrival: arrival(rom, at)
                             .map_err(|error| WorldError::Arrival { doorway, error })?,
+                        rule: door_rule(rom, at).ok_or(WorldError::UnknownDoorRule(doorway))?,
                     },
                 );
                 Ok(world::Door::To(doorway))
@@ -410,6 +446,15 @@ fn version(
     if state.layers.layer1.len() != size.blocks() {
         return Err(WorldError::LevelSize(room));
     }
+    if state.scroll_areas.len() < usize::from(size.width).wrapping_mul(usize::from(size.height)) {
+        return Err(WorldError::ScrollSize(room));
+    }
+    let setup = SETUPS
+        .iter()
+        .find_map(|&(pointer, setup)| {
+            (RomAddress::new(ROOM_BANK, pointer) == state.setup_code).then_some(setup)
+        })
+        .ok_or(WorldError::UnknownSetup(room))?;
     Ok(Version {
         level: state.layers.layer1,
         scrolls: state.scroll_areas,
@@ -428,6 +473,7 @@ fn version(
                 }
             },
         )?,
+        setup,
     })
 }
 

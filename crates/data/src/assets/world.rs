@@ -6,7 +6,7 @@
 //!
 //! `import::world` builds it from the ROM; the engine reads only this. It holds what the
 //! engine reads of a room today: a version's level, scroll areas, PLMs, tileset, layer 2, enemy
-//! graphics and Ceres doors, and the room's doors.
+//! graphics, Ceres doors and setup, and the room's doors and the rule each doorway runs.
 //! A record names other content by our ids, never by where the original keeps it.
 
 pub mod doorways;
@@ -40,6 +40,35 @@ pub struct Doorway {
     pub room: RoomId,
     /// Where the view arrives and how the passage carries her into the room.
     pub arrival: Arrival,
+    /// What passing through it runs beyond the passage.
+    pub rule: DoorRule,
+}
+
+/// What passing through a doorway runs beyond the passage, as the room's contents are fetched.
+/// Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DoorRule {
+    /// Into Ceres's elevator room from the hall below it: the screen goes back to its usual
+    /// mode, out of the rotating view.
+    FromCeresElevatorShaft,
+    /// Nothing.
+    Nothing,
+    /// Into Ceres's elevator room: the screen's rotating view, started level.
+    ToCeresElevatorShaft,
+}
+
+/// What a version of a room runs as its contents are fetched, beyond placing them. Listed
+/// alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RoomSetup {
+    /// The station's haze: a backdrop colour blended over the screen.
+    CeresHaze,
+    /// The haze, with the elevator's door shut as solid blocks: the escape's elevator room.
+    CeresHazeDoorShut,
+    /// The haze, with Ridley's room's own tile bases and the floor's screen mode.
+    CeresRidleyHaze,
+    /// Nothing.
+    Nothing,
 }
 
 /// A coordinate on a room's grid of 256-pixel screens.
@@ -127,6 +156,8 @@ pub struct Version {
     pub enemies: Vec<EnemyGraphics>,
     /// The station's door actors it places, in the room's order of its enemies.
     pub ceres_doors: Vec<CeresDoorPlacement>,
+    /// What it runs as its contents are fetched, beyond placing them.
+    pub setup: RoomSetup,
 }
 
 /// A Ceres door actor as a room's start places it: what it is and where.
@@ -302,6 +333,7 @@ mod tests {
             },
             enemies: Vec::new(),
             ceres_doors: Vec::new(),
+            setup: RoomSetup::Nothing,
         };
         Room {
             id,
@@ -351,6 +383,7 @@ mod tests {
             },
             speed: None,
         },
+        rule: DoorRule::Nothing,
     };
 
     #[test]

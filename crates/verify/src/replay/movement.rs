@@ -4,8 +4,8 @@ use super::{compare::Observation, data_failure, index::ObservationId, result::Ou
 use crate::source::{self, WramWord};
 use core::num::Wrapping;
 use data::assets::samus::map;
-use data::level::slope::{Shape, Slopes};
-use data::level::{BlockKind, Offset, PlmChoice};
+use data::level::BlockKind;
+use data::level::slope::Slopes;
 use data::pose::animation::{AnimationDelays, AnimationFrame, RunPaces};
 use data::pose::{PoseId, Poses, Shot, ShotDirection};
 use data::rom::Rom;
@@ -463,77 +463,22 @@ pub(super) fn level_blocks(
         data::room::RoomKey::from_room_pointer(word(wram, source::ROOM_PTR)?),
     )
     .map_err(|_| data_failure(None, "room door content"))?;
-    let mut cells = Vec::new();
-    let mut permissions = Vec::new();
-    for (index, (bytes, bts)) in words.as_chunks::<2>().0.iter().zip(bts).enumerate() {
-        let kind = data::level::Block::new(u16::from_le_bytes(*bytes), *bts).kind;
-        permissions.push(matches!(kind, BlockKind::Special(PlmChoice::Common(0x45))));
-        let cell = match kind {
-            BlockKind::Air(_)
-            | BlockKind::UnusedAir(_)
-            | BlockKind::SpikeAir(_)
-            | BlockKind::ShootableAir(_)
-            | BlockKind::BombableAir(_)
-            | BlockKind::SpecialAir(_) => types::Block::Air,
-            BlockKind::Solid(_)
-            | BlockKind::Spike(_)
-            | BlockKind::Shootable(_)
-            | BlockKind::Grapple(_) => types::Block::Solid,
-            BlockKind::Bombable(_) | BlockKind::Special(_) => types::Block::Answered,
-            BlockKind::Door(door) => {
-                if matches!(
-                    room.doors.doors.get(door.place()),
-                    Some(data::room::Door::ToRoom(_))
-                ) {
-                    types::Block::Air
-                } else {
-                    types::Block::Solid
-                }
-            }
-            BlockKind::HorizontalExtension(Offset(by))
-            | BlockKind::VerticalExtension(Offset(by)) => {
-                let rows = matches!(kind, BlockKind::VerticalExtension(_));
-                let offset =
-                    i16::from(by)
-                        .cast_unsigned()
-                        .wrapping_mul(if rows { width } else { 1 });
-                let at = u16::try_from(index)
-                    .map_err(|_| data_failure(None, "level address"))?
-                    .wrapping_add(offset);
-                types::Block::StandsFor((by != 0).then(|| types::Cell {
-                    x: at.checked_rem(width).unwrap_or(at),
-                    y: at.checked_div(width).unwrap_or(0),
-                }))
-            }
-            BlockKind::Slope(slope) => match content
-                .slopes
-                .shape(slope.shape)
-                .ok_or_else(|| data_failure(None, "slope shape"))?
-            {
-                Shape::Square(square) => types::Block::Stepped(std::array::from_fn(|row| {
-                    std::array::from_fn(|column| {
-                        square.solid_at((column != 0) ^ slope.x_flip, (row != 0) ^ slope.y_flip)
-                    })
-                })),
-                Shape::Surface(surface) => {
-                    let mut tops = surface.tops;
-                    if slope.x_flip {
-                        tops.reverse();
-                    }
-                    types::Block::Slope(types::Slope {
-                        faces: if slope.y_flip {
-                            types::SlopeFaces::Ceiling
-                        } else {
-                            types::SlopeFaces::Floor
-                        },
-                        depth: tops.map(|depth| Wrapping(u16::from(depth.min(17)))),
-                        factor: types::SlopeFactor(surface.factor),
-                    })
-                }
-            },
-        };
-        cells.push(cell);
-    }
+    let kinds: Vec<BlockKind> = words
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .zip(bts)
+        .map(|(bytes, bts)| data::level::Block::new(u16::from_le_bytes(*bytes), *bts).kind)
+        .collect();
+    let leads = |place| {
+        matches!(
+            room.doors.doors.get(place),
+            Some(data::room::Door::ToRoom(_))
+        )
+    };
+    let (cells, permissions) =
+        game::production::room_loading::blocks(&kinds, width, &content.slopes, leads)
+            .map_err(|_| data_failure(None, "slope shape"))?;
     Ok((width, cells, permissions))
 }
 

@@ -6,7 +6,7 @@
 //! through it. Building it ([`room`]) gives what play reads of her room: what her moves meet,
 //! its doors to other rooms by cell, and the camera's room.
 
-use super::connected::inputs::{CameraInputs, Screen};
+use super::connected::inputs::{CameraInputs, Lead, Screen};
 use super::played::{Doorway, Room};
 use super::world::{Boundary, MovementWorld};
 use boss_ceres_ridley::{CeresDoor, ColourSet, DoorKind, Stage};
@@ -15,7 +15,7 @@ use data::assets::actors::{self, Actors, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
 use data::assets::samus::palettes::SamusPalettes;
 use data::assets::tilesets::Tilesets;
-use data::assets::world::{self, CeresDoorKind, Door, ItemLighting, World};
+use data::assets::world::{self, CeresDoorKind, Door, DoorRule, ItemLighting, RoomSetup, World};
 use data::id::DoorwayId;
 use data::level::slope::{Shape, Slopes};
 use data::level::{BlockKind, PlmChoice, ScrollArea};
@@ -70,6 +70,10 @@ pub enum LoadFault {
     OtherActors,
     /// The version places a PLM whose blocks no owner here places.
     Plm,
+    /// The version's setup runs what no owner here runs.
+    RoomSetup(RoomSetup),
+    /// Passing through the doorway runs what no owner here runs.
+    DoorRule(DoorRule),
     /// A slope block names a shape the slopes don't hold.
     Slope,
     /// The level doesn't make geometry: its size or a chain of stand-ins.
@@ -129,11 +133,13 @@ pub fn load(
 /// The Ceres doors the room `through` leads to places as its contents are fetched.
 ///
 /// They come in its order of its enemies, each as a room's start places it (`RoomStart`). They
-/// are the only actors it places: her motion meets no other actor's box in it.
+/// are the only actors it places: her motion meets no other actor's box in it. The doorway's
+/// rule and the version's setup run then too, and only those that change nothing play reads
+/// are let through: none, and the station's haze, which only blends a colour over the screen.
 ///
 /// # Errors
-/// A doorway or room the content lacks, a Ceres actor of a later piece, or another actor, places
-/// none.
+/// A doorway or room the content lacks, a Ceres actor of a later piece, another actor, or
+/// another door rule or setup, places none.
 pub fn ceres_doors(
     through: DoorwayId,
     run: Run<'_>,
@@ -159,18 +165,31 @@ pub fn ceres_doors(
     {
         return Err(LoadFault::OtherActors);
     }
+    let rule = rooms
+        .world
+        .doorway(through)
+        .ok_or(LoadFault::Room(through))?
+        .rule;
+    if rule != DoorRule::Nothing {
+        return Err(LoadFault::DoorRule(rule));
+    }
+    if !matches!(version.setup, RoomSetup::Nothing | RoomSetup::CeresHaze) {
+        return Err(LoadFault::RoomSetup(version.setup));
+    }
     Ok(doors)
 }
 
-/// The room `through` leads to, as building it leaves it for play, with the camera's lead and
-/// the scroll areas past its screens kept from `before`.
+/// The room `through` leads to, as building it leaves it for play, with the scroll areas past
+/// its screens kept from `before`.
 ///
 /// What her moves meet is the version's level, with the blocks its scroll PLMs and extensions
 /// place as the room starts, and no actor's box: fetching its contents places no actor but the
 /// Ceres doors ([`ceres_doors`]), which play carries itself. The original places those blocks as
-/// the contents are fetched; nothing reads her room between. A door block lets her through when
-/// its door leads to a room. The camera's room is the version's scroll areas, the room's size
-/// and its scrollers.
+/// the contents are fetched; nothing reads her room between. Its doors to other rooms are the
+/// door blocks of that level; a door block lets her through when its door leads to a room. The
+/// camera's room is the version's scroll areas, the room's size and its scrollers, and building
+/// it turns the camera's lead back to ahead. Neither the room's setup nor the doorway's rule
+/// changes any of it: fetching the contents refuses those that would ([`ceres_doors`]).
 ///
 /// # Errors
 /// A doorway or room the content lacks, a version placing PLMs no owner here places, or a level
@@ -201,20 +220,23 @@ pub fn room(
     }
     let mut screens: Vec<Screen> = version.scrolls.iter().copied().map(screen).collect();
     screens.extend(before.screens.iter().skip(screens.len()));
-    let door_cells = version.level.iter().zip(0_u16..).filter_map(|(block, at)| {
-        let BlockKind::Door(door) = block.kind else {
+    let door_cells = kinds.iter().zip(0_u16..).filter_map(|(kind, at)| {
+        let BlockKind::Door(door) = kind else {
             return None;
         };
         Some((cell(at, width), door.place()))
     });
+    let leads = |place| matches!(room.doors.get(place), Some(Door::To(_)));
+    let (cells, lets_through) = blocks(&kinds, width, &rooms.slopes, leads)?;
     Ok(Room {
-        geometry: geometry(room, &kinds, &rooms.slopes)?,
+        geometry: MovementWorld::new(width, cells, lets_through, Vec::new(), Boundary::Air)
+            .map_err(|_| LoadFault::Geometry)?,
         doorways: doorways(&rooms.world, room, door_cells)?,
         camera: CameraInputs {
             screens,
             size: [room.size.width, room.size.height].map(u16::from),
             heights: [room.scrollers.up, room.scrollers.down].map(u16::from),
-            lead: before.lead,
+            lead: Lead::Ahead,
         },
     })
 }
@@ -236,34 +258,39 @@ fn cell(index: u16, width: u16) -> types::Cell {
     }
 }
 
-/// What her moves meet in `room` whose blocks are of `kinds`, row-major.
-fn geometry(
-    room: &world::Room,
+/// What her moves meet of each block of a level of `kinds`, `width` blocks across, row-major.
+///
+/// Each also says whether it lets her through whichever way she goes: the speed blocks' special
+/// block alone does. A door block lets her through when `leads` says its door, by its place in
+/// the room's doors, leads to a room.
+///
+/// # Errors
+/// A slope block naming a shape `slopes` lacks.
+pub fn blocks(
     kinds: &[BlockKind],
+    width: u16,
     slopes: &Slopes,
-) -> Result<MovementWorld, LoadFault> {
-    let width = room.size.blocks_across();
+    leads: impl Fn(usize) -> bool,
+) -> Result<(Vec<types::Block>, Vec<bool>), LoadFault> {
     let cells = kinds
         .iter()
         .zip(0_u16..)
-        .map(|(&kind, index)| block(room, kind, slopes, index, width))
+        .map(|(&kind, index)| block(kind, slopes, index, width, &leads))
         .collect::<Result<_, _>>()?;
-    // The speed blocks' special block alone lets her through, whichever way she goes.
     let lets_through = kinds
         .iter()
         .map(|kind| matches!(kind, BlockKind::Special(PlmChoice::Common(0x45))))
         .collect();
-    MovementWorld::new(width, cells, lets_through, Vec::new(), Boundary::Air)
-        .map_err(|_| LoadFault::Geometry)
+    Ok((cells, lets_through))
 }
 
 /// What her moves meet of a block of `kind` at `index`.
 fn block(
-    room: &world::Room,
     kind: BlockKind,
     slopes: &Slopes,
     index: u16,
     width: u16,
+    leads: impl Fn(usize) -> bool,
 ) -> Result<types::Block, LoadFault> {
     Ok(match kind {
         BlockKind::Air(_)
@@ -277,10 +304,13 @@ fn block(
         | BlockKind::Shootable(_)
         | BlockKind::Grapple(_) => types::Block::Solid,
         BlockKind::Bombable(_) | BlockKind::Special(_) => types::Block::Answered,
-        BlockKind::Door(door) => match room.doors.get(door.place()) {
-            Some(Door::To(_)) => types::Block::Air,
-            Some(Door::Nowhere) | None => types::Block::Solid,
-        },
+        BlockKind::Door(door) => {
+            if leads(door.place()) {
+                types::Block::Air
+            } else {
+                types::Block::Solid
+            }
+        }
         BlockKind::HorizontalExtension(_) | BlockKind::VerticalExtension(_) => {
             types::Block::StandsFor(kind.stands_for(index, width).map(|at| cell(at, width)))
         }
@@ -515,8 +545,8 @@ mod tests {
     use data::assets::samus::palettes::{BeamPalette, SamusPalettes, Suits};
     use data::assets::tilesets::{Tileset, Tilesets};
     use data::assets::world::{
-        Arrival, Conditional, Door, Doorway, Heading, ItemLighting, MapPlace, Pair, Room,
-        ScreenCoordinate, Version, World,
+        Arrival, Conditional, Door, DoorRule, Doorway, Heading, ItemLighting, MapPlace, Pair, Room,
+        RoomSetup, ScreenCoordinate, Version, World,
     };
     use data::id::{DoorwayId, RoomId, SpeciesId, TilesetId};
     use data::level::{Block, ScrollArea};
@@ -549,6 +579,7 @@ mod tests {
                 row: SpriteRow::new(2).unwrap(),
             }],
             ceres_doors: Vec::new(),
+            setup: RoomSetup::CeresHaze,
         }
     }
 
@@ -577,6 +608,7 @@ mod tests {
                 },
                 speed: None,
             },
+            rule: DoorRule::Nothing,
         };
         let room = Room {
             id: ROOM,
@@ -776,8 +808,48 @@ mod tests {
                 screens: vec![Screen::Short, Screen::Closed, Screen::Closed],
                 size: [1, 1],
                 heights: [0x70, 0xa0],
-                lead: Lead::Near,
+                lead: Lead::Ahead,
             }
+        );
+    }
+
+    #[test]
+    fn building_the_room_turns_the_cameras_lead_back_to_ahead() {
+        assert_eq!(built(&rooms()).unwrap().camera.lead, Lead::Ahead);
+    }
+
+    #[test]
+    fn fetching_the_contents_refuses_a_setup_or_door_rule_that_changes_what_play_reads() {
+        let progress = run_progress::Progress::default();
+        let run = Run {
+            progress: &progress,
+            ceres: boss_ceres_ridley::Stage::Calm,
+        };
+        let mut shut = version(1);
+        shut.setup = RoomSetup::CeresHazeDoorShut;
+        let rooms = rooms_of(shut, version(0));
+        assert_eq!(
+            super::ceres_doors(CHOSEN, run, &rooms),
+            Err(LoadFault::RoomSetup(RoomSetup::CeresHazeDoorShut))
+        );
+        assert_eq!(super::ceres_doors(OTHER, run, &rooms), Ok(Vec::new()));
+        let mut rooms = rooms;
+        rooms.world = World::new(
+            rooms.world.rooms().cloned().collect(),
+            [CHOSEN, OTHER]
+                .map(|id| {
+                    let mut doorway = *rooms.world.doorway(id).unwrap();
+                    if id == OTHER {
+                        doorway.rule = DoorRule::ToCeresElevatorShaft;
+                    }
+                    doorway
+                })
+                .to_vec(),
+        )
+        .unwrap();
+        assert_eq!(
+            super::ceres_doors(OTHER, run, &rooms),
+            Err(LoadFault::DoorRule(DoorRule::ToCeresElevatorShaft))
         );
     }
 
