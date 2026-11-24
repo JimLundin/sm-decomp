@@ -6,6 +6,7 @@ use enum_map::{Enum, EnumMap};
 
 pub mod arrival;
 pub mod brightness;
+pub mod flight;
 pub mod haze;
 pub mod power_on;
 pub mod quake;

@@ -19,11 +19,13 @@
 //! the camera replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the
 //! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
 //! console's power-on plays the front end alone, from its own power-on State with no seed:
-//! `power_on`.
+//! `power_on`. A row seeded at the flight to Ceres's first frame plays the flight alone, from its
+//! own start: `flight`.
 
 mod arrival;
 mod ceres_doors;
 mod colours;
+mod flight;
 mod frame;
 mod health;
 mod hud;
@@ -111,6 +113,8 @@ pub struct Report {
     pub seed_held: &'static [&'static str],
     /// The inputs this kind of run borrows from the record.
     pub borrowed: &'static [&'static str],
+    /// The streams this kind of run doesn't compare, because no owner here produces them.
+    pub masked: &'static [&'static str],
 }
 
 fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
@@ -208,6 +212,8 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
 ///
 /// A row from the console's power-on plays from its cut 0 with no seed.
 ///
+/// A row seeded at the flight to Ceres's first frame plays the flight from its start.
+///
 /// # Errors
 /// Missing or mismatched lock, cache or content refuse the run before any cut is played, and a
 /// cut past every row that continues the run, or a row that doesn't follow on, stops it.
@@ -230,11 +236,14 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     {
         return power_on::play(&mut rows, row, start, end);
     }
+    let seed = rows.record(start)?;
+    if flight::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
+        return flight::play(&mut rows, &sources.rom, seed, row, start, end);
+    }
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let seed = rows.record(start)?;
     let report = |held, stop| Report {
         row: row.to_owned(),
         start,
@@ -242,6 +251,7 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         stop,
         seed_held: SEED_HELD,
         borrowed: BORROWED,
+        masked: &[],
     };
     let mut run = match Run::admit(&seed, &content, &sources.rom, row) {
         Ok(run) => run,

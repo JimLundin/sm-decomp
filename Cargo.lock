@@ -107,6 +107,7 @@ dependencies = [
  "samus_movement",
  "screens_arrival",
  "screens_boot",
+ "screens_flight",
  "serde",
  "types",
  "weapons_projectiles",
@@ -147,6 +148,7 @@ version = "0.1.0"
 dependencies = [
  "canonical",
  "data",
+ "enum-map",
 ]
 
 [[package]]
@@ -255,6 +257,16 @@ dependencies = [
 
 [[package]]
 name = "screens_boot"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "screens_flight"
 version = "0.1.0"
 dependencies = [
  "enum-map",
@@ -404,6 +416,7 @@ dependencies = [
  "samus_movement",
  "screens_arrival",
  "screens_boot",
+ "screens_flight",
  "serde",
  "toml",
  "types",

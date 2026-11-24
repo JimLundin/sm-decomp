@@ -9,6 +9,7 @@ description = "The importers: the player's ROM, read once at the edge, into our 
 [dependencies]
 canonical = { path = "../canonical" }
 data = { path = "../data" }
+enum-map = "=3.1.0"
 
 [lints]
 workspace = true

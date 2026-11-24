@@ -30,6 +30,19 @@ seed_frame = 0
 frames = [1, 270]
 power_on = true
 
+# The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
+# flies off past the drifting sprites, the station comes into view and its name is typed, and the
+# picture darkens, to the frame before the arrival's seed.
+[[run]]
+row = "any-fly-to-ceres"
+start = 0
+end = 802
+held = 802
+stop = "end"
+seed_frame = 7512
+frames = [7513, 8314]
+power_on = false
+
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
 # made ready, she arrives on the elevator's pad at the top of the shaft, and the picture comes up.
 [[run]]

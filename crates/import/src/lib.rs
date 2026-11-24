@@ -5,6 +5,7 @@
 pub mod actors;
 pub mod audio;
 pub mod cache;
+pub mod flight;
 pub mod projectile;
 pub mod samus;
 pub mod start;

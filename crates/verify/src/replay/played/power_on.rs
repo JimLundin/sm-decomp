@@ -64,6 +64,7 @@ pub(super) fn play(
         stop,
         seed_held: &[],
         borrowed: BORROWED,
+        masked: &[],
     };
     if start != 0 {
         let later = Outcome::Unsupported {

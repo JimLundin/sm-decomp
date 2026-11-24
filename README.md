@@ -9,7 +9,7 @@
 The milestone is **Power-on through Ceres**: the any% movie from power-on through frame 15,196. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-Frames that pass          ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   2,655 of 15,196   17.5%
+Frames that pass          █████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   3,457 of 15,196   22.7%
 Continuous from power-on  █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     270 of 15,196    1.8%
 ```
 
@@ -26,7 +26,7 @@ The movie in the stretches being worked, in the order it plays; the first not ye
 | Boot | 1 to 270 | ✓ all 270 | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | **Next: The title and menus** | 271 to 568 | `░░░░░░░░░░░░░░░░░░░░` 0 of 298 | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | The intro | 569 to 7,512 | `░░░░░░░░░░░░░░░░░░░░` 0 of 6,944 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| The flight to Ceres | 7,513 to 8,315 | `░░░░░░░░░░░░░░░░░░░░` 0 of 803 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| The flight to Ceres | 7,513 to 8,315 | `███████████████████░` 802 of 803 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Her arrival | 8,316 to 8,538 | ✓ all 223 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Rooms 1 to 5 | 8,539 to 10,162 | ✓ all 1,624 | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
 | Ridley's room | 10,163 to 11,772 | `██████░░░░░░░░░░░░░░` 538 of 1,610 | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |

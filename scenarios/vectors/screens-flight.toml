@@ -1,0 +1,257 @@
+# Test vectors for docs/behaviours/screens-flight.md (the gunship's flight to Ceres).
+#
+# Format
+# - Each [[vector]] is one frame of the flight, from its state as the frame begins to its state
+#   as the frame ends: id; source ("recorded" or "constructed"); entries (the spec's behaviours it
+#   exercises); rules (optional); before; inputs (optional); after; output (optional).
+# - rules (optional): the reference rules this vector overrides: rhythm, frames (PictureDarkens's
+#   d). A vector without rules runs the reference one: rhythm 1.
+# - before and after: stage, "Starting", "WaitingForMusic", "RushingIn", "FlyingAway", "Label",
+#   "FadingOut" or "Done"; angle, 256ths of a turn in hex; zoom, 256ths, 0 to 32,767; plane, the
+#   plane's position [[x, "xf"], [y, "yf"]]: signed whole px and the fraction in 65,536ths in
+#   hex, added to it (so [-76, "8000"] is -75.5 px); sprites, a table by kind: RushingStars =
+#   [x, "xf", y, "yf", speed], the speed in 256ths of a px per frame; any other kind =
+#   [x, "xf", y, "yf", drift, wraps], the drift in 65,536ths of a px per frame and wraps a bool;
+#   absent kinds not placed; flash, [r, g, b], 0 to 31; label, { step, hold }: the index of the
+#   label's current step (0 the first) and its hold left in frames, absent outside the label;
+#   level, 0 to 15; screen, "Blanked" or "Shown"; count, the fade's count in frames.
+# - inputs (optional): track_waits, bool (absent means false); scene, the scene's content:
+#   ready = { angle, zoom, plane = [x, y], stars = [x, y], speed }, turn = { angle,
+#   plane = [x, y], sprites = { Kind = [x, y, drift, wraps] } }, label = the label's steps in
+#   order, each { letter, column, row, hold }, letter absent for a step that types none.
+# - output (optional): transform, [a, b, c, d]; scroll, [x, y]; typed, the letters typed this
+#   frame as [{ letter, column, row }]; done, bool. Absent fields are not checked.
+# - Content is invented: no place, angle, zoom, speed, drift, letter or hold of a scene is the
+#   game's. The recorded cases (named by row and cut elsewhere) keep the State as recorded and
+#   give the scene invented content, the label with the holds recorded.
+
+# In the dark, then the gunship appears.
+
+[[vector]]
+id = "R-setup"
+source = "recorded"
+entries = ["FlightIsMadeReady", "PlaneTransforms"]
+before = { stage = "Starting", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+inputs = { scene = { ready = { angle = "C0", zoom = 400, plane = [-50, -90], stars = [100, 70], speed = -900 } } }
+after = { stage = "WaitingForMusic", angle = "C0", zoom = 400, plane = [[-50, "0000"], [-90, "0000"]], sprites = { RushingStars = [100, "0000", 70, "0000", -900] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+output = { transform = [0, -400, 400, 0], scroll = [-50, -90] }
+
+[[vector]]
+id = "C-setup-lit"
+source = "constructed"
+entries = ["FlightIsMadeReady", "PlaneTransforms"]
+before = { stage = "Starting", angle = "41", zoom = 300, plane = [[5, "4000"], [-3, "C000"]], sprites = {}, flash = [2, 3, 4], level = 9, screen = "Shown", count = 6 }
+inputs = { scene = { ready = { angle = "40", zoom = 1000, plane = [3, 4], stars = [5, 6], speed = 7 } } }
+after = { stage = "WaitingForMusic", angle = "40", zoom = 1000, plane = [[3, "0000"], [4, "0000"]], sprites = { RushingStars = [5, "0000", 6, "0000", 7] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 6 }
+output = { transform = [0, 1000, -1000, 0], scroll = [3, 4] }
+
+[[vector]]
+id = "R-wait"
+source = "recorded"
+entries = ["PictureAppears", "StarsRushPast"]
+before = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0000"], [-104, "0000"]], sprites = { RushingStars = [112, "0000", 87, "0000", -1024] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+inputs = { track_waits = true }
+after = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0000"], [-104, "0000"]], sprites = { RushingStars = [112, "0000", 87, "0000", -1024] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+
+[[vector]]
+id = "R-appear"
+source = "recorded"
+entries = ["PictureAppears", "StarsRushPast"]
+before = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0000"], [-104, "0000"]], sprites = { RushingStars = [112, "0000", 87, "0000", -1024] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+inputs = { track_waits = false }
+after = { stage = "RushingIn", angle = "E0", zoom = 512, plane = [[-76, "8000"], [-108, "8000"]], sprites = { RushingStars = [108, "8000", 83, "8000", -896] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+output = { transform = [362, -362, 362, 362], scroll = [-76, -108] }
+
+[[vector]]
+id = "C-appear-from-lit"
+source = "constructed"
+entries = ["PictureAppears", "StarsRushPast"]
+before = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[0, "0000"], [0, "0000"]], sprites = { RushingStars = [10, "0000", 20, "0000", 0] }, flash = [0, 0, 0], level = 3, screen = "Blanked", count = 0 }
+after = { stage = "RushingIn", angle = "E0", zoom = 512, plane = [[0, "8000"], [0, "8000"]], sprites = { RushingStars = [10, "8000", 20, "8000", 128] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+
+# The rush toward the camera, and the turn.
+
+[[vector]]
+id = "R-rush-first"
+source = "recorded"
+entries = ["GunshipRushesIn", "StarsRushPast", "PlaneTransforms"]
+before = { stage = "RushingIn", angle = "E0", zoom = 512, plane = [[-76, "8000"], [-108, "8000"]], sprites = { RushingStars = [108, "8000", 83, "8000", -896] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+after = { stage = "RushingIn", angle = "E0", zoom = 496, plane = [[-79, "8000"], [-111, "8000"]], sprites = { RushingStars = [105, "8000", 80, "8000", -768] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+output = { transform = [350, -351, 351, 350], scroll = [-79, -111] }
+
+[[vector]]
+id = "R-rush-mid"
+source = "recorded"
+entries = ["GunshipRushesIn", "StarsRushPast", "PlaneTransforms"]
+before = { stage = "RushingIn", angle = "E0", zoom = 256, plane = [[-64, "8000"], [-96, "8000"]], sprites = { RushingStars = [120, "8000", 95, "8000", 1152] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+after = { stage = "RushingIn", angle = "E0", zoom = 240, plane = [[-59, "8000"], [-91, "8000"]], sprites = { RushingStars = [125, "8000", 100, "8000", 1280] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+output = { transform = [169, -170, 170, 169], scroll = [-59, -91] }
+
+[[vector]]
+id = "R-turn"
+source = "recorded"
+entries = ["GunshipRushesIn", "ViewTurnsAway", "StarsRushPast", "SpritesDrift", "PlaneTransforms"]
+before = { stage = "RushingIn", angle = "E0", zoom = 16, plane = [[64, "0000"], [32, "0000"]], sprites = { RushingStars = [248, "0000", 223, "0000", 3072] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+inputs = { scene = { turn = { angle = "30", plane = [-10, -100], sprites = { Station = [60, 140, 4096, true], LargeAsteroids = [300, 20, 16384, true], Vortex = [200, 50, -8192, false] } } } }
+after = { stage = "FlyingAway", angle = "30", zoom = 16, plane = [[-10, "0000"], [-100, "0000"]], sprites = { Station = [60, "1000", 140, "0000", 4096, true], LargeAsteroids = [300, "4000", 20, "0000", 16384, true], Vortex = [199, "E000", 50, "0000", -8192, false] }, flash = [31, 31, 31], level = 15, screen = "Shown", count = 0 }
+output = { transform = [6, 14, -14, 6], scroll = [-10, -100] }
+
+[[vector]]
+id = "C-turn-fraction"
+source = "constructed"
+entries = ["GunshipRushesIn", "ViewTurnsAway", "PlaneTransforms"]
+before = { stage = "RushingIn", angle = "E0", zoom = 20, plane = [[10, "8000"], [-5, "4000"]], sprites = { RushingStars = [0, "0000", 0, "0000", 900] }, flash = [7, 0, 9], level = 15, screen = "Shown", count = 0 }
+inputs = { scene = { turn = { angle = "20", plane = [-31, -120], sprites = { DistantStars = [-30, 80, -8192, false] } } } }
+after = { stage = "FlyingAway", angle = "20", zoom = 20, plane = [[-31, "8000"], [-120, "4000"]], sprites = { DistantStars = [-31, "E000", 80, "0000", -8192, false] }, flash = [31, 31, 31], level = 15, screen = "Shown", count = 0 }
+output = { transform = [14, 14, -14, 14], scroll = [-31, -120] }
+
+# Flying away toward the station.
+
+[[vector]]
+id = "R-away-first"
+source = "recorded"
+entries = ["GunshipFliesAway", "FlashFades", "PlaneTransforms"]
+before = { stage = "FlyingAway", angle = "20", zoom = 16, plane = [[-32, "0000"], [-128, "0000"]], sprites = {}, flash = [31, 31, 31], level = 15, screen = "Shown", count = 0 }
+after = { stage = "FlyingAway", angle = "20", zoom = 32, plane = [[-33, "E000"], [-128, "0000"]], sprites = {}, flash = [30, 30, 30], level = 15, screen = "Shown", count = 0 }
+output = { transform = [22, 22, -22, 22], scroll = [-33, -128] }
+
+[[vector]]
+id = "R-drift"
+source = "recorded"
+entries = ["SpritesDrift"]
+before = { stage = "FlyingAway", angle = "20", zoom = 16, plane = [[-32, "0000"], [-128, "0000"]], sprites = { Station = [116, "1000", 160, "0000", 12288, true], LargeAsteroids = [80, "4000", 159, "0000", -4096, false] }, flash = [31, 31, 31], level = 15, screen = "Shown", count = 0 }
+after = { stage = "FlyingAway", angle = "20", zoom = 32, plane = [[-33, "E000"], [-128, "0000"]], sprites = { Station = [116, "4000", 160, "0000", 12288, true], LargeAsteroids = [80, "3000", 159, "0000", -4096, false] }, flash = [30, 30, 30], level = 15, screen = "Shown", count = 0 }
+
+[[vector]]
+id = "R-away-fast"
+source = "recorded"
+entries = ["GunshipFliesAway", "FlashFades", "PlaneTransforms"]
+before = { stage = "FlyingAway", angle = "20", zoom = 3808, plane = [[-59, "4000"], [-128, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+after = { stage = "FlyingAway", angle = "20", zoom = 3840, plane = [[-59, "2000"], [-128, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+output = { transform = [2715, 2715, -2715, 2715], scroll = [-59, -128] }
+
+[[vector]]
+id = "C-flash-floor"
+source = "constructed"
+entries = ["FlashFades", "GunshipFliesAway"]
+before = { stage = "FlyingAway", angle = "20", zoom = 100, plane = [[0, "1000"], [4, "0000"]], sprites = {}, flash = [0, 5, 1], level = 15, screen = "Shown", count = 0 }
+after = { stage = "FlyingAway", angle = "20", zoom = 116, plane = [[-1, "F000"], [4, "0000"]], sprites = {}, flash = [0, 4, 0], level = 15, screen = "Shown", count = 0 }
+
+[[vector]]
+id = "C-drift-wrap"
+source = "constructed"
+entries = ["SpritesDrift"]
+before = { stage = "Done", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = { LargeAsteroids = [511, "F000", 30, "0000", 20480, true], Station = [-2, "0000", 40, "0000", 2048, true] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+after = { stage = "Done", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = { LargeAsteroids = [0, "4000", 30, "0000", 20480, true], Station = [510, "0800", 40, "0000", 2048, true] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+
+[[vector]]
+id = "C-drift-negative"
+source = "constructed"
+entries = ["SpritesDrift"]
+before = { stage = "Done", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = { DistantStars = [0, "1000", 87, "0000", -12288, false], Vortex = [600, "0000", 5, "0000", -4096, false] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+after = { stage = "Done", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = { DistantStars = [-1, "E000", 87, "0000", -12288, false], Vortex = [599, "F000", 5, "0000", -4096, false] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+
+[[vector]]
+id = "R-station"
+source = "recorded"
+entries = ["GunshipFliesAway", "StationComesIntoView", "PlaneTransforms"]
+before = { stage = "FlyingAway", angle = "20", zoom = 8192, plane = [[-76, "2000"], [-128, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+inputs = { scene = { label = [{ letter = "Q", column = 3, row = 7, hold = 16 }, { letter = "Z", column = 4, row = 7, hold = 16 }, { hold = 128 }] } }
+after = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 0, hold = 16 }, level = 15, screen = "Shown", count = 0 }
+output = { transform = [256, 0, 0, 256], scroll = [0, 0], typed = [{ letter = "Q", column = 3, row = 7 }] }
+
+# The label.
+
+[[vector]]
+id = "C-label-content"
+source = "constructed"
+entries = ["StationComesIntoView", "LabelIsTyped"]
+before = { stage = "FlyingAway", angle = "20", zoom = 9000, plane = [[3, "0000"], [3, "0000"]], sprites = {}, flash = [4, 4, 4], level = 12, screen = "Shown", count = 0 }
+inputs = { scene = { label = [{ hold = 5 }, { letter = "K", column = 0, row = 0, hold = 2 }] } }
+after = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [3, 3, 3], label = { step = 0, hold = 5 }, level = 12, screen = "Shown", count = 0 }
+output = { typed = [] }
+
+[[vector]]
+id = "R-label-hold"
+source = "recorded"
+entries = ["LabelIsTyped"]
+before = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 0, hold = 14 }, level = 15, screen = "Shown", count = 0 }
+inputs = { scene = { label = [{ letter = "Q", column = 3, row = 7, hold = 16 }, { letter = "Z", column = 4, row = 7, hold = 16 }, { hold = 128 }] } }
+after = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 0, hold = 13 }, level = 15, screen = "Shown", count = 0 }
+output = { typed = [] }
+
+[[vector]]
+id = "R-label-letter"
+source = "recorded"
+entries = ["LabelIsTyped"]
+before = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 0, hold = 1 }, level = 15, screen = "Shown", count = 0 }
+inputs = { scene = { label = [{ letter = "Q", column = 3, row = 7, hold = 16 }, { letter = "Z", column = 4, row = 7, hold = 16 }, { hold = 128 }] } }
+after = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 1, hold = 16 }, level = 15, screen = "Shown", count = 0 }
+output = { typed = [{ letter = "Z", column = 4, row = 7 }] }
+
+[[vector]]
+id = "R-label-end"
+source = "recorded"
+entries = ["LabelIsTyped"]
+before = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 2, hold = 1 }, level = 15, screen = "Shown", count = 0 }
+inputs = { scene = { label = [{ letter = "Q", column = 3, row = 7, hold = 16 }, { letter = "Z", column = 4, row = 7, hold = 16 }, { hold = 128 }] } }
+after = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 1 }
+output = { typed = [] }
+
+[[vector]]
+id = "C-label-end-adjusted"
+source = "constructed"
+entries = ["LabelIsTyped", "PictureDarkens"]
+rules = { rhythm = 4 }
+before = { stage = "Label", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], label = { step = 0, hold = 1 }, level = 11, screen = "Shown", count = 0 }
+inputs = { scene = { label = [{ letter = "K", column = 9, row = 1, hold = 3 }] } }
+after = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 11, screen = "Shown", count = 4 }
+
+# The fade out and the end.
+
+[[vector]]
+id = "R-fade-count"
+source = "recorded"
+entries = ["PictureDarkens", "FlightEnds"]
+before = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 1 }
+after = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+
+[[vector]]
+id = "R-fade-step"
+source = "recorded"
+entries = ["PictureDarkens", "FlightEnds"]
+before = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
+after = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 14, screen = "Shown", count = 1 }
+
+[[vector]]
+id = "C-fade-adjusted"
+source = "constructed"
+entries = ["PictureDarkens"]
+rules = { rhythm = 3 }
+before = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 9, screen = "Shown", count = 0 }
+after = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 8, screen = "Shown", count = 3 }
+
+[[vector]]
+id = "R-fade-last"
+source = "recorded"
+entries = ["PictureDarkens", "FlightEnds", "PlaneTransforms"]
+before = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 1, screen = "Shown", count = 0 }
+after = { stage = "Done", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
+output = { transform = [0, 0, 0, 0], scroll = [0, 0], done = true }
+
+[[vector]]
+id = "C-fade-at-zero"
+source = "constructed"
+entries = ["PictureDarkens", "FlightEnds"]
+before = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 0, screen = "Shown", count = 0 }
+after = { stage = "FadingOut", angle = "00", zoom = 256, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 0, screen = "Shown", count = 1 }
+output = { done = false }
+
+[[vector]]
+id = "C-done"
+source = "constructed"
+entries = ["FlightEnds", "PlaneTransforms"]
+before = { stage = "Done", angle = "E0", zoom = 3, plane = [[7, "0000"], [-2, "0000"]], sprites = {}, flash = [1, 2, 3], level = 0, screen = "Blanked", count = 0 }
+inputs = { track_waits = true }
+after = { stage = "Done", angle = "E0", zoom = 3, plane = [[7, "0000"], [-2, "0000"]], sprites = {}, flash = [1, 2, 3], level = 0, screen = "Blanked", count = 0 }
+output = { transform = [2, -3, 3, 2], scroll = [7, -2], done = true }

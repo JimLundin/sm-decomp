@@ -248,6 +248,21 @@ case `movement-ceres/carried-position-proximity` lost its gating obligation, whi
 diagnostic played run compares but does not gate. That loss is accepted until the played run
 is indexed.
 
+### The flight to Ceres
+
+A row seeded at the flight to Ceres's first frame plays the flight alone
+(`game::production::played::flight`, the screens-flight model), from the model's start with the
+scene imported from the player's ROM and nothing of room play read from the seed. It steps once
+per frame of work that finished, borrowing the lag and whether a track waits in audio's queue as
+the frame began. `any-fly-to-ceres` holds all 802 cuts: the stage, the plane's angle, zoom and
+position, its transformation and scroll, the flash, the brightness and the fade's count, the
+label's step and hold, the sprites by the slot each kind takes, the places the sprite drawing is
+told and whether it is done, and the letters the label types, compared from the setup's end at
+cut 32 (before it, the brightness alone). Not compared: the colour cycles (R4), CGRAM's setup load
+at cut 32, OAM, mode 7 VRAM, the BG1 tilemap's emptying, the letters' palette, priority and flips,
+and the PPU mirrors the stages write. A lagged frame stepped as finished differs at cut 1 in
+`flight.stage`. The join into the arrival's seed (movie frame 8,315) is a later piece.
+
 ### Her arrival at Ceres
 
 Her arrival at Ceres (screens-arrival, F4's first piece) plays alone from the intro's last frame

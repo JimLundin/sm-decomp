@@ -651,3 +651,14 @@ after = "let _ = colours;"
 case = "played chain-any-0006-E0B5 0 538"
 cut = 514
 field = "doors.colours.screen"
+
+[[fault]]
+name = "played-flight-lag-stepped"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "let FrameEnd::Finished(music) = frame else {"
+after = '''let music = if let FrameEnd::Finished(music) = frame { music } else { MusicQueue::Clear };
+    if false {'''
+case = "played any-fly-to-ceres 0 802"
+cut = 1
+field = "flight.stage"

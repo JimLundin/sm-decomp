@@ -14,7 +14,8 @@
 //! arrival as a new game begins. The screen's colours are the doors model's [`Palette`], which
 //! the passage, the lights and the baby each set in turn. The fixture every owner's tests build
 //! State from is `tests`. Ahead of room play, [`front_end`] is which part of the game runs, from
-//! the console's power-on.
+//! the console's power-on. Ahead of the new game, with no room, [`flight`] is the gunship's
+//! flight to Ceres.
 //!
 //! Each model is stepped once through its own whole-frame entry. The frame commits every owner
 //! together or none.
@@ -41,6 +42,7 @@
 pub mod arrival;
 mod camera;
 mod ceres_doors;
+pub mod flight;
 pub mod frame;
 pub mod front_end;
 mod health;

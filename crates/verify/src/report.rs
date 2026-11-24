@@ -446,6 +446,49 @@ const DOMAINS: &[Domain] = &[
         areas: &[("arrival", &["arrive.rs"]), ("fade", &["fade.rs"])],
         apart: &[],
     },
+    // The frame's order, its report and the catalogue are the domain's shared code.
+    Domain {
+        name: "screens-flight",
+        bridge: None,
+        adapters: &["production/played/flight.rs"],
+        providers: &[],
+        areas: &[
+            ("scene", &["stages.rs", "sprites.rs"]),
+            ("plane", &["plane.rs"]),
+        ],
+        apart: &[
+            Apart {
+                file: "stages.rs",
+                function: "type_label",
+                occurrences: 1,
+                area: "label",
+            },
+            Apart {
+                file: "stages.rs",
+                function: "begin_step",
+                occurrences: 1,
+                area: "label",
+            },
+            Apart {
+                file: "stages.rs",
+                function: "fade_out",
+                occurrences: 1,
+                area: "fade",
+            },
+            Apart {
+                file: "stages.rs",
+                function: "darken",
+                occurrences: 1,
+                area: "fade",
+            },
+            Apart {
+                file: "stages.rs",
+                function: "end",
+                occurrences: 1,
+                area: "fade",
+            },
+        ],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.
