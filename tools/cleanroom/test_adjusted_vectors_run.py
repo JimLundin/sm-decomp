@@ -1,5 +1,7 @@
 """Only a vector whose answer changes at the reference rules proves its entry adjustable."""
 
+import contextlib
+import io
 import subprocess
 import sys
 import tempfile
@@ -12,7 +14,7 @@ from unittest.mock import patch
 from typing import Any
 
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  candidates, check_domain, check_domain_owners, completed_test, parameter_entries, probe, prove, probe_test, rule_owners, test_command)
+                                  candidates, check_domain, check_domain_owners, completed_test, main, parameter_entries, probe, prove, probe_test, rule_owners, test_command)
 
 SPEC = """\
 ### Fixed
@@ -482,6 +484,42 @@ class AdjustedVectors(unittest.TestCase):
                 (tests / "vectors.rs").unlink()
                 self.assertEqual(test_command("demo", root),
                                  ["bash", "tools/lane/run_tests.sh", "--suite", "lib", "demo"])
+
+    def test_owners_selects_the_check_and_its_domains(self) -> None:
+        for arguments, owners, probed in ((["--owners"], ["alpha", "beta"], []),
+                                          (["--owners", "beta"], ["beta"], []),
+                                          ([], [], ["alpha", "beta"]),
+                                          (["beta"], [], ["beta"])):
+            with self.subTest(arguments=arguments), \
+                    patch("adjusted_vectors_run.domains", return_value=["alpha", "beta"]), \
+                    patch("adjusted_vectors_run.check_domain_owners") as owners_check, \
+                    patch("adjusted_vectors_run.check_domain", return_value=0) as probe_check:
+                self.assertEqual(main(arguments), 0)
+                self.assertEqual([c.args[1] for c in owners_check.call_args_list], owners)
+                self.assertEqual([c.args[1] for c in probe_check.call_args_list], probed)
+
+    def test_a_toml_error_in_the_owners_or_the_vectors_is_a_refusal(self) -> None:
+        owners = "tools/cleanroom/adjusted_rule_owners/demo.toml"
+        valid = {"docs/behaviours/demo.md": SPEC,
+                 "scenarios/vectors/demo.toml": vector('id = "step"\nentries = ["Step"]\n'
+                                                       'rules = { step = 3 }\nbefore = 2\nafter = 5\n'),
+                 owners: '[owners]\nstep = ["Step"]\n'}
+        for broken in (None, owners, "scenarios/vectors/demo.toml",
+                       "tools/cleanroom/adjusted_probe_tests.toml"):
+            with self.subTest(broken=broken), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                for name, text in valid.items():
+                    (root / name).parent.mkdir(parents=True, exist_ok=True)
+                    (root / name).write_text(text, encoding="utf-8", newline="\n")
+                if broken is not None:
+                    (root / broken).write_text("[owners\n", encoding="utf-8", newline="\n")
+                errors = io.StringIO()
+                with contextlib.chdir(root), contextlib.redirect_stdout(io.StringIO()), \
+                        contextlib.redirect_stderr(errors):
+                    status = main(["--owners", "demo"])
+                # 2 is the tool's own refusal, which it prints with its name.
+                self.assertEqual(status, 0 if broken is None else 2, errors.getvalue())
+                self.assertEqual(bool(errors.getvalue()), broken is not None)
 
 
 if __name__ == "__main__":

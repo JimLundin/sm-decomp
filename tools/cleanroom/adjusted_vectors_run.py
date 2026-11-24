@@ -79,8 +79,16 @@ def parameter_entries(spec: str) -> list[str]:
     return found
 
 
+def parsed(text: str, what: str) -> dict[str, Any]:
+    """TOML text as a table; a syntax error refuses, naming WHAT."""
+    try:
+        return tomllib.loads(text)
+    except tomllib.TOMLDecodeError as error:
+        raise CannotProbe(f"{what} is not TOML: {error}") from None
+
+
 def vectors(text: str) -> list[dict[str, Any]]:
-    rows = tomllib.loads(text).get("vector", [])
+    rows = parsed(text, "the vector file").get("vector", [])
     if not isinstance(rows, list):
         raise CannotProbe("`vector` is not an array of tables")
     return rows
@@ -329,7 +337,7 @@ def rule_owners(root: Path, domain: str, required: bool) -> dict[str, frozenset[
         if not required:
             return {}
         raise CannotProbe(f"{domain}: missing reviewed rule ownership")
-    raw_owners = tomllib.loads(ownership.read_text(encoding="utf-8")).get("owners")
+    raw_owners = parsed(ownership.read_text(encoding="utf-8"), f"{domain}: {ownership.name}").get("owners")
     if not isinstance(raw_owners, dict) or not all(
             isinstance(k, str) and isinstance(v, list) and all(isinstance(e, str) for e in v)
             for k, v in raw_owners.items()):
@@ -352,7 +360,7 @@ def probe_test(root: Path, domain: str, text: str) -> str | None:
     # Linked cases can refute inherited rules even when the ordinary candidate ignores
     # them. They require reviewed isolation rather than whole-suite probe answers.
     linked = any(isinstance(rows, list) and any(isinstance(row, dict) and "base" in row
-                 for row in rows) for rows in tomllib.loads(text).values())
+                 for row in rows) for rows in parsed(text, f"{domain}: the vector file").values())
     if linked and selected is None:
         raise CannotProbe(f"{domain}: linked vectors need a reviewed direct-vector test")
     return selected
