@@ -245,8 +245,14 @@ of implementer and independent-reviewer material, and relays only concrete shape
 **A manageable amount.** The root runs as many lanes at
 once as the machine and CI hold: disk for each building lane's own `target/` (about 5 GB) with
 room to spare, and GitHub's limit of 20 concurrent jobs. At most one round is in flight per
-domain. The root names each lane to Jim when it starts, and reports its result when it ends.
-Within that limit, the dependencies below decide what may overlap.
+model, so a domain with two models may have one round on each. The root names each lane to Jim
+when it starts, and reports its result when it ends. Within that limit, the dependencies below
+decide what may overlap.
+
+**A backlog item is always in flight** (Jim, 2026-11-24). Beside the rounds, at least one lane
+works a `status:backlog` work issue until none is left, and the items that shorten a round's
+cycle time go first: the time from an issue's opening to its landing, most of which is fix loops
+after reviews and waiting on a shared file, not CI.
 
 **Parallel lanes don't share files.** A rebase after main has moved costs a
 rebuild and a re-proof on this machine, which can wipe out the time running in parallel saved.
