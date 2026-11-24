@@ -1,10 +1,13 @@
 //! The README: the project's thesis and its progress in frames of the milestone's movie, counted
-//! from the reviewed played runs of [`PLAYED`].
+//! from the reviewed played runs of [`PLAYED`]: over the whole movie, by the stretches being
+//! worked and by the plan's rungs.
 //!
 //! A lock row's cut c is movie frame f + c, f its seed's movie frame, or 0 for a row from
 //! power-on, so a row's cut 0 is the frame after the previous row's last cut. A run seeded at
 //! frame s that held h cuts holds frames s + 1 through s + h. The milestone's frames are 1
 //! through the frame of the seed that ends it; frame 0 is power-on.
+
+mod stretches;
 
 use std::fmt::Write as _;
 use std::path::Path;
@@ -292,22 +295,22 @@ fn frame(value: u64) -> String {
     usize::try_from(value).map_or_else(|_| value.to_string(), grouped)
 }
 
-/// The cells of a progress bar: [`BAR`] wide in a monospace font, whatever the count.
+/// The cells of a headline bar: [`BAR`] wide in a monospace font, whatever the count.
 const BAR: u64 = 40;
 
-/// `count` of `total` as a bar of [`BAR`] cells, filled ones first, rounded down: only the whole
-/// total fills them all, and a count above none fills at least one, so neither end is overstated.
-fn bar(count: u64, total: u64) -> String {
+/// `count` of `total` as a bar of `cells`, filled ones first, rounded down: only the whole total
+/// fills them all, and a count above none fills at least one, so neither end is overstated.
+fn bar(count: u64, total: u64, cells: u64) -> String {
     let filled = if count == 0 {
         0
     } else {
         count
             .min(total)
-            .saturating_mul(BAR)
+            .saturating_mul(cells)
             .checked_div(total)
-            .map_or(0, |cells| cells.max(1))
+            .map_or(0, |filled| filled.max(1))
     };
-    (0..BAR)
+    (0..cells)
         .map(|cell| if cell < filled { '█' } else { '░' })
         .collect()
 }
@@ -325,7 +328,7 @@ fn bars(figures: &[(&str, u64)], total: u64) -> String {
         let _ = writeln!(
             out,
             "{name:<label$}  {}  {:>width$} of {of}  {:>6}",
-            bar(*count, total),
+            bar(*count, total, BAR),
             frame(*count),
             percent(*count, total),
             width = of.len()
@@ -398,7 +401,21 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
             run.start
         );
     }
-    out.push_str("\n| Stretch | Movie frames | Frames that pass |\n| --- | --- | ---: |\n");
+    out.push_str(
+        "\n### By stretch\n\nThe movie in the stretches being worked, in the order it plays; the \
+         first not yet whole is next.\n\n",
+    );
+    let stretches = stretches::stretches(
+        &read(&root.join(stretches::STRETCHES))?,
+        &milestone.movie,
+        total,
+    )?;
+    out.push_str(&stretches::table(&stretches, &runs));
+    out.push_str(
+        "\n### By rung\n\nThe plan's ladder of shorter stretches toward the milestone \
+         ([domains.md §4](docs/architecture/domains.md#4-order)).\n\n| Rung | Movie frames | \
+         Frames that pass |\n| --- | --- | ---: |\n",
+    );
     for rung in plan.rungs() {
         let after = frame_at(root, seed(&rung.starts)?)?;
         let through = frame_at(root, seed(&rung.ends)?)?;
@@ -422,7 +439,9 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{FromStart, PLAYED, Run, Stop, bar, bars, from_start, listed, passing, percent};
+    use super::{
+        BAR, FromStart, PLAYED, Run, Stop, bar, bars, from_start, listed, passing, percent,
+    };
 
     /// A run seeded at movie frame `seed` that held `held` frames.
     fn run(seed: u64, held: u64, power_on: bool) -> Run {
@@ -501,16 +520,16 @@ mod tests {
     #[test]
     fn a_bar_fills_its_share_of_the_total() {
         let filled = |bar: &str| bar.chars().filter(|&cell| cell == '█').count();
-        let empty = bar(0, 15_196);
+        let empty = bar(0, 15_196, BAR);
         assert_eq!((filled(&empty), empty.chars().count()), (0, 40));
         // 2,136 of 15,196 is 5.6 cells, rounded down.
-        assert_eq!(filled(&bar(2_136, 15_196)), 5);
-        assert!(bar(2_136, 15_196).starts_with("█████░"));
+        assert_eq!(filled(&bar(2_136, 15_196, BAR)), 5);
+        assert!(bar(2_136, 15_196, BAR).starts_with("█████░"));
         // One frame shows; one frame short of the whole doesn't fill the bar.
-        assert_eq!(filled(&bar(1, 15_196)), 1);
-        assert_eq!(filled(&bar(15_195, 15_196)), 39);
-        assert_eq!(bar(15_196, 15_196), "█".repeat(40));
-        assert_eq!(filled(&bar(0, 0)), 0);
+        assert_eq!(filled(&bar(1, 15_196, BAR)), 1);
+        assert_eq!(filled(&bar(15_195, 15_196, BAR)), 39);
+        assert_eq!(bar(15_196, 15_196, BAR), "█".repeat(40));
+        assert_eq!(filled(&bar(0, 0, BAR)), 0);
     }
 
     #[test]
@@ -520,8 +539,8 @@ mod tests {
             format!(
                 "```text\nPassing     {}   2,136 of 15,196   14.1%\nFrom start  {}       0 of \
                  15,196    0.0%\n```\n",
-                bar(2_136, 15_196),
-                bar(0, 15_196)
+                bar(2_136, 15_196, BAR),
+                bar(0, 15_196, BAR)
             )
         );
     }

@@ -1,0 +1,63 @@
+# The milestone's movie in the stretches being worked, in movie order: the README gives each its
+# frames that pass, collapses a stretch whose every frame passes, and marks the first one that
+# doesn't as next, with its work issue (verify::report::readme). The stretches cover the
+# milestone's frames back to back, frame 1 to the frame of the seed that ends it, and the report
+# fails when they leave a gap or overlap. Adding a scoped piece of the movie is splitting a row.
+#
+# [[stretch]]: `name` what the player sees, as the README says it; `frames` its first and last
+# movie frame as the README counts them, frame f being the cut compared once the movie's frame
+# before it has played, so frame 0 is power-on and docs/architecture/domains.md §4's frames,
+# counted as the frames played, are one less; `issue` the work issue that plays it.
+
+movie = "any"
+
+[[stretch]]
+name = "Boot"
+frames = [1, 271]
+issue = 752
+
+[[stretch]]
+name = "The title and menus"
+frames = [272, 568]
+issue = 752
+
+# From seed any-opening:1.
+[[stretch]]
+name = "The intro"
+frames = [569, 7512]
+issue = 756
+
+# From seed any-opening:5.
+[[stretch]]
+name = "The flight to Ceres"
+frames = [7513, 8315]
+issue = 756
+
+# From seed any-opening:6.
+[[stretch]]
+name = "Her arrival"
+frames = [8316, 8538]
+issue = 756
+
+# From seed any-boundary:1.
+[[stretch]]
+name = "Rooms 1 to 5"
+frames = [8539, 10162]
+issue = 748
+
+# From seed any-boundary:6: Ridley waking and his fight, until the escape's timer starts.
+[[stretch]]
+name = "Ridley's room"
+frames = [10163, 11772]
+issue = 753
+
+[[stretch]]
+name = "The escape"
+frames = [11773, 13236]
+issue = 757
+
+# Through seed any-opening:7, the milestone's end.
+[[stretch]]
+name = "The explosion and the flight to Zebes"
+frames = [13237, 15196]
+issue = 757

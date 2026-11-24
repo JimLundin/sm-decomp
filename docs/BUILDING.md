@@ -67,8 +67,10 @@ writes the whole `README.md`. It states the project's thesis and its progress in
 milestone's movie, as a bar and a count for the frames that pass and those continuous from
 power-on: the frames the reviewed played runs of
 [`scenarios/replay/played.toml`](../scenarios/replay/played.toml) hold, over the milestone and
-rungs of [`docs/architecture/domains.toml`](architecture/domains.toml). Its tests hold each listed
-run to the lock; the root changes a run there when a reviewed played run changes it.
+rungs of [`docs/architecture/domains.toml`](architecture/domains.toml) and the stretches being
+worked of [`scenarios/replay/stretches.toml`](../scenarios/replay/stretches.toml), the first not
+yet whole marked next. Its tests hold each listed run to the lock and the stretches to the
+milestone's frames; the root changes a run there when a reviewed played run changes it.
 `tools/check_readme.sh` in Quality, and verify's lib tests, which `tools/lane/gate.sh` runs when
 the README's inputs change, fail when the README differs from what the tree generates.
 
