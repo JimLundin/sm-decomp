@@ -66,7 +66,9 @@ class Completion(unittest.TestCase):
 
     def test_trailing_output_waits_for_inherited_writer(self):
         trailing = '{"type":"assistant"}\n{"subtype":"success","type":"result"}'
-        status, stream, _, elapsed = self.run_cli(self.descendant(trailing, 0.3), timeout=1)
+        # The writer's exit ends the wait, so a long deadline costs nothing; beside the gate's other
+        # checks the writer's own start can take most of a second.
+        status, stream, _, elapsed = self.run_cli(self.descendant(trailing, 0.3), timeout=10)
         self.assertEqual(status, 0)
         self.assertIn(trailing.encode(), stream.replace(b"\r\n", b"\n"))
         self.assertGreaterEqual(elapsed, 0.3)
@@ -155,7 +157,8 @@ def launch(root, session=None):
     bash = shutil.which("bash")
     if os.name == "nt":
         bash = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe")
-    # A hang guard: a launch takes seconds alone but far longer beside a gate's builds.
+    # A hang guard: a launch takes about 8 s alone and up to 40 s beside the gate's other checks, so
+    # this allows over four times the slowest seen.
     return subprocess.run([bash, str(tools / "launch.sh"), str(export),
                            str(root / "brief"), str(root / "transcript")],
                           env=env, capture_output=True, timeout=180)

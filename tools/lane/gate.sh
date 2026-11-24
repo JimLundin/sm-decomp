@@ -83,6 +83,8 @@ else
 fi
 start crate-rules bash tools/check_crate_rules.sh
 # The self-tests of the clean-room and lane tools, only for what this branch changes since main.
+# They run beside the builds, not after them: most of their load is their own (the import test's
+# cold build), so waiting for the builds only adds the builds' time; their timeouts allow for it.
 CARGO="$R/cargo" start self-tests bash tools/lane/self_tests.sh "$BASE"
 start doc-links sh tools/check_doc_links.sh
 # What verify's lib tests read: the README and the report it measures (the crates, the specs and
