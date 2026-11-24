@@ -511,53 +511,47 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
     }
 }
 
-/// The lock rows a run plays through: its own, then each row that continues it, opened as the
+/// The lock rows a run plays through: its own, then each row that continues it, reached as the
 /// run reaches it. A row continues another when both start from one capture's seeds, its own
 /// the next, so its cut 0 is the video frame after the other's last cut; the run's cuts count
 /// on through it.
-struct Rows<'a> {
+struct Chain<'a> {
     lock: &'a Lock,
-    cache: &'a Path,
-    /// Each row opened so far, with the run's cut its own cut 0 is.
-    opened: Vec<(u64, &'a Row, Cache)>,
+    /// Each row reached so far, with the run's cut its own cut 0 is.
+    reached: Vec<(u64, &'a Row)>,
 }
 
-impl<'a> Rows<'a> {
-    fn open(lock: &'a Lock, cache: &'a Path, row: &str) -> Result<Self, Outcome> {
+impl<'a> Chain<'a> {
+    fn new(lock: &'a Lock, row: &str) -> Result<Self, Outcome> {
         let row = lock
             .row(&RowId(row.to_owned()))
             .ok_or_else(|| data_failure(None, "played lock row"))?;
         Ok(Self {
             lock,
-            cache,
-            opened: vec![(0, row, Self::cache(cache, row)?)],
+            reached: vec![(0, row)],
         })
     }
 
-    fn cache(root: &Path, row: &Row) -> Result<Cache, Outcome> {
-        Cache::open(root, row).map_err(|_| data_failure(None, "record cache pins"))
-    }
-
-    /// The record at the run's `cut`, opening the rows that continue the run up to it.
-    fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
+    /// Which reached row holds the run's `cut`, by its place in the chain, and its own cut
+    /// there, reaching the rows that continue the run up to it.
+    fn place(&mut self, cut: u64) -> Result<(usize, u64), Outcome> {
         loop {
-            let (first, row, cache) = self
-                .opened
+            let place = self.reached.len().saturating_sub(1);
+            let &(first, row) = self
+                .reached
                 .last()
                 .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
             let next = first.saturating_add(row.frames.0);
             if cut < next {
-                let own = cut.checked_sub(*first);
-                return own.map_or_else(
-                    || Err(data_failure(Some(cut), "played rows")),
-                    |own| record(cache, own),
-                );
+                let own = cut
+                    .checked_sub(first)
+                    .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
+                return Ok((place, own));
             }
             let following = self
                 .following(row)
                 .ok_or_else(|| data_failure(Some(cut), "played row continuing the last row"))?;
-            self.opened
-                .push((next, following, Self::cache(self.cache, following)?));
+            self.reached.push((next, following));
         }
     }
 
@@ -570,6 +564,45 @@ impl<'a> Rows<'a> {
         self.lock.rows.iter().find(|candidate| {
             matches!(&candidate.start, Start::Seed { capture: own, index: at } if own == capture && *at == next)
         })
+    }
+}
+
+/// The records of a run's chain of rows, each row's cache opened as the run reaches it.
+struct Rows<'a> {
+    chain: Chain<'a>,
+    cache: &'a Path,
+    /// The caches of the rows reached, in the chain's order.
+    opened: Vec<Cache>,
+}
+
+impl<'a> Rows<'a> {
+    fn open(lock: &'a Lock, cache: &'a Path, row: &str) -> Result<Self, Outcome> {
+        Ok(Self {
+            chain: Chain::new(lock, row)?,
+            cache,
+            opened: Vec::new(),
+        })
+    }
+
+    /// The record at the run's `cut`.
+    fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
+        let (place, own) = self.chain.place(cut)?;
+        while self.opened.len() <= place {
+            let (_, row) = self
+                .chain
+                .reached
+                .get(self.opened.len())
+                .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
+            self.opened.push(
+                Cache::open(self.cache, row)
+                    .map_err(|_| data_failure(None, "record cache pins"))?,
+            );
+        }
+        let cache = self
+            .opened
+            .get(place)
+            .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
+        record(cache, own)
     }
 }
 
@@ -603,6 +636,11 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Ok(controller) => controller,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
+    // A seed that read the pad read the movie's: a stale or early pad is a harness fault.
+    if polled(&seed) && seed.pad.0 != controller.held {
+        let misaligned = data_failure(None, "played pad alignment");
+        return Ok(report(0, Stop::At(at(start, misaligned))));
+    }
     let mut held = 0;
     let mut previous = seed;
     for cut in start.saturating_add(1)..=end {
@@ -703,16 +741,6 @@ impl<'a> Run<'a> {
         if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
             return Err(data_failure(None, "played pad alignment"));
         }
-        if let Some(refused) = locked(&current.wram)? {
-            return Err(refused);
-        }
-        // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
-        if self.state.doors == Doors::Play && !finished(current) {
-            return Err(Outcome::Unsupported {
-                cut: None,
-                dependency: "lag cut in play (T1)".into(),
-            });
-        }
         // The room's geometry, its doors' cells and its camera screens are the seed room's;
         // no owner yet loads them for the room a passage brings her into.
         if self.entered && self.state.doors == Doors::Play {
@@ -720,6 +748,13 @@ impl<'a> Run<'a> {
                 cut: None,
                 dependency: "played room she enters: its geometry, door cells and camera screens"
                     .into(),
+            });
+        }
+        // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
+        if self.state.doors == Doors::Play && !finished(current) {
+            return Err(Outcome::Unsupported {
+                cut: None,
+                dependency: "lag cut in play (T1)".into(),
             });
         }
         let passing_before = matches!(self.state.doors, Doors::Passing(_));
@@ -920,6 +955,46 @@ mod tests {
         assert_ne!(
             run(Side::Left, Carry::CarriesOn),
             run(Side::Right, Carry::CarriesOn)
+        );
+    }
+
+    #[test]
+    fn a_run_reaches_the_rows_that_continue_it_and_counts_its_cuts_on_through_them() {
+        use crate::lock::{Lock, RowId};
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../scenarios/locks/lsnes.toml"
+        );
+        let lock = Lock::parse(&std::fs::read_to_string(path).unwrap()).unwrap();
+        let frames = |id: &str| lock.row(&RowId(id.into())).unwrap().frames.0;
+        let first = frames("chain-any-0003-DFD7");
+        let second = frames("chain-any-0004-E021");
+        let mut chain = super::Chain::new(&lock, "chain-any-0003-DFD7").unwrap();
+        assert_eq!(chain.place(0).unwrap(), (0, 0));
+        assert_eq!(chain.place(first - 1).unwrap(), (0, first - 1));
+        assert_eq!(
+            chain.reached.len(),
+            1,
+            "a row is reached only when the run reaches it"
+        );
+        assert_eq!(chain.place(first).unwrap(), (1, 0));
+        assert_eq!(chain.place(first + second + 2).unwrap(), (2, 2));
+        let ids: Vec<_> = chain
+            .reached
+            .iter()
+            .map(|(at, row)| (*at, row.id.0.as_str()))
+            .collect();
+        assert_eq!(
+            ids,
+            [
+                (0, "chain-any-0003-DFD7"),
+                (first, "chain-any-0004-E021"),
+                (first + second, "chain-any-0005-E06B"),
+            ]
+        );
+        assert!(
+            chain.place(u64::MAX - 1).is_err(),
+            "no row continues the capture's last"
         );
     }
 

@@ -48,7 +48,10 @@ sprites' and the flashing enemies' palettes, and the Ceres doors' colour set for
 stage. It also shows her shots' palette for the beams she has switched on at once. Each later
 cut's only new input is the movie's pad from the preceding vblank. The controller starts as the
 seed leaves it, with the game's last read and the buttons that went down at it, so a button
-held through the seed is not pressed again on the first cut. The run compares those
+held through the seed is not pressed again on the first cut. Her kept action, which the
+record keeps as a movement type, is decoded as the one action her own poses (the map's) of
+that type share, and refused where they share none; poses outside her map are not counted, a
+limit of the decode, though the kept action is carried and no frame these runs play reads it. The run compares those
 owners with the record at every NMI return and stops at the first difference or the first
 unsupported pose or content. Room facts with no selected producer yet are read once from the
 seed and held; `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model
@@ -85,10 +88,11 @@ the slide's end does that. Its first frame is the earliest such frame. The colou
 compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. The
 game's frame counter, and so her parity, counts each NMI that reads the pad. A lag cut in play
 is still a named stop: the M0 row has none, so no record yet shows how it plays. So is a seed
-in, or a cut entering, the lock in which the game holds her while room 1's elevator pad lowers
-her on arrival: her moves, her clip and her pose input don't run, and the lock and the pad's
-carry belong to the pad and arrival owners (domains B8 and F4), which aren't in the loop.
-`chain-any-0001-DF45` is refused at its seed for it.
+in the lock in which the game holds her while room 1's elevator pad lowers her on arrival: her
+moves, her clip and her pose input don't run, and the lock and the pad's carry belong to the pad
+and arrival owners (domains B8 and F4), which aren't in the loop. `chain-any-0001-DF45` is
+refused at its seed for it. Only the seed is read for the lock: a later cut entering it shows
+as the difference it makes.
 
 ```sh
 $TOOLS replay played chain-any-0003-DFD7 0 344 \
