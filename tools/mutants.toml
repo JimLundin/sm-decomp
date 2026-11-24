@@ -305,6 +305,16 @@ cut = 2
 field = "played pad alignment"
 
 [[fault]]
+name = "played-seed-buttons-pressed"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "pressed: word(wram, source::JOYPAD1_NEWKEYS)?,"
+after = "pressed: word(wram, source::JOYPAD1_LASTKEYS)?,"
+case = "played chain-any-0003-DFD7 16 41"
+cut = 17
+field = "movement.jump-held"
+
+[[fault]]
 name = "played-camera-state-held"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"

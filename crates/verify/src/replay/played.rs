@@ -91,6 +91,15 @@ struct Controller {
 }
 
 impl Controller {
+    /// The controller as the seed leaves it: the game's own last read and the buttons that
+    /// went down at it. A button held through the seed went down before it, not on cut 1.
+    fn seeded(wram: &[u8]) -> Result<Self, Outcome> {
+        Ok(Self {
+            held: word(wram, source::JOYPAD1_LASTKEYS)?,
+            pressed: word(wram, source::JOYPAD1_NEWKEYS)?,
+        })
+    }
+
     /// A polling NMI latches the new pad; a lag NMI leaves the previous read in place.
     const fn read(self, pad: u16, polled: bool) -> Self {
         if polled {
@@ -504,7 +513,10 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Ok(run) => run,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
-    let mut controller = Controller::default().read(seed.pad.0, polled(&seed));
+    let mut controller = match Controller::seeded(&seed.wram) {
+        Ok(controller) => controller,
+        Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
+    };
     let mut held = 0;
     let mut previous = seed;
     for cut in start.saturating_add(1)..=end {
@@ -767,6 +779,16 @@ mod tests {
     }
 
     #[test]
+    fn a_button_held_through_the_seed_is_not_pressed_on_the_first_cut() {
+        let mut wram = vec![0; 0x100];
+        wram[0x8b..0x8d].copy_from_slice(&0x0180_u16.to_le_bytes());
+        wram[0x8f..0x91].copy_from_slice(&0x0100_u16.to_le_bytes());
+        let seeded = Controller::seeded(&wram).unwrap();
+        assert_eq!((seeded.held, seeded.pressed), (0x0180, 0x0100));
+        assert_eq!(seeded.read(0x0180, true).pressed, 0);
+    }
+
+    #[test]
     fn a_lag_nmi_keeps_the_previous_read() {
         let read = Controller::default().read(0x0080, true);
         assert_eq!(read.read(0x0100, false), read);
@@ -809,6 +831,7 @@ mod tests {
             ..Default::default()
         }
     }
+
 
     /// The M0 rung: Ceres's third room from its seed to the door, movie pads only.
     #[test]

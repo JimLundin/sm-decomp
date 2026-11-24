@@ -43,7 +43,9 @@ version her progress chooses. Fetching the tiles heads the colours for the tiles
 the contents heads the sprite rows for her suit's, the species' the version loads, the common
 sprites' and the flashing enemies' palettes, and the Ceres doors' colour set for the station's
 stage. It also shows her shots' palette for the beams she has switched on at once. Each later
-cut's only new input is the movie's pad from the preceding vblank. The run compares those
+cut's only new input is the movie's pad from the preceding vblank. The controller starts as the
+seed leaves it, with the game's last read and the buttons that went down at it, so a button
+held through the seed is not pressed again on the first cut. The run compares those
 owners with the record at every NMI return and stops at the first difference or the first
 unsupported pose or content. Room facts with no selected producer yet are read once from the
 seed and held; `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model
@@ -90,11 +92,12 @@ It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by c
 dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
-Sixteen planted faults in the fault matrix, those of the responsibility `played`, stop that
+Seventeen planted faults in the fault matrix, those of the responsibility `played`, stop that
 run at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
-`camera.view.x.fraction`. Of the Ceres doors' faults, their State held rather than carried
-differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
+`camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
+cut 17 in `movement.jump-held`, played from the M0 row's cut 16. Of the Ceres doors' faults,
+their State held rather than carried differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
 than before differs at cut 7 in `ceres.0.phase`.
 
 The M0 row never shows a door blocking her: a fault that drops the doors' boxes from what her
