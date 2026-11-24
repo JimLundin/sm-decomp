@@ -415,7 +415,12 @@ def check_domain_owners(root: Path, domain: str) -> None:
     spec = (root / "docs/behaviours" / f"{domain}.md").read_text(encoding="utf-8")
     text = (root / "scenarios/vectors" / f"{domain}.toml").read_text(encoding="utf-8")
     probe_test(root, domain, text)
-    check_owners(text, parameter_entries(spec), rule_owners(root, domain, bool(candidates(text))))
+    owners = rule_owners(root, domain, bool(candidates(text)))
+    try:
+        check_owners(text, parameter_entries(spec), owners)
+    except CannotProbe as error:
+        # A vector's id alone doesn't say which domain's owners lack the rule.
+        raise CannotProbe(f"{domain}: {error}") from None
     print(f"adjusted: {domain}: every adjusted vector's overrides have a reviewed owner")
 
 

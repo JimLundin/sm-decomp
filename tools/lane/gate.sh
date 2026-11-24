@@ -122,17 +122,19 @@ fi
 passed doc-links || fail "DOC LINKS FAIL"
 if ! passed verify-lib; then
   fail "VERIFY LIB FAIL"
-  grep -E '^test .* FAILED$|panicked at|^test_dll:' "$O/verify-lib.log" | head -20
+  # Each failing test, then where each panicked with the panic's first line.
+  { grep -E '^test .* FAILED$|^test_dll:' "$O/verify-lib.log"
+    grep -A1 'panicked at' "$O/verify-lib.log" | grep -v '^--$'; } | head -20
   ! grep -q 'committed_readme_is_current .* FAILED' "$O/verify-lib.log" ||
     echo "README STALE: run cargo run -p tools --bin tools -- report --write"
 fi
 if ! passed faults; then
   fail "FAULTS FAIL: tools/check_mutants.py plan"
-  tail -n 5 "$O/faults.log"
+  tail -n 1 "$O/faults.log"
 fi
 if ! passed owners; then
   fail "OWNERS FAIL: tools/cleanroom/adjusted_vectors_run.py --owners"
-  tail -n 5 "$O/owners.log"
+  grep '^adjusted_vectors_run: ' "$O/owners.log"
 fi
 for check in verify-lib faults owners; do
   ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since $BASE"
