@@ -44,7 +44,9 @@ def source_path(root: Path, source: str) -> Path:
     path = (root / relative).resolve()
     production = (root / "crates/game/src/production").resolve()
     adapters = {(root / "crates/game/src/production.rs").resolve(), (root / PLAYED_RUNNER).resolve()}
-    if path not in adapters and not path.is_relative_to(production):
+    # The played runner's owners are its own modules, in the folder named after it.
+    runner = (root / PLAYED_RUNNER).with_suffix("").resolve()
+    if path not in adapters and not path.is_relative_to(production) and not path.is_relative_to(runner):
         raise ValueError("fault source is outside production adapters and the played runner")
     if path.suffix != ".rs":
         raise ValueError("fault source must be Rust")

@@ -2688,7 +2688,7 @@ records (lock `scenarios/locks/lsnes.toml`, the CI cache's rows).
   disagree (5 rows, each from a ceiling frame). With it: 2,866 and 759 agree, 0 disagree.
 - RAM: `0A1C`/`0A1F` pose and type, `0A20`/`0A23` old, `0A24`/`0A27` old-old, `0A28` prospective
   pose. The replay seeds the spin's memory from `0A27` and does not compare it (`parts` in
-  `crates/verify/src/replay/played.rs`).
+  `crates/verify/src/replay/played/samus.rs`).
 - Integration note: a start in a spin has the spin chosen once (§1.2). The replay's seed
   (`crates/verify/src/replay/movement.rs`) gives a spin whose `0A27` is not 3 or 14h no memory,
   and the vector harness's start gives none to every start; both need "chosen once" for a start

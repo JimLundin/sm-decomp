@@ -11,26 +11,38 @@
 //!
 //! The comparison is at frame cuts (decision 1): the selected owners' State at each NMI
 //! return. Intra-frame bus timing is not compared here.
+//!
+//! This file holds the run and the order in which the owners' fields are compared, which is
+//! the order a difference is reported in. Each owner's seed, record reading and compared fields
+//! live in its own module: `samus`, `passage`, `colours`, `station`, `health`, `hud` and
+//! `frame`; the camera's are the camera replay's. `platform` holds the borrowed lag, pad and
+//! audio answers, `seed` the facts held from the seed, and `rows` the chain of rows a run
+//! plays through.
+
+mod colours;
+mod frame;
+mod health;
+mod hud;
+mod passage;
+mod platform;
+mod rows;
+mod samus;
+mod seed;
+mod station;
 
 use super::compare::{CompareFault, Observation, compare};
-use super::index::ObservationId;
-use super::readers::record;
 use super::result::Outcome;
-use super::{
-    Sources, appearance, camera, ceres, connected, data_failure, health_tail, hud, movement,
-    ridley, shaft,
-};
-use crate::cache::Cache;
-use crate::lock::{Lock, Row, RowId, Start};
+use super::{Sources, appearance, camera, connected, data_failure, health_tail, movement};
 use crate::source;
 use canonical::model::Model;
-use data::{assets::world, rom::Rom, room::RoomKey};
-use game::production::connected::inputs::Inputs;
-use game::production::{played, room_loading};
-use oracle_record::{Cut, FrameRecord, NmiKind};
+use data::rom::Rom;
+use game::production::played;
+use oracle_record::FrameRecord;
+use platform::{
+    Controller, fetch_under_way, fetching_contents, finished, music_ready, parity, polled,
+};
 use std::path::Path;
-use types::Parity;
-use world_doors::{ColourGroup, Doors, Fetching, Palette, Passage, Phase};
+use world_doors::Doors;
 
 /// Room facts taken from the seed and held, because no selected owner produces them yet.
 /// Each one is a missing owner; the list shrinks as owners join the played loop.
@@ -86,445 +98,68 @@ pub struct Report {
     pub stop: Stop,
 }
 
-/// The controller as the game sees it: the pad read by the last polling NMI and the
-/// buttons that went down at that read.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-struct Controller {
-    held: u16,
-    pressed: u16,
-}
-
-impl Controller {
-    /// The controller as the seed leaves it: the game's own last read and the buttons that
-    /// went down at it. A button held through the seed went down before it, not on cut 1.
-    fn seeded(wram: &[u8]) -> Result<Self, Outcome> {
-        Ok(Self {
-            held: word(wram, source::JOYPAD1_LASTKEYS)?,
-            pressed: word(wram, source::JOYPAD1_NEWKEYS)?,
-        })
-    }
-
-    /// A polling NMI latches the new pad; a lag NMI leaves the previous read in place.
-    const fn read(self, pad: u16, polled: bool) -> Self {
-        if polled {
-            Self {
-                held: pad,
-                pressed: pad & !self.held,
-            }
-        } else {
-            self
-        }
-    }
-}
-
-/// Her parity: that of the count of finished frames as the frame begins.
-const fn parity(counter: u16) -> Parity {
-    if counter & 1 == 0 {
-        Parity::Even
-    } else {
-        Parity::Odd
-    }
-}
-
-const fn polled(record: &FrameRecord) -> bool {
-    matches!(record.cut, Cut::NmiReturn(nmi) if nmi.polled)
-}
-
-/// The borrowed lag: the NMI found the frame's work finished, waiting for it. A lag NMI finds
-/// the work part-done, whether or not it reads the pad.
-const fn finished(record: &FrameRecord) -> bool {
-    matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested))
-}
-
-/// The borrowed lag of the contents' fetch: done on its first frame. The fetch's work waits on
-/// its own uploads, so every NMI through it is a lag NMI and none says when its colours were
-/// set; the record shows them set within the slide, and the visor lit as the slide ends, which
-/// only a fetch done before the slide's end gives. Its first frame is the earliest such.
-const fn fetching_contents(doors: Doors) -> bool {
-    matches!(
-        doors,
-        Doors::Passing(Passage {
-            phase: Phase::Arriving {
-                fetching: Fetching::Contents,
-                ..
-            },
-            ..
-        })
-    )
-}
-
-/// The contents' fetch under way: from its first frame until the slide ends, the frame of work
-/// is held, so every NMI through it finds the fetch part-done.
-const fn fetch_under_way(doors: Doors) -> bool {
-    matches!(
-        doors,
-        Doors::Passing(Passage {
-            phase: Phase::Arriving {
-                fetching: Fetching::Contents | Fetching::Done,
-                ..
-            },
-            ..
-        })
-    )
-}
-
-/// The music queue's timers, its start index and the music timer.
-const MUSIC_TIMERS: usize = 0x0629;
-const MUSIC_QUEUE_START: source::WramWord = source::WramWord {
-    name: "MUSIC_QUEUE_START",
-    offset: 0x063B,
-};
-const MUSIC_TIMER: source::WramWord = source::WramWord {
-    name: "MUSIC_TIMER",
-    offset: 0x063F,
-};
-/// The entries the music queue holds.
-const MUSIC_ENTRIES: usize = 8;
-
-/// Audio's answer, borrowed: no track waits in the queue of tracks as the frame of work begins.
-/// The main loop's start steps the queue once: with the music timer at 1 the entry at the start
-/// index leaves; the music is ready when every entry's timer is then 0.
-fn music_ready(wram: &[u8]) -> Result<bool, Outcome> {
-    let bad = || data_failure(None, "played music queue");
-    let mut timers = wram
-        .get(MUSIC_TIMERS..)
-        .and_then(|queue| queue.as_chunks::<2>().0.get(..MUSIC_ENTRIES))
-        .ok_or_else(bad)?
-        .iter()
-        .map(|word| u16::from_le_bytes(*word))
-        .collect::<Vec<_>>();
-    if word(wram, MUSIC_TIMER)? == 1 {
-        let start = usize::from(word(wram, MUSIC_QUEUE_START)? / 2) % MUSIC_ENTRIES;
-        if let Some(leaving) = timers.get_mut(start) {
-            *leaving = 0;
-        }
-    }
-    Ok(timers.iter().all(|&timer| timer == 0))
-}
-
 fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
     at.read(wram).map_err(|_| data_failure(None, at.name))
 }
 
-/// Seed-held room facts and the seed's frame counter.
-struct Room {
-    inputs: Inputs,
-    timer_running: bool,
-    /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
-    sounds_sent: bool,
-    progress: run_progress::Progress,
-    ceres: boss_ceres_ridley::Stage,
-    /// The HUD's neighbours outside the loop.
-    hud: HudHeld,
-    /// Where her room sits on her map, and the area it is in.
-    map: (interface_hud::Room, data::room::Area),
-}
-
-/// The HUD's inputs that no owner in the loop produces.
-struct HudHeld {
-    bindings: hud::Bindings,
-    stock_at_start: interface_hud::StockAtStart,
-    status: interface_hud::Status,
-    map_collected: bool,
-}
-
-/// The facts held from the seed, and what play reads of the seed's room: its geometry and
-/// camera room as the seed holds them, and its doors by the seed's door cells.
-fn room(
-    seed: &[u8],
-    content: &connected::Content,
-    world: &world::World,
-) -> Result<(Room, played::Room), Outcome> {
-    let borrowed = movement::borrowed(seed, seed, &content.movement)?;
-    if borrowed.cinematic || borrowed.elevator || hud::time_stopped(seed)? {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "played seed outside ordinary play".into(),
-        });
-    }
-    let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
-    let (doorways, map) = doorways(seed, world)?;
-    let played = played::Room {
-        geometry: inputs.geometry.clone(),
-        doorways,
-        camera: inputs.camera.clone(),
-    };
-    let held = Room {
-        sounds_sent: inputs.sounds_waiting.count() == 0,
-        inputs,
-        map,
-        hud: HudHeld {
-            bindings: hud::bindings(seed)?,
-            stock_at_start: hud::stock_at_start(seed)?,
-            status: hud::status(seed)?,
-            map_collected: hud::map_collected(seed)?,
-        },
-        timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
-        progress: super::progress::seed(seed)?,
-        ceres: match word(seed, source::CERES_STATUS)? {
-            0 => boss_ceres_ridley::Stage::Calm,
-            1 => boss_ceres_ridley::Stage::Getaway,
-            _ => {
-                return Err(Outcome::Unsupported {
-                    cut: None,
-                    dependency: "played seed in the Ceres escape".into(),
-                });
-            }
-        },
-    };
-    Ok((held, played))
-}
-
-type Doorways = (
-    Vec<played::Doorway>,
-    (interface_hud::Room, data::room::Area),
-);
-
-/// The seed room's doors to other rooms, by the seed's door cells, and where the room sits on
-/// her map, from the imported world.
-fn doorways(seed: &[u8], world: &world::World) -> Result<Doorways, Outcome> {
-    let bad = || data_failure(None, "played room doors");
-    let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
-        .ok_or_else(bad)?;
-    let room = world.room(id).ok_or_else(bad)?;
-    let doorways =
-        room_loading::doorways(world, room, movement::door_cells(seed)?).map_err(|_| bad())?;
-    Ok((doorways, (room_loading::map_room(room), room.place.area)))
-}
-
-/// The rooms the engine loads, their tilesets, the sprites' colours and the slopes, imported
-/// from the player's ROM.
-fn rooms(image: &Rom) -> Result<room_loading::Rooms, Outcome> {
-    let bad = || data_failure(None, "played rooms import");
-    let world = import::world::import(image.lorom(), &import::world::LOADED).map_err(|_| bad())?;
-    let tilesets = import::tileset::import(image.lorom(), &world).map_err(|_| bad())?;
-    Ok(room_loading::Rooms {
-        world,
-        tilesets,
-        actors: import::actors::import(image.lorom()).map_err(|_| bad())?,
-        samus: import::samus::palettes::import(image.lorom()).map_err(|_| bad())?,
-        slopes: data::level::slope::Slopes::load(image.lorom()).map_err(|_| bad())?,
-    })
-}
-
+/// The owners' fields as the record at `cut` holds them, in the order they are compared.
 fn expected(
     record: &FrameRecord,
     content: &appearance::Content,
-    hud: &hud::Content,
+    hud: &super::hud::Content,
     hud_settled: bool,
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
     let wram = &record.wram;
-    let seeded = movement::seed(wram)?;
-    let mut fields = parts(&seeded);
-    fields.extend(movement::expected(
-        wram,
-        &[ObservationId::PositionX, ObservationId::PositionY],
-        row,
-        cut,
-    )?);
-    let (state, playing) = appearance::animation_owner(wram, content)?;
-    fields.extend(appearance::initial(state, content));
-    fields.push(connected::playing_observation(playing));
+    let finished = finished(record);
+    let mut fields = samus::expected(wram, content, row, cut)?;
     fields.extend(camera::expected(wram)?);
-    let passing = match word(wram, source::GAME_STATE)? {
-        PLAY => false,
-        TOUCHED | LOADING | ARRIVING => true,
-        _ => {
-            return Err(Outcome::Unsupported {
-                cut: None,
-                dependency: "played game state outside play and door passages".into(),
-            });
-        }
-    };
-    fields.push(passing_observation(passing));
+    let passing = passage::passing(wram)?;
+    fields.push(passage::observation(passing));
     // In play every draw is the loop's own, so a frame's draws are compared where it finished.
-    if finished(record) && !passing {
-        fields.push(random_observation(random(wram)?));
+    if finished && !passing {
+        fields.push(frame::random_observation(frame::random(wram)?));
     }
-    if finished(record) {
-        fields.extend(colour_observations(&Palette {
-            screen: colours(wram, SCREEN_COLOURS)?,
-            goal: colours(wram, GOAL_COLOURS)?,
-        }));
+    if finished {
+        fields.extend(colours::observations(&colours::palette(wram)?));
+        fields.extend(station::expected(wram)?);
     }
-    if finished(record) {
-        fields.extend(door_observations(
-            ceres::doors(wram)?
-                .into_iter()
-                .map(|slot| {
-                    let mut parts = ceres::expected(wram, slot)?;
-                    parts.push(ceres::drawn_with_ridley(wram, slot)?);
-                    Ok(parts)
-                })
-                .collect::<Result<_, _>>()?,
-        ));
-        fields.extend(ridley::observations(ridley::seed(wram)?.as_ref()));
-    }
-    fields.extend(shaft::observations(&shaft::pad_and_cover(wram)?));
-    fields.extend(health_parts(&health_tail::decode(wram, None)?));
+    fields.extend(station::pad_expected(wram)?);
+    fields.extend(health::parts(&health_tail::decode(wram, None)?));
     if hud_settled {
-        fields.extend(hud_parts(hud::expected(wram, hud)?));
+        fields.extend(hud::parts(super::hud::expected(wram, hud)?));
     }
-    fields.push(frame_count_observation(hud::frame_count(wram)?));
-    fields.push(finished_frames_observation(word(
-        wram,
-        source::NMI_FRAME_COUNTER_WORD,
-    )?));
+    fields.extend(frame::expected(wram)?);
     Ok(fields)
 }
 
-/// Health's State by part, so a difference names the part that differs.
-fn health_parts(health: &samus_health::State) -> [Observation; 6] {
-    [
-        ("health.energy.whole", health.energy.whole.get()),
-        ("health.energy.fraction", health.energy.fraction),
-        ("health.pending.whole", health.pending_loss.whole.get()),
-        ("health.pending.fraction", health.pending_loss.fraction),
-        (
-            "health.warning",
-            u16::from(health.warning == samus_health::Warning::On),
-        ),
-        ("health.protection", u16::from(health.protection.get())),
-    ]
-    .map(|(field, value)| Observation::quantity(field, i64::from(value)))
-}
-
-/// The room's Ceres doors by part, each named by its place in the room's order of its enemies,
-/// after how many there are, so a difference names the door and the part that differ.
-fn door_observations(doors: Vec<Vec<Observation>>) -> Vec<Observation> {
-    let count = i64::try_from(doors.len()).unwrap_or(i64::MAX);
-    let mut fields = vec![Observation::quantity("ceres.doors", count)];
-    for (place, parts) in doors.into_iter().enumerate() {
-        fields.extend(parts.into_iter().map(|part| Observation {
-            field: part.field.replacen("ceres.", &format!("ceres.{place}."), 1),
-            bytes: part.bytes,
-        }));
+/// The owners' fields as the played State holds them.
+fn actual(
+    state: &played::State,
+    content: &appearance::Content,
+    hud: &super::hud::Content,
+    finished: bool,
+    hud_settled: bool,
+) -> Result<Vec<Observation>, Outcome> {
+    let mut fields = samus::actual(&state.samus, content);
+    fields.extend(camera::initial(&state.camera.0));
+    fields.push(passage::observation(matches!(
+        state.passage.doors,
+        Doors::Passing(_)
+    )));
+    fields.push(frame::random_observation(state.frame.random));
+    if finished {
+        fields.extend(colours::observations(&state.palette));
+        fields.extend(station::actual(&state.station));
     }
-    fields
-}
-
-/// The seed room's Ceres doors, decoded once from the seed record. Her motion meets each one
-/// as the loop carries it, so none may stand among the actor boxes held from the seed too.
-///
-/// Her motion meets the boxes in the original's slot order, and the first that blocks her
-/// decides the move. Production puts the doors' boxes after the held ones, since the held
-/// geometry keeps no slots, so a held box in a slot after a door's would be met out of order.
-fn seed_doors(seed: &[u8]) -> Result<Vec<boss_ceres_ridley::CeresDoor>, Outcome> {
-    let slots = ceres::doors(seed)?;
-    let roster = movement::roster_slots(seed)?;
-    let refuse = |dependency: &str| Outcome::Unsupported {
-        cut: None,
-        dependency: dependency.into(),
-    };
-    if slots.iter().any(|slot| roster.contains(&slot.index())) {
-        return Err(refuse(
-            "played seed holds a Ceres door among the held actor boxes",
-        ));
+    fields.extend(station::pad_actual(&state.station));
+    fields.extend(health::parts(&state.health.0));
+    if hud_settled {
+        fields.extend(hud::parts(super::hud::initial(&state.hud.0, hud)?));
     }
-    let first_door = slots.iter().map(|slot| slot.index()).min();
-    if first_door.is_some_and(|door| roster.iter().any(|&held| held > door)) {
-        return Err(refuse(
-            "played seed holds an actor box in a slot after a Ceres door's",
-        ));
-    }
-    slots
-        .into_iter()
-        .map(|slot| ceres::seed(seed, slot))
-        .collect()
-}
-
-/// The mini-map's window: rows 0 to 2, columns 26 to 30 of the HUD's 32 columns.
-const MAP_WINDOW: core::ops::RangeInclusive<usize> = 26..=30;
-const HUD_COLUMNS: usize = 32;
-
-/// The HUD's observations with its cells split into the mini-map's window and the status bar,
-/// so a difference names the one that differs.
-fn hud_parts(fields: Vec<Observation>) -> Vec<Observation> {
-    let mut parts = Vec::with_capacity(fields.len().saturating_add(1));
-    for field in fields {
-        if field.field != "hud.grid" {
-            parts.push(field);
-            continue;
-        }
-        let (window, bar): (Vec<_>, Vec<_>) = field
-            .bytes
-            .as_chunks::<2>()
-            .0
-            .iter()
-            .enumerate()
-            .partition(|(cell, _)| MAP_WINDOW.contains(&(cell % HUD_COLUMNS)));
-        let bytes =
-            |cells: Vec<(usize, &[u8; 2])>| cells.into_iter().flat_map(|(_, cell)| *cell).collect();
-        parts.push(Observation {
-            field: "hud.map-window".into(),
-            bytes: bytes(window),
-        });
-        parts.push(Observation {
-            field: "hud.status-bar".into(),
-            bytes: bytes(bar),
-        });
-    }
-    parts
-}
-
-/// The game's states for play and the three stretches of a door passage.
-const PLAY: u16 = 8;
-const TOUCHED: u16 = 9;
-const LOADING: u16 = 10;
-const ARRIVING: u16 = 11;
-/// The screen's colours as they stand, and the colours a fade heads for.
-const SCREEN_COLOURS: usize = 0xc000;
-const GOAL_COLOURS: usize = 0xc200;
-
-/// The game's count of finished frames, which the HUD reads as the next frame begins.
-fn frame_count_observation(frame: interface_hud::FrameCount) -> Observation {
-    Observation::quantity("frame-count", i64::from(frame.0))
-}
-
-/// The count of finished frames in sixteen bits, which nothing restarts.
-fn finished_frames_observation(count: u16) -> Observation {
-    Observation::quantity("finished-frames", i64::from(count))
-}
-
-/// The game's random number as the record holds it.
-fn random(wram: &[u8]) -> Result<types::RandomSequence, Outcome> {
-    Ok(types::RandomSequence {
-        number: types::RandomNumber(word(wram, source::RANDOM_NUMBER)?),
-    })
-}
-
-fn random_observation(random: types::RandomSequence) -> Observation {
-    Observation::quantity("random", i64::from(random.number.0))
-}
-
-fn passing_observation(passing: bool) -> Observation {
-    Observation {
-        field: "doors.passing".into(),
-        bytes: vec![u8::from(passing)],
-    }
-}
-
-/// The colours, compared only at a cut whose frame of work finished: a lag cut finds a fade's
-/// step part-done.
-fn colour_observations(palette: &Palette) -> [Observation; 2] {
-    let bytes = |colours: &[types::Colour]| {
-        colours
-            .iter()
-            .flat_map(|colour| colour.bits().to_le_bytes())
-            .collect()
-    };
-    [
-        Observation {
-            field: "doors.colours.screen".into(),
-            bytes: bytes(&palette.screen),
-        },
-        Observation {
-            field: "doors.colours.goal".into(),
-            bytes: bytes(&palette.goal),
-        },
-    ]
+    fields.extend(frame::actual(state.frame));
+    Ok(fields)
 }
 
 fn at(cut: u64, outcome: Outcome) -> Outcome {
@@ -548,101 +183,6 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
     }
 }
 
-/// The lock rows a run plays through: its own, then each row that continues it, reached as the
-/// run reaches it. A row continues another when both start from one capture's seeds, its own
-/// the next, so its cut 0 is the video frame after the other's last cut; the run's cuts count
-/// on through it.
-struct Chain<'a> {
-    lock: &'a Lock,
-    /// Each row reached so far, with the run's cut its own cut 0 is.
-    reached: Vec<(u64, &'a Row)>,
-}
-
-impl<'a> Chain<'a> {
-    fn new(lock: &'a Lock, row: &str) -> Result<Self, Outcome> {
-        let row = lock
-            .row(&RowId(row.to_owned()))
-            .ok_or_else(|| data_failure(None, "played lock row"))?;
-        Ok(Self {
-            lock,
-            reached: vec![(0, row)],
-        })
-    }
-
-    /// Which reached row holds the run's `cut`, by its place in the chain, and its own cut
-    /// there, reaching the rows that continue the run up to it.
-    fn place(&mut self, cut: u64) -> Result<(usize, u64), Outcome> {
-        loop {
-            let place = self.reached.len().saturating_sub(1);
-            let &(first, row) = self
-                .reached
-                .last()
-                .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
-            let next = first.saturating_add(row.frames.0);
-            if cut < next {
-                let own = cut
-                    .checked_sub(first)
-                    .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
-                return Ok((place, own));
-            }
-            let following = self
-                .following(row)
-                .ok_or_else(|| data_failure(Some(cut), "played row continuing the last row"))?;
-            self.reached.push((next, following));
-        }
-    }
-
-    /// The row whose seed is the next of `row`'s capture.
-    fn following(&self, row: &Row) -> Option<&'a Row> {
-        let Start::Seed { capture, index } = &row.start else {
-            return None;
-        };
-        let next = index.checked_add(1)?;
-        self.lock.rows.iter().find(|candidate| {
-            matches!(&candidate.start, Start::Seed { capture: own, index: at } if own == capture && *at == next)
-        })
-    }
-}
-
-/// The records of a run's chain of rows, each row's cache opened as the run reaches it.
-struct Rows<'a> {
-    chain: Chain<'a>,
-    cache: &'a Path,
-    /// The caches of the rows reached, in the chain's order.
-    opened: Vec<Cache>,
-}
-
-impl<'a> Rows<'a> {
-    fn open(lock: &'a Lock, cache: &'a Path, row: &str) -> Result<Self, Outcome> {
-        Ok(Self {
-            chain: Chain::new(lock, row)?,
-            cache,
-            opened: Vec::new(),
-        })
-    }
-
-    /// The record at the run's `cut`.
-    fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
-        let (place, own) = self.chain.place(cut)?;
-        while self.opened.len() <= place {
-            let (_, row) = self
-                .chain
-                .reached
-                .get(self.opened.len())
-                .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
-            self.opened.push(
-                Cache::open(self.cache, row)
-                    .map_err(|_| data_failure(None, "record cache pins"))?,
-            );
-        }
-        let cache = self
-            .opened
-            .get(place)
-            .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
-        record(cache, own)
-    }
-}
-
 /// Play `row` from its cut `start` through `end` inclusive with the movie's pads alone. Cuts
 /// past the row's last go on through the rows that continue it, without a new seed.
 ///
@@ -652,8 +192,9 @@ impl<'a> Rows<'a> {
 pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report, Outcome> {
     let text = std::fs::read_to_string(&sources.lock)
         .map_err(|_| data_failure(None, "record lock file"))?;
-    let lock = Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
-    let mut rows = Rows::open(&lock, &sources.cache, row)?;
+    let lock =
+        crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
+    let mut rows = rows::Rows::open(&lock, &sources.cache, row)?;
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
@@ -700,9 +241,9 @@ struct Run<'a> {
     state: played::State,
     played: played::Content,
     rules: played::Rules,
-    room: Room,
+    room: seed::Room,
     content: &'a connected::Content,
-    hud: hud::Content,
+    hud: super::hud::Content,
     row: &'a str,
 }
 
@@ -715,41 +256,32 @@ impl<'a> Run<'a> {
     ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played ROM image");
         let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
-        let rooms = rooms(&image)?;
-        let (room, seeded) = room(&seed.wram, content, &rooms.world)?;
-        let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
-        let hud = hud::Content::load(path)?;
+        let rooms = seed::rooms(&image)?;
+        let (room, seeded) = seed::room(&seed.wram, content, &rooms.world)?;
+        let samus = samus::seed(&seed.wram, &content.appearance)?;
+        let hud = super::hud::Content::load(path)?;
         let (map_room, area) = room.map;
-        let ceres_doors = seed_doors(&seed.wram)?;
+        let ceres_doors = station::seed_doors(&seed.wram)?;
         Ok(Self {
             state: played::State {
-                movement: Model(movement::seed(&seed.wram)?),
-                appearance: Model(appearance),
-                figure: Model(figure),
+                samus,
                 camera: Model(camera::seed(&seed.wram, &camera::Content)?),
-                doors: Doors::Play,
-                doorway: None,
-                palette: Palette {
-                    screen: colours(&seed.wram, SCREEN_COLOURS)?,
-                    goal: colours(&seed.wram, GOAL_COLOURS)?,
+                passage: played::passage::State {
+                    doors: Doors::Play,
+                    doorway: None,
+                    room: seeded,
+                    map_room,
                 },
+                palette: colours::palette(&seed.wram)?,
                 health: Model(health_tail::decode(&seed.wram, None)?),
-                hud: Model(hud::decode_state(&seed.wram)?),
-                map_room,
-                room: seeded,
-                ceres_doors,
-                frame: hud::frame_count(&seed.wram)?,
-                finished_frames: word(&seed.wram, source::NMI_FRAME_COUNTER_WORD)?,
-                pad_and_cover: shaft::pad_and_cover(&seed.wram)?,
-                shaft_overlay: ceres::shaft_overlay(&seed.wram)?,
-                ridley: ridley::seed(&seed.wram)?,
-                stage: room.ceres,
-                random: random(&seed.wram)?,
+                hud: Model(super::hud::decode_state(&seed.wram)?),
+                frame: frame::seed(&seed.wram)?,
+                station: station::seed(&seed.wram, ceres_doors, room.ceres)?,
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
-                colour_groups: groups(),
+                colour_groups: colours::groups(),
                 rooms,
                 hud: hud.pictures,
                 map: hud.map_of(area)?.clone(),
@@ -783,8 +315,9 @@ impl<'a> Run<'a> {
         if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
             return Err(data_failure(None, "played pad alignment"));
         }
+        let doors = self.state.passage.doors;
         // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
-        if self.state.doors == Doors::Play && !finished(current) {
+        if doors == Doors::Play && !finished(current) {
             return Err(Outcome::Unsupported {
                 cut: None,
                 dependency: "lag cut in play (T1)".into(),
@@ -793,15 +326,15 @@ impl<'a> Run<'a> {
         // A lag cut through the contents' fetch finds it part-done, and the HUD with it: Ridley's
         // placing blanks the mini-map within the fetch, which the run takes as done on its first
         // frame. At every other cut the HUD is as its frame left it.
-        let hud_settled = finished(current) || !fetch_under_way(self.state.doors);
+        let hud_settled = finished(current) || !fetch_under_way(doors);
         let mut inputs = self.room.inputs.clone();
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
-        inputs.parity = parity(self.state.finished_frames);
+        inputs.parity = parity(self.state.frame.finished_frames);
         let passing = played::Passing {
             // The borrowed lag: the last NMI found the frame's work finished, so the next began.
             work_begun: finished(previous),
-            work_done: finished(current) || fetching_contents(self.state.doors),
+            work_done: finished(current) || fetching_contents(doors),
             audio: played::PassageAudio {
                 sounds_sent: self.room.sounds_sent,
                 music_ready: music_ready(&previous.wram)?,
@@ -809,23 +342,12 @@ impl<'a> Run<'a> {
             timer_running: self.room.timer_running,
             progress: &self.room.progress,
             // The borrowed random number, only through a passage; in play the loop carries it.
-            random: match self.state.doors {
+            random: match doors {
                 Doors::Play => None,
-                Doors::Passing(_) => Some(random(&previous.wram)?),
+                Doors::Passing(_) => Some(frame::random(&previous.wram)?),
             },
         };
-        let held = &self.room.hud;
-        let status = held.status;
-        let hud_frame = played::HudFrame {
-            buttons: held.bindings.buttons(controller.pressed, controller.held),
-            stock_at_start: held.stock_at_start,
-            capacity: status.energy.capacity,
-            reserve: status.reserve,
-            ammunition: status.ammunition,
-            map_collected: held.map_collected,
-            // The HUD's frame of play is a frame of main gameplay.
-            countdown: hud::MAIN_GAMEPLAY_COUNTDOWN,
-        };
+        let hud_frame = hud::frame(&self.room.hud, controller);
         self.state
             .step(&inputs, &passing, &hud_frame, &self.played, &self.rules)
             .map_err(|fault| Outcome::Unsupported {
@@ -856,211 +378,8 @@ impl<'a> Run<'a> {
     }
 }
 
-/// The doors' colour groups, by colour index: which colours the passage lights, which belong
-/// to the HUD's icons, the escape timer and the visor, and the rest.
-fn groups() -> [ColourGroup; world_doors::COLOURS] {
-    std::array::from_fn(|index| match index {
-        9 | 10 | 13 | 14 | 17..=19 | 29 => ColourGroup::Lit,
-        20..=23 | 28 => ColourGroup::Icon,
-        209 | 210 | 212 | 221 => ColourGroup::Timer,
-        196 => ColourGroup::Visor,
-        _ => ColourGroup::Other,
-    })
-}
-
-/// The 256 colours at `at`, as the record holds them.
-fn colours(wram: &[u8], at: usize) -> Result<[types::Colour; world_doors::COLOURS], Outcome> {
-    let bad = || data_failure(None, "played colours observation");
-    let words = wram
-        .get(at..)
-        .and_then(|bank| bank.as_chunks::<2>().0.get(..world_doors::COLOURS))
-        .ok_or_else(bad)?;
-    let mut colours = [types::Colour::BLACK; world_doors::COLOURS];
-    for (colour, word) in colours.iter_mut().zip(words) {
-        *colour = types::Colour::new(u16::from_le_bytes(*word)).ok_or_else(bad)?;
-    }
-    Ok(colours)
-}
-
-/// Her movement State by part, so a difference names the part that differs; the encoding is
-/// only compared, never logged. Her choices of her pose are compared as `movement.choices`:
-/// `movement::seed` reads them from the record's old and old-old pose types, which the game
-/// shifts only on a frame that chooses.
-fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
-    let part = |field: &str, value: String| Observation {
-        field: field.into(),
-        bytes: value.into_bytes(),
-    };
-    vec![
-        part("movement.pose", format!("{:?}", samus.pose)),
-        part("movement.run", run(&samus.run)),
-        part("movement.vertical", format!("{:?}", samus.vertical)),
-        part("movement.seat", format!("{:?}", samus.seat)),
-        part("movement.choices", format!("{:?}", samus.choices)),
-        part("movement.jump-held", format!("{:?}", samus.jump_held)),
-        part("movement.position", format!("{:?}", samus.position)),
-    ]
-}
-
-/// Her run as the record states it. While she follows the pad the game keeps no way of its
-/// own, so the way her speed points is compared only while she carries on; a way that differs
-/// while she follows the pad reaches the compared position if it ever moves her.
-fn run(run: &samus_movement::Run) -> String {
-    let samus_movement::Run {
-        speed,
-        way,
-        carry,
-        dash,
-        dashing,
-    } = run;
-    let way = (*carry == samus_movement::Carry::CarriesOn).then_some(way);
-    format!("{speed:?} {way:?} {carry:?} {dash:?} {dashing:?}")
-}
-
-fn actual(
-    state: &played::State,
-    content: &appearance::Content,
-    hud: &hud::Content,
-    finished: bool,
-    hud_settled: bool,
-) -> Result<Vec<Observation>, Outcome> {
-    let samus = &state.movement.0;
-    let mut fields = parts(samus);
-    fields.extend([
-        Observation::quantity("movement.position.x", i64::from(samus.position.x.0)),
-        Observation::quantity("movement.position.y", i64::from(samus.position.y.0)),
-    ]);
-    fields.extend(appearance::actual(&state.appearance.0, content));
-    fields.push(connected::playing_observation(state.figure.0));
-    fields.extend(camera::initial(&state.camera.0));
-    fields.push(passing_observation(matches!(
-        state.doors,
-        Doors::Passing(_)
-    )));
-    fields.push(random_observation(state.random));
-    if finished {
-        fields.extend(colour_observations(&state.palette));
-    }
-    if finished {
-        fields.extend(door_observations(
-            state
-                .ceres_doors
-                .iter()
-                .map(|door| {
-                    let mut parts = ceres::initial(door);
-                    parts.push(ceres::drawn_with_ridley_observation(
-                        ceres::drawn_with_ridley_of(door),
-                    ));
-                    parts
-                })
-                .collect(),
-        ));
-        fields.extend(ridley::observations(state.ridley.as_ref()));
-    }
-
-    fields.extend(shaft::observations(&state.pad_and_cover));
-    fields.extend(health_parts(&state.health.0));
-    if hud_settled {
-        fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));
-    }
-    fields.push(frame_count_observation(state.frame));
-    fields.push(finished_frames_observation(state.finished_frames));
-    Ok(fields)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::Controller;
-
-    #[test]
-    fn a_polling_read_reports_only_buttons_that_went_down() {
-        let first = Controller::default().read(0x0180, true);
-        assert_eq!((first.held, first.pressed), (0x0180, 0x0180));
-        let second = first.read(0x8180, true);
-        assert_eq!((second.held, second.pressed), (0x8180, 0x8000));
-        let released = second.read(0x0100, true);
-        assert_eq!((released.held, released.pressed), (0x0100, 0));
-    }
-
-    #[test]
-    fn a_button_held_through_the_seed_is_not_pressed_on_the_first_cut() {
-        let mut wram = vec![0; 0x100];
-        wram[0x8b..0x8d].copy_from_slice(&0x0180_u16.to_le_bytes());
-        wram[0x8f..0x91].copy_from_slice(&0x0100_u16.to_le_bytes());
-        let seeded = Controller::seeded(&wram).unwrap();
-        assert_eq!((seeded.held, seeded.pressed), (0x0180, 0x0100));
-        assert_eq!(seeded.read(0x0180, true).pressed, 0);
-    }
-
-    #[test]
-    fn a_lag_nmi_keeps_the_previous_read() {
-        let read = Controller::default().read(0x0080, true);
-        assert_eq!(read.read(0x0100, false), read);
-    }
-
-    #[test]
-    fn her_way_is_compared_only_while_she_carries_on() {
-        use samus_movement::{Carry, Dashing, Run};
-        use types::{Side, ZERO};
-        let run = |way, carry| {
-            super::run(&Run {
-                speed: ZERO,
-                way,
-                carry,
-                dash: ZERO,
-                dashing: Dashing::Off,
-            })
-        };
-        assert_eq!(
-            run(Side::Left, Carry::FollowsPad),
-            run(Side::Right, Carry::FollowsPad)
-        );
-        assert_ne!(
-            run(Side::Left, Carry::CarriesOn),
-            run(Side::Right, Carry::CarriesOn)
-        );
-    }
-
-    #[test]
-    fn a_run_reaches_the_rows_that_continue_it_and_counts_its_cuts_on_through_them() {
-        use crate::lock::{Lock, RowId};
-        let path = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../scenarios/locks/lsnes.toml"
-        );
-        let lock = Lock::parse(&std::fs::read_to_string(path).unwrap()).unwrap();
-        let frames = |id: &str| lock.row(&RowId(id.into())).unwrap().frames.0;
-        let first = frames("chain-any-0003-DFD7");
-        let second = frames("chain-any-0004-E021");
-        let mut chain = super::Chain::new(&lock, "chain-any-0003-DFD7").unwrap();
-        assert_eq!(chain.place(0).unwrap(), (0, 0));
-        assert_eq!(chain.place(first - 1).unwrap(), (0, first - 1));
-        assert_eq!(
-            chain.reached.len(),
-            1,
-            "a row is reached only when the run reaches it"
-        );
-        assert_eq!(chain.place(first).unwrap(), (1, 0));
-        assert_eq!(chain.place(first + second + 2).unwrap(), (2, 2));
-        let ids: Vec<_> = chain
-            .reached
-            .iter()
-            .map(|(at, row)| (*at, row.id.0.as_str()))
-            .collect();
-        assert_eq!(
-            ids,
-            [
-                (0, "chain-any-0003-DFD7"),
-                (first, "chain-any-0004-E021"),
-                (first + second, "chain-any-0005-E06B"),
-            ]
-        );
-        assert!(
-            chain.place(u64::MAX - 1).is_err(),
-            "no row continues the capture's last"
-        );
-    }
-
     fn diagnostic(args: std::fmt::Arguments<'_>) {
         use std::io::Write as _;
         writeln!(std::io::stdout().lock(), "{args}").unwrap();

@@ -215,9 +215,11 @@ field = "audio.reply0"
 
     def test_only_production_adapters_are_allowed(self) -> None:
         root = Path(__file__).resolve().parents[1]
-        for name in ["crates/game/src/production.rs", "crates/game/src/production/movement.rs"]:
+        for name in ["crates/game/src/production.rs", "crates/game/src/production/movement.rs",
+                     PLAYED_RUNNER, "crates/verify/src/replay/played/platform.rs"]:
             self.assertEqual(source_path(root, name), (root / name).resolve())
         for name in ["crates/clean/types/src/lib.rs", "crates/game/src/tick.rs",
+                     "crates/verify/src/replay/hud.rs",
                      "crates/game/src/production_other/audio.rs", "crates/game/src/production/../production.rs"]:
             with self.assertRaises(ValueError):
                 source_path(root, name)

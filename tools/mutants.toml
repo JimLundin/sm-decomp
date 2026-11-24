@@ -308,7 +308,7 @@ field = "played pad alignment"
 [[fault]]
 name = "played-seed-buttons-pressed"
 responsibility = "played"
-file = "crates/verify/src/replay/played.rs"
+file = "crates/verify/src/replay/played/platform.rs"
 before = "pressed: word(wram, source::JOYPAD1_NEWKEYS)?,"
 after = "pressed: word(wram, source::JOYPAD1_LASTKEYS)?,"
 case = "played chain-any-0003-DFD7 16 41"
@@ -399,7 +399,7 @@ field = "doors.colours.goal"
 name = "played-contents-fetch-lag-read"
 responsibility = "played"
 file = "crates/verify/src/replay/played.rs"
-before = "work_done: finished(current) || fetching_contents(self.state.doors),"
+before = "work_done: finished(current) || fetching_contents(doors),"
 after = "work_done: finished(current),"
 case = "played chain-any-0003-DFD7 0 300"
 cut = 300
@@ -408,9 +408,9 @@ field = "doors.colours.screen"
 [[fault]]
 name = "played-health-tail-lands"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
-before = ".play_frame(samus_health::TailImpact::Absent, &rules.health);"
-after = ".play_frame(samus_health::TailImpact::EligibleCeresTail, &rules.health);"
+file = "crates/game/src/production/played/health.rs"
+before = ".play_frame(samus_health::TailImpact::Absent, &rules.health)"
+after = ".play_frame(samus_health::TailImpact::EligibleCeresTail, &rules.health)"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "health.energy.whole"
@@ -428,9 +428,9 @@ field = "hud.map-window"
 [[fault]]
 name = "played-hud-frame-count-late"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
-before = "frame: state.frame,"
-after = "frame: FrameCount(state.frame.0.wrapping_add(1)),"
+file = "crates/game/src/production/played/hud.rs"
+before = "frame: state.frame.count,"
+after = "frame: interface_hud::FrameCount(state.frame.count.0.wrapping_add(1)),"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "hud.map-window"
@@ -438,7 +438,7 @@ field = "hud.map-window"
 [[fault]]
 name = "played-hud-energy-not-health"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/hud.rs"
 before = "now: health.energy.whole.get(),"
 after = "now: health.energy.whole.get().wrapping_sub(1),"
 case = "played chain-any-0003-DFD7 0 41"
@@ -448,9 +448,11 @@ field = "hud.status-bar"
 [[fault]]
 name = "played-ceres-doors-held"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
-before = "self.ceres_doors = enemies.doors.iter().map(|run| run.door).collect();"
-after = "self.ceres_doors = self.ceres_doors.clone();"
+file = "crates/game/src/production/played/station.rs"
+before = '''fn ran(&mut self, enemies: &Enemies) {
+        self.doors = enemies.doors.iter().map(|run| run.door).collect();'''
+after = '''fn ran(&mut self, enemies: &Enemies) {
+        self.doors = self.doors.clone();'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "ceres.0.wait"
@@ -463,7 +465,7 @@ before = '''
         let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;'''
 after = '''
         let mut moved = self.clone();
-        moved.movement = Model(self.her_frame(inputs, content, rules)?.samus);
+        moved.samus.movement = Model(self.her_frame(inputs, content, rules)?.samus);
         let enemies = moved.enemies(false, random, passing, content, rules, &mut palette)?;'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
@@ -472,7 +474,7 @@ field = "ceres.0.phase"
 [[fault]]
 name = "played-frame-count-not-restarted"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/frame.rs"
 before = "Finishing::Restarts(_) => FrameCount(1),"
 after = "Finishing::Restarts(_) => FrameCount(frame.0.wrapping_add(1)),"
 case = "played chain-any-0003-DFD7 0 344"
@@ -482,7 +484,7 @@ field = "frame-count"
 [[fault]]
 name = "played-room-entered-keeps-the-last"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/passage.rs"
 before = "self.room = room;"
 after = "drop(room);"
 case = "played chain-any-0003-DFD7 0 786"
@@ -502,9 +504,9 @@ field = "movement.position"
 [[fault]]
 name = "played-beacon-reads-the-count-after-the-frame"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
-before = "shaft::lights(self.finished_frames, self.doors, self.stage, &rules.ceres)"
-after = "shaft::lights(self.finished_frames.wrapping_add(1), self.doors, self.stage, &rules.ceres)"
+file = "crates/game/src/production/played/station.rs"
+before = "self.frame.finished_frames,"
+after = "self.frame.finished_frames.wrapping_add(1),"
 case = "played chain-any-0001-DF45 0 41"
 cut = 7
 field = "doors.colours.screen"
@@ -512,9 +514,9 @@ field = "doors.colours.screen"
 [[fault]]
 name = "played-beacon-ignores-the-fade"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
-before = "shaft::lights(self.finished_frames, self.doors, self.stage, &rules.ceres)"
-after = "shaft::lights(self.finished_frames, Doors::Play, self.stage, &rules.ceres)"
+file = "crates/game/src/production/played/station.rs"
+before = "self.passage.doors,"
+after = "world_doors::Doors::Play,"
 case = "played chain-any-0001-DF45 0 300"
 cut = 257
 field = "doors.colours.screen"
@@ -522,7 +524,7 @@ field = "doors.colours.screen"
 [[fault]]
 name = "played-finished-frames-count-overruns"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/frame.rs"
 before = "Finishing::Overrun => count,"
 after = "Finishing::Overrun => count.wrapping_add(1),"
 case = "played chain-any-0001-DF45 0 300"
@@ -532,7 +534,7 @@ field = "finished-frames"
 [[fault]]
 name = "played-movement-choices-forgotten"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/samus.rs"
 before = "let outcome = samus"
 after = '''samus.choices = samus_movement::Choices::starting_in(samus.pose);
         let outcome = samus'''
@@ -583,7 +585,7 @@ field = "hud.explored"
 [[fault]]
 name = "played-baby-glow-skipped"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/station.rs"
 before = "if let Some(colours) = run.colours {"
 after = "if let Some(colours) = run.colours.filter(|_| false) {"
 case = "played chain-any-0006-E0B5 0 300"
@@ -593,7 +595,7 @@ field = "doors.colours.screen"
 [[fault]]
 name = "played-random-not-drawn"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
+file = "crates/game/src/production/played/frame.rs"
 before = "if passing.work_begun {"
 after = "if false {"
 case = "played chain-any-0006-E0B5 0 300"

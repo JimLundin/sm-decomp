@@ -1,14 +1,19 @@
 //! One whole frame of Samus, in any pose, or of a passage.
 //!
-//! A frame of play steps her health, the room's Ceres doors, her clip's look ahead, her moves,
-//! her animation, the camera following her, the HUD, then the doors to other rooms. While a
-//! passage is under way, the doors to other rooms step alone, the Ceres doors run on the frames
-//! the passage runs the enemies, and the HUD takes its step outside play.
+//! A frame of play steps her health, the room's enemies (the station's actors), her clip's look
+//! ahead and her moves, her animation, the camera following her, the HUD, then the doors to other
+//! rooms. While a passage is under way, the doors to other rooms step alone, the station's actors
+//! run on the frames the passage runs the enemies, and the HUD takes its step outside play.
 //!
-//! Each model is stepped once through its own whole-frame entry. Movement reports what animation
-//! reads "as her moves leave her, before the pose change", so stepping movement whole and then
-//! animation gives the values the original reads between them; no pause inside either model is
-//! needed. The frame commits every owner together or none.
+//! This file holds only that order. Each owner's State, its step and what it reads of the others
+//! live in its own module: [`samus`] her moves and animation, `camera` the camera, `health`
+//! and [`hud`] her energy and the HUD, [`passage`] her room, its doors to other rooms and the
+//! passage through them, [`station`] the Ceres station's doors, pad, lights and Ridley, and
+//! [`frame`] the counts of frames and the random number. The screen's colours are the doors
+//! model's [`Palette`], which the passage, the lights and the baby each set in turn.
+//!
+//! Each model is stepped once through its own whole-frame entry. The frame commits every owner
+//! together or none.
 //!
 //! A frame whose moves reach a door to a room plays out whole, and the passage starts on the
 //! next. While it runs, her motion, her animation and the camera don't: the passage moves her
@@ -16,62 +21,42 @@
 //! passage's calls is done, the room's loading loads its part of the next room; building it
 //! replaces her room: what her moves meet, its doors to other rooms and the camera's room.
 //!
-//! Health plays first. Her animation reads the energy the frame's tail hit leaves, before the
-//! frame's loss; no Ridley is in this loop, so that is the energy the frame starts with. The
-//! HUD plays after her moves, reading her position after them and the energy Health leaves.
+//! Health plays first. Her animation reads the energy the frame starts with; the HUD plays after
+//! her moves, reading her position after them and the energy Health leaves.
 //!
-//! The Ceres doors run before she moves, reading where she was at the end of the last frame;
-//! her motion meets the boxes of those that were solid as the frame began. Fetching the next
-//! room's contents lets the last room's doors go and places its own.
-//!
-//! In the Ceres shaft as she arrives, the elevator's pad holds her: while it does, her moves
-//! and her animation don't run, and the pad sets her height after her frame. The shaft's
-//! overlay, run with the room's enemies, steps the lights, whose beacon sets screen colours.
-//!
-//! In Ridley's room he runs first of the room's enemies, the baby in his hold, and the door of
-//! his room after him. Fetching his room's contents places him: the HUD meets a boss, the
-//! stage is calm and his room's colours are the fade's goal. The baby's colours go to the
-//! screen as it glows. Each frame of work begins by drawing the game's random number once
-//! (game-random's `AdvanceRandom`), which the baby and the doors read. State carries the number;
-//! the caller replaces it where the loop doesn't own every draw, as through a passage.
+//! The station's actors run before she moves, reading where she was at the end of the last
+//! frame; her motion meets the boxes of the Ceres doors that were solid as the frame began.
+//! While the elevator's pad holds her, her moves and her animation don't run, and the pad sets
+//! her height after her frame. Each frame of work begins by drawing the game's random number
+//! once.
 
-use super::animation::{self, AppearanceContent};
-use super::camera_semantic;
-use super::connected::inputs::{CameraInputs, Inputs, Lead, Screen};
+mod camera;
+pub mod frame;
+mod health;
+pub mod hud;
+pub mod passage;
+pub mod samus;
+pub mod station;
+
+pub use hud::HudFrame;
+pub use passage::{Doorway, PassageAudio, Passing, Room};
+pub use samus::FigurePin;
+pub(super) use samus::animation_inputs;
+
+use super::animation::AppearanceContent;
+use super::connected::inputs::Inputs;
 use super::content::MovementContent;
 use super::health_tail::HealthPin;
 use super::hud::HudPin;
-use super::ridley;
-use super::room_loading::{self, LoadFault, Rooms};
-use super::shaft::{self, LightsFault};
-use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
-use boss_ceres_ridley::{
-    CeresDoor, CeresRidley, Lights, PadAndCover, RidleyPhase, RidleyPlacing, RidleyRun, Stage,
-};
-use canonical::model::{Model, Pinned};
-use core::cell::Cell;
-use core::num::Wrapping;
-use interface_hud::{
-    Ammunition, CancelButton, Controls, CountdownRuns, Dropped, Energy, FrameCount, FrameInputs,
-    FrameOutputs, HerMap, HudPictures, MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve,
-    SelectButton, Status, StockAtStart,
-};
-use samus_appearance::{Ahead, Dash, Figure, MissingClip, MoveEvent};
-use samus_movement::{Dashing, StandingAnimation, WallTest};
-use types::{Action, Facing, Hitbox, Item, Pair, Parts, Pose, Set};
-use world_camera::{RememberedPosition, ViewPosition};
-use world_doors::{
-    Activity, Arrival, COLOURS, ColourGroup, Doors, Finishing, Palette, Passage, Phase, RoomCall,
-    Scene,
-};
-
-/// The figure she is drawn in as the frame starts.
-pub struct FigurePin;
-impl Pinned for FigurePin {
-    type State = Figure;
-    const NAME: &'static str = "production-played-figure";
-    const SHAPE: u64 = 0x5d1e_2c4a_93b0_7f16;
-}
+use super::room_loading::{LoadFault, Rooms};
+use super::shaft::LightsFault;
+use crate::state::owned::CameraPin;
+use boss_ceres_ridley::{Lights, RidleyPlacing, RidleyRun};
+use canonical::model::Model;
+use interface_hud::{FrameOutputs, HerMap, HudPictures};
+use samus_appearance::Figure;
+use types::{Item, Pose};
+use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, Scene};
 
 /// Imported pose bodies, cannon headings, clips, run paces and the HUD's colours.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -109,131 +94,28 @@ pub struct Rules {
     pub ceres: boss_ceres_ridley::Rules,
 }
 
-/// A door to another room, from the room's content: the cell she touches, the doorway it
-/// leads through, where she arrives, and whether the room she leaves or the next one keeps the
-/// items dark.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Doorway {
-    /// The door's cell.
-    pub cell: types::Cell,
-    /// The doorway she goes through, which names the next room.
-    pub through: data::id::DoorwayId,
-    /// Where the view and she arrive.
-    pub arrival: Arrival,
-    /// Either room keeps the items dark through the passage.
-    pub items_dark: bool,
-    /// Where the next room sits on her map, or `None` when it is in another area, whose map
-    /// this loop doesn't hold.
-    pub map_room: Option<interface_hud::Room>,
-}
-
-/// What play reads of the room she is in: what her moves meet, its doors to other rooms, and
-/// the camera's room. A passage's building of the next room replaces it.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Room {
-    /// The room's blocks and the boxes of its solid actors other than the Ceres doors.
-    pub geometry: super::world::MovementWorld,
-    /// Its doors to other rooms, by cell.
-    pub doorways: Vec<Doorway>,
-    /// Its screens, size, scrollers and the camera's lead.
-    pub camera: CameraInputs,
-}
-
-/// What a frame brings the doors from owners outside this loop.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Passing<'a> {
-    /// The platform's: a frame of work begins in this frame, the last one's work done.
-    pub work_begun: bool,
-    /// The platform's: the passage's work in progress is done by this frame's end.
-    pub work_done: bool,
-    /// Audio's answers.
-    pub audio: PassageAudio,
-    /// The escape's: its timer is running.
-    pub timer_running: bool,
-    /// Her progress, which chooses the next room's version, her suit and her beams, and says
-    /// whether the station's boss is beaten.
-    pub progress: &'a run_progress::Progress,
-    /// The random numbers' owner's, where this loop doesn't own every draw: the game's random
-    /// number as the last frame left it, which replaces the one State carries. None where
-    /// State's own is the game's. The frame draws it once as its work begins.
-    pub random: Option<types::RandomSequence>,
-}
-
-/// What a frame of play brings the HUD from owners outside this loop.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct HudFrame {
-    /// Item select and item cancel this frame.
-    pub buttons: (SelectButton, CancelButton),
-    /// Her stock as the frame begins.
-    pub stock_at_start: StockAtStart,
-    /// Her energy capacity as the frame ends.
-    pub capacity: u16,
-    /// Her reserve tanks as the frame ends.
-    pub reserve: Reserve,
-    /// Her ammunition as the frame ends.
-    pub ammunition: Ammunition,
-    /// She has collected her map.
-    pub map_collected: bool,
-    /// Whether the scene runs the escape countdown this frame.
-    pub countdown: CountdownRuns,
-}
-
-/// What audio answers the passage.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PassageAudio {
-    /// Every sound request so far has been sent.
-    pub sounds_sent: bool,
-    /// No track waits in the queue of tracks.
-    pub music_ready: bool,
-}
-
-/// Samus's movement, her animation, the figure she shows, the camera and the doors, carried
-/// frame to frame.
+/// Each owner's State, carried frame to frame.
 ///
 /// The doors' State and the colours are the doors model's own types, which have no saved form
 /// yet, so this State is carried but not checkpointed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct State {
-    /// Her movement.
-    pub movement: Model<MovementPin>,
-    /// Her whole appearance State.
-    pub appearance: Model<AppearancePin>,
-    /// The figure she is drawn in.
-    pub figure: Model<FigurePin>,
+    /// Her movement, her appearance and the figure she is drawn in.
+    pub samus: samus::State,
     /// The camera.
     pub camera: Model<CameraPin>,
-    /// Play, or a passage under way.
-    pub doors: Doors,
-    /// The door she touched, from the touch until play goes on.
-    pub doorway: Option<Doorway>,
-    /// The screen's colours and the colours they head for.
-    pub palette: Palette,
     /// Her energy, the warning and her protection.
     pub health: Model<HealthPin>,
     /// The HUD.
     pub hud: Model<HudPin>,
-    /// Where her room sits on her map.
-    pub map_room: interface_hud::Room,
-    /// What play reads of her room.
-    pub room: Room,
-    /// The room's Ceres doors, in its order of its enemies.
-    pub ceres_doors: Vec<CeresDoor>,
-    /// The game's count of finished frames, in eight bits, which the HUD reads as the frame
-    /// begins.
-    pub frame: FrameCount,
-    /// The count of finished frames in sixteen bits, which nothing restarts; the shaft's lights
-    /// read it.
-    pub finished_frames: u16,
-    /// The Ceres shaft's elevator pad and the cover below it.
-    pub pad_and_cover: PadAndCover,
-    /// The room places the Ceres shaft's overlay, which shows the lights.
-    pub shaft_overlay: bool,
-    /// Ceres Ridley and the baby, in his room.
-    pub ridley: Option<CeresRidley>,
-    /// The Ceres station's stage, which his placing sets.
-    pub stage: Stage,
-    /// The game's random number as the last frame left it.
-    pub random: types::RandomSequence,
+    /// Her room, play or a passage under way, and the door she touched.
+    pub passage: passage::State,
+    /// The screen's colours and the colours they head for.
+    pub palette: Palette,
+    /// The Ceres station's doors, pad and cover, lights and Ridley.
+    pub station: station::State,
+    /// The counts of finished frames and the game's random number.
+    pub frame: frame::State,
 }
 
 /// What one frame published.
@@ -294,8 +176,8 @@ pub enum Fault {
 
 impl State {
     /// Play one frame from `inputs`. The candidate commits only when every owner completed.
-    /// Her room is State's own ([`State::room`]); the geometry and camera room of `inputs` are
-    /// not read.
+    /// Her room is State's own ([`passage::State::room`]); the geometry and camera room of
+    /// `inputs` are not read.
     ///
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
@@ -310,77 +192,54 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
-        if matches!(self.doors, Doors::Passing(_)) {
+        if matches!(self.passage.doors, Doors::Passing(_)) {
             return self.pass(passing, content, rules);
         }
-        self.room.geometry.validate().map_err(|_| Fault::Geometry)?;
+        self.passage
+            .room
+            .geometry
+            .validate()
+            .map_err(|_| Fault::Geometry)?;
         if inputs.items[Item::VariaSuit] || inputs.items[Item::GravitySuit] {
             return Err(Fault::Suit);
         }
-        let health = self
-            .health
-            .0
-            .play_frame(samus_health::TailImpact::Absent, &rules.health);
-        let room = camera_room(&self.room.camera)?;
-        let random = self.drawn(passing);
+        let health = self.health_frame(rules);
+        let room = camera::room(&self.passage.room.camera)?;
+        let random = self.frame.drawn(passing);
         // The enemies run before she moves, but her motion meets the doors as they block when
         // the frame began.
         let mut palette = self.palette;
         let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;
-        let her = if self.pad_and_cover.holds_her() {
-            Her::held(self)
+        let her = if self.station.pad_and_cover.holds_her() {
+            self.samus.held()
         } else {
             self.her_frame(inputs, content, rules)?
         };
         let mut samus = her.samus;
-        let pad_and_cover = shaft::run_pad(self.pad_and_cover, &mut samus, &rules.ceres);
-
-        let mut camera = self.camera.0;
-        camera_semantic::step(
-            &mut camera,
-            rules.camera.get(),
-            &world_camera::Frame {
-                samus: her.seen_by_camera(&samus),
-                room: &room,
-                lead: lead(self.room.camera.lead),
-                time_stopped: false,
-            },
-        );
-
-        let touched = her.touched(&self.room.doorways);
-        if touched.is_some_and(|doorway| doorway.map_room.is_none()) {
-            return Err(Fault::NewArea);
-        }
-        let mut hud_state = self.hud.0.clone();
-        let hud_outputs = hud_state
-            .frame_of_play(
-                &rules.hud,
-                &content.hud,
-                &hud_inputs(hud, self, &samus, her.after_moves(), health.state, content),
-            )
-            .map_err(|_| Fault::Hud)?;
-        let doors = self.doors.step(
-            scene(&samus, &camera, &palette),
-            &doors_inputs(touched.is_some(), touched, passing, content),
-            &rules.doors,
+        let pad_and_cover = self.station.pad(&mut samus, rules);
+        let camera = self.followed(&room, &her, &samus, rules);
+        let touched = self.passage.touched(&her)?;
+        let (hud_state, hud_outputs) =
+            self.hud_frame(hud, &samus, her.after_moves(), health.state, content, rules)?;
+        let doors = self.passage.in_play(
+            touched,
+            &passage::scene(&samus, &camera, &palette),
+            passing,
+            content,
+            rules,
         );
 
         // Her room and where it sits on her map stay as they are through a frame of play.
-        self.movement = Model(samus);
-        self.appearance = Model(her.appearance);
-        self.figure = Model(her.figure);
-        self.pad_and_cover = pad_and_cover;
+        self.samus.played(samus, &her);
+        self.station.pad_and_cover = pad_and_cover;
         self.camera = Model(camera);
-        self.doors = doors.doors;
-        self.doorway = touched;
+        self.passage.doors = doors.doors;
+        self.passage.doorway = touched;
         self.palette = doors.scene.palette;
         self.health = Model(health.state);
         self.hud = Model(hud_state);
-        self.ceres_doors = enemies.doors.iter().map(|run| run.door).collect();
-        self.ridley = enemies.ridley.map(|run| run.ridley);
-        self.random = random;
-        self.frame = counted(self.frame, doors.report.finishing);
-        self.finished_frames = finished(self.finished_frames, doors.report.finishing);
+        self.station.ran(&enemies);
+        self.frame = self.frame.after(doors.report.finishing, random);
         Ok(Outputs {
             movement: her.outcome,
             sounds: her.sounds,
@@ -394,154 +253,6 @@ impl State {
         })
     }
 
-    /// The random number the frame's enemies read: drawn once as a frame of work begins.
-    fn drawn(&self, passing: &Passing<'_>) -> types::RandomSequence {
-        let mut random = passing.random.unwrap_or(self.random);
-        if passing.work_begun {
-            game_random::advance_random(&mut random);
-        }
-        random
-    }
-
-    /// One run of the room's enemies, in its order: Ridley, then the Ceres doors, then the
-    /// shaft's overlay. The baby's colours and the beacon's go to `palette`.
-    fn enemies(
-        &self,
-        passage_under_way: bool,
-        random: types::RandomSequence,
-        passing: &Passing<'_>,
-        content: &Content,
-        rules: &Rules,
-        palette: &mut Palette,
-    ) -> Result<Enemies, Fault> {
-        let ridley = self
-            .ridley
-            .map(|ridley| run_ridley(ridley, passage_under_way, random, content, rules, palette))
-            .transpose()?;
-        let doors = run_doors(
-            &self.ceres_doors,
-            self.shaft_overlay,
-            &self.movement.0,
-            self.stage,
-            room_loading::Run {
-                progress: passing.progress,
-                ceres: self.stage,
-            }
-            .ridley_beaten(),
-            random,
-            &rules.ceres,
-        )?;
-        let lights = self.lights(content, rules, palette)?;
-        Ok(Enemies {
-            ridley,
-            doors,
-            lights,
-        })
-    }
-
-    /// Ridley's drawing as the frame leaves him, with the doors he draws; none outside his
-    /// room. It is produced for drawing, which this loop doesn't compare.
-    #[must_use]
-    pub fn ridley_drawing(&self) -> Option<ridley::Drawing> {
-        self.ridley
-            .as_ref()
-            .map(|ridley| ridley::drawing(ridley, &self.ceres_doors))
-    }
-
-    /// Her own frame: her moves, then her animation from what they report.
-    fn her_frame(&self, inputs: &Inputs, content: &Content, rules: &Rules) -> Result<Her, Fault> {
-        let start = self.figure.0;
-        let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
-        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
-        let after = Figure {
-            pose: samus.pose,
-            sprite: outcome.sprite,
-        };
-        let mut appearance = self.appearance.0;
-        let mut seen = animation_inputs(start, after, &outcome, inputs);
-        // The energy the tail hit leaves, before the frame's loss: with no tail, as it starts.
-        seen.energy = self.health.0.energy.whole.get();
-        let shown = animation::play(
-            &mut appearance,
-            &content.appearance,
-            &rules.appearance,
-            &animation::frame_of_play(seen),
-        )
-        .map_err(|fault| match fault {
-            animation::ClipFault::Missing(figure) | animation::ClipFault::Conflicting(figure) => {
-                Fault::Clip(figure)
-            }
-        })?;
-        Ok(Her {
-            samus,
-            outcome: Some(outcome),
-            appearance,
-            figure: after,
-            sounds: shown.sounds,
-        })
-    }
-
-    /// The shaft's lights, on a frame the room's enemies run: with the overlay in the room, the
-    /// beacon's step sets the colours it names.
-    fn lights(
-        &self,
-        content: &Content,
-        rules: &Rules,
-        palette: &mut Palette,
-    ) -> Result<Option<Lights>, Fault> {
-        if !self.shaft_overlay {
-            return Ok(None);
-        }
-        let lights = shaft::lights(self.finished_frames, self.doors, self.stage, &rules.ceres)
-            .map_err(Fault::Lights)?;
-        shaft::show(lights, &content.rooms.actors.beacon, palette).map_err(Fault::Lights)?;
-        Ok(Some(lights))
-    }
-
-    /// Her moves, after her clip's look ahead from the figure she starts the frame in.
-    fn moves(
-        &self,
-        inputs: &Inputs,
-        world: &dyn types::World,
-        content: &Content,
-        rules: &Rules,
-    ) -> Result<(samus_movement::Samus, samus_movement::Outcome), Fault> {
-        let start = self.figure.0;
-        let ahead = Ahead::of(&self.appearance.0, start, &content.appearance)
-            .map_err(|MissingClip(figure)| Fault::Clip(figure))?;
-        let mut samus = self.movement.0;
-        let missing_body = Cell::new(None);
-        let body = |pose: Pose| {
-            content.movement.radius(pose).unwrap_or_else(|| {
-                missing_body.set(Some(pose));
-                types::Pair {
-                    x: Wrapping(0),
-                    y: Wrapping(0),
-                }
-            })
-        };
-        let heading = |pose| content.movement.cannon_heading(pose);
-        let frame = samus_movement::Frame {
-            sprite_before_movement: start.sprite,
-            cinematic_active: inputs.activities[samus_appearance::Activity::Cinematic],
-            pad: inputs.held,
-            pressed: inputs.pressed,
-            items: inputs.items,
-            spin_turned_far: ahead.turned_far,
-            elevator_moving: false,
-            parity: inputs.parity,
-            animation_ends: ahead.end,
-            body: &body,
-            cannon_heading: &heading,
-        };
-        let outcome = samus
-            .step(&frame, world, &rules.movement)
-            .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
-        missing_body
-            .get()
-            .map_or(Ok((samus, outcome)), |pose| Err(Fault::Body(pose)))
-    }
-
     /// A frame of a passage: the doors alone, moving her position, the view, where the camera
     /// last saw her and the colours, then the room's loading of what the doors' call names.
     fn pass(
@@ -550,18 +261,16 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
-        let camera = self.camera.0;
-        let random = self.drawn(passing);
-        let brightening = brightening(self.doors, passing);
+        let random = self.frame.drawn(passing);
         let mut before = self.palette;
-        let early = if brightening {
+        let early = if passage::brightening(self.passage.doors, passing) {
             Some(self.enemies(true, random, passing, content, rules, &mut before)?)
         } else {
             None
         };
-        let exports = self.doors.step(
-            scene(&self.movement.0, &camera, &before),
-            &doors_inputs(false, self.doorway, passing, content),
+        let exports = self.passage.doors.step(
+            passage::scene(&self.samus.movement.0, &self.camera.0, &before),
+            &passage::doors_inputs(false, self.passage.doorway, passing, content),
             &rules.doors,
         );
         let Scene {
@@ -575,69 +284,27 @@ impl State {
             None if exports.report.runs[Activity::Enemies] => {
                 self.enemies(true, random, passing, content, rules, &mut palette)?
             }
-            None => Enemies::default(),
+            None => station::Enemies::default(),
         };
-        let mut moved = self.movement.0;
+        let mut moved = self.samus.movement.0;
         moved.position = her;
         let pad_and_cover = if exports.report.runs[Activity::Projectiles] {
-            shaft::run_pad(self.pad_and_cover, &mut moved, &rules.ceres)
+            self.station.pad(&mut moved, rules)
         } else {
-            self.pad_and_cover
+            self.station.pad_and_cover
         };
-        let mut ceres_doors = if enemies.doors.is_empty() {
-            self.ceres_doors.clone()
-        } else {
-            enemies.doors.iter().map(|run| run.door).collect()
-        };
-        let mut ridley = enemies.ridley.map_or(self.ridley, |run| Some(run.ridley));
         let loaded = self.load(exports.report.call, passing, content, &mut palette)?;
-        if let Some(room) = loaded.room {
-            self.room = room;
-        }
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
-        if let Some(placed) = loaded.actors {
-            ceres_doors = placed.doors;
-            self.shaft_overlay = placed.shaft_overlay;
-            ridley = placed.ridley.map(|placing| placing.ridley);
-        }
         if let Some(placing) = ridley_placed {
-            // The HUD meets the boss as his placing hands it on, outside a frame of play.
-            let room = self.doorway.and_then(|doorway| doorway.map_room);
-            self.hud.0.boss_blanks_the_map(
-                &rules.hud,
-                &content.hud,
-                ridley::encountered(placing.boss),
-                room.map_or(self.map_room.cell, |room| room.cell),
-            );
-            self.stage = placing.stage;
+            self.meet_the_boss(placing, content, rules);
         }
-        let kept = camera.seen();
-        self.movement.0 = moved;
-        self.pad_and_cover = pad_and_cover;
-        self.camera.0 = camera
-            .with_view(ViewPosition(view))
-            .with_remembered(RememberedPosition(Pair {
-                x: types::fixed(seen.x, kept.x.sub()),
-                y: types::fixed(seen.y, kept.y.sub()),
-            }));
+        self.station.passed(&enemies, loaded.actors, pad_and_cover);
+        self.samus.movement.0 = moved;
+        self.camera.0 = camera::passed(self.camera.0, view, seen);
         self.palette = palette;
-        self.doors = exports.doors;
-        self.ceres_doors = ceres_doors;
-        self.ridley = ridley;
-        self.random = random;
-        self.frame = counted(self.frame, exports.report.finishing);
-        self.finished_frames = finished(self.finished_frames, exports.report.finishing);
-        self.hud.0.out_of_play(&OutOfPlayInputs {
-            mini_map_turned_on: exports.report.minimap_on,
-            new_area: NewArea::SameArea,
-            dropped: Dropped::Nothing,
-        });
-        if self.doors == Doors::Play {
-            if let Some(room) = self.doorway.and_then(|doorway| doorway.map_room) {
-                self.map_room = room;
-            }
-            self.doorway = None;
-        }
+        self.frame = self.frame.after(exports.report.finishing, random);
+        self.hud.0.out_of_play(&hud::out_of_play(&exports.report));
+        self.passage.passed(exports.doors, loaded.room);
         Ok(Outputs {
             movement: None,
             sounds: Vec::new(),
@@ -649,431 +316,6 @@ impl State {
             ridley: enemies.ridley,
             ridley_placed,
         })
-    }
-
-    /// What the passage's call `call` loads of the next room, as its work is done: the colours
-    /// it sets, the room it builds and the Ceres actors it places.
-    fn load(
-        &self,
-        call: Option<RoomCall>,
-        passing: &Passing<'_>,
-        content: &Content,
-        palette: &mut Palette,
-    ) -> Result<Loaded, Fault> {
-        let mut loaded = Loaded {
-            room: None,
-            actors: None,
-        };
-        let Some(doorway) = self.doorway else {
-            return Ok(loaded);
-        };
-        let run = room_loading::Run {
-            progress: passing.progress,
-            ceres: self.stage,
-        };
-        room_loading::load(call, doorway.through, run, &content.rooms, palette)
-            .map_err(Fault::Load)?;
-        match call {
-            // Building the next room replaces what play reads of hers.
-            Some(RoomCall::BuildRoom) => {
-                loaded.room = Some(
-                    room_loading::room(doorway.through, run, &content.rooms, &self.room.camera)
-                        .map_err(Fault::Load)?,
-                );
-            }
-            // The next room's contents let the last room's Ceres actors go and place its own.
-            Some(RoomCall::FetchContents) => {
-                loaded.actors = Some(
-                    room_loading::ceres_actors(doorway.through, run, &content.rooms)
-                        .map_err(Fault::Load)?,
-                );
-            }
-            None
-            | Some(
-                RoomCall::LeaveRoom
-                | RoomCall::DrawTopRow
-                | RoomCall::FetchTiles
-                | RoomCall::AnimateTiles
-                | RoomCall::PlayMusic
-                | RoomCall::ReadLiquid,
-            ) => {}
-        }
-        Ok(loaded)
-    }
-}
-
-/// One run of the room's enemies: Ridley's, each Ceres door's and the shaft's lights.
-#[derive(Default)]
-struct Enemies {
-    ridley: Option<RidleyRun>,
-    doors: Vec<boss_ceres_ridley::Run>,
-    lights: Option<Lights>,
-}
-
-/// What a passage's call loaded of the next room.
-struct Loaded {
-    /// The room building it gives, which replaces hers.
-    room: Option<Room>,
-    /// The Ceres actors fetching its contents places, which replace the last room's.
-    actors: Option<room_loading::CeresActors>,
-}
-
-/// As the colours come up, the enemies run before the fade takes its step, so the beacon's
-/// colours go in first; that frame of work runs them whenever its work is done.
-const fn brightening(doors: Doors, passing: &Passing<'_>) -> bool {
-    passing.work_done
-        && matches!(
-            doors,
-            Doors::Passing(Passage {
-                phase: Phase::Brightening(_),
-                ..
-            })
-        )
-}
-
-/// Her own frame's results: her movement, its outcome, her appearance, the figure she shows and
-/// the sounds it asks for.
-struct Her {
-    samus: samus_movement::Samus,
-    /// None while the pad holds her.
-    outcome: Option<samus_movement::Outcome>,
-    appearance: samus_appearance::AppearanceState,
-    figure: Figure,
-    sounds: Vec<samus_appearance::SoundOffer>,
-}
-
-impl Her {
-    /// While the pad holds her, her frame changes nothing of her.
-    const fn held(state: &State) -> Self {
-        Self {
-            samus: state.movement.0,
-            outcome: None,
-            appearance: state.appearance.0,
-            figure: state.figure.0,
-            sounds: Vec::new(),
-        }
-    }
-
-    /// What the camera reads of her, at `samus` as the frame leaves her. While the pad holds
-    /// her nothing placed her, and she neither goes backwards nor rises.
-    fn seen_by_camera(&self, samus: &samus_movement::Samus) -> world_camera::Samus {
-        self.outcome.as_ref().map_or(
-            world_camera::Samus {
-                position: samus.position,
-                placed: None,
-                facing: samus.pose.facing,
-                backwards: false,
-                rising: false,
-            },
-            |outcome| camera_semantic::completed_samus(samus, outcome),
-        )
-    }
-
-    /// The door to another room her moves reached, if any; none while the pad holds her.
-    fn touched(&self, doorways: &[Doorway]) -> Option<Doorway> {
-        let outcome = self.outcome.as_ref()?;
-        doorways
-            .iter()
-            .find(|doorway| {
-                outcome
-                    .reached
-                    .iter()
-                    .any(|touch| touch.cell == doorway.cell)
-            })
-            .copied()
-    }
-
-    /// Where her moves leave her, which the mini-map reads.
-    fn after_moves(&self) -> types::Position {
-        self.outcome
-            .as_ref()
-            .map_or(self.samus.position, |outcome| outcome.position_after_moves)
-    }
-}
-
-/// What the HUD reads this frame: her moves, the energy Health leaves, and its neighbours.
-fn hud_inputs<'a>(
-    hud: &HudFrame,
-    state: &State,
-    samus: &samus_movement::Samus,
-    after_moves: types::Position,
-    health: samus_health::State,
-    content: &'a Content,
-) -> FrameInputs<'a> {
-    let (select, cancel) = hud.buttons;
-    let pose = samus.pose;
-    FrameInputs {
-        frame: state.frame,
-        stock_at_start: hud.stock_at_start,
-        controls: Controls {
-            select,
-            cancel,
-            // The player controls her in this loop, so only facing the screen stops a switch.
-            can_switch: pose.facing != Facing::Screen,
-        },
-        mini_map: MiniMapInputs {
-            runs: true,
-            turned_on: false,
-            position: Pair {
-                x: after_moves.x.pixel().0,
-                y: after_moves.y.pixel().0,
-            },
-            room: state.map_room,
-            map: &content.map,
-            map_collected: hud.map_collected,
-        },
-        mother_brain_falls: false,
-        status: Status {
-            energy: Energy {
-                now: health.energy.whole.get(),
-                capacity: hud.capacity,
-            },
-            reserve: hud.reserve,
-            ammunition: hud.ammunition,
-        },
-        collected: None,
-        // Neither the grapple beam nor stopped time is in this loop.
-        muted_by: match pose.action {
-            Action::Spinning => Some(Mute::SpinJump),
-            Action::WallJumping => Some(Mute::WallJump),
-            Action::AgainstWall
-            | Action::Crouching
-            | Action::Falling
-            | Action::Jumping
-            | Action::Landing(_)
-            | Action::Moonwalking
-            | Action::Morphing
-            | Action::Rolling
-            | Action::Running
-            | Action::StandingUp
-            | Action::Still
-            | Action::TakingOff
-            | Action::Turning(_)
-            | Action::Unmorphing => None,
-        },
-        dropped_before_status_bar: Dropped::Nothing,
-        dropped_after_status_bar: Dropped::Nothing,
-        countdown: hud.countdown,
-    }
-}
-
-/// The frame count after a frame: a finished frame counts, and a frame the doors restart the
-/// count on counts from 0 (`FinishedFrames`).
-const fn counted(frame: FrameCount, finishing: Finishing) -> FrameCount {
-    match finishing {
-        Finishing::Overrun => frame,
-        Finishing::Finished => FrameCount(frame.0.wrapping_add(1)),
-        Finishing::Restarts(_) => FrameCount(1),
-    }
-}
-
-/// The count of finished frames after a frame: every frame but one whose work overran counts.
-const fn finished(count: u16, finishing: Finishing) -> u16 {
-    match finishing {
-        Finishing::Overrun => count,
-        Finishing::Finished | Finishing::Restarts(_) => count.wrapping_add(1),
-    }
-}
-
-/// What the passage moves, as the frame before left it.
-fn scene(samus: &samus_movement::Samus, camera: &world_camera::Camera, palette: &Palette) -> Scene {
-    Scene {
-        her: samus.position,
-        seen: Pair {
-            x: camera.seen().x.pixel(),
-            y: camera.seen().y.pixel(),
-        },
-        camera: camera.position(),
-        palette: *palette,
-    }
-}
-
-fn doors_inputs(
-    touched: bool,
-    doorway: Option<Doorway>,
-    passing: &Passing<'_>,
-    content: &Content,
-) -> world_doors::Inputs {
-    world_doors::Inputs {
-        touched,
-        work_done: passing.work_done,
-        sounds_sent: passing.audio.sounds_sent,
-        music_ready: passing.audio.music_ready,
-        timer_running: passing.timer_running,
-        items_dark: doorway.is_some_and(|doorway| doorway.items_dark),
-        doorway: doorway.map(|doorway| doorway.arrival),
-        groups: content.colour_groups,
-    }
-}
-
-/// What animation reads of this frame's moves.
-pub(super) fn animation_inputs(
-    start: Figure,
-    after: Figure,
-    outcome: &samus_movement::Outcome,
-    inputs: &Inputs,
-) -> samus_appearance::Inputs {
-    let mut moves = Set::default();
-    moves[MoveEvent::StandingRestart] = outcome.standing_animation == StandingAnimation::Restarts;
-    moves[MoveEvent::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
-    moves[MoveEvent::HandedOver] = outcome.handed_over;
-    samus_appearance::Inputs {
-        figure: start,
-        figure_after: after,
-        moves,
-        dash: dash(
-            outcome.dashing_after_moves,
-            outcome.dash_began,
-            outcome.dash_lost,
-        ),
-        run_held: inputs.held.any(types::button::RUN),
-        heading_down: outcome.heading_down,
-        vertical_speed: outcome.vertical_speed_after_moves,
-        energy: inputs.energy,
-        items: inputs.items,
-        liquid: inputs.liquid,
-        sounds_waiting: inputs.sounds_waiting,
-        activities: inputs.activities,
-        shoot_held: inputs.held.any(types::button::SHOOT),
-        charge: inputs.charge,
-    }
-}
-
-/// The dash as the clip moves on, from movement's report of her moves.
-///
-/// Whether she is dashing after her moves decides first: movement reports a dash begun into a
-/// wall as begun and lost with her not dashing after her moves, and the original cancels it before
-/// the clip moves on, so it is stopped.
-const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
-    match (dashing_after_moves, began, lost) {
-        (Dashing::Off, _, true) => Dash::Stopped,
-        (Dashing::Off, _, false) => Dash::Off,
-        (Dashing::On, true, true) => Dash::BeganAndLost,
-        (Dashing::On, true, false) => Dash::Began,
-        (Dashing::On, false, true) => Dash::Lost,
-        (Dashing::On, false, false) => Dash::On,
-    }
-}
-
-/// One run of each of the room's Ceres doors, in its order of its enemies, reading where she
-/// was at the end of the last frame. In the escape a later piece owns the shaft's overlay.
-fn run_doors(
-    doors: &[CeresDoor],
-    shaft_overlay: bool,
-    her: &samus_movement::Samus,
-    stage: Stage,
-    ridley_beaten: bool,
-    random: types::RandomSequence,
-    rules: &boss_ceres_ridley::Rules,
-) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
-    if stage == Stage::Escape && (shaft_overlay || !doors.is_empty()) {
-        return Err(Fault::Escape);
-    }
-    let inputs = boss_ceres_ridley::Inputs {
-        her: Pair {
-            x: her.position.x.pixel(),
-            y: her.position.y.pixel(),
-        },
-        stage,
-        random: random.number.0,
-        // Outside the escape no door reads the screen's shaking, and the escape is refused.
-        shake_frames_left: 0,
-        // In his room Ridley runs first, and his run in this piece leaves him unbeaten.
-        ridley_beaten,
-    };
-    Ok(doors.iter().map(|door| door.run(&inputs, rules)).collect())
-}
-
-/// One run of Ridley, the baby in his hold: its colour set goes to the screen at once. Awake,
-/// a later piece runs him.
-fn run_ridley(
-    ridley: CeresRidley,
-    passage_under_way: bool,
-    random: types::RandomSequence,
-    content: &Content,
-    rules: &Rules,
-    palette: &mut Palette,
-) -> Result<RidleyRun, Fault> {
-    if ridley.phase == RidleyPhase::Awake {
-        return Err(Fault::RidleyAwake);
-    }
-    let run = ridley.run(passage_under_way, random.number.0, &rules.ceres);
-    if let Some(colours) = run.colours {
-        ridley::show_baby(colours, &content.rooms.actors.ceres_ridley, palette)
-            .map_err(|ridley::ColourFault| Fault::BabyColours)?;
-    }
-    Ok(run)
-}
-
-/// The room's geometry, with the Ceres doors that block her after its other solid actors.
-///
-/// The original meets the boxes in slot order, and the first that blocks her decides the move.
-/// The geometry's boxes keep no slots, so the doors go last: the admission accepts only rooms
-/// whose other solid actors sit in slots before the doors'.
-struct WithDoors<'a> {
-    geometry: &'a super::world::MovementWorld,
-    solid: Vec<Hitbox>,
-}
-
-impl<'a> WithDoors<'a> {
-    fn new(geometry: &'a super::world::MovementWorld, doors: &[CeresDoor]) -> Self {
-        let blocking = doors.iter().filter(|door| door.phase.solid());
-        Self {
-            geometry,
-            solid: types::World::solid_enemies(geometry)
-                .iter()
-                .cloned()
-                .chain(blocking.map(|door| door.hitbox()))
-                .collect(),
-        }
-    }
-}
-
-impl types::World for WithDoors<'_> {
-    fn block(&self, cell: types::Cell) -> types::Block {
-        types::World::block(self.geometry, cell)
-    }
-
-    fn lets_through(&self, cell: types::Cell, way: types::Way) -> bool {
-        types::World::lets_through(self.geometry, cell, way)
-    }
-
-    fn solid_enemies(&self) -> &[Hitbox] {
-        &self.solid
-    }
-}
-
-fn camera_room(input: &CameraInputs) -> Result<world_camera::Room, Fault> {
-    let [width, height] = input.size;
-    let [normal, rising] = input.heights;
-    world_camera::Room::new(
-        input
-            .screens
-            .iter()
-            .map(|screen| match screen {
-                Screen::Open => types::ScreenKind::Open,
-                Screen::Closed => types::ScreenKind::Closed,
-                Screen::Short => types::ScreenKind::Short,
-            })
-            .collect(),
-        types::Pair {
-            x: usize::from(width),
-            y: usize::from(height),
-        },
-        world_camera::Heights {
-            while_not_rising: Wrapping(normal),
-            while_rising: Wrapping(rising),
-        },
-    )
-    .map_err(|_| Fault::CameraRoom)
-}
-
-const fn lead(lead: Lead) -> world_camera::LeadSetting {
-    match lead {
-        Lead::Ahead => world_camera::LeadSetting::Ahead,
-        Lead::Left => world_camera::LeadSetting::KeepLeft,
-        Lead::Right => world_camera::LeadSetting::KeepRight,
-        Lead::Near => world_camera::LeadSetting::Near,
     }
 }
 
