@@ -318,8 +318,8 @@ field = "movement.jump-held"
 name = "played-camera-state-held"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "camera: Model(camera),"
-after = "camera: self.camera.clone(),"
+before = "self.camera = Model(camera);"
+after = "self.camera = Model(self.camera.0);"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "camera.view.x.fraction"
@@ -418,8 +418,8 @@ field = "health.energy.whole"
 name = "played-hud-state-held"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "hud: Model(hud_state),"
-after = "hud: self.hud.clone(),"
+before = "self.hud = Model(hud_state);"
+after = "self.hud = Model(self.hud.0.clone());"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 8
 field = "hud.map-window"
@@ -448,8 +448,8 @@ field = "hud.status-bar"
 name = "played-ceres-doors-held"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "ceres_doors: ceres.iter().map(|run| run.door).collect(),"
-after = "ceres_doors: self.ceres_doors.clone(),"
+before = "self.ceres_doors = ceres.iter().map(|run| run.door).collect();"
+after = "self.ceres_doors = self.ceres_doors.clone();"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "ceres.0.wait"
@@ -465,11 +465,11 @@ before = '''
             passing.ceres,
             &rules.ceres,
         )?;
-        let world = WithDoors::new(&inputs.geometry, &self.ceres_doors);
+        let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
         let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
 '''
 after = '''
-        let world = WithDoors::new(&inputs.geometry, &self.ceres_doors);
+        let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
         let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
         let ceres = run_doors(&self.ceres_doors, &samus, passing.ceres, &rules.ceres)?;
 '''
