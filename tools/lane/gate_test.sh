@@ -15,11 +15,17 @@ cp "$here/gate.sh" "$repo/tools/lane/gate.sh"
 echo 'channel = "0.0.0"' >"$repo/rust-toolchain.toml"
 echo 'Invented vectors.' >"$repo/scenarios/demo.toml"
 # Each fake records its name, prints $GATE_TEST_OUT_<name> and exits $GATE_TEST_STATUS_<name>.
+# The gate runs some tools with `sh`, which is dash on Linux, so the fakes are POSIX sh.
 fake() { # NAME PATH
-  printf '#!/usr/bin/env bash\necho >"%s/%s"\nout=GATE_TEST_OUT_%s status=GATE_TEST_STATUS_%s\n[ -z "${!out}" ] || echo "${!out}"\nexit "${!status:-0}"\n' \
-    "$ran" "$1" "$1" "$1" >"$2"
+  printf '#!/bin/sh\necho >"%s/%s"\n[ -z "${GATE_TEST_OUT_%s-}" ] || echo "$GATE_TEST_OUT_%s"\nexit "${GATE_TEST_STATUS_%s:-0}"\n' \
+    "$ran" "$1" "$1" "$1" "$1" >"$2"
   chmod +x "$2"
 }
+# Where dash is installed, `sh` is dash here as on Linux, so a bash-only fake fails on both.
+if dash=$(command -v dash); then
+  printf '#!/bin/sh\nexec "%s" "$@"\n' "$dash" >"$bin/sh"
+  chmod +x "$bin/sh"
+fi
 fake cargo "$bin/cargo"
 fake deny "$bin/cargo-deny"
 fake self_tests "$repo/tools/lane/self_tests.sh"
