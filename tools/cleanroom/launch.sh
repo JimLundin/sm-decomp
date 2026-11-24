@@ -66,7 +66,14 @@
 #     deny rule wins over an allow, so the home is denied entry by entry around it. On top, by
 #     name: the main checkout's folder and its sm-decomp* siblings, every worktree, the temporary
 #     folder ($TEMP, else $TMPDIR, else /tmp), CLEANROOM_PRIVATE (the canary record and the lane)
-#     and, when the exports' root is outside it, the home itself.
+#     and, when the exports' root is outside it, the home itself. The entries are those present
+#     at launch: one made beside the export's path during the session is not denied, so keep the
+#     exports' root outside the home (CLEANROOM_ROOT=/cleanroom) where the home is denied whole.
+#     A name holding one of ()[]*?{}!\ can't be written as a rule, so it stops the launch, as
+#     does a launch from outside a checkout, whose trees the rules then couldn't name.
+#   - Bash commands holding `:\` (a drive path) are denied here too; on Windows they can't be,
+#     since the runner command names two, and the options that read or write a file they name
+#     (--pathspec-from-file, --output, --logfile, --target-dir) are denied on both.
 #   - The emptied environment holds HOME, CLAUDE_CONFIG_DIR, the XDG folders and TMPDIR in the
 #     lane's home/ and tmp/; PATH is the lane's bin/, cargo's folder and /usr/local/bin:/usr/bin:/bin.
 #   - The API key comes from CLEANROOM_AUTH, else the apiKeyHelper and ANTHROPIC_* lines of
@@ -80,8 +87,10 @@
 #     is in vector_runner.sha256 with the runner.
 # First run on a Linux machine (BUILDING.md, "Setting up on Linux"):
 #   1. CLEANROOM_DRY_RUN=1 on the probe export; read settings.json's deny list and env.txt.
-#   2. canary.sh plant, then the probe above: every CHECK refused, TASK 7's runner passes, and
-#      `LAUNCH OK launch-probe`, whose canary check found nothing.
+#   2. canary.sh plant with the forbidden sources present (canary.sh list shows them), then the
+#      probe above: every CHECK refused (29 to 31, searches from / and the home, refused or
+#      finding nothing outside the export), TASK 7's runner passes, and `LAUNCH OK launch-probe`,
+#      whose canary check found nothing; CHECK 28's write into the lane is a LAUNCH BREACH.
 #   3. canary.sh check on the probe transcript once more, then delete the probe export.
 #
 # Limits the CLI cannot confine: cargo runs code the implementer writes (tests, build scripts,
@@ -108,6 +117,13 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 . "$here/lib.sh"
 case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) windows=1 ;; *) windows=0 ;; esac
+# The main checkout of the repository launch.sh is in; a launch from anywhere else stops, since the
+# rules that name the project's trees come from it.
+checkout_main() {
+  local common
+  common=$(git -C "$here" rev-parse --path-format=absolute --git-common-dir)     || die "launch.sh is not in a checkout of the repository: $here"
+  (cd "$common/.." && pwd -P)
+}
 
 probe=0
 if [ "${1:-}" = --probe ]; then
@@ -230,7 +246,11 @@ if [ "$windows" = 1 ]; then
     "Read(//d/**)" "Read(//e/**)" "Read(//f/**)"
   )
   outside_writes=("Edit($lane_rule/**)" "Write($lane_rule/**)" "Edit($home_rule/**)" "Write($home_rule/**)")
+  # A drive path after any character, `C:\`, would also refuse the runner command, which names
+  # two; the options that read or write a named file are denied instead.
+  drive_paths=()
 else
+  drive_paths=("Bash(*:\\\\*)")
   # Every entry beside the export's path, from / down: the export's root is in the home, and a
   # deny wins over an allow, so the home is denied around it rather than whole.
   outside=()
@@ -247,11 +267,13 @@ else
   done
   # By name besides: the project's trees and worktrees, the temporary folder, the canary record
   # and this lane, and the home itself when the export isn't in it.
-  main=$(cd "$(git -C "$here" rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
+  main=$(checkout_main)
   for proj in "$(dirname "$main")"/sm-decomp*; do [ -d "$proj" ] && outside+=("$(cd "$proj" && pwd -P)"); done
+  # A git failure here would drop these rules without a word, so it stops the launch.
+  worktrees=$(git -C "$here" worktree list --porcelain) || die "git can't list the worktrees of $here"
   while IFS= read -r wt; do
     wt=$(cd "$wt" 2>/dev/null && pwd -P) && outside+=("$wt")
-  done < <(git -C "$here" worktree list --porcelain | sed -n 's/^worktree //p')
+  done < <(sed -n 's/^worktree //p' <<<"$worktrees")
   tmp_dir=${TEMP:-${TMPDIR:-/tmp}}
   [ -d "$tmp_dir" ] && outside+=("$(cd "$tmp_dir" && pwd -P)")
   outside+=("$(cd "$private" && pwd -P)" "$lane")
@@ -260,6 +282,8 @@ else
   outside_reads=() outside_writes=()
   for o in "${outside[@]}"; do
     case "$export_dir/" in "$o"/*) die "the export $export_dir is inside $o, which the session must not read" ;; esac
+    # A rule is a glob closed by `)`: a name holding one of these would deny something else.
+    ! grep -q '[][()*?{}!\\]' <<<"$o" || die "can't write a deny rule for $o: rename it, it holds one of ()[]*?{}!\\"
     if [ -d "$o" ]; then r="$(rule_path "$o")/**"; else r=$(rule_path "$o"); fi
     outside_reads+=("Read($r)" "Glob($r)" "Grep($r)")
     outside_writes+=("Edit($r)" "Write($r)")
@@ -355,9 +379,15 @@ deny=(
   "Bash(cargo run *)" "Bash(cargo install *)" "Bash(cargo +*)"
   "Bash(* --manifest-path*)" "Bash(* --config*)" "Bash(* -Z*)" "Bash(* --no-index*)"
   "Bash(* --git-dir*)" "Bash(* --work-tree*)" "Bash(* -F *)" "Bash(* --file*)" "Bash(* --template*)"
-  # Arguments that name a place outside: parents, absolute paths, the home, variables.
-  "Bash(*../*)" "Bash(*..)" "Bash(* /*)" "Bash(*:/*)" "Bash(*~*)" "Bash(*\$*)" "Bash(*<*)"
-  "Bash(*>*)" "Bash(*|*)" "Bash(*;*)" "Bash(*&*)"
+  # Options that read or write a file they name: git prints a pathspec file's contents in its
+  # error, and the others write where they're told.
+  "Bash(* --pathspec-from-file*)" "Bash(* --pathspec-file-nul*)" "Bash(* --output*)"
+  "Bash(* --logfile*)" "Bash(* --target-dir*)" "Bash(* --artifact-dir*)" "Bash(* --out-dir*)"
+  # Arguments that name a place outside: parents, absolute paths (after a space or an `=`), the
+  # home, variables. The CLI reads `\\` in a rule as one backslash.
+  "Bash(*../*)" "Bash(*..)" "Bash(* /*)" "Bash(*=/*)" "Bash(*:/*)" "Bash(*=\\\\*)"
+  "Bash(*~*)" "Bash(*\$*)" "Bash(*<*)" "Bash(*>*)" "Bash(*|*)" "Bash(*;*)" "Bash(*&*)"
+  "${drive_paths[@]}"
 )
 
 settings=$lane/settings.json
@@ -381,13 +411,15 @@ settings_sum=$(sha256sum <"$settings")
 # (the CLI's project folder: the checkout's path, each character but letters and digits a dash),
 # the canary record and the settings file.
 if [ "$probe" = 1 ]; then
-  main=$(cd "$(git -C "$here" rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
+  main=$(checkout_main)
   temp_named=${TEMP:-${TMPDIR:-/tmp}}
   if [ "$windows" = 1 ]; then
     host() { cygpath -m "$1"; }
+    native() { cygpath -w "$1"; }
     temp_long=$(cygpath -m -l "$temp_named") project_key=$(cygpath -w "$main")
   else
     host() { printf '%s' "$1"; }
+    native() { printf '%s' "$1"; }
     temp_long=$(cd "$temp_named" && pwd -P) project_key=$main
   fi
   memory="$(host "${USERPROFILE:-$HOME}")/.claude/projects/$(printf '%s' "$project_key" | sed 's/[^A-Za-z0-9]/-/g')/memory/"
@@ -398,6 +430,11 @@ if [ "$probe" = 1 ]; then
   text=${text//@MEMORY@/"$memory"}
   text=${text//@PRIVATE@/"$(host "$(cd "$private" && pwd -P)")"}
   text=${text//@SETTINGS@/"$(host "$settings")"}
+  text=${text//@HOME@/"$(host "${USERPROFILE:-$HOME}")"}
+  # The two git options that reach a file by a native path: a read of the canary record and a
+  # write into the lane, which the launch checks for afterwards.
+  text=${text//@TOKENS_NATIVE@/"$(native "$(cd "$private" && pwd -P)/tokens.tsv")"}
+  text=${text//@WRITE_NATIVE@/"$(native "$lane/probe-written.txt")"}
   ! grep -qE '@[A-Z_]+@' <<<"$text" || die "the probe brief holds a placeholder launch.sh doesn't fill"
   printf '%s\n' "$text" >"$lane/brief.txt"
 fi
@@ -476,6 +513,8 @@ echo "launch: session exited $status; transcript $transcript ($(wc -l <"$transcr
 # The configuration is as it was launched.
 [ "$(sha256sum <"$settings")" = "$settings_sum" ] || { echo "LAUNCH BREACH $domain: $settings changed during the session" >&2; exit 1; }
 [ "$(runner_digest)" = "$runner_sum" ] || { echo "LAUNCH BREACH $domain: the runner, its shape scan or its awk.path in $lane changed during the session" >&2; exit 1; }
+
+[ "$probe" = 0 ] || [ ! -e "$lane/probe-written.txt" ] || { echo "LAUNCH BREACH $domain: the probe wrote $lane/probe-written.txt" >&2; exit 1; }
 
 # 4. The canary check, on the transcript and on the export's history.
 if ! bash "$here/canary.sh" check "$transcript" "$export_dir"; then

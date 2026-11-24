@@ -16,7 +16,8 @@ case "$(uname -s)" in
 esac
 tmp=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/launch-config-XXXXXX")
 tmp=$(cd "$tmp" && pwd -P)
-trap 'rm -rf "$tmp"' EXIT
+sibling=
+trap 'rm -rf "$tmp" ${sibling:+"$sibling"}' EXIT
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
 python=${CLEANROOM_PY:-${SM_PY:-$py_default}}
@@ -27,6 +28,12 @@ if [ "$windows" = 0 ]; then
   export HOME="$tmp/home" TEMP="$tmp/scratch"
   mkdir -p "$HOME/cleanroom/other-domain" "$TEMP/c4a/logs"
   echo private >"$HOME/notes.txt"
+  # A dotfile in a folder on the export's path, which only the walk's `.[!.]*` names.
+  mkdir -p "$HOME/.ssh" && echo key >"$HOME/.ssh/id"
+  # A sibling of the main checkout, which the rules name as sm-decomp*.
+  main=$(cd "$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
+  candidate="$(dirname "$main")/sm-decomp-launch-test-$$"
+  [ -e "$candidate" ] || { mkdir "$candidate" 2>/dev/null && sibling=$candidate; }
   root="$HOME/cleanroom"
 else
   root="$tmp/cleanroom"
@@ -52,9 +59,9 @@ git -C "$ex" init -q -b main && git -C "$ex" -c core.autocrlf=false add -A &&
   git -C "$ex" -c user.name=t -c user.email=t@invalid -c commit.gpgsign=false commit -q -m export ||
   { echo "FAIL the test export"; exit 1; }
 
-# launch.sh --probe EXPORT; prints the lane directory.
+# launch.sh --probe on $probe_export (default the export); prints the lane directory.
 launch() {
-  out=$(cd "$repo" && bash "$here/launch.sh" --probe "$ex" "$tmp/transcripts/t.jsonl" 2>&1) || {
+  out=$(cd "$repo" && bash "$here/launch.sh" --probe "${probe_export:-$ex}" "$tmp/transcripts/t.jsonl" 2>&1) || {
     echo "FAIL launch.sh $*: $out"; return 1; }
   sed -n 's/^LAUNCH DRY RUN launch-probe //p' <<<"$out"
 }
@@ -68,6 +75,14 @@ grep -q 'test-key' "$lane/settings.json" || fail "CLEANROOM_AUTH is not in the s
 grep -qE '@[A-Z_]+@' "$lane/brief.txt" && fail "the probe brief keeps a placeholder"
 grep -q '^PYTHON is "' "$lane/brief.txt" || fail "the probe brief doesn't name PYTHON"
 [ "$(head -1 "$lane/argv.txt")" = "$CLAUDE_BIN" ] || fail "the CLI is not CLAUDE_BIN"
+grep -q -- '--pathspec-from-file=.*tokens.tsv' "$lane/brief.txt" || fail "the probe brief's pathspec read names no file"
+# The Bash rules for absolute paths after `=` and the options that read or write a named file.
+"$python" -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]["deny"]))' \
+  "$lane/settings.json" | tr -d '\r' >"$tmp/deny.txt" || fail "the deny list can't be read"
+for rule in 'Bash(*=/*)' 'Bash(*=\\*)' 'Bash(* --pathspec-from-file*)' 'Bash(* --output*)' \
+  'Bash(* --logfile*)' 'Bash(* --target-dir*)' 'Bash(* /*)'; do
+  grep -qxF "$rule" "$tmp/deny.txt" || fail "no deny rule $rule"
+done
 
 if [ "$windows" = 1 ]; then
   for rule in 'Read(//c/Users/**)' 'Grep(//c/Users/**)' 'Read(//d/**)'; do
@@ -81,7 +96,7 @@ fi
 # Which paths the deny rules cover: a rule `Read(//P)` the path P, `Read(//P/**)` all under P.
 covered=$("$python" -I - "$lane/settings.json" "$ex/Cargo.toml" "$HOME/notes.txt" \
   "$CLEANROOM_PRIVATE/tokens.tsv" "$HOME/cleanroom/other-domain/x" "$TEMP/c4a/logs/b90.txt" \
-  "$repo/AGENTS.md" /etc/passwd <<'PY'
+  "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" /proc/self/environ <<'PY'
 import json, sys
 deny = json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]["deny"]
 def covers(tool, path):
@@ -99,9 +114,11 @@ PY
 ) || fail "the deny rules can't be read"
 grep -qx "$ex/Cargo.toml none" <<<"$covered" || fail "the export is denied: $(grep "^$ex/" <<<"$covered")"
 for p in "$HOME/notes.txt" "$CLEANROOM_PRIVATE/tokens.tsv" "$HOME/cleanroom/other-domain/x" \
-  "$TEMP/c4a/logs/b90.txt" "$repo/AGENTS.md" /etc/passwd; do
+  "$TEMP/c4a/logs/b90.txt" "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" /proc/self/environ; do
   grep -qx "$p Read,Glob,Grep,Edit,Write" <<<"$covered" || fail "not denied every tool: $(grep "^$p " <<<"$covered")"
 done
+grep -qxF 'Bash(*:\\*)' "$tmp/deny.txt" || fail "no deny rule for a drive path off Windows"
+[ -z "$sibling" ] || grep -qxF "Read(/$sibling/**)" "$tmp/deny.txt" || fail "the checkout's sibling $sibling is not denied by name"
 grep -qx 'Bash(cleanroom-tests)' < <("$python" -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]["allow"]))' "$lane/settings.json") ||
   fail "the runner command is not allowed"
 grep -qx "HOME=$lane/home" "$lane/env.txt" || fail "HOME is not the lane's home"
@@ -118,6 +135,14 @@ grep -q 'sk-test-launch-secret' "$lane2/settings.json" "$lane2/env.txt" "$lane2/
   fail "the API key is written down"
 grep -qx 'ANTHROPIC_API_KEY=<redacted>' "$lane2/env.txt" || fail "the API key is not passed"
 (unset ANTHROPIC_API_KEY; launch "without a key" >/dev/null 2>&1) && fail "a launch without a key goes on"
+
+# A name the rules can't hold stops the launch; an export outside the home denies the home whole.
+mkdir "$HOME/Foo (2)"
+CLEANROOM_AUTH="$tmp/auth" launch "with a folder named Foo (2)" >/dev/null 2>&1 && fail "a folder named Foo (2) beside the export's path goes into a rule"
+rmdir "$HOME/Foo (2)"
+mkdir -p "$tmp/outside" && cp -a "$ex" "$tmp/outside/launch-probe"
+lane3=$(probe_export="$tmp/outside/launch-probe" CLEANROOM_AUTH="$tmp/auth" launch "outside the home") || exit 1
+grep -qF "\"Read(/$HOME/**)\"" "$lane3/settings.json" || fail "the home is not denied whole for an export outside it"
 
 # The test command as the session runs it: the lane's environment alone, from the export.
 mapfile -t envv <"$lane/env.txt"

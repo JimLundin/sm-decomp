@@ -99,7 +99,7 @@ class Completion(unittest.TestCase):
         for changed in [None, "shape_scan.awk", "awk.path"]:
             with self.subTest(changed=changed), tempfile.TemporaryDirectory() as directory:
                 root = pathlib.Path(directory)
-                edit = (f"with open(pathlib.Path(os.environ['USERPROFILE']).parent / {changed!r}, 'a') as f:\n"
+                edit = (f"with open(pathlib.Path(os.environ.get('USERPROFILE') or os.environ['HOME']).parent / {changed!r}, 'a') as f:\n"
                         "    f.write('changed')\n") if changed else ""
                 result = launch(root, session=(
                     "import os, pathlib, sys\n"
@@ -115,6 +115,11 @@ def launch(root, session=None):
     SESSION, when given, is the Python that stands in for launch_stream.py and the CLI it runs."""
     tools = root / "tools"
     tools.mkdir()
+    # launch.sh names the project's trees from the checkout it is in, and off Windows refuses an
+    # export inside the temporary folder, so the copy is a repository and TEMP is elsewhere.
+    subprocess.run(["git", "init", "-q", str(tools)], check=True)
+    scratch = root / "scratch"
+    scratch.mkdir()
     export = root / "export"
     export.mkdir()
     for name in ["launch.sh", "launch_stream.py"]:
@@ -144,7 +149,7 @@ def launch(root, session=None):
     env.pop("FOUNDRY_LMS_TOKEN", None)
     env.update(CLAUDE_BIN=pathlib.Path(sys.executable).as_posix() if os.name == "nt" else cli.as_posix(), CLEANROOM_PY=pathlib.Path(sys.executable).as_posix(),
                CLEANROOM_PRIVATE=(root / "private").as_posix(), CLEANROOM_AUTH=(root / "auth").as_posix(),
-               CLEANROOM_COMPLETION_SECONDS="0.2")
+               CLEANROOM_COMPLETION_SECONDS="0.2", TEMP=str(scratch), TMPDIR=str(scratch))
     env["USERPROFILE"] = root.as_posix()
     if os.name != "nt":
         # launch.sh's Windows path conversion is immaterial to the invented export.
