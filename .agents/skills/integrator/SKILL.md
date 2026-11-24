@@ -25,7 +25,10 @@ model needs a change, report it as a finding for the next round.
    input provenance and unproved dependencies. Integrated claims require actual selected producers.
 4. **Prove them.** Run each required case through its declared end, including the null control and
    available complete checkpoint continuations. Use role-authorised fault tooling to demonstrate
-   the exact first failing cut and field. Record measured results for the reviewed baseline;
+   the exact first failing cut and field. Play every reviewed played run in one call,
+   `bash tools/lane/played.sh` (or name the runs: `<row>` or `<row>/<start>-<end>`): one build,
+   one load, each run's held cuts and stop checked against `scenarios/replay/played.toml`, and a
+   nonzero exit naming any that differs. Record measured results for the reviewed baseline;
    approval of changed requirements is separate from generating them.
 5. **Remove replaced execution.** Delete redundant owners, State copies, fallbacks and tests in
    the same change. Retain independently useful content, codecs and exact encoding by responsibility.

@@ -4,6 +4,7 @@
 # test executables); elsewhere this is `cargo test`. Doc tests are not run on Windows.
 # Optional --suite lib|test:NAME selects one enabled suite in one package.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python 3.11+), SM_TEST_DLL_DIR.
+# The reviewed played runs play in one call through tools/lane/played.sh.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 suite=()
