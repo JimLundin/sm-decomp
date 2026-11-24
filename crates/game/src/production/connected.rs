@@ -67,7 +67,7 @@ pub struct State {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outputs {
     /// Her appearance's sounds, in the order asked.
-    pub sounds: Vec<samus_appearance::SoundRequest>,
+    pub sounds: Vec<samus_appearance::SoundOffer>,
     /// Her stride's graphical contact, even when its sound is quieted.
     pub contact: Option<samus_appearance::GraphicalContact>,
     /// Movement's complete outcome.
@@ -211,8 +211,8 @@ impl State {
         }
         let playing = self.playing.0;
         let previous = self.movement.0;
-        let clip = content.appearance.get(playing).ok_or(Fault::Figure)?;
-        let ahead = super::appearance::ahead(&self.appearance.0, clip);
+        let ahead = samus_appearance::Ahead::of(&self.appearance.0, playing, &content.appearance)
+            .map_err(|_| Fault::Figure)?;
 
         let guard = world::Guard {
             world: &input.geometry,

@@ -33,30 +33,68 @@ impl Step {
     }
 }
 
-/// A number of frames: the time her step has left, 0 to 255, or a hold the model sets.
+/// The time her step has left, in frames, 0 to 255: every value of its type.
 #[derive(
     Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, serde::Serialize, serde::Deserialize,
 )]
 pub struct Frames(pub u8);
 
 impl Frames {
-    /// No frames.
+    /// No time left.
     pub const NONE: Self = Self(0);
     /// One frame left: the last frame of a step, after which the clip moves on.
     pub const LAST: Self = Self(1);
 
-    /// These frames lengthened by `slowdown`. The spec's bounds keep the sum in range: a hold is
-    /// at most `Hold::LONGEST`, 127 frames, and a slowdown at most `Slowdown::MOST`, 3, so a hold
-    /// slowed twice (`HandOverSlowdown`) is at most 133 frames, within the time left's 0 to 255.
-    /// The add saturates only where no value the spec allows reaches.
+    /// These frames lengthened by `slowdown`. A hold is at most `Hold::LONGEST`, 127 frames, and
+    /// a slowdown at most `Slowdown::MOST`, 3, so a hold slowed twice (`HandOverSlowdown`) is at
+    /// most 133 frames, within the time left's 0 to 255. The add saturates only beyond any
+    /// value those bounds reach.
     #[must_use]
     pub const fn slowed(self, slowdown: Slowdown) -> Self {
         Self(self.0.saturating_add(slowdown.0))
     }
 }
 
-/// A hold: a shown step's, or one the tuning gives (the restart's, the fast fall's, the rising
-/// step's); 1 frame or more and at most `Hold::LONGEST`.
+/// The frames a step shows when one of her moves sets it, the frame that sets it the first.
+///
+/// They are the restart's (`StandingRestart`), the fast fall's (`FastFall`) and the rising
+/// frames (`RisingHold`): 1 to `ShownFrames::MOST`, and no liquid slows them.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u8")]
+pub struct ShownFrames(pub(crate) u8);
+
+impl TryFrom<u8> for ShownFrames {
+    type Error = &'static str;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::new(value).ok_or("frames shown must be from 1 to 126")
+    }
+}
+
+impl ShownFrames {
+    /// At most 126 frames, so the time left they set stays within a hold's bound.
+    pub const MOST: u8 = 126;
+
+    /// The frames of `frames`, if they are 1 to `MOST`.
+    #[must_use]
+    pub fn new(frames: u8) -> Option<Self> {
+        (1..=Self::MOST).contains(&frames).then_some(Self(frames))
+    }
+
+    /// How many frames she shows.
+    #[must_use]
+    pub const fn count(self) -> u8 {
+        self.0
+    }
+
+    /// The time left the move sets, before the frame's time runs down: the frames plus 1, since
+    /// the frame that sets them runs one of them down and shows it.
+    #[must_use]
+    pub const fn before_the_run_down(self) -> Frames {
+        Frames(self.0.saturating_add(1))
+    }
+}
+
+/// A shown step's hold, as the content gives it: 1 frame or more and at most `Hold::LONGEST`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(try_from = "u8")]
 pub struct Hold(pub(crate) u8);
@@ -73,7 +111,7 @@ impl Hold {
     /// slowdowns stays within the time left's 0 to 255.
     pub const LONGEST: u8 = 127;
 
-    /// The hold of `frames`, if the spec allows it: 1 to `LONGEST`.
+    /// The hold of `frames`, if it is 1 to `LONGEST`.
     #[must_use]
     pub fn new(frames: u8) -> Option<Self> {
         (1..=Self::LONGEST)
@@ -88,7 +126,8 @@ impl Hold {
     }
 }
 
-/// A slowdown: frames a liquid adds to a hold, 0 to `Slowdown::MOST`.
+/// A slowdown: frames a liquid adds to a hold, 0 to `Slowdown::MOST`; the step slowdown and the
+/// start slowdown each are one (`Liquid`).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(try_from = "u8")]
 pub struct Slowdown(u8);
@@ -106,7 +145,7 @@ impl Slowdown {
     /// No slowdown: out of a liquid, or in one that doesn't slow her.
     pub const NONE: Self = Self(0);
 
-    /// The slowdown of `frames`, if the spec allows it: 0 to `MOST`.
+    /// The slowdown of `frames`, if it is 0 to `MOST`.
     #[must_use]
     pub fn new(frames: u8) -> Option<Self> {
         (frames <= Self::MOST).then_some(Self(frames))
@@ -166,10 +205,10 @@ impl Control {
 
 /// A clip: its instructions from step 0, and the steps it marks.
 ///
-/// The spec covers clips in which an `again` or a `branch` goes to a shown step, a `rest` is
-/// followed by a shown step, and the last step is not a shown one. Outside them the model stays
-/// total: a clip that would move on past its end leaves her where she is, and a step with no
-/// hold gives no time left.
+/// In the content the importer supplies, an `again` or a `branch` goes to a shown step, a
+/// `rest` is followed by a shown step, and the last step is a control. On any other clip the
+/// model still answers: a clip that would move on past its end leaves her where she is, and a
+/// step with no hold gives no time left.
 #[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Clip {
     /// The instructions, one per step, in order from step 0.
@@ -203,7 +242,7 @@ impl Clip {
 }
 
 /// One of the run's paces: a hold for each shown step of her running clips, by step number.
-/// Where a pace gives no hold for a step (outside the spec's content), the clip's own hold shows.
+/// Where a pace gives no hold for a step, the clip's own hold shows.
 #[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Pace(pub Vec<Hold>);
 

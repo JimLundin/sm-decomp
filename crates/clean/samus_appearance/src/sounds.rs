@@ -1,18 +1,17 @@
 //! Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. The domain's sounds, and the
 //! frame's sound rules at her stride, the pose she takes, a first passage entry and normal
-//! drawing. Each reads the frame's one set of inputs, applies at most once a frame, and neither
-//! advances her animation nor changes its quantities.
+//! drawing. Each reads the frame's one set of inputs, applies at most once a frame, and leaves
+//! her animation as it finds it.
 
-use types::{Action, BoostStage, Item};
+use types::{Action, BoostStage, Item, QueueAllowance};
 
 use crate::clip::{Clip, Frames};
 use crate::inputs::{Activity, Charge, Figure, Inputs};
-use crate::state::{Playhead, State};
+use crate::state::{Animation, Playhead};
 
-/// A sound the domain asks for: a semantic request for the sound domain to admit or not, the
-/// same request whichever rule asks for it.
+/// A sound the domain asks for, the same whichever rule asks for it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum SoundRequest {
+pub enum Sound {
     /// A running stride touches the ground (`FootContact`).
     Footstep,
     /// She starts boosting (`BoostStages`).
@@ -29,7 +28,7 @@ pub enum SoundRequest {
     SamusSilence,
 }
 
-/// The sound domain's queue a request joins.
+/// The sound domain's queue a sound is offered to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SoundQueue {
     /// The footstep sounds.
@@ -38,10 +37,33 @@ pub enum SoundQueue {
     Samus,
 }
 
-impl SoundRequest {
-    /// The queue it joins. Admission to it, sending, retries and replies are the sound domain's.
+/// A sound request as the frame reports it: the sound, the queue it is offered to, and its
+/// allowance in that queue. The sound domain decides from these whether it is admitted.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SoundOffer {
+    /// The sound asked for.
+    pub sound: Sound,
+    /// The queue it is offered to.
+    pub queue: SoundQueue,
+    /// Its allowance there, in sounds.
+    pub allowance: QueueAllowance,
+}
+
+impl Sound {
+    /// The request for this sound: the footstep sounds with an allowance of 6 for the footstep
+    /// and boosting; Samus sounds with 6 for a spin's start, and with 15 for a spin's end and
+    /// the silence.
     #[must_use]
-    pub const fn queue(self) -> SoundQueue {
+    pub const fn offer(self) -> SoundOffer {
+        SoundOffer {
+            sound: self,
+            queue: self.queue(),
+            allowance: self.allowance(),
+        }
+    }
+
+    /// The queue it is offered to.
+    const fn queue(self) -> SoundQueue {
         match self {
             Self::Footstep | Self::Boosting => SoundQueue::Footsteps,
             Self::PlainSpin
@@ -52,18 +74,15 @@ impl SoundRequest {
         }
     }
 
-    /// The most sounds that may already wait for it to join its queue: 6 for the footstep,
-    /// boosting and spin starts, 15 for a spin's end and the silence. The sound domain's
-    /// admission, not a rule of her look.
-    #[must_use]
-    pub const fn max_waiting(self) -> u8 {
+    /// Its allowance in that queue.
+    const fn allowance(self) -> QueueAllowance {
         match self {
             Self::Footstep
             | Self::Boosting
             | Self::PlainSpin
             | Self::SpaceJump
-            | Self::ScrewAttack => 6,
-            Self::SpinEnded | Self::SamusSilence => 15,
+            | Self::ScrewAttack => QueueAllowance(6),
+            Self::SpinEnded | Self::SamusSilence => QueueAllowance(15),
         }
     }
 }
@@ -87,13 +106,13 @@ const fn spinning(action: Action) -> bool {
 /// on the last frame (exactly 1 left) of a shown step that `clip`, her figure's as the frame
 /// starts, marks as a contact, she touches the ground. That is a graphical contact for part 2,
 /// and a `Footstep` unless she is boosting or a cinematic, a boss or special colour time is
-/// active. Nothing that quiets the footstep takes the graphical contact away.
+/// active. The graphical contact stays whatever quiets the footstep.
 #[must_use]
 pub fn foot_contact(
-    at_start: State,
+    at_start: Animation,
     inputs: &Inputs,
     clip: &Clip,
-) -> (Option<GraphicalContact>, Option<SoundRequest>) {
+) -> (Option<GraphicalContact>, Option<Sound>) {
     let (figure, playhead) = (inputs.figure, at_start.playhead);
     let contact = (figure.pose.action == Action::Running
         && playhead.time_left == Frames::LAST
@@ -102,31 +121,31 @@ pub fn foot_contact(
     .then_some(GraphicalContact { figure, playhead });
     let quiet =
         at_start.stage == BoostStage::Boosting || inputs.activities.values().any(|&active| active);
-    let sound = (contact.is_some() && !quiet).then_some(SoundRequest::Footstep);
+    let sound = (contact.is_some() && !quiet).then_some(Sound::Footstep);
     (contact, sound)
 }
 
-/// Spec: `SpinStarts`. Taking a different figure (its sprite included) that spins, not
-/// submerged, starts its spin's sound: `SpaceJump` with the space jump and not the screw attack,
-/// from any action and during a cinematic too; otherwise nothing from a spin or a wall jump;
-/// otherwise `ScrewAttack` with the screw attack, during a cinematic too; otherwise `PlainSpin`
-/// unless a cinematic is active.
+/// Spec: `SpinStarts`. Taking a different figure (its sprite included) that spins, unless she is
+/// submerged, starts its spin's sound: `SpaceJump` with the space jump and without the
+/// screw attack, from any action and during a cinematic too; otherwise nothing from a spin or a
+/// wall jump; otherwise `ScrewAttack` with the screw attack, during a cinematic too; otherwise
+/// `PlainSpin` while no cinematic is active.
 #[must_use]
-pub fn spin_start(inputs: &Inputs) -> Option<SoundRequest> {
+pub fn spin_start(inputs: &Inputs) -> Option<Sound> {
     let (from, takes, items) = (inputs.figure, inputs.figure_after, inputs.items);
     if from == takes || takes.pose.action != Action::Spinning || inputs.liquid.submerged {
         return None;
     }
     if !items[Item::ScrewAttack] && items[Item::SpaceJump] {
-        return Some(SoundRequest::SpaceJump);
+        return Some(Sound::SpaceJump);
     }
     if spinning(from.pose.action) {
         return None;
     }
     if items[Item::ScrewAttack] {
-        return Some(SoundRequest::ScrewAttack);
+        return Some(Sound::ScrewAttack);
     }
-    (!inputs.activities[Activity::Cinematic]).then_some(SoundRequest::PlainSpin)
+    (!inputs.activities[Activity::Cinematic]).then_some(Sound::PlainSpin)
 }
 
 /// Spec: `AtTheDoor`. On her first entry into a passage, before it holds its sounds: ending the
@@ -134,19 +153,18 @@ pub fn spin_start(inputs: &Inputs) -> Option<SoundRequest> {
 /// charge; otherwise, with shoot released and the charge below 16 frames, she is quieted
 /// (`SamusSilence`).
 #[must_use]
-pub fn at_the_door(inputs: &Inputs) -> Option<SoundRequest> {
+pub fn at_the_door(inputs: &Inputs) -> Option<Sound> {
     if spinning(inputs.figure_after.pose.action) {
-        return Some(SoundRequest::SpinEnded);
+        return Some(Sound::SpinEnded);
     }
     (!inputs.shoot_held && inputs.charge.frames() < Charge::QUIET_BELOW)
-        .then_some(SoundRequest::SamusSilence)
+        .then_some(Sound::SamusSilence)
 }
 
 /// Spec: `SpinEnds`. Normal drawing, with her animation frozen too: with `kept`, the action her
 /// last prepared frame kept, a spin or a wall jump, and her figure as the frame ends doing
-/// neither, the spin's sound ends (`SpinEnded`). No other drawing owner's admission is read.
+/// neither, the spin's sound ends (`SpinEnded`).
 #[must_use]
-pub fn spin_end(kept: Action, inputs: &Inputs) -> Option<SoundRequest> {
-    (spinning(kept) && !spinning(inputs.figure_after.pose.action))
-        .then_some(SoundRequest::SpinEnded)
+pub fn spin_end(kept: Action, inputs: &Inputs) -> Option<Sound> {
+    (spinning(kept) && !spinning(inputs.figure_after.pose.action)).then_some(Sound::SpinEnded)
 }

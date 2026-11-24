@@ -6,13 +6,13 @@ use std::collections::BTreeMap;
 
 use samus_appearance::{
     AppearanceState, CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences,
-    DryColourReset, Frame, FrameOutputs, GrappleActivity, LiquidLevel, PaletteObservations,
-    PaletteOpportunity, RoomColours, Rules, Suit, VisorDelay, VisorStep, update,
+    DryColourOutcome, DryColourReset, Frame, FrameOutputs, LiquidLevel, PaletteObservations,
+    PaletteOpportunity, Rules, Suit, Unrecognized, VisorDelay, VisorStep, update,
 };
 use serde::{Deserialize, Serialize};
 use types::{Action, Colour, PALETTE_SLOTS, Palette, Palettes, Set};
 
-use super::{Library, VectorContent, VectorInputs, behaviour, frame, named, read_file, state};
+use super::{Library, VectorContent, VectorInputs, animation, behaviour, frame, named, read_file};
 
 /// The levels of each colour channel, 0 to 31: the invented fixtures' slot pattern.
 const LEVELS: u16 = 32;
@@ -39,10 +39,13 @@ impl ColourVectors {
         let red = *self
             .invented_palettes
             .get(name)
-            .unwrap_or_else(|| panic!("no invented bank {name}"));
-        assert!(red < LEVELS, "{name}: red within a channel");
+            .unwrap_or_else(|| panic!("expected an invented bank {name}"));
+        assert!(
+            red < LEVELS,
+            "{name}: expected red within a channel's 0 to 31"
+        );
         Palette(std::array::from_fn(|slot| {
-            let slot = u16::try_from(slot).expect("a palette slot");
+            let slot = u16::try_from(slot).expect("expected a palette slot below 256");
             Colour::from_channels([red, slot % LEVELS, slot / LEVELS])
         }))
     }
@@ -55,13 +58,13 @@ impl ColourVectors {
         for (key, value) in history.observed.iter().chain(replacement) {
             assert!(
                 input.insert(key.clone(), value.clone()).is_some(),
-                "{}: unknown replacement {key}",
+                "{}: expected a replacement of a shared observation, found {key}",
                 history.id
             );
         }
         let input: Observations = toml::Value::Table(input)
             .try_into()
-            .expect("known observations");
+            .expect("expected the observations the file's header names");
         input.opportunity()
     }
 }
@@ -99,16 +102,16 @@ struct History {
 #[serde(deny_unknown_fields)]
 struct Sequences {
     visor_delay: u8,
-    visor_step: usize,
-    charge_glow_position: usize,
+    visor_step: u8,
+    charge_glow_position: u8,
 }
 
 impl From<Sequences> for ColourSequences {
     fn from(given: Sequences) -> Self {
         Self {
-            visor_delay: VisorDelay(given.visor_delay),
-            visor_step: VisorStep(given.visor_step),
-            charge_glow_position: ChargeGlowPosition(given.charge_glow_position),
+            visor_delay: VisorDelay::new(given.visor_delay),
+            visor_step: VisorStep::new(given.visor_step),
+            charge_glow_position: ChargeGlowPosition::new(given.charge_glow_position),
         }
     }
 }
@@ -139,9 +142,23 @@ struct Boundary {
     replacements: Vec<toml::Table>,
 }
 
+/// A boundary's outcome, as the file names it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 enum Outcome {
-    Unsupported,
+    /// The reset refused, an ordinary result of the frame.
+    Refused,
+    /// A fact the rule can't read.
+    Unrecognized,
+}
+
+impl Outcome {
+    /// The model's outcome of a frame's palette opportunity for this one.
+    const fn expected(self) -> DryColourOutcome {
+        match self {
+            Self::Refused => Ok(DryColourReset::Refused),
+            Self::Unrecognized => Err(Unrecognized),
+        }
+    }
 }
 
 /// A boundary case: the frame's inputs, with the history's pose after and items where the case
@@ -152,7 +169,7 @@ fn boundary_case(history: &History, replacement: &toml::Table) -> (VectorInputs,
         || history.pose_after.clone(),
         |text| {
             text.as_str()
-                .expect("a boundary pose is written as text")
+                .expect("expected a boundary pose written as text")
                 .to_owned()
         },
     );
@@ -162,7 +179,7 @@ fn boundary_case(history: &History, replacement: &toml::Table) -> (VectorInputs,
             || Ok(history.items.clone()),
             toml::Value::try_into::<Vec<String>>,
         )
-        .expect("boundary items are written as names");
+        .expect("expected boundary items written as names");
     (frame_inputs(&pose_after, &items), observations)
 }
 
@@ -190,30 +207,23 @@ struct Observations {
 const UNAVAILABLE: &str = "Unavailable";
 
 impl Observations {
-    /// The opportunity these observations make: one whose owners couldn't supply a fact is
-    /// unrecognized.
+    /// The opportunity these observations make: one whose owners couldn't supply a fact has a
+    /// fact the rule can't read.
     fn opportunity(&self) -> PaletteOpportunity {
         let (room, grapple) = (&self.room_colours, &self.grapple);
         if room == UNAVAILABLE || grapple == UNAVAILABLE {
-            return PaletteOpportunity::Unrecognized;
+            return PaletteOpportunity::Unreadable;
         }
         PaletteOpportunity::Observed(PaletteObservations {
             suit: self.suit,
-            room_colours: named(
-                &[
-                    RoomColours::Standard,
-                    RoomColours::RedBackground,
-                    RoomColours::OrangeBackground,
-                ],
-                room,
-            ),
+            room_colours: named(room),
             levels: [
                 (LiquidLevel::Water, self.water_present),
-                (LiquidLevel::Magma, self.lava_present),
+                (LiquidLevel::Lava, self.lava_present),
             ]
             .into_iter()
             .collect(),
-            grapple: named(&[GrappleActivity::Dormant, GrappleActivity::Busy], grapple),
+            grapple: named(grapple),
             effects: [
                 (ColourEffect::StoredGlow, self.stored_glow),
                 (ColourEffect::WeaponCharging, self.weapon_charging),
@@ -238,9 +248,13 @@ struct Kept {
 
 /// `kept` saved whole with serde, and restored fresh from the saved text alone, the same.
 fn restored(kept: &Kept) -> Kept {
-    let text = toml::to_string(kept).expect("the State and palettes save");
-    let fresh: Kept = toml::from_str(&text).expect("the State and palettes restore");
-    assert_eq!(toml::to_string(&fresh).expect("restored saves"), text);
+    let text = toml::to_string(kept).expect("expected the State and palettes to save");
+    let fresh: Kept = toml::from_str(&text).expect("expected the State and palettes to restore");
+    assert_eq!(
+        toml::to_string(&fresh).expect("expected the restored State and palettes to save"),
+        text,
+        "expected them restored as saved"
+    );
     fresh
 }
 
@@ -250,7 +264,7 @@ fn start(vectors: &ColourVectors, history: &History) -> Kept {
     let [current, target] = &history.palettes;
     restored(&Kept {
         appearance: AppearanceState {
-            animation: state(2, 3, 1, 1),
+            animation: animation(2, 3, 1, 1),
             kept_action: Action::WallJumping,
             cannon: CannonDelay::INITIAL,
             colours: history.before.into(),
@@ -288,7 +302,8 @@ fn play_frame(
         clips: Vec::new(),
         paces: &library.paces,
     };
-    let (appearance, outputs) = update(kept.appearance, &frame, &content, &Rules::VANILLA);
+    let (appearance, outputs) = update(kept.appearance, &frame, &content, &Rules::VANILLA)
+        .expect("expected a frame without movement to read no clip");
     let after = restored(&Kept {
         appearance,
         palettes: kept.palettes,
@@ -296,29 +311,30 @@ fn play_frame(
     (after, outputs)
 }
 
-/// The frame's applications of the reset: 1 where it applied, 0 where it was refused.
+/// The frame's applications of the reset: 1 where it applied, 0 where it was refused or a fact
+/// was unrecognized.
 fn applications(outputs: &FrameOutputs) -> usize {
     match outputs.dry_colours {
-        DryColourReset::Applied => 1,
-        DryColourReset::Unsupported | DryColourReset::NoOpportunity => 0,
+        Some(Ok(DryColourReset::Applied)) => 1,
+        Some(Ok(DryColourReset::Refused) | Err(Unrecognized)) | None => 0,
     }
 }
 
 /// The frame asks for nothing and leaves her animation and cannon as they were.
 fn check_quiet(before: &Kept, after: &Kept, outputs: &FrameOutputs, id: &str) {
-    assert!(outputs.sounds.is_empty(), "{id}: no requests");
-    assert_eq!(outputs.contact, None, "{id}: no graphics");
+    assert!(outputs.sounds.is_empty(), "{id}: expected no requests");
+    assert_eq!(outputs.contact, None, "{id}: expected no graphics");
     assert_eq!(
         after.appearance.animation, before.appearance.animation,
-        "{id}: animation"
+        "{id}: expected her animation unchanged"
     );
     assert_eq!(
         after.appearance.cannon, before.appearance.cannon,
-        "{id}: cannon"
+        "{id}: expected her cannon delay unchanged"
     );
     assert_eq!(
         after.appearance.kept_action, before.appearance.kept_action,
-        "{id}: kept action"
+        "{id}: expected her kept action unchanged"
     );
 }
 
@@ -346,11 +362,22 @@ fn run_history(vectors: &ColourVectors, history: &History, library: &Library) {
     assert_eq!(
         after.appearance.colours,
         history.after.into(),
-        "{id}: the three quantities"
+        "{id}: expected the three quantities `after` gives"
     );
-    assert_eq!(after.palettes, expected_palettes, "{id}: both whole banks");
-    assert_eq!(after.palettes.current.0.len(), PALETTE_SLOTS, "{id}");
-    assert_eq!(applications(&outputs), history.applications, "{id}");
+    assert_eq!(
+        after.palettes, expected_palettes,
+        "{id}: expected both whole banks as the frame's producers leave them"
+    );
+    assert_eq!(
+        after.palettes.current.0.len(),
+        PALETTE_SLOTS,
+        "{id}: expected 256 slots"
+    );
+    assert_eq!(
+        applications(&outputs),
+        history.applications,
+        "{id}: expected the applications `applications` gives"
+    );
     check_quiet(&before, &after, &outputs, id);
 }
 
@@ -363,7 +390,7 @@ fn every_ordinary_palette_history() {
     let (file, library) = read_file();
     let vectors = &file.ordinary_dry_colours;
     for history in &vectors.history {
-        assert_ne!(history.source, "", "{}", history.id);
+        assert_ne!(history.source, "", "{}: expected a source", history.id);
         for entry in &history.entries {
             behaviour(entry);
         }
@@ -383,16 +410,18 @@ fn every_ordinary_palette_history() {
 fn every_refusal_boundary_leaves_everything() {
     let (file, library) = read_file();
     let vectors = &file.ordinary_dry_colours;
-    assert!(!vectors.boundary.is_empty(), "boundary sets are supplied");
-    let mut refusals = 0_usize;
+    assert!(
+        !vectors.boundary.is_empty(),
+        "expected boundary sets in the file"
+    );
+    let mut cases = 0_usize;
     for boundary in &vectors.boundary {
-        assert_ne!(boundary.source, "", "{}", boundary.id);
-        assert_eq!(boundary.outcome, Outcome::Unsupported, "{}", boundary.id);
+        assert_ne!(boundary.source, "", "{}: expected a source", boundary.id);
         let history = vectors
             .history
             .iter()
             .find(|history| history.id == boundary.based_on)
-            .unwrap_or_else(|| panic!("{}: no history {}", boundary.id, boundary.based_on));
+            .unwrap_or_else(|| panic!("{}: expected a history {}", boundary.id, boundary.based_on));
         for replacement in &boundary.replacements {
             let case = format!("{}: {replacement:?}", boundary.id);
             let (inputs, observations) = boundary_case(history, replacement);
@@ -400,31 +429,81 @@ fn every_refusal_boundary_leaves_everything() {
             let before = start(vectors, history);
             let (after, outputs) =
                 play_frame(before.clone(), &inputs, opportunity, &[], vectors, &library);
-            assert_eq!(outputs.dry_colours, DryColourReset::Unsupported, "{case}");
-            assert_eq!(applications(&outputs), boundary.applications, "{case}");
+            assert_eq!(
+                outputs.dry_colours,
+                Some(boundary.outcome.expected()),
+                "{case}: expected the outcome `outcome` gives"
+            );
+            assert_eq!(
+                applications(&outputs),
+                boundary.applications,
+                "{case}: expected the applications `applications` gives"
+            );
             assert_eq!(
                 after, before,
-                "{case}: the State and both banks as they were"
+                "{case}: expected the State and both banks as they were"
             );
             check_quiet(&before, &after, &outputs, &case);
-            refusals = refusals.saturating_add(1);
+            cases = cases.saturating_add(1);
         }
     }
     println!(
-        "{refusals} independent ordinary colour refusals passed in {} sets",
+        "{cases} independent ordinary colour boundary cases passed in {} sets",
         vectors.boundary.len()
     );
 }
 
 #[test]
 fn palettes_restore_only_whole_and_representable() {
-    assert!(Colour::new(0x8000).is_none());
-    assert!(Palette::try_from(vec![Colour::BLACK; PALETTE_SLOTS - 1]).is_err());
-    assert!(Palette::try_from(vec![Colour::BLACK; PALETTE_SLOTS + 1]).is_err());
+    assert!(
+        Colour::new(0x8000).is_none(),
+        "expected a sixteenth bit refused"
+    );
+    assert!(
+        Palette::try_from(vec![Colour::BLACK; PALETTE_SLOTS - 1]).is_err(),
+        "expected 255 colours refused"
+    );
+    assert!(
+        Palette::try_from(vec![Colour::BLACK; PALETTE_SLOTS + 1]).is_err(),
+        "expected 257 colours refused"
+    );
     let (file, _) = read_file();
     let vectors = &file.ordinary_dry_colours;
-    let kept = start(vectors, vectors.history.first().expect("a history"));
-    let text = toml::to_string(&kept).expect("the State and palettes save");
-    assert!(text.contains("current = [1,"), "{text}");
-    assert!(toml::from_str::<Kept>(&text.replace("current = [1,", "current = [32768,")).is_err());
+    let kept = start(
+        vectors,
+        vectors.history.first().expect("expected a history"),
+    );
+    let text = toml::to_string(&kept).expect("expected the State and palettes to save");
+    assert!(
+        text.contains("current = [1,"),
+        "expected the current bank saved: {text}"
+    );
+    assert!(
+        toml::from_str::<Kept>(&text.replace("current = [1,", "current = [32768,")).is_err(),
+        "expected an unrepresentable restored colour refused"
+    );
+}
+
+/// Her colour sequences save as their numbers and restore only within their types' ranges.
+#[test]
+fn colour_sequences_restore_only_in_range() {
+    let sequences = ColourSequences {
+        visor_delay: VisorDelay::new(u8::MAX),
+        visor_step: VisorStep::new(u8::MAX),
+        charge_glow_position: ChargeGlowPosition::new(u8::MAX),
+    };
+    let text = toml::to_string(&sequences).expect("expected the sequences to save");
+    assert_eq!(
+        toml::from_str::<ColourSequences>(&text).expect("expected the sequences to restore"),
+        sequences,
+        "expected the sequences restored as saved"
+    );
+    for key in ["visor_delay", "visor_step", "charge_glow_position"] {
+        let beyond = text.replacen(&format!("{key} = 255"), &format!("{key} = 256"), 1);
+        assert_ne!(beyond, text, "expected {key} saved as 255: {text}");
+        assert!(
+            toml::from_str::<ColourSequences>(&beyond).is_err(),
+            "expected {key} of 256 refused"
+        );
+    }
 }

@@ -170,7 +170,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 76 |
 | interface-hud | 2,855 | 2,412 | 1.18 | 0.90 | 24 % | 2,742 | 1,193 | 108 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 100 |
-| samus-appearance | 3,390 | 2,186 | 1.55 | 1.05 | 32 % (over 25 %) | 1,525 | 1,445 | 189 |
+| samus-appearance | 3,502 | 2,248 | 1.56 | 1.04 | 33 % (over 25 %) | 1,525 | 1,557 | 193 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 56 |
 | world-doors | 3,223 | 2,875 | 1.12 | 1.08 | 4 % | - | 950 | 70 |
 | samus-health | 489 | 299 | 1.64 | 1.61 | 2 % | - | 246 | 27 |
@@ -313,25 +313,25 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean/samus_appearance/src/ahead.rs` | clip | logic | 85 | 123 | 40 | 0 | 1 | 0 | 0 | 22 |
-| `crates/clean/samus_appearance/src/cannon.rs` | cannon | tables and types | 101 | 142 | 184 | 76 | 3 | 0 | 0 | 76 |
-| `crates/clean/samus_appearance/src/catalogue.rs` | - | tables and types | 0 | 18 | 114 | 683 | 0 | 0 | 0 | 207 |
-| `crates/clean/samus_appearance/src/clip.rs` | clip | tables and types | 231 | 383 | 461 | 59 | 0 | 0 | 0 | 136 |
-| `crates/clean/samus_appearance/src/colours.rs` | palette | tables and types | 216 | 298 | 383 | 97 | 7 | 0 | 0 | 133 |
-| `crates/clean/samus_appearance/src/inputs.rs` | - | tables and types | 127 | 236 | 362 | 24 | 3 | 17 | 0 | 112 |
-| `crates/clean/samus_appearance/src/lib.rs` | - | logic | 0 | 198 | 0 | 0 | 0 | 0 | 0 | 29 |
+| `crates/clean/samus_appearance/src/ahead.rs` | clip | logic | 102 | 157 | 37 | 0 | 1 | 0 | 0 | 27 |
+| `crates/clean/samus_appearance/src/cannon.rs` | cannon | tables and types | 97 | 138 | 182 | 76 | 3 | 0 | 0 | 75 |
+| `crates/clean/samus_appearance/src/catalogue.rs` | - | tables and types | 17 | 44 | 119 | 714 | 1 | 0 | 0 | 220 |
+| `crates/clean/samus_appearance/src/clip.rs` | clip | tables and types | 292 | 481 | 519 | 60 | 0 | 0 | 0 | 160 |
+| `crates/clean/samus_appearance/src/colours.rs` | palette | tables and types | 276 | 406 | 428 | 100 | 7 | 0 | 0 | 165 |
+| `crates/clean/samus_appearance/src/inputs.rs` | - | tables and types | 173 | 312 | 388 | 105 | 3 | 17 | 0 | 141 |
+| `crates/clean/samus_appearance/src/lib.rs` | - | logic | 0 | 209 | 0 | 0 | 0 | 0 | 0 | 33 |
 | `crates/clean/samus_appearance/src/moves.rs` | moves | logic | 225 | 313 | 12 | 0 | 3 | 0 | 31 | 50 |
-| `crates/clean/samus_appearance/src/play.rs` | clip | logic | 755 | 830 | 3 | 0 | 43 | 46 | 49 | 108 |
+| `crates/clean/samus_appearance/src/play.rs` | clip | logic | 673 | 808 | 34 | 0 | 36 | 0 | 23 | 116 |
 | `crates/clean/samus_appearance/src/rules.rs` | - | tables and types | 0 | 39 | 63 | 58 | 0 | 0 | 0 | 30 |
-| `crates/clean/samus_appearance/src/run.rs` | run | logic | 238 | 340 | 33 | 60 | 11 | 0 | 11 | 72 |
-| `crates/clean/samus_appearance/src/sounds.rs` | - | logic | 359 | 455 | 110 | 68 | 7 | 0 | 7 | 98 |
-| `crates/clean/samus_appearance/src/starting.rs` | clip | tables and types | 260 | 303 | 117 | 464 | 12 | 13 | 7 | 153 |
-| `crates/clean/samus_appearance/src/state.rs` | - | tables and types | 68 | 165 | 215 | 57 | 1 | 0 | 0 | 73 |
-| `crates/clean/samus_appearance/src/state.rs` `fn on` | clip | logic | 63 | 69 | 0 | 0 | 7 | 0 | 0 | 8 |
+| `crates/clean/samus_appearance/src/run.rs` | run | logic | 245 | 344 | 24 | 39 | 11 | 0 | 17 | 66 |
+| `crates/clean/samus_appearance/src/sounds.rs` | - | logic | 382 | 485 | 138 | 72 | 7 | 0 | 7 | 109 |
+| `crates/clean/samus_appearance/src/starting.rs` | clip | tables and types | 249 | 303 | 104 | 428 | 12 | 0 | 7 | 147 |
+| `crates/clean/samus_appearance/src/state.rs` | - | tables and types | 80 | 187 | 218 | 57 | 1 | 0 | 0 | 79 |
+| `crates/clean/samus_appearance/src/state.rs` `fn on` | clip | logic | 63 | 69 | 0 | 0 | 7 | 0 | 6 | 8 |
 | `crates/clean/samus_appearance/src/state.rs` `fn run_down` | clip | logic | 96 | 96 | 0 | 0 | 9 | 0 | 0 | 12 |
 | `crates/clean/samus_appearance/src/state.rs` `fn after_lap` | run | logic | 33 | 41 | 0 | 0 | 0 | 0 | 0 | 6 |
-| `crates/clean/samus_appearance/src/update.rs` | - | logic | 537 | 669 | 106 | 0 | 12 | 43 | 54 | 120 |
-| total | | | 3,390 | 4,718 | 2,203 | 1,646 | 117 | 119 | 157 | 1,445 |
+| `crates/clean/samus_appearance/src/update.rs` | - | logic | 503 | 654 | 108 | 0 | 14 | 12 | 17 | 113 |
+| total | | | 3,502 | 5,086 | 2,374 | 1,709 | 112 | 29 | 106 | 1,557 |
 
 ### boss-ceres-ridley
 
@@ -421,7 +421,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | run-progress | 437 | 182 | 255 | 136 |
 | interface-hud | 1,193 | 659 | 534 | 476 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
-| samus-appearance | 1,445 | 920 | 525 | 565 |
+| samus-appearance | 1,557 | 1,017 | 540 | 584 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 950 | 386 | 564 | 537 |
 | samus-health | 246 | 58 | 188 | 82 |
@@ -430,7 +430,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
 | shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,263 | 1,073 | 190 | 243 |
-| total | 14,418 | 7,860 | 6,558 | 6,103 |
+| total | 14,530 | 7,957 | 6,573 | 6,121 |
 
 ## Spec, budget and fit by area
 
@@ -551,15 +551,15 @@ Spec [`docs/behaviours/samus-appearance.md`](behaviours/samus-appearance.md), k 
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| clip | 11 | 35.7 | 1,337 | - | 1,489 | 1.11 |
+| clip | 11 | 34.3 | 1,287 | - | 1,474 | 1.15 |
 | moves | 5 | 6.0 | 225 | - | 225 | 1.00 |
-| run | 3 | 10.0 | 375 | - | 270 | 0.72 |
-| cannon | 2 | 5.7 | 212 | - | 101 | 0.48 |
-| palette | 1 | 1.0 | 37 | 183 | 216 | 5.83 |
-| shared (in no area) | | | | | 1,090 | |
-| total | 22 | 58.3 | 2,186 | 1,525 | 3,390 | 1.55 |
+| run | 4 | 11.0 | 412 | - | 277 | 0.67 |
+| cannon | 2 | 5.7 | 212 | - | 97 | 0.46 |
+| palette | 1 | 3.0 | 112 | 183 | 276 | 2.46 |
+| shared (in no area) | | | | | 1,153 | |
+| total | 23 | 60.0 | 2,248 | 1,525 | 3,502 | 1.56 |
 
-Area fit 1.05: the areas' score, 2,300, ÷ the budget. Shared code 1,090, its share of the model 32 % (over 25 %).
+Area fit 1.04: the areas' score, 2,349, ÷ the budget. Shared code 1,153, its share of the model 33 % (over 25 %).
 
 ### boss-ceres-ridley
 
@@ -660,7 +660,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | weapons-projectiles | bridge | 1 | 1,409 | 1,347 | 68 | 240 | 208 | 37 | 0 | 226 |
 | weapons-projectiles | replay provider | 2 | 4,889 | 4,628 | 331 | 130 | 360 | 495 | 59 | 752 |
 | samus-movement | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-movement | replay provider | 3 | 6,643 | 6,668 | 526 | 286 | 345 | 715 | 61 | 1,146 |
+| samus-movement | replay provider | 3 | 6,656 | 6,680 | 526 | 286 | 346 | 715 | 61 | 1,147 |
 | world-camera | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -669,8 +669,8 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | interface-hud | replay provider | 1 | 3,661 | 3,549 | 65 | 79 | 277 | 340 | 19 | 542 |
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-appearance | bridge | 2 | 1,643 | 1,660 | 130 | 36 | 194 | 49 | 0 | 268 |
-| samus-appearance | replay provider | 1 | 2,194 | 2,395 | 19 | 30 | 110 | 93 | 66 | 335 |
+| samus-appearance | bridge | 2 | 1,595 | 1,609 | 126 | 36 | 194 | 49 | 0 | 256 |
+| samus-appearance | replay provider | 1 | 2,214 | 2,414 | 19 | 30 | 111 | 93 | 66 | 337 |
 | boss-ceres-ridley | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | boss-ceres-ridley | replay provider | 1 | 1,250 | 1,452 | 29 | 115 | 38 | 32 | 50 | 248 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -685,7 +685,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 41,825 | 41,639 | 3,805 | 1,864 | 3,110 | 3,494 | 477 | 7,103 |
+| total | | | 41,810 | 41,619 | 3,801 | 1,864 | 3,112 | 3,494 | 477 | 7,094 |
 
 ## Engine services
 
@@ -693,9 +693,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 36 | 4,144 | 24,865 | 24,960 | 6,786 | 999 | 1,708 | 3,036 | 302 | 5,167 |
-| bridges | 7 | 942 | 5,650 | 5,617 | 661 | 377 | 622 | 317 | 78 | 974 |
-| rebuilt models, shared types included | 119 | 6,103 | 36,616 | 45,653 | 19,854 | 17,780 | 1,816 | 1,341 | 918 | 14,418 |
+| production and exact services | 36 | 4,127 | 24,762 | 24,867 | 6,754 | 999 | 1,701 | 3,026 | 303 | 5,142 |
+| bridges | 7 | 934 | 5,602 | 5,566 | 657 | 377 | 622 | 317 | 78 | 962 |
+| rebuilt models, shared types included | 119 | 6,121 | 36,727 | 46,021 | 20,025 | 17,843 | 1,811 | 1,250 | 867 | 14,530 |
 
 ## Domain graph
 
@@ -1744,45 +1744,49 @@ graph LR
 
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| `ahead.rs` | clip | The read-ahead: what a caller asks of her State as the frame starts, before samus-movement's step: the end her clip reaches and whether her spin has turned far. | `struct Ahead`, `Ahead::of` | 85 | 22 |
-| `cannon.rs` | cannon | When her cannon may follow the selected item: a delay of its own, apart from her animation and the HUD's mode. | `enum SelectedItem (6)`, `enum ControlEligibility (2)`, `struct ItemControlAnswer`, `enum CannonEvent (3)`, `struct CannonDelay`, `CannonDelay::{INITIAL, new, remaining, may_follow, after}`, 2 private | 101 | 76 |
-| `catalogue.rs` | - | The catalogue: one behaviour per entry of the spec. | `enum BehaviourId (22)`, `struct Behaviour`, `const CATALOGUE` | 0 | 207 |
-| `clip.rs` | clip | Her clips and the run's paces: the content the importer supplies, as typed values. | `struct Step`, `struct Frames`, `struct Hold`, `struct Slowdown`, `struct Branch`, `enum Instruction (2)`, `enum Control (6)`, `struct Clip`, `struct Pace`, `struct Paces`, `Step::{FIRST, SECOND, next, before}`, `Frames::{NONE, LAST, slowed}`, `Hold::{LONGEST, new, frames}`, `Slowdown::{MOST, NONE, new}`, `Control::end`, `Clip::{at, hold}`, `Pace::hold`, `impl TryFrom<u8> for Hold`, `impl TryFrom<u8> for Slowdown`, 1 private | 231 | 136 |
-| `colours.rs` | palette | Her colour sequences during ordinary dry movement: the visor and charge-glow sequences, readied without touching the shared current and target palettes. | `struct VisorDelay`, `struct VisorStep`, `struct ChargeGlowPosition`, `struct ColourSequences`, `const ORDINARY_READY`, `enum Suit (3)`, `enum RoomColours (3)`, `enum GrappleActivity (2)`, `enum LiquidLevel (2)`, `enum ColourEffect (6)`, `struct PaletteObservations`, `enum PaletteOpportunity (3)`, `enum DryColourReset (3)`, `fn ordinary_dry_colours`, 6 private | 216 | 133 |
-| `inputs.rs` | - | What a frame brings, each fact once, from the domain that owns it. | `struct Figure`, `trait Content`, `enum MoveEvent (4)`, `enum Dash (3)`, `struct Liquid`, `enum Activity (3)`, `struct Charge`, `struct Inputs`, `struct SoundsWaiting`, `Liquid::NONE`, `Charge::{MOST, QUIET_BELOW, new, frames}`, `SoundsWaiting::{MOST, NONE, new, count}`, `impl TryFrom<u16> for Charge`, `impl TryFrom<u8> for SoundsWaiting` | 127 | 112 |
-| `lib.rs` | - | Her appearance State ([`AppearanceState`]) holds all she remembers from one frame to the next: her step and the time left on it, the boost stage and the laps left, her kept action, the cannon selection delay, and the visor delay, visor sequence position and charge-glow position. | - | 0 | 29 |
+| `ahead.rs` | clip | The read-ahead: what a caller asks of her State as the frame starts, before samus-movement's step: the end her clip reaches and whether her spin has turned far. | `struct Ahead`, `Ahead::of` | 102 | 27 |
+| `cannon.rs` | cannon | When her cannon may follow the selected item: a delay of its own, apart from her animation and the HUD's mode. | `enum SelectedItem (6)`, `enum ControlEligibility (2)`, `struct ItemControlAnswer`, `enum ItemControls (2)`, `struct CannonDelay`, `CannonDelay::{INITIAL, new, remaining, may_follow, after}`, 2 private | 97 | 75 |
+| `catalogue.rs` | - | The catalogue: one behaviour per entry of the spec. | `enum BehaviourId (23)`, `struct Behaviour`, `fn catalogue`, 1 private | 17 | 220 |
+| `clip.rs` | clip | Her clips and the run's paces: the content the importer supplies, as typed values. | `struct Step`, `struct Frames`, `struct ShownFrames`, `struct Hold`, `struct Slowdown`, `struct Branch`, `enum Instruction (2)`, `enum Control (6)`, `struct Clip`, `struct Pace`, `struct Paces`, `Step::{FIRST, SECOND, next, before}`, `Frames::{NONE, LAST, slowed}`, `ShownFrames::{MOST, new, count, before_the_run_down}`, `Hold::{LONGEST, new, frames}`, `Slowdown::{MOST, NONE, new}`, `Control::end`, `Clip::{at, hold}`, `Pace::hold`, `impl TryFrom<u8> for ShownFrames`, `impl TryFrom<u8> for Hold`, `impl TryFrom<u8> for Slowdown`, 1 private | 292 | 160 |
+| `colours.rs` | palette | Her colour sequences during ordinary dry movement: the visor and charge-glow sequences, readied while the shared current and target palettes stay with their owner. | `struct VisorDelay`, `struct VisorStep`, `struct ChargeGlowPosition`, `struct ColourSequences`, `const ORDINARY_READY`, `enum Suit (3)`, `enum RoomColours (3)`, `enum GrappleActivity (2)`, `enum LiquidLevel (2)`, `enum ColourEffect (6)`, `struct PaletteObservations`, `enum PaletteOpportunity (3)`, `enum DryColourReset (2)`, `struct Unrecognized`, `type DryColourOutcome`, `fn ordinary_dry_colours`, `VisorDelay::{new, ticks}`, `VisorStep::{new, entry}`, `ChargeGlowPosition::{RESET, new, picture}`, 6 private | 276 | 165 |
+| `inputs.rs` | - | What a frame brings, each fact once, from the domain that owns it, and the content her animation plays. | `struct Figure`, `trait AnimationContent`, `struct MissingClip`, `fn clip_of`, `enum MoveEvent (3)`, `enum Dash (6)`, `struct Liquid`, `enum Activity (3)`, `struct Charge`, `struct Inputs`, `struct SoundsWaiting`, `Dash::{dashing_as_the_clip_moves_on, began, lost}`, `Liquid::NONE`, `Charge::{MOST, QUIET_BELOW, new, frames}`, `SoundsWaiting::{MOST, new, count}`, `impl TryFrom<u16> for Charge`, `impl TryFrom<u8> for SoundsWaiting` | 173 | 141 |
+| `lib.rs` | - | Her appearance State ([`AppearanceState`]) holds all she remembers from one frame to the next: her step and the time left on it, the boost stage and the laps left, her kept action, the cannon selection delay, and the visor delay, visor sequence position and charge-glow position. | - | 0 | 33 |
 | `moves.rs` | moves | What her moves do to her clip, before the time runs down. | `fn standing_restart`, `fn wall_jump_ready`, `fn fast_fall`, `fn rising_hold` | 225 | 50 |
-| `play.rs` | clip | Her clip plays: the time runs down, and when it is over the clip moves on as its steps say. | `fn play`, 5 private | 755 | 108 |
+| `play.rs` | clip | Her clip plays: the time runs down, and when it is over the clip moves on as its steps say. | `struct ClipPlay`, `ClipPlay::play`, 7 private | 673 | 116 |
 | `rules.rs` | - | The spec's parameters, as a game's tuning: `Rules::VANILLA` holds the game's values, and any other `Rules` is an adjusted game. | `struct Rules`, `Rules::VANILLA` | 0 | 30 |
-| `run.rs` | run | Her run: its pace while she dashes, and the speed booster's stages up to boosting. | `fn stride`, `fn hold_on`, `fn next_stage`, `fn boosting_lap_stage`, `fn dash_began`, `fn dash_lost`, 2 private | 238 | 72 |
-| `sounds.rs` | - | Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. | `enum SoundRequest (7)`, `enum SoundQueue (2)`, `struct GraphicalContact`, `fn foot_contact`, `fn spin_start`, `fn at_the_door`, `fn spin_end`, `SoundRequest::{queue, max_waiting}`, 1 private | 359 | 98 |
-| `starting.rs` | clip | Taking another pose: where the clip of the pose she takes starts. | `fn start`, 12 private | 260 | 153 |
-| `state.rs` | -; `fn on` in clip, `fn run_down` in clip, `fn after_lap` in run | What her appearance remembers from one frame to the next: the four animation quantities (her step, the time left on it, the boost stage and the laps left), her kept action, the cannon selection delay, and her colour sequences. | `struct Playhead`, `enum RunDown (2)`, `struct Laps`, `enum LapsLeft (2)`, `struct State`, `struct AppearanceState`, `Playhead::{on, run_down}`, `Laps::{ONE, TWO, new, count}`, `LapsLeft::after_lap`, `AppearanceState::INITIAL`, 1 private | 259 | 99 |
-| `update.rs` | - | A frame of her appearance: the frame's inputs and parts go in, her appearance State and the frame's outputs come out, each rule applied once, where it happens in the frame. | `enum FramePart (4)`, `struct Frame`, `struct FrameOutputs`, `fn update`, 4 private | 537 | 120 |
+| `run.rs` | run | Her run: its pace while she dashes, and the speed booster's stages up to boosting. | `fn stride`, `fn hold_on`, `fn next_stage`, `fn boosting_lap_stage`, `fn dash_began`, `fn dash_lost`, 1 private | 245 | 66 |
+| `sounds.rs` | - | Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. | `enum Sound (7)`, `enum SoundQueue (2)`, `struct SoundOffer`, `struct GraphicalContact`, `fn foot_contact`, `fn spin_start`, `fn at_the_door`, `fn spin_end`, `Sound::offer`, 3 private | 382 | 109 |
+| `starting.rs` | clip | Taking another pose: where the clip of the pose she takes starts. | `fn start`, 11 private | 249 | 147 |
+| `state.rs` | -; `fn on` in clip, `fn run_down` in clip, `fn after_lap` in run | What her appearance remembers from one frame to the next: her animation's four quantities (her step, the time left on it, the boost stage and the laps left), her kept action, the cannon selection delay, and her colour sequences. | `struct Playhead`, `enum RunDown (2)`, `struct Laps`, `enum LapsLeft (2)`, `struct Animation`, `struct AppearanceState`, `Playhead::{on, run_down}`, `Laps::{ONE, TWO, new, count}`, `LapsLeft::after_lap`, `Animation::with_playhead`, `AppearanceState::INITIAL`, 1 private | 271 | 105 |
+| `update.rs` | - | A frame of her appearance: the frame's inputs and parts go in, her appearance State and the frame's outputs come out, each rule applied once, where it happens in the frame. | `enum FramePart (5)`, `struct Frame`, `struct FrameOutputs`, `fn update`, 2 private | 503 | 113 |
 
 Its crate root exports:
 
 - from `ahead`: `Ahead`
-- from `cannon`: `CannonDelay`, `CannonEvent`, `ControlEligibility`, `ItemControlAnswer`, `SelectedItem`
-- from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
-- from `clip`: `Branch`, `Clip`, `Control`, `Frames`, `Hold`, `Instruction`, `Pace`, `Paces`, `Slowdown`, `Step`
-- from `colours`: `ChargeGlowPosition`, `ColourEffect`, `ColourSequences`, `DryColourReset`, `GrappleActivity`, `LiquidLevel`, `PaletteObservations`, `PaletteOpportunity`, `RoomColours`, `Suit`, `VisorDelay`, `VisorStep`
-- from `inputs`: `Activity`, `Charge`, `Content`, `Dash`, `Figure`, `Inputs`, `Liquid`, `MoveEvent`, `SoundsWaiting`
+- from `cannon`: `CannonDelay`, `ControlEligibility`, `ItemControlAnswer`, `ItemControls`, `SelectedItem`
+- from `catalogue`: `Behaviour`, `BehaviourId`, `catalogue`
+- from `clip`: `Branch`, `Clip`, `Control`, `Frames`, `Hold`, `Instruction`, `Pace`, `Paces`, `ShownFrames`, `Slowdown`, `Step`
+- from `colours`: `ChargeGlowPosition`, `ColourEffect`, `ColourSequences`, `DryColourOutcome`, `DryColourReset`, `GrappleActivity`, `LiquidLevel`, `PaletteObservations`, `PaletteOpportunity`, `RoomColours`, `Suit`, `Unrecognized`, `VisorDelay`, `VisorStep`
+- from `inputs`: `Activity`, `AnimationContent`, `Charge`, `Dash`, `Figure`, `Inputs`, `Liquid`, `MissingClip`, `MoveEvent`, `SoundsWaiting`
 - from `rules`: `Rules`
-- from `sounds`: `GraphicalContact`, `SoundQueue`, `SoundRequest`
-- from `state`: `AppearanceState`, `Laps`, `LapsLeft`, `Playhead`, `State`
+- from `sounds`: `GraphicalContact`, `Sound`, `SoundOffer`, `SoundQueue`
+- from `state`: `Animation`, `AppearanceState`, `Laps`, `LapsLeft`, `Playhead`
 - from `update`: `Frame`, `FrameOutputs`, `FramePart`, `update`
 
 The public functions a caller reaches through them:
 
 ```rust
-Ahead::of(state: &AppearanceState, clip: &Clip) -> Self
+Ahead::of(state: &AppearanceState, figure: Figure, content: &impl AnimationContent) -> Result<Self, MissingClip>
 CannonDelay::new(frames: u8) -> Option<Self>
 CannonDelay::remaining(self) -> u8
 CannonDelay::may_follow(self) -> bool
+catalogue() -> EnumMap<BehaviourId, Behaviour>
 Step::next(self) -> Option<Self>
 Step::before(self) -> Option<Self>
 Frames::slowed(self, slowdown: Slowdown) -> Self
+ShownFrames::new(frames: u8) -> Option<Self>
+ShownFrames::count(self) -> u8
+ShownFrames::before_the_run_down(self) -> Frames
 Hold::new(frames: u8) -> Option<Self>
 Hold::frames(self) -> Frames
 Slowdown::new(frames: u8) -> Option<Self>
@@ -1790,18 +1794,27 @@ Control::end(self) -> Option<ClipEnd>
 Clip::at(&self, step: Step) -> Option<Instruction>
 Clip::hold(&self, step: Step) -> Option<Hold>
 Pace::hold(&self, step: Step) -> Option<Hold>
+VisorDelay::new(ticks: u8) -> Self
+VisorDelay::ticks(self) -> u8
+VisorStep::new(entry: u8) -> Self
+VisorStep::entry(self) -> u8
+ChargeGlowPosition::new(picture: u8) -> Self
+ChargeGlowPosition::picture(self) -> u8
+Dash::dashing_as_the_clip_moves_on(self) -> bool
+Dash::began(self) -> bool
+Dash::lost(self) -> bool
 Charge::new(frames: u16) -> Option<Self>
 Charge::frames(self) -> u16
 SoundsWaiting::new(waiting: u8) -> Option<Self>
 SoundsWaiting::count(self) -> u8
-SoundRequest::queue(self) -> SoundQueue
-SoundRequest::max_waiting(self) -> u8
+Sound::offer(self) -> SoundOffer
 Laps::new(count: u8) -> Option<Self>
 Laps::count(self) -> u8
-update(state: AppearanceState, frame: &Frame, content: &impl Content, rules: &Rules) -> (AppearanceState, FrameOutputs)
+Animation::with_playhead(self, playhead: Playhead) -> Self
+update(state: AppearanceState, frame: &Frame, content: &impl AnimationContent, rules: &Rules) -> Result<(AppearanceState, FrameOutputs), MissingClip>
 ```
 
-Shared types it takes from `types`: `Action`, `Aim`, `Body`, `BoostStage`, `Checked`, `ClipEnd`, `Fixed`, `Item`, `Kind`, `LandedFrom`, `Parts`, `Pose`, `Set`, `Sprite`, `Switch`, `Turn`. Other crates it uses: `core`, `enum_map`, `serde`.
+Shared types it takes from `types`: `Action`, `Aim`, `Body`, `BoostStage`, `Checked`, `ClipEnd`, `Fixed`, `Item`, `Kind`, `LandedFrom`, `Parts`, `Pose`, `QueueAllowance`, `Set`, `Sprite`, `Switch`, `Turn`, `by_member`. Other crates it uses: `core`, `enum_map`, `serde`.
 
 Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
 
@@ -1835,6 +1848,7 @@ graph LR
     m_run["run"]
   end
   m_ahead --> m_clip
+  m_ahead --> m_inputs
   m_ahead --> m_state
   m_colours --> m_inputs
   m_inputs --> m_clip
@@ -2313,7 +2327,7 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `struct FloorResponse` | samus-movement |
 | `enum SoundIdentity (4)` | samus-movement |
 | `enum SoundLibrary (2)` | samus-movement |
-| `struct QueueAllowance` | samus-movement |
+| `struct QueueAllowance` | samus-appearance, samus-movement |
 | `struct SoundRequest` | samus-movement |
 | `struct Buttons` | samus-movement |
 | `mod button` (RUN, JUMP, SHOOT, LEFT, RIGHT, UP, DOWN, AIM_UP, AIM_DOWN, SIDES, PAD) | samus-movement |
@@ -2333,7 +2347,7 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `type Set` | run-progress, samus-appearance, samus-movement, world-blocks, world-doors |
 | `fn set_of` | world-doors |
 | `trait Members` | run-progress |
-| `fn by_member` | world-blocks, world-doors |
+| `fn by_member` | samus-appearance, world-blocks, world-doors |
 | `enum Area (7)` | run-progress |
 | `enum Item (11)` | run-progress, samus-appearance, samus-movement |
 | `enum Beam (5)` | run-progress |
@@ -2389,32 +2403,32 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 58 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
 | samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Outcome`, `Samus` | 280 | 75 |
-| samus-movement | `crates/game/src/production/connected.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,081 | 232 |
+| samus-movement | `crates/game/src/production/connected.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,079 | 232 |
 | samus-movement | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 430 | 105 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 380 | 99 |
-| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 3,252 | 586 |
+| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 3,317 | 595 |
 | samus-movement | `crates/game/src/production.rs` | names it | `Outcome`, `Samus`, `UnknownPose` | 2,295 | 458 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 58 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 280 | 75 |
-| world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 1,081 | 232 |
+| world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 1,079 | 232 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `ViewPosition` | 3,252 | 586 |
+| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `ViewPosition` | 3,317 | 595 |
 | world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 2,295 | 458 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 58 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
-| run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 3,252 | 586 |
+| run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 3,317 | 595 |
 | run-progress | `crates/game/src/production/room_loading.rs` | names it | `Condition`, `EnteredRoom`, `Progress`, `RoomStates`, `Version` | 2,921 | 416 |
 | run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 2,295 | 458 |
 | run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 58 |
 | interface-hud | `crates/game/src/production/connected/early_map.rs` | names it | `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Pair`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 290 | 84 |
-| interface-hud | `crates/game/src/production/connected.rs` | names it | `HudState` | 1,081 | 232 |
+| interface-hud | `crates/game/src/production/connected.rs` | names it | `HudState` | 1,079 | 232 |
 | interface-hud | `crates/game/src/production/content.rs` | names it | `HudPictures` | 285 | 89 |
 | interface-hud | `crates/game/src/production/entries.rs` | names it | `Boss`, `FrameInputs`, `FrameOutputs`, `HudPictures`, `HudState`, `OutOfPlayInputs`, `Place`, `Rules` | 1,159 | 230 |
 | interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `HudState`, `MiniMapInputs`, `MiniMapPower`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 668 | 188 |
 | interface-hud | `crates/game/src/production/hud.rs` | bridge | `Flip`, `HudState`, `Place` | 148 | 35 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| interface-hud | `crates/game/src/production/played.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `FrameOutputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Status`, `StockAtStart` | 3,252 | 586 |
+| interface-hud | `crates/game/src/production/played.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `FrameOutputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Status`, `StockAtStart` | 3,317 | 595 |
 | interface-hud | `crates/game/src/production/room_loading.rs` | names it | `Room` | 2,921 | 416 |
 | interface-hud | `crates/game/src/production.rs` | names it | `FrameOutputs`, `HudState`, `UnsupportedFrame` | 2,295 | 458 |
 | interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 58 |
@@ -2422,29 +2436,29 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 2,295 | 458 |
 | world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 58 |
-| samus-appearance | `crates/game/src/production/animation.rs` | names it | `AppearanceState`, `CannonEvent`, `Clip`, `Content`, `Figure`, `Frame`, `FrameOutputs`, `FramePart`, `Inputs`, `Paces`, `PaletteOpportunity`, `Rules`, `update` | 401 | 105 |
-| samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Ahead`, `AppearanceState`, `Clip`, `Figure` | 40 | 25 |
+| samus-appearance | `crates/game/src/production/animation.rs` | names it | `AnimationContent`, `AppearanceState`, `Clip`, `Figure`, `Frame`, `FrameOutputs`, `FramePart`, `Inputs`, `ItemControls`, `MissingClip`, `Paces`, `PaletteOpportunity`, `Rules`, `update` | 256 | 78 |
+| samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Figure` | 20 | 18 |
 | samus-appearance | `crates/game/src/production/connected/inputs.rs` | names it | `Activity`, `Charge`, `Liquid`, `SoundsWaiting` | 0 | 49 |
-| samus-appearance | `crates/game/src/production/connected.rs` | names it | `Activity`, `AppearanceState`, `Figure`, `GraphicalContact`, `Liquid`, `Rules`, `SoundRequest` | 1,081 | 232 |
+| samus-appearance | `crates/game/src/production/connected.rs` | names it | `Activity`, `Ahead`, `AppearanceState`, `Figure`, `GraphicalContact`, `Liquid`, `Rules`, `SoundOffer` | 1,079 | 232 |
 | samus-appearance | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-appearance | `crates/game/src/production/movement.rs` | names it | `Figure` | 430 | 105 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 380 | 99 |
-| samus-appearance | `crates/game/src/production/played.rs` | names it | `Activity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules`, `SoundRequest` | 3,252 | 586 |
+| samus-appearance | `crates/game/src/production/played.rs` | names it | `Activity`, `Ahead`, `Dash`, `Figure`, `Inputs`, `MissingClip`, `MoveEvent`, `Rules`, `SoundOffer` | 3,317 | 595 |
 | samus-appearance | `crates/game/src/production.rs` | names it | `AppearanceState`, `Frame`, `FrameOutputs` | 2,295 | 458 |
-| samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,643 | 266 |
+| samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `AnimationContent`, `Branch`, `Clip`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,595 | 254 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
 | samus-appearance | `crates/game/src/state/owned.rs` | names it | `AppearanceState` | 0 | 58 |
 | boss-ceres-ridley | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 1,159 | 230 |
-| boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 3,252 | 586 |
+| boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 3,317 | 595 |
 | boss-ceres-ridley | `crates/game/src/production/room_loading.rs` | names it | `CeresDoor`, `ColourSet`, `DoorKind`, `Stage` | 2,921 | 416 |
 | boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 2,295 | 458 |
 | boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 58 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,159 | 230 |
-| world-doors | `crates/game/src/production/played.rs` | names it | `Activity`, `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Finishing`, `Inputs`, `Palette`, `Report`, `RoomCall`, `Rules`, `Scene` | 3,252 | 586 |
+| world-doors | `crates/game/src/production/played.rs` | names it | `Activity`, `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Finishing`, `Inputs`, `Palette`, `Report`, `RoomCall`, `Rules`, `Scene` | 3,317 | 595 |
 | world-doors | `crates/game/src/production/room_loading.rs` | names it | `Arrival`, `COLOURS`, `Palette`, `RoomCall` | 2,921 | 416 |
 | world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 2,295 | 458 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 668 | 188 |
-| samus-health | `crates/game/src/production/played.rs` | names it | `PlayedFrame`, `Rules`, `State`, `TailImpact` | 3,252 | 586 |
+| samus-health | `crates/game/src/production/played.rs` | names it | `PlayedFrame`, `Rules`, `State`, `TailImpact` | 3,317 | 595 |

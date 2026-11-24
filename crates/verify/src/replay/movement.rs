@@ -330,7 +330,7 @@ pub(super) fn input_at(
     // left (spec §1.1). It borrows her animation alone; the rest of her appearance State is no
     // input of the case, so it stands at her initialization's, which the query doesn't read.
     let appearance = samus_appearance::AppearanceState {
-        animation: samus_appearance::State {
+        animation: samus_appearance::Animation {
             playhead: samus_appearance::Playhead {
                 step,
                 time_left: samus_appearance::Frames(timer),
@@ -343,7 +343,8 @@ pub(super) fn input_at(
         },
         ..samus_appearance::AppearanceState::INITIAL
     };
-    let ahead = game::production::appearance::ahead(&appearance, &imported.clip);
+    let ahead = samus_appearance::Ahead::of(&appearance, imported.figure, &content.clips)
+        .map_err(|_| unsupported("actual movement pose animation content"))?;
     Ok(Input {
         sprite: observed_figure.figure.sprite,
         cinematic: word(wram, source::CINEMATIC_ACTIVE)? != 0,

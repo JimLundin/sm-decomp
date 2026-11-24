@@ -15,11 +15,14 @@
 #   behaviours it exercises); rules (optional); before; ahead (optional); inputs; after.
 # - rules: the vector's own values of the spec's parameters, for an adjusted game; a parameter
 #   it doesn't name has the game's value: breathing_threshold, the energy at which she still
-#   breathes in a loop (Breathing; 30); restart_hold, the restart's hold in frames
-#   (StandingRestart; 16); fast_fall_speed, the size of her vertical speed at which her fall jumps
-#   on, "PPPP.SSSS" in hex (FastFall; "0005.0000"); fast_fall_hold, the fast fall step's hold
-#   (FastFall; 8); rising_hold, the rising step's hold while she rises (RisingHold; 4);
-#   laps_per_stage, the laps each boost stage 0 to 4 lasts (BoostStages; [1, 1, 1, 1, 2]).
+#   breathes in a loop (Breathing; 30); restart_frames, the frames step 0 shows after a
+#   restart, the restart's own frame the first (StandingRestart; 15); fast_fall_speed, the size of
+#   her vertical speed at which her fall jumps on, "PPPP.SSSS" in hex (FastFall; "0005.0000");
+#   fast_fall_frames, the frames the fast fall step shows, its first frame included (FastFall; 7);
+#   rising_frames, the frames the rising step shows again each time she is still rising on its
+#   last frame, that frame included (RisingHold; 3); laps_per_stage, the laps each boost stage 0
+#   to 4 lasts (BoostStages; [1, 1, 1, 1, 2]). A frames rule's value is the time left the frame
+#   ends with.
 # - before and after: her appearance State's animation part and kept action: step, left (the
 #   time left), stage and laps (the laps left), each default 0 in before, and kept (her kept
 #   action, spec §9.1: an action, default "Still" in before, and in after the same as before);
@@ -35,9 +38,12 @@
 #   is written "Turning(Ground)", "Landing(Jump)" and the like. clip: the clip of her pose.
 #   pose_after and clip_after (optional, default the same): the pose she ends the frame in and
 #   its clip. energy (default 99); items (default none): "SpeedBooster", "SpaceJump",
-#   "ScrewAttack"; submerged, run_held, handed_over, dashing, dash_began, dash_lost,
-#   standing_restarts, wall_jump_readied, heading_down (each default false; dashing is true
-#   whenever dash_began is); slowdown, start_slowdown, sounds_waiting (each default 0);
+#   "ScrewAttack"; dash (default "Off"), the dash this frame (spec §1.3): "Off", "On", "Began",
+#   "Lost", "BeganAndLost" or "Stopped"; submerged, run_held, handed_over, standing_restarts,
+#   wall_jump_readied, heading_down (each default false); step_slowdown (the slowdown of each step
+#   her clip moves on to), start_slowdown (the slowdown of the first step of the pose she takes),
+#   each default 0; sounds_waiting (default 0 in this file only: the caller supplies it on every
+#   frame);
 #   vertical_speed (default "+0000.0000"): her vertical speed, a signed P.S quantity "+PPPP.SSSS"
 #   or "-PPPP.SSSS", the pixel part and the subpixel part both hex, downward positive;
 #   cinematic, boss, special_colours, shoot_held (each default false); charge (default 0);
@@ -152,7 +158,7 @@ id = "C-slow-show"
 source = "constructed"
 entries = ["ClipPlays"]
 before = { step = 2, left = 1 }
-inputs = { pose = "Upright Jumping Right Forward", clip = "jump", slowdown = 3, heading_down = true }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", step_slowdown = 3, heading_down = true }
 after = { step = 3, left = 9, stage = 0, laps = 0 }
 
 # moving on to "again 1" goes on from step 1, held 9
@@ -172,7 +178,7 @@ source = "constructed"
 entries = ["ClipControls"]
 before = { step = 4, left = 1 }
 ahead = { turned_far = true }
-inputs = { pose = "Upright Spinning Right Forward", clip = "spin", slowdown = 2 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", step_slowdown = 2 }
 after = { step = 1, left = 11, stage = 0, laps = 0 }
 
 # moving on to a rest: she rests on step 1 with 0 left, whatever the slowdown
@@ -181,7 +187,7 @@ id = "C-rest"
 source = "constructed"
 entries = ["ClipControls"]
 before = { step = 0, left = 1 }
-inputs = { pose = "Upright Falling Right Forward", clip = "blink", slowdown = 3 }
+inputs = { pose = "Upright Falling Right Forward", clip = "blink", step_slowdown = 3 }
 after = { step = 1, left = 0, stage = 0, laps = 0 }
 
 # energy 30: back to step 0, held 7
@@ -199,7 +205,7 @@ id = "C-breathe-on"
 source = "constructed"
 entries = ["Breathing"]
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Still Right Forward", clip = "stand", energy = 29, slowdown = 1 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", energy = 29, step_slowdown = 1 }
 after = { step = 3, left = 10, stage = 0, laps = 0 }
 
 # an adjusted game whose threshold is 50: energy 40, below it: on to step 3, held 9
@@ -239,7 +245,7 @@ source = "constructed"
 entries = ["ClipEnds", "StartingClip"]
 before = { step = 3, left = 1 }
 ahead = { end = "EndUnlessJump" }
-inputs = { pose = "Upright Turning(Ground) Left Forward", clip = "turn", pose_after = "Upright TakingOff Left Forward", clip_after = "jump", slowdown = 2, start_slowdown = 2 }
+inputs = { pose = "Upright Turning(Ground) Left Forward", clip = "turn", pose_after = "Upright TakingOff Left Forward", clip_after = "jump", step_slowdown = 2, start_slowdown = 2 }
 after = { step = 0, left = 7, stage = 0, laps = 0 }
 
 # the step before the end with 2 left: no end this frame, 1 left
@@ -293,7 +299,7 @@ id = "C-branch-submerged"
 source = "constructed"
 entries = ["WallJumpBranch"]
 before = { step = 0, left = 1 }
-inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", items = ["ScrewAttack"], submerged = true, slowdown = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", items = ["ScrewAttack"], submerged = true, step_slowdown = 1 }
 after = { step = 2, left = 8, stage = 0, laps = 0, sounds = ["PlainSpin"] }
 
 # a clip ends under water: the next pose's first hold is 7 + 3 (the start's) + 3
@@ -303,7 +309,7 @@ source = "constructed"
 entries = ["HandOverSlowdown", "ClipEnds", "StartingClip"]
 before = { step = 3, left = 1 }
 ahead = { end = "End" }
-inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", slowdown = 3, start_slowdown = 3, handed_over = true }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", step_slowdown = 3, start_slowdown = 3, handed_over = true }
 after = { step = 0, left = 13, stage = 0, laps = 0 }
 
 # another pose that no end brought, under water: 5 + 3, once
@@ -312,7 +318,7 @@ id = "C-slow-start"
 source = "constructed"
 entries = ["HandOverSlowdown", "StartingClip"]
 before = { step = 1, left = 4 }
-inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", slowdown = 3, start_slowdown = 3 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", step_slowdown = 3, start_slowdown = 3 }
 after = { step = 0, left = 8, stage = 0, laps = 0 }
 
 # under water with the gravity suit: the clip slows by 3, the start by 0, so the take-off holds 5
@@ -321,7 +327,7 @@ id = "C-slow-gravity-start"
 source = "constructed"
 entries = ["StartingClip"]
 before = { step = 1, left = 4 }
-inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", slowdown = 3, start_slowdown = 0 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", step_slowdown = 3, start_slowdown = 0 }
 after = { step = 0, left = 5, stage = 0, laps = 0 }
 
 # the same handed over by an end: 7 + 0 + 3
@@ -331,7 +337,7 @@ source = "constructed"
 entries = ["HandOverSlowdown", "StartingClip"]
 before = { step = 3, left = 1 }
 ahead = { end = "End" }
-inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", slowdown = 3, start_slowdown = 0, handed_over = true }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", step_slowdown = 3, start_slowdown = 0, handed_over = true }
 after = { step = 0, left = 10, stage = 0, laps = 0 }
 
 # at a surface: the pose she takes has its feet under it (3) while the one she leaves did not slow her (0): 5 + 3
@@ -340,7 +346,7 @@ id = "C-slow-surface"
 source = "constructed"
 entries = ["StartingClip"]
 before = { step = 1, left = 4 }
-inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", slowdown = 0, start_slowdown = 3 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", step_slowdown = 0, start_slowdown = 3 }
 after = { step = 0, left = 8, stage = 0, laps = 0 }
 
 # standing to a take-off: the jump's clip from step 0, held 5
@@ -498,7 +504,7 @@ source = "constructed"
 entries = ["HandOverSlowdown", "StartingClip"]
 before = { step = 3, left = 1 }
 ahead = { end = "End" }
-inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", slowdown = 2, start_slowdown = 0, handed_over = true }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", step_slowdown = 2, start_slowdown = 0, handed_over = true }
 after = { step = 0, left = 9, stage = 0, laps = 0 }
 
 # a spin whose sprite alone changes, to the screw attack's: another pose, from step 1 of its clip, held 11
@@ -526,15 +532,15 @@ id = "C-restart"
 source = "constructed"
 entries = ["StandingRestart"]
 before = { step = 4, left = 1 }
-inputs = { pose = "Upright Still Right Forward", clip = "stand", standing_restarts = true, slowdown = 3 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", standing_restarts = true, step_slowdown = 3 }
 after = { step = 0, left = 15, stage = 0, laps = 0 }
 
-# an adjusted game whose restart holds 25: step 0, 25 left, run down to 24
+# an adjusted game whose restart shows step 0 for 24 frames: the frame ends on step 0 with 24 left
 [[vector]]
 id = "C-restart-adjusted"
 source = "constructed"
 entries = ["StandingRestart"]
-rules = { restart_hold = 25 }
+rules = { restart_frames = 24 }
 before = { step = 3, left = 6 }
 inputs = { pose = "Upright Still Right Forward", clip = "stand", standing_restarts = true }
 after = { step = 0, left = 24, stage = 0, laps = 0 }
@@ -633,12 +639,12 @@ before = { step = 1, left = 1 }
 inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0005.0000", heading_down = true }
 after = { step = 2, left = 7, stage = 0, laps = 0 }
 
-# an adjusted game whose fall jumps on at 3.0000 px a frame and holds 12: falling at 3.8000 px a frame on step 1 with 3 left: the fast fall step 2, 12 left, run down to 11
+# an adjusted game whose fall jumps on at 3.0000 px a frame and shows the fast fall step for 11 frames: falling at 3.8000 px a frame on step 1 with 3 left: the frame ends on the fast fall step 2 with 11 left
 [[vector]]
 id = "C-fast-fall-adjusted"
 source = "constructed"
 entries = ["FastFall"]
-rules = { fast_fall_speed = "0003.0000", fast_fall_hold = 12 }
+rules = { fast_fall_speed = "0003.0000", fast_fall_frames = 11 }
 before = { step = 1, left = 3 }
 inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0003.8000", heading_down = true }
 after = { step = 2, left = 11, stage = 0, laps = 0 }
@@ -685,7 +691,7 @@ id = "C-fast-fall-liquid"
 source = "constructed"
 entries = ["FastFall"]
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0005.0000", heading_down = true, slowdown = 2 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0005.0000", heading_down = true, step_slowdown = 2 }
 after = { step = 2, left = 7, stage = 0, laps = 0 }
 
 # in a fall pose but rising at 5 px a frame on step 1: its size counts, so the fast fall step 2, 8 left, run down to 7
@@ -724,14 +730,14 @@ before = { step = 1, left = 1 }
 inputs = { pose = "Upright Jumping Right Forward", clip = "jump" }
 after = { step = 1, left = 3, stage = 0, laps = 0 }
 
-# an adjusted game whose rising hold is 7: on the rising step with 1 left, rising, slowdown 2, which doesn't slow it: 7 left, run down to 6
+# an adjusted game whose rising step shows 6 frames again: on it with 1 left, rising, step slowdown 2, which doesn't slow it: the frame ends with 6 left
 [[vector]]
 id = "C-rising-adjusted"
 source = "constructed"
 entries = ["RisingHold"]
-rules = { rising_hold = 7 }
+rules = { rising_frames = 6 }
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Jumping Right Forward", clip = "jump", slowdown = 2 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", step_slowdown = 2 }
 after = { step = 1, left = 6, stage = 0, laps = 0 }
 
 # the same heading down: the clip moves on to step 2, held 12
@@ -749,7 +755,7 @@ id = "C-pace-plain"
 source = "constructed"
 entries = ["RunPace"]
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true }
 after = { step = 2, left = 10, stage = 0, laps = 0 }
 
 # dashing, the booster at stage 3: step 2 held stage 3's 4, plus slowdown 1
@@ -758,7 +764,7 @@ id = "C-pace-boost"
 source = "constructed"
 entries = ["RunPace"]
 before = { step = 1, left = 1, stage = 3, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], slowdown = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"], step_slowdown = 1 }
 after = { step = 2, left = 5, stage = 3, laps = 1 }
 
 # dashing, run held, no booster, at the lap's end: step 0 held the plain pace's 11 + 2 slowdown
@@ -767,7 +773,7 @@ id = "C-lap-plain"
 source = "constructed"
 entries = ["RunPace"]
 before = { step = 4, left = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, slowdown = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, step_slowdown = 2 }
 after = { step = 0, left = 13, stage = 0, laps = 0 }
 
 # dashing, run let go, at the lap's end: the clip's again, step 0 held the clip's 6
@@ -776,7 +782,7 @@ id = "C-lap-not-held"
 source = "constructed"
 entries = ["RunPace", "ClipControls"]
 before = { step = 4, left = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On" }
 after = { step = 0, left = 6, stage = 0, laps = 0 }
 
 # dashing, run held, at the end of a lap whose again goes to step 2: the lap starts over at step 0, held the plain pace's 11
@@ -785,7 +791,7 @@ id = "C-lap-again-mid"
 source = "constructed"
 entries = ["RunPace"]
 before = { step = 4, left = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "stride", dashing = true, run_held = true }
+inputs = { pose = "Upright Running Right Forward", clip = "stride", dash = "On", run_held = true }
 after = { step = 0, left = 11, stage = 0, laps = 0 }
 
 # dashing, run held, moving on to a rest: that control ends the lap too, step 0 held the plain pace's 11
@@ -794,7 +800,7 @@ id = "C-lap-at-rest"
 source = "constructed"
 entries = ["RunPace"]
 before = { step = 0, left = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "pause", dashing = true, run_held = true }
+inputs = { pose = "Upright Running Right Forward", clip = "pause", dash = "On", run_held = true }
 after = { step = 0, left = 11, stage = 0, laps = 0 }
 
 # the dash lost at stage 2 as the clip moves on: step 2 held stage 2's 7, then stage 0 with 0 laps
@@ -803,8 +809,28 @@ id = "C-dash-lost-moving-on"
 source = "constructed"
 entries = ["RunPace", "BoostStages"]
 before = { step = 1, left = 1, stage = 2, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_lost = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "Lost", run_held = true, items = ["SpeedBooster"] }
 after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# a dash begins with the booster and is lost later in the frame as she slows in the same running
+# pose: step 2 held stage 0's 13 as she dashes while the clip moves on, then stage 0 with 0 laps
+[[vector]]
+id = "C-dash-began-and-lost"
+source = "constructed"
+entries = ["BoostStages", "RunPace"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "BeganAndLost", run_held = true, items = ["SpeedBooster"] }
+after = { step = 2, left = 13, stage = 0, laps = 0 }
+
+# dashing at stage 2, her moves stop the dash (she runs into a wall) before the clip moves on:
+# step 2 held the clip's 5, not a pace's, then stage 0 with 0 laps
+[[vector]]
+id = "C-dash-stopped"
+source = "constructed"
+entries = ["BoostStages", "RunPace"]
+before = { step = 1, left = 1, stage = 2, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "Stopped", run_held = true, items = ["SpeedBooster"] }
+after = { step = 2, left = 5, stage = 0, laps = 0 }
 
 # not dashing: step 2 held the clip's 5
 [[vector]]
@@ -821,7 +847,7 @@ id = "C-dash-jump"
 source = "constructed"
 entries = ["RunPace"]
 before = { step = 2, left = 1, stage = 2, laps = 1 }
-inputs = { pose = "Upright Jumping Right Forward", clip = "jump", dashing = true, run_held = true, items = ["SpeedBooster"], heading_down = true }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", dash = "On", run_held = true, items = ["SpeedBooster"], heading_down = true }
 after = { step = 3, left = 6, stage = 2, laps = 1 }
 
 # a dash begins with the booster: stage 0 with its 1 lap; the step moves on at stage 0's pace, 11
@@ -830,7 +856,7 @@ id = "C-began-booster"
 source = "constructed"
 entries = ["BoostStages"]
 before = { step = 0, left = 1, stage = 2, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_began = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "Began", run_held = true, items = ["SpeedBooster"] }
 after = { step = 1, left = 11, stage = 0, laps = 1 }
 
 # a dash begins without it: stage 0, 0 laps
@@ -839,17 +865,26 @@ id = "C-began-plain"
 source = "constructed"
 entries = ["BoostStages"]
 before = { step = 0, left = 3, stage = 0, laps = 0 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_began = true, run_held = true }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "Began", run_held = true }
 after = { step = 0, left = 2, stage = 0, laps = 0 }
 
 # at stage 4 with 2 laps left, the lap's end: 1 lap left, and the clip's again: step 0 held the clip's 6
 [[vector]]
 id = "C-lap-count"
 source = "constructed"
-entries = ["BoostStages", "ClipControls"]
+entries = ["CountedLapHold", "BoostStages", "ClipControls"]
 before = { step = 4, left = 1, stage = 4, laps = 2 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"] }
 after = { step = 0, left = 6, stage = 4, laps = 1 }
+
+# boosting with 2 laps left, the lap's end at a rest: 1 lap left, and the clip's rest: step 1, 0 left
+[[vector]]
+id = "C-lap-count-rest"
+source = "constructed"
+entries = ["CountedLapHold", "BoostStages", "ClipControls"]
+before = { step = 0, left = 1, stage = 4, laps = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "pause", dash = "On", run_held = true, items = ["SpeedBooster"] }
+after = { step = 1, left = 0, stage = 4, laps = 1 }
 
 # the same with run let go: the laps stay 2, and the clip's again
 [[vector]]
@@ -857,7 +892,7 @@ id = "C-lap-not-held-booster"
 source = "constructed"
 entries = ["BoostStages", "ClipControls"]
 before = { step = 4, left = 1, stage = 4, laps = 2 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", items = ["SpeedBooster"] }
 after = { step = 0, left = 6, stage = 4, laps = 2 }
 
 # stage 1, 1 lap left, the lap's end, slowdown 1: stage 2, its 1 lap, step 0 held stage 2's 8 + 1
@@ -866,7 +901,7 @@ id = "C-stage-up"
 source = "constructed"
 entries = ["BoostStages"]
 before = { step = 4, left = 1, stage = 1, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], slowdown = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"], step_slowdown = 1 }
 after = { step = 0, left = 9, stage = 2, laps = 1 }
 
 # an adjusted game whose stages last 3, 2, 4, 1 and 3 laps: stage 1, 1 lap left, the lap's end: stage 2 with its 4 laps, step 0 held stage 2's 8
@@ -876,7 +911,7 @@ source = "constructed"
 entries = ["BoostStages"]
 rules = { laps_per_stage = [3, 2, 4, 1, 3] }
 before = { step = 4, left = 1, stage = 1, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"] }
 after = { step = 0, left = 8, stage = 2, laps = 4 }
 
 # the same adjusted game: boosting with 1 lap left, the lap's end: stage 4 with its 3 laps, step 0 held the boosting pace's 4
@@ -886,7 +921,7 @@ source = "constructed"
 entries = ["BoostStages"]
 rules = { laps_per_stage = [3, 2, 4, 1, 3] }
 before = { step = 4, left = 1, stage = 4, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"] }
 after = { step = 0, left = 4, stage = 4, laps = 3 }
 
 # the same adjusted game: a dash begins with the booster: stage 0 with its 3 laps; the step moves on at stage 0's pace, 11
@@ -896,7 +931,7 @@ source = "constructed"
 entries = ["BoostStages"]
 rules = { laps_per_stage = [3, 2, 4, 1, 3] }
 before = { step = 0, left = 1, stage = 2, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_began = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "Began", run_held = true, items = ["SpeedBooster"] }
 after = { step = 1, left = 11, stage = 0, laps = 3 }
 
 # boosting, 1 lap left, the lap's end, slowdown 2: its 2 laps, step 0 held the boosting pace's 4 + 2
@@ -905,7 +940,7 @@ id = "C-boosting-lap"
 source = "constructed"
 entries = ["BoostStages"]
 before = { step = 4, left = 1, stage = 4, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], slowdown = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"], step_slowdown = 2 }
 after = { step = 0, left = 6, stage = 4, laps = 2 }
 
 # the dash lost while boosting: stage 0, 0 laps
@@ -914,7 +949,7 @@ id = "C-lost"
 source = "constructed"
 entries = ["BoostStages"]
 before = { step = 1, left = 4, stage = 4, laps = 2 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_lost = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "Lost", items = ["SpeedBooster"] }
 after = { step = 1, left = 3, stage = 0, laps = 0 }
 
 # stage 1 with 1 lap left, run let go at the lap's end: no stage up, the laps stay 1, and the clip's again
@@ -923,7 +958,7 @@ id = "C-stage-not-held"
 source = "constructed"
 entries = ["BoostStages", "ClipControls"]
 before = { step = 4, left = 1, stage = 1, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", items = ["SpeedBooster"] }
 after = { step = 0, left = 6, stage = 1, laps = 1 }
 
 # stage 3 to 4 with no sound waiting: Boosting; the lap at stage 0's pace, 14, and stage 0's 1 lap
@@ -932,7 +967,7 @@ id = "C-boost-quirk-0"
 source = "constructed"
 entries = ["BoostingLap", "BoostStages"]
 before = { step = 4, left = 1, stage = 3, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"] }
 after = { step = 0, left = 14, stage = 4, laps = 1, sounds = ["Boosting"] }
 
 # with 2 waiting: stage 2's pace, 8, and its 1 lap
@@ -941,7 +976,7 @@ id = "C-boost-quirk-2"
 source = "constructed"
 entries = ["BoostingLap"]
 before = { step = 4, left = 1, stage = 3, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], sounds_waiting = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"], sounds_waiting = 2 }
 after = { step = 0, left = 8, stage = 4, laps = 1, sounds = ["Boosting"] }
 
 # with 4 waiting: stage 4's pace, 4, and its 2 laps
@@ -950,7 +985,7 @@ id = "C-boost-quirk-4"
 source = "constructed"
 entries = ["BoostingLap"]
 before = { step = 4, left = 1, stage = 3, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], sounds_waiting = 4 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"], sounds_waiting = 4 }
 after = { step = 0, left = 4, stage = 4, laps = 2, sounds = ["Boosting"] }
 
 # the first boosting lap (stage 4, 1 lap left) moving on to step 1: the boosting pace's 7, not stage 0's 11
@@ -959,7 +994,7 @@ id = "C-boosting-first-lap"
 source = "constructed"
 entries = ["BoostingLap", "RunPace"]
 before = { step = 0, left = 1, stage = 4, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"] }
 after = { step = 1, left = 7, stage = 4, laps = 1 }
 
 # with 6 waiting: stage 3's pace, 7, and its 1 lap
@@ -968,7 +1003,7 @@ id = "C-boost-quirk-6"
 source = "constructed"
 entries = ["BoostingLap"]
 before = { step = 4, left = 1, stage = 3, laps = 1 }
-inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], sounds_waiting = 6 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dash = "On", run_held = true, items = ["SpeedBooster"], sounds_waiting = 6 }
 after = { step = 0, left = 7, stage = 4, laps = 1, sounds = ["Boosting"] }
 
 # facing the screen, 8 left becomes 7
@@ -1004,7 +1039,7 @@ id = "R-began"
 source = "boss-phantoon:351"
 entries = ["BoostStages"]
 before = { step = 0, left = 2 }
-inputs = { pose = "Upright Running Left Forward", clip = "run", dashing = true, dash_began = true, run_held = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Running Left Forward", clip = "run", dash = "Began", run_held = true, items = ["SpeedBooster"] }
 after = { step = 0, left = 1, stage = 0, laps = 1 }
 
 # jumping left aimed down-forward and heading down, the dash lost while boosting: stage 0, 0 laps; 15 left become 14
@@ -1013,7 +1048,7 @@ id = "R-lost-a"
 source = "chain-0100-B07A:3"
 entries = ["BoostStages"]
 before = { step = 1, left = 15, stage = 4, laps = 2 }
-inputs = { pose = "Upright Jumping Left DownForward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster"], heading_down = true, vertical_speed = "+0000.FC00" }
+inputs = { pose = "Upright Jumping Left DownForward", clip = "long", dash = "Lost", items = ["SpeedBooster"], heading_down = true, vertical_speed = "+0000.FC00" }
 after = { step = 1, left = 14, stage = 0, laps = 0 }
 
 # falling left, the dash lost at stage 3: stage 0, 0 laps; 2 left become 1
@@ -1022,7 +1057,7 @@ id = "R-lost-b"
 source = "chain-0314-DAE1:108"
 entries = ["BoostStages"]
 before = { step = 0, left = 2, stage = 3, laps = 1 }
-inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, vertical_speed = "+0000.C400" }
+inputs = { pose = "Upright Falling Left Forward", clip = "long", dash = "Lost", items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, vertical_speed = "+0000.C400" }
 after = { step = 0, left = 1, stage = 0, laps = 0 }
 
 # Each [[opportunity]] checks one rule of the frame's sounds (spec section 9): kind Contact (the
@@ -1213,7 +1248,7 @@ kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 0, left = 9, stage = 0, laps = 0 }
-inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", submerged = true, cinematic = false, slowdown = 3, start_slowdown = 3 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", submerged = true, cinematic = false, step_slowdown = 3, start_slowdown = 3 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1557,7 +1592,7 @@ kind = "PoseSelected"
 entries = ["SpinStarts"]
 before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 0, left = 9, stage = 0, laps = 0 }
-inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["SpaceJump", "ScrewAttack"], submerged = true, cinematic = false, slowdown = 3, start_slowdown = 3 }
+inputs = { pose = "Upright Running Right Forward", pose_after = "Upright Spinning Right Forward", clip = "run", clip_after = "spin", items = ["SpaceJump", "ScrewAttack"], submerged = true, cinematic = false, step_slowdown = 3, start_slowdown = 3 }
 expected = { sounds = [], contact = false }
 
 [[opportunity]]
@@ -1819,7 +1854,9 @@ steps = [
 # refused. Animation and cannon are unchanged.
 # Each [[boundary]] starts from its based_on history, observed table included. Its
 # "replacements" are independent cases, each changing shared observations or the inputs
-# pose_after and items of that frame.
+# pose_after and items of that frame. outcome: "Refused", the reset not admitted, an ordinary
+# result of the frame; "Unrecognized", a fact the rule can't read ("Unavailable"). Either
+# applies nothing.
 
 [ordinary_dry_colours.observations]
 suit = "Power"
@@ -2063,7 +2100,7 @@ applications = 1
 id = "C-ordinary-boundary"
 source = "constructed"
 based_on = "C-ordinary-stale"
-outcome = "Unsupported"
+outcome = "Refused"
 applications = 0
 replacements = [
     { pose_after = "Upright Falling Left Forward" },
@@ -2077,11 +2114,9 @@ replacements = [
     { suit = "Varia" },
     { room_colours = "RedBackground" },
     { room_colours = "OrangeBackground" },
-    { room_colours = "Unavailable" },
     { water_present = true },
     { lava_present = true },
     { grapple = "Busy" },
-    { grapple = "Unavailable" },
     { stored_glow = true },
     { weapon_charging = true },
     { override_colours = true },
@@ -2094,7 +2129,7 @@ replacements = [
 id = "C-ordinary-spin-boundary"
 source = "constructed"
 based_on = "C-ordinary-spin-stale"
-outcome = "Unsupported"
+outcome = "Refused"
 applications = 0
 replacements = [
     { items = ["ScrewAttack"] },
@@ -2106,4 +2141,15 @@ replacements = [
     { weapon_charging = true },
     { speed_glow = true },
     { hit_colour_pulse = true },
+]
+
+[[ordinary_dry_colours.boundary]]
+id = "C-ordinary-unreadable"
+source = "constructed"
+based_on = "C-ordinary-stale"
+outcome = "Unrecognized"
+applications = 0
+replacements = [
+    { room_colours = "Unavailable" },
+    { grapple = "Unavailable" },
 ]

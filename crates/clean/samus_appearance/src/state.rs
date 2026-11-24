@@ -1,7 +1,7 @@
-//! What her appearance remembers from one frame to the next: the four animation quantities
+//! What her appearance remembers from one frame to the next: her animation's four quantities
 //! (her step, the time left on it, the boost stage and the laps left), her kept action, the
-//! cannon selection delay, and her colour sequences. A caller may build each at any value the
-//! spec allows, read it back, save and restore it, and gives it back to the next frame as
+//! cannon selection delay, and her colour sequences. A caller may build each at any value its
+//! range allows, read it back, save and restore it, and gives it back to the next frame as
 //! `update` left it.
 
 use core::num::NonZeroU8;
@@ -32,8 +32,8 @@ pub struct Playhead {
 /// What her clip does this frame as the time runs down (`ClipPlays`).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RunDown {
-    /// Time is left, or her clip has no step after hers (outside the spec's clips): she stays on
-    /// her step, as this playhead says.
+    /// Time is left, or her clip has no step after hers: she stays on her step, as this
+    /// playhead says.
     Stays(Playhead),
     /// The time has run out: the clip moves on to this step, which holds this instruction.
     MovesOn(Step, Instruction),
@@ -98,7 +98,7 @@ impl Laps {
 /// that lap is the stage's last (`BoostStages`).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum LapsLeft {
-    /// No laps, 0: her run without the speed booster. A dash begun without it leaves none, and so
+    /// No laps, 0: her run without the speed booster. A dash begun without it leaves none, as
     /// does a dash lost, until the next dash begins.
     WithoutBooster,
     /// Her run with the speed booster: 1 lap or more, up to the laps the stage lasts.
@@ -116,14 +116,13 @@ impl LapsLeft {
     }
 }
 
-/// Spec: `ClipPlays`, `BoostStages`. The four persistent animation quantities: her step,
-/// the time left, the boost stage and the laps left.
+/// Spec: `ClipPlays`, `BoostStages`. Her animation: the part of her appearance State that plays
+/// her clip, its four quantities her step, the time left, the boost stage and the laps left.
 ///
 /// The end, whether her spin has turned far, where the clip of the pose she takes starts, the
-/// slowdowns and what her moves did are each worked out within the frame; they are not
-/// remembered.
+/// slowdowns and what her moves did are each worked out within the frame.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct State {
+pub struct Animation {
     /// Her step and the time left on it.
     pub playhead: Playhead,
     /// The boost stage, 0 to 4; 4 is boosting.
@@ -132,19 +131,26 @@ pub struct State {
     pub laps_left: LapsLeft,
 }
 
+impl Animation {
+    /// Her clip on `playhead`, with the boost stage and the laps left as they are.
+    #[must_use]
+    pub const fn with_playhead(self, playhead: Playhead) -> Self {
+        Self { playhead, ..self }
+    }
+}
+
 /// Her appearance State: all her appearance remembers from one frame to the next.
 ///
 /// Spec: `SpinEnds`, `CannonItemDelay`, `OrdinaryDryColours`. Her kept action, the cannon
-/// selection delay and the colour sequences are memories of their own: none can be rebuilt from
-/// her animation, her pose, the selected item or the palettes. The current and target palettes
-/// are not here: their producers and consumers share them, and this domain neither reads nor
-/// writes them.
+/// selection delay and the colour sequences are memories of their own, each kept apart from her
+/// animation, her pose, the selected item and the palettes. The current and target palettes
+/// live with their shared owner, beside this State.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct AppearanceState {
     /// Her animation's four quantities.
-    pub animation: State,
+    pub animation: Animation,
     /// Her kept action: the action of her pose as her last prepared frame started, which normal
-    /// drawing reads (`SpinEnds`). Not her pose's history, nor her pose as the frame starts.
+    /// drawing reads (`SpinEnds`).
     pub kept_action: Action,
     /// The cannon selection delay.
     pub cannon: CannonDelay,
@@ -160,7 +166,7 @@ impl AppearanceState {
     /// colour sequences as the ordinary reset leaves them (`OrdinaryDryColours`). A frame with
     /// her initialization sets every quantity to this first, and plays on from it.
     pub const INITIAL: Self = Self {
-        animation: State {
+        animation: Animation {
             playhead: Playhead {
                 step: Step::FIRST,
                 time_left: Frames::NONE,

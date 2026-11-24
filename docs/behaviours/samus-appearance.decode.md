@@ -106,18 +106,16 @@ record N to the next `R` record):
 | energy | `09C2` at N: the animation reads it before the frame's damage (the periodic damage `$90:E74D` follows `Animate Samus` in `$90:E725`, and the enemies' contact damage comes later in the frame). 4 cuts cross 30 within a frame, none at a breathe step |
 | items switched on | `09A2` at N+1: bits 2000h, 0200h, 0008h |
 | submerged | `$90:841D`'s test: gravity suit `09A2` & 20h clear, and the FX surface `195E` (non-negative, below the top boundary from `$90:EC58`, liquid physics on: `197E` & 4 clear) or the lava/acid surface `1962`. Never true in the cache |
-| slowdown | `0A9C` at N+1, the animation's own buffer: `$90:8078` the X speed divisor `0A66` (0 out of liquids); `$90:80B8` water: 3 (`$90:80CB`) with no gravity suit test; acid 2 (`$90:8219` → `$90:824C`, `$90:9E95`) with no gravity suit test either; lava (`$90:81C0`) 2, and 0 with the gravity suit (`$90:81DB` → `$90:820F`). FX types 8, Ah and Ch run `$90:8077` (RTS) and leave it as it was: the liquids' domain must carry it |
-| the start's slowdown | `$91:FB08`'s `$12`, worked out again for the pose she takes: the gravity suit gives `0A66` (`$91:FB0E` → `$91:FB3F`); otherwise the FX surface `195E` (liquid physics on) or the lava/acid surface `1962` against the **new pose's** bottom boundary (`$91:FB1D`..`$91:FB3D`): 3 in water (`$90:9E93`), 2 in lava or acid (`$90:9E95`). In the cache both are 0 on every frame of play, so `cachecheck.py` takes `0A9C` for it |
+| the step slowdown | `0A9C` at N+1, the animation's own buffer: `$90:8078` the X speed divisor `0A66` (0 out of liquids); `$90:80B8` water: 3 (`$90:80CB`) with no gravity suit test; acid 2 (`$90:8219` → `$90:824C`, `$90:9E95`) with no gravity suit test either; lava (`$90:81C0`) 2, and 0 with the gravity suit (`$90:81DB` → `$90:820F`). FX types 8, Ah and Ch run `$90:8077` (RTS) and leave it as it was: the liquids' domain must carry it |
+| the start slowdown | `$91:FB08`'s `$12`, worked out again for the pose she takes: the gravity suit gives `0A66` (`$91:FB0E` → `$91:FB3F`); otherwise the FX surface `195E` (liquid physics on) or the lava/acid surface `1962` against the **new pose's** bottom boundary (`$91:FB1D`..`$91:FB3D`): 3 in water (`$90:9E93`), 2 in lava or acid (`$90:9E95`). In the cache both are 0 on every frame of play, so `cachecheck.py` takes `0A9C` for it |
 | run held | pad `8B` at N & the run binding `09B6` |
 | handed over | `0A32` = 3 at N+1 with `0A2C` a pose (bit 15 clear): the super special "transition animation finished" took the frame's pose. On the 311 end frames on record it agrees with "an end, or an end unless a jump with `0A28` at N+1 not 4Bh, 4Ch, 19h or 1Ah outside the demo's `0A60` = E91Dh" (the 8 that gave way), and it is false on every other frame |
-| dashing | `0B3C` at N ≠ 0, or a dash began |
-| dash began | `0B3C` 0 at N, non-zero at N+1 (`$90:9796`, `$90:97CC`, in the movement handler, before the animation) |
-| dash lost | `0B3C` non-zero at N, 0 at N+1 (`$91:DE53`; also `$91:E655`, the pause screen's equipment change) |
+| the dash | from samus-movement's `dashing after her moves`, `dash began` and `dash lost` (its model: `dash_began` when the dash was off at the frame's start and her moves ran one, `dash_lost` when it was on or ran and is off at the end): off, on, began (began, dashing), lost (not began, dashing, lost), began and lost (began, lost), stopped (not dashing after her moves, lost). From the records alone: on when `0B3C` ≠ 0 at N and N+1; began when 0 at N and non-zero at N+1 (`$90:9796`, `$90:97CC`, in the movement handler, before the animation); lost when non-zero at N and 0 at N+1 (`$91:DE53`; also `$91:E655`, the pause screen's equipment change). Began and lost, and stopped, leave no trace in `0B3C` at the cuts (§Findings, "The dash's six values") |
 | standing restarts | movement type 0 at N, pose 1 or 2, pad `8B` at N & the shoot binding `09B2` (`$90:A3AD`); samus-movement's `StandingAnimation::Restarts` |
 | wall jump readied | samus-movement's `WallTest::Readied`. In `cachecheck.py`, from the records: the pose unchanged, a kick step, `0A96` at N+1 on it and at N neither on it nor one before (the kick step is reached no other way) |
 | vertical speed | samus-movement's `vertical speed after her moves` where its model runs the frame; elsewhere `0B2E`.`0B2C` at N+1 read as signed, then negated when `0B36` = 1 (up), so a rise the pull took past zero (`FFFF.F400` rising, samus-ceres-push 989) is the small `+0000.0C00`, as samus-movement gives it and as `BMI` reads it. The original reads `0B2E` alone at `$90:A5AC` (`CMP #5`, `BMI`), right after the falling movement (`$90:A590` → `$90:9168`) and before the pose change: `0B2E`.`0B2C` holds the size and `0B36` the direction, so the test is the size's, whichever way she moves (root decision a) |
 | heading down | samus-movement's `heading down` where its model runs the frame; elsewhere `0B36` = 2 at N+1. The two differ on a landing (as her moves leave her she heads down; N+1 shows none), where the landing's clip starts either way |
-| sounds waiting | `(0648 low − 0645) & 0Fh` at N: library 3's queue, `$80:9158` |
+| sounds waiting | `(0648 low − 0645) & 0Fh` at N: library 3's queue, `$80:9158`. Read every frame from the sound domain's queue; not appearance State, no starting value (the engine's bridge gives 0 until the sound domain supplies it, gaps file) |
 | cinematic, boss, special colours active | `1F51`, `179C`, `0A68` non-zero, as `FootContact` reads them (`$90:A404..A419`); `1F51` also for `SpinStarts` |
 | shoot held, charge | `008B & 09B2`, `0CD0` (`AtTheDoor`, `$90:F471..F4A1`) |
 | the frame's parts | her movement: the new state handler's normal, demo or elevator handler runs (§The harness). Preparation: the current state handler reaches `$90:EB02` (`$90:E6C3`, `$90:E70D`, `$90:E71C`). Palette opportunity: the pose-update PC `91eb88` hits (§Actions the opening reaches). First passage entry: `$84:8250`. Normal drawing: `$90:EB35` |
@@ -135,13 +133,14 @@ Which inputs samus-movement's model doesn't yet report is §Requests to samus-mo
 | WallJumpBranch | `$90:841D`..`$90:8489` (+1, +0Bh, +15h from the FBh byte; sounds 31h, 3Eh, 33h on library 1, `$80:9049`); `$90:8315` |
 | HandOverSlowdown | `$91:EBA4`..`$91:EBC0` then `$91:F36E` (command 3: `0A94` += `0A9C`), after `$91:FB08` set the first hold with its own `$12` (the start's slowdown) |
 | StartingClip | `$91:FB08`..`$91:FB8C` (pose = old pose: nothing; `0A9A` bit 15: kept; else frame and its byte plus the start's slowdown `$12`, `$91:FB0E`..`$91:FB56`), with `0A9A` from the pose's initialisation `$91:F468`'s table `$91:F4A2`: `$91:F4DC` (standing, shot direction up 0 or 9 from a previous pose's up: 1), `$91:F50C` (running from running: 8000h), `$91:F5AF` (15h/16h from 55h/56h: 1), `$91:F5EB` (85h/86h from F1h/F2h: 1), `$91:F624` (spin from spin or wall jump: 1), `$91:F9F4` (ball from types 4, 8: 8000h), `$91:FA56` (spring ball from 11h-13h: 8000h); the shot directions `$91:B629` byte 3 |
-| StandingRestart | `$90:A3AD`..`$90:A3C7` (in `$90:A383`: poses 1, 2 with shoot held, `0A94` = 10h, `0A96` = 0), then the countdown `$90:801E` the same frame |
+| StandingRestart | `$90:A3AD`..`$90:A3C7` (in `$90:A383`: poses 1, 2 with shoot held, `0A94` = 10h, `0A96` = 0), then the countdown `$90:801E` the same frame: the spec's restart's frames are 10h − 1 = 15 |
 | WallJumpReady | `$90:9DB2`..`$90:9DD7` (in the wall jump check `$90:9D35`: `0A94` = 1, `0A96` = 0Ah, or 1Ah in 81h/82h), then the countdown `$90:8021` |
 | SpinTurnedFar | `$90:9D55`..`$90:9D68` (`0A96` − 0Bh, or − 1Bh in 81h/82h, `BMI`), inside the wall jump check `$90:9D35`, in the movement of the frame that reads it, from `0A96` and the pose `0A1C` as that frame starts (§Findings, "Turned far from the frame's start"); the lists `$91:B384`, `$91:B391`, `$91:B39E`, `$91:B491` |
-| FastFall | `$90:A5AC`..`$90:A5C5` (in `$90:A58D`, poses 29h, 2Ah, 67h, 68h: `0B2E` ≥ 5 signed, `0A96` < 5 signed: `0A94` = 8, `0A96` = 5); lists `$91:B34A`, `$91:B353` |
-| RisingHold | `$90:8011`..`$90:8050` (poses 4Dh, 4Eh: `0B36` ≠ 2, `0A96` = 1 and `0A94` = 1 → `0A94` = 4, then the countdown); list `$91:B326` |
-| RunPace | `$90:84EF`..`$90:851D` (`0B3C` ≠ 0, movement type 1: the delay from `$91:B5D3`, or `$91:B5DE`'s list for `0B3F` with the booster); `$90:8538`..`$90:857B` (an instruction byte with run held, no booster: frame 0, `$91:B5D3`'s first byte) |
+| FastFall | `$90:A5AC`..`$90:A5C5` (in `$90:A58D`, poses 29h, 2Ah, 67h, 68h: `0B2E` ≥ 5 signed, `0A96` < 5 signed: `0A94` = 8, `0A96` = 5), then the countdown the same frame: the fast fall's frames are 8 − 1 = 7; lists `$91:B34A`, `$91:B353` |
+| RisingHold | `$90:8011`..`$90:8050` (poses 4Dh, 4Eh: `0B36` ≠ 2, `0A96` = 1 and `0A94` = 1 → `0A94` = 4, then the countdown): the rising frames are 4 − 1 = 3; list `$91:B326` |
+| RunPace | `$90:84EF`..`$90:851D` (`0B3C` ≠ 0, movement type 1: the delay from `$91:B5D3`, or `$91:B5DE`'s list for `0B3F` with the booster); `$90:82FB` (every byte with bit 80h, so every control, goes to `$90:852C`: any control ends a lap); `$90:8538`..`$90:857B` (an instruction byte with run held, no booster: frame 0, `$91:B5D3`'s first byte) |
 | BoostStages | `$90:857D`..`$90:85D8` (the word `DEC` of `0B3E`, `BIT #$00FF`; counter + 100h unless bit 0400h; `$91:B61F` the timers 1, 1, 1, 1, 2; frame 0 and the stage's first byte); `$90:9796`..`$90:97A6` (begun with the booster: `0B3E` = 0001h) and `$90:97CC`..`$90:97D2` (without: 0); `$91:DE53` (cancel: `0B3E` = 0 when `0B3C` ≠ 0); the boosting sound 3, library 3, `$80:914D` |
+| CountedLapHold | `$90:8587` (the boost timer still non-zero after its `DEC`: `BNE` to `$90:85DA`, which returns the control byte), then `$90:830B`..`$90:8315`: the control runs from the dispatch table, and a control that returns carry set takes its hold from the delay list `[$00],y` plus `0A9C`, not from `$90:84E3`'s pace; `$90:8344` (F0h-F5h) leaves the timer at 0 |
 | BoostingLap | `$90:85A6`..`$90:85B6`: the `JSL $80:914D` returns A from `$80:9155`, whose high byte (after `XBA` at `$90:85AA`) is library 3's queue count before the sound (`$80:9158`..`$80:9161`), or 3 when 6 or more wait (the early return keeps the sound in the high byte); that index picks both `$91:B61F` and `$91:B5DE` |
 
 `scan.sh --mirror` on the spec and these notes: 0 of 15 entries single-routine (§Scan).
@@ -222,25 +221,73 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   parameter values; the header gains it), worked by hand on invented clips:
   - `Breathing`, the threshold (1Eh, `$90:8346`): C-breathe-adjusted at 50, energy 40 goes on
     to step 3, held 9, where the game's 30 would loop;
-  - `StandingRestart`, the restart's hold (10h, `$90:A3AD`..`$90:A3C7`): C-restart-adjusted at
-    25, step 0 run down to 24;
-  - `FastFall`, the speed and the hold (5 and 8, `$90:A5AC`..`$90:A5C5`): C-fast-fall-adjusted at
-    3.0000 and 12, a fall at 3.8000 jumps to the fast fall step, run down to 11, where the
-    game's 5 would let the clip play on;
-  - `RisingHold`, the hold (4, `$90:8011`..`$90:8050`): C-rising-adjusted at 7, run down to 6;
+  - `StandingRestart`, the restart's frames (15: the stored 10h, `$90:A3AD`..`$90:A3C7`, less the
+    same frame's countdown): C-restart-adjusted at 24, the frame ends on step 0 with 24 left;
+  - `FastFall`, the speed and the fast fall's frames (5 and 7: the stored 8 less the countdown,
+    `$90:A5AC`..`$90:A5C5`): C-fast-fall-adjusted at 3.0000 and 11, a fall at 3.8000 jumps to
+    the fast fall step with 11 left, where the game's 5 would let the clip play on;
+  - `RisingHold`, the rising frames (3: the stored 4 less the countdown, `$90:8011`..`$90:8050`):
+    C-rising-adjusted at 6, the frame ends with 6 left;
   - `BoostStages`, the laps each stage lasts (`$91:B61F`): C-laps-adjusted-began and
     C-laps-adjusted-up and C-laps-adjusted-boosting at 3, 2, 4, 1 and 3 laps (a dash begun:
     stage 0's 3 laps; stage 1's last lap ends: stage 2 with its 4; boosting, its last lap ends:
     stage 4 with its 3).
   The root made the first four parameters (2026-11-11): their numbers already sit in the model's
-  tuning, and the goal is that each behaviour can be adjusted.
+  tuning, and the goal is that each behaviour can be adjusted. The cold-read round (#735) states
+  the three holds as the frames the step shows, the setting frame included, so a tuner's number
+  is what the player sees: the original stores one more and counts it down the same frame
+  (`$90:801E` runs after each writer). The reference values are unchanged in effect (16, 8, 4
+  stored; 15, 7, 3 shown), and so are the three adjusted vectors' expected States; their rules
+  are now 24, 11 and 6 frames.
 - **A dash lost after the animation.** `$91:DE53` is called from the movement handlers (before the
   animation: `$90:A3D0` standing, `$90:A551`.. the other halts, `$90:E5E9` the wall stop) and from
   the pose change's speed effects (`$91:EC76`, `$91:EC8E`, `$91:ECD3`, after it). On record every
   loss read as "after" (`dashing` from `0B3C` at N): item-charge-beam 52 and chain-0013-92FD 210
   run the plain pace on the frame the dash goes, with the pose unchanged. A loss in a running
-  movement handler before the animation (the wall stop) would make `dashing` false that frame;
+  movement handler before the animation (the wall stop) would make `dashing` false that frame (the spec's stopped);
   samus-movement's model must report `dashing` as of the animation's turn (§Requests).
+- **The dash's six values** (cold-read round, #735). Beginning and losing are one lifecycle
+  (spec §1.3's table). Every reachable combination of "dashing as the clip moves on" and "lost by
+  the frame's end":
+  - **began and lost** in one frame: on a running frame (`0A1F` = 1) with no dash, run held and
+    no transition for the pad (the direction let go), the lookup failure `$91:82D9` →
+    `$91:8304` gives running the command decelerate, keeping her pose (carry set, `$91:82E4`),
+    or stop when her base speed is 0 (`$91:8332`, `$91:831B`..`$91:832D`); the running
+    movement's `$90:9771`..`$90:97D2` begins the dash (`0B3C` = 1, `0B3E` = 0001h with the
+    booster), the animation runs with it, and the pose change's command (`$91:EC16`: `$91:EC50`
+    → `$91:EC76`, or `$91:ECD0` → `$91:ECD3`) cancels it at `$91:DE53`. The spin's
+    initialisation turning round (`$91:F66F`) cancels in the pose change too. At the cuts
+    `0B3C` is 0 at N and N+1, so the cached records can't tell it from off; samus-movement's
+    model reports both flags (`dash_began` and `dash_lost` from its run state), and
+    C-dash-began-and-lost works it on invented clips. Its trace on her State is the pace's hold
+    as her clip moves on in the kept running pose, and every frame of such a deceleration with
+    run held repeats it. Not reconciled with the records: the cache's decode reads these frames
+    as off (`0B3C` 0 at both cuts), and the 18,233-frame match shows no difference, so on record
+    none moved on to a shown step whose pace differs from the clip's hold, or none occurred.
+  - **stopped**: a wall met in the running movement's X movement (`$90:E5CE` → `$90:E5E9`)
+    cancels before the animation, so the clip moves on without the pace and the stage and laps
+    are 0 by the frame's end (C-dash-stopped). The turn-around movements (`$90:A79E`,
+    `$90:A7BB`) cancel before the animation as well, in poses that don't run.
+- **The counted lap's hold is the clip's** (the cold-read round's question; `CountedLapHold`,
+  a quirk). With the booster and laps left, `$90:8587` branches to `$90:85DA`, which returns the
+  control byte to the dispatcher: an `again` takes its target's hold from the delay list
+  (`$90:8315`), not the boosted pace that `$90:84E3` gives shown steps. The 16 counted laps on
+  record (`cachecheck.py`) match it. Any control ends a lap: `$90:82FB` sends every byte with
+  bit 80h through `$90:852C` (C-lap-at-rest, C-lap-count-rest).
+- **The spin start's order.** `$91:F6B2`..`$91:F6C2` (right; `$91:F713`..`$91:F723` left) test
+  the screw attack, then the space jump, then `0A9A` (already spinning, set at `$91:F634` from
+  the old movement type 3 or 14h), then the cinematic: the space jump sounds before the
+  "already spinning" test, the screw attack after it (`$91:F74A`), and only the plain spin
+  checks the cinematic. Spec `SpinStarts` states the order once.
+- **Sounds waiting and the queue's allowance.** The count is the sound domain's, read each frame;
+  nothing in appearance starts it. The allowance each request carries (6 or 15, the `$80:9049` /
+  `$80:914D` caps) is part of the request; whether the queue admits it is audio-transport's
+  `OfferAcceptance`. No appearance rule reads the answer: the boosting lap reads the count before
+  its sound, whatever the queue does with it.
+- **Initialization is a part of its own.** Initialise Samus (`$91:E00D`) is called from
+  `$82:8014` and `$82:8057`, game states 6, 1Fh and 28h (loading), where none of her work, item
+  controls, palette opportunity or drawing runs; the spec's part sets the whole State and the
+  cannon's reset is one consequence of it.
 - **The boosting lap reads the sound queue.** At counter 4, `$90:859D`..`$90:85A6` queue the
   booster's sound through `$80:914D`, which returns with A's high byte the library-3 queue count
   (`(0648 − 0645) & 0Fh`), so `$90:85AA`'s `XBA : AND #$00FF : ASL` indexes `$91:B61F` and
@@ -410,9 +457,11 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 58.3 units = 2,186 (clip 1,337, moves 225, run 375, cannon 212, palette 37),
-22 entries, 53 arms, 188 vectors. The kept action's preparation arm in `SpinEnds` is 1.0 of
-them; naming each input once counts no unit.
+Budget: 37.5 × 60.0 units = 2,248 (clip 1,287, moves 225, run 412, cannon 212, palette 112),
+23 entries, 56 arms, 193 vectors. The kept action's preparation arm in `SpinEnds` is 1.0 of
+them; naming each input once counts no unit. The cold-read round (#735) moved 58.3 to 60.0:
+`CountedLapHold`'s arm (+1.0, run), the palette's refused and unrecognized arms (+2.0), and the
+clip area's slowdown formulas written out in words (−1.3).
 
 Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.
@@ -420,7 +469,7 @@ together, not split by area.
 - Area clip: 1.4, ClipPlays, ClipControls, Breathing, ClipEnds, WallJumpBranch, HandOverSlowdown,
   StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor
 - Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
-- Area run: RunPace, BoostStages, BoostingLap
+- Area run: RunPace, BoostStages, CountedLapHold, BoostingLap
 - Area cannon: CannonItemDelay, CannonReadinessReset
 - Area palette (old 183): OrdinaryDryColours
 
@@ -652,7 +701,7 @@ needs it: the figure, the items, submerged and cinematic among them. Her pose is
 only because the pose as the frame starts and the pose she ends it in are different values (the stride and the preparation come before
 samus-movement's pick, drawing and the palette opportunity after it). The stride's step, time
 left and boost stage are the State's, not inputs. The palette opportunity reads no position: the original's bottom calculation enters only the surface comparisons, which the
-water and magma levels already stand for (§Sources and exact mapping), and the arm holds the
+water and lava levels already stand for (§Sources and exact mapping), and the arm holds the
 same outcome whatever the position. The spin sounds are one set of requests that
 `WallJumpBranch` and `SpinStarts` both ask for (spec §9.1). The appearance State holds the kept
 action (§The prepared movement snapshot), and has a starting value (spec §1.6, §State).

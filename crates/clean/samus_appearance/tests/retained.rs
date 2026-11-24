@@ -4,14 +4,16 @@
 mod retained {
     use enum_map::EnumMap;
     use samus_appearance::{
-        Activity, AppearanceState, CannonDelay, CannonEvent, Charge, ChargeGlowPosition, Clip,
-        ColourSequences, Content, Control, Dash, Figure, Frame, FrameOutputs, FramePart, Frames,
-        Hold, Inputs, Instruction, Laps, LapsLeft, Liquid, Pace, Paces, PaletteOpportunity,
-        Playhead, Rules, SoundQueue, SoundRequest, SoundsWaiting, State, Step, VisorDelay,
-        VisorStep, update,
+        Activity, Animation, AnimationContent, AppearanceState, CannonDelay, Charge,
+        ChargeGlowPosition, Clip, ColourSequences, Control, ControlEligibility, Dash, Figure,
+        Frame, FrameOutputs, FramePart, Frames, Hold, Inputs, Instruction, ItemControlAnswer,
+        ItemControls, Laps, LapsLeft, Liquid, Pace, Paces, PaletteOpportunity, Playhead, Rules,
+        SelectedItem, ShownFrames, Sound, SoundQueue, SoundsWaiting, Step, VisorDelay, VisorStep,
+        update,
     };
     use types::{
-        Action, Aim, Body, BoostStage, Facing, Gun, Item, Legs, Pose, Set, Sprite, ZERO, set_of,
+        Action, Aim, Body, BoostStage, Facing, Gun, Item, Legs, Pose, QueueAllowance, Set, Sprite,
+        ZERO, set_of,
     };
 
     /// Her figure upright, facing right, unaimed, doing `action`.
@@ -30,7 +32,7 @@ mod retained {
     }
 
     fn hold(frames: u8) -> Hold {
-        Hold::new(frames).expect("a hold in range")
+        Hold::new(frames).expect("expected a hold of 1 to 127 frames")
     }
 
     /// A running clip: step 0, a contact held 3 frames, then back to it.
@@ -66,9 +68,9 @@ mod retained {
         }
     }
 
-    impl Content for OneClip {
-        fn clip(&self, _: &Figure) -> &Clip {
-            &self.clip
+    impl AnimationContent for OneClip {
+        fn clip(&self, _: &Figure) -> Option<&Clip> {
+            Some(&self.clip)
         }
 
         fn paces(&self) -> &Paces {
@@ -77,18 +79,18 @@ mod retained {
     }
 
     const COLOURS: ColourSequences = ColourSequences {
-        visor_delay: VisorDelay(7),
-        visor_step: VisorStep(5),
-        charge_glow_position: ChargeGlowPosition(2),
+        visor_delay: VisorDelay::new(7),
+        visor_step: VisorStep::new(5),
+        charge_glow_position: ChargeGlowPosition::new(2),
     };
 
     /// Her appearance State with `animation`, a kept spin, her cannon waiting a frame and some
     /// colours.
-    fn appearance(animation: State) -> AppearanceState {
+    fn appearance(animation: Animation) -> AppearanceState {
         AppearanceState {
             animation,
             kept_action: Action::Spinning,
-            cannon: CannonDelay::new(1).expect("a delay in range"),
+            cannon: CannonDelay::new(1).expect("expected a delay of 1 in range"),
             colours: COLOURS,
         }
     }
@@ -107,10 +109,10 @@ mod retained {
             energy: 99,
             items: Set::default(),
             liquid: Liquid::NONE,
-            sounds_waiting: SoundsWaiting::NONE,
+            sounds_waiting: SoundsWaiting::new(0).expect("expected 0 sounds waiting in range"),
             activities: Set::default(),
             shoot_held: false,
-            charge: Charge::new(0).expect("no charge"),
+            charge: Charge::new(0).expect("expected no charge in range"),
         }
     }
 
@@ -119,13 +121,13 @@ mod retained {
         Frame {
             inputs,
             parts: set_of(parts),
-            cannon: CannonEvent::ControlsSkipped,
+            item_controls: ItemControls::Skipped,
             palette: PaletteOpportunity::Absent,
         }
     }
 
-    fn on_contact(stage: BoostStage, laps_left: LapsLeft) -> State {
-        State {
+    fn on_contact(stage: BoostStage, laps_left: LapsLeft) -> Animation {
+        Animation {
             playhead: Playhead {
                 step: Step::FIRST,
                 time_left: Frames::LAST,
@@ -138,16 +140,22 @@ mod retained {
     /// Plays `frame` from `state` with the stride clip for every figure.
     fn play(state: AppearanceState, frame: &Frame) -> (AppearanceState, FrameOutputs) {
         update(state, frame, &OneClip::of(stride_clip()), &Rules::VANILLA)
+            .expect("expected a clip for every figure")
+    }
+
+    /// The sounds of a frame's requests, in order.
+    fn asked(outputs: &FrameOutputs) -> Vec<Sound> {
+        outputs.sounds.iter().map(|offer| offer.sound).collect()
     }
 
     #[test]
-    fn state_serializes_every_quantity_and_restores_it() {
+    fn her_animation_saves_every_quantity_and_restores_it() {
         for stage in BoostStage::ALL {
             for laps_left in [
                 LapsLeft::WithoutBooster,
-                LapsLeft::WithBooster(Laps::new(u8::MAX).expect("255 laps")),
+                LapsLeft::WithBooster(Laps::new(u8::MAX).expect("expected 255 laps in range")),
             ] {
-                let state = State {
+                let animation = Animation {
                     playhead: Playhead {
                         step: Step(u8::MAX),
                         time_left: Frames(u8::MAX),
@@ -155,12 +163,15 @@ mod retained {
                     stage,
                     laps_left,
                 };
-                let text = toml::to_string(&state).expect("the State saves");
-                assert!(text.contains("step = 255"));
-                assert!(text.contains("time_left = 255"));
-                assert!(text.contains("stage ="));
-                assert!(text.contains("laps_left"));
-                assert_eq!(toml::from_str::<State>(&text).expect("restores"), state);
+                let text = toml::to_string(&animation).expect("expected her animation to save");
+                for part in ["step = 255", "time_left = 255", "stage =", "laps_left"] {
+                    assert!(text.contains(part), "expected {part} in {text}");
+                }
+                assert_eq!(
+                    toml::from_str::<Animation>(&text).expect("expected her animation to restore"),
+                    animation,
+                    "expected her animation restored as saved"
+                );
             }
         }
     }
@@ -171,7 +182,7 @@ mod retained {
             kept_action: Action::WallJumping,
             ..appearance(on_contact(BoostStage::Stage3, LapsLeft::WithoutBooster))
         };
-        let text = toml::to_string(&state).expect("the appearance State saves");
+        let text = toml::to_string(&state).expect("expected the appearance State to save");
         for part in [
             "animation",
             "kept_action = \"WallJumping\"",
@@ -181,11 +192,12 @@ mod retained {
             "visor_step = 5",
             "charge_glow_position = 2",
         ] {
-            assert!(text.contains(part), "{part} in {text}");
+            assert!(text.contains(part), "expected {part} in {text}");
         }
         assert_eq!(
-            toml::from_str::<AppearanceState>(&text).expect("restores"),
-            state
+            toml::from_str::<AppearanceState>(&text).expect("expected the State to restore"),
+            state,
+            "expected the State restored as saved"
         );
     }
 
@@ -193,14 +205,59 @@ mod retained {
     fn restored_laps_cannot_bypass_the_positive_range() {
         let text =
             "stage = 'Stage0'\n[playhead]\nstep = 0\ntime_left = 0\n[laps_left]\nWithBooster = 0\n";
-        assert!(toml::from_str::<State>(text).is_err());
-        assert_eq!(Laps::new(0), None);
-        assert_eq!(Charge::new(0).map(Charge::frames), Some(0));
+        assert!(
+            toml::from_str::<Animation>(text).is_err(),
+            "expected a restored 0 laps with the booster refused"
+        );
+        assert_eq!(Laps::new(0), None, "expected 0 laps refused");
+        assert_eq!(
+            Charge::new(0).map(Charge::frames),
+            Some(0),
+            "expected no charge built"
+        );
         assert_eq!(
             Charge::new(Charge::MOST).map(Charge::frames),
-            Some(Charge::MOST)
+            Some(Charge::MOST),
+            "expected the most charge built"
         );
-        assert_eq!(Charge::new(Charge::MOST + 1), None);
+        assert_eq!(
+            Charge::new(Charge::MOST + 1),
+            None,
+            "expected a charge past the most refused"
+        );
+    }
+
+    /// A tuner's frames shown are 1 to 126, built and restored alike, and the vanilla tuning's
+    /// are the frames she shows: 15, 7 and 3.
+    #[test]
+    fn frames_shown_are_checked_and_counted_as_shown() {
+        assert_eq!(ShownFrames::new(0), None, "expected 0 frames refused");
+        assert_eq!(ShownFrames::new(127), None, "expected 127 frames refused");
+        assert_eq!(
+            ShownFrames::new(126).map(ShownFrames::count),
+            Some(126),
+            "expected 126 frames built"
+        );
+        let vanilla = Rules::VANILLA;
+        let counts = [
+            vanilla.restart_frames,
+            vanilla.fast_fall_frames,
+            vanilla.rising_frames,
+        ]
+        .map(ShownFrames::count);
+        assert_eq!(counts, [15, 7, 3], "expected the spec's frames shown");
+        let text = toml::to_string(&vanilla).expect("expected the tuning to save");
+        assert_eq!(
+            toml::from_str::<Rules>(&text).expect("expected the tuning to restore"),
+            vanilla,
+            "expected the tuning restored as saved"
+        );
+        let beyond = text.replace("restart_frames = 15", "restart_frames = 127");
+        assert_ne!(beyond, text, "expected restart_frames saved as 15: {text}");
+        assert!(
+            toml::from_str::<Rules>(&beyond).is_err(),
+            "expected a restored 127 frames refused"
+        );
     }
 
     #[test]
@@ -221,20 +278,27 @@ mod retained {
             .collect();
             let before = appearance(on_contact(BoostStage::Stage3, LapsLeft::WithoutBooster));
             let (_, outputs) = play(before, &frame(given, [FramePart::Movement]));
-            let contact = outputs.contact.expect("a contact");
-            assert_eq!(contact.playhead, before.animation.playhead, "as she starts");
+            let contact = outputs.contact.expect("expected a graphical contact");
+            assert_eq!(
+                contact.playhead, before.animation.playhead,
+                "expected the contact's playhead as she starts the frame"
+            );
             let quiet = cinematic || boss || colours;
-            let footstep = (!quiet).then_some(SoundRequest::Footstep);
-            assert_eq!(outputs.sounds, footstep.into_iter().collect::<Vec<_>>());
+            let footstep = (!quiet).then_some(Sound::Footstep);
+            assert_eq!(
+                asked(&outputs),
+                footstep.into_iter().collect::<Vec<_>>(),
+                "expected a footstep unless a suppressor is active"
+            );
         }
     }
 
     #[test]
     fn a_contact_on_a_control_is_none() {
-        // Shape relations are the importer's: the model stays total on a mark it can't show.
+        // Shape relations are the importer's: the model answers on a mark it can't show.
         let mut clip = stride_clip();
         clip.contacts = std::iter::once(Step::SECOND).collect();
-        let state = State {
+        let animation = Animation {
             playhead: Playhead {
                 step: Step::SECOND,
                 time_left: Frames::LAST,
@@ -243,18 +307,19 @@ mod retained {
         };
         let running = upright(Action::Running);
         let (_, outputs) = update(
-            appearance(state),
+            appearance(animation),
             &frame(inputs(running, running), [FramePart::Movement]),
             &OneClip::of(clip),
             &Rules::VANILLA,
-        );
-        assert_eq!(outputs.contact, None);
-        assert_eq!(outputs.sounds, []);
+        )
+        .expect("expected a clip for every figure");
+        assert_eq!(outputs.contact, None, "expected no contact on a control");
+        assert_eq!(asked(&outputs), [], "expected no sound");
     }
 
     #[test]
     fn drawing_and_passage_have_no_hidden_engine_admission_guards() {
-        let most = Charge::new(Charge::MOST).expect("in range");
+        let most = Charge::new(Charge::MOST).expect("expected the most charge in range");
         let spinning = upright(Action::Spinning);
         let cases = [
             (
@@ -262,7 +327,7 @@ mod retained {
                     inputs(spinning, upright(Action::Unmorphing)),
                     [FramePart::Drawing],
                 ),
-                vec![SoundRequest::SpinEnded],
+                vec![Sound::SpinEnded],
             ),
             (
                 frame(
@@ -273,7 +338,7 @@ mod retained {
                     },
                     [FramePart::PassageEntry],
                 ),
-                vec![SoundRequest::SpinEnded],
+                vec![Sound::SpinEnded],
             ),
             (
                 frame(
@@ -289,8 +354,12 @@ mod retained {
         for (frame, expected) in cases {
             let before = appearance(on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster));
             let (after, outputs) = play(before, &frame);
-            assert_eq!(after, before);
-            assert_eq!(outputs.sounds, expected, "{frame:?}");
+            assert_eq!(after, before, "expected the State as it was: {frame:?}");
+            assert_eq!(
+                asked(&outputs),
+                expected,
+                "expected the rule's sound alone: {frame:?}"
+            );
         }
     }
 
@@ -306,28 +375,61 @@ mod retained {
         );
         let before = appearance(on_contact(BoostStage::Boosting, LapsLeft::WithoutBooster));
         let (after, outputs) = play(before, &frame);
-        assert_eq!(after, before);
+        assert_eq!(after, before, "expected the State as it was");
         assert_eq!(
-            outputs.sounds,
-            [SoundRequest::SamusSilence, SoundRequest::SpinEnded]
+            asked(&outputs),
+            [Sound::SamusSilence, Sound::SpinEnded],
+            "expected the door's request, then drawing's"
         );
     }
 
-    /// Her initialization comes first in its frame and the frame plays on from it: drawing reads
-    /// the kept action initialization leaves, `Still`, not the spin the frame was given, and the
-    /// frame leaves her State as at initialization.
+    /// Her initialization is a part of its own, first in its frame, and the frame plays on from
+    /// it: drawing reads the kept action initialization leaves, `Still`, and the frame leaves
+    /// her State as at initialization, whatever State it was given.
     #[test]
     fn a_frame_plays_on_from_her_initialization() {
         let falling = upright(Action::Falling);
-        let frame = Frame {
-            cannon: CannonEvent::SamusInitialized,
-            ..frame(inputs(falling, falling), [FramePart::Drawing])
-        };
+        let frame = frame(
+            inputs(falling, falling),
+            [FramePart::Initialization, FramePart::Drawing],
+        );
         let before = appearance(on_contact(BoostStage::Boosting, LapsLeft::WithoutBooster));
         let (after, outputs) = play(before, &frame);
-        assert_eq!(after, AppearanceState::INITIAL);
-        assert_eq!(outputs.sounds, []);
-        assert!(!outputs.cannon_may_follow);
+        assert_eq!(
+            after,
+            AppearanceState::INITIAL,
+            "expected her whole State at initialization"
+        );
+        assert_eq!(asked(&outputs), [], "expected no spin's end");
+        assert!(
+            !outputs.cannon_may_follow,
+            "expected the cannon waiting after initialization"
+        );
+    }
+
+    /// Her initialization with her item controls in the same frame: initialization sets the
+    /// delay to 2 first, and the controls then bring it down.
+    #[test]
+    fn item_controls_play_on_from_her_initialization() {
+        let standing = upright(Action::Still);
+        let frame = Frame {
+            item_controls: ItemControls::Ran(ItemControlAnswer {
+                before: SelectedItem::None,
+                after: SelectedItem::None,
+                eligibility: ControlEligibility::Eligible,
+            }),
+            ..frame(inputs(standing, standing), [FramePart::Initialization])
+        };
+        let before = AppearanceState {
+            cannon: CannonDelay::new(0).expect("expected a delay of 0 in range"),
+            ..appearance(on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster))
+        };
+        let (after, _) = play(before, &frame);
+        assert_eq!(
+            after.cannon.remaining(),
+            1,
+            "expected 2 from initialization, less 1 for the unchanged controls"
+        );
     }
 
     /// Drawing repeated on frames whose work is not prepared reads the same kept action each
@@ -341,8 +443,16 @@ mod retained {
                 state,
                 &frame(inputs(falling, falling), [FramePart::Drawing]),
             );
-            assert_eq!(outputs.sounds, [SoundRequest::SpinEnded]);
-            assert_eq!(after.kept_action, Action::Spinning);
+            assert_eq!(
+                asked(&outputs),
+                [Sound::SpinEnded],
+                "expected the kept spin's end"
+            );
+            assert_eq!(
+                after.kept_action,
+                Action::Spinning,
+                "expected the kept spin unchanged"
+            );
             state = after;
         }
         let prepared = frame(
@@ -350,8 +460,12 @@ mod retained {
             [FramePart::Preparation, FramePart::Drawing],
         );
         let (after, outputs) = play(state, &prepared);
-        assert_eq!(outputs.sounds, []);
-        assert_eq!(after.kept_action, Action::Running);
+        assert_eq!(asked(&outputs), [], "expected no spin's end");
+        assert_eq!(
+            after.kept_action,
+            Action::Running,
+            "expected the prepared frame to keep her run"
+        );
     }
 
     /// One frame whose stride, animation update, spin start and passage entry each ask for a
@@ -361,7 +475,7 @@ mod retained {
         let (running, spinning) = (upright(Action::Running), upright(Action::Spinning));
         let at_start = on_contact(
             BoostStage::Stage3,
-            LapsLeft::WithBooster(Laps::new(1).expect("a lap")),
+            LapsLeft::WithBooster(Laps::new(1).expect("expected a lap in range")),
         );
         let given = Inputs {
             dash: Dash::On,
@@ -372,48 +486,67 @@ mod retained {
         let frame = frame(given, [FramePart::Movement, FramePart::PassageEntry]);
         let (after, outputs) = play(appearance(at_start), &frame);
         assert_eq!(
-            outputs.sounds,
+            asked(&outputs),
             [
-                SoundRequest::Footstep,
-                SoundRequest::Boosting,
-                SoundRequest::PlainSpin,
-                SoundRequest::SpinEnded,
-            ]
+                Sound::Footstep,
+                Sound::Boosting,
+                Sound::PlainSpin,
+                Sound::SpinEnded
+            ],
+            "expected the stride's, the update's, the spin start's and the door's, in order"
         );
-        assert!(outputs.contact.is_some());
-        assert_eq!(after.animation.stage, BoostStage::Boosting);
+        assert!(outputs.contact.is_some(), "expected the stride's contact");
+        assert_eq!(
+            after.animation.stage,
+            BoostStage::Boosting,
+            "expected her boosting"
+        );
         assert_eq!(
             after.animation.playhead.step,
             Step::FIRST,
-            "her spin's clip"
+            "expected her spin's clip from step 0"
         );
-        assert_eq!(after.cannon, appearance(at_start).cannon);
-        assert_eq!(after.colours, COLOURS);
+        assert_eq!(
+            after.cannon,
+            appearance(at_start).cannon,
+            "expected the cannon delay unchanged"
+        );
+        assert_eq!(after.colours, COLOURS, "expected her colours unchanged");
     }
 
+    /// Each request the frame reports carries its sound's queue and allowance, as the sound
+    /// table gives them.
     #[test]
-    fn requests_describe_admission_not_driver_work() {
-        assert_eq!(SoundRequest::Footstep.queue(), SoundQueue::Footsteps);
-        assert_eq!(SoundRequest::Boosting.queue(), SoundQueue::Footsteps);
-        for sound in [
-            SoundRequest::Footstep,
-            SoundRequest::Boosting,
-            SoundRequest::PlainSpin,
-            SoundRequest::SpaceJump,
-            SoundRequest::ScrewAttack,
-        ] {
-            assert_eq!(sound.max_waiting(), 6);
+    fn each_request_carries_its_queue_and_allowance() {
+        let rows = [
+            (Sound::Footstep, SoundQueue::Footsteps, 6),
+            (Sound::Boosting, SoundQueue::Footsteps, 6),
+            (Sound::PlainSpin, SoundQueue::Samus, 6),
+            (Sound::SpaceJump, SoundQueue::Samus, 6),
+            (Sound::ScrewAttack, SoundQueue::Samus, 6),
+            (Sound::SpinEnded, SoundQueue::Samus, 15),
+            (Sound::SamusSilence, SoundQueue::Samus, 15),
+        ];
+        for (sound, queue, allowance) in rows {
+            let offer = sound.offer();
+            assert_eq!(offer.sound, sound, "expected the request of {sound:?}");
+            assert_eq!(offer.queue, queue, "expected the queue of {sound:?}");
+            assert_eq!(
+                offer.allowance,
+                QueueAllowance(allowance),
+                "expected the allowance of {sound:?}"
+            );
         }
-        for sound in [
-            SoundRequest::PlainSpin,
-            SoundRequest::SpaceJump,
-            SoundRequest::ScrewAttack,
-            SoundRequest::SpinEnded,
-            SoundRequest::SamusSilence,
-        ] {
-            assert_eq!(sound.queue(), SoundQueue::Samus);
-        }
-        assert_eq!(SoundRequest::SpinEnded.max_waiting(), 15);
-        assert_eq!(SoundRequest::SamusSilence.max_waiting(), 15);
+        let running = upright(Action::Running);
+        let before = appearance(on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster));
+        let (_, outputs) = play(
+            before,
+            &frame(inputs(running, running), [FramePart::Movement]),
+        );
+        assert_eq!(
+            outputs.sounds,
+            [Sound::Footstep.offer()],
+            "expected the footstep's request, with its queue and allowance"
+        );
     }
 }

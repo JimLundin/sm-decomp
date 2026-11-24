@@ -1,6 +1,6 @@
 //! Taking another pose: where the clip of the pose she takes starts.
 
-use types::{Action, Aim, Body, LandedFrom, Pose, Turn};
+use types::{Action, Aim, Body, LandedFrom, Pose};
 
 use crate::clip::{Clip, Slowdown, Step};
 use crate::inputs::{Inputs, MoveEvent};
@@ -12,8 +12,8 @@ enum Actions {
     Any,
     /// One of these.
     OneOf(&'static [Action]),
-    /// Any action but these.
-    AllBut(&'static [Action]),
+    /// Any action but a turn: a turn aimed up doesn't shoot, so it doesn't count as aimed up.
+    AnyButATurn,
 }
 
 /// One side of a row of `StartingClip`'s table: the poses it names. A part it leaves `None`
@@ -30,7 +30,7 @@ impl Poses {
         let action = match self.actions {
             Actions::Any => true,
             Actions::OneOf(actions) => actions.contains(&pose.action),
-            Actions::AllBut(actions) => !actions.contains(&pose.action),
+            Actions::AnyButATurn => !matches!(pose.action, Action::Turning(_)),
         };
         action
             && self.body.is_none_or(|body| body == pose.body)
@@ -54,15 +54,7 @@ struct Row {
     starts: Start,
 }
 
-/// Every turn, which doesn't count as aimed up (`StartingClip`).
-const TURNS: &[Action] = &[
-    Action::Turning(Turn::Fall),
-    Action::Turning(Turn::Ground),
-    Action::Turning(Turn::Jump),
-    Action::Turning(Turn::MoonwalkJump),
-];
-
-/// The ball's actions whose clip goes on from one to another; `Morphing` is not one.
+/// The ball's actions whose clip goes on from one to another.
 const BALL_GOES_ON: &[Action] = &[Action::Still, Action::Rolling, Action::Falling];
 
 /// Her run, in any body and aim.
@@ -130,7 +122,7 @@ const TABLE: [Row; 7] = [
         },
         from: Poses {
             body: None,
-            actions: Actions::AllBut(TURNS),
+            actions: Actions::AnyButATurn,
             aim: Some(Aim::Up),
         },
         starts: Start::At(Step::SECOND),
@@ -165,8 +157,8 @@ const TABLE: [Row; 7] = [
 
 /// Spec: `StartingClip`. When she takes another pose and the table doesn't keep her clip going,
 /// `clip_after`, the clip of that pose, starts from the step the table says, with its hold plus
-/// the start's slowdown (and `HandOverSlowdown`'s). Otherwise `played`, the playhead her clip
-/// at the frame's start left as it played, stays as it is.
+/// the start slowdown (and `HandOverSlowdown`'s step slowdown). Otherwise `played`, the playhead
+/// her clip at the frame's start left as it played, stays as it is.
 #[must_use]
 pub fn start(played: Playhead, inputs: &Inputs, clip_after: &Clip) -> Playhead {
     let (from, takes) = (&inputs.figure, &inputs.figure_after);
@@ -184,10 +176,11 @@ pub fn start(played: Playhead, inputs: &Inputs, clip_after: &Clip) -> Playhead {
 }
 
 /// Spec: `HandOverSlowdown` (a quirk). The first step of a pose her clip's end handed over is
-/// slowed by the clip's slowdown as well as the start's; any other pose by the start's alone.
+/// slowed by the step slowdown as well as the start slowdown; any other pose by the start
+/// slowdown alone.
 fn hand_over_slowdown(inputs: &Inputs) -> Slowdown {
     if inputs.moves[MoveEvent::HandedOver] {
-        inputs.liquid.slowdown
+        inputs.liquid.step_slowdown
     } else {
         Slowdown::NONE
     }

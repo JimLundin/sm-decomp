@@ -22,7 +22,7 @@ it does not choose a weapon, fire a shot or animate how her gun changes shape.
 **What it reads** (§1.3, each from the domain that owns it, each once a frame): her pose at the
 frame's start and at its end, and what her moves did this frame (samus-movement); her clips and
 the run's paces (the importer, §1.4); her current energy ([health](samus-health.md)) and the
-items switched on (progress); the pad's run and shoot buttons; the slowdown and whether she is
+items switched on (progress); the pad's run and shoot buttons; the two slowdowns and whether she is
 submerged (the liquids); how many sounds are waiting (the sound domain); whether a cinematic or
 a boss is active; her charge (weapons).
 
@@ -100,30 +100,52 @@ the two (§9.2). On a frame she doesn't move, her pose after is her pose.
 | energy | a count | `Breathing` |
 | items switched on | `SpeedBooster`, `SpaceJump`, `ScrewAttack`: progress's own output | `RunPace`, `BoostStages`, `WallJumpBranch`, `SpinStarts`, `OrdinaryDryColours` |
 | submerged | `bool`: she is under a liquid's surface, the liquid slows her, and she lacks the gravity suit (the liquids) | `WallJumpBranch`, `SpinStarts` |
-| slowdown | frames, 0 to 3: added to the holds her clip moves on to: 3 in water, whatever her suit; 2 in acid, whatever her suit; 2 in lava without the gravity suit, 0 with it; 0 out of a liquid (the liquids) | `ClipPlays`, `ClipControls`, `Breathing`, `WallJumpBranch`, `HandOverSlowdown`, `RunPace`, `BoostStages` |
-| the start's slowdown | frames, 0 to 3: added to the first hold of the pose she takes: 3 with the feet of that pose under water, 2 under lava or acid; 0 with the gravity suit, out of a liquid, or where the liquid doesn't slow her (the liquids) | `StartingClip`, `HandOverSlowdown` |
+| the step slowdown | frames, 0 to 3: added to the hold of each step her clip moves on to: 3 in water, whatever her suit; 2 in acid, whatever her suit; 2 in lava without the gravity suit, 0 with it; 0 out of a liquid (the liquids) | `ClipPlays`, `ClipControls`, `Breathing`, `WallJumpBranch`, `HandOverSlowdown`, `RunPace`, `BoostStages` |
+| the start slowdown | frames, 0 to 3: added to the hold of the step the clip of the pose she takes starts on: 3 with the feet of that pose under water, 2 under lava or acid; 0 with the gravity suit, out of a liquid, or where the liquid doesn't slow her (the liquids) | `StartingClip`, `HandOverSlowdown` |
 | run held | `bool`: the pad holds run this frame | `RunPace`, `BoostStages` |
 | handed over | `bool`: samus-movement took the pose her clip's end handed over this frame (samus-movement's `handed over`, its §1.4) | `HandOverSlowdown` |
-| dashing | `bool`: she is dashing as the clip moves on (samus-movement's `dashing after her moves`, its §1.4) | `RunPace`, `BoostStages` |
-| dash began, dash lost | `bool` each: a dash began this frame, before the clip moves on; it was lost this frame (samus-movement's `dash began` and `dash lost`) | `BoostStages` |
+| the dash | one of the six below: her dash this frame, as samus-movement's `dashing after her moves`, `dash began` and `dash lost` (its §1.4) together give it | `RunPace`, `BoostStages` |
 | standing restarts | `bool`: samus-movement's "the standing animation restarts" (`AimingAndShooting`) | `StandingRestart` |
 | wall jump readied | `bool`: samus-movement's near-wall test readied a wall jump (`WallJump`) | `WallJumpReady` |
 | her vertical speed | signed `P.S`, pixels a frame, downward positive: samus-movement's `vertical speed after her moves` (its §1.4), as her moves leave her, before what they met acts and before the pose change. An input of its own, apart from heading down: she can rise fast in a fall's pose, and the moonfall and a rise a ceiling stops are not heading down whatever the speed | `FastFall` |
 | heading down | `bool`: samus-movement's `heading down` (its §1.4), as her moves leave her, before what they met acts and before the pose change: she falls, a fall at 0 included, and not in the moonfall (samus-movement's `Moonfall`: the spin she enters as a turn ends, which drops with no rise); a rise a ceiling stops this frame is not heading down | `RisingHold` |
-| sounds waiting | 0 to 15: the sounds waiting in the queue the speed booster's sound joins, before it (the sound domain) | `BoostingLap` |
+| sounds waiting | 0 to 15: the sounds waiting in the queue the speed booster's sound joins, before it (the sound domain). The caller supplies it on every frame; it is no part of her State and has no starting value | `BoostingLap` |
 | cinematic active | `bool` (the cinematic owner) | `FootContact`, `SpinStarts` |
 | boss active | `bool` (the boss owner) | `FootContact` |
 | special colours active | `bool`: special colour time remains (appearance's colour owner, part 2); not §11.2's special colouring | `FootContact` |
 | shoot held | `bool`: the pad holds shoot | `AtTheDoor` |
 | charge | frames, 0 to 32767: how long her shot has charged (weapons) | `AtTheDoor` |
 
+**The slowdowns and submerged** are three facts of the liquids, none following from another.
+The step slowdown applies to each step's time as the clip moves on (§2, §5); the start slowdown
+to the step the clip of a pose she takes starts on (`StartingClip`). The gravity suit zeroes the
+start slowdown in every liquid, and the step slowdown only in lava. Submerged reads neither.
+
+**The dash.** Its beginning and its loss are one lifecycle, and a frame carries one of these
+values. The clip moves on at §6's step 3, and a dash is lost at its step 5.
+
+| The dash | Dashing as the clip moves on | Then |
+| --- | --- | --- |
+| off | no | nothing |
+| on | yes | nothing |
+| began | yes: it began this frame, before the clip moves on (§6, 1) | nothing |
+| lost | yes | lost by the frame's end |
+| began and lost | yes: it began this frame, before the clip moves on | lost by the frame's end |
+| stopped | no: her moves stopped it before the clip moves on (a wall halts her, say) | lost by the frame's end |
+
+Began and lost can fall in one frame: running with no dash, run held and her direction let go,
+her moves begin a dash and she loses it as she slows down in the same pose, so the clip moves on
+at the pace [C-dash-began-and-lost]. A dash that begins and stops before the clip moves on is
+stopped.
+
 Which parts the frame has is an input too. A frame may have any of them, each at most once:
 
 | Part | When | Read by |
 | --- | --- | --- |
+| her initialization | first in its frame: it sets her whole appearance State to §1.6's, whatever State the frame starts with. The game's frame of her initialization has none of her other parts | every quantity of the State (§1.6), `CannonReadinessReset` |
 | her movement | samus-movement's step, with the animation update on its results; her stride is part of it. A frozen frame, at a passage's door or while paused, has none | every entry of §2 to §5, `FootContact`, `SpinStarts` |
 | the preparation of her work | before her movement (§9.2). A frame whose work is locked is still prepared; a paused frame, or a passage's frame that bypasses her work, is not | `SpinEnds` |
-| her item controls, or her initialization | §10; her initialization comes first in its frame and sets her whole appearance State (§1.6) | `CannonItemDelay`, `CannonReadinessReset`; initialization, every quantity of the State |
+| her item controls | §10 | `CannonItemDelay` |
 | the palette opportunity, with its observations (§11.2) | after her movement and the suit's selection | `OrdinaryDryColours` |
 | her first entry into a passage | before the passage holds its sounds | `AtTheDoor` |
 | normal drawing | the frame's last | `SpinEnds` |
@@ -170,7 +192,8 @@ this spec (stated simplifications, docs/LEGACY.md):
 - When her clip ends (`ClipEnds`) she takes another pose that frame, and when a turn's or a
   landing's end gives way, she takes the jump the pad asked for.
 - A hold is at most 127 frames (the game's are at most 80), so a hold with both slowdowns stays
-  within the time left's 0 to 255.
+  within the time left's 0 to 255. The restart's, the fast fall's and the rising frames (§4) are
+  1 to 126.
 - Not 5 sounds waiting when she starts boosting (`BoostingLap`): with 5 the game's behaviour is
   outside this spec (LEGACY).
 - The laps left are 1 to the stage's laps with the speed booster, 0 without it or before her
@@ -179,17 +202,18 @@ this spec (stated simplifications, docs/LEGACY.md):
 - Within the poses this domain plays (§7, which leaves the x-ray scope to another domain),
   nothing changes her pose between the frame's start and the preparation of her work: her
   preparation keeps the action of her pose as the frame starts (`SpinEnds`).
-- A dash that begins this frame is dashing, and she is handed over a pose only on a frame whose
-  end (`ClipEnds`) is an end, or an end unless a jump that doesn't give way.
+- She is handed over a pose only on a frame whose end (`ClipEnds`) is an end, or an end unless
+  a jump that doesn't give way.
 
 ### 1.6 Her appearance at initialization
 
 When Samus is initialized (her arrival at Ceres or Zebes, or a demo's loading), her appearance
-State is the same whatever came before. Her initialization is a part of a frame (§1.3): it
-sets every quantity of her appearance State to the table below, whatever State the frame
-starts with, before any other part of that frame, which plays on from it
-[C-initialize, C-cannon-initialize]. So a caller either starts from this State or plays a
-frame with her initialization from any State, alike:
+State is the same whatever came before. Her initialization is a part of a frame of its own
+(§1.3), not a part of her item controls: it sets every quantity of her appearance State to the
+table below, whatever State the frame starts with [C-initialize, C-cannon-initialize]. The game
+runs it while it loads, on a frame with none of her other parts; a frame given other parts too
+plays them on from this State. So a caller either starts from this State or plays a frame with
+her initialization from any State, alike:
 
 | Quantity | At initialization |
 | --- | --- |
@@ -215,8 +239,8 @@ play on from this State. The vector file's `[initialization]` table holds it.
 - switch: none.
 - The time left, less 1, above 0 → that is the time left, on the same step [C-count, R-count]
 - The time left, less 1, at 0 or below → the clip moves on to `step + 1` [C-next, C-after-rest]
-- The clip moving on to a shown step → its hold plus the slowdown is the time left,
-  `hold + slowdown` [C-next, C-after-rest, C-slow-show]
+- The clip moving on to a shown step → its hold plus the step slowdown is the time left
+  [C-next, C-after-rest, C-slow-show]
 - So a hold of `n` shows its step for `n` frames, and a step with no time left (after a rest)
   moves on the next frame: 1 frame left and none move on alike.
 - checked: oracle (every recorded frame of play); constructed (C-count, C-next, C-after-rest,
@@ -228,10 +252,10 @@ play on from this State. The vector file's `[initialization]` table holds it.
 - params: none.
 - switch: none.
 - The clip moving on to `again s` → it goes on from step `s`, with that step's hold plus the
-  slowdown as the time left [C-again, C-slow-again]
+  step slowdown as the time left [C-again, C-slow-again]
 - The clip moving on to a `rest` → she rests on it with no time left, 0 [C-rest]
 - So a rest shows its picture for exactly one frame, however slow the liquid, and the clip moves
-  on from it the next frame (C-after-rest).
+  on from it the next frame [C-after-rest].
 - checked: oracle (500 loops and 6 rests on record); constructed (C-again, C-slow-again, C-rest,
   C-after-rest).
 
@@ -242,9 +266,9 @@ play on from this State. The vector file's `[initialization]` table holds it.
 - params: the threshold, 30 energy.
 - switch: parameter (the threshold).
 - The clip moving on to `breathe`, her energy at the threshold or more → back to step 0, with
-  its hold plus the slowdown [C-breathe-loop]
+  its hold plus the step slowdown [C-breathe-loop]
 - The clip moving on to `breathe`, her energy below the threshold → on to the next step, with its
-  hold plus the slowdown [C-breathe-on, C-breathe-adjusted]
+  hold plus the step slowdown [C-breathe-on, C-breathe-adjusted]
 - checked: oracle (31 loops and 2 on to breathe hard, on record); constructed (C-breathe-loop,
   C-breathe-on); adjusted, the threshold at 50 (C-breathe-adjusted).
 
@@ -257,9 +281,9 @@ play on from this State. The vector file's `[initialization]` table holds it.
 - The clip moving on to `end` → the end is an end [C-end, C-slow-handover]
 - The clip moving on to `end-unless-jump` → the end is an end unless a jump [C-end-unless-jump,
   C-end-gives-way, C-jump-up-from-turn]
-- So with time left on the step before an end, the frame reports no end (C-end-later); the
+- So with time left on the step before an end, the frame reports no end [C-end-later]; the
   frame an end is reported is the frame her next pose shows (`StartingClip`), and whether an end
-  unless a jump hands over is samus-movement's (C-end-gives-way: its pad's jump taken).
+  unless a jump hands over is samus-movement's, by the jump its pad asks for [C-end-gives-way].
 - checked: oracle (350 ends on record: 151 ends, 199 ends unless a jump, of which 9 gave way;
   each is reported from the frame's start); constructed (C-end, C-end-unless-jump,
   C-end-gives-way, C-end-later).
@@ -277,7 +301,7 @@ play on from this State. The vector file's `[initialization]` table holds it.
 - Not submerged, with the space jump and not the screw attack → step `y`, asking for
   `SpaceJump` [C-branch-space]
 - Not submerged, with neither → step `x`, asking for `PlainSpin` [C-branch-spin]
-- The step it goes to → its hold plus the slowdown is the time left [C-branch-spin,
+- The step it goes to → its hold plus the step slowdown is the time left [C-branch-spin,
   C-branch-space]
 - checked: oracle (13 wall jumps on record: 9 plain, 4 with the screw attack); constructed
   (C-branch-spin, C-branch-space, C-branch-screw, C-branch-screw-and-space,
@@ -285,16 +309,16 @@ play on from this State. The vector file's `[initialization]` table holds it.
 
 ### HandOverSlowdown
 - kind: quirk.
-- summary: in a liquid, the first step of a pose a clip's end handed over is slowed by the start's
-  slowdown and by the clip's slowdown both.
+- summary: in a liquid, the first step of a pose a clip's end handed over is slowed by the start
+  slowdown and by the step slowdown both.
 - params: none.
 - switch: none.
 - Handed over: she takes the pose her clip's end handed over → the first step's time left is
-  longer by the slowdown too, `hold + start + slowdown` with `start` the start's slowdown
-  [C-slow-handover, C-slow-gravity-handover, C-slow-acid-gravity]
-- So another pose that no clip's end brought takes the start's slowdown alone (C-slow-start,
-  C-slow-gravity-start), as does the pad's jump after an end unless a jump (C-end-gives-way), and
-  out of a liquid both are 0.
+  longer by the step slowdown too: its hold plus both slowdowns [C-slow-handover,
+  C-slow-gravity-handover, C-slow-acid-gravity]
+- So another pose that no clip's end brought takes the start slowdown alone, as does the pad's
+  jump after an end unless a jump, and out of a liquid both are 0 [C-slow-start,
+  C-slow-gravity-start, C-end-gives-way].
 - checked: constructed (C-slow-handover, C-slow-gravity-handover, C-slow-acid-gravity,
   C-slow-start, C-slow-gravity-start, C-end-gives-way); no recorded frame of play is in a liquid
   that slows her.
@@ -313,7 +337,7 @@ play on from this State. The vector file's `[initialization]` table holds it.
 - She takes another pose, the pair in a row of "kept" below → her step and the time left stay as
   they are [C-kept-run, C-kept-run-advance, C-kept-ball, C-kept-spring]
 - She takes another pose, the pair in a row of "step 1" below → its clip from step 1, with its
-  hold plus the start's slowdown, `hold + start` [C-spin-from-spin, C-spin-from-walljump,
+  hold plus the start slowdown [C-spin-from-spin, C-spin-from-walljump,
   C-stand-up-from-up, C-landing-up-from-up, C-jump-up-from-takeoff, C-crouch-up-from-crouching,
   C-spin-sprite-only]
 - She takes another pose, any other pair → its clip from step 0, with its hold plus the start's
@@ -333,10 +357,10 @@ Cells: kept, step 1
 | `Jumping` aimed `Up` | `TakingOff` aimed `Up` | step 1 |
 | crouched `Still` aimed `Up` | `Crouching` aimed `Up` | step 1 |
 
-- So the ball `Morphing` is not one of the ball's rows (C-not-kept-morph), and a turn aimed up
-  doesn't shoot, so it doesn't count as aimed up (C-stand-up-from-turn).
+- So the ball `Morphing` is not one of the ball's rows, and a turn aimed up doesn't shoot, so it
+  doesn't count as aimed up [C-not-kept-morph, C-stand-up-from-turn].
 - So, as the time runs down in the clip of her pose at the frame's start (§6), a kept row keeps
-  the hold that clip gave as it moved on (C-kept-ball: the ball's 9).
+  the hold that clip gave as it moved on [C-kept-ball, C-kept-run-advance].
 - checked: oracle (1,964 kept, 102 from step 1 and 2,139 from step 0 on record); constructed
   (the vectors above).
 
@@ -347,13 +371,14 @@ Cells: kept, step 1
 ### StandingRestart
 - kind: mechanic.
 - summary: holding shoot while she stands unaimed starts her standing clip over.
-- params: the restart's hold, 16 frames, which no liquid slows.
-- switch: parameter (the restart's hold).
-- Standing restarts → step 0 with the restart's hold left, before the time runs down this frame
+- params: the restart's frames, 15: the frames step 0 shows after a restart, the restart's own
+  frame the first of them; no liquid slows it.
+- switch: parameter (the restart's frames).
+- Standing restarts → step 0, and the frame ends with the restart's frames left, whatever time
+  was left: the time left is the restart's frames plus 1 before the time runs down this frame
   [C-restart, R-restart-a, R-restart-b, C-restart-adjusted]
-- So the frame ends on step 0 with 15 frames left (R-restart-a, from 1 frame left).
 - checked: oracle (29 restarts on record); constructed (C-restart); recorded (R-restart-a,
-  R-restart-b); adjusted, the restart's hold at 25 (C-restart-adjusted).
+  R-restart-b); adjusted, the restart's frames at 24 (C-restart-adjusted).
 
 ### WallJumpReady
 - kind: mechanic.
@@ -362,8 +387,8 @@ Cells: kept, step 1
 - switch: none.
 - A wall jump readied, her clip with a kick step → the step before the kick step, with 1 frame
   left, before the time runs down this frame [C-ready, C-ready-walljump]
-- So the clip moves on the same frame and shows the kick step for its hold (C-ready), or, in a
-  wall jump's clip whose kick step is an `again`, goes where that leads (C-ready-walljump).
+- So the clip moves on the same frame and shows the kick step for its hold, or, in a clip
+  whose kick step is an `again`, goes where that leads [C-ready, C-ready-walljump].
 - checked: oracle (39 readied on record); constructed (C-ready, C-ready-walljump).
 
 ### SpinTurnedFar
@@ -378,11 +403,10 @@ Cells: kept, step 1
 - Her clip with no kick step → not turned far [C-far-no-kick, C-far-taken-clip]
 - So it reads only the State and her pose's clip as the frame starts, as the end does (§6): the
   frame's moves and the pose she takes change it from the next frame on. A readied wall jump
-  shows as turned far the frame after (C-ready, then C-far-at-kick), as does a clip she takes on
-  its kick step (C-far-taken-clip), and the pose she takes doesn't undo it that frame
-  (C-far-leaving).
+  shows as turned far the frame after, as does a clip she takes on its kick step, and the pose
+  she takes doesn't undo it that frame [C-ready, C-far-at-kick, C-far-taken-clip, C-far-leaving].
 - So "past it" goes by step number: in a clip that branches, the steps of a branch numbered after
-  the kick step are past it (C-far-later-branch: the space jump's steps in a wall jump).
+  the kick step are past it [C-far-later-branch].
 - checked: oracle (every frame of a spin on record, through samus-movement, which reads it when she wall jumps);
   constructed (C-far, C-far-at-kick, C-not-far, C-far-no-kick, C-ready, C-far-taken-clip,
   C-far-leaving, C-far-later-branch).
@@ -391,33 +415,38 @@ Cells: kept, step 1
 - kind: mechanic.
 - summary: moving fast in a fall's pose, her fall jumps to its fast fall picture, whichever way
   she moves.
-- params: the speed, 5 pixels a frame; the hold, 8 frames, which no liquid slows.
-- switch: parameter (the speed and the hold).
+- params: the speed, 5 pixels a frame; the fast fall's frames, 7: the frames the fast fall step
+  shows, the frame she reaches it the first of them; no liquid slows it.
+- switch: parameter (the speed and the fast fall's frames).
 - Her clip with a fast fall step, her step on any step before it, whatever the time left, her
   vertical speed at the speed or more either way (its size, rising or falling) → the fast fall
-  step with the hold left, before the time runs down this frame [C-fast-fall,
-  C-fast-fall-early, C-fast-fall-liquid, C-fast-fall-rising, C-fast-fall-adjusted]
-- So short of 5 pixels a frame either way (C-fast-fall-slow, C-fast-fall-rising-slow), or on the
-  fast fall step or past it (C-fast-fall-on, C-fast-fall-past), the clip plays as it would.
-- So a fall's pose rising at 5 pixels a frame or more (an unmorph's end that carries such a rise
-  into the crouch, then a walk off a ledge) shows the fast fall picture too (C-fast-fall-rising);
-  no record rises so fast in a fall's pose (the fastest is 2.4000).
+  step, and the frame ends with the fast fall's frames left: the time left is those frames plus 1
+  before the time runs down this frame [C-fast-fall, C-fast-fall-early, C-fast-fall-liquid,
+  C-fast-fall-rising, C-fast-fall-adjusted]
+- So short of the speed either way, or on the fast fall step or past it, the clip plays as it
+  would [C-fast-fall-slow, C-fast-fall-rising-slow, C-fast-fall-on, C-fast-fall-past].
+- So a fall's pose rising at the speed or more (an unmorph's end that carries such a rise into
+  the crouch, then a walk off a ledge) shows the fast fall picture too [C-fast-fall-rising]; no
+  record rises so fast in a fall's pose (the fastest is 2.4000).
 - checked: oracle (4 on record); constructed (C-fast-fall, C-fast-fall-early, C-fast-fall-liquid,
   C-fast-fall-slow, C-fast-fall-rising, C-fast-fall-rising-slow, C-fast-fall-on,
-  C-fast-fall-past); adjusted, the speed at 3 pixels a frame and the hold at 12
+  C-fast-fall-past); adjusted, the speed at 3 pixels a frame and the fast fall's frames at 11
   (C-fast-fall-adjusted).
 
 ### RisingHold
 - kind: mechanic.
 - summary: a straight jump holds its rising picture for as long as she rises.
-- params: the hold, 4 frames, which no liquid slows.
-- switch: parameter (the hold).
-- Her clip with a rising step, on it with 1 frame left, not heading down → the hold left, before
-  the time runs down this frame [C-rising, C-rising-adjusted]
-- So with more time left on it, it counts down as usual (C-rising-early).
-- So she stays on the rising step 3 frames at a time until she heads down, then the clip goes on
-  (C-rising-down).
-- checked: oracle (20 on record); constructed (C-rising, C-rising-early, C-rising-down); adjusted, the hold at 7 (C-rising-adjusted).
+- params: the rising frames, 3: the frames the rising step shows again each time she still
+  rises on its last frame, that frame the first of them; no liquid slows it.
+- switch: parameter (the rising frames).
+- Her clip with a rising step, on it with 1 frame left, not heading down → the frame ends on it
+  with the rising frames left: the time left is those frames plus 1 before the time runs down
+  this frame [C-rising, C-rising-adjusted]
+- So with more time left on it, it counts down as usual [C-rising-early].
+- So she stays on the rising step the rising frames at a time until she heads down, then the
+  clip goes on [C-rising-down].
+- checked: oracle (20 on record); constructed (C-rising, C-rising-early, C-rising-down);
+  adjusted, the rising frames at 6 (C-rising-adjusted).
 
 ---
 
@@ -430,20 +459,23 @@ Cells: kept, step 1
   pace.
 - params: none (the paces are content, §1.4).
 - switch: none.
+- "Dashing" here is the dash as the clip moves on (§1.3): on, began, lost, or began and lost.
 - Running and dashing, the clip moving on to a shown step → its hold is the pace's for that
-  step, plus the slowdown: the plain pace without the speed booster, the boosted pace of her stage
-  with it [C-pace-plain, C-pace-boost, C-dash-lost-moving-on]
-- So dashing in any other action, a jump or a fall, her clip's own holds show (C-dash-jump).
-- Running and dashing, run held, without the speed booster, the clip moving on to a control
-  → the lap starts over: step 0, with the plain pace's first hold plus the slowdown [C-lap-plain,
+  step, plus the step slowdown: the plain pace without the speed booster, the boosted pace of
+  her stage with it [C-pace-plain, C-pace-boost, C-dash-lost-moving-on, C-dash-began-and-lost]
+- So dashing in any other action, a jump or a fall, her clip's own holds show, as they do when
+  her dash is off or stopped [C-dash-jump, C-not-dashing, C-dash-stopped].
+- A lap is her running clip from step 0 to the first control the clip moves on to. Any control
+  ends it: a rest, an `again` to any step, a `breathe`, an end or a branch [C-lap-at-rest,
+  C-lap-again-mid, C-lap-count-rest].
+- Running and dashing, run held, without the speed booster, at a lap's end → the lap starts
+  over: step 0, with the plain pace's first hold plus the step slowdown [C-lap-plain,
   C-lap-again-mid, C-lap-at-rest]
-- So a lap is her running clip from step 0 to the first control the clip moves on to, whatever
-  control it is: a rest, or an `again` to any step, ends it alike (C-lap-at-rest,
-  C-lap-again-mid).
 - So dashing with run let go, a lap ends as the clip says, on the clip's own hold
-  (C-lap-not-held), and not dashing her run shows the clip's holds (C-not-dashing).
+  [C-lap-not-held].
 - checked: oracle (760 plain and 715 boosted holds, 58 laps on record); constructed (C-pace-plain,
-  C-pace-boost, C-lap-plain, C-lap-not-held, C-not-dashing, C-dash-jump).
+  C-pace-boost, C-lap-plain, C-lap-not-held, C-not-dashing, C-dash-jump, C-dash-stopped,
+  C-dash-began-and-lost).
 
 ### BoostStages
 - kind: mechanic.
@@ -452,27 +484,43 @@ Cells: kept, step 1
 - params: the laps each stage lasts, 1 at stages 0 to 3 and 2 at stage 4; an adjusted game may
   give each stage 1 lap or more.
 - switch: parameter (the laps per stage).
-- A dash began → stage 0, with stage 0's laps left with the speed booster, 0 without it
-  [C-began-booster, C-began-plain, R-began, C-laps-adjusted-began]
-- Running and dashing, run held, with the speed booster, the clip moving on to a control,
-  the laps left less 1 above 0 → that is the laps left, and the control does as the clip says
-  [C-lap-count]
-- So a lap only counted goes on with the clip's own hold for the step the control leads to, not
-  the pace's (C-lap-count: the clip's 6); the pace's hold returns with the next shown step.
+- A dash began (began, or began and lost) → stage 0, with stage 0's laps left with the speed
+  booster, 0 without it, before the clip moves on [C-began-booster, C-began-plain, R-began,
+  C-laps-adjusted-began, C-dash-began-and-lost]
+- Running and dashing, run held, with the speed booster, at a lap's end (`RunPace`), the laps
+  left less 1 above 0 → that is the laps left, and the control does as the clip says
+  (`CountedLapHold`) [C-lap-count, C-lap-count-rest]
 - So with run let go the laps left stay as they are, no stage goes up, and the control does as
-  the clip says (C-lap-not-held-booster, C-stage-not-held).
+  the clip says [C-lap-not-held-booster, C-stage-not-held].
 - The same, the laps left less 1 at 0, the stage below 4 → the stage goes up by 1, the laps left
   are the new stage's, and the lap starts over: step 0, with the new stage's pace's first hold
-  plus the slowdown [C-stage-up, C-laps-adjusted-up]
+  plus the step slowdown [C-stage-up, C-laps-adjusted-up]
 - The same at stage 4 → the laps left are stage 4's, and the lap starts over: step 0, with the
-  boosting pace's first hold plus the slowdown [C-boosting-lap, C-laps-adjusted-boosting]
+  boosting pace's first hold plus the step slowdown [C-boosting-lap, C-laps-adjusted-boosting]
 - The stage going up to 4 → asks for `Boosting` [C-boost-quirk-0]
-- A dash lost → stage 0, with 0 laps left, after the clip moves on [C-lost, C-dash-lost-moving-on,
-  R-lost-a, R-lost-b]
+- A dash lost (lost, began and lost, or stopped) → stage 0, with 0 laps left, as the frame ends
+  [C-lost, C-dash-lost-moving-on, C-dash-began-and-lost, C-dash-stopped, R-lost-a, R-lost-b]
 - checked: oracle (96 began, 50 stages up, 16 laps counted, 109 lost on record); constructed
-  (C-began-booster, C-began-plain, C-lap-count, C-lap-not-held-booster, C-stage-not-held,
-  C-stage-up, C-boosting-lap, C-lost); adjusted, the laps per stage at 3, 2, 4, 1 and 3
-  (C-laps-adjusted-began, C-laps-adjusted-up, C-laps-adjusted-boosting); recorded (R-began, R-lost-a, R-lost-b).
+  (C-began-booster, C-began-plain, C-lap-count, C-lap-count-rest, C-lap-not-held-booster,
+  C-stage-not-held, C-stage-up, C-boosting-lap, C-lost, C-dash-began-and-lost, C-dash-stopped);
+  adjusted, the laps per stage at 3, 2, 4, 1 and 3 (C-laps-adjusted-began, C-laps-adjusted-up,
+  C-laps-adjusted-boosting); recorded (R-began, R-lost-a, R-lost-b).
+
+### CountedLapHold
+- kind: quirk.
+- summary: a boosted lap that only counts down her laps goes on at the clip's own hold, not the
+  pace's, until the next shown step.
+- params: none.
+- switch: none.
+- A lap's end that only counts (`BoostStages`: laps left less 1 above 0) → the control does as
+  the clip says, and the step it leads to takes the clip's own hold plus the step slowdown, not
+  the boosted pace's [C-lap-count]; a rest leaves no time left, as it does anywhere
+  [C-lap-count-rest]
+- So the pace's hold returns with the next shown step the clip moves on to (`RunPace`), and a
+  lap's end that raises the stage, or that restarts a lap at stage 4 or without the speed
+  booster, starts over on the pace instead.
+- checked: oracle (16 laps counted on record, each on the clip's own hold); constructed
+  (C-lap-count, C-lap-count-rest).
 
 ### BoostingLap
 - kind: quirk.
@@ -488,7 +536,7 @@ Cells: kept, step 1
 - So 5 waiting is outside the inputs' domain, as §1.5 states (LEGACY).
 - So with no sound waiting, as on record, the first boosting lap starts on stage 0's first hold
   with stage 0's 1 lap; its other steps show the boosting pace, since her stage is 4
-  (`RunPace`; C-boosting-first-lap), and its lap end starts the next at the boosting pace.
+  (`RunPace`), and its lap end starts the next at the boosting pace [C-boosting-first-lap].
 - checked: oracle (5 on record, each with 0 waiting); constructed (C-boost-quirk-0,
   C-boost-quirk-2, C-boost-quirk-4, C-boost-quirk-6, C-boosting-first-lap).
 
@@ -506,15 +554,16 @@ domain reads the pose it picks:
 - **Then, with samus-movement's results and the pose she takes**, in this order, as the State at
   the frame's end shows:
 
-1. Her moves' changes: a dash's beginning, a standing restart, a readied wall jump, a fast
-   fall.
+1. Her moves' changes: a dash's beginning (began, or began and lost), a standing restart, a
+   readied wall jump, a fast fall.
 2. The rising hold.
 3. The time runs down and the clip moves on (§2, §5), from her pose at the frame's start.
 4. The start of the clip of the pose she takes (`StartingClip`, `HandOverSlowdown`).
-5. A dash's loss.
+5. A dash's loss (lost, began and lost, or stopped, §1.3).
 
-So a restart from 1 frame left ends the frame on 15 (R-restart-a), a readied spin shows its kick
-step the same frame (C-ready), and a clip that ends hands over in the frame it ends (C-end).
+So the restart's, the fast fall's and the rising frames count the frame that sets them (step 3
+runs that frame's time down), a readied spin shows its kick step the same frame, and a clip that
+ends hands over in the frame it ends [R-restart-a, C-ready, C-end].
 
 ## 7. Out of scope, and who supplies it
 
@@ -526,7 +575,7 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
   grapple beam, the shinespark (its windup sets the stage to 4 and its end clears it; the crouch's
   shine keeps it), knockback and her hurt, a metroid draining her, the crystal flash, her
   appearance at the start, the death, and an item switched on or off mid-pose by the pause screen.
-- **The liquids:** the slowdown and whether she is submerged.
+- **The liquids:** the two slowdowns and whether she is submerged.
 
 ## 8. Open questions
 
@@ -562,16 +611,20 @@ it must still remain available to part 2.
 
 The domain's sounds are semantic requests, one set whichever rule asks for them:
 
-| Sound | Joins, with at most | Asked for by |
+| Sound | Offered to, with its allowance | Asked for by |
 | --- | --- | --- |
-| `Footstep` | the footstep sounds, 6 waiting | `FootContact` |
-| `Boosting` | the footstep sounds, 6 waiting | `BoostStages` |
-| `PlainSpin`, `SpaceJump`, `ScrewAttack` | Samus sounds, 6 waiting | `WallJumpBranch` (a wall jump's branch) and `SpinStarts` (the spin she takes): each is the same request whichever asks |
-| `SpinEnded` | Samus sounds, 15 waiting | `SpinEnds`, `AtTheDoor` |
-| `SamusSilence` | Samus sounds, 15 waiting | `AtTheDoor` |
+| `Footstep` | the footstep sounds, 6 | `FootContact` |
+| `Boosting` | the footstep sounds, 6 | `BoostStages` |
+| `PlainSpin`, `SpaceJump`, `ScrewAttack` | Samus sounds, 6 | `WallJumpBranch` (a wall jump's branch) and `SpinStarts` (the spin she takes): each is the same request whichever asks |
+| `SpinEnded` | Samus sounds, 15 | `SpinEnds`, `AtTheDoor` |
+| `SamusSilence` | Samus sounds, 15 | `AtTheDoor` |
 
-Sound admission, sending, retries and driver replies belong to the sound domain. An outstanding
-retry is not another appearance sound. Callers keep the frame's requests in the order of §9.2.
+Appearance only reports each request, with its queue and allowance as the table gives them. Whether
+a request is admitted is the sound domain's rule ([audio-transport](audio-transport.md)
+`OfferAcceptance`: a queue takes an offer while it holds fewer sounds than the allowance), as are
+sending, retries and driver replies; no rule here reads whether a request was admitted. An
+outstanding retry is not another appearance sound. Callers keep the frame's requests in the order
+of §9.2.
 
 **Bounded engine admission for the other drawing effects.** Charge is zero, a charge sound is not retained
 for resumption, the echoes are quiet, debug is inactive, and the countdown has not expired.
@@ -606,20 +659,25 @@ colour and liquid effects remain part 2.
 - params: none.
 - switch: none.
 
-For the item branches below, a qualifying selection means her pose after differs from her pose
-(§1.2, the sprite included), its action is `Spinning`, and she is not submerged. This common
-condition says nothing about her items, her pose's action or cinematic activity; "from spin or
-wall jump" is her pose's action.
+A qualifying selection means her pose after differs from her pose (§1.2, the sprite included),
+its action is `Spinning`, and she is not submerged. "Already spinning" means her pose's action
+is `Spinning` or `WallJumping`. A qualifying selection is decided in this order, the first that
+applies deciding; the space jump comes before "already spinning", so it alone is asked for on
+a spin that goes on:
 
-- Qualifying selection, with SpaceJump and without ScrewAttack → ask for `SpaceJump`,
-  even from spin or wall jump and even during a cinematic [C-start-space, C-start-space-continued, C-start-space-cinematic]
-- Qualifying selection, with ScrewAttack, not from spin or wall jump → ask for `ScrewAttack`,
-  even during a cinematic [C-start-screw, C-start-both, C-start-screw-cinematic]
-- Qualifying selection, with ScrewAttack, from spin or wall jump → no sound
+1. With ScrewAttack → `ScrewAttack` unless already spinning, whatever the cinematic.
+2. Else with SpaceJump → `SpaceJump`, already spinning or not, whatever the cinematic.
+3. Else → `PlainSpin` unless already spinning or a cinematic is active.
+
+- Qualifying selection, with SpaceJump and without ScrewAttack → ask for `SpaceJump`
+  [C-start-space, C-start-space-continued, C-start-space-cinematic]
+- Qualifying selection, with ScrewAttack, not already spinning → ask for `ScrewAttack`
+  [C-start-screw, C-start-both, C-start-screw-cinematic]
+- Qualifying selection, with ScrewAttack, already spinning → no sound
   [C-start-screw-continued]
-- Qualifying selection, with neither item, not from spin or wall jump, cinematic inactive →
+- Qualifying selection, with neither item, not already spinning, cinematic inactive →
   ask for `PlainSpin` [C-start-plain, R-start]
-- Qualifying selection, with neither item, from spin or wall jump or cinematic active → no sound
+- Qualifying selection, with neither item, already spinning or cinematic active → no sound
   [C-start-continued, C-start-wall, C-start-cinematic, C-start-continued-cinematic]
 - Her pose after the same as her pose, no spinning selection, or submerged → no sound
   [C-start-same, C-start-other, C-start-submerged, C-start-submerged-both]
@@ -636,7 +694,7 @@ wall jump" is her pose's action.
 - The frame's work prepared → her kept action becomes her pose's action, before normal drawing
   reads it [C-end-prepared, C-end-prepared-replaces, R-unspin]
 - So a frame without preparation leaves her kept action as it is, as a paused frame does
-  (C-end-frozen, C-end-spin, C-end-wall).
+  [C-end-frozen, C-end-spin, C-end-wall].
 - Normal drawing, her kept action `Spinning` or `WallJumping`, her pose after's action
   neither → ask for `SpinEnded` [C-end-spin, C-end-wall, C-end-frozen, C-end-prepared, R-unspin]
 - Her kept action neither, or her pose after's action `Spinning` or `WallJumping` → no sound
@@ -742,7 +800,7 @@ including facing the screen or being controlled by another domain, leaves it alo
 - summary: a newly initialized Samus needs two frames of eligible unchanged item controls before her cannon may follow the selection.
 - params: none.
 - switch: none.
-- Samus is initialized for arrival at Ceres or Zebes, or a demo is initialized → the delay becomes 2 [C-cannon-initialize, C-cannon-reset-during-wait].
+- Her initialization (§1.3's part of its own, §1.6, which sets her whole State) → the delay becomes 2 [C-cannon-initialize, C-cannon-reset-during-wait, C-initialize].
 - A pose or clip changes, drawing repeats, the game lags or a passage only moves her to another room without reinitializing Samus → keep this delay; only `CannonItemDelay` and actual initialization change it [C-cannon-unrelated, C-cannon-skipped, R-cannon-lag].
 - checked: original only (initialization); constructed (the C cases). No recorded initialization-delay history is claimed.
 
@@ -795,13 +853,13 @@ The rule reads two of the frame's inputs (§1.3): her pose after, the pose this 
 selected (its body and action), and the items switched on (the screw attack). Its other
 observations are its own: each is its owner's value for the frame's palette opportunity, the
 suit selection made for this frame, and the others as their owners have them by then. Where
-she is doesn't enter: the water and magma levels say whether a liquid is present.
+she is doesn't enter: the water and lava levels say whether a liquid is present.
 
 | Observation | Type and owner | Read by |
 | --- | --- | --- |
 | current suit selection | `Suit` (Power, Varia or Gravity), the actual equipment-dependent selection supplied for current use | `OrdinaryDryColours` |
 | room colour treatment | `RoomColours` (standard, red background or orange background), from room effects | `OrdinaryDryColours` |
-| water and magma levels | independently present or absent, from room effects and the current Environment | `OrdinaryDryColours` |
+| water and lava levels | independently present or absent, from room effects and the current Environment; the lava level is the surface of lava or acid | `OrdinaryDryColours` |
 | grapple activity | dormant or busy, from Grapple | `OrdinaryDryColours` |
 | lingering glow after firing and weapon charging | independently inactive or active, from the shot/charge owners | `OrdinaryDryColours` |
 | appearance override and special colouring | independently inactive or active, from the current colour-effect owners | `OrdinaryDryColours` |
@@ -819,20 +877,30 @@ the grapple or room effects observations above.
 - summary: during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were.
 - params: none.
 - switch: none.
-- The frame's palette opportunity sees her pose after upright and running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Leave all 256 current and 256 target colours at their positions as the frame's other producers leave them, even with different valid poses of those actions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump, C-ordinary-shared-colours].
-- checked: oracle (recorded application and preservation for each admitted action, R-ordinary-run-colours to R-ordinary-moonwalk-colours); original and constructed (stale reset and varied inputs).
+- The frame's palette opportunity sees her pose after upright and running, standing still, moonwalking, in a straight jump, turning in a take-off or a straight jump (`Turning(Jump)`), landing upright from a straight jump or a fall (`Landing(Jump)`), or spinning while the screw attack is switched off; in the Power suit, standard room colours, neither water nor lava present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Leave all 256 current and 256 target colours at their positions as the frame's other producers leave them, even with different valid poses of those actions or initial palettes. Every admitted action except the spin is admitted with the screw attack on or off. A spin without the screw attack readies the sequences exactly as a run does: neither the spin nor its direction changes the three quantities or either palette [R-ordinary-run-colours, R-ordinary-spin-colours, R-ordinary-jump-colours, R-ordinary-jump-turn-colours, R-ordinary-landing-colours, R-ordinary-still-colours, R-ordinary-moonwalk-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready, C-ordinary-spin-stale, C-ordinary-spin-other-way, C-ordinary-jump-stale, C-ordinary-jump-turn-stale, C-ordinary-landing-stale, C-ordinary-still-stale, C-ordinary-moonwalk-stale, C-ordinary-screw-jump, C-ordinary-shared-colours].
+- Every fact read, a premise of that arm not holding → refused, an ordinary result: nothing
+  applied [C-ordinary-boundary, C-ordinary-spin-boundary]
+- A fact the rule can't read → unrecognized: nothing applied, and the frame is outside what this
+  rule decides [C-ordinary-unreadable]
+- checked: oracle (recorded application and preservation for each admitted action, R-ordinary-run-colours to R-ordinary-moonwalk-colours); original and constructed (stale reset, varied inputs, refusals and unreadable facts).
 
-**Admission.** The surrounding caller reports unsupported for a frame's palette opportunity
-outside this arm: other actions (among them falling, crouching, the morph and spring balls,
-taking off, standing up, wall jumps, turning on the ground or in a fall, landing from a spin
-or a wall jump, and any action of a crouched or ball figure), a spin while the screw attack is
-switched on, other suits, water or magma present, busy grapple, active stored
-glow, weapon charging, special colouring, appearance override, speed glow or hit colour pulse, and
-unrecognized or unavailable current facts or unrepresentable colours. Red and orange room backgrounds can advance the
-visor sequence clock and are outside the ordinary reset. A refused frame leaves the three
-quantities and both palettes as they were and applies nothing. A frame without a palette
-opportunity, or drawing alone, does not apply this rule. `C-ordinary-boundary` changes each premise of a run
-independently, and `C-ordinary-spin-boundary` the premises of a spin, the screw attack included.
+**Two ways a frame applies nothing.** A frame's palette opportunity ends one of three ways:
+applied (the arm above), refused, or unrecognized.
+
+- **Refused**, an ordinary result of the frame: every fact is read and the arm's premises don't
+  all hold. Among them: other actions (falling, crouching, the morph and spring balls, taking
+  off, standing up, wall jumps, turning on the ground or in a fall, landing from a spin or a
+  wall jump, and any action of a crouched or ball figure), a spin while the screw attack is
+  switched on, other suits, red or orange room backgrounds (which can advance the visor
+  sequence's clock themselves), water or lava present, busy grapple, active stored glow, weapon
+  charging, special colouring, appearance override, speed glow or hit colour pulse
+  [C-ordinary-boundary, C-ordinary-spin-boundary].
+- **Unrecognized**: a current fact the rule can't read, an unavailable or unrecognized
+  observation, or colours it can't represent. The frame is outside what this rule decides
+  [C-ordinary-unreadable].
+
+Either leaves the three quantities and both palettes as they were and applies nothing. A frame
+without a palette opportunity, or drawing alone, does not apply this rule.
 
 **Order that matters.** The frame's palette opportunity comes after movement has selected her
 pose and the suit has been selected, and before health maintenance and the

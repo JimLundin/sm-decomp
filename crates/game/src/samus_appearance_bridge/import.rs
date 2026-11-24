@@ -15,7 +15,7 @@ use data::pose::animation::{
 };
 use enum_map::EnumMap;
 use samus_appearance::{
-    Branch, Clip, Content, Control, Figure, Hold, Instruction, Pace, Paces, Step,
+    AnimationContent, Branch, Clip, Control, Figure, Hold, Instruction, Pace, Paces, Step,
 };
 use types::Sprite;
 
@@ -79,18 +79,6 @@ impl Imported {
 pub struct Clips {
     poses: Vec<Imported>,
     paces: Paces,
-    none: Clip,
-}
-
-/// A clip with no steps, which leaves her where she is.
-const fn no_steps() -> Clip {
-    Clip {
-        instructions: Vec::new(),
-        kick: None,
-        fast_fall: None,
-        rising: None,
-        contacts: std::collections::BTreeSet::new(),
-    }
 }
 
 /// No clips and no paces: content with nothing imported.
@@ -102,7 +90,6 @@ impl Default for Clips {
                 plain: Pace(Vec::new()),
                 boosted: EnumMap::from_fn(|_| Pace(Vec::new())),
             },
-            none: no_steps(),
         }
     }
 }
@@ -131,7 +118,6 @@ impl Clips {
                 plain: pace(&paces.plain)?,
                 boosted: EnumMap::from_array([first?, second?, third?, fourth?, boosting?]),
             },
-            none: no_steps(),
         };
         for imported in &clips.poses {
             if imported.figure.pose.action != types::Action::Running {
@@ -166,13 +152,12 @@ impl Clips {
     }
 }
 
-impl Content for Clips {
-    /// A pose no entry holds has no steps: the model leaves her where she is.
-    fn clip(&self, figure: &Figure) -> &Clip {
+impl AnimationContent for Clips {
+    fn clip(&self, figure: &Figure) -> Option<&Clip> {
         self.poses
             .iter()
             .find(|imported| imported.figure == *figure)
-            .map_or(&self.none, |imported| &imported.clip)
+            .map(|imported| &imported.clip)
     }
 
     fn paces(&self) -> &Paces {

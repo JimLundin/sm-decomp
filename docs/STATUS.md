@@ -383,7 +383,7 @@ palette opportunity have no producer in the loop, so the delay and the sequences
 decoded; only the four animation quantities are compared.
 
 The separately checked current source has five clip holds, four advances, its first wrap at
-cut14 and one marked Contact at cut10, with its graphical contact and Footstep request. The
+cut14 and one marked Contact at cut10, with its graphical contact and Footstep offer. The
 indexed case checks each cut's continuation from a checkpoint.
 
 Controls, equipment, liquid, energy, occupancy, the owners active at her stride, the charge,

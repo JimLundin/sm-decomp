@@ -1,4 +1,5 @@
-//! What a frame brings, each fact once, from the domain that owns it.
+//! What a frame brings, each fact once, from the domain that owns it, and the content her
+//! animation plays.
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
@@ -16,15 +17,26 @@ pub struct Figure {
     pub sprite: Sprite,
 }
 
-/// The content: her clips, one for each pose and sprite, and the run's paces.
-pub trait Content {
-    /// The clip of a pose drawn in its sprite.
-    fn clip(&self, figure: &Figure) -> &Clip;
+/// The content her animation plays, as the importer supplies it: a clip for each figure the
+/// content holds, and the run's paces.
+pub trait AnimationContent {
+    /// The clip of `figure`, or none where the content holds no clip for it.
+    fn clip(&self, figure: &Figure) -> Option<&Clip>;
     /// The run's paces.
     fn paces(&self) -> &Paces;
 }
 
-/// What samus-movement's step did this frame, that this domain reads. Listed in no order.
+/// The figure whose clip a frame or the read-ahead needs and the content lacks. The model gives
+/// it back for the caller to refuse the frame.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct MissingClip(pub Figure);
+
+/// The clip `content` holds for `figure`, or the figure as missing.
+pub fn clip_of(content: &impl AnimationContent, figure: Figure) -> Result<&Clip, MissingClip> {
+    content.clip(&figure).ok_or(MissingClip(figure))
+}
+
+/// What samus-movement's step did this frame that her clip reads. Listed in no order.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum, Serialize, Deserialize)]
 pub enum MoveEvent {
     /// "The standing animation restarts" (`StandingRestart`).
@@ -33,37 +45,80 @@ pub enum MoveEvent {
     WallJumpReadied,
     /// It took the pose her clip's end handed over (`HandOverSlowdown`).
     HandedOver,
-    /// Her dash was lost this frame (`BoostStages`).
-    DashLost,
 }
 
-/// Whether she is dashing as the clip moves on (`RunPace`, `BoostStages`).
+/// Spec: `RunPace`, `BoostStages`. Her dash this frame: one value for its whole lifecycle.
+///
+/// Samus-movement's dash after her moves, dash began and dash lost together give it. The clip
+/// moves on in the middle of the frame; a dash that began did so before it, and a dash lost is
+/// lost by the frame's end.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Dash {
-    /// She is not dashing.
+    /// Not dashing all frame.
     Off,
-    /// She is dashing.
+    /// Dashing all frame.
     On,
-    /// A dash began this frame, before the clip moves on: she is dashing.
+    /// The dash began this frame, before the clip moves on, and goes on.
     Began,
+    /// Dashing as the clip moves on, and lost by the frame's end.
+    Lost,
+    /// The dash began this frame before the clip moves on, and is lost by the frame's end: she
+    /// slows down in the same pose.
+    BeganAndLost,
+    /// Her moves stopped the dash before the clip moves on (a wall halts her, say), and it is
+    /// lost by the frame's end.
+    Stopped,
 }
 
-/// What the liquid she is in does to her animation (the liquids).
+impl Dash {
+    /// Whether she is dashing as the clip moves on, so her stride takes the run's pace.
+    #[must_use]
+    pub const fn dashing_as_the_clip_moves_on(self) -> bool {
+        match self {
+            Self::On | Self::Began | Self::Lost | Self::BeganAndLost => true,
+            Self::Off | Self::Stopped => false,
+        }
+    }
+
+    /// Whether the dash began this frame, before the clip moves on.
+    #[must_use]
+    pub const fn began(self) -> bool {
+        match self {
+            Self::Began | Self::BeganAndLost => true,
+            Self::Off | Self::On | Self::Lost | Self::Stopped => false,
+        }
+    }
+
+    /// Whether the dash is lost by the frame's end.
+    #[must_use]
+    pub const fn lost(self) -> bool {
+        match self {
+            Self::Lost | Self::BeganAndLost | Self::Stopped => true,
+            Self::Off | Self::On | Self::Began => false,
+        }
+    }
+}
+
+/// The liquids' three facts for the frame, each its own, none following from another. The
+/// gravity suit zeroes the start slowdown in every liquid and the step slowdown only in lava.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Liquid {
-    /// Added to the holds her clip moves on to.
-    pub slowdown: Slowdown,
-    /// The start's slowdown: added to the first hold of the pose she takes.
+    /// The step slowdown: frames added to the hold of each step her clip moves on to
+    /// (`ClipPlays`, `ClipControls`, `Breathing`, `WallJumpBranch`, `RunPace`, `BoostStages`),
+    /// and to the first step of a pose a clip's end handed over (`HandOverSlowdown`).
+    pub step_slowdown: Slowdown,
+    /// The start slowdown: frames added to the hold of the step the clip of the pose she takes
+    /// starts on, by the liquid at the feet of that pose (`StartingClip`).
     pub start_slowdown: Slowdown,
-    /// Under a liquid's surface that slows her, without the gravity suit (`WallJumpBranch`,
-    /// `SpinStarts`).
+    /// She is under a liquid's surface, the liquid slows her and she lacks the gravity suit
+    /// (`WallJumpBranch`, `SpinStarts`).
     pub submerged: bool,
 }
 
 impl Liquid {
-    /// No liquid: out of one, nothing slows her and she is not submerged.
+    /// Out of a liquid: both slowdowns 0, and she is not submerged.
     pub const NONE: Self = Self {
-        slowdown: Slowdown::NONE,
+        step_slowdown: Slowdown::NONE,
         start_slowdown: Slowdown::NONE,
         submerged: false,
     };
@@ -77,8 +132,7 @@ pub enum Activity {
     Cinematic,
     /// A boss is active (the boss owner).
     Boss,
-    /// Special colour time remains (appearance's colour owner, part 2); not the palette
-    /// opportunity's special colouring.
+    /// Special colour time remains (appearance's colour owner, part 2).
     SpecialColourTime,
 }
 
@@ -100,7 +154,7 @@ impl Charge {
     /// Spec: `AtTheDoor`. Below 16 frames of charge, a passage quiets her.
     pub const QUIET_BELOW: u16 = 16;
 
-    /// The charge of `frames`, if the spec allows it: 0 to `MOST`.
+    /// The charge of `frames`, if it is 0 to `MOST`.
     #[must_use]
     pub const fn new(frames: u16) -> Option<Self> {
         if frames <= Self::MOST {
@@ -120,9 +174,9 @@ impl Charge {
 /// What a frame brings: each fact once, from the domain that owns it, read by every rule that
 /// needs it.
 ///
-/// Her pose comes twice, as the frame starts and as it ends, because samus-movement picks the
+/// Her figure comes twice, as the frame starts and as it ends, because samus-movement picks the
 /// pose she takes part-way through the frame: her stride and the preparation of her work come
-/// before the pick, the clip of the first pose plays out before the clip of the second starts,
+/// before the pick, the clip of the first figure plays out before the clip of the second starts,
 /// and the spin start compares the two. On a frame she doesn't move, the two are the same.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Inputs {
@@ -132,14 +186,14 @@ pub struct Inputs {
     pub figure_after: Figure,
     /// What her moves did this frame.
     pub moves: Set<MoveEvent>,
-    /// Whether she is dashing as the clip moves on.
+    /// Her dash this frame, from its beginning to its loss.
     pub dash: Dash,
     /// The pad holds run this frame.
     pub run_held: bool,
-    /// Heading down, as her moves leave her: she falls, a fall at 0 included, and not in the
-    /// moonfall; a rise a ceiling stops this frame is not (`RisingHold`).
+    /// Heading down, as her moves leave her: she falls, a fall at 0 included, outside the
+    /// moonfall; a rise a ceiling stops this frame counts as rising (`RisingHold`).
     pub heading_down: bool,
-    /// Her vertical speed as her moves leave her, downward positive, read apart from heading
+    /// Her vertical speed as her moves leave her, downward positive, a fact apart from heading
     /// down: she can rise fast in a fall's pose (`FastFall`).
     pub vertical_speed: Fixed,
     /// Her energy (`Breathing`).
@@ -147,7 +201,7 @@ pub struct Inputs {
     /// The items switched on; this domain reads the speed booster, the space jump and the screw
     /// attack.
     pub items: Set<Item>,
-    /// The liquid's slowdowns, and whether she is submerged.
+    /// The step slowdown, the start slowdown, and whether she is submerged.
     pub liquid: Liquid,
     /// The sounds waiting in the queue the speed booster's sound joins (`BoostingLap`).
     pub sounds_waiting: SoundsWaiting,
@@ -159,8 +213,9 @@ pub struct Inputs {
     pub charge: Charge,
 }
 
-/// How many sounds wait in the queue the speed booster's sound joins, before it (the sound
-/// domain): 0 to `SoundsWaiting::MOST`.
+/// How many sounds wait in the queue the speed booster's sound joins, before it, 0 to
+/// `SoundsWaiting::MOST` (the sound domain; `BoostingLap`). The caller supplies it on every
+/// frame.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(try_from = "u8")]
 pub struct SoundsWaiting(u8);
@@ -175,10 +230,8 @@ impl TryFrom<u8> for SoundsWaiting {
 impl SoundsWaiting {
     /// At most 15 sounds wait.
     pub const MOST: u8 = 15;
-    /// No sounds waiting, as on every record of her starting to boost.
-    pub const NONE: Self = Self(0);
 
-    /// The count of `waiting`, if the spec allows it: 0 to `MOST`.
+    /// The count of `waiting`, if it is 0 to `MOST`.
     #[must_use]
     pub const fn new(waiting: u8) -> Option<Self> {
         if waiting <= Self::MOST {

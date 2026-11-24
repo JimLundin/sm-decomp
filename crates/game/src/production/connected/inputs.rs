@@ -85,5 +85,5 @@ pub struct InputsPin;
 impl Pinned for InputsPin {
     type State = Inputs;
     const NAME: &'static str = "production-connected-inputs";
-    const SHAPE: u64 = 0x004e_f490_1f5d_92a8;
+    const SHAPE: u64 = 0x84da_10f6_fd31_39a8;
 }

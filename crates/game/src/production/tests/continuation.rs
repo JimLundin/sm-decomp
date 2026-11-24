@@ -103,7 +103,7 @@ fn animation() -> (
     );
     let rules = ProductionRules::Appearance(animation::Rules::VANILLA);
     let state = animation::AppearanceState {
-        animation: animation::State {
+        animation: animation::Animation {
             playhead: animation::Playhead {
                 step: animation::Step::FIRST,
                 time_left: animation::Frames(3),
@@ -131,7 +131,7 @@ fn animation() -> (
         energy: 99,
         items: types::Set::default(),
         liquid: animation::Liquid::NONE,
-        sounds_waiting: animation::SoundsWaiting::NONE,
+        sounds_waiting: animation::SoundsWaiting::new(0).unwrap(),
         activities: types::Set::default(),
         shoot_held: false,
         charge: animation::Charge::new(0).unwrap(),
@@ -141,7 +141,7 @@ fn animation() -> (
     let frame = animation::Frame {
         inputs,
         parts,
-        cannon: animation::CannonEvent::ControlsSkipped,
+        item_controls: animation::ItemControls::Skipped,
         palette: animation::PaletteOpportunity::Absent,
     };
     (production, content, rules, frame)

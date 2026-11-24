@@ -4,26 +4,31 @@
 use enum_map::Enum;
 use types::Set;
 
-use crate::cannon::CannonEvent;
-use crate::colours::{DryColourReset, PaletteOpportunity, ordinary_dry_colours};
-use crate::inputs::{Content, Inputs};
+use crate::cannon::ItemControls;
+use crate::colours::{DryColourOutcome, PaletteOpportunity, ordinary_dry_colours};
+use crate::inputs::{AnimationContent, Inputs, MissingClip, clip_of};
 use crate::moves::{fast_fall, rising_hold, standing_restart, wall_jump_ready};
-use crate::play::play;
+use crate::play::ClipPlay;
 use crate::rules::Rules;
 use crate::run::{dash_began, dash_lost};
 use crate::sounds::{
-    GraphicalContact, SoundRequest, at_the_door, foot_contact, spin_end, spin_start,
+    GraphicalContact, Sound, SoundOffer, at_the_door, foot_contact, spin_end, spin_start,
 };
 use crate::starting::start;
-use crate::state::{AppearanceState, State};
+use crate::state::{Animation, AppearanceState};
 
 /// A part a frame may have, each at most once, that carries nothing beyond the frame's inputs.
 /// Listed in the frame's order.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
 pub enum FramePart {
+    /// Her initialization, first in its frame: it sets her whole appearance State to
+    /// [`AppearanceState::INITIAL`], whatever State the frame starts with, and the frame's other
+    /// parts play on from it (`CannonReadinessReset`). The game's frame of her initialization
+    /// has none of her other parts.
+    Initialization,
     /// The preparation of her work, before her movement (`SpinEnds`). A frame whose work is
-    /// locked is still prepared; a paused frame, or a passage's frame that bypasses her work, is
-    /// not.
+    /// locked is still prepared; a paused frame, or a passage's frame that bypasses her work,
+    /// goes unprepared.
     Preparation,
     /// Her movement: samus-movement's step, her stride in it, and the animation update on its
     /// results (every animation entry, `FootContact`, `SpinStarts`). A frozen frame, at a
@@ -43,10 +48,8 @@ pub struct Frame {
     pub inputs: Inputs,
     /// The parts the frame has of those that carry nothing more.
     pub parts: Set<FramePart>,
-    /// Her item controls, with their answer (`CannonItemDelay`), or her initialization, which
-    /// comes first in its frame and sets her whole appearance State (`CannonReadinessReset`), or
-    /// neither.
-    pub cannon: CannonEvent,
+    /// Her item controls, with their answer when they run (`CannonItemDelay`).
+    pub item_controls: ItemControls,
     /// The palette opportunity, with its own observations, or none (`OrdinaryDryColours`).
     pub palette: PaletteOpportunity,
 }
@@ -54,8 +57,8 @@ pub struct Frame {
 /// What the frame tells, as the whole frame leaves it, beside the appearance State it leaves.
 ///
 /// Her step, the boost stage and her colour sequences are outputs too: each is read from that
-/// State, where it lives, as the frame leaves it. The end and turned far are not: they are the
-/// read-ahead, `Ahead::of`, asked of her State before the frame.
+/// State, where it lives, as the frame leaves it. The end and turned far are the read-ahead,
+/// `Ahead::of`, asked of her State before the frame.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FrameOutputs {
     /// Her stride's graphical contact, for part 2's splashes and dust (`FootContact`).
@@ -63,12 +66,12 @@ pub struct FrameOutputs {
     /// Whether her cannon may follow the selected item, as the frame's item controls leave its
     /// delay, for the picture of her gun.
     pub cannon_may_follow: bool,
-    /// What the palette opportunity did with the ordinary reset (`OrdinaryDryColours`).
-    pub dry_colours: DryColourReset,
-    /// The frame's sounds, in the order asked: the stride's, the animation update's, the spin
-    /// start's, the passage entry's, then normal drawing's. Several may be asked for in one
-    /// frame; none is merged or dropped.
-    pub sounds: Vec<SoundRequest>,
+    /// What the palette opportunity ended in, where the frame has one (`OrdinaryDryColours`).
+    pub dry_colours: Option<DryColourOutcome>,
+    /// The frame's sound requests, each with its queue and allowance, in the order asked: the
+    /// stride's, the animation update's, the spin start's, the passage entry's, then normal
+    /// drawing's. Each request asked for is here, in its place.
+    pub sounds: Vec<SoundOffer>,
 }
 
 /// Plays one frame of her appearance from `state`, as the frame's parts happen.
@@ -78,23 +81,31 @@ pub struct FrameOutputs {
 ///
 /// 1. Her initialization, first in its frame, sets her whole appearance State as
 ///    [`AppearanceState::INITIAL`] gives it, whatever the frame starts with; the rest of the
-///    frame plays on from it. Or her item controls set the cannon's delay, before her gun's
-///    picture reads it.
-/// 2. The preparation of her work keeps the action of her pose as the frame starts.
-/// 3. Her movement: her stride; her clip plays; the spin start of the pose she takes; that
+///    frame plays on from it.
+/// 2. Her item controls set the cannon's delay, before her gun's picture reads it.
+/// 3. The preparation of her work keeps the action of her pose as the frame starts.
+/// 4. Her movement: her stride; her clip plays; the spin start of the pose she takes; that
 ///    pose's clip starts.
-/// 4. The palette opportunity readies her colour sequences.
-/// 5. A first passage entry quiets her, then normal drawing ends a kept spin's sound.
-#[must_use]
+/// 5. The palette opportunity readies her colour sequences.
+/// 6. A first passage entry quiets her, then normal drawing ends a kept spin's sound.
+///
+/// # Errors
+///
+/// `MissingClip` with the figure, where the frame has her movement and `content` holds no clip
+/// for the figure she starts or ends the frame in.
 pub fn update(
     state: AppearanceState,
     frame: &Frame,
-    content: &impl Content,
+    content: &impl AnimationContent,
     rules: &Rules,
-) -> (AppearanceState, FrameOutputs) {
+) -> Result<(AppearanceState, FrameOutputs), MissingClip> {
     let (inputs, parts) = (&frame.inputs, &frame.parts);
-    let state = initialized(state, frame.cannon);
-    let cannon = state.cannon.after(frame.cannon);
+    let state = if parts[FramePart::Initialization] {
+        AppearanceState::INITIAL
+    } else {
+        state
+    };
+    let cannon = state.cannon.after(frame.item_controls);
     let kept_action = if parts[FramePart::Preparation] {
         inputs.figure.pose.action
     } else {
@@ -102,7 +113,7 @@ pub fn update(
     };
     let mut sounds = Vec::new();
     let (animation, contact) = if parts[FramePart::Movement] {
-        move_her(state.animation, inputs, content, rules, &mut sounds)
+        move_her(state.animation, inputs, content, rules, &mut sounds)?
     } else {
         (state.animation, None)
     };
@@ -123,67 +134,50 @@ pub fn update(
         contact,
         cannon_may_follow: cannon.may_follow(),
         dry_colours,
-        sounds,
+        sounds: sounds.into_iter().map(Sound::offer).collect(),
     };
-    (after, outputs)
-}
-
-/// Spec: `CannonReadinessReset`, and her appearance at initialization. A frame with her
-/// initialization starts from her State at initialization, whatever State it was given: every
-/// quantity, the cannon's delay of 2 among them. Any other frame starts from `state`.
-const fn initialized(state: AppearanceState, event: CannonEvent) -> AppearanceState {
-    match event {
-        CannonEvent::SamusInitialized => AppearanceState::INITIAL,
-        CannonEvent::ControlsSkipped | CannonEvent::ControlsRan(_) => state,
-    }
+    Ok((after, outputs))
 }
 
 /// Her movement's part of the frame, in its order, from `at_start`, her animation as the frame
 /// starts: her stride (`FootContact`); her clip plays; the spin start of the pose she takes
-/// (`SpinStarts`); that pose's clip starts. The sounds asked for join `sounds` in that order.
-/// Gives her animation as it leaves it and her stride's graphical contact.
+/// (`SpinStarts`); that pose's clip starts, then a dash's loss. The sounds asked for join
+/// `sounds` in that order. Gives her animation as it leaves it and her stride's graphical
+/// contact, or the figure whose clip `content` lacks.
 fn move_her(
-    at_start: State,
+    at_start: Animation,
     inputs: &Inputs,
-    content: &impl Content,
+    content: &impl AnimationContent,
     rules: &Rules,
-    sounds: &mut Vec<SoundRequest>,
-) -> (State, Option<GraphicalContact>) {
-    let clip = content.clip(&inputs.figure);
+    sounds: &mut Vec<Sound>,
+) -> Result<(Animation, Option<GraphicalContact>), MissingClip> {
+    let clip = clip_of(content, inputs.figure)?;
+    let clip_after = clip_of(content, inputs.figure_after)?;
     let (contact, footstep) = foot_contact(at_start, inputs, clip);
     sounds.extend(footstep);
-    let (played, sound) = play_her_clip(at_start, inputs, content, rules);
+    let playing = ClipPlay {
+        inputs,
+        clip,
+        paces: content.paces(),
+        rules,
+    };
+    let (played, sound) = play_her_clip(at_start, &playing);
     sounds.extend(sound);
     sounds.extend(spin_start(inputs));
-    (take_her_pose(played, inputs, content), contact)
+    let started = played.with_playhead(start(played.playhead, inputs, clip_after));
+    Ok((dash_lost(started, inputs), contact))
 }
 
 /// The animation update's first half, in its order: her moves' changes (a dash's beginning, a
 /// standing restart, a readied wall jump, a fast fall), the rising hold, then the time runs down
-/// and the clip of her pose at the frame's start moves on. Gives the State and the sound asked
-/// for, at most one.
-fn play_her_clip(
-    state: State,
-    inputs: &Inputs,
-    content: &impl Content,
-    rules: &Rules,
-) -> (State, Option<SoundRequest>) {
-    let clip = content.clip(&inputs.figure);
-    let begun = dash_began(state, inputs, rules);
+/// and the clip of her figure at the frame's start moves on. Gives her animation and the sound
+/// asked for, at most one.
+fn play_her_clip(animation: Animation, playing: &ClipPlay<'_>) -> (Animation, Option<Sound>) {
+    let (inputs, clip, rules) = (playing.inputs, playing.clip, playing.rules);
+    let begun = dash_began(animation, inputs, rules);
     let playhead = standing_restart(begun.playhead, inputs, rules);
     let playhead = wall_jump_ready(playhead, inputs, clip);
     let playhead = fast_fall(playhead, inputs, clip, rules);
     let playhead = rising_hold(playhead, inputs, clip, rules);
-    play(State { playhead, ..begun }, inputs, content, rules)
-}
-
-/// The animation update's second half, in its order: the clip of the pose she takes starts
-/// (`StartingClip`, `HandOverSlowdown`), then a dash's loss.
-fn take_her_pose(played: State, inputs: &Inputs, content: &impl Content) -> State {
-    let clip_after = content.clip(&inputs.figure_after);
-    let started = State {
-        playhead: start(played.playhead, inputs, clip_after),
-        ..played
-    };
-    dash_lost(started, inputs)
+    playing.play(begun.with_playhead(playhead))
 }

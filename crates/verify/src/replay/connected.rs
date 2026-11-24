@@ -511,7 +511,7 @@ mod tests {
     fn connected_marked_contact_and_first_wrap_have_complete_publications() {
         use game::production::ProductionOutputs;
         use game::state::owned::OwnedState;
-        use samus_appearance::{GraphicalContact, SoundRequest};
+        use samus_appearance::{GraphicalContact, Sound};
         let index = index();
         let sources = sources();
         let case = index
@@ -540,7 +540,7 @@ mod tests {
                 panic!()
             };
             let expected_contact = (cut == 10).then_some(contact);
-            let expected_sound = (cut == 10).then_some(SoundRequest::Footstep);
+            let expected_sound = (cut == 10).then_some(Sound::Footstep.offer());
             let graphics_match = output.contact == expected_contact;
             if !graphics_match {
                 diagnostic(format_args!(

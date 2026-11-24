@@ -44,7 +44,7 @@ Each reaches the model as an input those domains give, or leaves it as an output
 engine has none of them yet, so the bridge gives the input a domain would (LEGACY, "Samus's
 animation timing in the engine"):
 
-- **The liquids:** the slowdown, the start's slowdown and whether she is submerged: 0, 0 and not
+- **The liquids:** the step slowdown, the start slowdown and whether she is submerged: 0, 0 and not
   submerged.
 - **The sound domain:** the sounds the model asks for leave as ordered typed producer requests, and no sound waits (`BoostingLap`): every boosting lap on record had 0
   waiting.

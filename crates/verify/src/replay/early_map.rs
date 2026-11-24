@@ -564,14 +564,14 @@ fn map_observations(
 /// from its movement type, so the rest of her appearance State is carried, not compared.
 struct AnimationPin;
 impl canonical::model::Pinned for AnimationPin {
-    type State = samus_appearance::State;
+    type State = samus_appearance::Animation;
     const NAME: &'static str = "samus-appearance-animation";
-    const SHAPE: u64 = 0x347B_D040_BE28_1439;
+    const SHAPE: u64 = 0xF21C_717E_58BA_7D4D;
 }
 
 struct CompletedOwners<'a> {
     movement: &'a samus_movement::Samus,
-    appearance: samus_appearance::State,
+    appearance: samus_appearance::Animation,
     playing: samus_appearance::Figure,
     camera: world_camera::Camera,
 }

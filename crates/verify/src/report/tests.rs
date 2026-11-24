@@ -359,6 +359,6 @@ fn independent_vector_ids_include_opportunities_and_compositions_once() {
             "../../../../scenarios/vectors/samus-appearance.toml"
         ))
         .len(),
-        189
+        193
     );
 }

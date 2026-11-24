@@ -201,7 +201,7 @@ fn room(
         camera: inputs.camera.clone(),
     };
     let held = Room {
-        sounds_sent: inputs.sounds_waiting == samus_appearance::SoundsWaiting::NONE,
+        sounds_sent: inputs.sounds_waiting.count() == 0,
         inputs,
         map,
         hud: HudHeld {

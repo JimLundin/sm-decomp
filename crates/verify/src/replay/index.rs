@@ -652,9 +652,9 @@ fn rule_exists(rule: &str) -> bool {
         || interface_hud::CATALOGUE
             .iter()
             .any(|entry| rule == format!("interface-hud/{:?}", entry.id))
-        || samus_appearance::CATALOGUE
+        || samus_appearance::catalogue()
             .iter()
-            .any(|entry| rule == format!("samus-appearance/{:?}", entry.id))
+            .any(|(id, _)| rule == format!("samus-appearance/{id:?}"))
         || run_progress::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("run-progress/{id:?}"))

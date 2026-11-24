@@ -4,7 +4,7 @@
 #[cfg(test)]
 mod catalogue {
     use enum_map::{Enum, EnumMap};
-    use samus_appearance::{BehaviourId, CATALOGUE};
+    use samus_appearance::{BehaviourId, catalogue};
     use types::{BoostStage, Checked, Kind, Switch};
 
     const SPEC: &str = include_str!("../../../../docs/behaviours/samus-appearance.md");
@@ -24,7 +24,10 @@ mod catalogue {
                 .lines
                 .iter()
                 .find(|(field, _)| field == name)
-                .map_or_else(|| panic!("{} has no {name}", self.id), |(_, text)| text);
+                .map_or_else(
+                    || panic!("expected {} to have a {name} line", self.id),
+                    |(_, text)| text,
+                );
             text.trim().trim_end_matches('.').replace('`', "")
         }
     }
@@ -65,7 +68,7 @@ mod catalogue {
             "timing" => Kind::Timing,
             "encoding" => Kind::Encoding,
             "output" => Kind::Output,
-            other => panic!("unwritten kind {other:?}"),
+            other => panic!("expected a kind the spec writes, found {other:?}"),
         }
     }
 
@@ -75,7 +78,7 @@ mod catalogue {
             Some("none") => Switch::Fixed,
             Some("toggle") => Switch::Toggle,
             Some("parameter") => Switch::Parameter,
-            other => panic!("unwritten switch {other:?}"),
+            other => panic!("expected a switch the spec writes, found {other:?}"),
         }
     }
 
@@ -91,33 +94,6 @@ mod catalogue {
         }
     }
 
-    #[test]
-    fn the_catalogue_is_the_specs_entries_in_order() {
-        let entries = spec_entries();
-        let ids: Vec<String> = entries.iter().map(|entry| entry.id.clone()).collect();
-        let catalogued: Vec<String> = CATALOGUE
-            .iter()
-            .map(|behaviour| format!("{:?}", behaviour.id))
-            .collect();
-        assert_eq!(catalogued, ids);
-        for (behaviour, entry) in CATALOGUE.iter().zip(&entries) {
-            assert_eq!(behaviour.kind, kind(&entry.field("kind")), "{}", entry.id);
-            assert_eq!(
-                behaviour.switch,
-                switch(&entry.field("switch")),
-                "{}",
-                entry.id
-            );
-            assert_eq!(behaviour.summary, entry.field("summary"), "{}", entry.id);
-            assert_eq!(
-                behaviour.checked,
-                checked(&entry.field("checked")),
-                "{}",
-                entry.id
-            );
-        }
-    }
-
     /// Every member of the enum `K`, in its order.
     fn members<K: Enum>() -> Vec<K> {
         EnumMap::<K, ()>::default()
@@ -126,14 +102,60 @@ mod catalogue {
             .collect()
     }
 
+    /// Each entry of the spec is the catalogue's behaviour of its name, with its kind, switch,
+    /// summary and checked line, and the catalogue has no behaviour the spec lacks.
+    #[test]
+    fn the_catalogue_is_the_specs_entries() {
+        let entries = spec_entries();
+        let mut ids: Vec<String> = entries.iter().map(|entry| entry.id.clone()).collect();
+        let mut catalogued: Vec<String> = members::<BehaviourId>()
+            .iter()
+            .map(|id| format!("{id:?}"))
+            .collect();
+        ids.sort();
+        catalogued.sort();
+        assert_eq!(
+            catalogued, ids,
+            "expected one behaviour for each spec entry"
+        );
+        let catalogue = catalogue();
+        for entry in &entries {
+            let behaviour = catalogue
+                .values()
+                .find(|behaviour| format!("{:?}", behaviour.id) == entry.id)
+                .unwrap_or_else(|| panic!("expected a behaviour {}", entry.id));
+            let id = &entry.id;
+            assert_eq!(
+                behaviour.kind,
+                kind(&entry.field("kind")),
+                "{id}: expected the spec's kind"
+            );
+            assert_eq!(
+                behaviour.switch,
+                switch(&entry.field("switch")),
+                "{id}: expected the spec's switch"
+            );
+            assert_eq!(
+                behaviour.summary,
+                entry.field("summary"),
+                "{id}: expected the spec's summary"
+            );
+            assert_eq!(
+                behaviour.checked,
+                checked(&entry.field("checked")),
+                "{id}: expected the spec's checked line"
+            );
+        }
+    }
+
+    /// The catalogue's row for each id is that id's: each behaviour named once.
     #[test]
     fn the_catalogue_names_every_behaviour_once() {
-        for id in members::<BehaviourId>() {
-            let rows = CATALOGUE
-                .iter()
-                .filter(|behaviour| behaviour.id == id)
-                .count();
-            assert_eq!(rows, 1, "{id:?} has {rows} rows in the catalogue");
+        for (id, behaviour) in catalogue() {
+            assert_eq!(
+                behaviour.id, id,
+                "expected the row of {id:?} to name {id:?}"
+            );
         }
     }
 
@@ -141,6 +163,10 @@ mod catalogue {
     /// stage once, in the order the stages go up.
     #[test]
     fn the_stages_name_every_stage_once_in_order() {
-        assert_eq!(BoostStage::ALL.to_vec(), members::<BoostStage>());
+        assert_eq!(
+            BoostStage::ALL.to_vec(),
+            members::<BoostStage>(),
+            "expected every stage once, in the order they go up"
+        );
     }
 }

@@ -3,16 +3,17 @@
 
 use types::ClipEnd;
 
-use crate::clip::{Clip, Instruction};
+use crate::clip::Instruction;
+use crate::inputs::{AnimationContent, Figure, MissingClip, clip_of};
 use crate::state::{AppearanceState, RunDown};
 
 /// What is known of a frame from its start alone: the read-ahead.
 ///
-/// It is one query of her State before the frame, not a part of the frame: it reads the State
-/// as the frame starts and the clip of her pose then, and nothing else, and it changes nothing.
-/// A frame with her movement gives the same answer, so the frame doesn't tell it again. A
-/// caller asks it before the frame, as samus-movement does before its step, since the frame
-/// needs her pose at its end, which that step picks.
+/// It is one query of her State before the frame, apart from the frame's parts: it reads the
+/// State as the frame starts and the clip of the figure she starts the frame in, and changes
+/// nothing. A frame with her movement gives the same answer. A caller asks it before the
+/// frame, as samus-movement does before its step, since the frame needs her pose at its end,
+/// which that step picks.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Ahead {
     /// The end her clip reaches this frame, if it reaches one (`ClipEnds`), which samus-movement's
@@ -25,26 +26,35 @@ pub struct Ahead {
 
 impl Ahead {
     /// What is known of the frame from `state`, her appearance State as the caller kept it, and
-    /// `clip`, the clip of her figure at the frame's start.
+    /// the clip `content` holds for `figure`, the figure she starts the frame in. Gives the
+    /// figure back as missing where the content holds no clip for it.
     ///
     /// Spec: `ClipEnds`. The end is the one the time running down moves her clip on to, if it
-    /// moves on to one. No move of the frame can change it: the spec's clips that end have no
-    /// kick, fast fall or rising step, and belong neither to her run, nor to her standing
-    /// unaimed, nor to a kept row of `StartingClip`.
+    /// moves on to one. The frame's moves leave it as it is: the clips that end have no kick,
+    /// fast fall or rising step, and belong to none of her run, her standing unaimed and the kept
+    /// rows of `StartingClip`.
     ///
     /// Spec: `SpinTurnedFar`. Her spin has turned far once her clip has a kick step and her step
     /// is on it or past it by step number, so the steps of a branch numbered after the kick step
     /// are past it. What the frame's moves and the pose she takes do shows from the next frame.
-    #[must_use]
-    pub fn of(state: &AppearanceState, clip: &Clip) -> Self {
+    ///
+    /// # Errors
+    ///
+    /// `MissingClip` with `figure`, where `content` holds no clip for it.
+    pub fn of(
+        state: &AppearanceState,
+        figure: Figure,
+        content: &impl AnimationContent,
+    ) -> Result<Self, MissingClip> {
+        let clip = clip_of(content, figure)?;
         let playhead = state.animation.playhead;
         let end = match playhead.run_down(clip) {
             RunDown::MovesOn(_, Instruction::Control(control)) => control.end(),
             RunDown::MovesOn(_, Instruction::Show(_)) | RunDown::Stays(_) => None,
         };
-        Self {
+        Ok(Self {
             end,
             turned_far: clip.kick.is_some_and(|kick| playhead.step >= kick),
-        }
+        })
     }
 }

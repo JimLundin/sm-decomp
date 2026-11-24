@@ -95,7 +95,7 @@ fn inputs(held: types::Buttons) -> Inputs {
         parity: types::Parity::Even,
         energy: 99,
         liquid: samus_appearance::Liquid::NONE,
-        sounds_waiting: samus_appearance::SoundsWaiting::NONE,
+        sounds_waiting: samus_appearance::SoundsWaiting::new(0).unwrap(),
         activities: Set::default(),
         charge: samus_appearance::Charge::try_from(0).unwrap(),
         geometry: empty_world(),
@@ -250,4 +250,33 @@ fn a_finished_frame_counts_and_a_restarting_one_counts_from_zero() {
         counted(last, Finishing::Restarts(world_doors::SlideScreen::Sprites)),
         FrameCount(1)
     );
+}
+
+/// Each report of her moves gives the dash the clip reads, decided first by whether she is
+/// dashing after them.
+#[test]
+fn dash_follows_her_dashing_after_moves() {
+    let cases = [
+        (Dashing::Off, false, true, Dash::Stopped),
+        (Dashing::Off, true, false, Dash::Off),
+        (Dashing::Off, false, false, Dash::Off),
+        (Dashing::On, true, true, Dash::BeganAndLost),
+        (Dashing::On, true, false, Dash::Began),
+        (Dashing::On, false, true, Dash::Lost),
+        (Dashing::On, false, false, Dash::On),
+    ];
+    for (dashing, began, lost, expected) in cases {
+        assert_eq!(
+            dash(dashing, began, lost),
+            expected,
+            "{dashing:?}, began {began}, lost {lost}"
+        );
+    }
+}
+
+/// A run into a wall that starts her dash leaves her not dashing after her moves: stopped, so
+/// the clip holds its own pace.
+#[test]
+fn dash_begun_into_a_wall_is_stopped() {
+    assert_eq!(dash(Dashing::Off, true, true), Dash::Stopped);
 }

@@ -1,5 +1,5 @@
 //! Her colour sequences during ordinary dry movement: the visor and charge-glow sequences,
-//! readied without touching the shared current and target palettes.
+//! readied while the shared current and target palettes stay with their owner.
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
@@ -7,26 +7,77 @@ use types::{Action, Body, Item, LandedFrom, Set, Turn};
 
 use crate::inputs::{Figure, Inputs};
 
-/// Eligible visor palette ticks remaining, from 0 to 255.
+/// The visor delay: eligible palette ticks before the visor sequence moves on, 0 to 255, each
+/// value of its `u8` on construction and on restore.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct VisorDelay(pub u8);
+pub struct VisorDelay(u8);
 
-/// Zero-based entry of the visor sequence.
+impl VisorDelay {
+    /// The delay of `ticks` eligible palette ticks.
+    #[must_use]
+    pub const fn new(ticks: u8) -> Self {
+        Self(ticks)
+    }
+
+    /// Its eligible palette ticks.
+    #[must_use]
+    pub const fn ticks(self) -> u8 {
+        self.0
+    }
+}
+
+/// The visor sequence position: an entry of the visor's colour sequence, numbered from 0, held
+/// as a `u8` on construction and on restore.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct VisorStep(pub usize);
+pub struct VisorStep(u8);
 
-/// Zero-based picture of the charge-glow sequence; this says nothing about glow activity.
+impl VisorStep {
+    /// The entry numbered `entry`, from 0.
+    #[must_use]
+    pub const fn new(entry: u8) -> Self {
+        Self(entry)
+    }
+
+    /// Its number, from 0.
+    #[must_use]
+    pub const fn entry(self) -> u8 {
+        self.0
+    }
+}
+
+/// The charge-glow position: a picture of the charge glow's sequence, numbered from 0.
+///
+/// 0 is the reset position. It is held as a `u8` on construction and on restore. Whether a glow
+/// shows is the current beam and effect facts'.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ChargeGlowPosition(pub usize);
+pub struct ChargeGlowPosition(u8);
 
-/// Spec: `OrdinaryDryColours`. Persistent sequence state, separate from shared colours.
+impl ChargeGlowPosition {
+    /// The reset position, the sequence's first picture.
+    pub const RESET: Self = Self(0);
+
+    /// The picture numbered `picture`, from 0.
+    #[must_use]
+    pub const fn new(picture: u8) -> Self {
+        Self(picture)
+    }
+
+    /// Its number, from 0.
+    #[must_use]
+    pub const fn picture(self) -> u8 {
+        self.0
+    }
+}
+
+/// Spec: `OrdinaryDryColours`. Her colour sequences: the visor delay, the visor sequence position
+/// and the charge-glow position, kept beside the shared palettes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ColourSequences {
-    /// Delay before the visor sequence advances.
+    /// Eligible palette ticks before the visor sequence moves on.
     pub visor_delay: VisorDelay,
-    /// Entry in the visor sequence.
+    /// The entry of the visor sequence.
     pub visor_step: VisorStep,
-    /// Picture in the charge-glow sequence.
+    /// The picture of the charge-glow sequence.
     pub charge_glow_position: ChargeGlowPosition,
 }
 
@@ -36,21 +87,21 @@ pub struct ColourSequences {
 pub const ORDINARY_READY: ColourSequences = ColourSequences {
     visor_delay: VisorDelay(1),
     visor_step: VisorStep(3),
-    charge_glow_position: ChargeGlowPosition(0),
+    charge_glow_position: ChargeGlowPosition::RESET,
 };
 
-/// Actual current equipment-dependent suit selection.
+/// The suit selection made for this frame, from the equipment switched on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Suit {
     /// Neither Gravity nor Varia is enabled.
     Power,
     /// Varia is enabled without Gravity.
     Varia,
-    /// Gravity is enabled, regardless of Varia.
+    /// Gravity is enabled, with or without Varia.
     Gravity,
 }
 
-/// Room colour treatment supplied by room effects.
+/// The room's colour treatment, from room effects.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RoomColours {
     /// Standard room treatment.
@@ -61,7 +112,7 @@ pub enum RoomColours {
     OrangeBackground,
 }
 
-/// Current activity supplied by Grapple, independent of camera scrolling.
+/// The grapple beam's current activity, from Grapple.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GrappleActivity {
     /// Grapple is dormant.
@@ -70,16 +121,18 @@ pub enum GrappleActivity {
     Busy,
 }
 
-/// Independently present liquid levels; presence does not mean Samus is submerged.
+/// A liquid level of the room, each present or absent on its own, from room effects and the
+/// current Environment. Listed in no order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, Serialize, Deserialize)]
 pub enum LiquidLevel {
-    /// A water level.
+    /// The water level.
     Water,
-    /// A magma level.
-    Magma,
+    /// The lava level: the surface of lava or acid.
+    Lava,
 }
 
-/// Current colour effects, independently supplied by their owners.
+/// A current colour effect, each active or inactive on its own, from its owner. Listed in no
+/// order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, Serialize, Deserialize)]
 pub enum ColourEffect {
     /// Lingering glow after firing.
@@ -115,36 +168,26 @@ impl ScrewAttackPremise {
     }
 }
 
-// Spec: `OrdinaryDryColours`, its Admission paragraph. These two items are the one place that
-// decides which figures the ordinary reset admits; nothing else names an action or a body.
+// Spec: `OrdinaryDryColours`. These two items are the one place that decides which figures the
+// ordinary reset admits.
 
-/// Only an upright figure is admitted: the spec refuses any action of a crouched or ball figure,
-/// and the spring ball is a ball.
+/// The body of every admitted figure: upright.
 const ADMITTED_BODY: Body = Body::Upright;
 
-/// The admitted dry movements of an upright figure, each with its screw-attack premise.
-///
-/// Every action not listed is refused: falling, crouching, morphing, unmorphing, rolling, taking
-/// off, standing up, pressing against a wall, wall jumps, turns on the ground, in a fall or in a
-/// moonwalk's jump, and landing from a spin or a wall jump. A spin is admitted only while the
-/// screw attack is off. Admitting or refusing one more action is adding or removing its line.
+/// The admitted dry movements of an upright figure, each with its screw-attack premise: running,
+/// standing still, moonwalking, a straight jump, turning in a take-off or a straight jump,
+/// landing from a straight jump or a fall, and a spin with the screw attack switched off. Every
+/// other action is refused.
 const ADMITTED_DRY_MOVEMENTS: &[(Action, ScrewAttackPremise)] = &[
-    // Running [R-ordinary-run-colours].
     (Action::Running, ScrewAttackPremise::Either),
-    // Standing still [R-ordinary-still-colours].
     (Action::Still, ScrewAttackPremise::Either),
-    // Moonwalking [R-ordinary-moonwalk-colours].
     (Action::Moonwalking, ScrewAttackPremise::Either),
-    // A straight jump [R-ordinary-jump-colours].
     (Action::Jumping, ScrewAttackPremise::Either),
-    // Turning in a straight jump.
     (Action::Turning(Turn::Jump), ScrewAttackPremise::Either),
-    // Landing from a straight jump.
     (
         Action::Landing(LandedFrom::Jump),
         ScrewAttackPremise::Either,
     ),
-    // A spin, only with the screw attack off.
     (Action::Spinning, ScrewAttackPremise::SwitchedOff),
 ];
 
@@ -159,9 +202,7 @@ fn admits_dry_movement(figure: Figure, screw_attack_on: bool) -> bool {
 
 /// Spec: `OrdinaryDryColours`. The palette opportunity's own observations, each its owner's.
 ///
-/// Her figure and her items are the frame's inputs, not observations; where she is doesn't
-/// enter. Where an owner cannot supply its fact, the opportunity is `PaletteOpportunity::Unrecognized`
-/// instead.
+/// The rule reads her figure and her items from the frame's inputs beside these.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PaletteObservations {
     /// The suit selection made for this frame (equipment).
@@ -189,55 +230,61 @@ impl PaletteObservations {
     }
 }
 
-/// The frame's palette opportunity, if it has one.
+/// The frame's palette opportunity, with what its owners supply for it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PaletteOpportunity {
-    /// The frame has no palette opportunity, or only draws: the reset is not considered.
+    /// The frame has no palette opportunity, or only draws.
     Absent,
     /// The opportunity, with every owner's current fact.
     Observed(PaletteObservations),
-    /// The opportunity, with a current fact its owner could not supply or that is not one of the
-    /// recognized values: the reset is unsupported.
-    Unrecognized,
+    /// The opportunity, with a current fact the rule can't read: an observation its owner
+    /// couldn't supply or gave as an unknown value, or colours it can't represent.
+    Unreadable,
 }
 
-/// What the frame's palette opportunity did with the ordinary reset.
+/// Spec: `OrdinaryDryColours`. What the ordinary reset did at a palette opportunity whose facts
+/// it read: both are ordinary results of the frame.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DryColourReset {
-    /// The frame had no palette opportunity.
-    NoOpportunity,
-    /// The reset applied, even if the sequences were already as it leaves them.
+    /// The reset applied: the sequences are as it leaves them, as they may already have been.
     Applied,
-    /// The opportunity is outside the ordinary dry-movement arm: the caller reports it
-    /// unsupported, and the sequences are as they were.
-    Unsupported,
+    /// A premise of the reset didn't hold: the sequences are as they were.
+    Refused,
 }
+
+/// Spec: `OrdinaryDryColours`. A palette opportunity with a fact the rule can't read: the frame
+/// is outside what the rule decides, the one failure of the rule, and the sequences are as they
+/// were.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Unrecognized;
+
+/// What a frame's palette opportunity ends in: applied or refused, or unrecognized.
+pub type DryColourOutcome = Result<DryColourReset, Unrecognized>;
 
 /// Spec: `OrdinaryDryColours`. The frame's palette opportunity, after movement has selected her
 /// figure and the suit has been selected, and before health maintenance and the frame's drawing
 /// and palette upload. It reads her figure as the frame ends and the screw attack from the
-/// frame's inputs.
+/// frame's inputs, and gives the sequences and the opportunity's outcome, if the frame has one.
 ///
 /// An admitted opportunity sets the visor delay to 1, the visor to its entry 3 and the charge
-/// glow to its reset position, whatever they were; any other leaves them as they were. Neither
-/// way reads or writes a colour of the current or target palette, nor asks for a sound, a
-/// graphic or a hardware request.
+/// glow to its reset position, whatever they were; a refused or unrecognized one leaves them as
+/// they were. The current and target palettes stay with their owner, as the frame's other
+/// producers leave them, and the reset asks for no sound, graphic or hardware request.
 #[must_use]
 pub fn ordinary_dry_colours(
     sequences: ColourSequences,
     opportunity: PaletteOpportunity,
     inputs: &Inputs,
-) -> (ColourSequences, DryColourReset) {
+) -> (ColourSequences, Option<DryColourOutcome>) {
     let screw_attack_on = inputs.items[Item::ScrewAttack];
     match opportunity {
-        PaletteOpportunity::Absent => (sequences, DryColourReset::NoOpportunity),
+        PaletteOpportunity::Absent => (sequences, None),
         PaletteOpportunity::Observed(observed)
             if observed.admit_ordinary_reset(inputs.figure_after, screw_attack_on) =>
         {
-            (ORDINARY_READY, DryColourReset::Applied)
+            (ORDINARY_READY, Some(Ok(DryColourReset::Applied)))
         }
-        PaletteOpportunity::Observed(_) | PaletteOpportunity::Unrecognized => {
-            (sequences, DryColourReset::Unsupported)
-        }
+        PaletteOpportunity::Observed(_) => (sequences, Some(Ok(DryColourReset::Refused))),
+        PaletteOpportunity::Unreadable => (sequences, Some(Err(Unrecognized))),
     }
 }

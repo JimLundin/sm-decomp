@@ -2,15 +2,15 @@
 //! appearance State saved and restored between frames.
 
 use samus_appearance::{
-    AppearanceState, CannonDelay, CannonEvent, ControlEligibility, Frame, FramePart,
-    ItemControlAnswer, Rules, SelectedItem,
+    AppearanceState, CannonDelay, ControlEligibility, Frame, FramePart, ItemControlAnswer,
+    ItemControls, Rules, SelectedItem,
 };
 use serde::Deserialize;
 use types::{Action, Set, set_of};
 
 use super::{
-    Library, UNTOUCHED_COLOURS, VectorContent, VectorFile, VectorInputs, behaviour, frame, kept,
-    moving_content, play, read_file, state,
+    Library, UNTOUCHED_COLOURS, VectorContent, VectorFile, VectorInputs, animation, behaviour,
+    frame, kept, moving_content, play, read_file,
 };
 
 #[derive(Deserialize)]
@@ -71,9 +71,14 @@ impl HistoryStep {
         ItemControlAnswer {
             before: self
                 .item_before
-                .expect("the identity the controls start from"),
-            after: self.item_after.expect("the identity the controls leave"),
-            eligibility: if self.eligible.expect("whether the controls may switch") {
+                .expect("expected the identity the controls start from"),
+            after: self
+                .item_after
+                .expect("expected the identity the controls leave"),
+            eligibility: if self
+                .eligible
+                .expect("expected whether the controls may switch")
+            {
                 ControlEligibility::Eligible
             } else {
                 ControlEligibility::Ineligible
@@ -85,13 +90,14 @@ impl HistoryStep {
     fn validate(&self) {
         let controls = self.kind == Operation::Controls;
         let identities = controls || self.kind == Operation::OutsideSelection;
-        assert_eq!(self.item_before.is_some(), identities, "{self:?}");
-        assert_eq!(self.item_after.is_some(), identities, "{self:?}");
-        assert_eq!(self.eligible.is_some(), controls, "{self:?}");
+        let fields = "expected each field only on the operations that give it";
+        assert_eq!(self.item_before.is_some(), identities, "{fields}: {self:?}");
+        assert_eq!(self.item_after.is_some(), identities, "{fields}: {self:?}");
+        assert_eq!(self.eligible.is_some(), controls, "{fields}: {self:?}");
         assert_eq!(
             self.event.is_some(),
             self.kind == Operation::Unrelated,
-            "{self:?}"
+            "{fields}: {self:?}"
         );
         let controls_only = [
             self.one_shot_before,
@@ -101,9 +107,12 @@ impl HistoryStep {
         ];
         assert!(
             controls || controls_only.iter().all(Option::is_none),
-            "{self:?}"
+            "{fields}: {self:?}"
         );
-        assert!(CannonDelay::new(self.expected_delay).is_some(), "{self:?}");
+        assert!(
+            CannonDelay::new(self.expected_delay).is_some(),
+            "expected a delay of 0 to 2 frames: {self:?}"
+        );
     }
 }
 
@@ -113,17 +122,17 @@ fn borrowed<'a>(file: &'a VectorFile, id: &str) -> &'a VectorInputs {
         .vector
         .iter()
         .find(|vector| vector.id == id)
-        .unwrap_or_else(|| panic!("no animation vector {id}"))
+        .unwrap_or_else(|| panic!("expected an animation vector {id}"))
         .inputs
 }
 
 /// The frame a step plays, with the clips it reads, if the step is a frame of play.
 ///
-/// A selection change outside item controls and a drawing are not inputs of the model: no frame
-/// is played for them, and the history checks the delay as it stands. A pose or clip change is
-/// a frame whose movement takes another pose or clip and whose controls don't run; a passage
-/// without initialization is a frame with a passage entry and no controls. A frame of her item
-/// controls or her initialization alone brings her standing still.
+/// A selection change outside item controls and a drawing are a history's own steps: it plays
+/// no frame for them, and checks the delay as it stands. A pose or clip change is a frame whose
+/// movement takes another pose or clip and whose controls don't run; a passage without
+/// initialization is a frame with a passage entry and no controls. A frame of her item controls
+/// or her initialization alone brings her standing still.
 fn frame_of<'a>(
     step: &HistoryStep,
     file: &VectorFile,
@@ -137,35 +146,36 @@ fn frame_of<'a>(
         pose: "Upright Running Right Forward".to_owned(),
         ..VectorInputs::default()
     };
-    let (given, parts, cannon): (&VectorInputs, Set<FramePart>, CannonEvent) = match step.kind {
-        Operation::Controls => (
-            &standing,
-            Set::default(),
-            CannonEvent::ControlsRan(step.answer()),
-        ),
-        Operation::Skip => (&standing, Set::default(), CannonEvent::ControlsSkipped),
-        Operation::Initialize => (&standing, Set::default(), CannonEvent::SamusInitialized),
-        Operation::OutsideSelection | Operation::Draw => return None,
-        Operation::Unrelated => match step.event.expect("an unrelated event") {
-            UnrelatedEvent::PoseChange => (
-                borrowed(file, "C-start"),
-                set_of([FramePart::Movement]),
-                CannonEvent::ControlsSkipped,
+    let (given, parts, item_controls): (&VectorInputs, Set<FramePart>, ItemControls) =
+        match step.kind {
+            Operation::Controls => (&standing, Set::default(), ItemControls::Ran(step.answer())),
+            Operation::Skip => (&standing, Set::default(), ItemControls::Skipped),
+            Operation::Initialize => (
+                &standing,
+                set_of([FramePart::Initialization]),
+                ItemControls::Skipped,
             ),
-            UnrelatedEvent::ClipChange => (
-                borrowed(file, "C-end"),
-                set_of([FramePart::Movement]),
-                CannonEvent::ControlsSkipped,
-            ),
-            UnrelatedEvent::PassageWithoutInitialization => (
-                &running,
-                set_of([FramePart::PassageEntry]),
-                CannonEvent::ControlsSkipped,
-            ),
-        },
-    };
+            Operation::OutsideSelection | Operation::Draw => return None,
+            Operation::Unrelated => match step.event.expect("expected an unrelated event") {
+                UnrelatedEvent::PoseChange => (
+                    borrowed(file, "C-start"),
+                    set_of([FramePart::Movement]),
+                    ItemControls::Skipped,
+                ),
+                UnrelatedEvent::ClipChange => (
+                    borrowed(file, "C-end"),
+                    set_of([FramePart::Movement]),
+                    ItemControls::Skipped,
+                ),
+                UnrelatedEvent::PassageWithoutInitialization => (
+                    &running,
+                    set_of([FramePart::PassageEntry]),
+                    ItemControls::Skipped,
+                ),
+            },
+        };
     let played = Frame {
-        cannon,
+        item_controls,
         ..frame(given, parts)
     };
     Some((played, moving_content("a cannon frame", given, library)))
@@ -178,10 +188,10 @@ fn frame_of<'a>(
 fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
     let id = &history.id;
     let mut appearance = AppearanceState {
-        animation: state(2, 3, 1, 1),
+        animation: animation(2, 3, 1, 1),
         kept_action: Action::Spinning,
         cannon: CannonDelay::new(history.initial_delay)
-            .unwrap_or_else(|| panic!("{id}: initial delay outside the spec")),
+            .unwrap_or_else(|| panic!("{id}: expected an initial delay of 0 to 2 frames")),
         colours: UNTOUCHED_COLOURS,
     };
     let mut drawn = appearance.cannon.may_follow();
@@ -190,16 +200,26 @@ fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
         if let Some((frame, content)) = frame_of(step, file, library) {
             let (after, outputs) = play(appearance, &frame, &content, &Rules::VANILLA);
             let unchanged = if step.kind == Operation::Initialize {
-                assert_eq!(after, AppearanceState::INITIAL, "{id} step {at}");
+                assert_eq!(
+                    after,
+                    AppearanceState::INITIAL,
+                    "{id} step {at}: expected her whole State at initialization"
+                );
                 AppearanceState::INITIAL
             } else {
                 appearance
             };
-            assert_eq!(after.colours, unchanged.colours, "{id} step {at}");
-            assert_eq!(after.kept_action, unchanged.kept_action, "{id} step {at}");
+            assert_eq!(
+                after.colours, unchanged.colours,
+                "{id} step {at}: expected her colours unchanged"
+            );
+            assert_eq!(
+                after.kept_action, unchanged.kept_action,
+                "{id} step {at}: expected her kept action unchanged"
+            );
             assert!(
                 outputs.sounds.len() <= 1,
-                "{id} step {at}: at most a passage's"
+                "{id} step {at}: expected a passage's sound at most"
             );
             drawn = outputs.cannon_may_follow;
             appearance = after;
@@ -207,16 +227,20 @@ fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
             appearance = kept(appearance);
         }
         let delay = appearance.cannon;
-        assert_eq!(delay.remaining(), step.expected_delay, "{id} step {at}");
+        assert_eq!(
+            delay.remaining(),
+            step.expected_delay,
+            "{id} step {at}: expected the delay `expected_delay` gives"
+        );
         assert_eq!(
             delay.may_follow(),
             step.expected_may_follow,
-            "{id} step {at}"
+            "{id} step {at}: expected readiness as `expected_may_follow` gives it"
         );
         if step.kind == Operation::Draw {
             assert_eq!(
                 drawn, step.expected_may_follow,
-                "{id} step {at}: the picture"
+                "{id} step {at}: expected the picture to read readiness as the frame left it"
             );
         }
     }
@@ -230,7 +254,7 @@ fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
 fn every_cannon_history() {
     let (file, library) = read_file();
     for history in &file.cannon_readiness {
-        assert_ne!(history.source, "", "{}", history.id);
+        assert_ne!(history.source, "", "{}: expected a source", history.id);
         for entry in &history.entries {
             behaviour(entry);
         }
@@ -245,43 +269,74 @@ fn every_cannon_history() {
 #[test]
 fn strict_cannon_parser_rejects_unknown_fields_and_names() {
     let text = "id='test'\nsource='constructed'\nentries=[]\ninitial_delay=0\nsteps=[{kind='draw',expected_delay=0,expected_may_follow=true}]";
-    assert!(toml::from_str::<CannonHistory>(text).is_ok());
-    assert!(toml::from_str::<CannonHistory>(&format!("{text}\nunknown=1")).is_err());
+    let refused = "expected the parser to refuse it";
     assert!(
-        toml::from_str::<CannonHistory>(&text.replace("kind='draw'", "kind='draw',unknown=1"))
-            .is_err()
+        toml::from_str::<CannonHistory>(text).is_ok(),
+        "expected a well-formed history to read"
     );
     assert!(
-        toml::from_str::<CannonHistory>(&text.replace("kind='draw'", "kind='redraw'")).is_err()
+        toml::from_str::<CannonHistory>(&format!("{text}\nunknown=1")).is_err(),
+        "an unknown key: {refused}"
+    );
+    assert!(
+        toml::from_str::<CannonHistory>(&text.replace("kind='draw'", "kind='draw',unknown=1"))
+            .is_err(),
+        "an unknown step key: {refused}"
+    );
+    assert!(
+        toml::from_str::<CannonHistory>(&text.replace("kind='draw'", "kind='redraw'")).is_err(),
+        "an unknown kind: {refused}"
     );
     assert!(
         toml::from_str::<CannonHistory>(&text.replace(
             "kind='draw'",
             "kind='outside_selection',item_before='Missile',item_after='None'"
         ))
-        .is_err()
+        .is_err(),
+        "an unknown item: {refused}"
     );
-    assert!(toml::from_str::<VectorFile>(&format!("{}\nunknown=1", super::VECTORS)).is_err());
+    assert!(
+        toml::from_str::<VectorFile>(&format!("{}\nunknown=1", super::VECTORS)).is_err(),
+        "an unknown key of the file: {refused}"
+    );
 }
 
 #[test]
 fn the_delay_is_built_and_restored_only_in_its_range() {
     for frames in 0..=2 {
-        let delay = CannonDelay::new(frames).expect("every delay the spec allows");
-        assert_eq!(delay.remaining(), frames);
-        assert_eq!(delay.may_follow(), frames == 0);
+        let delay = CannonDelay::new(frames).expect("expected each delay of 0 to 2 frames");
+        assert_eq!(delay.remaining(), frames, "expected the delay built");
+        assert_eq!(
+            delay.may_follow(),
+            frames == 0,
+            "expected readiness at 0 alone"
+        );
         let appearance = AppearanceState {
-            animation: state(3, 7, 2, 1),
+            animation: animation(3, 7, 2, 1),
             kept_action: Action::WallJumping,
             cannon: delay,
             colours: UNTOUCHED_COLOURS,
         };
-        assert_eq!(kept(appearance), appearance);
+        assert_eq!(
+            kept(appearance),
+            appearance,
+            "expected it restored as saved"
+        );
     }
-    assert_eq!(CannonDelay::new(3), None);
-    assert_eq!(CannonDelay::new(u8::MAX), None);
+    assert_eq!(CannonDelay::new(3), None, "expected a delay of 3 refused");
+    assert_eq!(
+        CannonDelay::new(u8::MAX),
+        None,
+        "expected a delay of 255 refused"
+    );
     let initial = AppearanceState::INITIAL;
-    let text = toml::to_string(&initial).expect("the appearance State saves");
-    assert!(text.contains("\"Two\""), "{text}");
-    assert!(toml::from_str::<AppearanceState>(&text.replace("\"Two\"", "\"Three\"")).is_err());
+    let text = toml::to_string(&initial).expect("expected the appearance State to save");
+    assert!(
+        text.contains("\"Two\""),
+        "expected the delay of 2 saved: {text}"
+    );
+    assert!(
+        toml::from_str::<AppearanceState>(&text.replace("\"Two\"", "\"Three\"")).is_err(),
+        "expected a restored delay of 3 refused"
+    );
 }

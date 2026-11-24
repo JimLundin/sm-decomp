@@ -1,8 +1,8 @@
 //! Checked immutable animation content and the clean appearance entry.
 
 use samus_appearance::{
-    AppearanceState, CannonEvent, Clip, Content, Figure, Frame, FrameOutputs, FramePart, Inputs,
-    Paces, PaletteOpportunity, Rules,
+    AnimationContent, AppearanceState, Clip, Figure, Frame, FrameOutputs, FramePart, Inputs,
+    ItemControls, MissingClip, Paces, PaletteOpportunity, Rules,
 };
 use types::Set;
 
@@ -59,24 +59,13 @@ impl AppearanceContent {
     }
 }
 
-struct ClipProvider<'a> {
-    content: &'a AppearanceContent,
-    missing: std::cell::Cell<Option<Figure>>,
-    discarded: Clip,
-}
-
-impl Content for ClipProvider<'_> {
-    fn clip(&self, figure: &Figure) -> &Clip {
-        if let Some(clip) = self.content.get(*figure) {
-            return clip;
-        }
-        self.missing.set(Some(*figure));
-        // Finish only the private candidate so a failed lookup cannot publish a default clip.
-        &self.discarded
+impl AnimationContent for AppearanceContent {
+    fn clip(&self, figure: &Figure) -> Option<&Clip> {
+        self.get(*figure)
     }
 
     fn paces(&self) -> &Paces {
-        &self.content.paces
+        &self.paces
     }
 }
 
@@ -102,7 +91,7 @@ pub(super) fn frame_of_play(inputs: Inputs) -> Frame {
     Frame {
         inputs,
         parts,
-        cannon: CannonEvent::ControlsSkipped,
+        item_controls: ItemControls::Skipped,
         palette: PaletteOpportunity::Absent,
     }
 }
@@ -117,26 +106,8 @@ pub(super) fn play(
     rules: &Rules,
     frame: &Frame,
 ) -> Result<FrameOutputs, ClipFault> {
-    for figure in [frame.inputs.figure, frame.inputs.figure_after] {
-        if content.get(figure).is_none() {
-            return Err(ClipFault::Missing(figure));
-        }
-    }
-    let provider = ClipProvider {
-        content,
-        missing: std::cell::Cell::new(None),
-        discarded: Clip {
-            instructions: Vec::new(),
-            kick: None,
-            fast_fall: None,
-            rising: None,
-            contacts: std::collections::BTreeSet::new(),
-        },
-    };
-    let (after, outputs) = samus_appearance::update(*state, frame, &provider, rules);
-    if let Some(figure) = provider.missing.get() {
-        return Err(ClipFault::Missing(figure));
-    }
+    let (after, outputs) = samus_appearance::update(*state, frame, content, rules)
+        .map_err(|MissingClip(figure)| ClipFault::Missing(figure))?;
     *state = after;
     Ok(outputs)
 }

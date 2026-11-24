@@ -9,21 +9,22 @@ mod vectors {
 
     use core::num::Wrapping;
     use std::collections::BTreeMap;
-    use std::fmt::Debug;
 
     use enum_map::EnumMap;
     use samus_appearance::{
-        Activity, Ahead, AppearanceState, BehaviourId, Branch, CATALOGUE, CannonDelay, CannonEvent,
-        Charge, ChargeGlowPosition, Clip, ColourSequences, Content, Control, Dash, DryColourReset,
-        Figure, Frame, FrameOutputs, FramePart, Frames, Hold, Inputs, Instruction, Laps, LapsLeft,
-        Liquid, MoveEvent, Pace, Paces, PaletteOpportunity, Playhead, Rules, Slowdown,
-        SoundRequest, SoundsWaiting, State, Step, VisorDelay, VisorStep, update,
+        Activity, Ahead, Animation, AnimationContent, AppearanceState, BehaviourId, Branch,
+        CannonDelay, Charge, ChargeGlowPosition, Clip, ColourSequences, Control, Dash, Figure,
+        Frame, FrameOutputs, FramePart, Frames, Hold, Inputs, Instruction, ItemControls, Laps,
+        LapsLeft, Liquid, MissingClip, MoveEvent, Pace, Paces, PaletteOpportunity, Playhead, Rules,
+        ShownFrames, Slowdown, Sound, SoundsWaiting, Step, VisorDelay, VisorStep, catalogue,
+        update,
     };
     use serde::Deserialize;
+    use serde::de::DeserializeOwned;
     use types::{
-        Action, Aim, Body, BoostStage, Checked, ClipEnd, Facing, Fixed, Gun, Item, LandedFrom,
-        Legs, Set, Sprite, Switch, Turn, fixed, set_of,
+        Action, BoostStage, Checked, ClipEnd, Fixed, Gun, Item, Legs, Set, Sprite, Switch,
     };
+    use types::{fixed, set_of};
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-appearance.toml");
 
@@ -54,8 +55,8 @@ mod vectors {
         kept: String,
         cannon_delay: u8,
         visor_delay: u8,
-        visor_step: usize,
-        charge_glow_position: usize,
+        visor_step: u8,
+        charge_glow_position: u8,
     }
 
     #[derive(Deserialize)]
@@ -96,10 +97,10 @@ mod vectors {
     #[serde(deny_unknown_fields, default)]
     struct RulesTable {
         breathing_threshold: Option<u16>,
-        restart_hold: Option<u8>,
+        restart_frames: Option<u8>,
         fast_fall_speed: Option<String>,
-        fast_fall_hold: Option<u8>,
-        rising_hold: Option<u8>,
+        fast_fall_frames: Option<u8>,
+        rising_frames: Option<u8>,
         laps_per_stage: Option<[u8; 5]>,
     }
 
@@ -136,8 +137,8 @@ mod vectors {
         kept: String,
         cannon_delay: Option<u8>,
         visor_delay: Option<u8>,
-        visor_step: Option<usize>,
-        charge_glow_position: Option<usize>,
+        visor_step: Option<u8>,
+        charge_glow_position: Option<u8>,
     }
 
     /// The file header's defaults.
@@ -169,8 +170,8 @@ mod vectors {
         kept: Option<String>,
         cannon_delay: Option<u8>,
         visor_delay: Option<u8>,
-        visor_step: Option<usize>,
-        charge_glow_position: Option<usize>,
+        visor_step: Option<u8>,
+        charge_glow_position: Option<u8>,
         #[serde(default)]
         sounds: Vec<String>,
     }
@@ -180,8 +181,8 @@ mod vectors {
     struct NamedMemory {
         cannon_delay: Option<u8>,
         visor_delay: Option<u8>,
-        visor_step: Option<usize>,
-        charge_glow_position: Option<usize>,
+        visor_step: Option<u8>,
+        charge_glow_position: Option<u8>,
     }
 
     impl NamedMemory {
@@ -190,15 +191,18 @@ mod vectors {
             let colours = base.colours;
             AppearanceState {
                 cannon: self.cannon_delay.map_or(base.cannon, |frames| {
-                    CannonDelay::new(frames)
-                        .unwrap_or_else(|| panic!("a delay of {frames} is outside the spec"))
+                    CannonDelay::new(frames).unwrap_or_else(|| {
+                        panic!("expected a cannon delay of 0 to 2 frames, found {frames}")
+                    })
                 }),
                 colours: ColourSequences {
-                    visor_delay: self.visor_delay.map_or(colours.visor_delay, VisorDelay),
-                    visor_step: self.visor_step.map_or(colours.visor_step, VisorStep),
+                    visor_delay: self
+                        .visor_delay
+                        .map_or(colours.visor_delay, VisorDelay::new),
+                    visor_step: self.visor_step.map_or(colours.visor_step, VisorStep::new),
                     charge_glow_position: self
                         .charge_glow_position
-                        .map_or(colours.charge_glow_position, ChargeGlowPosition),
+                        .map_or(colours.charge_glow_position, ChargeGlowPosition::new),
                 },
                 ..base
             }
@@ -220,16 +224,14 @@ mod vectors {
         clip_after: Option<String>,
         energy: u16,
         items: Vec<String>,
+        dash: String,
         submerged: bool,
         run_held: bool,
         handed_over: bool,
-        dashing: bool,
-        dash_began: bool,
-        dash_lost: bool,
         standing_restarts: bool,
         wall_jump_readied: bool,
         heading_down: bool,
-        slowdown: u8,
+        step_slowdown: u8,
         start_slowdown: u8,
         vertical_speed: String,
         sounds_waiting: u8,
@@ -243,6 +245,8 @@ mod vectors {
 
     /// The file header's default energy.
     const DEFAULT_ENERGY: u16 = 99;
+    /// The file header's default dash.
+    const DEFAULT_DASH: &str = "Off";
     /// The file header's default vertical speed.
     const DEFAULT_VERTICAL_SPEED: &str = "+0000.0000";
 
@@ -256,16 +260,14 @@ mod vectors {
                 clip_after: None,
                 energy: DEFAULT_ENERGY,
                 items: Vec::new(),
+                dash: DEFAULT_DASH.to_owned(),
                 submerged: false,
                 run_held: false,
                 handed_over: false,
-                dashing: false,
-                dash_began: false,
-                dash_lost: false,
                 standing_restarts: false,
                 wall_jump_readied: false,
                 heading_down: false,
-                slowdown: 0,
+                step_slowdown: 0,
                 start_slowdown: 0,
                 vertical_speed: DEFAULT_VERTICAL_SPEED.to_owned(),
                 sounds_waiting: 0,
@@ -334,69 +336,40 @@ mod vectors {
         after: After,
     }
 
-    const BODIES: &[Body] = &[Body::Upright, Body::Crouched, Body::Ball, Body::SpringBall];
-    const ACTIONS: &[Action] = &[
-        Action::AgainstWall,
-        Action::Crouching,
-        Action::Falling,
-        Action::Jumping,
-        Action::Landing(LandedFrom::Jump),
-        Action::Landing(LandedFrom::Spin),
-        Action::Moonwalking,
-        Action::Morphing,
-        Action::Rolling,
-        Action::Running,
-        Action::Spinning,
-        Action::StandingUp,
-        Action::Still,
-        Action::TakingOff,
-        Action::Turning(Turn::Fall),
-        Action::Turning(Turn::Ground),
-        Action::Turning(Turn::Jump),
-        Action::Turning(Turn::MoonwalkJump),
-        Action::Unmorphing,
-        Action::WallJumping,
-    ];
-    const FACINGS: &[Facing] = &[Facing::Left, Facing::Right, Facing::Screen];
-    const AIMS: &[Aim] = &[
-        Aim::Forward,
-        Aim::Up,
-        Aim::UpForward,
-        Aim::DownForward,
-        Aim::Down,
-    ];
-    const SPRITES: &[Sprite] = &[Sprite::ScrewAttack, Sprite::SpaceJump, Sprite::OtherSuit];
-    const ITEMS: &[Item] = &[Item::SpeedBooster, Item::SpaceJump, Item::ScrewAttack];
-    const REQUESTS: &[SoundRequest] = &[
-        SoundRequest::Footstep,
-        SoundRequest::Boosting,
-        SoundRequest::PlainSpin,
-        SoundRequest::SpaceJump,
-        SoundRequest::ScrewAttack,
-        SoundRequest::SpinEnded,
-        SoundRequest::SamusSilence,
-    ];
+    /// The member the file names `name`, by its Rust name, read as the type's own serde form
+    /// reads it; any other name fails the test.
+    fn named<T: DeserializeOwned>(name: &str) -> T {
+        toml::Value::String(name.to_owned())
+            .try_into()
+            .unwrap_or_else(|_| panic!("expected the name of a member, found {name:?}"))
+    }
 
-    /// The member of `all` the file names `name`, by its Rust name; any other name fails the test.
-    fn named<T: Debug + Copy>(all: &[T], name: &str) -> T {
-        *all.iter()
-            .find(|member| format!("{member:?}") == name)
-            .unwrap_or_else(|| panic!("unknown name {name:?}"))
+    /// An action as the file writes it: a name, or a name with the turn or the landing it holds
+    /// in brackets, "Turning(Ground)".
+    fn action(name: &str) -> Action {
+        let Some((variant, held)) = name.strip_suffix(')').and_then(|rest| rest.split_once('('))
+        else {
+            return named(name);
+        };
+        let held = toml::Value::String(held.to_owned());
+        toml::Value::Table(std::iter::once((variant.to_owned(), held)).collect())
+            .try_into()
+            .unwrap_or_else(|_| panic!("expected an action, found {name:?}"))
     }
 
     /// A pose with its sprite: "BODY ACTION FACING AIM", then "Drawn", "Striding" and a sprite,
     /// each if given.
     fn figure(text: &str) -> Figure {
         let words: Vec<&str> = text.split_whitespace().collect();
-        let [body, action, facing, aim, rest @ ..] = words.as_slice() else {
-            panic!("unwritten pose {text:?}");
+        let [body, action_name, facing, aim, rest @ ..] = words.as_slice() else {
+            panic!("expected a pose \"BODY ACTION FACING AIM\", found {text:?}");
         };
         let mut figure = Figure {
             pose: types::Pose {
-                body: named(BODIES, body),
-                action: named(ACTIONS, action),
-                facing: named(FACINGS, facing),
-                aim: named(AIMS, aim),
+                body: named(body),
+                action: action(action_name),
+                facing: named(facing),
+                aim: named(aim),
                 gun: Gun::Stowed,
                 legs: Legs::Together,
             },
@@ -406,7 +379,7 @@ mod vectors {
             match *word {
                 "Drawn" => figure.pose.gun = Gun::Drawn,
                 "Striding" => figure.pose.legs = Legs::Striding,
-                sprite => figure.sprite = named(SPRITES, sprite),
+                sprite => figure.sprite = named(sprite),
             }
         }
         figure
@@ -416,7 +389,7 @@ mod vectors {
     fn step_number(text: &str) -> Step {
         Step(
             text.parse()
-                .unwrap_or_else(|_| panic!("unwritten step {text:?}")),
+                .unwrap_or_else(|_| panic!("expected a step number, found {text:?}")),
         )
     }
 
@@ -440,22 +413,29 @@ mod vectors {
             [frames] => Instruction::Show(hold(
                 frames
                     .parse()
-                    .unwrap_or_else(|_| panic!("unwritten cell {cell:?}")),
+                    .unwrap_or_else(|_| panic!("expected a step's cell, found {cell:?}")),
             )),
-            _ => panic!("unwritten cell {cell:?}"),
+            _ => panic!("expected a step's cell, found {cell:?}"),
         }
     }
 
-    /// A hold the content gives, a clip's or a pace's: 1 frame or more, and at most the spec's
-    /// bound, `Hold::LONGEST`; any other fails the test.
+    /// A hold the content gives, a clip's or a pace's: 1 frame or more, and at most
+    /// `Hold::LONGEST`; any other fails the test.
     fn hold(frames: u8) -> Hold {
-        Hold::new(frames).unwrap_or_else(|| panic!("a hold of {frames} frames is outside the spec"))
+        Hold::new(frames)
+            .unwrap_or_else(|| panic!("expected a hold of 1 to 127 frames, found {frames}"))
+    }
+
+    /// A tuner's frames shown: 1 to 126; any other fails the test.
+    fn shown(frames: u8) -> ShownFrames {
+        ShownFrames::new(frames)
+            .unwrap_or_else(|| panic!("expected 1 to 126 frames shown, found {frames}"))
     }
 
     /// A slowdown the file gives: 0 to 3 frames; any other fails the test.
     fn slowdown(frames: u8) -> Slowdown {
         Slowdown::new(frames)
-            .unwrap_or_else(|| panic!("a slowdown of {frames} frames is outside the spec"))
+            .unwrap_or_else(|| panic!("expected a slowdown of 0 to 3 frames, found {frames}"))
     }
 
     /// The digits of each part of a vertical speed.
@@ -467,25 +447,29 @@ mod vectors {
     /// any other text fails the test.
     fn speed_size(text: &str) -> Fixed {
         let part = |digits: &str| {
-            assert_eq!(digits.len(), PART_DIGITS, "unwritten speed {text:?}");
-            u16::from_str_radix(digits, HEX).unwrap_or_else(|_| panic!("unwritten speed {text:?}"))
+            assert_eq!(
+                digits.len(),
+                PART_DIGITS,
+                "expected a speed \"PPPP.SSSS\", found {text:?}"
+            );
+            u16::from_str_radix(digits, HEX)
+                .unwrap_or_else(|_| panic!("expected a speed \"PPPP.SSSS\", found {text:?}"))
         };
         let (pixel, sub) = text
             .split_once('.')
-            .unwrap_or_else(|| panic!("unwritten speed {text:?}"));
+            .unwrap_or_else(|| panic!("expected a speed \"PPPP.SSSS\", found {text:?}"));
         fixed(Wrapping(part(pixel)), part(sub))
     }
 
     /// The header's vertical speed, "+PPPP.SSSS" or "-PPPP.SSSS": a sign, then its size, downward
     /// positive; any other text fails the test.
     fn vertical_speed(text: &str) -> Fixed {
-        let (sign, size) = text
-            .split_at_checked(1)
-            .unwrap_or_else(|| panic!("unwritten vertical speed {text:?}"));
+        let expected = format!("expected a vertical speed \"+PPPP.SSSS\", found {text:?}");
+        let (sign, size) = text.split_at_checked(1).expect(&expected);
         match sign {
             "+" => speed_size(size),
             "-" => -speed_size(size),
-            _ => panic!("unwritten vertical speed {text:?}"),
+            _ => panic!("{expected}"),
         }
     }
 
@@ -496,16 +480,18 @@ mod vectors {
             breathing_threshold: given
                 .breathing_threshold
                 .unwrap_or(game.breathing_threshold),
-            restart_hold: given.restart_hold.map_or(game.restart_hold, hold),
+            restart_frames: given.restart_frames.map_or(game.restart_frames, shown),
             fast_fall_speed: given
                 .fast_fall_speed
                 .as_deref()
                 .map_or(game.fast_fall_speed, speed_size),
-            fast_fall_hold: given.fast_fall_hold.map_or(game.fast_fall_hold, hold),
-            rising_hold: given.rising_hold.map_or(game.rising_hold, hold),
+            fast_fall_frames: given.fast_fall_frames.map_or(game.fast_fall_frames, shown),
+            rising_frames: given.rising_frames.map_or(game.rising_frames, shown),
             laps_per_stage: given.laps_per_stage.map_or(game.laps_per_stage, |laps| {
                 EnumMap::from_array(laps.map(|count| {
-                    Laps::new(count).unwrap_or_else(|| panic!("a stage of {count} laps"))
+                    Laps::new(count).unwrap_or_else(|| {
+                        panic!("expected a stage of 1 lap or more, found {count}")
+                    })
                 }))
             }),
         }
@@ -527,8 +513,8 @@ mod vectors {
 
     /// The four animation quantities, as the file numbers them; 0 laps left is her run without
     /// the speed booster.
-    fn state(step: u8, left: u8, stage: u8, laps: u8) -> State {
-        State {
+    fn animation(step: u8, left: u8, stage: u8, laps: u8) -> Animation {
+        Animation {
             playhead: Playhead {
                 step: Step(step),
                 time_left: Frames(left),
@@ -541,15 +527,15 @@ mod vectors {
     /// The cannon delay the animation and sound frames start from: no frame of theirs runs her
     /// item controls, so each leaves it as it was.
     fn untouched_cannon() -> CannonDelay {
-        CannonDelay::new(1).expect("a delay of 1 is in range")
+        CannonDelay::new(1).expect("expected a delay of 1 to be in range")
     }
 
     /// The colour sequences the animation and sound frames start from: none of them has a
     /// palette opportunity, so each leaves them as they were.
     const UNTOUCHED_COLOURS: ColourSequences = ColourSequences {
-        visor_delay: VisorDelay(19),
-        visor_step: VisorStep(2),
-        charge_glow_position: ChargeGlowPosition(4),
+        visor_delay: VisorDelay::new(19),
+        visor_step: VisorStep::new(2),
+        charge_glow_position: ChargeGlowPosition::new(4),
     };
 
     /// The State an animation vector or a sound opportunity starts from besides what it names:
@@ -573,8 +559,8 @@ mod vectors {
             charge_glow_position: given.charge_glow_position,
         };
         memory.over(AppearanceState {
-            animation: state(given.step, given.left, given.stage, given.laps),
-            kept_action: named(ACTIONS, &given.kept),
+            animation: animation(given.step, given.left, given.stage, given.laps),
+            kept_action: action(&given.kept),
             ..unnamed
         })
     }
@@ -589,11 +575,8 @@ mod vectors {
             charge_glow_position: given.charge_glow_position,
         };
         memory.over(AppearanceState {
-            animation: state(given.step, given.left, given.stage, given.laps),
-            kept_action: given
-                .kept
-                .as_deref()
-                .map_or(before.kept_action, |kept| named(ACTIONS, kept)),
+            animation: animation(given.step, given.left, given.stage, given.laps),
+            kept_action: given.kept.as_deref().map_or(before.kept_action, action),
             ..before
         })
     }
@@ -605,7 +588,7 @@ mod vectors {
         Frame {
             inputs: inputs(given),
             parts,
-            cannon: CannonEvent::ControlsSkipped,
+            item_controls: ItemControls::Skipped,
             palette: PaletteOpportunity::Absent,
         }
     }
@@ -613,13 +596,13 @@ mod vectors {
     /// Her appearance State as a caller keeps it between frames: saved whole with serde and
     /// restored fresh from the saved text alone, the same.
     fn kept(state: AppearanceState) -> AppearanceState {
-        let text = toml::to_string(&state).expect("the appearance State saves");
+        let text = toml::to_string(&state).expect("expected the appearance State to save");
         let restored: AppearanceState =
-            toml::from_str(&text).expect("the appearance State restores");
+            toml::from_str(&text).expect("expected the saved appearance State to restore");
         assert_eq!(
-            toml::to_string(&restored).expect("the restored State saves"),
+            toml::to_string(&restored).expect("expected the restored State to save"),
             text,
-            "restored as saved"
+            "expected the State restored as saved"
         );
         restored
     }
@@ -628,25 +611,26 @@ mod vectors {
     fn play(
         state: AppearanceState,
         frame: &Frame,
-        content: &impl Content,
+        content: &impl AnimationContent,
         rules: &Rules,
     ) -> (AppearanceState, FrameOutputs) {
-        let (after, outputs) = update(kept(state), frame, content, rules);
+        let (after, outputs) = update(kept(state), frame, content, rules)
+            .unwrap_or_else(|MissingClip(figure)| panic!("expected a clip for {figure:?}"));
         (kept(after), outputs)
     }
 
-    /// A frame's content: the clip of each figure the frame reads, and the run's paces.
+    /// A frame's content: the clip of each figure the file names one for, and the run's paces.
     struct VectorContent<'a> {
         clips: Vec<(Figure, &'a Clip)>,
         paces: &'a Paces,
     }
 
-    impl Content for VectorContent<'_> {
-        fn clip(&self, figure: &Figure) -> &Clip {
+    impl AnimationContent for VectorContent<'_> {
+        fn clip(&self, figure: &Figure) -> Option<&Clip> {
             self.clips
                 .iter()
                 .find(|(given, _)| given == figure)
-                .map_or_else(|| panic!("no clip for {figure:?}"), |&(_, clip)| clip)
+                .map(|&(_, clip)| clip)
         }
 
         fn paces(&self) -> &Paces {
@@ -664,12 +648,12 @@ mod vectors {
         fn clip(&self, name: &str) -> &Clip {
             self.clips
                 .get(name)
-                .unwrap_or_else(|| panic!("no clip {name}"))
+                .unwrap_or_else(|| panic!("expected a clip named {name}"))
         }
     }
 
     fn read_file() -> (VectorFile, Library) {
-        let file: VectorFile = toml::from_str(VECTORS).expect("the vector file reads");
+        let file: VectorFile = toml::from_str(VECTORS).expect("expected the vector file to read");
         let clips = file
             .clips
             .iter()
@@ -682,18 +666,13 @@ mod vectors {
         (file, Library { clips, paces })
     }
 
+    /// The behaviour the file names `name`, among the catalogue's own ids.
     fn behaviour(name: &str) -> BehaviourId {
-        named(&CATALOGUE.map(|behaviour| behaviour.id), name)
-    }
-
-    /// Whether she dashes as the clip moves on: a dash that began is dashing, whatever `dashing`
-    /// says.
-    const fn dash(given: &VectorInputs) -> Dash {
-        match (given.dash_began, given.dashing) {
-            (true, _) => Dash::Began,
-            (false, true) => Dash::On,
-            (false, false) => Dash::Off,
-        }
+        catalogue()
+            .into_values()
+            .map(|behaviour| behaviour.id)
+            .find(|id| format!("{id:?}") == name)
+            .unwrap_or_else(|| panic!("expected a behaviour of the catalogue, found {name:?}"))
     }
 
     fn inputs(given: &VectorInputs) -> Inputs {
@@ -702,10 +681,9 @@ mod vectors {
         moves[MoveEvent::StandingRestart] = given.standing_restarts;
         moves[MoveEvent::WallJumpReadied] = given.wall_jump_readied;
         moves[MoveEvent::HandedOver] = given.handed_over;
-        moves[MoveEvent::DashLost] = given.dash_lost;
         let mut items = Set::<Item>::default();
         for item in &given.items {
-            items[named(ITEMS, item)] = true;
+            items[named::<Item>(item)] = true;
         }
         let mut activities = Set::<Activity>::default();
         activities[Activity::Cinematic] = given.cinematic;
@@ -715,37 +693,36 @@ mod vectors {
             figure: start,
             figure_after: given.pose_after.as_deref().map_or(start, figure),
             moves,
-            dash: dash(given),
+            dash: named::<Dash>(&given.dash),
             run_held: given.run_held,
             heading_down: given.heading_down,
             vertical_speed: vertical_speed(&given.vertical_speed),
             energy: given.energy,
             items,
             liquid: Liquid {
-                slowdown: slowdown(given.slowdown),
+                step_slowdown: slowdown(given.step_slowdown),
                 start_slowdown: slowdown(given.start_slowdown),
                 submerged: given.submerged,
             },
             sounds_waiting: SoundsWaiting::new(given.sounds_waiting).unwrap_or_else(|| {
                 panic!(
-                    "{} sounds waiting is outside the spec",
+                    "expected 0 to 15 sounds waiting, found {}",
                     given.sounds_waiting
                 )
             }),
             activities,
             shoot_held: given.shoot_held,
-            charge: Charge::new(given.charge)
-                .unwrap_or_else(|| panic!("a charge of {} is outside the spec", given.charge)),
+            charge: Charge::new(given.charge).unwrap_or_else(|| {
+                panic!(
+                    "expected a charge of 0 to 32767 frames, found {}",
+                    given.charge
+                )
+            }),
         }
     }
 
-    /// The clip a case's moving frame plays where the case names none: the file's `long`, an
-    /// invented clip of shown steps that no rule a case checks reads, as the recorded vectors
-    /// use it.
-    const UNREAD_CLIP: &str = "long";
-
-    /// The content of a moving frame: the clip of the figure she starts the frame in and of the
-    /// one she takes, as `given` names them.
+    /// The content of a frame: the clip `given` names for the figure she starts the frame in,
+    /// and for the one she takes (by default the same clip), each where `given` names one.
     fn moving_content<'a>(
         id: &str,
         given: &VectorInputs,
@@ -754,15 +731,18 @@ mod vectors {
         let inputs = inputs(given);
         assert!(
             inputs.figure != inputs.figure_after || given.clip_after.is_none(),
-            "{id}: another clip for the same pose"
+            "{id}: expected one clip for one figure"
         );
-        let clip = given.clip.as_deref().unwrap_or(UNREAD_CLIP);
-        let clip_after = given.clip_after.as_deref().unwrap_or(clip);
+        let clip_after = given.clip_after.as_deref().or(given.clip.as_deref());
+        let clips = [
+            (inputs.figure, given.clip.as_deref()),
+            (inputs.figure_after, clip_after),
+        ]
+        .into_iter()
+        .filter_map(|(figure, name)| Some((figure, library.clip(name?))))
+        .collect();
         VectorContent {
-            clips: vec![
-                (inputs.figure, library.clip(clip)),
-                (inputs.figure_after, library.clip(clip_after)),
-            ],
+            clips,
             paces: &library.paces,
         }
     }
@@ -770,13 +750,31 @@ mod vectors {
     fn end(name: &str) -> Option<ClipEnd> {
         match name {
             "None" => None,
-            other => Some(named(&[ClipEnd::End, ClipEnd::EndUnlessJump], other)),
+            other => Some(named(other)),
         }
     }
 
     /// The sounds the file names, in its order.
-    fn sounds(names: &[String]) -> Vec<SoundRequest> {
-        names.iter().map(|name| named(REQUESTS, name)).collect()
+    fn sounds(names: &[String]) -> Vec<Sound> {
+        names.iter().map(|name| named(name)).collect()
+    }
+
+    /// The sounds of a frame's requests, in its order, each request carrying the queue and
+    /// allowance of its sound.
+    fn asked(outputs: &FrameOutputs) -> Vec<Sound> {
+        outputs
+            .sounds
+            .iter()
+            .map(|offer| {
+                assert_eq!(
+                    *offer,
+                    offer.sound.offer(),
+                    "expected the queue and allowance of {:?}",
+                    offer.sound
+                );
+                offer.sound
+            })
+            .collect()
     }
 
     /// Runs one animation vector as a frame with her movement alone; its mismatches, if any.
@@ -784,7 +782,7 @@ mod vectors {
         let given = &vector.inputs;
         assert!(
             !given.prepared,
-            "{}: a vector has her moves alone",
+            "{}: expected a vector to have her moves alone",
             vector.id
         );
         let content = moving_content(&vector.id, given, library);
@@ -795,9 +793,9 @@ mod vectors {
             turned_far: vector.ahead.turned_far,
         };
         assert_eq!(
-            Ahead::of(&kept(before), content.clip(&frame.inputs.figure)),
-            ahead,
-            "{}: the read-ahead samus-movement asks before its step",
+            Ahead::of(&kept(before), frame.inputs.figure, &content),
+            Ok(ahead),
+            "{}: expected the read-ahead samus-movement asks before its step",
             vector.id
         );
         let (after, outputs) = play(before, &frame, &content, &rules(&vector.rules));
@@ -805,12 +803,12 @@ mod vectors {
             after_state(&vector.after, before),
             sounds(&vector.after.sounds),
             None,
-            DryColourReset::NoOpportunity,
+            None,
             before.cannon.may_follow(),
         );
         let actual = (
             after,
-            outputs.sounds,
+            asked(&outputs),
             outputs.contact,
             outputs.dry_colours,
             outputs.cannon_may_follow,
@@ -842,7 +840,7 @@ mod vectors {
             .collect();
         assert!(
             failures.is_empty(),
-            "{} of {} vectors fail:\n{}",
+            "expected every vector to pass; {} of {} fail:\n{}",
             failures.len(),
             file.vector.len(),
             failures.join("\n")
@@ -854,13 +852,7 @@ mod vectors {
     #[test]
     fn every_adjusted_vector_exercises_parameters() {
         let (file, _) = read_file();
-        let switch_of = |entry: &str| {
-            let id = behaviour(entry);
-            CATALOGUE
-                .iter()
-                .find(|behaviour| behaviour.id == id)
-                .map(|behaviour| behaviour.switch)
-        };
+        let catalogue = catalogue();
         let fixed: Vec<String> = file
             .vector
             .iter()
@@ -869,11 +861,51 @@ mod vectors {
                 vector
                     .entries
                     .iter()
-                    .filter(|entry| switch_of(entry) != Some(Switch::Parameter))
+                    .filter(|entry| catalogue[behaviour(entry)].switch != Switch::Parameter)
                     .map(|entry| format!("{}: {entry}", vector.id))
             })
             .collect();
-        assert!(fixed.is_empty(), "adjusted, but not parameters: {fixed:?}");
+        assert!(
+            fixed.is_empty(),
+            "expected adjusted vectors to exercise parameters alone, found {fixed:?}"
+        );
+    }
+
+    /// A frame with her movement whose content lacks the clip of a figure she starts or ends it
+    /// in, and the read-ahead of a figure with no clip, give that figure back as missing.
+    #[test]
+    fn a_figure_with_no_clip_is_given_back() {
+        let (_, library) = read_file();
+        let given = VectorInputs {
+            pose: "Upright Still Right Forward".to_owned(),
+            pose_after: Some("Upright TakingOff Right Forward".to_owned()),
+            ..VectorInputs::default()
+        };
+        let frame = frame(&given, set_of([FramePart::Movement]));
+        let none = VectorContent {
+            clips: Vec::new(),
+            paces: &library.paces,
+        };
+        let state = AppearanceState::INITIAL;
+        assert_eq!(
+            update(state, &frame, &none, &Rules::VANILLA),
+            Err(MissingClip(frame.inputs.figure)),
+            "expected the starting figure missing"
+        );
+        assert_eq!(
+            Ahead::of(&state, frame.inputs.figure, &none),
+            Err(MissingClip(frame.inputs.figure)),
+            "expected the read-ahead's figure missing"
+        );
+        let only_start = VectorContent {
+            clips: vec![(frame.inputs.figure, library.clip("stand"))],
+            paces: &library.paces,
+        };
+        assert_eq!(
+            update(state, &frame, &only_start, &Rules::VANILLA),
+            Err(MissingClip(frame.inputs.figure_after)),
+            "expected the figure she takes missing"
+        );
     }
 
     /// The part of the frame a sound rule's case plays: her movement for her stride and the pose
@@ -888,18 +920,22 @@ mod vectors {
 
     /// Her stride's graphical contact is the figure she runs in as the frame starts and her
     /// playhead then, before her clip plays.
-    fn check_contact(outputs: &FrameOutputs, frame: &Frame, at_start: State, id: &str) {
+    fn check_contact(outputs: &FrameOutputs, frame: &Frame, at_start: Animation, id: &str) {
         let Some(contact) = outputs.contact else {
             return;
         };
-        assert_eq!(contact.figure.pose.action, Action::Running, "{id}: contact");
+        assert_eq!(
+            contact.figure.pose.action,
+            Action::Running,
+            "{id}: expected the contact of a run"
+        );
         assert_eq!(
             contact.figure, frame.inputs.figure,
-            "{id}: the contact's figure is hers as the frame starts"
+            "{id}: expected the contact's figure to be hers as the frame starts"
         );
         assert_eq!(
             contact.playhead, at_start.playhead,
-            "{id}: contact playhead"
+            "{id}: expected the contact's playhead to be hers as the frame starts"
         );
     }
 
@@ -919,14 +955,18 @@ mod vectors {
         assert_eq!(
             after,
             after_state(&vector.after, before),
-            "{id} ({}): her whole State, as the frame leaves it",
+            "{id} ({}): expected her whole State as `after` gives it",
             vector.source
         );
-        assert_eq!(outputs.contact.is_some(), vector.expected.contact, "{id}");
         assert_eq!(
-            outputs.sounds,
+            outputs.contact.is_some(),
+            vector.expected.contact,
+            "{id}: expected the graphical contact as `expected` gives it"
+        );
+        assert_eq!(
+            asked(&outputs),
             sounds(&vector.expected.sounds),
-            "{id}: ordered sounds"
+            "{id}: expected the sounds as `expected` gives them, in order"
         );
         check_contact(&outputs, &frame, before.animation, id);
     }
@@ -944,7 +984,7 @@ mod vectors {
             }
             assert!(
                 vector.after.sounds.is_empty(),
-                "{}: sounds are expected",
+                "{}: expected the sounds under `expected`",
                 vector.id
             );
             run_opportunity(vector, &library);
@@ -955,39 +995,25 @@ mod vectors {
         );
     }
 
-    /// The model's part for a part the file names; her initialization is none of these, but the
-    /// frame's cannon part, in place of her item controls.
-    const fn frame_part(name: PartName) -> Option<FramePart> {
+    /// The model's part for a part the file names.
+    const fn frame_part(name: PartName) -> FramePart {
         match name {
-            PartName::Initialization => None,
-            PartName::Movement => Some(FramePart::Movement),
-            PartName::Preparation => Some(FramePart::Preparation),
-            PartName::Drawing => Some(FramePart::Drawing),
+            PartName::Initialization => FramePart::Initialization,
+            PartName::Movement => FramePart::Movement,
+            PartName::Preparation => FramePart::Preparation,
+            PartName::Drawing => FramePart::Drawing,
         }
     }
 
     /// The frame of a combined case: its one set of inputs and the parts it names, each once.
     fn work_frame(work: &AppearanceWork) -> Frame {
-        let id = &work.id;
         let mut parts = Set::<FramePart>::default();
-        let mut cannon = CannonEvent::ControlsSkipped;
         for &name in &work.parts {
-            if let Some(part) = frame_part(name) {
-                assert!(!parts[part], "{id}: a second {part:?}");
-                parts[part] = true;
-            } else {
-                assert_eq!(
-                    cannon,
-                    CannonEvent::ControlsSkipped,
-                    "{id}: initialized twice"
-                );
-                cannon = CannonEvent::SamusInitialized;
-            }
+            let part = frame_part(name);
+            assert!(!parts[part], "{}: expected {part:?} once", work.id);
+            parts[part] = true;
         }
-        Frame {
-            cannon,
-            ..frame(&work.inputs, parts)
-        }
+        frame(&work.inputs, parts)
     }
 
     /// Plays one combined frame in the one update. Its `before` holds initialization's cannon
@@ -998,19 +1024,26 @@ mod vectors {
         let content = moving_content(id, &work.inputs, library);
         let before = before_state(&work.before, AppearanceState::INITIAL);
         let (after, outputs) = play(before, &frame, &content, &Rules::VANILLA);
-        assert!(work.after.sounds.is_empty(), "{id}: sounds are top-level");
+        assert!(
+            work.after.sounds.is_empty(),
+            "{id}: expected the sounds at the case's top level"
+        );
         assert_eq!(
             after,
             after_state(&work.after, before),
-            "{id} ({}): her State, with one animation update at most",
+            "{id} ({}): expected her State as `after` gives it, from one animation update at most",
             work.source
         );
         assert_eq!(
-            outputs.sounds,
+            asked(&outputs),
             sounds(&work.sounds),
-            "{id}: every request, in order"
+            "{id}: expected every request `sounds` gives, in order"
         );
-        assert_eq!(outputs.contact.is_some(), work.contact, "{id}: contact");
+        assert_eq!(
+            outputs.contact.is_some(),
+            work.contact,
+            "{id}: expected the graphical contact `contact` gives"
+        );
         check_contact(&outputs, &frame, before.animation, id);
     }
 
@@ -1021,17 +1054,26 @@ mod vectors {
         let (file, _) = read_file();
         let given = &file.initialization;
         let expected = AppearanceState {
-            animation: state(given.step, given.left, given.stage, given.laps),
-            kept_action: named(ACTIONS, &given.kept),
-            cannon: CannonDelay::new(given.cannon_delay).expect("a delay the spec allows"),
+            animation: animation(given.step, given.left, given.stage, given.laps),
+            kept_action: action(&given.kept),
+            cannon: CannonDelay::new(given.cannon_delay)
+                .expect("expected a cannon delay of 0 to 2 frames"),
             colours: ColourSequences {
-                visor_delay: VisorDelay(given.visor_delay),
-                visor_step: VisorStep(given.visor_step),
-                charge_glow_position: ChargeGlowPosition(given.charge_glow_position),
+                visor_delay: VisorDelay::new(given.visor_delay),
+                visor_step: VisorStep::new(given.visor_step),
+                charge_glow_position: ChargeGlowPosition::new(given.charge_glow_position),
             },
         };
-        assert_eq!(AppearanceState::INITIAL, expected);
-        assert_eq!(kept(AppearanceState::INITIAL), expected);
+        assert_eq!(
+            AppearanceState::INITIAL,
+            expected,
+            "expected the file's [initialization]"
+        );
+        assert_eq!(
+            kept(AppearanceState::INITIAL),
+            expected,
+            "expected the State at initialization to restore as saved"
+        );
     }
 
     #[test]
@@ -1067,12 +1109,15 @@ mod vectors {
             .map(|entry| behaviour(entry))
             .chain(file.ordinary_dry_colours.entries().map(behaviour))
             .collect();
-        let missing: Vec<BehaviourId> = CATALOGUE
-            .iter()
+        let missing: Vec<BehaviourId> = catalogue()
+            .into_values()
             .filter(|behaviour| behaviour.checked == Checked::ByVectors)
             .map(|behaviour| behaviour.id)
             .filter(|id| !exercised.contains(id))
             .collect();
-        assert!(missing.is_empty(), "no vector exercises {missing:?}");
+        assert!(
+            missing.is_empty(),
+            "expected a vector for every behaviour checked by vectors; none exercises {missing:?}"
+        );
     }
 }

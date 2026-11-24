@@ -1,9 +1,9 @@
 //! The catalogue: one behaviour per entry of the spec.
 
-use enum_map::Enum;
-use types::{Checked, Kind, Switch};
+use enum_map::{Enum, EnumMap};
+use types::{Checked, Kind, Switch, by_member};
 
-/// One per entry of the spec, by the entry's name.
+/// One per entry of the spec, by the entry's name. Its order means nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
 pub enum BehaviourId {
     /// The time runs down, and the clip moves on.
@@ -34,6 +34,8 @@ pub enum BehaviourId {
     RunPace,
     /// The speed booster's stages, lap by lap, up to boosting.
     BoostStages,
+    /// A boosted lap that only counts goes on at the clip's own hold.
+    CountedLapHold,
     /// The lap on which she starts boosting starts on a stage the sounds waiting name.
     BoostingLap,
     /// Running contact graphics and optional footstep sound.
@@ -67,8 +69,14 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// Every behaviour of the spec, in its order.
-pub const CATALOGUE: [Behaviour; 22] = [
+/// The catalogue: every behaviour of the spec, by its id.
+#[must_use]
+pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
+    by_member(ROWS, |behaviour| behaviour.id)
+}
+
+/// The catalogue's rows, each naming its behaviour, in any order.
+const ROWS: [Behaviour; 23] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -112,7 +120,7 @@ pub const CATALOGUE: [Behaviour; 22] = [
     Behaviour {
         id: BehaviourId::HandOverSlowdown,
         summary: "in a liquid, the first step of a pose a clip's end handed over is slowed by \
-                  the start's slowdown and by the clip's slowdown both",
+                  the start slowdown and by the step slowdown both",
         kind: Kind::Quirk,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -178,6 +186,14 @@ pub const CATALOGUE: [Behaviour; 22] = [
                   stage; four stages on she is boosting, and laps go on at the boosting pace",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountedLapHold,
+        summary: "a boosted lap that only counts down her laps goes on at the clip's own hold, \
+                  not the pace's, until the next shown step",
+        kind: Kind::Quirk,
+        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {

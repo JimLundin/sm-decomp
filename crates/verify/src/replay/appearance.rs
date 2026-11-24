@@ -8,9 +8,9 @@ use data::rom::Rom;
 use game::production::{AppearanceContent, FigureClip};
 use game::samus_appearance_bridge::{Clips, Imported};
 use samus_appearance::{
-    Activity, AppearanceState, CannonDelay, CannonEvent, Charge, ChargeGlowPosition,
-    ColourSequences, Content as _, Dash, Frame, FramePart, Frames, Inputs, Laps, LapsLeft, Liquid,
-    MoveEvent, PaletteOpportunity, Playhead, State, VisorDelay, VisorStep,
+    Activity, Animation, AnimationContent as _, AppearanceState, CannonDelay, Charge,
+    ChargeGlowPosition, ColourSequences, Dash, Frame, FramePart, Frames, Inputs, ItemControls,
+    Laps, LapsLeft, Liquid, MoveEvent, PaletteOpportunity, Playhead, VisorDelay, VisorStep,
 };
 use types::{Action, BoostStage, Item, Set};
 
@@ -122,7 +122,7 @@ pub fn validate_step(prior: &[u8], current: &[u8]) -> Result<(), Outcome> {
 }
 
 /// Her animation's four quantities on `imported`'s clip.
-fn animation(wram: &[u8], imported: &Imported) -> Result<State, Outcome> {
+fn animation(wram: &[u8], imported: &Imported) -> Result<Animation, Outcome> {
     let step = imported
         .step_of(AnimationFrame(word(wram, 0x0a96)?))
         .ok_or_else(|| data_failure(None, "observed playhead"))?;
@@ -133,7 +133,7 @@ fn animation(wram: &[u8], imported: &Imported) -> Result<State, Outcome> {
         .get(usize::from(stage))
         .copied()
         .ok_or_else(|| data_failure(None, "observed boost"))?;
-    Ok(State {
+    Ok(Animation {
         playhead: Playhead {
             step,
             time_left: Frames(timer),
@@ -196,12 +196,14 @@ fn remembered(wram: &[u8]) -> Result<(CannonDelay, ColourSequences), Outcome> {
     if visor_entry % 2 != 0 || glow % 2 != 0 {
         return Err(data_failure(None, "observed colour sequences"));
     }
+    let glow_picture =
+        u8::try_from(glow / 2).map_err(|_| data_failure(None, "observed charge-glow picture"))?;
     Ok((
         cannon,
         ColourSequences {
-            visor_delay: VisorDelay(visor_delay),
-            visor_step: VisorStep(usize::from(visor_entry / 2)),
-            charge_glow_position: ChargeGlowPosition(usize::from(glow / 2)),
+            visor_delay: VisorDelay::new(visor_delay),
+            visor_step: VisorStep::new(visor_entry / 2),
+            charge_glow_position: ChargeGlowPosition::new(glow_picture),
         },
     ))
 }
@@ -235,7 +237,7 @@ pub(super) fn running_owner(
 pub(super) fn running_animation(
     wram: &[u8],
     content: &Content,
-) -> Result<(State, samus_appearance::Figure), Outcome> {
+) -> Result<(Animation, samus_appearance::Figure), Outcome> {
     let imported = drawn(wram, content)?;
     running(imported.figure)?;
     Ok((animation(wram, imported)?, imported.figure))
@@ -277,7 +279,7 @@ pub(super) fn owner(
 pub(super) fn animation_owner(
     wram: &[u8],
     content: &Content,
-) -> Result<(State, samus_appearance::Figure), Outcome> {
+) -> Result<(Animation, samus_appearance::Figure), Outcome> {
     let imported = drawn(wram, content)?;
     Ok((animation(wram, imported)?, imported.figure))
 }
@@ -292,7 +294,7 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
     let mut moves = Set::default();
     moves[MoveEvent::StandingRestart] = matches!(word(prior, 0x0a1c)?, 1 | 2) && shoot_held;
     // WallJumpReadied has no kick on this clip. HandedOver is read only when
-    // figures differ, and DashLost cannot occur in the admitted dash-off interval.
+    // figures differ, and the admitted interval has no dash (`0B3C` is 0), so none is lost.
     let mut items = Set::default();
     let equipped = word(prior, 0x09a2)?;
     for (mask, item) in [
@@ -324,7 +326,8 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
         vertical_speed: types::ZERO,
         energy: word(prior, 0x09c2)?,
         items,
-        // Slowdown is observed zero at both cuts; start/submergence are unread.
+        // The step slowdown is observed zero at both cuts; the start slowdown and
+        // submerged are unread.
         liquid: Liquid::NONE,
         sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
             .ok_or_else(|| data_failure(None, "appearance sound queue count"))?,
@@ -343,7 +346,7 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
     Ok(Frame {
         inputs,
         parts,
-        cannon: CannonEvent::ControlsSkipped,
+        item_controls: ItemControls::Skipped,
         palette: PaletteOpportunity::Absent,
     })
 }
@@ -376,7 +379,7 @@ pub fn actual(state: &AppearanceState, content: &Content) -> Vec<Observation> {
     initial(state.animation, content)
 }
 
-pub fn initial(state: State, _content: &Content) -> Vec<Observation> {
+pub fn initial(state: Animation, _content: &Content) -> Vec<Observation> {
     let boost = match state.stage {
         BoostStage::Stage0 => 0,
         BoostStage::Stage1 => 1,

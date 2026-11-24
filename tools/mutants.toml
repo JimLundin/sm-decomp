@@ -70,9 +70,10 @@ field = "hud.grid"
 name = "appearance-double-update"
 responsibility = "appearance"
 file = "crates/game/src/production/animation.rs"
-before = '''let (after, outputs) = samus_appearance::update(*state, frame, &provider, rules);'''
-after = '''let (first, _) = samus_appearance::update(*state, frame, &provider, rules);
-    let (after, outputs) = samus_appearance::update(first, frame, &provider, rules);'''
+before = '''let (after, outputs) = samus_appearance::update(*state, frame, content, rules)'''
+after = '''let (first, _) = samus_appearance::update(*state, frame, content, rules)
+        .map_err(|MissingClip(figure)| ClipFault::Missing(figure))?;
+    let (after, outputs) = samus_appearance::update(first, frame, content, rules)'''
 case = "appearance/standing-clip"
 cut = 435
 field = "appearance.time-left"

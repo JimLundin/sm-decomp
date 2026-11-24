@@ -207,7 +207,7 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/animation.rs" },
   { role = "navigation", path = "crates/clean/samus_appearance/src/catalogue.rs" },
   { role = "adapter", path = "crates/game/src/production/connected.rs" },
-  { role = "adapter", path = "crates/game/src/production/appearance.rs" },
+  { role = "adapter", path = "crates/game/src/production/played.rs" },
 ]
 
 [[rule]]

@@ -8,7 +8,8 @@ use crate::rules::Rules;
 use crate::state::Playhead;
 
 /// Spec: `StandingRestart`. Holding shoot while she stands unaimed starts her standing clip
-/// over: step 0 with the restart's hold, which no liquid slows.
+/// over: step 0 shows for the restart's frames, this frame the first, whatever time was left;
+/// no liquid slows it.
 #[must_use]
 pub fn standing_restart(playhead: Playhead, inputs: &Inputs, rules: &Rules) -> Playhead {
     if !inputs.moves[MoveEvent::StandingRestart] {
@@ -16,7 +17,7 @@ pub fn standing_restart(playhead: Playhead, inputs: &Inputs, rules: &Rules) -> P
     }
     Playhead {
         step: Step::FIRST,
-        time_left: rules.restart_hold.frames(),
+        time_left: rules.restart_frames.before_the_run_down(),
     }
 }
 
@@ -34,23 +35,24 @@ pub fn wall_jump_ready(playhead: Playhead, inputs: &Inputs, clip: &Clip) -> Play
     }
 }
 
-/// Spec: `FastFall`. Moving fast either way, rising or falling, on a step before her clip's fast
-/// fall step, she jumps to it with the fast fall's hold, which no liquid slows.
+/// Spec: `FastFall`. Moving fast either way, rising or falling, on any step before her clip's
+/// fast fall step, she jumps to it, and it shows for the fast fall's frames, this frame the
+/// first; no liquid slows it.
 #[must_use]
 pub fn fast_fall(playhead: Playhead, inputs: &Inputs, clip: &Clip, rules: &Rules) -> Playhead {
     let ahead = clip.fast_fall.filter(|&step| playhead.step < step);
     match ahead {
         Some(step) if inputs.vertical_speed.size() >= rules.fast_fall_speed => Playhead {
             step,
-            time_left: rules.fast_fall_hold.frames(),
+            time_left: rules.fast_fall_frames.before_the_run_down(),
         },
         Some(_) | None => playhead,
     }
 }
 
-/// Spec: `RisingHold`. On the rising step with 1 frame left, while not heading down, the rising
-/// hold, which no liquid slows, becomes the time left before it runs down. So at the game's hold
-/// of 4 she stays on the rising picture 3 frames at a time for as long as she rises.
+/// Spec: `RisingHold`. On the rising step with 1 frame left, while she rises, the step shows
+/// again for the rising frames, this frame the first; no liquid slows it. So she stays on the
+/// rising picture the rising frames at a time for as long as she rises.
 #[must_use]
 pub fn rising_hold(playhead: Playhead, inputs: &Inputs, clip: &Clip, rules: &Rules) -> Playhead {
     let holds = !inputs.heading_down
@@ -60,7 +62,7 @@ pub fn rising_hold(playhead: Playhead, inputs: &Inputs, clip: &Clip, rules: &Rul
         return playhead;
     }
     Playhead {
-        time_left: rules.rising_hold.frames(),
+        time_left: rules.rising_frames.before_the_run_down(),
         ..playhead
     }
 }

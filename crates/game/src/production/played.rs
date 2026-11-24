@@ -41,7 +41,7 @@ use interface_hud::{
     FrameOutputs, HerMap, HudPictures, MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve,
     SelectButton, Status, StockAtStart,
 };
-use samus_appearance::{Dash, Figure, MoveEvent};
+use samus_appearance::{Ahead, Dash, Figure, MissingClip, MoveEvent};
 use samus_movement::{Dashing, StandingAnimation, WallTest};
 use types::{Action, Facing, Hitbox, Item, Pair, Parts, Pose, Set};
 use world_camera::{RememberedPosition, ViewPosition};
@@ -208,7 +208,7 @@ pub struct Outputs {
     /// Movement's complete outcome; none while a passage runs.
     pub movement: Option<samus_movement::Outcome>,
     /// Her appearance's sounds, in the order asked; none while a passage runs.
-    pub sounds: Vec<samus_appearance::SoundRequest>,
+    pub sounds: Vec<samus_appearance::SoundOffer>,
     /// What the doors report.
     pub doors: world_doors::Report,
     /// Health's frame; none while a passage runs.
@@ -377,8 +377,8 @@ impl State {
         rules: &Rules,
     ) -> Result<(samus_movement::Samus, samus_movement::Outcome), Fault> {
         let start = self.figure.0;
-        let clip = content.appearance.get(start).ok_or(Fault::Clip(start))?;
-        let ahead = super::appearance::ahead(&self.appearance.0, clip);
+        let ahead = Ahead::of(&self.appearance.0, start, &content.appearance)
+            .map_err(|MissingClip(figure)| Fault::Clip(figure))?;
         let mut samus = self.movement.0;
         let missing_body = Cell::new(None);
         let body = |pose: Pose| {
@@ -640,16 +640,15 @@ pub(super) fn animation_inputs(
     moves[MoveEvent::StandingRestart] = outcome.standing_animation == StandingAnimation::Restarts;
     moves[MoveEvent::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
     moves[MoveEvent::HandedOver] = outcome.handed_over;
-    moves[MoveEvent::DashLost] = outcome.dash_lost;
     samus_appearance::Inputs {
         figure: start,
         figure_after: after,
         moves,
-        dash: match (outcome.dash_began, outcome.dashing_after_moves) {
-            (true, _) => Dash::Began,
-            (false, Dashing::On) => Dash::On,
-            (false, Dashing::Off) => Dash::Off,
-        },
+        dash: dash(
+            outcome.dashing_after_moves,
+            outcome.dash_began,
+            outcome.dash_lost,
+        ),
         run_held: inputs.held.any(types::button::RUN),
         heading_down: outcome.heading_down,
         vertical_speed: outcome.vertical_speed_after_moves,
@@ -660,6 +659,22 @@ pub(super) fn animation_inputs(
         activities: inputs.activities,
         shoot_held: inputs.held.any(types::button::SHOOT),
         charge: inputs.charge,
+    }
+}
+
+/// The dash as the clip moves on, from movement's report of her moves.
+///
+/// Whether she is dashing after her moves decides first: movement reports a dash begun into a
+/// wall as begun and lost with her not dashing after her moves, and the original cancels it before
+/// the clip moves on, so it is stopped.
+const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
+    match (dashing_after_moves, began, lost) {
+        (Dashing::Off, _, true) => Dash::Stopped,
+        (Dashing::Off, _, false) => Dash::Off,
+        (Dashing::On, true, true) => Dash::BeganAndLost,
+        (Dashing::On, true, false) => Dash::Began,
+        (Dashing::On, false, true) => Dash::Lost,
+        (Dashing::On, false, false) => Dash::On,
     }
 }
 
