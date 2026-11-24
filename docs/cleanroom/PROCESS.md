@@ -252,9 +252,12 @@ Within that limit, the dependencies below decide what may overlap.
 rebuild and a re-proof on this machine, which can wipe out the time running in parallel saved.
 So before a lane starts, its brief lists the files it will change, and lanes running at once
 change disjoint files. A file that most work passes through belongs to one lane at a time: the
-played owner and its runner, `tools/mutants.toml` and STATUS. Other lanes don't edit it. They
-hand their entries for it (a planted fault, a STATUS paragraph) to the root, who adds them when
-the lane lands. When two pieces of work need the same file, they run one after the other in a
+played loop's order of owners (`crates/game/src/production/played.rs`) and the order its runner
+compares them in (`crates/verify/src/replay/played.rs`), `tools/mutants.toml` and STATUS. Other
+lanes don't edit it. They hand their entries for it (a line of order, a planted fault, a STATUS
+paragraph) to the root, who adds them when the lane lands. Each owner's part of the played loop
+is its own file in `production/played/` and `replay/played/`, and belongs to the lane that
+integrates that owner. When two pieces of work need the same file, they run one after the other in a
 single lane, or the second starts from the first's branch and lands after it. The lane with the
 most work in flight lands first, and shorter lanes start from it. The generated README is
 regenerated at landing, never merged by hand.
