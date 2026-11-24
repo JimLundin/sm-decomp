@@ -61,10 +61,12 @@ tree_hash() {
   printf '%s\n' "$listing" | sha256sum | cut -d' ' -f1
 }
 
+# The image is its OS and its release date: one release (ImageVersion 20261116.133.1) is served
+# under several build numbers (20261116.376.1) at once, by runners picked at random.
 fingerprint() {
-  local tree
+  local tree release=${ImageVersion:-}
   tree=$(tree_hash "$1" "${2:-HEAD}") || return 1
-  printf 'verdict 1\njob %s\nimage %s %s\ntree %s\n' "$1" "${ImageOS:-}" "${ImageVersion:-}" "$tree" |
+  printf 'verdict 1\njob %s\nimage %s %s\ntree %s\n' "$1" "${ImageOS:-}" "${release%%.*}" "$tree" |
     sha256sum | cut -d' ' -f1
 }
 
