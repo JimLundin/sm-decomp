@@ -7,7 +7,7 @@
 //! its doors to other rooms by cell, and the camera's room.
 
 use super::connected::inputs::{CameraInputs, Lead, Screen};
-use super::played::{Doorway, Room};
+use super::played::passage::{Doorway, Room};
 use super::world::{Boundary, MovementWorld};
 use boss_ceres_ridley::{
     CeresDoor, CeresRidley, ColourSet, DoorColours, DoorKind, DoorPalette, GoalColours,

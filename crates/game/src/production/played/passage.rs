@@ -6,10 +6,10 @@
 //! camera's room. Fetching the next room's contents lets the last room's Ceres actors go and
 //! places its own.
 
-use super::super::connected::inputs::CameraInputs;
-use super::super::room_loading::{self, CeresActors};
 use super::samus::Her;
 use super::{Content, Fault, Rules};
+use crate::production::connected::inputs::CameraInputs;
+use crate::production::room_loading::{self, CeresActors};
 use types::{Pair, Parts};
 use world_doors::{Arrival, Doors, Exports, Palette, Passage, Phase, RoomCall, Scene};
 
@@ -36,7 +36,7 @@ pub struct Doorway {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Room {
     /// The room's blocks and the boxes of its solid actors other than the Ceres doors.
-    pub geometry: super::super::world::MovementWorld,
+    pub geometry: crate::production::world::MovementWorld,
     /// Its doors to other rooms, by cell.
     pub doorways: Vec<Doorway>,
     /// Its screens, size, scrollers and the camera's lead.

@@ -7,10 +7,12 @@
 //!
 //! This file holds only that order. Each owner's State, its step and what it reads of the others
 //! live in its own module: [`samus`] her moves and animation, `camera` the camera, `health`
-//! and [`hud`] her energy and the HUD, [`passage`] her room, its doors to other rooms and the
-//! passage through them, [`station`] the Ceres station's doors, pad, lights and Ridley, and
-//! [`frame`] the counts of frames and the random number. The screen's colours are the doors
-//! model's [`Palette`], which the passage, the lights and the baby each set in turn.
+//! and `hud` her energy and the HUD, [`passage`] her room, its doors to other rooms and the
+//! passage through them, [`station`] the order of the Ceres station's actors and their State,
+//! with `ridley` Ridley and the baby, `ceres_doors` the Ceres doors and `shaft` the shaft's pad
+//! and lights, and [`frame`] the counts of frames and the random number. The screen's colours
+//! are the doors model's [`Palette`], which the passage, the lights and the baby each set in
+//! turn. The fixture every owner's tests build State from is `tests`.
 //!
 //! Each model is stepped once through its own whole-frame entry. The frame commits every owner
 //! together or none.
@@ -31,29 +33,32 @@
 //! once.
 
 mod camera;
+mod ceres_doors;
 pub mod frame;
 mod health;
-pub mod hud;
+mod hud;
 pub mod passage;
+mod ridley;
 pub mod samus;
+mod shaft;
 pub mod station;
 
 pub use hud::HudFrame;
-pub use passage::{Doorway, PassageAudio, Passing, Room};
-pub use samus::FigurePin;
 pub(super) use samus::animation_inputs;
 
-use super::animation::AppearanceContent;
-use super::connected::inputs::Inputs;
-use super::content::MovementContent;
-use super::health_tail::HealthPin;
-use super::hud::HudPin;
-use super::room_loading::{LoadFault, Rooms};
-use super::shaft::LightsFault;
+use crate::production::CameraRules;
+use crate::production::animation::AppearanceContent;
+use crate::production::connected::inputs::Inputs;
+use crate::production::content::MovementContent;
+use crate::production::health_tail::HealthPin;
+use crate::production::hud::HudPin;
+use crate::production::room_loading::{LoadFault, Rooms};
+use crate::production::shaft::LightsFault;
 use crate::state::owned::CameraPin;
 use boss_ceres_ridley::{Lights, RidleyPlacing, RidleyRun};
 use canonical::model::Model;
 use interface_hud::{FrameOutputs, HerMap, HudPictures};
+use passage::Passing;
 use samus_appearance::Figure;
 use types::{Item, Pose};
 use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, Scene};
@@ -83,7 +88,7 @@ pub struct Rules {
     /// Animation parameters.
     pub appearance: samus_appearance::Rules,
     /// Camera parameters.
-    pub camera: super::CameraRules,
+    pub camera: CameraRules,
     /// Passage parameters.
     pub doors: world_doors::Rules,
     /// Health parameters.

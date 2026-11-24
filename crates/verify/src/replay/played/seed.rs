@@ -27,7 +27,7 @@ pub(super) fn room(
     seed: &[u8],
     content: &connected::Content,
     world: &world::World,
-) -> Result<(Room, played::Room), Outcome> {
+) -> Result<(Room, played::passage::Room), Outcome> {
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator || crate::replay::hud::time_stopped(seed)? {
         return Err(Outcome::Unsupported {
@@ -37,7 +37,7 @@ pub(super) fn room(
     }
     let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
     let (doorways, map) = doorways(seed, world)?;
-    let played = played::Room {
+    let played = played::passage::Room {
         geometry: inputs.geometry.clone(),
         doorways,
         camera: inputs.camera.clone(),
@@ -64,7 +64,7 @@ pub(super) fn room(
 }
 
 type Doorways = (
-    Vec<played::Doorway>,
+    Vec<played::passage::Doorway>,
     (interface_hud::Room, data::room::Area),
 );
 

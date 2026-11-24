@@ -4,9 +4,9 @@
 //! stepping movement whole and then animation gives the values the original reads between
 //! them; no pause inside either model is needed.
 
-use super::super::animation;
-use super::super::connected::inputs::Inputs;
 use super::{Content, Fault, Rules};
+use crate::production::animation;
+use crate::production::connected::inputs::Inputs;
 use crate::state::owned::{AppearancePin, MovementPin};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
@@ -197,7 +197,7 @@ pub(in crate::production) fn animation_inputs(
 /// Whether she is dashing after her moves decides first: movement reports a dash begun into a
 /// wall as begun and lost with her not dashing after her moves, and the original cancels it before
 /// the clip moves on, so it is stopped.
-pub(super) const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
+const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
     match (dashing_after_moves, began, lost) {
         (Dashing::Off, _, true) => Dash::Stopped,
         (Dashing::Off, _, false) => Dash::Off,
@@ -205,5 +205,41 @@ pub(super) const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) 
         (Dashing::On, true, false) => Dash::Began,
         (Dashing::On, false, true) => Dash::Lost,
         (Dashing::On, false, false) => Dash::On,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::dash;
+    use samus_appearance::Dash;
+    use samus_movement::Dashing;
+
+    /// Each report of her moves gives the dash the clip reads, decided first by whether she is
+    /// dashing after them.
+    #[test]
+    fn dash_follows_her_dashing_after_moves() {
+        let cases = [
+            (Dashing::Off, false, true, Dash::Stopped),
+            (Dashing::Off, true, false, Dash::Off),
+            (Dashing::Off, false, false, Dash::Off),
+            (Dashing::On, true, true, Dash::BeganAndLost),
+            (Dashing::On, true, false, Dash::Began),
+            (Dashing::On, false, true, Dash::Lost),
+            (Dashing::On, false, false, Dash::On),
+        ];
+        for (dashing, began, lost, expected) in cases {
+            assert_eq!(
+                dash(dashing, began, lost),
+                expected,
+                "{dashing:?}, began {began}, lost {lost}"
+            );
+        }
+    }
+
+    /// A run into a wall that starts her dash leaves her not dashing after her moves: stopped, so
+    /// the clip holds its own pace.
+    #[test]
+    fn dash_begun_into_a_wall_is_stopped() {
+        assert_eq!(dash(Dashing::Off, true, true), Dash::Stopped);
     }
 }

@@ -45,6 +45,7 @@ pub(super) fn random(wram: &[u8]) -> Result<types::RandomSequence, Outcome> {
     })
 }
 
+/// The game's random number, compared as a quantity.
 pub(super) fn random_observation(random: types::RandomSequence) -> Observation {
     Observation::quantity("random", i64::from(random.number.0))
 }

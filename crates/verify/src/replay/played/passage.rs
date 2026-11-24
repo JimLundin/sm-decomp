@@ -23,6 +23,7 @@ pub(super) fn passing(wram: &[u8]) -> Result<bool, Outcome> {
     }
 }
 
+/// Whether a door passage is under way, compared as one byte.
 pub(super) fn observation(passing: bool) -> Observation {
     Observation {
         field: "doors.passing".into(),

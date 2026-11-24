@@ -14,20 +14,23 @@
 //!
 //! This file holds the run and the order in which the owners' fields are compared, which is
 //! the order a difference is reported in. Each owner's seed, record reading and compared fields
-//! live in its own module: `samus`, `passage`, `colours`, `station`, `health`, `hud` and
-//! `frame`; the camera's are the camera replay's. `platform` holds the borrowed lag, pad and
-//! audio answers, `seed` the facts held from the seed, and `rows` the chain of rows a run
-//! plays through.
+//! live in its own module: `samus`, `passage`, `colours`, `ceres_doors`, `ridley`, `shaft`,
+//! `health`, `hud` and `frame`, with `station` the station's State; the camera's are the camera
+//! replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the facts held
+//! from the seed, and `rows` the chain of rows a run plays through.
 
+mod ceres_doors;
 mod colours;
 mod frame;
 mod health;
 mod hud;
 mod passage;
 mod platform;
+mod ridley;
 mod rows;
 mod samus;
 mod seed;
+mod shaft;
 mod station;
 
 use super::compare::{CompareFault, Observation, compare};
@@ -123,9 +126,10 @@ fn expected(
     }
     if finished {
         fields.extend(colours::observations(&colours::palette(wram)?));
-        fields.extend(station::expected(wram)?);
+        fields.extend(ceres_doors::expected(wram)?);
+        fields.extend(ridley::expected(wram)?);
     }
-    fields.extend(station::pad_expected(wram)?);
+    fields.extend(shaft::expected(wram)?);
     fields.extend(health::parts(&health_tail::decode(wram, None)?));
     if hud_settled {
         fields.extend(hud::parts(super::hud::expected(wram, hud)?));
@@ -151,9 +155,10 @@ fn actual(
     fields.push(frame::random_observation(state.frame.random));
     if finished {
         fields.extend(colours::observations(&state.palette));
-        fields.extend(station::actual(&state.station));
+        fields.extend(ceres_doors::actual(&state.station));
+        fields.extend(ridley::actual(&state.station));
     }
-    fields.extend(station::pad_actual(&state.station));
+    fields.extend(shaft::actual(&state.station));
     fields.extend(health::parts(&state.health.0));
     if hud_settled {
         fields.extend(hud::parts(super::hud::initial(&state.hud.0, hud)?));
@@ -261,7 +266,7 @@ impl<'a> Run<'a> {
         let samus = samus::seed(&seed.wram, &content.appearance)?;
         let hud = super::hud::Content::load(path)?;
         let (map_room, area) = room.map;
-        let ceres_doors = station::seed_doors(&seed.wram)?;
+        let ceres_doors = ceres_doors::seed(&seed.wram)?;
         Ok(Self {
             state: played::State {
                 samus,
@@ -331,11 +336,11 @@ impl<'a> Run<'a> {
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
         inputs.parity = parity(self.state.frame.finished_frames);
-        let passing = played::Passing {
+        let passing = played::passage::Passing {
             // The borrowed lag: the last NMI found the frame's work finished, so the next began.
             work_begun: finished(previous),
             work_done: finished(current) || fetching_contents(doors),
-            audio: played::PassageAudio {
+            audio: played::passage::PassageAudio {
                 sounds_sent: self.room.sounds_sent,
                 music_ready: music_ready(&previous.wram)?,
             },

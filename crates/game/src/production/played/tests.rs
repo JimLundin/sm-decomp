@@ -1,3 +1,5 @@
+//! The State every owner's tests start from, and the frame they play it through.
+
 use super::*;
 use crate::production::animation::AppearanceContent;
 use crate::production::connected::inputs::{CameraInputs, Lead, Screen};
@@ -5,43 +7,25 @@ use crate::production::content::MovementContent;
 use crate::production::room_loading::Rooms;
 use crate::production::tests::{empty_world, fixtures};
 use crate::production::{FigureClip, PoseContent};
-use boss_ceres_ridley::{CeresDoor, DoorKind, PadAndCover, Phase, Quarter, Stage, Wait};
+use boss_ceres_ridley::{CeresDoor, Stage};
 use core::num::Wrapping;
 use interface_hud as hud;
 use interface_hud::{
     Ammunition, CancelButton, CountdownRuns, FrameCount, HerMap, HudPictures, Reserve,
     SelectButton, StockAtStart,
 };
-use samus_appearance::Dash;
-use samus_movement::Dashing;
-use types::{Pair, Parts, Set, Side};
+use types::{Pair, Set};
 use world_camera::{RememberedPosition, ViewPosition};
-use world_doors::{FadeTime, Finishing, Passage};
 
 /// Her figure in the fixture's pose.
-fn figure() -> Figure {
+pub(super) fn figure() -> Figure {
     Figure {
         pose: fixtures::samus().pose,
         sprite: types::Sprite::Plain,
     }
 }
 
-/// A Ceres door touching her right side: her box reaches 5 px right of her, the door's 8 px
-/// left of its centre.
-fn door(phase: Phase) -> CeresDoor {
-    let her = fixtures::samus().position;
-    CeresDoor {
-        kind: DoorKind::Door,
-        facing: Side::Left,
-        position: Pair {
-            x: Wrapping(her.x.pixel().0.wrapping_add(13)),
-            y: her.y.pixel(),
-        },
-        phase,
-    }
-}
-
-fn state(doors: Vec<CeresDoor>) -> State {
+pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     let her = fixtures::samus().position;
     State {
         samus: samus::State {
@@ -60,7 +44,7 @@ fn state(doors: Vec<CeresDoor>) -> State {
         passage: passage::State {
             doors: Doors::Play,
             doorway: None,
-            room: super::Room {
+            room: passage::Room {
                 geometry: empty_world(),
                 doorways: Vec::new(),
                 camera: inputs(types::Buttons::default()).camera,
@@ -115,7 +99,7 @@ fn state(doors: Vec<CeresDoor>) -> State {
     }
 }
 
-fn inputs(held: types::Buttons) -> Inputs {
+pub(super) fn inputs(held: types::Buttons) -> Inputs {
     Inputs {
         held,
         pressed: held,
@@ -133,11 +117,11 @@ fn inputs(held: types::Buttons) -> Inputs {
             heights: [112, 128],
             lead: Lead::Ahead,
         },
-        activity: super::super::connected::inputs::Activity::Inactive,
+        activity: crate::production::connected::inputs::Activity::Inactive,
     }
 }
 
-fn hud_frame() -> HudFrame {
+pub(super) fn hud_frame() -> HudFrame {
     HudFrame {
         buttons: (SelectButton::NotPressed, CancelButton::NotPressed),
         stock_at_start: StockAtStart {
@@ -155,7 +139,7 @@ fn hud_frame() -> HudFrame {
     }
 }
 
-fn content() -> Content {
+pub(super) fn content() -> Content {
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
         movement: MovementContent::new(
@@ -209,11 +193,11 @@ fn content() -> Content {
     }
 }
 
-fn rules() -> Rules {
+pub(super) fn rules() -> Rules {
     Rules {
         movement: samus_movement::Rules::default(),
         appearance: samus_appearance::Rules::VANILLA,
-        camera: super::super::CameraRules::new(world_camera::Rules::REFERENCE),
+        camera: CameraRules::new(world_camera::Rules::REFERENCE),
         doors: world_doors::Rules::default(),
         health: samus_health::Rules::REFERENCE,
         hud: interface_hud::Rules::default(),
@@ -221,11 +205,15 @@ fn rules() -> Rules {
     }
 }
 
-fn play(state: &mut State, held: types::Buttons, ceres: Stage) -> Result<Outputs, Fault> {
+pub(super) fn play(
+    state: &mut State,
+    held: types::Buttons,
+    ceres: Stage,
+) -> Result<Outputs, Fault> {
     play_with(state, &content(), held, ceres)
 }
 
-fn play_with(
+pub(super) fn play_with(
     state: &mut State,
     content: &Content,
     held: types::Buttons,
@@ -235,7 +223,7 @@ fn play_with(
     let passing = Passing {
         work_begun: true,
         work_done: true,
-        audio: PassageAudio {
+        audio: passage::PassageAudio {
             sounds_sent: true,
             music_ready: true,
         },
@@ -245,198 +233,4 @@ fn play_with(
     };
     state.station.stage = ceres;
     state.step(&inputs(held), &passing, &hud_frame(), content, &rules())
-}
-
-/// A door on the last frame of its opening, which its run this frame leaves open.
-fn opening_ends() -> Phase {
-    Phase::Opening {
-        quarter: Quarter::Fourth,
-        wait: Wait::new(1).unwrap(),
-    }
-}
-
-#[test]
-fn a_door_that_opens_this_frame_still_blocks_her_moves() {
-    let mut blocked = state(vec![door(opening_ends())]);
-    play(&mut blocked, types::button::RIGHT, Stage::Calm).unwrap();
-    assert!(!blocked.station.doors[0].phase.solid());
-    let mut open = state(vec![door(Phase::Open {
-        wait: Wait::new(2).unwrap(),
-    })]);
-    play(&mut open, types::button::RIGHT, Stage::Calm).unwrap();
-    let start = fixtures::samus().position.x;
-    assert!(open.samus.movement.0.position.x.0 > start.0);
-    assert!(blocked.samus.movement.0.position.x.0 < open.samus.movement.0.position.x.0);
-}
-
-#[test]
-fn the_escape_refuses_a_room_with_ceres_doors_and_leaves_state_as_it_was() {
-    let mut escaping = state(vec![door(opening_ends())]);
-    escaping.station.stage = Stage::Escape;
-    let before = escaping.clone();
-    assert_eq!(
-        play(&mut escaping, types::Buttons::default(), Stage::Escape),
-        Err(Fault::Escape)
-    );
-    assert_eq!(escaping, before);
-}
-
-/// The shaft's pad, under her with its wait `wait`, and the cover below.
-fn on_the_pad(wait: u16) -> PadAndCover {
-    let her = fixtures::samus().position;
-    let mut placed = PadAndCover::arrival(
-        Pair {
-            x: her.x.pixel(),
-            y: her.y.pixel(),
-        },
-        &boss_ceres_ridley::Rules::default(),
-    )
-    .pad_and_cover;
-    if let Some(pad) = placed.pad.as_mut() {
-        pad.wait = boss_ceres_ridley::PadWait::new(wait).unwrap();
-    }
-    placed
-}
-
-#[test]
-fn while_the_pad_holds_her_her_moves_and_animation_dont_run_and_it_sets_her_height() {
-    let mut held = state(Vec::new());
-    held.station.pad_and_cover = on_the_pad(1);
-    // A pixel above the floor, so the pad's run lowers her to it.
-    held.samus.movement.0.position.y = types::fixed(Wrapping(71), 0);
-    let before = held.clone();
-    let outputs = play(&mut held, types::button::RIGHT, Stage::Calm).unwrap();
-    assert_eq!(outputs.movement, None);
-    assert_eq!(
-        held.samus.movement.0.position.x,
-        before.samus.movement.0.position.x
-    );
-    assert_eq!(
-        held.samus.movement.0.position.y,
-        types::fixed(Wrapping(72), 0)
-    );
-    assert_eq!(held.samus.appearance, before.samus.appearance);
-    assert!(
-        held.station.pad_and_cover.holds_her(),
-        "she reaches the floor held"
-    );
-    // The next run lets her go after her frame, still held; the frame after, she moves.
-    play(&mut held, types::button::RIGHT, Stage::Calm).unwrap();
-    assert!(!held.station.pad_and_cover.holds_her());
-    assert_eq!(
-        held.samus.movement.0.position.x,
-        before.samus.movement.0.position.x
-    );
-    play(&mut held, types::button::RIGHT, Stage::Calm).unwrap();
-    assert!(held.samus.movement.0.position.x.0 > before.samus.movement.0.position.x.0);
-}
-
-#[test]
-fn with_the_shafts_overlay_the_beacon_sets_its_colours_from_the_count_of_finished_frames() {
-    let mut content = content();
-    let mut beacon = data::assets::actors::BeaconColours::default();
-    for (step, set) in beacon.sets.iter_mut().enumerate() {
-        *set = [data::assets::art::Colour(u16::try_from(step).unwrap() + 1); 6];
-    }
-    content.rooms.actors.beacon = beacon;
-    let mut shaft = state(Vec::new());
-    shaft.station.shaft_overlay = true;
-    // Step (24 / 8) mod 8 = 3 of the cycle.
-    shaft.frame.finished_frames = 24;
-    let outputs = play_with(&mut shaft, &content, types::Buttons::default(), Stage::Calm).unwrap();
-    assert_eq!(
-        outputs
-            .lights
-            .and_then(|lights| lights.beacon)
-            .map(boss_ceres_ridley::BeaconStep::place),
-        Some(3)
-    );
-    let first = data::assets::actors::BeaconColours::FIRST;
-    assert_eq!(shaft.palette.screen[first - 1], types::Colour::BLACK);
-    assert!(
-        shaft.palette.screen[first..first + 6]
-            .iter()
-            .all(|colour| colour.bits() == 4)
-    );
-    assert_eq!(shaft.palette.screen[first + 6], types::Colour::BLACK);
-    assert_eq!(shaft.frame.finished_frames, 25);
-    // In the escape a later piece owns the overlay.
-    assert_eq!(
-        play_with(
-            &mut shaft,
-            &content,
-            types::Buttons::default(),
-            Stage::Escape
-        ),
-        Err(Fault::Escape)
-    );
-}
-
-/// As the colours come up, the lights run before the fade's step, so on its first step the
-/// beacon still shows; as they go dark the fade's step comes first, so the beacon shows none.
-#[test]
-fn the_beacon_shows_before_the_fade_in_takes_its_step_and_not_once_the_fade_out_has() {
-    let mut content = content();
-    content.rooms.actors.beacon = data::assets::actors::BeaconColours {
-        sets: [[data::assets::art::Colour(7); 6]; 8],
-    };
-    let fading = |phase| {
-        let mut shaft = state(Vec::new());
-        shaft.station.shaft_overlay = true;
-        shaft.passage.doors = Doors::Passing(Passage {
-            phase,
-            arrival: None,
-            slide_frames: 0,
-        });
-        let outputs =
-            play_with(&mut shaft, &content, types::Buttons::default(), Stage::Calm).unwrap();
-        (outputs.lights.and_then(|lights| lights.beacon), shaft)
-    };
-    let first = data::assets::actors::BeaconColours::FIRST;
-    let (shown, brightening) = fading(world_doors::Phase::Brightening(FadeTime::START));
-    assert!(shown.is_some());
-    assert_eq!(brightening.palette.screen[first].bits(), 7);
-    let (shown, darkening) = fading(world_doors::Phase::Darkening(FadeTime::START));
-    assert_eq!(shown, None);
-    assert_eq!(darkening.palette.screen[first], types::Colour::BLACK);
-}
-
-#[test]
-fn a_finished_frame_counts_and_a_restarting_one_counts_from_zero() {
-    let last = FrameCount(0xff);
-    assert_eq!(frame::counted(last, Finishing::Overrun), last);
-    assert_eq!(frame::counted(last, Finishing::Finished), FrameCount(0));
-    assert_eq!(
-        frame::counted(last, Finishing::Restarts(world_doors::SlideScreen::Sprites)),
-        FrameCount(1)
-    );
-}
-
-/// Each report of her moves gives the dash the clip reads, decided first by whether she is
-/// dashing after them.
-#[test]
-fn dash_follows_her_dashing_after_moves() {
-    let cases = [
-        (Dashing::Off, false, true, Dash::Stopped),
-        (Dashing::Off, true, false, Dash::Off),
-        (Dashing::Off, false, false, Dash::Off),
-        (Dashing::On, true, true, Dash::BeganAndLost),
-        (Dashing::On, true, false, Dash::Began),
-        (Dashing::On, false, true, Dash::Lost),
-        (Dashing::On, false, false, Dash::On),
-    ];
-    for (dashing, began, lost, expected) in cases {
-        assert_eq!(
-            samus::dash(dashing, began, lost),
-            expected,
-            "{dashing:?}, began {began}, lost {lost}"
-        );
-    }
-}
-
-/// A run into a wall that starts her dash leaves her not dashing after her moves: stopped, so
-/// the clip holds its own pace.
-#[test]
-fn dash_begun_into_a_wall_is_stopped() {
-    assert_eq!(samus::dash(Dashing::Off, true, true), Dash::Stopped);
 }

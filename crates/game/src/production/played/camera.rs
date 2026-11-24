@@ -1,9 +1,9 @@
 //! The camera following her through a frame of play, and moved by a passage.
 
-use super::super::camera_semantic;
-use super::super::connected::inputs::{CameraInputs, Lead, Screen};
 use super::samus::Her;
 use super::{Fault, Rules};
+use crate::production::camera_semantic;
+use crate::production::connected::inputs::{CameraInputs, Lead, Screen};
 use core::num::Wrapping;
 use types::{Pair, Parts, Px};
 use world_camera::{Camera, RememberedPosition, ViewPosition};

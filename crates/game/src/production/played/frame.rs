@@ -4,7 +4,7 @@
 //! `AdvanceRandom`), which the baby and the Ceres doors read. State carries the number; the
 //! caller replaces it where the loop doesn't own every draw, as through a passage.
 
-use super::Passing;
+use super::passage::Passing;
 use interface_hud::FrameCount;
 use world_doors::Finishing;
 
@@ -43,7 +43,7 @@ impl State {
 
 /// The frame count after a frame: a finished frame counts, and a frame the doors restart the
 /// count on counts from 0 (`FinishedFrames`).
-pub(super) const fn counted(frame: FrameCount, finishing: Finishing) -> FrameCount {
+const fn counted(frame: FrameCount, finishing: Finishing) -> FrameCount {
     match finishing {
         Finishing::Overrun => frame,
         Finishing::Finished => FrameCount(frame.0.wrapping_add(1)),
@@ -56,5 +56,23 @@ const fn finished(count: u16, finishing: Finishing) -> u16 {
     match finishing {
         Finishing::Overrun => count,
         Finishing::Finished | Finishing::Restarts(_) => count.wrapping_add(1),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::counted;
+    use interface_hud::FrameCount;
+    use world_doors::Finishing;
+
+    #[test]
+    fn a_finished_frame_counts_and_a_restarting_one_counts_from_zero() {
+        let last = FrameCount(0xff);
+        assert_eq!(counted(last, Finishing::Overrun), last);
+        assert_eq!(counted(last, Finishing::Finished), FrameCount(0));
+        assert_eq!(
+            counted(last, Finishing::Restarts(world_doors::SlideScreen::Sprites)),
+            FrameCount(1)
+        );
     }
 }

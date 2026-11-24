@@ -2,8 +2,8 @@
 //!
 //! The HUD plays after her moves, reading her position after them and the energy Health leaves.
 
-use super::super::ridley;
 use super::{Content, Fault, Rules};
+use crate::production::ridley;
 use boss_ceres_ridley::RidleyPlacing;
 use interface_hud::{
     Ammunition, CancelButton, Controls, CountdownRuns, Dropped, Energy, FrameInputs, FrameOutputs,
