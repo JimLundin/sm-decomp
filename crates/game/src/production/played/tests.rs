@@ -78,6 +78,7 @@ fn state(doors: Vec<CeresDoor>) -> State {
             blocks: Pair { x: 0, y: 0 },
         },
         ceres_doors: doors,
+        frame: FrameCount(0),
     }
 }
 
@@ -105,7 +106,6 @@ fn inputs(held: types::Buttons) -> Inputs {
 
 fn hud_frame() -> HudFrame {
     HudFrame {
-        frame: FrameCount(0),
         buttons: (SelectButton::NotPressed, CancelButton::NotPressed),
         stock_at_start: StockAtStart {
             counts: enum_map::EnumMap::from_fn(|_| 0),
@@ -234,4 +234,15 @@ fn the_escape_refuses_a_room_with_ceres_doors_and_leaves_state_as_it_was() {
         Err(Fault::Escape)
     );
     assert_eq!(escaping, before);
+}
+
+#[test]
+fn a_finished_frame_counts_and_a_restarting_one_counts_from_zero() {
+    let last = FrameCount(0xff);
+    assert_eq!(counted(last, Finishing::Overrun), last);
+    assert_eq!(counted(last, Finishing::Finished), FrameCount(0));
+    assert_eq!(
+        counted(last, Finishing::Restarts(world_doors::SlideScreen::Sprites)),
+        FrameCount(1)
+    );
 }

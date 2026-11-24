@@ -33,7 +33,10 @@ her moves, the energy Health leaves and its held neighbours. While a passage run
 its step outside play, turned on when the doors turn the mini-map on. The run also compares
 Health's State (energy, pending loss, warning, protection) and the HUD's State (the mini-map's
 window, the status bar, the explored cells, the values last shown, the selection and the
-mini-map's off) at every cut, each part by name. A frame whose moves
+mini-map's off) at every cut, each part by name. The game's count of finished frames, which the
+HUD reads as a frame begins (her cell's blink), is the played owner's too: a finished frame
+counts it, and each frame on which the doors restart it (world-doors' `FinishedFrames`) counts
+from 0. It is compared as `frame-count` at every cut. A frame whose moves
 reach a door to a room plays out whole; from the next, while the passage runs, the doors step
 alone and move her position, the view, where the camera last saw her and the colours. As each
 of the passage's calls is done, the room's loading
@@ -96,11 +99,12 @@ It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by c
 dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
-Seventeen planted faults in the fault matrix, those of the responsibility `played`, stop that
+Eighteen planted faults in the fault matrix, those of the responsibility `played`, stop that
 run at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
-cut 17 in `movement.jump-held`, played from the M0 row's cut 16. Of the Ceres doors' faults,
+cut 17 in `movement.jump-held`, played from the M0 row's cut 16. A frame on which the doors
+restart the frame count counted on instead differs at cut 238 in `frame-count`. Of the Ceres doors' faults,
 their State held rather than carried differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
 than before differs at cut 7 in `ceres.0.phase`.
 

@@ -44,7 +44,9 @@ use samus_appearance::{Dash, Figure, MoveEvent};
 use samus_movement::{Dashing, StandingAnimation, WallTest};
 use types::{Action, Facing, Hitbox, Item, Pair, Parts, Pose, Set};
 use world_camera::{RememberedPosition, ViewPosition};
-use world_doors::{Activity, Arrival, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scene};
+use world_doors::{
+    Activity, Arrival, COLOURS, ColourGroup, Doors, Finishing, Palette, RoomCall, Scene,
+};
 
 /// The figure she is drawn in as the frame starts.
 pub struct FigurePin;
@@ -128,8 +130,6 @@ pub struct Passing<'a> {
 /// What a frame of play brings the HUD from owners outside this loop.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct HudFrame {
-    /// The frame count as the frame begins.
-    pub frame: FrameCount,
     /// Item select and item cancel this frame.
     pub buttons: (SelectButton, CancelButton),
     /// Her stock as the frame begins.
@@ -184,6 +184,9 @@ pub struct State {
     pub map_room: interface_hud::Room,
     /// The room's Ceres doors, in its order of its enemies.
     pub ceres_doors: Vec<CeresDoor>,
+    /// The game's count of finished frames, in eight bits, which the HUD reads as the frame
+    /// begins.
+    pub frame: FrameCount,
 }
 
 /// What one frame published.
@@ -318,7 +321,7 @@ impl State {
             .frame_of_play(
                 &rules.hud,
                 &content.hud,
-                &hud_inputs(hud, &samus, &outcome, health.state, self.map_room, content),
+                &hud_inputs(hud, self, &samus, &outcome, health.state, content),
             )
             .map_err(|_| Fault::Hud)?;
         let doors = self.doors.step(
@@ -339,6 +342,7 @@ impl State {
             hud: Model(hud_state),
             map_room: self.map_room,
             ceres_doors: ceres.iter().map(|run| run.door).collect(),
+            frame: counted(self.frame, doors.report.finishing),
         };
         Ok(Outputs {
             movement: Some(outcome),
@@ -459,6 +463,7 @@ impl State {
         self.palette = palette;
         self.doors = exports.doors;
         self.ceres_doors = ceres_doors;
+        self.frame = counted(self.frame, exports.report.finishing);
         self.hud.0.out_of_play(&OutOfPlayInputs {
             mini_map_turned_on: exports.report.minimap_on,
             new_area: NewArea::SameArea,
@@ -484,16 +489,16 @@ impl State {
 /// What the HUD reads this frame: her moves, the energy Health leaves, and its neighbours.
 fn hud_inputs<'a>(
     hud: &HudFrame,
+    state: &State,
     samus: &samus_movement::Samus,
     outcome: &samus_movement::Outcome,
     health: samus_health::State,
-    room: interface_hud::Room,
     content: &'a Content,
 ) -> FrameInputs<'a> {
     let (select, cancel) = hud.buttons;
     let pose = samus.pose;
     FrameInputs {
-        frame: hud.frame,
+        frame: state.frame,
         stock_at_start: hud.stock_at_start,
         controls: Controls {
             select,
@@ -508,7 +513,7 @@ fn hud_inputs<'a>(
                 x: outcome.position_after_moves.x.pixel().0,
                 y: outcome.position_after_moves.y.pixel().0,
             },
-            room,
+            room: state.map_room,
             map: &content.map,
             map_collected: hud.map_collected,
         },
@@ -544,6 +549,16 @@ fn hud_inputs<'a>(
         dropped_before_status_bar: Dropped::Nothing,
         dropped_after_status_bar: Dropped::Nothing,
         countdown: hud.countdown,
+    }
+}
+
+/// The frame count after a frame: a finished frame counts, and a frame the doors restart the
+/// count on counts from 0 (`FinishedFrames`).
+const fn counted(frame: FrameCount, finishing: Finishing) -> FrameCount {
+    match finishing {
+        Finishing::Overrun => frame,
+        Finishing::Finished => FrameCount(frame.0.wrapping_add(1)),
+        Finishing::Restarts(_) => FrameCount(1),
     }
 }
 

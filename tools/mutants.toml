@@ -428,8 +428,8 @@ field = "hud.map-window"
 name = "played-hud-frame-count-late"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "frame: hud.frame,"
-after = "frame: FrameCount(hud.frame.0.wrapping_add(1)),"
+before = "frame: state.frame,"
+after = "frame: FrameCount(state.frame.0.wrapping_add(1)),"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "hud.map-window"
@@ -476,3 +476,13 @@ after = '''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "ceres.0.phase"
+
+[[fault]]
+name = "played-frame-count-not-restarted"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "Finishing::Restarts(_) => FrameCount(1),"
+after = "Finishing::Restarts(_) => FrameCount(frame.0.wrapping_add(1)),"
+case = "played chain-any-0003-DFD7 0 344"
+cut = 238
+field = "frame-count"

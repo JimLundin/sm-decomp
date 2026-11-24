@@ -693,7 +693,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 36 | 3,831 | 22,987 | 23,251 | 6,729 | 969 | 1,540 | 2,819 | 280 | 4,921 |
+| production and exact services | 36 | 3,847 | 23,080 | 23,332 | 6,729 | 969 | 1,540 | 2,842 | 282 | 4,932 |
 | bridges | 7 | 942 | 5,650 | 5,617 | 661 | 377 | 622 | 317 | 78 | 974 |
 | rebuilt models, shared types included | 119 | 6,103 | 36,616 | 45,653 | 19,854 | 17,780 | 1,816 | 1,341 | 918 | 14,418 |
 
@@ -2393,17 +2393,17 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 430 | 105 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 380 | 99 |
-| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 2,960 | 550 |
+| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `Samus`, `StandingAnimation`, `UnknownPose`, `WallTest` | 3,053 | 561 |
 | samus-movement | `crates/game/src/production.rs` | names it | `Outcome`, `Samus`, `UnknownPose` | 2,295 | 458 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 58 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 280 | 75 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 1,081 | 232 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `ViewPosition` | 2,960 | 550 |
+| world-camera | `crates/game/src/production/played.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `ViewPosition` | 3,053 | 561 |
 | world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 2,295 | 458 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 58 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
-| run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 2,960 | 550 |
+| run-progress | `crates/game/src/production/played.rs` | names it | `Progress` | 3,053 | 561 |
 | run-progress | `crates/game/src/production/room_loading.rs` | names it | `Condition`, `EnteredRoom`, `Progress`, `RoomStates`, `Version` | 1,335 | 206 |
 | run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 2,295 | 458 |
 | run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 58 |
@@ -2414,7 +2414,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `HerMap`, `HudPictures`, `HudState`, `MiniMapInputs`, `MiniMapPower`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `Status`, `StockAtStart` | 668 | 188 |
 | interface-hud | `crates/game/src/production/hud.rs` | bridge | `Flip`, `HudState`, `Place` | 148 | 35 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| interface-hud | `crates/game/src/production/played.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `FrameOutputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Status`, `StockAtStart` | 2,960 | 550 |
+| interface-hud | `crates/game/src/production/played.rs` | names it | `Ammunition`, `CancelButton`, `Controls`, `CountdownRuns`, `Dropped`, `Energy`, `FrameCount`, `FrameInputs`, `FrameOutputs`, `HerMap`, `HudPictures`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Status`, `StockAtStart` | 3,053 | 561 |
 | interface-hud | `crates/game/src/production.rs` | names it | `FrameOutputs`, `HudState`, `UnsupportedFrame` | 2,295 | 458 |
 | interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 58 |
 | world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 1,159 | 230 |
@@ -2428,22 +2428,22 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-appearance | `crates/game/src/production/movement.rs` | names it | `Figure` | 430 | 105 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 380 | 99 |
-| samus-appearance | `crates/game/src/production/played.rs` | names it | `Activity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules`, `SoundRequest` | 2,960 | 550 |
+| samus-appearance | `crates/game/src/production/played.rs` | names it | `Activity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules`, `SoundRequest` | 3,053 | 561 |
 | samus-appearance | `crates/game/src/production.rs` | names it | `AppearanceState`, `Frame`, `FrameOutputs` | 2,295 | 458 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,643 | 266 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
 | samus-appearance | `crates/game/src/state/owned.rs` | names it | `AppearanceState` | 0 | 58 |
 | boss-ceres-ridley | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 1,159 | 230 |
-| boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 2,960 | 550 |
+| boss-ceres-ridley | `crates/game/src/production/played.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 3,053 | 561 |
 | boss-ceres-ridley | `crates/game/src/production/room_loading.rs` | names it | `CeresDoor`, `ColourSet`, `DoorKind`, `Stage` | 1,335 | 206 |
 | boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 2,295 | 458 |
 | boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 58 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,159 | 230 |
-| world-doors | `crates/game/src/production/played.rs` | names it | `Activity`, `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Inputs`, `Palette`, `Report`, `RoomCall`, `Rules`, `Scene` | 2,960 | 550 |
+| world-doors | `crates/game/src/production/played.rs` | names it | `Activity`, `Arrival`, `COLOURS`, `ColourGroup`, `Doors`, `Finishing`, `Inputs`, `Palette`, `Report`, `RoomCall`, `Rules`, `Scene` | 3,053 | 561 |
 | world-doors | `crates/game/src/production/room_loading.rs` | names it | `COLOURS`, `Palette`, `RoomCall` | 1,335 | 206 |
 | world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 2,295 | 458 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 89 |
 | samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 668 | 188 |
-| samus-health | `crates/game/src/production/played.rs` | names it | `PlayedFrame`, `Rules`, `State`, `TailImpact` | 2,960 | 550 |
+| samus-health | `crates/game/src/production/played.rs` | names it | `PlayedFrame`, `Rules`, `State`, `TailImpact` | 3,053 | 561 |

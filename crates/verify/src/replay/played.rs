@@ -167,8 +167,6 @@ struct Room {
     hud: HudHeld,
     /// Where her room sits on her map, and the area it is in.
     map: (interface_hud::Room, data::room::Area),
-    /// The game's frame count in eight bits, which the HUD reads.
-    frames: u8,
 }
 
 /// The HUD's inputs that no owner in the loop produces.
@@ -203,7 +201,6 @@ fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, 
             status: hud::status(seed)?,
             map_collected: hud::map_collected(seed)?,
         },
-        frames: hud::frame_count(seed)?.0,
         timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
         progress: super::progress::seed(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
@@ -353,6 +350,7 @@ fn expected(
     }
     fields.extend(health_parts(&health_tail::decode(wram, None)?));
     fields.extend(hud_parts(hud::expected(wram, hud)?));
+    fields.push(frame_count_observation(hud::frame_count(wram)?));
     Ok(fields)
 }
 
@@ -458,6 +456,11 @@ const ARRIVING: u16 = 11;
 /// The screen's colours as they stand, and the colours a fade heads for.
 const SCREEN_COLOURS: usize = 0xc000;
 const GOAL_COLOURS: usize = 0xc200;
+
+/// The game's count of finished frames, which the HUD reads as the next frame begins.
+fn frame_count_observation(frame: interface_hud::FrameCount) -> Observation {
+    Observation::quantity("frame-count", i64::from(frame.0))
+}
 
 fn passing_observation(passing: bool) -> Observation {
     Observation {
@@ -595,6 +598,7 @@ impl<'a> Run<'a> {
                 hud: Model(hud::decode_state(&seed.wram)?),
                 map_room,
                 ceres_doors,
+                frame: hud::frame_count(&seed.wram)?,
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
@@ -661,7 +665,6 @@ impl<'a> Run<'a> {
         let held = &self.room.hud;
         let status = held.status;
         let hud_frame = played::HudFrame {
-            frame: interface_hud::FrameCount(self.room.frames),
             buttons: held.bindings.buttons(controller.pressed, controller.held),
             stock_at_start: held.stock_at_start,
             capacity: status.energy.capacity,
@@ -679,7 +682,6 @@ impl<'a> Run<'a> {
             })?;
         if polled(current) {
             self.room.counter = self.room.counter.wrapping_add(1);
-            self.room.frames = self.room.frames.wrapping_add(1);
         }
         let expected = expected(current, &self.content.appearance, &self.hud, self.row, cut)?;
         let actual = actual(
@@ -787,6 +789,7 @@ fn actual(
     }
     fields.extend(health_parts(&state.health.0));
     fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));
+    fields.push(frame_count_observation(state.frame));
     Ok(fields)
 }
 
