@@ -2,6 +2,7 @@
 
 You need your own unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`, SHA-1
 `da957f0d63d14cb441d215462904c4fa8519c613`. No ROM or game data is in this repository.
+Credits and licences for the tools and data the project uses are in [CREDITS](CREDITS.md).
 
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid

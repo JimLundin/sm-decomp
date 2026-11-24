@@ -4,7 +4,7 @@ Current acceptance is indexed production replay. The committed
 [index](../scenarios/replay/index.toml), [baseline](../scenarios/replay/baseline.toml) and
 [transition ledger](../scenarios/replay/transition.toml) define witnesses, exact obligations and
 reviewed replacement/loss dispositions. Generated numbers live in [REPORT](REPORT.md) and the
-README status; regenerate them as [BUILDING](BUILDING.md#the-status-and-the-report) describes.
+README's progress; regenerate them as [BUILDING](BUILDING.md#the-status-and-the-report) describes.
 
 ```mermaid
 flowchart LR
