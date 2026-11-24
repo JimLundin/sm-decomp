@@ -42,10 +42,15 @@ alone and move her position, the view, where the camera last saw her and the col
 of the passage's calls is done, the room's loading
 ([`game::production::room_loading`](../crates/game/src/production/room_loading.rs)) loads its
 part of the next room from the imported world, tilesets, species and sprite palettes, in the
-version her progress chooses. Fetching the tiles heads the colours for the tileset's. Fetching
+version her progress chooses. Building the room gives what play reads of her room from the
+version's imported level and scroll areas: what her moves meet (its blocks, with those its
+scroll PLMs and extensions place, and no actor's box), its doors to other rooms by cell, and
+the camera's room (its screens, size and scrollers; the scroll areas past a preset room's
+screens and the camera's lead stay as they were). Fetching the tiles heads the colours for the tileset's. Fetching
 the contents heads the sprite rows for her suit's, the species' the version loads, the common
 sprites' and the flashing enemies' palettes, and the Ceres doors' colour set for the station's
-stage. It also shows her shots' palette for the beams she has switched on at once. Each later
+stage, and refuses a version placing any other actor, whose box no owner here places. It also
+shows her shots' palette for the beams she has switched on at once. Each later
 cut's only new input is the movie's pad from the preceding vblank. The controller starts as the
 seed leaves it, with the game's last read and the buttons that went down at it, so a button
 held through the seed is not pressed again on the first cut. Her kept action, which the
@@ -102,22 +107,25 @@ $TOOLS replay played chain-any-0003-DFD7 0 344 \
 It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by cut and field or
 dependency name only. An end past the row's last cut plays on through the rows that continue it,
 the same capture's next seeds, without a new seed: each row's cut 0 is the video frame after
-the last cut of the row before, and the run's cuts count on through it. The room facts the run
-holds from its seed (her room's geometry, its doors' cells and its camera screens) have no
-owner for the room a passage brings her into, so the run stops at that room's first frame of
-play as `played room she enters`; the map room and the Ceres doors follow the room from the
-imported world. Played back to back, the Ceres rows from `chain-any-0001-DF45` stop at its
-cut 0 (her arrival's lock), from `chain-any-0002-DF8D` hold 25 cuts (cut 26,
-`movement.position`), and from `chain-any-0003-DFD7` and `chain-any-0004-E021` hold their
-rows and stop at the next row's cut 0 for the room she enters. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
-dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
+the last cut of the row before, and the run's cuts count on through it. The seed room's
+geometry, door cells and camera room are held from the seed; each room a passage brings her
+into is built from the imported world, with its map room and its Ceres doors. Played back to
+back, the Ceres rows from `chain-any-0001-DF45` stop at its cut 0 (her arrival's lock), from
+`chain-any-0002-DF8D` hold 25 cuts (cut 26, `movement.position`), from `chain-any-0003-DFD7`
+hold 786 cuts, through `chain-any-0004-E021` and on to cut 178 of `chain-any-0005-E06B`, and
+from `chain-any-0004-E021` hold 441 cuts to the same stop. That stop is the passage to Ridley's
+room fetching its contents, which place a Ceres actor of a later piece (`LaterCeresActor`).
+CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
+`played`. It is a diagnostic, not yet an indexed obligation.
 
-Eighteen planted faults in the fault matrix, those of the responsibility `played`, stop that
+Nineteen planted faults in the fault matrix, those of the responsibility `played`, stop that
 run at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
 cut 17 in `movement.jump-held`, played from the M0 row's cut 16. A frame on which the doors
-restart the frame count counted on instead differs at cut 238 in `frame-count`. Of the Ceres doors' faults,
+restart the frame count counted on instead differs at cut 238 in `frame-count`. The last room's
+geometry, doors and camera room kept after a passage builds the next differ, played back to back
+from the M0 row's seed, at cut 348 (the next row's cut 3) in `movement.position`. Of the Ceres doors' faults,
 their State held rather than carried differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
 than before differs at cut 7 in `ceres.0.phase`.
 

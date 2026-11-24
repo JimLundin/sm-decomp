@@ -154,6 +154,8 @@ pub enum WorldError {
         /// The parameter.
         parameter: u16,
     },
+    /// A version of the room has a level of another size than the room's screens hold.
+    LevelSize(RoomId),
     /// A doorway's arrival record isn't fully present in the image.
     Arrival {
         /// The doorway.
@@ -337,7 +339,7 @@ fn from_decoded(
         .map(|entry| {
             Ok(Conditional {
                 condition: condition(id, entry.condition)?,
-                version: version(rom, id, entry.state)?,
+                version: version(rom, id, decoded.size, entry.state)?,
             })
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -353,7 +355,7 @@ fn from_decoded(
         item_lighting: item_lighting(decoded.cre),
         doors,
         conditional,
-        default: version(rom, id, decoded.default)?,
+        default: version(rom, id, decoded.size, decoded.default)?,
     })
 }
 
@@ -388,8 +390,13 @@ fn condition(room: RoomId, condition: room::Condition) -> Result<world::Conditio
     }
 }
 
-/// The version a decoded state of room `room` loads.
-fn version(image: Lorom<'_>, room: RoomId, state: RoomState) -> Result<Version, WorldError> {
+/// The version a decoded state of room `room`, of `size`, loads.
+fn version(
+    image: Lorom<'_>,
+    room: RoomId,
+    size: room::Screens,
+    state: RoomState,
+) -> Result<Version, WorldError> {
     let index = TilesetIndex(state.tileset);
     let tileset = TILESETS
         .iter()
@@ -400,7 +407,12 @@ fn version(image: Lorom<'_>, room: RoomId, state: RoomState) -> Result<Version, 
     } else {
         Back::Background
     };
+    if state.layers.layer1.len() != size.blocks() {
+        return Err(WorldError::LevelSize(room));
+    }
     Ok(Version {
+        level: state.layers.layer1,
+        scrolls: state.scroll_areas,
         tileset,
         back,
         plms: state.plms,

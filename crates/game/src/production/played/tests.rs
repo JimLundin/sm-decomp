@@ -77,6 +77,11 @@ fn state(doors: Vec<CeresDoor>) -> State {
             cell: Pair { x: 0, y: 0 },
             blocks: Pair { x: 0, y: 0 },
         },
+        room: super::Room {
+            geometry: empty_world(),
+            doorways: Vec::new(),
+            camera: inputs(types::Buttons::default()).camera,
+        },
         ceres_doors: doors,
         frame: FrameCount(0),
     }
@@ -169,6 +174,7 @@ fn content() -> Content {
             tilesets: data::assets::tilesets::Tilesets::default(),
             actors: data::assets::actors::Actors::default(),
             samus: data::assets::samus::palettes::SamusPalettes::default(),
+            slopes: data::level::slope::Slopes::default(),
         },
         hud: HudPictures::default(),
         map: HerMap::default(),
@@ -190,7 +196,6 @@ fn rules() -> Rules {
 fn play(state: &mut State, held: types::Buttons, ceres: Stage) -> Result<Outputs, Fault> {
     let progress = run_progress::Progress::default();
     let passing = Passing {
-        doorways: &[],
         work_done: true,
         audio: PassageAudio {
             sounds_sent: true,

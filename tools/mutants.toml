@@ -486,3 +486,13 @@ after = "Finishing::Restarts(_) => FrameCount(frame.0.wrapping_add(1)),"
 case = "played chain-any-0003-DFD7 0 344"
 cut = 238
 field = "frame-count"
+
+[[fault]]
+name = "played-room-entered-keeps-the-last"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "self.room = room;"
+after = "drop(room);"
+case = "played chain-any-0003-DFD7 0 786"
+cut = 348
+field = "movement.position"

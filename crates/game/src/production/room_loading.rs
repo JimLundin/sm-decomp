@@ -3,15 +3,23 @@
 //!
 //! The passage says when each call's work is done; this says what it loads. The room that
 //! loads is the one the doorway leads to, in the version progress chooses as she comes in
-//! through it.
+//! through it. Building it ([`room`]) gives what play reads of her room: what her moves meet,
+//! its doors to other rooms by cell, and the camera's room.
 
+use super::connected::inputs::{CameraInputs, Screen};
+use super::played::{Doorway, Room};
+use super::world::{Boundary, MovementWorld};
 use boss_ceres_ridley::{CeresDoor, ColourSet, DoorKind, Stage};
+use core::num::Wrapping;
 use data::assets::actors::{self, Actors, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
 use data::assets::samus::palettes::SamusPalettes;
 use data::assets::tilesets::Tilesets;
-use data::assets::world::{self, CeresDoorKind, World};
+use data::assets::world::{self, CeresDoorKind, Door, ItemLighting, World};
 use data::id::DoorwayId;
+use data::level::slope::{Shape, Slopes};
+use data::level::{BlockKind, PlmChoice, ScrollArea};
+use data::plm::PlmKind;
 use data::room::Area;
 use run_progress::{EnteredRoom, Progress, RoomStates, Version};
 use types::{Item, Side};
@@ -28,6 +36,8 @@ pub struct Rooms {
     pub actors: Actors,
     /// Her suit's and her shots' colours.
     pub samus: SamusPalettes,
+    /// The slopes' shapes, which a slope block names.
+    pub slopes: Slopes,
 }
 
 /// What a room's loading reads of the run.
@@ -56,6 +66,14 @@ pub enum LoadFault {
     Species(data::id::SpeciesId),
     /// The version places a Ceres actor that a later piece of the station models.
     LaterCeresActor,
+    /// The version places actors other than the Ceres doors, whose boxes no owner here places.
+    OtherActors,
+    /// The version places a PLM whose blocks no owner here places.
+    Plm,
+    /// A slope block names a shape the slopes don't hold.
+    Slope,
+    /// The level doesn't make geometry: its size or a chain of stand-ins.
+    Geometry,
 }
 
 /// The screen's first sprite row: the sprite rows follow the eight background rows.
@@ -108,17 +126,21 @@ pub fn load(
     }
 }
 
-/// The Ceres doors the room `through` leads to places as its contents are fetched, in its order
-/// of its enemies, each as a room's start places it (`RoomStart`).
+/// The Ceres doors the room `through` leads to places as its contents are fetched.
+///
+/// They come in its order of its enemies, each as a room's start places it (`RoomStart`). They
+/// are the only actors it places: her motion meets no other actor's box in it.
 ///
 /// # Errors
-/// A doorway or room the content lacks, or a Ceres actor of a later piece, places none.
+/// A doorway or room the content lacks, a Ceres actor of a later piece, or another actor, places
+/// none.
 pub fn ceres_doors(
     through: DoorwayId,
     run: Run<'_>,
     rooms: &Rooms,
 ) -> Result<Vec<CeresDoor>, LoadFault> {
-    version(rooms, through, run.progress)?
+    let version = version(rooms, through, run.progress)?;
+    let doors = version
         .ceres_doors
         .iter()
         .map(|placed| {
@@ -129,7 +151,228 @@ pub fn ceres_doors(
             };
             Ok(CeresDoor::place(kind, facing, placed.position, run.ceres).door)
         })
-        .collect()
+        .collect::<Result<_, _>>()?;
+    if version
+        .enemies
+        .iter()
+        .any(|loaded| loaded.species != actors::CERES_DOOR)
+    {
+        return Err(LoadFault::OtherActors);
+    }
+    Ok(doors)
+}
+
+/// The room `through` leads to, as building it leaves it for play, with the camera's lead and
+/// the scroll areas past its screens kept from `before`.
+///
+/// What her moves meet is the version's level, with the blocks its scroll PLMs and extensions
+/// place as the room starts, and no actor's box: fetching its contents places no actor but the
+/// Ceres doors ([`ceres_doors`]), which play carries itself. The original places those blocks as
+/// the contents are fetched; nothing reads her room between. A door block lets her through when
+/// its door leads to a room. The camera's room is the version's scroll areas, the room's size
+/// and its scrollers.
+///
+/// # Errors
+/// A doorway or room the content lacks, a version placing PLMs no owner here places, or a level
+/// that doesn't make geometry builds none.
+pub fn room(
+    through: DoorwayId,
+    run: Run<'_>,
+    rooms: &Rooms,
+    before: &CameraInputs,
+) -> Result<Room, LoadFault> {
+    let version = version(rooms, through, run.progress)?;
+    let room = entered(rooms, through)?;
+    let unplaced = |kind| matches!(kind, PlmKind::Item(..) | PlmKind::Unmodelled { .. });
+    if version
+        .plms
+        .entries
+        .iter()
+        .any(|entry| unplaced(entry.kind))
+    {
+        return Err(LoadFault::Plm);
+    }
+    let width = room.size.blocks_across();
+    let mut kinds: Vec<BlockKind> = version.level.iter().map(|block| block.kind).collect();
+    for (index, kind) in version.plms.placed_blocks(width) {
+        if let Some(slot) = kinds.get_mut(usize::from(index)) {
+            *slot = kind;
+        }
+    }
+    let mut screens: Vec<Screen> = version.scrolls.iter().copied().map(screen).collect();
+    screens.extend(before.screens.iter().skip(screens.len()));
+    let door_cells = version.level.iter().zip(0_u16..).filter_map(|(block, at)| {
+        let BlockKind::Door(door) = block.kind else {
+            return None;
+        };
+        Some((cell(at, width), door.place()))
+    });
+    Ok(Room {
+        geometry: geometry(room, &kinds, &rooms.slopes)?,
+        doorways: doorways(&rooms.world, room, door_cells)?,
+        camera: CameraInputs {
+            screens,
+            size: [room.size.width, room.size.height].map(u16::from),
+            heights: [room.scrollers.up, room.scrollers.down].map(u16::from),
+            lead: before.lead,
+        },
+    })
+}
+
+/// The camera's screen for a scroll area: the camera tests only for red and blue.
+const fn screen(area: ScrollArea) -> Screen {
+    match area {
+        ScrollArea::Red => Screen::Closed,
+        ScrollArea::Blue => Screen::Short,
+        ScrollArea::Green | ScrollArea::Unknown(_) => Screen::Open,
+    }
+}
+
+/// The cell at `index` of a room `width` blocks across, row-major.
+fn cell(index: u16, width: u16) -> types::Cell {
+    types::Cell {
+        x: index.checked_rem(width).unwrap_or(index),
+        y: index.checked_div(width).unwrap_or(0),
+    }
+}
+
+/// What her moves meet in `room` whose blocks are of `kinds`, row-major.
+fn geometry(
+    room: &world::Room,
+    kinds: &[BlockKind],
+    slopes: &Slopes,
+) -> Result<MovementWorld, LoadFault> {
+    let width = room.size.blocks_across();
+    let cells = kinds
+        .iter()
+        .zip(0_u16..)
+        .map(|(&kind, index)| block(room, kind, slopes, index, width))
+        .collect::<Result<_, _>>()?;
+    // The speed blocks' special block alone lets her through, whichever way she goes.
+    let lets_through = kinds
+        .iter()
+        .map(|kind| matches!(kind, BlockKind::Special(PlmChoice::Common(0x45))))
+        .collect();
+    MovementWorld::new(width, cells, lets_through, Vec::new(), Boundary::Air)
+        .map_err(|_| LoadFault::Geometry)
+}
+
+/// What her moves meet of a block of `kind` at `index`.
+fn block(
+    room: &world::Room,
+    kind: BlockKind,
+    slopes: &Slopes,
+    index: u16,
+    width: u16,
+) -> Result<types::Block, LoadFault> {
+    Ok(match kind {
+        BlockKind::Air(_)
+        | BlockKind::UnusedAir(_)
+        | BlockKind::SpikeAir(_)
+        | BlockKind::ShootableAir(_)
+        | BlockKind::BombableAir(_)
+        | BlockKind::SpecialAir(_) => types::Block::Air,
+        BlockKind::Solid(_)
+        | BlockKind::Spike(_)
+        | BlockKind::Shootable(_)
+        | BlockKind::Grapple(_) => types::Block::Solid,
+        BlockKind::Bombable(_) | BlockKind::Special(_) => types::Block::Answered,
+        BlockKind::Door(door) => match room.doors.get(door.place()) {
+            Some(Door::To(_)) => types::Block::Air,
+            Some(Door::Nowhere) | None => types::Block::Solid,
+        },
+        BlockKind::HorizontalExtension(_) | BlockKind::VerticalExtension(_) => {
+            types::Block::StandsFor(kind.stands_for(index, width).map(|at| cell(at, width)))
+        }
+        BlockKind::Slope(slope) => match slopes.shape(slope.shape).ok_or(LoadFault::Slope)? {
+            Shape::Square(square) => types::Block::Stepped(core::array::from_fn(|row| {
+                core::array::from_fn(|column| {
+                    square.solid_at((column != 0) ^ slope.x_flip, (row != 0) ^ slope.y_flip)
+                })
+            })),
+            Shape::Surface(surface) => {
+                let mut tops = surface.tops;
+                if slope.x_flip {
+                    tops.reverse();
+                }
+                types::Block::Slope(types::Slope {
+                    faces: if slope.y_flip {
+                        types::SlopeFaces::Ceiling
+                    } else {
+                        types::SlopeFaces::Floor
+                    },
+                    depth: tops.map(|depth| Wrapping(u16::from(depth.min(17)))),
+                    factor: types::SlopeFactor(surface.factor),
+                })
+            }
+        },
+    })
+}
+
+/// The doors to other rooms of `room`, by the cell of each of its door blocks `door_cells`.
+///
+/// Each door cell comes with the block's place in the room's doors. A door gives the doorway it
+/// leads through, where she arrives, whether either room keeps the items dark, and where the
+/// next room sits on her map when it is in the same area. A door that leads nowhere is no door
+/// to another room.
+///
+/// # Errors
+/// A doorway or room the world lacks.
+pub fn doorways(
+    world: &World,
+    room: &world::Room,
+    door_cells: impl IntoIterator<Item = (types::Cell, usize)>,
+) -> Result<Vec<Doorway>, LoadFault> {
+    let mut doorways = Vec::new();
+    for (cell, place) in door_cells {
+        let Some(&Door::To(through)) = room.doors.get(place) else {
+            continue;
+        };
+        let doorway = world.doorway(through).ok_or(LoadFault::Room(through))?;
+        let next = world.room(doorway.room).ok_or(LoadFault::Room(through))?;
+        doorways.push(Doorway {
+            cell,
+            through,
+            arrival: world_doors::Arrival {
+                way: doorway.arrival.way,
+                view: types::Pair {
+                    x: doorway.arrival.view.x.pixels(),
+                    y: doorway.arrival.view.y.pixels(),
+                },
+                speed: doorway.arrival.speed,
+            },
+            items_dark: [room, next]
+                .iter()
+                .any(|room| room.item_lighting == ItemLighting::Dark),
+            map_room: (next.place.area == room.place.area).then(|| map_room(next)),
+        });
+    }
+    Ok(doorways)
+}
+
+/// Where `room` sits on her map, as the HUD reads it: its row counts from the row above its
+/// first cell.
+#[must_use]
+pub fn map_room(room: &world::Room) -> interface_hud::Room {
+    interface_hud::Room {
+        cell: types::Pair {
+            x: i32::from(room.place.x),
+            y: i32::from(room.place.y).saturating_add(1),
+        },
+        blocks: types::Pair {
+            x: room.size.blocks_across(),
+            y: u16::from(room.size.height).wrapping_mul(16),
+        },
+    }
+}
+
+/// The room `through` leads to.
+fn entered(rooms: &Rooms, through: DoorwayId) -> Result<&world::Room, LoadFault> {
+    rooms
+        .world
+        .doorway(through)
+        .and_then(|doorway| rooms.world.room(doorway.room))
+        .ok_or(LoadFault::Room(through))
 }
 
 /// Fetching the contents, in the original's order, so a later row wins where two share one:
@@ -214,11 +457,7 @@ fn version<'a>(
     through: DoorwayId,
     progress: &Progress,
 ) -> Result<&'a world::Version, LoadFault> {
-    let room = rooms
-        .world
-        .doorway(through)
-        .and_then(|doorway| rooms.world.room(doorway.room))
-        .ok_or(LoadFault::Room(through))?;
+    let room = entered(rooms, through)?;
     let conditions: Vec<_> = room
         .conditional
         .iter()
@@ -267,7 +506,8 @@ const fn area(area: Area) -> Result<types::Area, LoadFault> {
 
 #[cfg(test)]
 mod tests {
-    use super::{LoadFault, Rooms, Run, load};
+    use super::{LoadFault, Rooms, Run, load, room};
+    use crate::production::connected::inputs::{CameraInputs, Lead, Screen};
     use data::assets::actors::{
         Actors, CERES_DOOR, CeresDoorColours, EnemyGraphics, Species, SpriteRow,
     };
@@ -279,6 +519,7 @@ mod tests {
         ScreenCoordinate, Version, World,
     };
     use data::id::{DoorwayId, RoomId, SpeciesId, TilesetId};
+    use data::level::{Block, ScrollArea};
     use data::room::{Area, Screens, Scrollers};
     use world_doors::{COLOURS, Palette, RoomCall};
 
@@ -287,8 +528,19 @@ mod tests {
     const CHOSEN: DoorwayId = DoorwayId(1);
     const OTHER: DoorwayId = DoorwayId(2);
 
+    /// A version drawing from `tileset`: a level of air but for a solid block at (1, 0), a door
+    /// block of the room's first door at (1, 1) and of a door it lacks at (2, 1); the first
+    /// screen short.
     fn version(tileset: u16) -> Version {
+        let block = |at: usize| match at {
+            1 => Block::new(0x8000, 0),
+            17 => Block::new(0x9000, 0),
+            18 => Block::new(0x9000, 5),
+            _ => Block::default(),
+        };
         Version {
+            level: (0..256).map(block).collect(),
+            scrolls: vec![ScrollArea::Blue],
             tileset: TilesetId(tileset),
             back: data::assets::world::Back::Level,
             plms: data::plm::PlmPopulation::default(),
@@ -309,6 +561,11 @@ mod tests {
     }
 
     fn rooms() -> Rooms {
+        rooms_of(version(1), version(0))
+    }
+
+    /// The rooms of one room whose version entered by [`CHOSEN`] is `chosen`.
+    fn rooms_of(chosen: Version, default: Version) -> Rooms {
         let doorway = |id| Doorway {
             id,
             room: ROOM,
@@ -332,14 +589,17 @@ mod tests {
                 width: 1,
                 height: 1,
             },
-            scrollers: Scrollers { up: 0, down: 0 },
+            scrollers: Scrollers {
+                up: 0x70,
+                down: 0xa0,
+            },
             item_lighting: ItemLighting::Lit,
             doors: vec![Door::To(CHOSEN), Door::To(OTHER)],
             conditional: vec![Conditional {
                 condition: data::assets::world::Condition::EnteredBy(CHOSEN),
-                version: version(1),
+                version: chosen,
             }],
-            default: version(0),
+            default,
         };
         Rooms {
             world: World::new(vec![room], vec![doorway(CHOSEN), doorway(OTHER)]).unwrap(),
@@ -361,6 +621,7 @@ mod tests {
                     escape: [Colour(0x0077); 15],
                 },
             },
+            slopes: data::level::slope::Slopes::default(),
             samus: SamusPalettes {
                 suits: Suits {
                     power: Row([Colour(0x0088); 16]),
@@ -469,6 +730,88 @@ mod tests {
         assert_eq!(
             loaded(RoomCall::FetchTiles, DoorwayId(9)),
             Err(LoadFault::Room(DoorwayId(9)))
+        );
+    }
+
+    fn built(rooms: &Rooms) -> Result<super::Room, LoadFault> {
+        let before = CameraInputs {
+            screens: vec![Screen::Closed; 3],
+            size: [4, 4],
+            heights: [1, 2],
+            lead: Lead::Near,
+        };
+        let progress = run_progress::Progress::default();
+        let run = Run {
+            progress: &progress,
+            ceres: boss_ceres_ridley::Stage::Calm,
+        };
+        room(CHOSEN, run, rooms, &before)
+    }
+
+    #[test]
+    fn building_the_room_gives_its_blocks_its_doors_by_cell_and_its_screens() {
+        let built = built(&rooms()).unwrap();
+        let at = |x, y| types::World::block(&built.geometry, types::Cell { x, y });
+        assert_eq!(at(1, 0), types::Block::Solid);
+        assert_eq!(at(0, 0), types::Block::Air);
+        assert_eq!(
+            at(1, 1),
+            types::Block::Air,
+            "a door to a room lets her through"
+        );
+        assert_eq!(
+            at(2, 1),
+            types::Block::Solid,
+            "a door the room lacks doesn't"
+        );
+        let cells: Vec<_> = built
+            .doorways
+            .iter()
+            .map(|door| (door.cell, door.through))
+            .collect();
+        assert_eq!(cells, [(types::Cell { x: 1, y: 1 }, CHOSEN)]);
+        assert_eq!(
+            built.camera,
+            CameraInputs {
+                screens: vec![Screen::Short, Screen::Closed, Screen::Closed],
+                size: [1, 1],
+                heights: [0x70, 0xa0],
+                lead: Lead::Near,
+            }
+        );
+    }
+
+    #[test]
+    fn a_version_placing_another_actor_places_no_doors() {
+        let mut other = version(1);
+        other.enemies[0].species = SpeciesId(0);
+        let progress = run_progress::Progress::default();
+        let run = Run {
+            progress: &progress,
+            ceres: boss_ceres_ridley::Stage::Calm,
+        };
+        let rooms = rooms_of(other, version(0));
+        assert_eq!(
+            super::ceres_doors(CHOSEN, run, &rooms),
+            Err(LoadFault::OtherActors)
+        );
+        assert_eq!(super::ceres_doors(OTHER, run, &rooms), Ok(Vec::new()));
+    }
+
+    #[test]
+    fn a_version_placing_unplaced_plms_or_a_short_level_builds_no_room() {
+        let mut item = version(1);
+        item.plms.entries.push(data::plm::PlmEntry {
+            kind: data::plm::PlmKind::Item(data::plm::ItemPlm::MorphBall, 0),
+            x: 0,
+            y: 0,
+        });
+        assert_eq!(built(&rooms_of(item, version(0))), Err(LoadFault::Plm));
+        let mut short = version(1);
+        short.level.pop();
+        assert_eq!(
+            built(&rooms_of(short, version(0))),
+            Err(LoadFault::Geometry)
         );
     }
 }

@@ -337,3 +337,19 @@ fn imported_room_lighting_survives_unrelated_header_flags() {
     dark.item_lighting = world::ItemLighting::Lit;
     assert_eq!(dark, lit);
 }
+
+#[test]
+fn every_loaded_version_holds_a_block_for_each_of_its_rooms_and_its_screens_scroll_areas() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let world = import(cartridge.lorom(), &LOADED).unwrap();
+    for room in world.rooms() {
+        let versions = room.conditional.iter().map(|entry| &entry.version);
+        for version in versions.chain([&room.default]) {
+            assert_eq!(version.level.len(), room.size.blocks(), "{:?}", room.id);
+            let screens = usize::from(room.size.width) * usize::from(room.size.height);
+            assert!(version.scrolls.len() >= screens, "{:?}", room.id);
+        }
+    }
+}

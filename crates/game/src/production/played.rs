@@ -13,7 +13,8 @@
 //! A frame whose moves reach a door to a room plays out whole, and the passage starts on the
 //! next. While it runs, her motion, her animation and the camera don't: the passage moves her
 //! position, the view and the colours, and nothing else of theirs changes. As each of the
-//! passage's calls is done, the room's loading loads its part of the next room.
+//! passage's calls is done, the room's loading loads its part of the next room; building it
+//! replaces her room: what her moves meet, its doors to other rooms and the camera's room.
 //!
 //! Health plays first. Her animation reads the energy the frame's tail hit leaves, before the
 //! frame's loss; no Ridley is in this loop, so that is the energy the frame starts with. The
@@ -110,11 +111,21 @@ pub struct Doorway {
     pub map_room: Option<interface_hud::Room>,
 }
 
+/// What play reads of the room she is in: what her moves meet, its doors to other rooms, and
+/// the camera's room. A passage's building of the next room replaces it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Room {
+    /// The room's blocks and the boxes of its solid actors other than the Ceres doors.
+    pub geometry: super::world::MovementWorld,
+    /// Its doors to other rooms, by cell.
+    pub doorways: Vec<Doorway>,
+    /// Its screens, size, scrollers and the camera's lead.
+    pub camera: CameraInputs,
+}
+
 /// What a frame brings the doors from owners outside this loop.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Passing<'a> {
-    /// The room's doors to other rooms.
-    pub doorways: &'a [Doorway],
     /// The platform's: the passage's work in progress is done by this frame's end.
     pub work_done: bool,
     /// Audio's answers.
@@ -182,6 +193,8 @@ pub struct State {
     pub hud: Model<HudPin>,
     /// Where her room sits on her map.
     pub map_room: interface_hud::Room,
+    /// What play reads of her room.
+    pub room: Room,
     /// The room's Ceres doors, in its order of its enemies.
     pub ceres_doors: Vec<CeresDoor>,
     /// The game's count of finished frames, in eight bits, which the HUD reads as the frame
@@ -234,6 +247,8 @@ pub enum Fault {
 
 impl State {
     /// Play one frame from `inputs`. The candidate commits only when every owner completed.
+    /// Her room is State's own ([`State::room`]); the geometry and camera room of `inputs` are
+    /// not read.
     ///
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
@@ -251,7 +266,7 @@ impl State {
         if matches!(self.doors, Doors::Passing(_)) {
             return self.pass(passing, content, rules);
         }
-        inputs.geometry.validate().map_err(|_| Fault::Geometry)?;
+        self.room.geometry.validate().map_err(|_| Fault::Geometry)?;
         if inputs.items[Item::VariaSuit] || inputs.items[Item::GravitySuit] {
             return Err(Fault::Suit);
         }
@@ -259,7 +274,7 @@ impl State {
             .health
             .0
             .play_frame(samus_health::TailImpact::Absent, &rules.health);
-        let room = camera_room(&inputs.camera)?;
+        let room = camera_room(&self.room.camera)?;
         let start = self.figure.0;
         // The doors run before she moves, but her motion meets them as they block when the
         // frame began.
@@ -269,7 +284,7 @@ impl State {
             passing.ceres,
             &rules.ceres,
         )?;
-        let world = WithDoors::new(&inputs.geometry, &self.ceres_doors);
+        let world = WithDoors::new(&self.room.geometry, &self.ceres_doors);
         let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
         let after = Figure {
             pose: samus.pose,
@@ -298,12 +313,13 @@ impl State {
             &world_camera::Frame {
                 samus: camera_semantic::completed_samus(&samus, &outcome),
                 room: &room,
-                lead: lead(inputs.camera.lead),
+                lead: lead(self.room.camera.lead),
                 time_stopped: false,
             },
         );
 
-        let touched = passing
+        let touched = self
+            .room
             .doorways
             .iter()
             .find(|doorway| {
@@ -330,20 +346,18 @@ impl State {
             &rules.doors,
         );
 
-        *self = Self {
-            movement: Model(samus),
-            appearance: Model(appearance),
-            figure: Model(after),
-            camera: Model(camera),
-            doors: doors.doors,
-            doorway: touched,
-            palette: doors.scene.palette,
-            health: Model(health.state),
-            hud: Model(hud_state),
-            map_room: self.map_room,
-            ceres_doors: ceres.iter().map(|run| run.door).collect(),
-            frame: counted(self.frame, doors.report.finishing),
-        };
+        // Her room and where it sits on her map stay as they are through a frame of play.
+        self.movement = Model(samus);
+        self.appearance = Model(appearance);
+        self.figure = Model(after);
+        self.camera = Model(camera);
+        self.doors = doors.doors;
+        self.doorway = touched;
+        self.palette = doors.scene.palette;
+        self.health = Model(health.state);
+        self.hud = Model(hud_state);
+        self.ceres_doors = ceres.iter().map(|run| run.door).collect();
+        self.frame = counted(self.frame, doors.report.finishing);
         Ok(Outputs {
             movement: Some(outcome),
             sounds: shown.sounds,
@@ -433,6 +447,7 @@ impl State {
         } else {
             ceres.iter().map(|run| run.door).collect()
         };
+        let mut built = None;
         if let Some(doorway) = self.doorway {
             let run = room_loading::Run {
                 progress: passing.progress,
@@ -446,11 +461,32 @@ impl State {
                 &mut palette,
             )
             .map_err(Fault::Load)?;
-            // The next room's contents let the last room's doors go and place its own.
-            if exports.report.call == Some(RoomCall::FetchContents) {
-                ceres_doors = room_loading::ceres_doors(doorway.through, run, &content.rooms)
-                    .map_err(Fault::Load)?;
+            match exports.report.call {
+                // Building the next room replaces what play reads of hers.
+                Some(RoomCall::BuildRoom) => {
+                    built = Some(
+                        room_loading::room(doorway.through, run, &content.rooms, &self.room.camera)
+                            .map_err(Fault::Load)?,
+                    );
+                }
+                // The next room's contents let the last room's doors go and place its own.
+                Some(RoomCall::FetchContents) => {
+                    ceres_doors = room_loading::ceres_doors(doorway.through, run, &content.rooms)
+                        .map_err(Fault::Load)?;
+                }
+                None
+                | Some(
+                    RoomCall::LeaveRoom
+                    | RoomCall::DrawTopRow
+                    | RoomCall::FetchTiles
+                    | RoomCall::AnimateTiles
+                    | RoomCall::PlayMusic
+                    | RoomCall::ReadLiquid,
+                ) => {}
             }
+        }
+        if let Some(room) = built {
+            self.room = room;
         }
         let kept = camera.seen();
         self.movement.0.position = her;

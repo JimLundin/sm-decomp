@@ -25,10 +25,10 @@ use crate::source;
 use canonical::model::Model;
 use data::{assets::world, rom::Rom, room::RoomKey};
 use game::production::connected::inputs::Inputs;
-use game::production::played;
+use game::production::{played, room_loading};
 use oracle_record::{Cut, FrameRecord, NmiKind};
 use std::path::Path;
-use types::{Pair, Parity};
+use types::Parity;
 use world_doors::{ColourGroup, Doors, Fetching, Palette, Passage, Phase};
 
 /// Room facts taken from the seed and held, because no selected owner produces them yet.
@@ -45,8 +45,8 @@ pub const SEED_HELD: &[&str] = &[
     "the owners active at her stride: a cinematic, a boss, special colour time",
     "her shot's charge, which no frame of play reads",
     "cinematic and elevator status",
-    "room geometry and the boxes of actors other than the Ceres doors",
-    "camera room settings and lead",
+    "the seed room's geometry and the boxes of its actors other than the Ceres doors",
+    "the seed room's camera screens, size and scrollers, and the camera's lead",
     "escape timer",
     "passage sounds sent and music ready",
     "progress, which chooses the next room's version, her suit and her beams",
@@ -156,7 +156,6 @@ fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
 /// Seed-held room facts and the seed's frame counter.
 struct Room {
     inputs: Inputs,
-    doorways: Vec<played::Doorway>,
     timer_running: bool,
     /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
     sounds_sent: bool,
@@ -177,7 +176,13 @@ struct HudHeld {
     map_collected: bool,
 }
 
-fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, Outcome> {
+/// The facts held from the seed, and what play reads of the seed's room: its geometry and
+/// camera room as the seed holds them, and its doors by the seed's door cells.
+fn room(
+    seed: &[u8],
+    content: &connected::Content,
+    world: &world::World,
+) -> Result<(Room, played::Room), Outcome> {
     if let Some(refused) = locked(seed)? {
         return Err(refused);
     }
@@ -189,11 +194,15 @@ fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, 
         });
     }
     let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
-    let (doorways, map) = doorways(seed, image)?;
-    Ok(Room {
+    let (doorways, map) = doorways(seed, world)?;
+    let played = played::Room {
+        geometry: inputs.geometry.clone(),
+        doorways,
+        camera: inputs.camera.clone(),
+    };
+    let held = Room {
         sounds_sent: inputs.sounds_waiting == samus_appearance::SoundsWaiting::NONE,
         inputs,
-        doorways,
         map,
         hud: HudHeld {
             bindings: hud::bindings(seed)?,
@@ -214,7 +223,8 @@ fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, 
             }
         },
         counter: word(seed, source::NMI_FRAME_COUNTER_WORD)?,
-    })
+    };
+    Ok((held, played))
 }
 
 /// Samus's new-state handler, a bank $90 routine pointer: `$E8DC` while the game holds her
@@ -237,69 +247,35 @@ fn locked(wram: &[u8]) -> Result<Option<Outcome>, Outcome> {
     )
 }
 
-/// Where `room` sits on her map, as the HUD reads it.
-fn map_room(room: &world::Room) -> interface_hud::Room {
-    let blocks_down = u16::from(room.size.height).wrapping_mul(16);
-    hud::room_from_words(
-        [u16::from(room.place.x), u16::from(room.place.y)],
-        [room.size.blocks_across(), blocks_down],
-    )
-}
-
 type Doorways = (
     Vec<played::Doorway>,
     (interface_hud::Room, data::room::Area),
 );
 
-/// The room's doors to other rooms, by cell, and where the room sits on her map, from the
-/// imported world.
-fn doorways(seed: &[u8], image: &Rom) -> Result<Doorways, Outcome> {
-    use data::assets::world::{Door, ItemLighting};
+/// The seed room's doors to other rooms, by the seed's door cells, and where the room sits on
+/// her map, from the imported world.
+fn doorways(seed: &[u8], world: &world::World) -> Result<Doorways, Outcome> {
     let bad = || data_failure(None, "played room doors");
     let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
         .ok_or_else(bad)?;
-    let world = import::world::import(image.lorom(), &[id]).map_err(|_| bad())?;
     let room = world.room(id).ok_or_else(bad)?;
-    let area = room.place.area;
-    let mut doorways = Vec::new();
-    for (cell, place) in movement::door_cells(seed)? {
-        let Some(Door::To(to)) = room.doors.get(place) else {
-            continue;
-        };
-        let doorway = world.doorway(*to).ok_or_else(bad)?;
-        let next = import::world::import(image.lorom(), &[doorway.room]).map_err(|_| bad())?;
-        let next = next.room(doorway.room).ok_or_else(bad)?;
-        doorways.push(played::Doorway {
-            cell,
-            through: *to,
-            arrival: world_doors::Arrival {
-                way: doorway.arrival.way,
-                view: Pair {
-                    x: doorway.arrival.view.x.pixels(),
-                    y: doorway.arrival.view.y.pixels(),
-                },
-                speed: doorway.arrival.speed,
-            },
-            items_dark: [room, next]
-                .iter()
-                .any(|room| room.item_lighting == ItemLighting::Dark),
-            map_room: (next.place.area == area).then(|| map_room(next)),
-        });
-    }
-    Ok((doorways, (map_room(room), area)))
+    let doorways =
+        room_loading::doorways(world, room, movement::door_cells(seed)?).map_err(|_| bad())?;
+    Ok((doorways, (room_loading::map_room(room), room.place.area)))
 }
 
-/// The rooms the engine loads, their tilesets and the sprites' colours, imported from the
-/// player's ROM.
-fn rooms(image: &Rom) -> Result<game::production::room_loading::Rooms, Outcome> {
+/// The rooms the engine loads, their tilesets, the sprites' colours and the slopes, imported
+/// from the player's ROM.
+fn rooms(image: &Rom) -> Result<room_loading::Rooms, Outcome> {
     let bad = || data_failure(None, "played rooms import");
     let world = import::world::import(image.lorom(), &import::world::LOADED).map_err(|_| bad())?;
     let tilesets = import::tileset::import(image.lorom(), &world).map_err(|_| bad())?;
-    Ok(game::production::room_loading::Rooms {
+    Ok(room_loading::Rooms {
         world,
         tilesets,
         actors: import::actors::import(image.lorom()).map_err(|_| bad())?,
         samus: import::samus::palettes::import(image.lorom()).map_err(|_| bad())?,
+        slopes: data::level::slope::Slopes::load(image.lorom()).map_err(|_| bad())?,
     })
 }
 
@@ -667,8 +643,6 @@ struct Run<'a> {
     content: &'a connected::Content,
     hud: hud::Content,
     row: &'a str,
-    /// A passage has brought her into another room, whose held facts the run doesn't have.
-    entered: bool,
 }
 
 impl<'a> Run<'a> {
@@ -680,7 +654,8 @@ impl<'a> Run<'a> {
     ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played ROM image");
         let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
-        let room = room(&seed.wram, content, &image)?;
+        let rooms = rooms(&image)?;
+        let (room, seeded) = room(&seed.wram, content, &rooms.world)?;
         let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
         let hud = hud::Content::load(path)?;
         let (map_room, area) = room.map;
@@ -700,6 +675,7 @@ impl<'a> Run<'a> {
                 health: Model(health_tail::decode(&seed.wram, None)?),
                 hud: Model(hud::decode_state(&seed.wram)?),
                 map_room,
+                room: seeded,
                 ceres_doors,
                 frame: hud::frame_count(&seed.wram)?,
             },
@@ -707,7 +683,7 @@ impl<'a> Run<'a> {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 colour_groups: groups(),
-                rooms: rooms(&image)?,
+                rooms,
                 hud: hud.pictures,
                 map: hud.map_of(area)?.clone(),
             },
@@ -724,7 +700,6 @@ impl<'a> Run<'a> {
             content,
             hud,
             row,
-            entered: false,
         })
     }
 
@@ -741,15 +716,6 @@ impl<'a> Run<'a> {
         if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
             return Err(data_failure(None, "played pad alignment"));
         }
-        // The room's geometry, its doors' cells and its camera screens are the seed room's;
-        // no owner yet loads them for the room a passage brings her into.
-        if self.entered && self.state.doors == Doors::Play {
-            return Err(Outcome::Unsupported {
-                cut: None,
-                dependency: "played room she enters: its geometry, door cells and camera screens"
-                    .into(),
-            });
-        }
         // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
         if self.state.doors == Doors::Play && !finished(current) {
             return Err(Outcome::Unsupported {
@@ -757,13 +723,11 @@ impl<'a> Run<'a> {
                 dependency: "lag cut in play (T1)".into(),
             });
         }
-        let passing_before = matches!(self.state.doors, Doors::Passing(_));
         let mut inputs = self.room.inputs.clone();
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
         inputs.parity = parity(self.room.counter);
         let passing = played::Passing {
-            doorways: &self.room.doorways,
             work_done: finished(current) || fetching_contents(self.state.doors),
             audio: played::PassageAudio {
                 sounds_sent: self.room.sounds_sent,
@@ -791,7 +755,6 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        self.entered |= passing_before && self.state.doors == Doors::Play;
         if polled(current) {
             self.room.counter = self.room.counter.wrapping_add(1);
         }
@@ -1010,6 +973,24 @@ mod tests {
             rom: path("SM_ROM"),
             lock: path("SM_LOCK"),
             ..Default::default()
+        }
+    }
+
+    /// The Ceres rows played back to back from cut 0, each on through the rooms she enters.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn ceres_rows_played_back_to_back() {
+        let sources = sources();
+        for row in [
+            "chain-any-0002-DF8D",
+            "chain-any-0003-DFD7",
+            "chain-any-0004-E021",
+        ] {
+            let report = super::play(&sources, row, 0, 3000).unwrap();
+            diagnostic(format_args!(
+                "PLAYED_ALONE row={} start={} held={} stop={:?}",
+                report.row, report.start, report.held, report.stop
+            ));
         }
     }
 

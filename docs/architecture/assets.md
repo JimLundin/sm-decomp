@@ -102,7 +102,7 @@ are variants of it that share what they share.
 Of these, `data::assets::world` holds today what the engine reads of a room: `World`, with its
 rooms and the `Doorway`s their doors lead through (each names the room it leads into), and
 `Room` with its place, size, scrollers and doors, and its versions with the tileset, layer 2
-(`Back`), PLMs and enemy graphics of each. Ids come from registries: rooms from `world::rooms` (slice 0's room,
+(`Back`), PLMs, enemy graphics, level (the front layer's blocks) and scroll areas of each. Ids come from registries: rooms from `world::rooms` (slice 0's room,
 Ceres's six and the rooms their doors lead to), doorways from `world::doorways` (every doorway
 those rooms' doors lead through), tilesets from `data::assets::tilesets` (those their versions
 draw from); `import::world` maps the original's room headers, door headers and tileset indices
@@ -111,7 +111,8 @@ changes hold no ROM address: a door names its `DoorwayId`, a version's condition
 own `Condition` in progress's terms (a doorway by its `DoorwayId`), and a PLM population names
 its scroll change lists by their place in it. The importer refuses a room, doorway, tileset or
 boss bit no id stands for. The engine loads `import::world::LOADED`, slice 0's room and
-Ceres's six: their PLMs and doors come from the records; the level is read from work RAM. The
+Ceres's six: their PLMs, doors, levels and scroll areas come from the records; the played run
+reads the seed room's level from work RAM and builds each room she enters from the records. The
 verifier reads a version's tileset and layer 2 from the records too, and asks the importer
 alone where the original keeps a version's state header and scroll change lists, which the
 work RAM names by place. The world's `Condition` and progress's stay two types: progress is a

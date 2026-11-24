@@ -5,8 +5,8 @@
 //! default; and the doorways their doors lead through, by our [`DoorwayId`].
 //!
 //! `import::world` builds it from the ROM; the engine reads only this. It holds what the
-//! engine reads of a room today: a version's PLMs, tileset, layer 2, enemy graphics and Ceres
-//! doors, and the room's doors.
+//! engine reads of a room today: a version's level, scroll areas, PLMs, tileset, layer 2, enemy
+//! graphics and Ceres doors, and the room's doors.
 //! A record names other content by our ids, never by where the original keeps it.
 
 pub mod doorways;
@@ -16,6 +16,7 @@ pub use types::{BossKind, Event, Fixed, Heading, Item, Pair, Px, Set, Side};
 
 use crate::assets::actors::EnemyGraphics;
 use crate::id::{DoorwayId, RoomId, TilesetId};
+use crate::level::{Block, ScrollArea};
 use crate::plm::PlmPopulation;
 use crate::room::{Area, Screens, Scrollers};
 
@@ -109,6 +110,13 @@ pub enum Back {
 /// One version of a room: what loads when its condition chooses it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Version {
+    /// Its level's front layer, a block each, row-major from the top left: as many as the
+    /// room's screens hold.
+    pub level: Vec<Block>,
+    /// The camera's scroll areas, a screen each, row-major. A table's run on past the room's
+    /// screens with the bytes the original keeps after them; preset areas cover the room's
+    /// screens alone, and the run past them stays as the last room left it.
+    pub scrolls: Vec<ScrollArea>,
     /// The tileset its blocks draw from.
     pub tileset: TilesetId,
     /// What layer 2 shows.
@@ -284,6 +292,8 @@ mod tests {
 
     fn room(id: RoomId) -> Room {
         let version = || Version {
+            level: Vec::new(),
+            scrolls: Vec::new(),
             tileset: TilesetId(0),
             back: Back::Level,
             plms: PlmPopulation {
