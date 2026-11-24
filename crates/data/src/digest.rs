@@ -2,7 +2,7 @@
 //! the engine's verifier so both sides compute the same marks (docs/ORACLE.md, RELOCK §2).
 //!
 //! Every committed lock digest depends on these constants. They were moved
-//! bit for bit from the old engine (git tag `archive/old-engine`).
+//! bit for bit from the old engine (commit `09486a2fd`).
 
 use core::hash::Hasher;
 

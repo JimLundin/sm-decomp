@@ -439,7 +439,7 @@ const ROUTES: &[&str] = &[
     "c4a/logs",
     ".decode.md",
     "decode notes",
-    "archive/old-engine",
+    "09486a2fd",
     "sm/src",
     "ram_map",
     "collab/reviews",

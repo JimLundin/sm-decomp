@@ -1,6 +1,6 @@
 //! The original's work RAM, as the named sources the decode rules read.
 //!
-//! Each source carries its `ram_map.rs` name (the old engine's `ram_map.rs`, git tag `archive/old-engine`, from
+//! Each source carries its `ram_map.rs` name (the old engine's `ram_map.rs` at commit `09486a2fd`, from
 //! its `ram_table!`) and its offset in bank $7E, checked against the bank logs
 //! (<https://patrickjohnston.org/bank/>). The engine crates hold no addresses (K1); this
 //! table is the one place the decoder learns where the original keeps a value.
@@ -1296,7 +1296,7 @@ pub struct WramTable {
 /// A word every slot of a table holds, at the same place in each.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SlotField {
-    /// The field's name in the old engine's slot layout (git tag `archive/old-engine`).
+    /// The field's name in the old engine's slot layout (commit `09486a2fd`).
     pub name: &'static str,
     /// Its offset from the slot's start.
     pub offset: u16,

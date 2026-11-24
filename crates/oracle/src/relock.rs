@@ -276,7 +276,7 @@ pub struct Recorded {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FactResult {
     Holds(bool),
-    /// Not evaluated: `probe:` facts are old-engine instrumentation, and the
+    /// Not evaluated: `probe:` facts are the old engine's instrumentation, and the
     /// others wait for `verify::decode` (step c, second part).
     Unevaluated,
 }

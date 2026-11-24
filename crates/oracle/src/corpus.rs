@@ -141,7 +141,7 @@ pub fn run_row_with(
     let start = match (&pin.seed, &pin.checkpoint) {
         (_, Some(checkpoint)) => {
             return Err(RowError::NotRun(format!(
-                "starts from the old verifier's checkpoint (git tag `archive/old-engine`) {checkpoint}"
+                "starts from the old verifier's checkpoint (commit `09486a2fd`) {checkpoint}"
             )));
         }
         (Some(seed), None) => {
