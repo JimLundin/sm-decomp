@@ -75,6 +75,10 @@ done
 # Each fault worker and dispatched target is its own verdict.
 [ "$(bash "$verdict" fingerprint faults-0)" != "$(bash "$verdict" fingerprint faults-1)" ] ||
   no "two fault workers share a fingerprint"
+# One image release under two build numbers is one image; a new release is a new one.
+image() { ImageOS=ubuntu24 ImageVersion=$1 bash "$verdict" fingerprint replay; }
+[ "$(image 20261116.133.1)" = "$(image 20261116.376.1)" ] || no "one image release has two fingerprints"
+[ "$(image 20261116.133.1)" != "$(image 20261123.1.1)" ] || no "two image releases share a fingerprint"
 
 [ "$fail" = 0 ] && echo "VERDICT INPUTS OK"
 exit "$fail"
