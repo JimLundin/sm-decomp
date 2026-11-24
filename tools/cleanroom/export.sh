@@ -175,9 +175,11 @@ disassemblies or annotated listings); if you recognise something from such a sou
   each as its own command.
 - \`cargo test\` builds the tests but cannot run them: this machine blocks the test executables.
   Run the tests with the one command your brief gives, a Python interpreter on a fixed runner
-  outside this directory, exactly as written and with nothing added. It links each test target
-  of the clean crates as a library, runs it and prints libtest's output. No other Python is
-  allowed.
+  outside this directory, exactly as written and with nothing added. It first checks two of
+  DESIGN.md's rules, modules importing in one direction only and no struct that only wraps one
+  call's arguments, and names each place that breaks one; then it links each test target of the
+  clean crates as a library, runs it and prints libtest's output. A broken rule fails the run as
+  a failed test does. No other Python is allowed.
 - Report a gap you can't explain, with the vector, the field, the expected and actual values and
   the spec entry you suspect.
 EOF

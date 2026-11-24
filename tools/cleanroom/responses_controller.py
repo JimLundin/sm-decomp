@@ -586,7 +586,10 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
             raise Refused("blind copy contains unreachable objects")
     if not probe:
         operator([paths["bash"], str(here / "scan_brief.sh"), str(brief.resolve(strict=True))], here.parent.parent)
-    shutil.copyfile(here / "vector_runner.py", lane / "vector_runner.py")
+    # The runner and the shape scan it runs before the tests (vector_runner.py).
+    runner_files = ("vector_runner.py", "strip_rust.awk", "shape_scan.awk")
+    for name in runner_files:
+        shutil.copyfile(here / name, lane / name)
     shutil.copyfile(brief, lane / "brief.txt")
     commands = {
         "code_check": [paths["bash"], str(here / "code_check.sh"), "--import",
@@ -613,7 +616,7 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         "transcript": str(transcript), "provider_config": str(home / ".codex" / "config.toml"),
         "writable": ["crates/clean/types/", folders[0] + "/"],
         "mode": mode,
-        "trusted_files": [str(lane / "vector_runner.py"), str(lane / "brief.txt"),
+        "trusted_files": [*(str(lane / name) for name in runner_files), str(lane / "brief.txt"),
                           str(here / "responses_controller.py"), str(here / "launch_stream.py")],
         "environment": environment, "commands": commands,
     }

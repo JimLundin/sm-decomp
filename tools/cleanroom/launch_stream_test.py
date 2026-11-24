@@ -89,7 +89,8 @@ class Completion(unittest.TestCase):
             export.mkdir()
             for name in ["launch.sh", "launch_stream.py"]:
                 shutil.copyfile(HERE / name, tools / name)
-            (tools / "vector_runner.py").write_text("# Invented runner\n", encoding="utf-8")
+            for name in ["vector_runner.py", "strip_rust.awk", "shape_scan.awk"]:
+                (tools / name).write_text("# Invented runner\n", encoding="utf-8")
             (tools / "lib.sh").write_text(
                 'die() { echo "$*" >&2; exit 1; }\n'
                 'git_isolated() { case "$2" in rev-list) echo invented-root ;; '
