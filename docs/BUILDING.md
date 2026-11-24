@@ -2,7 +2,7 @@
 
 You need your own unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`, SHA-1
 `da957f0d63d14cb441d215462904c4fa8519c613`. No ROM or game data is in this repository.
-Credits and licences for the tools and data the project uses are in [CREDITS](CREDITS.md).
+Credits and licences for the tools and data the project uses are [below](#credits-and-licence).
 
 ```sh
 cargo build --release -p app             # the production application: target/release/super-metroid
@@ -82,3 +82,15 @@ prints the current clean models' size, budget and fit by domain and area, their 
 bridges, replay providers and engine services, the indexed replay evidence, the domain graph and
 each model's structure. Its replay results separate scoped, integrated and whole-movie witnesses
 and distinguish supported behaviour from expected unsupported boundaries.
+
+## Credits and licence
+
+[LakeSnes](https://github.com/angelo-wf/LakeSnes) (MIT) is linked into the oracle: the build
+fetches its pinned sources and their licence; the repository carries only the project's fixes to it
+(`crates/oracle/native/fixes/`).
+[lsnes](https://tasvideos.org/EmulatorResources/Lsnes) and
+[MesenCE](https://github.com/nesdev-org/MesenCE) run as separate processes; none of their code is
+linked or copied. The crates in `vendor/` are registry crates, each with its own licence files.
+Patrick Johnston's [bank logs](https://patrickjohnston.org/bank/) inform names
+and behaviour. Original contributions are MIT ([LICENSE](../LICENSE)). Super Metroid is a trademark
+of Nintendo; no ROM or game data is included.
