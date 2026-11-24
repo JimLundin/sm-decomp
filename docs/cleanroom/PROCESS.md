@@ -264,7 +264,9 @@ the played loop is its own file in `production/played/` and `replay/played/`, an
 lane that integrates that owner. The two loop files, the order of owners in a frame
 (`crates/game/src/production/played.rs`) and the order its runner compares them in
 (`crates/verify/src/replay/played.rs`), take a few lines from each owner's lane: its State field,
-its faults, and its call in the order. The root settles the order of those lines at landing.
+its faults, and its call in the order. So does the played tests' shared fixture
+(`production/played/tests.rs`), with the field's starting value; each owner's tests are in its
+own module. The root settles the order of those lines at landing.
 When two pieces of work need the same file, they run one after the other in a
 single lane, or the second starts from the first's branch and lands after it. The lane with the
 most work in flight lands first, and shorter lanes start from it. The generated README is
