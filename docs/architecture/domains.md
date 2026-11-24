@@ -359,6 +359,11 @@ after the flight to Zebes and before the Landing Site loads (Jim, 2026-11-12); t
 starts the next milestone. A divergence is localised by sparse checkpoints over the run, then
 dense ones over the range they narrow it to.
 
+**Ceres in the order it plays** (Jim, 2026-11-24). Within Ceres, work follows the order the
+player meets it: the arrival, room 1 and its elevator pad, the rooms down to Ridley's, his room,
+then the escape back up. The progress shown is the frames played back to back from the earliest
+seed, so each step lengthens one run rather than adding a room elsewhere.
+
 **What the stretch holds.** Observed, not read off the game: lsnes played the any% movie from
 power-on to frame 15,500 and logged, per frame, the game state, the cinematic step, the room,
 each object list (enemies, enemy projectiles, PLMs, palette FX, animated tiles, HDMA objects,
