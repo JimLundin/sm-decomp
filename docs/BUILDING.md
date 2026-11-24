@@ -70,3 +70,4 @@ The status reads the plan's domains, their waves,
 their progress and the rounds landed from
 [`docs/architecture/domains.toml`](architecture/domains.toml), which the root changes in the
 commit that lands a round.
+
