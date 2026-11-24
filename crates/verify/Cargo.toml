@@ -24,6 +24,7 @@ samus_movement = { path = "../clean/samus_movement" }
 world_doors = { path = "../clean/world_doors" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 enemy_interactions = { path = "../clean/enemy_interactions" }
+screens_boot = { path = "../clean/screens_boot" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 import = { path = "../import" }

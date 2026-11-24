@@ -17,7 +17,9 @@
 //! live in its own module: `samus`, `passage`, `colours`, `ceres_doors`, `ridley`, `shaft`,
 //! `health`, `hud` and `frame`, with `station` the station's State; the camera's are the camera
 //! replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the facts held
-//! from the seed, and `rows` the chain of rows a run plays through.
+//! from the seed, and `rows` the chain of rows a run plays through. A row from the
+//! console's power-on plays the front end alone, from its own power-on State with no seed:
+//! `power_on`.
 
 mod ceres_doors;
 mod colours;
@@ -26,6 +28,7 @@ mod health;
 mod hud;
 mod passage;
 mod platform;
+mod power_on;
 mod ridley;
 mod rows;
 mod samus;
@@ -99,6 +102,10 @@ pub struct Report {
     pub held: u64,
     /// Where the run stopped.
     pub stop: Stop,
+    /// The facts this kind of run holds from its seed.
+    pub seed_held: &'static [&'static str],
+    /// The inputs this kind of run borrows from the record.
+    pub borrowed: &'static [&'static str],
 }
 
 fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
@@ -191,6 +198,8 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
 /// Play `row` from its cut `start` through `end` inclusive with the movie's pads alone. Cuts
 /// past the row's last go on through the rows that continue it, without a new seed.
 ///
+/// A row from the console's power-on plays from its cut 0 with no seed.
+///
 /// # Errors
 /// Missing or mismatched lock, cache or content refuse the run before any cut is played, and a
 /// cut past every row that continues the run, or a row that doesn't follow on, stops it.
@@ -200,6 +209,13 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     let lock =
         crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
     let mut rows = rows::Rows::open(&lock, &sources.cache, row)?;
+    let id = crate::lock::RowId(row.to_owned());
+    if lock
+        .row(&id)
+        .is_some_and(|listed| listed.start == crate::lock::Start::PowerOn)
+    {
+        return power_on::play(&mut rows, row, start, end);
+    }
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
@@ -210,6 +226,8 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         start,
         held,
         stop,
+        seed_held: SEED_HELD,
+        borrowed: BORROWED,
     };
     let mut run = match Run::admit(&seed, &content, &sources.rom, row) {
         Ok(run) => run,
@@ -459,8 +477,8 @@ mod tests {
                 report.start,
                 report.held,
                 report.stop,
-                super::SEED_HELD,
-                super::BORROWED
+                report.seed_held,
+                report.borrowed
             ));
         }
     }

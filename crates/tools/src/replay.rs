@@ -361,12 +361,7 @@ fn played(args: &[String]) -> Result<String, String> {
         .map_err(|outcome| format!("replay played: {outcome:?}"))?;
     Ok(format!(
         "PLAYED_ALONE row={} start={} held={} stop={:?} seed_held={:?} borrowed={:?}\n",
-        report.row,
-        report.start,
-        report.held,
-        report.stop,
-        replay::played::SEED_HELD,
-        replay::played::BORROWED,
+        report.row, report.start, report.held, report.stop, report.seed_held, report.borrowed,
     ))
 }
 

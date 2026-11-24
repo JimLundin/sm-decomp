@@ -239,6 +239,39 @@ case `movement-ceres/carried-position-proximity` lost its gating obligation, whi
 diagnostic played run compares but does not gate. That loss is accepted until the played run
 is indexed.
 
+### From power-on
+
+From the console's power-on, `any-power-on` plays the front end alone
+(`game::production::played::front_end`, the screens-boot model). There is no seed record: the
+run starts from the model's power-on State and reads nothing of cut 0. Cut 0's work RAM is the
+emulator's power-on fill; its save memory is the movie's starting save memory, which P2 will
+read as the game settles (cuts 263 to 270). Each cut borrows two inputs, which the run's receipt
+lists (a power-on run holds nothing from a seed). One is whether its frame of work finished,
+with a vblank without NMI counted as not finished. The other is whether the boot's driver
+upload ended in its interval (CPU and audio timing until T1): a CPU write of 0 to APU port 1
+straight after ports 2-3, looked for at every cut. An end outside the sound's load is bad data,
+so a run that reaches the title found exactly one. Before the logo only the screen's blank is
+compared, because the level under the blank first comes from the platform's power-on value.
+After that the run compares the screen and its level, and the hold's frames left while the
+logo is held. It compares the count of finished frames at finished cuts before the load (until
+the clear in cut 4's interval the count is the emulator's fill) and at every cut while the
+sound loads. While the game settles, the count is compared from the third cut after the
+upload's end: the settle's clear runs through that cut and the two after it. The run holds 270
+cuts and stops at cut 271, the title's first frame (`TitleBegins`), which is not yet owned. A
+step that does nothing holds 17. The upload's end moved to cut 252 differs at cut 255 in
+`power-on.finished-frames`. A hold of 119 differs at cut 33 in `power-on.hold`. By the root's
+ruling, recorded on 2026-11-24 in session #758, the lit cuts 18 to 166 count as played on the
+comparisons this spec makes, with the logo's picture listed as not compared until its spec
+lands. Limits:
+- an end one cut late (254) is not caught, because the count is 150 on both sides at 254 and
+  0 on both sides from 257;
+- the logo's picture is not compared: OAM, CGRAM and VRAM at the lit cuts 18 to 166;
+- the other display registers set at cut 5 are not compared: `obsel`, `bgmode` and `tm`;
+- `$05B8` (every NMI counted) and the lag counts `$05BA`/`$05BB` are not compared;
+- the APU port contents are not compared; only the upload's end is borrowed;
+- the pad is not compared: the game reads the movie's pad from cut 18, and no boot rule acts on it;
+- the settle's save memory and random number are not compared before cut 271.
+
 ## Intra-frame timing and the played-alone run
 
 Intra-frame timing is T1's (MODEL decision 35): absolute master-tick clocks, ordered hardware

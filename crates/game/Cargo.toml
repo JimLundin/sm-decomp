@@ -21,6 +21,7 @@ samus_movement = { path = "../clean/samus_movement" }
 enemy_interactions = { path = "../clean/enemy_interactions" }
 game_random = { path = "../clean/game_random" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
+screens_boot = { path = "../clean/screens_boot" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 enum-map = "=3.1.0"

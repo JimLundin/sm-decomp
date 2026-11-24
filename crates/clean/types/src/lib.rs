@@ -5,6 +5,7 @@ use core::num::Wrapping;
 use enum_map::{Enum, EnumMap};
 
 pub mod haze;
+pub mod power_on;
 pub mod quake;
 
 mod random;

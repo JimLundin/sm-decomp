@@ -177,8 +177,8 @@ mod tests {
         );
         // A gap, an overlap, a short or long end, a missing issue and another movie all fail.
         for (from, to) in [
-            ("frames = [272, 568]", "frames = [273, 568]"),
-            ("frames = [272, 568]", "frames = [271, 568]"),
+            ("frames = [271, 568]", "frames = [272, 568]"),
+            ("frames = [271, 568]", "frames = [270, 568]"),
             ("frames = [13237, 15196]", "frames = [13237, 15195]"),
             ("frames = [13237, 15196]", "frames = [13237, 15197]"),
             ("frames = [8316, 8538]", "frames = [8316, 8315]"),

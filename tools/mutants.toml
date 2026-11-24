@@ -611,3 +611,23 @@ after = "music_ready: true,"
 case = "played chain-any-0005-E06B 0 320"
 cut = 216
 field = "ceres.0.phase"
+
+[[fault]]
+name = "played-power-on-upload-end-early"
+responsibility = "played"
+file = "crates/verify/src/replay/played/power_on.rs"
+before = "let ended = upload_ended(&record.apu_log);"
+after = "let ended = cut == 252;"
+case = "played any-power-on 0 270"
+cut = 255
+field = "power-on.finished-frames"
+
+[[fault]]
+name = "played-power-on-hold-short"
+responsibility = "played"
+file = "crates/verify/src/replay/played/power_on.rs"
+before = "const RULES: Rules = Rules::REFERENCE;"
+after = "const RULES: Rules = Rules { hold: screens_boot::HoldFrames(119), ..Rules::REFERENCE };"
+case = "played any-power-on 0 270"
+cut = 33
+field = "power-on.hold"

@@ -12,13 +12,14 @@
 movie = "any"
 
 [[stretch]]
+# From power-on: its cut c is frame c, and the title begins at cut 271.
 name = "Boot"
-frames = [1, 271]
+frames = [1, 270]
 issue = 752
 
 [[stretch]]
 name = "The title and menus"
-frames = [272, 568]
+frames = [271, 568]
 issue = 752
 
 # From seed any-opening:1.

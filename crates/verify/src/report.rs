@@ -398,6 +398,45 @@ const DOMAINS: &[Domain] = &[
         areas: &[("backdrop", &["lib.rs"])],
         apart: &[],
     },
+    // The fades are the screen's; the power-on's step orders both areas' rules, and what a frame
+    // end brings, the rules and the catalogue are the domain's shared code.
+    Domain {
+        name: "screens-boot",
+        bridge: None,
+        adapters: &["production/played/front_end.rs"],
+        providers: &[],
+        areas: &[("screen", &["fade.rs"])],
+        apart: &[
+            // `QuietUntilTheLogo`: blank until the logo's first frame finishes.
+            Apart {
+                file: "power_on.rs",
+                function: "quiet_until_the_logo",
+                occurrences: 1,
+                area: "screen",
+            },
+            // `LogoHeld`: the hold's frames at full.
+            Apart {
+                file: "power_on.rs",
+                function: "logo_held",
+                occurrences: 1,
+                area: "screen",
+            },
+            // `SoundLoads`: black while the driver loads, and the count's restart at its end.
+            Apart {
+                file: "power_on.rs",
+                function: "sound_loads",
+                occurrences: 1,
+                area: "loading",
+            },
+            // `FramesCounted`: every finished frame counts.
+            Apart {
+                file: "power_on.rs",
+                function: "frames_counted",
+                occurrences: 1,
+                area: "loading",
+            },
+        ],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.

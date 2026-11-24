@@ -1,0 +1,270 @@
+# The power-on sequence, one frame end at a time: the State before it, how the frame ended, and
+# the State after it.
+#
+# State: `stage` ("before-logo", "brightening", "held", "dimming", "sound-loading",
+# "settling"), `hold_left` (frames of the hold still to show, only while "held"), `screen`
+# (["blank" or "lit", level 0 to 15]) and `frames` (the count of finished frames).
+# Input: `finished`, whether the frame's work finished, and `upload_ended`, whether the boot's
+# driver upload ended within the frame (false when absent).
+# `rules` overrides the reference rules for the vector: `fade_step` (levels per frame, reference
+# 1) and `hold` (frames, reference 120). `unsupported = true` in `after` means the frame end
+# belongs to the title, which this spec leaves to it.
+
+[[vector]]
+id = "R-before-logo"
+source = "recorded"
+entries = ["QuietUntilTheLogo"]
+before = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+finished = false
+after = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+
+[[vector]]
+id = "R-first-light"
+source = "recorded"
+entries = ["LogoBrightens", "FramesCounted"]
+before = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+finished = true
+after = { stage = "brightening", screen = ["lit", 1], frames = 1 }
+
+[[vector]]
+id = "R-brightening"
+source = "recorded"
+entries = ["LogoBrightens", "FramesCounted"]
+before = { stage = "brightening", screen = ["lit", 8], frames = 8 }
+finished = true
+after = { stage = "brightening", screen = ["lit", 9], frames = 9 }
+
+[[vector]]
+id = "C-full"
+source = "constructed"
+entries = ["LogoBrightens"]
+before = { stage = "brightening", screen = ["lit", 14], frames = 14 }
+finished = true
+after = { stage = "held", hold_left = 120, screen = ["lit", 15], frames = 15 }
+
+[[vector]]
+id = "R-hold-first"
+source = "recorded"
+entries = ["LogoHeld"]
+before = { stage = "held", hold_left = 120, screen = ["lit", 15], frames = 15 }
+finished = true
+after = { stage = "held", hold_left = 119, screen = ["lit", 15], frames = 16 }
+
+[[vector]]
+id = "R-hold-last"
+source = "recorded"
+entries = ["LogoHeld"]
+before = { stage = "held", hold_left = 1, screen = ["lit", 15], frames = 134 }
+finished = true
+after = { stage = "held", hold_left = 0, screen = ["lit", 15], frames = 135 }
+
+[[vector]]
+id = "R-dimming-starts"
+source = "recorded"
+entries = ["LogoHeld", "LogoDims"]
+before = { stage = "held", hold_left = 0, screen = ["lit", 15], frames = 135 }
+finished = true
+after = { stage = "dimming", screen = ["lit", 14], frames = 136 }
+
+[[vector]]
+id = "R-dimming"
+source = "recorded"
+entries = ["LogoDims"]
+before = { stage = "dimming", screen = ["lit", 7], frames = 143 }
+finished = true
+after = { stage = "dimming", screen = ["lit", 6], frames = 144 }
+
+[[vector]]
+id = "R-dark"
+source = "recorded"
+entries = ["LogoDims"]
+before = { stage = "dimming", screen = ["lit", 1], frames = 149 }
+finished = true
+after = { stage = "sound-loading", screen = ["blank", 0], frames = 150 }
+
+[[vector]]
+id = "R-loading-blank"
+source = "recorded"
+entries = ["SoundLoads", "FramesCounted"]
+before = { stage = "sound-loading", screen = ["blank", 0], frames = 150 }
+finished = false
+after = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+
+[[vector]]
+id = "R-loading"
+source = "recorded"
+entries = ["SoundLoads", "FramesCounted"]
+before = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+finished = false
+after = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+
+[[vector]]
+id = "C-upload-ended"
+source = "constructed"
+entries = ["SoundLoads"]
+before = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+finished = false
+upload_ended = true
+after = { stage = "settling", screen = ["blank", 15], frames = 0 }
+
+[[vector]]
+id = "R-settling"
+source = "recorded"
+entries = ["Settling"]
+before = { stage = "settling", screen = ["blank", 15], frames = 0 }
+finished = false
+after = { stage = "settling", screen = ["blank", 15], frames = 0 }
+
+[[vector]]
+id = "R-settling-later"
+source = "recorded"
+entries = ["Settling"]
+before = { stage = "settling", screen = ["blank", 15], frames = 0 }
+finished = false
+after = { stage = "settling", screen = ["blank", 15], frames = 0 }
+
+[[vector]]
+id = "C-settled"
+source = "constructed"
+entries = ["Settling"]
+before = { stage = "settling", screen = ["blank", 15], frames = 0 }
+finished = true
+after = { unsupported = true }
+
+[[vector]]
+id = "C-unfinished-before-logo"
+source = "constructed"
+entries = ["QuietUntilTheLogo", "FramesCounted"]
+before = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+finished = false
+after = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+
+[[vector]]
+id = "C-unfinished-brightening"
+source = "constructed"
+entries = ["LogoBrightens", "FramesCounted"]
+before = { stage = "brightening", screen = ["lit", 5], frames = 5 }
+finished = false
+after = { stage = "brightening", screen = ["lit", 5], frames = 5 }
+
+[[vector]]
+id = "C-unfinished-held"
+source = "constructed"
+entries = ["LogoHeld"]
+before = { stage = "held", hold_left = 60, screen = ["lit", 15], frames = 75 }
+finished = false
+after = { stage = "held", hold_left = 60, screen = ["lit", 15], frames = 75 }
+
+[[vector]]
+id = "C-unfinished-dimming"
+source = "constructed"
+entries = ["LogoDims"]
+before = { stage = "dimming", screen = ["lit", 3], frames = 147 }
+finished = false
+after = { stage = "dimming", screen = ["lit", 3], frames = 147 }
+
+[[vector]]
+id = "C-count-wraps"
+source = "constructed"
+entries = ["FramesCounted"]
+before = { stage = "brightening", screen = ["lit", 2], frames = 65535 }
+finished = true
+after = { stage = "brightening", screen = ["lit", 3], frames = 0 }
+
+[[vector]]
+id = "C-ended-unfinished"
+source = "constructed"
+entries = ["SoundLoads"]
+before = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+finished = false
+upload_ended = true
+after = { stage = "settling", screen = ["blank", 15], frames = 0 }
+
+[[vector]]
+id = "A-step-3-brightening"
+source = "constructed"
+entries = ["LogoBrightens"]
+rules = { fade_step = 3 }
+before = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+finished = true
+after = { stage = "brightening", screen = ["lit", 3], frames = 1 }
+
+[[vector]]
+id = "A-step-4-caps"
+source = "constructed"
+entries = ["LogoBrightens"]
+rules = { fade_step = 4 }
+before = { stage = "brightening", screen = ["lit", 12], frames = 3 }
+finished = true
+after = { stage = "held", hold_left = 120, screen = ["lit", 15], frames = 4 }
+
+[[vector]]
+id = "A-step-15-at-once"
+source = "constructed"
+entries = ["LogoBrightens"]
+rules = { fade_step = 15, hold = 2 }
+before = { stage = "before-logo", screen = ["blank", 15], frames = 0 }
+finished = true
+after = { stage = "held", hold_left = 2, screen = ["lit", 15], frames = 1 }
+
+[[vector]]
+id = "A-hold-5"
+source = "constructed"
+entries = ["LogoBrightens", "LogoHeld"]
+rules = { hold = 5 }
+before = { stage = "brightening", screen = ["lit", 14], frames = 14 }
+finished = true
+after = { stage = "held", hold_left = 5, screen = ["lit", 15], frames = 15 }
+
+[[vector]]
+id = "A-hold-0"
+source = "constructed"
+entries = ["LogoBrightens", "LogoHeld"]
+rules = { hold = 0 }
+before = { stage = "brightening", screen = ["lit", 14], frames = 14 }
+finished = true
+after = { stage = "held", hold_left = 0, screen = ["lit", 15], frames = 15 }
+
+[[vector]]
+id = "A-step-4-dims-to-dark"
+source = "constructed"
+entries = ["LogoDims"]
+rules = { fade_step = 4 }
+before = { stage = "dimming", screen = ["lit", 3], frames = 140 }
+finished = true
+after = { stage = "sound-loading", screen = ["blank", 0], frames = 141 }
+
+[[vector]]
+id = "A-step-2-dims"
+source = "constructed"
+entries = ["LogoHeld", "LogoDims"]
+rules = { fade_step = 2 }
+before = { stage = "held", hold_left = 0, screen = ["lit", 15], frames = 128 }
+finished = true
+after = { stage = "dimming", screen = ["lit", 13], frames = 129 }
+
+[[vector]]
+id = "A-step-15-dims-at-once"
+source = "constructed"
+entries = ["LogoHeld", "LogoDims"]
+rules = { fade_step = 15 }
+before = { stage = "held", hold_left = 0, screen = ["lit", 15], frames = 128 }
+finished = true
+after = { stage = "sound-loading", screen = ["blank", 0], frames = 129 }
+
+[[vector]]
+id = "C-finished-while-loading"
+source = "constructed"
+entries = ["SoundLoads", "FramesCounted"]
+before = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+finished = true
+after = { stage = "sound-loading", screen = ["blank", 15], frames = 151 }
+
+[[vector]]
+id = "C-ended-finished"
+source = "constructed"
+entries = ["SoundLoads", "FramesCounted"]
+before = { stage = "sound-loading", screen = ["blank", 15], frames = 150 }
+finished = true
+upload_ended = true
+after = { stage = "settling", screen = ["blank", 15], frames = 0 }

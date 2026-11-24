@@ -12,7 +12,8 @@
 //! with `ridley` Ridley and the baby, `ceres_doors` the Ceres doors and `shaft` the shaft's pad
 //! and lights, and [`frame`] the counts of frames and the random number. The screen's colours
 //! are the doors model's [`Palette`], which the passage, the lights and the baby each set in
-//! turn. The fixture every owner's tests build State from is `tests`.
+//! turn. The fixture every owner's tests build State from is `tests`. Ahead of
+//! room play, [`front_end`] is which part of the game runs, from the console's power-on.
 //!
 //! Each model is stepped once through its own whole-frame entry. The frame commits every owner
 //! together or none.
@@ -35,6 +36,7 @@
 mod camera;
 mod ceres_doors;
 pub mod frame;
+pub mod front_end;
 mod health;
 mod hud;
 pub mod passage;
