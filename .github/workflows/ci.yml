@@ -6,6 +6,8 @@ name: CI
 #   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
 # Full runs start Quality and verification independently. Manual runs can select one check.
 # Main pushes run both to refresh clean build caches; verify/** runs verification only.
+# Each verification job reruns only when a file it reads changed: it reuses the passing verdict of a
+# run that did its work on the same inputs (tools/ci/verdict.sh). Quality always runs.
 # Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:
   pull_request:
