@@ -356,14 +356,27 @@ fn door_observations(doors: Vec<Vec<Observation>>) -> Vec<Observation> {
 
 /// The seed room's Ceres doors, decoded once from the seed record. Her motion meets each one
 /// as the loop carries it, so none may stand among the actor boxes held from the seed too.
+///
+/// Her motion meets the boxes in the original's slot order, and the first that blocks her
+/// decides the move. Production puts the doors' boxes after the held ones, since the held
+/// geometry keeps no slots, so a held box in a slot after a door's would be met out of order.
 fn seed_doors(seed: &[u8]) -> Result<Vec<boss_ceres_ridley::CeresDoor>, Outcome> {
     let slots = ceres::doors(seed)?;
     let roster = movement::roster_slots(seed)?;
+    let refuse = |dependency: &str| Outcome::Unsupported {
+        cut: None,
+        dependency: dependency.into(),
+    };
     if slots.iter().any(|slot| roster.contains(&slot.index())) {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "played seed holds a Ceres door among the held actor boxes".into(),
-        });
+        return Err(refuse(
+            "played seed holds a Ceres door among the held actor boxes",
+        ));
+    }
+    let first_door = slots.iter().map(|slot| slot.index()).min();
+    if first_door.is_some_and(|door| roster.iter().any(|&held| held > door)) {
+        return Err(refuse(
+            "played seed holds an actor box in a slot after a Ceres door's",
+        ));
     }
     slots
         .into_iter()

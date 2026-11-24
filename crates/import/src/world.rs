@@ -146,6 +146,14 @@ pub enum WorldError {
         /// Why.
         error: data::enemy::EnemyError,
     },
+    /// A version of the room places a Ceres door actor whose first parameter names no actor
+    /// of the doors' species.
+    CeresActor {
+        /// The room.
+        room: RoomId,
+        /// The parameter.
+        parameter: u16,
+    },
     /// A doorway's arrival record isn't fully present in the image.
     Arrival {
         /// The doorway.
@@ -398,8 +406,16 @@ fn version(image: Lorom<'_>, room: RoomId, state: RoomState) -> Result<Version, 
         plms: state.plms,
         enemies: crate::actors::graphics_set(image, state.enemy_set)
             .map_err(|error| WorldError::Enemies { room, error })?,
-        ceres_doors: crate::actors::ceres_doors(image, state.enemy_population)
-            .map_err(|error| WorldError::Population { room, error })?,
+        ceres_doors: crate::actors::ceres_doors(image, state.enemy_population).map_err(
+            |error| match error {
+                crate::actors::CeresDoorsError::Population(error) => {
+                    WorldError::Population { room, error }
+                }
+                crate::actors::CeresDoorsError::Kind(parameter) => {
+                    WorldError::CeresActor { room, parameter }
+                }
+            },
+        )?,
     })
 }
 

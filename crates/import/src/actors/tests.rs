@@ -95,3 +95,22 @@ fn every_registered_species_and_the_shared_palettes_import_from_the_rom() {
         );
     }
 }
+
+#[test]
+fn a_ceres_door_actor_is_named_by_its_first_parameter_and_no_other_value_imports() {
+    let named: Vec<_> = (0..=7).map(ceres_door_kind).collect();
+    assert_eq!(
+        named,
+        [
+            Some(CeresDoorKind::Door(Side::Right)),
+            Some(CeresDoorKind::Door(Side::Left)),
+            Some(CeresDoorKind::Later),
+            Some(CeresDoorKind::Later),
+            Some(CeresDoorKind::ShaftDoor),
+            Some(CeresDoorKind::Later),
+            Some(CeresDoorKind::Later),
+            None,
+        ]
+    );
+    assert_eq!(ceres_door_kind(0xffff), None);
+}

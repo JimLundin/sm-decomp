@@ -443,3 +443,26 @@ after = "ceres_doors: self.ceres_doors.clone(),"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "ceres.0.wait"
+
+[[fault]]
+name = "played-ceres-doors-read-her-after-moves"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = '''
+        let ceres = run_doors(
+            &self.ceres_doors,
+            &self.movement.0,
+            passing.ceres,
+            &rules.ceres,
+        )?;
+        let world = WithDoors::new(&inputs.geometry, &self.ceres_doors);
+        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
+'''
+after = '''
+        let world = WithDoors::new(&inputs.geometry, &self.ceres_doors);
+        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
+        let ceres = run_doors(&self.ceres_doors, &samus, passing.ceres, &rules.ceres)?;
+'''
+case = "played chain-any-0003-DFD7 0 41"
+cut = 7
+field = "ceres.0.phase"

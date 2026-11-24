@@ -233,7 +233,10 @@ impl State {
     /// Play one frame from `inputs`. The candidate commits only when every owner completed.
     ///
     /// # Errors
-    /// Missing pose content, an unknown pose or malformed room inputs leave State unchanged.
+    /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
+    /// room inputs, the escape with Ceres doors in the room ([`Fault::Escape`]), and a next
+    /// room that doesn't load, such as one placing a Ceres actor of a later piece
+    /// ([`LoadFault::LaterCeresActor`]).
     pub fn step(
         &mut self,
         inputs: &Inputs,
@@ -634,6 +637,10 @@ fn run_doors(
 }
 
 /// The room's geometry, with the Ceres doors that block her after its other solid actors.
+///
+/// The original meets the boxes in slot order, and the first that blocks her decides the move.
+/// The geometry's boxes keep no slots, so the doors go last: the admission accepts only rooms
+/// whose other solid actors sit in slots before the doors'.
 struct WithDoors<'a> {
     geometry: &'a super::world::MovementWorld,
     solid: Vec<Hitbox>,
@@ -700,3 +707,6 @@ const fn lead(lead: Lead) -> world_camera::LeadSetting {
         Lead::Near => world_camera::LeadSetting::Near,
     }
 }
+
+#[cfg(test)]
+mod tests;

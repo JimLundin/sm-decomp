@@ -102,31 +102,55 @@ pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
 
 /// The Ceres door actors the enemy population at `at`, a room state's, places, in its order.
 ///
-/// A door's first parameter names what it is: a door facing right or left, or the shaft's
-/// door; any other value is an actor a later piece of the station models.
+/// A door's first parameter names what it is: a door facing right or left, the shaft's door,
+/// or an actor a later piece of the station models.
 ///
 /// # Errors
 ///
-/// [`EnemyError`] when the population runs outside the image or its bank.
-pub fn ceres_doors(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<CeresDoorPlacement>, EnemyError> {
+/// [`CeresDoorsError::Population`] when the population runs outside the image or its bank,
+/// and [`CeresDoorsError::Kind`] when a door's first parameter names none of these.
+pub fn ceres_doors(
+    rom: Lorom<'_>,
+    at: RomAddress,
+) -> Result<Vec<CeresDoorPlacement>, CeresDoorsError> {
     let door = SpeciesKey(CERES_DOOR_PLACE);
-    Ok(data::enemy::population(rom, at)?
+    data::enemy::population(rom, at)
+        .map_err(CeresDoorsError::Population)?
         .placements
         .iter()
         .filter(|placed| placed.species == door)
-        .map(|placed| CeresDoorPlacement {
-            kind: match placed.parameter_1 {
-                0 => CeresDoorKind::Door(Side::Right),
-                1 => CeresDoorKind::Door(Side::Left),
-                4 => CeresDoorKind::ShaftDoor,
-                _ => CeresDoorKind::Later,
-            },
-            position: Pair {
-                x: Wrapping(placed.x),
-                y: Wrapping(placed.y),
-            },
+        .map(|placed| {
+            Ok(CeresDoorPlacement {
+                kind: ceres_door_kind(placed.parameter_1)
+                    .ok_or(CeresDoorsError::Kind(placed.parameter_1))?,
+                position: Pair {
+                    x: Wrapping(placed.x),
+                    y: Wrapping(placed.y),
+                },
+            })
         })
-        .collect())
+        .collect()
+}
+
+/// What a Ceres door actor's first parameter names it: 2, 3, 5 and 6 are the door of Ridley's
+/// room, the shaft's cover and the getaway's walls, which later pieces of the station model.
+const fn ceres_door_kind(parameter: u16) -> Option<CeresDoorKind> {
+    match parameter {
+        0 => Some(CeresDoorKind::Door(Side::Right)),
+        1 => Some(CeresDoorKind::Door(Side::Left)),
+        4 => Some(CeresDoorKind::ShaftDoor),
+        2 | 3 | 5 | 6 => Some(CeresDoorKind::Later),
+        _ => None,
+    }
+}
+
+/// Why a population's Ceres doors don't import.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CeresDoorsError {
+    /// The population doesn't decode.
+    Population(EnemyError),
+    /// A door actor's first parameter, which names no actor of the doors' species.
+    Kind(u16),
 }
 
 /// The graphics set at `at`, a room state's: each species it loads, in order, with its row.

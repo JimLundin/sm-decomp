@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::num::NonZeroU8;
 use types::{Pair, Pose};
 
-pub(super) fn samus() -> samus_movement::Samus {
+pub(in crate::production) fn samus() -> samus_movement::Samus {
     samus_movement::Samus {
         position: Pair {
             x: Wrapping(100 * 65536),

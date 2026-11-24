@@ -56,14 +56,17 @@ The room's Ceres doors (boss-ceres-ridley's `CeresDoor`) play in the loop too. T
 decoded once from the seed record, each door in the room's order of its enemies, and carried
 with nothing fed back. Each frame of play runs every door once through `CeresDoor::run`, before
 her moves, reading where she was at the end of the last frame and the station's stage. Her
-motion meets the boxes of the doors that were solid as the frame began, after the held actor
-boxes. In a passage the doors run on the frames of work the passage says the enemies run.
+motion meets the boxes of the doors that were solid as the frame began. The original meets the
+boxes in slot order and the held boxes keep no slots, so the doors' boxes come last and the
+runner refuses a seed holding an actor box in a slot after a door's. In a passage the doors run on the frames of work the passage says the enemies run.
 Fetching the next room's contents lets the last room's doors go and places the next room's
 from the imported world: the version her progress chooses lists the Ceres doors its enemy
 population places. The run compares how many doors the room holds, and each door's phase, wait, figure,
 shown and solid, by its place (`ceres.0.phase`), at every cut whose frame of work finished,
 since a lag cut can find the room's enemies part-built. The escape refuses the frame: its
-shakes read the random numbers and the screen's shaking, which are not in the loop.
+shakes read the random numbers and the screen's shaking, which are not in the loop. A door's
+request for its opening sound is produced but not compared: it belongs to the audio boundary
+(MODEL decision 37), whose owner is not in the loop yet.
 
 Lag is borrowed until the platform's costs are modelled (MODEL decision 35); `BORROWED` names
 it. The runner reads one fact per cut from the record: whether the NMI found the frame's work
@@ -87,11 +90,19 @@ It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by c
 dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
-Two planted faults in the fault matrix stop that run at a recorded cut. A pad one frame stale
-fails the runner's pad alignment check at cut 2, and a camera State held rather than carried
-differs at cut 1 in `camera.view.x.fraction`. Each plays cuts 1 to 41 of the M0 row, a span
-the run holds. Among the later ones, the Ceres doors' State held rather than carried differs at
-cut 1 in `ceres.0.wait`.
+Sixteen planted faults in the fault matrix, those of the responsibility `played`, stop that
+run at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
+check at cut 2, and a camera State held rather than carried differs at cut 1 in
+`camera.view.x.fraction`. Of the Ceres doors' faults, their State held rather than carried
+differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
+than before differs at cut 7 in `ceres.0.phase`.
+
+The M0 row never shows a door blocking her: a fault that drops the doors' boxes from what her
+motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play. Only the unit
+test of a door that opens in the frame still blocking her catches it. Retiring the indexed
+case `movement-ceres/carried-position-proximity` lost its gating obligation, which the
+diagnostic played run compares but does not gate. That loss is accepted until the played run
+is indexed.
 
 ## Intra-frame timing and the played-alone run
 
@@ -137,13 +148,13 @@ fault-runner test and the fault plan before any build. Full pull-request, schedu
 run every fault. A fast-forward to main reuses a successful pull-request verdict for the
 same head and tested tree. Missing evidence runs every fault. The supported responsibility
 inventory comes from the index and reviewed baseline, so omitting an owner fails the check.
-Weapons and contact have separate faults in their shared case. The movement/Ceres connection
-has a separate fault substituting the door centre for held movement proximity.
+Weapons and contact have separate faults in their shared case. The played run's faults are
+listed under Frames played alone.
 
 These faults exercise movement scheduling, the audio frame's cadence, cannon permission, contact
-permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres
-scheduling. They prove the named comparisons detect those errors within the existing scoped
-cases and the narrowly integrated movement/Ceres connection. They do not prove all rules,
+permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres scheduling. They
+prove the named comparisons detect those errors within the existing scoped cases and the
+played run. They do not prove all rules,
 borrowed producers, omitted outputs or pixels. Unsupported
 cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
 
