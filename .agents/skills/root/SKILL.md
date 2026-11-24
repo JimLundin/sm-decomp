@@ -40,9 +40,7 @@ A brief is the whole of what a fresh session knows. Write it like this:
   of about 30 minutes: make the change, prove the narrowest test locally, push, start focused
   CI and hand back the run ids. The root watches CI in the background and briefs a fresh lane
   on a failure. Each brief states a 45-minute check-in, after which the lane hands back what it
-  has. On 2026-11-22, three lanes briefed with whole outcomes ran 50–72 minutes each. 50–75%
-  of that was waiting on local replay tests (4–10 minutes per run) and, in one lane, a single
-  10-minute git comparison, done in the foreground at the shell's 10-minute cap.
+  has: most of a longer lane's time goes to waiting on local replay tests (4–10 minutes a run).
 
 For the two confined roles, the brief is also part of the barrier:
 - **Spec words only.** Name spec entries and player-visible behaviour, and phrase findings as
@@ -120,17 +118,16 @@ the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_b
 ## Landing
 
 Before landing a round, complete [PROCESS step 11](../../../docs/cleanroom/PROCESS.md#a-round):
-update its domain registration and regenerate the README after review. The spec, import
-and integration land together. Land one change at a time by fast-forward through
-`tools/lane/land.sh` only after CI is green: Quality, content and replay.
+update its domain registration and regenerate the README after review. Land one change at a
+time by fast-forward through `tools/lane/land.sh` only after CI is green: Quality, content and
+replay.
 The commands below apply to rounds and other work.
 
 1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
 2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
-   `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`. It lands as one commit
-   with the branch's tree, each part listed under its role with its body indented under it (a
-   lane of one commit has that commit's body as its own), and every `Role:` and
-   `Co-Authored-By:` line kept once, at the end; it refuses a branch that doesn't hold `HEAD`.
+   `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`, which makes the one
+   commit PROCESS step 11 describes (a lane of one commit keeps that commit's body as its own)
+   and refuses a branch that doesn't hold `HEAD`.
    Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for
    you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
 3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
