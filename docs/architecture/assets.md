@@ -121,7 +121,7 @@ verifier reads a version's tileset and layer 2 from the records too, and asks th
 alone where the original keeps a version's state header and scroll change lists, which the
 work RAM names by place. The world's `Condition` and progress's stay two types: progress is a
 clean-room model whose crate depends only on `types`, so one type would live in `types`, a
-change for progress's own round; `game::run_progress_bridge` maps every variant meanwhile.
+change for progress's own round; `game::production::room_loading` maps every variant meanwhile.
 Each doorway also holds its arrival: the shared `Heading`, the view's screen coordinates and
 an optional speed in pixels and subpixels per frame. A negative speed in the source means the
 passage supplies its own; zero is an explicit speed. The arrival's view stays screen-aligned;
@@ -331,9 +331,8 @@ family by family, private to it once their format lands. `tools`, `verify` and `
 player's ROM at startup) depend on `import`; `game` and `runtime` may not, and
 `deny.toml` checks it (`cargo deny check bans`), so "only the importer knows the layout" is a build
 error rather than a review rule. Samus's importer is `import::samus`. The decoded tables of
-`data::pose` it reads stay in `data` while the engine loads them too (`game::pose::Content`
-holds her pose definitions, transitions, spritemaps and tiles); they move into `import` when
-the engine moves and draws her from the format alone.
+`data::pose` it reads stay in `data` while the engine reads them too; they move into `import`
+when the engine moves and draws her from the format alone.
 
 | Importer | Reads | Knowledge that never leaves `import` |
 | --- | --- | --- |
