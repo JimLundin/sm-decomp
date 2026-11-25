@@ -494,7 +494,7 @@ name = "played-ridley-flight-drops-his-speed"
 responsibility = "played"
 file = "crates/game/src/production/played/ridley.rs"
 before = "    let run = ridley.run(\n"
-after = "    let ridley = if matches!(ridley.phase, RidleyPhase::InFlight(_)) { CeresRidley { speed: Pair { x: ridley.speed.x, y: core::num::Wrapping(0) }, ..ridley } } else { ridley };\n    let run = ridley.run(\n"
+after = "    let ridley = if matches!(ridley.phase, RidleyPhase::InFlight(_)) { CeresRidley { speed: types::Pair { x: ridley.speed.x, y: core::num::Wrapping(0) }, ..ridley } } else { ridley };\n    let run = ridley.run(\n"
 case = "played chain-any-0006-E0B5 0 896"
 cut = 880
 field = "ridley.position"
