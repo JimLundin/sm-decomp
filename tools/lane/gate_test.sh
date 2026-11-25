@@ -10,14 +10,24 @@
 here=$(cd "$(dirname "$0")" && pwd)
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
-scratch=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/gate-test-XXXXXX")
-# The /tmp case's plantings are shared places: they go even when the test is stopped.
-planted= home_temp=
-trap 'rm -rf "$scratch" ${home_temp:+"$home_temp"}; [ -z "$planted" ] || rm -rf /tmp/.cargo' EXIT
+scratch=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/gate-test-XXXXXX") || exit 1
+trap 'rm -rf "$scratch"' EXIT
 repo=$scratch/repo bin=$scratch/bin ran=$scratch/ran
 mkdir -p "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
 cp "$here/gate.sh" "$repo/tools/lane/gate.sh"
-cp "$here/../cleanroom/lib.sh" "$repo/tools/cleanroom/lib.sh"
+# Run the real selector, mapping its /tmp result to a private stand-in for the fallback case.
+sed 's/^outside_home_temp() {/select_outside_home_temp() {/' "$here/../cleanroom/lib.sh" \
+  >"$repo/tools/cleanroom/lib.sh" || exit 1
+cat >>"$repo/tools/cleanroom/lib.sh" <<'EOF' || exit 1
+outside_home_temp() {
+  local selected
+  selected=$(select_outside_home_temp) || return
+  if [ "$selected" = /tmp ] && [ -n "${GATE_TEST_FALLBACK:-}" ]; then
+    selected=$GATE_TEST_FALLBACK
+  fi
+  printf '%s\n' "$selected"
+}
+EOF
 echo 'channel = "0.0.0"' >"$repo/rust-toolchain.toml"
 echo 'Invented vectors.' >"$repo/scenarios/demo.toml"
 # Each fake records its name, prints $GATE_TEST_OUT_<name> and exits $GATE_TEST_STATUS_<name>.
@@ -146,20 +156,21 @@ settled TEMP="$elsewhere/tmp"
 mkdir -p "$elsewhere/.cargo" && echo '[build]' >"$elsewhere/.cargo/config.toml"
 ! reuses TEMP="$elsewhere/tmp" || fail "a gate with a cargo configuration above TEMP reused a pass: $out"
 rm -r "$elsewhere"
-# A TEMP in the home: the clean-room self-tests build in /tmp instead (lib.sh's
-# outside_home_temp), so cargo's configuration above /tmp is the one they read. The case runs only
-# where /tmp holds none; the planted one is an empty table, which changes no build meanwhile.
-# Its TEMP is a folder of the home, so nothing but outside_home_temp leads the gate to /tmp; the
-# scratch repository must be outside /tmp too (TEMP set, as BUILDING's Linux setup has it), or
-# the walk up from the checkout reaches /tmp and the case can't tell the two apart.
-if [ ! -e /tmp/.cargo ]; then
-  home_temp=$(mktemp -d "$HOME/.gate-test-XXXXXX")
-  settled TEMP="$home_temp"
-  mkdir /tmp/.cargo && planted=1 && echo '[build]' >/tmp/.cargo/config.toml
-  ! reuses TEMP="$home_temp" ||
-    fail "a gate with a cargo configuration above the self-tests' /tmp reused a pass: $out"
-  rm -r /tmp/.cargo "$home_temp" && planted= home_temp=
+# With TEMP in the home, the real selector returns /tmp. Give that result a private
+# stand-in beside the repo and home so only the selected build path can see its config.
+home_temp=$scratch/home/tmp
+fallback=$scratch/fallback
+mkdir -p "$home_temp" "$fallback" || exit 1
+selected=$(export HOME="$scratch/home" TEMP="$home_temp"; . "$here/../cleanroom/lib.sh"; outside_home_temp)
+[ "$selected" = /tmp ] || fail "the self-tests selected '$selected' with TEMP inside the home"
+settings=(HOME="$scratch/home" TEMP="$home_temp" GATE_TEST_FALLBACK="$fallback")
+settled "${settings[@]}"
+if ! (mkdir "$fallback/.cargo" && echo '[build]' >"$fallback/.cargo/config.toml"); then
+  fail "could not install the cargo configuration above the self-tests' build directory"
+  exit 1
 fi
+! reuses "${settings[@]}" ||
+  fail "a gate with a cargo configuration above the self-tests' build directory reused a pass: $out"
 # A file git ignores only by a rule from outside the tree is unseen by status, not by the gate.
 settled
 echo 'hard_tabs = true' >"$repo/rustfmt.toml" && echo rustfmt.toml >"$scratch/excludes"
