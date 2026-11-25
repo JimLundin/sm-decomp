@@ -155,7 +155,8 @@ the first clean-room lane there:
    launch's Linux rules without a session.
 2. The played runs reproduce `scenarios/replay/played.toml`: each prints one `PLAYED_ALONE` line,
    whose cuts held and stop match its run's `held` and `stop`. Where `tools/lane/played.sh` is on
-   main it runs them; else this loop, as CI's `played` target does:
+   main it runs them, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree
+   has no `rom/`); else this loop, as CI's `played` target does:
 
    ```sh
    cargo build --locked --profile verify -p tools
