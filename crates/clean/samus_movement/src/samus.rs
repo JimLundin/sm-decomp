@@ -3,6 +3,7 @@
 
 use crate::collide::{Bounds, Moved, Probe, Stop};
 use crate::jump_held::JumpHeld;
+use crate::knockback::Knockback;
 use crate::run::Dashing;
 use crate::run::Run;
 use crate::tick::Frame;
@@ -143,8 +144,8 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
 /// `dashing_after_moves`, `dash_began`, `dash_lost`, `handed_over`, `heading_down` and
 /// `vertical_speed_after_moves`, with her pose and vertical speed at the frame's end,
 /// `standing_animation`, `wall_test`, `floor_response` and `touchdown_graphics`; sound transport
-/// `touchdown_requests`; the world `inside` and `reached`; weapons `pending_aim` and `travelled`.
-/// Each is the frame's own, not State.
+/// `touchdown_requests`; the world `inside` and `reached`; weapons `pending_aim` and `travelled`;
+/// samus-appearance `push_started` too (§12). Each is the frame's own, not State.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[expect(
     clippy::struct_excessive_bools,
@@ -209,6 +210,8 @@ pub struct Outcome {
     /// `heading_down` is read: her moves' pull included, before what they met acts and before
     /// the pose change.
     pub vertical_speed_after_moves: Fixed,
+    /// §12, `PushStarts`: a push started this frame (samus-appearance pulses her colours).
+    pub push_started: bool,
 }
 
 /// Samus as the player can tell her, and what she remembers.
@@ -237,6 +240,8 @@ pub struct Samus {
     /// `Jumping`: how long jump has stayed held, and whether she landed or an animation ended
     /// the frame before.
     pub jump_held: JumpHeld,
+    /// §12: the knockback's push time left, its side and the push under way.
+    pub knockback: Knockback,
 }
 
 impl Samus {

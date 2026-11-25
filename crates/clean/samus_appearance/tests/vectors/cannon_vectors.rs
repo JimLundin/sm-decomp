@@ -2,8 +2,8 @@
 //! appearance State saved and restored between frames.
 
 use samus_appearance::{
-    AppearanceState, CannonDelay, ControlEligibility, Frame, FramePart, ItemControlAnswer,
-    ItemControls, Rules, SelectedItem,
+    AppearanceState, CannonDelay, ControlEligibility, Frame, FramePart, HurtCount,
+    ItemControlAnswer, ItemControls, Rules, SelectedItem,
 };
 use serde::Deserialize;
 use types::{Action, Set, set_of};
@@ -193,6 +193,7 @@ fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
         cannon: CannonDelay::new(history.initial_delay)
             .unwrap_or_else(|| panic!("{id}: expected an initial delay of 0 to 2 frames")),
         colours: UNTOUCHED_COLOURS,
+        hurt_count: HurtCount::NONE,
     };
     let mut drawn = appearance.cannon.may_follow();
     for (at, step) in history.steps.iter().enumerate() {
@@ -316,6 +317,7 @@ fn the_delay_is_built_and_restored_only_in_its_range() {
             kept_action: Action::WallJumping,
             cannon: delay,
             colours: UNTOUCHED_COLOURS,
+            hurt_count: HurtCount::NONE,
         };
         assert_eq!(
             kept(appearance),

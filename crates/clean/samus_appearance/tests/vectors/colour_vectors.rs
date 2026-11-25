@@ -6,16 +6,21 @@ use std::collections::BTreeMap;
 
 use samus_appearance::{
     AppearanceState, CannonDelay, ChargeGlowPosition, ColourEffect, ColourSequences,
-    DryColourOutcome, DryColourReset, Frame, FrameOutputs, LiquidLevel, PaletteObservations,
-    PaletteOpportunity, Rules, Suit, Unrecognized, VisorDelay, VisorStep, update,
+    DryColourOutcome, DryColourReset, Frame, FrameOutputs, HurtCount, LiquidLevel,
+    PaletteObservations, PaletteOpportunity, Rules, Suit, Unrecognized, VisorDelay, VisorStep,
+    update,
 };
 use serde::{Deserialize, Serialize};
 use types::{Action, Colour, PALETTE_SLOTS, Palette, Palettes, Set};
 
-use super::{Library, VectorContent, VectorInputs, animation, behaviour, frame, named, read_file};
+use super::{Library, VectorInputs, animation, behaviour, frame, named, read_file};
 
 /// The levels of each colour channel, 0 to 31: the invented fixtures' slot pattern.
 const LEVELS: u16 = 32;
+
+/// The hurt count a frame starts from where the file gives the hit colour pulse active: one
+/// mid-pulse, past the counts that change her colours.
+const PULSING: u8 = 20;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -50,10 +55,14 @@ impl ColourVectors {
         }))
     }
 
-    /// The frame's palette opportunity for `history`: the shared observations, then the
-    /// history's own `observed` table, then `replacement`'s observations, each replacing keys
-    /// already present.
-    fn opportunity(&self, history: &History, replacement: &toml::Table) -> PaletteOpportunity {
+    /// The frame's palette opportunity for `history`, and the hurt count the frame starts from:
+    /// the shared observations, then the history's own `observed` table, then `replacement`'s
+    /// observations, each replacing keys already present.
+    fn opportunity(
+        &self,
+        history: &History,
+        replacement: &toml::Table,
+    ) -> (PaletteOpportunity, HurtCount) {
         let mut input = self.observations.clone();
         for (key, value) in history.observed.iter().chain(replacement) {
             assert!(
@@ -65,7 +74,7 @@ impl ColourVectors {
         let input: Observations = toml::Value::Table(input)
             .try_into()
             .expect("expected the observations the file's header names");
-        input.opportunity()
+        (input.opportunity(), input.hurt_count())
     }
 }
 
@@ -230,11 +239,17 @@ impl Observations {
                 (ColourEffect::OverrideColours, self.override_colours),
                 (ColourEffect::SpecialColours, self.special_colours),
                 (ColourEffect::SpeedGlow, self.speed_glow),
-                (ColourEffect::HitColourPulse, self.hit_colour_pulse),
             ]
             .into_iter()
             .collect(),
         })
+    }
+
+    /// Spec §11.2, §12: the hit colour pulse is her hurt count above 0, a part of her State. A
+    /// frame whose pulse is active starts mid-pulse; otherwise with no pulse.
+    fn hurt_count(&self) -> HurtCount {
+        let frames = if self.hit_colour_pulse { PULSING } else { 0 };
+        HurtCount::new(frames).expect("expected a hurt count in range")
     }
 }
 
@@ -258,9 +273,9 @@ fn restored(kept: &Kept) -> Kept {
     fresh
 }
 
-/// Where a palette history starts: its sequences, its banks, and an animation and cannon its
-/// frame leaves alone.
-fn start(vectors: &ColourVectors, history: &History) -> Kept {
+/// Where a palette history starts: its sequences, its banks, the hurt count `hurt`, and an
+/// animation and cannon its frame leaves alone.
+fn start(vectors: &ColourVectors, history: &History, hurt: HurtCount) -> Kept {
     let [current, target] = &history.palettes;
     restored(&Kept {
         appearance: AppearanceState {
@@ -268,6 +283,7 @@ fn start(vectors: &ColourVectors, history: &History) -> Kept {
             kept_action: Action::WallJumping,
             cannon: CannonDelay::INITIAL,
             colours: history.before.into(),
+            hurt_count: hurt,
         },
         palettes: Palettes {
             current: vectors.palette(current),
@@ -298,10 +314,7 @@ fn play_frame(
         palette: opportunity,
         ..frame(inputs, Set::default())
     };
-    let content = VectorContent {
-        clips: Vec::new(),
-        paces: &library.paces,
-    };
+    let content = library.without_clips();
     let (appearance, outputs) = update(kept.appearance, &frame, &content, &Rules::VANILLA)
         .expect("expected a frame without movement to read no clip");
     let after = restored(&Kept {
@@ -340,7 +353,8 @@ fn check_quiet(before: &Kept, after: &Kept, outputs: &FrameOutputs, id: &str) {
 
 fn run_history(vectors: &ColourVectors, history: &History, library: &Library) {
     let id = &history.id;
-    let before = start(vectors, history);
+    let (opportunity, hurt) = vectors.opportunity(history, &toml::Table::new());
+    let before = start(vectors, history, hurt);
     let mut expected_palettes = before.palettes.clone();
     for update in &history.palette_updates {
         let colours = vectors.palette(&update.colours);
@@ -350,7 +364,6 @@ fn run_history(vectors: &ColourVectors, history: &History, library: &Library) {
         }
     }
     let inputs = frame_inputs(&history.pose_after, &history.items);
-    let opportunity = vectors.opportunity(history, &toml::Table::new());
     let (after, outputs) = play_frame(
         before.clone(),
         &inputs,
@@ -425,8 +438,8 @@ fn every_refusal_boundary_leaves_everything() {
         for replacement in &boundary.replacements {
             let case = format!("{}: {replacement:?}", boundary.id);
             let (inputs, observations) = boundary_case(history, replacement);
-            let opportunity = vectors.opportunity(history, &observations);
-            let before = start(vectors, history);
+            let (opportunity, hurt) = vectors.opportunity(history, &observations);
+            let before = start(vectors, history, hurt);
             let (after, outputs) =
                 play_frame(before.clone(), &inputs, opportunity, &[], vectors, &library);
             assert_eq!(
@@ -472,6 +485,7 @@ fn palettes_restore_only_whole_and_representable() {
     let kept = start(
         vectors,
         vectors.history.first().expect("expected a history"),
+        HurtCount::NONE,
     );
     let text = toml::to_string(&kept).expect("expected the State and palettes to save");
     assert!(

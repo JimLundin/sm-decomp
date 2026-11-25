@@ -37,6 +37,7 @@ pub(super) fn expected(
     )?);
     let (state, playing) = appearance::animation_owner(wram, content)?;
     fields.extend(appearance::initial(state, content));
+    fields.push(appearance::hurt_observation(appearance::hurt_count(wram)?));
     fields.push(connected::playing_observation(playing));
     Ok(fields)
 }
@@ -53,6 +54,7 @@ pub(super) fn actual(
         Observation::quantity("movement.position.y", i64::from(samus.position.y.0)),
     ]);
     fields.extend(appearance::actual(&state.appearance.0, content));
+    fields.push(appearance::hurt_observation(state.appearance.0.hurt_count));
     fields.push(connected::playing_observation(state.figure.0));
     fields
 }
@@ -73,8 +75,21 @@ fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
         part("movement.seat", format!("{:?}", samus.seat)),
         part("movement.choices", format!("{:?}", samus.choices)),
         part("movement.jump-held", format!("{:?}", samus.jump_held)),
+        part("movement.knockback", knockback(samus.knockback)),
         part("movement.position", format!("{:?}", samus.position)),
     ]
+}
+
+/// Her knockback as the record states it. The side a hit pushes her to is the hitter's last,
+/// kept while no push is under way, so it is compared only while one is.
+fn knockback(knockback: samus_movement::Knockback) -> String {
+    let samus_movement::Knockback {
+        time_left,
+        side,
+        push,
+    } = knockback;
+    let side = push.is_some().then_some(side);
+    format!("{time_left:?} {side:?} {push:?}")
 }
 
 /// Her run as the record states it. While she follows the pad the game keeps no way of its

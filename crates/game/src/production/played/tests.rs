@@ -141,6 +141,11 @@ pub(super) fn hud_frame() -> HudFrame {
 }
 
 pub(super) fn content() -> Content {
+    content_with(&data::assets::samus::palettes::SamusPalettes::default())
+}
+
+/// The fixture's content, with her pulse colours taken from `palettes`.
+pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalettes) -> Content {
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
         movement: MovementContent::new(
@@ -179,6 +184,7 @@ pub(super) fn content() -> Content {
                 plain: samus_appearance::Pace(Vec::new()),
                 boosted: enum_map::EnumMap::from_fn(|_| samus_appearance::Pace(Vec::new())),
             },
+            crate::production::pulse_colours(palettes).unwrap(),
         )
         .unwrap(),
         colour_groups: [ColourGroup::Other; COLOURS],

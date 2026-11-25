@@ -72,6 +72,16 @@ mod catalogue {
         }
     }
 
+    /// The kind line's kinds: one, or two joined by "and" ("timing and output"), of which a
+    /// behaviour holds the first.
+    fn first_kind(written: &str) -> Kind {
+        let first = written.split(" and ").next().unwrap_or(written);
+        for more in written.split(" and ").skip(1) {
+            kind(more);
+        }
+        kind(first)
+    }
+
     /// The switch line's first word: `none`, `toggle` or `parameter`, then what it names.
     fn switch(written: &str) -> Switch {
         match written.split_whitespace().next() {
@@ -127,7 +137,7 @@ mod catalogue {
             let id = &entry.id;
             assert_eq!(
                 behaviour.kind,
-                kind(&entry.field("kind")),
+                first_kind(&entry.field("kind")),
                 "{id}: expected the spec's kind"
             );
             assert_eq!(

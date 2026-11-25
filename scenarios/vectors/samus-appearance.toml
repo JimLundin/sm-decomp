@@ -2153,3 +2153,146 @@ replacements = [
     { room_colours = "Unavailable" },
     { grapple = "Unavailable" },
 ]
+
+# Hurt colours (spec section 12). Each [[hurt_colours]] is one frame of HurtColours:
+# before.count, the hurt count as the frame starts (0 to 59); energy_fell, whether her energy as
+# the frame leaves Health is below the frame before's; push_started, samus-movement's PushStarts
+# this frame; cinematic (default false); pose_after (default upright Running) and items (default
+# none), as the histories above give them; grapple (default "Dormant"). Colours are invented: the row's colours before the
+# frame are fixture "before"; her hurt colours fixture "hurt", her Power suit's "suit", the
+# cinematic's grey colours "grey", each 16 distinguishable colours. after.count; after.row, the
+# fixture her row of the current colours holds after the frame ("before" when left as it is);
+# the target colours are unchanged in every case; after.sounds, the requests in order.
+# The recorded ones are chain-any-0006-E0B5's first hit (record N is the state before frame N+1);
+# its other four hits give the same counts and colours at the same offsets from the hit.
+
+[[hurt_colours]]
+id = "RH1"
+source = "chain-any-0006-E0B5:609"
+entries = ["HurtColours"]
+before = { count = 0 }
+energy_fell = true
+push_started = true
+after = { count = 2, row = "hurt", sounds = [] }
+
+[[hurt_colours]]
+id = "RH2"
+source = "chain-any-0006-E0B5:610"
+entries = ["HurtColours"]
+before = { count = 2 }
+energy_fell = false
+push_started = false
+pose_after = { body = "Upright", action = "Recoiling" }
+after = { count = 3, row = "suit", sounds = ["Hurt"] }
+
+[[hurt_colours]]
+id = "RH3"
+source = "chain-any-0006-E0B5:611"
+entries = ["HurtColours"]
+before = { count = 3 }
+energy_fell = false
+push_started = false
+pose_after = { body = "Upright", action = "Leaping" }
+after = { count = 4, row = "hurt", sounds = [] }
+
+[[hurt_colours]]
+id = "RH4"
+source = "chain-any-0006-E0B5:647"
+entries = ["HurtColours"]
+before = { count = 39 }
+energy_fell = false
+push_started = false
+after = { count = 40, row = "before", sounds = [] }
+
+[[hurt_colours]]
+id = "RH5"
+source = "chain-any-0006-E0B5:667"
+entries = ["HurtColours"]
+before = { count = 59 }
+energy_fell = false
+push_started = false
+after = { count = 0, row = "before", sounds = [] }
+
+[[hurt_colours]]
+id = "C-hurt-fall-only"
+source = "constructed"
+entries = ["HurtColours"]
+before = { count = 0 }
+energy_fell = true
+push_started = false
+pose_after = { body = "Upright", action = "Turning" }
+after = { count = 2, row = "hurt", sounds = [] }
+
+[[hurt_colours]]
+id = "C-hurt-cinematic"
+source = "constructed"
+entries = ["HurtColours"]
+before = { count = 2 }
+energy_fell = false
+push_started = false
+cinematic = true
+after = { count = 3, row = "grey", sounds = [] }
+
+[[hurt_colours]]
+id = "C-hurt-spin-again"
+source = "constructed"
+entries = ["HurtColours"]
+before = { count = 39 }
+energy_fell = false
+push_started = false
+pose_after = { body = "Upright", action = "Spinning" }
+after = { count = 40, row = "before", sounds = ["PlainSpin"] }
+
+[[hurt_colours]]
+id = "C-hurt-pushed-again"
+source = "constructed"
+entries = ["HurtColours"]
+before = { count = 20 }
+energy_fell = false
+push_started = true
+after = { count = 2, row = "hurt", sounds = [] }
+
+[[hurt_colours]]
+id = "C-hurt-idle"
+source = "constructed"
+entries = ["HurtColours"]
+before = { count = 0 }
+energy_fell = false
+push_started = false
+after = { count = 0, row = "before", sounds = [] }
+
+[[hurt_colours]]
+id = "RH6"
+source = "chain-any-0006-E0B5:613"
+entries = ["HurtColours"]
+before = { count = 5 }
+energy_fell = false
+push_started = false
+after = { count = 6, row = "hurt", sounds = [] }
+
+[[hurt_colours]]
+id = "RH7"
+source = "chain-any-0006-E0B5:614"
+entries = ["HurtColours"]
+before = { count = 6 }
+energy_fell = false
+push_started = false
+after = { count = 7, row = "suit", sounds = [] }
+
+[[hurt_colours]]
+id = "RH8"
+source = "chain-any-0006-E0B5:615"
+entries = ["HurtColours"]
+before = { count = 7 }
+energy_fell = false
+push_started = false
+after = { count = 8, row = "before", sounds = [] }
+
+[[hurt_colours]]
+id = "C-hurt-fall-mid-pulse"
+source = "constructed"
+entries = ["HurtColours"]
+before = { count = 20 }
+energy_fell = true
+push_started = false
+after = { count = 21, row = "before", sounds = [] }

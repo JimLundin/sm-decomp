@@ -3090,6 +3090,53 @@ after = { position = ["0108.0000", "00FC.0000"], speed_x = "+0000.0000", dash = 
 #   "wall_kick" (the wall-jump kick).
 # - after.pose: the pose the frame ends in. Only the pose is compared.
 
+# An aimed crouched turn let go (PadChart): two records turn to face right and end facing left;
+# the third ends its animation that frame instead.
+
+[[pose_step]]
+id = "P-crouch-turn-letgo"
+source = "chain-any-0006-E0B5:539"
+entries = ["PadChart"]
+pose = { body = "Crouched", action = "Turning", facing = "Right", aim = "DownForward", turn = "Ground" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Still", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P-crouch-turn-letgo-up"
+source = "boss-phantoon:1794"
+entries = ["PadChart"]
+pose = { body = "Crouched", action = "Turning", facing = "Right", aim = "UpForward", turn = "Ground" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Still", facing = "Left", aim = "Forward" } }
+
+[[pose_step]]
+id = "P-crouch-turn-end"
+source = "chain-any-0006-E0B5:607"
+entries = ["PadChart", "AnimationEnds"]
+pose = { body = "Crouched", action = "Turning", facing = "Right", aim = "DownForward", turn = "Ground" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "animation_end"
+after = { pose = { body = "Crouched", action = "Still", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "C-crouch-turn-letgo-left"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Crouched", action = "Turning", facing = "Left", aim = "DownForward", turn = "Ground" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Still", facing = "Left", aim = "Forward" } }
+
 [[pose_step]]
 id = "P1"
 source = "r02:208"
@@ -7170,3 +7217,388 @@ pose = { body="Upright", action="Jumping", facing="Right", radius=[5,21] }
 pad = ["jump"]
 jump_pressed = false
 after = { position=["0100.0000", "007F.0000"], speed_y="-0000.E400", rising=true }
+
+# Thrown back by a hit (spec §12). Format added to the above:
+# - hit (optional, on the checked frame or a lead-in frame): the frame's hit, { side, time }:
+#   side "Left" or "Right", the way it pushes her; time: how many frames the push lasts (1 to 45).
+# - before.knockback / after.knockback (optional): the knockback, { time, side, push }: push time
+#   left (0 to 45), side ("Left" or "Right"), push under way ("None", "Down" or "Up"). Missing in
+#   before: time 0 and push "None". after compares the parts it gives. after.falling (optional):
+#   whether she ends the frame falling at 0 (spec §1.2), compared only where given.
+# - pose action "Recoiling" or "Leaping" (spec §12): upright; in Recoiling speed_x points
+#   the knockback's side, in Leaping backward, as the spec says. Their bodies are content, given
+#   as every pose's is (radius): the game's are [5, 21] (Recoiling) and [5, 19] (Leaping).
+# - before.motion (optional, §12 vectors): "Follows" (default), "CarriesOn" or "Skids", her
+#   horizontal motion's memory (spec §1.2), which a push's start keeps; after.motion compares it.
+#   before.no_vertical_motion (optional, default false): in an airborne pose, she has no vertical
+#   motion at all (a floor stopped the push), not a fall just begun (spec §12,
+#   `BackwardLeap`'s moonfall).
+# - rules: push_rise (PushStarts; "0005.0000"), push_gain, push_brake, push_top (PushMoves;
+#   "0001.8000", "0000.8000", "0005.0000"), leap_gain, leap_top (BackwardLeap; "0000.C000",
+#   "0005.0000").
+# - The recorded vectors are 0006 (chain-any-0006-E0B5), Ceres Ridley's room, and any-intro-2219.
+#   On a push's start frame (PK1, PK5) the body grows to Recoiling's, so after.pose gives
+#   Recoiling's radius, the chosen pose's own as pose fit takes it (a record still shows the old
+#   body there, the new one holding from the next frame); pose fit's 5 px (PK1) is in y.
+#   r05 is chain-0059-A293 (a hitter with push time 10: 9 left after the hit frame).
+
+[[vector]]
+id = "PK1"
+source = "chain-any-0006-E0B5:609"
+entries = ["PushTime", "PushStarts", "PoseFitAfterMoves"]
+world = { floor_top = 208 }
+before = { position = ["00D8.2000", "00C0.FFFF"] }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+hit = { side = "Left", time = 5 }
+pad = []
+jump_pressed = false
+after = { position = ["00D8.2000", "00BB.FFFF"], speed_x = "+0000.0000", speed_y = "-0005.0000", pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }, knockback = { time = 4, side = "Left", push = "Up" }, position_after_moves = ["00D8.2000", "00C0.FFFF"], rising = true }
+
+[[vector]]
+id = "PK2"
+source = "chain-any-0006-E0B5:706"
+entries = ["PushTime", "PushMoves", "Dash"]
+world = {}
+before = { position = ["00E0.F000", "00BB.FFFF"], speed_x = "+0002.C000", dash = "0001.A000", speed_y = "-0005.0000", dashing = true, knockback = { time = 4, side = "Right", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = ["run", "left", "jump"]
+jump_pressed = false
+next_pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 21] }
+after = { position = ["00E6.D000", "00B6.FFFF"], speed_x = "-0004.4000", dash = "0001.A000", speed_y = "-0004.E400", knockback = { time = 3, side = "Right", push = "Up" } }
+
+[[vector]]
+id = "PK3"
+source = "chain-any-0006-E0B5:803"
+entries = ["PushTime", "PushMoves", "WallsAndCeilings"]
+world = { wall_right = 240 }
+before = { position = ["00EB.A000", "009C.2BFF"], speed_x = "+0001.8000", speed_y = "-0004.E400", knockback = { time = 3, side = "Right", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = ["left", "jump"]
+jump_pressed = true
+pressed = ["left"]
+next_pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 21] }
+after = { position = ["00EB.FFFF", "0097.47FF"], speed_x = "+0000.0000", speed_y = "-0004.C800", knockback = { time = 2, side = "Right", push = "Up" } }
+
+[[vector]]
+id = "PK4"
+source = "chain-any-0006-E0B5:898"
+entries = ["PushTime", "PushMoves", "FollowingTheGround"]
+world = {}
+before = { position = ["00E0.AFFF", "00A1.FBFF"], speed_x = "-0000.C000", speed_y = "-0005.0000", knockback = { time = 4, side = "Left", push = "Down" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00DE.6FFF", "00A5.3BFF"], speed_x = "-0002.4000", speed_y = "-0005.0000", knockback = { time = 3, side = "Left", push = "Down" } }
+
+[[vector]]
+id = "PK5"
+source = "chain-any-0006-E0B5:993"
+entries = ["PushTime", "PushStarts", "RisingAndFalling"]
+world = { wall_right = 240 }
+before = { position = ["00EB.FFFF", "004D.8FFF"], speed_y = "+0000.7000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+hit = { side = "Left", time = 5 }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["00EB.FFFF", "004D.FFFF"], speed_x = "+0000.0000", speed_y = "-0005.0000", pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }, knockback = { time = 4, side = "Left", push = "Down" } }
+
+[[vector]]
+id = "PL1"
+source = "chain-any-0006-E0B5:612"
+entries = ["PushTime", "BackwardLeap", "RisingAndFalling"]
+world = {}
+before = { position = ["00D3.A000", "00B2.1BFF"], speed_x = "-0003.0000", speed_y = "-0004.C800", knockback = { time = 2, side = "Left", push = "Up" } }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["00CF.E000", "00AD.53FF"], speed_x = "-0003.C000", speed_y = "-0004.AC00", pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }, knockback = { time = 1, side = "Left", push = "Up" } }
+
+[[vector]]
+id = "PL2"
+source = "chain-any-0006-E0B5:636"
+entries = ["BackwardLeap", "WordwiseTopSpeed", "RisingAndFalling"]
+world = {}
+before = { position = ["0055.2000", "00BB.0FFF"], speed_x = "-0005.C000", speed_y = "+0002.4C00" }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+pressed = ["right"]
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+after = { position = ["0050.2000", "00BD.5BFF"], speed_x = "+0005.0000", speed_y = "+0002.6800" }
+
+[[vector]]
+id = "PL3"
+source = "chain-any-0006-E0B5:728"
+entries = ["BackwardLeap", "WordwiseTopSpeed", "Dash"]
+world = {}
+before = { position = ["0054.3000", "00B2.F7FF"], speed_x = "-0005.0000", dash = "0001.A000", speed_y = "+0001.DC00", dashing = true }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["right"]
+jump_pressed = false
+pressed = ["right"]
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+after = { position = ["004C.D000", "00B4.D3FF"], speed_x = "+0005.C000", dash = "0001.A000", speed_y = "+0001.F800" }
+
+[[vector]]
+id = "PE1"
+source = "chain-any-0006-E0B5:614"
+entries = ["PushEnds", "BackwardLeap"]
+world = {}
+before = { position = ["00CB.6000", "00A8.A7FF"], speed_x = "-0004.8000", speed_y = "-0004.9000", knockback = { time = 0, side = "Left", push = "Up" } }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["00C6.6000", "00A4.17FF"], speed_x = "-0005.0000", speed_y = "+0000.0000", falling = true, pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }, knockback = { time = 0, push = "None" } }
+
+[[vector]]
+id = "PE2"
+source = "chain-any-0006-E0B5:902"
+entries = ["PushEnds", "PushMoves"]
+world = { floor_top = 208 }
+before = { position = ["00D0.AFFF", "00B5.FBFF"], speed_x = "-0005.0000", speed_y = "-0005.0000", knockback = { time = 0, side = "Left", push = "Down" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["00CB.AFFF", "00BB.FBFF"], speed_x = "-0005.0000", speed_y = "+0000.0000", falling = true, pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }, knockback = { time = 0, push = "None" } }
+
+[[vector]]
+id = "PE3"
+source = "chain-any-0006-E0B5:998"
+entries = ["PushEnds", "BackwardLeap"]
+world = {}
+before = { position = ["00DD.FFFF", "005F.FFFF"], speed_x = "-0005.0000", speed_y = "-0005.0000", knockback = { time = 0, side = "Left", push = "Down" } }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["00D8.3FFF", "005A.FFFF"], speed_x = "-0005.C000", speed_y = "+0000.0000", falling = true, knockback = { time = 0, push = "None" } }
+
+[[vector]]
+id = "PA1"
+source = "chain-any-0006-E0B5:903"
+entries = ["AfterThePush", "Landing"]
+world = { floor_top = 208 }
+before = { position = ["00CB.AFFF", "00BB.FBFF"], speed_x = "-0005.0000", falling = true, knockback = { time = 0, side = "Left", push = "None" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+next_pose = { body = "Upright", action = "Landing", facing = "Right", landed_from = "Jump", radius = [5, 21] }
+after = { position = ["00CB.AFFF", "00BB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "PA2"
+source = "any-intro-2219:181"
+entries = ["AfterThePush"]
+world = {}
+before = { position = ["00CC.0000", "0043.03FF"], speed_x = "+0005.0000", falling = true, knockback = { time = 0, side = "Right", push = "None" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }
+pad = []
+jump_pressed = false
+next_pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+after = { position = ["00CC.0000", "0049.03FF"], speed_x = "-0005.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-push-waits"
+source = "constructed"
+entries = ["PushTime", "PushStarts"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], knockback = { time = 2, side = "Right", push = "None" } }
+pose = { body = "Upright", action = "Turning", facing = "Left", turn = "Ground", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["00FF.4000", "010B.FFFF"], speed_y = "+0000.0000", pose = { body = "Upright", action = "Turning", facing = "Left", turn = "Ground", radius = [5, 21] }, knockback = { time = 1, side = "Right", push = "None" } }
+
+[[vector]]
+id = "C-push-rise"
+source = "constructed"
+entries = ["PushTime", "PushStarts"]
+rules = { push_rise = "0004.0000" }
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Left", radius = [5, 21] }
+hit = { side = "Right", time = 5 }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_y = "-0004.0000", pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }, knockback = { time = 4, side = "Right", push = "Up" } }
+
+[[vector]]
+id = "C-push-gain"
+source = "constructed"
+entries = ["PushTime", "PushMoves"]
+rules = { push_gain = "0001.0000" }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_y = "-0005.0000", knockback = { time = 3, side = "Left", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["00FF.0000", "007B.0000"], speed_x = "-0001.0000", speed_y = "-0004.E400", knockback = { time = 2, side = "Left", push = "Up" } }
+
+[[vector]]
+id = "C-leap-top"
+source = "constructed"
+entries = ["BackwardLeap", "WordwiseTopSpeed"]
+rules = { leap_top = "0003.0000" }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0002.8000", speed_y = "-0002.0000" }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["00FD.0000", "007E.0000"], speed_x = "-0003.0000", speed_y = "-0001.E400", pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] } }
+
+[[vector]]
+id = "PK6"
+source = "chain-0059-A293:391"
+entries = ["PushTime", "PushMoves", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["06C5.0000", "00AB.FFFF"], speed_y = "-0005.0000", knockback = { time = 9, side = "Right", push = "Down" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }
+pad = ["run", "left", "aim_down"]
+jump_pressed = false
+pressed = ["aim_down"]
+after = { position = ["06C6.8000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000", falling = false, knockback = { time = 8, side = "Right", push = "Down" } }
+
+[[vector]]
+id = "PK7"
+source = "chain-0059-A293:392"
+entries = ["PushTime", "PushMoves"]
+world = { floor_top = 192 }
+before = { position = ["06C6.8000", "00AB.FFFF"], no_vertical_motion = true, knockback = { time = 8, side = "Right", push = "Down" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+pressed = ["right"]
+after = { position = ["06C8.0000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000", falling = false, pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }, knockback = { time = 7, side = "Right", push = "Down" } }
+
+[[vector]]
+id = "PK8"
+source = "chain-0059-A293:66"
+entries = ["PushTime", "PushMoves", "Dashing"]
+world = {}
+before = { position = ["074E.8FFF", "00AB.FFFF"], speed_x = "+0001.0000", dash = "0000.4000", speed_y = "-0005.0000", dashing = true, motion = "CarriesOn", knockback = { time = 9, side = "Right", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }
+pad = ["run"]
+jump_pressed = false
+after = { position = ["074F.4FFF", "00A6.FFFF"], speed_x = "+0000.8000", dash = "0000.4000", speed_y = "-0004.E400", dashing = false, motion = "Follows", knockback = { time = 8, side = "Right", push = "Up" } }
+
+[[vector]]
+id = "PK9"
+source = "chain-0059-A293:67"
+entries = ["PushTime", "PushMoves"]
+world = {}
+before = { position = ["074F.4FFF", "00A6.FFFF"], speed_x = "+0000.8000", dash = "0000.4000", speed_y = "-0004.E400", knockback = { time = 8, side = "Right", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }
+pad = ["run"]
+jump_pressed = false
+after = { position = ["0751.8FFF", "00A2.1BFF"], speed_x = "+0002.0000", speed_y = "-0004.C800", knockback = { time = 7, side = "Right", push = "Up" } }
+
+[[vector]]
+id = "PK10"
+source = "chain-0059-A293:142"
+entries = ["PushTime", "PushMoves", "WordwiseTopSpeed"]
+world = {}
+before = { position = ["0747.8FFF", "005A.73FF"], speed_x = "+0004.4000", speed_y = "-0005.0000", knockback = { time = 2, side = "Right", push = "Down" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Left", radius = [5, 21] }
+pad = ["run", "right", "aim_up"]
+jump_pressed = false
+after = { position = ["074D.4FFF", "0061.33FF"], speed_x = "+0005.C000", speed_y = "-0005.0000", knockback = { time = 1, side = "Right", push = "Down" } }
+
+[[vector]]
+id = "PL4"
+source = "chain-0059-A293:394"
+entries = ["PushTime", "BackwardLeap", "Moonfall"]
+world = { floor_top = 192 }
+before = { position = ["06C9.8000", "00AB.FFFF"], no_vertical_motion = true, knockback = { time = 6, side = "Right", push = "Down" } }
+pose = { body = "Upright", action = "Leaping", facing = "Left", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+next_pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 21] }
+after = { position = ["06CA.4000", "00AB.FFFF"], speed_x = "-0000.C000", speed_y = "+0000.1C00", knockback = { time = 5, side = "Right", push = "Down" } }
+
+[[vector]]
+id = "PE4"
+source = "chain-0059-A293:400"
+entries = ["PushEnds", "BackwardLeap", "Moonfall", "Jumping"]
+world = { floor_top = 192, solid_block = [1712, 176] }
+before = { position = ["06C9.8000", "00AB.FFFF"], no_vertical_motion = true, knockback = { time = 6, side = "Right", push = "Down" } }
+lead_in = [
+    { pose = { body = "Upright", action = "Leaping", facing = "Left", radius = [5, 21] }, pad = ["run", "right"], jump_pressed = false },
+    { pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19] }, pad = ["run", "left", "jump"], jump_pressed = true, pressed = ["left"] },
+    { pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }, pad = ["run", "left", "jump"], jump_pressed = false },
+    { pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }, pad = ["run", "left", "jump"], jump_pressed = false },
+    { pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }, pad = ["run", "left", "jump"], jump_pressed = false },
+    { pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }, pad = ["run", "left", "jump"], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }
+pad = ["run", "left", "jump"]
+jump_pressed = false
+after = { position = ["06C5.0000", "00AD.FFFF"], speed_y = "+0000.0000", falling = true, pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }, knockback = { time = 0, push = "None" } }
+
+[[vector]]
+id = "C-push-brake"
+source = "constructed"
+entries = ["PushTime", "PushMoves"]
+rules = { push_brake = "0000.4000" }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0001.0000", speed_y = "-0005.0000", motion = "Skids", knockback = { time = 3, side = "Left", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["00FF.4000", "007B.0000"], speed_x = "-0000.C000", speed_y = "-0004.E400", motion = "Follows", knockback = { time = 2, side = "Left", push = "Up" } }
+
+[[vector]]
+id = "C-push-top"
+source = "constructed"
+entries = ["PushTime", "PushMoves", "WordwiseTopSpeed"]
+rules = { push_top = "0003.0000" }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0001.C000", speed_y = "-0005.0000", knockback = { time = 3, side = "Left", push = "Up" } }
+pose = { body = "Upright", action = "Recoiling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["00FD.0000", "007B.0000"], speed_x = "-0003.0000", speed_y = "-0004.E400", knockback = { time = 2, side = "Left", push = "Up" } }
+
+[[vector]]
+id = "C-leap-gain"
+source = "constructed"
+entries = ["BackwardLeap"]
+rules = { leap_gain = "0001.0000" }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0001.0000", speed_y = "-0002.0000" }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "jump"]
+jump_pressed = false
+after = { position = ["00FE.0000", "007E.0000"], speed_x = "-0002.0000", speed_y = "-0001.E400", pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] } }
+
+[[vector]]
+id = "C-leap-stride"
+source = "constructed"
+entries = ["BackwardLeap"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0002.0000", speed_y = "-0002.0000" }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["right", "jump"]
+jump_pressed = false
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", legs = "Striding", radius = [5, 19] }
+after = { position = ["00FD.4000", "007E.0000"], speed_x = "+0002.C000", speed_y = "-0001.E400" }
+
+[[vector]]
+id = "C-leap-both-right"
+source = "constructed"
+entries = ["BackwardLeap"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0002.0000", speed_y = "-0002.0000" }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "right", "jump"]
+jump_pressed = false
+after = { position = ["00FD.4000", "007E.0000"], speed_x = "-0002.C000", speed_y = "-0001.E400", pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] } }
+
+[[vector]]
+id = "C-leap-both-left"
+source = "constructed"
+entries = ["BackwardLeap"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "+0002.0000", speed_y = "-0002.0000" }
+pose = { body = "Upright", action = "Leaping", facing = "Left", radius = [5, 19] }
+pad = ["left", "right", "jump"]
+jump_pressed = false
+next_pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }
+after = { position = ["0102.C000", "007E.0000"], speed_x = "-0002.C000", speed_y = "-0001.E400" }

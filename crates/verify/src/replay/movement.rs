@@ -12,8 +12,8 @@ use data::rom::Rom;
 use game::production::world::{Boundary, MovementWorld};
 use game::production::{MovementContent, PoseContent};
 use samus_movement::{
-    Bounces, Carry, Choices, Chosen, Dashing, FrameBefore, JumpHeld, Phase, Run, Samus, Seat,
-    Vertical,
+    Bounces, Carry, Choices, Chosen, Dashing, FrameBefore, JumpHeld, Knockback, Phase, Push,
+    PushFrames, Run, Samus, Seat, Vertical,
 };
 use types::{Action, Buttons, Fixed, Item, Parity, Pose, Position, Radius, Set, Side, Turn, ZERO};
 
@@ -38,6 +38,8 @@ fn unsupported(dependency: &str) -> Outcome {
 pub struct Content {
     pub movement: MovementContent,
     pub clips: game::samus_appearance_bridge::Clips,
+    /// Her clips as production plays them, for her clip's look ahead.
+    appearance: game::production::AppearanceContent,
     slopes: Slopes,
     rom: Rom,
 }
@@ -72,9 +74,11 @@ impl Content {
         let movement = MovementContent::new(entries)
             .map_err(|_| data_failure(None, "movement content relation"))?;
         let slopes = Slopes::load(rom.lorom()).map_err(|_| data_failure(None, "slope content"))?;
+        let appearance = super::appearance::production_content(&rom, &clips)?;
         Ok(Self {
             movement,
             clips,
+            appearance,
             slopes,
             rom,
         })
@@ -148,6 +152,7 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
         latest: chosen(source::SAMUS_PREV_MOVEMENT_TYPE2)?,
         before: chosen(source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE)?,
     };
+    let knockback = knockback(wram)?;
     Ok(Samus {
         position: Position {
             x: fixed(wram, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?,
@@ -192,6 +197,32 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
                 FrameBefore::Other
             },
         },
+        knockback,
+    })
+}
+
+/// Her knockback: the push time left (`18AA`), the side a hit pushes her to (`0A54`) and the
+/// push under way (`0A52`, 1 to 3 up, 4 or 5 down).
+fn knockback(wram: &[u8]) -> Result<Knockback, Outcome> {
+    let time_left = u8::try_from(word(wram, source::SAMUS_KNOCKBACK_TIMER)?)
+        .ok()
+        .and_then(PushFrames::new)
+        .ok_or_else(|| data_failure(None, "movement push time"))?;
+    let side = match word(wram, source::SAMUS_KNOCKBACK_X_DIRECTION)? {
+        0 => Side::Left,
+        1 => Side::Right,
+        _ => return Err(data_failure(None, "movement push side")),
+    };
+    let push = match word(wram, source::SAMUS_KNOCKBACK_DIRECTION)? {
+        0 => None,
+        1..=3 => Some(Push::Up),
+        4 | 5 => Some(Push::Down),
+        _ => return Err(data_failure(None, "movement push under way")),
+    };
+    Ok(Knockback {
+        time_left,
+        side,
+        push,
     })
 }
 
@@ -356,7 +387,7 @@ pub(super) fn input_at(
         },
         ..samus_appearance::AppearanceState::INITIAL
     };
-    let ahead = samus_appearance::Ahead::of(&appearance, imported.figure, &content.clips)
+    let ahead = samus_appearance::Ahead::of(&appearance, imported.figure, &content.appearance)
         .map_err(|_| unsupported("actual movement pose animation content"))?;
     Ok(Input {
         sprite: observed_figure.figure.sprite,

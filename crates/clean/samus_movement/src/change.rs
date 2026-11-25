@@ -36,27 +36,66 @@ pub struct PoseChange {
     pub contact: Option<Contact>,
 }
 
+/// `PoseFollows`: the pose her frame's first step chooses, from the pad, her animation's end and
+/// what her moves met, not yet taken, and the contact her moves made that comes with it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Selection {
+    /// The choice.
+    pub choice: Choice,
+    /// `Landing`, `WallJump`: what her moves' contact will do to her motion once she takes it.
+    pub contact: Option<Contact>,
+}
+
+impl Selection {
+    /// A pose that nothing her moves met comes with (`Choice::instead`): `PushStarts`'
+    /// `Recoiling`, or the pose `PushEnds` keeps.
+    pub(crate) const fn only(pose: types::Pose) -> Self {
+        Self {
+            choice: Choice::instead(pose),
+            contact: None,
+        }
+    }
+}
+
 impl Samus {
-    /// `PoseFollows`: the pose change, from `start`, her at the frame's start, after her moves
-    /// (`moves`). The pose is chosen; a running pose other than hers brings the aim change's
-    /// step (`AimingAndShooting`); pose fit takes the pose, refuses it or takes the crouch
-    /// instead (`PoseFitAfterMoves`), and none of the chosen pose's effects come with the last
-    /// two. She takes the pose she ends in, and a frame whose pose chosen chooses anew records
-    /// it in her choices (`WallJump`). A change of shape lowers her (`ShrinkingLowersHer`) and a
-    /// placement puts her; then her moves' contact acts (`Landing`, `WallJump`), and then the
-    /// change's effects (`PadChart`, `AnimationEnds`).
-    pub(crate) fn take_pose(
-        &mut self,
+    /// `PoseFollows`: the pose chosen once her moves (`moves`) are made, from `start`, her at
+    /// the frame's start, and the contact her moves made that comes with it.
+    pub(crate) fn choose_pose(
+        &self,
         start: &Self,
         situation: &'static Situation,
         moves: &MovesMade,
-        t: &mut Tick,
-    ) -> PoseChange {
+        t: &Tick,
+    ) -> Selection {
         let springs = start.pose.body == Body::SpringBall && t.frame.pad.any(JUMP);
         let contact = self
             .vertical
             .contact(moves.met, situation.footing, springs, t.rules);
-        let chosen = self.choose(start, situation, moves.met, contact, t);
+        Selection {
+            choice: self.choose(start, situation, moves.met, contact, t),
+            contact,
+        }
+    }
+
+    /// `PoseFollows`: the pose change, from `start`, her at the frame's start, after her moves
+    /// (`moves`), taking the pose `selection` chose. A running pose other than hers brings the aim
+    /// change's step (`AimingAndShooting`); pose fit takes the pose, refuses it or takes the
+    /// crouch instead (`PoseFitAfterMoves`), and none of the chosen pose's effects come with the
+    /// last two. She takes the pose she ends in, and a frame whose pose chosen chooses anew
+    /// records it in her choices (`WallJump`). A change of shape lowers her
+    /// (`ShrinkingLowersHer`) and a placement puts her; then her moves' contact acts (`Landing`,
+    /// `WallJump`), and then the change's effects (`PadChart`, `AnimationEnds`).
+    pub(crate) fn take_pose(
+        &mut self,
+        start: &Self,
+        moves: &MovesMade,
+        selection: Selection,
+        t: &mut Tick,
+    ) -> PoseChange {
+        let Selection {
+            choice: chosen,
+            contact,
+        } = selection;
         let stepped = if chosen.aim_step {
             self.step_forward(start, chosen, t)
         } else {
@@ -270,6 +309,7 @@ impl Samus {
             Effect::Launch => self.run.launch(pose.facing),
             Effect::ComesToTheGround => self.vertical.come_to_the_ground(),
             Effect::EndsTheBounce => self.vertical.end_bounce(),
+            Effect::AlongHerFacing => self.run.way = Side::of(pose.facing),
             Effect::LiftIfUnaimed | Effect::TurnRoundIfFacingChanges => {}
         }
     }

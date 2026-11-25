@@ -18,8 +18,9 @@ pub enum Phase {
     /// On the ground, keeping the vertical speed she brought with her, downward or upward
     /// (`FollowingTheGround`); an upward one is a rise she keeps there (`RisingAndFalling`).
     Ground,
-    /// On the ground, falling at a vertical speed of 0 (§1.2): only a push beyond this spec
-    /// hands her back so. As the ball, or while her body changes shape, it is a vertical motion
+    /// On the ground, falling at a vertical speed of 0 (§1.2): only a push hands her back so (a
+    /// knockback's end, `PushEnds`, or a bomb jump's, beyond this spec). As the ball, or while
+    /// her body changes shape, it is a vertical motion
     /// she moves by; in any other pose on the ground she keeps it and moves as with none, and
     /// only leaving the ground ends it (`FollowingTheGround`).
     GroundFalling,
@@ -119,7 +120,7 @@ impl Vertical {
         }
     }
 
-    /// `RisingAndFalling`, `Jumping`, `WallJump`: she starts rising at this speed.
+    /// `RisingAndFalling`, `Jumping`, `WallJump`, `PushStarts`: she starts rising at this speed.
     fn rise(&mut self, v: Fixed) {
         self.phase = Phase::Rising;
         self.speed = -v;
@@ -137,10 +138,35 @@ impl Vertical {
         self.speed = ZERO;
     }
 
-    /// `Landing`: she stands on the ground with no vertical motion.
-    const fn stand(&mut self) {
+    /// `Landing`, `PushMoves`: she stands on the ground with no vertical motion.
+    pub(crate) const fn stand(&mut self) {
         self.phase = Phase::Ground;
         self.speed = ZERO;
+    }
+
+    /// `PushStarts`: a push starts her rising at the push's rise.
+    pub(crate) fn recoil(&mut self, r: &Rules) {
+        self.rise(r.push_rise);
+    }
+
+    /// `PushEnds`: the push over, she is handed back falling at 0 (§1.2): on the ground falling
+    /// at a vertical speed of 0, in the air a fall just begun.
+    pub(crate) const fn handed_back(&mut self) {
+        self.phase = if self.on_ground() {
+            Phase::GroundFalling
+        } else {
+            Phase::Falling
+        };
+        self.speed = ZERO;
+    }
+
+    /// `BackwardLeap`, `Moonfall`: a leap she starts with no vertical motion (a floor stopped the
+    /// push) is the moonfall's: from the speed she has she falls with no falling limit, and the
+    /// straight jump the pad makes of it goes on so, until she lands or the push ends.
+    pub(crate) const fn leap(&mut self) {
+        if self.on_ground() {
+            self.phase = Phase::Moonfall;
+        }
     }
 
     /// `RisingAndFalling`: at a frame's start the rise ends, falling from rest, once the pull

@@ -472,6 +472,7 @@ together, not split by area.
 - Area run: RunPace, BoostStages, CountedLapHold, BoostingLap
 - Area cannon: CannonItemDelay, CannonReadinessReset
 - Area palette (old 183): OrdinaryDryColours
+- Area hurt (old 0: no old code models the pulse): HurtColours, 12
 
 
 ## Stride, spin and passage sound opportunities
@@ -1025,3 +1026,62 @@ The old implementation is the palette area of the [domain inventory](../architec
 OrdinaryDryColours). The admitted actions widen the one OrdinaryDryColours arm without a new
 outcome, so the units are unchanged. At k = 37.5 the increment is 37.5.
 The general active colour effects remain outside this allowance.
+
+## Her hurt colours and the push's poses (#753, spec §12)
+
+Records: lean cache `SM_CACHE=$TEMP/collab/ci-cache/rows`, `chain-any-0006-E0B5` (0006), the
+five tail hits at 609, 705, 801, 897 and 993. Scratch: `$TEMP/collab/knock-753/scratch/hurt.py`
+(per record: her colour row in the current, target and shown colours, `18A8`, `0A48`, `0A4A`,
+`0ACC`) and `hurt2.py` (the five hits side by side). All five are alike: the row holds the hurt
+colours on the hit's record and two and four records later, the suit's otherwise; the target
+colours never change; the shown colours equal the current ones every record; `0A48` reads 2 on
+the hit's record, 3 the next, 40 at 38 records on, and 0 from 58 on.
+
+### Sources
+
+- **The count.** `$91:ED66` (the push's start) sets `0A48` = 1; `$90:EADF` sets it to 1 when
+  `09C2` < `0A12` (the previous frame's energy) with `0A48` = 0. Both come before the palette
+  handler in the frame.
+- **HurtColours.** `$91:D6F7` (Samus palette handling, every frame) ends in `$91:D8A5`: with
+  `0A4A` (super special palette flags: shinespark, crystal flash, hyper beam) non-zero it goes to
+  `$91:D954` instead; with `0A48` = 0 it returns. Count 2: sound 35h, library 1, allowance 6
+  (`Hurt`), unless `1F51` (cinematic) ≠ 0, or the new state handler is `$E8D9` with pose 54h;
+  then the suit's colours. Count < 7: odd → `$91:A380` (the hurt colours, 20h bytes) by
+  `$91:DD5B` into the current colours' row 4 (`7E:C180`..`C19F`); even → `$91:A3A0` (the
+  intro's grey) in a cinematic, else `$91:DEBA` (the suit's colours). Then `INC`; at 28h
+  (`$91:D911`) with the grapple inactive: movement type 3 or 14h → `$90:F084` command 1Ch (the
+  spin's sound again); else `0CD0` ≥ 10h with shoot held → `0DC0` = 1 (the charge's sound
+  resumes); with the grapple busy and below its cancel → sound 6, library 1, allowance 9. At
+  ≥ 3Ch → 0.
+- **The push's poses** (no entry; harness cases). 53h/54h and 4Fh/50h take the ordinary pose change (`$91:EB88`) and their clips
+  play as any other: 0006 609 step 0 hold 2, 610 step 0 hold 1; 611 (50h) step 0 hold 8 counting
+  down; 897 step 0 hold 2, 899 step 1 hold 10h, 902 step 1 hold Dh (`0A96`, `0A94`).
+
+### RAM mapping
+
+| Quantity | RAM | Decode |
+| --- | --- | --- |
+| hurt count | `0A48` | as is, 0 to 3Bh |
+| her row of the current colours | `7E:C180`..`C19F` | 16 colours, BGR555 |
+| `Hurt` | sound 35h, library 1, allowance 6 | |
+
+Out of scope, original only: the drain's skip of `Hurt` (`$91:D8BD`..`D8CB`, handler `$E8D9` and
+pose 54h), the grapple's sound 6 at 40 (`$91:D93F`) and the charge flag `0DC0` at 40 (weapons').
+The push's start, read here, is samus-movement §12's "push started" output (`$91:ED66`).
+
+### Harness note
+
+Compared each frame: the hurt count and the 16 colours of her row of the current colours (and the
+shown colours, which equal them). The colours are content: the recorded vectors use invented
+fixtures, and 0006's hit windows are harness cases with the imported hurt and suit colours. The
+`Hurt` request is compared at the audio boundary (MODEL decision 37). The flicker while she is
+protected is drawing, not compared by the played run, and stays part 2's.
+
+### The reference model
+
+`$TEMP/collab/knock-753/scratch/hurtmodel.py`: HurtColours per frame over 0006 609-1057 (the five
+hits and their counts to 0), seeded from each frame's starting record, the fall read from `09C2`
+and the push's start from `0A52`. 449 frames: model 449, do-nothing 154 (the count moves on most
+frames). `Hurt` is asked at 610, 706, 802, 898 and 994, the frame after each hit. No count reaches
+40 while she spins or charges in 0006, so the spin's sound again is constructed only
+(C-hurt-spin-again).

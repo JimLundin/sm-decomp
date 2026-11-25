@@ -179,6 +179,14 @@ pub struct Rules {
     pub crouch_lowers: Fixed,
     /// `ShrinkingLowersHer`: the morph's own distance.
     pub morph_lowers: Fixed,
+    /// `PushStarts`: the rise a push starts her at, upward.
+    pub push_rise: Fixed,
+    /// `PushMoves`: the push's gain a frame (`step`) and its top speed (`top`).
+    pub push: Limits,
+    /// `PushMoves`: the push's brake a frame, where her motion carries on or skids.
+    pub push_brake: Fixed,
+    /// `BackwardLeap`: the leap's gain a frame (`step`) and its top speed (`top`).
+    pub leap: Limits,
 }
 
 /// The vanilla game, with the spec's numbers: `Rules`' default.
@@ -261,6 +269,16 @@ const VANILLA: Rules = Rules {
     small_body: Wrapping(8),
     crouch_lowers: Wrapping(0x5_0000),
     morph_lowers: Wrapping(0x9_0000),
+    push_rise: Wrapping(0x5_0000),
+    push: Limits {
+        step: Wrapping(0x1_8000),
+        top: Wrapping(0x5_0000),
+    },
+    push_brake: Wrapping(0x8000),
+    leap: Limits {
+        step: Wrapping(0xC000),
+        top: Wrapping(0x5_0000),
+    },
 };
 
 impl Default for Rules {

@@ -13,8 +13,8 @@ use core::cell::RefCell;
 use core::num::Wrapping;
 use samus_movement::{
     Bounces, CATALOGUE, Carry, Choices, Dashing, Direction, DirectionalTravels, Frame, FrameBefore,
-    JumpHeld, Met, Moment, Outcome, Phase, Rules, Run, Samus, Seat, SpeedCap, TravelDistance,
-    TravelKind, TravelledDistances, Vertical, WallTest,
+    Hit, JumpHeld, Knockback, Met, Moment, Outcome, Phase, Push, PushFrames, Rules, Run, Samus,
+    Seat, SpeedCap, TravelDistance, TravelKind, TravelledDistances, Vertical, WallTest,
 };
 use serde::Deserialize;
 use types::{
@@ -31,7 +31,7 @@ fn receipt(vector: &Vector) -> (Samus, Outcome) {
     let end = vector.next_pose.as_ref().map(PoseTable::sized);
     let mut known = vec![vector.pose.sized()];
     known.extend(end);
-    known.extend(vector.after.pose.as_ref().map(PoseTable::sized));
+    known.extend(ending(vector));
     let body = |pose| body_size(pose, step, end, &known).unwrap();
     let headings = |_| None;
     let world = room(&vector.world);
@@ -51,7 +51,9 @@ fn receipt(vector: &Vector) -> (Samus, Outcome) {
         cannon_heading: &headings,
     };
     let mut samus = start(&vector.before, step.pose);
-    let outcome = samus.step(&frame, &world, &applied_rules(vector)).unwrap();
+    let rules = applied_rules(vector);
+    let moves = samus.moves(&frame, &world, &rules).unwrap();
+    let outcome = samus.react(moves, step.hit);
     (samus, outcome)
 }
 
@@ -123,6 +125,22 @@ fn the_first_enemy_in_order_decides() {
     assert_ne!(gap_state.position, touch_state.position);
 }
 
+/// Spec §12, `PushStarts`: a frame reports "push started" exactly where its push starts, which
+/// her knockback tells: she starts the frame with no push under way and ends it with one.
+#[test]
+fn push_started_is_reported_where_a_push_starts() {
+    let vectors = file().vector;
+    let mut started = 0_usize;
+    for vector in vectors.iter().filter(|v| v.lead_in.is_empty()) {
+        let before = start(&vector.before, vector.pose.pose()).knockback.push;
+        let (samus, outcome) = receipt(vector);
+        let expected = before.is_none() && samus.knockback.push.is_some();
+        assert_eq!(outcome.push_started, expected, "{}", vector.id);
+        started += usize::from(expected);
+    }
+    assert!(started > 0, "no vector starts a push");
+}
+
 const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-movement.toml");
 
 // ---- The file's shape.
@@ -189,6 +207,8 @@ struct Vector {
     cannon_heading: Option<samus_movement::FiringDirection>,
     /// Imported old pose cannon content.
     previous_cannon_heading: Option<samus_movement::FiringDirection>,
+    /// The checked frame's hit, if one comes (spec §12).
+    hit: Option<HitTable>,
     /// What is compared at the checked frame's end.
     after: After,
 }
@@ -205,8 +225,69 @@ impl Vector {
             spin_turned_far: self.spin_turned_far,
             cannon_heading: self.cannon_heading,
             previous_cannon_heading: self.previous_cannon_heading,
+            hit: self.hit,
         }
     }
+}
+
+/// The frame's hit (the header's `hit`): the side it pushes her to, and how many frames its push
+/// lasts.
+#[derive(Deserialize, Clone, Copy)]
+#[serde(deny_unknown_fields)]
+struct HitTable {
+    /// The way it pushes her.
+    side: SideName,
+    /// How many frames its push lasts.
+    time: PushTime,
+}
+
+impl HitTable {
+    /// The model's hit.
+    const fn model(self) -> Hit {
+        Hit {
+            side: self.side.model(),
+            push: self.time.0,
+        }
+    }
+}
+
+/// How long a push lasts, as the model admits it (spec §12: at most 45).
+#[derive(Deserialize, Clone, Copy)]
+#[serde(try_from = "u8")]
+struct PushTime(PushFrames);
+
+impl TryFrom<u8> for PushTime {
+    type Error = String;
+
+    fn try_from(frames: u8) -> Result<Self, String> {
+        PushFrames::new(frames)
+            .map(Self)
+            .ok_or_else(|| format!("a push time of {frames} frames, past 45"))
+    }
+}
+
+/// `before.knockback`: the knockback at the start, every part given.
+#[derive(Deserialize, Clone, Copy)]
+#[serde(deny_unknown_fields)]
+struct KnockbackTable {
+    /// The push time left.
+    time: PushTime,
+    /// The side it pushes her to.
+    side: SideName,
+    /// The push under way.
+    push: PushName,
+}
+
+/// `after.knockback`: the parts of the knockback compared, each only where given.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AfterKnockback {
+    /// The push time left.
+    time: Option<PushTime>,
+    /// The side it pushes her to.
+    side: Option<SideName>,
+    /// The push under way.
+    push: Option<PushName>,
 }
 
 /// A lead-in frame: the pose it starts in, and what the frame brings.
@@ -231,6 +312,8 @@ struct FrameTable {
     cannon_heading: Option<samus_movement::FiringDirection>,
     /// Imported old pose cannon content.
     previous_cannon_heading: Option<samus_movement::FiringDirection>,
+    /// The frame's hit, if one comes (spec §12).
+    hit: Option<HitTable>,
 }
 
 /// A `[[pose_step]]`: one frame of the pose chart.
@@ -321,6 +404,18 @@ struct RulesTable {
     bounce_threshold: Option<u16>,
     /// `BlocksStopFlush`: the horizontal move's limit.
     move_limit: Option<u16>,
+    /// `PushStarts`: the push's rise.
+    push_rise: Option<Quantity>,
+    /// `PushMoves`: the push's gain a frame.
+    push_gain: Option<Quantity>,
+    /// `PushMoves`: the push's brake a frame.
+    push_brake: Option<Quantity>,
+    /// `PushMoves`: the push's top speed.
+    push_top: Option<Quantity>,
+    /// `BackwardLeap`: the leap's gain a frame.
+    leap_gain: Option<Quantity>,
+    /// `BackwardLeap`: the leap's top speed.
+    leap_top: Option<Quantity>,
 }
 
 impl RulesTable {
@@ -339,6 +434,12 @@ impl RulesTable {
         set(&mut rules.crouch_lowers, self.crouch_lowers);
         set(&mut rules.gravity, self.gravity.map(|g| Quantity(g.0)));
         set(&mut rules.wall_reach, self.wall_reach);
+        set(&mut rules.push_rise, self.push_rise);
+        set(&mut rules.push.step, self.push_gain);
+        set(&mut rules.push_brake, self.push_brake);
+        set(&mut rules.push.top, self.push_top);
+        set(&mut rules.leap.step, self.leap_gain);
+        set(&mut rules.leap.top, self.leap_top);
         let set_px = |value: &mut Px, n: Option<u16>| {
             if let Some(n) = n {
                 *value = Wrapping(n);
@@ -498,6 +599,10 @@ struct CellTable {
 /// What the player can tell about Samus at the start (the header's `before`).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "each is one yes-or-no key of the header's `before`, read apart"
+)]
 struct Before {
     /// Her position, `[x, y]`.
     position: [Quantity; 2],
@@ -522,6 +627,13 @@ struct Before {
     /// Whether she is dashing.
     #[serde(default)]
     dashing: bool,
+    /// The knockback; missing, no push time and no push under way.
+    knockback: Option<KnockbackTable>,
+    /// Her horizontal motion's memory (spec §1.2), "Follows" where missing in a push's pose.
+    motion: Option<MotionName>,
+    /// In an airborne pose, no vertical motion at all (a floor stopped the push).
+    #[serde(default)]
+    no_vertical_motion: bool,
 }
 
 /// What a vector compares at the checked frame's end, each only where given.
@@ -587,6 +699,12 @@ struct After {
     heading_down: Option<bool>,
     /// Her vertical speed as her moves leave her, at `heading_down`'s point.
     speed_y_after_moves: Option<Signed>,
+    /// The parts of the knockback it gives.
+    knockback: Option<AfterKnockback>,
+    /// Whether she ends the frame falling at 0 (spec §1.2).
+    falling: Option<bool>,
+    /// Her horizontal motion's memory (spec §1.2).
+    motion: Option<MotionName>,
 }
 
 /// Explicit None or a response; every nested field is consumed, no unknown fields allowed.
@@ -975,8 +1093,10 @@ enum ActionName {
     Falling,
     Jumping,
     Landing,
+    Leaping,
     Moonwalking,
     Morphing,
+    Recoiling,
     Rolling,
     Running,
     Spinning,
@@ -997,8 +1117,10 @@ impl ActionName {
             Self::Falling => Action::Falling,
             Self::Jumping => Action::Jumping,
             Self::Landing => Action::Landing(landed_from.expect("a landing's landed_from")),
+            Self::Leaping => Action::Leaping,
             Self::Moonwalking => Action::Moonwalking,
             Self::Morphing => Action::Morphing,
+            Self::Recoiling => Action::Recoiling,
             Self::Rolling => Action::Rolling,
             Self::Running => Action::Running,
             Self::Spinning => Action::Spinning,
@@ -1026,6 +1148,73 @@ impl FacingName {
             Self::Left => Facing::Left,
             Self::Right => Facing::Right,
             Self::Screen => Facing::Screen,
+        }
+    }
+}
+
+/// A side: the way a hit pushes her (spec §12).
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+enum SideName {
+    Left,
+    Right,
+}
+
+impl SideName {
+    const fn model(self) -> Side {
+        match self {
+            Self::Left => Side::Left,
+            Self::Right => Side::Right,
+        }
+    }
+}
+
+/// The push under way (spec §12), the file's `none` for no push under way.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+enum PushName {
+    None,
+    Down,
+    Up,
+}
+
+impl PushName {
+    const fn model(self) -> Option<Push> {
+        match self {
+            Self::None => None,
+            Self::Down => Some(Push::Down),
+            Self::Up => Some(Push::Up),
+        }
+    }
+}
+
+/// Her horizontal motion's memory (spec §1.2): it follows the pad, carries on along her facing,
+/// or carries on against it, a skid.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+enum MotionName {
+    Follows,
+    CarriesOn,
+    Skids,
+}
+
+impl MotionName {
+    /// The way her speed points as she remembers it, and whether it carries on, facing `ahead`.
+    fn model(self, ahead: Side) -> (Side, Carry) {
+        let behind = match ahead {
+            Side::Left => Side::Right,
+            Side::Right => Side::Left,
+        };
+        match self {
+            Self::Follows => (ahead, Carry::FollowsPad),
+            Self::CarriesOn => (ahead, Carry::CarriesOn),
+            Self::Skids => (behind, Carry::CarriesOn),
+        }
+    }
+
+    /// The name of her run's memory, facing `ahead`.
+    fn of(run: &Run, ahead: Side) -> Self {
+        match (run.carry, run.way == ahead) {
+            (Carry::FollowsPad, _) => Self::Follows,
+            (Carry::CarriesOn, true) => Self::CarriesOn,
+            (Carry::CarriesOn, false) => Self::Skids,
         }
     }
 }
@@ -1550,12 +1739,39 @@ fn start(before: &Before, pose: Pose) -> Samus {
         n => panic!("bounces {n}, past 2"),
     };
     let facing = Side::of(pose.facing);
-    let way = if speed_x.size == ZERO {
-        facing
-    } else if speed_x.negative {
-        Side::Left
-    } else {
-        Side::Right
+    let knockback = before
+        .knockback
+        .map_or(Knockback::spent(Side::Right), |k| Knockback {
+            time_left: k.time.0,
+            side: k.side.model(),
+            push: k.push.model(),
+        });
+    let pushed = pushes(pose, knockback);
+    if let Some(points) = pushed.filter(|_| speed_x.size != ZERO) {
+        assert_eq!(
+            speed_x.negative,
+            points == Side::Left,
+            "a push's pose: speed_x points its side"
+        );
+    }
+    let (way, carry) = match (before.motion, pushed) {
+        (Some(motion), _) => motion.model(facing),
+        (None, Some(_)) => MotionName::Follows.model(facing),
+        (None, None) => {
+            let way = if speed_x.size == ZERO {
+                facing
+            } else if speed_x.negative {
+                Side::Left
+            } else {
+                Side::Right
+            };
+            let carry = if way == facing {
+                Carry::FollowsPad
+            } else {
+                Carry::CarriesOn
+            };
+            (way, carry)
+        }
     };
     let airborne = matches!(
         pose.action,
@@ -1564,13 +1780,21 @@ fn start(before: &Before, pose: Pose) -> Samus {
             | Action::Spinning
             | Action::Falling
             | Action::WallJumping
+            | Action::Leaping
             | Action::Turning(Turn::Jump | Turn::Fall)
     );
-    let phase = match (airborne, speed_y.negative) {
-        (true, true) => Phase::Rising,
-        (true, false) => Phase::Falling,
-        (false, _) if before.falling => Phase::GroundFalling,
-        (false, _) => Phase::Ground,
+    // `Recoiling` is read as a grounded pose (spec §1.2: every pose the spec doesn't name as
+    // airborne), yet when a push lifts her in it she is rising.
+    let phase = if speed_y.negative && (airborne || pose.action == Action::Recoiling) {
+        Phase::Rising
+    } else if before.no_vertical_motion {
+        Phase::Ground
+    } else if airborne {
+        Phase::Falling
+    } else if before.falling {
+        Phase::GroundFalling
+    } else {
+        Phase::Ground
     };
     let jump_held = JumpHeld {
         frames: Wrapping(before.jump_held),
@@ -1585,11 +1809,7 @@ fn start(before: &Before, pose: Pose) -> Samus {
         run: Run {
             speed: speed_x.size,
             way,
-            carry: if way == facing {
-                Carry::FollowsPad
-            } else {
-                Carry::CarriesOn
-            },
+            carry,
             dash,
             dashing: if before.dashing {
                 Dashing::On
@@ -1606,6 +1826,20 @@ fn start(before: &Before, pose: Pose) -> Samus {
         choices: Choices::starting_in(pose),
         seat: Seat::Unseated,
         jump_held,
+        knockback,
+    }
+}
+
+/// Spec §12, her poses in a push: the side her horizontal speed points to in `pose`, where a push
+/// decides it: the knockback's side in `Recoiling`, backward in `Leaping`; elsewhere none, as §1
+/// says.
+fn pushes(pose: Pose, knockback: Knockback) -> Option<Side> {
+    if pose.action == Action::Recoiling {
+        Some(knockback.side)
+    } else if pose.action == Action::Leaping {
+        Some(Side::of(pose.facing.back()))
+    } else {
+        None
     }
 }
 
@@ -1626,6 +1860,8 @@ struct Step {
     animation_ends: Option<ClipEnd>,
     /// `WallJump`: the frame's own `spin_turned_far` (default false), given as `animation_ends`.
     spin_turned_far: bool,
+    /// §12: the frame's hit, which the frame's second step reads.
+    hit: Option<Hit>,
 }
 
 /// One frame of a vector or its lead-in. The buttons just pressed are `pressed`, and jump as
@@ -1644,6 +1880,7 @@ fn step_of(f: &FrameTable) -> Step {
         pressed: Buttons(buttons(&f.pressed).0 | jump.0),
         animation_ends: f.animation_ends.map(EndName::model),
         spin_turned_far: f.spin_turned_far,
+        hit: f.hit.map(HitTable::model),
     }
 }
 
@@ -1669,6 +1906,7 @@ const fn other(p: Parity) -> Parity {
 /// the size its start gives, the body the frame's moves use; for another, the frame's own end
 /// where it names that pose, else any the vector gives. A record's body can lag its pose, so the
 /// same pose may come with two sizes, one at a frame's end and one at the next frame's start.
+/// A push's poses, `Recoiling` and `Leaping`, are content like every pose's (spec §1.3, §12).
 /// None where the vector gives no body for the pose.
 fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -> Option<Radius> {
     (step.pose == p)
@@ -1676,6 +1914,13 @@ fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -
         .or_else(|| end.filter(|e| e.0 == p))
         .or_else(|| known.iter().find(|k| k.0 == p).copied())
         .map(|k| k.1)
+}
+
+/// The pose a vector's checked frame ends in, with her body there, as `after.pose` gives it: that
+/// radius is the pose's body, a push's start's `Recoiling` included, the chosen pose's own as pose
+/// fit takes it.
+fn ending(vector: &Vector) -> Option<SizedPose> {
+    vector.after.pose.as_ref().map(PoseTable::sized)
 }
 
 fn applied_rules(vector: &Vector) -> Rules {
@@ -1712,7 +1957,7 @@ fn run(vector: &Vector) -> Vec<String> {
         .collect();
     let mut known: Vec<SizedPose> = frames.iter().map(|f| (f.pose, f.radius)).collect();
     known.extend(last_next);
-    known.extend(after_pose);
+    known.extend(ending(vector));
     let mut parity = first_parity(vector.frame.model(), frames.len());
     let mut misses = Vec::new();
     let mut outcome = None;
@@ -1754,7 +1999,10 @@ fn run(vector: &Vector) -> Vec<String> {
             cannon_heading: &cannon_heading,
         };
         parity = other(parity);
-        let stepped = samus.step(&frame, &room, &rules);
+        // The frame's two steps: her moves, then her reaction to the frame's hit.
+        let stepped = samus
+            .moves(&frame, &room, &rules)
+            .map(|moves| samus.react(moves, step.hit));
         if let Some(p) = ungiven.borrow().first() {
             misses.push(format!(
                 "{name}: frame {n} reads the body of {p:?}, not given"
@@ -1859,10 +2107,12 @@ fn show_placed(placed: Option<Fixed>) -> String {
     placed.map_or_else(|| "none".to_owned(), show)
 }
 
-/// Her horizontal speed as the player reads it, rightward positive.
-const fn speed_x(samus: &Samus) -> Signed {
+/// Her horizontal speed as the player reads it, rightward positive: the way her pose points it in
+/// a push (spec §12), else the way it points (§1).
+fn speed_x(samus: &Samus) -> Signed {
+    let way = pushes(samus.pose, samus.knockback).unwrap_or(samus.run.way);
     Signed {
-        negative: matches!(samus.run.way, Side::Left),
+        negative: way == Side::Left,
         size: samus.run.speed,
     }
 }
@@ -1950,6 +2200,42 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
     ]
 }
 
+/// Her §12 and §1.2 memory at the frame's end: the knockback's parts the vector gives, whether
+/// she is falling at 0, and her horizontal motion's memory.
+fn remembered(after: &After, samus: &Samus) -> Vec<Compared> {
+    let k = after.knockback.as_ref();
+    let falling = samus.vertical.speed == ZERO
+        && matches!(samus.vertical.phase, Phase::Falling | Phase::GroundFalling);
+    let facing = Side::of(samus.pose.facing);
+    vec![
+        (
+            "knockback.time",
+            k.and_then(|k| k.time).map(|t| t.0.frames().to_string()),
+            samus.knockback.time_left.frames().to_string(),
+        ),
+        (
+            "knockback.side",
+            k.and_then(|k| k.side).map(|s| format!("{:?}", s.model())),
+            format!("{:?}", samus.knockback.side),
+        ),
+        (
+            "knockback.push",
+            k.and_then(|k| k.push).map(|p| format!("{:?}", p.model())),
+            format!("{:?}", samus.knockback.push),
+        ),
+        (
+            "falling",
+            after.falling.map(|b| b.to_string()),
+            falling.to_string(),
+        ),
+        (
+            "motion",
+            after.motion.map(|m| format!("{m:?}")),
+            format!("{:?}", MotionName::of(&samus.run, facing)),
+        ),
+    ]
+}
+
 /// The frame's outputs.
 fn outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
     let cell = |[x, y]: &[u16; 2]| format!("[{x}, {y}]");
@@ -2022,6 +2308,7 @@ fn for_her_animation(after: &After, outcome: &Outcome) -> Vec<Compared> {
 /// Every field a vector's `after` gives, hers and the frame's outputs.
 fn compared(after: &After, samus: &Samus, outcome: &Outcome) -> Vec<Compared> {
     let mut fields = hers(after, samus);
+    fields.extend(remembered(after, samus));
     fields.push((
         "pending_aim",
         after.pending_aim.as_ref().map(|aim| show_aim(aim.0)),
@@ -2153,7 +2440,13 @@ jump_pressed = false
 "#;
 
 /// Every `rules` key the header defines, with the game's value it gives, and another value.
-const RULES_KEYS: [(&str, &str, &str); 12] = [
+const RULES_KEYS: [(&str, &str, &str); 18] = [
+    ("push_rise", "\"0005.0000\"", "\"0004.0000\""),
+    ("push_gain", "\"0001.8000\"", "\"0001.0000\""),
+    ("push_brake", "\"0000.8000\"", "\"0000.4000\""),
+    ("push_top", "\"0005.0000\"", "\"0003.0000\""),
+    ("leap_gain", "\"0000.C000\"", "\"0001.0000\""),
+    ("leap_top", "\"0005.0000\"", "\"0003.0000\""),
     ("speed_cap", "\"Wordwise\"", "\"Exact\""),
     ("dash_gain", "\"0000.1000\"", "\"0000.2000\""),
     ("aim_step", "\"0001.0000\"", "\"0003.0000\""),
@@ -2219,22 +2512,23 @@ const EVERY_TABLE: &str = r#"
 id = "every-table"
 source = "constructed"
 entries = ["Landing"]
-rules = { speed_cap = "Wordwise", dash_gain = "0000.1000", aim_step = "0001.0000", elevator_descent = "0001.0000", jump_speed = "0004.E000", ground_pull = "0001.0000", crouch_lowers = "0005.0000", gravity = "0000.1C00", wall_reach = "0008.0000", small_body = 8, bounce_threshold = 3, move_limit = 15%0% }
+rules = { speed_cap = "Wordwise", dash_gain = "0000.1000", aim_step = "0001.0000", elevator_descent = "0001.0000", jump_speed = "0004.E000", ground_pull = "0001.0000", crouch_lowers = "0005.0000", gravity = "0000.1C00", wall_reach = "0008.0000", small_body = 8, bounce_threshold = 3, move_limit = 15, push_rise = "0005.0000", push_gain = "0001.8000", push_brake = "0000.8000", push_top = "0005.0000", leap_gain = "0000.C000", leap_top = "0005.0000"%0% }
 items = ["MorphBall"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "1.00"%1% }, slope_ceiling = { block = [256, 0], surface = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17]%2% }, stepped = { block = [0, 0], quarters = ["..", ".."]%3% }, enemy = { centre = [8, 8], radius = [1, 1]%4% }, cells = [{ block = [16, 0], kind = "Spikes"%5% }]%6% }
-before = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.0000"%7% }
+before = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.0000", motion = "Follows", no_vertical_motion = false, knockback = { time = 0, side = "Right", push = "None"%16% }%7% }
 lead_in = [
-  { pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%8% }, pad = [], jump_pressed = false%9% },
+  { pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%8% }, pad = [], jump_pressed = false, hit = { side = "Left", time = 5%17% }%9% },
 ]
 pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%10% }
 next_pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%11% }
+hit = { side = "Left", time = 5%18% }
 pad = []
 jump_pressed = false
-after = { reached = [{ cell = [0, 0], way = "Down"%12% }], pose = { body = "Upright", action = "Still", facing = "Right"%13% }, travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000"%15% }%14% }
+after = { reached = [{ cell = [0, 0], way = "Down"%12% }], pose = { body = "Upright", action = "Still", facing = "Right"%13% }, travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000"%15% }, knockback = { time = 4, side = "Left", push = "Up"%19% }, falling = false, motion = "Follows"%14% }
 "#;
 
 /// How many marks `EVERY_TABLE` has.
-const TABLES: usize = 16;
+const TABLES: usize = 20;
 
 /// A pose step whose own pose, `after` and `after.pose` each have a mark, as `EVERY_TABLE`'s.
 const STEP_TABLES: &str = r#"
@@ -2307,6 +2601,11 @@ fn an_unknown_key_or_name_is_refused() {
             "jump_pressed = false\nafter",
             "animation_ends = \"Ends\"\njump_pressed = false\nafter",
         ),
+        ("\"Follows\"", "\"Follow\""),
+        ("push = \"None\"", "push = \"Nothing\""),
+        ("side = \"Left\"", "side = \"West\""),
+        ("time = 5", "time = 46"),
+        ("\"Still\", facing", "\"Recoil\", facing"),
     ];
     for (name, unknown) in names {
         let text = known.replacen(name, unknown, 1);
@@ -2503,7 +2802,9 @@ fn ordinary_call_delivers_outputs_and_comparison_checks_transport_fields() {
         body: &body,
         cannon_heading: &cannon,
     };
-    let outcome = samus.step(&frame, &world, &Rules::default()).unwrap();
+    let rules = Rules::default();
+    let moves = samus.moves(&frame, &world, &rules).unwrap();
+    let outcome = samus.react(moves, None);
     let saved = toml::to_string(&samus).unwrap();
     let restored: Samus = toml::from_str(&saved).unwrap();
     assert_eq!(restored, samus);

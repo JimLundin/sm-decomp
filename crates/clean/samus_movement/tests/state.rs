@@ -5,7 +5,8 @@
 use core::num::Wrapping;
 use samus_movement::{
     Bounces, Carry, Choices, Chosen, Dashing, Direction, DirectionalTravels, FrameBefore, JumpHeld,
-    Phase, Run, Samus, Seat, TravelDistance, TravelKind, TravelledDistances, Vertical,
+    Knockback, Phase, Push, PushFrames, Run, Samus, Seat, TravelDistance, TravelKind,
+    TravelledDistances, Vertical,
 };
 use serde::{Deserialize, Serialize};
 use types::{Action, Aim, Body, Facing, Gun, LandedFrom, Legs, Position, Side, Turn};
@@ -53,6 +54,11 @@ fn saved_movement() -> SavedMovement {
             jump_held: JumpHeld {
                 frames: Wrapping(32777),
                 before: FrameBefore::LandedOrEnded,
+            },
+            knockback: Knockback {
+                time_left: PushFrames::new(45).unwrap(),
+                side: Side::Left,
+                push: Some(Push::Down),
             },
         },
         distances: TravelledDistances {
@@ -109,6 +115,28 @@ fn default_is_exactly_fresh() {
     }
 }
 
+/// Spec: `PushTime`. The knockback restores every push under way and any push time left from
+/// 0 to 45 frames; a saved time past 45 is refused, never cut to fit.
+#[test]
+fn knockback_round_trips_within_its_range() {
+    for (frames, push) in [(0, None), (1, Some(Push::Up)), (45, Some(Push::Down))] {
+        let mut saved = saved_movement();
+        saved.samus.knockback = Knockback {
+            time_left: PushFrames::new(frames).unwrap(),
+            side: Side::Right,
+            push,
+        };
+        let encoded = toml::to_string(&saved).expect("knockback serializes");
+        let restored: SavedMovement = toml::from_str(&encoded).expect("knockback deserializes");
+        assert_eq!(restored, saved);
+    }
+    assert_eq!(PushFrames::new(46), None);
+    let encoded = toml::to_string(&saved_movement()).expect("state serializes");
+    let past = encoded.replace("time_left = 45", "time_left = 46");
+    assert_ne!(past, encoded, "the saved push time is written");
+    assert!(toml::from_str::<SavedMovement>(&past).is_err());
+}
+
 /// Pose payloads and nonempty gun/legs values are part of State as well.
 #[test]
 fn pose_payloads_round_trip() {
@@ -136,6 +164,14 @@ fn pose_payloads_round_trip() {
         },
         types::Pose {
             legs: Legs::Striding,
+            ..upright
+        },
+        types::Pose {
+            action: Action::Recoiling,
+            ..upright
+        },
+        types::Pose {
+            action: Action::Leaping,
             ..upright
         },
     ] {

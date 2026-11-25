@@ -1,5 +1,5 @@
-//! Her palettes from the ROM: her suit's by suit, and her shots' for each combination of the
-//! four beams that colour them.
+//! Her palettes from the ROM: her suit's by suit, her hurt pulse's two, and her shots' for each
+//! combination of the four beams that colour them.
 //!
 //! Her shots' palettes are a table of pointers indexed by the beams switched on as bits, wave
 //! first, then ice, spazer and plasma; no combination with both the spazer and the plasma
@@ -14,6 +14,9 @@ use crate::actors::palette;
 const POWER: RomAddress = RomAddress::new(0x9b, 0x9400);
 const VARIA: RomAddress = RomAddress::new(0x9b, 0x9520);
 const GRAVITY: RomAddress = RomAddress::new(0x9b, 0x9800);
+/// Her hurt pulse's colours, and the grey standing for her suit's in a cinematic.
+const HURT: RomAddress = RomAddress::new(0x91, 0xa380);
+const CINEMATIC_GREY: RomAddress = RomAddress::new(0x91, 0xa3a0);
 /// Her shots' palette pointers, a word per combination, into their own bank.
 const BEAM_POINTERS: RomAddress = RomAddress::new(0x90, 0xc3c9);
 /// The beams a combination's bits stand for, lowest first.
@@ -49,6 +52,8 @@ pub fn import(rom: Lorom<'_>) -> Result<SamusPalettes, AddressError> {
             varia: palette(rom, VARIA)?,
             gravity: palette(rom, GRAVITY)?,
         },
+        hurt: palette(rom, HURT)?,
+        cinematic_grey: palette(rom, CINEMATIC_GREY)?,
         beams,
     })
 }
@@ -83,3 +88,5 @@ mod tests {
 // Bank $90 log, update beam tiles and palette `$90:AC8D`, load beam palette `$90:ACCD`: the
 // pointers `$90:C3C9` indexed by `([equipped beams] & FFFh) * 2`, 20h bytes to sprite
 // palette 6 (`$7E:C1C0`), which `$82:E139` copies to target sprite palette 6.
+// Bank $91 log, Samus palette handling `$91:D8A5`: the hurt flash's colours `$91:A380` and, in a
+// cinematic, the intro's grey `$91:A3A0`, 20h bytes each to sprite palette 4 (`$7E:C180`).

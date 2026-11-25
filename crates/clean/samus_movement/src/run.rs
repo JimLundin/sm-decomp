@@ -79,8 +79,8 @@ impl Run {
         self.dash = ZERO;
     }
 
-    /// `Landing`, `WallJump`, `DriftInTheAir`: horizontal speed 0, following the pad.
-    const fn stop(&mut self) {
+    /// `Landing`, `WallJump`, `DriftInTheAir`, `PushMoves`: horizontal speed 0, following the pad.
+    pub(crate) const fn stop(&mut self) {
         self.speed = ZERO;
         self.carry = Carry::FollowsPad;
     }
@@ -157,15 +157,21 @@ impl Run {
 
     /// `Dash`, `Dashing`: her dash, before her speed builds. Running with run held she is
     /// dashing from her moves on and her dash grows to its cap; in any other activity whose
-    /// speed builds, a dash she has while not dashing is gone.
+    /// speed builds, the backward leap's included (`BackwardLeap`), a dash she has while not
+    /// dashing is gone. A push neither builds nor loses it (`PushMoves`).
     pub(crate) fn dash_for_moves(&mut self, moves: Moves, t: &Tick) {
-        if let Moves::Build(gait, _) = moves {
-            if running_with_run_held(gait, t.frame.pad) {
+        match moves {
+            Moves::Build(gait, _) if running_with_run_held(gait, t.frame.pad) => {
                 self.dashing = Dashing::On;
                 self.grow_dash(t.rules.dash_cap.of(&t.frame.items), t.rules);
-            } else {
-                self.lose_dash();
             }
+            Moves::Build(..) | Moves::Leap => self.lose_dash(),
+            Moves::HaltsAfterDash
+            | Moves::Rest
+            | Moves::TakeOff
+            | Moves::DashKeepingSpeeds
+            | Moves::Pushed(_)
+            | Moves::DropsInPlace => {}
         }
     }
 
@@ -174,7 +180,9 @@ impl Run {
     /// vertical motion on the ground (a vertical speed, or falling at 0). The ball at rest
     /// braking or skidding rolls like running and keeps its dash; with a vertical motion it moves
     /// by its dash only, keeping both speeds. Taking off she moves by her dash only, a dash she is
-    /// to lose gone first, and follows the pad.
+    /// to lose gone first, and follows the pad. A push moves her by its speed and her dash; the
+    /// frame after it she makes no horizontal move, keeping her speed; the leap moves as its pad
+    /// says (`leap`).
     pub(crate) fn stride(&mut self, moves: Moves, facing: Facing, falls: bool, t: &Tick) -> Stride {
         match moves {
             Moves::Build(gait, drift) => self.drift(gait, drift, facing, t),
@@ -187,6 +195,35 @@ impl Run {
                 Stride::DashAlone
             }
             Moves::DashKeepingSpeeds => Stride::DashAlone,
+            Moves::Pushed(_) => {
+                self.pushed(t.rules);
+                Stride::SpeedAndDash
+            }
+            Moves::DropsInPlace => Stride::Nothing,
+            Moves::Leap => self.leap(t),
+        }
+    }
+
+    /// `PushMoves`: her speed's size builds by the push's gain to its top (`WordwiseTopSpeed`),
+    /// or, where her motion carries on or skids, brakes by the push's brake, to no lower than 0.
+    fn pushed(&mut self, r: &Rules) {
+        if self.carry == Carry::CarriesOn {
+            self.speed -= self.speed.min(r.push_brake);
+        } else {
+            self.gain(r.push, r);
+        }
+    }
+
+    /// `BackwardLeap`: holding either side her speed's size builds by the leap's gain to its top
+    /// (`WordwiseTopSpeed`), and she moves by it and her dash; holding neither her speed is 0 and
+    /// she makes no horizontal move.
+    fn leap(&mut self, t: &Tick) -> Stride {
+        if t.frame.pad.any(SIDES) {
+            self.gain(t.rules.leap, t.rules);
+            Stride::SpeedAndDash
+        } else {
+            self.speed = ZERO;
+            Stride::Nothing
         }
     }
 
@@ -210,7 +247,8 @@ impl Run {
         if let_go && drift == Drift::BallAir {
             return Stride::DashThenHalt;
         }
-        let topped = self.build(r.limits(gait), ahead, r);
+        let topped = self.gain(r.limits(gait), r);
+        self.way = ahead;
         if drift == Drift::Spin {
             return self.spin_drift(topped, facing, t);
         }
@@ -235,13 +273,12 @@ impl Run {
         }
     }
 
-    /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her
-    /// facing. Returns whether she took the top speed: the step was cut to it, so a step that
-    /// lands exactly on it hasn't reached it (`DriftInTheAir`).
-    fn build(&mut self, limits: Limits, ahead: Side, r: &Rules) -> bool {
+    /// `SpeedBuildsAndBrakes`: her speed's size gains the step up to the top
+    /// (`WordwiseTopSpeed`). Returns whether she took the top speed: the step was cut to it, so a
+    /// step that lands exactly on it hasn't reached it (`DriftInTheAir`).
+    fn gain(&mut self, limits: Limits, r: &Rules) -> bool {
         let sum = self.speed + limits.step;
         self.speed = r.cap(sum, limits.top);
-        self.way = ahead;
         self.speed != sum
     }
 

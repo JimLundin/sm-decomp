@@ -130,8 +130,10 @@ fn hud_inputs<'a>(
             | Action::Falling
             | Action::Jumping
             | Action::Landing(_)
+            | Action::Leaping
             | Action::Moonwalking
             | Action::Morphing
+            | Action::Recoiling
             | Action::Rolling
             | Action::Running
             | Action::StandingUp

@@ -2,11 +2,12 @@
 //! frame's outputs come out, each rule applied once, where it happens in the frame.
 
 use enum_map::Enum;
-use types::Set;
+use types::{RowColours, Set};
 
 use crate::cannon::ItemControls;
 use crate::colours::{DryColourOutcome, PaletteOpportunity, ordinary_dry_colours};
-use crate::inputs::{AnimationContent, Inputs, MissingClip, clip_of};
+use crate::hurt::{HurtOpportunity, hurt_colours};
+use crate::inputs::{AppearanceContent, Inputs, MissingClip, clip_of};
 use crate::moves::{fast_fall, rising_hold, standing_restart, wall_jump_ready};
 use crate::play::ClipPlay;
 use crate::rules::Rules;
@@ -52,6 +53,8 @@ pub struct Frame {
     pub item_controls: ItemControls,
     /// The palette opportunity, with its own observations, or none (`OrdinaryDryColours`).
     pub palette: PaletteOpportunity,
+    /// Her hurt colours, after Health, with their observations, or none (`HurtColours`).
+    pub hurt: HurtOpportunity,
 }
 
 /// What the frame tells, as the whole frame leaves it, beside the appearance State it leaves.
@@ -68,16 +71,20 @@ pub struct FrameOutputs {
     pub cannon_may_follow: bool,
     /// What the palette opportunity ended in, where the frame has one (`OrdinaryDryColours`).
     pub dry_colours: Option<DryColourOutcome>,
+    /// The 16 colours her row of the current colours takes this frame, for the palette's owner
+    /// to write there; none leaves her row as it is. The target colours are left as they are
+    /// (`HurtColours`).
+    pub her_colours: Option<RowColours>,
     /// The frame's sound requests, each with its queue and allowance, in the order asked: the
-    /// stride's, the animation update's, the spin start's, the passage entry's, then normal
-    /// drawing's. Each request asked for is here, in its place.
+    /// stride's, the animation update's, the spin start's, her hurt colours', the passage
+    /// entry's, then normal drawing's. Each request asked for is here, in its place.
     pub sounds: Vec<SoundOffer>,
 }
 
 /// Plays one frame of her appearance from `state`, as the frame's parts happen.
 ///
 /// Spec: `CannonItemDelay`, `CannonReadinessReset`, `FootContact`, `SpinStarts`, `AtTheDoor`,
-/// `SpinEnds`, `OrdinaryDryColours`, and the animation's entries in their order:
+/// `SpinEnds`, `OrdinaryDryColours`, `HurtColours`, and the animation's entries in their order:
 ///
 /// 1. Her initialization, first in its frame, sets her whole appearance State as
 ///    [`AppearanceState::INITIAL`] gives it, whatever the frame starts with; the rest of the
@@ -86,8 +93,10 @@ pub struct FrameOutputs {
 /// 3. The preparation of her work keeps the action of her pose as the frame starts.
 /// 4. Her movement: her stride; her clip plays; the spin start of the pose she takes; that
 ///    pose's clip starts.
-/// 5. The palette opportunity readies her colour sequences.
-/// 6. A first passage entry quiets her, then normal drawing ends a kept spin's sound.
+/// 5. The palette opportunity readies her colour sequences, reading the hurt count as the frame
+///    starts.
+/// 6. After Health, her hurt colours: the pulse, and the hurt count.
+/// 7. A first passage entry quiets her, then normal drawing ends a kept spin's sound.
 ///
 /// # Errors
 ///
@@ -96,7 +105,7 @@ pub struct FrameOutputs {
 pub fn update(
     state: AppearanceState,
     frame: &Frame,
-    content: &impl AnimationContent,
+    content: &impl AppearanceContent,
     rules: &Rules,
 ) -> Result<(AppearanceState, FrameOutputs), MissingClip> {
     let (inputs, parts) = (&frame.inputs, &frame.parts);
@@ -117,7 +126,15 @@ pub fn update(
     } else {
         (state.animation, None)
     };
-    let (colours, dry_colours) = ordinary_dry_colours(state.colours, frame.palette, inputs);
+    let (colours, dry_colours) =
+        ordinary_dry_colours(state.colours, frame.palette, inputs, state.hurt_count);
+    let (hurt_count, her_colours, hurt_sound) = hurt_colours(
+        state.hurt_count,
+        frame.hurt,
+        inputs,
+        content.pulse_colours(),
+    );
+    sounds.extend(hurt_sound);
     if parts[FramePart::PassageEntry] {
         sounds.extend(at_the_door(inputs));
     }
@@ -129,11 +146,13 @@ pub fn update(
         kept_action,
         cannon,
         colours,
+        hurt_count,
     };
     let outputs = FrameOutputs {
         contact,
         cannon_may_follow: cannon.may_follow(),
         dry_colours,
+        her_colours,
         sounds: sounds.into_iter().map(Sound::offer).collect(),
     };
     Ok((after, outputs))
@@ -147,7 +166,7 @@ pub fn update(
 fn move_her(
     at_start: Animation,
     inputs: &Inputs,
-    content: &impl AnimationContent,
+    content: &impl AppearanceContent,
     rules: &Rules,
     sounds: &mut Vec<Sound>,
 ) -> Result<(Animation, Option<GraphicalContact>), MissingClip> {

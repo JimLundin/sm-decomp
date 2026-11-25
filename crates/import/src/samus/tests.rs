@@ -102,12 +102,12 @@ const fn pose(body: Body, action: Action, facing: Facing, aim: Aim) -> Pose {
 }
 
 #[test]
-fn the_ids_are_in_order_and_164_of_253_are_hers() {
+fn the_ids_are_in_order_and_168_of_253_are_hers() {
     assert!(MAP.windows(2).all(|pair| pair[0].id.0 < pair[1].id.0));
     let mapped = (0..IDS).filter(|&id| key_of(PoseId(id)).is_some()).count();
-    assert_eq!((mapped, usize::from(IDS) - mapped), (164, 89));
+    assert_eq!((mapped, usize::from(IDS) - mapped), (168, 85));
     // Another domain's and the unused ids have no pose.
-    for id in [0x0D, 0x20, 0x4F, 0x53, 0xA8, 0xBA, 0xC9, 0xD5, 0xE8, 0xF0] {
+    for id in [0x0D, 0x20, 0x47, 0x5B, 0xA8, 0xBA, 0xC9, 0xD5, 0xE8, 0xF0] {
         assert_eq!(key_of(PoseId(id)), None, "{id:#04X}");
     }
 }

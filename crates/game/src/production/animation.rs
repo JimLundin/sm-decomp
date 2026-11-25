@@ -1,10 +1,13 @@
 //! Checked immutable animation content and the clean appearance entry.
 
+use data::assets::art::Palette;
+use data::assets::samus::palettes::SamusPalettes;
+use enum_map::enum_map;
 use samus_appearance::{
-    AnimationContent, AppearanceState, Clip, Figure, Frame, FrameOutputs, FramePart, Inputs,
-    ItemControls, MissingClip, Paces, PaletteOpportunity, Rules,
+    AppearanceState, Clip, Figure, Frame, FrameOutputs, FramePart, HurtOpportunity, Inputs,
+    ItemControls, MissingClip, Paces, PaletteOpportunity, PulseColours, Rules, Suit,
 };
-use types::Set;
+use types::{RowColours, Set};
 
 /// One imported semantic figure and its complete clip.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -15,11 +18,12 @@ pub struct FigureClip {
     pub clip: Clip,
 }
 
-/// Immutable clips and run paces selected at admission.
+/// Immutable clips, run paces and hurt pulse colours selected at admission.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AppearanceContent {
     figures: Vec<FigureClip>,
     paces: Paces,
+    pulse: PulseColours,
 }
 
 /// A malformed or unavailable semantic clip.
@@ -36,7 +40,11 @@ impl AppearanceContent {
     ///
     /// # Errors
     /// Conflicting duplicate entries are refused.
-    pub fn new(figures: Vec<FigureClip>, paces: Paces) -> Result<Self, ClipFault> {
+    pub fn new(
+        figures: Vec<FigureClip>,
+        paces: Paces,
+        pulse: PulseColours,
+    ) -> Result<Self, ClipFault> {
         for (index, entry) in figures.iter().enumerate() {
             if figures
                 .iter()
@@ -46,7 +54,11 @@ impl AppearanceContent {
                 return Err(ClipFault::Conflicting(entry.figure));
             }
         }
-        Ok(Self { figures, paces })
+        Ok(Self {
+            figures,
+            paces,
+            pulse,
+        })
     }
 
     /// The imported clip, without advancing animation or choosing a different figure.
@@ -59,7 +71,7 @@ impl AppearanceContent {
     }
 }
 
-impl AnimationContent for AppearanceContent {
+impl samus_appearance::AppearanceContent for AppearanceContent {
     fn clip(&self, figure: &Figure) -> Option<&Clip> {
         self.get(*figure)
     }
@@ -67,6 +79,35 @@ impl AnimationContent for AppearanceContent {
     fn paces(&self) -> &Paces {
         &self.paces
     }
+
+    fn pulse_colours(&self) -> &PulseColours {
+        &self.pulse
+    }
+}
+
+/// Her hurt pulse's colours from her imported palettes; none where a colour has more than 15
+/// bits.
+#[must_use]
+pub fn pulse_colours(palettes: &SamusPalettes) -> Option<PulseColours> {
+    let suits = &palettes.suits;
+    Some(PulseColours {
+        hurt: row(&palettes.hurt)?,
+        suits: enum_map! {
+            Suit::Power => row(&suits.power)?,
+            Suit::Varia => row(&suits.varia)?,
+            Suit::Gravity => row(&suits.gravity)?,
+        },
+        cinematic_grey: row(&palettes.cinematic_grey)?,
+    })
+}
+
+/// A palette's colours as a row of 15-bit colours.
+fn row(palette: &Palette) -> Option<RowColours> {
+    let mut colours = [types::Colour::BLACK; types::ROW_COLOURS];
+    for (colour, imported) in colours.iter_mut().zip(palette.0) {
+        *colour = types::Colour::new(imported.0)?;
+    }
+    Some(RowColours(colours))
 }
 
 /// The parts of a frame of play in these loops: her work is prepared, she moves, and she is
@@ -77,13 +118,13 @@ const PLAYED: [FramePart; 3] = [
     FramePart::Drawing,
 ];
 
-/// A frame of play that brings each of `inputs`' facts once.
+/// A frame of play that brings each of `inputs`' facts once, with `hurt` its hurt colours.
 ///
 /// Her item controls and the palette opportunity have no producer in these loops: the frame
 /// reports the controls skipped and no palette opportunity, so the cannon delay and the colour
 /// sequences carry in her State as they came.
 #[must_use]
-pub(super) fn frame_of_play(inputs: Inputs) -> Frame {
+pub(super) fn frame_of_play(inputs: Inputs, hurt: HurtOpportunity) -> Frame {
     let mut parts = Set::default();
     for part in PLAYED {
         parts[part] = true;
@@ -93,6 +134,7 @@ pub(super) fn frame_of_play(inputs: Inputs) -> Frame {
         parts,
         item_controls: ItemControls::Skipped,
         palette: PaletteOpportunity::Absent,
+        hurt,
     }
 }
 

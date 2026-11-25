@@ -4,6 +4,7 @@
 //! machine), and the rows of the chart's tables (its moves). `situation` and `chart::table` hold
 //! the rows; `chart` reads them.
 
+use crate::knockback::Push;
 use crate::rules::{Gait, Lowers};
 use types::button::{self, LEFT, PAD, RIGHT};
 use types::{Action, Aim, Body, Buttons, Facing, Gun, Item, Legs, Pose, Side};
@@ -69,6 +70,8 @@ pub enum Doing {
     Turning,
     /// Her body changes shape: crouching, standing up, morphing or unmorphing.
     Shaping,
+    /// She is thrown back by a hit's push, or drops the frame after it (§12).
+    Recoiling,
 }
 
 /// `SpeedBuildsAndBrakes`, `DriftInTheAir`: how her speed builds as she moves by it.
@@ -102,6 +105,16 @@ pub enum Moves {
     TakeOff,
     /// While her body changes shape: her dash only, keeping both speeds.
     DashKeepingSpeeds,
+    /// `PushMoves`: in `Recoiling` or the ball with a push under way, her speed builds by the
+    /// push's gain (or, carrying on or skidding, brakes by its brake) and she moves by it and her
+    /// dash the push's side, then up by her vertical speed or down by the ground pull, as the
+    /// push under way throws her. `Samus::motion` decides it, over her situation's own moves.
+    Pushed(Push),
+    /// `AfterThePush`: her moves the frame after a push ends in `Recoiling`: no horizontal move,
+    /// then the ground pull, which lands her or lets her fall.
+    DropsInPlace,
+    /// `BackwardLeap`: a straight jump's moves backward, with the leap's own speeds.
+    Leap,
 }
 
 /// `Landing`, `FollowingTheGround`: what a floor does to her, named for her situation: one her
@@ -282,6 +295,9 @@ pub enum Effect {
     /// `ShrinkingLowersHer`: a change of shape started from the ball after it has bounced ends
     /// her vertical motion and its bounces.
     EndsTheBounce,
+    /// `BackwardLeap`: the straight jump the pad makes of the leap keeps her speed's size, now
+    /// pointing her facing's way.
+    AlongHerFacing,
 }
 
 /// A change of action's own effect, whatever brought the change.
@@ -398,6 +414,8 @@ pub enum RowId {
     JumpWithUpDownOrAnAimButtonHeld,
     /// "jump and back held".
     JumpAndBackHeld,
+    /// `PushMoves`, `BackwardLeap`: "back and jump held".
+    BackAndJumpHeld,
     /// "aiming `Down`: down pressed".
     AimingDownDownPressed,
     /// "aiming `Down`, she faces `Right`: forward, jump and shoot held".
@@ -422,6 +440,8 @@ pub enum RowId {
     AnyButtonHeld,
     /// "nothing held".
     NothingHeld,
+    /// "crouched turning aimed `Up`, `UpForward`, `DownForward` or `Down`: nothing held".
+    CrouchedTurningAimedNothingHeld,
     /// "the way she walks, shoot and an aim button held".
     WalksShootAndAnAimButtonHeld,
     /// "the way she walks and shoot held".

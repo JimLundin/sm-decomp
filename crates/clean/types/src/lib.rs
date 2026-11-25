@@ -408,7 +408,7 @@ mod play_time;
 pub use play_time::{PlayFrames, PlayHours, PlayMinutes, PlaySeconds, PlayTime};
 
 mod palette;
-pub use palette::{Colour, PALETTE_SLOTS, Palette, Palettes};
+pub use palette::{Colour, PALETTE_SLOTS, Palette, Palettes, ROW_COLOURS, RowColours};
 
 /// A value for each axis: x rightward, y downward.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -585,10 +585,14 @@ pub enum Action {
     Jumping,
     /// The moment she touches down, before she stands still, with what she landed from.
     Landing(LandedFrom),
+    /// The backward leap: a long jump backward she makes of a hit's push (samus-movement §12).
+    Leaping,
     /// Moonwalking.
     Moonwalking,
     /// Curling into the ball.
     Morphing,
+    /// Thrown back by a hit's push (samus-movement §12).
+    Recoiling,
     /// Rolling as a ball.
     Rolling,
     /// Running.
@@ -825,6 +829,69 @@ pub struct SoundRequest {
     pub library: SoundLibrary,
     /// Transport's queue admission allowance.
     pub queue_allowance: QueueAllowance,
+}
+
+/// The longest push a hit gives, in frames (samus-movement §12): a push up to it rises to its
+/// end; a longer one is out of scope.
+const LONGEST_PUSH: u8 = 45;
+
+/// Spec: samus-movement `PushTime`. A push's time, in frames, 0 to 45: the time a hit's push lasts
+/// (1 to 45, the hitter's to give), or the push time she has left (0 to 45).
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u8", into = "u8")]
+pub struct PushFrames(u8);
+
+impl PushFrames {
+    /// No push time.
+    pub const NONE: Self = Self(0);
+
+    /// A push of `frames` frames, if it is within the longest push (45 frames).
+    #[must_use]
+    pub const fn new(frames: u8) -> Option<Self> {
+        if frames <= LONGEST_PUSH {
+            Some(Self(frames))
+        } else {
+            None
+        }
+    }
+
+    /// Its frames.
+    #[must_use]
+    pub const fn frames(self) -> u8 {
+        self.0
+    }
+
+    /// Spec: samus-movement `PushTime`. One frame less, to no lower than 0.
+    #[must_use]
+    pub const fn less_one(self) -> Self {
+        Self(self.0.saturating_sub(1))
+    }
+}
+
+impl TryFrom<u8> for PushFrames {
+    type Error = &'static str;
+
+    fn try_from(frames: u8) -> Result<Self, Self::Error> {
+        Self::new(frames).ok_or("a push lasts at most 45 frames")
+    }
+}
+
+impl From<PushFrames> for u8 {
+    fn from(time: PushFrames) -> Self {
+        time.frames()
+    }
+}
+
+/// The frame's hit on Samus: the side it pushes her to and how long its push lasts.
+///
+/// The hitter judges it (samus-movement §12, `PushTime`): in Ceres, Ridley's tail
+/// (boss-ceres-ridley `TailHits`); samus-health reads the same hit for its damage.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Hit {
+    /// The way it pushes her.
+    pub side: Side,
+    /// How long its push lasts.
+    pub push: PushFrames,
 }
 
 /// The pad: a set of its buttons, the ones held or the ones just pressed, each a bit of

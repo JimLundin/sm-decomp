@@ -676,12 +676,12 @@ and the pose definitions.
 | 4Ch | Facing left - normal jump transition | Upright | TakingOff | Left | Forward |  |  |
 | 4Dh | Facing right - normal jump - not aiming - not moving - gun not extended | Upright | Jumping | Right | Forward |  |  |
 | 4Eh | Facing left - normal jump - not aiming - not moving - gun not extended | Upright | Jumping | Left | Forward |  |  |
-| 4Fh | Facing left - damage boost | (unreachable) | | | | | out of scope: damage boost |
-| 50h | Facing right - damage boost | (unreachable) | | | | | out of scope: damage boost |
+| 4Fh | Facing left - damage boost | Upright | Leaping | Left | Forward |  | §12; radius 13h; `0A1E` reads the travel (right) |
+| 50h | Facing right - damage boost | Upright | Leaping | Right | Forward |  | §12; radius 13h; `0A1E` reads the travel (left) |
 | 51h | Facing right - normal jump - not aiming - moving forward | Upright | Jumping | Right | Forward | legs Striding |  |
 | 52h | Facing left - normal jump - not aiming - moving forward | Upright | Jumping | Left | Forward | legs Striding |  |
-| 53h | Facing right - knockback | (unreachable) | | | | | out of scope: knockback |
-| 54h | Facing left - knockback | (unreachable) | | | | | out of scope: knockback |
+| 53h | Facing right - knockback | Upright | Recoiling | Right | Forward |  | §12; radius 15h |
+| 54h | Facing left - knockback | Upright | Recoiling | Left | Forward |  | §12; radius 15h |
 | 55h | Facing right - normal jump transition - aiming up | Upright | TakingOff | Right | Up |  |  |
 | 56h | Facing left - normal jump transition - aiming up | Upright | TakingOff | Left | Up |  |  |
 | 57h | Facing right - normal jump transition - aiming up-right | Upright | TakingOff | Right | UpForward |  |  |
@@ -2286,6 +2286,8 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
   AnimationEnds
 - Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
+- Area recoil (old 0: no old code models the push): PushTime, PushStarts, PushMoves, BackwardLeap,
+  PushEnds, AfterThePush, 12
 
 Budget: 37.5 × 265.7 units = 9,961 (motion 4,200, pose fit 687, pose chart 2,412, collision 2,662).
 The official counter reports 111.0 motion units, 18.3 pose-fit units, 64.3 pose-chart units
@@ -2754,3 +2756,187 @@ x moves at cut 1.
 **Budget.** `tools spec-units` (scratch, against main's spec): 264.7 → 265.7 units (+1.0, the
 `DriftInTheAir` arm; `WallJump`'s carried-on arm is replaced one for one, and `PadChart`'s rule is
 a table cell), budget 9,923 → 9,961.
+
+## Thrown back by a hit (#753, spec §12)
+
+The hit's push and the backward leap, for Ceres Ridley's tail. Records: lean cache
+`SM_CACHE=$TEMP/collab/ci-cache/rows`, `chain-any-0006-E0B5` (0006) and `any-intro-2219`;
+`chain-0059-A293` (r05) 65 and 139 as further witnesses. Scratch readers:
+`$TEMP/collab/knock-753/scratch/kd.py` (per record: pad, pose, movement type, facing, position,
+speeds, dash, `0A52`, `0A54`, `18AA`, `18A8`, energy, handlers) and `vals.py`.
+
+**The five hits of 0006** (record N is the state before frame N+1; frame N+1 reads record N's pad):
+
+| Hit | Record | From | Pad at the hit | `0A54` | `0A52` | Leap (pose 50h) from | `18AA` 0 | End | After |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 609 | 27h crouched | none | 0 left | 1 up | 611 | 613 | 614 in 50h | let go 636 |
+| 2 | 705 | 09h running, dash 1.A000 | 8280h | 1 right | 2 up | 706 | 709 | 710 in 50h | let go 728 |
+| 3 | 801 | 51h jumping, falling | none | 1 right | 2 up | 803 (wall at x F0h) | 805 | 806 in 50h | jump only 824 |
+| 4 | 897 | 51h jumping, falling | 0100h (forward) | 0 left | 4 down | none | 901 | 902 in 53h | 903 lands A4h |
+| 5 | 993 | 19h spin | 0100h (forward) | 0 left | 4 down | 997 | 997 | 998 in 50h (rises 5 px) | leap on |
+
+### Sources per entry
+
+- **The hit (Ridley's output).** `$A6:CB0E`: tangible, `18A8` = 0 and not holding her, then
+  `$A6:DFD9`: tail tip within Eh px; `$A6:E000` `18A8` = 60h, `$A6:E006` `18AA` = 5, `$A6:E009`
+  to `$A6:E017` `0A54` = 1 (right) when `0AF6` ≥ the tail tip's x (`7E20A4`), else 0. Ridley runs
+  in the main enemy routine (`$82:8B65`), after her current state handler (`$82:8B58`, her moves)
+  and before the new state handler (`$82:8B69`). Other hitters' push times: `$A0:A57E` 5 (enemy
+  contact), `$94:8EA2` and others Ah (spikes), `$94:9879` 10, `$8B:B91B` Bh (the intro demo's).
+- **PushTime.** `18AA` is counted down at the frame's very end (`$A0:9169`, `$82:8BB3`), to no
+  lower than 0. It counts whether a push is under way or not.
+- **PushStarts.** `$90:DDE9` (the new state handler's hit check, after her moves): `18AA` ≠ 0
+  and `0A52` = 0 → `$90:DE82` by movement type (`0A1F`, the pose she started the frame in):
+  `$DEFA` (types 0, 1, 2, 3, 5, Dh, 10h, 14h, 15h; 6 through `$DEEA`) sets the special pose
+  53h/54h by facing; `$DF15` (4, 8, 9, 11h-13h) keeps the pose; `$DEE2` (Bh, Ch, Eh, Fh, 17h-1Ah)
+  and `$DEDD` (Ah, 16h) ignore it, leaving `18AA` to run, so a later frame can start it.
+  `$91:ED4E` (command "start knockback"): `$91:ED6A` by the old movement type: `$EDB0` sets
+  `0A52` 1/2 (up) or 4/5 (down, forward held in `8B`: right `0100h` facing right, left `0200h`
+  facing left), `$EE27` (morphed) always up; handler `$DF38`. `$90:99D6`: `0B2E`.`0B2C` =
+  5.0000 (`$90:9EE9`: 2.0000 in water and in lava or acid), `0B36` = 1. Pose fit: the special
+  pose goes through `$91:EB88`'s ordinary pose change (`$91:ECD0` path), which raises a crouch
+  starting it on a floor by 15h − 10h = 5 px (0006 609) and leaves a spin in the air (0006 993).
+  The two values per kind (1/2, 4/5) differ only in name: `$90:DF44` sends 1, 2 to `$DF53` and
+  4, 5 to `$DF64`; the side is `0A54`'s.
+- **PushMoves.** `$90:DF53` (up): `$90:8EDF` (`$90:9BD1` the X speed table's knockback row, air
+  `0001,8000,0005,0000,0000,8000`: gain 1.8000, top 5.0000, brake 0.8000; `$90:9A7E` with
+  `0B4A`; displacement by `0A54`), `$90:90E2` (moves by the old speed, then `0B32` 0.1C00 off,
+  direction kept), `$90:DF6E` (on a solid vertical collision: `0B4A`, `0B2C`/`0B2E`, `0B36`,
+  `0B46`/`0B48` zeroed, bottom aligned; the handler and `0A52` stay, so the next frame builds from
+  0 the push's side: r05 390-393, +1.8000 a frame on the floor, `0B36` = 0 after). `$90:DF64` (down): `$90:8EDF`, `$90:923F` (down by
+  `0DBC`.`0DBE` + 1.0, or 1.0 on a slope), `$90:DF6E`. The dash: `$90:8EDF` doesn't call
+  `$90:973E`, so `0B42` is kept (0006 705-709: 1.A000). The pad: the transition table of 53h
+  (`$91:A8E4`) has one row, held `0280h` → 50h; 54h (`$91:A8EC`) held `0180h` → 4Fh; the pose
+  definitions' let-go column is FFh for both (`$91:B8C1`, `$91:B8C9`), so nothing else changes
+  it. The row's change applies at the frame's end (`$91:EB88`); that frame's motion is still the
+  knockback handler's (0006 705 → 706: +4.4000 + 1.A000 right). With no row matched (or nothing
+  pressed), `$91:82D9` → `$91:8304`: type Ah's command is 2 (stop), `$91:ECD0`: `0B4A` = 0 and
+  `$91:DE53` (dashing ends) at the frame's end. `$90:9A7E` brakes on any non-zero `0B4A` (carrying
+  on 2, skidding 1), so a brake lasts one frame: r05 65 → 66 brakes 1.0000 to 0.8000 (`0B4A` 2 → 0,
+  `0B3C` 1 → 0), 67 builds to 2.0000. The run case: r05 139-143, 1.4000 → 2.C000 → 4.4000 → 5.C000
+  → 5.0000 (WordwiseTopSpeed keeps 5.C000).
+- **BackwardLeap.** 4Fh/50h: movement type 19h, direction byte 8 (4Fh) or 4 (50h) against the
+  name's facing (`$91:B8A1`, `$91:B8A9`), so `0A1E` reads the travel. `$91:F8AE` sets the normal
+  handler `$A337`; `$90:A7CA` is `$90:8FB3`, the straight jump's movement, with the air X speed
+  table's 19h row (`0000,C000,0005,0000,0000,8000`: gain 0.C000, top 5.0000). Its rows
+  (`$91:A3F6`, `$91:A40A`): held back + A → itself, forward + A → 52h/51h, A → 4Eh/4Dh;
+  no row or no input → `$91:82D9`, the let-go column 4Eh/4Dh (command 2, stop, which at a
+  base speed ≠ 0 leaves it). After the change the speed's magnitude `0B46` is kept and `0A1E`
+  turns to the jump's facing, so the decoded signed speed flips (0006 727 → 728: −5.0000 →
+  +5.C000; 729: snapped to 1.4000). A floor in the leap: not on record (open).
+- **The moonfall after a floor stop.** With `0B36` = 0 the leap's and the jump's `$90:8FB3` skip
+  the let-go test and `$90:90E2` subtracts 0.1C00 from the magnitude each frame, moving her by the
+  old one: r05 394-399, FFFF.E400 → FFFF.5800, no limit; she sinks 2 px as her body shrinks 15h →
+  13h. The push ends at 400 in 52h (her own pose), the floor stopping her at 00AD.FFFF without a
+  landing; 401 falls at 0.1C00, 402 lands in E5h.
+- **PushEnds.** `$90:DDE9` with `18AA` = 0 and `0A52` ≠ 0: in type Ah (`$DE48`) the special pose
+  29h/2Ah by facing, else her own pose (or `0A32` = 8 after a transition's end); command
+  "knockback finished", `$91:F31D` (already in this note's C3 entry for r05:400): `0A52` = 0,
+  handler `$A337`, bounce 0, `0B2C`/`0B2E` 0, `0B22` = 1, `0B36` = 2, bottom aligned; the pose
+  written is ignored by `$91:EB88` (its `0A32` = 1 branch), so she keeps her pose.
+- **AfterThePush.** A frame in 53h/54h under the normal handler: `$90:A5FC` (type Ah) is
+  `$90:923F` only: no horizontal move, down by `0DBC`.`0DBE` (last frame's) + 1.0. The prospective
+  pose from the end frame (29h/2Ah) applies; a floor met lands her (`A4h`/`A5h`, landing from a
+  straight jump; 0006 903). any-intro-2219 181: 54h → 2Ah, +6.0000, speed 5.0000 kept, x unmoved.
+
+### RAM mapping (added to State)
+
+| Quantity | RAM | Decode |
+| --- | --- | --- |
+| push time left | `18AA` | as is |
+| push side | `0A54` | 0 `Left`, 1 `Right` |
+| push under way | `0A52` | 0 none, 1-3 `Up`, 4-5 `Down` |
+| pose `Recoiling` | 53h (facing right), 54h (facing left) | upright, radius 15h |
+| pose `Leaping` | 50h (facing right), 4Fh (facing left) | upright, radius 13h; `0A1E` is the travel, the facing is the name's |
+| horizontal speed in `Recoiling` | `0B46`.`0B48`, `0A54` | rightward with `0A54` = 1 |
+| horizontal speed in `Leaping` | `0B46`.`0B48`, `0A1E` | leftward when `0A1E` low byte is 4 (as §State) |
+| the frame's hit (input) | `18AA` rising from 0 or rewritten by the hitter, with `0A54` | Ridley's tail: the `$A6:DFD9` path |
+
+### Harness note
+
+Compared, as the movement harness compares her motion, on the frames she starts in 53h/54h or
+4Fh/50h, the push's start frame and the frame after a push ends: position, speeds, dash, pose,
+and the knockback's three parts. The pose map's rows 4Fh, 50h, 53h, 54h (above, "unreachable")
+become reachable. The hit is an input from Ridley's tail (boss-ceres-ridley part 4b); until it
+exists the played run can't produce these frames. The frame after a push ends in the ball, a
+push in a liquid, the push braking from a carrying-on start and a floor in the leap are not on
+record; the spec marks them original only. The old rule that deferred the end frame (`0A52` ≠ 0
+and `18AA` = 0 under the normal handler, gap 33) now compares it.
+
+**Harness cases for the push's poses' clips** (samus-appearance, content): 0006 609-614 and
+897-903 (53h step 0 hold 2, then step 1 hold 10h), 611-616 (50h step 0 hold 8 counting down).
+These are ordinary clips; appearance's `StartingClip` and `ClipPlays` play them.
+
+**Chain-0059-A293 (r05) is a witness**, with a push time of 10 (another hitter; 9 left after the hit frame). Its frames 65-76,
+139-145 and 390-400 are compared now that gap 33's deferral is gone; the integrator should index
+them where r05 is an indexed case.
+
+### The reference model
+
+`$TEMP/collab/knock-753/scratch/model12.py`: §12's rules per frame over 0006's five hit windows
+(each from the hit's frame to the frame after the push ends, and the leap to its let-go), seeded
+from the record of each frame's start and run on that record's pad and the frame's hit (an
+energy drop at the next record, its side `0A54`); on the push's start frame her own moves are the
+record's. It compares x, y, the signed speeds, the push time left, the push under way and the
+pose's class (`Recoiling`, `Leaping`, `Jumping`, `Falling`, `Landing`) per frame. 0006 windows
+609-637, 705-729, 801-825, 897-904, 993-1000: 91 frames in §12's scope, model 91, do-nothing 0;
+any-intro-2219 170-181: 12, model 12, do-nothing 0; r05 65-76, 139-145, 390-400 (the jump frames
+395-398 are her own motion, not counted): 25, model 25, do-nothing 0. Planted faults: `push_gain`
+1.4000 holds 81 of 91 (r05 16 of 25), `leap_top` 4.8000 holds 29 of 91, `push_brake` 0.4000 holds
+r05 24 of 25. Vectors (`vecrun.py`): 26 of the 28 §12 vectors pass the model; C-push-waits (a
+turn's own motion) is worked by hand, and PE4 (a lead-in through her own jump) is the per-frame
+run's r05:400. `tools spec-units` was not run here (the
+tools executable is blocked locally); the recoil area's units are the root's to add.
+
+## An aimed crouched turn let go (0006:539, #753)
+
+The played run stopped at 0006 cut 539 on `movement.pose`: a spec gap, not a seed or runner
+artefact. 0006 534 → 535: crouched aiming down-left (74h), right pressed, starts the crouched
+turn 9Ah (movement type 17h; decoded facing right, `DownForward`). 536-538 hold right; record
+538's pad is empty, and at 539 she is 28h (crouched, facing left, `Forward`), x +0.C000 from the
+turn's own move, `0B46` 0.C000. The cycle repeats every 6 frames (545, 551 ... 599), and at 607 the
+turn's animation (`$91:B42E`: three steps of 2 frames, then `F8,73`) ends first and hands over 73h.
+boss-phantoon 1794 shows the same from A3h.
+
+Source: the turns aimed up, up-forward and down (97h-9Ah, A2h, A3h) share an empty transition
+table, so a held button keeps the turn (`$91:81B9`). With nothing held `$91:81A9` takes
+BRANCH_NO_INPUT → `$91:82D9` → `$91:8304`: type 17h's command is 2 (stop: `0B4A` = 0, `$91:DE53`
+ends dashing), then the pose definitions' let-go column (`$91:B62B`), which is 28h for all six
+(`$91:BAF9` for 9Ah), whichever way the turn faces. The unaimed crouched turns 43h/44h have FFh
+there and keep the turn, as the chart's general row says. The animation end's pose
+(`$91:EBB0`, super special) wins over the prospective one.
+
+Vectors: P-crouch-turn-letgo (0006:539), P-crouch-turn-letgo-up (boss-phantoon:1794),
+P-crouch-turn-end (0006:607), C-crouch-turn-letgo-left (99h, from the same column).
+
+## The frame's two steps (#753, B1)
+
+The original's frame: `$90:E692` (the current state handler: pose input, her moves) runs before
+the main enemy routine (`$82:8B65`), where Ridley's tail judges the hit from `0AF6`/`0AFA` and the
+body radius `0AFE`/`0B00` (the body she started the frame in: 0006 609 and 993 still show 10h and
+0Ch), and Health's damage lands; then `$90:E722` (the new state handler) runs `$90:DDE9` (the
+push's start and end), `$91:EB88` (the pose change: the special pose wins over the pad's, pose
+fit, the aim step) and the frame's end counts `18AA` (`$A0:9169`). Every hit record shows the push
+started in the hit's own frame (0006 609, 705, 801, 897, 993; r05 65, 139, 390: pose 53h/54h,
+`0B2E` 5, `0B36` 1, and 0006 609's 5 px fit), so the reaction is the same frame's second step.
+PK1 now also compares `position_after_moves` (00D8.2000, 00C0.FFFF) and `rising`.
+
+## The knockback implementer's gaps (#753)
+
+1. **C-push-waits.** A ground turn started from rest that follows the pad creeps 0.C000 the new
+   way on that frame (`TurningRound`, R93, R94: the turn's top is 0 and WordwiseTopSpeed keeps
+   0.C000 over 0 once), so the vector's x is 00FF.4000; the push's rules it checks are unchanged.
+2. **The push poses' bodies** are content (§1.3): 53h/54h radius 15h, 4Fh/50h 13h (`$91:B8C1`,
+   `$91:B8A1`). PK1 and PK5 now give Recoiling's 21 px in `after.pose`, as pose fit takes it; the
+   records' 10h and 0Ch there are the old body, which holds until the next frame.
+3. The vector header's ranges now read 1 to 45 and 0 to 45, as the spec does.
+4. **Choices.**
+   - Left, right and jump held in the leap: the leap's tables (`$91:A3F6` for 4Fh, `$91:A40A` for
+     50h) list the left row (`0280h`) first; for 50h it keeps the leap, for 4Fh it is the
+     striding jump 52h. C-leap-both-right, C-leap-both-left.
+   - A push whose pose fit would refuse `Recoiling`: out of scope.
+   - The end frame: `$91:EB88`'s knockback-finished branch runs `$91:F31D` and goes straight to
+     the pose-changed tail, so the prospective pose (the pad's row or a landing) and its command
+     (`0A2E`, the let-go) are both skipped, whatever pose the row names. Her animation's end on
+     that frame is out of scope.
+   - The ball's push (its moves, rows, let-go and end) is out of scope.

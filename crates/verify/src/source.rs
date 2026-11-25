@@ -1575,6 +1575,24 @@ pub const COOLDOWN_TIMER: WramWord = WramWord {
     name: "COOLDOWN_TIMER",
     offset: 0x0CCC,
 };
+/// Bank $A0 log, `$A0:9169`: her push time left, counted down at the frame's very end.
+pub const SAMUS_KNOCKBACK_TIMER: WramWord = WramWord {
+    name: "SAMUS_KNOCKBACK_TIMER",
+    offset: 0x18AA,
+};
+
+/// Bank $90 log, `$90:DF44`: her push under way, 0 none, 1 to 3 up, 4 or 5 down.
+pub const SAMUS_KNOCKBACK_DIRECTION: WramWord = WramWord {
+    name: "SAMUS_KNOCKBACK_DIRECTION",
+    offset: 0x0A52,
+};
+
+/// Bank $A6 log, `$A6:E009`: the side a hit pushes her to, 0 left, 1 right.
+pub const SAMUS_KNOCKBACK_X_DIRECTION: WramWord = WramWord {
+    name: "SAMUS_KNOCKBACK_X_DIRECTION",
+    offset: 0x0A54,
+};
+
 /// Bank $90 log: the ball's bounce count in the low byte (0, 1 or 2), and 6 in the
 /// high byte for the spring ball.
 pub const SAMUS_BOUNCE_STATE: WramWord = WramWord {

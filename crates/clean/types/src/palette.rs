@@ -93,6 +93,13 @@ impl From<Palette> for Vec<Colour> {
     }
 }
 
+/// The number of colours in one row of a palette, the colours a sprite draws from.
+pub const ROW_COLOURS: usize = 16;
+
+/// The 16 ordered colours of one row of a palette: a sprite's colours.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RowColours(pub [Colour; ROW_COLOURS]);
+
 /// The authoritative banks, shared by palette producers and consumers.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Palettes {

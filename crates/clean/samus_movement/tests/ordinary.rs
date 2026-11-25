@@ -85,6 +85,7 @@ fn complete_ordinary_call_and_publication_lifetimes() {
             },
             seat: samus_movement::Seat::Unseated,
             jump_held: samus_movement::JumpHeld::NONE,
+            knockback: samus_movement::Knockback::spent(types::Side::Right),
         },
         travels: TravelledDistances::fresh(),
         pending_aim: Some(FiringDirection::UpFacingLeft),
@@ -116,11 +117,13 @@ fn complete_ordinary_call_and_publication_lifetimes() {
         body: &body,
         cannon_heading: &headings, // Validated content.
     };
-    let outcome = caller
-        .samus
-        .step(&frame, &content, &Rules::default())
-        .unwrap();
-    // The whole frame's outputs come out of the one call, not recovered from her final pose.
+    // Her moves, then her reaction once the hitter judges the hit (none) from where they end.
+    let rules = Rules::default();
+    let moves = caller.samus.moves(&frame, &content, &rules).unwrap();
+    assert_eq!(moves.position_after_moves().x, Wrapping(0x002B_4000));
+    let outcome = caller.samus.react(moves, None);
+    assert!(!outcome.push_started);
+    // The whole frame's outputs come out of the two steps, not recovered from her final pose.
     caller.travels.travels = outcome.travelled;
     if let Some(aim) = outcome.pending_aim {
         caller.pending_aim = Some(aim);

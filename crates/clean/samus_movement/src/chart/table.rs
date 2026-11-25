@@ -15,7 +15,9 @@ const SPRING_BALL: Test = Test::With(&[Item::SpringBall]);
 ///
 /// A floor met while turning or while her body changes shape has no row: the turn's own rows
 /// apply, and a changing body's pad has no say. The aim change's step comes after the pose is
-/// chosen, so its row's outcome is `STEP_BLOCKED`, apart.
+/// chosen, so its row's outcome is `STEP_BLOCKED`, apart. `AfterThePush`: the drop the frame
+/// after a push lands her as from a straight jump, so `Recoiling` shares the jump's floor rows,
+/// and the leap is a straight jump (`BackwardLeap`).
 pub const MOVES_MET: &[Row] = &[
     Row {
         id: RowId::WallStopAimedUp,
@@ -53,7 +55,7 @@ pub const MOVES_MET: &[Row] = &[
         id: RowId::FloorFiring,
         needs: &[
             Test::Met(Met::Floor),
-            Test::Doing(&[Doing::StraightJump, Doing::Falling]),
+            Test::Doing(&[Doing::StraightJump, Doing::Falling, Doing::Recoiling]),
             Test::Aimed(&[Aim::Forward]),
             Test::Held(SHOOT),
         ],
@@ -68,7 +70,7 @@ pub const MOVES_MET: &[Row] = &[
         id: RowId::FloorFromAJump,
         needs: &[
             Test::Met(Met::Floor),
-            Test::Doing(&[Doing::StraightJump, Doing::Falling]),
+            Test::Doing(&[Doing::StraightJump, Doing::Falling, Doing::Recoiling]),
         ],
         next: Next {
             action: Some(Action::Landing(LandedFrom::Jump)),

@@ -1,4 +1,5 @@
-//! Her own frame: her clip's look ahead, her moves, then her animation from what they report.
+//! Her own frame: her clip's look ahead, her moves, what the frame plays between them and her
+//! reaction (the frame's hit), then her appearance from what they report.
 //!
 //! Movement reports what animation reads "as her moves leave her, before the pose change", so
 //! stepping movement whole and then animation gives the values the original reads between
@@ -11,8 +12,10 @@ use crate::state::owned::{AppearancePin, MovementPin};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
-use samus_appearance::{Ahead, Dash, Figure, MissingClip, MoveEvent};
-use samus_movement::{Dashing, StandingAnimation, WallTest};
+use samus_appearance::{
+    Ahead, Dash, Figure, GrappleActivity, HurtOpportunity, MissingClip, MoveEvent, Suit,
+};
+use samus_movement::{Dashing, Hit, StandingAnimation, WallTest};
 use types::{Pose, Set};
 
 /// The figure she is drawn in as the frame starts.
@@ -42,6 +45,7 @@ impl State {
             outcome: None,
             appearance: self.appearance.0,
             figure: self.figure.0,
+            colours: None,
             sounds: Vec::new(),
         }
     }
@@ -56,52 +60,70 @@ impl State {
 }
 
 impl super::State {
-    /// Her own frame: her moves, then her animation from what they report.
-    pub(super) fn her_frame(
+    /// Her own frame: her moves, then what `between` plays once they are made, from her
+    /// position after them, giving the frame's hit; then her reaction to that hit, and her
+    /// appearance from what both steps report.
+    pub(super) fn her_frame<T>(
         &self,
         inputs: &Inputs,
         content: &Content,
         rules: &Rules,
-    ) -> Result<Her, Fault> {
+        between: impl FnOnce(types::Position) -> Result<(T, Option<Hit>), Fault>,
+    ) -> Result<(Her, T), Fault> {
         let start = self.samus.figure.0;
         let world = self.station.world(&self.passage.room.geometry);
-        let (samus, outcome) = self.moves(inputs, &world, content, rules)?;
+        let (samus, outcome, between) = self.movement(inputs, &world, content, rules, between)?;
         let after = Figure {
             pose: samus.pose,
             sprite: outcome.sprite,
         };
         let mut appearance = self.samus.appearance.0;
         let mut seen = animation_inputs(start, after, &outcome, inputs);
-        // The energy the tail hit leaves, before the frame's loss: with no tail, as it starts.
+        // The energy the tail hit leaves, before the frame's loss, and the energy the frame
+        // before left: with no tail, both are the energy the frame starts with, so her energy
+        // doesn't fall and only a push's start begins her hurt colours.
         seen.energy = self.health.0.energy.whole.get();
+        seen.previous_energy = seen.energy;
+        // The loop refuses her other suits, and no grapple is in it.
+        let hurt = HurtOpportunity::Observed {
+            suit: Suit::Power,
+            grapple: GrappleActivity::Dormant,
+        };
         let shown = animation::play(
             &mut appearance,
             &content.appearance,
             &rules.appearance,
-            &animation::frame_of_play(seen),
+            &animation::frame_of_play(seen, hurt),
         )
         .map_err(|fault| match fault {
             animation::ClipFault::Missing(figure) | animation::ClipFault::Conflicting(figure) => {
                 Fault::Clip(figure)
             }
         })?;
-        Ok(Her {
-            samus,
-            outcome: Some(outcome),
-            appearance,
-            figure: after,
-            sounds: shown.sounds,
-        })
+        Ok((
+            Her {
+                samus,
+                outcome: Some(outcome),
+                appearance,
+                figure: after,
+                colours: shown.her_colours,
+                sounds: shown.sounds,
+            },
+            between,
+        ))
     }
 
-    /// Her moves, after her clip's look ahead from the figure she starts the frame in.
-    fn moves(
+    /// Her movement's two steps: her moves, after her clip's look ahead from the figure she
+    /// starts the frame in; `between`, from her position after them, giving the frame's hit;
+    /// then her reaction to it.
+    fn movement<T>(
         &self,
         inputs: &Inputs,
         world: &dyn types::World,
         content: &Content,
         rules: &Rules,
-    ) -> Result<(samus_movement::Samus, samus_movement::Outcome), Fault> {
+        between: impl FnOnce(types::Position) -> Result<(T, Option<Hit>), Fault>,
+    ) -> Result<(samus_movement::Samus, samus_movement::Outcome, T), Fault> {
         let start = self.samus.figure.0;
         let ahead = Ahead::of(&self.samus.appearance.0, start, &content.appearance)
             .map_err(|MissingClip(figure)| Fault::Clip(figure))?;
@@ -130,23 +152,27 @@ impl super::State {
             body: &body,
             cannon_heading: &heading,
         };
-        let outcome = samus
-            .step(&frame, world, &rules.movement)
+        let moves = samus
+            .moves(&frame, world, &rules.movement)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
+        let (between, hit) = between(moves.position_after_moves())?;
+        let outcome = samus.react(moves, hit);
         missing_body
             .get()
-            .map_or(Ok((samus, outcome)), |pose| Err(Fault::Body(pose)))
+            .map_or(Ok((samus, outcome, between)), |pose| Err(Fault::Body(pose)))
     }
 }
 
-/// Her own frame's results: her movement, its outcome, her appearance, the figure she shows and
-/// the sounds it asks for.
+/// Her own frame's results: her movement, its outcome, her appearance, the figure she shows, the
+/// colours her row takes and the sounds it asks for.
 pub(super) struct Her {
     pub(super) samus: samus_movement::Samus,
     /// None while the pad holds her.
     pub(super) outcome: Option<samus_movement::Outcome>,
     appearance: samus_appearance::AppearanceState,
     figure: Figure,
+    /// The colours her row of the screen's colours takes; none leaves it as it is.
+    pub(super) colours: Option<types::RowColours>,
     pub(super) sounds: Vec<samus_appearance::SoundOffer>,
 }
 
@@ -170,6 +196,7 @@ pub(in crate::production) fn animation_inputs(
     moves[MoveEvent::StandingRestart] = outcome.standing_animation == StandingAnimation::Restarts;
     moves[MoveEvent::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
     moves[MoveEvent::HandedOver] = outcome.handed_over;
+    moves[MoveEvent::PushStarted] = outcome.push_started;
     samus_appearance::Inputs {
         figure: start,
         figure_after: after,
@@ -183,6 +210,7 @@ pub(in crate::production) fn animation_inputs(
         heading_down: outcome.heading_down,
         vertical_speed: outcome.vertical_speed_after_moves,
         energy: inputs.energy,
+        previous_energy: inputs.energy,
         items: inputs.items,
         liquid: inputs.liquid,
         sounds_waiting: inputs.sounds_waiting,
@@ -211,8 +239,51 @@ const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
 #[cfg(test)]
 mod tests {
     use super::dash;
+    use crate::production::played::tests::{content_with, inputs, rules, state};
+    use data::assets::art::{Colour, Palette};
+    use data::assets::samus::palettes::SamusPalettes;
     use samus_appearance::Dash;
-    use samus_movement::Dashing;
+    use samus_movement::{Dashing, Hit};
+    use types::{Action, PushFrames, Side};
+
+    /// A hit on her frame throws her back and pulses her hurt colours, and she plays on through
+    /// the push's next frame: every pose the push takes her into has its body and its clip.
+    #[test]
+    fn a_hit_throws_her_back_in_her_hurt_colours() {
+        let palettes = SamusPalettes {
+            hurt: Palette(core::array::from_fn(|place| {
+                Colour(0x1000 + u16::try_from(place).unwrap())
+            })),
+            ..SamusPalettes::default()
+        };
+        let content = content_with(&palettes);
+        let hurt = crate::production::pulse_colours(&palettes).unwrap().hurt;
+        let mut state = state(Vec::new());
+        let frame_inputs = inputs(types::Buttons::default());
+        let hit = Hit {
+            side: Side::Left,
+            push: PushFrames::new(5).unwrap(),
+        };
+        let (her, ()) = state
+            .her_frame(&frame_inputs, &content, &rules(), |_| Ok(((), Some(hit))))
+            .unwrap();
+        assert!(her.outcome.as_ref().unwrap().push_started);
+        assert_eq!(her.samus.knockback.time_left, PushFrames::new(4).unwrap());
+        assert_eq!(her.samus.knockback.side, Side::Left);
+        assert!(her.samus.knockback.push.is_some());
+        assert_eq!(her.samus.pose.action, Action::Recoiling);
+        assert_eq!(her.figure.pose, her.samus.pose);
+        assert_eq!(her.appearance.hurt_count.frames(), 2);
+        assert_eq!(her.colours, Some(hurt));
+
+        state.samus.played(her.samus, &her);
+        let (next, ()) = state
+            .her_frame(&frame_inputs, &content, &rules(), |_| Ok(((), None)))
+            .unwrap();
+        assert_eq!(next.samus.knockback.time_left, PushFrames::new(3).unwrap());
+        assert_eq!(next.samus.pose.action, Action::Recoiling);
+        assert_eq!(next.appearance.hurt_count.frames(), 3);
+    }
 
     /// Each report of her moves gives the dash the clip reads, decided first by whether she is
     /// dashing after them.

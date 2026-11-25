@@ -1,9 +1,9 @@
 //! What a frame brings, each fact once, from the domain that owns it, and the content her
-//! animation plays.
+//! appearance shows: her clips, the run's paces and her pulse's colours.
 
-use enum_map::Enum;
+use enum_map::{Enum, EnumMap};
 use serde::{Deserialize, Serialize};
-use types::{Fixed, Item, Pose, Set, Sprite};
+use types::{Fixed, Item, Pose, RowColours, Set, Sprite};
 
 use crate::clip::{Clip, Paces, Slowdown};
 
@@ -17,13 +17,47 @@ pub struct Figure {
     pub sprite: Sprite,
 }
 
-/// The content her animation plays, as the importer supplies it: a clip for each figure the
-/// content holds, and the run's paces.
-pub trait AnimationContent {
+/// The suit selection made for this frame, from the equipment switched on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, Serialize, Deserialize)]
+pub enum Suit {
+    /// Neither Gravity nor Varia is enabled.
+    Power,
+    /// Varia is enabled without Gravity.
+    Varia,
+    /// Gravity is enabled, with or without Varia.
+    Gravity,
+}
+
+/// The grapple beam's current activity, from Grapple.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GrappleActivity {
+    /// Grapple is dormant.
+    Dormant,
+    /// Grapple is busy.
+    Busy,
+}
+
+/// Spec: `HurtColours`. The colours her hurt pulse shows in her row, as the importer supplies
+/// them: 16 colours each, her row's.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PulseColours {
+    /// Her hurt colours.
+    pub hurt: RowColours,
+    /// Each suit's colours.
+    pub suits: EnumMap<Suit, RowColours>,
+    /// The cinematic's grey colours, which stand for her suit's while a cinematic is active.
+    pub cinematic_grey: RowColours,
+}
+
+/// The content her appearance shows, as the importer supplies it: a clip for each figure the
+/// content holds, the run's paces, and the colours of her hurt pulse.
+pub trait AppearanceContent {
     /// The clip of `figure`, or none where the content holds no clip for it.
     fn clip(&self, figure: &Figure) -> Option<&Clip>;
     /// The run's paces.
     fn paces(&self) -> &Paces;
+    /// The colours her hurt pulse shows (`HurtColours`).
+    fn pulse_colours(&self) -> &PulseColours;
 }
 
 /// The figure whose clip a frame or the read-ahead needs and the content lacks. The model gives
@@ -32,11 +66,11 @@ pub trait AnimationContent {
 pub struct MissingClip(pub Figure);
 
 /// The clip `content` holds for `figure`, or the figure as missing.
-pub fn clip_of(content: &impl AnimationContent, figure: Figure) -> Result<&Clip, MissingClip> {
+pub fn clip_of(content: &impl AppearanceContent, figure: Figure) -> Result<&Clip, MissingClip> {
     content.clip(&figure).ok_or(MissingClip(figure))
 }
 
-/// What samus-movement's step did this frame that her clip reads. Listed in no order.
+/// What samus-movement's step did this frame that her appearance reads. Listed in no order.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum, Serialize, Deserialize)]
 pub enum MoveEvent {
     /// "The standing animation restarts" (`StandingRestart`).
@@ -45,6 +79,8 @@ pub enum MoveEvent {
     WallJumpReadied,
     /// It took the pose her clip's end handed over (`HandOverSlowdown`).
     HandedOver,
+    /// A hit's push started this frame: samus-movement's "push started" (`HurtColours`).
+    PushStarted,
 }
 
 /// Spec: `RunPace`, `BoostStages`. Her dash this frame: one value for its whole lifecycle.
@@ -196,8 +232,10 @@ pub struct Inputs {
     /// Her vertical speed as her moves leave her, downward positive, a fact apart from heading
     /// down: she can rise fast in a fall's pose (`FastFall`).
     pub vertical_speed: Fixed,
-    /// Her energy (`Breathing`).
+    /// Her energy, as the frame leaves Health (`Breathing`, `HurtColours`).
     pub energy: u16,
+    /// Her energy as the frame before left it, which her energy falls from (`HurtColours`).
+    pub previous_energy: u16,
     /// The items switched on; this domain reads the speed booster, the space jump and the screw
     /// attack.
     pub items: Set<Item>,
@@ -211,6 +249,15 @@ pub struct Inputs {
     pub shoot_held: bool,
     /// How long her shot has charged (`AtTheDoor`).
     pub charge: Charge,
+}
+
+impl Inputs {
+    /// Spec: `HurtColours`. Whether her energy fell this frame: it is below the energy the frame
+    /// before left.
+    #[must_use]
+    pub const fn energy_fell(&self) -> bool {
+        self.energy < self.previous_energy
+    }
 }
 
 /// How many sounds wait in the queue the speed booster's sound joins, before it, 0 to

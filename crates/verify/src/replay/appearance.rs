@@ -8,9 +8,9 @@ use data::rom::Rom;
 use game::production::{AppearanceContent, FigureClip};
 use game::samus_appearance_bridge::{Clips, Imported};
 use samus_appearance::{
-    Activity, Animation, AnimationContent as _, AppearanceState, CannonDelay, Charge,
-    ChargeGlowPosition, ColourSequences, Dash, Frame, FramePart, Frames, Inputs, ItemControls,
-    Laps, LapsLeft, Liquid, MoveEvent, PaletteOpportunity, Playhead, VisorDelay, VisorStep,
+    Activity, Animation, AppearanceState, CannonDelay, Charge, ChargeGlowPosition, ColourSequences,
+    Dash, Frame, FramePart, Frames, HurtCount, HurtOpportunity, Inputs, ItemControls, Laps,
+    LapsLeft, Liquid, MoveEvent, PaletteOpportunity, Playhead, VisorDelay, VisorStep,
 };
 use types::{Action, BoostStage, Item, Set};
 
@@ -32,22 +32,31 @@ impl Content {
             .map_err(|_| data_failure(None, "animation pace content"))?;
         let clips = Clips::import(&delays, &paces)
             .map_err(|_| data_failure(None, "semantic animation content"))?;
-        let figures = clips
-            .poses()
-            .iter()
-            .map(|entry| FigureClip {
-                figure: entry.figure,
-                clip: entry.clip.clone(),
-            })
-            .collect();
-        let appearance = AppearanceContent::new(figures, clips.paces().clone())
-            .map_err(|_| data_failure(None, "animation content relation"))?;
         Ok(Self {
-            appearance,
+            appearance: production_content(&rom, &clips)?,
             clips,
             poses,
         })
     }
+}
+
+/// The appearance content production plays: `clips`, the run's paces and her hurt pulse's
+/// colours imported from `rom`.
+pub(super) fn production_content(rom: &Rom, clips: &Clips) -> Result<AppearanceContent, Outcome> {
+    let palettes = import::samus::palettes::import(rom.lorom())
+        .map_err(|_| data_failure(None, "her palettes content"))?;
+    let pulse = game::production::pulse_colours(&palettes)
+        .ok_or_else(|| data_failure(None, "her hurt pulse colours"))?;
+    let figures = clips
+        .poses()
+        .iter()
+        .map(|entry| FigureClip {
+            figure: entry.figure,
+            clip: entry.clip.clone(),
+        })
+        .collect();
+    AppearanceContent::new(figures, clips.paces().clone(), pulse)
+        .map_err(|_| data_failure(None, "animation content relation"))
 }
 
 fn word(wram: &[u8], at: usize) -> Result<u16, Outcome> {
@@ -216,7 +225,21 @@ fn whole(wram: &[u8], content: &Content, imported: &Imported) -> Result<Appearan
         kept_action: kept_action(wram, content, imported.figure.pose.action)?,
         cannon,
         colours,
+        hurt_count: hurt_count(wram)?,
     })
+}
+
+/// Her hurt count (`0A48`), 0 to 59.
+pub(super) fn hurt_count(wram: &[u8]) -> Result<HurtCount, Outcome> {
+    u8::try_from(word(wram, 0x0a48)?)
+        .ok()
+        .and_then(HurtCount::new)
+        .ok_or_else(|| data_failure(None, "observed hurt count"))
+}
+
+/// Her hurt count as a compared field.
+pub(super) fn hurt_observation(count: HurtCount) -> Observation {
+    Observation::quantity("appearance.hurt-count", i64::from(count.frames()))
 }
 
 pub fn seed(wram: &[u8], content: &Content) -> Result<AppearanceState, Outcome> {
@@ -325,6 +348,8 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
         heading_down: false,
         vertical_speed: types::ZERO,
         energy: word(prior, 0x09c2)?,
+        // Her hurt colours are outside the case, which reads no fall.
+        previous_energy: word(prior, 0x09c2)?,
         items,
         // The step slowdown is observed zero at both cuts; the start slowdown and
         // submerged are unread.
@@ -348,6 +373,7 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
         parts,
         item_controls: ItemControls::Skipped,
         palette: PaletteOpportunity::Absent,
+        hurt: HurtOpportunity::Absent,
     })
 }
 

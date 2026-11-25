@@ -14,9 +14,7 @@ use data::pose::animation::{
     RISING_FRAME, RISINGS, RunPaces, wall_jump_frame,
 };
 use enum_map::EnumMap;
-use samus_appearance::{
-    AnimationContent, Branch, Clip, Control, Figure, Hold, Instruction, Pace, Paces, Step,
-};
+use samus_appearance::{Branch, Clip, Control, Figure, Hold, Instruction, Pace, Paces, Step};
 use types::Sprite;
 
 /// Why the decoded lists give no clips.
@@ -152,15 +150,19 @@ impl Clips {
     }
 }
 
-impl AnimationContent for Clips {
-    fn clip(&self, figure: &Figure) -> Option<&Clip> {
+impl Clips {
+    /// The clip of `figure`, or none where the content holds no clip for it.
+    #[must_use]
+    pub fn clip(&self, figure: &Figure) -> Option<&Clip> {
         self.poses
             .iter()
             .find(|imported| imported.figure == *figure)
             .map(|imported| &imported.clip)
     }
 
-    fn paces(&self) -> &Paces {
+    /// The run's paces.
+    #[must_use]
+    pub const fn paces(&self) -> &Paces {
         &self.paces
     }
 }

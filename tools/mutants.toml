@@ -7,9 +7,13 @@
 name = "movement-double-update"
 responsibility = "movement"
 file = "crates/game/src/production/movement.rs"
-before = '''let outcome = samus'''
-after = '''samus.step(&admitted, world, rules).map_err(ProductionFault::Movement)?;
-    let outcome = samus'''
+before = '''Ok(samus.react(moves, None))'''
+after = '''let again = samus.moves(admitted, world, rules).map_err(ProductionFault::Movement)?;
+    samus.react(again, None);
+    let moves = samus
+        .moves(admitted, world, rules)
+        .map_err(ProductionFault::Movement)?;
+    Ok(samus.react(moves, None))'''
 case = "movement/W15"
 cut = 815
 field = "movement.position.x"
@@ -123,8 +127,8 @@ field = "audio.reply3"
 name = "movement-inside-cells-omitted"
 responsibility = "movement"
 file = "crates/game/src/production/movement.rs"
-before = "Ok(outcome)"
-after = '''let mut outcome = outcome;
+before = '''Ok(samus.react(moves, None))'''
+after = '''let mut outcome = samus.react(moves, None);
     outcome.inside.clear();
     Ok(outcome)'''
 case = "movement-native-occupied-first-search"
@@ -461,12 +465,10 @@ field = "ceres.0.wait"
 name = "played-ceres-doors-read-her-after-moves"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = '''
-        let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;'''
-after = '''
-        let mut moved = self.clone();
-        moved.samus.movement = Model(self.her_frame(inputs, content, rules)?.samus);
-        let enemies = moved.enemies(false, random, passing, content, rules, &mut palette)?;'''
+before = '''            let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;'''
+after = '''            let mut moved = self.clone();
+            moved.samus.movement.0.position = _after_moves;
+            let enemies = moved.enemies(false, random, passing, content, rules, &mut palette)?;'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "ceres.0.phase"
@@ -535,12 +537,32 @@ field = "finished-frames"
 name = "played-movement-choices-forgotten"
 responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
-before = "let outcome = samus"
+before = "let moves = samus"
 after = '''samus.choices = samus_movement::Choices::starting_in(samus.pose);
-        let outcome = samus'''
+        let moves = samus'''
 case = "played chain-any-0002-DF8D 0 30"
 cut = 26
 field = "movement.choices"
+
+[[fault]]
+name = "played-reaction-state-dropped"
+responsibility = "played"
+file = "crates/game/src/production/played/samus.rs"
+before = "let outcome = samus.react(moves, hit);"
+after = "let outcome = { let mut dropped = samus; dropped.react(moves, hit) };"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "movement.pose"
+
+[[fault]]
+name = "played-hurt-previous-energy-higher"
+responsibility = "played"
+file = "crates/game/src/production/played/samus.rs"
+before = "seen.previous_energy = seen.energy;"
+after = "seen.previous_energy = seen.energy + 1;"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "appearance.hurt-count"
 
 [[fault]]
 name = "played-ridley-slam-hold-one-longer"

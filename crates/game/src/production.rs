@@ -29,7 +29,7 @@ pub mod shaft;
 mod tests;
 pub mod weapons;
 pub mod world;
-pub use animation::{AppearanceContent, ClipFault, FigureClip};
+pub use animation::{AppearanceContent, ClipFault, FigureClip, pulse_colours};
 use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};

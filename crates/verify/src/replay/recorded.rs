@@ -201,7 +201,7 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
         [Responsibility::Appearance] => {
             let content = Arc::new(appearance::Content::load(&sources.rom)?);
             let seed = ProductionSeed::Appearance(appearance::seed(wram, &content)?);
-            let clips = ProductionContent::Appearance(content.appearance.clone());
+            let clips = ProductionContent::Appearance(Box::new(content.appearance.clone()));
             (
                 Context::Appearance(content.clone()),
                 Actual::Appearance(content),

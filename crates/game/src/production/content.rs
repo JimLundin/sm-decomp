@@ -92,7 +92,7 @@ pub enum ProductionContent {
     /// Camera room/scroll constraints are explicit inputs.
     Camera,
     /// Exact imported semantic animation clips and paces.
-    Appearance(super::AppearanceContent),
+    Appearance(Box<super::AppearanceContent>),
     /// Progress reports carry the typed world facts they record.
     Progress,
     /// Every named imported HUD picture.

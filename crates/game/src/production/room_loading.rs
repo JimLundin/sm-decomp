@@ -549,9 +549,12 @@ pub fn start(
     })
 }
 
-/// Her suit's row of `goal`.
-fn suit_row(goal: &mut [types::Colour; COLOURS]) -> Option<&mut [types::Colour; ROW_COLOURS]> {
-    goal.as_chunks_mut::<ROW_COLOURS>()
+/// Her suit's row of `colours`, the screen's or the ones they head for.
+pub(crate) fn suit_row(
+    colours: &mut [types::Colour; COLOURS],
+) -> Option<&mut [types::Colour; ROW_COLOURS]> {
+    colours
+        .as_chunks_mut::<ROW_COLOURS>()
         .0
         .iter_mut()
         .skip(SPRITE_ROW)
@@ -898,6 +901,8 @@ mod tests {
                     varia: Row([Colour(0x0099); 16]),
                     gravity: Row([Colour(0x00aa); 16]),
                 },
+                hurt: Row([Colour(0x00ab); 16]),
+                cinematic_grey: Row([Colour(0x00ac); 16]),
                 beams: vec![BeamPalette {
                     beams: types::Set::default(),
                     palette: Row([Colour(0x00bb); 16]),

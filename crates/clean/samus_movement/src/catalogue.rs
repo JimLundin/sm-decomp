@@ -74,6 +74,18 @@ pub enum BehaviourId {
     OtherBlockKinds,
     /// How the top speed is tested part by part (§9).
     WordwiseTopSpeed,
+    /// The push time a hit gives, counting down at each frame's end (§12).
+    PushTime,
+    /// A push due starting once her moves are made, if her pose admits one (§12).
+    PushStarts,
+    /// How the push throws her its side, up or down (§12).
+    PushMoves,
+    /// The backward leap, a straight jump travelling backward (§12).
+    BackwardLeap,
+    /// The push's end, handing her back falling at 0 (§12).
+    PushEnds,
+    /// The drop the frame after a push ends in `Recoiling` (§12).
+    AfterThePush,
 }
 
 /// A catalogue entry.
@@ -93,7 +105,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 34] = [
+pub const CATALOGUE: [Behaviour; 40] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -330,6 +342,48 @@ pub const CATALOGUE: [Behaviour; 34] = [
         summary: "the top speed is tested part by part.",
         kind: Kind::Quirk,
         switch: Switch::Toggle,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PushTime,
+        summary: "the push time counts down once at each frame's end.",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PushStarts,
+        summary: "push time left with no push under way starts one after her moves, if her pose admits one.",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PushMoves,
+        summary: "in the push she is thrown the push's side, up or down; only back and jump change it.",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BackwardLeap,
+        summary: "the backward leap is a straight jump travelling backward with its own speeds.",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PushEnds,
+        summary: "the first frame she starts with a push under way and no push time left ends it.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::AfterThePush,
+        summary: "the frame after a push ends in `Recoiling`, she drops by her speed and falls or lands.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
 ];

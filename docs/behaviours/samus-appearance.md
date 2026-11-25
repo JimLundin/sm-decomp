@@ -10,7 +10,8 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 ## Header
 
 **Scope.** Part 1 of the domain "how Samus looks": her animation's timing, its sound opportunities (§9),
-when her cannon may follow the selected item (§10), and the ordinary dry palette opportunity (§11).
+when her cannon may follow the selected item (§10), the ordinary dry palette opportunity (§11),
+and her hurt colours and the push's poses (§12).
 Her sprite and colours belong to the same domain because the player sees one figure.
 The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -569,11 +570,11 @@ ends hands over in the frame it ends [R-restart-a, C-ready, C-end].
 
 - **Part 2 of this domain:** her sprite (the picture each step shows, where its halves sit, what
   it uploads), her suits and active palette effects (visor, charge, booster glow, screw attack,
-  hit colour pulse), the flicker while she is invincible, splashes and dust, and the echoes'
+  the colour effects that own her colours outright), the flicker while she is invincible, splashes and dust, and the echoes'
   pictures. They read her step and the boost stage.
 - **Poses other domains drive**, whose clips those domains step or set: the x-ray scope, the
   grapple beam, the shinespark (its windup sets the stage to 4 and its end clears it; the crouch's
-  shine keeps it), knockback and her hurt, a metroid draining her, the crystal flash, her
+  shine keeps it), a metroid draining her, the crystal flash, her
   appearance at the start, the death, and an item switched on or off mid-pose by the pause screen.
 - **The liquids:** the two slowdowns and whether she is submerged.
 
@@ -618,6 +619,7 @@ The domain's sounds are semantic requests, one set whichever rule asks for them:
 | `PlainSpin`, `SpaceJump`, `ScrewAttack` | Samus sounds, 6 | `WallJumpBranch` (a wall jump's branch) and `SpinStarts` (the spin she takes): each is the same request whichever asks |
 | `SpinEnded` | Samus sounds, 15 | `SpinEnds`, `AtTheDoor` |
 | `SamusSilence` | Samus sounds, 15 | `AtTheDoor` |
+| `Hurt` | Samus sounds, 6 | `HurtColours` (§12) |
 
 Appearance only reports each request, with its queue and allowance as the table gives them. Whether
 a request is admitted is the sound domain's rule ([audio-transport](audio-transport.md)
@@ -863,7 +865,7 @@ she is doesn't enter: the water and lava levels say whether a liquid is present.
 | grapple activity | dormant or busy, from Grapple | `OrdinaryDryColours` |
 | lingering glow after firing and weapon charging | independently inactive or active, from the shot/charge owners | `OrdinaryDryColours` |
 | appearance override and special colouring | independently inactive or active, from the current colour-effect owners | `OrdinaryDryColours` |
-| speed glow and hit colour pulse | independently inactive or active, from current boost activity and the damage appearance owner | `OrdinaryDryColours` |
+| speed glow and hit colour pulse | independently inactive or active, from current boost activity and the hurt count (§12, active above 0) | `OrdinaryDryColours` |
 
 Use the frame's suit selection. With Gravity enabled it is Gravity, otherwise with Varia
 enabled it is Varia, otherwise it is Power. A suit value from before this frame's selection
@@ -908,3 +910,56 @@ frame's later drawing and palette upload, which read the three quantities as the
 them. It does not advance animation, cannon readiness, movement, room palette objects or
 health. The model chooses its API and representation. The palette histories in the vector file
 specify the visible outcomes.
+
+## 12. Her hurt colours and the push's poses
+
+When her energy falls (Ridley's tail, [samus-health](samus-health.md) `TailHit`) or a push
+starts ([samus-movement](samus-movement.md) §12, `PushStarts`), her colours pulse: three frames
+in her hurt colours, each followed by a frame in her suit's, then her suit's colours hold while a
+count runs out. The second frame asks for the hurt sound. The push's two poses, `Recoiling` and
+`Leaping`, are ordinary poses here: their clips are content, and they start and play as every
+clip does (§2, §3).
+
+**What it reads.** Her current energy as the frame leaves Health and the energy the frame before
+left (`EnergyAmount`, whole energy; samus-health's output, as `Breathing` reads it); whether a
+push started this frame (samus-movement §12's output "push started"); whether a cinematic is
+active; the current suit selection (§11.2); her pose after, and whether she spins (§1.2); and
+whether the grapple is busy. Content (the importer): her
+hurt colours, each suit's colours and the cinematic's grey colours, 16 colours each, the colours
+of her own row of colours (the fifth of the eight sixteen-colour rows sprites draw from).
+
+**What it keeps.** The hurt count (`HurtCount`, 0 to 59 frames): State, given and read back by a
+caller with the rest of appearance's State. It is the "hit colour pulse" §11.2 reads: active
+while the count is above 0.
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| hurt count | `HurtCount`, frames | which frames show her hurt colours, and when the pulse is over | `HurtColours`; §11.2's hit colour pulse; output |
+| her sprite's colours | 16 colours of the current colours (§11.1), her row | what she is drawn in | output (video) |
+
+### HurtColours
+- kind: timing and output.
+- summary: a fall in energy or a push's start pulses her colours three times and asks for the
+  hurt sound.
+- params: none; the colours are content.
+- switch: none.
+- A push started this frame → the count is 1; else her energy fell this frame and the count is 0
+  → the count is 1; her energy falling with the count above 0 changes nothing [RH1,
+  C-hurt-fall-only, C-hurt-pushed-again, C-hurt-fall-mid-pulse]
+- Then, the count above 0 → by the count: 1, 3 or 5 → her row of the current colours takes her
+  hurt colours; 2, 4 or 6 → it takes her suit's colours (the frame's suit selection), or, with a
+  cinematic active, the cinematic's grey colours; 7 or more → it is left as it is. The target
+  colours are left as they are [RH1, RH2, RH3, RH6, RH7, RH8, C-hurt-cinematic]
+- The count 2, with no cinematic active → ask for `Hurt` [RH2, C-hurt-cinematic]
+- Then the count goes up by 1; reaching 40, the grapple dormant, spinning (her pose after a spin
+  or a wall jump) → ask for her spin's sound again (`PlainSpin`, `SpaceJump` or `ScrewAttack`, as
+  `SpinStarts` chooses it); reaching 60 → the count is 0 [RH4, C-hurt-spin-again, RH5]
+- The count 0 and no fall and no push → nothing changes [C-hurt-idle]
+- Out of scope (§7), none of them in Ceres: a frame whose colours another of her effects owns
+  outright (the shinespark's, the crystal flash's, the final weapon's), which leaves the count as
+  it is; at 2, the `Hurt` request skipped while the final boss drains her; at 40, a powered shot's
+  hum coming back, and the tether's sound while the grapple is busy.
+- checked: oracle (0006's five hits, all alike: RH1-RH8); constructed (C-hurt-fall-only,
+  C-hurt-cinematic, C-hurt-spin-again, C-hurt-pushed-again, C-hurt-idle, C-hurt-fall-mid-pulse).
+
+The sound `Hurt` joins §9.1's table: Samus sounds, allowance 6.

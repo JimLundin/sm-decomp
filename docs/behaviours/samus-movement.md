@@ -12,11 +12,12 @@ the world. It covers her speeds and position, how her pose follows from input an
 that changes her speeds, and her collision with blocks, slopes and solid enemies.
 
 **Not in this spec yet** (each an input where it feeds us; §10): animation timing, liquids,
-knockback, bomb jumps, grapple, the shinespark (and what the speed booster starts there), pushes
+bomb jumps, grapple, the shinespark (and what the speed booster starts there), pushes
 from the room (Ceres, conveyors, quicksand), and what a cell she reaches then does
 (`TouchedCells` says which she reaches; `OtherBlockKinds` how each kind meets her motion). The
 speed booster's part in her motion is in: her dash's cap (`Dash`) and the faster start of her jumps
-(`Jumping`).
+(`Jumping`). A hit's knockback and the backward leap are in (§12); the damage and the hit itself
+are samus-health's and the hitter's.
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
@@ -44,7 +45,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | transition firing aim | optional `FiringDirection`, defined below; a publication, not a distance | a shot made while her pose changes keeps the intended gun direction | output (weapons-projectiles `CannonOrigin` through caller-held pending aim) |
 | latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
-| her position after her moves | x, y: `P.S` | the mini-map shows the cell her moves leave her in, before the aim change's step and the pose change move her, so a step or a push that takes her across a screen's edge shows there a frame later | output (the mini-map of the HUD's domain reads it; each frame works it out, so it isn't State); `MovesAsShePosed` |
+| her position after her moves | x, y: `P.S` | the mini-map shows the cell her moves leave her in, before the aim change's step and the pose change move her, so a step or a push that takes her across a screen's edge shows there a frame later | output of the frame's first step (§12): the mini-map of the HUD's domain and the hitter (Ridley's tail) read it; each frame works it out, so it isn't State; `MovesAsShePosed` |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround`; output (samus-appearance reads `vertical speed after her moves`, §1.4) |
@@ -116,10 +117,10 @@ C-ground-rise-kept).
 **Falling at 0 on the ground.** The ball, or her body while it changes shape, can be on the ground
 and falling at a vertical speed of 0, which moves her unlike no vertical speed
 (`FollowingTheGround`). In any other pose on the ground she keeps it and moves as with none, until
-she leaves the ground or changes shape (`FollowingTheGround`, BG3). Only a push beyond this spec
-hands her back so (a bomb jump's end, at its peak, or a knockback's end, §10): in scope, a landing
+she leaves the ground or changes shape (`FollowingTheGround`, BG3). Only a push hands her back so
+(a bomb jump's end, at its peak, beyond this spec, or a knockback's end, §12): otherwise a landing
 leaves her no vertical motion, the ball falling at 0 walks off the same frame, and a change of
-shape falling at 0 grows the speed the same frame. So no lead-in in scope reaches it, and a start
+shape falling at 0 grows the speed the same frame. So no lead-in short of a knockback reaches it, and a start
 says it outright: the vectors' `before.falling`. A vertical motion, on the ground, is a vertical speed other than 0
 or falling at 0.
 
@@ -136,6 +137,7 @@ or falling at 0.
 | spin turned far | `bool`: the spin's sprite has turned far enough to kick off a wall | `WallJump` |
 | her animation's end | none, an end, or an end unless a jump: the end her animation reaches this frame, known from the frame's start (samus-appearance's `ClipEnds`) | `PoseFollows`, `AnimationEnds` |
 | elevator moving | `bool` | `RidingTheElevator` |
+| the frame's hit | none, or a hit with its side and push time (§12), known after her moves and read by the frame's second step (§12, the frame's two steps) | `PushTime` |
 | frame parity | `Even` or `Odd`: the game's frame count, alternating every frame | `BlocksStopFlush` |
 | body size | each pose's half-width and half-height in px (`radius`): the game's data, for any pose, the one the step chooses included. A frame's moves use the body of the pose she starts it in; the chosen pose's body is read within the frame only where it grows (`PoseFitAfterMoves`) or a change of shape lowers her (`ShrinkingLowersHer`), and otherwise first holds on the next frame, so a record's body at a frame's end can still be the body she started it in (J1's spin start shows 21 px). While a moving elevator carries her facing the screen (`RidingTheElevator`), the caller gives, as the body of the pose she starts the frame in, the body she had as the ride began, which the ride keeps, not the body of facing the screen (her y there is the elevator's) | §8, `PoseFitAfterMoves` |
 
@@ -178,7 +180,7 @@ one an animation's end hands over is `AnimationEnds`' choice), the standing anim
 | Part | Values |
 | --- | --- |
 | body | `Upright`, `Crouched`, `Ball`, `SpringBall` |
-| action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Landing` (the moment she touches down from a jump, a fall or a spin, before she stands still), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
+| action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Leaping` and `Recoiling` (§12), `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Landing` (the moment she touches down from a jump, a fall or a spin, before she stands still), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
 | facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed, the way her speed points included: C-screen-skid) |
 | aim | the arm's direction: `Forward`, `Up`, `UpForward`, `DownForward`, `Down`; it changes only the sprite, except for `AimingAndShooting` |
 | turn | for `Turning` only, the turn she is in: `Fall` (in a fall), `Ground` (on the ground, upright or crouched), `Jump` (in a take-off or a straight jump), `MoonwalkJump` (the moonwalk's jump, still on the ground). The player sees it as what she was doing when she turned; `AnimationEnds` hands over a pose by it, and the pad chart reads `MoonwalkJump` as a turn on the ground. `Fall`, `Jump` and `MoonwalkJump` are upright: crouched she turns only from the crouch, on the ground (`PadChart`), so a crouched turn is always `Ground`; how a crouched turn aimed up, down or up-forward moves her with a vertical speed she keeps on the ground is open (§11, question 22) |
@@ -688,7 +690,8 @@ axis. These are named choices, not angles rounded to a movement direction.
 - The frame she changes pose → she still moves as the pose at the frame's start says: what she is
   doing, her speeds, and what a landing or a fall does, come from the pose at the frame's start
   [J1, J2, A1, W12, W14]
-- Each frame → it reports `her position after her moves` (§1): where her horizontal move, the
+- Each frame → its first step (§12, the frame's two steps) reports `her position after her
+  moves` (§1): where her horizontal move, the
   near-wall test, the ground pull or her vertical move, and the elevator's descent leave her,
   before the aim change's step (`AimingAndShooting`) and before the pose change's push, lift and
   lowering (`PoseFitAfterMoves`, `ShrinkingLowersHer`) [C-after-moves-screen-edge,
@@ -1405,6 +1408,7 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | | forward held | kept | none |
 | | anything else, or nothing held | kept | she follows the pad again (`TurningRound`) |
 | turning in a jump or a fall, crouched turning, or turning on the ground or from the moonwalk's jump aimed `UpForward` | any button held | kept | none: she keeps turning (`TurningRound`) |
+| | crouched turning aimed `Up`, `UpForward`, `DownForward` or `Down`: nothing held | crouched `Still`, facing `Left` whichever way she turns, aim `Forward` | she follows the pad again, and dashing ends |
 | | nothing held | kept | she follows the pad again (`TurningRound`) |
 | changing body: `Crouching`, `StandingUp`, `Morphing`, `Unmorphing` | anything, or nothing held | kept | none: the pad has no say until the animation ends |
 | moonwalking | down pressed; beats jump pressed | crouched `Crouching`, facing the way she looks, `Forward` | she is lowered 5 px (`ShrinkingLowersHer`) |
@@ -1446,7 +1450,13 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   aim; air aim; with, else; then a spin the way she walks; aim kept; the same ball facing that
   side; the ball off the ground, rising; she is lowered (`ShrinkingLowersHer`); `Jumping`'s
   take-off; `Jumping`'s spin start; `Jumping`'s spring-ball hop; `TurningRound`; none; she follows
-  the pad again; as running; horizontal speed 0, dash 0, following the pad; dash 0.
+  the pad again; as running; horizontal speed 0, dash 0, following the pad; dash 0; crouched
+  turning aimed `Up`, `UpForward`, `DownForward` or `Down`:; facing `Left` whichever way she
+  turns; she follows the pad again, and dashing ends.
+- An aimed crouched turn let go → crouched `Still` facing `Left`, aim `Forward`, even when she
+  was turning to face right; her horizontal speed keeps its size, pointing left. Her
+  animation ending that frame comes first: the turn's end hands over its pose (`AnimationEnds`)
+  [P-crouch-turn-letgo, P-crouch-turn-letgo-up, P-crouch-turn-end, C-crouch-turn-letgo-left]
 - In a straight jump aimed `Down`, while she faces `Left`, forward, jump and shoot held →
   decided as in any straight jump, forward held winning (`Jumping`, `Forward`, striding): the
   row for those three fits only when she faces `Right`, and nothing takes its place the other way
@@ -1488,10 +1498,12 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   let-go effect, AS4 the run at 0 that stands following the pad; LG1, a straight jump's let-go at
   0; R-walljump-letgo, a wall jump's
   let-go into the screw attack's spin, keeping her speed; CE2, a turn from facing the screen;
-  CE3, the moonwalk's turn holding the way she walks; CE4, a crouched turn's skid); constructed
+  CE3, the moonwalk's turn holding the way she walks; CE4, a crouched turn's skid;
+  P-crouch-turn-letgo, P-crouch-turn-letgo-up and P-crouch-turn-end, an aimed crouched turn let
+  go and ending); constructed
   (C-chart-a to C-chart-j; C-screen-skid, a skid ended facing the screen; C-screen-turn and
   C-screen-jump, a side held and jump pressed facing the screen; C-moonwalk-turn;
-  C-crouch-turn-skid; C-walljump-letgo-space and C-walljump-letgo-plain, the wall jump's let-go
+  C-crouch-turn-skid; C-crouch-turn-letgo-left; C-walljump-letgo-space and C-walljump-letgo-plain, the wall jump's let-go
   with space jump and with neither item; C-jump-letgo-moving, a straight jump's let-go moving);
   original only (the other rows with left and right
   both held).
@@ -1635,7 +1647,7 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   its aim).
 
 ### Out of the chart's scope
-- The spring ball's rows, the grapple, knockback, the boost after damage, x-ray, shinespark, the
+- The spring ball's rows, the grapple, x-ray, shinespark, the
   crystal flash, the drain, liquids, and items switched on or off mid-pose.
 
 ---
@@ -2089,7 +2101,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   follow. How she looks while she builds speed and glows (her run's animation pace, the glow's
   palette) is how Samus looks. Neither changes her speeds or position. The booster switched on or
   off mid-run (by the pause screen) is an item switched mid-pose, out of scope here.
-- **Pushes:** room pushes, quicksand, knockback, bomb jumps, grapple, shinespark.
+- **Pushes:** room pushes, quicksand, bomb jumps, grapple, shinespark. A hit's knockback is §12.
 - **Her outputs under a push.** Where a push moves her in a frame, pose fit and the shrink still
   place her as `PoseFitAfterMoves` and `ShrinkingLowersHer` say, and the placement is
   still theirs, but from where the push left her, and the push decides what they meet: in
@@ -2098,15 +2110,12 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   lowers her 5 px (151, 389). Without the push she meets open air there: the body grows about its
   centre, or she walks off. So her y and the placement are the push's on those
   frames, with the push.
-- **A knockback's end.** After a hit's push back she falls in a jump pose with no falling limit, as
-  in the moonfall, while the knockback's time runs on. Those frames are her own motion, in scope:
-  `Moonfall`'s rule for her fall, `RisingAndFalling` for whether she rises. The first frame after
-  its time has run out ends the knockback, wherever she is, and that frame is the knockback's,
-  outputs and all: whatever her motion did, she keeps her pose and is handed back falling at 0
-  (§1.2), with no change of body to fit (r05:400, where the floor meets her on that frame and a
-  landing would raise her 2 px). The knockback's own push, and her rise on the frame it starts (the
-  records show her rising there), are the knockback (damage) domain's too, as her going backwards
-  is.
+- **A knockback's end** is §12 (`PushEnds`). Out of scope there: a push taken as the ball, a
+  floor met in the backward leap, a push longer than 45 frames, an `Up` push a ceiling stops
+  (the Ceres run never meets a ceiling in a push), a push whose pose fit would refuse
+  `Recoiling`, and her animation's end on a push's last frame. A hit in a liquid starts a slower rise; liquids
+  are out of scope. A push ending in `Recoiling` while a shot is fully powered up brings back that
+  shot's hum; the charge beam is out of scope here.
 - **Animation timing:** how far an animation has run and the end it reaches, samus-appearance's
   (`ClipEnds`, an input here, §1.3); its frames are drawn by the sprite, and readying a wall jump
   shows only there (`WallJump`). What this domain reports for it is §1.4.
@@ -2200,3 +2209,192 @@ acts on her motion as below. These rules are Samus's; other actors get their own
     by that speed under the pull, where the unaimed crouched turn keeps the speed without moving by
     it, as the spec says of every pose on the ground. The records have the aimed crouched turns only
     with no vertical motion, where the two move alike; open until the oracle shows one.
+
+## 12. Thrown back by a hit
+
+A hit (Ridley's tail in Ceres, the only one in scope) pushes her back for a few frames: she is
+thrown upward and clear, or, holding forward as it lands, driven down and clear along the ground.
+Holding back and jump during the push turns it into the backward leap, a long backward jump.
+Damage is [samus-health](samus-health.md)'s; whether a hit comes is the hitter's (in Ceres,
+Ridley's tail, [boss-ceres-ridley](boss-ceres-ridley.md) `TailHits`), which gives none while
+her protection lasts, and protection outlasts the push, so in scope no hit reaches a push under
+way. How she looks is [samus-appearance](samus-appearance.md)'s.
+
+**What she reads.** The frame's hit, from the hitter: none, or a hit with its **side** (`Side`:
+`Left` or `Right`, the way it pushes her) and its **push time** (`PushFrames`, frames, 1 to 45).
+The hitter decides both: in Ceres, Ridley's tail (boss-ceres-ridley's `TailHits`, the same hit
+samus-health reads as `TailImpact`), from her position and body after her moves; her body is this
+domain's content (§1.3, body size). The hit is known after her moves, and after any hit that
+frame is known she reacts to it in the same frame (below). Up to 45
+frames, an `Up` push's rise stays above 0 to its end (`PushMoves`); more, or a ceiling stopping
+an `Up` push, is out of scope (§10).
+
+**The frame's two steps.** A frame of hers is two steps, in this order, and between them the
+hitter judges the frame's hit and samus-health takes its damage:
+
+1. **Her moves:** everything up to `her position after her moves` (§1, `MovesAsShePosed`): her
+   horizontal and vertical moves in the pose she started the frame in, the push's moves
+   (`PushMoves`), the leap's (`BackwardLeap`) and the drop the frame after a push
+   (`AfterThePush`, whose falling or landing pose is the chosen one); and the choice of the pose the pad, her animation's end and her moves ask for (§7), not yet taken.
+   It gives `her position after her moves` and the §1.4 outputs. The hitter reads that position
+   and the body she started the frame in, whose size is this domain's content (§1.3); it reads
+   nothing else of hers.
+2. **Her reaction, after any hit that frame is known:** the hit's push time and side
+   (`PushTime`), the push's start (`PushStarts`) in place of the chosen pose, or else the chosen
+   pose; the aim change's step (`AimingAndShooting`), pose fit (`PoseFitAfterMoves`) and the
+   lowering (`ShrinkingLowersHer`) for the pose she takes; the leap's start and the let-go at a
+   push frame's end (`PushMoves`, `BackwardLeap`); the push's end (`PushEnds`); and the push
+   time's count at the frame's end. It gives the rest: her pose, position and speeds as the
+   frame ends, the y a placement put her at, "push started", and the State. With no hit and no
+   push, it takes the chosen pose as every frame does.
+
+So on the hit's frame her moves are her own, and she ends it in the push's pose, rising
+(PK1: crouched at 00D8.2000, 00C0.FFFF, her moves leave her there, and she ends the frame
+`Recoiling` 5 px higher, rising at 5.0000).
+
+**What she remembers.** The knockback: its push time left (`PushFrames`, 0 to 45), its side,
+and the push under way (`Push`: none, `Up` or `Down`). It is State a caller gives and reads back,
+as jump held through is (§1.2): a vector gives it as `before.knockback` and compares it as
+`after.knockback`.
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| push time left | `PushFrames`, frames | how long the push goes on | `PushTime`, `PushStarts`, `PushEnds` |
+| push side | `Side` | the way she is thrown | `PushMoves` |
+| push under way | `Push`: none, `Up`, `Down` | thrown up or driven down | `PushMoves`, `PushEnds`, `AfterThePush` |
+| push started (output) | `bool`: `PushStarts` started a push this frame; not State | her colours pulse | output (samus-appearance `HurtColours`) |
+
+**Her poses in a push** (§2's action): `Recoiling`, upright, her facing kept; `Leaping`, upright,
+her facing kept, travelling backward. Their bodies are content, as every pose's is (§1.3, body
+size): the game's half-heights are 21 px and 19 px. In the ball the
+push keeps her pose. In `Recoiling` her horizontal speed points the knockback's side, in
+`Leaping` backward (against her facing), and in every other pose the way §1 says.
+
+### PushTime
+- kind: timing.
+- summary: the push time counts down once at each frame's end.
+- params: none.
+- switch: none.
+- A frame whose hit comes → the push time left becomes the hit's push time and the side the
+  hit's side, before `PushStarts` looks [PK1, PK5]
+- Every frame's end, after everything else → the push time left goes down by 1, to no lower
+  than 0, whether a push is under way or not [PK1, PK2, C-push-waits]
+- checked: oracle (0006); constructed (C-push-waits).
+
+### PushStarts
+- kind: mechanic.
+- summary: push time left with no push under way starts one after her moves, if her pose admits
+  one.
+- params: `push_rise` = 5.0000, her rise at the start.
+- switch: parameter.
+- The test is the frame's second step: after her moves, and after any hit that frame is known,
+  on the pose she started the frame in. Push time left above 0,
+  no push under way, and that pose upright or crouched, on the ground or in the air, in any
+  action but those below → the push starts: her pose becomes `Recoiling` with her facing, in
+  place of any pose the pad or her moves chose, and pose fit places her as for any taller pose
+  (`PoseFitAfterMoves`: crouched on a floor she rises 5 px) [PK1, PK5]
+- The same as the ball, the spring ball included → the push starts and she keeps her pose; the
+  ball's push, its moves, rows and end, is out of scope (§10): the Ceres run never takes a hit as
+  the ball
+- A push whose pose fit would refuse `Recoiling` (too little room to grow) is out of scope (§10):
+  no hit in the Ceres run comes where she can't stand
+- `Turning`, a change of shape (`Crouching`, `Morphing`, `StandingUp`, `Unmorphing`),
+  `Recoiling` or `Leaping` → no push starts; the time runs on, and the push starts on the
+  first frame she starts in a pose that admits one while the time is still above 0; if the time
+  runs out first, none starts [C-push-waits]
+- The push's kind → `Down` when she holds forward (her facing's side) this frame and isn't the
+  ball, else `Up` [PK1, PK5]
+- At the start → her vertical speed is `push_rise` upward and she is rising; her horizontal
+  speed keeps its size, her motion stays carrying on or skidding if it was (§1.2), and her dash
+  is kept; the frame reports the push started [PK1, PK5, C-push-rise]
+- checked: oracle (0006: PK1, PK5); constructed (C-push-waits, C-push-rise).
+
+### PushMoves
+- kind: mechanic.
+- summary: in the push she is thrown the push's side, up or down; only back and jump change it.
+- params: `push_gain` = 1.8000, `push_brake` = 0.8000, `push_top` = 5.0000.
+- switch: parameter.
+- A frame she starts in `Recoiling`, or the ball, with a push under way → horizontally her
+  speed's size builds by `push_gain` to `push_top` (`WordwiseTopSpeed`), or, where her motion
+  is carrying on or skidding (§1.2), brakes by `push_brake`, to no lower than 0; she moves by it
+  plus her dash the push's side; her dash is neither built nor lost [PK2, PK3, PK4, PK8, PK9,
+  PK10, C-push-gain, C-push-top, C-push-brake]
+- At that frame's end, unless the pad starts the backward leap (below) → her motion follows the
+  pad and she is no longer dashing (`Dashing`), so a brake lasts one frame and the next builds
+  from what it left [PK8, PK9, C-push-brake]
+- So a push from standing still moves her 1.8000, 3.0000, 4.8000, 5.0000 and 5.0000 on its five
+  frames (the four after the hit and the end's), and one from a run at 2.C000 moves her 4.4000,
+  5.C000 (kept, the top tested part by part) and then 5.0000, each plus her dash [PK10].
+- A wall stops the move as any horizontal move does (`WallsAndCeilings`): her speed is 0 and
+  builds again from 0 [PK3]
+- `Up` → she moves up by her vertical speed, which then slows by the pull (`RisingAndFalling`'s
+  0.1C00) and stays a rise [PK2, PK3]
+- `Down` → she moves down by her horizontal move's speed, her dash included, plus 1 px (the
+  ground pull, `FollowingTheGround`), and keeps her vertical speed as it is [PK4]
+- A floor stopping that vertical move → her vertical and horizontal speeds are 0,
+  she has no vertical motion, her motion follows the pad, and the push goes on: the next frame
+  builds from 0, still the push's side [PK6, PK7]
+- So a `Down` push on the ground moves her `push_gain` a frame, flush on the floor, and leaves her
+  no vertical motion [PK6, PK7].
+- The pad: back and jump both held, other buttons too or not → the backward leap starts at this
+  frame's end: her pose becomes `Leaping`, her motion this frame still the push's; nothing
+  else the pad does changes her pose or motion in the push [PK2, PK3, PK4]
+- checked: oracle (0006: PK2-PK4; r05: PK6-PK10); constructed (C-push-gain, C-push-top,
+  C-push-brake).
+
+### BackwardLeap
+- kind: mechanic.
+- summary: the backward leap is a straight jump travelling backward with its own speeds.
+- params: `leap_gain` = 0.C000, `leap_top` = 5.0000.
+- switch: parameter.
+- A frame she starts in `Leaping` → she moves as in a straight jump (`Jumping`,
+  `RisingAndFalling`, `Moonfall`, `Dash`, `WallsAndCeilings`), backward taking the place of forward: holding
+  either side her speed's size builds by `leap_gain` to `leap_top` (`WordwiseTopSpeed`) and she
+  moves by it plus her dash backward; holding neither side her speed is 0 and she makes no
+  horizontal move; jump let go while she rises ends the rise [PL1, PL2, C-leap-top,
+  C-leap-gain]
+- So from the push's 5.0000 the leap moves her 5.C000 and 5.0000 on alternate frames, the top
+  being tested part by part.
+- A leap, or the straight jump the pad makes of it, started with no vertical motion (a floor
+  stopped the push) is the moonfall's (`Moonfall`): the speed grows 0.1C00 a frame from
+  0 with no falling limit, moving her by the frame before's, while the push's time runs on; it
+  ends when she lands or the push ends [PL4, PE4]
+- The push's time runs on while she leaps, and its end (`PushEnds`) comes in the leap [PE1]
+- The pad, at the frame's end, the rows taken in this order, left before right: facing right,
+  left and jump held → she goes on leaping; facing left, left and jump held → the striding jump
+  below; so with left, right and jump all held she goes on leaping facing right and takes the
+  striding jump facing left [C-leap-both-right, C-leap-both-left]. Otherwise: back and jump held →
+  she goes on leaping; forward and jump held →
+  a straight jump with her legs striding (§2, aim `Forward`); anything else, nothing held
+  included → a straight jump, legs together, aim `Forward` [PL2, PL3]. The jump keeps her
+  speed's size, now pointing her facing's way [PL2, PL3, C-leap-stride]
+- Meeting a floor in the leap is out of scope (§10): no record lands in one.
+- checked: oracle (0006: PL1-PL3, PE1; r05: PL4); constructed (C-leap-top, C-leap-gain,
+  C-leap-stride, C-leap-both-right, C-leap-both-left).
+
+### PushEnds
+- kind: mechanic.
+- summary: the first frame she starts with a push under way and no push time left ends it.
+- params: none.
+- switch: none.
+- That frame → her motion is her pose's (`PushMoves` in `Recoiling` or the ball,
+  `BackwardLeap`'s in the leap, and in any other pose her own, §3-§8), and then the push is over:
+  she keeps her pose and is handed back falling at 0 (§1.2), with no change of body to fit,
+  whatever her motion did. No pose the frame chose is taken, and none of its effects: not the
+  pad's row, its let-go (her motion stays as her moves left it) nor a landing a floor her motion
+  meets that frame [PE1, PE2, PE3, PE4]
+- So in the leap she can rise on that frame and still end it falling at 0 (PE3: up 5 px).
+- checked: oracle (0006: PE1-PE3; r05: PE4).
+
+### AfterThePush
+- kind: mechanic.
+- summary: the frame after a push ends in `Recoiling`, she drops by her speed and falls or
+  lands.
+- params: none.
+- switch: none.
+- A frame she starts in `Recoiling` with no push under way → she makes no horizontal move and
+  keeps her horizontal speed's size; she moves down by the speed of her last horizontal move,
+  her dash included, plus 1 px (the ground pull, `FollowingTheGround`); then she is
+  `Falling`, her facing kept and aim `Forward`, her speed pointing her facing's way, or, where
+  that move met a floor, she lands as from a straight jump (`Landing`) [PA1, PA2]
+- checked: oracle (0006: PA1; any-intro-2219: PA2).

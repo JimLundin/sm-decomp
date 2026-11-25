@@ -45,7 +45,7 @@ pub struct PlayingPin;
 impl Pinned for PlayingPin {
     type State = Figure;
     const NAME: &'static str = "production-connected-playing";
-    const SHAPE: u64 = 0x4301_5F68_4F3E_58BA;
+    const SHAPE: u64 = 0xF3F7_3BDB_5E58_D1C0;
 }
 
 /// The selected owners, carried frame to frame.
@@ -254,9 +254,11 @@ impl State {
             &mut appearance,
             &content.appearance,
             &rules.appearance,
-            &animation::frame_of_play(super::played::animation_inputs(
-                playing, selected, &outcome, input,
-            )),
+            // No Health plays in this loop, so her hurt colours are outside it.
+            &animation::frame_of_play(
+                super::played::animation_inputs(playing, selected, &outcome, input),
+                samus_appearance::HurtOpportunity::Absent,
+            ),
         )
         .map_err(|_| Fault::Figure)?;
 

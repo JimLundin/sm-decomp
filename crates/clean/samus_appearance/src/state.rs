@@ -1,6 +1,7 @@
 //! What her appearance remembers from one frame to the next: her animation's four quantities
 //! (her step, the time left on it, the boost stage and the laps left), her kept action, the
-//! cannon selection delay, and her colour sequences. A caller may build each at any value its
+//! cannon selection delay, her colour sequences and the hurt count. A caller may build each at
+//! any value its
 //! range allows, read it back, save and restore it, and gives it back to the next frame as
 //! `update` left it.
 
@@ -11,7 +12,7 @@ use types::{Action, BoostStage};
 
 use crate::cannon::CannonDelay;
 use crate::clip::{Clip, Frames, Hold, Instruction, Slowdown, Step};
-use crate::colours::{ColourSequences, ORDINARY_READY};
+use crate::colours::{ColourSequences, HurtCount, ORDINARY_READY};
 
 /// Spec: `ClipPlays`, `BoostStages`. How the time left and the laps left run out: the count less
 /// 1, while that is above 0; at 0 or below the count is over. So 1 left and none left are over
@@ -141,9 +142,9 @@ impl Animation {
 
 /// Her appearance State: all her appearance remembers from one frame to the next.
 ///
-/// Spec: `SpinEnds`, `CannonItemDelay`, `OrdinaryDryColours`. Her kept action, the cannon
-/// selection delay and the colour sequences are memories of their own, each kept apart from her
-/// animation, her pose, the selected item and the palettes. The current and target palettes
+/// Spec: `SpinEnds`, `CannonItemDelay`, `OrdinaryDryColours`, `HurtColours`. Her kept action,
+/// the cannon selection delay, the colour sequences and the hurt count are memories of their
+/// own, each kept apart from her animation, her pose, the selected item and the palettes. The current and target palettes
 /// live with their shared owner, beside this State.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct AppearanceState {
@@ -156,15 +157,18 @@ pub struct AppearanceState {
     pub cannon: CannonDelay,
     /// The visor delay, the visor's entry and the charge glow's position.
     pub colours: ColourSequences,
+    /// The hurt count: how far her hurt pulse has gone (`HurtColours`).
+    pub hurt_count: HurtCount,
 }
 
 impl AppearanceState {
     /// Her appearance as Samus is initialized (her arrival at Ceres or Zebes, or a demo's
     /// loading), whatever came before: step 0 with no time left, stage 0 with no laps left
     /// whatever her items, her kept action `Still` (no spin, so drawing ends none until a
-    /// preparation keeps one), the cannon waiting 2 frames (`CannonReadinessReset`), and the
-    /// colour sequences as the ordinary reset leaves them (`OrdinaryDryColours`). A frame with
-    /// her initialization sets every quantity to this first, and plays on from it.
+    /// preparation keeps one), the cannon waiting 2 frames (`CannonReadinessReset`), the colour
+    /// sequences as the ordinary reset leaves them (`OrdinaryDryColours`), and no hurt pulse
+    /// under way. A frame with her initialization sets every quantity to this first, and plays
+    /// on from it.
     pub const INITIAL: Self = Self {
         animation: Animation {
             playhead: Playhead {
@@ -177,5 +181,6 @@ impl AppearanceState {
         kept_action: Action::Still,
         cannon: CannonDelay::INITIAL,
         colours: ORDINARY_READY,
+        hurt_count: HurtCount::NONE,
     };
 }

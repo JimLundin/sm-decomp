@@ -8,7 +8,7 @@ pub struct MovementPin;
 impl Pinned for MovementPin {
     type State = samus_movement::Samus;
     const NAME: &'static str = "production-movement";
-    const SHAPE: u64 = 0x14DD_9A8F_D564_ADDC;
+    const SHAPE: u64 = 0xCB92_9AE7_D54A_32B2;
 }
 
 /// The complete transport state schema: senders, request lines, groups and song.
@@ -41,7 +41,7 @@ pub struct AppearancePin;
 impl Pinned for AppearancePin {
     type State = samus_appearance::AppearanceState;
     const NAME: &'static str = "samus-appearance";
-    const SHAPE: u64 = 0x239A_F950_2DC1_31A5;
+    const SHAPE: u64 = 0xB2DA_FEFF_DE5F_DB9F;
 }
 
 /// One writable owner for every selected model quantity.

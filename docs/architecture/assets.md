@@ -357,7 +357,7 @@ format:
 
 | Format | From |
 | --- | --- |
-| the key and dress variant of each clip | the pose map (the 164 ids the domain reaches, decode notes "The pose map"), held once in `data::assets::samus::map`; nothing in the ROM names a pose by its parts |
+| the key and dress variant of each clip | the pose map (the 168 ids the domain reaches, decode notes "The pose map"), held once in `data::assets::samus::map`; nothing in the ROM names a pose by its parts |
 | frames, holds and the clip's end | the pose's animation delay list (`data::pose::animation`), one frame per byte the animation reaches; the end from the instruction that ends the list |
 | top and bottom sprites | the top and bottom half spritemap tables (`data::pose::spritemap`), first index by pose plus the frame |
 | whether the bottom half is drawn | the bottom-half rule of draw Samus, by movement type, pose and frame, baked per frame |

@@ -60,7 +60,7 @@ pub struct FigurePin;
 impl Pinned for FigurePin {
     type State = samus_appearance::Figure;
     const NAME: &'static str = "production-frame-playing-figure";
-    const SHAPE: u64 = 0x4301_5F68_4F3E_58BA;
+    const SHAPE: u64 = 0xF3F7_3BDB_5E58_D1C0;
 }
 
 fn check_elevator(pose: Pose, elevator_moving: bool) -> Result<(), ProductionFault> {
@@ -122,8 +122,9 @@ fn step(
     world: &dyn types::World,
     rules: &samus_movement::Rules,
 ) -> Result<samus_movement::Outcome, ProductionFault> {
-    let outcome = samus
-        .step(admitted, world, rules)
+    // No hitter plays in the scoped loops, so the frame's hit is none.
+    let moves = samus
+        .moves(admitted, world, rules)
         .map_err(ProductionFault::Movement)?;
-    Ok(outcome)
+    Ok(samus.react(moves, None))
 }

@@ -52,6 +52,8 @@ pub enum BehaviourId {
     CannonReadinessReset,
     /// Ordinary dry movement readies the visor and charge glow without changing either palette.
     OrdinaryDryColours,
+    /// A fall in energy or a push's start pulses her colours and asks for the hurt sound.
+    HurtColours,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -76,7 +78,7 @@ pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
 }
 
 /// The catalogue's rows, each naming its behaviour, in any order.
-const ROWS: [Behaviour; 23] = [
+const ROWS: [Behaviour; 24] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -252,6 +254,15 @@ const ROWS: [Behaviour; 23] = [
         id: BehaviourId::OrdinaryDryColours,
         summary: "during ordinary dry movement the visor and charge-glow sequences are readied while the present and target colours stay as they were",
         kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    // The spec gives this entry two kinds, timing and output; a behaviour has one, the first.
+    Behaviour {
+        id: BehaviourId::HurtColours,
+        summary: "a fall in energy or a push's start pulses her colours three times and asks for \
+                  the hurt sound",
+        kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

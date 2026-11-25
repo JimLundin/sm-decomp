@@ -6,7 +6,7 @@ use crate::clip::{Branch, Clip, Control, Hold, Instruction, Pace, Paces, Step};
 use crate::inputs::Inputs;
 use crate::rules::Rules;
 use crate::run::{boosting_lap_stage, hold_on, next_stage, stride};
-use crate::sounds::Sound;
+use crate::sounds::{Sound, Spin};
 use crate::state::{Animation, Laps, LapsLeft, Playhead, RunDown};
 
 /// Her clip as it plays this frame: the clip of the figure she starts the frame in, the run's
@@ -145,18 +145,18 @@ impl ClipPlay<'_> {
     }
 
     /// Spec: `WallJumpBranch`. The spin she wall jumps in, and its sound: plainly when
-    /// submerged, else as the screw attack with it, else as the space jump with it, else
-    /// plainly.
+    /// submerged, else her spin by her items (`Spin::of`).
     fn wall_jump(&self, branch: Branch) -> (Step, Sound) {
-        let items = &self.inputs.items;
-        if self.inputs.liquid.submerged {
-            (branch.spin, Sound::PlainSpin)
-        } else if items[Item::ScrewAttack] {
-            (branch.screw_attack, Sound::ScrewAttack)
-        } else if items[Item::SpaceJump] {
-            (branch.space_jump, Sound::SpaceJump)
+        let spin = if self.inputs.liquid.submerged {
+            Spin::Plain
         } else {
-            (branch.spin, Sound::PlainSpin)
-        }
+            Spin::of(&self.inputs.items)
+        };
+        let to = match spin {
+            Spin::Plain => branch.spin,
+            Spin::SpaceJump => branch.space_jump,
+            Spin::ScrewAttack => branch.screw_attack,
+        };
+        (to, spin.sound())
     }
 }

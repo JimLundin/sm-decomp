@@ -1,9 +1,10 @@
-//! Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. The domain's sounds, and the
+//! Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. The domain's sounds, her spin's
+//! sound by her items, and the
 //! frame's sound rules at her stride, the pose she takes, a first passage entry and normal
 //! drawing. Each reads the frame's one set of inputs, applies at most once a frame, and leaves
 //! her animation as it finds it.
 
-use types::{Action, BoostStage, Item, QueueAllowance};
+use types::{Action, BoostStage, Item, QueueAllowance, Set};
 
 use crate::clip::{Clip, Frames};
 use crate::inputs::{Activity, Charge, Figure, Inputs};
@@ -26,6 +27,8 @@ pub enum Sound {
     SpinEnded,
     /// Her quiet uncharged sound stops at a passage (`AtTheDoor`).
     SamusSilence,
+    /// She is hurt: the second frame of her hurt pulse (`HurtColours`).
+    Hurt,
 }
 
 /// The sound domain's queue a sound is offered to.
@@ -51,8 +54,8 @@ pub struct SoundOffer {
 
 impl Sound {
     /// The request for this sound: the footstep sounds with an allowance of 6 for the footstep
-    /// and boosting; Samus sounds with 6 for a spin's start, and with 15 for a spin's end and
-    /// the silence.
+    /// and boosting; Samus sounds with 6 for a spin's start and the hurt sound, and with 15 for a
+    /// spin's end and the silence.
     #[must_use]
     pub const fn offer(self) -> SoundOffer {
         SoundOffer {
@@ -70,7 +73,8 @@ impl Sound {
             | Self::SpaceJump
             | Self::ScrewAttack
             | Self::SpinEnded
-            | Self::SamusSilence => SoundQueue::Samus,
+            | Self::SamusSilence
+            | Self::Hurt => SoundQueue::Samus,
         }
     }
 
@@ -81,8 +85,45 @@ impl Sound {
             | Self::Boosting
             | Self::PlainSpin
             | Self::SpaceJump
-            | Self::ScrewAttack => QueueAllowance(6),
+            | Self::ScrewAttack
+            | Self::Hurt => QueueAllowance(6),
             Self::SpinEnded | Self::SamusSilence => QueueAllowance(15),
+        }
+    }
+}
+
+/// The spin she spins, by her items, each with its own sound.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Spin {
+    /// A plain spin.
+    Plain,
+    /// The space jump's spin.
+    SpaceJump,
+    /// The screw attack's spin.
+    ScrewAttack,
+}
+
+impl Spin {
+    /// Spec: `WallJumpBranch`, `SpinStarts`, `HurtColours`. Her spin by her items: the screw
+    /// attack's with it, else the space jump's with it, else a plain one.
+    #[must_use]
+    pub fn of(items: &Set<Item>) -> Self {
+        if items[Item::ScrewAttack] {
+            Self::ScrewAttack
+        } else if items[Item::SpaceJump] {
+            Self::SpaceJump
+        } else {
+            Self::Plain
+        }
+    }
+
+    /// The sound its start asks for.
+    #[must_use]
+    pub const fn sound(self) -> Sound {
+        match self {
+            Self::Plain => Sound::PlainSpin,
+            Self::SpaceJump => Sound::SpaceJump,
+            Self::ScrewAttack => Sound::ScrewAttack,
         }
     }
 }
@@ -95,11 +136,6 @@ pub struct GraphicalContact {
     pub figure: Figure,
     /// The contact picture's step and time left, before her clip plays this frame.
     pub playhead: Playhead,
-}
-
-/// Spin and wall jump share one spin sound's lifetime (`SpinStarts`, `SpinEnds`, `AtTheDoor`).
-const fn spinning(action: Action) -> bool {
-    matches!(action, Action::Spinning | Action::WallJumping)
 }
 
 /// Spec: `FootContact`. Her stride, from the frame's start, before the animation update: running,
@@ -126,26 +162,24 @@ pub fn foot_contact(
 }
 
 /// Spec: `SpinStarts`. Taking a different figure (its sprite included) that spins, unless she is
-/// submerged, starts its spin's sound: `SpaceJump` with the space jump and without the
-/// screw attack, from any action and during a cinematic too; otherwise nothing from a spin or a
-/// wall jump; otherwise `ScrewAttack` with the screw attack, during a cinematic too; otherwise
-/// `PlainSpin` while no cinematic is active.
+/// submerged, starts the noise her kind of spin makes (`Spin::of`): the space jump's from any
+/// action and during a cinematic too; the screw attack's unless she already spins or wall jumps,
+/// during a cinematic too; a plain spin's unless she already spins or wall jumps, or a cinematic
+/// is active.
 #[must_use]
 pub fn spin_start(inputs: &Inputs) -> Option<Sound> {
-    let (from, takes, items) = (inputs.figure, inputs.figure_after, inputs.items);
+    let (from, takes) = (inputs.figure, inputs.figure_after);
     if from == takes || takes.pose.action != Action::Spinning || inputs.liquid.submerged {
         return None;
     }
-    if !items[Item::ScrewAttack] && items[Item::SpaceJump] {
-        return Some(Sound::SpaceJump);
-    }
-    if spinning(from.pose.action) {
-        return None;
-    }
-    if items[Item::ScrewAttack] {
-        return Some(Sound::ScrewAttack);
-    }
-    (!inputs.activities[Activity::Cinematic]).then_some(Sound::PlainSpin)
+    let already_spinning = from.pose.action.spins();
+    let spin = Spin::of(&inputs.items);
+    let quiet = match spin {
+        Spin::SpaceJump => false,
+        Spin::ScrewAttack => already_spinning,
+        Spin::Plain => already_spinning || inputs.activities[Activity::Cinematic],
+    };
+    (!quiet).then_some(spin.sound())
 }
 
 /// Spec: `AtTheDoor`. On her first entry into a passage, before it holds its sounds: ending the
@@ -154,7 +188,7 @@ pub fn spin_start(inputs: &Inputs) -> Option<Sound> {
 /// (`SamusSilence`).
 #[must_use]
 pub fn at_the_door(inputs: &Inputs) -> Option<Sound> {
-    if spinning(inputs.figure_after.pose.action) {
+    if inputs.figure_after.pose.action.spins() {
         return Some(Sound::SpinEnded);
     }
     (!inputs.shoot_held && inputs.charge.frames() < Charge::QUIET_BELOW)
@@ -166,5 +200,5 @@ pub fn at_the_door(inputs: &Inputs) -> Option<Sound> {
 /// neither, the spin's sound ends (`SpinEnded`).
 #[must_use]
 pub fn spin_end(kept: Action, inputs: &Inputs) -> Option<Sound> {
-    (spinning(kept) && !spinning(inputs.figure_after.pose.action)).then_some(Sound::SpinEnded)
+    (kept.spins() && !inputs.figure_after.pose.action.spins()).then_some(Sound::SpinEnded)
 }

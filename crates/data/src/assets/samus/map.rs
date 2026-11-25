@@ -1,7 +1,7 @@
 //! The pose map: which of the original's poses shows each pose as the player sees it.
 //!
 //! Nothing in the ROM names a pose by its parts, so the map is held here, once (the
-//! samus-movement decode notes, "The pose map"). Of the original's 253 poses, 164 are one of
+//! samus-movement decode notes, "The pose map"). Of the original's 253 poses, 168 are one of
 //! hers; the rest are another domain's or unused.
 //!
 //! It is a registry and holds no ROM bytes: the importer (`import::samus`) reads it to key the
@@ -59,7 +59,7 @@ const fn row(id: u16, body: Body, action: Action, facing: Facing, aim: Aim) -> E
 
 /// Every pose of the original's that is one of hers, in its order.
 #[rustfmt::skip]
-pub const MAP: [Entry; 164] = {
+pub const MAP: [Entry; 168] = {
     use {Action as A, Aim as M, Body as B, Facing as F};
     [
         row(0x00, B::Upright, A::Still, F::Screen, M::Forward).worn(Worn::Suit(Suit::First)),
@@ -123,8 +123,12 @@ pub const MAP: [Entry; 164] = {
         row(0x4C, B::Upright, A::TakingOff, F::Left, M::Forward),
         row(0x4D, B::Upright, A::Jumping, F::Right, M::Forward),
         row(0x4E, B::Upright, A::Jumping, F::Left, M::Forward),
+        row(0x4F, B::Upright, A::Leaping, F::Left, M::Forward),
+        row(0x50, B::Upright, A::Leaping, F::Right, M::Forward),
         row(0x51, B::Upright, A::Jumping, F::Right, M::Forward).striding(),
         row(0x52, B::Upright, A::Jumping, F::Left, M::Forward).striding(),
+        row(0x53, B::Upright, A::Recoiling, F::Right, M::Forward),
+        row(0x54, B::Upright, A::Recoiling, F::Left, M::Forward),
         row(0x55, B::Upright, A::TakingOff, F::Right, M::Up),
         row(0x56, B::Upright, A::TakingOff, F::Left, M::Up),
         row(0x57, B::Upright, A::TakingOff, F::Right, M::UpForward),

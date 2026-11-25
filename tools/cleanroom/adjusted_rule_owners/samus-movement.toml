@@ -25,3 +25,12 @@ wall_reach = ["WallJump"]
 bounce_threshold = ["Landing"]
 # BlocksStopFlush: docs/behaviours/samus-movement.md:1540; crates/clean/samus_movement/tests/vectors.rs:184
 move_limit = ["BlocksStopFlush"]
+# PushStarts: docs/behaviours/samus-movement.md:2284; crates/clean/samus_movement/tests/vectors.rs:184
+push_rise = ["PushStarts"]
+# PushMoves: docs/behaviours/samus-movement.md:2312; crates/clean/samus_movement/tests/vectors.rs:184
+push_gain = ["PushMoves"]
+push_brake = ["PushMoves"]
+push_top = ["PushMoves"]
+# BackwardLeap: docs/behaviours/samus-movement.md:2345; crates/clean/samus_movement/tests/vectors.rs:184
+leap_gain = ["BackwardLeap"]
+leap_top = ["BackwardLeap"]

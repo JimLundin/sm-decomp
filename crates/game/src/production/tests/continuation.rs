@@ -79,7 +79,7 @@ fn animation() -> (
         pose: super::fixtures::samus().pose,
         sprite: types::Sprite::Plain,
     };
-    let content = ProductionContent::Appearance(
+    let content = ProductionContent::Appearance(Box::new(
         AppearanceContent::new(
             vec![FigureClip {
                 figure,
@@ -98,9 +98,13 @@ fn animation() -> (
                 plain: animation::Pace(Vec::new()),
                 boosted: enum_map::EnumMap::from_fn(|_| animation::Pace(Vec::new())),
             },
+            crate::production::pulse_colours(
+                &data::assets::samus::palettes::SamusPalettes::default(),
+            )
+            .unwrap(),
         )
         .unwrap(),
-    );
+    ));
     let rules = ProductionRules::Appearance(animation::Rules::VANILLA);
     let state = animation::AppearanceState {
         animation: animation::Animation {
@@ -129,6 +133,7 @@ fn animation() -> (
         heading_down: true,
         vertical_speed: Wrapping(0),
         energy: 99,
+        previous_energy: 99,
         items: types::Set::default(),
         liquid: animation::Liquid::NONE,
         sounds_waiting: animation::SoundsWaiting::new(0).unwrap(),
@@ -143,6 +148,7 @@ fn animation() -> (
         parts,
         item_controls: animation::ItemControls::Skipped,
         palette: animation::PaletteOpportunity::Absent,
+        hurt: animation::HurtOpportunity::Absent,
     };
     (production, content, rules, frame)
 }

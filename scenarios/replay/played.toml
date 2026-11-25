@@ -59,29 +59,31 @@ frames = [8316, 8537]
 power_on = false
 
 # The arrival, played on into Ceres's first room and through the second to fifth into Ridley's
-# with no new seed, until Ridley's eye has lit and she ends a crouched turn, a samus-movement case not yet owned.
+# with no new seed, until Ridley's eye has lit and he becomes tangible, where his tail (boss-ceres-
+# ridley part 4b) takes over.
 [[run]]
 row = "any-ceres-arrival"
 start = 0
 end = 3223
-held = 2385
-stop = { failed = "movement.pose" }
+held = 2455
+stop = { failed = "RidleyTangible" }
 seed_frame = 8315
-frames = [8316, 10700]
+frames = [8316, 10770]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
 # floor and lets her go, and she leaves by the room's door; played on through the second, third,
 # fourth and fifth rooms and into Ridley's with no new seed, the door slamming shut behind her,
-# until Ridley's eye has lit and she ends a crouched turn, a samus-movement case not yet owned.
+# until Ridley's eye has lit and he becomes tangible, where his tail (boss-ceres-ridley part 4b)
+# takes over.
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
 end = 3000
-held = 2162
-stop = { failed = "movement.pose" }
+held = 2232
+stop = { failed = "RidleyTangible" }
 seed_frame = 8538
-frames = [8539, 10700]
+frames = [8539, 10770]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -107,15 +109,16 @@ frames = [8951, 9231]
 power_on = false
 
 # Ceres's third room, played on through the fourth and fifth and into Ridley's with no new seed,
-# until Ridley's eye has lit and she ends a crouched turn, a samus-movement case not yet owned.
+# until Ridley's eye has lit and he becomes tangible, where his tail (boss-ceres-ridley part 4b)
+# takes over.
 [[run]]
 row = "chain-any-0003-DFD7"
 start = 0
 end = 3000
-held = 1468
-stop = { failed = "movement.pose" }
+held = 1538
+stop = { failed = "RidleyTangible" }
 seed_frame = 9232
-frames = [9233, 10700]
+frames = [9233, 10770]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -130,15 +133,16 @@ frames = [9578, 9840]
 power_on = false
 
 # Ridley's room alone, from its own seed: Ridley waits in the dark with the baby, which cries and
-# glows once, then wakes, his eye lighting, until she ends a crouched turn, a samus-movement case not yet owned.
+# glows once, then wakes, his eye lighting, until he becomes tangible, where his tail (boss-ceres-
+# ridley part 4b) takes over.
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 0
 end = 1785
-held = 538
-stop = { failed = "movement.pose" }
+held = 608
+stop = { failed = "RidleyTangible" }
 seed_frame = 10162
-frames = [10163, 10700]
+frames = [10163, 10770]
 power_on = false
 
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being

@@ -1,11 +1,71 @@
 //! Her colour sequences during ordinary dry movement: the visor and charge-glow sequences,
-//! readied while the shared current and target palettes stay with their owner.
+//! readied while the shared current and target palettes stay with their owner. And the hurt
+//! count, the hit colour pulse the ordinary reset reads.
 
 use enum_map::Enum;
 use serde::{Deserialize, Serialize};
 use types::{Action, Body, Item, LandedFrom, Set, Turn};
 
-use crate::inputs::{Figure, Inputs};
+use crate::inputs::{Figure, GrappleActivity, Inputs, Suit};
+
+/// Spec: `HurtColours`. The hurt count: the frames of her hurt pulse so far.
+///
+/// It is 0 to `HurtCount::MOST`, with 0 no pulse. It is the hit colour pulse
+/// `OrdinaryDryColours` reads, active while the count is above 0. It holds one of its values on
+/// construction and on restore alike.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "u8", into = "u8")]
+pub struct HurtCount(u8);
+
+impl TryFrom<u8> for HurtCount {
+    type Error = &'static str;
+    fn try_from(frames: u8) -> Result<Self, Self::Error> {
+        Self::new(frames).ok_or("the hurt count must be from 0 to 59")
+    }
+}
+
+impl From<HurtCount> for u8 {
+    fn from(count: HurtCount) -> Self {
+        count.frames()
+    }
+}
+
+impl HurtCount {
+    /// No pulse: the count 0.
+    pub const NONE: Self = Self(0);
+    /// The count a fall in her energy or a push's start sets: 1.
+    pub const STRUCK: Self = Self(1);
+    /// The count is at most 59: reaching 60, it is 0.
+    pub const MOST: u8 = 59;
+
+    /// The count of `frames`, if it is 0 to `MOST`.
+    #[must_use]
+    pub const fn new(frames: u8) -> Option<Self> {
+        if frames <= Self::MOST {
+            Some(Self(frames))
+        } else {
+            None
+        }
+    }
+
+    /// Its frames.
+    #[must_use]
+    pub const fn frames(self) -> u8 {
+        self.0
+    }
+
+    /// Whether her colours pulse: the count is above 0 (§11.2's hit colour pulse).
+    #[must_use]
+    pub const fn pulsing(self) -> bool {
+        self.0 > Self::NONE.0
+    }
+
+    /// Spec: `HurtColours`. The count gone up by 1; reaching 60, it is 0 and the pulse is over.
+    #[must_use]
+    pub fn next(self) -> Self {
+        Self::new(self.0.saturating_add(1)).unwrap_or(Self::NONE)
+    }
+}
 
 /// The visor delay: eligible palette ticks before the visor sequence moves on, 0 to 255, each
 /// value of its `u8` on construction and on restore.
@@ -90,17 +150,6 @@ pub const ORDINARY_READY: ColourSequences = ColourSequences {
     charge_glow_position: ChargeGlowPosition::RESET,
 };
 
-/// The suit selection made for this frame, from the equipment switched on.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Suit {
-    /// Neither Gravity nor Varia is enabled.
-    Power,
-    /// Varia is enabled without Gravity.
-    Varia,
-    /// Gravity is enabled, with or without Varia.
-    Gravity,
-}
-
 /// The room's colour treatment, from room effects.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RoomColours {
@@ -110,15 +159,6 @@ pub enum RoomColours {
     RedBackground,
     /// Orange background treatment.
     OrangeBackground,
-}
-
-/// The grapple beam's current activity, from Grapple.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum GrappleActivity {
-    /// Grapple is dormant.
-    Dormant,
-    /// Grapple is busy.
-    Busy,
 }
 
 /// A liquid level of the room, each present or absent on its own, from room effects and the
@@ -131,8 +171,8 @@ pub enum LiquidLevel {
     Lava,
 }
 
-/// A current colour effect, each active or inactive on its own, from its owner. Listed in no
-/// order.
+/// A current colour effect another owner supplies, each active or inactive on its own. Listed in
+/// no order. The hit colour pulse is not one: it is her own hurt count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, Serialize, Deserialize)]
 pub enum ColourEffect {
     /// Lingering glow after firing.
@@ -145,8 +185,6 @@ pub enum ColourEffect {
     SpecialColours,
     /// Speed glow.
     SpeedGlow,
-    /// Hit colour pulse.
-    HitColourPulse,
 }
 
 /// What an admitted dry movement asks of the screw attack, among the items switched on.
@@ -218,10 +256,11 @@ pub struct PaletteObservations {
 }
 
 impl PaletteObservations {
-    /// Whether these observations, with her figure as the frame ends and whether the screw
-    /// attack is switched on, are ordinary dry movement.
-    fn admit_ordinary_reset(&self, figure: Figure, screw_attack_on: bool) -> bool {
+    /// Whether these observations, with her figure as the frame ends, whether the screw attack is
+    /// switched on and her hurt count, are ordinary dry movement: among them, no hit colour pulse.
+    fn admit_ordinary_reset(&self, figure: Figure, screw_attack_on: bool, hurt: HurtCount) -> bool {
         admits_dry_movement(figure, screw_attack_on)
+            && !hurt.pulsing()
             && self.suit == Suit::Power
             && self.room_colours == RoomColours::Standard
             && self.levels.values().all(|present| !present)
@@ -264,7 +303,9 @@ pub type DryColourOutcome = Result<DryColourReset, Unrecognized>;
 /// Spec: `OrdinaryDryColours`. The frame's palette opportunity, after movement has selected her
 /// figure and the suit has been selected, and before health maintenance and the frame's drawing
 /// and palette upload. It reads her figure as the frame ends and the screw attack from the
-/// frame's inputs, and gives the sequences and the opportunity's outcome, if the frame has one.
+/// frame's inputs, and `hurt`, her hurt count as the frame starts (her hurt colours come later,
+/// after Health), as the hit colour pulse. It gives the sequences and the opportunity's outcome,
+/// if the frame has one.
 ///
 /// An admitted opportunity sets the visor delay to 1, the visor to its entry 3 and the charge
 /// glow to its reset position, whatever they were; a refused or unrecognized one leaves them as
@@ -275,12 +316,13 @@ pub fn ordinary_dry_colours(
     sequences: ColourSequences,
     opportunity: PaletteOpportunity,
     inputs: &Inputs,
+    hurt: HurtCount,
 ) -> (ColourSequences, Option<DryColourOutcome>) {
     let screw_attack_on = inputs.items[Item::ScrewAttack];
     match opportunity {
         PaletteOpportunity::Absent => (sequences, None),
         PaletteOpportunity::Observed(observed)
-            if observed.admit_ordinary_reset(inputs.figure_after, screw_attack_on) =>
+            if observed.admit_ordinary_reset(inputs.figure_after, screw_attack_on, hurt) =>
         {
             (ORDINARY_READY, Some(Ok(DryColourReset::Applied)))
         }

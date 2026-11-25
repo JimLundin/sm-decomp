@@ -138,6 +138,8 @@ fn fresh(start: &NewGame) -> Result<played::samus::State, Outcome> {
         choices: samus_movement::Choices::starting_in(pose),
         seat: samus_movement::Seat::Unseated,
         jump_held: samus_movement::JumpHeld::NONE,
+        // No push: the new game clears the side, which reads as left.
+        knockback: samus_movement::Knockback::spent(types::Side::Left),
     };
     Ok(played::samus::State {
         movement: Model(samus),

@@ -6,18 +6,19 @@
 mod vectors {
     mod cannon_vectors;
     mod colour_vectors;
+    mod hurt_vectors;
 
     use core::num::Wrapping;
     use std::collections::BTreeMap;
 
     use enum_map::EnumMap;
     use samus_appearance::{
-        Activity, Ahead, Animation, AnimationContent, AppearanceState, BehaviourId, Branch,
+        Activity, Ahead, Animation, AppearanceContent, AppearanceState, BehaviourId, Branch,
         CannonDelay, Charge, ChargeGlowPosition, Clip, ColourSequences, Control, Dash, Figure,
-        Frame, FrameOutputs, FramePart, Frames, Hold, Inputs, Instruction, ItemControls, Laps,
-        LapsLeft, Liquid, MissingClip, MoveEvent, Pace, Paces, PaletteOpportunity, Playhead, Rules,
-        ShownFrames, Slowdown, Sound, SoundsWaiting, Step, VisorDelay, VisorStep, catalogue,
-        update,
+        Frame, FrameOutputs, FramePart, Frames, Hold, HurtCount, HurtOpportunity, Inputs,
+        Instruction, ItemControls, Laps, LapsLeft, Liquid, MissingClip, MoveEvent, Pace, Paces,
+        PaletteOpportunity, Playhead, PulseColours, Rules, ShownFrames, Slowdown, Sound,
+        SoundsWaiting, Step, VisorDelay, VisorStep, catalogue, update,
     };
     use serde::Deserialize;
     use serde::de::DeserializeOwned;
@@ -29,8 +30,8 @@ mod vectors {
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-appearance.toml");
 
     /// The vector file: her State at initialization, the paces, the clips by name, the animation
-    /// vectors, the sound opportunities, the combined frames, the cannon histories and the
-    /// palette histories.
+    /// vectors, the sound opportunities, the combined frames, the cannon histories, the palette
+    /// histories and the hurt colours frames.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -42,6 +43,7 @@ mod vectors {
         appearance_work: Vec<AppearanceWork>,
         cannon_readiness: Vec<cannon_vectors::CannonHistory>,
         ordinary_dry_colours: colour_vectors::ColourVectors,
+        hurt_colours: Vec<hurt_vectors::HurtVector>,
     }
 
     /// Her appearance State as initialization leaves it, quantity by quantity.
@@ -582,7 +584,8 @@ mod vectors {
     }
 
     /// The frame of `given`, with the parts in `parts`, and its preparation if `given` says its
-    /// work is prepared. Her item controls don't run, and it has no palette opportunity.
+    /// work is prepared. Her item controls don't run, and it has no palette opportunity and no
+    /// hurt colours.
     fn frame(given: &VectorInputs, mut parts: Set<FramePart>) -> Frame {
         parts[FramePart::Preparation] |= given.prepared;
         Frame {
@@ -590,6 +593,7 @@ mod vectors {
             parts,
             item_controls: ItemControls::Skipped,
             palette: PaletteOpportunity::Absent,
+            hurt: HurtOpportunity::Absent,
         }
     }
 
@@ -611,7 +615,7 @@ mod vectors {
     fn play(
         state: AppearanceState,
         frame: &Frame,
-        content: &impl AnimationContent,
+        content: &impl AppearanceContent,
         rules: &Rules,
     ) -> (AppearanceState, FrameOutputs) {
         let (after, outputs) = update(kept(state), frame, content, rules)
@@ -619,13 +623,14 @@ mod vectors {
         (kept(after), outputs)
     }
 
-    /// A frame's content: the clip of each figure the file names one for, and the run's paces.
+    /// A frame's content: the clip of each figure the file names one for, the run's paces and
+    /// the invented colours of her hurt pulse.
     struct VectorContent<'a> {
         clips: Vec<(Figure, &'a Clip)>,
-        paces: &'a Paces,
+        library: &'a Library,
     }
 
-    impl AnimationContent for VectorContent<'_> {
+    impl AppearanceContent for VectorContent<'_> {
         fn clip(&self, figure: &Figure) -> Option<&Clip> {
             self.clips
                 .iter()
@@ -634,14 +639,19 @@ mod vectors {
         }
 
         fn paces(&self) -> &Paces {
-            self.paces
+            &self.library.paces
+        }
+
+        fn pulse_colours(&self) -> &PulseColours {
+            &self.library.pulse_colours
         }
     }
 
-    /// The file's clips and the run's paces, read once.
+    /// The file's clips and the run's paces, read once, and the hurt pulse's invented colours.
     struct Library {
         clips: BTreeMap<String, Clip>,
         paces: Paces,
+        pulse_colours: PulseColours,
     }
 
     impl Library {
@@ -649,6 +659,14 @@ mod vectors {
             self.clips
                 .get(name)
                 .unwrap_or_else(|| panic!("expected a clip named {name}"))
+        }
+
+        /// Content holding no clip, with the paces and pulse colours.
+        const fn without_clips(&self) -> VectorContent<'_> {
+            VectorContent {
+                clips: Vec::new(),
+                library: self,
+            }
         }
     }
 
@@ -663,7 +681,12 @@ mod vectors {
             plain: pace(&file.paces.plain),
             boosted: EnumMap::from_array(file.paces.boosted.each_ref().map(|holds| pace(holds))),
         };
-        (file, Library { clips, paces })
+        let library = Library {
+            clips,
+            paces,
+            pulse_colours: hurt_vectors::invented_pulse_colours(),
+        };
+        (file, library)
     }
 
     /// The behaviour the file names `name`, among the catalogue's own ids.
@@ -698,6 +721,8 @@ mod vectors {
             heading_down: given.heading_down,
             vertical_speed: vertical_speed(&given.vertical_speed),
             energy: given.energy,
+            // No frame of these tables has her energy fall: the hurt frames give that themselves.
+            previous_energy: given.energy,
             items,
             liquid: Liquid {
                 step_slowdown: slowdown(given.step_slowdown),
@@ -741,10 +766,7 @@ mod vectors {
         .into_iter()
         .filter_map(|(figure, name)| Some((figure, library.clip(name?))))
         .collect();
-        VectorContent {
-            clips,
-            paces: &library.paces,
-        }
+        VectorContent { clips, library }
     }
 
     fn end(name: &str) -> Option<ClipEnd> {
@@ -882,10 +904,7 @@ mod vectors {
             ..VectorInputs::default()
         };
         let frame = frame(&given, set_of([FramePart::Movement]));
-        let none = VectorContent {
-            clips: Vec::new(),
-            paces: &library.paces,
-        };
+        let none = library.without_clips();
         let state = AppearanceState::INITIAL;
         assert_eq!(
             update(state, &frame, &none, &Rules::VANILLA),
@@ -899,7 +918,7 @@ mod vectors {
         );
         let only_start = VectorContent {
             clips: vec![(frame.inputs.figure, library.clip("stand"))],
-            paces: &library.paces,
+            library: &library,
         };
         assert_eq!(
             update(state, &frame, &only_start, &Rules::VANILLA),
@@ -1048,7 +1067,8 @@ mod vectors {
     }
 
     /// The file's initialization table is the State the crate gives her at initialization, and
-    /// it saves and restores as it is.
+    /// it saves and restores as it is. The table names no hurt count: initialization leaves no
+    /// pulse under way.
     #[test]
     fn her_state_at_initialization_is_the_files() {
         let (file, _) = read_file();
@@ -1063,6 +1083,7 @@ mod vectors {
                 visor_step: VisorStep::new(given.visor_step),
                 charge_glow_position: ChargeGlowPosition::new(given.charge_glow_position),
             },
+            hurt_count: HurtCount::NONE,
         };
         assert_eq!(
             AppearanceState::INITIAL,
@@ -1106,6 +1127,7 @@ mod vectors {
                     .iter()
                     .flat_map(|history| &history.entries),
             )
+            .chain(file.hurt_colours.iter().flat_map(|frame| &frame.entries))
             .map(|entry| behaviour(entry))
             .chain(file.ordinary_dry_colours.entries().map(behaviour))
             .collect();

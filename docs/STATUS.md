@@ -183,9 +183,9 @@ the eye's 64 steps and the body's 16 colour sets, is imported and checked once. 
 goes to the screen at once on colours 12 to 14 of sprite row 7 (the body's would go to colours 1
 to 11 of rows 7 and 1), compared as `doors.colours.screen`; the run also compares his count,
 runs, the roar's figure and its runs, his look, and whether he is tangible, moving and roaring,
-read from his slot's properties and his words. What is played is his eye's fade, its first 26 of
-64 steps (room 6's cuts 513 to 538). The body's fade, his wait, his roar, his turning tangible,
-moving and roaring, and the two refusals (`Fault::RidleyTangible`, his tail's touch being part
+read from his slot's properties and his words. What is played is his eye's fade, all 64 steps, and
+his body's fade to the run before its last set (room 6's cuts 513 to 608). His turning tangible,
+his wait, his roar, moving and roaring, and the two refusals (`Fault::RidleyTangible`, his tail's touch being part
 4b's, and `Fault::RidleyFlying`, part 4c's) are reached by no played cut: they hold by the
 vectors and the production tests only. The fight's music and the roar are produced and not
 compared. Her going backwards, which the camera reads, is her skid or her moonwalk
@@ -205,16 +205,23 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 538 from its
-seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,162 cuts, through
-rooms 2 to 5 and on to cut 538 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,468;
-from her arrival (`any-ceres-arrival`, below) they hold 2,385. Each stops at room 6's cut 539 in
-`movement.pose`: her crouched turn, begun at 535, ends a frame later in production than in the
-record, a samus-movement case whose amendment is specced and imported (knockback's round).
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 608 from its
+seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,232 cuts, through
+rooms 2 to 5 and on to cut 608 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,538;
+from her arrival (`any-ceres-arrival`, below) they hold 2,455, to movie frame 10,770. Her frame
+is two steps, her moves and then her reaction to the frame's hit, with the station and Health
+between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,
+and her crouched turn, begun at room 6's cut 535, ends at the record's frame. No played cut hits
+her yet: the hit is none until his tail is integrated (boss-ceres-ridley part 4b), so the push and
+the hurt colours are compared as idle (`movement.knockback`, `appearance.hurt-count`). A
+production test plays a hit through her frame: she takes `Recoiling`, her push counts down into
+the next frame, and her row takes her hurt colours. Each run
+stops at room 6's cut 609 on `Fault::RidleyTangible`, the frame he becomes tangible, whose tail is
+part 4b's.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Thirty planted faults in the fault matrix, those of the responsibility `played`, stop
+Forty-five planted faults in the fault matrix, those of the responsibility `played`, stop
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
@@ -223,7 +230,10 @@ restart the frame count counted on instead differs at cut 238 in `frame-count`. 
 geometry, doors and camera room kept after a passage builds the next differ, played back to back
 from the M0 row's seed, at cut 348 (the next row's cut 3) in `movement.position`. Of the Ceres doors' faults,
 their State held rather than carried differs at cut 1 in `ceres.0.wait`, and the doors reading her position after her moves rather
-than before differs at cut 7 in `ceres.0.phase`. In room 1, the pad's carry dropped from her
+than before differs at cut 7 in `ceres.0.phase`. Of her frame's, her reaction run on a copy, so
+she keeps the State her moves started from, differs at cut 1 in `movement.pose`, and the energy
+the frame before left read one above the frame's, a fall that starts her hurt colours, at cut 1
+in `appearance.hurt-count`. In room 1, the pad's carry dropped from her
 height differs at cut 29 in `movement.position`; the beacon reading the count as the frame
 leaves it differs at cut 7, and reading no fade's steps at cut 257, in `doors.colours.screen`;
 and a frame whose work overran counted as finished differs at cut 253 in `finished-frames`. The

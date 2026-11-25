@@ -4,7 +4,7 @@
 use types::ClipEnd;
 
 use crate::clip::Instruction;
-use crate::inputs::{AnimationContent, Figure, MissingClip, clip_of};
+use crate::inputs::{AppearanceContent, Figure, MissingClip, clip_of};
 use crate::state::{AppearanceState, RunDown};
 
 /// What is known of a frame from its start alone: the read-ahead.
@@ -44,7 +44,7 @@ impl Ahead {
     pub fn of(
         state: &AppearanceState,
         figure: Figure,
-        content: &impl AnimationContent,
+        content: &impl AppearanceContent,
     ) -> Result<Self, MissingClip> {
         let clip = clip_of(content, figure)?;
         let playhead = state.animation.playhead;

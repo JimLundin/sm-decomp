@@ -4,16 +4,16 @@
 mod retained {
     use enum_map::EnumMap;
     use samus_appearance::{
-        Activity, Animation, AnimationContent, AppearanceState, CannonDelay, Charge,
+        Activity, Animation, AppearanceContent, AppearanceState, CannonDelay, Charge,
         ChargeGlowPosition, Clip, ColourSequences, Control, ControlEligibility, Dash, Figure,
-        Frame, FrameOutputs, FramePart, Frames, Hold, Inputs, Instruction, ItemControlAnswer,
-        ItemControls, Laps, LapsLeft, Liquid, Pace, Paces, PaletteOpportunity, Playhead, Rules,
-        SelectedItem, ShownFrames, Sound, SoundQueue, SoundsWaiting, Step, VisorDelay, VisorStep,
-        update,
+        Frame, FrameOutputs, FramePart, Frames, GrappleActivity, Hold, HurtCount, HurtOpportunity,
+        Inputs, Instruction, ItemControlAnswer, ItemControls, Laps, LapsLeft, Liquid, MoveEvent,
+        Pace, Paces, PaletteOpportunity, Playhead, PulseColours, Rules, SelectedItem, ShownFrames,
+        Sound, SoundQueue, SoundsWaiting, Step, Suit, VisorDelay, VisorStep, update,
     };
     use types::{
-        Action, Aim, Body, BoostStage, Facing, Gun, Item, Legs, Pose, QueueAllowance, Set, Sprite,
-        ZERO, set_of,
+        Action, Aim, Body, BoostStage, Colour, Facing, Gun, Item, Legs, Pose, QueueAllowance,
+        RowColours, Set, Sprite, ZERO, set_of,
     };
 
     /// Her figure upright, facing right, unaimed, doing `action`.
@@ -49,32 +49,43 @@ mod retained {
         }
     }
 
-    /// One clip for every figure, and every pace holding 3 frames a step.
+    /// One clip for every figure, every pace holding 3 frames a step, and black pulse colours.
     struct OneClip {
         clip: Clip,
         paces: Paces,
+        pulse_colours: PulseColours,
     }
 
     impl OneClip {
         fn of(clip: Clip) -> Self {
             let pace = || Pace(vec![hold(3), hold(3)]);
+            let black = RowColours([Colour::BLACK; 16]);
             Self {
                 clip,
                 paces: Paces {
                     plain: pace(),
                     boosted: EnumMap::from_fn(|_| pace()),
                 },
+                pulse_colours: PulseColours {
+                    hurt: black,
+                    suits: EnumMap::from_fn(|_| black),
+                    cinematic_grey: black,
+                },
             }
         }
     }
 
-    impl AnimationContent for OneClip {
+    impl AppearanceContent for OneClip {
         fn clip(&self, _: &Figure) -> Option<&Clip> {
             Some(&self.clip)
         }
 
         fn paces(&self) -> &Paces {
             &self.paces
+        }
+
+        fn pulse_colours(&self) -> &PulseColours {
+            &self.pulse_colours
         }
     }
 
@@ -84,14 +95,15 @@ mod retained {
         charge_glow_position: ChargeGlowPosition::new(2),
     };
 
-    /// Her appearance State with `animation`, a kept spin, her cannon waiting a frame and some
-    /// colours.
+    /// Her appearance State with `animation`, a kept spin, her cannon waiting a frame, some
+    /// colours and a hurt pulse under way.
     fn appearance(animation: Animation) -> AppearanceState {
         AppearanceState {
             animation,
             kept_action: Action::Spinning,
             cannon: CannonDelay::new(1).expect("expected a delay of 1 in range"),
             colours: COLOURS,
+            hurt_count: HurtCount::new(17).expect("expected a hurt count of 17 in range"),
         }
     }
 
@@ -107,6 +119,7 @@ mod retained {
             heading_down: false,
             vertical_speed: ZERO,
             energy: 99,
+            previous_energy: 99,
             items: Set::default(),
             liquid: Liquid::NONE,
             sounds_waiting: SoundsWaiting::new(0).expect("expected 0 sounds waiting in range"),
@@ -116,13 +129,15 @@ mod retained {
         }
     }
 
-    /// A frame of `inputs` with `parts`, with no item controls and no palette opportunity.
+    /// A frame of `inputs` with `parts`, with no item controls, no palette opportunity and no
+    /// hurt colours.
     fn frame<const N: usize>(inputs: Inputs, parts: [FramePart; N]) -> Frame {
         Frame {
             inputs,
             parts: set_of(parts),
             item_controls: ItemControls::Skipped,
             palette: PaletteOpportunity::Absent,
+            hurt: HurtOpportunity::Absent,
         }
     }
 
@@ -191,6 +206,7 @@ mod retained {
             "visor_delay = 7",
             "visor_step = 5",
             "charge_glow_position = 2",
+            "hurt_count = 17",
         ] {
             assert!(text.contains(part), "expected {part} in {text}");
         }
@@ -514,6 +530,59 @@ mod retained {
         assert_eq!(after.colours, COLOURS, "expected her colours unchanged");
     }
 
+    /// The push's two poses are ordinary figures whose clips are content: taking `Recoiling` as a
+    /// push starts, then `Leaping`, each clip starts at its first step as any pose's does, while
+    /// her hurt colours pulse in the same frames, after her movement's sounds.
+    #[test]
+    fn the_pushs_poses_start_their_clips_as_any_pose_does() {
+        let hurt = HurtOpportunity::Observed {
+            suit: Suit::Power,
+            grapple: GrappleActivity::Dormant,
+        };
+        let (running, recoiling, leaping) = (
+            upright(Action::Running),
+            upright(Action::Recoiling),
+            upright(Action::Leaping),
+        );
+        let mut pushed = inputs(running, recoiling);
+        pushed.moves[MoveEvent::PushStarted] = true;
+        let before = AppearanceState {
+            hurt_count: HurtCount::NONE,
+            ..appearance(on_contact(BoostStage::Stage0, LapsLeft::WithoutBooster))
+        };
+        let first = Frame {
+            hurt,
+            ..frame(pushed, [FramePart::Movement])
+        };
+        let (after, outputs) = play(before, &first);
+        let started = Playhead {
+            step: Step::FIRST,
+            time_left: Frames(3),
+        };
+        assert_eq!(
+            after.animation.playhead, started,
+            "expected the recoil's clip from its first step"
+        );
+        assert_eq!(after.hurt_count.frames(), 2, "expected the pulse begun");
+        assert!(outputs.her_colours.is_some(), "expected her hurt colours");
+        assert_eq!(
+            asked(&outputs),
+            [Sound::Footstep],
+            "expected the stride's sound alone"
+        );
+        let second = Frame {
+            hurt,
+            ..frame(inputs(recoiling, leaping), [FramePart::Movement])
+        };
+        let (after, outputs) = play(after, &second);
+        assert_eq!(
+            after.animation.playhead, started,
+            "expected the leap's clip from its first step"
+        );
+        assert_eq!(after.hurt_count.frames(), 3, "expected the pulse going on");
+        assert_eq!(asked(&outputs), [Sound::Hurt], "expected the hurt sound");
+    }
+
     /// Each request the frame reports carries its sound's queue and allowance, as the sound
     /// table gives them.
     #[test]
@@ -526,6 +595,7 @@ mod retained {
             (Sound::ScrewAttack, SoundQueue::Samus, 6),
             (Sound::SpinEnded, SoundQueue::Samus, 15),
             (Sound::SamusSilence, SoundQueue::Samus, 15),
+            (Sound::Hurt, SoundQueue::Samus, 6),
         ];
         for (sound, queue, allowance) in rows {
             let offer = sound.offer();

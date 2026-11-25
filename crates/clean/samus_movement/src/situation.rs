@@ -212,6 +212,16 @@ pub static CLASSES: &[Class] = &[
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
+        action: &[Action::Recoiling],
+        is: &RECOILING,
+        ..UPRIGHT_AT_ANY_AIM
+    },
+    Class {
+        action: &[Action::Leaping],
+        is: &LEAPING,
+        ..UPRIGHT_AT_ANY_AIM
+    },
+    Class {
         action: &[Action::Still],
         facing: &[Facing::Screen],
         is: &FACING_THE_SCREEN,
@@ -1367,16 +1377,36 @@ static TURNING: Situation = Situation {
 };
 
 /// Turning in a jump or a fall, crouched turning, or turning on the ground or from the
-/// moonwalk's jump aimed `UpForward`: she keeps turning.
+/// moonwalk's jump aimed `UpForward`: she keeps turning, but an aimed crouched turn let go
+/// becomes crouched `Still` facing left.
 static TURNING_ON: Situation = Situation {
     doing: Doing::Turning,
     moves: Moves::Build(Gait::Turning, Drift::Ground),
     footing: Footing::Turning,
-    rows: &[Row {
-        id: RowId::AnyButtonHeld,
-        needs: &[Test::Held(ANY_BUTTON)],
-        ..NO_CHANGE
-    }],
+    rows: &[
+        Row {
+            id: RowId::AnyButtonHeld,
+            needs: &[Test::Held(ANY_BUTTON)],
+            ..NO_CHANGE
+        },
+        // An aimed crouched turn let go: crouched `Still` facing left, whichever way she turns,
+        // her speed keeping its size and now pointing left.
+        Row {
+            id: RowId::CrouchedTurningAimedNothingHeld,
+            needs: &[
+                Test::Body(&[Body::Crouched]),
+                Test::Aimed(&[Aim::Up, Aim::UpForward, Aim::DownForward, Aim::Down]),
+                Test::Not(&Test::Held(ANY_BUTTON)),
+            ],
+            next: Next {
+                body: Some(Body::Crouched),
+                facing: NextFacing::To(Facing::Left),
+                ..TO_STILL
+            },
+            effects: &[Effect::EndSkid],
+            ..NO_CHANGE
+        },
+    ],
     last: Row {
         id: RowId::NothingHeld,
         effects: &[Effect::EndSkid],
@@ -1618,6 +1648,77 @@ static AGAINST_WALL: Situation = Situation {
             ..KEEP_POSE
         },
         effects: &[Effect::EndSkid],
+        ..NO_CHANGE
+    },
+};
+
+/// `BackwardLeap`: the leap, upright, her facing kept, aim `Forward`.
+const TO_LEAPING: Next = Next {
+    action: Some(Action::Leaping),
+    ..TO_STILL
+};
+
+/// "back and jump held", other buttons too or not: the backward leap (`PushMoves`), or the leap
+/// going on (`BackwardLeap`).
+const BACK_AND_JUMP: &[Test] = &[Test::Held(BACK), Test::Held(key::JUMP)];
+
+/// `PushMoves`, `AfterThePush`: thrown back by a hit. Under a push her moves are the push's
+/// (`Samus::motion`), and what they meet chooses nothing; at the frame's end back and jump held
+/// start the backward leap, and anything else lets her motion follow the pad again, no longer
+/// dashing. With no push under way she drops, and what that meets chooses her pose
+/// (`WhatHerMovesMet`): a floor lands her as from a straight jump, none lets her fall.
+static RECOILING: Situation = Situation {
+    doing: Doing::Recoiling,
+    moves: Moves::DropsInPlace,
+    footing: Footing::OnHerFeet,
+    rows: &[Row {
+        id: RowId::BackAndJumpHeld,
+        needs: BACK_AND_JUMP,
+        next: TO_LEAPING,
+        ..NO_CHANGE
+    }],
+    last: Row {
+        id: RowId::AnythingElse,
+        effects: &[Effect::EndSkid],
+        ..NO_CHANGE
+    },
+};
+
+/// `BackwardLeap`: a straight jump travelling backward. At the frame's end back and jump held
+/// keep her leaping; forward and jump held make it a straight jump, striding; anything else a
+/// straight jump, legs together; each jump keeps her speed's size, pointing her facing's way.
+/// Left and right held together with jump, the row holding left is taken, left before right:
+/// facing right that is back, and she goes on leaping; facing left it is forward, and she takes
+/// the striding jump.
+static LEAPING: Situation = Situation {
+    doing: Doing::StraightJump,
+    moves: Moves::Leap,
+    footing: Footing::OnHerFeet,
+    rows: &[
+        Row {
+            id: RowId::BackAndJumpHeld,
+            needs: BACK_AND_JUMP,
+            beats_unless: &[Beat {
+                row: RowId::ForwardAndJumpHeld,
+                unless: &[&[Test::Faces(Side::Left)]],
+            }],
+            ..NO_CHANGE
+        },
+        Row {
+            id: RowId::ForwardAndJumpHeld,
+            needs: &[Test::Held(FORWARD), Test::Held(key::JUMP)],
+            next: Next {
+                legs: Some(Legs::Striding),
+                ..TO_JUMPING
+            },
+            effects: &[Effect::AlongHerFacing],
+            ..NO_CHANGE
+        },
+    ],
+    last: Row {
+        id: RowId::AnythingElse,
+        next: TO_JUMPING,
+        effects: &[Effect::AlongHerFacing],
         ..NO_CHANGE
     },
 };

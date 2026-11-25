@@ -1,8 +1,11 @@
 //! `MovesAsShePosed`: a frame's moves, as the pose she starts it in says: her horizontal move
 //! and the slope checks after it, the near-wall test, then the ground pull or her vertical
-//! move; facing the screen, the elevator's descent or nothing.
+//! move; facing the screen, the elevator's descent or nothing. Under a hit's push, the push's
+//! moves (`PushMoves`); in the leap, a straight jump's backward (`BackwardLeap`); the frame after
+//! a push, its drop (`AfterThePush`).
 
 use crate::collide::{Moved, Probe, Stop, vertical_heading};
+use crate::knockback::Push;
 use crate::rows::{Doing, Footing, Met, Moves, Situation};
 use crate::run::{Dashing, Stride, running_with_run_held};
 use crate::samus::{Samus, Seat, WallTest};
@@ -11,7 +14,8 @@ use crate::travel::TravelledDistances;
 use crate::vertical::Course;
 use types::button::{JUMP, LEFT, SIDES};
 use types::{
-    Action, DirectionalTravels, Facing, Fixed, FloorResponse, Heading, TravelDistance, ZERO, px,
+    Action, DirectionalTravels, Facing, Fixed, FloorResponse, Heading, Side, TravelDistance, ZERO,
+    px,
 };
 
 /// What her moves leave for the rest of the frame: what they met, the floor response a stop
@@ -34,12 +38,13 @@ pub struct MovesMade {
 }
 
 impl Samus {
-    /// `MovesAsShePosed`: the frame's moves. At the frame's start a rise ends where it does
-    /// (`RisingAndFalling`). Facing the screen she makes
+    /// `MovesAsShePosed`: the frame's moves, as `motion` decides them. At the frame's start a
+    /// rise ends where it does (`RisingAndFalling`). Facing the screen she makes
     /// no move of her own, but a moving elevator carries her down (`RidingTheElevator`).
     /// `WhatHerMovesMet`: a wall stop while running wins over walking off a ledge, once that
     /// walk off has acted on her vertical motion.
     pub(crate) fn make_moves(&mut self, situation: &Situation, t: &mut Tick) -> MovesMade {
+        let moves = self.motion(situation);
         self.vertical.end_rise(situation.doing, t.frame.pad);
         let mut made = MovesMade {
             met: None,
@@ -55,7 +60,7 @@ impl Samus {
             }
             false
         } else {
-            self.move_as_posed(situation, &mut made, t)
+            self.move_as_posed(situation, moves, &mut made, t)
         };
         made.left = *self;
         self.vertical.meet_in_moves(made.met);
@@ -65,21 +70,58 @@ impl Samus {
         made
     }
 
-    /// `SpeedBuildsAndBrakes`, `Dash`, `Dashing`, `WallJump`, `Jumping`: her moves as her
-    /// situation says: her dash, then her speed, then her horizontal move; her moves as standing,
-    /// against the wall or as any turn end her dashing; the near-wall test; space jump's jump
-    /// again; then, unless she kicked off a wall or is taking off, her vertical move. Returns
-    /// whether a wall stopped her horizontal move.
-    fn move_as_posed(&mut self, s: &Situation, made: &mut MovesMade, t: &mut Tick) -> bool {
+    /// §12: how she moves this frame, decided once: her situation's own moves, but in
+    /// `Recoiling` or the ball with a push under way, the push's (`PushMoves`).
+    fn motion(&self, s: &Situation) -> Moves {
+        // `PushMoves`: the push moves her only in the poses that take it as they started the
+        // frame: `Recoiling`, the pose a push throws her into, and the ball, which keeps its pose
+        // under a push (`PushStarts`). In any other pose, the leap included, she moves as it says
+        // (`PushEnds`, `BackwardLeap`).
+        let takes_the_push = s.doing == Doing::Recoiling || s.footing == Footing::Ball;
+        match self.knockback.push {
+            Some(push) if takes_the_push => Moves::Pushed(push),
+            Some(_) | None => s.moves,
+        }
+    }
+
+    /// The side her horizontal move goes to: the push's side (`PushMoves`), backward in the leap
+    /// (`BackwardLeap`), and otherwise the way her speed points, her facing's at 0
+    /// (`SpeedBuildsAndBrakes`).
+    fn moving_to(&self, moves: Moves) -> Side {
+        match moves {
+            Moves::Pushed(_) => self.knockback.side,
+            Moves::Leap => Side::of(self.pose.facing.back()),
+            Moves::Build(..)
+            | Moves::HaltsAfterDash
+            | Moves::Rest
+            | Moves::TakeOff
+            | Moves::DashKeepingSpeeds
+            | Moves::DropsInPlace => self.run.moving(self.pose.facing),
+        }
+    }
+
+    /// `SpeedBuildsAndBrakes`, `Dash`, `Dashing`, `WallJump`, `Jumping`: her moves as `moves`
+    /// says: her dash, then her speed, then her horizontal move; her moves as standing, against
+    /// the wall or as any turn end her dashing; the near-wall test; space jump's jump again;
+    /// then, unless she kicked off a wall or is taking off, her vertical move. Returns whether a
+    /// wall stopped her horizontal move.
+    fn move_as_posed(
+        &mut self,
+        s: &Situation,
+        moves: Moves,
+        made: &mut MovesMade,
+        t: &mut Tick,
+    ) -> bool {
         made.ran =
-            matches!(s.moves, Moves::Build(gait, _) if running_with_run_held(gait, t.frame.pad));
-        self.run.dash_for_moves(s.moves, t);
+            matches!(moves, Moves::Build(gait, _) if running_with_run_held(gait, t.frame.pad));
+        self.run.dash_for_moves(moves, t);
         let stride = self
             .run
-            .stride(s.moves, self.pose.facing, self.vertical.has_motion(), t);
+            .stride(moves, self.pose.facing, self.vertical.has_motion(), t);
         let amount = self.run.speed + self.run.dash;
-        let walled =
-            stride != Stride::Nothing && self.walk(stride, s.doing, amount, &mut made.travelled, t);
+        let to = self.moving_to(moves);
+        let walled = stride != Stride::Nothing
+            && self.walk(stride, s.doing, to, amount, &mut made.travelled, t);
         if matches!(
             s.doing,
             Doing::Standing | Doing::AgainstWall | Doing::Turning
@@ -91,15 +133,115 @@ impl Samus {
         if made.wall_test == WallTest::Kicked {
             made.met = Some(Met::WallKick);
         } else if s.doing != Doing::TakingOff {
-            let (met, floor_stop) = self.move_vertically(s.footing, amount, &mut made.travelled, t);
+            let (met, floor_stop) =
+                self.vertical_move(s.footing, moves, amount, &mut made.travelled, t);
             made.met = met;
             made.floor_stop = floor_stop;
         }
         walled
     }
 
+    /// Her vertical move as `moves` says: the push's (`PushMoves`), which meets nothing that
+    /// chooses her pose; the drop the frame after a push (`AfterThePush`); else the move of her
+    /// footing, the leap's from the moonfall where it starts with no vertical motion
+    /// (`BackwardLeap`). Returns what it met and the response a floor's stop made.
+    fn vertical_move(
+        &mut self,
+        footing: Footing,
+        moves: Moves,
+        amount: Fixed,
+        travelled: &mut DirectionalTravels,
+        t: &mut Tick,
+    ) -> (Option<Met>, Option<FloorResponse>) {
+        match moves {
+            Moves::Pushed(push) => {
+                self.thrown_clear(push, amount, travelled, t);
+                (None, None)
+            }
+            Moves::DropsInPlace => (Some(self.drop_after_the_push(amount, travelled, t)), None),
+            Moves::Leap => {
+                self.vertical.leap();
+                self.move_vertically(footing, amount, travelled, t)
+            }
+            Moves::Build(..)
+            | Moves::HaltsAfterDash
+            | Moves::Rest
+            | Moves::TakeOff
+            | Moves::DashKeepingSpeeds => self.move_vertically(footing, amount, travelled, t),
+        }
+    }
+
+    /// `PushMoves`: as `push` throws her. Thrown up, she moves up by her vertical speed, which
+    /// the pull then slows, a rise still; driven down, she moves down by the ground pull, her
+    /// horizontal move's speed and dash (`amount`) and 1 px, keeping her vertical speed, and a
+    /// floor that stops it leaves her no vertical motion and horizontal speed 0, following the
+    /// pad: the push goes on.
+    fn thrown_clear(
+        &mut self,
+        push: Push,
+        amount: Fixed,
+        travelled: &mut DirectionalTravels,
+        t: &mut Tick,
+    ) {
+        match push {
+            Push::Down => {
+                let by = self.pull(amount, t);
+                if self.vertical_step(by, travelled, t) {
+                    self.vertical.stand();
+                    self.run.stop();
+                }
+            }
+            Push::Up => {
+                self.vertical_step(self.vertical.speed, travelled, t);
+                self.vertical.grow(t.rules);
+            }
+        }
+    }
+
+    /// `AfterThePush`: with no horizontal move, her speed now points her facing's way; she moves
+    /// down by the ground pull, her speed and dash (`amount`) and 1 px. Returns what it met: a
+    /// floor, which lands her as from a straight jump, or none, and she falls.
+    fn drop_after_the_push(
+        &mut self,
+        amount: Fixed,
+        travelled: &mut DirectionalTravels,
+        t: &mut Tick,
+    ) -> Met {
+        self.run.way = Side::of(self.pose.facing);
+        let by = self.pull(amount, t);
+        if self.vertical_step(by, travelled, t) {
+            Met::Floor
+        } else {
+            Met::NoFloor
+        }
+    }
+
+    /// `FollowingTheGround`, `SlopesCarry`: the ground pull, her speed and dash (`amount`) plus
+    /// 1 px, or 1 px seated on a slope.
+    fn pull(&self, amount: Fixed, t: &Tick) -> Fixed {
+        if self.seat == Seat::Seated {
+            t.rules.ground_pull
+        } else {
+            amount + t.rules.ground_pull
+        }
+    }
+
+    /// A vertical move by the signed `by`, which she takes and whose travel is recorded
+    /// (`TravelledDistances`). Returns whether something stopped it.
+    fn vertical_step(
+        &mut self,
+        by: Fixed,
+        travelled: &mut DirectionalTravels,
+        t: &mut Tick,
+    ) -> bool {
+        let moved = self.move_up_or_down(by, t);
+        travelled[vertical_heading(by)] = moved.accepted;
+        self.take_result(&moved);
+        moved.stop.is_some()
+    }
+
     /// `SpeedBuildsAndBrakes`, `WallsAndCeilings`, `SlopesCarry`: her horizontal move, by her
-    /// speed and dash together (`amount`) or her dash alone, the way she moves. A wall that stops
+    /// speed and dash together (`amount`) or her dash alone, to the side `to`. A wall that stops
     /// it halts her and ends her dashing; a move by her dash that halts after it halts her, and
     /// as the ball ends her dashing too. Then the slope checks run. Returns whether a wall
     /// stopped it.
@@ -107,6 +249,7 @@ impl Samus {
         &mut self,
         stride: Stride,
         doing: Doing,
+        to: Side,
         amount: Fixed,
         travelled: &mut DirectionalTravels,
         t: &mut Tick,
@@ -116,7 +259,7 @@ impl Samus {
         } else {
             self.run.dash
         };
-        let heading = self.run.moving(self.pose.facing).heading();
+        let heading = to.heading();
         let (from, probe) = (self.bounds(t.frame), self.horizontal_probe());
         let moved = t.sideways(from, heading, by, probe);
         self.position = moved.to;
@@ -186,8 +329,7 @@ impl Samus {
     ) -> (Option<Met>, Option<FloorResponse>) {
         let course = self.vertical.course(footing);
         let by = match course {
-            Course::Pulled if self.seat == Seat::Seated => t.rules.ground_pull,
-            Course::Pulled => amount + t.rules.ground_pull,
+            Course::Pulled => self.pull(amount, t),
             Course::BallMovesByIt | Course::InTheAir => self.vertical.speed,
         };
         let moved = self.move_up_or_down(by, t);

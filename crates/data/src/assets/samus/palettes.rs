@@ -1,5 +1,5 @@
-//! Her palettes (docs/architecture/assets.md §3.2, `SamusPalettes`): her suit's by suit, and
-//! her shots' by the beams switched on.
+//! Her palettes (docs/architecture/assets.md §3.2, `SamusPalettes`): her suit's by suit, her
+//! hurt pulse's two, and her shots' by the beams switched on.
 
 pub use types::{Beam, Set};
 
@@ -31,6 +31,10 @@ pub struct BeamPalette {
 pub struct SamusPalettes {
     /// Her suit's, by suit.
     pub suits: Suits,
+    /// The colours her hurt pulse flashes her in.
+    pub hurt: Palette,
+    /// The grey that stands for her suit's colours in the hurt pulse while a cinematic is active.
+    pub cinematic_grey: Palette,
     /// Her shots', one for each combination of beams she can have switched on.
     pub beams: Vec<BeamPalette>,
 }

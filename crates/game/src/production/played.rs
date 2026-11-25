@@ -26,11 +26,13 @@
 //! passage's calls is done, the room's loading loads its part of the next room; building it
 //! replaces her room: what her moves meet, its doors to other rooms and the camera's room.
 //!
-//! Health plays first. Her animation reads the energy the frame starts with; the HUD plays after
-//! her moves, reading her position after them and the energy Health leaves.
-//!
-//! The station's actors run before she moves, reading where she was at the end of the last
-//! frame; her motion meets the boxes of the Ceres doors that were solid as the frame began.
+//! Her movement's frame is two steps: her moves, then her reaction to the frame's hit. Between
+//! them the station's actors run and then Health; no owner here judges a hit yet, so the hit is
+//! none. The actors read where she was at the end of the last frame, and her motion meets the
+//! boxes of the Ceres doors that were solid as the frame began. Her appearance reads the energy
+//! the frame starts with and whether her reaction started a push, and sets her row of the
+//! screen's colours while her hurt colours pulse; the HUD plays after her moves, reading her
+//! position after them and the energy Health leaves.
 //! While the elevator's pad holds her, her moves and her animation don't run, and the pad sets
 //! her height after her frame. Each frame of work begins by drawing the game's random number
 //! once.
@@ -63,7 +65,7 @@ use crate::production::connected::inputs::Inputs;
 use crate::production::content::MovementContent;
 use crate::production::health_tail::HealthPin;
 use crate::production::hud::HudPin;
-use crate::production::room_loading::{LoadFault, Rooms};
+use crate::production::room_loading::{self, LoadFault, Rooms};
 use crate::production::shaft::LightsFault;
 use crate::state::owned::CameraPin;
 use boss_ceres_ridley::{Lights, RidleyContent, RidleyPlacing, RidleyRun};
@@ -235,18 +237,27 @@ impl State {
         if inputs.items[Item::VariaSuit] || inputs.items[Item::GravitySuit] {
             return Err(Fault::Suit);
         }
-        let health = self.health_frame(rules);
         let room = camera::room(&self.passage.room.camera)?;
         let random = self.frame.drawn(passing);
-        // The enemies run before she moves, but her motion meets the doors as they block when
-        // the frame began.
         let mut palette = self.palette;
-        let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;
-        let her = if self.station.pad_and_cover.holds_her() {
-            self.samus.held()
-        } else {
-            self.her_frame(inputs, content, rules)?
+        // Between her moves and her reaction: the enemies, reading her as the frame began, then
+        // Health. No owner here judges a hit, so the frame's hit is none.
+        let mut between = |_after_moves: types::Position| {
+            let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;
+            let health = self.health_frame(rules);
+            Ok(((enemies, health), None))
         };
+        let (her, (enemies, health)) = if self.station.pad_and_cover.holds_her() {
+            let (between, _) = between(self.samus.movement.0.position)?;
+            (self.samus.held(), between)
+        } else {
+            self.her_frame(inputs, content, rules, between)?
+        };
+        if let (Some(row), Some(colours)) =
+            (room_loading::suit_row(&mut palette.screen), her.colours)
+        {
+            *row = colours.0;
+        }
         let mut samus = her.samus;
         let pad_and_cover = self.station.pad(&mut samus, rules);
         let camera = self.followed(&room, &her, &samus, rules);

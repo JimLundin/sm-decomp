@@ -2,19 +2,23 @@
 //! Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels.
 //!
 //! Every rule names the spec entry it comes from. `samus` holds her state and a frame's
-//! outputs; `step` plays a whole frame in the spec's order: `moves` her moves as she posed,
-//! then `change` the pose she takes, with `fit` its pose fit. `run` is her horizontal motion
-//! and `vertical` her vertical motion, each a value with its own rules; `collide` what her moves
+//! outputs; `step` plays a frame in its two steps (§12): `moves` her moves as she posed and the
+//! pose they ask for, then, once the frame's hit is known, `change` the pose she takes, with
+//! `fit` its pose fit, and `knockback` a hit's push. `run` is her horizontal motion and
+//! `vertical` her vertical motion, each a value with its own rules; `collide` what her moves
 //! meet, `jump_held` jump held through, and `chart` with `situation` and `rows` the pose chart;
 //! `rules` the tuning parameters and `catalogue` the spec's entries.
 //!
 //! A caller holds a `Samus`, every part of her state public (her `Run` with its `Dashing`,
-//! `Vertical`, pose, `Choices`, `Seat` and `JumpHeld`), and steps her a `Frame` at a time
-//! (`Samus::step`) in a `World` under `Rules` (every tuning value the spec's entries list as a
-//! parameter, `Rules::default()` the vanilla game's), reading the frame's `Outcome` (what it gives the
-//! camera, the world and her animation, §1, §1.4 and `TouchedCells`, her sprite as the shared
-//! `types::Sprite`), or `UnknownPose` for a pose no situation names. The pose chart alone answers
-//! through `Moment::next_pose`.
+//! `Vertical`, pose, `Choices`, `Seat`, `JumpHeld` and `Knockback`), and steps her a `Frame` at a
+//! time in a `World` under `Rules` (every tuning value the spec's entries list as a parameter,
+//! `Rules::default()` the vanilla game's). A frame is two calls in order: `Samus::moves`, whose
+//! `HerMoves` gives her position after her moves, from which the hitter judges the frame's hit
+//! (`types::Hit`, or none); then `Samus::react` with that hit, which plays the rest of the frame
+//! and returns its `Outcome` (what it gives the camera, the world and her animation, §1, §1.4,
+//! §12's push started and `TouchedCells`, her sprite as the shared `types::Sprite`). `moves`
+//! gives `UnknownPose` for a pose no situation names. The pose chart alone answers through
+//! `Moment::next_pose`.
 //!
 //! Spec: `TravelledDistances`. `Outcome::travelled` directly reports a fresh complete
 //! `DirectionalTravels` map of signed `TravelDistance`s after collision. A caller retains
@@ -32,24 +36,28 @@
 //! # An ordinary call
 //!
 //! Restore the caller's complete serde `Samus` (position, pose, `Run`, `Vertical` with its
-//! bounces and phase, `Choices`, `Seat` and `JumpHeld`); a start mid-play with no history
-//! gives `Choices::starting_in` its pose. Before the frame's moves, weapons read the
+//! bounces and phase, `Choices`, `Seat`, `JumpHeld` and `Knockback`); a start mid-play with no
+//! history gives `Choices::starting_in` its pose. Before the frame's moves, weapons read the
 //! caller-held `TravelledDistances` and pending firing aim; the cannon pass clears pending aim.
 //! Appearance's first half supplies the frame's clip end and spin-turned-far result, and the
 //! sprite it selected before movement; progress supplies the items switched on, the mode
 //! cinematic and elevator status, input the held and just-pressed actions, and the game the
 //! frame's parity and the poses' bodies and cannon headings.
 //!
-//! Build a `Frame` with those inputs and call `samus.step(&frame, &world, &rules)` once. It
-//! plays the whole frame and leaves `samus` her State at the frame's end: save all of it for
-//! the next frame. Keep `outcome.travelled` for the next cannon opportunity, and replace the
+//! Build a `Frame` with those inputs and call `samus.moves(&frame, &world, &rules)`; the hitter
+//! judges the frame's hit from `position_after_moves()` and the body of the pose she started
+//! in, samus-health takes its damage, and `samus.react(moves, hit)` plays the rest of the frame
+//! and leaves `samus` her State at the frame's end: save all of it for the next frame. Between
+//! the two calls `samus` is still her State at the frame's start. Keep `outcome.travelled` for
+//! the next cannon opportunity, and replace the
 //! pending aim only when `outcome.pending_aim` publishes a heading. A frame the surrounding mode
 //! skips calls nothing and keeps the caller's memory as it is.
 //!
 //! The world receives `inside` and the ordered `reached` cells; the mini-map
 //! `position_after_moves`; sound transport every ordered `touchdown_requests` record (identity,
 //! library and allowance), repeats kept; appearance's second half the start and end poses,
-//! `floor_response` with its speed, `touchdown_graphics` and the §1.4 outputs, and it may
+//! `floor_response` with its speed, `touchdown_graphics`, the §1.4 outputs and
+//! `push_started` (`HurtColours`), and it may
 //! append its own sound requests after movement's. None of these is State, and a frame with no
 //! touchdown reports none.
 //!
@@ -82,6 +90,7 @@ mod chart;
 mod collide;
 mod fit;
 mod jump_held;
+mod knockback;
 mod moves;
 mod rows;
 pub mod rules;
@@ -105,10 +114,13 @@ pub use types::{Direction, DirectionalTravels, FiringDirection, TravelDistance};
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use chart::Moment;
 pub use jump_held::{FrameBefore, JumpHeld};
+pub use knockback::{Knockback, Push};
 pub use rows::Met;
 pub use rules::{Bounces, Rules, SpeedCap, WithItem};
 pub use run::{Carry, Dashing, Run};
 pub use samus::{Choices, Chosen, Outcome, Samus, Seat, StandingAnimation, WallTest};
 pub use situation::UnknownPose;
+pub use step::HerMoves;
 pub use tick::Frame;
+pub use types::{Hit, PushFrames};
 pub use vertical::{Phase, Vertical};
