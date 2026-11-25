@@ -2,7 +2,9 @@
 # Invented records and exports prove completed scans, record snapshots and independent exclusions.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-tmp=$(mktemp -d)
+. "$here/lib.sh"
+# Outside the home, where host tools would open and fetch the repositories this makes.
+tmp=$(mktemp -d "$(outside_home_temp)/canary-test-XXXXXX")
 pid=
 cleanup() {
   if [ -n "$pid" ]; then kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; fi

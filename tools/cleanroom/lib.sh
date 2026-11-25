@@ -158,6 +158,16 @@ export_mirror() {
   cp "$src/HEAD" "$2/HEAD"
 }
 
+# outside_home_temp: the temporary folder ($TEMP, else $TMPDIR, else /tmp), or /tmp when that
+# is in the home. The self-tests keep the repositories they make there: host tools open and fetch
+# the repositories they find under the home (VS Code's git extension runs `git fetch` in each one
+# it opens in its workspace), which adds to their .git what export_mirror and export_git_odd check.
+outside_home_temp() {
+  local base=${TEMP:-${TMPDIR:-/tmp}}
+  case "$(cd "$base" && pwd -P)/" in "$(cd "$HOME" && pwd -P)"/*) base=/tmp ;; esac
+  printf '%s\n' "$base"
+}
+
 # export_remotes DIR: the remote and url lines of DIR/.git/config, read as a file (no includes,
 # nothing run).
 export_remotes() {

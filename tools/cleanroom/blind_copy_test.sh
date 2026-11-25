@@ -6,7 +6,9 @@
 # Run from anywhere; exit 1 lists what went wrong.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
-tmp=$(mktemp -d "${TEMP:-/tmp}/blind-copy-XXXXXX")
+. "$here/lib.sh"
+# Outside the home, where host tools would open and fetch the repositories this makes.
+tmp=$(mktemp -d "$(outside_home_temp)/blind-copy-XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 bad=0
 fail() { echo "FAIL $*"; bad=1; }

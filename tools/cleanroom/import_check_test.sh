@@ -17,7 +17,9 @@ export GIT_AUTHOR_NAME=import-check GIT_AUTHOR_EMAIL=import-check@localhost
 export GIT_COMMITTER_NAME=import-check GIT_COMMITTER_EMAIL=import-check@localhost
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(git rev-parse --show-toplevel) || exit 1
-tmp=$(mktemp -d "${TEMP:-/tmp}/cc-import-XXXXXX")
+. "$here/lib.sh"
+# Outside the home, where host tools would open and fetch the repositories this makes.
+tmp=$(mktemp -d "$(outside_home_temp)/cc-import-XXXXXX")
 branch=cc-import-test-$$
 bad=0
 fail() { echo "FAIL $*"; bad=1; }

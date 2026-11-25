@@ -17,7 +17,9 @@ case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*) windows=1 py_default=$LOCALAPPDATA/sm-decomp-tools/python-3.13.7/python.exe ;;
   *) windows=0 py_default=python3 ;;
 esac
-tmp=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/launch-config-XXXXXX")
+. "$here/lib.sh"
+# Outside the home, where host tools would open and fetch the repositories this makes.
+tmp=$(mktemp -d "$(outside_home_temp)/launch-config-XXXXXX")
 tmp=$(cd "$tmp" && pwd -P)
 sibling=
 trap 'rm -rf "$tmp" ${sibling:+"$sibling"}' EXIT
