@@ -127,7 +127,9 @@ Each step names its owner, what it waits for, and its done-condition.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh --import`, which refuses a variant import
-   (L4) even in a crate whose older ones still only warn on the trunk, applies the commits to a
+   (L4) even in a crate whose older ones still only warn on the trunk, and `scan.sh` on each file
+   the commits add or change, which refuses a hit that file didn't hold at the export's start (the
+   trunk's own hits stay until a round removes them), applies the commits to a
    lane branch, takes the branch back if the export's crates break the capability rule (clippy's
    forbidden lints), then runs both clippy configurations of `tools/lane/gate.sh` over every clean
    crate in the workspace: an export holds one domain's model and `types`, so a change to

@@ -7,7 +7,8 @@
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
 # `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
 # code_check.sh --import (nothing cargo would run or read at build time, and no variant import
-# even in a crate whose old ones still only warn on the trunk), or nothing is applied. If BRANCH
+# even in a crate whose old ones still only warn on the trunk), and add no scan.sh hit to a file
+# that didn't hold it at the export's start, or nothing is applied. If BRANCH
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
 # `Role: integrator`), so the patches apply as they were made. The workspace takes every folder
 # of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring the model
@@ -66,6 +67,37 @@ checked=$(mktemp -d)
 trap 'rm -rf "$checked"' EXIT
 git_isolated "$dest" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
 bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh refused the export's crates; nothing applied"
+
+# The clean room's scan (scan.sh's checks 1-3: the original's addresses, names and shapes) on what
+# the implementer changed: each file the commits add or change, at the export's HEAD, against the
+# same file at the export's start. A finding counts as new when that file holds it, by class and
+# detail, more often than it did at the start, so the hits already on the trunk (a clean type
+# documented in the player's words that the lexicon also holds) don't block, and one the patches
+# add anywhere does. Line numbers are left out of the comparison: an edit above a hit moves it.
+mapfile -t changed < <(git_isolated "$dest" diff --name-only --no-renames --diff-filter=d "$root" HEAD -- crates/clean)
+existed=()
+[ ${#changed[@]} -eq 0 ] || mapfile -t existed < <(git_isolated "$dest" ls-tree -r --name-only "$root" -- "${changed[@]}")
+started=$(mktemp -d) hits=$(mktemp -d)
+trap 'rm -rf "$checked" "$started" "$hits"' EXIT
+[ ${#existed[@]} -eq 0 ] || git_isolated "$dest" archive --format=tar "$root" -- "${existed[@]}" | tar -x -m -C "$started"
+scan_hits() { # DIR FILE...: the scan's findings in DIR's FILEs, as `file: class: detail`
+  local dir=$1 out status=0 line
+  shift
+  [ $# -gt 0 ] || return 0
+  out=$(bash "$cleanroom_dir/scan.sh" "${@/#/$dir/}") || status=$?
+  [ "$status" -le 1 ] || die "scan.sh failed; nothing applied"
+  while IFS= read -r line; do
+    case $line in "$dir/"*) line=${line#"$dir/"}; echo "${line%%:*}: ${line#*:*: }" ;; esac
+  done <<<"$out"
+}
+scan_hits "$started" "${existed[@]}" >"$hits/start"
+scan_hits "$checked" "${changed[@]}" >"$hits/head"
+added=$(LC_ALL=C comm -13 <(LC_ALL=C sort "$hits/start") <(LC_ALL=C sort "$hits/head"))
+if [ -n "$added" ]; then
+  sed 's/^/scan: /' <<<"$added"
+  die "scan.sh finds $(wc -l <<<"$added") hits the export's start doesn't hold; nothing applied"
+fi
+echo "import: scan.sh finds nothing new in ${#changed[@]} changed files"
 
 cargo=${CARGO:-cargo}
 before=$(git rev-parse HEAD)
