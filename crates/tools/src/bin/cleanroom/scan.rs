@@ -401,9 +401,10 @@ fn identity_names(src: &str) -> Cow<'_, str> {
 
 /// Rust's non-zero integers, which the name check would split into the words "non zero". One is
 /// masked only where a `.rs` file's code writes it under its module, `num::NonZeroU16` (after
-/// `use core::num;`, or within `core::num::NonZeroU16`): the spelling no declaration of the
-/// file's own can take. A bare `NonZeroU16`, a declaration, a comment, a string and any other file
-/// are always scanned. Every entry is a spelling the barrier no longer reads, so an addition needs
+/// `use core::num;`, or within `core::num::NonZeroU16`), outside every macro: Rust's declaration
+/// syntax can't take that spelling, but a macro's matcher can (`decl!(num::NonZeroU16)` declaring
+/// `$n`), so a macro invocation's arguments and a `macro_rules!` body are never masked. A bare
+/// `NonZeroU16`, a declaration, a comment, a string and any other file are always scanned. Every entry is a spelling the barrier no longer reads, so an addition needs
 /// the same anchoring and a reviewer's sign-off.
 const NUM_TYPES: &[&str] = &[
     "NonZeroU8",
@@ -424,11 +425,15 @@ const NUM_TYPES: &[&str] = &[
 /// ends the phrase, so no words join across it.
 fn library_names(src: &str) -> Cow<'_, str> {
     let tokens = text::rust_spans(src);
+    let in_macro = macro_tokens(&tokens);
     let mut masked: Option<String> = None;
-    for path in tokens.windows(4) {
+    for (at, path) in tokens.windows(4).enumerate() {
         let [module, first, second, name] = path else {
             continue;
         };
+        if in_macro.get(at.saturating_add(3)).copied().unwrap_or(true) {
+            continue;
+        }
         let qualified = matches!(&module.token, Tok::Ident(word) if word == "num")
             && first.token == Tok::Punct(':')
             && second.token == Tok::Punct(':')
@@ -446,6 +451,56 @@ fn library_names(src: &str) -> Cow<'_, str> {
         );
     }
     masked.map_or(Cow::Borrowed(src), Cow::Owned)
+}
+
+/// Which tokens are inside a macro: a `name!` invocation's delimited arguments, or a
+/// `macro_rules! name` definition's body.
+fn macro_tokens(tokens: &[text::SpannedToken]) -> Vec<bool> {
+    let mut inside = vec![false; tokens.len()];
+    let mut at = 0usize;
+    while at < tokens.len() {
+        let bang = matches!(tokens.get(at).map(|t| &t.token), Some(Tok::Ident(_)))
+            && tokens
+                .get(at.saturating_add(1))
+                .is_some_and(|t| t.token == Tok::Punct('!'));
+        if !bang {
+            at = at.saturating_add(1);
+            continue;
+        }
+        // The delimiter after `!`, or after the name `macro_rules!` defines.
+        let mut open = at.saturating_add(2);
+        if matches!(tokens.get(open).map(|t| &t.token), Some(Tok::Ident(_))) {
+            open = open.saturating_add(1);
+        }
+        let Some(Tok::Punct(opening @ ('(' | '[' | '{'))) = tokens.get(open).map(|t| &t.token)
+        else {
+            at = at.saturating_add(1);
+            continue;
+        };
+        let closing = match opening {
+            '(' => ')',
+            '[' => ']',
+            _ => '}',
+        };
+        let mut depth = 0usize;
+        let mut end = open;
+        while let Some(t) = tokens.get(end) {
+            if t.token == Tok::Punct(*opening) {
+                depth = depth.saturating_add(1);
+            } else if t.token == Tok::Punct(closing) {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    break;
+                }
+            }
+            end = end.saturating_add(1);
+        }
+        for flag in inside.iter_mut().take(end.saturating_add(1)).skip(at) {
+            *flag = true;
+        }
+        at = end.saturating_add(1);
+    }
+    inside
 }
 
 /// Every check that applies to `path`'s contents.
@@ -578,6 +633,14 @@ mod tests {
             "type NonZeroU8 = u8;",
             "let r#NonZero = 1;",
             "struct S { NonZeroU8: u8 }",
+            // Macros that declare an item spelled only `num::NonZeroU16` in the source.
+            "macro_rules! decl { ($m:ident :: $n:ident) => { pub struct $n(pub u16); } }\n\
+             pub mod num { decl!(num::NonZeroU16); }\nfn f(x: num::NonZeroU16) {}",
+            "macro_rules! decl { (core::num::$n:ident) => { pub enum $n { A } } }\n\
+             pub mod num { decl!(core::num::NonZeroU16); }\nfn f() { let _ = num::NonZeroU16::A; }",
+            "macro_rules! decl { (num::$n:ident) => { pub struct $n; } }\n\
+             macro_rules! get { (num::$n:ident) => { $n } }\n\
+             decl!(num::NonZeroU16);\nfn g() -> get!(num::NonZeroU16) { todo!() }",
             // A module of the file's own named `num`: its declaration still scans.
             "mod num { pub struct NonZeroU16; }\nfn f(_: num::NonZeroU16) {}",
             // Comments and strings, even written under `num::`.
