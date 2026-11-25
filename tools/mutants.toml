@@ -1,7 +1,7 @@
 # Production wiring faults must fail at the recorded cut and field.
 # Each supported replay responsibility has a distinct semantic fault.
 
-# CI assigns each case to one worker. Put the expensive cases first so they start on separate workers.
+# CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 [[fault]]
 name = "movement-double-update"
