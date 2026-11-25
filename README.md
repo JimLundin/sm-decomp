@@ -23,7 +23,7 @@ The stretches being worked, in the order the movie plays them; the first not yet
 | Boot | `━·······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | The title and menus | `━━······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | **The intro** | `·━━━━━━━━━━━━━━━━━━━····················` | `████▓▓▓▓▓░░░░░░░░░░░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| The flight to Ceres | `···················━━━··················` | `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| The flight to Ceres | `···················━━━··················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Her arrival | `·····················━━·················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Rooms 1 to 5 | `······················━━━━━·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
 | Ridley's room | `··························━━━━━·········` | `▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░` | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |

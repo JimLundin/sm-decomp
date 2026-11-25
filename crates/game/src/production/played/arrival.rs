@@ -9,10 +9,12 @@
 //! fade takes its step after it.
 
 use super::passage::Passing;
-use super::{Content, Fault, Outputs, Rules};
+use super::{Content, Fault, Outputs, Rules, frame};
 use boss_ceres_ridley::PadAndCover;
 use screens_arrival::{Preparation, Start, SuitColours};
-use types::arrival::{ArrivalStage, ArrivalState};
+use types::arrival::{ArrivalStage, ArrivalState, FadeFrames};
+use types::brightness::{Blanking, Brightness, Level};
+use types::flight::Visibility;
 use world_doors::Finishing;
 
 /// The arrival, carried frame to frame.
@@ -54,18 +56,62 @@ impl State {
         preparation: Begun::UnderWay,
     };
 
+    /// Enter the new game's preparation with the brightness the flight left behind.
+    pub(super) fn after_flight(brightness: types::flight::Brightness) -> Self {
+        Self {
+            arrival: ArrivalState {
+                stage: ArrivalStage::Preparing,
+                brightness: Brightness {
+                    level: Level::new(brightness.level.get()).unwrap_or(Level::BLACK),
+                    blanking: match brightness.visibility {
+                        Visibility::Blanked => Blanking::Blanked,
+                        Visibility::Shown => Blanking::Shown,
+                    },
+                },
+                count: FadeFrames::NONE,
+            },
+            preparation: Begun::Not,
+        }
+    }
+
     /// Whether the start is still being made ready, so that no frame of play runs.
     #[must_use]
     pub fn preparing(&self) -> bool {
         self.arrival.stage == ArrivalStage::Preparing
     }
 
+    /// The preparation's single frame of work draws once. Its waits can finish additional
+    /// frames without drawing again.
+    pub(super) fn prepare_frame(
+        &mut self,
+        frame: frame::State,
+        begun: bool,
+        finishing: Finishing,
+        borrowed_random: Option<types::RandomSequence>,
+    ) -> frame::State {
+        let random = if begun && self.preparation == Begun::Not {
+            self.preparation = Begun::UnderWay;
+            frame::draw(borrowed_random.unwrap_or(frame.random))
+        } else {
+            frame.random
+        };
+        frame.after(finishing, random)
+    }
+
+    /// The arrival model's own State and outputs for one frame.
+    pub(super) fn advance(
+        &mut self,
+        preparation: Preparation<'_>,
+        rules: screens_arrival::Rules,
+    ) -> screens_arrival::Report {
+        screens_arrival::step(&mut self.arrival, preparation, rules)
+    }
+
     /// The fade's step after a frame of play (`PictureBrightens`, then `PlayBegins`); once she
     /// plays it changes nothing.
-    pub(super) fn after_play(self, rules: &Rules) -> Self {
-        let mut arrival = self.arrival;
-        screens_arrival::step(&mut arrival, Preparation::Underway, rules.arrival);
-        Self { arrival, ..self }
+    pub(super) fn after_play(mut self, rules: &Rules) -> Self {
+        self.advance(Preparation::Underway, rules.arrival);
+        self
     }
 }
 
@@ -79,21 +125,12 @@ impl super::State {
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
-        let mut preparation = self.arrival.preparation;
-        let random = if passing.work_begun && preparation == Begun::Not {
-            preparation = Begun::UnderWay;
-            self.frame.drawn(passing)
-        } else {
-            self.frame.random
-        };
         let start = Start {
             x: content.start_x,
             suit: suit(content, passing)?,
             goal: types::Palette(self.palette.goal),
         };
-        let mut arrival = self.arrival.arrival;
-        let report = screens_arrival::step(
-            &mut arrival,
+        let report = self.arrival.advance(
             if passing.start == Readiness::Ready {
                 Preparation::Ready(&start)
             } else {
@@ -111,20 +148,17 @@ impl super::State {
             self.palette.screen = arrived.colours.0;
             self.hud.0.mini_map = interface_hud::MiniMapPower::On;
         }
-        self.arrival = State {
-            arrival,
-            preparation,
-        };
         // The preparation's own waits for the frame's end are the frames it finishes.
         let doors = world_doors::Report {
-            finishing: if passing.work_done {
-                Finishing::Finished
-            } else {
-                Finishing::Overrun
-            },
+            finishing: frame::finishing(passing.work_done),
             ..world_doors::Report::play()
         };
-        self.frame = self.frame.after(doors.finishing, random);
+        self.frame = self.arrival.prepare_frame(
+            self.frame,
+            passing.work_begun,
+            doors.finishing,
+            passing.random,
+        );
         Ok(Outputs {
             movement: None,
             sounds: Vec::new(),

@@ -21,7 +21,7 @@
 //! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
 //! console's power-on plays the front end alone, from its own power-on State with no seed, on
 //! into the intro: `power_on`, with the screens' fields from the title on in `screens`. A row
-//! seeded at the flight to Ceres's first frame plays the flight alone, from its own start:
+//! seeded at the flight to Ceres's first frame plays the flight into the new game's preparation:
 //! `flight`. A row seeded as the intro begins or inside its last pages plays the intro alone,
 //! from its seed: `intro`.
 
@@ -223,7 +223,7 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
 ///
 /// A row from the console's power-on plays from its cut 0 with no seed.
 ///
-/// A row seeded at the flight to Ceres's first frame plays the flight from its start.
+/// A row seeded at the flight to Ceres's first frame plays the flight into the preparation.
 ///
 /// A row seeded as the intro begins or inside its last pages plays the intro from its seed.
 ///

@@ -1,18 +1,16 @@
-//! A run from the flight to Ceres's first frame: the flight alone, compared at each cut.
+//! A run from the flight to Ceres's first frame, through the new game's dark preparation.
 //!
-//! The run admits the flight's start itself, with the scene imported from the player's ROM, and
-//! reads nothing of the seed but that it is the flight's first frame: no room, no Samus, nothing
-//! of room play. Each cut borrows whether its frame of work finished, and at each finished one
-//! whether a track waited in audio's queue as the frame began ([`super::BORROWED`]).
+//! The run starts the flight with the scene imported from the player's ROM. It admits the frame
+//! counts and random sequence once at the flight's seed and carries both into the new game's
+//! preparation. [`BORROWED`] names the platform, audio and loading answers it reads.
 //!
-//! Until the flight is made ready the record holds the setup's working values, so only the
-//! brightness is compared. From then on, at every cut: the stage, the plane's angle, zoom and
-//! position, the transformation and the scroll it gives, the flash, the brightness, the fade's
-//! count, the label's step and hold, the sprites by the slot each kind takes and the places the
-//! sprite drawing is told, whether the flight is done, and the letters the frame typed.
-//! [`MASKED`] names what no owner here produces, which is not compared.
+//! The comparison checks which scene is active and both counters at every cut. In flight, the
+//! random number is checked at finished cuts, and the flight's brightness at every cut. Once the
+//! setup is done, it also checks the stage, plane, transform, scroll, flash, fade, label, sprites,
+//! and letters typed. In the preparation it checks the arrival's stage, brightness and random
+//! number at every cut. [`MASKED`] names the outputs outside this comparison.
 
-use super::{Report, Stop, rows::Rows, word};
+use super::{Report, Stop, arrival, frame, rows::Rows, word};
 use crate::replay::compare::{CompareFault, Observation, compare};
 use crate::replay::{data_failure, result::Outcome};
 use crate::source::{self, WramWord};
@@ -26,21 +24,26 @@ use std::path::Path;
 use types::Fixed;
 use types::flight::{Drifter, FlightSprite, FlightStage, Scene, State, TypedLetter, Visibility};
 
-/// The streams of the flight's frames no owner here produces, each with its writer.
+/// The streams outside the comparison and their owners.
 pub const MASKED: &[&str] = &[
     "CGRAM: the flight's colours as the setup loads them at cut 32 (T1), and the colours that cycle from the turn on (R4)",
     "OAM and the sprites' pictures and animation (E1)",
     "VRAM's mode 7 tilemap and tiles, with the picture's swap at the turn (E4)",
     "the BG1 tilemap but for the letters the label types: its emptying at the station, and each letter's palette, priority and flips (E2)",
     "the PPU mirrors the stages write: the layers and colour math at the turn, the layers, mode and bases at the station (E4)",
+    "the random number at lag cuts during flight, where the draw depends on timing (T1)",
+    "the save to cartridge memory as the new game begins (P2)",
+    "the preparation's working room, palettes, actors and HUD (R2, C1, H3)",
 ];
 
-/// What a flight run holds from its seed: only that it is the flight's first frame.
-const SEED_HELD: &[&str] = &[];
+/// The frame owner's initial State comes from the flight's first frame.
+const SEED_HELD: &[&str] = &["the frame counts and random number at the flight's start"];
 
 /// What a flight run borrows from the record (decision 35).
 const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
+    "lag: whether a frame of work begins, the last one's done",
+    "the start ready: the frame a new game's start is made ready (R2 and C1's loading, T1's lag)",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
 ];
 
@@ -192,7 +195,7 @@ pub(super) fn play(
         masked: MASKED,
     };
     let mut run = Run {
-        state: flight::start(),
+        journey: flight::Journey::start(frame::seed(&seed.wram)?),
         report: None,
         scene,
         label_steps: 0,
@@ -220,14 +223,14 @@ pub(super) fn play(
 /// The flight's State, what its last frame reported, its scene, and the label's steps the
 /// record has begun.
 struct Run {
-    state: State,
+    journey: flight::Journey,
     report: Option<FrameReport>,
     scene: Scene,
     label_steps: u64,
 }
 
 impl Run {
-    /// Play the interval ending at `current` and compare the flight with it. `began` is the
+    /// Play the interval ending at `current` and compare the active scene. `began` is the
     /// record its frame of work began after.
     fn step(
         &mut self,
@@ -236,61 +239,100 @@ impl Run {
         current: &FrameRecord,
         cut: u64,
     ) -> Result<(), Outcome> {
-        let at = |outcome: Outcome| {
-            if let Outcome::DataFailure { cut: None, source } = outcome {
-                Outcome::DataFailure {
-                    cut: Some(cut),
-                    source,
-                }
-            } else {
-                outcome
-            }
-        };
-        let frame = if super::finished(current) {
-            FrameEnd::Finished(if super::music_ready(&began.wram).map_err(at)? {
-                MusicQueue::Clear
-            } else {
-                MusicQueue::TrackWaits
-            })
+        let at = |outcome| super::at(cut, outcome);
+        let is_flight = matches!(self.journey.stage, flight::Stage::Flight(_));
+        let end = if super::finished(current) {
+            FrameEnd::Finished(
+                if !is_flight || super::music_ready(&began.wram).map_err(at)? {
+                    MusicQueue::Clear
+                } else {
+                    MusicQueue::TrackWaits
+                },
+            )
         } else {
             FrameEnd::Lagged
         };
-        let report =
-            flight::played(&mut self.state, frame, &self.scene, RULES).map_err(|fault| {
-                Outcome::Unsupported {
-                    cut: Some(cut),
-                    dependency: format!("played frame {fault:?}"),
-                }
+        let ready = if is_flight {
+            game::production::played::arrival::Readiness::NotYet
+        } else {
+            arrival::start(&previous.wram, &current.wram).map_err(at)?
+        };
+        let report = self
+            .journey
+            .step(
+                super::finished(previous),
+                end,
+                ready,
+                &self.scene,
+                RULES,
+                screens_arrival::Rules::REFERENCE,
+            )
+            .map_err(|fault| Outcome::Unsupported {
+                cut: Some(cut),
+                dependency: format!("played frame {fault:?}"),
             })?;
+        let recorded_flight = word(&current.wram, source::GAME_STATE).map_err(at)? == FLIGHT;
+        if recorded_flight != matches!(self.journey.stage, flight::Stage::Flight(_)) {
+            return Err(Outcome::Difference {
+                cut,
+                field: "flight.active".into(),
+            });
+        }
+        let (mut expected, mut actual) = match self.journey.stage {
+            flight::Stage::Flight(state) => self
+                .compared(&state, report, previous, current)
+                .map_err(at)?,
+            flight::Stage::Arrival(state) => (
+                arrival::expected(&current.wram, false).map_err(at)?,
+                arrival::actual(state),
+            ),
+        };
+        expected.extend(frame::expected(&current.wram).map_err(at)?);
+        actual.extend(frame::actual(self.journey.frame));
+        if !recorded_flight || super::finished(current) {
+            expected.push(frame::random_observation(
+                frame::random(&current.wram).map_err(at)?,
+            ));
+            actual.push(frame::random_observation(self.journey.frame.random));
+        }
+        compare(&expected, &actual).map_err(|fault| match fault {
+            CompareFault::Difference(field) => Outcome::Difference { cut, field },
+            CompareFault::EmptyExpected
+            | CompareFault::DuplicateField(_)
+            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played flight comparison"),
+        })
+    }
+
+    fn compared(
+        &mut self,
+        state: &State,
+        report: Option<FrameReport>,
+        previous: &FrameRecord,
+        current: &FrameRecord,
+    ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let typed = report.as_ref().and_then(|report| report.typed);
         if let Some(report) = report {
             self.report = Some(report);
         }
-        if step_begun(previous, current).map_err(at)? {
+        if step_begun(previous, current)? {
             self.label_steps = self.label_steps.saturating_add(1);
         }
-        let recorded = recorded(previous, current, self.label_steps).map_err(at)?;
-        let (expected, actual) = self.report.as_ref().map_or_else(
+        let recorded = recorded(previous, current, self.label_steps)?;
+        Ok(self.report.as_ref().map_or_else(
             // Not yet made ready: the record holds the setup's working values.
             || {
                 (
                     recorded.brightness(),
-                    Fields::brightness_of(&self.state).brightness(),
+                    Fields::brightness_of(state).brightness(),
                 )
             },
             |report| {
                 (
                     recorded.observations(),
-                    played(&self.state, report, typed).observations(),
+                    played(state, report, typed).observations(),
                 )
             },
-        );
-        compare(&expected, &actual).map_err(|fault| match fault {
-            CompareFault::Difference(field) => Outcome::Difference { cut, field },
-            CompareFault::EmptyExpected
-            | CompareFault::DuplicateField(_)
-            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
-        })
+        ))
     }
 }
 

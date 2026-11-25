@@ -25,11 +25,12 @@ pub struct State {
 impl State {
     /// The random number the frame's enemies read: drawn once as a frame of work begins.
     pub(super) fn drawn(self, passing: &Passing<'_>) -> types::RandomSequence {
-        let mut random = passing.random.unwrap_or(self.random);
+        let random = passing.random.unwrap_or(self.random);
         if passing.work_begun {
-            game_random::advance_random(&mut random);
+            draw(random)
+        } else {
+            random
         }
-        random
     }
 
     /// The counts after a frame the doors report `finishing` of, with the number it drew.
@@ -65,6 +66,21 @@ impl Counts {
             finished_frames: self.finished_frames.wrapping_add(finished),
             random,
         }
+    }
+}
+
+/// Draw from the carried sequence as a frame of work begins.
+pub(super) fn draw(mut random: types::RandomSequence) -> types::RandomSequence {
+    game_random::advance_random(&mut random);
+    random
+}
+
+/// The frame finished its work or overran the cut.
+pub(super) const fn finishing(done: bool) -> Finishing {
+    if done {
+        Finishing::Finished
+    } else {
+        Finishing::Overrun
     }
 }
 

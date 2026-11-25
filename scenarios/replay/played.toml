@@ -47,6 +47,18 @@ seed_frame = 7512
 frames = [7513, 8314]
 power_on = false
 
+# The flight into the dark preparation from the same seed, carrying both frame counters and
+# the random sequence. The start becomes ready on the next cut, which needs the initial HUD.
+[[run]]
+row = "any-fly-to-ceres"
+start = 0
+end = 995
+held = 994
+stop = { failed = "HudStartup" }
+seed_frame = 7512
+frames = [7513, 8506]
+power_on = false
+
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
 # made ready, she arrives on the elevator's pad at the top of the shaft, and the picture comes up.
 [[run]]
