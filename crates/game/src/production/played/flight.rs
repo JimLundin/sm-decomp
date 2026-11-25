@@ -29,6 +29,7 @@ pub struct Journey {
     pub stage: Stage,
     /// The game's counters and random sequence.
     pub frame: frame::State,
+    setup_already_drew: bool,
 }
 
 /// The scene that owns the picture.
@@ -54,6 +55,16 @@ impl Journey {
         Self {
             stage: Stage::Flight(start()),
             frame,
+            setup_already_drew: false,
+        }
+    }
+
+    /// Resume the unfinished setup whose opening draw is already in the frame State.
+    #[must_use]
+    pub fn resume_setup(frame: frame::State) -> Self {
+        Self {
+            setup_already_drew: true,
+            ..Self::start(frame)
         }
     }
 
@@ -81,7 +92,7 @@ impl Journey {
                 let report = played(flight, end, scene, rules);
                 // A flight frame draws once. Its audio service can overrun before that draw,
                 // so the frame owner accounts for it where the platform finishes the work.
-                let drew = report.is_some();
+                let drew = report.is_some() && !std::mem::take(&mut self.setup_already_drew);
                 (report, drew)
             }
             Stage::Arrival(arrival) => {

@@ -194,8 +194,16 @@ pub(super) fn play(
         borrowed: BORROWED,
         masked: MASKED,
     };
+    let frame = frame::seed(&seed.wram)?;
+    // Admission requires the flight's initial function. Its setup draws before its first
+    // lag cut, so a lagged seed in that function already includes the draw.
+    let journey = if super::finished(&seed) {
+        flight::Journey::start(frame)
+    } else {
+        flight::Journey::resume_setup(frame)
+    };
     let mut run = Run {
-        journey: flight::Journey::start(frame::seed(&seed.wram)?),
+        journey,
         report: None,
         scene,
         label_steps: 0,
@@ -750,6 +758,11 @@ mod tests {
             ..Default::default()
         };
         let report = super::super::play(&sources, "any-fly-to-ceres", 0, 802).unwrap();
+        for start in 1..32 {
+            let resumed = super::super::play(&sources, "any-fly-to-ceres", start, 32).unwrap();
+            assert_eq!(resumed.held, 32 - start, "flight setup seed {start}");
+            assert_eq!(resumed.stop, super::Stop::End, "flight setup seed {start}");
+        }
         diagnostic(format_args!(
             "PLAYED_ALONE row={} start={} held={} stop={:?}",
             report.row, report.start, report.held, report.stop
