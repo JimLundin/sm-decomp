@@ -137,3 +137,17 @@ stop = { failed = "movement.pose" }
 seed_frame = 10162
 frames = [10163, 10700]
 power_on = false
+
+# The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being
+# examined, its rise, the dissolve back to page 5's typed text, the wait for a press, page 6 and
+# the fade, to the row's last cut. The blank and the intro's end fall in the next frame, the
+# flight's seed.
+[[run]]
+row = "any-intro-6012"
+start = 1
+end = 1499
+held = 1498
+stop = "end"
+seed_frame = 6013
+frames = [6014, 7511]
+power_on = false

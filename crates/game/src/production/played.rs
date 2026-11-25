@@ -15,7 +15,7 @@
 //! the passage, the lights and the baby each set in turn. The fixture every owner's tests build
 //! State from is `tests`. Ahead of room play, [`front_end`] is which part of the game runs, from
 //! the console's power-on. Ahead of the new game, with no room, [`flight`] is the gunship's
-//! flight to Ceres.
+//! flight to Ceres, and [`intro`] the intro's last pages.
 //!
 //! Each model is stepped once through its own whole-frame entry. The frame commits every owner
 //! together or none.
@@ -47,6 +47,7 @@ pub mod frame;
 pub mod front_end;
 mod health;
 mod hud;
+pub mod intro;
 pub mod passage;
 mod ridley;
 pub mod samus;

@@ -20,7 +20,8 @@
 //! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
 //! console's power-on plays the front end alone, from its own power-on State with no seed:
 //! `power_on`. A row seeded at the flight to Ceres's first frame plays the flight alone, from its
-//! own start: `flight`.
+//! own start: `flight`. A row seeded inside the intro's last pages plays the intro alone, from
+//! its seed: `intro`.
 
 mod arrival;
 mod ceres_doors;
@@ -29,6 +30,7 @@ mod flight;
 mod frame;
 mod health;
 mod hud;
+mod intro;
 mod passage;
 mod platform;
 mod power_on;
@@ -214,6 +216,8 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
 ///
 /// A row seeded at the flight to Ceres's first frame plays the flight from its start.
 ///
+/// A row seeded inside the intro's last pages plays the intro from its seed.
+///
 /// # Errors
 /// Missing or mismatched lock, cache or content refuse the run before any cut is played, and a
 /// cut past every row that continues the run, or a row that doesn't follow on, stops it.
@@ -239,6 +243,9 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     let seed = rows.record(start)?;
     if flight::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
         return flight::play(&mut rows, &sources.rom, seed, row, start, end);
+    }
+    if intro::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
+        return intro::play(&mut rows, &sources.rom, seed, row, start, end);
     }
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,

@@ -489,6 +489,21 @@ const DOMAINS: &[Domain] = &[
             },
         ],
     },
+    // The frame's order, its report, the content and the catalogue are the domain's shared code.
+    Domain {
+        name: "screens-intro",
+        bridge: None,
+        adapters: &["production/played/intro.rs"],
+        providers: &[],
+        areas: &[
+            ("scripts", &["script.rs"]),
+            ("dissolve", &["dissolve.rs"]),
+            ("baby", &["baby.rs"]),
+            ("pages", &["pages.rs"]),
+            ("fade", &["fade.rs"]),
+        ],
+        apart: &[],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.

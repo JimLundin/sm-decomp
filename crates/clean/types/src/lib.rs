@@ -8,6 +8,7 @@ pub mod arrival;
 pub mod brightness;
 pub mod flight;
 pub mod haze;
+pub mod intro;
 pub mod power_on;
 pub mod quake;
 

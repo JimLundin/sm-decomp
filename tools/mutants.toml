@@ -662,3 +662,13 @@ after = '''let music = if let FrameEnd::Finished(music) = frame { music } else {
 case = "played any-fly-to-ceres 0 802"
 cut = 1
 field = "flight.stage"
+
+[[fault]]
+name = "played-intro-press-dropped"
+responsibility = "played"
+file = "crates/verify/src/replay/played/intro.rs"
+before = "pressed: controller.pressed != 0,"
+after = "pressed: false,"
+case = "played any-intro-6012 1 1499"
+cut = 1186
+field = "intro.stage"

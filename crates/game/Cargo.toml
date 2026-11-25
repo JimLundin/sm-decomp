@@ -22,6 +22,7 @@ enemy_interactions = { path = "../clean/enemy_interactions" }
 game_random = { path = "../clean/game_random" }
 screens_arrival = { path = "../clean/screens_arrival" }
 screens_flight = { path = "../clean/screens_flight" }
+screens_intro = { path = "../clean/screens_intro" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 screens_boot = { path = "../clean/screens_boot" }
 types = { path = "../clean/types" }

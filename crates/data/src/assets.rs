@@ -7,6 +7,7 @@ pub mod art;
 pub mod audio;
 pub mod fingerprint;
 pub mod flight;
+pub mod intro;
 pub mod projectile;
 pub mod samus;
 pub mod start;

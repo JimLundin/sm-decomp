@@ -106,6 +106,10 @@ rounds = 1
 name = "screens-flight"
 rounds = 1
 
+[[model]]
+name = "screens-intro"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -359,7 +363,7 @@ wave = 3
 rounds = 8
 # Inferred: P2 for the file a file select loads.
 reads = ["S1", "S5", "W1", "P2"]
-model = "screens-boot"
+model = ["screens-boot", "screens-intro"]
 status = "in-progress"
 
 [[domain]]

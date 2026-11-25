@@ -1,0 +1,398 @@
+# Test vectors for docs/behaviours/screens-intro.md (the intro's last pages).
+#
+# Format
+# - Each [[vector]] is one frame of the intro, from its state as the frame begins to its state as
+#   the frame ends: id; source ("recorded" or "constructed"); entries (the spec's behaviours it
+#   exercises); rules (optional); before; inputs (optional); after; output (optional); gone
+#   (optional).
+# - rules (optional): the reference rules this vector overrides: rhythm, frames (PictureDarkens's
+#   d). A vector without rules runs the reference one: rhythm 1.
+# - before and after hold only the parts the vector needs; a part absent from before is not
+#   there (no baby, no page, no eyes, no caret, no glows, no colours) or at its rest value (the
+#   dissolve's count 0, the height 0, the click turn off, level 15 Shown, the fade's count 0),
+#   and a part absent from after is not checked. The parts: stage ("ToScene", "Scene",
+#   "ToPageFive", "ToText", "Text", "WaitingForPress", "FadingOut", "Done"); dissolve, the
+#   dissolve's count; colours, a table by colour index of [[red, green, blue] levels,
+#   [red, green, blue] steps], in 256ths; height, the picture's height, px, signed;
+#   baby = { y, script, step, hold, count }; page and eyes = { script, step, hold, count };
+#   caret = { x, y, script, step, hold, count }; step is the index of the script's current step
+#   (-1 when placed and not yet run) and count the count left of a repeat (absent for none);
+#   glows, a list of [column, row, the set it takes next, frames left]; click, the click turn;
+#   level, 0 to 15; screen, "Blanked" or "Shown"; count, the fade's count.
+# - inputs (optional): press, bool (absent means false); scene, the scene's content: scripts, a
+#   table by name of step lists, each step one of { picture, hold }, { letter, column, row, hold }
+#   (a letter " " is a space), { hold } (shows nothing), { back = k },
+#   { repeat = k, times = n }, { signal } ("page5", "wait", "blink" or "finish") or
+#   { end = true }; a page is placed with "page5" or "page6", the eyes' page 6 script is
+#   "eyes_six", the caret's are "caret_steady" and "caret_blink"; sets = { to_scene = { dims,
+#   brightens }, to_text = { dims, brightens }, text }, colour indices, text the colours page 5
+#   starts black; full, a table by colour index of [red, green, blue] full levels, 0 to 31;
+#   caret_colours, a table by colour index of 15-bit colours in hex; caret_home, [x, y].
+# - output (optional): shown, a table by colour index of the colours shown in hex; typed, the
+#   letters typed as [{ letter, column, row }]; clicks, the number of clicks asked; cleared, the
+#   text cleared; music_stop, the music's stop asked; caret_shown, whether the caret shows;
+#   equipment_returned, the equipment returned. gone (optional): the parts no longer there.
+# - Content is invented: no script, picture, letter, colour index, set, full colour or place of
+#   the scene is the game's. The recorded cases (named by row and cut elsewhere) keep the State
+#   as recorded, each colour's levels and steps under an invented index, and give the scene
+#   invented content with the holds recorded.
+
+# Picture scripts: Samus's eyes and the baby.
+
+[[vector]]
+id = "R-eyes-hold"
+source = "recorded"
+entries = ["ScriptSteps"]
+before = { stage = "ToScene", dissolve = 123, eyes = { script = "eyes", step = 4, hold = 12 } }
+inputs = { scene = { sets = { to_scene = { dims = [], brightens = [] } }, scripts = { eyes = [{ picture = "o", hold = 128 }, { picture = "h", hold = 10 }, { picture = "s", hold = 10 }, { picture = "h", hold = 10 }, { picture = "o", hold = 80 }, { picture = "h", hold = 8 }, { picture = "s", hold = 8 }, { picture = "h", hold = 8 }, { back = 0 }] } } }
+after = { stage = "ToScene", dissolve = 122, eyes = { script = "eyes", step = 4, hold = 11 } }
+
+[[vector]]
+id = "R-eyes-next"
+source = "recorded"
+entries = ["ScriptSteps"]
+before = { stage = "ToScene", dissolve = 112, eyes = { script = "eyes", step = 4, hold = 1 } }
+inputs = { scene = { sets = { to_scene = { dims = [], brightens = [] } }, scripts = { eyes = [{ picture = "o", hold = 128 }, { picture = "h", hold = 10 }, { picture = "s", hold = 10 }, { picture = "h", hold = 10 }, { picture = "o", hold = 80 }, { picture = "h", hold = 8 }, { picture = "s", hold = 8 }, { picture = "h", hold = 8 }, { back = 0 }] } } }
+after = { stage = "ToScene", dissolve = 111, eyes = { script = "eyes", step = 5, hold = 8 } }
+
+[[vector]]
+id = "R-eyes-back"
+source = "recorded"
+entries = ["ScriptSteps"]
+before = { stage = "ToScene", dissolve = 88, eyes = { script = "eyes", step = 7, hold = 1 } }
+inputs = { scene = { sets = { to_scene = { dims = [], brightens = [] } }, scripts = { eyes = [{ picture = "o", hold = 128 }, { picture = "h", hold = 10 }, { picture = "s", hold = 10 }, { picture = "h", hold = 10 }, { picture = "o", hold = 80 }, { picture = "h", hold = 8 }, { picture = "s", hold = 8 }, { picture = "h", hold = 8 }, { back = 0 }] } } }
+after = { stage = "ToScene", dissolve = 87, eyes = { script = "eyes", step = 0, hold = 128 } }
+
+[[vector]]
+id = "C-script-picture"
+source = "constructed"
+entries = ["ScriptSteps"]
+before = { stage = "Text", eyes = { script = "eyes", step = 0, hold = 1 } }
+inputs = { scene = { scripts = { eyes = [{ picture = "a", hold = 3 }, { picture = "b", hold = 7 }] } } }
+after = { stage = "Text", eyes = { script = "eyes", step = 1, hold = 7 } }
+
+[[vector]]
+id = "C-script-back"
+source = "constructed"
+entries = ["ScriptSteps"]
+before = { stage = "Text", eyes = { script = "eyes", step = 2, hold = 1 } }
+inputs = { scene = { scripts = { eyes = [{ picture = "a", hold = 3 }, { picture = "b", hold = 7 }, { picture = "c", hold = 2 }, { back = 1 }] } } }
+after = { stage = "Text", eyes = { script = "eyes", step = 1, hold = 7 } }
+
+[[vector]]
+id = "C-script-repeat"
+source = "constructed"
+entries = ["ScriptSteps"]
+before = { stage = "Scene", dissolve = 65535, height = 8, baby = { y = 50, script = "baby", step = 1, hold = 1, count = 3 } }
+inputs = { scene = { scripts = { baby = [{ picture = "a", hold = 4 }, { picture = "b", hold = 6 }, { repeat = 0, times = 5 }, { picture = "c", hold = 9 }] } } }
+after = { stage = "Scene", baby = { y = 50, step = 0, hold = 4, count = 2 } }
+
+[[vector]]
+id = "C-script-repeat-last"
+source = "constructed"
+entries = ["ScriptSteps"]
+before = { stage = "Scene", dissolve = 65535, height = 8, baby = { y = 50, script = "baby", step = 1, hold = 1, count = 1 } }
+inputs = { scene = { scripts = { baby = [{ picture = "a", hold = 4 }, { picture = "b", hold = 6 }, { repeat = 0, times = 5 }, { picture = "c", hold = 9 }] } } }
+after = { stage = "Scene", baby = { y = 50, step = 3, hold = 9 } }
+
+[[vector]]
+id = "R-baby-signal"
+source = "recorded"
+entries = ["ScriptSteps", "PageFiveBegins"]
+before = { stage = "Scene", dissolve = 65535, height = 8, baby = { y = 79, script = "baby", step = 3, hold = 1, count = 1 } }
+inputs = { scene = { scripts = { baby = [{ picture = "a", hold = 10 }, { picture = "b", hold = 10 }, { picture = "c", hold = 10 }, { picture = "b", hold = 10 }, { repeat = 0, times = 10 }, { signal = "page5" }, { picture = "a", hold = 10 }, { picture = "b", hold = 10 }, { back = 6 }] } } }
+after = { stage = "ToPageFive", baby = { y = 79, step = 6, hold = 10 } }
+
+# The dissolves.
+
+[[vector]]
+id = "R-to-scene-step"
+source = "recorded"
+entries = ["PicturesDissolve"]
+before = { stage = "ToScene", dissolve = 124, colours = { 3 = [[0, 7936, 0], [0, 248, 0]], 40 = [[0, 0, 0], [248, 248, 232]] } }
+inputs = { scene = { sets = { to_scene = { dims = [3], brightens = [40] } } } }
+after = { stage = "ToScene", dissolve = 123, colours = { 3 = [[0, 7688, 0], [0, 248, 0]], 40 = [[248, 248, 232], [248, 248, 232]] } }
+output = { shown = { 3 = "03C0", 40 = "0000" } }
+
+[[vector]]
+id = "R-to-scene-hold"
+source = "recorded"
+entries = ["PicturesDissolve"]
+before = { stage = "ToScene", dissolve = 123, colours = { 3 = [[0, 7688, 0], [0, 248, 0]], 40 = [[248, 248, 232], [248, 248, 232]] } }
+inputs = { scene = { sets = { to_scene = { dims = [3], brightens = [40] } } } }
+after = { stage = "ToScene", dissolve = 122, colours = { 3 = [[0, 7688, 0], [0, 248, 0]], 40 = [[248, 248, 232], [248, 248, 232]] } }
+output = { shown = {} }
+
+[[vector]]
+id = "R-to-scene-end"
+source = "recorded"
+entries = ["PicturesDissolve", "DissolveEnds"]
+before = { stage = "ToScene", dissolve = 0, height = 8, colours = { 3 = [[0, 248, 0], [0, 248, 0]], 40 = [[7688, 7688, 7192], [248, 248, 232]] } }
+inputs = { scene = { sets = { to_scene = { dims = [3], brightens = [40] } } } }
+after = { stage = "Scene", dissolve = 65535, height = 8, colours = { 3 = [[0, 0, 0], [0, 248, 0]], 40 = [[7936, 7936, 7424], [248, 248, 232]] } }
+output = { shown = { 3 = "0000", 40 = "77FF" }, cleared = true }
+
+[[vector]]
+id = "R-to-text-step"
+source = "recorded"
+entries = ["PicturesDissolve"]
+before = { stage = "ToText", dissolve = 124, colours = { 3 = [[0, 0, 0], [0, 248, 0]], 40 = [[7936, 7936, 7424], [248, 248, 232]] } }
+inputs = { scene = { sets = { to_text = { dims = [40], brightens = [3] } } } }
+after = { stage = "ToText", dissolve = 123, colours = { 3 = [[0, 248, 0], [0, 248, 0]], 40 = [[7688, 7688, 7192], [248, 248, 232]] } }
+output = { shown = { 3 = "0000", 40 = "73DE" } }
+
+[[vector]]
+id = "R-to-text-hold"
+source = "recorded"
+entries = ["PicturesDissolve"]
+before = { stage = "ToText", dissolve = 126, colours = { 3 = [[0, 0, 0], [0, 248, 0]] } }
+inputs = { scene = { sets = { to_text = { dims = [40], brightens = [3] } } } }
+after = { stage = "ToText", dissolve = 125, colours = { 3 = [[0, 0, 0], [0, 248, 0]] } }
+output = { shown = {} }
+
+[[vector]]
+id = "R-to-text-end"
+source = "recorded"
+entries = ["PicturesDissolve", "DissolveEnds"]
+before = { stage = "ToText", dissolve = 0, colours = { 3 = [[0, 7688, 0], [0, 248, 0]], 40 = [[248, 248, 232], [248, 248, 232]] } }
+inputs = { scene = { sets = { to_text = { dims = [40], brightens = [3] } }, caret_colours = { 41 = "1234" } } }
+after = { stage = "Text", dissolve = 65535, colours = { 3 = [[0, 7936, 0], [0, 248, 0]], 40 = [[0, 0, 0], [248, 248, 232]] } }
+output = { shown = { 3 = "03E0", 40 = "0000", 41 = "1234" } }
+
+[[vector]]
+id = "C-dim-wraps"
+source = "constructed"
+entries = ["PicturesDissolve"]
+before = { stage = "ToScene", dissolve = 20, colours = { 7 = [[100, 300, 50], [200, 0, 50]], 9 = [[8000, 300, 0], [400, 10, 0]] } }
+inputs = { scene = { sets = { to_scene = { dims = [7], brightens = [9] } } } }
+after = { stage = "ToScene", dissolve = 19, colours = { 7 = [[65436, 300, 0], [200, 0, 50]], 9 = [[208, 310, 0], [400, 10, 0]] } }
+output = { shown = { 7 = "003F", 9 = "0020" } }
+
+# The baby.
+
+[[vector]]
+id = "R-baby-rises"
+source = "recorded"
+entries = ["BabyRises"]
+before = { stage = "ToScene", dissolve = 121, height = -23, baby = { y = 110, script = "baby", step = 1, hold = 4 } }
+inputs = { scene = { sets = { to_scene = { dims = [], brightens = [] } }, scripts = { baby = [{ picture = "a", hold = 10 }, { picture = "b", hold = 10 }] } } }
+after = { stage = "ToScene", dissolve = 120, height = -22, baby = { y = 109, step = 1, hold = 3 } }
+
+[[vector]]
+id = "C-baby-at-eight"
+source = "constructed"
+entries = ["BabyRises"]
+before = { stage = "ToScene", dissolve = 9, height = 8, baby = { y = 60, script = "baby", step = 0, hold = 6 } }
+inputs = { scene = { sets = { to_scene = { dims = [], brightens = [] } }, scripts = { baby = [{ picture = "a", hold = 9 }] } } }
+after = { stage = "ToScene", dissolve = 8, height = 8, baby = { y = 60, step = 0, hold = 5 } }
+
+[[vector]]
+id = "R-baby-leaves"
+source = "recorded"
+entries = ["BabyLeaves"]
+before = { stage = "ToText", dissolve = 1, height = 8, baby = { y = 79, script = "baby", step = 0, hold = 4 } }
+inputs = { scene = { sets = { to_text = { dims = [], brightens = [] } }, scripts = { baby = [{ picture = "a", hold = 10 }] } } }
+after = { stage = "ToText", dissolve = 0 }
+gone = ["baby"]
+
+# The pages.
+
+[[vector]]
+id = "R-page5-begins"
+source = "recorded"
+entries = ["PageFiveBegins", "ScriptSteps"]
+before = { stage = "ToPageFive", dissolve = 65535, height = 8, colours = { 3 = [[0, 0, 0], [0, 248, 0]], 40 = [[7936, 7936, 7424], [248, 248, 232]] }, caret = { x = 8, y = 248, script = "caret_blink", step = 0, hold = 5 } }
+inputs = { scene = { sets = { text = [3] }, full = { 3 = [0, 31, 0], 40 = [31, 31, 29] }, caret_home = [8, 24], scripts = { page5 = [{ hold = 1 }, { letter = "Q", column = 1, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "ToText", dissolve = 127, colours = { 3 = [[0, 0, 0], [0, 248, 0]], 40 = [[7936, 7936, 7424], [248, 248, 232]] }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 }, page = { script = "page5", step = 0, hold = 1 }, click = false }
+output = { shown = { 3 = "0000", 40 = "77FF" }, caret_shown = true }
+
+[[vector]]
+id = "C-page-begins"
+source = "constructed"
+entries = ["PageFiveBegins"]
+before = { stage = "ToPageFive", dissolve = 50, click = true, colours = { 2 = [[10, 20, 30], [1, 1, 1]], 5 = [[0, 0, 0], [0, 0, 0]] } }
+inputs = { scene = { sets = { text = [2] }, full = { 2 = [4, 5, 6], 5 = [10, 0, 31] }, caret_home = [40, 16], scripts = { page5 = [{ hold = 3 }], caret_steady = [{ picture = "caret", hold = 2 }, { back = 0 }] } } }
+after = { stage = "ToText", dissolve = 127, colours = { 2 = [[0, 0, 0], [32, 40, 48]], 5 = [[2560, 0, 7936], [80, 0, 248]] }, caret = { x = 40, y = 16, script = "caret_steady", step = 0, hold = 2 }, page = { script = "page5", step = 0, hold = 3 }, click = false }
+output = { shown = { 2 = "0000", 5 = "7C0A" } }
+
+[[vector]]
+id = "R-letter"
+source = "recorded"
+entries = ["LetterIsTyped", "LetterGlows", "CaretBlinks"]
+before = { stage = "ToText", dissolve = 127, page = { script = "page5", step = 0, hold = 1 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 }, click = false }
+inputs = { scene = { sets = { to_text = { dims = [], brightens = [] } }, scripts = { page5 = [{ hold = 1 }, { letter = "Q", column = 1, row = 4, hold = 5 }, { letter = "R", column = 2, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "ToText", dissolve = 126, page = { step = 1, hold = 5 }, caret = { x = 16, y = 24, step = 0, hold = 4 }, click = true, glows = [[1, 4, 1, 5]] }
+output = { typed = [{ letter = "Q", column = 1, row = 4 }], clicks = 1, caret_shown = true }
+
+[[vector]]
+id = "C-letter-space"
+source = "constructed"
+entries = ["LetterIsTyped"]
+before = { stage = "Text", page = { script = "page5", step = 0, hold = 1 }, click = false }
+inputs = { scene = { scripts = { page5 = [{ hold = 1 }, { letter = " ", column = 3, row = 2, hold = 5 }, { letter = "R", column = 4, row = 2, hold = 5 }] } } }
+after = { stage = "Text", page = { step = 1, hold = 5 }, click = true, glows = [[3, 2, 1, 5]] }
+output = { typed = [{ letter = " ", column = 3, row = 2 }], clicks = 0 }
+
+[[vector]]
+id = "C-letter-glows-full"
+source = "constructed"
+entries = ["LetterIsTyped", "LetterGlows"]
+before = { stage = "Text", page = { script = "page5", step = 0, hold = 1 }, click = true, glows = [[1, 1, 1, 3], [2, 1, 1, 3], [3, 1, 1, 3], [4, 1, 1, 3], [5, 1, 1, 3], [6, 1, 1, 3], [7, 1, 1, 3], [8, 1, 1, 3]] }
+inputs = { scene = { scripts = { page5 = [{ hold = 1 }, { letter = "K", column = 9, row = 1, hold = 5 }, { letter = "R", column = 10, row = 1, hold = 5 }] } } }
+after = { stage = "Text", page = { step = 1, hold = 5 }, click = false, glows = [[1, 1, 1, 2], [2, 1, 1, 2], [3, 1, 1, 2], [4, 1, 1, 2], [5, 1, 1, 2], [6, 1, 1, 2], [7, 1, 1, 2], [8, 1, 1, 2]] }
+output = { clicks = 0 }
+
+[[vector]]
+id = "C-letter-last"
+source = "constructed"
+entries = ["LetterIsTyped"]
+before = { stage = "Text", page = { script = "page5", step = 0, hold = 1 }, caret = { x = 0, y = 0, script = "caret_steady", step = 0, hold = 9 }, click = false }
+inputs = { scene = { scripts = { page5 = [{ hold = 1 }, { letter = "Z", column = 6, row = 9, hold = 5 }, { signal = "blink" }, { hold = 4 }], caret_steady = [{ picture = "caret", hold = 9 }, { back = 0 }] } } }
+after = { stage = "Text", page = { step = 1, hold = 5 }, caret = { x = 8, y = 80, hold = 8 } }
+output = { clicks = 1 }
+
+[[vector]]
+id = "R-glow-hold"
+source = "recorded"
+entries = ["LetterGlows"]
+before = { stage = "ToText", dissolve = 126, glows = [[1, 4, 1, 5]] }
+inputs = { scene = { sets = { to_text = { dims = [], brightens = [] } } } }
+after = { stage = "ToText", glows = [[1, 4, 1, 4]] }
+
+[[vector]]
+id = "R-glow-step"
+source = "recorded"
+entries = ["LetterGlows"]
+before = { stage = "ToText", dissolve = 122, glows = [[1, 4, 1, 1]] }
+inputs = { scene = { sets = { to_text = { dims = [], brightens = [] } } } }
+after = { stage = "ToText", glows = [[1, 4, 2, 5]] }
+
+[[vector]]
+id = "R-glow-end"
+source = "recorded"
+entries = ["LetterGlows"]
+before = { stage = "Text", dissolve = 65535, glows = [[21, 14, 1, 1], [20, 14, 2, 1], [19, 14, 3, 1]] }
+after = { stage = "Text", glows = [[21, 14, 2, 5], [20, 14, 3, 5]] }
+
+[[vector]]
+id = "R-caret-blink"
+source = "recorded"
+entries = ["CaretBlinks", "ScriptSteps"]
+before = { stage = "FadingOut", level = 14, count = 1, caret = { x = 8, y = 56, script = "caret_blink", step = 1, hold = 1 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "FadingOut", level = 14, count = 0, caret = { x = 8, y = 56, script = "caret_blink", step = 0, hold = 5 } }
+output = { caret_shown = true }
+
+[[vector]]
+id = "C-caret-steady"
+source = "constructed"
+entries = ["CaretBlinks"]
+before = { stage = "Text", caret = { x = 30, y = 40, script = "caret_blink", step = 0, hold = 1 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 3 }, { hold = 2 }, { back = 0 }] } } }
+after = { stage = "Text", caret = { x = 30, y = 40, script = "caret_blink", step = 1, hold = 2 } }
+output = { caret_shown = false }
+
+[[vector]]
+id = "R-page5-end"
+source = "recorded"
+entries = ["ScriptSteps", "PageEnds", "CaretBlinks"]
+before = { stage = "Text", dissolve = 65535, page = { script = "page5", step = 1, hold = 1 }, caret = { x = 8, y = 120, script = "caret_steady", step = 0, hold = 5 } }
+inputs = { scene = { scripts = { page5 = [{ hold = 1 }, { letter = "Q", column = 1, row = 14, hold = 5 }, { signal = "wait" }, { end = true }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "WaitingForPress", caret = { x = 8, y = 120, script = "caret_blink", step = -1, hold = 1 } }
+gone = ["page"]
+
+[[vector]]
+id = "C-wait"
+source = "constructed"
+entries = ["PressTurnsThePage"]
+before = { stage = "WaitingForPress", dissolve = 65535, caret = { x = 8, y = 120, script = "caret_blink", step = 0, hold = 3 } }
+inputs = { press = false, scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "WaitingForPress", dissolve = 65535, caret = { x = 8, y = 120, step = 0, hold = 2 } }
+output = { cleared = false, music_stop = false }
+
+[[vector]]
+id = "R-page6-begins"
+source = "recorded"
+entries = ["PressTurnsThePage", "ScriptSteps"]
+before = { stage = "WaitingForPress", dissolve = 65535, eyes = { script = "eyes", step = 0, hold = 34 }, caret = { x = 8, y = 120, script = "caret_blink", step = -1, hold = 1 }, glows = [[21, 14, 2, 5], [20, 14, 3, 5]] }
+inputs = { press = true, scene = { caret_home = [8, 24], scripts = { eyes = [{ picture = "o", hold = 128 }], eyes_six = [{ picture = "s", hold = 64 }, { picture = "h", hold = 8 }, { picture = "t", hold = 16 }, { back = 2 }], page6 = [{ hold = 1 }, { letter = "C", column = 1, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "Text", page = { script = "page6", step = 0, hold = 1 }, eyes = { script = "eyes_six", step = 0, hold = 64 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 }, click = false, glows = [[21, 14, 2, 4], [20, 14, 3, 4]] }
+output = { cleared = true, music_stop = true }
+
+[[vector]]
+id = "R-page6-caret"
+source = "recorded"
+entries = ["CaretBlinks", "ScriptSteps"]
+before = { stage = "Text", dissolve = 65535, page = { script = "page6", step = 1, hold = 1 }, caret = { x = 8, y = 56, script = "caret_steady", step = 0, hold = 5 } }
+inputs = { scene = { scripts = { page6 = [{ hold = 1 }, { letter = "Q", column = 8, row = 6, hold = 5 }, { signal = "blink" }, { hold = 128 }, { signal = "finish" }, { end = true }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "Text", page = { step = 3, hold = 128 }, caret = { x = 8, y = 56, script = "caret_blink", step = -1, hold = 1 } }
+
+[[vector]]
+id = "R-page6-end"
+source = "recorded"
+entries = ["PageEnds", "ScriptSteps"]
+before = { stage = "Text", dissolve = 65535, page = { script = "page6", step = 3, hold = 1 } }
+inputs = { scene = { scripts = { page6 = [{ hold = 1 }, { letter = "Q", column = 8, row = 6, hold = 5 }, { signal = "blink" }, { hold = 128 }, { signal = "finish" }, { end = true }] } } }
+after = { stage = "FadingOut", level = 15, screen = "Shown", count = 1 }
+gone = ["page"]
+
+[[vector]]
+id = "C-finish-adjusted"
+source = "constructed"
+entries = ["PageEnds", "PictureDarkens"]
+rules = { rhythm = 4 }
+before = { stage = "Text", page = { script = "page6", step = 0, hold = 1 }, level = 12 }
+inputs = { scene = { scripts = { page6 = [{ hold = 6 }, { hold = 2 }, { signal = "finish" }, { end = true }] } } }
+after = { stage = "Text", level = 12, page = { step = 1, hold = 2 } }
+
+[[vector]]
+id = "C-finish-adjusted-end"
+source = "constructed"
+entries = ["PageEnds", "PictureDarkens"]
+rules = { rhythm = 4 }
+before = { stage = "Text", page = { script = "page6", step = 1, hold = 1 }, level = 12 }
+inputs = { scene = { scripts = { page6 = [{ hold = 6 }, { hold = 2 }, { signal = "finish" }, { end = true }] } } }
+after = { stage = "FadingOut", level = 12, count = 4 }
+gone = ["page"]
+
+# The fade out and the end.
+
+[[vector]]
+id = "R-fade-count"
+source = "recorded"
+entries = ["PictureDarkens"]
+before = { stage = "FadingOut", level = 15, screen = "Shown", count = 1 }
+after = { stage = "FadingOut", level = 15, screen = "Shown", count = 0 }
+
+[[vector]]
+id = "R-fade-step"
+source = "recorded"
+entries = ["PictureDarkens", "IntroEnds"]
+before = { stage = "FadingOut", level = 15, screen = "Shown", count = 0 }
+after = { stage = "FadingOut", level = 14, screen = "Shown", count = 1 }
+
+[[vector]]
+id = "C-fade-adjusted"
+source = "constructed"
+entries = ["PictureDarkens"]
+rules = { rhythm = 3 }
+before = { stage = "FadingOut", level = 9, screen = "Shown", count = 0 }
+after = { stage = "FadingOut", level = 8, screen = "Shown", count = 3 }
+
+[[vector]]
+id = "C-fade-at-zero"
+source = "constructed"
+entries = ["PictureDarkens", "IntroEnds"]
+before = { stage = "FadingOut", level = 0, screen = "Shown", count = 0 }
+after = { stage = "FadingOut", level = 0, screen = "Shown", count = 1 }
+output = { equipment_returned = false }
+
+[[vector]]
+id = "R-fade-last"
+source = "recorded"
+entries = ["PictureDarkens", "IntroEnds"]
+before = { stage = "FadingOut", height = 8, level = 1, screen = "Shown", count = 0, eyes = { script = "eyes_six", step = 2, hold = 15 }, caret = { x = 8, y = 56, script = "caret_blink", step = 1, hold = 4 }, click = true }
+inputs = { scene = { scripts = { eyes_six = [{ picture = "s", hold = 64 }, { picture = "h", hold = 8 }, { picture = "t", hold = 16 }, { back = 2 }], caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "Done", dissolve = 0, height = 0, level = 0, screen = "Blanked", count = 0, click = false }
+output = { equipment_returned = true }
+gone = ["eyes", "page", "baby", "caret"]

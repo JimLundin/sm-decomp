@@ -108,6 +108,7 @@ dependencies = [
  "screens_arrival",
  "screens_boot",
  "screens_flight",
+ "screens_intro",
  "serde",
  "types",
  "weapons_projectiles",
@@ -276,6 +277,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "screens_intro"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.229"
 dependencies = [
@@ -417,6 +428,7 @@ dependencies = [
  "screens_arrival",
  "screens_boot",
  "screens_flight",
+ "screens_intro",
  "serde",
  "toml",
  "types",

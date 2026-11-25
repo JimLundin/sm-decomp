@@ -248,6 +248,26 @@ case `movement-ceres/carried-position-proximity` lost its gating obligation, whi
 diagnostic played run compares but does not gate. That loss is accepted until the played run
 is indexed.
 
+### The intro's last pages
+
+`any-intro-6012`, the intro's last pages, plays alone from cut 1, inside page 4's turn: the
+dissolve to the scene, the only stage a run is admitted at. The intro's State is admitted from
+the seed's intro work RAM (the stage, the dissolve's count, the colours' levels and steps and the
+colours shown, the picture's height, the baby, the page, the eyes, the caret, the glows, the
+click turn and the brightness), with the language from the options' setting; its content (the
+pages', the eyes', the baby's and the caret's scripts, the full colours, the dissolves' sets, the
+caret's colours and home) is imported from the player's ROM, and nothing of room play is read.
+It holds 1,498 cuts, 1,496 in full: at each finished cut the stage, the dissolve's count, the
+colours and the colours shown, the height, each script's name, step, hold and repeat count, the
+caret's place and whether it shows, the glows, the click turn, the clicks against the sound
+queue's index, the music's stop against the music queue's, the brightness, the fade's count and
+the equipment returned; at the 2 lag cuts, 129 and 403, which are borrowed, the brightness
+alone. VRAM (E2), OAM (E1), the colour blend's bands (E3) and the PPU mirrors (E3) are masked.
+The intro's end, the blank, `IntroEnds` and the equipment returned, falls in the next frame,
+the flight's seed, outside the row: the played run does not witness it, its vectors and unit
+test do, and it becomes live at the join into the flight. A model that never moves differs at
+cut 2 in `intro.dissolve`; a press dropped by the runner differs at cut 1186 in `intro.stage`.
+
 ### The flight to Ceres
 
 A row seeded at the flight to Ceres's first frame plays the flight alone

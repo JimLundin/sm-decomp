@@ -15,6 +15,7 @@ world_camera = { path = "../clean/world_camera" }
 interface_hud = { path = "../clean/interface_hud" }
 game_random = { path = "../clean/game_random" }
 screens_flight = { path = "../clean/screens_flight" }
+screens_intro = { path = "../clean/screens_intro" }
 game_time = { path = "../clean/game_time" }
 world_quake = { path = "../clean/world_quake" }
 world_haze = { path = "../clean/world_haze" }
