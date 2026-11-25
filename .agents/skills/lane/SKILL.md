@@ -44,7 +44,9 @@ role skill your brief names. For engineering work, follow the task route in AGEN
   runs verify's lib tests (the report, the README and the played runs), the planted faults' plan,
   the rule owners and the clean-room and lane tools' self-tests only when your branch changes their
   subject since `SM_GATE_BASE` (origin/main unless set; a stacked branch sets its base), and
-  `cargo deny` where cargo-deny is installed. A failing check names its finding.
+  `cargo deny` where cargo-deny is installed. A failing check names its finding. When a gate on
+  this machine already passed the same tree over the same base with the same tools, it prints
+  `GATE REUSED` naming that pass and runs nothing; `SM_GATE_FRESH=1` runs it anyway.
 - Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]`. On Linux (and CI) it is
   `cargo test -p <crate>...`. Windows only: Defender blocks fresh test executables (exit 126), so
   there it links each test target as a DLL and runs it through Python (`tools/lane/test_dll.py`;

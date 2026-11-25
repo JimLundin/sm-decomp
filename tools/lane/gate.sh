@@ -8,9 +8,18 @@
 # The checks run at once, each into its own log, and report in a fixed order when all are done.
 # They don't wait on each other's build locks: each clippy pass has its own target directory, and
 # verify's lib tests link for an explicit target triple (tools/lane/test_dll.py).
+# A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
+# of the commit where the branch left BASE) and what it ran with (the toolchain, cargo-deny or its
+# absence, Python, and the environment cargo, rustc and the gate read). Those decide what every
+# check reads, which checks run and how, so a later gate of the same key with nothing uncommitted
+# passed already: the root's gate of a squashed or picked commit whose tree is the lane's, on the
+# base the lane was gated on, says whose pass it reuses and runs nothing. A file git is told to
+# ignore changes to (skip-worktree, assume-unchanged) turns this off. SM_GATE_FRESH=1 runs the
+# checks anyway.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR, SM_GATE_BASE (the base,
-# default origin/main; a stacked branch names the branch it builds on). Off Windows the toolchain
-# is the cargo on PATH, which rustup points at rust-toolchain.toml's channel.
+# default origin/main; a stacked branch names the branch it builds on), SM_GATE_PASSED (where the
+# passes are recorded). Off Windows the toolchain is the cargo on PATH, which rustup points at
+# rust-toolchain.toml's channel.
 BASE=${SM_GATE_BASE:-origin/main}
 # Every subject check compares with BASE, so one that doesn't resolve stops the gate.
 git rev-parse --verify -q "$BASE^{commit}" >/dev/null || {
@@ -25,6 +34,29 @@ case "$(uname -s)" in
     ;;
   *) R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}" ;;
 esac
+# The dependency rules (deny.toml). cargo-deny is a prebuilt binary, found on PATH or in cargo's
+# bin directory; where it is missing the gate says so and CI's Quality holds the rules.
+deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny")
+[ -x "$deny" ] || [ -x "$deny.exe" ] || deny=
+PASSED="${SM_GATE_PASSED:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate-passed}"
+key=
+if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
+  ! git ls-files -v | grep -q '^[a-zS]' && left=$(git merge-base "$BASE" HEAD); then
+  ran_with=$({
+    "$R/rustc" --version 2>&1
+    if [ -n "$deny" ]; then echo "cargo-deny $deny"; cksum <"$deny" 2>/dev/null || cksum <"$deny.exe"
+    else echo "no cargo-deny"; fi
+    "${SM_PY:-python3}" --version 2>&1
+    env | LC_ALL=C grep -E '^(RUST|CARGO|CLIPPY_CONF_DIR=|SM_RUST_BIN=|SM_PY=)' | LC_ALL=C sort
+  } | git hash-object --stdin)
+  key=$(git rev-parse HEAD^{tree})-$(git rev-parse "$left^{tree}")-$ran_with
+fi
+if [ -n "$key" ] && [ "${SM_GATE_FRESH:-0}" != 1 ] && [ -s "$PASSED/$key" ]; then
+  echo "GATE REUSED: $(cat "$PASSED/$key") passed this tree over the same base, with the same tools"
+  [ -n "$deny" ] || echo "DENY SKIPPED: no cargo-deny here; CI's Quality runs cargo deny check bans"
+  echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
+  exit 0
+fi
 O="${SM_GATE_DIR:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1
 O_resolved=$(cd "$O" && pwd -P)
@@ -73,10 +105,7 @@ start clippy "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -
 # Clippy fingerprints CLIPPY_CONF_DIR, so this pass keeps its own target directory; sharing one
 # would re-check `types` and everything that depends on it in both passes on every run.
 CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" start clean-clippy "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze -p screens_boot -p screens_arrival -p screens_flight -p screens_intro -p screens_title -p screens_file_select -p screens_options --all-targets --no-deps -- -D warnings
-# The dependency rules (deny.toml). cargo-deny is a prebuilt binary, found on PATH or in cargo's
-# bin directory; where it is missing the gate says so and CI's Quality holds the rules.
-deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny")
-if [ -x "$deny" ] || [ -x "$deny.exe" ]; then
+if [ -n "$deny" ]; then
   PATH="$R:$PATH" start deny "$deny" --locked check bans
 else
   deny=; echo 0 >"$O/deny.status"
@@ -157,6 +186,12 @@ for check in verify-lib faults owners; do
   ! skipped "$check" || echo "${check^^} SKIPPED: no change to its subject since $BASE"
 done
 if [ "$ok" -eq 1 ]; then
+  # Recorded only when nothing is uncommitted at the end and HEAD's tree is the one gated.
+  if [ -n "$key" ] && [ -z "$(git status --porcelain --untracked-files=all)" ] &&
+    [ "$(git rev-parse HEAD^{tree})" = "${key%%-*}" ]; then
+    mkdir -p "$PASSED" &&
+      echo "$(git rev-parse --short HEAD) $(git branch --show-current) $(date -u +%FT%TZ)" >"$PASSED/$key"
+  fi
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
 else
   echo "GATE FAILED $(git branch --show-current)"

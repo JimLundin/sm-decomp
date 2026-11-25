@@ -133,7 +133,9 @@ The commands below apply to rounds and other work.
    Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for
    you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
 3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
-   each lane's commits, evidence and ratchet deltas.
+   each lane's commits, evidence and ratchet deltas. When a gate on this machine already passed
+   the same tree over the same base (the rebased round branch, or a lane based on `origin/main`),
+   it prints `GATE REUSED` naming that pass and runs nothing; `SM_GATE_FRESH=1` runs it anyway.
 4. In the background: `bash tools/lane/watch.sh <pr> <sha>`, with the sha you pushed: it lands only
    that head, so a push GitHub hasn't shown yet never lands the old head's green run. Exit 0
    landed (via `land.sh`, fast-forward only); 3 main moved (rebase, re-gate, re-push); 4 a run

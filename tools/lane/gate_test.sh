@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # gate_test.sh: gate.sh, run in a scratch repository whose tools and toolchain are fakes that
 # record that they ran, stops before any check on a base that doesn't resolve; passes a clean
-# branch; runs a check for an untracked file in its subject even where git status hides untracked
-# files; and shows a failing check's last lines when its tool prints none of the lines the gate
+# branch; reuses that pass for a new commit of the same tree over the same base, running nothing,
+# unless SM_GATE_FRESH=1, other compiler flags, cargo-deny's presence or a skip-worktree file
+# says otherwise; never reuses a failed gate; runs a check for an untracked file in its subject
+# even where git status hides untracked files; and shows a failing check's last lines when its tool prints none of the lines the gate
 # looks for. Run from anywhere; exit 1 lists what went wrong.
 here=$(cd "$(dirname "$0")" && pwd)
 bad=0
@@ -46,7 +48,8 @@ git -C "$repo" -c user.name=fixture -c user.email=fixture@invalid commit -qm "In
 gate() {
   rm -f "$ran"/*
   (cd "$repo" && env PATH="$bin:$PATH" SM_RUST_BIN="$bin" SM_GATE_DIR="$scratch/gate" \
-    SM_GATE_BASE=HEAD "$@" bash tools/lane/gate.sh 2>&1)
+    SM_GATE_PASSED="$scratch/passed" CARGO_HOME="$scratch/no-cargo-home" SM_GATE_BASE=HEAD "$@" \
+    bash tools/lane/gate.sh 2>&1)
 }
 ran() { [ -e "$ran/$1" ]; }
 
@@ -57,6 +60,44 @@ out=$(gate SM_GATE_BASE=no-such-base); status=$?
 out=$(gate) || fail "a clean branch failed: $out"
 grep -q '^GATE OK ' <<<"$out" || fail "a clean branch printed no GATE OK: $out"
 ! ran verify_lib || fail "a clean branch ran verify's lib tests: $out"
+
+commit() { git -C "$repo" -c user.name=fixture -c user.email=fixture@invalid commit -q "$@"; }
+# A new commit of the same tree over the same base, as a squash or a pick makes.
+commit --allow-empty -m "Same tree"
+out=$(gate) || fail "the same tree's second gate failed: $out"
+grep -q '^GATE REUSED: ' <<<"$out" || fail "the same tree's second gate reused nothing: $out"
+grep -q "^GATE OK $(git -C "$repo" rev-parse --short HEAD) " <<<"$out" || fail "the reused gate named another head: $out"
+[ -z "$(ls "$ran")" ] || fail "the reused gate ran $(ls "$ran"): $out"
+out=$(gate SM_GATE_FRESH=1) || fail "a fresh gate of a passed tree failed: $out"
+ran cargo || fail "SM_GATE_FRESH=1 ran no check: $out"
+# What the gate ran with is part of the key: other compiler flags, or cargo-deny installed or gone.
+out=$(gate RUSTFLAGS=--cap-lints=allow) || fail "a gate with other flags failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with other flags reused a pass: $out"
+# No cargo-deny: the fake moved away, and no directory on PATH holding a real one (CI's Quality
+# installs one); CARGO_HOME, the gate's other place to look, is empty for every gate here.
+mv "$bin/cargo-deny" "$bin/no-cargo-deny"
+no_deny=$bin
+while IFS= read -r dir; do
+  [ -z "$dir" ] || [ -e "$dir/cargo-deny" ] || [ -e "$dir/cargo-deny.exe" ] || no_deny=$no_deny:$dir
+done < <(tr : '\n' <<<"$PATH")
+out=$(gate PATH="$no_deny") || fail "a gate without cargo-deny failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate without cargo-deny reused a pass that ran it: $out"
+out=$(gate PATH="$no_deny") || fail "the second gate without cargo-deny failed: $out"
+grep -q '^DENY SKIPPED: ' <<<"$out" || fail "a reused gate without cargo-deny didn't say deny was skipped: $out"
+mv "$bin/no-cargo-deny" "$bin/cargo-deny"
+# A file whose changes git is told to ignore turns reuse off.
+git -C "$repo" update-index --skip-worktree scenarios/demo.toml
+out=$(gate) || fail "a gate with a skip-worktree file failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with a skip-worktree file reused a pass: $out"
+git -C "$repo" update-index --no-skip-worktree scenarios/demo.toml
+
+# A failed gate is not reused: the same tree's next gate runs the checks again.
+echo 'Invented crate rules.' >"$repo/scenarios/rules.toml"
+git -C "$repo" add -A && commit -m "Changed tree"
+out=$(gate GATE_TEST_STATUS_crate_rules=1) && fail "a failing crate-rules check passed: $out"
+out=$(gate) || fail "the failed tree's next gate failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a failed gate was reused: $out"
+ran crate_rules || fail "the failed tree's next gate ran no crate rules: $out"
 
 mkdir "$repo/scenarios/new"
 echo 'Invented untracked vectors.' >"$repo/scenarios/new/demo.toml"
@@ -72,5 +113,5 @@ out=$(gate GATE_TEST_STATUS_verify_lib=1 GATE_TEST_OUT_verify_lib='invented link
 grep -qx 'invented link failure' <<<"$out" || fail "verify's lib tests failed with no reason: $out"
 grep -qx 'invented decode error' <<<"$out" || fail "the owners check failed with no reason: $out"
 
-[ "$bad" -eq 0 ] && echo "GATE TEST OK: a bad base stops it, a clean branch passes, an untracked subject runs its check, a failure shows its log"
+[ "$bad" -eq 0 ] && echo "GATE TEST OK: a bad base stops it, a clean branch passes and its tree's next gate reuses it, a failed gate isn't reused, an untracked subject runs its check, a failure shows its log"
 exit $bad
