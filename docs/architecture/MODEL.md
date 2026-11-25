@@ -199,7 +199,8 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
 25. **A check is trusted once it is shown to fail** (Jim, 2026-11-12). Each domain's replay
     cases are run against planted one-line faults in its model, and a fault no vector or case
     catches is a finding against the cases. This runs in parallel with the rung's work, not
-    ahead of it.
+    ahead of it. A planted fault goes in production or in verify's played runner, never in a
+    clean crate: `tools/check_mutants.py` refuses any other file (2026-11-24).
 26. **The process freezes once the checks are shown to work** (Jim, 2026-11-12). When decision
     25's planted faults are caught on the rung's rows for the domains it needs, and the gain over
     the null model is the headline, the process freezes until the rung is reached: no new rule
