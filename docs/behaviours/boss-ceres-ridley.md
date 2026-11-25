@@ -977,3 +977,112 @@ read it back.
 **The baby goes on.** On every run of this part the baby runs as part 3's `BabyHeld`,
 `BabyFidgets` and `BabyCries` say, and its colours and cry are reported as in §12.4; every F-
 vector carries it [F-baby-cries].
+
+## 14. Part 4b, his tail at rest and its hit
+
+From the moment he starts moving (§13.4) until he takes off, Ridley's tail hangs still behind
+him, its tip a little right of him and below. When he is tangible and her protection has run
+out, she is hit as soon as her body comes within reach of the tip: she loses energy and is pushed
+back, away from the tip. In the movie she stands at the tip as he turns tangible and again each
+time her protection runs out, so she is hit three times before he takes off.
+
+**What this part reads and leaves.** It reads his phase and position (§13), her position and
+body once her movement has stepped this frame (samus-movement), her protection as the frame starts
+(samus-health) and the random number (§12.3). It hands the frame's hit to her energy
+(samus-health) and to her motion (samus-movement), and the tail's place to drawing. Left to
+others: the energy a hit takes and the protection it gives (samus-health's `TailHit`); the push
+itself, its leap and its poses (samus-movement's push); her hurt colours (samus-appearance); the
+tail's motion, its whip and its sound once he takes off, and the hits his moving tail gives
+(part 4c, with this part's `TailHits` on its tip); his wings, drawn only (C1); drawing the
+tail's segments (C1). In this part he holds nothing. Once he carries the baby off in his fake
+retreat, after her 100th hit on him (a later part), his tail hits her no more: that part states
+it, and part 4c's use of `TailHits` must carry it.
+
+**Running.** As in §13: on each run that ends in `BodyFading`, `ReadyToRoar` or `Roaring`, this
+part's entries run after §13's, so the run he turns tangible can hit. A run that ends before
+he moves leaves the tail as it was, and the run he takes off is part 4c's, tail included.
+
+### 14.1 What the player can tell
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| the tail's place | x, y: px, 16-bit: where the tip and all seven of its segments are while it rests; none before he moves | where the tail is drawn; where it reaches her | `TailHits`; output (drawing) |
+| the tail's curl | count, 8 to 23; 16 when he is placed | how tightly the tail curls once it moves (part 4c) | `TailCurls`; part 4c |
+| the tail's reach | px, `t` | how close she can come to the tip unhurt | `TailHits` |
+| the frame's hit | none, or a hit with its side (`Side`: `Left` or `Right`, the way it pushes her) and its push time (`PushFrames`, frames: 5) | she loses energy and is pushed back | output |
+
+### 14.2 What he remembers: state a caller can hold
+
+§13.2's, and the tail's curl: nothing else. The tail's place follows from his position while it
+rests. A caller can build him in any state this part allows and read it back.
+
+### 14.3 What he reads (Inputs)
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| her position | x, y: px, 16-bit, as her moves this frame leave it, before her reaction to a hit (samus-movement) | `TailHits` |
+| her body | her half-width and half-height, px, of the body she started the frame in, read from her movement's content (its body size for the pose she began the frame in); not an output of her movement | `TailHits` |
+| her protection | frames, as the frame starts (samus-health's remaining protection) | `TailHits` |
+| the random number | 16-bit, the one the baby reads on the same run (§12.3) | `TailCurls` |
+
+### 14.4 What he reports (Outputs)
+
+The hit is this part's alone: neither reader judges the reach, the side or the push time again.
+The frame runs in this order: her moves; his run reads where they left her, with the body she
+started the frame in, and reports the frame's hit; Health applies the hit; then her movement's
+reaction, its second step in the same frame, starts the push.
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| the frame's hit | none, or a hit with its side and push time (§14.1), made on his run, after her moves that frame | samus-health, in the same frame (the frame's tail impact, `TailImpact`: the same event, worth 15 energy there); samus-movement, in the same frame, in its reaction step after her moves (its §12 input, the frame's hit: `PushTime` and the push that follows) |
+| the tail's place | as in §14.1 | drawing (C1) |
+
+### TailAtRest
+- kind: mechanic.
+- summary: from the moment he starts moving until he takes off, his tail hangs still: its tip and
+  all its segments at one place behind him.
+- params: the place, 32 px right of his position and 16 px down (he faces left).
+- switch: Fixed.
+- A run that ends in `BodyFading`, `ReadyToRoar` or `Roaring` → the tail's place
+  `((x + 32) mod 2^16, (y + 16) mod 2^16)`, with `(x, y)` his position [T-rest-first,
+  T-rest-intangible, T-hit-left, T-wrap, T-wrap-across, T-wrap-y]
+- A run that ends before he moves reports no tail's place [T-curl-still].
+- So the tail's place doesn't move in this part: his position doesn't.
+- checked: oracle (recorded cases T2 to T7, every run 577-866 of the cached rows); constructed
+  (the wrap).
+
+### TailCurls
+- kind: mechanic.
+- summary: now and then, at random, the tail's curl changes; it shows only once the tail moves
+  (part 4c).
+- params: the change, at a random number of 65,280 or more, to 8 + (the random number mod 16).
+- switch: Fixed.
+- He is placed → curl 16 [T-placed]
+- A run that ends in `BodyFading`, `ReadyToRoar` or `Roaring`, the random number `n` 65,280 or
+  more → curl `8 + (n mod 16)` [T-curl-least, T-curl-most, T-curl-recorded]
+- Otherwise the curl stays: a random number under 65,280, or a run that ends before he moves
+  [T-curl-below, T-rest-first, T-curl-still].
+- checked: oracle (recorded cases T1 and T8; every run of the cached rows from his placing to
+  the escape); constructed.
+
+### TailHits
+- kind: mechanic and parameter.
+- summary: tangible, he hits her when her body comes within reach of his tail's tip and her
+  protection has run out; she is pushed away from the tip.
+- params: the tail's reach, `t` = 14 px (rule `tail_reach`); a rule from 0 to 255. The push
+  time, 5 frames.
+- switch: **Parameter**, the tail's reach (params).
+- Here `dx` and `dy` are her x less the tip's x and her y less the tip's y, each taken mod 2^16
+  as a signed number from −32,768 to 32,767, and `w` and `h` her half-width and half-height.
+- A run, tangible, her protection 0 as the frame starts, `|dx| < w + t` and `|dy| < h + t` →
+  the frame's hit, push time 5; side `Right` when `dx` ≥ 0, else `Left` [T-hit-left,
+  T-hit-right, T-hit-jumping, T-hit-ready, T-reach-x-inside, T-reach-y-inside, T-side-left,
+  T-wrap, T-wrap-across, T-wrap-y, T-reach-adjusted]
+- Otherwise there is no hit: she out of reach on either axis [T-reach-x-edge, T-reach-y-edge,
+  T-reach-adjusted-edge, T-curl-least], her protection over 0 as the frame starts
+  [T-protected], or he not tangible [T-rest-first, T-rest-intangible, T-curl-still].
+- So her side is judged on where her moves leave her that frame: at the tip's x or right of it
+  she is pushed right. With her protection of 96 frames she is hit every 96 frames while she
+  stays in reach.
+- checked: oracle (recorded cases T2 to T7: every run 577-866 of the cached rows, three hits);
+  constructed (each edge of the reach, the wraps on both axes, the adjusted reach).

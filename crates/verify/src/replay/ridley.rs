@@ -1,11 +1,13 @@
 //! Independent observations of Ceres Ridley and the baby he holds, from her entering his room
-//! to his take-off: decoded from his enemy slot, his words and the baby's, compared by part.
+//! to his take-off: decoded from his enemy slot, his words, his tail's and the baby's, compared
+//! by part. His tail's hit on her is compared where it lands, on her energy, her protection and
+//! her push.
 
 use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField, WramWord};
 use boss_ceres_ridley::{
     Baby, BabyFigure, BabyRoutine, CeresRidley, FidgetFigure, FigureLength as _, GlowFigure,
-    ReadyWait, RidleyLook, RidleyPhase, RidleyWait, RoarFigure, RoarWait, ShownFigure,
+    ReadyWait, RidleyLook, RidleyPhase, RidleyWait, RoarFigure, RoarWait, ShownFigure, TailCurl,
     TimedRoarFigure,
 };
 use core::num::{NonZeroU16, Wrapping};
@@ -44,6 +46,17 @@ const ROARING: WramWord = WramWord {
     name: "CERES_RIDLEY_ROARING",
     offset: 0x781E,
 };
+
+/// His tail's curl, the ideal angle between its segments.
+const TAIL_CURL: WramWord = WramWord {
+    name: "CERES_RIDLEY_TAIL_CURL",
+    offset: 0x201E,
+};
+/// His tail's segments: the first's x, each next one's 14h bytes on, its y 2 bytes after its x;
+/// the seventh is the tip.
+const TAIL_SEGMENT_X: u16 = 0x202C;
+const TAIL_SEGMENT_STRIDE: u16 = 0x14;
+const TAIL_SEGMENTS: u16 = 7;
 
 /// The properties bit that keeps her touch and her shots from meeting him.
 const INTANGIBLE: u16 = 0x0400;
@@ -153,8 +166,47 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
             y: Wrapping(slot_word(wram, slot, source::ENEMY_Y_POS)?),
         },
         baby: baby(wram)?,
+        curl: u8::try_from(read(wram, TAIL_CURL)?)
+            .ok()
+            .and_then(TailCurl::new)
+            .ok_or_else(|| unsupported("Ceres Ridley tail curl observation"))?,
     };
     Ok(Some((ridley, seen)))
+}
+
+/// Where his tail's seven segments are, tip last, as the record holds them while his tail
+/// rests, or each as the model holds the place of the whole tail; none before he moves and from
+/// his take-off on, when the model has no resting tail.
+pub(super) fn tail_segments(wram: &[u8], phase: RidleyPhase) -> Result<Vec<Tail>, Outcome> {
+    (0..TAIL_SEGMENTS)
+        .map(|segment| {
+            if !phase.tail_at_rest() {
+                return Ok(None);
+            }
+            let x = TAIL_SEGMENT_X.wrapping_add(segment.wrapping_mul(TAIL_SEGMENT_STRIDE));
+            let word = |offset| {
+                read(
+                    wram,
+                    WramWord {
+                        name: "CERES_RIDLEY_TAIL_SEGMENT",
+                        offset,
+                    },
+                )
+            };
+            Ok(Some(Pair {
+                x: Wrapping(word(x)?),
+                y: Wrapping(word(x.wrapping_add(2))?),
+            }))
+        })
+        .collect()
+}
+
+/// A segment of his tail: its place while the tail rests, or none.
+pub(super) type Tail = Option<Pair<Px>>;
+
+/// His resting tail's seven segments as the model holds them: all at the tail's place.
+pub(super) fn modelled_tail_segments(ridley: &CeresRidley) -> Vec<Tail> {
+    (0..TAIL_SEGMENTS).map(|_| ridley.tail()).collect()
 }
 
 /// His phase from his slot's function, with its count and wait words and, roaring, his list.
@@ -254,13 +306,13 @@ fn baby(wram: &[u8]) -> Result<Baby, Outcome> {
 }
 
 /// Ridley's State by part, so a difference names the part that differs, with what his phase
-/// shows; whether he is in the room first.
-pub(super) fn observations(ridley: Option<(&CeresRidley, Shows)>) -> Vec<Observation> {
+/// shows and his tail's segments; whether he is in the room first.
+pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Vec<Observation> {
     let mut fields = vec![Observation::quantity(
         "ridley.placed",
         i64::from(ridley.is_some()),
     )];
-    let Some((ridley, seen)) = ridley else {
+    let Some((ridley, seen, tail)) = ridley else {
         return fields;
     };
     // Each phase's code, with its count, its runs and its wait where it has them.
@@ -337,16 +389,24 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows)>) -> Vec<Observa
             ),
             ("ridley.baby.runs", i64::from(baby_runs)),
             ("ridley.baby.position", place(ridley.baby.position)),
+            ("ridley.tail.curl", i64::from(ridley.curl.get())),
         ]
         .map(|(field, value)| Observation::quantity(field, value)),
+    );
+    fields.extend(
+        tail.iter().enumerate().map(|(segment, &at)| {
+            Observation::quantity(format!("ridley.tail.{segment}"), place(at))
+        }),
     );
     fields
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Shows, baby, observations, observed, seed};
+    use super::{Shows, baby, observations, observed, seed, tail_segments};
     use boss_ceres_ridley::{BabyRoutine, RidleyLook, RidleyPhase, RoarFigure};
+    use core::num::Wrapping;
+    use types::Pair;
 
     fn write(wram: &mut [u8], at: usize, value: u16) {
         wram[at..at.saturating_add(2)].copy_from_slice(&value.to_le_bytes());
@@ -369,6 +429,7 @@ mod tests {
             (0x7808, 3),
             (0x8804, 0x00F0),
             (0x8808, 0x0096),
+            (0x201E, 16),
         ] {
             write(&mut wram, at, value);
         }
@@ -376,7 +437,15 @@ mod tests {
         assert!(matches!(ridley.phase, RidleyPhase::Waiting { wait } if wait.runs() == 7));
         assert!(matches!(ridley.baby.routine, BabyRoutine::Showing(shown) if shown.runs() == 3));
         assert_eq!(seen, Shows::of(ridley.phase));
-        assert_eq!(observations(Some((&ridley, seen))).len(), 15);
+        assert_eq!(ridley.curl.get(), 16);
+        // Waiting, his tail has no resting place.
+        let tail = tail_segments(&wram, ridley.phase).unwrap();
+        assert_eq!(tail, vec![None; 7]);
+        assert_eq!(observations(Some((&ridley, seen, &tail))).len(), 23);
+        // A curl outside 8 to 23 is not one his tail holds.
+        write(&mut wram, 0x201E, 24);
+        assert!(seed(&wram).is_err());
+        write(&mut wram, 0x201E, 16);
         // A figure shown past its length is not a state the baby holds.
         write(&mut wram, 0x7808, 5);
         assert!(baby(&wram).is_err());
@@ -388,6 +457,24 @@ mod tests {
         write(&mut wram, slot + 0x3A, 1);
         let phase = seed(&wram).unwrap().unwrap().phase;
         assert_eq!(phase, RidleyPhase::BodyFading { sets: 3, runs: 1 });
+        // His tail rests: each segment's place from its x and y, the tip seventh.
+        write(&mut wram, 0x202C + 6 * 0x14, 0x0120);
+        write(&mut wram, 0x202E + 6 * 0x14, 0x0090);
+        let tail = tail_segments(&wram, phase).unwrap();
+        assert_eq!(
+            tail[6],
+            Some(Pair {
+                x: Wrapping(0x0120),
+                y: Wrapping(0x0090),
+            })
+        );
+        assert_eq!(
+            tail[0],
+            Some(Pair {
+                x: Wrapping(0),
+                y: Wrapping(0)
+            })
+        );
         write(&mut wram, slot + 0x38, 3 * 22 + 1);
         assert!(seed(&wram).is_err());
 

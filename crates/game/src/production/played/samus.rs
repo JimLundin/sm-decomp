@@ -61,14 +61,14 @@ impl State {
 
 impl super::State {
     /// Her own frame: her moves, then what `between` plays once they are made, from her
-    /// position after them, giving the frame's hit; then her reaction to that hit, and her
-    /// appearance from what both steps report.
+    /// position after them, giving the frame's hit and the energy it leaves her; then her
+    /// reaction to that hit, and her appearance from what both steps report.
     pub(super) fn her_frame<T>(
         &self,
         inputs: &Inputs,
         content: &Content,
         rules: &Rules,
-        between: impl FnOnce(types::Position) -> Result<(T, Option<Hit>), Fault>,
+        between: impl FnOnce(types::Position) -> Result<Between<T>, Fault>,
     ) -> Result<(Her, T), Fault> {
         let start = self.samus.figure.0;
         let world = self.station.world(&self.passage.room.geometry);
@@ -79,11 +79,10 @@ impl super::State {
         };
         let mut appearance = self.samus.appearance.0;
         let mut seen = animation_inputs(start, after, &outcome, inputs);
-        // The energy the tail hit leaves, before the frame's loss, and the energy the frame
-        // before left: with no tail, both are the energy the frame starts with, so her energy
-        // doesn't fall and only a push's start begins her hurt colours.
-        seen.energy = self.health.0.energy.whole.get();
-        seen.previous_energy = seen.energy;
+        // The energy the tail's hit leaves, before the frame's loss, against the energy the
+        // frame starts with: a hit that lands makes her energy fall.
+        seen.energy = between.energy;
+        seen.previous_energy = self.health.0.energy.whole.get();
         // The loop refuses her other suits, and no grapple is in it.
         let hurt = HurtOpportunity::Observed {
             suit: Suit::Power,
@@ -109,7 +108,7 @@ impl super::State {
                 colours: shown.her_colours,
                 sounds: shown.sounds,
             },
-            between,
+            between.played,
         ))
     }
 
@@ -122,8 +121,8 @@ impl super::State {
         world: &dyn types::World,
         content: &Content,
         rules: &Rules,
-        between: impl FnOnce(types::Position) -> Result<(T, Option<Hit>), Fault>,
-    ) -> Result<(samus_movement::Samus, samus_movement::Outcome, T), Fault> {
+        between: impl FnOnce(types::Position) -> Result<Between<T>, Fault>,
+    ) -> Result<(samus_movement::Samus, samus_movement::Outcome, Between<T>), Fault> {
         let start = self.samus.figure.0;
         let ahead = Ahead::of(&self.samus.appearance.0, start, &content.appearance)
             .map_err(|MissingClip(figure)| Fault::Clip(figure))?;
@@ -155,12 +154,23 @@ impl super::State {
         let moves = samus
             .moves(&frame, world, &rules.movement)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
-        let (between, hit) = between(moves.position_after_moves())?;
-        let outcome = samus.react(moves, hit);
+        let between = between(moves.position_after_moves())?;
+        let outcome = samus.react(moves, between.hit);
         missing_body
             .get()
             .map_or(Ok((samus, outcome, between)), |pose| Err(Fault::Body(pose)))
     }
+}
+
+/// What a frame plays between her moves and her reaction: the frame's hit, the whole energy it
+/// leaves her before the frame's loss, and the rest of what it played.
+pub(super) struct Between<T> {
+    /// What else it played.
+    pub(super) played: T,
+    /// The frame's hit, which her reaction reads.
+    pub(super) hit: Option<Hit>,
+    /// Her whole energy as the hit leaves it, which her appearance reads.
+    pub(super) energy: u16,
 }
 
 /// Her own frame's results: her movement, its outcome, her appearance, the figure she shows, the
@@ -238,7 +248,7 @@ const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
 
 #[cfg(test)]
 mod tests {
-    use super::dash;
+    use super::{Between, dash};
     use crate::production::played::tests::{content_with, inputs, rules, state};
     use data::assets::art::{Colour, Palette};
     use data::assets::samus::palettes::SamusPalettes;
@@ -265,7 +275,13 @@ mod tests {
             push: PushFrames::new(5).unwrap(),
         };
         let (her, ()) = state
-            .her_frame(&frame_inputs, &content, &rules(), |_| Ok(((), Some(hit))))
+            .her_frame(&frame_inputs, &content, &rules(), |_| {
+                Ok(Between {
+                    played: (),
+                    hit: Some(hit),
+                    energy: 84,
+                })
+            })
             .unwrap();
         assert!(her.outcome.as_ref().unwrap().push_started);
         assert_eq!(her.samus.knockback.time_left, PushFrames::new(4).unwrap());
@@ -278,7 +294,13 @@ mod tests {
 
         state.samus.played(her.samus, &her);
         let (next, ()) = state
-            .her_frame(&frame_inputs, &content, &rules(), |_| Ok(((), None)))
+            .her_frame(&frame_inputs, &content, &rules(), |_| {
+                Ok(Between {
+                    played: (),
+                    hit: None,
+                    energy: 99,
+                })
+            })
             .unwrap();
         assert_eq!(next.samus.knockback.time_left, PushFrames::new(3).unwrap());
         assert_eq!(next.samus.pose.action, Action::Recoiling);

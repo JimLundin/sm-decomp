@@ -15,19 +15,18 @@ pub(super) fn content(colours: &CeresRidleyColours) -> Result<RidleyContent, Out
 
 /// Ridley as the record holds him, compared at a cut whose frame of work finished.
 pub(super) fn expected(wram: &[u8]) -> Result<Vec<Observation>, Outcome> {
-    Ok(ridley::observations(
-        ridley::observed(wram)?
-            .as_ref()
-            .map(|(ridley, seen)| (ridley, *seen)),
-    ))
+    let Some((ridley, seen)) = ridley::observed(wram)? else {
+        return Ok(ridley::observations(None));
+    };
+    let tail = ridley::tail_segments(wram, ridley.phase)?;
+    Ok(ridley::observations(Some((&ridley, seen, &tail))))
 }
 
 /// Ridley as the played State holds him.
 pub(super) fn actual(station: &played::station::State) -> Vec<Observation> {
-    ridley::observations(
-        station
-            .ridley
-            .as_ref()
-            .map(|ridley| (ridley, ridley::Shows::of(ridley.phase))),
-    )
+    let Some(ridley) = station.ridley.as_ref() else {
+        return ridley::observations(None);
+    };
+    let tail = ridley::modelled_tail_segments(ridley);
+    ridley::observations(Some((ridley, ridley::Shows::of(ridley.phase), &tail)))
 }

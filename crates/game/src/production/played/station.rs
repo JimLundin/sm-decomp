@@ -2,13 +2,13 @@
 //! Ridley (`ridley`), then the Ceres doors (`ceres_doors`), then the shaft's overlay with its
 //! lights (`shaft`).
 //!
-//! The room's enemies run before she moves, reading where she was at the end of the last
-//! frame. Fetching the next room's contents lets the last room's actors go and places its own.
+//! The room's enemies run between her moves and her reaction. The Ceres doors read where she was
+//! at the end of the last frame, and Ridley's tail reads her as her moves leave her. Fetching the next room's contents lets the last room's actors go and places its own.
 
 use super::passage::Passing;
 use super::{Content, Fault, Rules, ceres_doors, ridley};
 use crate::production::room_loading::{self, CeresActors};
-use boss_ceres_ridley::{CeresDoor, CeresRidley, Lights, PadAndCover, RidleyRun, Stage};
+use boss_ceres_ridley::{CeresDoor, CeresRidley, Her, Lights, PadAndCover, RidleyRun, Stage};
 use world_doors::Palette;
 
 /// The station's actors in her room, carried frame to frame.
@@ -24,6 +24,16 @@ pub struct State {
     pub ridley: Option<CeresRidley>,
     /// The Ceres station's stage, which his placing sets.
     pub stage: Stage,
+}
+
+/// When the room's enemies run: in a frame of play, Ridley's tail reading her as her moves
+/// leave her, or while a passage is under way, when nothing of hers is there to reach.
+#[derive(Clone, Copy)]
+pub(super) enum Running<'a> {
+    /// A frame of play, with her as his tail reads her in his room.
+    Play(Option<&'a Her>),
+    /// A passage is under way.
+    Passage,
 }
 
 /// One run of the room's enemies: Ridley's, each Ceres door's and the shaft's lights.
@@ -75,7 +85,7 @@ impl super::State {
     /// shaft's overlay. The baby's colours and the beacon's go to `palette`.
     pub(super) fn enemies(
         &self,
-        passage_under_way: bool,
+        running: Running<'_>,
         random: types::RandomSequence,
         passing: &Passing<'_>,
         content: &Content,
@@ -85,7 +95,7 @@ impl super::State {
         let station = &self.station;
         let ridley = station
             .ridley
-            .map(|ridley| ridley::run(ridley, passage_under_way, random, content, rules, palette))
+            .map(|ridley| ridley::run(ridley, running, random, content, rules, palette))
             .transpose()?;
         let ridley_beaten = room_loading::Run {
             progress: passing.progress,

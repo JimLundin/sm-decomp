@@ -14,9 +14,10 @@ use crate::actors::palette;
 const POWER: RomAddress = RomAddress::new(0x9b, 0x9400);
 const VARIA: RomAddress = RomAddress::new(0x9b, 0x9520);
 const GRAVITY: RomAddress = RomAddress::new(0x9b, 0x9800);
-/// Her hurt pulse's colours, and the grey standing for her suit's in a cinematic.
-const HURT: RomAddress = RomAddress::new(0x91, 0xa380);
-const CINEMATIC_GREY: RomAddress = RomAddress::new(0x91, 0xa3a0);
+/// Her hurt pulse's colours, and the grey standing for her suit's in a cinematic: in her suits'
+/// bank, where the routine that copies them reads.
+const HURT: RomAddress = RomAddress::new(0x9b, 0xa380);
+const CINEMATIC_GREY: RomAddress = RomAddress::new(0x9b, 0xa3a0);
 /// Her shots' palette pointers, a word per combination, into their own bank.
 const BEAM_POINTERS: RomAddress = RomAddress::new(0x90, 0xc3c9);
 /// The beams a combination's bits stand for, lowest first.
@@ -88,5 +89,6 @@ mod tests {
 // Bank $90 log, update beam tiles and palette `$90:AC8D`, load beam palette `$90:ACCD`: the
 // pointers `$90:C3C9` indexed by `([equipped beams] & FFFh) * 2`, 20h bytes to sprite
 // palette 6 (`$7E:C1C0`), which `$82:E139` copies to target sprite palette 6.
-// Bank $91 log, Samus palette handling `$91:D8A5`: the hurt flash's colours `$91:A380` and, in a
-// cinematic, the intro's grey `$91:A3A0`, 20h bytes each to sprite palette 4 (`$7E:C180`).
+// Bank $91 log, Samus palette handling `$91:D8A5`: the hurt flash's colours `#$A380` and, in a
+// cinematic, the intro's grey `#$A3A0`, each passed to `$91:DD5B`, which sets the data bank to
+// $9B and copies 20h bytes from `$9B:A380` or `$9B:A3A0` to sprite palette 4 (`$7E:C180`).

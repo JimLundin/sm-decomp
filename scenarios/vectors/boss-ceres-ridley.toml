@@ -1,4 +1,4 @@
-# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; parts 2, 3 and 4a below).
+# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; parts 2, 3, 4a and 4b below).
 #
 # Format
 # - Each [[vector]] is one run of one door, from its state at the run's start to its state at the
@@ -1833,3 +1833,286 @@ baby = { routine = "Fidget", step = 7, runs = 10 }
 random = "FC6C"
 ridley_after = { phase = "Roaring", wait = 99, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 0, runs = 1, look = "First", position = [170, 191] }, shown = true, solid = false, cry = true, colours = "Glow1", tangible = true, moving = true, roaring = false, music = false, roar = false }
 
+
+# ================================================================ part 4b: his tail at rest and its hit
+#
+# Format of the part-4b vectors (spec §14), ids T-: one run of him and the baby in the part-4a
+# form (content, ridley, baby, random, rules, ridley_after), or (T-placed) his placing in the
+# part-3 form, with:
+# - ridley.curl and ridley_after.curl: the tail's curl, 8 to 23 (TailCurls).
+# - her (optional, absent: no her to reach): position = [x, y], her position as her moves this
+#   frame leave it, before her reaction to a hit, 16-bit, in decimal; body = [half-width,
+#   half-height], px, of the body she started the frame in; protection, frames, her protection as the frame starts (samus-health).
+# - ridley_after.tail = [x, y]: where the tail's tip and all seven of its segments are, absent
+#   on a run that ends before he moves; ridley_after.hit = { side, push }: the frame's hit, side
+#   "Left" or "Right", push how long the push lasts, in frames, absent for none.
+# - rules may hold tail_reach (px, TailHits) and pace (part 4a). Without them: tail_reach 14,
+#   pace 2.
+# - The F- vectors carry none of these fields: the tail's outputs on their runs follow from the
+#   rules here and are checked by the T- vectors.
+# - Content is part 4a's invented content. The recorded cases T1 to T8 (whose rows and frames the
+#   observer keeps) keep the records' places of him and her, her body and protection, the baby and
+#   the random numbers where a rule reads them; a case at the game's last set or step is moved onto the invented
+#   content's last. The rest are worked from the spec's rules.
+
+[[vector]]
+# his placing: the tail's curl starts at 16 (recorded case T1)
+id = "T-placed"
+source = "constructed"
+entries = ["TailCurls"]
+ridley_placing = true
+ridley_after = { present = true, phase = "Holding", position = [186, 169], baby = { routine = "New" }, shown = true, solid = false, boss = true, music_stops = true, shake_stops = true, stage_calm = true, room_colours = true, curl = 16 }
+
+[[vector]]
+# recorded case T2: the run he starts moving: his tail at rest, its tip 32 px right of him and 16 down; she is in reach but he is not tangible
+id = "T-rest-first"
+source = "constructed"
+entries = ["TailAtRest", "TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 4, runs = 10 }
+random = "21BC"
+her = { position = [207, 192], body = [5, 16], protection = 0 }
+ridley_after = { phase = "BodyFading", sets = 0, runs = 0, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 5, runs = 1, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185] }
+
+[[vector]]
+# recorded case T3: the body's fade, an off-run: the tail stays at rest; in reach, not tangible: no hit
+id = "T-rest-intangible"
+source = "constructed"
+entries = ["TailAtRest", "TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 3, runs = 0, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+random = "E6EC"
+her = { position = [216, 192], body = [5, 16], protection = 0 }
+ridley_after = { phase = "BodyFading", sets = 3, runs = 1, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185] }
+
+[[vector]]
+# recorded case T4: the run he turns tangible: the tip within reach, her x left of it: the hit, to the left
+id = "T-hit-left"
+source = "constructed"
+entries = ["TailHits", "TailAtRest"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "BodyFading", sets = 3, runs = 1, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 2 }
+her = { position = [216, 192], body = [5, 16], protection = 0 }
+ridley_after = { phase = "ReadyToRoar", wait = 4, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 3, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = true, roar = false, body_colours = 4, curl = 16, tail = [218, 185], hit = { side = "Left", push = 5 } }
+
+[[vector]]
+# recorded case T5: in reach while one frame of her protection is left as the frame starts: no hit
+id = "T-protected"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 163, figure = 3, figure_runs = 76, look = "Wide", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 1, runs = 7 }
+random = "F86D"
+her = { position = [220, 187], body = [5, 21], protection = 1 }
+ridley_after = { phase = "Roaring", wait = 162, figure = 3, figure_runs = 77, look = "Wide", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 8, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false, curl = 16, tail = [218, 185] }
+
+[[vector]]
+# recorded case T6: her protection spent, her x right of the tip: the hit, to the right
+id = "T-hit-right"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 162, figure = 3, figure_runs = 77, look = "Wide", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 1, runs = 8 }
+random = "DB32"
+her = { position = [224, 187], body = [5, 21], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 161, figure = 3, figure_runs = 78, look = "Wide", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 9, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Right", push = 5 } }
+
+[[vector]]
+# recorded case T7: in the air, 16 px right of the tip and 24 above it: the hit, to the right
+id = "T-hit-jumping"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 66, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Glow", step = 8, runs = 2 }
+random = "228B"
+her = { position = [234, 161], body = [5, 19], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 65, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 8, runs = 3, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Right", push = 5 } }
+
+[[vector]]
+# ready to roar, in reach, protection spent: the hit (no row: her protection never runs out then)
+id = "T-hit-ready"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "ReadyToRoar", wait = 2, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [210, 190], body = [5, 16], protection = 0 }
+ridley_after = { phase = "ReadyToRoar", wait = 1, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Left", push = 5 } }
+
+[[vector]]
+# her x exactly her half-width + 14 right of the tip: out of reach
+id = "T-reach-x-edge"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [237, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185] }
+
+[[vector]]
+# her x 18 px left of the tip, 1 px short of her half-width + 14: in reach, to the left
+id = "T-reach-x-inside"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [200, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Left", push = 5 } }
+
+[[vector]]
+# her y exactly her half-height + 14 below the tip: out of reach
+id = "T-reach-y-edge"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [218, 215], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185] }
+
+[[vector]]
+# her y one less than her half-height + 14 above the tip: in reach; her x at the tip's: to the right
+id = "T-reach-y-inside"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [218, 156], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Right", push = 5 } }
+
+[[vector]]
+# her x 1 px left of the tip's: to the left
+id = "T-side-left"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [217, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Left", push = 5 } }
+
+[[vector]]
+# his place near the right end of the 16-bit range: the tip wraps to the left end; her x left of it
+id = "T-wrap"
+source = "constructed"
+entries = ["TailAtRest", "TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [65530, 100], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [20, 116], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [65530, 100], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [65514, 122] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [26, 116], hit = { side = "Left", push = 5 } }
+
+[[vector]]
+# the tip just short of the wrap, her x just past it: in reach, and to the right
+id = "T-wrap-across"
+source = "constructed"
+entries = ["TailAtRest", "TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [65500, 100], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [4, 110], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [65500, 100], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [65484, 122] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [65532, 116], hit = { side = "Right", push = 5 } }
+
+[[vector]]
+# his y near the bottom of the 16-bit range: the tip's y wraps to 10; her y 65,534, 12 above it across the wrap: in reach; her x at the tip's: to the right
+id = "T-wrap-y"
+source = "constructed"
+entries = ["TailAtRest", "TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 65530], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [218, 65534], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 65530], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 16] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 10], hit = { side = "Right", push = 5 } }
+
+[[vector]]
+# the tail's reach adjusted to 20: 24 px right of the tip, half-width 5, is in reach (out of it at 14)
+id = "T-reach-adjusted"
+source = "constructed"
+entries = ["TailHits"]
+rules = { tail_reach = 20 }
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [242, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Right", push = 5 } }
+
+[[vector]]
+# the tail's reach adjusted to 20: 25 px below the tip, half-height 5, is out of reach
+id = "T-reach-adjusted-edge"
+source = "constructed"
+entries = ["TailHits"]
+rules = { tail_reach = 20 }
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+her = { position = [218, 210], body = [5, 5], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185] }
+
+[[vector]]
+# the random number 65,280 on a moving run: the curl turns 8
+id = "T-curl-least"
+source = "constructed"
+entries = ["TailCurls"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+random = "FF00"
+her = { position = [100, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 8, tail = [218, 185] }
+
+[[vector]]
+# the random number 65,535: the curl turns 23
+id = "T-curl-most"
+source = "constructed"
+entries = ["TailCurls"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 9 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+random = "FFFF"
+her = { position = [100, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 23, tail = [218, 185] }
+
+[[vector]]
+# recorded case T8 moved here: the random number 65,385, the curl turns 17
+id = "T-curl-recorded"
+source = "constructed"
+entries = ["TailCurls"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+random = "FF69"
+her = { position = [100, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 17, tail = [218, 185] }
+
+[[vector]]
+# the random number 65,279: the curl stays
+id = "T-curl-below"
+source = "constructed"
+entries = ["TailCurls"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 120, figure = 5, look = "Rest", position = [186, 169], curl = 12 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+random = "FEFF"
+her = { position = [100, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "Roaring", wait = 119, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 12, tail = [218, 185] }
+
+[[vector]]
+# his eye still fading: no tail run, the curl stays whatever the random number; in reach, no hit
+id = "T-curl-still"
+source = "constructed"
+entries = ["TailCurls", "TailAtRest"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "EyeFading", steps = 2, look = "Rest", position = [186, 169], curl = 16 }
+baby = { routine = "Fidget", step = 0, runs = 1 }
+random = "FFFF"
+her = { position = [218, 185], body = [5, 16], protection = 0 }
+ridley_after = { phase = "EyeFading", steps = 3, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 1, curl = 16 }

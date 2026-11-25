@@ -1,22 +1,25 @@
 //! Ceres Ridley as she enters his room and as he wakes: placed at his place in the dark with the
 //! baby in his hold, waiting a fixed while once the door's passage is over, then waking: his eye
-//! lights up, his body fades in, and tangible he roars before he takes off. His flight is a
-//! later piece's.
+//! lights up, his body fades in, and tangible he roars before he takes off, his tail at rest
+//! behind him from his body's fade on and hitting her when she comes within its reach. His
+//! flight is a later piece's.
 //!
 //! The caller holds a [`CeresRidley`] between frames and steps it on the frame the room places
 //! him ([`CeresRidley::place`]) and on each frame he runs ([`CeresRidley::run`]): whether a
-//! door's passage is under way, the random number and his content are all he reads. On a frame
-//! he doesn't run the caller doesn't step him, and nothing of him or the baby changes.
+//! door's passage is under way, the random number, her as his tail reads her ([`Her`]) and his
+//! content are all he reads. On a frame he doesn't run the caller doesn't step him, and nothing
+//! of him or the baby changes.
 
 use core::num::Wrapping;
 
-use types::{Pair, Px};
+use types::{Hit, Pair, Px};
 
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
 use crate::ridley_phase::{FightMusic, RidleyPhase, RoarSound};
 use crate::roar::RidleyLook;
 use crate::rules::Rules;
 use crate::station::Stage;
+use crate::tail::{Her, TailCurl, place_at_rest};
 use crate::waking::{BodyColours, EyeColours, RidleyContent};
 
 /// `RidleyPlaced`: his place, whatever the room's content says.
@@ -41,6 +44,8 @@ pub struct CeresRidley {
     pub position: Pair<Px>,
     /// The baby he holds.
     pub baby: Baby,
+    /// How tightly his tail curls once it moves (`TailCurls`).
+    pub curl: TailCurl,
 }
 
 /// The boss a placing hands the HUD as encountered, whose mini-map rule is the HUD's own.
@@ -121,6 +126,9 @@ pub struct RidleyRun {
     pub music: Option<FightMusic>,
     /// The roar's sound, for audio, on the run it is heard (`Roars`).
     pub roar: Option<RoarSound>,
+    /// The frame's hit of his tail on her, its side and its push time, the one hit her motion
+    /// reacts to and her energy reads, as it stands (`TailHits`).
+    pub hit: Option<Hit>,
 }
 
 /// A look drawn at a position.
@@ -140,6 +148,9 @@ pub struct RidleyDrawing {
     pub ridley: Option<Drawn<RidleyLook>>,
     /// The baby's look at its position; none before its first run.
     pub baby: Option<Drawn<BabyLook>>,
+    /// Where his tail's tip and all its segments are while it rests; none before he moves and
+    /// from his take-off on (`TailAtRest`).
+    pub tail: Option<Pair<Px>>,
 }
 
 impl CeresRidley {
@@ -153,7 +164,8 @@ impl CeresRidley {
     /// placed and none of it happens. Placed, he holds at his place with no look, the baby new;
     /// the HUD learns of a boss encountered, the music stops, the station stops shaking, the
     /// stage is calm and his room's colours are the fade's goal. He is placed before the door
-    /// of his room, whose colours follow his (`TheDoorsColours`).
+    /// of his room, whose colours follow his (`TheDoorsColours`). `TailCurls`: his tail's curl
+    /// starts at 16.
     #[must_use]
     pub const fn place(ridley_beaten: bool) -> Option<RidleyPlacing> {
         if ridley_beaten {
@@ -165,6 +177,7 @@ impl CeresRidley {
                 look: None,
                 position: PLACE,
                 baby: Baby::NEW,
+                curl: TailCurl::PLACED,
             },
             boss: Boss::CeresRidley,
             music: MusicStop,
@@ -175,37 +188,70 @@ impl CeresRidley {
     }
 
     /// One run of him, on a frame he runs, reading whether a door's passage is under way as he
-    /// runs (the door passage), the frame's random number, as the doors read it, and his
-    /// content. He moves on by his phase (`RidleyWaits`, `EyeFadesIn`, `BodyFadesIn`,
-    /// `ReadyToRoar`, `Roars`) and takes its look, and the baby runs in his hold, whatever his
-    /// phase (`BabyHeld`, `BabyFidgets`, `BabyCries`). His position doesn't change.
+    /// runs (the door passage), the frame's random number, as the doors read it, her as his
+    /// tail reads her, if she is there to reach, and his content. He moves on by his phase
+    /// (`RidleyWaits`, `EyeFadesIn`, `BodyFadesIn`, `ReadyToRoar`, `Roars`) and takes its look,
+    /// and the baby runs in his hold, whatever his phase (`BabyHeld`, `BabyFidgets`,
+    /// `BabyCries`). His position doesn't change.
+    ///
+    /// On a run that ends with his tail at rest (`TailAtRest`), his tail runs after the rest of
+    /// him, so the run he turns tangible can hit: its curl changes with the random number
+    /// (`TailCurls`), and if he is tangible its tip hits her within its reach (`TailHits`). A run
+    /// that ends before he moves leaves the tail as it was; the run he takes off is his next
+    /// part's, tail included.
     #[must_use]
     pub fn run(
         self,
         passage_under_way: bool,
         random: u16,
+        her: Option<&Her>,
         content: &RidleyContent,
         rules: &Rules,
     ) -> RidleyRun {
         let baby = self.baby.run(self.position, random);
         let phase = self.phase.run(passage_under_way, content, rules);
-        RidleyRun {
-            ridley: Self {
-                phase: phase.phase,
-                look: phase.look,
-                baby: baby.baby,
-                ..self
+        let tail_runs = phase.phase.tail_at_rest();
+        let ridley = Self {
+            phase: phase.phase,
+            look: phase.look,
+            baby: baby.baby,
+            curl: if tail_runs {
+                self.curl.curled(random)
+            } else {
+                self.curl
             },
+            ..self
+        };
+        RidleyRun {
+            ridley,
             cry: baby.cry,
             colours: baby.colours,
             eye_colours: phase.eye,
             body_colours: phase.body,
             music: phase.music,
             roar: phase.roar,
+            hit: ridley.tail_hit(her, rules),
         }
     }
 
-    /// His drawing: his look at his position and the baby's look at its position.
+    /// `TailAtRest`: where his tail's tip and all its segments hang while it rests, from his
+    /// position; none before he moves and from his take-off on.
+    #[must_use]
+    pub fn tail(&self) -> Option<Pair<Px>> {
+        self.phase
+            .tail_at_rest()
+            .then(|| place_at_rest(self.position))
+    }
+
+    /// `TailHits`: the frame's hit, as his run leaves him: his tail at rest and he tangible,
+    /// her there and within its tip's reach.
+    fn tail_hit(&self, her: Option<&Her>, rules: &Rules) -> Option<Hit> {
+        let tip = self.tail().filter(|_| self.phase.tangible())?;
+        her?.hit_by(tip, rules.tail_reach)
+    }
+
+    /// His drawing: his look at his position, the baby's look at its position and his tail's
+    /// place while it rests.
     #[must_use]
     pub fn drawing(&self) -> RidleyDrawing {
         RidleyDrawing {
@@ -219,6 +265,7 @@ impl CeresRidley {
                 .look()
                 .zip(self.baby.position)
                 .map(|(look, position)| Drawn { look, position }),
+            tail: self.tail(),
         }
     }
 }

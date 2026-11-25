@@ -161,8 +161,8 @@ before the next ordinary follow can overwrite it.
 | Input | RAM (at the scroll, record N+1) | Decode |
 | --- | --- | --- |
 | her position | `0B10`-`0B16` of record N+1, which the scroll sets to `0AF6`-`0AFC` as it ends | as is; equal to N+1's `0AF6`-`0AFC` unless the room's main code or the next frame's start moved her |
-| her facing | `0A1E` low byte | 4 `Left`; 8 `Right`; 0 `Screen` (the scroll tests only 4) |
-| going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-movement §1.2) |
+| her facing | `0A1E` low byte | 4 `Left`; 8 `Right`; 0 `Screen` (the scroll tests only 4). In the damage boost's poses (4Fh, 50h; movement type 19h, samus-movement's `Leaping`) the pose table gives the way she travels, 8 for 4Fh and 4 for 50h, against her facing, which samus-movement keeps from the recoil pose (53h faces right, 54h left): the spec's facing there is the opposite of this byte |
+| going backwards | `0A52` (knockback direction), `0A1F` low byte (movement type), `0B4A` (X acceleration mode) | `0A52` ≠ 0, or movement type 10h (moonwalking), or `0B4A` = 1 (turning around: the skid, samus-movement §1.2), each read against `0A1E` (`$90:95B7`..`$90:95E5`). In the spec's terms, with her facing kept in the leap: the skid, the moonwalk, or exactly one of `0A52` ≠ 0 (the push) and the leap (the poses 4Fh, 50h) |
 | rising | `0B36` | = 1 (up), samus-movement's rise state: from the rise's start until `$90:8FDC`/`$90:9046` end it at the start of a frame, so a rise at 0 and the frame whose pull spends the rise (`0B36` = 1 with `0B2E` negative when `$90:9666` reads it) are rising; 0 (none, the moonfall's) and 2 (down) are not. Records: 3 usable spent frames (samus-bomb-jump-vertical 1035, samus-ceres-push 989, samus-grapple-release 325), none decisive; C-rise-spent is |
 | the y a placement put her at, if any | samus-movement's output | its pixel part is what the placements write to `0B14` (the pixel word only; `0B16` is kept); with none, `0B14` is not written. Samus-movement reports it as an option (`placed`), a placement of 0 px included, which the harness's `placement` passes through and the bridge's `settle` writes to `0B14`'s pixel |
 | the room's screens | `$7E:CD20`, 32h bytes, row-major, `07A9` across (`w`), `07AB` down (`h`); the shared `types::ScreenKind` | 0 `Closed` (red), 1 `Short` (blue), 2 `Open` (green), any other byte `Open` (below); the bytes from `w × h` on are the `below` run (index row × `w` + column, the room's rows continued), any value but 0 and 1 read as `Open` (only 0 and 1 are ever tested); past the 32h bytes, the RAM after it (docs/LEGACY.md) |
@@ -312,6 +312,29 @@ vectors test's TOML `Value`, a false positive; the root accepts both.
   `model.py` with and without each (`$TEMP/collab/camera-r3/fuzz_borrow.py`) found the borrow
   change nothing and the carry change 503 frames; the spec states the carry as an arm and the
   borrow as a "So" line.
+- **The view's subpixel at a room edge, and her backward leap.** The edges keep the subpixel:
+  `$80:A6DE` (left) and `$80:A959` (top) clear `0911`/`0915` only, and `$80:A66C` (right) and
+  `$80:A930` (bottom) store the pixel word only; `090F`/`0913` are cleared only by the aim stops
+  (`$80:A65F`, `$80:A6D6`, `$80:A8E8`, `$80:A951`), which come first. Over the 13 Ceres rows
+  (`any-ceres-arrival`, the 11 `chain-any-*` rows, `samus-ceres-push`), 1,339 compared moves end
+  left of or above the room: 1,278 short of the aim, subpixel kept (792 across, 486 down), and 61
+  past it, subpixel 0 (36 across, 25 down); every one as the spec says. In the leap the lead is
+  what decides: at `chain-any-0006-E0B5` cut 621 (R36) the pose is 50h from cut 611, `0A1E` is 4,
+  the way she travels, and the push is over from cut 614 (`0A52` = 0, `18AA` spent). The record
+  aims at `A0h − A0h = 0`, the view's own x, and holds 0000.0000. Read as facing right and not going
+  backwards, the view aims at 40h, moves right 6.C000, and the right edge (the room is one screen
+  wide) stops it on 0 with its subpixel C000 kept. During the push (611..613) the game reads
+  `0A52` against the leap's `0A1E` and leads by 60h, the way she faces: the push and the leap
+  cancel. §1.3 states it. The reference model (`$TEMP/collab/camera-edge/ref.py`, `rows.py`), fed
+  the record's facing turned back in the leap poses, matches the camera on all 4,765 compared
+  Ceres frames with the leap rule and on 4,719 with going backwards as the push alone (29 misses
+  in room 6 from 621, 14 in `chain-any-0010-DF8D`, 3 in `samus-ceres-push`); the null model
+  matches 1,817. Over all 63 cached rows: 22,493 of 22,502 with the rule, 22,366 without, null
+  8,523. The 9 left are boss-kraid-defeated 806 and 850 (above) and 7 frames where another routine
+  moved her or the point it measures from (chain-0012-91F8 273, chain-0232-D5A7 142 and 152,
+  item-charge-beam 695, item-morph-ball 1216, item-reserve-tank 511 and 1057), none a leap. Every
+  frame the rule adds is a leap: event-zebes-awake (40), samus-screw-attack (40, pose 4Fh, facing
+  left), chain-0059-A293 (1) and the Ceres ones.
 - **Time frozen.** The scroll right/left/up/down routines don't test it; she doesn't move while
   time is frozen, so only the settles' test is seen.
 - **Out of scope here and masked in the harness:** the slow grapple scrolling (`0CF8` ≠ 0,
@@ -443,7 +466,9 @@ The vectors hold RAM observations and invented content only (MODEL §1 decision 
 recorded vectors carried the game's rooms, so they left the vector file and are **harness cases**:
 the harness must compare each named frame and match it, with the room's content loaded through the
 importer. Each case keeps its old vector's id, so the history reads; its constructed twin is the
-same frame moved into an invented room (§How the spec was made), and carries the rule.
+same frame moved into an invented room (§How the spec was made), and carries the rule. R36 to R40 have no old
+vector: they are the recorded frames behind the edge and leap twins (§Findings, the view's
+subpixel at a room edge), named for the integrator to wire.
 
 - **The frame** is the pair record N, N+1 of the row: N+1 is the record named. Every case is a
   frame the harness compares (one frame of gameplay in one room), on both axes but for R24: its y
@@ -503,6 +528,11 @@ same frame moved into an invented room (§How the spec was made), and carries th
 | R33 | item-morph-ball 1228 | `$9E9F`: table `$8F:9EED`, 8×3, and the run after it; heights 70h/A0h | C-right-free-creep-up |
 | R34 | samus-bomb-jump-vertical 1030 | `$9804`: preset, 1×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-hold-creep-up |
 | R35 | samus-shinespark-left 214 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-rise-at-0-to-aim |
+| R36 | chain-any-0006-E0B5 621 | `$E0B5`: preset, 1×1, the bottom row blue; the run after it from the record; heights 70h/A0h | C-leap-on-aim |
+| R37 | chain-any-0006-E0B5 623 | `$E0B5`: preset, 1×1, the bottom row blue; the run after it from the record; heights 70h/A0h | C-leap-left-edge-keeps-subpixel |
+| R38 | chain-any-0006-E0B5 615 | `$E0B5`: preset, 1×1, the bottom row blue; the run after it from the record; heights 70h/A0h | C-right-edge-keeps-subpixel |
+| R39 | chain-any-0006-E0B5 229 | `$E0B5`: preset, 1×1, the bottom row blue; the run after it from the record; heights 70h/A0h | C-top-edge-keeps-subpixel |
+| R40 | chain-any-0003-DFD7 136 | `$DFD7`: preset, 1×2, the bottom row blue; the run after it from the record; heights 70h/A0h | C-left-edge-after-aim |
 
 The importer's screens equal the record's on every case but those listed: R4 and R5 (Glass Tunnel
 `$CEFB`, its table all green; red, blue and red in RAM) and R11 and R12 (`$AA41`, screens 0 and 2

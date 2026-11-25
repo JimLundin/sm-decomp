@@ -1,5 +1,6 @@
-//! The boss-ceres-ridley model, built from its behaviour spec alone. Three parts of the Ceres
-//! station so far: the doors, the shaft as she arrives, and Ridley's room as she enters. Each
+//! The boss-ceres-ridley model, built from its behaviour spec alone. The parts of the Ceres
+//! station so far: the doors, the shaft as she arrives, Ridley's room as she enters, Ridley's
+//! waking, and his tail at rest and its hit. Each
 //! piece has its own state, inputs and outputs, and its caller steps it on its own schedule.
 //!
 //! **The doors.** A Ceres door stands between two of the station's rooms. It slides open as
@@ -46,6 +47,13 @@
 //! [`CeresRidley::run`] carries him through it, reading his content ([`RidleyContent`]): the
 //! run answers with his eye's and body's colours, the fight's music and the roar's sound too.
 //!
+//! **His tail at rest and its hit.** From the moment he starts moving until he takes off, his
+//! tail hangs still behind him ([`CeresRidley::tail`]), its curl changing now and then at
+//! random. Once he is tangible its tip hits her when her body comes within its reach and her
+//! protection has run out: the run reads her ([`Her`]) and answers with the frame's hit, its
+//! side and its push time ([`types::TailImpact`]), which her energy and her motion read as it
+//! stands.
+//!
 //! The tuning values of all of them are in [`Rules`], whose default holds the spec's values.
 
 mod baby;
@@ -65,6 +73,7 @@ mod roar;
 mod rules;
 mod shown;
 mod station;
+mod tail;
 mod waking;
 
 pub use baby::{
@@ -90,4 +99,5 @@ pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
 pub use shown::{FigureLength, ShownFigure};
 pub use station::{ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeStart, Stage};
+pub use tail::{Her, TailCurl};
 pub use waking::{BodyColours, EyeColours, FadeSets, ReadyWait, RidleyContent, RoarWait, RunsLeft};

@@ -123,6 +123,16 @@ impl RidleyPhase {
         )
     }
 
+    /// `TailAtRest`: whether his tail hangs at rest: from his body's fade on, until he takes
+    /// off, when his tail is his next part's.
+    #[must_use]
+    pub const fn tail_at_rest(self) -> bool {
+        matches!(
+            self,
+            Self::BodyFading { .. } | Self::ReadyToRoar { .. } | Self::Roaring { .. }
+        )
+    }
+
     /// Whether he is roaring: `Roaring` with the roar's figure 2, 3 or 4.
     #[must_use]
     pub const fn roaring(self) -> bool {

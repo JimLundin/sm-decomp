@@ -3,11 +3,14 @@
 //! In Ridley's room he runs first of the room's enemies, the baby in his hold, and the door of
 //! his room after him. Fetching his room's contents places him: the HUD meets a boss, the
 //! stage is calm and his room's colours are the fade's goal. The baby's colours go to the
-//! screen as it glows, and his own as his eye and his body fade in.
+//! screen as it glows, and his own as his eye and his body fade in. From his body's fade on his
+//! tail rests behind him, and once he is tangible it hits her within its reach: his run reports
+//! the frame's hit, which her energy and her motion read.
 
 use super::{Content, Fault, Rules, station};
 use crate::production::ridley;
-use boss_ceres_ridley::{CeresRidley, RidleyPhase, RidleyRun};
+use boss_ceres_ridley::{CeresRidley, Her, RidleyPhase, RidleyRun};
+use types::{Pair, Parts as _};
 use world_doors::Palette;
 
 impl station::State {
@@ -21,14 +24,38 @@ impl station::State {
     }
 }
 
-/// One run of Ridley, the baby in his hold: the colour sets the run names go to the screen at
-/// once. His fight's music and his roar are produced, for audio.
-///
-/// Once he is tangible his tail's touch hurts her and knocks her back, which no owner here
-/// plays, so the run that makes him tangible is refused; flying, a later piece runs him.
+impl super::State {
+    /// Her as Ridley's tail reads her in his room: her position in whole pixels as her moves
+    /// leave her (`after_moves`), the body of the pose she started the frame in, from her
+    /// movement's content, and her protection as the frame starts; none outside his room.
+    pub(super) fn reached(
+        &self,
+        after_moves: types::Position,
+        content: &Content,
+    ) -> Result<Option<Her>, Fault> {
+        if self.station.ridley.is_none() {
+            return Ok(None);
+        }
+        let pose = self.samus.movement.0.pose;
+        let body = content.movement.radius(pose).ok_or(Fault::Body(pose))?;
+        Ok(Some(Her {
+            position: Pair {
+                x: after_moves.x.pixel(),
+                y: after_moves.y.pixel(),
+            },
+            body,
+            protection: u16::from(self.health.0.protection.get()),
+        }))
+    }
+}
+
+/// One run of Ridley, the baby in his hold, his tail reading her in a frame of play:
+/// the colour sets the run names go to the screen at once. His fight's music and his roar are
+/// produced, for audio, and the frame's hit for her energy and her motion. Flying, a later
+/// piece runs him.
 pub(super) fn run(
     ridley: CeresRidley,
-    passage_under_way: bool,
+    running: station::Running<'_>,
     random: types::RandomSequence,
     content: &Content,
     rules: &Rules,
@@ -37,15 +64,17 @@ pub(super) fn run(
     if ridley.phase == RidleyPhase::Flying {
         return Err(Fault::RidleyFlying);
     }
+    let (passage_under_way, her) = match running {
+        station::Running::Play(her) => (false, her),
+        station::Running::Passage => (true, None),
+    };
     let run = ridley.run(
         passage_under_way,
         random.number.0,
+        her,
         &content.ridley,
         &rules.ceres,
     );
-    if run.ridley.phase.tangible() {
-        return Err(Fault::RidleyTangible);
-    }
     if let Some(colours) = run.colours {
         ridley::show_baby(colours, &content.rooms.actors.ceres_ridley, palette)
             .map_err(|ridley::ColourFault| Fault::BabyColours)?;
@@ -63,12 +92,13 @@ pub(super) fn run(
 mod tests {
     use super::run;
     use crate::production::played::Fault;
+    use crate::production::played::station::Running;
     use crate::production::played::tests::{content, rules};
     use boss_ceres_ridley::{
-        BodyColours, CeresRidley, EyeColours, FadeSets, RidleyContent, RidleyPhase,
+        BodyColours, CeresRidley, EyeColours, FadeSets, Her, RidleyContent, RidleyPhase,
     };
-    use core::num::NonZeroU16;
-    use types::{Colour, RandomNumber, RandomSequence};
+    use core::num::{NonZeroU16, Wrapping};
+    use types::{Colour, Hit, Pair, PushFrames, Px, RandomNumber, RandomSequence, Side};
     use world_doors::{COLOURS, Palette};
 
     /// His sprite rows' first colour on the screen: the second and the doors'.
@@ -105,13 +135,49 @@ mod tests {
         }
     }
 
-    fn ran(phase: RidleyPhase, palette: &mut Palette) -> Result<RidleyPhase, Fault> {
+    /// Her as his tail reads her: at `position`, a body of 8 by 16 px, unprotected.
+    fn her(position: Pair<Px>) -> Her {
+        Her {
+            position,
+            body: Pair {
+                x: Wrapping(8),
+                y: Wrapping(16),
+            },
+            protection: 0,
+        }
+    }
+
+    /// Her far from his tail.
+    fn far() -> Her {
+        her(Pair {
+            x: Wrapping(0),
+            y: Wrapping(0),
+        })
+    }
+
+    fn ran_by(
+        phase: RidleyPhase,
+        her: &Her,
+        palette: &mut Palette,
+    ) -> Result<(RidleyPhase, Option<Hit>), Fault> {
         let mut content = content();
         content.ridley = waking();
         let random = RandomSequence {
             number: RandomNumber(1),
         };
-        run(ridley(phase), false, random, &content, &rules(), palette).map(|run| run.ridley.phase)
+        run(
+            ridley(phase),
+            Running::Play(Some(her)),
+            random,
+            &content,
+            &rules(),
+            palette,
+        )
+        .map(|run| (run.ridley.phase, run.hit))
+    }
+
+    fn ran(phase: RidleyPhase, palette: &mut Palette) -> Result<RidleyPhase, Fault> {
+        ran_by(phase, &far(), palette).map(|(phase, _)| phase)
     }
 
     fn unlit() -> Palette {
@@ -151,18 +217,39 @@ mod tests {
         assert_eq!(palette.screen, shown);
     }
 
+    /// The run he turns tangible reports the frame's hit when she stands at his tail's tip, and
+    /// none when she is out of its reach.
     #[test]
-    fn the_run_he_turns_tangible_and_any_run_flying_are_refused_leaving_the_screen() {
-        for (phase, fault) in [
-            (
-                RidleyPhase::BodyFading { sets: 1, runs: 1 },
-                Fault::RidleyTangible,
-            ),
-            (RidleyPhase::Flying, Fault::RidleyFlying),
-        ] {
-            let mut palette = unlit();
-            assert_eq!(ran(phase, &mut palette), Err(fault));
-            assert_eq!(palette, unlit());
-        }
+    fn the_run_he_turns_tangible_hits_her_at_his_tails_tip() {
+        let turning = RidleyPhase::BodyFading { sets: 1, runs: 1 };
+        let placed = ridley(turning).position;
+        let tip = Pair {
+            x: placed.x + Wrapping(32),
+            y: placed.y + Wrapping(16),
+        };
+        let left_of_it = Pair {
+            x: tip.x - Wrapping(1),
+            ..tip
+        };
+        let (phase, hit) = ran_by(turning, &her(left_of_it), &mut unlit()).unwrap();
+        assert!(phase.tangible());
+        assert_eq!(
+            hit,
+            Some(Hit {
+                side: Side::Left,
+                push: PushFrames::new(5).unwrap(),
+            })
+        );
+        assert_eq!(ran_by(turning, &far(), &mut unlit()).unwrap().1, None);
+    }
+
+    #[test]
+    fn any_run_flying_is_refused_leaving_the_screen() {
+        let mut palette = unlit();
+        assert_eq!(
+            ran(RidleyPhase::Flying, &mut palette),
+            Err(Fault::RidleyFlying)
+        );
+        assert_eq!(palette, unlit());
     }
 }

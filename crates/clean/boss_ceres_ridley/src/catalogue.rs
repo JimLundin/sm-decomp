@@ -71,6 +71,12 @@ pub enum BehaviourId {
     ReadyToRoar,
     /// He roars, shuts his jaws and sits; then he takes off.
     Roars,
+    /// From his moving until his take-off, his tail hangs still behind him.
+    TailAtRest,
+    /// Now and then, at random, his tail's curl changes.
+    TailCurls,
+    /// Tangible, his tail's tip hits her within its reach once her protection has run out.
+    TailHits,
 }
 
 /// A catalogue entry.
@@ -88,9 +94,9 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten and
-/// his waking's four.
-const ENTRIES: usize = 32;
+/// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
+/// his waking's four and his tail's three.
+const ENTRIES: usize = 35;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -344,6 +350,30 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
                           runs out; then he takes off",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailAtRest,
+        summary: "from the moment he starts moving until he takes off, his tail hangs \
+                          still: its tip and all its segments at one place behind him",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailCurls,
+        summary: "now and then, at random, the tail's curl changes; it shows only once \
+                          the tail moves",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailHits,
+        summary: "tangible, he hits her when her body comes within reach of his tail's \
+                          tip and her protection has run out; she is pushed away from the tip",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
 ];

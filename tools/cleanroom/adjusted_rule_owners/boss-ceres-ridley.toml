@@ -26,3 +26,5 @@ slam = ["SlamShut"]
 wake = ["RidleyWaits"]
 # BodyFadesIn: docs/behaviours/boss-ceres-ridley.md:922
 pace = ["BodyFadesIn"]
+# TailHits: docs/behaviours/boss-ceres-ridley.md:1067
+tail_reach = ["TailHits"]

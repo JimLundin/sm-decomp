@@ -27,7 +27,8 @@
 # - samus: what the camera reads of her this frame (spec §1.3): position = [x, y], after everything
 #   that moved her this frame; facing, "Left", "Right" or "Screen"; backwards (optional, default
 #   none): "Knockback", "Moonwalk" or "Skid", why she is going backwards (the spec's input is
-#   the bool; each reason reads the same; listed alphabetically); rising (optional, default
+#   the bool; each reason reads the same; listed alphabetically; "Knockback" also names her
+#   backward leap once the push is over, spec §1.3); rising (optional, default
 #   false); placed (optional, default none): the y a placement put her at this frame, a pixel
 #   coordinate from 0 to 65535 (spec §1.3 and `Remembering`); with none, the camera follows from where it last saw
 #   her.
@@ -518,6 +519,15 @@ before = { camera = ["0010.0000", "007F.0000"], seen = ["0080.0000", "0100.0000"
 samus = { position = ["0082.0000", "0100.0000"], facing = "Right" }
 after = { vertical_fraction = 0, camera = ["000E.0000", "007F.0000"], seen = ["0082.0000", "0100.0000"] }
 [[vector]]
+# her backward leap while the push still moves her: the two turn the lead round twice, so she is not going backwards and the view aims 96 px left of her, the way she faces; it moves right through open screens
+id = "C-leap-in-push"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "Settling", "Remembering"]
+room = { screens = ["OOOO"], heights = [104, 150] }
+before = { camera = ["0150.0000", "0000.0000"], seen = ["01D3.A000", "00B0.0000"] }
+samus = { position = ["01CF.E000", "00B0.0000"], facing = "Right" }
+after = { vertical_fraction = 0, camera = ["0154.C000", "0000.0000"], seen = ["01CF.E000", "00B0.0000"] }
+[[vector]]
 # she moves down 2 px but her aim is above the room's top: the view moves up onto the aim and stops on the top, its subpixel 0; across she is still and the next screen is closed, so it holds on its screen's edge
 id = "C-aim-above-top"
 source = "constructed"
@@ -834,6 +844,51 @@ room = { screens = ["SOCC", "SSOC", "OSSO"], heights = [104, 150] }
 before = { camera = ["01E4.9900", "0200.0000"], seen = ["024A.58FF", "0298.F3FF"] }
 samus = { position = ["0241.CCFF", "0295.F3FF"], facing = "Left", rising = true }
 after = { vertical_fraction = 0, camera = ["01DB.0D00", "01FF.0000"], seen = ["0241.CCFF", "0295.F3FF"] }
+[[vector]]
+# her backward leap, the push over, facing right and travelling left: she goes backwards, so the view aims 160 px left of her, which is its own x, and stays on its aim, subpixel included; down the move passes the room's bottom, a short row, and backs up onto it
+id = "C-leap-on-aim"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "ShortScreens", "Remembering"]
+room = { screens = ["OOO", "OOS"], heights = [104, 150] }
+before = { camera = ["0200.0000", "0100.0C00"], seen = ["02A6.2000", "019D.BBFF"] }
+samus = { position = ["02A0.6000", "019E.63FF"], facing = "Right", backwards = "Knockback" }
+after = { vertical_fraction = 43008, camera = ["0200.0000", "0100.B400"], seen = ["02A0.6000", "019E.63FF"] }
+[[vector]]
+# her backward leap, the push over: going backwards, her aim is left of the room and the view moves left past the room's left edge, which stops it on 0 with its subpixel kept
+id = "C-leap-left-edge-keeps-subpixel"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "ShortScreens", "Remembering"]
+room = { screens = ["OO", "SS"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0100.7800"], seen = ["009B.6000", "019F.27FF"] }
+samus = { position = ["0095.A000", "01A0.07FF"], facing = "Right", backwards = "Knockback" }
+after = { vertical_fraction = 57344, camera = ["0000.4000", "0100.5800"], seen = ["0095.A000", "01A0.07FF"] }
+[[vector]]
+# her backward leap, the push over: the view moves right past the room's right edge, which stops it there with its subpixel kept; down she is still and it holds on the room's bottom
+id = "C-right-edge-keeps-subpixel"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "Settling", "ShortScreens", "Remembering"]
+room = { screens = ["OOO", "OOS"], heights = [104, 150] }
+before = { camera = ["0200.C000", "0100.9C00"], seen = ["02C6.6000", "019C.17FF"] }
+samus = { position = ["02C0.A000", "019C.17FF"], facing = "Right", backwards = "Knockback" }
+after = { vertical_fraction = 0, camera = ["0200.8000", "0100.9C00"], seen = ["02C0.A000", "019C.17FF"] }
+[[vector]]
+# she rises 1 px inside the room's top screen: the view moves up past the room's top, which stops it on 0 with its subpixel kept; across she is still and it holds
+id = "C-top-edge-keeps-subpixel"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer", "RoomEdges", "Settling", "Remembering"]
+room = { screens = ["OS", "OO"], heights = [104, 150] }
+before = { camera = ["0100.8000", "0000.C000"], seen = ["0168.A000", "0044.4FFF"] }
+samus = { position = ["0168.F000", "0043.CFFF"], facing = "Right", rising = true }
+after = { vertical_fraction = 32768, camera = ["0100.8000", "0000.4000"], seen = ["0168.F000", "0043.CFFF"] }
+[[vector]]
+# she moves right with her aim left of the room: the move left passes the aim first, which stops it there with its subpixel 0, and the room's left edge then stops it on 0; down it follows her into open screens
+id = "C-left-edge-after-aim"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "ShortScreens", "Remembering"]
+room = { screens = ["OO", "OO", "SO"], heights = [104, 150] }
+before = { camera = ["0000.E800", "01E4.A400"], seen = ["0058.EC00", "0253.FFFF"] }
+samus = { position = ["005D.1C00", "0257.FFFF"], facing = "Right" }
+after = { vertical_fraction = 0, camera = ["0000.0000", "01E9.A400"], seen = ["005D.1C00", "0257.FFFF"] }
 [[vector]]
 id = "C-adjust-extra"
 source = "constructed"

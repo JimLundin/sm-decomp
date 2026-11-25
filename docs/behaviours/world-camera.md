@@ -13,14 +13,16 @@ the speed it moves at, the room's edges, the room's closed screens and how it ea
 and what it remembers of her between frames, including the fractional height difference that
 her next shot inherits. It reads her motion's outputs: her position after her
 moves, the y a placement put her at, if any, whether she skids, whether she rises, her facing and
-whether she moonwalks.
+whether she moonwalks, and, from her knockback, the push under way and her backward leap.
 
 **What it reads from samus-movement.** Its step's outputs: her position, the y a placement put her
 at, if any (where pose fit or a change of shape placed her), the skid, her facing and `rising` (§1.3), which samus-movement's `RisingAndFalling` gives: she is rising from the
 rise's start until it ends, a rise at 0 and the frame that spends the rise included. Her vertical
 speed can't stand in for it: at a rise at 0 it is 0, and on the frame that spends the rise it
-already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). While a knockback moves her, `rising` and going backwards are the
-knockback's (§5).
+already points down, yet both aim the camera as a rise does (C-rise-at-0, C-rise-spent). While a knockback's push moves her, `rising` is the
+push's (§5). Going backwards reads two more things samus-movement holds (its §12): the push
+under way (`Push`) and her backward leap (`Leaping`), which keeps her facing while she travels
+against it; §1.3 says how.
 
 **Not in this spec** (each an input where it feeds us, §1.3; §5 names who supplies each): a door's
 passage, which places the view in the next room; the cells that open and close screens as she
@@ -61,7 +63,7 @@ it. How callers select such a frame belongs to their domains (§5).
 | her position | x, y: `P.S`, after everything that moved her this frame | `FollowingHer`, `LeadingHer`, `AimingHeight`, `Remembering`, `RememberedHeightFraction` |
 | the y a placement put her at, if any | `PlacementY`, a pixel coordinate from 0 to 65535, or none: where pose fit or a change of shape placed her this frame (her motion's output); none on a frame nothing placed her, and then the camera follows her from where it last saw her | `Remembering`, `RememberedHeightFraction` |
 | her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
-| going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain); the vectors name which | `LeadingHer` |
+| going backwards | `bool`: she skids (her motion's output) or moonwalks (her pose); or exactly one of two holds: a knockback's push moves her (samus-movement's push under way, its §12), or she is in her backward leap (her motion's `Leaping`, which travels against her facing). So in the leap she goes backwards once the push is over, and not while it still moves her (`LeadingHer`). The vectors name which | `LeadingHer` |
 | rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included: samus-movement's output (`RisingAndFalling`), or the knockback's while one moves her (§5) | `AimingHeight` |
 | the room's screens | a grid of the shared `ScreenKind` (`types`, the kind the blocks' scroll cells write), so many screens across (`w`) and down (`h`), and the run of screens the room's loading left after its last screen (`BelowTheRoom`) | `ClosedScreens`, `ShortScreens`, `Settling`, `RoomEdges`, `ScreensRunOn` |
 | the aim heights | the room's two distances in px: while she isn't rising, and while she rises | `AimingHeight` |
@@ -161,8 +163,14 @@ of the room is in a column past the row's last (`ScreensRunOn`).
   (C-moonwalk-right-to-closed-edge, C-moonwalk-left-to-aim) and a knockback (C-knockback-left,
   C-knockback-rising-down-closed) turn the lead round: the view looks the way she travels, not the
   way she faces.
-- checked: oracle (`Ahead`, every harness case that moves across); constructed (`Near`,
-  `KeepLeft`, `KeepRight`, facing the screen, and `Ahead` in the vectors that move across).
+- So in her backward leap, once the push is over, the view looks the way she travels, against
+  her facing (C-leap-on-aim, C-leap-left-edge-keeps-subpixel). While the push still moves her in
+  the leap, the push and the leap turn the lead round twice: she isn't going backwards, and the
+  view looks the way she faces (C-leap-in-push).
+- checked: oracle (`Ahead`, every harness case that moves across; the backward leap, in and
+  after the push, C-leap-on-aim and C-leap-left-edge-keeps-subpixel the twins of recorded frames);
+  constructed (`Near`, `KeepLeft`, `KeepRight`, facing the screen, C-leap-in-push, and `Ahead` in
+  the vectors that move across).
 
 ### AimingHeight
 - kind: mechanic and parameter.
@@ -307,10 +315,17 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   down is `yb = (h − 1) × 256 + margin` (`ShortScreens`).
 - Going right, `c` `exceeds` `xr` → it stops on `xr`, and no closed screen moves it that frame
   [C-right-onto-edge, C-rise-into-corner, C-down-short-closed-below, C-corner-other-heights,
-  C-edge-right-from-left]
+  C-edge-right-from-left, C-right-edge-keeps-subpixel]
 - Going left or up `before` 0 → it stops on 0 on that axis, and no closed screen moves it that frame
   [C-aim-above-top, C-left-past-edge, C-rise-into-corner, C-aim-above-top-right-edge,
-  C-left-edge-keeps-subpixel]
+  C-left-edge-keeps-subpixel, C-leap-left-edge-keeps-subpixel, C-top-edge-keeps-subpixel,
+  C-left-edge-after-aim]
+- So a room edge keeps the camera's subpixel part, on either axis and either way; it is 0 only
+  when the aim stopped the move first (`FollowingHer`). A move left or up that ends short of an
+  aim beyond the room's edge stops on 0 with its subpixel kept (C-left-edge-keeps-subpixel,
+  C-leap-left-edge-keeps-subpixel, C-top-edge-keeps-subpixel); one that passes that aim stops on
+  it, its subpixel 0, and then on 0 (C-left-edge-after-aim, C-aim-above-top). Going right or down
+  the edge keeps it too (C-right-edge-keeps-subpixel, C-leap-on-aim's bottom).
 - Going down, `c` `exceeds` `yb` → it backs up as from a closed screen, `max(yb, back(cm))`, and no
   closed screen moves it that frame [C-down-to-bottom-31, C-skid-rising-down-to-bottom,
   C-right-to-closed-edge-down-to-bottom, C-edge-down-from-above, C-edge-down-from-below]
@@ -324,8 +339,10 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   `011F`).
 - So a camera left of the room that moves right goes straight to the room's right edge
   (C-edge-right-from-left).
-- checked: oracle; constructed (C-edge-right-from-left, C-edge-down-from-above,
-  C-edge-down-from-below).
+- checked: oracle (the subpixel at each edge: C-left-edge-keeps-subpixel,
+  C-leap-left-edge-keeps-subpixel, C-top-edge-keeps-subpixel, C-left-edge-after-aim,
+  C-right-edge-keeps-subpixel and C-leap-on-aim the twins of recorded frames); constructed
+  (C-edge-right-from-left, C-edge-down-from-above, C-edge-down-from-below).
 
 ### ShortScreens
 - kind: mechanic.
@@ -493,8 +510,9 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - **Other placements:** the grapple's own slow camera; the grapple, the shinespark, a suit she
   collects, cutscenes, some bosses and the gunship changing where the camera saw her; the harness
   masks the frames and axes they act on until those domains come.
-- **The knockback (the damage domain):** while a knockback moves her, it supplies going backwards
-  and `rising`.
+- **The knockback (samus-movement's, its §12):** while its push moves her, it supplies `rising`;
+  its push under way (`Push`) and her backward leap (`Leaping`, her facing kept) supply going
+  backwards as §1.3 says.
 - **The enemies:** a boss changes the lead setting; Kraid's room keeps her on its first screen.
 - **The room rules that move the view after it follows** (the room's own code): one room holds the
   view above a floor, one scrolls it right, one shakes it, and one waits for it.

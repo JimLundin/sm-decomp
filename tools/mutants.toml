@@ -413,11 +413,11 @@ field = "doors.colours.screen"
 name = "played-health-tail-lands"
 responsibility = "played"
 file = "crates/game/src/production/played/health.rs"
-before = ".play_frame(samus_health::TailImpact::Absent, &rules.health)"
-after = ".play_frame(samus_health::TailImpact::EligibleCeresTail, &rules.health)"
+before = "None => samus_health::TailImpact::Absent,"
+after = "None => samus_health::TailImpact::EligibleCeresTail,"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
-field = "health.energy.whole"
+field = "appearance.hurt-count"
 
 [[fault]]
 name = "played-hud-state-held"
@@ -465,10 +465,10 @@ field = "ceres.0.wait"
 name = "played-ceres-doors-read-her-after-moves"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = '''            let enemies = self.enemies(false, random, passing, content, rules, &mut palette)?;'''
+before = '''            let enemies = self.enemies(running, random, passing, content, rules, &mut palette)?;'''
 after = '''            let mut moved = self.clone();
-            moved.samus.movement.0.position = _after_moves;
-            let enemies = moved.enemies(false, random, passing, content, rules, &mut palette)?;'''
+            moved.samus.movement.0.position = after_moves;
+            let enemies = moved.enemies(running, random, passing, content, rules, &mut palette)?;'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "ceres.0.phase"
@@ -548,8 +548,8 @@ field = "movement.choices"
 name = "played-reaction-state-dropped"
 responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
-before = "let outcome = samus.react(moves, hit);"
-after = "let outcome = { let mut dropped = samus; dropped.react(moves, hit) };"
+before = "let outcome = samus.react(moves, between.hit);"
+after = "let outcome = { let mut dropped = samus; dropped.react(moves, between.hit) };"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "movement.pose"
@@ -558,11 +558,41 @@ field = "movement.pose"
 name = "played-hurt-previous-energy-higher"
 responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
-before = "seen.previous_energy = seen.energy;"
-after = "seen.previous_energy = seen.energy + 1;"
+before = "seen.previous_energy = self.health.0.energy.whole.get();"
+after = "seen.previous_energy = self.health.0.energy.whole.get() + 1;"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "appearance.hurt-count"
+
+[[fault]]
+name = "played-tail-hit-not-reacted"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "                hit,"
+after = "                hit: None,"
+case = "played chain-any-0006-E0B5 0 620"
+cut = 609
+field = "movement.pose"
+
+[[fault]]
+name = "played-tail-hit-kept-from-health"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "played: (enemies, self.health_frame(hit, rules)),"
+after = "played: (enemies, self.health_frame(None, rules)),"
+case = "played chain-any-0006-E0B5 0 620"
+cut = 609
+field = "health.energy.whole"
+
+[[fault]]
+name = "played-tail-not-compared"
+responsibility = "played"
+file = "crates/verify/src/replay/played/ridley.rs"
+before = "let tail = ridley::modelled_tail_segments(ridley);"
+after = "let tail = vec![None; 7];"
+case = "played chain-any-0006-E0B5 0 620"
+cut = 577
+field = "ridley.tail.0"
 
 [[fault]]
 name = "played-ridley-slam-hold-one-longer"
@@ -577,9 +607,9 @@ field = "ceres.0.wait"
 [[fault]]
 name = "played-ridley-waits-in-the-passage"
 responsibility = "played"
-file = "crates/game/src/production/played.rs"
-before = "Some(self.enemies(true, random, passing, content, rules, &mut before)?)"
-after = "Some(self.enemies(false, random, passing, content, rules, &mut before)?)"
+file = "crates/game/src/production/played/ridley.rs"
+before = "station::Running::Passage => (true, None),"
+after = "station::Running::Passage => (false, None),"
 case = "played chain-any-0005-E06B 0 320"
 cut = 282
 field = "ridley.phase"
@@ -784,3 +814,13 @@ after = "expiry(answer != CountdownExpiry::Expired)"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "hud.countdown.expiry"
+
+[[fault]]
+name = "played-camera-backwards-push-alone"
+responsibility = "played"
+file = "crates/game/src/production/camera_semantic.rs"
+before = "!= (current.pose.action == types::Action::Leaping))"
+after = "&& true)"
+case = "played chain-any-0006-E0B5 0 727"
+cut = 621
+field = "camera.view.x.fraction"

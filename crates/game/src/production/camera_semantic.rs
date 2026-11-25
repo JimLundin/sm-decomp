@@ -75,8 +75,42 @@ pub(super) fn completed_samus(
             .placed
             .map(|placed| types::PlacementY(placed.pixel().0)),
         facing: current.pose.facing,
-        // She goes backwards as she skids or moonwalks; no knockback is in these loops.
-        backwards: outputs.skidding || current.pose.action == types::Action::Moonwalking,
+        backwards: backwards(current, outputs.skidding),
         rising: outputs.rising,
+    }
+}
+
+/// World-camera §1.3's going backwards: she skids or moonwalks, or is in exactly one of a hit's
+/// push and the backward leap. The leap keeps her facing as she travels against it, and while the
+/// push still moves her the two turn the lead round twice.
+fn backwards(current: &samus_movement::Samus, skidding: bool) -> bool {
+    skidding
+        || current.pose.action == types::Action::Moonwalking
+        || (current.knockback.push.is_some() != (current.pose.action == types::Action::Leaping))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::backwards;
+    use crate::production::tests::fixtures;
+    use samus_movement::Push;
+    use types::Action;
+
+    /// Her, not skidding, in `action` with `push` under way.
+    fn goes_backwards(action: Action, push: Option<Push>) -> bool {
+        let mut samus = fixtures::samus();
+        samus.pose.action = action;
+        samus.knockback.push = push;
+        backwards(&samus, false)
+    }
+
+    /// The push and the leap each turn the lead round; together they cancel, so the camera reads
+    /// exactly one of them as going backwards (world-camera §1.3, `LeadingHer`).
+    #[test]
+    fn exactly_one_of_the_push_and_the_leap_goes_backwards() {
+        assert!(!goes_backwards(Action::Leaping, Some(Push::Up)));
+        assert!(goes_backwards(Action::Leaping, None));
+        assert!(goes_backwards(Action::Recoiling, Some(Push::Up)));
+        assert!(!goes_backwards(Action::Falling, None));
     }
 }

@@ -603,8 +603,8 @@ Sprite palette 1 is drawn by none of his sprites in 0006 (OAM at 620 and 700 use
 
 **How the played frame runs it:**
 1. Production (`crates/game/src/production/played/ridley.rs`, `run`) steps him through this
-   part's phases. The run that makes him tangible is refused (`Fault::RidleyTangible`): his
-   tail's touch is part 4b's. A run that starts `Flying` is refused (`Fault::RidleyFlying`,
+   part's phases. From the run that makes him tangible his tail can hit her (part 4b,
+   below). A run that starts `Flying` is refused (`Fault::RidleyFlying`,
    part 4c).
 2. His colours go to the screen as the baby's do (`production/ridley.rs`, `show_eye` and
    `show_body`): the eye's set to sprite palette 7 colours 12-14, the body's set to sprite
@@ -635,6 +635,138 @@ samus-appearance's hurt colours.
 | F18, F19, F20, F21 | `chain-any-0006-E0B5`:866, 867, 767, 700 | F-roar-last, F-roar-flies, F-baby-cries, F-roar-wide-counts |
 | H7 | `chain-any-0006-E0B5`:513-609 | the eye's and the body's sets with the game's content (indexed replay) |
 
+## Part 4b, his tail at rest and its hit
+
+### How it was made
+
+Behaviour first, from CI's lean record cache, row `chain-any-0006-E0B5` cuts 570-1000, read per
+frame by scratch readers (`$TEMP/collab/tail-753/scratch/`, local only: `td.py`, `tc.py`,
+`chg.py`, `hits.py`, `curl.py`, `ext.py`): the tail's block `7E2000..20AF` (its function index,
+angle delta, curl, seven segments of 14h bytes), his position `0F7A`/`0F7E`, `0F86`, `7E7804`,
+`7E7836`, `7E7838`, and her `0AF6`/`0AFA`, `0AFE`/`0B00`, `18A8`, `18AA`, `0A54`, `09C2`. The
+bank log A6 (`$A2BD`, `$CAF5..CB20`, `$CEBA..CF53`, `$CF5A`, `$D2AA`, `$D2D6..D3B3`,
+`$DF29..DF58`, `$DFD9..E01A`, the main AI `$A288..A2BC`) then pinned the arithmetic.
+
+The reference model, `$TEMP/collab/tail-753/scratch/model4b.py` (it borrows part 4a's model and
+part 3's baby), on 0006 577-866, the 290 runs that end in `BodyFading`, `ReadyToRoar` or
+`Roaring`:
+
+| Compared | Model | Do-nothing (last run's value) | No tail (none, no hit) |
+| --- | --- | --- | --- |
+| the tip (`20A4`, `20A6`) | 290 | 289 | 0 |
+| all seven segments at the tip (`202C`/`202E` + 14h × i) | 290 | 289 | 0 |
+| the curl (`201E`) | 290 | 290 | |
+| a hit (`18A8` 0 to 5Fh) | 290 (3 hits: 609, 705, 801) | 287 | 287 |
+| its side (`0A54`) | 290 | 287 | 287 |
+
+Every hit's push time is 5 (`18AA` 4 at the hit's record) and costs 15 energy. The curl rule
+also holds on every run from 513 to the escape, 1,073 of 1,073 (one change, at 945, in his
+flight). Beyond this part the hit rule on the recorded tip holds 867-1585, 719 of 719 runs,
+with the two flight hits (897 and 993, both `Left`): part 4c needs only the moving tip.
+`model4b.py vectors` runs the 23 T- vectors: 23 of 23; `model4a.py vectors` still agrees on
+its 29 F- vectors.
+
+### State (the RAM mapping)
+
+| Spec | RAM | Notes |
+| --- | --- | --- |
+| the tail's place, at rest | `7E202C`/`202E` + 14h × i, i = 0..6; the tip is segment 6, `7E20A4`/`20A6` | `$CEBA`: segment 0 at his position + (`$CF54` 20h + its x offset, its y offset + 10h), each next one at the last + its offsets; at rest every offset (`2030`/`2032` + 14h × i) is 0, since tail function 0 (`$CB20`, `RTS`) never updates the angles |
+| at rest | `7E2000` = 0 | set to 1 (neutral) at the take-off (`$A354`): part 4c |
+| the tail's curl | `7E201E`, the ideal angle between segments | 10h from `$D2D6` at his placing (`$A156`; 0005:184); `$A2BD` on every moving run |
+| the tail's reach (`tail_reach`) | `#$000E` at `$DFD9` (both axes) | a rule key of its own: the doors' `reach` (48, `SheIsNear`) is another Parameter |
+| the push time | `#$0005` to `18AA` at `$E003` | 4 at the hit's record: movement's step counts it down the same frame |
+
+Untouched at rest: the segments' distances (`2026` + 14h × i: `$CF5A` shrinks only above 800h,
+and the distances start at 200h, 800h ... 500h), the angle delta (`2014` = 1, so the whip's
+sound, `$D2AA`, needs 8 or more), the whip targets.
+
+### Inputs and order
+
+- The tail runs inside his main AI after his function (`$A28E` executes `0FA8`, then `$A299`
+  checks `7E7804`), so the run that turns him tangible (`$A432`, 609) is judged tangible.
+- Her position and radius are read where the enemies run, after her own movement (the root's
+  ruling, corrected from the records: her moves, then his run reports the hit, Health applies it,
+  then her movement's reaction starts the push, all in the same frame). At 609 the record's y, 187, is after the
+  push's 5 px pose fit; her y as her moves leave 609 is 192 (crouched, unmoved), which T-hit-left
+  takes. Her body is the one she started the frame in: the hit's record keeps the old body (16 at
+  0006:609, 12 at 993) and the new one shows from the next frame; read from her movement's
+  content for the pose she began the frame in.
+- Her protection is read before her own step counts it down: at 704 the record before shows
+  1 and no hit lands; at 705 the record before shows 0 and the hit lands.
+- The random number is `05E5` as his run reads it; its value at the record agrees on all 1,073
+  runs. The baby's routine reads the same word later in the run (part 3).
+- `7E7836` (the hold) is 0 on every run of the Ceres rows (0006 0-1776). It is not "never set in
+  Ceres": the fake retreat sets it at `$A6:BE45` (`$BE03`, his feet closing on the baby), reached
+  from `$A6E8` to `$BD9A` once his hit counter `7E781A` reaches 100 (`$A6EC`); only `$BCA7`
+  (Norfair) and `$9664` (init) clear it, so from then on the tail hits her no more. The any% row
+  goes `A6E8` to `A971` at 994 instead. Part 4c (or the retreat's part) states it.
+
+### Outputs
+
+| Spec | RAM / code |
+| --- | --- |
+| the frame's hit | `$DFD9..E01A`: `18A8` = 60h, `18AA` = 5, `0A54` = 0 (left) or 1 (right); damage `7E7838` (0Fh) through `$A0:A45E` and `$91:DF51` (samus-health's `TailHit`) |
+| the tail's place | `7E202C..20A7` (drawing, `$DB2A`) |
+
+### Sources per entry
+
+| Entry | Sources |
+| --- | --- |
+| TailAtRest | `$A6:CAF5..CB0D`, `$CB20`, `$CEBA..CF53`, `$CF54`, `$CF5A` |
+| TailCurls | `$A6:A2BD..A2D2`, `$D2FD` |
+| TailHits | `$A6:CB0E..CB1D`, `$DFD9..E01A`, `$DF29..DF58` |
+
+### Findings behind the spec's choices
+
+- **The reach is a box, not a radius.** `$DF29` compares `|dx|` with her x radius + 14 and
+  `|dy|` with her y radius + 14, each by a borrow and then a strict compare: so the edges are
+  `<` on both axes. The differences are 16-bit, made absolute from their sign (`BPL`/negate).
+- **The side** is the sign of her x less the tip's x (`BMI`): 0 counts as right.
+- **His tangibility, her protection and his hold** are one `ORA` test at `$CB0E`; the spec
+  keeps the first two and leaves the hold to the part that owns the fake retreat (set at
+  `$BE45`, after 100 hits, `$A6EC`); in this part it is always clear.
+- **The tail is at rest on all of part 4a's moving runs.** Its block changes only at 577 (the
+  segments' places set); the curl changes first at 945. The flight's tail (from 867) is an
+  articulated chain of angles, distances and whips (`$CBC0`, `$CC39`, `$D09F`, `$D19D`): part
+  4c, which this part's `TailHits` serves unchanged.
+- **His wings** (`7E780A`/`780C`) animate from 577 and are drawing only; left to C1 (and part 4c
+  for their speed in flight).
+- **The tail's place before he moves** is the initial table (`$D398`/`$D3A6`, not his position):
+  never read, as the tail doesn't run then; the spec reports none.
+
+### The harness (for the integrator)
+
+- **Rows:** `chain-any-0006-E0B5` 577-866.
+- **Compared per run:** the tip `20A4`/`20A6` and the seven segments' places; `201E` as the curl;
+  the frame's hit as `18A8` going from 0 to 5Fh, with `0A54` as its side and `18AA` + 1 as its
+  push time (movement's step has spent one); her energy and the rest of the push are
+  samus-health's and samus-movement's.
+- **Skipped:** the tail's drawing (C1); everything else in `7E2000..20AF` (angles, distances,
+  stagger, whip targets: unchanged at rest and part 4c's).
+
+**What the integrator needs:**
+1. Production: `run_ridley` produces the frame's hit after her movement step and before her push
+   starts, and routes it to samus-health (`TailImpact`) and samus-movement (the frame's hit);
+   Health's protection as the frame starts and her position and body as her moves leave it come
+   in.
+2. The verify reader (`crates/verify/src/replay/ridley.rs`) decodes the tip, the segments and the
+   curl, and the hit from `18A8`/`0A54`/`18AA` as above.
+3. The vector harness, `crates/clean/boss_ceres_ridley/tests/vectors.rs`, parses the T- fields
+   (`ridley.curl`, `her`, `ridley_after.curl`, `tail`, `hit`, `rules.tail_reach`); until it does, its
+   `deny_unknown_fields` rejects the file.
+
+With part 4a, S4's knockback and samus-appearance's hurt colours, the played run's stop moves
+from 609 to 867, his take-off (part 4c).
+
+### The harness cases
+
+| Case | Row:frame | Vectors |
+| --- | --- | --- |
+| T1 | `chain-any-0005-E06B`:184 | T-placed |
+| T2, T3, T4 | `chain-any-0006-E0B5`:577, 608, 609 | T-rest-first, T-rest-intangible, T-hit-left |
+| T5, T6, T7 | `chain-any-0006-E0B5`:704, 705, 801 | T-protected, T-hit-right, T-hit-jumping |
+| T8 | `chain-any-0006-E0B5`:945 (his flight; the same rule) | T-curl-recorded |
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -645,7 +777,8 @@ samus-movement. There is no old code: the engine carries the doors unrun
 (`EnemyBody::Unmodelled`, LEGACY "slots it carries but doesn't run") and has nothing for the pad,
 the cover, the beacon or the platform, nor for the door of Ridley's room, the walls or Ridley
 (`LoadFault::LaterCeresActor`), so no area has `old`, and there is no old-code guideline to
-compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking.
+compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking. Part 4b has none:
+the engine has no tail.
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
@@ -654,5 +787,6 @@ compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his
 - Area ridley-door: RidleyRoomStart, SlamShut, LockedIn, DrawnWithRidley, GetawayWalls
 - Area ridley: RidleyPlaced, RidleyWaits, BabyHeld, BabyFidgets, BabyCries
 - Area ridley-wakes: EyeFadesIn, BodyFadesIn, ReadyToRoar, Roars
+- Area ridley-tail: TailAtRest, TailCurls, TailHits
 
-Budget: 37.5 × 101.0 units = 3,786 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625)
+Budget: 37.5 × 108.3 units = 4,061 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 275)

@@ -2261,14 +2261,16 @@ as jump held through is (§1.2): a vector gives it as `before.knockback` and com
 | --- | --- | --- | --- |
 | push time left | `PushFrames`, frames | how long the push goes on | `PushTime`, `PushStarts`, `PushEnds` |
 | push side | `Side` | the way she is thrown | `PushMoves` |
-| push under way | `Push`: none, `Up`, `Down` | thrown up or driven down | `PushMoves`, `PushEnds`, `AfterThePush` |
+| push under way | `Push`: none, `Up`, `Down` | thrown up or driven down | `PushMoves`, `PushEnds`, `AfterThePush`; world-camera `LeadingHer` (output) |
 | push started (output) | `bool`: `PushStarts` started a push this frame; not State | her colours pulse | output (samus-appearance `HurtColours`) |
 
 **Her poses in a push** (§2's action): `Recoiling`, upright, her facing kept; `Leaping`, upright,
 her facing kept, travelling backward. Their bodies are content, as every pose's is (§1.3, body
 size): the game's half-heights are 21 px and 19 px. In the ball the
 push keeps her pose. In `Recoiling` her horizontal speed points the knockback's side, in
-`Leaping` backward (against her facing), and in every other pose the way §1 says.
+`Leaping` backward (against her facing), and in every other pose the way §1 says. World-camera
+relies on `Leaping` keeping her facing: it reads her as going backwards in the leap once the
+push is over (its `LeadingHer`).
 
 ### PushTime
 - kind: timing.

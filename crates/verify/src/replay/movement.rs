@@ -115,9 +115,14 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
         _ => return Err(data_failure(None, "movement speed mode")),
     };
     let magnitude = fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?;
+    // The backward leap is a jump: she is in the air throughout it.
     let airborne = matches!(
         pose.action,
-        Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
+        Action::Jumping
+            | Action::Spinning
+            | Action::Falling
+            | Action::WallJumping
+            | Action::Leaping
     );
     let turning = matches!(pose.action, Action::Turning(Turn::Jump | Turn::Fall));
     let (phase, speed) = match word(wram, source::SAMUS_Y_DIR)? {

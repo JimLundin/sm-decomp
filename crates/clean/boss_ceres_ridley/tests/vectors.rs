@@ -1,6 +1,6 @@
 //! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, the doors',
-//! the shaft's and Ridley's, and checks the catalogue against the vectors. Every table refuses a
-//! key it doesn't know, and every name must be one the spec gives.
+//! the shaft's and Ridley's (his tail's among them), and checks the catalogue against the
+//! vectors. Every table refuses a key it doesn't know, and every name must be one the spec gives.
 
 #[cfg(test)]
 mod vectors {
@@ -10,14 +10,14 @@ mod vectors {
         AlternatingLook, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
         BehaviourId, BodyColours, Boss, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind,
         DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Figure, FigureLook, GlowFigure,
-        Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase,
-        Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyWait, RoarFigure,
-        RoarWait, Rules, Shake, ShakeLayers, ShakeStart, ShownFigure, Stage, TimedRoarFigure, Wait,
-        WakeWait, catalogue,
+        Her, Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait,
+        Phase, Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyWait, RoarFigure,
+        RoarWait, Rules, Shake, ShakeLayers, ShakeStart, ShownFigure, Stage, TailCurl,
+        TimedRoarFigure, Wait, WakeWait, catalogue,
     };
     use enum_map::Enum;
     use serde::Deserialize;
-    use types::{Checked, Colour, Pair, Px, Side};
+    use types::{Checked, Colour, Hit, Pair, Px, Side};
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/boss-ceres-ridley.toml");
 
@@ -29,7 +29,8 @@ mod vectors {
 
     /// A vector of any part: the doors' fields (the door of Ridley's room and the getaway's walls
     /// among them), the shaft's (the pad and the cover, or the lights), or Ridley's. Which part
-    /// it is follows from the result it names.
+    /// it is follows from the result it names; Ridley's part-4b vectors, his tail's, are the
+    /// ones whose ids start `T-`.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Vector {
@@ -46,7 +47,7 @@ mod vectors {
         // The doors.
         door: Option<DoorRow>,
         before: Option<PhaseRow>,
-        her: Option<[String; 2]>,
+        her: Option<HerField>,
         stage: Option<StageName>,
         shaking: Option<u16>,
         after: Option<After>,
@@ -69,12 +70,30 @@ mod vectors {
         lights_after: Option<LightsAfter>,
     }
 
+    /// A vector's `her`: where she was, as a door reads her, or her as his tail reads her.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum HerField {
+        Door([String; 2]),
+        Tail(HerRow),
+    }
+
+    /// Her as his tail reads her: her position in decimal, her body's half-sizes and her
+    /// protection.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct HerRow {
+        position: [u16; 2],
+        body: [u16; 2],
+        protection: u16,
+    }
+
     impl Vector {
         /// Whether the vector names any of the doors' own fields.
         const fn names_doors(&self) -> bool {
             self.door.is_some()
                 || self.before.is_some()
-                || self.her.is_some()
+                || matches!(self.her, Some(HerField::Door(_)))
                 || self.stage.is_some()
                 || self.shaking.is_some()
                 || self.after.is_some()
@@ -87,7 +106,33 @@ mod vectors {
                 || self.baby.is_some()
                 || self.passing.is_some()
                 || self.content.is_some()
+                || matches!(self.her, Some(HerField::Tail(_)))
                 || self.ridley_after.is_some()
+        }
+
+        /// Whether it is one of his tail's vectors, in the part-4b form.
+        fn names_tail(&self) -> bool {
+            self.id.starts_with("T-")
+        }
+
+        /// Where she was, as a door reads her.
+        fn door_her(&self) -> Option<&[String; 2]> {
+            match &self.her {
+                Some(HerField::Door(her)) => Some(her),
+                Some(HerField::Tail(_)) | None => None,
+            }
+        }
+
+        /// Her as his tail reads her; none where the vector has no her to reach.
+        fn tail_her(&self) -> Option<Her> {
+            match &self.her {
+                Some(HerField::Tail(row)) => Some(Her {
+                    position: point(row.position),
+                    body: point(row.body),
+                    protection: row.protection,
+                }),
+                Some(HerField::Door(_)) | None => None,
+            }
         }
 
         /// Whether the vector names a field the doors and Ridley share.
@@ -191,6 +236,7 @@ mod vectors {
         slam: Option<u16>,
         wake: Option<u16>,
         pace: Option<u8>,
+        tail_reach: Option<u8>,
     }
 
     #[derive(Deserialize)]
@@ -543,6 +589,7 @@ mod vectors {
             pace: row.pace.map_or(reference.pace, |runs| {
                 NonZeroU8::new(runs).expect("a pace is 1 to 255 runs")
             }),
+            tail_reach: row.tail_reach.unwrap_or(reference.tail_reach),
         }
     }
 
@@ -607,7 +654,7 @@ mod vectors {
     /// One run of the door from its `before`, reading what the vector gives.
     fn run(vector: &Vector) -> After {
         let before = vector.before.as_ref().expect("a run starts from a before");
-        let her = vector.her.as_ref().expect("a run reads where she was");
+        let her = vector.door_her().expect("a run reads where she was");
         let inputs = Inputs {
             her: position(her),
             stage: door_stage(vector),
@@ -789,6 +836,7 @@ mod vectors {
         figure_runs: Option<u8>,
         look: Option<RidleyLookName>,
         position: [u16; 2],
+        curl: Option<u8>,
     }
 
     impl RidleyRow {
@@ -875,6 +923,24 @@ mod vectors {
         roar: Option<bool>,
         eye_colours: Option<u16>,
         body_colours: Option<u16>,
+        curl: Option<u8>,
+        tail: Option<[u16; 2]>,
+        hit: Option<HitRow>,
+    }
+
+    /// The frame's hit of his tail: the side it pushes her and the push's frames.
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct HitRow {
+        side: SideName,
+        push: u8,
+    }
+
+    const fn hit_row(hit: Hit) -> HitRow {
+        HitRow {
+            side: side_name(hit.side),
+            push: hit.push.frames(),
+        }
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -1221,8 +1287,23 @@ mod vectors {
             shake_stops: Some(true),
             stage_calm: Some(placing.stage == Stage::Calm),
             room_colours: Some(true),
+            curl: vector.names_tail().then_some(placing.ridley.curl.get()),
             ..ridley_after(placing.ridley)
         }
+    }
+
+    /// The curl a vector's `ridley` names: a part-4b vector names it; the others name none and
+    /// run with the curl he is placed with, which their checks don't read.
+    fn curl(vector: &Vector, row: &RidleyRow) -> TailCurl {
+        assert_eq!(
+            vector.names_tail(),
+            row.curl.is_some(),
+            "{}: the part-4b vectors alone name the curl",
+            vector.id
+        );
+        row.curl.map_or(TailCurl::PLACED, |curl| {
+            TailCurl::new(curl).expect("a curl is 8 to 23")
+        })
     }
 
     /// One run of him and the baby from the vector's `ridley` and `baby`, with its content. A
@@ -1245,11 +1326,13 @@ mod vectors {
                 routine: routine(baby),
                 position: None,
             },
+            curl: curl(vector, row),
         };
         let content = vector.content.clone().unwrap_or_else(stand_in_content);
         let run = ridley.run(
             vector.passing.unwrap_or(false),
             vector.random(),
+            vector.tail_her().as_ref(),
             &ridley_content(&content),
             &rules(&vector.rules),
         );
@@ -1262,7 +1345,7 @@ mod vectors {
             return part_3;
         }
         let phase = run.ridley.phase;
-        RidleyAfter {
+        let part_4a = RidleyAfter {
             tangible: Some(phase.tangible()),
             moving: Some(phase.moving()),
             roaring: Some(phase.roaring()),
@@ -1275,6 +1358,16 @@ mod vectors {
                 .body_colours
                 .map(|BodyColours([colour, ..])| colour.bits()),
             ..part_3
+        };
+        if !vector.names_tail() {
+            assert!(vector.tail_her().is_none(), "the tail's her is part 4b's");
+            return part_4a;
+        }
+        RidleyAfter {
+            curl: Some(run.ridley.curl.get()),
+            tail: run.ridley.drawing().tail.map(point_row),
+            hit: run.hit.map(hit_row),
+            ..part_4a
         }
     }
 
