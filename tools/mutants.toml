@@ -802,6 +802,16 @@ cut = 1
 field = "flight.stage"
 
 [[fault]]
+name = "played-flight-arrival-waits-for-finished"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "Stage::Flight(flight) if flight.stage == FlightStage::Done => {"
+after = "Stage::Flight(flight) if flight.stage == FlightStage::Done && matches!(end, FrameEnd::Finished(_)) => {"
+case = "played any-fly-to-ceres 0 995"
+cut = 803
+field = "flight.active"
+
+[[fault]]
 name = "played-intro-press-dropped"
 responsibility = "played"
 file = "crates/verify/src/replay/played/intro.rs"

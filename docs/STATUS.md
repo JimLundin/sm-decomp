@@ -409,7 +409,14 @@ told and whether it is done, and the letters the label types, compared from the 
 cut 32 (before it, the brightness alone). Not compared: the colour cycles (R4), CGRAM's setup load
 at cut 32, OAM, mode 7 VRAM, the BG1 tilemap's emptying, the letters' palette, priority and flips,
 and the PPU mirrors the stages write. A lagged frame stepped as finished differs at cut 1 in
-`flight.stage`. The join into the arrival's seed (movie frame 8,315) is a later piece.
+`flight.stage`. The same flight run can continue for 994 cuts, through movie frame 8,506.
+At cut 803 (movie frame 8,315) the flight turns the dark screen over to the arrival while the
+frame's work is still in progress. Production carries both frame counts, brightness and the
+random sequence into the preparation. The run compares the counts at every cut and the random
+number at finished flight cuts and every preparation cut. At cut 995 the start is ready, and
+the run stops at `HudStartup`. The load flow must put up the HUD before the fade begins.
+The save to cartridge memory on the handoff is outside this comparison. Delaying the handoff
+until the work finishes first differs at cut 803 in `flight.active`.
 
 ### Her arrival at Ceres
 
