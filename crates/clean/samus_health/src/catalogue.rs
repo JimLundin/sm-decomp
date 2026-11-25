@@ -8,8 +8,8 @@ use types::{Checked, Kind, Switch};
 pub enum BehaviourId {
     /// Accumulated periodic loss reduces energy once.
     PeriodicLoss,
-    /// An eligible Ceres tail hit, judged on protection as the frame starts, takes energy
-    /// and grants protection.
+    /// An eligible hit in Ceres, judged on protection as the frame starts, takes its worth
+    /// in energy and grants protection.
     TailHit,
     /// Protection is drawn as the frame's hit left it, then spends one frame.
     ProtectionTime,
@@ -46,9 +46,9 @@ pub struct Behaviour {
 /// model coverage.
 ///
 /// `R-maintenance-current` witnesses a frame without a loss or warning change.
-/// `R-tail-hit` and `R-tail-protected` witness a hit and protection spending.
-/// Constructed vectors contrast arithmetic, warning thresholds, a hit during
-/// protection and expiry.
+/// `R-tail-hit` and `R-tail-protected` witness a hit and protection spending, and
+/// `R-steam-hit` a hit worth nothing that still grants protection. Constructed vectors
+/// contrast arithmetic, warning thresholds, hit worths, a hit during protection and expiry.
 #[must_use]
 pub const fn behaviour(id: BehaviourId) -> Behaviour {
     match id {
@@ -61,7 +61,7 @@ pub const fn behaviour(id: BehaviourId) -> Behaviour {
         },
         BehaviourId::TailHit => Behaviour {
             id: BehaviourId::TailHit,
-            summary: "Ridley's eligible tail hit in Ceres takes energy and briefly protects Samus.",
+            summary: "an eligible hit in Ceres takes its worth in energy and briefly protects Samus.",
             kind: Kind::Mechanic,
             switch: Switch::Fixed,
             checked: Checked::ByVectors,

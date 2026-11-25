@@ -75,11 +75,13 @@ fn constructed_protected_duplicate_preserves_complete_carried_health() {
     let [hit, quiet] = inputs.0.as_slice() else {
         panic!("native scope schedule");
     };
-    assert_eq!(hit.tail, TailImpact::EligibleCeresTail);
+    let Impact::EligibleHit { .. } = hit.tail else {
+        panic!("the native hit");
+    };
     let mut duplicate = production.clone();
     let native = advance(&mut production, protected_cut, quiet).unwrap();
     let repeated = Frame {
-        tail: TailImpact::EligibleCeresTail,
+        tail: hit.tail,
         ..*quiet
     };
     let protected = advance(&mut duplicate, protected_cut, &repeated).unwrap();

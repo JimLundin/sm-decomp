@@ -82,6 +82,29 @@ remain actor-side dependencies for integrated replay. The independently observed
 post-adjustment amount is available as a declared borrowed Health stimulus for
 scoped production replay.
 
+### The hit's worth: the escape's steam
+
+The frame's impact carries its worth from the hitter. Ridley's tail takes the actor's
+configured amount above (15); the escape's steam vents reach the same debit with a
+species damage of 0. In bank log [A0](https://patrickjohnston.org/bank/A0), a puff's
+touch at `$A0:A562..A596` reads the species damage (`$A0:E1FF` + 6: 0) through
+`$A0:A45E` into `$91:DF51`, which takes 0 from current whole energy and leaves the
+fraction. The same touch stores 96 in `$18A8`, as the tail's `$A6:E000` does, plus
+the push time and direction that Movement owns. The vents' contact skips the touch
+while `$18A8` is not 0, so Health never sees a vent's impact while protected; the
+constructed C-steam-protected states what Health does if one arrives. The worth is
+therefore a value of the hitter, not a constant of Health: `TailHit`'s arms subtract
+whatever the impact carries, with the floor of zero, and a 0 grant is the same grant.
+
+R-steam-hit is row `chain-any-0009-DFD7`, the interval ending at cut 137 (room 3 of
+the escape, the vent touching her from the left): cut 136 holds the State before and
+cut 137 the State after. Whole energy 24, fraction 0, pending 0 and warning On at both;
+protection 0 at 136 and 95 at 137; neither suit; time running. The lean record cache
+has no Drawing marker, so the vector omits `protection_drawn`; the warning request
+None follows from the unchanged warning word and is not independently observed.
+The second puff hit, `chain-any-0010-DF8D` cut 66 (room 2, from the right), has the
+same Health State before and after and is not a separate vector.
+
 ### ProtectionTime
 
 `$A0:9169..9171` reads active protection and decrements it once when positive.
@@ -197,8 +220,9 @@ protection both Drawing markers read; the energy both Drawing markers read equal
 the State at the frame's end. The reference agrees with both frames direct and
 restored. The do-nothing comparison agrees with neither.
 
-The file has 24 model vectors (3 recorded and 21 constructed) and 3 admission
-contrasts. The whole-frame reference (below) matches all 24; the do-nothing
+The file's tail and periodic vectors are 24 model vectors (3 recorded and 21
+constructed) beside 3 admission contrasts; the steam's three are counted under the
+hit's worth below. The whole-frame reference (below) matches all 24; the do-nothing
 comparison matches 6. In the earlier staged reference the duplicate, fraction-clearing, early-age, omitted-age, stale-energy,
 borrow, repeated pending-loss and warning-threshold controls fail. Trace controls
 also reject stale protection at contact, wrong equipment at the actual impact,
@@ -294,6 +318,35 @@ combined-integer energy, agrees with all 24 model vectors and checks every
 (`mutants.py`): ageing before the hit (17 of 24 pass), protection drawn after ageing
 (17), the warning judged before the hit (20), and a hit ignoring protection (22).
 
+## The hit's worth
+
+The frame's impact is "absent, or an eligible hit worth `d` whole energy", `d` from
+the hitter, so one input holds both Ceres hitters: the tail's hit worth 15 and the
+steam's worth 0, each with the same protection. `TailHit` keeps its name for both; its
+first arm subtracts the impact's `d`. The vectors write the impact as `impact_worth`,
+omitted when absent: the tail vectors at 15, the steam vectors at 0.
+
+The file has 32 vectors: 29 model vectors (4 recorded, 25 constructed) and 3 admission
+contrasts. The steam's: R-steam-hit (recorded, above); C-steam-hit, a 0-worth hit at protection 0 on 31 whole
+and 300 fractional units with 1 whole and 100 fractional units pending: the hit keeps
+31 and 300 and the pending loss, loss leaves 30 and 200, the warning goes On with
+Start, 96 while drawn and 95 at the frame's end; C-steam-protected, continuing it, a
+0-worth impact with 95 left: nothing but the frame's ageing to 94, drawn 95. Two
+more hold the worth to neither hitter's value: C-hit-worth-40 takes 40 from 52 to
+leave 12, so the warning goes On with Start; C-hit-worth-most takes 32767 from 32767
+and 9 fractional units, leaving 0 whole and keeping the 9. Both grant 96 while drawn
+and leave 95.
+
+Reference: `$TEMP/collab/health-worth/reference.py`, one step per frame on a
+combined-integer energy, agrees with all 29 model vectors and checks every
+`continues` chain; the do-nothing step matches 6 of 29. Mutants rejected: a worth
+fixed at 15 (25 of 29 pass), a worth taken as 0 when 0 and 15 otherwise (27; only
+C-hit-worth-40 and C-hit-worth-most reject it), a 0-worth hit granting no protection
+(27) and a 0-worth hit skipped (27). Per frame from each cached record before (`records.py`), with an
+impact worth 0 at the two puff hits and none elsewhere, it matches 168 of 168 admitted
+pairs in `chain-any-0009-DFD7` 0-168 (do-nothing 136) and 111 of 111 in
+`chain-any-0010-DF8D` 0-111 (do-nothing 3).
+
 ## Harness contract
 
 Call the actual production health step once per admitted frame with carried complete
@@ -312,6 +365,12 @@ A scope ending before such a required neighbor does not claim that neighbor
 implemented. All six scalar quantities need complete set/read/save/restore checks and
 a checkpoint continuation over repeated frames. Never infer the zero-loss frame was
 omitted because its final scalar values match its initial values.
+
+For the steam hit, seed at `chain-any-0009-DFD7` cut 136 and play 137 with the frame's
+impact worth 0, from the vents' owner or as a declared borrowed input with no actor
+producer credit; compare complete Health State at 137 and on through the protection
+the hit grants. Production hands Health the worth the hitter gives; it never derives
+the worth from the hitter's identity inside Health.
 
 For the Ceres tail frames, the frame's tail impact comes from Ridley's owner, or is a
 declared borrowed input with no actor producer credit. Feed Ridley's contact the

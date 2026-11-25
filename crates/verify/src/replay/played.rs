@@ -333,6 +333,8 @@ impl<'a> Run<'a> {
             .map_err(|_| data_failure(None, "played new game's start"))?;
         let rooms = seed::rooms(&image)?;
         let ridley = ridley::content(&rooms.actors.ceres_ridley)?;
+        let tail_worth = samus_health::WholeEnergy::new(rooms.actors.ceres_tail_worth)
+            .ok_or_else(|| data_failure(None, "Ceres Ridley's tail's worth"))?;
         // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
         let (room, state) = if arrival::seed(&seed.wram)?.preparing() {
             start::admit(&seed.wram, &start, &rooms)?
@@ -352,6 +354,7 @@ impl<'a> Run<'a> {
                 map: hud.map_of(area)?.clone(),
                 start_x: core::num::Wrapping(start.her.0),
                 ridley,
+                tail_worth,
             },
             rules: played::Rules {
                 movement: samus_movement::Rules::default(),

@@ -101,6 +101,8 @@ pub struct Content {
     pub start_x: types::Px,
     /// Ceres Ridley's eye's steps and his body's colour sets.
     pub ridley: RidleyContent,
+    /// The whole energy his tail's hit is worth, imported as his tail's own.
+    pub tail_worth: samus_health::WholeEnergy,
 }
 
 /// The tuning each model reads.
@@ -260,9 +262,9 @@ impl State {
             let enemies = self.enemies(running, random, passing, content, rules, &mut palette)?;
             let hit = enemies.ridley.and_then(|run| run.hit);
             Ok(samus::Between {
-                played: (enemies, self.health_frame(hit, rules)),
+                played: (enemies, self.health_frame(hit, content, rules)),
                 hit,
-                energy: self.energy_the_hit_leaves(hit, rules),
+                energy: self.energy_the_hit_leaves(hit, content, rules),
             })
         };
         let (her, (enemies, health)) = if self.station.pad_and_cover.holds_her() {

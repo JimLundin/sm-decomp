@@ -264,7 +264,7 @@ name = "health-tail-impact-not-delivered"
 responsibility = "health"
 file = "crates/game/src/production/health_tail.rs"
 before = '''let health = self.health.0.play_frame(frame.tail, &rules);'''
-after = '''let health = self.health.0.play_frame(TailImpact::Absent, &rules);'''
+after = '''let health = self.health.0.play_frame(Impact::Absent, &rules);'''
 case = "health/ceres-tail-drawing-gauge"
 cut = 993
 field = "health.protection"
@@ -413,11 +413,21 @@ field = "doors.colours.screen"
 name = "played-health-tail-lands"
 responsibility = "played"
 file = "crates/game/src/production/played/health.rs"
-before = "None => samus_health::TailImpact::Absent,"
-after = "None => samus_health::TailImpact::EligibleCeresTail,"
+before = "None => samus_health::Impact::Absent,"
+after = "None => samus_health::Impact::EligibleHit { worth: content.tail_worth },"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "appearance.hurt-count"
+
+[[fault]]
+name = "played-tail-hit-worth-nothing"
+responsibility = "played"
+file = "crates/game/src/production/played/health.rs"
+before = "worth: content.tail_worth,"
+after = "worth: samus_health::WholeEnergy::ZERO,"
+case = "played chain-any-0006-E0B5 0 620"
+cut = 609
+field = "health.energy.whole"
 
 [[fault]]
 name = "played-hud-state-held"
@@ -578,8 +588,8 @@ field = "movement.pose"
 name = "played-tail-hit-kept-from-health"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = "played: (enemies, self.health_frame(hit, rules)),"
-after = "played: (enemies, self.health_frame(None, rules)),"
+before = "played: (enemies, self.health_frame(hit, content, rules)),"
+after = "played: (enemies, self.health_frame(None, content, rules)),"
 case = "played chain-any-0006-E0B5 0 620"
 cut = 609
 field = "health.energy.whole"

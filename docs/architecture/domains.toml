@@ -77,7 +77,7 @@ rounds = 1
 
 [[model]]
 name = "samus-health"
-rounds = 2
+rounds = 3
 
 [[model]]
 name = "world-quake"

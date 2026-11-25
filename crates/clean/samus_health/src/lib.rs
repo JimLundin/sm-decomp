@@ -1,7 +1,8 @@
-//! Samus's current energy, her protection after Ridley's tail hits her in Ceres, and the
-//! low-energy warning, played one whole frame at a time by [`State::play_frame`].
-//! Which frames are admitted, tail overlap and eligibility, loss production, pickups,
-//! drawing history and playback belong to neighbouring owners, not to this model.
+//! Samus's current energy, her protection after an eligible hit in Ceres (Ridley's tail, or
+//! a steam puff in the escape), and the low-energy warning, played one whole frame at a
+//! time by [`State::play_frame`]. Which frames are admitted, each hitter's touch,
+//! eligibility and worth, loss production, pickups, drawing history and playback belong to
+//! neighbouring owners, not to this model.
 
 use serde::{Deserialize, Serialize};
 
@@ -70,9 +71,9 @@ impl EnergyAmount {
     };
 
     /// Spec: `TailHit`. Whole energy taken with a floor of zero; the fraction is kept.
-    const fn less_whole(self, damage: WholeEnergy) -> Self {
+    const fn less_whole(self, worth: WholeEnergy) -> Self {
         Self {
-            whole: WholeEnergy(self.whole.0.saturating_sub(damage.0)),
+            whole: WholeEnergy(self.whole.0.saturating_sub(worth.0)),
             fraction: self.fraction,
         }
     }
@@ -135,17 +136,21 @@ pub enum WarningSound {
     Stop,
 }
 
-/// Spec: `TailHit`. The frame's tail impact, from Ridley, who decides overlap and eligibility.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum TailImpact {
-    /// No eligible hit this frame, including when Ridley skips checking overlap.
+/// Spec: `TailHit`. The frame's impact, as the frame's hitter gives it.
+///
+/// The hitter decides whether it made an eligible hit and what that hit is worth
+/// (Ridley's tail 15, a steam puff in the escape 0). Health never works the worth out
+/// for itself.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Impact {
+    /// No eligible hit this frame, including when a hitter skips contact.
     Absent,
-    /// Ridley's eligible Ceres tail hit, worth 15 whole energy.
-    EligibleCeresTail,
+    /// An eligible hit, worth this many whole energy.
+    EligibleHit {
+        /// Whole energy the hit takes if it lands.
+        worth: WholeEnergy,
+    },
 }
-
-/// Spec: `TailHit`. Whole energy an eligible Ceres tail hit takes.
-const CERES_TAIL_DAMAGE: WholeEnergy = WholeEnergy(15);
 
 /// Spec: `TailHit`, `ProtectionTime`. Remaining protection in active gameplay frames.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -155,13 +160,13 @@ pub struct ProtectionFrames(u8);
 impl ProtectionFrames {
     /// No protection remains.
     pub const ZERO: Self = Self(0);
-    /// Spec: `TailHit`. A successful hit grants 96 frames.
-    pub const TAIL_GRANT: Self = Self(96);
+    /// Spec: `TailHit`. A hit that lands grants 96 frames, whatever it is worth.
+    pub const HIT_GRANT: Self = Self(96);
 
     /// Constructs a remaining count in the admitted range 0..=96.
     #[must_use]
     pub const fn new(frames: u8) -> Option<Self> {
-        if frames <= Self::TAIL_GRANT.0 {
+        if frames <= Self::HIT_GRANT.0 {
             Some(Self(frames))
         } else {
             None
@@ -220,7 +225,8 @@ pub struct State {
     pub pending_loss: EnergyLoss,
     /// The warning last requested, whether or not audio played it.
     pub warning: Warning,
-    /// Remaining protection, which Ridley's contact reads as the frame starts.
+    /// Remaining protection, which each hitter's contact (Ridley's tail, the vents' touch)
+    /// reads as the frame starts.
     pub protection: ProtectionFrames,
 }
 
@@ -252,16 +258,16 @@ impl Rules {
 
 impl State {
     /// Plays one admitted frame (time Running, neither suit; the caller refuses any other
-    /// frame before calling), from this State as the frame starts and the frame's tail
-    /// impact. Every rule applies every frame, in this order:
+    /// frame before calling), from this State as the frame starts and the frame's impact.
+    /// Every rule applies every frame, in this order:
     ///
     /// 1. `TailHit`, judged on protection as the frame starts;
     /// 2. `PeriodicLoss`, on the energy the hit left;
     /// 3. `LowEnergyWarning`, on whole energy after both;
     /// 4. `ProtectionTime`: protection is drawn as the hit left it, then spends one frame.
     #[must_use]
-    pub const fn play_frame(self, tail: TailImpact, rules: &Rules) -> PlayedFrame {
-        let (energy, protection_drawn) = self.tail_hit(tail);
+    pub const fn play_frame(self, impact: Impact, rules: &Rules) -> PlayedFrame {
+        let (energy, protection_drawn) = self.hit(impact);
         let energy = energy.reduced_by(self.pending_loss);
         let (warning, warning_sound) = self.warning.judged(energy.whole, *rules);
         PlayedFrame {
@@ -276,19 +282,17 @@ impl State {
         }
     }
 
-    /// Spec: `TailHit`. An eligible tail impact lands only when no protection remains as the
-    /// frame starts: it takes 15 whole energy (floor zero, fraction kept) and grants 96
-    /// frames of protection. Otherwise energy and protection stay as they are. Gives the
-    /// energy and the protection the frame goes on with.
-    const fn tail_hit(self, tail: TailImpact) -> (EnergyAmount, ProtectionFrames) {
-        let lands = matches!(tail, TailImpact::EligibleCeresTail) && self.protection.0 == 0;
-        if lands {
-            (
-                self.energy.less_whole(CERES_TAIL_DAMAGE),
-                ProtectionFrames::TAIL_GRANT,
-            )
-        } else {
-            (self.energy, self.protection)
+    /// Spec: `TailHit`. An eligible hit lands only when no protection remains as the frame
+    /// starts: it takes its worth in whole energy (floor zero, fraction kept) and grants 96
+    /// frames of protection, so a hit worth nothing still protects her. Otherwise energy and
+    /// protection stay as they are. Gives the energy and the protection the frame goes on
+    /// with.
+    const fn hit(self, impact: Impact) -> (EnergyAmount, ProtectionFrames) {
+        match impact {
+            Impact::EligibleHit { worth } if self.protection.0 == 0 => {
+                (self.energy.less_whole(worth), ProtectionFrames::HIT_GRANT)
+            }
+            Impact::EligibleHit { .. } | Impact::Absent => (self.energy, self.protection),
         }
     }
 }

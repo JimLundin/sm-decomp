@@ -245,8 +245,9 @@ behind him (part 4b): the run compares its curl and its seven segments' places
 (`ridley.tail.curl`, `ridley.tail.0` to `ridley.tail.6`), read from his tail's words while it
 rests and none before. Tangible, his tail hits her at cuts 609 and 705: his run reads her position as her
 moves leave her, the body of the pose she started the frame in and her protection as the frame
-starts, and reports the hit, which Health takes (15 energy, 96 frames of protection) and her
-movement's reaction takes in the same frame (her push, `Recoiling`, then her backward leap).
+starts, and reports the hit, which Health takes (worth 15 energy, his tail's worth imported from
+the player's ROM as his content, and 96 frames of protection) and her movement's reaction takes
+in the same frame (her push, `Recoiling`, then her backward leap).
 The hit itself is compared where it lands: `health.*`, `movement.knockback` and her hurt colours
 in `doors.colours.screen`. His wait, his roar, moving and roaring, and the refusal of his
 flight (`Fault::RidleyFlying`, part 4c's) are reached by no played cut: they hold by the vectors
@@ -297,7 +298,7 @@ played yet.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Sixty planted faults in the fault matrix, those of the responsibility `played`, stop
+Sixty-one planted faults in the fault matrix, those of the responsibility `played`, stop
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
@@ -555,7 +556,8 @@ cases remain held boundaries and require no fault credit until they have reviewe
 
 The indexed `health/ceres-tail-drawing-gauge` case starts from the authenticated native cut
 992 and plays the next two frames whole. Each frame's borrowed inputs are Ridley's tail impact
-(an eligible hit on the first frame, none on the second), the clock and equipment that admit
+(an eligible hit on the first frame, worth the energy the record observes it deliver, and none
+on the second), the clock and equipment that admit
 the frame, and the HUD's neighbours. Each frame plays Health once
 (`samus_health::State::play_frame`), commits Drawing's energy history from the frame's Health,
 and plays the HUD's one frame of play, its status bar reading the frame's whole energy. Each

@@ -170,7 +170,7 @@ pub struct CeresRidleyColours {
     pub body_sets: Vec<BodyShades>,
 }
 
-/// The colours of the sprites other than hers.
+/// The colours of the sprites other than hers, and the worth of Ceres Ridley's tail's hit.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Actors {
     /// Every registered species, in id order.
@@ -185,6 +185,9 @@ pub struct Actors {
     pub beacon: BeaconColours,
     /// Ridley's room's colours in Ceres and the baby's colour sets.
     pub ceres_ridley: CeresRidleyColours,
+    /// The whole energy Ceres Ridley's tail's hit takes from her: his tail's own, set apart from
+    /// the amount his body's touch takes.
+    pub ceres_tail_worth: u16,
 }
 
 impl Actors {

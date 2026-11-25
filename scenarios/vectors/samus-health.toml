@@ -1,10 +1,11 @@
 # Vectors for samus-health.md. Each vector is one whole admitted frame: Health's State as
 # the frame starts (before) and as the frame leaves it (after), complete with remaining
 # protection, and the frame's outputs.
-# tail_impact is the frame's tail impact from Ridley: "EligibleCeresTail" (15 whole energy)
-# or "Absent"; omitted, it is Absent. The protected recorded frame supplies Absent because
-# Ridley skips overlap while protection is positive; C-tail-repeat and C-tail-last-frame
-# construct an overlap during protection.
+# impact_worth is the frame's impact: an eligible hit worth that many whole energy, as its
+# hitter gives it (15 for Ridley's tail, 0 for a steam puff); omitted, the impact is absent.
+# The protected recorded frames have no impact because each hitter skips contact while
+# protection is positive; C-tail-repeat, C-tail-last-frame and C-steam-protected construct
+# an eligible impact during protection.
 # protection_drawn is the frame's protection while drawn; where it is omitted it is not
 # compared. The energy drawn is after's current energy.
 # Energy and pending fractions are integer multiples of 1/65536 energy.
@@ -198,7 +199,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 39, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 sound = "Start"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 15 }
 protection_drawn = 96
 
 [[vector]]
@@ -208,7 +209,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 94 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "Absent" }
+inputs = { time = "Running", suit = "NeitherSuit" }
 protection_drawn = 95
 continues = "R-tail-hit"
 
@@ -219,7 +220,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 48, energy_fraction = 7, pending_whole = 2, pending_fraction = 8, warning = "Off", protection = 0 }
 after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 sound = "Start"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 15 }
 protection_drawn = 96
 
 [[vector]]
@@ -229,7 +230,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 14, energy_fraction = 21, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 after = { energy_whole = 0, energy_fraction = 21, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 15 }
 protection_drawn = 96
 
 [[vector]]
@@ -239,7 +240,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 1 }
 after = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 15 }
 protection_drawn = 1
 
 [[vector]]
@@ -249,7 +250,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 after = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 15 }
 protection_drawn = 96
 continues = "C-tail-last-frame"
 
@@ -260,7 +261,7 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
 after = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 94 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "EligibleCeresTail" }
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 15 }
 protection_drawn = 95
 continues = "C-tail-after-expiry"
 
@@ -271,5 +272,55 @@ entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
 before = { energy_whole = 70, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 after = { energy_whole = 70, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
-inputs = { time = "Running", suit = "NeitherSuit", tail_impact = "Absent" }
+inputs = { time = "Running", suit = "NeitherSuit" }
 protection_drawn = 0
+
+[[vector]]
+id = "R-steam-hit"
+source = "recorded"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
+after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 0 }
+
+[[vector]]
+id = "C-steam-hit"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 31, energy_fraction = 300, pending_whole = 1, pending_fraction = 100, warning = "Off", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 200, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 0 }
+protection_drawn = 96
+
+[[vector]]
+id = "C-steam-protected"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 30, energy_fraction = 200, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+after = { energy_whole = 30, energy_fraction = 200, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 94 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 0 }
+protection_drawn = 95
+continues = "C-steam-hit"
+
+[[vector]]
+id = "C-hit-worth-40"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 12, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 40 }
+protection_drawn = 96
+
+[[vector]]
+id = "C-hit-worth-most"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 32767, energy_fraction = 9, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 0, energy_fraction = 9, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit", impact_worth = 32767 }
+protection_drawn = 96

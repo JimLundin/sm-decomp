@@ -90,6 +90,8 @@ fn every_registered_species_and_the_shared_palettes_import_from_the_rom() {
     // Ceres Ridley's eye fades in over 64 steps, his body over 16 sets.
     assert_eq!(actors.ceres_ridley.eye_steps.len(), 64);
     assert_eq!(actors.ceres_ridley.body_sets.len(), 16);
+    // His tail's hit is worth 15, apart from his species' contact damage.
+    assert_eq!(actors.ceres_tail_worth, 15);
     for &(id, name) in &SPECIES {
         assert_eq!(
             actors.species(id).map(|species| species.id),
@@ -177,4 +179,43 @@ fn ridleys_eye_steps_hold_the_sets_they_name_and_his_body_its_sixteen_sets() {
         ceres_ridley_colours(Lorom::new(&image)),
         Err(ActorsError::EyeSteps)
     );
+}
+
+#[test]
+fn ridleys_tail_worth_is_his_set_ups_load_and_other_code_there_is_refused() {
+    // An invented worth, loaded and stored where his tail's hit reads it.
+    let mut code = vec![LOAD, 0x34, 0x12];
+    code.extend_from_slice(&TAIL_WORTH_STORE);
+    let rom = image(TAIL_WORTH_LOAD, &code);
+    assert_eq!(ceres_tail_worth(Lorom::new(&rom)), Ok(0x1234));
+
+    // A load stored elsewhere, or no load at all, is not his tail's worth.
+    for at in 3..7 {
+        let mut other = code.clone();
+        other[at] ^= 1;
+        let rom = image(TAIL_WORTH_LOAD, &other);
+        assert_eq!(
+            ceres_tail_worth(Lorom::new(&rom)),
+            Err(ActorsError::TailWorth)
+        );
+    }
+    let mut other = code.clone();
+    other[0] = 0xad;
+    let rom = image(TAIL_WORTH_LOAD, &other);
+    assert_eq!(
+        ceres_tail_worth(Lorom::new(&rom)),
+        Err(ActorsError::TailWorth)
+    );
+
+    // A worth up to the most whole energy is his tail's; one past it is refused.
+    for (low, high, worth) in [
+        (0xff, 0x7f, Ok(0x7fff)),
+        (0x00, 0x80, Err(ActorsError::TailWorth)),
+    ] {
+        let mut other = code.clone();
+        other[1] = low;
+        other[2] = high;
+        let rom = image(TAIL_WORTH_LOAD, &other);
+        assert_eq!(ceres_tail_worth(Lorom::new(&rom)), worth);
+    }
 }

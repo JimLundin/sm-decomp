@@ -213,6 +213,8 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
             )])
             .unwrap(),
         },
+        // The worth the player's ROM gives his tail's hit.
+        tail_worth: samus_health::WholeEnergy::new(15).unwrap(),
     }
 }
 

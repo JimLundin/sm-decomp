@@ -11,7 +11,7 @@ use interface_hud::{
     HudPictures, HudState, MiniMapInputs, MiniMapPower, Reserve, Room, SelectButton, Selection,
     Status, StockAtStart,
 };
-use samus_health::{ProtectionFrames, Rules, TailImpact, WarningSound};
+use samus_health::{Impact, ProtectionFrames, Rules, WarningSound};
 
 /// Complete health quantities; neighbouring qualification stays outside this pin.
 pub struct HealthPin;
@@ -83,8 +83,8 @@ pub struct Frame {
     pub played: u64,
     /// The clock and equipment that admit the frame.
     pub context: Context,
-    /// Ridley's tail impact this frame.
-    pub tail: TailImpact,
+    /// Ridley's tail impact this frame, with the worth the record observes.
+    pub tail: Impact,
     /// The HUD's neighbours this frame.
     pub hud: HudFrame,
 }

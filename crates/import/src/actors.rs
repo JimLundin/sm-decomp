@@ -68,6 +68,12 @@ const END_OF_STEPS: u8 = 0xff;
 const EYE_SETS: RomAddress = RomAddress::new(0xa6, 0xe2aa);
 /// The body's colour sets, each of 11 colours, in the order it shows them.
 const BODY_SETS: RomAddress = RomAddress::new(0xa6, 0xe30a);
+/// Ceres Ridley's set-up's load of his tail's hit worth (`$A6:A216`), and the store after it
+/// that holds it where his tail's hit reads it (`$7E:7838`): his species header's contact damage
+/// is his body's, not his tail's.
+const TAIL_WORTH_LOAD: RomAddress = RomAddress::new(0xa6, 0xa216);
+const LOAD: u8 = 0xa9;
+const TAIL_WORTH_STORE: [u8; 4] = [0x8f, 0x38, 0x78, 0x7e];
 /// How many colour sets the eye and the body each have.
 const FADE_SETS: usize = 16;
 /// Where a bank's ROM half starts.
@@ -87,6 +93,9 @@ pub enum ActorsError {
     /// Ridley's eye has no steps, its steps have no end byte before its sets, or a step names a
     /// colour set past them.
     EyeSteps,
+    /// The code that sets Ridley's tail's hit worth is not the load and store expected there, or
+    /// the worth it loads is more than the most whole energy, 32767.
+    TailWorth,
 }
 
 impl From<AddressError> for ActorsError {
@@ -96,12 +105,13 @@ impl From<AddressError> for ActorsError {
 }
 
 /// Every registered species' palette, the shared sprite palettes, the Ceres doors' colours and
-/// Ceres Ridley's.
+/// Ceres Ridley's, and his tail's hit worth.
 ///
 /// # Errors
 ///
 /// [`ActorsError::Address`] when a table is outside the image, [`ActorsError::EyeSteps`] when
-/// Ridley's eye's steps don't each name one of its sets.
+/// Ridley's eye's steps don't each name one of its sets, [`ActorsError::TailWorth`] when his
+/// tail's hit worth isn't set by the code expected or is more than 32767.
 pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
     let species = PLACES
         .iter()
@@ -127,8 +137,27 @@ pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
         },
         beacon: beacon(rom)?,
         ceres_ridley: ceres_ridley_colours(rom)?,
+        ceres_tail_worth: ceres_tail_worth(rom)?,
     })
 }
+
+/// The whole energy Ceres Ridley's tail's hit is worth: the operand of his set-up's load, read
+/// only where that load and the store after it are the ones expected, and only up to the most
+/// whole energy, [`MOST_WORTH`].
+fn ceres_tail_worth(rom: Lorom<'_>) -> Result<u16, ActorsError> {
+    let code = rom.read(TAIL_WORTH_LOAD, 7)?;
+    match code {
+        [LOAD, low, high, store @ ..] if *store == TAIL_WORTH_STORE => {
+            Some(u16::from_le_bytes([*low, *high]))
+                .filter(|&worth| worth <= MOST_WORTH)
+                .ok_or(ActorsError::TailWorth)
+        }
+        _ => Err(ActorsError::TailWorth),
+    }
+}
+
+/// The most whole energy a hit can be worth: Health's whole energy runs 0..=32767.
+const MOST_WORTH: u16 = 0x7fff;
 
 /// The shaft beacon's colour sets: its table holds a row of eight colours for each step, whose
 /// first six are the step's set.

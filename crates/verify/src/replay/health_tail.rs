@@ -9,7 +9,7 @@ use game::production::{
 };
 use game::state::owned::OwnedState;
 use samus_health::{
-    EnergyAmount, EnergyLoss, ProtectionFrames, Rules, TailImpact, Warning, WholeEnergy,
+    EnergyAmount, EnergyLoss, Impact, ProtectionFrames, Rules, Warning, WholeEnergy,
 };
 use serde::Deserialize;
 
@@ -34,8 +34,6 @@ pub(super) const CUTS: [u64; 2] = [993, 994];
 
 const CONTEXT_PIN: &str = "8ca15c6669c31e4605046a10fefd772fed5a2a3f4f842aeef2a7655c791e49cf";
 const EXPECTED_PIN: &str = "813b6b8d06f6826b78925ae426278f288d7329f9167c8492d018667ebb9b6884";
-// Whole energy the eligible Ceres tail delivers; any other delivery is not this scope's.
-const CERES_TAIL_DAMAGE: u16 = 15;
 const OFFER_PIN: &str = "23b8deabfaa84f7129bf4f46b36f1027c53a3e067b9d2115a12b8e476b7e568c";
 
 #[derive(Deserialize)]
@@ -137,14 +135,14 @@ impl Inputs {
             .zip(0..)
             .map(|(((context, offer), hud), played)| {
                 let ProtectionAccess::ReadCurrent = offer.actor_protection_access;
+                // The hit is worth what the record observes the tail deliver.
                 let tail = match offer.delivery {
-                    None => TailImpact::Absent,
-                    Some(Delivery {
-                        damage_whole: CERES_TAIL_DAMAGE,
-                    }) => TailImpact::EligibleCeresTail,
-                    Some(_) => {
-                        return Err(data_failure(Some(offer.end_cut), "Health tail delivery"));
-                    }
+                    None => Impact::Absent,
+                    Some(Delivery { damage_whole }) => Impact::EligibleHit {
+                        worth: WholeEnergy::new(damage_whole).ok_or_else(|| {
+                            data_failure(Some(offer.end_cut), "Health tail delivery")
+                        })?,
+                    },
                 };
                 Ok(Frame {
                     played,

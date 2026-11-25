@@ -1,7 +1,7 @@
 //! Every vector played through the whole-frame step, and save-and-restore checks.
 
 use samus_health::{
-    BehaviourId, EnergyAmount, EnergyLoss, PlayedFrame, ProtectionFrames, Rules, State, TailImpact,
+    BehaviourId, EnergyAmount, EnergyLoss, Impact, PlayedFrame, ProtectionFrames, Rules, State,
     Warning, WarningSound, WholeEnergy, behaviour,
 };
 use serde::Deserialize;
@@ -84,7 +84,8 @@ impl From<Snapshot> for State {
 struct Context {
     time: Time,
     suit: Suit,
-    tail_impact: Option<TailImpact>,
+    /// The worth of the frame's eligible hit, as its hitter gives it; omitted, no hit.
+    impact_worth: Option<WholeEnergy>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -124,13 +125,15 @@ impl Vector {
 }
 
 impl Vector {
-    /// The frame's tail impact; omitted, it is Absent.
-    fn tail_impact(&self) -> TailImpact {
-        self.inputs.tail_impact.unwrap_or(TailImpact::Absent)
+    /// The frame's impact: an eligible hit worth `impact_worth`, or Absent where it is omitted.
+    fn impact(&self) -> Impact {
+        self.inputs
+            .impact_worth
+            .map_or(Impact::Absent, |worth| Impact::EligibleHit { worth })
     }
 
     fn play(&self, start: State) -> PlayedFrame {
-        start.play_frame(self.tail_impact(), &self.rules())
+        start.play_frame(self.impact(), &self.rules())
     }
 }
 
@@ -154,7 +157,7 @@ fn verify_frame(vector: &Vector, start: State) -> Result<State, Box<dyn std::err
 
     // The loss is consumed once: a following frame without a hit neither spends it again
     // nor requests a sound.
-    let next = played.state.play_frame(TailImpact::Absent, &vector.rules());
+    let next = played.state.play_frame(Impact::Absent, &vector.rules());
     assert_eq!(
         (
             next.state.energy,
@@ -171,7 +174,9 @@ fn verify_frame(vector: &Vector, start: State) -> Result<State, Box<dyn std::err
 fn samus_health_admitted_vectors() -> TestResult {
     let data = vectors()?;
     let admitted: Vec<_> = data.iter().filter(|v| v.evidence_kind.is_none()).collect();
-    assert_eq!(admitted.len(), 24);
+    // Every vector of the file is either played here or is integration admission evidence.
+    assert_eq!(admitted.len() + 3, data.len());
+    assert_eq!(admitted.len(), 29);
     let recorded: Vec<_> = admitted
         .iter()
         .filter(|v| v.source == Source::Recorded)
@@ -179,14 +184,19 @@ fn samus_health_admitted_vectors() -> TestResult {
         .collect();
     assert_eq!(
         recorded,
-        ["R-maintenance-current", "R-tail-hit", "R-tail-protected"]
+        [
+            "R-maintenance-current",
+            "R-tail-hit",
+            "R-tail-protected",
+            "R-steam-hit"
+        ]
     );
     assert_eq!(
         admitted
             .iter()
             .filter(|v| v.source == Source::Constructed)
             .count(),
-        21
+        25
     );
     for vector in &admitted {
         assert_eq!(vector.inputs.time, Time::Running);
@@ -239,7 +249,7 @@ fn integration_admission_metadata_is_not_model_coverage() -> TestResult {
         assert!(vector.sound.is_none());
         assert!(vector.rules.is_none());
         assert!(vector.continues.is_none());
-        assert!(vector.inputs.tail_impact.is_none());
+        assert!(vector.inputs.impact_worth.is_none());
         assert!(vector.protection_drawn.is_none());
         assert_eq!(vector.source, Source::Constructed);
         // Only validate evidence shape. No qualification implementation, operation
@@ -276,8 +286,8 @@ fn check_independent_loss(mut state: State, pending: u16, fraction: u16) -> Test
             warning_threshold: WholeEnergy::try_from(threshold)?,
         };
         fresh = restored(state)?;
-        let played = state.play_frame(TailImpact::Absent, &rules);
-        assert_eq!(fresh.play_frame(TailImpact::Absent, &rules), played);
+        let played = state.play_frame(Impact::Absent, &rules);
+        assert_eq!(fresh.play_frame(Impact::Absent, &rules), played);
         assert_eq!(played.state.pending_loss, EnergyLoss::ZERO);
         assert_eq!(restored(played.state)?, played.state);
     }
@@ -313,12 +323,12 @@ fn excess_fractional_loss_clears_nonzero_starting_fraction() -> TestResult {
             fraction: 2,
         },
         warning: Warning::Off,
-        protection: ProtectionFrames::TAIL_GRANT,
+        protection: ProtectionFrames::HIT_GRANT,
     };
 
-    // An admitted Running/NeitherSuit frame without a tail impact. Its expected result is
+    // An admitted Running/NeitherSuit frame without an impact. Its expected result is
     // independent of another model call.
-    let played = state.play_frame(TailImpact::Absent, &Rules::REFERENCE);
+    let played = state.play_frame(Impact::Absent, &Rules::REFERENCE);
     assert_eq!(
         played.state,
         State {
@@ -335,7 +345,7 @@ fn excess_fractional_loss_clears_nonzero_starting_fraction() -> TestResult {
         }
     );
     assert_eq!(played.warning_sound, WarningSound::Start);
-    assert_eq!(played.protection_drawn, ProtectionFrames::TAIL_GRANT);
+    assert_eq!(played.protection_drawn, ProtectionFrames::HIT_GRANT);
     Ok(())
 }
 
