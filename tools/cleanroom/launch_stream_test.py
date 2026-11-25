@@ -122,7 +122,7 @@ def launch(root, session=None):
     scratch.mkdir()
     export = root / "export"
     export.mkdir()
-    for name in ["launch.sh", "launch_stream.py"]:
+    for name in ["launch.sh", "launch_stream.py", "box_relay.py"]:
         shutil.copyfile(HERE / name, tools / name)
     if session is not None:
         (tools / "launch_stream.py").write_text(session, encoding="utf-8", newline="\n")
@@ -141,7 +141,7 @@ def launch(root, session=None):
     (tools / "scan_brief.sh").write_text("exit 0\n", encoding="utf-8")
     (tools / "canary.sh").write_text('echo checked >"$CLEANROOM_PRIVATE/canary-checked"\nexit 0\n', encoding="utf-8")
     (root / "brief").write_text("Invented brief.\n", encoding="utf-8")
-    (root / "auth").write_text("", encoding="utf-8")
+    (root / "auth").write_text('  "env": {"ANTHROPIC_API_KEY": "invented-key"},\n', encoding="utf-8")
     cli = root / ("fake.cmd" if os.name == "nt" else "fake.sh")
     cli.write_text("@echo invented failure 1>&2\n@exit /b 7\n" if os.name == "nt" else "#!/bin/sh\necho invented failure >&2\nexit 7\n", encoding="utf-8", newline="\n")
     cli.chmod(0o755)

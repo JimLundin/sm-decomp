@@ -122,31 +122,33 @@ again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
 
 **The clean room.** `tools/cleanroom/export.sh` writes exports under `$CLEANROOM_ROOT` (default
 `~/cleanroom`), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. Off Windows
-the launch denies the session every place beside the export's path, the home around the exports'
-root included, and empties its environment; its header says what it denies and why. The session
-needs an API key: `ANTHROPIC_API_KEY` in the environment, an `apiKeyHelper` in
-`~/.claude/settings.json` that names absolute paths, or `CLEANROOM_AUTH`.
+the session runs in a box: a docker container with no network whose file system holds only the
+export, the lane's home and temporary folder, and read-only `/usr`, toolchain, CLI and settings.
+Inside it the launch's pattern rules still deny every place beside the export's path, as a
+second layer; its header says what each layer holds and why. The session needs an API key:
+`ANTHROPIC_API_KEY` in the environment, an `apiKeyHelper` or `ANTHROPIC_*` lines in
+`~/.claude/settings.json`, or `CLEANROOM_AUTH`. A relay outside the box adds it to each request,
+so it never enters the box.
 
 ### Before any confined session on the box
 
-The Linux confinement is pattern rules over this machine's paths until it is proven, so before
-the first clean-room lane there:
+The operating system confines the session, and the pattern rules are a second layer. Before the
+first clean-room lane on a machine, and after a new CLI version:
 
-- **Exports go outside the home.** Make a root such as `/cleanroom`, owned by you, and set
-  `CLEANROOM_ROOT=/cleanroom`. The launch then denies the home and the temporary folder whole, as
-  Windows does, instead of naming their entries at launch, which misses anything created in them
-  during a session.
-- **The key goes through a helper.** Keep it in a file only you can read (`chmod 600`) and put
-  `"apiKeyHelper": "cat /home/you/.config/anthropic/key"` in `~/.claude/settings.json`, so the
-  CLI holds the key and its children's environment doesn't. `ANTHROPIC_API_KEY` passes it to every
-  `cargo test` the session runs.
-- **Prove searches from above the export are refused.** The probe's CHECKs 29 to 31 grep from `/`
-  and from the home and glob `**/AGENTS.md` from the home; each must be refused or find nothing
-  outside the export.
-- **Prefer confinement by the operating system.** The rules confine the CLI's tools, not the
-  processes it starts: `cargo test` and git can read any file you can. On Linux bubblewrap or
-  landlock around the session can deny those reads and the network outright; that is the
-  barrier to build before relying on the pattern rules alone.
+- **Docker runs as you.** `docker info` works without `sudo` (your user is in the `docker`
+  group). The box needs nothing else changed on the host: bubblewrap and the CLI's own sandbox
+  need unprivileged user namespaces, which Ubuntu's AppArmor restricts, and docker doesn't.
+- **The box is proven.** `bash tools/cleanroom/launch_config_test.sh` prints `LAUNCH CONFIG TEST
+  OK`: it runs the box with a fake CLI that tries the home, the canary record, the temporary
+  folder, the checkout, a search from `/`, writes into the lane, the network and the key, and
+  each must fail, while the export, the relay and the test runner work.
+- **The key stays outside the box.** The dry run's `settings.json` holds the placeholder
+  `cleanroom-relay` and `env.txt` holds no key.
+- **The probe passes in the box** (below): every CHECK refused, and nothing outside the export
+  is in the box to find, so CHECKs 29 to 31 (searches from `/` and the home) find nothing.
+- **Exports may stay in the home.** A folder made beside the export during a session is not in
+  the box. With the exports' root outside the home (`CLEANROOM_ROOT=/cleanroom`, made once with
+  `sudo`) the rules also deny the home whole rather than entry by entry.
 
 ### First run on the box
 
@@ -179,8 +181,8 @@ the first clean-room lane there:
    rm -rf "$ex"
    ```
 
-   The dry run writes the lane record and stops: read its `settings.json` deny list and
-   `env.txt`. The probe passes when it prints `LAUNCH OK launch-probe`, the transcript shows
+   The dry run writes the lane record and stops: read its `settings.json` deny list, `env.txt`
+   and `box.txt`, the box's `docker run`. The probe passes when it prints `LAUNCH OK launch-probe`, the transcript shows
    every CHECK refused and every TASK done (TASK 7's runner ends `vector_runner: all targets
    passed`), and the canary check prints `CANARY CLEAN`.
 

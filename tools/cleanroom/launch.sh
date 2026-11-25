@@ -56,7 +56,26 @@
 # denied", "denied by your permission settings"): every CHECK refused, every TASK done.
 # CLEANROOM_DRY_RUN=1 writes the lane record and stops before the session (launch_config_test.sh).
 #
-# Off Windows (Linux) the barrier is the same, built from that machine's paths:
+# Off Windows (Linux) the session runs in a box, and the rules below are a second layer inside it:
+#   - The box is a docker container (`docker run` as this user, its argv in the lane's box.txt)
+#     with no network, a read-only root made from nothing (box_relay.py image), no capabilities
+#     and no new privileges. Its file system holds only its mounts, each at its own path: the
+#     export (written), the lane's home/ and tmp/ (written), and read-only /usr, the
+#     /etc/alternatives links, cargo's bin/, rustup's home, the CLI, and the lane's settings,
+#     runner, shape scan and relay. The home, the checkout, the temporary folder, the canary
+#     record, the ROM and the record cache are not in it, so a process the session starts
+#     (cargo, a test, git) can't read them either, whatever the rules allow; nor can a search
+#     from / or the export's parents, and a folder made beside the export during the session
+#     is not in it. Bubblewrap and the CLI's own sandbox need unprivileged user namespaces,
+#     which Ubuntu's AppArmor restricts; docker needs nothing changed on the host.
+#   - The credential stays outside: box_relay.py serves the lane's api.sock outside the box and
+#     adds the key (an apiKeyHelper's output, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN) to each
+#     request on its way to the API's base URL, refusing any other path. Inside, the box's first
+#     process forwards 127.0.0.1:8765 to that socket and runs the CLI, whose settings hold that
+#     address and a placeholder key. The API is the one place the box can reach.
+#   - A launch on Linux needs docker (`docker info` as this user); there is no session without
+#     the box.
+# The rules are built from that machine's paths:
 #   - The CLI is `claude` on PATH or CLAUDE_BIN, run by absolute path; nothing goes through cygpath.
 #   - Rule paths are the CLI's absolute form, `//` and the path (`//home/me/**` is /home/me).
 #   - Reads (Read, Glob, Grep) and writes (Edit, Write) are denied for every entry of every
@@ -77,8 +96,8 @@
 #   - The emptied environment holds HOME, CLAUDE_CONFIG_DIR, the XDG folders and TMPDIR in the
 #     lane's home/ and tmp/; PATH is the lane's bin/, cargo's folder and /usr/local/bin:/usr/bin:/bin.
 #   - The API key comes from CLEANROOM_AUTH, else the apiKeyHelper and ANTHROPIC_* lines of
-#     ~/.claude/settings.json (a helper runs with the lane's HOME, so it names absolute paths),
-#     else ANTHROPIC_API_KEY, passed in the environment and redacted in env.txt.
+#     ~/.claude/settings.json (a helper runs outside the box, as this user), else
+#     ANTHROPIC_API_KEY; the relay holds it, and env.txt, the box's environment, holds none.
 #   - Python is CLEANROOM_PY, else python3.13 or python3 on PATH, 3.11 or later, by absolute path.
 #   - The test command is `cleanroom-tests`, a script in the lane's bin/ that runs that Python on
 #     the lane's vector_runner.py, which runs the shape scan and then `cargo test` per target. A
@@ -86,7 +105,8 @@
 #     Linux doesn't search the working directory first, so the export can't shadow it; the script
 #     is in vector_runner.sha256 with the runner.
 # First run on a Linux machine (BUILDING.md, "Setting up on Linux"):
-#   1. CLEANROOM_DRY_RUN=1 on the probe export; read settings.json's deny list and env.txt.
+#   1. CLEANROOM_DRY_RUN=1 on the probe export; read settings.json's deny list, env.txt and
+#      box.txt. launch_config_test.sh runs the box with a fake CLI that tries each way out.
 #   2. canary.sh plant with the forbidden sources present (canary.sh list shows them), then the
 #      probe above: every CHECK refused (29 to 31, searches from / and the home, refused or
 #      finding nothing outside the export), TASK 7's runner passes, and `LAUNCH OK launch-probe`,
@@ -94,7 +114,8 @@
 #   3. canary.sh check on the probe transcript once more, then delete the probe export.
 #
 # Limits the CLI cannot confine: cargo runs code the implementer writes (tests, build scripts,
-# macros) as an ordinary process, which can read any file this user can. Build scripts and cargo
+# macros) as an ordinary process, which on Windows can read any file this user can (on Linux,
+# only what the box holds). Build scripts and cargo
 # configuration are not writable here, but a test body is. The canary check after the session is
 # what catches a test that read a forbidden file and printed it. On the trunk, code_check.sh, which
 # import.sh runs before applying anything, refuses what cargo would run or read at build time
@@ -390,10 +411,19 @@ deny=(
   "${drive_paths[@]}"
 )
 
+# Off Windows the credential stays outside the box: box_relay.py, outside, adds it to each request,
+# and the session's settings hold the box's base URL and a placeholder instead.
+box_port=8765
+if [ "$windows" = 0 ]; then
+  auth_json=$(printf '{\n'; auth; printf '  "box": true\n}\n')
+  session_auth=$("$python" -I "$here/box_relay.py" settings - "$box_port" <<<"$auth_json") ||
+    die "box_relay.py can't read the credential's settings"
+fi
+
 settings=$lane/settings.json
 {
   printf '{\n'
-  auth
+  if [ "$windows" = 1 ]; then auth; else printf '%s\n' "$session_auth"; fi
   printf '  "model": %s,\n' "$(q "${CLEANROOM_MODEL:-opus}")"
   printf '  "disableAllHooks": true,\n  "autoMemoryEnabled": false,\n  "includeCoAuthoredBy": false,\n'
   printf '  "enableAllProjectMcpServers": false,\n  "cleanupPeriodDays": 99999,\n'
@@ -485,10 +515,51 @@ else
     "GIT_COMMITTER_NAME=implementer" "GIT_COMMITTER_EMAIL=implementer@cleanroom.invalid"
     "DISABLE_AUTOUPDATER=1"
   )
-  [ "$api_key_env" = 0 ] || envv+=("ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
 fi
-[ -n "${FOUNDRY_LMS_TOKEN:-}" ] && envv+=("FOUNDRY_LMS_TOKEN=$FOUNDRY_LMS_TOKEN")
+[ "$windows" = 1 ] && [ -n "${FOUNDRY_LMS_TOKEN:-}" ] && envv+=("FOUNDRY_LMS_TOKEN=$FOUNDRY_LMS_TOKEN")
 : >"$lane/home/.gitconfig"
+
+# Off Windows the session runs in a box: a container with no network whose root holds nothing but
+# the mounts below, each at its own path so the rules above still name them. Written: the export,
+# the lane's home/ and tmp/. Read-only: /usr (the system's programs and libraries), the toolchain,
+# the CLI, the lane's settings, runner and relay. The lane's api.sock is the API's way out.
+box=()
+if [ "$windows" = 0 ]; then
+  box_image=sm-cleanroom-root:1
+  uid=$(id -u) gid=$(id -g)
+  printf 'implementer:x:%s:%s::%s:/bin/sh\n' "$uid" "$gid" "$lane/home" >"$lane/passwd"
+  printf 'implementer:x:%s:\n' "$gid" >"$lane/group"
+  cp "$here/box_relay.py" "$lane/box_relay.py"
+  claude_real=$(readlink -f "$claude_bin")
+  argv[0]=$claude_real
+  box_name=cleanroom-$(basename "$lane")
+  box=(docker run --rm -i --name "$box_name" --network none --read-only
+    --tmpfs /tmp:rw,nosuid,nodev,mode=1777 --cap-drop ALL --security-opt no-new-privileges
+    --user "$uid:$gid" --workdir "$export_dir" --env-file "$lane/env.txt")
+  box_mount() { # SRC [rw]: SRC at its own path, read-only unless rw
+    case $1 in *,* | *$'\n'*) die "can't mount $1: it holds a comma or a newline" ;; esac
+    [ -e "$1" ] || die "nothing to mount at $1"
+    if [ "${2:-}" = rw ]; then box+=(--mount "type=bind,src=$1,dst=$1"); else box+=(--mount "type=bind,src=$1,dst=$1,readonly"); fi
+  }
+  box_mount "$export_dir" rw; box_mount "$lane/home" rw; box_mount "$lane/tmp" rw
+  box_mount /usr; box_mount /etc/alternatives; box_mount /etc/ld.so.cache
+  box+=(--mount "type=bind,src=$lane/passwd,dst=/etc/passwd,readonly"
+    --mount "type=bind,src=$lane/group,dst=/etc/group,readonly")
+  for f in settings.json box_relay.py bin "${runner_files[@]}"; do
+    case $f in bin/*) ;; *) box_mount "$lane/$f" ;; esac
+  done
+  box_mount "$claude_real"
+  # The toolchain: cargo's programs (not its home, which can hold a registry token) and rustup's
+  # toolchains. Anything else the PATH or the interpreter needs outside /usr is mounted too.
+  rustup_home=${RUSTUP_HOME:-$HOME/.rustup}
+  box_mount "$(dirname "$cargo_bin")"; box_mount "$(cd "$rustup_home" && pwd -P)"
+  py_prefix=$("$python" -I -c 'import sys; print(sys.base_prefix)')
+  case $py_prefix/ in /usr/*) ;; *) box_mount "$py_prefix" ;; esac
+  case $awk_bin in /usr/* | /bin/*) ;; *) die "awk at $awk_bin is outside /usr, which the box holds" ;; esac
+  box+=(--mount "type=bind,src=$lane/api.sock,dst=$lane/api.sock" "$box_image"
+    "$python" -I "$lane/box_relay.py" box "$box_port" "$lane/api.sock" --)
+  printf '%s\n' "${box[@]}" >"$lane/box.txt"
+fi
 printf '%s\n' "${argv[@]}" >"$lane/argv.txt"
 printf '%s\n' "${envv[@]}" | sed -E 's/^(FOUNDRY_LMS_TOKEN|ANTHROPIC_API_KEY)=.*/\1=<redacted>/' >"$lane/env.txt"
 printf 'export\t%s\nroot\t%s\nbrief\t%s\ntranscript\t%s\n' "$export_dir" "$root" "$brief" "$transcript" >"$lane/lane.tsv"
@@ -500,6 +571,21 @@ fi
 
 # 3. The session, its prompt the brief, its working directory the export.
 status=0
+if [ "$windows" = 0 ]; then
+  "$python" -I "$here/box_relay.py" image "$box_image" || die "docker can't make the box's image $box_image"
+  : >"$lane/api.sock"
+  "$python" -I "$here/box_relay.py" serve "$lane/api.sock" - <<<"$auth_json" 2>"$lane/relay.txt" &
+  relay_pid=$!
+  trap 'kill "$relay_pid" 2>/dev/null; docker kill "$box_name" >/dev/null 2>&1 || true' EXIT
+  for _ in $(seq 100); do [ -S "$lane/api.sock" ] && break; sleep 0.1; done
+  [ -S "$lane/api.sock" ] || die "the relay didn't start; see $lane/relay.txt"
+  # The docker client runs outside with the session's environment (plus DOCKER_HOST, if set);
+  # inside, the box has only env.txt.
+  env -i "${envv[@]}" ${DOCKER_HOST:+"DOCKER_HOST=$DOCKER_HOST"} "$python" -I "$here/launch_stream.py" \
+    --cwd "$export_dir" --transcript "$transcript" --stderr "$lane/stderr.txt" \
+    --timeout "${CLEANROOM_COMPLETION_SECONDS:-240}" \
+    -- "${box[@]}" "${argv[@]}" <"$lane/brief.txt" || status=$?
+else
 # Inherited stdout handles keep the pipe open while background work reports. EOF proves
 # output completion for descendants that inherit the CLI stream. A deadline after CLI exit
 # refuses a writer that never closes; detached writers are left running and never certified.
@@ -507,6 +593,7 @@ env -i "${envv[@]}" "$python" -I "$here/launch_stream.py" --cwd "$export_dir" \
   --transcript "$transcript" --stderr "$lane/stderr.txt" \
   --timeout "${CLEANROOM_COMPLETION_SECONDS:-240}" \
   -- "${argv[@]}" <"$lane/brief.txt" || status=$?
+fi
 cp "$transcript" "$lane/transcript.jsonl"
 echo "launch: session exited $status; transcript $transcript ($(wc -l <"$transcript") events)"
 
