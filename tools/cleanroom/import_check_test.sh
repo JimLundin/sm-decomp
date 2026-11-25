@@ -4,7 +4,7 @@
 # applying it, taking the branch back; refuses an export whose own configuration rewrites URLs;
 # refuses one that adds a name scan.sh finds, naming it, with the branch untouched; refuses one
 # whose new function opens with an entry the spec sources from one routine, naming it, with the
-# branch untouched; imports a
+# branch untouched, and one whose spec is only an untracked file, not on the branch; imports a
 # harmless one, which passes both clippy runs, though the caller's environment carries such a
 # rewrite and it changes the shared types' file, whose hits on the trunk (scan.sh's names among
 # them) stay; and fails an import whose change to the shared types breaks another clean crate,
@@ -53,13 +53,11 @@ mkexport() { # DEST
 }
 
 git -C "$repo" worktree add -q -b "$branch" "$tmp/wt" HEAD || exit 1
-# The dummy domain's spec, on the branch the imports land on: Rolling's source is one routine,
-# Standing's two.
+# The dummy domain's spec: Rolling's source is one routine, Standing's two. It stays untracked in
+# the worktree until the first import is refused for want of it, then the branch commits it.
 mkdir -p "$tmp/wt/docs/behaviours"
 printf '%s\n' '# Import test' '' '### Rolling' '' 'She rolls ($91:8000).' '' '### Standing' '' \
   'She stands ($91:8000, then $93:8000).' >"$tmp/wt/docs/behaviours/import-test.md"
-git -C "$tmp/wt" add docs/behaviours/import-test.md
-git -C "$tmp/wt" commit -q -m "The import test's spec" || exit 1
 mkexport "$tmp/builds"
 implementer_commit "$tmp/builds" crates/clean/import_test/build.rs 'fn main() {}'
 mkexport "$tmp/leaky"
@@ -115,6 +113,18 @@ pub const fn id(x: u8) -> u8 {
 mkexport "$tmp/breaks"
 implementer_commit "$tmp/breaks" crates/clean/types/src/lib.rs \
   '//! Emptied, so the crates that use a clean type no longer build.'
+
+# The mirror scan reads the spec from the branch's commit: an untracked copy in the worktree
+# doesn't stand in for it.
+unspecified=$(git -C "$tmp/wt" rev-parse HEAD)
+if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/fine" "$branch" 2>&1); then
+  fail "import scanned an untracked spec the branch doesn't hold: $out"
+else
+  grep -q 'no spec docs/behaviours/import-test.md on' <<<"$out" || fail "refusal did not name the missing spec: $out"
+fi
+[ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$unspecified" ] || fail "the import without a spec moved the branch"
+git -C "$tmp/wt" add docs/behaviours/import-test.md
+git -C "$tmp/wt" commit -q -m "The import test's spec" || exit 1
 
 before=$(git -C "$tmp/wt" rev-parse HEAD)
 if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/builds" "$branch" 2>&1); then
@@ -185,5 +195,5 @@ else
     || fail "the clean-room run did not name world_blocks: $out"
   ! grep -q 'IMPORT OK' <<<"$out" || fail "the failing import said IMPORT OK: $out"
 fi
-[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: a build script, std::fs::read and an export that rewrites URLs and a name scan.sh finds and a function the mirror scan maps onto one routine refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them with the trunk's scan hits kept, a change to the shared types that breaks another clean crate failed naming it"
+[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: a build script, std::fs::read and an export that rewrites URLs and a name scan.sh finds and a function the mirror scan maps onto one routine and an export whose spec is only untracked refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them with the trunk's scan hits kept, a change to the shared types that breaks another clean crate failed naming it"
 exit $bad

@@ -118,10 +118,11 @@ echo "import: scan.sh finds nothing new in ${#changed[@]} changed files"
 # and detail), refuses the import. The spec's own share of single-routine entries is the
 # observer's, so only these findings are compared. A report whose count of them disagrees with
 # the findings this reads refuses the import rather than passing it.
-top=$(git rev-parse --show-toplevel)
-spec=$top/docs/behaviours/$domain.md decode=$top/docs/behaviours/$domain.decode.md
-[ -f "$spec" ] || die "no spec docs/behaviours/$domain.md on $branch for the mirror scan; nothing applied"
-[ -f "$decode" ] || decode=-
+# Both are read from BRANCH's commit, not the worktree, where an untracked file would stand in.
+spec=$scratch/spec.md decode=$scratch/decode.md
+git show "HEAD:docs/behaviours/$domain.md" >"$spec" 2>/dev/null ||
+  die "no spec docs/behaviours/$domain.md on $branch for the mirror scan; nothing applied"
+git show "HEAD:docs/behaviours/$domain.decode.md" >"$decode" 2>/dev/null || decode=-
 started_model=$scratch/started_model
 mkdir "$started_model"
 git_isolated "$scratch/export.git" archive --format=tar "$root" -- "$model" | tar -x -m -C "$started_model"
