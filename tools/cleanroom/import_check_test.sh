@@ -2,7 +2,9 @@
 # import_check_test.sh: import.sh refuses a patch that adds a build script, leaving the branch
 # where it was, and one that adds std::fs::read to a test, which the capability rule refuses after
 # applying it, taking the branch back; refuses an export whose own configuration rewrites URLs;
-# refuses one that adds a name scan.sh finds, naming it, with the branch untouched; imports a
+# refuses one that adds a name scan.sh finds, naming it, with the branch untouched; refuses one
+# whose new function opens with an entry the spec sources from one routine, naming it, with the
+# branch untouched; imports a
 # harmless one, which passes both clippy runs, though the caller's environment carries such a
 # rewrite and it changes the shared types' file, whose hits on the trunk (scan.sh's names among
 # them) stay; and fails an import whose change to the shared types breaks another clean crate,
@@ -39,6 +41,13 @@ mkexport() { # DEST
 }
 
 git -C "$repo" worktree add -q -b "$branch" "$tmp/wt" HEAD || exit 1
+# The dummy domain's spec, on the branch the imports land on: Rolling's source is one routine,
+# Standing's two.
+mkdir -p "$tmp/wt/docs/behaviours"
+printf '%s\n' '# Import test' '' '### Rolling' '' 'She rolls ($91:8000).' '' '### Standing' '' \
+  'She stands ($91:8000, then $93:8000).' >"$tmp/wt/docs/behaviours/import-test.md"
+git -C "$tmp/wt" add docs/behaviours/import-test.md
+git -C "$tmp/wt" commit -q -m "The import test's spec" || exit 1
 mkexport "$tmp/builds"
 implementer_commit "$tmp/builds" crates/clean/import_test/build.rs 'fn main() {}'
 mkexport "$tmp/leaky"
@@ -56,6 +65,24 @@ implementer_commit "$tmp/named" crates/clean/import_test/src/lib.rs \
 #[must_use]
 pub const fn id(x: u8) -> u8 {
     x
+}'
+mkexport "$tmp/mirrored"
+implementer_commit "$tmp/mirrored" crates/clean/import_test/src/lib.rs \
+  '//! Opens a function with an entry whose source is one routine.
+
+/// How she moves.
+#[derive(Clone, Copy, Debug)]
+pub enum Move {
+    /// She rolls.
+    Rolling,
+    /// She stands.
+    Standing,
+}
+
+/// Whether she rolls.
+#[must_use]
+pub const fn rolls(m: Move) -> bool {
+    matches!(m, Move::Rolling)
 }'
 mkexport "$tmp/fine"
 # The shared types' file gains a doc paragraph above its hits on the trunk, so each moves down and
@@ -114,6 +141,15 @@ else
 fi
 [ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused name moved the branch"
 
+if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/mirrored" "$branch" 2>&1); then
+  fail "import accepted a function the mirror scan maps onto one routine: $out"
+else
+  grep -q '^mirror: crates/clean/import_test/src/lib.rs: rolls: opens with Rolling, whose source is one routine$' <<<"$out" \
+    || fail "refusal did not name the mirrored function: $out"
+  grep -q 'nothing applied' <<<"$out" || fail "refusal did not say nothing applied: $out"
+fi
+[ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused mirrored function moved the branch"
+
 out=$(cd "$tmp/wt" && GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://elsewhere.invalid/.insteadOf \
   GIT_CONFIG_VALUE_0=cleanroom-test: bash tools/cleanroom/import.sh "$tmp/fine" "$branch" 2>&1) \
   || fail "harmless import refused: $out"
@@ -122,6 +158,8 @@ grep -q 'import: workspace clippy clean' <<<"$out" || fail "harmless import ran 
 grep -q 'import: clean-room clippy clean' <<<"$out" || fail "harmless import ran no clean-room clippy: $out"
 grep -q 'import: scan.sh finds nothing new in 2 changed files' <<<"$out" \
   || fail "harmless import did not scan the shared types and its crate: $out"
+grep -q 'import: the mirror scan finds no new function' <<<"$out" \
+  || fail "harmless import ran no mirror scan: $out"
 
 # The harmless import changed the shared types' file this export replaces whole: start it where
 # the others started.
@@ -135,5 +173,5 @@ else
     || fail "the clean-room run did not name world_blocks: $out"
   ! grep -q 'IMPORT OK' <<<"$out" || fail "the failing import said IMPORT OK: $out"
 fi
-[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: a build script, std::fs::read and an export that rewrites URLs and a name scan.sh finds refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them with the trunk's scan hits kept, a change to the shared types that breaks another clean crate failed naming it"
+[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: a build script, std::fs::read and an export that rewrites URLs and a name scan.sh finds and a function the mirror scan maps onto one routine refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them with the trunk's scan hits kept, a change to the shared types that breaks another clean crate failed naming it"
 exit $bad

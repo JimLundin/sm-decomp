@@ -129,7 +129,10 @@ Each step names its owner, what it waits for, and its done-condition.
 7. **Import** (root): `import.sh` first runs `code_check.sh --import`, which refuses a variant
    import (L4) even in a crate whose older ones still only warn on the trunk. Then it runs
    `scan.sh` on each file the commits add or change, and refuses a hit that file didn't hold at
-   the export's start; the trunk's own hits don't block. It applies the commits to a lane
+   the export's start; the trunk's own hits don't block. It runs the mirror scan
+   (`scan.sh --mirror`) on the model against the spec and decode notes on the lane branch, and
+   refuses a non-private function the export's start didn't have that opens with an entry whose
+   source is one routine. It applies the commits to a lane
    branch, takes the branch back if the export's crates break the capability rule (clippy's
    forbidden lints), then runs both clippy configurations of `tools/lane/gate.sh` over every clean
    crate in the workspace: an export holds one domain's model and `types`, so a change to

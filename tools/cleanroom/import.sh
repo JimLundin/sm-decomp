@@ -7,8 +7,9 @@
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
 # `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
 # code_check.sh --import (nothing cargo would run or read at build time, and no variant import
-# even in a crate whose old ones still only warn on the trunk), and add no scan.sh hit to a file
-# that didn't hold it at the export's start, or nothing is applied. If BRANCH
+# even in a crate whose old ones still only warn on the trunk), add no scan.sh hit to a file
+# that didn't hold it at the export's start, and add no function the mirror scan maps onto one
+# routine (against the spec and decode notes on BRANCH), or nothing is applied. If BRANCH
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
 # `Role: integrator`), so the patches apply as they were made. The workspace takes every folder
 # of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring the model
@@ -105,6 +106,41 @@ if [ -n "$added" ]; then
   die "scan.sh finds $(wc -l <<<"$added") hits the export's start doesn't hold; nothing applied"
 fi
 echo "import: scan.sh finds nothing new in ${#changed[@]} changed files"
+
+# The mirror scan (scan.sh --mirror, the clean room's check 4) on the model crate at the export's
+# start and at its HEAD, against the spec and decode notes BRANCH holds: a non-private function
+# that opens with an entry whose source is one routine, and that the start didn't have (by file
+# and detail), refuses the import. The spec's own share of single-routine entries is the
+# observer's, so only these findings are compared. A report whose count of them disagrees with
+# the findings this reads refuses the import rather than passing it.
+top=$(git rev-parse --show-toplevel)
+spec=$top/docs/behaviours/$domain.md decode=$top/docs/behaviours/$domain.decode.md
+[ -f "$spec" ] || die "no spec docs/behaviours/$domain.md on $branch for the mirror scan; nothing applied"
+[ -f "$decode" ] || decode=-
+started_model=$(mktemp -d)
+trap 'rm -rf "$checked" "$started" "$hits" "$started_model"' EXIT
+git_isolated "$dest" archive --format=tar "$root" -- "$model" | tar -x -m -C "$started_model"
+mirror_hits() { # DIR: the mirror scan's entry-point findings in DIR's model crate, as `file: detail`
+  local dir=$1 out status=0 line parsed=0 counted
+  [ -d "$dir/$model" ] || return 0
+  out=$(bash "$cleanroom_dir/scan.sh" --mirror "$spec" "$decode" "$dir/$model") || status=$?
+  [ "$status" -le 1 ] || die "scan.sh --mirror failed; nothing applied"
+  while IFS= read -r line; do
+    case $line in "$dir/"*:[0-9]*:\ entry-point:\ *)
+      line=${line#"$dir/"}; echo "${line%%:*}: ${line#*: entry-point: }"; parsed=$((parsed + 1)) ;;
+    esac
+  done <<<"$out"
+  counted=$(sed -n 's/^mirror: .*; \([0-9]*\) of [0-9]* tagged non-private functions map onto one routine$/\1/p' <<<"$out")
+  [ "$counted" = "$parsed" ] || die "scan.sh --mirror reported in a form import.sh can't read; nothing applied"
+}
+mirror_hits "$started_model" >"$hits/mirror-start"
+mirror_hits "$checked" >"$hits/mirror-head"
+added=$(LC_ALL=C comm -13 <(LC_ALL=C sort "$hits/mirror-start") <(LC_ALL=C sort "$hits/mirror-head"))
+if [ -n "$added" ]; then
+  sed 's/^/mirror: /' <<<"$added"
+  die "the mirror scan finds $(wc -l <<<"$added") functions the export's start doesn't hold that open with a single-routine entry; nothing applied"
+fi
+echo "import: the mirror scan finds no new function that opens with a single-routine entry"
 
 cargo=${CARGO:-cargo}
 before=$(git rev-parse HEAD)
