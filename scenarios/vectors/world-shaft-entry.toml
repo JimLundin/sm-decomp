@@ -1,0 +1,75 @@
+[[vector]]
+id = "C-shaft-view"
+source = "constructed"
+entries = ["ShaftViewStarts"]
+before = { split = false, enabled = false, room_mode = "Tiled", hud_mode = "Tiled", matrix = [32, -3, 4, 128], pivot = [9, 17], outside = "Repeat", mirrors = [true, false], scroll = [8, 47], rotation_sample = "OffCentre", next_direction = "Counterclockwise", hold = 12 }
+input = { setup = "ShaftView" }
+after = { split = true, enabled = true, room_mode = "Affine", hud_mode = "Tiled", matrix = [256, 0, 0, 256], pivot = [128, 1008], outside = "Repeat", mirrors = [true, false], scroll = [8, 47], rotation_sample = "Centre", next_direction = "Clockwise", hold = 60 }
+
+[[vector]]
+id = "C-seal-door"
+source = "constructed"
+entries = ["ShaftDoorSeals"]
+before = { placement = false, haze = "None", cells = [
+    { at = [2, 0], kind = "Air", look = 17, flips = [false, true], mark = 2 },
+    { at = [2, 1], kind = "Door", look = 14, flips = [true, false], mark = 3 },
+    { at = [2, 2], kind = "Door", look = 15, flips = [false, false], mark = 3 },
+    { at = [2, 3], kind = "Door", look = 19, flips = [true, true], mark = 4 },
+    { at = [2, 4], kind = "Door", look = 22, flips = [false, true], mark = 2 },
+    { at = [1, 4], kind = "Air", look = 20, flips = [true, true], mark = 1 },
+] }
+input = { setup = "SealEntrance", door_top = [2, 1] }
+after = { placement = true, haze = "Red", cells = [
+    { at = [2, 0], kind = "Air", look = 17, flips = [false, true], mark = 2 },
+    { at = [2, 1], kind = "Solid", look = 14, flips = [true, false], mark = 3 },
+    { at = [2, 2], kind = "Solid", look = 15, flips = [false, false], mark = 3 },
+    { at = [2, 3], kind = "Solid", look = 19, flips = [true, true], mark = 4 },
+    { at = [2, 4], kind = "Solid", look = 22, flips = [false, true], mark = 2 },
+    { at = [1, 4], kind = "Air", look = 20, flips = [true, true], mark = 1 },
+] }
+
+[[vector]]
+id = "C-seal-placement-retires"
+source = "constructed"
+entries = ["ShaftDoorSeals"]
+before = { placement = true, haze = "Red", cells = [
+    { at = [2, 1], kind = "Solid", look = 14, flips = [true, false], mark = 3 },
+    { at = [2, 2], kind = "Solid", look = 15, flips = [false, false], mark = 3 },
+    { at = [2, 3], kind = "Solid", look = 19, flips = [true, true], mark = 4 },
+    { at = [2, 4], kind = "Solid", look = 22, flips = [false, true], mark = 2 },
+] }
+input = { setup = "RunBlockScripts" }
+after = { placement = false, haze = "Red", cells = [
+    { at = [2, 1], kind = "Solid", look = 14, flips = [true, false], mark = 3 },
+    { at = [2, 2], kind = "Solid", look = 15, flips = [false, false], mark = 3 },
+    { at = [2, 3], kind = "Solid", look = 19, flips = [true, true], mark = 4 },
+    { at = [2, 4], kind = "Solid", look = 22, flips = [false, true], mark = 2 },
+] }
+
+[[observation]]
+id = "R-entry-setup"
+source = "rS2:222"
+entries = ["ShaftViewStarts", "ShaftDoorSeals"]
+cut = "Interrupted"
+room_mode = "Affine"
+ppu_mode = "Tiled"
+matrix = [256, 0, 0, 256]
+pivot = [128, 1008]
+hold = 60
+solidified = [[15, 38], [15, 39], [15, 40], [15, 41]]
+placement = true
+haze = "Red"
+
+[[observation]]
+id = "R-placement-retired"
+source = "rS2:234"
+entries = ["ShaftDoorSeals"]
+cut = "Complete"
+room_mode = "Affine"
+ppu_mode = "Tiled"
+matrix = [256, 0, 0, 256]
+pivot = [128, 1008]
+hold = 60
+solidified = []
+placement = false
+haze = "Red"
