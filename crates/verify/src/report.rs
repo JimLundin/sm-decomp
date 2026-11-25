@@ -1067,6 +1067,7 @@ impl Tree {
         let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
         let rebuilt = names.iter().copied().collect();
         let plan = plan::Plan::parse(&read(&root.join(plan::PLAN))?, &rebuilt)?;
+        plan.recorded(root)?;
         let replay = replay::Snapshot::read(root)?;
         Ok(Self {
             shared_files,

@@ -1,6 +1,7 @@
 # The whole-game plan of domains.md (§3 the domains, §4 the waves) as data, for `verify::report`:
-# its domain graph, and the milestone and rungs the README counts frames over. The root changes it in the commit that lands a round:
-# the model's `rounds` by one, and a domain's `status` when its work starts or its queue empties.
+# its domain graph, the milestone the README counts frames over, and the rungs toward it. The root
+# changes it in the commit that lands a round: the model's `rounds` by one, and a domain's
+# `status` when its work starts or its queue empties.
 #
 # [[model]]: a clean-room model crate, `crates/clean/<crate>` (its name with dashes as
 # underscores), with the rounds landed on main. Every model of `verify::report::DOMAINS` has one,
@@ -665,8 +666,9 @@ needs = [
 
 # The ladder toward the milestone (domains.md §4): shorter stretches of the same movie, each
 # played alone from its first seed, that can be reached before the whole milestone; the report
-# checks each rung's needs and seeds against the plan. Each rung's needs are a first estimate from
-# domains.md §4's table; a session's planning corrects them from what the stretch's rows show.
+# checks each rung's needs against the plan and its seeds against the recorded seeds. Each rung's
+# needs are a first estimate from domains.md §4's table; a session's planning corrects them from
+# what the stretch's rows show.
 
 [[rung]]
 id = "M0"

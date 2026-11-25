@@ -2,7 +2,8 @@
 # it lies in the movie, with a bar of its frames that pass in the headline's marks or a tick once
 # all of them do, and its work issue, the first one not yet whole in bold
 # (verify::report::readme). The stretches cover the milestone's frames back to back, frame 1 to
-# the frame of the seed that ends it, and the report fails when they leave a gap or overlap. Adding a scoped piece of the movie is splitting a row.
+# the frame of the seed that ends it, and the report fails when they leave a gap or overlap.
+# Adding a scoped piece of the movie is splitting a row.
 #
 # [[stretch]]: `name` what the player sees, as the README says it; `frames` its first and last
 # movie frame as the README counts them, frame f being the cut compared once the movie's frame

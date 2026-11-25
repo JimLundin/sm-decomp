@@ -363,3 +363,64 @@ fn independent_vector_ids_include_opportunities_and_compositions_once() {
         193
     );
 }
+
+#[test]
+fn every_seed_the_plan_names_is_recorded() {
+    let root = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+    let rebuilt = DOMAINS.iter().map(|domain| domain.name).collect();
+    let text = fs::read_to_string(root.join(PLAN)).unwrap_or_default();
+    let file: toml::Table = text.parse().unwrap_or_default();
+    let recorded = |text: &str| Plan::parse(text, &rebuilt).and_then(|plan| plan.recorded(root));
+    assert_eq!(recorded(&text), Ok(()));
+    // The file written back unchanged holds too, so a fault below is its seed.
+    assert_eq!(recorded(&file.to_string()), Ok(()));
+    // Each rung's start and end, and the milestone's end, moved to a seed its capture lacks.
+    let missing = |name: &str| {
+        let capture = name.split_once(':').map_or(name, |(capture, _)| capture);
+        toml::Value::String(format!("{capture}:999999"))
+    };
+    let rungs = file
+        .get("rung")
+        .and_then(toml::Value::as_array)
+        .map_or(0, Vec::len);
+    assert_ne!(rungs, 0);
+    for index in 0..rungs {
+        for key in ["starts", "ends"] {
+            let mut planted = file.clone();
+            let rung = planted
+                .get_mut("rung")
+                .and_then(toml::Value::as_array_mut)
+                .and_then(|all| all.get_mut(index))
+                .and_then(toml::Value::as_table_mut);
+            let Some(rung) = rung else {
+                panic!("rung {index} is not a table");
+            };
+            let moved = rung.get(key).and_then(toml::Value::as_str).map(missing);
+            assert!(moved.is_some(), "rung {index} has no {key}");
+            rung.insert(
+                String::from(key),
+                moved.unwrap_or(toml::Value::Boolean(false)),
+            );
+            assert!(
+                recorded(&planted.to_string()).is_err(),
+                "rung {index}: {key}"
+            );
+        }
+    }
+    let mut planted = file;
+    let milestone = planted
+        .get_mut("milestone")
+        .and_then(toml::Value::as_table_mut);
+    let Some(milestone) = milestone else {
+        panic!("the plan has no milestone");
+    };
+    let moved = milestone
+        .get("ends")
+        .and_then(toml::Value::as_str)
+        .map(missing);
+    milestone.insert(
+        String::from("ends"),
+        moved.unwrap_or(toml::Value::Boolean(false)),
+    );
+    assert!(recorded(&planted.to_string()).is_err());
+}

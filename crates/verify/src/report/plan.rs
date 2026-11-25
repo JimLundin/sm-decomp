@@ -2,6 +2,7 @@
 //! rebuilt domains.
 
 use std::collections::BTreeSet;
+use std::path::Path;
 
 use serde::Deserialize;
 
@@ -307,6 +308,21 @@ impl Plan {
             seed(&rung.ends)?;
         }
         Ok(plan)
+    }
+
+    /// Whether the milestone's and every rung's seeds are recorded under `root`.
+    ///
+    /// # Errors
+    ///
+    /// The first seed the seed tables lack.
+    pub(super) fn recorded(&self, root: &Path) -> Result<(), String> {
+        let rungs = self.rung.iter().flat_map(|rung| [&rung.starts, &rung.ends]);
+        for name in std::iter::once(&self.milestone.ends).chain(rungs) {
+            let (capture, index) = seed(name)?;
+            super::seeds::seed_frame(root, capture, index)
+                .map_err(|e| format!("{PLAN}: `{name}`: {e}"))?;
+        }
+        Ok(())
     }
 
     /// The headline milestone.
