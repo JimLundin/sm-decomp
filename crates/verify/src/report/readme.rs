@@ -429,33 +429,111 @@ mod tests {
         }
     }
 
-    #[test]
-    fn the_committed_runs_agree_with_the_lock() {
+    /// The committed runs file, as text and as a table.
+    fn committed() -> (std::path::PathBuf, String, toml::Table) {
         let root = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
         let text = std::fs::read_to_string(root.join(PLAYED)).unwrap_or_default();
-        let runs = listed(root, &text, "any");
+        let table = text.parse().unwrap_or_default();
+        (root.to_path_buf(), text, table)
+    }
+
+    /// A fault planted in one run's figures; none when they don't have the figure it moves.
+    type Fault = fn(&mut toml::Table) -> Option<()>;
+
+    /// `file` with run `index` changed by `fault`, as text; none when the fault doesn't apply to
+    /// that run's figures.
+    fn faulted(file: &toml::Table, index: usize, fault: Fault) -> Option<String> {
+        let mut file = file.clone();
+        let run = file
+            .get_mut("run")?
+            .as_array_mut()?
+            .get_mut(index)?
+            .as_table_mut()?;
+        fault(run)?;
+        Some(file.to_string())
+    }
+
+    /// The integer `key` of `run`, changed by `by`.
+    fn shift(run: &mut toml::Table, key: &str, by: i64) -> Option<()> {
+        let value = run.get_mut(key)?;
+        *value = toml::Value::Integer(value.as_integer()?.checked_add(by)?);
+        Some(())
+    }
+
+    #[test]
+    fn the_committed_runs_agree_with_the_lock() {
+        let (root, text, file) = committed();
+        let runs = listed(&root, &text, "any");
         assert!(runs.as_ref().is_ok_and(|runs| !runs.is_empty()), "{runs:?}");
-        // Each figure a run states is held to the lock: its row, its cuts within the rows it
-        // plays back to back, its stop, its seed's frame, the frames it held and power-on.
-        for (from, to) in [
-            (
-                "row = \"chain-any-0003-DFD7\"",
-                "row = \"chain-any-0003-NONE\"",
-            ),
-            ("held = 1468", "held = 1469"),
-            ("held = 1468", "held = 1467"),
-            ("end = 3000", "end = 20000"),
-            ("seed_frame = 9232", "seed_frame = 9231"),
-            ("frames = [9233, 10700]", "frames = [9233, 10701]"),
-            ("power_on = false", "power_on = true"),
-            ("movie = \"any\"", "movie = \"100\""),
-        ] {
-            assert!(text.contains(from), "{from}");
-            assert!(
-                listed(root, &text.replacen(from, to, 1), "any").is_err(),
-                "{to}"
-            );
+        let count = file
+            .get("run")
+            .and_then(toml::Value::as_array)
+            .map_or(0, Vec::len);
+        assert_eq!(runs.as_ref().map(Vec::len), Ok(count));
+        // The file written back unchanged lists the same runs, so a fault below is its figure.
+        assert_eq!(listed(&root, &file.to_string(), "any"), runs);
+        // Each figure every run states is held to the lock: its row, its cuts within the rows it
+        // plays back to back, its stop, its seed's frame, the frames it held and power-on. Each
+        // fault is one figure of one run moved off the committed one.
+        let faults: [(&str, Fault); 8] = [
+            ("a row not in the lock", |run| {
+                let row = format!("{}-NONE", run.get("row")?.as_str()?);
+                run.insert(String::from("row"), toml::Value::String(row));
+                Some(())
+            }),
+            ("one more cut held", |run| shift(run, "held", 1)),
+            ("one fewer cut held", |run| {
+                (run.get("held")?.as_integer()? > 0).then_some(())?;
+                shift(run, "held", -1)
+            }),
+            ("an end past the rows played back to back", |run| {
+                shift(run, "end", 1_000_000)
+            }),
+            ("the seed's frame one later", |run| {
+                shift(run, "seed_frame", 1)
+            }),
+            ("the last frame held one later", |run| {
+                let frames = run.get_mut("frames")?.as_array_mut()?;
+                let last = frames.get_mut(1)?;
+                *last = toml::Value::Integer(last.as_integer()?.checked_add(1)?);
+                Some(())
+            }),
+            ("power-on the other way", |run| {
+                let power_on = !run.get("power_on")?.as_bool()?;
+                run.insert(String::from("power_on"), toml::Value::Boolean(power_on));
+                Some(())
+            }),
+            ("the other stop", |run| {
+                let stop = if run.get("stop")?.as_str() == Some("end") {
+                    toml::Value::Table(toml::Table::from_iter([(
+                        String::from("failed"),
+                        toml::Value::String(String::from("a difference")),
+                    )]))
+                } else {
+                    toml::Value::String(String::from("end"))
+                };
+                run.insert(String::from("stop"), stop);
+                Some(())
+            }),
+        ];
+        for (fault, plant) in faults {
+            let planted: Vec<(usize, String)> = (0..count)
+                .filter_map(|index| Some((index, faulted(&file, index, plant)?)))
+                .collect();
+            assert_ne!(planted, [], "{fault} fits no run");
+            for (index, planted) in planted {
+                assert!(
+                    listed(&root, &planted, "any").is_err(),
+                    "run {index}: {fault}"
+                );
+            }
         }
+        let mut other = file;
+        other.insert(
+            String::from("movie"),
+            toml::Value::String(String::from("100")),
+        );
+        assert!(listed(&root, &other.to_string(), "any").is_err());
     }
 
     #[test]
