@@ -3,19 +3,23 @@
 //! From the console's power-on the boot runs (`power_on`, screens-boot's power-on) until the
 //! game settles. On the first frame that finishes then, the title begins (`title`), and each
 //! screen hands on to the next at its way out: file select (`file_select`), then the options
-//! menu (`options`), until the options hand on to the intro, a later piece. From the title on,
+//! menu (`options`), then the intro (`intro`), its opening and page 1, until a press while page 1
+//! waits starts the battle on Zebes, a later piece. From the title on,
 //! the frame owner's [`Counts`] carry the count of finished frames and the random number, and
 //! owners outside the rungs answer through [`Answers`]. Room play joins this State once the
 //! intro and the parts after it hand on.
 
 mod file_select;
+mod intro;
 mod options;
 mod power_on;
 mod title;
 
 use super::frame::Counts;
+use super::intro::State as Intro;
 use screens_boot::{DriverUpload, PowerOnState};
 use screens_file_select::{FrameOfWork, SaveMemory};
+use screens_intro::{IntroContent, MusicRequest, TrackReply};
 use screens_options::ChosenFile;
 use types::RandomSequence;
 use types::file_select::{
@@ -27,7 +31,7 @@ use types::title::{TitleStage, TitleState};
 pub use screens_title::{Button, Pressed};
 
 /// Which part of the game runs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum State {
     /// The console's power-on, until the game settles.
     PowerOn(PowerOnState),
@@ -36,7 +40,7 @@ pub enum State {
 }
 
 /// The screens from the title on, with the frame owner's counts.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Screens {
     /// The screen that runs.
     pub screen: Screen,
@@ -45,7 +49,7 @@ pub struct Screens {
 }
 
 /// A screen from the title on.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Screen {
     /// The title, from the game's settling until file select begins.
     Title(TitleState),
@@ -53,6 +57,8 @@ pub enum Screen {
     FileSelect(FileSelect),
     /// The options menu, until it hands on.
     Options(Options),
+    /// The intro, from the frame end the options hand on to it at.
+    Intro(Box<Intro>),
 }
 
 /// File select, with what it reported that its State doesn't keep.
@@ -117,6 +123,8 @@ pub struct Rules {
     pub title: screens_title::Rules,
     /// File select's.
     pub file_select: screens_file_select::Rules,
+    /// The intro's.
+    pub intro: screens_intro::Rules,
 }
 
 impl Rules {
@@ -125,14 +133,27 @@ impl Rules {
         power_on: screens_boot::Rules::REFERENCE,
         title: screens_title::Rules::REFERENCE,
         file_select: screens_file_select::Rules::REFERENCE,
+        intro: screens_intro::Rules::REFERENCE,
     };
 }
 
-/// The answers of owners outside the rungs: save memory's (file select's questions about the
-/// slots, and the chosen file's start) and the random number's seeding as the game settles.
+/// The screens' imported content: the intro's scenes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Content {
+    /// The intro's scripts, colours and the caret's home.
+    pub intro: IntroContent,
+}
+
+/// The answers of owners outside the rungs.
+///
+/// Save memory's (file select's questions about the slots, and the chosen file's start), the
+/// random number's seeding as the game settles, and audio's whether a tune asked for still
+/// waits to load.
 pub trait Answers: SaveMemory {
     /// The random number as the game settles.
     fn settled_random(&self) -> RandomSequence;
+    /// Audio's reply as the frame of work begins: whether a tune asked for still waits.
+    fn track(&self) -> TrackReply;
     /// How the file in `slot` starts once chosen: its settings and how it begins. None where
     /// save memory's owner can't start it.
     fn file(&self, slot: Slot) -> Option<FileStart>;
@@ -156,6 +177,10 @@ pub enum Sound {
     FileSelect(screens_file_select::MenuSound),
     /// The options menu's sounds.
     Options(screens_options::MenuSound),
+    /// The intro's music requests.
+    IntroMusic(MusicRequest),
+    /// A letter of an intro page clicks.
+    IntroClick,
 }
 
 /// Why a frame end was not played. State is unchanged.
@@ -171,6 +196,10 @@ pub enum Fault {
     FileUnstarted,
     /// The options menu handed on to a later piece.
     HandedOn(WayOut),
+    /// The intro's pages in a language not played.
+    IntroLanguage,
+    /// The intro went on to a later piece.
+    Intro(super::intro::Fault),
 }
 
 impl State {
@@ -185,12 +214,13 @@ impl State {
         &mut self,
         end: FrameEnd,
         rules: &Rules,
+        content: &Content,
         answers: &impl Answers,
     ) -> Result<Vec<Sound>, Fault> {
-        let (next, sounds) = match *self {
-            Self::PowerOn(power_on) => power_on::step(power_on, end, rules, answers)?,
+        let (next, sounds) = match self {
+            Self::PowerOn(power_on) => power_on::step(*power_on, end, rules, content, answers)?,
             Self::Screens(screens) => {
-                let (screens, sounds) = screens.step(end.work, rules, answers)?;
+                let (screens, sounds) = screens.clone().step(end.work, rules, content, answers)?;
                 (Self::Screens(screens), sounds)
             }
         };
@@ -225,6 +255,7 @@ impl Screens {
         self,
         work: Work,
         rules: &Rules,
+        content: &Content,
         answers: &impl Answers,
     ) -> Result<(Self, Vec<Sound>), Fault> {
         let stepped = match self.screen.handed_on(answers)? {
@@ -233,6 +264,7 @@ impl Screens {
                 file_select::step(state, work, rules.file_select, answers)?
             }
             Screen::Options(state) => options::step(state, work)?,
+            Screen::Intro(state) => intro::step(*state, work, rules.intro, content, answers)?,
         };
         let screens = Self {
             screen: stepped.screen,
@@ -271,7 +303,10 @@ impl Screen {
                     begins: file.begins,
                 })
             }
-            unchanged @ (Self::Title(_) | Self::FileSelect(_) | Self::Options(_)) => unchanged,
+            unchanged @ (Self::Title(_)
+            | Self::FileSelect(_)
+            | Self::Options(_)
+            | Self::Intro(_)) => unchanged,
         })
     }
 }

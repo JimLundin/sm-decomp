@@ -7,8 +7,8 @@ use types::intro::{IntroStage, IntroState};
 
 use crate::dissolve::on_beat;
 
-/// `BabyRises`: the picture's height it stops at, px.
-const SETTLED_HEIGHT: i16 = 8;
+/// `BabyRises`, `PageOneIsMadeReady`: the height the scene's picture stands at once settled, px.
+pub const SETTLED_HEIGHT: i16 = 8;
 /// The baby's x on the screen, px.
 pub const BABY_X: u16 = 112;
 

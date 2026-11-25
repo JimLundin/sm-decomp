@@ -1,5 +1,5 @@
 //! One frame of the intro, in the order its parts read each other's results: first the stage's
-//! step, then the baby, the caret's script, the page's script, the eyes' script and the glows.
+//! step (the opening's, page 1's, a dissolve's, a page's turn or the fade's), then the baby, the caret's script, the page's script, the eyes' script and the glows.
 //! So a script placed by the stage's step runs its first step in the same frame, while one placed
 //! by a script's signal (the caret's blinking script) runs from the next; and the baby's signal
 //! for page 5 takes effect at the next frame's stage step.
@@ -13,6 +13,12 @@ use crate::baby::{BABY_X, baby_leaves, baby_rises};
 use crate::content::{Dissolve, IntroContent};
 use crate::dissolve::dissolve_frame;
 use crate::fade::{intro_ends, picture_darkens};
+use crate::music::TrackReply;
+use crate::opening::{
+    first_tune, intro_begins, opening_brightens, opening_darkens, opening_loads, opening_pause,
+    second_tune, second_tune_loads,
+};
+use crate::page_one::{page_one_brightens, page_one_is_made_ready, page_one_loads};
 use crate::pages::{
     letter_is_typed, letters_glow, page_five_begins, press_turns_the_page, take_signal,
 };
@@ -20,10 +26,27 @@ use crate::report::{Report, ShownPicture};
 use crate::rules::Rules;
 use crate::script::{PictureName, Ran, Shows, Step, run, showing};
 
-/// One frame of the intro: `pressed` is whether any button was pressed anew this frame.
-pub fn step(state: &mut IntroState, pressed: bool, content: &IntroContent, rules: Rules) -> Report {
+/// What the intro reads each frame besides its content and rules.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FrameInputs {
+    /// Whether any button was pressed anew this frame (the movie's pad).
+    pub pressed: bool,
+    /// Audio's reply: whether a tune asked for still waits to load and start.
+    pub track: TrackReply,
+}
+
+/// One frame of the intro.
+///
+/// A press while page 1 waits (`PageOneWaits`) starts the battle on Zebes, a part not yet
+/// modelled (`PageEnds`): the caller refuses it, and the model reads it as no press.
+pub fn step(
+    state: &mut IntroState,
+    inputs: FrameInputs,
+    content: &IntroContent,
+    rules: Rules,
+) -> Report {
     let mut report = Report::empty();
-    stage_step(state, pressed, content, rules, &mut report);
+    stage_step(state, inputs, content, rules, &mut report);
     baby_frame(state, content, rules);
     caret_frame(state, content, rules);
     page_frame(state, content, rules, &mut report);
@@ -33,20 +56,32 @@ pub fn step(state: &mut IntroState, pressed: bool, content: &IntroContent, rules
     report
 }
 
-/// The stage's step: a dissolve's frame, a page's turn, or the fade's.
+/// The stage's step: the opening's, page 1's, a dissolve's frame, a page's turn, or the fade's.
+/// The stages left out hold while the scripts run.
 fn stage_step(
     state: &mut IntroState,
-    pressed: bool,
+    inputs: FrameInputs,
     content: &IntroContent,
     rules: Rules,
     report: &mut Report,
 ) {
     match state.stage {
+        IntroStage::Begins => intro_begins(state, report),
+        IntroStage::OpeningLoads => opening_loads(state, inputs.track),
+        IntroStage::OpeningBrightens => opening_brightens(state),
+        IntroStage::OpeningPause => opening_pause(state, report),
+        IntroStage::FirstTune => first_tune(state, report),
+        IntroStage::SecondTuneLoads => second_tune_loads(state, inputs.track),
+        IntroStage::SecondTune => second_tune(state),
+        IntroStage::OpeningDarkens => opening_darkens(state),
+        IntroStage::PageOneMadeReady => page_one_is_made_ready(state, content, report),
+        IntroStage::PageOneLoads => page_one_loads(state, inputs.track),
+        IntroStage::PageOneBrightens => page_one_brightens(state),
         IntroStage::ToScene => dissolve_frame(state, Dissolve::ToScene, content, report),
         IntroStage::ToText => dissolve_frame(state, Dissolve::ToText, content, report),
         IntroStage::ToPageFive => page_five_begins(state, content, report),
         IntroStage::WaitingForPress => {
-            if pressed {
+            if inputs.pressed {
                 press_turns_the_page(state, content, report);
             }
         }
@@ -54,7 +89,7 @@ fn stage_step(
             picture_darkens(state, rules);
             intro_ends(state, report);
         }
-        IntroStage::Scene | IntroStage::Text | IntroStage::Done => {}
+        IntroStage::PageOneWaits | IntroStage::Scene | IntroStage::Text | IntroStage::Done => {}
     }
 }
 

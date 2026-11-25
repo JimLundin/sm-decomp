@@ -1,28 +1,39 @@
-//! The intro's last pages: page 4's text dissolving into the baby being examined, page 5 typed,
-//! the wait for a press, page 6 and the fade to black (screens-intro).
+//! The intro (screens-intro): its opening and page 1, and its last pages.
+//!
+//! The opening and page 1 run from the intro's first frame to the wait for the press that starts
+//! the battle on Zebes; the last pages from page 4's text dissolving into the baby being
+//! examined, through page 5 typed, the wait for a press and page 6, to the fade to black.
 //!
 //! The intro runs ahead of the new game, with no room, and reads nothing of room play. It steps
-//! once per frame of work that finished; a lag frame is the platform's and changes nothing of
-//! it. The screen keeps the colours the intro last took. On the first finished frame after the
-//! intro is done the flight to Ceres begins, which is its own owner's.
+//! once per frame of work that finished, with the movie's press and audio's reply whether a track
+//! waits; a lag frame is the platform's and changes nothing of it. The screen keeps the colours
+//! the intro last took; the opening's and page 1's are the setup's load (content and T1), which
+//! no owner here produces, so the intro begins on black. A press while page 1 waits starts the
+//! battle on Zebes, a later piece, and is refused. On the first finished frame after the intro is
+//! done the flight to Ceres begins, which is its own owner's.
 
 use data::assets::intro::{self as asset, Cue, Picture, Scene, Shows, Step};
 use enum_map::enum_map;
 use screens_intro::{
-    Dissolve, DissolveSets, IndexedColour, IntroContent, Language, Letter, PictureName, Report,
-    Rules, Signal, Unsupported, plays, step,
+    Dissolve, DissolveSets, FrameInputs, IndexedColour, IntroContent, Language, Letter,
+    PictureName, Report, Rules, Signal, TrackReply, Unsupported, plays, step,
 };
-use types::intro::IntroState;
-use types::{Pair, Palette};
+use types::intro::{
+    Brightness, ClickTurn, FadeFrames, FadingColours, Glows, IntroStage, IntroState, StageWait,
+};
+use types::{Colour, Pair, Palette};
 
-/// How a frame ended: its work finished, with whether a button went down as it began, or the
-/// frame lagged.
+/// How a frame ended: its work finished, with whether a button went down as it began and
+/// audio's reply, or the frame lagged.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FrameEnd {
-    /// The frame's work finished; whether any button was pressed anew.
+    /// The frame's work finished; whether any button was pressed anew, and whether a tune asked
+    /// for still waits to load.
     Finished {
         /// Any button pressed anew this frame.
         pressed: bool,
+        /// Audio's reply as the frame began.
+        track: TrackReply,
     },
     /// The frame lagged: its work goes on into the next.
     Lagged,
@@ -33,6 +44,8 @@ pub enum FrameEnd {
 pub enum Fault {
     /// The intro is done and this frame is the flight's.
     FlightBegins,
+    /// A press while page 1 waits: the battle on Zebes begins, a later piece.
+    BattleBegins,
 }
 
 /// The intro's State and the colours the screen shows, which the intro sets when a frame takes
@@ -43,6 +56,37 @@ pub struct State {
     pub intro: IntroState,
     /// The screen's 256 colours.
     pub colours: Palette,
+}
+
+/// The intro as the options hand on to it, before its first frame (`IntroBegins`).
+///
+/// The stage `Begins`, the screen black and blanked with the fade's count 0, as the front end
+/// leaves it, and the rest at rest; the screen's colours black. Only the English pages are
+/// played.
+///
+/// # Errors
+/// [`Unsupported`] for a Japanese setting.
+pub fn begins(language: Language) -> Result<State, Unsupported> {
+    let intro = IntroState {
+        stage: IntroStage::Begins,
+        wait: StageWait::ZERO,
+        colours: FadingColours::still_black(),
+        dissolve: 0,
+        height: 0,
+        baby: None,
+        page: None,
+        eyes: None,
+        caret: None,
+        glows: Glows::none(),
+        click: ClickTurn::Off,
+        brightness: Brightness::BLANKED,
+        fade: FadeFrames::ZERO,
+    };
+    admit(
+        language,
+        intro,
+        Palette([Colour::BLACK; types::PALETTE_SLOTS]),
+    )
 }
 
 /// The intro as admitted, in the options' language: only the English pages are played.
@@ -61,20 +105,29 @@ pub fn admit(
 /// Play one frame of the intro. A lagged frame changes nothing and reports nothing.
 ///
 /// # Errors
-/// [`Fault::FlightBegins`] on a finished frame once the intro is done.
+/// [`Fault::FlightBegins`] on a finished frame once the intro is done, and
+/// [`Fault::BattleBegins`] on a press while page 1 waits. State is unchanged.
 pub fn played(
     state: &mut State,
     frame: FrameEnd,
     content: &IntroContent,
     rules: Rules,
 ) -> Result<Option<Report>, Fault> {
-    let FrameEnd::Finished { pressed } = frame else {
+    let FrameEnd::Finished { pressed, track } = frame else {
         return Ok(None);
     };
-    if state.intro.stage == types::intro::IntroStage::Done {
+    if state.intro.stage == IntroStage::Done {
         return Err(Fault::FlightBegins);
     }
-    let report = step(&mut state.intro, pressed, content, rules);
+    if pressed && state.intro.stage == IntroStage::PageOneWaits {
+        return Err(Fault::BattleBegins);
+    }
+    let report = step(
+        &mut state.intro,
+        FrameInputs { pressed, track },
+        content,
+        rules,
+    );
     if let Some(colours) = &report.colours {
         state.colours = colours.clone();
     }
@@ -91,6 +144,7 @@ pub fn content(scene: &Scene) -> IntroContent {
     let [x, y] = scene.caret_home;
     IntroContent {
         pages: enum_map! {
+            types::intro::PageScript::One => script(&scene.page_one),
             types::intro::PageScript::Five => script(&scene.page_five),
             types::intro::PageScript::Six => script(&scene.page_six),
         },
@@ -139,6 +193,7 @@ fn script(steps: &[Step]) -> screens_intro::Script {
             Step::Cue(cue) => screens_intro::Step::Hand(match cue {
                 Cue::PageFive => Signal::PageFive,
                 Cue::WaitForPress => Signal::WaitForPress,
+                Cue::WaitForPressThenFight => Signal::WaitForPressThenFight,
                 Cue::CaretBlinks => Signal::CaretBlinks,
                 Cue::Finish => Signal::Finish,
             }),
@@ -154,12 +209,12 @@ fn name(picture: Picture) -> PictureName {
 
 #[cfg(test)]
 mod tests {
-    use super::{FrameEnd, State, admit, content, played};
+    use super::{Fault, FrameEnd, State, admit, begins, content, played};
     use data::assets::intro::{Colour, Cue, DissolveSets, Palette, Scene, Shows, Step};
-    use screens_intro::{IntroEvent, Language, Rules};
+    use screens_intro::{Equipment, IntroEvent, Language, Rules, TrackReply};
     use types::intro::{
         Blanking, Brightness, BrightnessLevel, ClickTurn, FadeFrames, FadingColours, Glows,
-        IntroStage, IntroState,
+        IntroStage, IntroState, StageWait,
     };
 
     fn scene() -> Scene {
@@ -176,6 +231,7 @@ mod tests {
             Step::End,
         ];
         Scene {
+            page_one: wait.clone(),
             page_five: wait.clone(),
             page_six: wait.clone(),
             eyes_blinking: wait.clone(),
@@ -195,6 +251,7 @@ mod tests {
     fn fading() -> State {
         let intro = IntroState {
             stage: IntroStage::FadingOut,
+            wait: StageWait::ZERO,
             colours: FadingColours::still_black(),
             dissolve: 0,
             height: 0,
@@ -213,7 +270,50 @@ mod tests {
         admit(Language::English, intro, Palette([Colour::BLACK; 256])).unwrap()
     }
 
-    const FINISHED: FrameEnd = FrameEnd::Finished { pressed: false };
+    const FINISHED: FrameEnd = FrameEnd::Finished {
+        pressed: false,
+        track: TrackReply::NoneWaits,
+    };
+
+    #[test]
+    fn the_intro_begins_dark_and_lends_the_equipment_on_its_first_frame() {
+        let mut state = begins(Language::English).unwrap();
+        assert_eq!(state.intro.stage, IntroStage::Begins);
+        assert!(begins(Language::Japanese).is_err());
+        let content = content(&scene());
+        let report = played(&mut state, FINISHED, &content, Rules::REFERENCE)
+            .unwrap()
+            .unwrap();
+        assert_eq!(state.intro.stage, IntroStage::OpeningLoads);
+        assert_eq!(state.intro.brightness, Brightness::BLANKED);
+        assert!(
+            report
+                .events
+                .contains(&IntroEvent::Equipment(Equipment::LENT))
+        );
+    }
+
+    #[test]
+    fn a_press_while_page_one_waits_is_refused() {
+        let mut state = fading();
+        state.intro.stage = IntroStage::PageOneWaits;
+        let waiting = state.clone();
+        let content = content(&scene());
+        let pressed = FrameEnd::Finished {
+            pressed: true,
+            track: TrackReply::NoneWaits,
+        };
+        assert_eq!(
+            played(&mut state, pressed, &content, Rules::REFERENCE),
+            Err(Fault::BattleBegins)
+        );
+        assert_eq!(state, waiting, "a refused frame changes nothing");
+        assert!(
+            played(&mut state, FINISHED, &content, Rules::REFERENCE)
+                .unwrap()
+                .is_some()
+        );
+    }
 
     #[test]
     fn a_japanese_setting_is_not_played() {
@@ -240,11 +340,15 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(state.intro.stage, IntroStage::Done);
-        assert!(report.events.contains(&IntroEvent::EquipmentReturned));
+        assert!(
+            report
+                .events
+                .contains(&IntroEvent::Equipment(Equipment::RETURNED))
+        );
         let done = state.clone();
         assert_eq!(
             played(&mut state, FINISHED, &content, Rules::REFERENCE),
-            Err(super::Fault::FlightBegins)
+            Err(Fault::FlightBegins)
         );
         assert_eq!(state, done, "a refused frame changes nothing");
     }

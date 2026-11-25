@@ -12,13 +12,11 @@ use types::intro::{
 use types::{Pair, Px};
 
 use crate::content::IntroContent;
-use crate::dissolve::{at_full, shown};
+use crate::dissolve::{DISSOLVE_FROM, at_full, shown};
 use crate::report::{IntroEvent, Recoloured, Report};
 use crate::rules::Rules;
 use crate::script::{Letter, Shows, Signal, Step};
 
-/// `PageFiveBegins`: the dissolve back to the text runs 128 frames, its count from 127.
-const TO_TEXT_COUNT: u16 = 127;
 /// A column or a row of the text layer, px.
 const CELL: u16 = 8;
 /// `LetterGlows`: the frames each colour set holds before the next.
@@ -39,7 +37,7 @@ pub fn page_five_begins(state: &mut IntroState, content: &IntroContent, report: 
         }
     }
     report.colours = Some(shown(&state.colours));
-    state.dissolve = TO_TEXT_COUNT;
+    state.dissolve = DISSOLVE_FROM;
 }
 
 /// `PressTurnsThePage`: the text is cleared, page 6 begins, Samus's eyes start to stare from
@@ -52,11 +50,21 @@ pub fn press_turns_the_page(state: &mut IntroState, content: &IntroContent, repo
     report.events.push(IntroEvent::MusicStops);
 }
 
-/// A page begins: its script placed at its start, the click turn off, and the caret at its home
-/// on its steady script.
+/// A page begins: its script placed (`place_page`), and the caret at its home on its steady
+/// script (`caret_at_home`).
 const fn begin_page(state: &mut IntroState, page: PageScript, content: &IntroContent) {
+    place_page(state, page);
+    caret_at_home(state, content);
+}
+
+/// A page's script placed at its start, the click turn off.
+pub const fn place_page(state: &mut IntroState, page: PageScript) {
     state.page = Some(ScriptPlace::start(page));
     state.click = ClickTurn::Off;
+}
+
+/// The caret at its home, on its steady script from its start.
+pub const fn caret_at_home(state: &mut IntroState, content: &IntroContent) {
     state.caret = Some(Caret {
         place: content.caret_home,
         script: ScriptPlace::start(CaretScript::Steady),
@@ -64,8 +72,8 @@ const fn begin_page(state: &mut IntroState, page: PageScript, content: &IntroCon
 }
 
 /// A signal a script hands the scene. `PageFiveBegins`: the baby's page 5, taken while the scene
-/// shows. `PageEnds`: wait for a press, or finish and start the fade from the rhythm `d`.
-/// `CaretBlinks`: the caret blinks while the page waits.
+/// shows. `PageEnds`: wait for a press (page 5's, or page 1's before the fight), or finish and
+/// start the fade from the rhythm `d`. `CaretBlinks`: the caret blinks while the page waits.
 pub const fn take_signal(state: &mut IntroState, signal: Signal, rules: Rules) {
     match signal {
         Signal::PageFive => {
@@ -75,6 +83,10 @@ pub const fn take_signal(state: &mut IntroState, signal: Signal, rules: Rules) {
         }
         Signal::WaitForPress => {
             state.stage = IntroStage::WaitingForPress;
+            caret_blinks(state);
+        }
+        Signal::WaitForPressThenFight => {
+            state.stage = IntroStage::PageOneWaits;
             caret_blinks(state);
         }
         Signal::CaretBlinks => caret_blinks(state),

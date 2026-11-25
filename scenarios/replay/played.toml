@@ -21,16 +21,17 @@ movie = "any"
 # The any% movie from power-on: black, the Nintendo logo brightening, held and dimming, black
 # while the sound driver loads and the game settles; the title fading in and counting down,
 # file select with a new file chosen in slot A, the options menu with the moonwalk setting
-# turned on, and start game fading out, until the options hand on to the intro, a part of the
-# front end not yet owned.
+# turned on, and start game fading out; the options hand on to the intro, played on through
+# its opening and page 1 with no new seed, until the press while page 1 waits starts the battle
+# on Zebes, a part of the intro not yet owned.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 568
-held = 567
-stop = { failed = "HandedOn(IntroBegins)" }
+end = 2220
+held = 2219
+stop = { failed = "Intro(BattleBegins)" }
 seed_frame = 0
-frames = [1, 567]
+frames = [1, 2219]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -143,6 +144,20 @@ held = 608
 stop = { failed = "RidleyTangible" }
 seed_frame = 10162
 frames = [10163, 10770]
+power_on = false
+
+# The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune
+# loads, the opening's words brightening, held through the first tune and the second, and
+# darkening; page 1 made ready in the dark, typed as the picture brightens beside Samus's
+# blinking eyes, to the caret blinking as the game waits for the press.
+[[run]]
+row = "any-intro-0568"
+start = 0
+end = 1650
+held = 1650
+stop = "end"
+seed_frame = 568
+frames = [569, 2218]
 power_on = false
 
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being

@@ -37,6 +37,9 @@ pub enum Signal {
     PageFive,
     /// Page 5's end: the game waits for a press, the caret blinking (`PageEnds`, `CaretBlinks`).
     WaitForPress,
+    /// Page 1's end: the game waits for the press that starts the battle on Zebes, the caret
+    /// blinking (`PageEnds`, `CaretBlinks`).
+    WaitForPressThenFight,
     /// The caret starts to blink (`CaretBlinks`).
     CaretBlinks,
     /// Page 6's end: the picture starts to fade out (`PageEnds`).

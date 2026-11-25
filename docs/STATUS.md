@@ -283,6 +283,37 @@ case `movement-ceres/carried-position-proximity` lost its gating obligation, whi
 diagnostic played run compares but does not gate. That loss is accepted until the played run
 is indexed.
 
+### The intro's opening and page 1
+
+`any-intro-0568`, the intro's opening and page 1, plays alone from its seed, cut 0, the frame end
+the options hand on to the intro at: the run admits the State the hand-on gives (the stage
+`Begins`, the screen black and blanked, the fade's count 0, the rest at rest) and reads nothing
+else of the seed but the options' language. Page 1's script, the eyes' and the caret's are
+imported from the player's ROM. Each cut borrows whether its frame of work finished and, at
+finished cuts, whether a track waited in audio's queue as the frame began (the flight's
+producer). It holds all 1,650 cuts to page 1's wait: at each finished cut the stage, the stage's
+wait while the opening holds, the dissolve's count from page 1's making ready on, the height,
+each script's name, step, hold and repeat count, the caret's place and whether it shows, the
+glows, the click turn, the clicks against the sound queue's index, the music's requests against
+the music queue's, the brightness, the fade's count in the slow fades and the equipment
+returned; at the lag cuts (1-53, 71-104, 412-435, 739-773) the brightness alone. Masked, with
+their writers: VRAM (E2), CGRAM, the intro's palettes as its setup loads them (content through
+T1), OAM (E1), the PPU mirrors (E3, E4), and what the intro's first frame sets outside it (her
+State and drawing, the bindings, the area, the room's size, the door, layer 1's place, the line
+program and the colour effects): their owners', none in the loop before the battle on Zebes.
+Limits: the equipment the model lends is reported but compared by neither run, and applying it
+has no owner in the loop; the tunes' start delays (8 and 14 frames) are checked by neither run,
+because this run counts the music's requests, the power-on run's queue code is the same for
+every tune played, and whether a track waits is read from the record, so a wrong delay never
+feeds back. The press while page 1 waits starts the battle, part (b), which the
+intro's adapter refuses (`BattleBegins`).
+
+Planted faults: the adapter ignoring audio's reply (none waits) differs
+at cut 55 in `intro.stage` (from power-on, cut 623); page 1's end imported as page 5's wait
+differs at cut 1,650 in `intro.stage` (2,218); the pages' tune coded `FF37h` in verify's played
+runner differs from power-on at cut 1,290 in `front-end.sounds` (the intro row's own run counts
+the requests, so it holds): the first two fail on both runs, the third from power-on alone.
+
 ### The intro's last pages
 
 `any-intro-6012`, the intro's last pages, plays alone from cut 1, inside page 4's turn: the
@@ -374,10 +405,16 @@ lands. Limits:
 
 `any-power-on` plays on past the boot through the title, file select and the options menu
 (the screens-title, screens-file-select and screens-options models, one step per file under
-`game::production::played::front_end`), to the options' hand-on to the intro. Cut 568 is the
-first cut of the next row, `any-intro-0568`, which the run reaches as the row that follows a
-power-on row. The run holds 567 cuts and stops at cut 568 with `HandedOn(IntroBegins)`: the
-options hand on to the intro, which the front end does not yet own.
+`game::production::played::front_end`), to the options' hand-on to the intro, and on through
+the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
+Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
+follows a power-on row: the frame end the options hand on at, where the front end begins the
+intro in the State `Begins`. The run holds 2,219 cuts, through `any-intro-2219`'s cut 0, and
+stops at cut 2,220 with `Intro(BattleBegins)`: the press while page 1 waits starts the battle on
+Zebes, part (b) of the intro, not yet owned. From cut 568 the intro's own fields are compared
+beside the front end's, as the intro's run compares them, but the report's: the front end's
+sounds compare the intro's clicks and music requests (but the stops, which the queue holds as
+empty entries), and whether the caret shows is not compared from power-on.
 
 From cut 271 it compares the screen, the game state and the count of finished frames at every
 cut; at finished cuts, the random number, the sounds against the queues (accumulated over each
@@ -397,8 +434,10 @@ faults fail where they did on the longer run. Limits:
   read from the game's own count, so comparing it is not an independent check; the screen and
   the random number check those cuts. A step of 2 is taken at any `Requested` cut; this run
   sees one at cut 308 alone;
-- how the file begins is the harness's P2 answer for a new file (the intro), not observed: the
-  run stops at 568 on the model's own hand-on to the intro, and nothing at 568 is compared;
+- how the file begins is the harness's P2 answer for a new file (the intro), not observed; the
+  intro's language is the options' setting;
+- from the intro on, the music's stops are not compared: the queue holds a stop as an empty
+  entry;
 - the order of the sounds asked for within one interval is not compared, within a queue or
   across queues: expected and played are each sorted before they are compared;
 - save memory (SRAM) is not compared;

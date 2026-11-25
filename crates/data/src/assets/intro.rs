@@ -1,5 +1,7 @@
-//! The intro's last scene (docs/architecture/assets.md): its picture scripts, the colours its
-//! dissolves head for and move, the caret's colours and its home, in the intro's own format.
+//! The intro's scenes in its own format (docs/architecture/assets.md).
+//!
+//! Page 1's and the last pages' picture scripts, the colours the last pages' dissolves head for
+//! and move, the caret's colours and its home.
 //!
 //! A script is a timeline of steps, each showing a picture, a letter or nothing for its frames,
 //! or going back, repeating a stretch, or handing the scene a cue. The pictures are named by
@@ -52,6 +54,8 @@ pub enum Cue {
     PageFive,
     /// Page 5's end: the game waits for a press.
     WaitForPress,
+    /// Page 1's end: the game waits for the press that starts the battle on Zebes.
+    WaitForPressThenFight,
     /// The caret starts to blink.
     CaretBlinks,
     /// Page 6's end: the picture fades out.
@@ -92,9 +96,11 @@ pub struct DissolveSets {
     pub brightens: Vec<u8>,
 }
 
-/// The intro's last scene.
+/// The intro's scenes: page 1 and the last pages.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Scene {
+    /// Page 1's letters, places and holds, and its cue.
+    pub page_one: Vec<Step>,
     /// Page 5's letters, places and holds, and its cues.
     pub page_five: Vec<Step>,
     /// Page 6's.

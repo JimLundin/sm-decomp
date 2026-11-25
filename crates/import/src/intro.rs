@@ -1,5 +1,5 @@
-//! The importer of the intro's last scene: the only code that knows where the original keeps
-//! the pages, Samus's eyes, the baby, the caret and the scene's colours.
+//! The importer of the intro's scenes: the only code that knows where the original keeps the
+//! pages, Samus's eyes, the baby, the caret and the last scene's colours.
 //!
 //! Each picture script is read from the original's instruction list for it, which the importer
 //! turns into steps: a list holding an instruction the intro doesn't use is refused rather than
@@ -40,6 +40,7 @@ const SPRITES: u8 = 0x8b;
 const TEXT: u8 = 0x8c;
 
 /// The objects whose headers name their lists, `LIST_AT` bytes in.
+const PAGE_ONE: u16 = 0xcf3f;
 const PAGE_FIVE: u16 = 0xcf57;
 const PAGE_SIX: u16 = 0xcf5d;
 const EYES: u16 = 0xcf63;
@@ -70,6 +71,8 @@ const MAX_STEPS: usize = 256;
 const INSTRUCTION: u16 = 0x8000;
 
 /// The text objects' instructions.
+const PAGE_ONE_BEGINS: u16 = 0xae43;
+const PAGE_ONE_ENDS: u16 = 0xae5b;
 const JAPANESE_PAGE_FIVE: u16 = 0xb19b;
 const JAPANESE_PAGE_SIX: u16 = 0xb228;
 const CARET_TO_BLINK: u16 = 0xadd4;
@@ -132,8 +135,8 @@ impl ListPlaces {
 /// Where each of the scene's scripts' lists stands in the original.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Places {
-    /// Page 5's and page 6's.
-    pub pages: [ListPlaces; 2],
+    /// Page 1's, page 5's and page 6's.
+    pub pages: [ListPlaces; 3],
     /// The eyes' blinking and staring.
     pub eyes: [ListPlaces; 2],
     /// The baby's.
@@ -142,13 +145,14 @@ pub struct Places {
     pub caret: [ListPlaces; 2],
 }
 
-/// The scene's seven scripts' lists, in the order `import` and `list_places` name them: page 5,
-/// page 6, the eyes blinking and staring, the baby, the caret steady and blinking.
-fn lists(rom: Lorom<'_>) -> Result<[(Vec<Step>, ListPlaces); 7], ImportError> {
+/// The scenes' eight scripts' lists, in the order `import` and `list_places` name them: page 1,
+/// page 5, page 6, the eyes blinking and staring, the baby, the caret steady and blinking.
+fn lists(rom: Lorom<'_>) -> Result<[(Vec<Step>, ListPlaces); 8], ImportError> {
     let header = |bank, object| -> Result<RomAddress, ImportError> {
         Ok(at(bank, word(rom, at(SPRITES, object), LIST_AT)?))
     };
     Ok([
+        script(rom, header(TEXT, PAGE_ONE)?, List::Text)?,
         script(rom, header(TEXT, PAGE_FIVE)?, List::Text)?,
         script(rom, header(TEXT, PAGE_SIX)?, List::Text)?,
         script(rom, header(TEXT, EYES)?, List::Text)?,
@@ -166,6 +170,7 @@ fn lists(rom: Lorom<'_>) -> Result<[(Vec<Step>, ListPlaces); 7], ImportError> {
 /// As [`import`]'s, for the lists.
 pub fn list_places(rom: Lorom<'_>) -> Result<Places, ImportError> {
     let [
+        page_one,
         page_five,
         page_six,
         blinking,
@@ -175,20 +180,21 @@ pub fn list_places(rom: Lorom<'_>) -> Result<Places, ImportError> {
         caret_blinking,
     ] = lists(rom)?.map(|(_, places)| places);
     Ok(Places {
-        pages: [page_five, page_six],
+        pages: [page_one, page_five, page_six],
         eyes: [blinking, staring],
         baby,
         caret: [steady, caret_blinking],
     })
 }
 
-/// The intro's last scene, with the pages in English.
+/// The intro's scenes, with the pages in English.
 ///
 /// # Errors
 /// A list, drawing or colour outside the image, an instruction or a drawing the intro doesn't
 /// use, a list that loops forward or runs on, and a colour over 15 bits.
 pub fn import(rom: Lorom<'_>) -> Result<Scene, ImportError> {
     let [
+        page_one,
         page_five,
         page_six,
         eyes_blinking,
@@ -212,6 +218,7 @@ pub fn import(rom: Lorom<'_>) -> Result<Scene, ImportError> {
         ranges.iter().flat_map(Clone::clone).collect()
     };
     let scene = Scene {
+        page_one,
         page_five,
         page_six,
         eyes_blinking,
@@ -277,7 +284,9 @@ fn script(
             (Some(step), length)
         } else {
             match (list, first) {
-                (List::Text, JAPANESE_PAGE_FIVE | JAPANESE_PAGE_SIX) => (None, 2),
+                // Page 1's first instruction turns the click off, which placing a page does.
+                (List::Text, PAGE_ONE_BEGINS | JAPANESE_PAGE_FIVE | JAPANESE_PAGE_SIX) => (None, 2),
+                (List::Text, PAGE_ONE_ENDS) => (Some(Step::Cue(Cue::WaitForPressThenFight)), 2),
                 (List::Text, CARET_TO_BLINK) => (Some(Step::Cue(Cue::CaretBlinks)), 2),
                 (List::Text, WAIT_FOR_PRESS) => (Some(Step::Cue(Cue::WaitForPress)), 2),
                 (List::Text, FINISH) => (Some(Step::Cue(Cue::Finish)), 2),
@@ -394,7 +403,9 @@ fn word(rom: Lorom<'_>, place: RomAddress, offset: usize) -> Result<u16, ImportE
 }
 
 // ROM sources for the data above, kept out of the public docs (the original's bank addresses):
-// bank $8B log. The text objects `$8B:CF57` (page 5), `$CF5D` (page 6) and `$CF63` (Samus
+// bank $8B log. The text objects `$8B:CF3F` (page 1, whose list begins with `$AE43`, the click
+// turn off and the Japanese page, and ends with `$AE5B`, the caret blinking and the wait for the
+// fight's press), `$8B:CF57` (page 5), `$CF5D` (page 6) and `$CF63` (Samus
 // blinking), whose lists are in bank 8C; `$8B:B4BC` switches the eyes to `$8C:D613` on page 6.
 // The sprite objects `$8B:CE67` (the baby being examined) and `$CE6D` (the caret); `$8B:ADD4`
 // sets the caret to `$CC03`, and `$8B:ADEE` places it at (8, 18h). A text step is (timer,
@@ -435,6 +446,7 @@ mod tests {
         let mut image = Image(vec![0; 0x68000]);
         // Each object's header names its list four bytes in.
         for (header, list) in [
+            (0xcf43, 0x9200),
             (0xcf5b, 0x9000),
             (0xcf61, 0x9100),
             (0xcf67, 0x9100),
@@ -450,6 +462,8 @@ mod tests {
             &[0xb19b, 1, 0x0101, 0xd683, 5, 0x0403, 0xd68b, 0xb1b3, 0x9698],
         );
         image.put(0x8c, 0xd683, &[0x8849]);
+        // Page 1: its first instruction, nothing, the wait for the fight, the end.
+        image.put(0x8c, 0x9200, &[0xae43, 1, 0x0101, 0xd683, 0xae5b, 0x9698]);
         image.put(0x8c, 0xd68b, &[0x884d, 0x0101, 0x2001]);
         image.put(0x8c, 0x9100, &[0x80, 0x0d11, 0xd781, 0x971e, 0x9100]);
         image.put(0x8c, 0xd613, &[0x40, 0x0d11, 0xd781, 0x971e, 0xd613]);
@@ -508,7 +522,19 @@ mod tests {
                 hold: 0x40
             })
         );
-        let [page_five, _] = &places.pages;
+        assert_eq!(
+            scene.page_one,
+            [
+                Step::Show {
+                    shows: Shows::Nothing,
+                    hold: 1
+                },
+                Step::Cue(Cue::WaitForPressThenFight),
+                Step::End,
+            ]
+        );
+        let [page_one, page_five, _] = &places.pages;
+        assert_eq!(page_one.step_at(0x9208), Some(StepAt::Step(0)));
         assert_eq!(page_five.step_at(0x9000), Some(StepAt::Start));
         assert_eq!(page_five.step_at(0x9008), Some(StepAt::Step(0)));
         assert_eq!(page_five.step_at(0x900e), Some(StepAt::Step(1)));

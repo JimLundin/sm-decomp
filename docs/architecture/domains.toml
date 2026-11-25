@@ -109,7 +109,7 @@ rounds = 1
 
 [[model]]
 name = "screens-intro"
-rounds = 1
+rounds = 2
 
 [[model]]
 name = "screens-title"

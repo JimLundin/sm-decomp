@@ -18,10 +18,11 @@
 //! `health`, `hud`, `frame` and `arrival`, with `station` the station's State; the camera's are
 //! the camera replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the
 //! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
-//! console's power-on plays the front end alone, from its own power-on State with no seed:
-//! `power_on`, with the screens' fields from the title on in `screens`. A row seeded at the
-//! flight to Ceres's first frame plays the flight alone, from its own start: `flight`. A row
-//! seeded inside the intro's last pages plays the intro alone, from its seed: `intro`.
+//! console's power-on plays the front end alone, from its own power-on State with no seed, on
+//! into the intro: `power_on`, with the screens' fields from the title on in `screens`. A row
+//! seeded at the flight to Ceres's first frame plays the flight alone, from its own start:
+//! `flight`. A row seeded as the intro begins or inside its last pages plays the intro alone,
+//! from its seed: `intro`.
 
 mod arrival;
 mod ceres_doors;
@@ -219,7 +220,7 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
 ///
 /// A row seeded at the flight to Ceres's first frame plays the flight from its start.
 ///
-/// A row seeded inside the intro's last pages plays the intro from its seed.
+/// A row seeded as the intro begins or inside its last pages plays the intro from its seed.
 ///
 /// # Errors
 /// Missing or mismatched lock, cache or content refuse the run before any cut is played, and a
@@ -241,14 +242,14 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         .row(&id)
         .is_some_and(|listed| listed.start == crate::lock::Start::PowerOn)
     {
-        return power_on::play(&mut rows, row, start, end);
+        return power_on::play(&mut rows, &sources.rom, row, start, end);
     }
     let seed = rows.record(start)?;
     if flight::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
         return flight::play(&mut rows, &sources.rom, seed, row, start, end);
     }
-    if intro::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
-        return intro::play(&mut rows, &sources.rom, seed, row, start, end);
+    if let Some(part) = intro::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
+        return intro::play(&mut rows, &sources.rom, seed, part, row, start, end);
     }
     let content = connected::Content {
         movement: movement::Content::load(&sources.rom)?,

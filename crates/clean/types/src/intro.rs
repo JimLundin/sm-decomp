@@ -1,7 +1,7 @@
 //! The intro's state (screens-intro), carried between frames, saved and restored.
 //!
-//! Where the scene has got to, its colours, the baby, the page, the caret, the glowing letters,
-//! Samus's eyes and the screen's brightness.
+//! Where the scene has got to and how long it holds there, its colours, the baby, the page, the
+//! caret, the glowing letters, Samus's eyes and the screen's brightness.
 
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +10,31 @@ use crate::{Pair, Px};
 /// The intro's stage: where the scene has got to. Every entry reads it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IntroStage {
+    /// The intro's first frame: the scene is cleared and the first tune asked for.
+    Begins,
+    /// Dark while the opening's first tune loads.
+    OpeningLoads,
+    /// The opening's words slowly brightening.
+    OpeningBrightens,
+    /// The words at full, before the first tune plays.
+    OpeningPause,
+    /// The words holding while the first tune plays.
+    FirstTune,
+    /// The words holding while the second tune loads.
+    SecondTuneLoads,
+    /// The words holding while the second tune plays.
+    SecondTune,
+    /// The opening slowly darkening.
+    OpeningDarkens,
+    /// Page 1 made ready in the dark.
+    PageOneMadeReady,
+    /// Dark while the pages' tune loads; Samus's eyes and the caret already run.
+    PageOneLoads,
+    /// Page 1 typing while the picture slowly brightens.
+    PageOneBrightens,
+    /// Page 1 typed, the caret blinking, the game waiting for the press that starts the battle
+    /// on Zebes.
+    PageOneWaits,
     /// Page 4's text dissolving into the picture of the baby.
     ToScene,
     /// The picture shown, the baby on its script.
@@ -138,6 +163,8 @@ impl<S> ScriptPlace<S> {
 /// The page scripts.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, enum_map::Enum, Serialize, Deserialize)]
 pub enum PageScript {
+    /// Page 1, placed once the pages' tune has loaded.
+    One,
     /// Page 5, placed as the picture starts back toward the text.
     Five,
     /// Page 6, placed by the press ("CERES STATION WAS UNDER ATTACK!!").
@@ -367,6 +394,16 @@ impl BrightnessLevel {
     pub const fn darker(self) -> Self {
         Self(self.0.saturating_sub(1))
     }
+
+    /// One level brighter, staying at 15.
+    #[must_use]
+    pub const fn brighter(self) -> Self {
+        if self.0 < FULL_LEVEL {
+            Self(self.0.wrapping_add(1))
+        } else {
+            self
+        }
+    }
 }
 
 impl TryFrom<u8> for BrightnessLevel {
@@ -407,6 +444,11 @@ impl Brightness {
         level: BrightnessLevel::FULL,
         blanking: Blanking::Shown,
     };
+    /// Black and blanked: where a fade to black ends, and how the intro starts.
+    pub const BLANKED: Self = Self {
+        level: BrightnessLevel::BLACK,
+        blanking: Blanking::Blanked,
+    };
 }
 
 /// The most frames of the fade's count and its rhythm.
@@ -422,6 +464,13 @@ impl FadeFrames {
     pub const ZERO: Self = Self(0);
     /// `PictureDarkens`: the reference rhythm, 1 frame.
     pub const REFERENCE_RHYTHM: Self = Self(1);
+    /// `SlowFade`: the slow fades' pace, a level every 2 frames: the count a level starts from.
+    pub const SLOW_FADE_PACE: Self = Self(2);
+    /// `IntroBegins`: the count as the intro starts dark, 3; the opening's brightening starts
+    /// from the pace instead, so the screen shows nothing of it.
+    pub const AS_THE_INTRO_BEGINS: Self = Self(3);
+    /// `SlowFade`: the slow fades count in a byte, so one frame fewer than 0 is 255.
+    pub const SLOW_COUNT_BELOW_ZERO: Self = Self(255);
 
     /// These frames, if they are 0 to 32,768.
     #[must_use]
@@ -463,11 +512,87 @@ impl From<FadeFrames> for u16 {
     }
 }
 
+/// The longest wait a stage starts.
+const LONGEST_STAGE_HOLD: u16 = 32_768;
+/// `OpeningUnfolds`: a hold that runs out from 0 leaves its wait one less, wrapped at 16 bits.
+const WAIT_RAN_OUT_FROM_ZERO: u16 = u16::MAX;
+
+/// Whether a stage's hold goes on or has run out this frame (`OpeningUnfolds`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Hold {
+    /// Frames are left.
+    Holding,
+    /// The hold is over: the stage moves on.
+    RanOut,
+}
+
+/// The stage's wait, frames (`OpeningUnfolds`): how long the opening holds each part. 0 to
+/// 32,768, or 65,535 after a hold that ran out from 0.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "u16", into = "u16")]
+pub struct StageWait(u16);
+
+impl StageWait {
+    /// No wait.
+    pub const ZERO: Self = Self(0);
+    /// `OpeningUnfolds`: the opening's words hold at full 60 frames before the first tune plays.
+    pub const BEFORE_FIRST_TUNE: Self = Self(60);
+    /// `OpeningUnfolds`: the words hold 200 frames while the first tune plays.
+    pub const FIRST_TUNE: Self = Self(200);
+    /// `OpeningUnfolds`: the words hold 240 frames while the second tune plays, then darken.
+    pub const SECOND_TUNE: Self = Self(240);
+
+    /// The wait of these frames, if it is 0 to 32,768 or 65,535.
+    #[must_use]
+    pub const fn new(frames: u16) -> Option<Self> {
+        if frames <= LONGEST_STAGE_HOLD || frames == WAIT_RAN_OUT_FROM_ZERO {
+            Some(Self(frames))
+        } else {
+            None
+        }
+    }
+
+    /// Its frames.
+    #[must_use]
+    pub const fn frames(self) -> u16 {
+        self.0
+    }
+
+    /// `OpeningUnfolds`: one frame of a hold. Over 1, one frame fewer and the hold goes on; at 1
+    /// or 0 the hold runs out, one less, wrapped at 16 bits (0 from 1, 65,535 from 0). A wait of
+    /// 65,535 is a hold that has already run out: read again, it runs out again as it is.
+    #[must_use]
+    pub const fn counted_down(self) -> (Self, Hold) {
+        match self.0 {
+            0 => (Self(WAIT_RAN_OUT_FROM_ZERO), Hold::RanOut),
+            1 => (Self::ZERO, Hold::RanOut),
+            WAIT_RAN_OUT_FROM_ZERO => (self, Hold::RanOut),
+            frames => (Self(frames.wrapping_sub(1)), Hold::Holding),
+        }
+    }
+}
+
+impl TryFrom<u16> for StageWait {
+    type Error = &'static str;
+
+    fn try_from(frames: u16) -> Result<Self, Self::Error> {
+        Self::new(frames).ok_or("the stage's wait is 0 to 32,768, or 65,535")
+    }
+}
+
+impl From<StageWait> for u16 {
+    fn from(wait: StageWait) -> Self {
+        wait.frames()
+    }
+}
+
 /// The intro's state: everything it remembers from one frame to the next (screens-intro).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IntroState {
     /// Where the scene has got to.
     pub stage: IntroStage,
+    /// The stage's wait: how long the opening holds each part.
+    pub wait: StageWait,
     /// The scene's colours as the dissolves move them.
     pub colours: FadingColours,
     /// The dissolve's count, frames: when the dissolve steps and ends. It wraps at 16 bits.
@@ -488,6 +613,6 @@ pub struct IntroState {
     pub click: ClickTurn,
     /// The screen's brightness.
     pub brightness: Brightness,
-    /// The fade's count, frames: when the picture next darkens.
+    /// The fade's count, frames: when the picture next darkens or brightens.
     pub fade: FadeFrames,
 }

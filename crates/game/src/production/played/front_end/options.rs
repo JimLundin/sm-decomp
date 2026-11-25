@@ -1,9 +1,14 @@
 //! The options menu (screens-options), until it hands on.
 
 use super::{Button, Fault, Options, Pressed, Screen, Sound, Stepped, Work};
+use crate::production::played::intro;
 use screens_options::{FrameEnd, MenuAction, NextPiece};
+use types::options::{Language, WayOut};
 
 /// One frame end of the options menu. Each finished frame of work drew as it began.
+///
+/// Once the menu has handed on to the intro, the next frame end is the hand-on's: the game
+/// turns to the intro, whose first frame is the one after (screens-intro `IntroBegins`).
 pub(super) fn step(options: Options, work: Work) -> Result<Stepped, Fault> {
     let end = match work {
         Work::Unfinished => FrameEnd::Busy,
@@ -11,9 +16,24 @@ pub(super) fn step(options: Options, work: Work) -> Result<Stepped, Fault> {
         Work::FinishedTwice(_) => return Err(Fault::TwoFinished),
     };
     let mut menu = options.menu;
-    let sounds = screens_options::step(&mut menu, end, options.begins)
-        .map_err(|NextPiece(way)| Fault::HandedOn(way))?;
     let finished = work.finished();
+    let sounds = match screens_options::step(&mut menu, end, options.begins) {
+        Ok(sounds) => sounds,
+        Err(NextPiece(WayOut::IntroBegins)) => {
+            let language = match menu.settings.language {
+                Language::English => screens_intro::Language::English,
+                Language::Japanese => screens_intro::Language::Japanese,
+            };
+            let begun = intro::begins(language).map_err(|_| Fault::IntroLanguage)?;
+            return Ok(Stepped {
+                screen: Screen::Intro(Box::new(begun)),
+                finished,
+                drawn: finished,
+                sounds: Vec::new(),
+            });
+        }
+        Err(NextPiece(way)) => return Err(Fault::HandedOn(way)),
+    };
     Ok(Stepped {
         screen: Screen::Options(Options { menu, ..options }),
         finished,

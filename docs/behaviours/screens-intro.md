@@ -1,6 +1,11 @@
-# The intro's last pages: behaviour spec
+# The intro: behaviour spec
 
-What the player sees at the end of the intro: page 4's text dissolves into a picture of the
+What the player sees at the start of the intro: the screen stays dark while the first tune
+loads, then slowly brightens on the opening's words; they hold while the first tune plays and the
+second follows, then the picture slowly darkens. Page 1 is made ready in the dark, and once its
+tune has loaded it slowly brightens while its text is typed beside Samus's blinking eyes; at its
+end the caret blinks and the game waits for a press, which starts the battle on Zebes
+(a later part). What the player sees at the end of the intro: page 4's text dissolves into a picture of the
 baby being examined, the baby rising into view as the picture settles; Samus's eyes
 blink beside the text; the picture dissolves back to text and page 5 is typed out letter by
 letter, each letter glowing as it appears, with a click every other letter and a caret running
@@ -12,11 +17,14 @@ records over time. Vectors:
 
 ## Header
 
-**Scope: the intro's model (the plan's F2), its first piece: the intro's last row.** The
-intro's own State: where the scene has got to, the dissolve's colours and its count, the
-picture's height, the baby, the page being typed, the caret, the glowing letters, Samus's eyes,
-the screen's brightness and the fade's count. The intro's earlier pages and its two scenes
-played by her extend this model later.
+**Scope: the intro's model (the plan's F2), in parts.** Specced: the intro's opening and page 1,
+from the intro's start to the wait for the press that starts the battle on Zebes (§7,
+§8), and the intro's last row, from page 4's turn to its end (§2-§6). The intro's own State:
+where the scene has got to, the stage's wait, the dissolve's colours and its count, the picture's
+height, the baby, the page being typed, the caret, the glowing letters, Samus's eyes, the
+screen's brightness and the fade's count. Not yet specced (§11): the press after page 1 and the
+battle on Zebes played by her, page 2, the baby's discovery played by her, page 3, the
+baby delivered and page 4.
 
 **The shared shape.** The intro is built from four mechanisms, each in a player's terms:
 1. **Picture scripts** (§2): a script is a list of steps, each showing a picture (a letter, a
@@ -28,15 +36,19 @@ played by her extend this model later.
    script with no change of behaviour.
 2. **The dissolve** (§3): one set of colours dims to black while another brightens from black,
    in 32 even steps, one every 4 frames.
-3. **The brightness fade** (§6): the same rule as the flight's fade out; a later piece can make
-   them one entry.
+3. **The brightness fades:** the fade out at the end (§6), the same rule as the flight's fade
+   out, which a later piece can make one entry; the slow fades in and out of the opening and
+   page 1 (§7, §8), one level every 2 frames.
 4. **Moving pictures:** the baby's rise here (§4); the flight's drifts and rush are its own.
 
 **What it reads.**
 - **The pad's new presses** (the movie's input): whether any button was pressed anew this frame.
+- **Whether a track waits** (audio's reply, U1): whether a tune asked for is still waiting to
+  load and start, read by the opening's and page 1's waits.
 - **The language** (the options' setting): this piece plays the English pages; a Japanese
   setting is Unsupported at the intro's start.
 - **The scene's content** (in our format): the scripts (the pages' letters, places and holds,
+  page 1's among them,
   the eyes', the baby's and the caret's two), the full colours of the scene's 256 colours, which
   colours belong to the text and which to the picture in each dissolve, the colours the caret
   takes once the text is back, and the caret's home.
@@ -44,14 +56,16 @@ played by her extend this model later.
 **What it hands the others, each frame:** the screen's 256 colours, the picture's height, the
 pictures the scripts show and where (the letters with their colour sets, the eyes, the baby, the
 caret), the brightness, to the renderer; each click asked for and the music's stop at page 6,
-to audio (U1); on the frame it ends, that it is done, and that the equipment lent for the
+to audio (U1), and the opening's and page 1's music requests (§7, §8); on the frame it begins,
+that the equipment for the played scenes is lent; on the frame it ends, that it is done, and that the equipment lent for the
 played scenes is returned: the next frame is the flight's (screens-flight `FlightIsMadeReady`).
 
 **What it leaves.** The pictures themselves are content drawn by the platform; the line split
 of the colour blend during a dissolve is the platform's line program (E3); the lag frames are
 the platform's (T1); playing the click and stopping the music are audio's (U1).
 
-**What it replaces:** nothing. The engine has no intro.
+**What it replaces:** nothing but the intro's last row's model: the engine has no opening or
+page 1.
 
 **Notation.** Places on the text layer are columns and rows of 8 px; screen places are pixels,
 x rightward and y downward, 16-bit. A colour is three channels (red, green, blue); a channel's
@@ -68,7 +82,8 @@ over).
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
-| the intro's stage | `IntroStage`: `ToScene`, `Scene`, `ToPageFive` (the baby has signalled page 5), `ToText`, `Text`, `WaitingForPress`, `FadingOut` or `Done` | what the screen shows | every entry |
+| the intro's stage | `IntroStage`: the opening's `Begins`, `OpeningLoads`, `OpeningBrightens`, `OpeningPause`, `FirstTune`, `SecondTuneLoads`, `SecondTune` or `OpeningDarkens`; page 1's `PageOneMadeReady`, `PageOneLoads`, `PageOneBrightens` or `PageOneWaits`; `ToScene`, `Scene`, `ToPageFive` (the baby has signalled page 5), `ToText`, `Text`, `WaitingForPress`, `FadingOut` or `Done` | what the screen shows | every entry |
+| the stage's wait | frames, 0 to 32,768; 65,535 only after a hold that ran out from 0, in a stage that does not read it | how long the opening holds each part | `OpeningUnfolds` |
 | the colours | 256 colours, each three channel levels in 256ths, 16-bit | the picture's colours | `PicturesDissolve`, `PageFiveBegins`; output (the colours shown) |
 | the colours' steps | 256 colours, each three steps in 256ths: a colour's full level × 8, so 32 steps make it full | how fast each colour fades | `PicturesDissolve` |
 | the dissolve's count | frames, 0 to 65,535 | when the dissolve steps and ends | `PicturesDissolve`, `BabyRises`, `BabyLeaves` |
@@ -79,7 +94,7 @@ over).
 | the glowing letters | up to 8, each its place (column, row), the colour set it takes next (0 to 3) and frames left | how bright each new letter is | `LetterGlows` |
 | the click turn | `bool`: whether the next letter's turn clicks | which letters click | `LetterIsTyped` |
 | the screen's brightness | `Brightness`: a level, 0 to 15 (0 black, 15 full), and `Blanked` (nothing shown at any level) or `Shown` | how bright the picture is | `PictureDarkens`, `IntroEnds`; output |
-| the fade's count | frames, 0 to 32,768 | when the picture next darkens | `PictureDarkens` |
+| the fade's count | frames, 0 to 32,768; 0 to 2 in the slow fades' stages | when the picture next darkens or brightens | `PictureDarkens`, `SlowFade` |
 | the fade's rhythm | frames, `d` (`PictureDarkens`): a rule, not State | how many frames each level holds | `PageEnds`, `PictureDarkens` |
 
 ### 1.2 What it remembers: state a caller can hold
@@ -92,9 +107,10 @@ and its `after` reads them back.
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| a press | `bool`: any button pressed anew this frame (the movie's pad) | `PressTurnsThePage` |
+| a press | `bool`: any button pressed anew this frame (the movie's pad) | `PressTurnsThePage`, `PageEnds` |
+| a track waits | `bool`: a tune asked for still waits to load and start (audio's reply, U1) | `OpeningUnfolds`, `PageOneBegins` |
 | the language | the options' setting: English (a Japanese setting is Unsupported) | the caller, at the intro's start |
-| the scripts | content: each a list of steps (§2): the pages 5 and 6, the eyes' two (blinking, page 6's), the baby's, the caret's two (steady, blinking) | `ScriptSteps`, `LetterIsTyped`, `CaretBlinks` |
+| the scripts | content: each a list of steps (§2): the pages 1, 5 and 6, the eyes' two (blinking, page 6's), the baby's, the caret's two (steady, blinking) | `ScriptSteps`, `LetterIsTyped`, `CaretBlinks` |
 | the full colours | content: the scene's 256 colours as the dissolves head for them | `PageFiveBegins` |
 | the dissolve's sets | content: for each dissolve, the colours that dim and those that brighten; for page 5, the text's colours that start black | `PicturesDissolve`, `PageFiveBegins` |
 | the caret's colours | content: the colours, by index, the caret takes once the text is back | `DissolveEnds` |
@@ -110,6 +126,8 @@ and its `after` reads them back.
 | a click | an event, per letter that clicks | U1 (the sound's request) |
 | the music stops | an event, as page 6 begins | U1 |
 | the brightness | `Brightness`, every frame | output |
+| the music's requests | events, in order: stop the music, load a tune (the opening's first or second, or the pages'), play the loaded tune after a delay, frames; each request is asked with a delay of 8 frames unless it names a longer one | U1 |
+| the equipment lent | an event, as the intro begins: her missiles and their capacity 900 and the default buttons, for the played scenes | the owners of her equipment and of the buttons |
 | the equipment returned | an event, as the intro ends: her missiles and their capacity 0 and the player's own buttons back, undoing what the played scenes lent | the owners of her equipment and of the buttons |
 | the intro done | `bool`: the stage is `Done` | the caller: the next frame is the flight's |
 
@@ -136,9 +154,9 @@ and its `after` reads them back.
   [R-baby-signal, R-page5-end]
 - The hold 1, the next step "end" → the script removed [R-page5-end]
 - A script is placed at its start with its hold 1, so its first step comes the next time it
-  runs: on the same frame for a script placed by the stage's step (§7), on the next for one
+  runs: on the same frame for a script placed by the stage's step (§9), on the next for one
   placed by another script's signal [R-page6-begins, R-page5-begins, R-page5-end]
-- checked: oracle (recorded cases E1-E3, B1, P5); constructed.
+- checked: oracle (recorded cases E1-E3, B1, P5, W1-W3); constructed.
 
 ## 3. The dissolves
 
@@ -248,21 +266,26 @@ and its `after` reads them back.
   the page waits; it shows whenever its script's step is the caret's picture.
 - params: none (the scripts and their holds are content).
 - switch: Fixed.
-- A page's signal "wait for a press" or "caret blinks" → the caret's blinking script placed at
-  its start, its place kept [R-page5-end, R-page6-caret]
+- A page's signal "wait for a press", "wait for a press, then the fight" or "caret blinks" → the
+  caret's blinking script placed at its start, its place kept [R-page5-end, R-page6-caret,
+  R-page1-end]
 - The caret's script's current step the caret's picture → the caret shown [R-caret-blink]
 - The caret's script's current step showing nothing → the caret hidden [C-caret-steady]
-- checked: oracle (recorded cases P3, P5, P7); constructed.
+- checked: oracle (recorded cases P3, P5, P7, W8); constructed.
 
 ### PageEnds
 - kind: mechanic.
-- summary: at the end of page 5 the game waits for a press; at the end of page 6 the page holds,
-  and the picture starts to fade out.
+- summary: at the end of page 1 and of page 5 the game waits for a press; at the end of page 6
+  the page holds, and the picture starts to fade out.
 - params: none (the signals are the page's content).
 - switch: Fixed.
 - The signal "wait for a press" → the stage `WaitingForPress` [R-page5-end]
+- The signal "wait for a press, then the fight" → the stage `PageOneWaits` [R-page1-end]
+- `PageOneWaits`, no press → the stage left; the scripts run [C-page1-waits]
+- A press while page 1 waits is Unsupported: it starts the battle on Zebes, part (b) (§11),
+  not yet specced, and the caller refuses it.
 - The signal "finish" → the stage `FadingOut`, the fade's count `d` [R-page6-end, C-finish-adjusted-end]
-- checked: oracle (recorded cases P5, P8); constructed.
+- checked: oracle (recorded cases P5, P8, W8); constructed.
 
 ### PressTurnsThePage
 - kind: mechanic.
@@ -308,9 +331,103 @@ and its `after` reads them back.
 
 ---
 
-## 7. Order that matters
+## 7. The opening
 
-- **Within a frame:** first the stage's step (§3, §5's turns, §6), then the baby (`BabyLeaves`,
+### IntroBegins
+- kind: mechanic.
+- summary: the intro's first frame clears the scene, keeps the screen dark, asks for the first
+  tune and lends the equipment the played scenes use.
+- params: none.
+- switch: Fixed.
+- `Begins` → the stage `OpeningLoads`; the dissolve's count 0, the picture's height 0, no baby,
+  no page, no eyes, no caret, no glow, the click turn off, the stage's wait 0, the brightness
+  `Blanked` at level 0, the fade's count 3; the music stopped and the first tune asked to
+  load; the equipment lent [R-begins, C-begins-clears]
+- checked: oracle (recorded case S0); constructed.
+
+### SlowFade
+- kind: mechanic.
+- summary: in the opening and as page 1 appears, the picture brightens or darkens one level
+  every 2 frames; brightening stops at 15, darkening blanks the screen as it reaches 0.
+- params: the rhythm, 2 frames.
+- switch: Fixed.
+- `OpeningBrightens`, `PageOneBrightens` or `OpeningDarkens`, the fade's count `c` over 1 → the
+  count `c − 1`, the brightness left [R-brighten-count, R-darken-count]
+- `OpeningBrightens` or `PageOneBrightens`, the count 1 or 0, the level `l` with `l + 1` under
+  15 → the level `l + 1`, `Shown`, the count 2 [R-brighten-step, C-brighten-from-rest]
+- The same, the count 1 or 0, `l + 1` 15 or more → the level 15, `Shown`, the count 0: the fade
+  is done [R-brighten-last, R-page1-text]
+- `OpeningDarkens`, the count 1 or 0, the level `l` over 1 → the level `l − 1`, `Shown`, the
+  count 2 [R-darken-step, C-darken-from-blanked]
+- The same, the count 1 or 0, the level 1 → the level 0, `Blanked`, the count 0: the fade is
+  done [R-darken-last]
+- The same, the count `c` 1 or 0, the level 0 → the count `c − 1` (0 from 1, 255 from 0), the
+  brightness left: the fade is done [C-darken-at-zero]
+- checked: oracle (recorded cases S3, S4, S8, S9, W4); constructed.
+
+### OpeningUnfolds
+- kind: mechanic.
+- summary: the opening waits for the first tune to load, brightens, holds 60 frames, asks the
+  first tune to play, holds 200 frames, asks for the second tune, waits for it to load, holds
+  240 frames and darkens.
+- params: the holds, 60, 200 and 240 frames; the second tune's start, 14 frames after it loads.
+- switch: Fixed.
+- `OpeningLoads`, no track waits → the stage `OpeningBrightens`, the fade's count 2
+  [R-opening-loaded]
+- `OpeningBrightens`, the fade done (`SlowFade`) → the stage `OpeningPause`, the wait 60
+  [R-brighten-last]
+- `OpeningPause`, `FirstTune` or `SecondTune`, the wait `w` over 1 → the wait `w − 1` [R-pause]
+- `OpeningPause`, the wait 1 or 0 → the stage `FirstTune`, the wait 200; the loaded tune asked to
+  play 8 frames after [R-first-tune, C-wait-zero]
+- `FirstTune`, the wait `w` 1 or 0 → the stage `SecondTuneLoads`, the wait `w − 1` (0 from 1,
+  65,535 from 0); the music stopped, the
+  second tune asked to load and to play 14 frames after [R-second-tune, C-first-tune-zero]
+- `SecondTuneLoads`, no track waits → the stage `SecondTune`, the wait 240 [R-second-loaded]
+- `SecondTune`, the wait `w` 1 or 0 → the stage `OpeningDarkens`, the wait `w − 1` (0 from 1,
+  65,535 from 0), the fade's count 2
+  [R-darken-begins]
+- `OpeningDarkens`, the fade done → the stage `PageOneMadeReady` [R-darken-last,
+  C-darken-at-zero]
+- While a track waits, the opening's loading stages change nothing (R-opening-loads,
+  C-second-loading).
+- So the first tune's wait and the second's end in the frame the reply says none waits, and the
+  first brightening comes 2 frames after.
+- checked: oracle (recorded cases S1-S7, S9); constructed.
+
+## 8. Page 1
+
+### PageOneIsMadeReady
+- kind: mechanic.
+- summary: in the dark, the text is cleared, the picture stands at 8, Samus's eyes start to
+  blink, the caret waits at its home, and the pages' tune is asked for.
+- params: the picture's height 8; the dissolve's count 127, which the next part's dissolve
+  starts from.
+- switch: Fixed.
+- `PageOneMadeReady` → the stage `PageOneLoads`; the text cleared; no page; the dissolve's count 127; the
+  picture's height 8; the eyes on their blinking script from its start; the caret at its home on
+  its steady script; the music stopped, the pages' tune asked to load and to play 14 frames after
+  [R-page1-ready]
+- checked: oracle (recorded case W1).
+
+### PageOneBegins
+- kind: mechanic.
+- summary: once the pages' tune has loaded, page 1 starts to type and the picture slowly
+  brightens; once it is full the text goes on typing.
+- params: none.
+- switch: Fixed.
+- `PageOneLoads`, a track waits → the stage left; the scripts run [R-page1-loads]
+- `PageOneLoads`, no track waits → the stage `PageOneBrightens`, the fade's count 2; page 1's
+  script placed, the click turn off [R-page1-begins, C-page1-click-off]
+- `PageOneBrightens`, the fade done (`SlowFade`) → the stage `Text` [R-page1-text]
+- So page 1's first step, which shows nothing, comes on the frame it is placed, and its first
+  letter 1 frame later (R-page1-begins).
+- checked: oracle (recorded cases W2-W4); constructed.
+
+---
+
+## 9. Order that matters
+
+- **Within a frame:** first the stage's step (§3, §5's turns, §6, §7, §8), then the baby (`BabyLeaves`,
   `BabyRises`, then its script), then the caret's script, then the page's script (its letters
   and signals), then the eyes' script, then the glows.
 - So the baby's signal for page 5 takes effect on the next frame's stage step
@@ -318,19 +435,26 @@ and its `after` reads them back.
   letter's glow shows set 0 in the frame the letter appears; a caret placed by a page's signal
   runs from the next frame.
 
-## 8. Out of scope, and who supplies it
+## 10. Out of scope, and who supplies it
 
 - **The line split (E3):** the colour blend's bands while a dissolve runs.
-- **Audio (U1):** playing the clicks; stopping the music.
+- **Audio (U1):** playing the clicks; stopping the music, loading and playing the tunes asked
+  for; whether a track waits, its reply.
 - **The pictures (content, drawn by the platform):** the letters, the eyes, the baby, the caret.
 - **Lag (T1):** the frames that load a picture.
 - **The flight (screens-flight):** from the frame after `Done`.
-- **Her equipment and the buttons:** applying what `IntroEnds` returns.
+- **Her equipment and the buttons:** applying what `IntroBegins` lends and `IntroEnds` returns.
+- **Her own State as the intro begins** (the samus domains): the intro readies her for the
+  played scenes; no part of her is shown before the battle on Zebes.
 
-## 9. Open questions
+## 11. Open questions
 
-1. Page 4 and the earlier pages, their turns, and the two played scenes extend this model in
-   later pieces; this row is admitted after page 4's turn has finished.
+1. The parts not yet specced, by mechanism, each a later round: (b) the press after page 1, the
+   dissolve to the battle on Zebes played by her under the movie's demo, and back to page
+   2's text; (c) page 2, the dissolve to the baby's discovery played by her, back to page 3's
+   text; (d) page 3, the dissolve to the baby delivered (a picture scene like the baby being
+   examined), page 4 typed, to page 4's press. Parts (b) and (c) need her movement, beams and
+   the scene's enemies in the loop; (d) reuses this spec's dissolves and pages.
 2. The brightness fade here and in the flight is one rule written twice; a later coherence
    round may make it one shared entry.
 3. The Japanese pages are other content and a different end of page 5 (an arrow and a wait);

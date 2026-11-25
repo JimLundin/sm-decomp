@@ -33,6 +33,16 @@ pub enum BehaviourId {
     PictureDarkens,
     /// The intro ends once the picture is blanked.
     IntroEnds,
+    /// The intro starts dark, asks for its first tune and lends her equipment.
+    IntroBegins,
+    /// The opening and page 1 brighten or darken a level every 2 frames.
+    SlowFade,
+    /// The opening's waits, brightening, holds, tunes and darkening, in order.
+    OpeningUnfolds,
+    /// Page 1's eyes, caret, picture and tune made ready in the dark.
+    PageOneIsMadeReady,
+    /// Page 1 types while its picture brightens.
+    PageOneBegins,
 }
 
 /// A catalogue entry.
@@ -51,7 +61,7 @@ pub struct Behaviour {
 }
 
 /// The number of the spec's entries.
-const ENTRIES: usize = 13;
+const ENTRIES: usize = 18;
 
 /// The catalogue's rows, one per spec entry, in the spec's order.
 const ROWS: [Behaviour; ENTRIES] = [
@@ -132,8 +142,8 @@ const ROWS: [Behaviour; ENTRIES] = [
     },
     Behaviour {
         id: BehaviourId::PageEnds,
-        summary: "at the end of page 5 the game waits for a press; at the end of page 6 the page \
-                  holds, and the picture starts to fade out",
+        summary: "at the end of page 1 and of page 5 the game waits for a press; at the end of \
+                  page 6 the page holds, and the picture starts to fade out",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -159,6 +169,48 @@ const ROWS: [Behaviour; ENTRIES] = [
         summary: "once the picture is black and blanked, the intro is over: everything of the \
                   scene is cleared, the equipment lent for the played scenes is returned, and the \
                   next frame is the flight's",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::IntroBegins,
+        summary: "the intro's first frame clears the scene, keeps the screen dark, asks for the \
+                  first tune and lends the equipment the played scenes use",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SlowFade,
+        summary: "in the opening and as page 1 appears, the picture brightens or darkens one \
+                  level every 2 frames; brightening stops at 15, darkening blanks the screen as \
+                  it reaches 0",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::OpeningUnfolds,
+        summary: "the opening waits for the first tune to load, brightens, holds 60 frames, asks \
+                  the first tune to play, holds 200 frames, asks for the second tune, waits for \
+                  it to load, holds 240 frames and darkens",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PageOneIsMadeReady,
+        summary: "in the dark, the text is cleared, the picture stands at 8, Samus's eyes start \
+                  to blink, the caret waits at its home, and the pages' tune is asked for",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PageOneBegins,
+        summary: "once the pages' tune has loaded, page 1 starts to type and the picture slowly \
+                  brightens; once it is full the text goes on typing",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

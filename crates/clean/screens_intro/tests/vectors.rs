@@ -10,14 +10,15 @@ mod vectors {
 
     use enum_map::EnumMap;
     use screens_intro::{
-        Dissolve, DissolveSets, IndexedColour, IntroContent, IntroEvent, Letter, PictureName,
-        Report, Rules, Shows, Signal, Step, catalogue, step,
+        Dissolve, DissolveSets, Equipment, FrameInputs, IndexedColour, IntroContent, IntroEvent,
+        Letter, MusicRequest, PictureName, Report, Rules, Shows, Signal, Step, TrackReply, Tune,
+        catalogue, step,
     };
     use serde::Deserialize;
     use types::intro::{
         Baby, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn, ColourSet,
         EyesScript, FadeFrames, FadingColours, Glow, Glows, IntroStage, IntroState, PageScript,
-        Progress, ScriptPlace, StepAt, TextPlace,
+        Progress, ScriptPlace, StageWait, StepAt, TextPlace,
     };
     use types::{Checked, Colour, PALETTE_SLOTS, Pair, Palette};
 
@@ -69,6 +70,7 @@ mod vectors {
     struct Part {
         stage: Option<IntroStage>,
         dissolve: Option<u16>,
+        wait: Option<u16>,
         colours: Option<BTreeMap<String, [[u16; 3]; 2]>>,
         height: Option<i16>,
         baby: Option<Placed>,
@@ -99,6 +101,7 @@ mod vectors {
     #[serde(deny_unknown_fields)]
     struct Inputs {
         press: Option<bool>,
+        track_waits: Option<bool>,
         scene: Option<Scene>,
     }
 
@@ -152,6 +155,8 @@ mod vectors {
         music_stop: Option<bool>,
         caret_shown: Option<bool>,
         equipment_returned: Option<bool>,
+        equipment_lent: Option<bool>,
+        music: Option<Vec<String>>,
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]
@@ -181,6 +186,7 @@ mod vectors {
 
     fn named(name: &str) -> Named {
         match name {
+            "page1" => Named::Page(PageScript::One),
             "page5" => Named::Page(PageScript::Five),
             "page6" => Named::Page(PageScript::Six),
             "eyes" => Named::Eyes(EyesScript::Blinking),
@@ -259,6 +265,7 @@ mod vectors {
     fn build(part: &Part) -> IntroState {
         IntroState {
             stage: part.stage.expect("before names the stage"),
+            wait: StageWait::new(part.wait.unwrap_or(0)).unwrap(),
             colours: colours(part),
             dissolve: part.dissolve.unwrap_or(0),
             height: part.height.unwrap_or(0),
@@ -300,6 +307,7 @@ mod vectors {
         match name {
             "page5" => Signal::PageFive,
             "wait" => Signal::WaitForPress,
+            "fight" => Signal::WaitForPressThenFight,
             "blink" => Signal::CaretBlinks,
             "finish" => Signal::Finish,
             other => panic!("unknown signal {other}"),
@@ -527,6 +535,7 @@ mod vectors {
     fn check_after(failures: &mut Failures, after: &Part, state: &IntroState) {
         failures.check("stage", after.stage, state.stage);
         failures.check("dissolve", after.dissolve, state.dissolve);
+        failures.check("wait", after.wait, state.wait.frames());
         failures.check("height", after.height, state.height);
         check_colours(failures, after, state);
         check_scripts(failures, after, state);
@@ -598,8 +607,23 @@ mod vectors {
         let music_stop = happened(report, IntroEvent::MusicStops);
         failures.check("music stop", output.music_stop, music_stop);
         failures.check("caret shown", output.caret_shown, report.caret.is_some());
-        let returned = happened(report, IntroEvent::EquipmentReturned);
+        let returned = happened(report, IntroEvent::Equipment(Equipment::RETURNED));
         failures.check("equipment returned", output.equipment_returned, returned);
+        let lent = happened(report, IntroEvent::Equipment(Equipment::LENT));
+        failures.check("equipment lent", output.equipment_lent, lent);
+        let music: Vec<String> = report.music.iter().map(|&request| asked(request)).collect();
+        failures.check("music", output.music.as_ref(), &music);
+    }
+
+    /// A music request as the vectors write it.
+    fn asked(request: MusicRequest) -> String {
+        match request {
+            MusicRequest::Stop => "stop".to_owned(),
+            MusicRequest::Load(Tune::OpeningFirst) => "load first".to_owned(),
+            MusicRequest::Load(Tune::OpeningSecond) => "load second".to_owned(),
+            MusicRequest::Load(Tune::Pages) => "load pages".to_owned(),
+            MusicRequest::Play { after } => format!("play {after}"),
+        }
     }
 
     fn rules(vector: &Vector) -> Rules {
@@ -616,8 +640,19 @@ mod vectors {
         let mut state = build(&vector.before);
         let inputs = vector.inputs.as_ref();
         let pressed = inputs.and_then(|inputs| inputs.press).unwrap_or(false);
+        let waits = inputs
+            .and_then(|inputs| inputs.track_waits)
+            .unwrap_or(false);
+        let frame = FrameInputs {
+            pressed,
+            track: if waits {
+                TrackReply::TrackWaits
+            } else {
+                TrackReply::NoneWaits
+            },
+        };
         let scene = content(inputs.and_then(|inputs| inputs.scene.as_ref()));
-        let report = step(&mut state, pressed, &scene, rules(vector));
+        let report = step(&mut state, frame, &scene, rules(vector));
         let mut failures = Failures {
             id: &vector.id,
             found: Vec::new(),

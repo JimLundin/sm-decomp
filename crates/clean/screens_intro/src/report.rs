@@ -1,23 +1,61 @@
 //! What the intro hands the others each frame: the colours and pictures to the renderer, the
-//! clicks and the music's stop to audio, and, as it ends, the equipment returned.
+//! clicks, the music's stop and the tunes asked for to audio, and, as it begins and ends, the
+//! equipment lent and returned.
 
 use types::intro::{ColourSet, TextPlace};
 use types::{Pair, Palette, Px};
 
+use crate::music::MusicRequest;
 use crate::script::{Letter, PictureName};
+
+/// Which buttons the pad's presses mean.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ButtonSetting {
+    /// The game's default buttons, which the played scenes use.
+    Default,
+    /// The player's own buttons.
+    PlayersOwn,
+}
+
+/// Her equipment as the intro sets it for its played scenes, and undoes it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Equipment {
+    /// Her missiles.
+    pub missiles: u16,
+    /// Their capacity.
+    pub missile_capacity: u16,
+    /// The buttons.
+    pub buttons: ButtonSetting,
+}
+
+impl Equipment {
+    /// `IntroBegins`: lent for the played scenes: missiles and their capacity 900, and the
+    /// default buttons.
+    pub const LENT: Self = Self {
+        missiles: 900,
+        missile_capacity: 900,
+        buttons: ButtonSetting::Default,
+    };
+    /// `IntroEnds`: returned: missiles and their capacity 0, and the player's own buttons back.
+    pub const RETURNED: Self = Self {
+        missiles: 0,
+        missile_capacity: 0,
+        buttons: ButtonSetting::PlayersOwn,
+    };
+}
 
 /// Something that happened this frame, for another part of the game to act on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IntroEvent {
-    /// The text layer is cleared (`DissolveEnds`, `PressTurnsThePage`).
+    /// The text layer is cleared (`DissolveEnds`, `PressTurnsThePage`, `PageOneIsMadeReady`).
     TextCleared,
     /// A letter clicks: the sound is asked for (`LetterIsTyped`).
     Click,
     /// The music is asked to stop, as page 6 begins (`PressTurnsThePage`).
     MusicStops,
-    /// The intro is over and the equipment lent for its played scenes is returned: her missiles
-    /// and their capacity 0, and the player's own buttons back (`IntroEnds`).
-    EquipmentReturned,
+    /// Her equipment set for the played scenes (`Equipment::LENT`, `IntroBegins`) or set back
+    /// (`Equipment::RETURNED`, `IntroEnds`).
+    Equipment(Equipment),
 }
 
 /// A picture shown at a place on the screen.
@@ -56,6 +94,8 @@ pub struct Report {
     pub caret: Option<ShownPicture>,
     /// What happened, in order.
     pub events: Vec<IntroEvent>,
+    /// The music's requests, in order (`IntroBegins`, `OpeningUnfolds`, `PageOneIsMadeReady`).
+    pub music: Vec<MusicRequest>,
 }
 
 impl Report {
@@ -70,6 +110,7 @@ impl Report {
             baby: None,
             caret: None,
             events: Vec::new(),
+            music: Vec::new(),
         }
     }
 }

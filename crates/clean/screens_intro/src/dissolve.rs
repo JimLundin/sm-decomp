@@ -7,6 +7,8 @@ use types::{Colour, Palette};
 use crate::content::{Dissolve, IntroContent};
 use crate::report::{IntroEvent, Report};
 
+/// `PageFiveBegins`, `PageOneIsMadeReady`: a dissolve runs 128 frames, its count from 127.
+pub const DISSOLVE_FROM: u16 = 127;
 /// `PicturesDissolve`: the dissolve steps on every fourth count.
 const BEAT: u16 = 4;
 /// A channel's level is in 256ths of a whole level.

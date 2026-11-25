@@ -1,5 +1,6 @@
 //! A run from the console's power-on: the front end's boot, then its screens from the title on
-//! (`screens`), compared at each cut until the options hand on to the intro.
+//! (`screens`), compared at each cut through the options' hand-on to the intro and on through
+//! the intro's opening and page 1, whose own fields are the intro run's (`intro`).
 //!
 //! The run admits the power-on State itself: of cut 0 it reads only where the next cut's
 //! interval begins, as its work RAM is the emulator's power-on fill. Each cut borrows the inputs
@@ -13,16 +14,18 @@
 //! settle clears the count's memory through the upload's cut and the two after it. The hold's
 //! frames left while the logo is held before and after the frame.
 
+use super::intro::{Part, Scenes};
 use super::platform::{Controller, polled};
 use super::screens::{self, Asked, Borrowed, Queues};
 use super::{Report, Stop, rows::Rows, word};
 use crate::replay::compare::{CompareFault, Observation, compare};
 use crate::replay::{data_failure, result::Outcome};
 use crate::source;
-use front_end::{FrameEnd, Rules, Work};
+use front_end::{Content, FrameEnd, Rules, Work};
 use game::production::played::front_end;
 use oracle_record::{ApuAccess, ApuAccessKind, FrameRecord};
 use screens_boot::{DriverUpload, PowerOnStage, PowerOnState, ScreenLight};
+use std::path::Path;
 
 /// The logo's timer: the hold's frames left.
 const HOLD_LEFT: source::WramWord = source::WramWord {
@@ -52,13 +55,16 @@ pub(super) const BORROWED: &[&str] = &[
     "the boot's driver upload ended in the frame (CPU and audio timing until T1), from the interval's APU port writes: looked for at every cut, and an end outside the sound's load is bad data",
     "lag from the title on: how many frames of work finished in the interval, from the cut kind, and 2 where the game's own count steps by 2 at a requested NMI (an NMI inside the interval that the record's cut list doesn't show); any other disagreement is bad data",
     "the random number as the game settles (game-random's seeding of the boot), read from the record as the title begins",
+    "audio from the intro on: whether a track waits in the queue of tracks as the frame of work begins",
     "save memory (P2): which slots hold a file, from the game's own answer at the cut file select asks; the slot chosen last, valid when its record names slot A, B or C and that value AND its complement is 0; a chosen empty slot starts a new file, with the intro and every setting off",
 ];
 
-/// Play the power-on row `row` from power-on through `end`. A run from a later cut has no State
-/// to admit: nothing reads the power-on's State from a record.
+/// Play the power-on row `row` from power-on through `end`, the intro's scenes imported from
+/// the player's ROM at `rom`. A run from a later cut has no State to admit: nothing reads the
+/// power-on's State from a record.
 pub(super) fn play(
     rows: &mut Rows<'_>,
+    rom: &Path,
     row: &str,
     start: u64,
     end: u64,
@@ -70,7 +76,7 @@ pub(super) fn play(
         stop,
         seed_held: &[],
         borrowed: BORROWED,
-        masked: &[],
+        masked: super::intro::OPENING_MASKED,
     };
     if start != 0 {
         let later = Outcome::Unsupported {
@@ -79,8 +85,13 @@ pub(super) fn play(
         };
         return Ok(report(0, Stop::At(later)));
     }
+    let scenes = Scenes::import(rom, Part::Opening)?;
     let mut run = Run {
         state: front_end::State::AT_POWER_ON,
+        content: Content {
+            intro: scenes.content.clone(),
+        },
+        scenes,
         ended: None,
         controller: Controller::default(),
         queues: None,
@@ -88,24 +99,31 @@ pub(super) fn play(
     };
     let mut held = 0;
     let mut previous = rows.record(0)?;
+    let mut began = previous.clone();
     for cut in 1..=end {
         let current = rows.record(cut)?;
         if current.video_frame != previous.video_frame.wrapping_add(1) {
             return Err(data_failure(Some(cut), "played rows join"));
         }
-        if let Err(outcome) = run.step(&previous, &current, cut) {
+        if let Err(outcome) = run.step(&began, &previous, &current, cut) {
             return Ok(report(held, Stop::At(outcome)));
         }
         held = held.saturating_add(1);
+        if super::finished(&current) {
+            began = current.clone();
+        }
         previous = current;
     }
     Ok(report(held, Stop::End))
 }
 
-/// The front end's State, the cut the upload ended at, and from the title on the controller,
-/// the queues at the last finished cut and the sounds played since it.
+/// The front end's State and content, the intro's reader, the cut the upload ended at, and from
+/// the title on the controller, the queues at the last finished cut and the sounds played since
+/// it.
 struct Run {
     state: front_end::State,
+    content: Content,
+    scenes: Scenes,
     ended: Option<u64>,
     controller: Controller,
     queues: Option<Queues>,
@@ -113,18 +131,19 @@ struct Run {
 }
 
 impl Run {
-    /// Play the interval from `previous` to `record`, at `cut`, and compare the part that runs
-    /// with the record.
+    /// Play the interval from `previous` to `record`, at `cut`, whose frame of work began after
+    /// `began`, and compare the part that runs with the record.
     ///
     /// An upload's end outside the sound's load is bad data, and the game settles only on one,
     /// so a run that reaches the title found exactly one.
     fn step(
         &mut self,
+        began: &FrameRecord,
         previous: &FrameRecord,
         record: &FrameRecord,
         cut: u64,
     ) -> Result<(), Outcome> {
-        let before = self.state;
+        let before = self.state.clone();
         // From the title on the uploads are the audio side's: the title's music data ends the
         // same way, at 354 in the any% movie.
         let ended = matches!(before, front_end::State::PowerOn(_)) && upload_ended(&record.apu_log);
@@ -157,20 +176,20 @@ impl Run {
             },
         };
         let answers =
-            Borrowed::read(previous, record).map_err(|outcome| super::at(cut, outcome))?;
-        let sounds =
-            self.state
-                .step(frame, &RULES, &answers)
-                .map_err(|fault| Outcome::Unsupported {
-                    cut: Some(cut),
-                    dependency: format!("played frame {fault:?}"),
-                })?;
+            Borrowed::read(began, previous, record).map_err(|outcome| super::at(cut, outcome))?;
+        let sounds = self
+            .state
+            .step(frame, &RULES, &self.content, &answers)
+            .map_err(|fault| Outcome::Unsupported {
+                cut: Some(cut),
+                dependency: format!("played frame {fault:?}"),
+            })?;
         if ended {
             self.ended = Some(cut);
         }
-        match (before, self.state) {
+        match (&before, self.state.clone()) {
             (front_end::State::PowerOn(before), front_end::State::PowerOn(after)) => {
-                self.compare_power_on(before, after, record, finished, cut)
+                self.compare_power_on(*before, after, record, finished, cut)
             }
             (_, front_end::State::Screens(after)) => {
                 if self.queues.is_none() {
@@ -178,7 +197,7 @@ impl Run {
                         Some(Queues::read(previous).map_err(|outcome| super::at(cut, outcome))?);
                 }
                 self.sounds
-                    .extend(sounds.into_iter().map(screens::sound_code));
+                    .extend(sounds.into_iter().filter_map(screens::sound_code));
                 self.compare_screens(&after, record, finished, cut)
             }
             (front_end::State::Screens(_), front_end::State::PowerOn(_)) => {
@@ -234,8 +253,16 @@ impl Run {
             }
             (false, _) | (true, None) => None,
         };
-        let pairs = screens::compared(record, after, finished, asked)
+        let mut pairs = screens::compared(record, after, finished, asked)
             .map_err(|outcome| super::at(cut, outcome))?;
+        if let front_end::Screen::Intro(intro) = &after.screen {
+            let (expected, actual) = self
+                .scenes
+                .compared(record, intro)
+                .map_err(|outcome| super::at(cut, outcome))?;
+            pairs.expected.extend(expected);
+            pairs.actual.extend(actual);
+        }
         differs(&pairs.expected, &pairs.actual, cut)
     }
 }
@@ -444,34 +471,5 @@ mod tests {
         assert!(Compared::at(held, held, true, None, 40).hold);
         let full = state(PowerOnStage::Brightening);
         assert!(!Compared::at(full, held, true, None, 32).hold);
-    }
-
-    /// The any% movie from power-on: every cut of the boot, the title, file select and the
-    /// options holds, and the intro's first frame, cut 568, is not owned.
-    #[test]
-    #[ignore = "pinned record cache"]
-    fn power_on_played_alone() {
-        use std::io::Write as _;
-        let path = |name| std::env::var_os(name).unwrap().into();
-        let sources = crate::replay::Sources {
-            cache: path("SM_CACHE"),
-            lock: path("SM_LOCK"),
-            ..Default::default()
-        };
-        let report = super::super::play(&sources, "any-power-on", 0, 567).unwrap();
-        writeln!(
-            std::io::stdout().lock(),
-            "PLAYED_ALONE row={} start={} held={} stop={:?}",
-            report.row,
-            report.start,
-            report.held,
-            report.stop
-        )
-        .unwrap();
-        assert_eq!(report.held, 567);
-        assert!(matches!(
-            report.stop,
-            super::Stop::At(crate::replay::result::Outcome::Unsupported { cut: Some(568), .. })
-        ));
     }
 }

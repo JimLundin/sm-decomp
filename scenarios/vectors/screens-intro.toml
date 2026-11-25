@@ -1,4 +1,5 @@
-# Test vectors for docs/behaviours/screens-intro.md (the intro's last pages).
+# Test vectors for docs/behaviours/screens-intro.md (the intro's opening and page 1, and its last
+# pages).
 #
 # Format
 # - Each [[vector]] is one frame of the intro, from its state as the frame begins to its state as
@@ -12,18 +13,22 @@
 #   dissolve's count 0, the height 0, the click turn off, level 15 Shown, the fade's count 0),
 #   and a part absent from after is not checked. The parts: stage ("ToScene", "Scene",
 #   "ToPageFive", "ToText", "Text", "WaitingForPress", "FadingOut", "Done"); dissolve, the
-#   dissolve's count; colours, a table by colour index of [[red, green, blue] levels,
+#   dissolve's count; wait, the stage's wait, frames; colours, a table by colour index of [[red, green, blue] levels,
 #   [red, green, blue] steps], in 256ths; height, the picture's height, px, signed;
 #   baby = { y, script, step, hold, count }; page and eyes = { script, step, hold, count };
 #   caret = { x, y, script, step, hold, count }; step is the index of the script's current step
 #   (-1 when placed and not yet run) and count the count left of a repeat (absent for none);
 #   glows, a list of [column, row, the set it takes next, frames left]; click, the click turn;
-#   level, 0 to 15; screen, "Blanked" or "Shown"; count, the fade's count.
-# - inputs (optional): press, bool (absent means false); scene, the scene's content: scripts, a
+#   level, 0 to 15; screen, "Blanked" or "Shown"; count, the fade's count. The opening's and page
+#   1's stages: "Begins", "OpeningLoads", "OpeningBrightens", "OpeningPause", "FirstTune",
+#   "SecondTuneLoads", "SecondTune", "OpeningDarkens", "PageOneMadeReady", "PageOneLoads",
+#   "PageOneBrightens", "PageOneWaits".
+# - inputs (optional): press, bool (absent means false); track_waits, whether a track waits in
+#   the line of tunes still to load (absent means false); scene, the scene's content: scripts, a
 #   table by name of step lists, each step one of { picture, hold }, { letter, column, row, hold }
 #   (a letter " " is a space), { hold } (shows nothing), { back = k },
-#   { repeat = k, times = n }, { signal } ("page5", "wait", "blink" or "finish") or
-#   { end = true }; a page is placed with "page5" or "page6", the eyes' page 6 script is
+#   { repeat = k, times = n }, { signal } ("page5", "wait", "fight", "blink" or "finish") or
+#   { end = true }; a page is placed with "page1", "page5" or "page6", the eyes' page 6 script is
 #   "eyes_six", the caret's are "caret_steady" and "caret_blink"; sets = { to_scene = { dims,
 #   brightens }, to_text = { dims, brightens }, text }, colour indices, text the colours page 5
 #   starts black; full, a table by colour index of [red, green, blue] full levels, 0 to 31;
@@ -31,7 +36,10 @@
 # - output (optional): shown, a table by colour index of the colours shown in hex; typed, the
 #   letters typed as [{ letter, column, row }]; clicks, the number of clicks asked; cleared, the
 #   text cleared; music_stop, the music's stop asked; caret_shown, whether the caret shows;
-#   equipment_returned, the equipment returned. gone (optional): the parts no longer there.
+#   equipment_returned, the equipment returned; equipment_lent, the equipment lent; music, the
+#   music's requests in order, each "stop", "load first", "load second", "load pages" or
+#   "play N" (play the loaded tune N frames after; a stop or a load is asked with the delay of
+#   8 frames). gone (optional): the parts no longer there.
 # - Content is invented: no script, picture, letter, colour index, set, full colour or place of
 #   the scene is the game's. The recorded cases (named by row and cut elsewhere) keep the State
 #   as recorded, each colour's levels and steps under an invented index, and give the scene
@@ -396,3 +404,230 @@ inputs = { scene = { scripts = { eyes_six = [{ picture = "s", hold = 64 }, { pic
 after = { stage = "Done", dissolve = 0, height = 0, level = 0, screen = "Blanked", count = 0, click = false }
 output = { equipment_returned = true }
 gone = ["eyes", "page", "baby", "caret"]
+
+# The opening.
+
+[[vector]]
+id = "R-begins"
+source = "recorded"
+entries = ["IntroBegins"]
+before = { stage = "Begins", level = 0, screen = "Blanked", count = 0 }
+after = { stage = "OpeningLoads", dissolve = 0, height = 0, level = 0, screen = "Blanked", count = 3, click = false }
+output = { music = ["stop", "load first"], equipment_lent = true }
+gone = ["page", "eyes", "caret", "baby"]
+
+[[vector]]
+id = "C-begins-clears"
+source = "constructed"
+entries = ["IntroBegins"]
+before = { stage = "Begins", dissolve = 40, height = 3, level = 9, screen = "Shown", click = true, eyes = { script = "eyes", step = 0, hold = 7 }, glows = [[2, 3, 1, 4]] }
+inputs = { scene = { scripts = { eyes = [{ picture = "a", hold = 9 }] } } }
+after = { stage = "OpeningLoads", dissolve = 0, height = 0, level = 0, screen = "Blanked", click = false, glows = [] }
+output = { equipment_lent = true }
+gone = ["eyes"]
+
+[[vector]]
+id = "R-opening-loads"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "OpeningLoads", level = 0, screen = "Blanked", count = 3 }
+inputs = { track_waits = true }
+after = { stage = "OpeningLoads", level = 0, screen = "Blanked", count = 3 }
+output = { music = [] }
+
+[[vector]]
+id = "R-opening-loaded"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "OpeningLoads", level = 0, screen = "Blanked", count = 3 }
+inputs = { track_waits = false }
+after = { stage = "OpeningBrightens", level = 0, screen = "Blanked", count = 2 }
+
+[[vector]]
+id = "R-brighten-count"
+source = "recorded"
+entries = ["SlowFade"]
+before = { stage = "OpeningBrightens", level = 0, screen = "Blanked", count = 2 }
+after = { stage = "OpeningBrightens", level = 0, screen = "Blanked", count = 1 }
+
+[[vector]]
+id = "R-brighten-step"
+source = "recorded"
+entries = ["SlowFade"]
+before = { stage = "OpeningBrightens", level = 0, screen = "Blanked", count = 1 }
+after = { stage = "OpeningBrightens", level = 1, screen = "Shown", count = 2 }
+
+[[vector]]
+id = "R-brighten-last"
+source = "recorded"
+entries = ["SlowFade", "OpeningUnfolds"]
+before = { stage = "OpeningBrightens", level = 14, screen = "Shown", count = 1 }
+after = { stage = "OpeningPause", level = 15, screen = "Shown", count = 0, wait = 60 }
+
+[[vector]]
+id = "C-brighten-from-rest"
+source = "constructed"
+entries = ["SlowFade"]
+before = { stage = "OpeningBrightens", level = 6, screen = "Shown", count = 0 }
+after = { stage = "OpeningBrightens", level = 7, screen = "Shown", count = 2 }
+
+[[vector]]
+id = "R-pause"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "OpeningPause", level = 15, screen = "Shown", wait = 60 }
+after = { stage = "OpeningPause", level = 15, screen = "Shown", wait = 59 }
+output = { music = [] }
+
+[[vector]]
+id = "R-first-tune"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "OpeningPause", level = 15, screen = "Shown", wait = 1 }
+after = { stage = "FirstTune", level = 15, screen = "Shown", wait = 200 }
+output = { music = ["play 8"] }
+
+[[vector]]
+id = "C-wait-zero"
+source = "constructed"
+entries = ["OpeningUnfolds"]
+before = { stage = "OpeningPause", wait = 0 }
+after = { stage = "FirstTune", wait = 200 }
+output = { music = ["play 8"] }
+
+[[vector]]
+id = "R-second-tune"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "FirstTune", level = 15, screen = "Shown", wait = 1 }
+after = { stage = "SecondTuneLoads", level = 15, screen = "Shown" }
+output = { music = ["stop", "load second", "play 14"] }
+
+[[vector]]
+id = "C-first-tune-zero"
+source = "constructed"
+entries = ["OpeningUnfolds"]
+before = { stage = "FirstTune", wait = 0 }
+after = { stage = "SecondTuneLoads", wait = 65535 }
+output = { music = ["stop", "load second", "play 14"] }
+
+[[vector]]
+id = "R-second-loaded"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "SecondTuneLoads", level = 15, screen = "Shown" }
+inputs = { track_waits = false }
+after = { stage = "SecondTune", level = 15, screen = "Shown", wait = 240 }
+
+[[vector]]
+id = "C-second-loading"
+source = "constructed"
+entries = ["OpeningUnfolds"]
+before = { stage = "SecondTuneLoads", level = 15, screen = "Shown", wait = 0 }
+inputs = { track_waits = true }
+after = { stage = "SecondTuneLoads", level = 15, screen = "Shown", wait = 0 }
+
+[[vector]]
+id = "R-darken-begins"
+source = "recorded"
+entries = ["OpeningUnfolds"]
+before = { stage = "SecondTune", level = 15, screen = "Shown", wait = 1 }
+after = { stage = "OpeningDarkens", level = 15, screen = "Shown", count = 2 }
+
+[[vector]]
+id = "R-darken-count"
+source = "recorded"
+entries = ["SlowFade"]
+before = { stage = "OpeningDarkens", level = 15, screen = "Shown", count = 2 }
+after = { stage = "OpeningDarkens", level = 15, screen = "Shown", count = 1 }
+
+[[vector]]
+id = "R-darken-step"
+source = "recorded"
+entries = ["SlowFade"]
+before = { stage = "OpeningDarkens", level = 15, screen = "Shown", count = 1 }
+after = { stage = "OpeningDarkens", level = 14, screen = "Shown", count = 2 }
+
+[[vector]]
+id = "C-darken-from-blanked"
+source = "constructed"
+entries = ["SlowFade"]
+before = { stage = "OpeningDarkens", level = 5, screen = "Blanked", count = 1 }
+after = { stage = "OpeningDarkens", level = 4, screen = "Shown", count = 2 }
+
+[[vector]]
+id = "R-darken-last"
+source = "recorded"
+entries = ["SlowFade", "OpeningUnfolds"]
+before = { stage = "OpeningDarkens", level = 1, screen = "Shown", count = 1 }
+after = { stage = "PageOneMadeReady", level = 0, screen = "Blanked", count = 0 }
+
+[[vector]]
+id = "C-darken-at-zero"
+source = "constructed"
+entries = ["SlowFade", "OpeningUnfolds"]
+before = { stage = "OpeningDarkens", level = 0, screen = "Shown", count = 1 }
+after = { stage = "PageOneMadeReady", level = 0, screen = "Shown", count = 0 }
+
+# Page 1.
+
+[[vector]]
+id = "R-page1-ready"
+source = "recorded"
+entries = ["PageOneIsMadeReady", "ScriptSteps"]
+before = { stage = "PageOneMadeReady", level = 0, screen = "Blanked" }
+inputs = { scene = { caret_home = [8, 24], scripts = { eyes = [{ picture = "o", hold = 128 }, { picture = "h", hold = 10 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageOneLoads", dissolve = 127, height = 8, level = 0, screen = "Blanked", eyes = { script = "eyes", step = 0, hold = 128 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 } }
+output = { cleared = true, music = ["stop", "load pages", "play 14"], caret_shown = true }
+gone = ["page"]
+
+[[vector]]
+id = "R-page1-loads"
+source = "recorded"
+entries = ["PageOneBegins"]
+before = { stage = "PageOneLoads", dissolve = 127, height = 8, level = 0, screen = "Blanked", eyes = { script = "eyes", step = 0, hold = 98 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 } }
+inputs = { track_waits = true, scene = { scripts = { eyes = [{ picture = "o", hold = 128 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageOneLoads", dissolve = 127, eyes = { step = 0, hold = 97 }, caret = { step = 0, hold = 4 } }
+
+[[vector]]
+id = "R-page1-begins"
+source = "recorded"
+entries = ["PageOneBegins", "ScriptSteps"]
+before = { stage = "PageOneLoads", dissolve = 127, height = 8, level = 0, screen = "Blanked", eyes = { script = "eyes", step = 0, hold = 97 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 4 } }
+inputs = { track_waits = false, scene = { scripts = { page1 = [{ hold = 1 }, { letter = "Q", column = 1, row = 4, hold = 5 }], eyes = [{ picture = "o", hold = 128 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageOneBrightens", level = 0, screen = "Blanked", count = 2, click = false, page = { script = "page1", step = 0, hold = 1 }, eyes = { step = 0, hold = 96 }, caret = { x = 8, y = 24, hold = 3 }, glows = [] }
+output = { clicks = 0, typed = [] }
+
+[[vector]]
+id = "C-page1-click-off"
+source = "constructed"
+entries = ["PageOneBegins"]
+before = { stage = "PageOneLoads", level = 0, screen = "Blanked", click = true }
+inputs = { scene = { scripts = { page1 = [{ hold = 3 }, { letter = "K", column = 2, row = 2, hold = 5 }] } } }
+after = { stage = "PageOneBrightens", count = 2, click = false, page = { script = "page1", step = 0, hold = 3 } }
+
+[[vector]]
+id = "R-page1-text"
+source = "recorded"
+entries = ["SlowFade", "PageOneBegins", "LetterIsTyped"]
+before = { stage = "PageOneBrightens", dissolve = 127, height = 8, level = 14, screen = "Shown", count = 1, page = { script = "page1", step = 6, hold = 2 }, caret = { x = 56, y = 24, script = "caret_steady", step = 0, hold = 4 }, click = false, glows = [[4, 4, 3, 2], [5, 4, 2, 2], [6, 4, 1, 2]] }
+inputs = { scene = { scripts = { page1 = [{ hold = 1 }, { letter = "A", column = 1, row = 4, hold = 5 }, { letter = "B", column = 2, row = 4, hold = 5 }, { letter = "C", column = 3, row = 4, hold = 5 }, { letter = "D", column = 4, row = 4, hold = 5 }, { letter = "E", column = 5, row = 4, hold = 5 }, { letter = "F", column = 6, row = 4, hold = 5 }, { letter = "G", column = 7, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "Text", level = 15, screen = "Shown", count = 0, page = { step = 6, hold = 1 }, caret = { x = 56, y = 24, hold = 3 }, click = false, glows = [[4, 4, 3, 1], [5, 4, 2, 1], [6, 4, 1, 1]] }
+
+[[vector]]
+id = "R-page1-end"
+source = "recorded"
+entries = ["ScriptSteps", "PageEnds", "CaretBlinks", "LetterGlows"]
+before = { stage = "Text", dissolve = 127, height = 8, page = { script = "page1", step = 2, hold = 1 }, eyes = { script = "eyes", step = 0, hold = 22 }, caret = { x = 8, y = 136, script = "caret_steady", step = 0, hold = 3 }, glows = [[22, 16, 3, 1], [23, 16, 2, 1], [24, 16, 1, 1]] }
+inputs = { scene = { scripts = { page1 = [{ hold = 1 }, { letter = "X", column = 23, row = 16, hold = 5 }, { letter = "Y", column = 24, row = 16, hold = 5 }, { signal = "fight" }, { end = true }], eyes = [{ picture = "o", hold = 128 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageOneWaits", dissolve = 127, height = 8, eyes = { step = 0, hold = 21 }, caret = { x = 8, y = 136, script = "caret_blink", step = -1, hold = 1 }, click = false, glows = [[23, 16, 3, 5], [24, 16, 2, 5]] }
+gone = ["page"]
+
+[[vector]]
+id = "C-page1-waits"
+source = "constructed"
+entries = ["PageEnds"]
+before = { stage = "PageOneWaits", dissolve = 127, height = 8, caret = { x = 8, y = 136, script = "caret_blink", step = 0, hold = 4 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageOneWaits", dissolve = 127, height = 8, caret = { x = 8, y = 136, step = 0, hold = 3 } }
+output = { cleared = false, music_stop = false, music = [] }

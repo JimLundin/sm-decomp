@@ -1,5 +1,6 @@
-//! The front end's screens from the title on (the title, file select and the options menu):
-//! their borrowed inputs and the fields compared at each cut.
+//! The front end's screens from the title on (the title, file select, the options menu and the
+//! intro): their borrowed inputs and the fields compared at each cut. The intro's own fields are
+//! the intro run's (`super::intro`).
 //!
 //! Compared at every cut: the screen, blank or lit, and its level; which part of the game runs
 //! (the game state); and the frame owner's count of finished frames. At finished cuts: the
@@ -9,7 +10,7 @@
 //! title screen shows or is left; file select's cursor once its menu is set up; the options'
 //! cursor wherever the State holds one, the dissolve's block size and the three settings.
 
-use super::platform::Controller;
+use super::platform::{Controller, music_ready};
 use super::word;
 use crate::replay::compare::Observation;
 use crate::replay::{data_failure, result::Outcome};
@@ -18,6 +19,7 @@ use game::production::played::front_end::{
     Answers, Button, FileStart, Pressed, Screen, Screens, Sound,
 };
 use oracle_record::FrameRecord;
+use screens_intro::{MusicRequest, TrackReply, Tune};
 use screens_options::ChosenFile;
 use types::file_select::{
     FileSelectStage, MenuItem, MenuPhase, MenuState, Slot, WayOut as FileSelectWayOut,
@@ -73,6 +75,7 @@ const LAST_CHOSEN_COMPLEMENT: usize = 0x1FEE;
 const TITLE: u16 = 0x01;
 const OPTIONS: u16 = 0x02;
 const FILE_SELECT: u16 = 0x04;
+const INTRO: u16 = 0x1E;
 
 /// The display register's forced blank bit and its brightness.
 const BLANK: u8 = 0x80;
@@ -148,11 +151,17 @@ pub(super) struct Borrowed {
     settled_random: RandomSequence,
     files: Set<Slot>,
     last_chosen: Option<Slot>,
+    track: TrackReply,
 }
 
 impl Borrowed {
-    /// The answers for the interval from `previous` to `current`.
-    pub(super) fn read(previous: &FrameRecord, current: &FrameRecord) -> Result<Self, Outcome> {
+    /// The answers for the interval from `previous` to `current`, whose frame of work began
+    /// after `began`.
+    pub(super) fn read(
+        began: &FrameRecord,
+        previous: &FrameRecord,
+        current: &FrameRecord,
+    ) -> Result<Self, Outcome> {
         let holding = word(&current.wram, SLOTS_HOLDING_FILES)?;
         let sram = |at: usize| {
             current
@@ -174,6 +183,11 @@ impl Borrowed {
                 .map(|(bit, &slot)| (slot, holding & (1 << bit) != 0))
                 .collect(),
             last_chosen,
+            track: if music_ready(&began.wram)? {
+                TrackReply::NoneWaits
+            } else {
+                TrackReply::TrackWaits
+            },
         })
     }
 }
@@ -193,6 +207,10 @@ impl screens_file_select::SaveMemory for Borrowed {
 impl Answers for Borrowed {
     fn settled_random(&self) -> RandomSequence {
         self.settled_random
+    }
+
+    fn track(&self) -> TrackReply {
+        self.track
     }
 
     /// Only an empty slot's new file: loading a file is save memory's owner's, not played here.
@@ -268,21 +286,29 @@ const fn code(queue: u8, number: u16) -> [u8; 3] {
     [queue, low, high]
 }
 
-/// The code the game queues a sound as.
-pub(super) const fn sound_code(sound: Sound) -> [u8; 3] {
+/// The code the game queues a sound as; none for the music's stop, which the queue holds as an
+/// empty entry, so the queues can't show it.
+pub(super) const fn sound_code(sound: Sound) -> Option<[u8; 3]> {
     use screens_file_select::MenuSound as FileSelectSound;
     use screens_options::MenuSound as OptionsSound;
     use screens_title::TuneRequest;
-    match sound {
+    Some(match sound {
         Sound::Title(TuneRequest::TitleMusic) => code(MUSIC, 0xFF03),
-        Sound::Title(TuneRequest::OpeningTheme) => code(MUSIC, 0x0005),
+        Sound::Title(TuneRequest::OpeningTheme) | Sound::IntroMusic(MusicRequest::Play { .. }) => {
+            code(MUSIC, 0x0005)
+        }
         Sound::Title(TuneRequest::TitleTheme) => code(MUSIC, 0x0006),
         Sound::FileSelect(FileSelectSound::MenuOpens) => code(LIBRARY_THREE.tag, 0x01),
         Sound::FileSelect(FileSelectSound::CursorMoved)
         | Sound::Options(OptionsSound::CursorMoved) => code(LIBRARY_ONE.tag, 0x37),
         Sound::FileSelect(FileSelectSound::ChoiceMade) => code(LIBRARY_ONE.tag, 0x2A),
         Sound::Options(OptionsSound::Selected) => code(LIBRARY_ONE.tag, 0x38),
-    }
+        Sound::IntroMusic(MusicRequest::Stop) => return None,
+        Sound::IntroMusic(MusicRequest::Load(Tune::OpeningFirst)) => code(MUSIC, 0xFF3F),
+        Sound::IntroMusic(MusicRequest::Load(Tune::OpeningSecond)) => code(MUSIC, 0xFF42),
+        Sound::IntroMusic(MusicRequest::Load(Tune::Pages)) => code(MUSIC, 0xFF36),
+        Sound::IntroClick => code(LIBRARY_THREE.tag, 0x0D),
+    })
 }
 
 /// The expected and actual observations, in the order a difference is reported.
@@ -329,9 +355,9 @@ pub(super) fn compared(
     pairs.push(
         "front-end.screen",
         i64::from(record.ppu.inidisp & (BLANK | LEVEL)),
-        i64::from(screen(screens.screen)),
+        i64::from(screen(&screens.screen)),
     );
-    if let Some(state) = game_state(screens.screen) {
+    if let Some(state) = game_state(&screens.screen) {
         pairs.push(
             "front-end.game-state",
             i64::from(word(wram, GAME_STATE)?),
@@ -343,7 +369,7 @@ pub(super) fn compared(
         i64::from(word(wram, source::NMI_FRAME_COUNTER_WORD)?),
         i64::from(screens.counts.finished_frames),
     );
-    if let Screen::Title(title) = screens.screen
+    if let Screen::Title(title) = &screens.screen
         && let TitleStage::TitleScreen { countdown } | TitleStage::Leaving { countdown, .. } =
             title.stage
     {
@@ -368,8 +394,8 @@ pub(super) fn compared(
             asked.played.concat(),
         );
     }
-    match screens.screen {
-        Screen::Title(_) => {}
+    match &screens.screen {
+        Screen::Title(_) | Screen::Intro(_) => {}
         Screen::FileSelect(file_select) => {
             if let FileSelectStage::Menu(MenuState { cursor, .. }) = file_select.menu.stage {
                 pairs.push(
@@ -417,11 +443,19 @@ fn settings(pairs: &mut Pairs, wram: &[u8], settings: Settings) -> Result<(), Ou
 }
 
 /// The screen as the display register holds it.
-const fn screen(screen: Screen) -> u8 {
+fn screen(screen: &Screen) -> u8 {
     let light = match screen {
         Screen::Title(title) => title.screen,
         Screen::FileSelect(file_select) => file_select.menu.screen,
         Screen::Options(options) => options.menu.screen,
+        Screen::Intro(intro) => {
+            let brightness = intro.intro.brightness;
+            let level = brightness.level.number();
+            return match brightness.blanking {
+                types::intro::Blanking::Blanked => BLANK | level,
+                types::intro::Blanking::Shown => level,
+            };
+        }
     };
     match light {
         ScreenLight::Blank(level) => BLANK | level.get(),
@@ -430,7 +464,7 @@ const fn screen(screen: Screen) -> u8 {
 }
 
 /// The game state the part that runs is, where it is one the run plays through.
-const fn game_state(screen: Screen) -> Option<u16> {
+const fn game_state(screen: &Screen) -> Option<u16> {
     match screen {
         Screen::Title(title) => match title.stage {
             TitleStage::FileSelectBegins => Some(FILE_SELECT),
@@ -454,7 +488,8 @@ const fn game_state(screen: Screen) -> Option<u16> {
             }) => None,
             FileSelectStage::Menu(_) | FileSelectStage::Loading(_) => Some(FILE_SELECT),
         },
-        // The intro's hand-on is the options' until the intro's first frame ends.
+        Screen::Intro(_) => Some(INTRO),
+        // The intro's hand-on is the options' until the frame end it hands on at.
         Screen::Options(options) => match options.menu.stage {
             OptionsStage::HandedOn(
                 WayOut::EscapeBegins
