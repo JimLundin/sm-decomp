@@ -55,15 +55,18 @@ DONE = [
 ]
 
 
-def transcript(calls, offered=OFFERED):
-    """JSON lines of a session: init, then each call and its result."""
-    lines = [{"type": "system", "subtype": "init", "cwd": CWD, "tools": offered}]
+def transcript(calls, offered=OFFERED, init=True):
+    """JSON lines of a session: init, then each call and its result (None: no result)."""
+    lines = []
+    if init:
+        lines.append({"type": "system", "subtype": "init", "cwd": CWD, "tools": offered})
     for n, (tool, given, refused, text) in enumerate(calls):
         lines.append({"type": "assistant", "message": {"content": [
             {"type": "tool_use", "id": f"u{n}", "name": tool, "input": given}]}})
-        lines.append({"type": "user", "message": {"content": [
-            {"type": "tool_result", "tool_use_id": f"u{n}", "is_error": refused,
-             "content": text}]}})
+        if refused is not None:
+            lines.append({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": f"u{n}", "is_error": refused,
+                 "content": text}]}})
     lines.append({"type": "result", "subtype": "success"})
     return "\n".join(json.dumps(line) for line in lines) + "\n"
 
@@ -74,10 +77,10 @@ def full():
 
 
 class ProbeCheck(unittest.TestCase):
-    def check(self, calls, offered=OFFERED):
+    def check(self, calls, offered=OFFERED, init=True):
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory, "transcript.jsonl")
-            path.write_text(transcript(calls, offered), encoding="utf-8", newline="\n")
+            path.write_text(transcript(calls, offered, init), encoding="utf-8", newline="\n")
             result = subprocess.run(
                 [sys.executable, "-I", str(HERE / "probe_check.py"), str(path), "--python", PYTHON,
                  "--runner", "cleanroom-tests", "--home", HOME],
@@ -117,6 +120,31 @@ class ProbeCheck(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("CHECK 3: never tried with Grep", out)
 
+    def test_no_init_event_or_tools_list_proves_nothing(self):
+        code, out = self.check(full(), init=False)
+        self.assertEqual(code, 1, out)
+        self.assertIn("no init event", out)
+        code, out = self.check(full(), offered=None)
+        self.assertEqual(code, 1, out)
+
+    def test_a_check_that_only_failed_was_not_refused(self):
+        calls = [(t, g, r, "Exit code 128 fatal: could not open it: No such file or directory")
+                 if g.get("command", "").startswith("git add --pathspec") else (t, g, r, x)
+                 for t, g, r, x in full()]
+        code, out = self.check(calls)
+        self.assertEqual(code, 1, out)
+        self.assertTrue(out.startswith("CHECK 27: failed but was not refused"), out)
+        calls = [(t, g, r, "No such tool available: Grep.") if t == "Grep" else (t, g, r, x)
+                 for t, g, r, x in full()]
+        self.assertEqual(self.check(calls)[0], 0)
+
+    def test_a_check_with_no_recorded_result_is_not_refused(self):
+        calls = [(t, g, None if g.get("command") == "cat ../anything" else r, x)
+                 for t, g, r, x in full()]
+        code, out = self.check(calls)
+        self.assertEqual(code, 1, out)
+        self.assertIn("CHECK 7: Bash was tried but no result was recorded", out)
+
     def test_a_search_may_pass_by_finding_nothing_outside_the_export(self):
         def search_from_root(text):
             return [(t, g, False if g.get("path") == "/" else r, text if g.get("path") == "/" else x)
@@ -125,7 +153,14 @@ class ProbeCheck(unittest.TestCase):
         self.assertEqual(code, 0, out)
         code, out = self.check(search_from_root(CWD + "/crates/clean/types/src/lib.rs"))
         self.assertEqual(code, 0, out)
-        code, out = self.check(search_from_root("/home/someone/notes.md"))
+        for outside in ("/home/someone/notes.md", "../../etc/speed.conf", "~/notes/speed.txt"):
+            code, out = self.check(search_from_root(outside))
+            self.assertEqual(code, 3, out)
+            self.assertIn("BREACH CHECK 29", out)
+        # Finding nothing excuses only the search the step names: a Glob of / that succeeded
+        # is no Grep's empty result.
+        calls = full() + [("Glob", {"pattern": "speed", "path": "/"}, False, "No files found")]
+        code, out = self.check(calls)
         self.assertEqual(code, 3, out)
         self.assertIn("BREACH CHECK 29", out)
 

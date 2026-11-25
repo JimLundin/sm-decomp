@@ -53,7 +53,8 @@
 # file; scan_brief.sh refuses that brief by design, so --probe runs on the dummy domain only. Its
 # @NAME@ placeholders become this machine's paths (the temporary folder, the main checkout, the
 # root's memory, the canary record, the settings file). LAUNCH OK on a probe also means its
-# transcript shows every CHECK tried and refused (or its tool never offered) and every TASK done,
+# transcript shows every CHECK tried and refused by the CLI (a permission denial or no such tool;
+# a call that merely failed proves no rule), or its tool never offered, and every TASK done,
 # and the export's HEAD is the probe's commit (probe_check.py, launch_probe_checks.toml); a CHECK
 # that succeeded is a LAUNCH BREACH.
 # CLEANROOM_DRY_RUN=1 writes the lane record and stops before the session (launch_config_test.sh).
