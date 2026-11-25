@@ -199,7 +199,9 @@ power-on: the frames the reviewed played runs of
 rungs of [`docs/architecture/domains.toml`](architecture/domains.toml) and the stretches being
 worked of [`scenarios/replay/stretches.toml`](../scenarios/replay/stretches.toml), the first not
 yet whole marked next. Its tests hold each listed run to the lock and the stretches to the
-milestone's frames; the root changes a run there when a reviewed played run changes it.
+milestone's frames. When an integrator's work moves a played run, its own commits change the
+run there and regenerate the README, and the root reviews the figures at landing (Jim,
+2026-11-25); full CI's replay witnesses hold every run to the file.
 `tools/check_readme.sh` in Quality, and verify's lib tests, which `tools/lane/gate.sh` runs when
 the README's inputs change, fail when the README differs from what the tree generates.
 

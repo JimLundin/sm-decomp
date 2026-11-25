@@ -2,7 +2,8 @@
 # scenarios/locks/lsnes.toml played by the engine alone from a seed cut, with the movie's pads and
 # nothing fed back, compared at every frame cut (verify::replay::played). `tools report` turns
 # them into the README's progress in movie frames (verify::report::readme); its tests fail when a
-# run disagrees with the lock. The root changes a run here when a reviewed played run changes it.
+# run disagrees with the lock. An integrator whose work moves a run changes it here, and the root
+# reviews it at landing.
 #
 # [[run]]: `row` the lock row; `start` the seed cut; `end` the last cut asked for; `held` the
 # cuts after the seed whose compared fields all matched; `stop` "end" when every cut through

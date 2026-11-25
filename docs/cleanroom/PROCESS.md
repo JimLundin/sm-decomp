@@ -184,7 +184,8 @@ Each step names its owner, what it waits for, and its done-condition.
     domain's `status` when its work starts or ends), deletes the crate's line from
     `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
     trunk's check refuses a listed crate with none), and regenerates the README
-    (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
+    (`tools report --write`); the integration already carries `played.toml` and the README for
+    any played run it moved, and the root reviews those figures. It rebases the branch onto `origin/main`, re-gates
     it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
     the branch's tree on `origin/main`, its subject the root's, its body each part under its role
     (spec, model, integration) with its own body indented under it, every `Role:` and

@@ -28,15 +28,19 @@ model needs a change, report it as a finding for the next round.
    the exact first failing cut and field. Play every reviewed played run in one call,
    `bash tools/lane/played.sh` (or name the runs: `<row>` or `<row>/<start>-<end>`): one build,
    one load, each run's held cuts and stop checked against `scenarios/replay/played.toml`, and a
-   nonzero exit naming any that differs. Record measured results for the reviewed baseline;
+   nonzero exit naming any that differs. When your work moves a run, change its `held` and `stop`
+   there in your own commit (Jim, 2026-11-25): full CI holds every run to the file, and the root
+   reviews the figures at landing. Record measured results for the reviewed baseline;
    approval of changed requirements is separate from generating them.
 5. **Remove replaced execution.** Delete redundant owners, State copies, fallbacks and tests in
    the same change. Retain independently useful content, codecs and exact encoding by responsibility.
 6. **Register and validate.** Update the report's model/provider mapping, run the source gate and
    complete indexed replay baseline as [lane](../lane/SKILL.md#prove-it) specifies. Run crate
    tests with `tools/lane/run_tests.sh`: on Linux that is `cargo test`; only on Windows does it
-   link the tests as DLLs. The root regenerates
-   the README after independent review. Done when Quality and every required case hold.
+   link the tests as DLLs. When `played.toml` moves, regenerate the README in the same commit
+   (`cargo run -p tools --bin tools -- report --write`); Quality fails a README the tree doesn't
+   generate. At a round's landing the root regenerates it again after its own `domains.toml`
+   change. Done when Quality and every required case hold.
 7. **Report.** Give the production interface, per-case outcomes and compared observations, null
    evidence, continuations, first divergences, fault proof, explicit coverage losses and missing
    dependencies, removed owners and exact head. The root assesses size after independent review.
