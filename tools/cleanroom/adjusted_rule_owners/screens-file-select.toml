@@ -1,0 +1,5 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+menu_pace = ["MenuBrightens", "MenuDims"]
+helmet_turn = ["HelmetTurns"]

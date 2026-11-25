@@ -319,8 +319,8 @@ After that the run compares the screen and its level, and the hold's frames left
 logo is held. It compares the count of finished frames at finished cuts before the load (until
 the clear in cut 4's interval the count is the emulator's fill) and at every cut while the
 sound loads. While the game settles, the count is compared from the third cut after the
-upload's end: the settle's clear runs through that cut and the two after it. The run holds 270
-cuts and stops at cut 271, the title's first frame (`TitleBegins`), which is not yet owned. A
+upload's end: the settle's clear runs through that cut and the two after it. The boot holds
+its 270 cuts; at cut 271 the title begins and the run plays on (below). On the boot alone, a
 step that does nothing holds 17. The upload's end moved to cut 252 differs at cut 255 in
 `power-on.finished-frames`. A hold of 119 differs at cut 33 in `power-on.hold`. By the root's
 ruling, recorded on 2026-11-24 in session #758, the lit cuts 18 to 166 count as played on the
@@ -334,6 +334,42 @@ lands. Limits:
 - the APU port contents are not compared; only the upload's end is borrowed;
 - the pad is not compared: the game reads the movie's pad from cut 18, and no boot rule acts on it;
 - the settle's save memory and random number are not compared before cut 271.
+
+### The title, file select and options
+
+`any-power-on` plays on past the boot through the title, file select and the options menu
+(the screens-title, screens-file-select and screens-options models, one step per file under
+`game::production::played::front_end`), to the options' hand-on to the intro. Cut 568 is the
+first cut of the next row, `any-intro-0568`, which the run reaches as the row that follows a
+power-on row. The run holds 567 cuts and stops at cut 568 with `HandedOn(IntroBegins)`: the
+options hand on to the intro, which the front end does not yet own.
+
+From cut 271 it compares the screen, the game state and the count of finished frames at every
+cut; at finished cuts, the random number, the sounds against the queues (accumulated over each
+finished cut, because a sound can appear at a lag cut), the title's countdown, file select's
+and the options' cursors, and the options' block size and settings (Japanese text,
+weapon-reset, moonwalk). Borrowed, as the run's receipt lists: the frames of work finished in
+each interval (from the cut kind, and 2 wherever the game's count steps by 2 at a `Requested`
+cut), the random number as the game settles, and P2's save-memory answers.
+
+Planted faults: a title fast step of 3 differs at cut 308 in `front-end.screen`; a file
+select menu pace of 3 at cut 403 in `front-end.screen`; file select drawing a random number on a
+frame of work that goes on at cut 395 in `front-end.random`; ChoiceMade's sound coded 2Bh at cut
+433 in `front-end.sounds`; Up moving the options' cursor down at cut 488 in `options.cursor`; the
+options keeping the settings they were handed at cut 519 in `options.moonwalk`. The boot's two
+faults fail where they did on the longer run. Limits:
+- from the title on, the count of finished frames is the sum of the borrowed steps, which are
+  read from the game's own count, so comparing it is not an independent check; the screen and
+  the random number check those cuts. A step of 2 is taken at any `Requested` cut; this run
+  sees one at cut 308 alone;
+- how the file begins is the harness's P2 answer for a new file (the intro), not observed: the
+  run stops at 568 on the model's own hand-on to the intro, and nothing at 568 is compared;
+- the order of the sounds asked for within one interval is not compared, within a queue or
+  across queues: expected and played are each sorted before they are compared;
+- save memory (SRAM) is not compared;
+- the pictures are not compared: OAM, CGRAM and VRAM;
+- the queues' heads and timers are not compared, only the sounds in them;
+- the sub-stage indexes are not compared.
 
 ## Intra-frame timing and the played-alone run
 

@@ -1,0 +1,453 @@
+# File select, one frame end at a time: the State before it, how the frame ended, and the State
+# after it.
+#
+# State: `stage` ("loading", "brightening", "choosing", "confirming", "leaving"), `load_step`
+# (the load's finished frame ends so far, 0 to 4, only while "loading"), `screen` (["blank" or
+# "lit", level 0 to 15]), `cursor` ("slot-a", "slot-b", "slot-c", "copy", "clear", "exit") and
+# `offered` (some slot holds a file, so copy and clear are offered), both from the load's fourth
+# finished frame end, `fade_wait` (finished frames before the next level, from the load's fourth
+# finished frame end), `chosen` (the slot chosen) and `turn_left` (frames of work left of the
+# helmet's turn), both only while "confirming".
+# Input: `finished`, 1 when the game had its work, or a part of it, done by the frame end, 0 when
+# still busy; `pressed`, one list per finished frame of the buttons just pressed as it began (none
+# when absent); `input`, save memory's answers at the load's fourth finished frame end:
+# `last_slot` (the slot chosen last, absent when save memory holds none valid) and `files` (the
+# slots that hold a file).
+# `after` lists the fields the vector checks, and `requests`, the sounds asked for, oldest first
+# (none when absent): "menu-opens", "cursor-moved", "choice-made"; and `frame_goes_on = true`
+# where the frame of work goes on through the frame end (false when absent). `stage` in `after`
+# may be a way out: "options-begin", "title-returns", "copy-begins" or "clear-begins".
+# `unsupported = true` means the frame end belongs to the piece after a way out. `rules`
+# overrides `menu_pace` (finished frames per level, reference 2) and `helmet_turn` (frames of
+# work, reference 57).
+
+[[vector]]
+id = "R-load-first"
+source = "recorded"
+entries = ["MenuLoads"]
+before = { stage = "loading", load_step = 0, screen = ["blank", 0] }
+finished = 1
+after = { stage = "loading", load_step = 1, screen = ["blank", 0], frame_goes_on = true }
+
+[[vector]]
+id = "R-load-busy"
+source = "recorded"
+entries = ["MenuLoads"]
+before = { stage = "loading", load_step = 1, screen = ["blank", 0] }
+finished = 0
+after = { stage = "loading", load_step = 1, screen = ["blank", 0] }
+
+[[vector]]
+id = "R-load-second"
+source = "recorded"
+entries = ["MenuLoads"]
+before = { stage = "loading", load_step = 1, screen = ["blank", 0] }
+finished = 1
+after = { stage = "loading", load_step = 2, screen = ["blank", 0], requests = ["menu-opens"] }
+
+[[vector]]
+id = "R-load-third"
+source = "recorded"
+entries = ["MenuLoads"]
+before = { stage = "loading", load_step = 2, screen = ["blank", 0] }
+finished = 1
+after = { stage = "loading", load_step = 3, screen = ["blank", 0] }
+
+[[vector]]
+id = "R-load-unblanks"
+source = "recorded"
+entries = ["MenuLoads", "CursorStarts"]
+before = { stage = "loading", load_step = 3, screen = ["blank", 0] }
+finished = 1
+input = { files = [] }
+after = { stage = "loading", load_step = 4, screen = ["lit", 0], fade_wait = 1, cursor = "slot-a", offered = false, frame_goes_on = true }
+
+[[vector]]
+id = "R-load-last"
+source = "recorded"
+entries = ["MenuLoads"]
+before = { stage = "loading", load_step = 4, screen = ["lit", 0], fade_wait = 1, cursor = "slot-a" }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 0], fade_wait = 1 }
+
+[[vector]]
+id = "R-brighten-waits"
+source = "recorded"
+entries = ["MenuBrightens"]
+before = { stage = "brightening", screen = ["lit", 0], fade_wait = 1, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 0], fade_wait = 0 }
+
+[[vector]]
+id = "R-brighten-step"
+source = "recorded"
+entries = ["MenuBrightens"]
+before = { stage = "brightening", screen = ["lit", 0], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 1], fade_wait = 1 }
+
+[[vector]]
+id = "R-brighten-full"
+source = "recorded"
+entries = ["MenuBrightens"]
+before = { stage = "brightening", screen = ["lit", 14], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "choosing", screen = ["lit", 15], fade_wait = 1 }
+
+[[vector]]
+id = "R-start-new-file"
+source = "recorded"
+entries = ["ItemPressed"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "confirming", chosen = "slot-a", cursor = "slot-a", screen = ["lit", 15], turn_left = 57, requests = ["choice-made"] }
+
+[[vector]]
+id = "R-confirm-press"
+source = "recorded"
+entries = ["HelmetTurns"]
+before = { stage = "confirming", chosen = "slot-a", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false, turn_left = 57 }
+finished = 1
+pressed = [["A"]]
+after = { stage = "leaving", screen = ["lit", 15], fade_wait = 1 }
+
+[[vector]]
+id = "R-leave-waits"
+source = "recorded"
+entries = ["MenuDims"]
+before = { stage = "leaving", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 15], fade_wait = 0 }
+
+[[vector]]
+id = "R-leave-step"
+source = "recorded"
+entries = ["MenuDims"]
+before = { stage = "leaving", screen = ["lit", 15], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 14], fade_wait = 1 }
+
+[[vector]]
+id = "R-leave-dark"
+source = "recorded"
+entries = ["MenuDims"]
+before = { stage = "leaving", screen = ["lit", 1], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "options-begin", screen = ["blank", 0] }
+
+[[vector]]
+id = "C-cursor-last-slot"
+source = "constructed"
+entries = ["CursorStarts"]
+before = { stage = "loading", load_step = 3, screen = ["blank", 0] }
+finished = 1
+input = { last_slot = "slot-c", files = ["slot-c"] }
+after = { stage = "loading", load_step = 4, cursor = "slot-c", offered = true, frame_goes_on = true }
+
+[[vector]]
+id = "C-brighten-busy"
+source = "constructed"
+entries = ["MenuBrightens"]
+before = { stage = "brightening", screen = ["lit", 5], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 0
+after = { stage = "brightening", screen = ["lit", 5], fade_wait = 0 }
+
+[[vector]]
+id = "C-up-no-files-wraps"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "choosing", cursor = "exit", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-up-no-files-skips"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "exit", offered = false }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "choosing", cursor = "slot-c", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-down-no-files-skips"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-c", offered = false }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "exit", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-down-no-files-wraps"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "exit", offered = false }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "slot-a", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-down-files"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-c", offered = true }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "copy", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-down-files-wraps"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "exit", offered = true }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "slot-a", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-up-files"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "exit", offered = true }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "choosing", cursor = "clear", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-up-files-wraps"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = true }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "choosing", cursor = "exit", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-press-beats-up"
+source = "constructed"
+entries = ["ItemPressed", "CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-b", offered = false }
+finished = 1
+pressed = [["A", "Up"]]
+after = { stage = "confirming", chosen = "slot-b", cursor = "slot-b", turn_left = 57, requests = ["choice-made"] }
+
+[[vector]]
+id = "C-up-beats-down"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-b", offered = false }
+finished = 1
+pressed = [["Up", "Down", "B"]]
+after = { stage = "choosing", cursor = "slot-a", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-b-returns"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-b", offered = false }
+finished = 1
+pressed = [["B"]]
+after = { stage = "title-returns", requests = ["cursor-moved", "cursor-moved"] }
+
+[[vector]]
+id = "C-exit-returns"
+source = "constructed"
+entries = ["ItemPressed"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "exit", offered = false }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "title-returns" }
+
+[[vector]]
+id = "C-copy-begins"
+source = "constructed"
+entries = ["ItemPressed"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "copy", offered = false }
+finished = 1
+pressed = [["A"]]
+after = { stage = "copy-begins", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-clear-begins"
+source = "constructed"
+entries = ["ItemPressed"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "clear", offered = false }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "clear-begins", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-other-buttons"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-b", offered = false }
+finished = 1
+pressed = [["X", "Y", "Left", "Right", "Select"]]
+after = { stage = "choosing", cursor = "slot-b" }
+
+[[vector]]
+id = "C-helmet-turned"
+source = "constructed"
+entries = ["HelmetTurns"]
+before = { stage = "confirming", chosen = "slot-a", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false, turn_left = 1 }
+finished = 1
+after = { stage = "leaving" }
+
+[[vector]]
+id = "C-helmet-turning"
+source = "constructed"
+entries = ["HelmetTurns"]
+before = { stage = "confirming", chosen = "slot-a", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false, turn_left = 57 }
+finished = 1
+pressed = [["B"]]
+after = { stage = "confirming", turn_left = 56 }
+
+[[vector]]
+id = "C-after-options"
+source = "constructed"
+entries = ["MenuDims"]
+before = { stage = "options-begin", screen = ["blank", 0], cursor = "slot-a", offered = false }
+finished = 1
+after = { unsupported = true }
+
+[[vector]]
+id = "A-pace-1-brightens"
+source = "constructed"
+entries = ["MenuBrightens"]
+rules = { menu_pace = 1 }
+before = { stage = "brightening", screen = ["lit", 3], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 4], fade_wait = 0 }
+
+[[vector]]
+id = "A-pace-3-unblanks"
+source = "constructed"
+entries = ["MenuLoads", "MenuBrightens"]
+rules = { menu_pace = 3 }
+before = { stage = "loading", load_step = 3, screen = ["blank", 0] }
+finished = 1
+after = { stage = "loading", load_step = 4, screen = ["lit", 0], fade_wait = 2, frame_goes_on = true }
+
+[[vector]]
+id = "A-pace-3-dims"
+source = "constructed"
+entries = ["MenuDims"]
+rules = { menu_pace = 3 }
+before = { stage = "leaving", screen = ["lit", 1], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "options-begin", screen = ["blank", 0] }
+
+[[vector]]
+id = "A-pace-3-waits"
+source = "constructed"
+entries = ["MenuDims"]
+rules = { menu_pace = 3 }
+before = { stage = "leaving", screen = ["lit", 15], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 14], fade_wait = 2 }
+
+[[vector]]
+id = "C-up-no-files-clear"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "clear", offered = false }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "choosing", cursor = "copy", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-up-no-files-copy"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "copy", offered = false }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "choosing", cursor = "slot-c", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-down-no-files-copy"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "copy", offered = false }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "exit", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-down-no-files-clear"
+source = "constructed"
+entries = ["CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "clear", offered = false }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "exit", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-choosing-busy"
+source = "constructed"
+entries = ["ItemPressed", "CursorMoves"]
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-b", offered = false }
+finished = 0
+after = { stage = "choosing", cursor = "slot-b" }
+
+[[vector]]
+id = "C-leaving-busy"
+source = "constructed"
+entries = ["MenuDims"]
+before = { stage = "leaving", screen = ["lit", 7], fade_wait = 0, cursor = "slot-a", offered = false }
+finished = 0
+after = { stage = "leaving", screen = ["lit", 7], fade_wait = 0 }
+
+[[vector]]
+id = "C-confirming-busy"
+source = "constructed"
+entries = ["HelmetTurns"]
+before = { stage = "confirming", chosen = "slot-a", screen = ["lit", 15], fade_wait = 1, cursor = "slot-a", offered = false, turn_left = 20 }
+finished = 0
+after = { stage = "confirming", turn_left = 20 }
+
+[[vector]]
+id = "C-after-title-returns"
+source = "constructed"
+entries = ["ItemPressed"]
+before = { stage = "title-returns", screen = ["lit", 15], cursor = "slot-a", offered = true }
+finished = 1
+after = { unsupported = true }
+
+[[vector]]
+id = "C-after-copy-begins"
+source = "constructed"
+entries = ["ItemPressed"]
+before = { stage = "copy-begins", screen = ["lit", 15], cursor = "slot-a", offered = true }
+finished = 1
+after = { unsupported = true }
+
+[[vector]]
+id = "C-after-clear-begins"
+source = "constructed"
+entries = ["ItemPressed"]
+before = { stage = "clear-begins", screen = ["lit", 15], cursor = "slot-a", offered = true }
+finished = 1
+after = { unsupported = true }
+
+[[vector]]
+id = "A-helmet-turn-3"
+source = "constructed"
+entries = ["ItemPressed", "HelmetTurns"]
+rules = { helmet_turn = 3 }
+before = { stage = "choosing", screen = ["lit", 15], fade_wait = 1, cursor = "slot-c", offered = false }
+finished = 1
+pressed = [["A"]]
+after = { stage = "confirming", chosen = "slot-c", turn_left = 3, requests = ["choice-made"] }
+
+[[vector]]
+id = "A-helmet-turn-2-ends"
+source = "constructed"
+entries = ["HelmetTurns"]
+rules = { helmet_turn = 2 }
+before = { stage = "confirming", chosen = "slot-c", screen = ["lit", 15], fade_wait = 1, cursor = "slot-c", offered = false, turn_left = 1 }
+finished = 1
+after = { stage = "leaving" }

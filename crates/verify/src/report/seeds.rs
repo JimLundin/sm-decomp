@@ -63,18 +63,33 @@ pub(super) fn movie(capture: &str) -> Option<&str> {
     capture.split('-').next()
 }
 
+/// The movie `row` plays: its seed's capture's or, from power-on, the first word of its id.
+pub(super) fn row_movie(row: &Row) -> Option<&str> {
+    match &row.start {
+        Start::PowerOn => row.id.0.split('-').next(),
+        Start::Seed { capture, .. } => movie(capture),
+    }
+}
+
+/// The movie frame of `row`'s cut 0: frame 0 from power-on, else its seed's.
+pub(super) fn first_frame(root: &Path, row: &Row) -> Result<u64, String> {
+    match &row.start {
+        Start::PowerOn => Ok(0),
+        Start::Seed { capture, index } => seed_frame(root, capture, *index),
+    }
+}
+
 /// The row that follows `row` back to back: the lock's row seeded in the same movie whose cut 0
 /// is the frame after `row`'s last cut. It may come from another capture: the new game's
-/// arrival ends one capture's seeds, and Ceres's first room begins another's. None for a row
-/// from power-on or with no such row.
+/// arrival ends one capture's seeds, and Ceres's first room begins another's. A row from
+/// power-on is followed by the movie's seed at the frame after its last cut. None with no such
+/// row.
 ///
 /// # Errors
 /// A table of seeds that can't be read, or more than one row that would follow.
 pub fn following<'a>(root: &Path, lock: &'a Lock, row: &Row) -> Result<Option<&'a Row>, String> {
-    let Start::Seed { capture, index } = &row.start else {
-        return Ok(None);
-    };
-    let next = seed_frame(root, capture, *index)?.saturating_add(row.frames.0);
+    let played = row_movie(row);
+    let next = first_frame(root, row)?.saturating_add(row.frames.0);
     let mut tables = BTreeMap::new();
     let mut found: Option<&'a Row> = None;
     for candidate in &lock.rows {
@@ -85,7 +100,7 @@ pub fn following<'a>(root: &Path, lock: &'a Lock, row: &Row) -> Result<Option<&'
         else {
             continue;
         };
-        if movie(own) != movie(capture) {
+        if movie(own) != played {
             continue;
         }
         if !tables.contains_key(own.as_str()) {

@@ -6,7 +6,7 @@ The rebuild's crates, as planned in
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |
 | `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `types` (the asset key is the clean room's pose) |
-| `game` | production admission, complete owned clean State, concrete selected recipes and their adapters. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions`, `world_doors`, `audio_transport`, `game_time`, `samus_health`, `world_quake`, `world_haze`, `game_random`, `screens_boot`, `screens_arrival` |
+| `game` | production admission, complete owned clean State, concrete selected recipes and their adapters. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions`, `world_doors`, `audio_transport`, `game_time`, `samus_health`, `world_quake`, `world_haze`, `game_random`, `screens_boot`, `screens_arrival`, `screens_title`, `screens_file_select`, `screens_options` |
 | `runtime` | the line compositor. Presentation, sound backends and storage are planned; compositor output feeds nothing back into production State. | `data` |
 | `app` | `super-metroid` currently returns `UnsupportedPowerOn`. Application admission and effect delivery are the target. | `data`, `import`, `game`, `runtime` |
 | `import` | the importers ([assets.md §5](../docs/architecture/assets.md#5-the-importers)): the only code that knows the ROM's layout of the content it writes, into `data`'s formats, and the content cache ([assets.md §6](../docs/architecture/assets.md#6-loading-at-runtime)). `game` and `runtime` never reach it. | `data`, `canonical` (the cache is written with the codec) |
@@ -35,6 +35,9 @@ The rebuild's crates, as planned in
 | `world_haze` | Ceres backdrop haze fade, intensity and band intents. | `types` |
 | `screens_boot` | the console's power-on (`crates/clean/screens_boot`): the logo brightening, held and dimming, the sound driver's load and the settle until the title, built from its spec in the clean room, and its catalogue. | `types` |
 | `screens_arrival` | her arrival at Ceres as a new game begins: the dark wait, the arrival and the fade in up to play. | `types` |
+| `screens_title` | the title (`crates/clean/screens_title`): the load, the skipped opening, the title screen fading in, counting down and left for file select, built from its spec in the clean room, and its catalogue. | `types` |
+| `screens_file_select` | file select (`crates/clean/screens_file_select`): the load, the menu fading in, the cursor, a file chosen and its helmet turning, and the fade to the options menu, built from its spec in the clean room, and its catalogue. | `types` |
+| `screens_options` | the options menu (`crates/clean/screens_options`): the load, the cursor, the language, the special settings and their dissolves, and start game's hand-offs, built from its spec in the clean room, and its catalogue. | `types` |
 
 The clean crates are the folders of `crates/clean/`, one level deep, each a workspace member
 (`crates/clean/*`). A model's package is its domain's name with dashes as underscores, and the

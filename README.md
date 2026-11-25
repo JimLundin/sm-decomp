@@ -9,12 +9,12 @@
 The milestone is **Power-on through Ceres**: the any% movie from power-on through frame 15,196. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-Frames that pass          █████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░   4,955 of 15,196   32.6%
-Continuous from power-on  █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     270 of 15,196    1.8%
+Frames that pass          █████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░   5,252 of 15,196   34.6%
+Continuous from power-on  █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     567 of 15,196    3.7%
 ```
 
 - **Frames that pass:** every frame some reviewed run holds, counted once.
-- **Continuous from power-on:** the frames held back to back from power-on, with nothing fed back. It stops at frame 271: TitleBegins.
+- **Continuous from power-on:** the frames held back to back from power-on, with nothing fed back. It stops at frame 568: HandedOn(IntroBegins).
 - **Longest continuous run from any seed:** frames 8,316 to 10,700 (2,385 frames), `any-ceres-arrival` from its cut 0.
 
 ### By stretch
@@ -24,7 +24,7 @@ The movie in the stretches being worked, in the order it plays; the first not ye
 | Stretch | Movie frames | Frames that pass | Work |
 | --- | --- | --- | --- |
 | Boot | 1 to 270 | ✓ all 270 | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| **Next: The title and menus** | 271 to 568 | `░░░░░░░░░░░░░░░░░░░░` 0 of 298 | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| **Next: The title and menus** | 271 to 568 | `███████████████████░` 297 of 298 | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | The intro | 569 to 7,512 | `████░░░░░░░░░░░░░░░░` 1,498 of 6,944 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | The flight to Ceres | 7,513 to 8,315 | `███████████████████░` 802 of 803 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Her arrival | 8,316 to 8,538 | ✓ all 223 | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |

@@ -1,0 +1,6 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+fast_step = ["SkipDims", "TitleBrightens"]
+demo_wait = ["TitleWaits"]
+leave_pace = ["TitleLeaves"]

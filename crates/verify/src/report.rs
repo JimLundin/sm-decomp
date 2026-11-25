@@ -403,7 +403,10 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "screens-boot",
         bridge: None,
-        adapters: &["production/played/front_end.rs"],
+        adapters: &[
+            "production/played/front_end.rs",
+            "production/played/front_end/power_on.rs",
+        ],
         providers: &[],
         areas: &[("screen", &["fade.rs"])],
         apart: &[
@@ -502,6 +505,53 @@ const DOMAINS: &[Domain] = &[
             ("pages", &["pages.rs"]),
             ("fade", &["fade.rs"]),
         ],
+        apart: &[],
+    },
+    // The title's one file holds every entry, all of them the screen's.
+    Domain {
+        name: "screens-title",
+        bridge: None,
+        adapters: &["production/played/front_end/title.rs"],
+        providers: &[],
+        areas: &[("screen", &["lib.rs"])],
+        apart: &[],
+    },
+    // Every entry is the menu's; the catalogue, the rules and what a frame end brings are the
+    // domain's shared code.
+    Domain {
+        name: "screens-file-select",
+        bridge: None,
+        adapters: &["production/played/front_end/file_select.rs"],
+        providers: &[],
+        areas: &[(
+            "menu",
+            &[
+                "choosing.rs",
+                "confirming.rs",
+                "cursor.rs",
+                "fade.rs",
+                "load.rs",
+            ],
+        )],
+        apart: &[],
+    },
+    Domain {
+        name: "screens-options",
+        bridge: None,
+        adapters: &["production/played/front_end/options.rs"],
+        providers: &[],
+        areas: &[(
+            "menu",
+            &[
+                "choosing.rs",
+                "cursor.rs",
+                "dissolve.rs",
+                "fade.rs",
+                "leave.rs",
+                "load.rs",
+                "special.rs",
+            ],
+        )],
         apart: &[],
     },
 ];

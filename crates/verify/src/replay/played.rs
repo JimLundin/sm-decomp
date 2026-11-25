@@ -19,9 +19,9 @@
 //! the camera replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the
 //! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
 //! console's power-on plays the front end alone, from its own power-on State with no seed:
-//! `power_on`. A row seeded at the flight to Ceres's first frame plays the flight alone, from its
-//! own start: `flight`. A row seeded inside the intro's last pages plays the intro alone, from
-//! its seed: `intro`.
+//! `power_on`, with the screens' fields from the title on in `screens`. A row seeded at the
+//! flight to Ceres's first frame plays the flight alone, from its own start: `flight`. A row
+//! seeded inside the intro's last pages plays the intro alone, from its seed: `intro`.
 
 mod arrival;
 mod ceres_doors;
@@ -37,6 +37,7 @@ mod power_on;
 mod ridley;
 mod rows;
 mod samus;
+mod screens;
 mod seed;
 mod shaft;
 mod start;

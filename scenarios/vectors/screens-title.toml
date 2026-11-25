@@ -1,0 +1,371 @@
+# The title sequence, one frame end at a time: the State before it, how the frame ended, and
+# the State after it.
+#
+# State: `stage` ("begun" for the game as the power-on hands it over, then "loading",
+# "skip-dimming", "preparing", "brightening", "title-screen", "leaving"), `screen` (["blank" or
+# "lit", level 0 to 15]), `countdown` (only while "title-screen" and "leaving") and `next_dim`
+# (frames to the next dim, only while "leaving").
+# Input: `finished`, how many frames of work finished since the last frame end (0, 1 or 2), and
+# `pressed`, one list per finished frame of the buttons just pressed as it began (none when
+# absent).
+# `after` lists the fields the vector checks, and `requests`, the tunes asked for in the frame
+# end, oldest first (none when absent). `stage` in `after` may be a way out: "opening-plays",
+# "demo-begins" or "file-select-begins". `unsupported = true` in `after` means the frame end
+# belongs to the piece after a way out.
+# `rules` overrides the reference rules for the vector: `fast_step` (levels per frame,
+# reference 2), `demo_wait` (frames, reference 900) and `leave_pace` (frames per level,
+# reference 2).
+
+[[vector]]
+id = "R-begins"
+source = "recorded"
+entries = ["TitleBegins"]
+before = { stage = "begun", screen = ["blank", 15] }
+finished = 1
+after = { stage = "loading", screen = ["blank", 15] }
+
+[[vector]]
+id = "C-begun-busy"
+source = "constructed"
+entries = ["TitleBegins"]
+before = { stage = "begun", screen = ["blank", 15] }
+finished = 0
+after = { stage = "begun", screen = ["blank", 15] }
+
+[[vector]]
+id = "R-loading"
+source = "recorded"
+entries = ["TitleLoads"]
+before = { stage = "loading", screen = ["blank", 15] }
+finished = 0
+after = { stage = "loading", screen = ["blank", 0] }
+
+[[vector]]
+id = "R-loading-still-dark"
+source = "recorded"
+entries = ["TitleLoads"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 0
+after = { stage = "loading", screen = ["blank", 0] }
+
+[[vector]]
+id = "R-two-frames"
+source = "recorded"
+entries = ["TitleLoads", "OpeningSkipped", "SkipDims"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 2
+pressed = [["A"], ["A"]]
+after = { stage = "skip-dimming", screen = ["lit", 11], requests = ["title-music", "opening-theme"] }
+
+[[vector]]
+id = "R-skip-dims"
+source = "recorded"
+entries = ["SkipDims"]
+before = { stage = "skip-dimming", screen = ["lit", 11] }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "skip-dimming", screen = ["lit", 9] }
+
+[[vector]]
+id = "R-skip-dark"
+source = "recorded"
+entries = ["SkipDims"]
+before = { stage = "skip-dimming", screen = ["lit", 1] }
+finished = 1
+pressed = [["A"]]
+after = { stage = "preparing", screen = ["blank", 0], requests = ["title-theme"] }
+
+[[vector]]
+id = "R-prepared"
+source = "recorded"
+entries = ["TitlePrepared"]
+before = { stage = "preparing", screen = ["blank", 0] }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "brightening", screen = ["blank", 0] }
+
+[[vector]]
+id = "R-tune-loading"
+source = "recorded"
+entries = ["TitleBrightens"]
+before = { stage = "brightening", screen = ["blank", 0] }
+finished = 0
+after = { stage = "brightening", screen = ["blank", 0] }
+
+[[vector]]
+id = "R-first-light"
+source = "recorded"
+entries = ["TitleBrightens"]
+before = { stage = "brightening", screen = ["blank", 0] }
+finished = 1
+pressed = [["A"]]
+after = { stage = "brightening", screen = ["lit", 2] }
+
+[[vector]]
+id = "R-brightening"
+source = "recorded"
+entries = ["TitleBrightens"]
+before = { stage = "brightening", screen = ["lit", 6] }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 8] }
+
+[[vector]]
+id = "R-full"
+source = "recorded"
+entries = ["TitleBrightens"]
+before = { stage = "brightening", screen = ["lit", 14] }
+finished = 1
+after = { stage = "title-screen", screen = ["lit", 15], countdown = 900 }
+
+[[vector]]
+id = "R-press"
+source = "recorded"
+entries = ["TitleWaits"]
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 900 }
+finished = 1
+pressed = [["A"]]
+after = { stage = "leaving", screen = ["lit", 15], countdown = 899, next_dim = 2 }
+
+[[vector]]
+id = "R-leave-waits"
+source = "recorded"
+entries = ["TitleLeaves"]
+before = { stage = "leaving", screen = ["lit", 15], countdown = 899, next_dim = 2 }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 15], countdown = 899, next_dim = 1 }
+
+[[vector]]
+id = "R-leave-dims"
+source = "recorded"
+entries = ["TitleLeaves"]
+before = { stage = "leaving", screen = ["lit", 15], countdown = 899, next_dim = 1 }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 14], countdown = 899, next_dim = 2 }
+
+[[vector]]
+id = "R-leave-dark"
+source = "recorded"
+entries = ["TitleLeaves"]
+before = { stage = "leaving", screen = ["lit", 1], countdown = 899, next_dim = 1 }
+finished = 1
+after = { stage = "file-select-begins", screen = ["blank", 0] }
+
+[[vector]]
+id = "C-load-done-skip"
+source = "constructed"
+entries = ["TitleLoads", "OpeningSkipped", "SkipDims"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 1
+pressed = [["A"]]
+after = { stage = "skip-dimming", screen = ["lit", 13], requests = ["title-music", "opening-theme"] }
+
+[[vector]]
+id = "C-load-done-b"
+source = "constructed"
+entries = ["OpeningSkipped"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 1
+pressed = [["B"]]
+after = { stage = "skip-dimming", screen = ["lit", 13], requests = ["title-music", "opening-theme"] }
+
+[[vector]]
+id = "C-load-done-start"
+source = "constructed"
+entries = ["OpeningSkipped"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 1
+pressed = [["Start", "X"]]
+after = { stage = "skip-dimming", screen = ["lit", 13], requests = ["title-music", "opening-theme"] }
+
+[[vector]]
+id = "C-load-done-no-press"
+source = "constructed"
+entries = ["TitleLoads"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 1
+after = { stage = "opening-plays", screen = ["lit", 15], requests = ["title-music", "opening-theme"] }
+
+[[vector]]
+id = "C-load-done-other-button"
+source = "constructed"
+entries = ["TitleLoads"]
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 1
+pressed = [["X", "Y", "Select", "Up"]]
+after = { stage = "opening-plays", screen = ["lit", 15], requests = ["title-music", "opening-theme"] }
+
+[[vector]]
+id = "C-skip-ignores-press"
+source = "constructed"
+entries = ["OpeningSkipped", "SkipDims"]
+before = { stage = "skip-dimming", screen = ["lit", 9] }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "skip-dimming", screen = ["lit", 7] }
+
+[[vector]]
+id = "C-skip-dark-exact"
+source = "constructed"
+entries = ["SkipDims"]
+before = { stage = "skip-dimming", screen = ["lit", 2] }
+finished = 1
+after = { stage = "preparing", screen = ["blank", 0], requests = ["title-theme"] }
+
+[[vector]]
+id = "C-unfinished-skip"
+source = "constructed"
+entries = ["SkipDims"]
+before = { stage = "skip-dimming", screen = ["lit", 5] }
+finished = 0
+after = { stage = "skip-dimming", screen = ["lit", 5] }
+
+[[vector]]
+id = "C-full-capped"
+source = "constructed"
+entries = ["TitleBrightens"]
+before = { stage = "brightening", screen = ["lit", 13] }
+finished = 1
+after = { stage = "title-screen", screen = ["lit", 15], countdown = 900 }
+
+[[vector]]
+id = "C-title-waits"
+source = "constructed"
+entries = ["TitleWaits"]
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 500 }
+finished = 1
+after = { stage = "title-screen", screen = ["lit", 15], countdown = 499 }
+
+[[vector]]
+id = "C-title-other-button"
+source = "constructed"
+entries = ["TitleWaits"]
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 500 }
+finished = 1
+pressed = [["X", "Select", "Down"]]
+after = { stage = "title-screen", screen = ["lit", 15], countdown = 499 }
+
+[[vector]]
+id = "C-demo"
+source = "constructed"
+entries = ["TitleWaits"]
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 1 }
+finished = 1
+after = { stage = "demo-begins", screen = ["lit", 15], countdown = 0 }
+
+[[vector]]
+id = "C-demo-over-press"
+source = "constructed"
+entries = ["TitleWaits"]
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 1 }
+finished = 1
+pressed = [["A"]]
+after = { stage = "demo-begins", screen = ["lit", 15], countdown = 0 }
+
+[[vector]]
+id = "C-unfinished-title"
+source = "constructed"
+entries = ["TitleWaits"]
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 500 }
+finished = 0
+pressed = []
+after = { stage = "title-screen", screen = ["lit", 15], countdown = 500 }
+
+[[vector]]
+id = "C-leave-ignores-press"
+source = "constructed"
+entries = ["TitleLeaves"]
+before = { stage = "leaving", screen = ["lit", 10], countdown = 899, next_dim = 2 }
+finished = 1
+pressed = [["B"]]
+after = { stage = "leaving", screen = ["lit", 10], countdown = 899, next_dim = 1 }
+
+[[vector]]
+id = "C-unfinished-leaving"
+source = "constructed"
+entries = ["TitleLeaves"]
+before = { stage = "leaving", screen = ["lit", 10], countdown = 899, next_dim = 1 }
+finished = 0
+after = { stage = "leaving", screen = ["lit", 10], countdown = 899, next_dim = 1 }
+
+[[vector]]
+id = "C-after-file-select"
+source = "constructed"
+entries = ["TitleLeaves"]
+before = { stage = "file-select-begins", screen = ["blank", 0] }
+finished = 1
+after = { unsupported = true }
+
+[[vector]]
+id = "A-fast-step-3-dims"
+source = "constructed"
+entries = ["SkipDims"]
+rules = { fast_step = 3 }
+before = { stage = "skip-dimming", screen = ["lit", 12] }
+finished = 1
+after = { stage = "skip-dimming", screen = ["lit", 9] }
+
+[[vector]]
+id = "A-fast-step-15-dark-at-once"
+source = "constructed"
+entries = ["TitleLoads", "OpeningSkipped", "SkipDims"]
+rules = { fast_step = 15 }
+before = { stage = "loading", screen = ["blank", 0] }
+finished = 1
+pressed = [["A"]]
+after = { stage = "preparing", screen = ["blank", 0], requests = ["title-music", "opening-theme", "title-theme"] }
+
+[[vector]]
+id = "A-fast-step-3-brightens"
+source = "constructed"
+entries = ["TitleBrightens"]
+rules = { fast_step = 3 }
+before = { stage = "brightening", screen = ["blank", 0] }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 3] }
+
+[[vector]]
+id = "A-demo-wait-5"
+source = "constructed"
+entries = ["TitleBrightens", "TitleWaits"]
+rules = { demo_wait = 5 }
+before = { stage = "brightening", screen = ["lit", 14] }
+finished = 1
+after = { stage = "title-screen", screen = ["lit", 15], countdown = 5 }
+
+[[vector]]
+id = "A-demo-wait-1"
+source = "constructed"
+entries = ["TitleWaits"]
+rules = { demo_wait = 1 }
+before = { stage = "brightening", screen = ["lit", 14] }
+finished = 2
+pressed = [[], ["A"]]
+after = { stage = "demo-begins", screen = ["lit", 15], countdown = 0 }
+
+[[vector]]
+id = "A-leave-pace-3-press"
+source = "constructed"
+entries = ["TitleWaits", "TitleLeaves"]
+rules = { leave_pace = 3 }
+before = { stage = "title-screen", screen = ["lit", 15], countdown = 900 }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "leaving", screen = ["lit", 15], countdown = 899, next_dim = 3 }
+
+[[vector]]
+id = "A-leave-pace-3-dims"
+source = "constructed"
+entries = ["TitleLeaves"]
+rules = { leave_pace = 3 }
+before = { stage = "leaving", screen = ["lit", 15], countdown = 899, next_dim = 1 }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 14], countdown = 899, next_dim = 3 }
+
+[[vector]]
+id = "A-leave-pace-1"
+source = "constructed"
+entries = ["TitleLeaves"]
+rules = { leave_pace = 1 }
+before = { stage = "leaving", screen = ["lit", 9], countdown = 899, next_dim = 1 }
+finished = 2
+after = { stage = "leaving", screen = ["lit", 7], countdown = 899, next_dim = 1 }

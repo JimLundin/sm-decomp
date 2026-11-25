@@ -28,6 +28,9 @@ world_doors = { path = "../clean/world_doors" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 enemy_interactions = { path = "../clean/enemy_interactions" }
 screens_boot = { path = "../clean/screens_boot" }
+screens_title = { path = "../clean/screens_title" }
+screens_file_select = { path = "../clean/screens_file_select" }
+screens_options = { path = "../clean/screens_options" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 import = { path = "../import" }

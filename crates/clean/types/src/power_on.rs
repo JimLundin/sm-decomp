@@ -36,6 +36,18 @@ impl Level {
     pub const fn get(self) -> u8 {
         self.0
     }
+
+    /// One level brighter, stopping at full.
+    #[must_use]
+    pub fn brighter(self) -> Self {
+        Self::new(self.0.saturating_add(1)).unwrap_or(Self::FULL)
+    }
+
+    /// One level darker, stopping at dark.
+    #[must_use]
+    pub const fn darker(self) -> Self {
+        Self(self.0.saturating_sub(1))
+    }
 }
 
 impl TryFrom<u8> for Level {

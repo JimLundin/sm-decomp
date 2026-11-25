@@ -15,7 +15,7 @@ use std::path::Path;
 use serde::Deserialize;
 
 use super::plan::{Plan, seed};
-use super::seeds::{following, seed_frame};
+use super::seeds::{first_frame, following, row_movie, seed_frame};
 use super::{COMMAND, grouped, read};
 use crate::lock::{Lock, Row, RowId, Start};
 
@@ -129,31 +129,14 @@ fn listed(root: &Path, text: &str, movie: &str) -> Result<Vec<Run>, String> {
         .collect()
 }
 
-/// Whether `row` plays `movie`: its seed's capture is the movie's, or, from power-on, its id
-/// starts with the movie's name.
-fn of_movie(row: &Row, movie: &str) -> bool {
-    match &row.start {
-        Start::PowerOn => row.id.0.split('-').next() == Some(movie),
-        Start::Seed { capture, .. } => super::seeds::movie(capture) == Some(movie),
-    }
-}
-
 /// The movie frame of the seed `index` of `capture`.
 fn frame_at(root: &Path, (capture, index): (&str, u32)) -> Result<u64, String> {
     seed_frame(root, capture, index)
 }
 
-/// The movie frame of `row`'s cut 0.
-fn first_frame(root: &Path, row: &Row) -> Result<u64, String> {
-    match &row.start {
-        Start::PowerOn => Ok(0),
-        Start::Seed { capture, index } => frame_at(root, (capture, *index)),
-    }
-}
-
 /// The cuts that follow `row`'s cut 0 back to back, reached as far as past cut `wanted`: its
 /// own, and those of the rows that follow it with no frame between, from whichever capture of
-/// the movie. A row from power-on has only its own.
+/// the movie.
 fn reach(root: &Path, lock: &Lock, row: &Row, wanted: u64) -> Result<u64, String> {
     let mut cuts = row.frames.0;
     let mut last = row;
@@ -177,7 +160,7 @@ fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<R
     let row = lock
         .row(&RowId(listing.row.clone()))
         .ok_or_else(|| wrong(format!("no such row in {LOCK}")))?;
-    if !of_movie(row, movie) {
+    if row_movie(row) != Some(movie) {
         return Err(wrong(format!("not a row of the {movie} movie")));
     }
     let first = first_frame(root, row)?;

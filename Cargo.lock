@@ -107,8 +107,11 @@ dependencies = [
  "samus_movement",
  "screens_arrival",
  "screens_boot",
+ "screens_file_select",
  "screens_flight",
  "screens_intro",
+ "screens_options",
+ "screens_title",
  "serde",
  "types",
  "weapons_projectiles",
@@ -267,6 +270,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "screens_file_select"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
 name = "screens_flight"
 version = "0.1.0"
 dependencies = [
@@ -278,6 +291,26 @@ dependencies = [
 
 [[package]]
 name = "screens_intro"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "screens_options"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "screens_title"
 version = "0.1.0"
 dependencies = [
  "enum-map",
@@ -427,8 +460,11 @@ dependencies = [
  "samus_movement",
  "screens_arrival",
  "screens_boot",
+ "screens_file_select",
  "screens_flight",
  "screens_intro",
+ "screens_options",
+ "screens_title",
  "serde",
  "toml",
  "types",

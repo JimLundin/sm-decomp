@@ -18,16 +18,18 @@
 movie = "any"
 
 # The any% movie from power-on: black, the Nintendo logo brightening, held and dimming, black
-# while the sound driver loads and the game settles, until the title begins, a part of the
+# while the sound driver loads and the game settles; the title fading in and counting down,
+# file select with a new file chosen in slot A, the options menu with the moonwalk setting
+# turned on, and start game fading out, until the options hand on to the intro, a part of the
 # front end not yet owned.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 567
-held = 270
-stop = { failed = "TitleBegins" }
+end = 568
+held = 567
+stop = { failed = "HandedOn(IntroBegins)" }
 seed_frame = 0
-frames = [1, 270]
+frames = [1, 567]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it

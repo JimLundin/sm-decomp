@@ -2,7 +2,8 @@
 //!
 //! Each frame of work begins by drawing the game's random number once (game-random's
 //! `AdvanceRandom`), which the baby and the Ceres doors read. State carries the number; the
-//! caller replaces it where the loop doesn't own every draw, as through a passage.
+//! caller replaces it where the loop doesn't own every draw, as through a passage. Ahead of
+//! room play the front end's screens carry the same draw and the sixteen-bit count as [`Counts`].
 
 use super::passage::Passing;
 use interface_hud::FrameCount;
@@ -36,6 +37,32 @@ impl State {
         Self {
             count: counted(self.count, finishing),
             finished_frames: finished(self.finished_frames, finishing),
+            random,
+        }
+    }
+}
+
+/// The counts ahead of room play, from the title on: the count of finished frames in sixteen
+/// bits and the random number, which the screens leave to the frame owner.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Counts {
+    /// The count of finished frames, which the power-on restarts as the game settles.
+    pub finished_frames: u16,
+    /// The game's random number as the last frame left it.
+    pub random: types::RandomSequence,
+}
+
+impl Counts {
+    /// The counts after a frame end at which `finished` frames of work finished, `drawn` of
+    /// them having drawn the random number as they began. A frame of work drew as it began,
+    /// but only a finished frame end shows it, so it is counted where the frame finishes.
+    pub(super) fn after(self, finished: u16, drawn: u16) -> Self {
+        let mut random = self.random;
+        for _ in 0..drawn {
+            game_random::advance_random(&mut random);
+        }
+        Self {
+            finished_frames: self.finished_frames.wrapping_add(finished),
             random,
         }
     }

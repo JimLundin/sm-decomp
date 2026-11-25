@@ -25,6 +25,9 @@ screens_flight = { path = "../clean/screens_flight" }
 screens_intro = { path = "../clean/screens_intro" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 screens_boot = { path = "../clean/screens_boot" }
+screens_title = { path = "../clean/screens_title" }
+screens_file_select = { path = "../clean/screens_file_select" }
+screens_options = { path = "../clean/screens_options" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 enum-map = "=3.1.0"

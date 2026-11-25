@@ -6,11 +6,266 @@ use enum_map::{Enum, EnumMap};
 
 pub mod arrival;
 pub mod brightness;
+pub mod file_select;
 pub mod flight;
 pub mod haze;
 pub mod intro;
+pub mod options;
 pub mod power_on;
 pub mod quake;
+
+/// The title sequence's State: its stage and the screen, from the power-on's hand-over until
+/// file select begins. The game carries it from one frame end to the next and may save and
+/// restore it.
+pub mod title {
+    use serde::{Deserialize, Serialize};
+
+    use crate::power_on::ScreenLight;
+
+    /// Spec: `TitleWaits`. The longest demo wait, 32,767 finished frames.
+    const LONGEST_DEMO_WAIT: u16 = 32_767;
+    /// Spec: `TitleLeaves`. The slowest leaving pace, 128 finished frames per level.
+    const SLOWEST_LEAVE_PACE: u8 = 128;
+    /// Spec: `TitleWaits`. The reference demo wait, 900 finished frames.
+    const REFERENCE_DEMO_WAIT: u16 = 900;
+    /// Spec: `TitleLeaves`. The reference leaving pace, 2 finished frames per level.
+    const REFERENCE_LEAVE_PACE: u8 = 2;
+
+    /// Spec: `TitleWaits`. How many finished frames the title screen shows before the demos
+    /// begin: 1 to 32,767.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub struct DemoWait(u16);
+
+    impl DemoWait {
+        /// The reference game's wait, 900 frames.
+        pub const REFERENCE: Self = Self(REFERENCE_DEMO_WAIT);
+
+        /// The wait of this many frames, if it is one (1 to 32,767).
+        #[must_use]
+        pub const fn new(frames: u16) -> Option<Self> {
+            if frames >= 1 && frames <= LONGEST_DEMO_WAIT {
+                Some(Self(frames))
+            } else {
+                None
+            }
+        }
+
+        /// Its frames.
+        #[must_use]
+        pub const fn get(self) -> u16 {
+            self.0
+        }
+    }
+
+    /// Spec: `TitleLeaves`. How many finished frames each level of the leaving dim lasts: 1 to
+    /// 128.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub struct LeavePace(u8);
+
+    impl LeavePace {
+        /// The reference game's pace, 2 frames per level.
+        pub const REFERENCE: Self = Self(REFERENCE_LEAVE_PACE);
+
+        /// The pace of this many frames per level, if it is one (1 to 128).
+        #[must_use]
+        pub const fn new(frames: u8) -> Option<Self> {
+            if frames >= 1 && frames <= SLOWEST_LEAVE_PACE {
+                Some(Self(frames))
+            } else {
+                None
+            }
+        }
+
+        /// Its frames per level.
+        #[must_use]
+        pub const fn get(self) -> u8 {
+            self.0
+        }
+    }
+
+    /// Spec: `TitleWaits`. Finished frames left before the demos begin: 0 to 32,767.
+    ///
+    /// It is 1 to the demo wait while the title screen shows, and stays where it was, 0 to the
+    /// demo wait less one, while the title screen is left.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(try_from = "u16", into = "u16")]
+    pub struct DemoCountdown(u16);
+
+    impl DemoCountdown {
+        /// The countdown run out: the demos begin.
+        pub const RAN_OUT: Self = Self(0);
+
+        /// The countdown of this many frames, if it is one (0 to 32,767).
+        #[must_use]
+        pub const fn new(frames: u16) -> Option<Self> {
+            if frames <= LONGEST_DEMO_WAIT {
+                Some(Self(frames))
+            } else {
+                None
+            }
+        }
+
+        /// The whole wait: the countdown as the title screen reaches full.
+        #[must_use]
+        pub const fn whole(wait: DemoWait) -> Self {
+            Self(wait.0)
+        }
+
+        /// One finished frame off the countdown. A countdown already run out stays so.
+        #[must_use]
+        pub const fn counted_down(self) -> Self {
+            Self(self.0.saturating_sub(1))
+        }
+
+        /// Its frames.
+        #[must_use]
+        pub const fn get(self) -> u16 {
+            self.0
+        }
+    }
+
+    impl TryFrom<u16> for DemoCountdown {
+        type Error = &'static str;
+
+        fn try_from(frames: u16) -> Result<Self, Self::Error> {
+            Self::new(frames).ok_or("a demo countdown must be 0 to 32,767")
+        }
+    }
+
+    impl From<DemoCountdown> for u16 {
+        fn from(countdown: DemoCountdown) -> Self {
+            countdown.get()
+        }
+    }
+
+    /// Spec: `TitleLeaves`. Finished frames until the leaving title screen next dims: 1 to 128.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(try_from = "u8", into = "u8")]
+    pub struct DimDelay(u8);
+
+    impl DimDelay {
+        /// The delay of this many frames, if it is one (1 to 128).
+        #[must_use]
+        pub const fn new(frames: u8) -> Option<Self> {
+            if frames >= 1 && frames <= SLOWEST_LEAVE_PACE {
+                Some(Self(frames))
+            } else {
+                None
+            }
+        }
+
+        /// A whole level's delay: the leaving pace.
+        #[must_use]
+        pub const fn whole(pace: LeavePace) -> Self {
+            Self(pace.0)
+        }
+
+        /// One finished frame off the delay: the frames still to wait, or none when the screen
+        /// dims now.
+        #[must_use]
+        pub const fn counted_down(self) -> Option<Self> {
+            Self::new(self.0.saturating_sub(1))
+        }
+
+        /// Its frames.
+        #[must_use]
+        pub const fn get(self) -> u8 {
+            self.0
+        }
+    }
+
+    impl TryFrom<u8> for DimDelay {
+        type Error = &'static str;
+
+        fn try_from(frames: u8) -> Result<Self, Self::Error> {
+            Self::new(frames).ok_or("a dim delay must be 1 to 128")
+        }
+    }
+
+    impl From<DimDelay> for u8 {
+        fn from(delay: DimDelay) -> Self {
+            delay.get()
+        }
+    }
+
+    /// Where the title sequence stands. The last three are its ways out, which belong to the
+    /// piece that follows.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    pub enum TitleStage {
+        /// The game settled; the title's first frame not yet finished.
+        Begun,
+        /// Black while the title's pictures load.
+        Loading,
+        /// The skipped opening fading out.
+        SkipDimming,
+        /// Black while the title screen is prepared and its tune loads.
+        Preparing,
+        /// The title screen fading in.
+        Brightening,
+        /// The title screen at full, counting down to the demos.
+        TitleScreen {
+            /// Frames left before the demos.
+            countdown: DemoCountdown,
+        },
+        /// The title screen slowly dimming on the way to file select.
+        Leaving {
+            /// The countdown as the title screen was left, kept as it was.
+            countdown: DemoCountdown,
+            /// Frames until the next dim.
+            next_dim: DimDelay,
+        },
+        /// Way out: nothing was pressed and the opening plays on.
+        OpeningPlays,
+        /// Way out: the countdown ran out and the demos begin.
+        DemoBegins,
+        /// Way out: the title screen reached dark and file select begins.
+        FileSelectBegins,
+    }
+
+    impl TitleStage {
+        /// The countdown to the demos, where the title screen has one: while it shows, while
+        /// it is left, and run out as the demos begin.
+        #[must_use]
+        pub const fn countdown(self) -> Option<DemoCountdown> {
+            match self {
+                Self::TitleScreen { countdown } | Self::Leaving { countdown, .. } => {
+                    Some(countdown)
+                }
+                Self::DemoBegins => Some(DemoCountdown::RAN_OUT),
+                Self::Begun
+                | Self::Loading
+                | Self::SkipDimming
+                | Self::Preparing
+                | Self::Brightening
+                | Self::OpeningPlays
+                | Self::FileSelectBegins => None,
+            }
+        }
+    }
+
+    /// The title sequence's complete State. A caller may set any stage and screen the spec
+    /// allows, read them back, carry them forward and restore them.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct TitleState {
+        /// Where the sequence stands, with its countdown and dim delay.
+        pub stage: TitleStage,
+        /// The screen at the last frame end.
+        pub screen: ScreenLight,
+    }
+
+    impl TitleState {
+        /// Spec: `TitleBegins`. The State as the game settles: begun, with the power-on's
+        /// screen as it hands over.
+        #[must_use]
+        pub const fn begun(screen: ScreenLight) -> Self {
+            Self {
+                stage: TitleStage::Begun,
+                screen,
+            }
+        }
+    }
+}
 
 mod random;
 pub use random::{RandomNumber, RandomSequence};

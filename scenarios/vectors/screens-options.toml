@@ -1,0 +1,335 @@
+# The options menu, one frame end at a time: the State before it, how the frame ended, and the
+# State after it.
+#
+# State: `stage` ("loading", "brightening", "choosing", "special", "dissolving-out",
+# "dissolving-in", "leaving", "returning"), `load_step` (0 or 1, only while "loading"), `screen`
+# (["blank" or "lit", level 0 to 15]), `cursor` (on the options: "start-game", "english",
+# "japanese", "controls", "special"; on the special settings: "weapon-reset", "moonwalk", "end";
+# while dissolving, "start-game" towards the options, "special" or "controls" towards those),
+# `mosaic` (the dissolve's block size, 0 to 15; absent when off), `begins` (how the chosen file
+# begins, only while "leaving": "intro" or "ceres-escape"), and the settings `japanese`,
+# `moonwalk` and `weapon_reset` (true or false).
+# Input: `finished`, 1 when the game had its work done by the frame end, 0 when still busy;
+# `pressed`, one list per finished frame of the buttons just pressed as it began (none when
+# absent); `input.begins`, how the chosen file begins: "intro" (a new file), "ceres-escape" or
+# "play" ("intro" when absent).
+# `after` lists the fields the vector checks, and `requests`, the sounds asked for, oldest first
+# (none when absent): "cursor-moved", "selected". `stage` in `after` may be a way out:
+# "intro-begins", "escape-begins", "play-continues", "file-select-again" or "controls-begin".
+# `unsupported = true` means the frame end belongs to the piece after a way out.
+
+[[vector]]
+id = "R-load-first"
+source = "recorded"
+entries = ["OptionsLoad"]
+before = { stage = "loading", screen = ["blank", 0], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "loading", load_step = 1, screen = ["blank", 0] }
+
+[[vector]]
+id = "R-load-busy"
+source = "recorded"
+entries = ["OptionsLoad"]
+before = { stage = "loading", load_step = 1, screen = ["blank", 0], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 0
+after = { stage = "loading", load_step = 1, screen = ["blank", 0] }
+
+[[vector]]
+id = "R-load-done"
+source = "recorded"
+entries = ["OptionsLoad"]
+before = { stage = "loading", load_step = 1, screen = ["blank", 0], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "brightening", screen = ["blank", 0], cursor = "start-game" }
+
+[[vector]]
+id = "R-brighten-first"
+source = "recorded"
+entries = ["OptionsBrighten"]
+before = { stage = "brightening", screen = ["blank", 0], cursor = "start-game", japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "brightening", screen = ["lit", 1] }
+
+[[vector]]
+id = "R-brighten-full"
+source = "recorded"
+entries = ["OptionsBrighten"]
+before = { stage = "brightening", screen = ["lit", 14], cursor = "start-game", japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "choosing", screen = ["lit", 15] }
+
+[[vector]]
+id = "R-up-then-a"
+source = "recorded"
+entries = ["OptionsCursor", "OptionsChoice", "Dissolve"]
+before = { stage = "choosing", screen = ["lit", 15], cursor = "start-game", japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Up", "A"]]
+after = { stage = "dissolving-out", mosaic = 0, cursor = "special", screen = ["lit", 15], requests = ["cursor-moved", "selected"] }
+
+[[vector]]
+id = "R-dissolve-out"
+source = "recorded"
+entries = ["Dissolve"]
+before = { stage = "dissolving-out", mosaic = 0, cursor = "special", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "dissolving-out", mosaic = 1, screen = ["lit", 14] }
+
+[[vector]]
+id = "R-dissolve-dark"
+source = "recorded"
+entries = ["Dissolve"]
+before = { stage = "dissolving-out", mosaic = 14, cursor = "special", screen = ["lit", 1], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "dissolving-in", mosaic = 15, screen = ["blank", 0] }
+
+[[vector]]
+id = "R-dissolve-in"
+source = "recorded"
+entries = ["Dissolve"]
+before = { stage = "dissolving-in", mosaic = 15, cursor = "special", screen = ["blank", 0], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "dissolving-in", mosaic = 14, screen = ["lit", 1] }
+
+[[vector]]
+id = "R-dissolve-into-special"
+source = "recorded"
+entries = ["Dissolve"]
+before = { stage = "dissolving-in", mosaic = 1, cursor = "special", screen = ["lit", 14], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "special", cursor = "weapon-reset", screen = ["lit", 15] }
+
+[[vector]]
+id = "R-moonwalk-on"
+source = "recorded"
+entries = ["SpecialSettings"]
+before = { stage = "special", cursor = "weapon-reset", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Down", "Left"]]
+after = { stage = "special", cursor = "moonwalk", moonwalk = true, weapon_reset = false, requests = ["cursor-moved", "selected"] }
+
+[[vector]]
+id = "R-special-back"
+source = "recorded"
+entries = ["SpecialSettings", "Dissolve"]
+before = { stage = "special", cursor = "moonwalk", screen = ["lit", 15], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+pressed = [["B"]]
+after = { stage = "dissolving-out", mosaic = 0, cursor = "start-game", moonwalk = true, requests = ["selected"] }
+
+[[vector]]
+id = "R-dissolve-into-options"
+source = "recorded"
+entries = ["Dissolve"]
+before = { stage = "dissolving-in", mosaic = 1, cursor = "start-game", screen = ["lit", 14], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+after = { stage = "choosing", cursor = "start-game", screen = ["lit", 15] }
+
+[[vector]]
+id = "R-start-game"
+source = "recorded"
+entries = ["OptionsChoice"]
+before = { stage = "choosing", cursor = "start-game", screen = ["lit", 15], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+pressed = [["A"]]
+after = { stage = "leaving", begins = "intro", screen = ["lit", 15], moonwalk = true, requests = ["selected"] }
+
+[[vector]]
+id = "R-leaving"
+source = "recorded"
+entries = ["OptionsLeave"]
+before = { stage = "leaving", begins = "intro", cursor = "start-game", screen = ["lit", 15], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+after = { stage = "leaving", screen = ["lit", 14] }
+
+[[vector]]
+id = "R-intro-begins"
+source = "recorded"
+entries = ["OptionsLeave"]
+before = { stage = "leaving", begins = "intro", cursor = "start-game", screen = ["lit", 1], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+after = { stage = "intro-begins", screen = ["blank", 0], moonwalk = true, japanese = false, weapon_reset = false }
+
+[[vector]]
+id = "C-down-wraps"
+source = "constructed"
+entries = ["OptionsCursor"]
+before = { stage = "choosing", cursor = "special", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Down"]]
+after = { stage = "choosing", cursor = "start-game", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-up-beats-down"
+source = "constructed"
+entries = ["OptionsCursor"]
+before = { stage = "choosing", cursor = "controls", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Up", "Down"]]
+after = { stage = "choosing", cursor = "japanese", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-language"
+source = "constructed"
+entries = ["OptionsChoice"]
+before = { stage = "choosing", cursor = "japanese", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Start"]]
+after = { stage = "choosing", cursor = "start-game", japanese = true, requests = ["selected"] }
+
+[[vector]]
+id = "C-language-back"
+source = "constructed"
+entries = ["OptionsChoice"]
+before = { stage = "choosing", cursor = "english", screen = ["lit", 15], japanese = true, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["A"]]
+after = { stage = "choosing", cursor = "start-game", japanese = false, requests = ["selected"] }
+
+[[vector]]
+id = "C-controls"
+source = "constructed"
+entries = ["OptionsChoice", "Dissolve"]
+before = { stage = "choosing", cursor = "controls", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["A"]]
+after = { stage = "dissolving-out", mosaic = 0, requests = ["selected"] }
+
+[[vector]]
+id = "C-controls-dark"
+source = "constructed"
+entries = ["Dissolve"]
+before = { stage = "dissolving-out", mosaic = 14, cursor = "controls", screen = ["lit", 1], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "dissolving-in", mosaic = 15, cursor = "controls", screen = ["blank", 0] }
+
+[[vector]]
+id = "C-controls-begin"
+source = "constructed"
+entries = ["Dissolve"]
+before = { stage = "dissolving-in", mosaic = 1, cursor = "controls", screen = ["lit", 14], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "controls-begin", screen = ["lit", 15] }
+
+[[vector]]
+id = "C-b-returns"
+source = "constructed"
+entries = ["OptionsChoice", "OptionsLeave"]
+before = { stage = "choosing", cursor = "english", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["B", "A", "Down"]]
+after = { stage = "returning", cursor = "japanese", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-return-dark"
+source = "constructed"
+entries = ["OptionsLeave"]
+before = { stage = "returning", cursor = "english", screen = ["lit", 1], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "file-select-again", screen = ["blank", 0] }
+
+[[vector]]
+id = "C-resumes-play"
+source = "constructed"
+entries = ["OptionsChoice"]
+before = { stage = "choosing", cursor = "start-game", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Start"]]
+input = { begins = "play" }
+after = { stage = "play-continues", screen = ["lit", 15], requests = ["selected"] }
+
+[[vector]]
+id = "C-weapon-reset"
+source = "constructed"
+entries = ["SpecialSettings"]
+before = { stage = "special", cursor = "weapon-reset", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Right"]]
+after = { stage = "special", weapon_reset = true, moonwalk = false, requests = ["selected"] }
+
+[[vector]]
+id = "C-moonwalk-off"
+source = "constructed"
+entries = ["SpecialSettings"]
+before = { stage = "special", cursor = "moonwalk", screen = ["lit", 15], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+pressed = [["A"]]
+after = { stage = "special", moonwalk = false, requests = ["selected"] }
+
+[[vector]]
+id = "C-special-up-wraps"
+source = "constructed"
+entries = ["SpecialSettings"]
+before = { stage = "special", cursor = "weapon-reset", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Up"]]
+after = { stage = "special", cursor = "end", requests = ["cursor-moved"] }
+
+[[vector]]
+id = "C-special-end"
+source = "constructed"
+entries = ["SpecialSettings", "Dissolve"]
+before = { stage = "special", cursor = "end", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["Left"]]
+after = { stage = "dissolving-out", mosaic = 0, cursor = "start-game", requests = ["selected"] }
+
+[[vector]]
+id = "C-special-b-over-toggle"
+source = "constructed"
+entries = ["SpecialSettings"]
+before = { stage = "special", cursor = "moonwalk", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["B", "A"]]
+after = { stage = "dissolving-out", moonwalk = false, requests = ["selected"] }
+
+[[vector]]
+id = "C-other-buttons"
+source = "constructed"
+entries = ["OptionsCursor", "OptionsChoice"]
+before = { stage = "choosing", cursor = "english", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["X", "Y", "Left", "Select"]]
+after = { stage = "choosing", cursor = "english", japanese = false }
+
+[[vector]]
+id = "C-busy-dissolve"
+source = "constructed"
+entries = ["Dissolve"]
+before = { stage = "dissolving-out", mosaic = 3, cursor = "special", screen = ["lit", 11], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 0
+after = { stage = "dissolving-out", mosaic = 3, screen = ["lit", 11] }
+
+[[vector]]
+id = "C-after-intro-begins"
+source = "constructed"
+entries = ["OptionsLeave"]
+before = { stage = "intro-begins", cursor = "start-game", screen = ["blank", 0], japanese = false, moonwalk = true, weapon_reset = false }
+finished = 1
+after = { unsupported = true }
+
+[[vector]]
+id = "C-escape-file"
+source = "constructed"
+entries = ["OptionsChoice"]
+before = { stage = "choosing", cursor = "start-game", screen = ["lit", 15], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+pressed = [["A"]]
+input = { begins = "ceres-escape" }
+after = { stage = "leaving", begins = "ceres-escape", screen = ["lit", 15], requests = ["selected"] }
+
+[[vector]]
+id = "C-escape-begins"
+source = "constructed"
+entries = ["OptionsLeave"]
+before = { stage = "leaving", begins = "ceres-escape", cursor = "start-game", screen = ["lit", 1], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { stage = "escape-begins", screen = ["blank", 0] }
+
+[[vector]]
+id = "C-after-escape-begins"
+source = "constructed"
+entries = ["OptionsLeave"]
+before = { stage = "escape-begins", cursor = "start-game", screen = ["blank", 0], japanese = false, moonwalk = false, weapon_reset = false }
+finished = 1
+after = { unsupported = true }
