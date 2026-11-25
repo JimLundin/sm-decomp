@@ -10,7 +10,7 @@ time. Vectors: [`scenarios/vectors/interface-hud.toml`](../../scenarios/vectors/
 
 **Scope.** The status bar, its mini-map, and the escape countdown displayed over the room (§5.1):
 its start, its wait, its running down, its slide into the corner, its picture and its running
-out. It covers what each of
+out. It also puts up the HUD when a new file starts at Ceres (§2). It covers what each of
 the HUD's cells shows from one frame to the next, the selected item and the one-shot item, how
 Select and item cancel change them, and the cells of her map she has explored. It reads the
 values it shows from the domains that own them (§1.3), and draws pictures the importer supplies
@@ -23,8 +23,8 @@ frames.
 shot does to the selection (the weapons drop it); the energy, ammunition and items themselves
 (damage, pickups, the stations that refill her); the pictures of the HUD and of her map (the
 importer); when a sound request is heard (the sound
-domain's queue); the HUD's first contents when a game starts or the pause screen gives the HUD
-back (the load flow, the pause screen); moving the HUD's cells to the screen (the video
+domain's queue); rebuilding the HUD when loading a saved file or in the pause screen (the load flow, the pause
+screen); moving the HUD's cells to the screen (the video
 encoder); the pause screen's own map, which reads the explored cells this domain keeps; when the
 escape's countdown starts and what the escape does when it runs out (the escape's scene), and
 drawing the countdown's picture (the sprite encoder).
@@ -100,18 +100,25 @@ when Select cycles.
 | her room | its top-left cell on her map, and its size in 16 px blocks across and down | `Exploring`, `MiniMapStill` |
 | her map | each cell's picture with its flips; the cells it charts; whether she has collected it; its beyond pictures (`LastColumnsShift`) | `MiniMapWindow`, `DiagonalPicture` |
 | the HUD's pictures | content, by name (§1.4), from the importer | every entry that draws a cell |
+| room setup puts up the new-file HUD | an event for the prepared Ceres room, before arrival | `NewFileStatusBar`, `NewFileMiniMap` |
+| the opening frame of the status bar | one row of 32 cells above the three HUD rows, then three rows of 32 cells (§1.4), from the importer | `NewFileStatusBar` |
+| the opening map preview | 3 rows of 5 cells, each empty or a map picture with flips, from the prepared room's content | `NewFileMiniMap` |
+| fresh energy | now and capacity, in energy units, from the new file's progress | `NewFileStatusBar` |
+| frame count at setup | 0 to 255, the game clock as setup puts up the HUD | `NewFileMiniMap` through `HerBlink` |
 
 **Frames of play.** The HUD takes one frame of play for each frame the game plays her and the
 enemies: in a room, and also while the picture fades in after a load, while it fades out on
 the way to the pause menu and in again after it, while the reserve tanks refill, in her death's
 first frames, while the time runs out, on Ceres's last frames after she reaches its elevator, as
 she escapes Zebes, and in the demos that play by themselves. The frame on which she enters a
-door is one: the door's passage starts after it. Two other domains replace the HUD's State on
-frames of their own, which are neither frames of play nor steps outside play: the load flow's
-start-up of the HUD as a game starts or loads, and the pause screen's frames, on which it draws
-the status bar itself (§6). Every other frame of the running game, once the HUD is drawn, is a
-step outside play (`OutOfPlay`): a door's passage, a load's other frames, the cinematics (the
-opening's scenes among them).
+door is one: the door's passage starts after it. For a fresh file at Ceres, room setup puts up
+the HUD while the screen is still black (§2). Her arrival later sends the mini-map turn-on
+as a step outside play. The first ordinary HUD update is the first frame of the fade.
+
+Saved-file loads, the Zebes landing and demo startup have their own HUD replacements,
+owned by the load flow. The pause screen draws the status bar on its own frames (§6).
+The remaining frames with a HUD are steps outside play (`OutOfPlay`), including the rest of
+room setup, door passages and cinematics.
 
 ### 1.4 The HUD's pictures
 
@@ -141,6 +148,10 @@ the blank cell a highlight tests is the blank's picture unflipped (`SelectionHig
 pickup tests the blank's picture alone (`IconsAppear`), and the diagonal's test compares numbers
 (`DiagonalPicture`).
 
+The opening frame's four rows are imported with their colour sets and flips. The upper row is
+a fixed part of the status bar. The video encoder receives it when the HUD goes up. The three
+lower rows form the initial grid before the HUD draws the gauge and opening map preview.
+
 The pictures are always supplied: the spec defines the HUD only with a set the importer gives it,
 as the game always has its own. A stand-in for pictures not yet imported is outside the spec: no
 rule says what it shows, and no vector or record checks it.
@@ -162,6 +173,36 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 ---
 
 ## 2. The status bar
+
+### NewFileStatusBar
+- kind: mechanic.
+- summary: a new file at Ceres puts up the status bar with her starting energy.
+- params: none.
+- switch: none.
+- The room is prepared for a new file at Ceres and setup puts up the HUD → publish the fixed
+  upper row to the video encoder and take the three lower rows as the HUD's cells. The countdown
+  is Dormant. The selection, one-shot item and item last shown are none. The ammunition last
+  shown is zero and the ammunition and reserve cells keep their opening pictures. Start the
+  energy last shown at zero and apply `EnergyGauge` to the fresh energy. Hand the resulting
+  HUD State to the fade and play [R-new-file-hud, C-new-file-energy, C-new-file-zero].
+- So the fade starts with the energy already shown and ordinary play reads the same grid and
+  last shown values. Setup publishes the upper row and the HUD State.
+- checked: oracle (R-new-file-hud); constructed (C-new-file-energy, C-new-file-zero).
+
+### NewFileMiniMap
+- kind: mechanic.
+- summary: the mini-map has a preview before her first frame in the room.
+- params: the window and its colour sets (§1.2, §1.4).
+- switch: none.
+- Setup puts up the HUD → draw each of the preview's pictures with its flips in the explored
+  colours, and each empty cell with the map's blank in the charted colours. Give the center
+  cell `HerBlink`'s colours when the setup frame count is in the lit half of its cycle
+  [R-new-file-hud, C-new-file-energy, C-new-file-zero].
+- The new file uses the preview → leave the explored cells empty and start with the mini-map
+  on. Each frame of play thereafter uses the ordinary mini-map rules
+  [R-new-file-first-play, C-new-file-energy].
+- checked: oracle (R-new-file-hud, R-new-file-first-play); constructed (C-new-file-energy,
+  C-new-file-zero).
 
 ### EnergyGauge
 - kind: mechanic.
@@ -396,7 +437,7 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - summary: her cell blinks, `n` frames in the blink colours and `n` as drawn.
 - params: `n`, the frames each way: 8.
 - switch: **Parameter** (the frames each way; the reference rules hold 8).
-- After the window is drawn, `frame mod 2n < n` → her window cell takes the blink colours [C-R1,
+- After the window is drawn in play or at new-file setup, `frame mod 2n < n` → her window cell takes the blink colours [C-R1,
   C-R2, C-mm-charted, C-blink-adjusted]
 - So with `frame mod 2n ≥ n` it shows as `MiniMapWindow` drew it (C-R3, C-R16).
 - checked: oracle (every harness case with a mini-map); constructed (their twins;
@@ -743,9 +784,10 @@ countdown as the frame leaves it.
 - **Progress:** the area, the map collected, the explored cells of the other areas: those of the
   area she enters on a step outside play that leads into another area (`a new area`); it keeps
   the explored cells of the area she leaves.
-- **The load flow and the pause screen:** the HUD's first contents (the status bar's frame, the
-  icons she has, the counts), on their own frames (§1.3): the load flow's start-up of the HUD as
-  a game starts or loads, and the pause screen's frames, which draw the status bar themselves.
+- **Arrival and room setup:** the event that puts up the new file's HUD before the fade, and the
+  opening map preview for the prepared room. The new file's progress supplies her fresh energy.
+- **The load flow and the pause screen:** rebuilding the HUD on a saved-file load, the Zebes
+  landing and demo startup, and drawing it on the pause screen's own frames (§1.3).
 - **Doors:** the frame count's reset at a door.
 - **Doors and the load flow:** `a boss encountered`, on entering the room of Kraid,
   Draygon, Crocomire, Phantoon or Ridley (Ceres's or Norfair's) while it lives, outside a frame

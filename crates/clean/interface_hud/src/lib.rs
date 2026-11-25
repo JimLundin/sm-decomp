@@ -3,8 +3,13 @@
 //!
 //! The HUD is a view of what the game holds, drawn into a grid of 32 × 3 cells. Its state,
 //! `HudState`, is changed in place by each step of the running game; its grid is the picture
-//! drawn. Which step a frame is, the main loop chooses, calling one of three entries:
+//! drawn. A new file's State comes from room setup; then which step a frame is, the main loop
+//! chooses, calling one of four entries:
 //!
+//! - `HudState::new_file`, room setup for a new file at Ceres, before her first frame of play:
+//!   from the importer's `OpeningFrame` and the prepared room's `OpeningPreview`, with the frame
+//!   count at setup and her fresh energy, it gives the `NewFileHud`: the upper row for the video
+//!   encoder and the State the fade and play carry on from.
 //! - `HudState::frame_of_play`, one whole frame of play: with the rules, the HUD's pictures
 //!   (content the importer supplies) and the frame's `FrameInputs` (her stock as the frame
 //!   begins and the buttons, her position after her moves, the values as the frame ends, the
@@ -42,6 +47,7 @@ mod item;
 mod layout;
 mod map;
 mod mini_map;
+mod new_file;
 mod pictures;
 mod rules;
 mod selection;
@@ -65,6 +71,8 @@ pub use inputs::{
 };
 pub use item::{Ammo, SelectableItem};
 pub use map::{HerMap, MapCellSet, MapPictures};
+pub use mini_map::{OpeningPreview, PreviewCell};
+pub use new_file::{NewFileHud, OpeningFrame, UpperRow};
 pub use pictures::{HudPictures, Icons};
 pub use rules::{Alternation, Boss, Rules};
 pub use state::{HudState, MiniMapPower, Selection, Shown};

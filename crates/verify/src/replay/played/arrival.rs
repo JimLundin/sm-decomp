@@ -6,6 +6,7 @@ use crate::replay::compare::Observation;
 use crate::replay::{data_failure, result::Outcome};
 use crate::source;
 use game::production::played;
+use oracle_record::{Cut, FrameRecord};
 use types::arrival::{ArrivalStage, ArrivalState, FadeFrames};
 use types::brightness::{Blanking, Brightness, Level};
 
@@ -71,6 +72,11 @@ pub(super) fn seed(wram: &[u8]) -> Result<played::arrival::State, Outcome> {
         } else {
             played::arrival::Begun::UnderWay
         },
+        setup: if arrival.stage == ArrivalStage::Preparing {
+            played::arrival::Setup::BeforeMusic
+        } else {
+            played::arrival::Setup::Published
+        },
         arrival,
     })
 }
@@ -78,18 +84,39 @@ pub(super) fn seed(wram: &[u8]) -> Result<played::arrival::State, Outcome> {
 /// The borrowed readiness of the start (the start's loading, R2 and C1, with T1's lag): the
 /// game state turns from the preparation's to the fade in's between `previous` and `current`.
 pub(super) fn start(
-    previous: &[u8],
-    current: &[u8],
+    previous: &FrameRecord,
+    current: &FrameRecord,
 ) -> Result<played::arrival::Readiness, Outcome> {
+    use played::arrival::Readiness;
+    if word(&previous.wram, source::GAME_STATE)? != PREPARING {
+        return Ok(Readiness::NotYet);
+    }
+    if word(&current.wram, source::GAME_STATE)? == FADING_IN {
+        return Ok(Readiness::Ready);
+    }
     Ok(
-        if word(previous, source::GAME_STATE)? == PREPARING
-            && word(current, source::GAME_STATE)? == FADING_IN
-        {
-            played::arrival::Readiness::Ready
+        if final_music_wait(current) && !final_music_wait(previous) {
+            Readiness::FinalMusicWait
         } else {
-            played::arrival::Readiness::NotYet
+            Readiness::NotYet
         },
     )
+}
+
+/// The borrowed loading beat preceding the HUD by twenty waits. The other calls to
+/// the generic music service have different return addresses on the native stack.
+fn final_music_wait(record: &FrameRecord) -> bool {
+    const WAIT_FOR_NMI: core::ops::RangeInclusive<u32> = 0x0080_8343..=0x0080_8346;
+    const MUSIC_CALLER: u16 = 0xa119;
+    // JSL's return address and bank, the two PHPs and the saved X precede the caller.
+    const CALLER_OFFSET: usize = 9;
+    let Cut::NmiReturn(nmi) = record.cut else {
+        return false;
+    };
+    let address = usize::from(record.cpu.s).saturating_add(CALLER_OFFSET);
+    super::finished(record)
+        && WAIT_FOR_NMI.contains(&nmi.interrupted_pc)
+        && record.wram.get(address..address.saturating_add(2)) == Some(&MUSIC_CALLER.to_le_bytes())
 }
 
 /// The arrival's fields as the record holds them: the stage and the brightness at every cut,

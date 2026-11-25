@@ -94,7 +94,7 @@ whose name is a lexicon match:
 
 | Quantity | RAM | Decode |
 | --- | --- | --- |
-| the HUD's cells | `$7E:C608`..`C6C7`, 3 rows of 32 words (BG3 tilemap rows 1 to 3; the top row, VRAM `$5800`, is uploaded only by the HUD's initialisation `$80:9A79` and isn't the domain's) | each word: picture bits 0-9, colour set bits 10-12, h-flip bit 14, v-flip bit 15; bit 13 (priority) is set in every word the HUD writes and in every recorded word: a word without it is a harness defect |
+| the HUD's cells | `$7E:C608`..`C6C7`, 3 rows of 32 words (BG3 tilemap rows 1 to 3; the top row, VRAM `$5800`, is uploaded only by the HUD's initialisation `$80:9A79` and is published at new-file setup, §New-file setup) | each word: picture bits 0-9, colour set bits 10-12, h-flip bit 14, v-flip bit 15; bit 13 (priority) is set in every word the HUD writes and in every recorded word: a word without it is a harness defect |
 | the values last shown | `0A06` energy, `0A08` missiles, `0A0A` super missiles, `0A0C` power bombs, `0A0E` the item | counts as is; the item as below |
 | the selected item | `09D2` (HUD item index) | 0 none, 1 missiles, 2 super missiles, 3 power bombs, 4 grapple, 5 x-ray. Every store to it, with its owner and whether it lands in a compared pair: §The selection's writers |
 | the one-shot item | `0A04` (auto-cancel HUD item index) | the selection is the one-shot item when `0A04` = `09D2` ≠ 0; not when `0A04` = 0; any other value is a harness defect. The original keeps `0A04` 0 or equal to `09D2`: Select writes both (`$90:C50A`..`$90:C516`), item cancel and `$90:BF25`/`$90:C091` clear both, `$90:BF41`/`$90:C0A6` clear `09D2` only when `0A04` is 0; the rainbow beam clears `0A04` alone (§The selection's writers) |
@@ -508,7 +508,7 @@ store can land in a compared pair (a frame of play, or a step outside play).
 | `$8B:C655`/`C658` | game state 25h: the station explodes with her aboard (then `$8B:C695` sets 19h) | the cinematics (`the selection dropped`, outside play) | yes, as a step outside play; no cached row |
 | `$8B:AF44`, `$8B:AFF1` | the opening's Mother Brain scene (missiles), its hatching scene (none) | the cinematics (spec §6, §7 question 2) | no: the opening shows no HUD |
 | `$81:B2F1` | a new save file | the file select | no: before any HUD |
-| `$91:E147`/`E14A` | initialise Samus: from game states 6, 1Fh and 28h (`$82:8014`, `$82:8057`) and from the opening's scenes | the load flow, the cinematics | no: in the load flow's HUD initialisation (skipped) or before any HUD |
+| `$91:E147`/`E14A` | initialise Samus: from game states 6, 1Fh and 28h (`$82:8014`, `$82:8057`) and from the opening's scenes | the load flow, the cinematics | no: in the load flow's replacement or before any HUD. Fresh Ceres setup compares the resulting cleared selection |
 
 ## The harness (for the integrator)
 
@@ -531,11 +531,18 @@ the records, with the other domains' values decoded as inputs.
     and 2Ah (`$82:854B`). N+1's game state doesn't matter: the frame whose door collision sets
     game state 9 ran in full (chain-any rows, every door). Skipped by name: `05B6` not advanced
     by exactly one. A boss met in such a frame (`$90:A7E2` with a room boss's id) is a defect.
-  - **The load flow's HUD initialisation:** N's game state 6, 1Fh or 28h (the demos' load; all three run `$82:8000`), whose frames run `$80:9A79`
-    (the HUD's frame, icons and counts drawn, `0A06`..`0A0E` zeroed; any-zebes-arrival 40 and 184
-    change the values last shown and the status bar). Another domain's writer of every field:
-    skipped, and the next pair seeds afresh, until `$80:9A79` is watched (then mask on its hit).
-  - **A step outside play** (spec `OutOfPlay`): every other pair whose records both decode: the
+  - **Fresh Ceres HUD setup.** In `any-ceres-arrival`, 183 → 184 uses the room setup's
+    publish event (§New-file setup). Compare the initialized HUD State and overlay at
+    184 and keep the State through 192. At 192 the arrival sends the mini-map turn-on,
+    leaving the HUD as it was. The 192 → 193 pair runs the ordinary play rules. Keep this
+    State for the rest of the fade. Cuts before 184 have no initialized HUD to compare.
+  - **The load flow's other HUD replacements.** Saved loads, the Zebes landing and
+    demo startup run the initializer `$80:9A79` by way of `$82:8000` (game states 6,
+    1Fh and 28h, except the admitted Ceres setup above). For example,
+    `any-zebes-arrival` 183 → 184 changes the status bar and the energy last shown.
+    The scoped HUD harness skips these replacements and starts its next pair from the
+    replacement writer's result. In joined replay their producers are separate dependencies.
+  - **A step outside play** (spec `OutOfPlay`): every other pair whose records both decode, after the exceptions above: the
     door's game states 9, Ah and Bh, the cinematics (1Eh, 22h, 25h), the load's other states.
     Its only inputs are the turn-on (§Inputs), a new area (§Inputs), the selection dropped
     (§Inputs) and a boss met (`$90:A7E2` with a room boss's id, the `BossEvent` step). A room
@@ -677,8 +684,8 @@ Frames are pairs after folding; no row diverged on any field:
 - **Ceres's end** (0011): game states 20h and 21h run main gameplay (9 window changes, the
   blink); 22h, Ceres going up, is a cinematic (1,814 frames, nothing moves).
 - **The game's start** (any-ceres-arrival, any-zebes-arrival): 7, the fade in, runs main gameplay
-  (the window and the explored cells move); 1Fh and 6 run the HUD's initialisation `$80:9A79`,
-  the load flow's.
+  (the window and the explored cells move). The survey omitted the load flow's initializer
+  `$80:9A79` in 1Fh and 6. The fresh Ceres witness covers its own setup (§New-file setup).
 
 **The interim mask** (her position at the mini-map's turn) ended 147 of the 152 segments. With
 it off every row holds in one segment up to its door, but for one frame: chain-any-0005-E06B
@@ -717,7 +724,7 @@ The spec gate of the Ceres delta (`$TEMP/collab/reviews/adversary-110.md`, its s
 
 1. **The load flow's and the pause screen's frames.** Spec §1.3 names them as other domains'
    frames that replace the HUD's State, neither frames of play nor steps outside play; §6 says
-   the same. §The harness skips 6, 1Fh, 28h and Dh to 11h by name. The root's: a pause row.
+   the same. That gate's harness skipped 6, 1Fh, 28h and Dh to 11h by name. The root's: a pause row.
 2. **An area change in a door's passage** (`$82:DF99`/`$82:DFB6`, door property bit 40h, game
    state Bh) swaps the explored cells: input `a new area`, an `OutOfPlay` arm, the vector
    C-out-of-play-new-area. No cached row crosses areas.
@@ -861,12 +868,14 @@ indicator: the fit is score ÷ budget, and being over it costs in proportion to 
 as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
-  SwitchClick, OneShotFlash, IconsAppear
+  SwitchClick, OneShotFlash, IconsAppear, NewFileStatusBar
 - Area countdown: 5.1, EscapeCountdown, CountdownBegins, CountdownWaits, CountdownTicks,
   CountdownRunsOut, CountdownSlides, CountdownShown
 - Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
 - Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, OutOfPlay,
-  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift
+  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift, NewFileMiniMap
+
+Budget: 37.5 × 79.7 units = 2,987 (status 825, countdown 500, selection 412, minimap 1,250)
 
 Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
 one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
@@ -1162,3 +1171,97 @@ as the frame begins is the stock the cases were matched on, and each keeps its r
 
 The record index was confirmed on the same pairs: `09D2` differs at N and N+1 in all five (each
 is a Select press) and is equal at area-maridia 391 and 392.
+
+
+## New-file setup
+
+### Ownership and sources
+
+| Entry or input | Source |
+| --- | --- |
+| Setup event | `$82:8041` selects the Ceres load station for the new file. `$82:805B` loads the station, `$82:805F` prepares its room and `$82:8063` puts up the HUD. This is before the seven passes at `$82:80F9` and before `$82:8109` starts the fade. The last music wait at `$80:A117` ends after 20 NMIs (cuts 164–183, `$80:A132`–`$A141`). Room setup owns the prepared-room publish event after that wait. The earlier enemy graphics collection at `$80:A0CA` supplies preview content. The tile transfers and enemy initialization at `$82:80F9` follow HUD publication. |
+| Opening frame and output | `$80:9A7F`–`$9AAF`. The fixed top row is the 32 tilemap words at `$80:988B`, uploaded to VRAM word `$5800`. The following 96 words at `$80:98CB` are the initial grid at `$7E:C608`. The ordinary HUD publication at `$80:9CAD` sends that grid to VRAM words `$5820`–`$587F`. Decode the opening rows with their colours and flips. |
+| NewFileStatusBar | `$80:9AE4`–`$9AF2` clears the five last-shown words. `$80:9B3D` calls the usual gauge and status refresh. The new file has zero reserve mode and no ammo capacity or equipped grapple or x-ray, so the reserve and ammo cells keep the opening art. See [new-file progress](run-progress.decode.md). `$91:E147` and `$E14A` clear the selections before setup. `$80:A08E` clears the countdown. |
+| NewFileMiniMap | `$90:A8EF`–`$A918` computes the center from the load-station position and room map header. `$90:AA43`–`$AB46` paints that window. This call bypasses the ordinary map update that supplies visibility masks and explores the player's cell. `$90:AB49`–`$AB59` applies the shared blink to the center. `$80:C4AF` turns on the mini-map as the room is loaded, and `$82:8137` calls the arrival command, which turns it on again at `$90:F233`. Neither turn-on paints the map. |
+| Clock | `05B5` just before setup publishes the grid. In the Ceres row this is the value at cut 183. Setup's NMI advances it at cut 184. The arrival event at 192 turns on the mini-map as specified by screens-arrival. The count at cut 192 belongs to the first gameplay update. The gameplay update reads the previous cut's count as usual. |
+
+The preview shows several pictures in explored colours because the first draw uses values
+left by room setup. The explored set is empty. Import the preview as a checked
+3 × 5 array of optional map looks, with the following sources for the supported fresh Ceres
+start. The runtime needs only this array. The import edge uses the game's original content
+and the room's selected load recipe.
+
+1. Read the Ceres load station selected at `$82:8041` using `$80:C4B5` and the station layout
+   at `$80:C437`. Its room is `$8F:DF45` with initial room state `$8F:DF57`. The preview is
+   centered on the room's map column and row plus the station's x and y in 256-pixel screens,
+   with the map's padding row included (center column 12, row 14). The station position
+   before the arrival's pose change is the source.
+2. The fresh file has neither an acquired map nor any explored cells (§State and [progress
+   decode](run-progress.decode.md)). In the original, `$22` and the charted row masks
+   `$26/$28/$2A` are also zero at Ceres setup. The opening map draw uses the left page and no
+   charted pictures. The first five high bits of `$18/$1A/$1C` select pictures in the upper,
+   middle and lower row respectively, most significant bit at the left. With bit clear,
+   the HUD draws its map blank. The selected pictures come from the existing area map
+   art at the corresponding coordinates around the center.
+3. **Upper row.** The initial room state's FX definition selects the elevator FX at
+   `$89:AC48`. `$88:D928` registers its effect with `$88:8435`. The store at `$88:8442`
+   writes the effect's calling bank as the high byte of `$18`, with a zero low byte.
+   Project that bank's five high bits into the upper row.
+4. **Middle and lower rows.** During `$80:A0CA`, enemy loader `$A0:8A1E` calls the
+   enemy graphics set loader `$A0:8D64`. `$A0:8DAC` starts `$1C` at the graphics set
+   location from the room state (`$B4:9218` for this room). `$A0:8EAE` advances it by four
+   per entry until the terminator check at `$A0:8DB3`. Project the five high bits of the
+   terminator location into the lower row. `$A0:8E18` leaves the last enemy graphics bank
+   in `$1A` with a zero high byte, so the middle row has no pictures.
+5. The resulting Ceres preview has pictures at window cells (0,0), (4,0), (0,2) and
+   (3,2). The normal map update supplies different masks once the fade plays her first
+   frame. Carry the HUD State into that frame. Use the ordinary map and position inputs
+   from the running room and Samus.
+
+The same routine runs on the landing at Zebes, outside this new-file rule. It has a different
+enemy graphics set terminator, and its setup clock lights the center. General saved-file,
+demo and Zebes landing startup need their own admission and do not use Ceres's preview
+as a default.
+
+### Harness
+
+For the joined movie, `any-ceres-arrival` cut 184 is movie frame 8499. It is the first cut
+with all 96 cells and their history ready. Cuts 184–192 keep that grid and history. The fade
+begins at 192 (movie 8507), and the first play frame ends at 193. Compare the grid and all HUD
+State starting at 184, with the 32 fixed top cells and 96 lower cells also visible in VRAM
+at those cuts. The top row is a setup output common to the following frames, not part of
+carried HUD State. Before 184, omit the HUD comparison until setup has issued it. There is
+no mask on the initialized fields. The joined production path consumes the room setup event,
+imported frame and preview, fresh progress energy and setup clock. It does not call the
+replay decoder to construct the HUD from cut 184 or 192. If the room setup scheduler has yet
+to supply the event or its clock, that dependency belongs to arrival setup and time, not to
+the HUD.
+
+- **R-new-file-hud.** Cut 183 → 184, held through 192. The recorded fixture keeps the HUD's
+  semantic observations, including the preview colours. Compare the actual 128 words with
+  imported content and production drawing.
+- **R-new-file-first-play.** Cut 192 → 193. The first explored cell is (12,14). The temporary
+  preview is replaced. Five grid cells differ and the energy last shown stays 99.
+- **C-new-file-energy.** Invented opening art and preview. Energy 237 of 399 gives two full
+  tanks, an empty tank and digits 37. The center is lit and preserves its vertical flip.
+- **C-new-file-zero.** With a zero value last shown and zero fresh energy, the opening gauge
+  stays as supplied even when capacity allows tanks. At frame 4 with a four-frame blink, the
+  empty center stays in the charted colours.
+
+### Independent reference
+
+`$TEMP/collab/hud-startup-evidence/reference.py` uses the game image to derive the preview
+and base art. It checks the two recorded witnesses, runs both constructed cases and carries
+its predicted HUD through the fade. It uses the preceding cut's clock as its time input.
+Every modeled cut compares the 32 fixed cells, 96 grid cells, last-shown values, selections,
+map power, the bitmap and countdown status. The recorded 96 VRAM cells equal the WRAM grid
+throughout the compared interval.
+
+| Cuts | Reference | Unchanged since the previous cut |
+| --- | ---: | ---: |
+| 184–192, setup and hold | 9/9 | 8/9 |
+| 193–222, fade | 30/30 | 26/30 |
+
+A blank preview, stale energy history and using the later arrival clock each fail at cut 184. Forcing a gauge redraw at
+zero or ignoring the changed blink rule fails C-new-file-zero. C-new-file-energy also fails
+with a blank preview or stale energy history.

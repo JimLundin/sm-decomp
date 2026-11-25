@@ -213,7 +213,7 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
         [Responsibility::Progress] => (
             Context::Progress,
             Actual::Progress,
-            ProductionSeed::Progress(Box::new(progress::seed(wram)?)),
+            ProductionSeed::Progress(Box::new(progress::decode(wram)?)),
             ProductionContent::Progress,
             ProductionRules::Progress(run_progress::Rules::reference()),
         ),

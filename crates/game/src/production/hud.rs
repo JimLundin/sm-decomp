@@ -23,20 +23,23 @@ pub fn tilemap(state: &HudState) -> Result<Vec<u8>, TilemapFault> {
                 .grid
                 .get(Place { x, y })
                 .ok_or(TilemapFault::MissingCell)?;
-            let flips = match tile.look.flip {
-                interface_hud::Flip::None => 0,
-                interface_hud::Flip::Across => 0x4000,
-                interface_hud::Flip::Down => 0x8000,
-                interface_hud::Flip::Both => 0xc000,
-            };
-            let value = tile.look.picture.index()
-                | (u16::from(tile.colours.number()) << 10)
-                | 0x2000
-                | flips;
-            bytes.extend_from_slice(&value.to_le_bytes());
+            bytes.extend_from_slice(&cell(tile));
         }
     }
     Ok(bytes)
+}
+
+/// Encode a HUD cell as the video hardware reads it.
+#[must_use]
+pub fn cell(tile: interface_hud::Tile) -> [u8; 2] {
+    let flips = match tile.look.flip {
+        interface_hud::Flip::None => 0,
+        interface_hud::Flip::Across => 0x4000,
+        interface_hud::Flip::Down => 0x8000,
+        interface_hud::Flip::Both => 0xc000,
+    };
+    (tile.look.picture.index() | (u16::from(tile.colours.number()) << 10) | 0x2000 | flips)
+        .to_le_bytes()
 }
 
 /// The HUD's complete State, carried between whole frames of play.

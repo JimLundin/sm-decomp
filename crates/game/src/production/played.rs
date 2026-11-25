@@ -60,6 +60,7 @@ pub mod quake;
 mod ridley;
 pub mod samus;
 mod shaft;
+mod start;
 pub mod station;
 
 pub use hud::HudFrame;
@@ -96,6 +97,8 @@ pub struct Content {
     pub rooms: Rooms,
     /// The HUD's pictures.
     pub hud: HudPictures,
+    /// The checked opening HUD of a fresh Ceres start, when this run supports one.
+    pub opening_hud: Option<(interface_hud::OpeningFrame, interface_hud::OpeningPreview)>,
     /// Her map of the area she is in.
     pub map: HerMap,
     /// Her place across the new game's start room, x in pixels.
@@ -168,6 +171,8 @@ pub struct Outputs {
     pub health: Option<samus_health::PlayedFrame>,
     /// The HUD's frame of play; none while a passage runs.
     pub hud: Option<FrameOutputs>,
+    /// The fixed status-bar row published by new-file room setup.
+    pub opening_hud: Option<interface_hud::UpperRow>,
     /// Each Ceres door's run, in order; none on a frame the enemies don't run.
     pub ceres_doors: Vec<boss_ceres_ridley::Run>,
     /// What the shaft's lights show; none on a frame its overlay doesn't run.
@@ -204,6 +209,10 @@ pub enum Fault {
     /// The HUD refused the frame: the escape countdown starts on a frame whose scene only shows
     /// it.
     Hud,
+    /// The new file's room setup has no opening HUD provider.
+    HudStartup,
+    /// The fresh file's Samus could not be constructed.
+    NewGame,
     /// The station's escape in the shaft: a later piece owns the shaft's overlay.
     Escape,
     /// The room's quake can't take the frame: a door's shake of a strength it has no size for,
@@ -322,6 +331,7 @@ impl State {
             doors: doors.report,
             health: Some(health),
             hud: Some(hud_outputs),
+            opening_hud: None,
             ceres_doors: enemies.doors,
             lights: enemies.lights,
             ridley: enemies.ridley,
@@ -417,6 +427,7 @@ impl State {
             doors: exports.report,
             health: None,
             hud: None,
+            opening_hud: None,
             ceres_doors: enemies.doors,
             lights: enemies.lights,
             ridley: enemies.ridley,

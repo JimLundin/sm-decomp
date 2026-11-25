@@ -50,7 +50,7 @@ impl HudState {
     /// one tank per 100 of her capacity, as many as fit (14), full while whole hundreds remain
     /// and empty after, and her energy's last two digits. Cells past her capacity keep what they
     /// show.
-    fn energy_gauge(&mut self, pictures: &HudPictures, energy: Energy) {
+    pub(crate) fn energy_gauge(&mut self, pictures: &HudPictures, energy: Energy) {
         if mem::replace(&mut self.shown.energy, energy.now) == energy.now {
             return;
         }

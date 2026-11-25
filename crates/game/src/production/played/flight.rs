@@ -44,8 +44,8 @@ pub enum Stage {
 /// Why a frame was not played. State is unchanged.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
-    /// The start is ready, but no HUD owner supplies the new game's initial HUD.
-    HudStartup,
+    /// The flight handed on. The room owner steps all later frames.
+    RoomBegun,
 }
 
 impl Journey {
@@ -73,15 +73,13 @@ impl Journey {
     /// frame returns its report, including the ordered music requests and their delays for audio.
     ///
     /// # Errors
-    /// [`Fault::HudStartup`] when the start is ready and its HUD has no startup owner.
+    /// [`Fault::RoomBegun`] after the handoff to the new-game room owner.
     pub fn step(
         &mut self,
         begun: bool,
         end: FrameEnd,
-        ready: arrival::Readiness,
         scene: &Scene,
         rules: Rules,
-        arrival_rules: screens_arrival::Rules,
     ) -> Result<Option<FrameReport>, Fault> {
         let finishing = frame::finishing(matches!(end, FrameEnd::Finished(_)));
         let (report, drew) = match &mut self.stage {
@@ -96,14 +94,7 @@ impl Journey {
                 let drew = report.is_some() && !std::mem::take(&mut self.setup_already_drew);
                 (report, drew)
             }
-            Stage::Arrival(arrival) => {
-                if ready == arrival::Readiness::Ready {
-                    return Err(Fault::HudStartup);
-                }
-                arrival.advance(screens_arrival::Preparation::Underway, arrival_rules);
-                self.frame = arrival.prepare_frame(self.frame, begun, finishing, None);
-                return Ok(None);
-            }
+            Stage::Arrival(_) => return Err(Fault::RoomBegun),
         };
         let random = if drew {
             frame::draw(self.frame.random)
@@ -182,18 +173,7 @@ mod tests {
         let frame = crate::production::played::tests::state(Vec::new()).frame;
         let mut journey = Journey::start(frame);
         let scene = scene();
-        let mut step = |end| {
-            journey
-                .step(
-                    true,
-                    end,
-                    arrival::Readiness::NotYet,
-                    &scene,
-                    Rules::REFERENCE,
-                    screens_arrival::Rules::REFERENCE,
-                )
-                .unwrap()
-        };
+        let mut step = |end| journey.step(true, end, &scene, Rules::REFERENCE).unwrap();
         assert_eq!(step(FrameEnd::Lagged), None);
         let report = step(CLEAR).unwrap();
         assert_eq!(
@@ -233,20 +213,8 @@ mod tests {
             assert!(frames < 1000, "the flight ends");
         }
         assert_eq!(flight.brightness, Brightness::DARK);
-        let step = |journey: &mut Journey, end, ready| {
-            journey.step(
-                true,
-                end,
-                ready,
-                &scene,
-                Rules::REFERENCE,
-                screens_arrival::Rules::REFERENCE,
-            )
-        };
-        assert_eq!(
-            step(&mut journey, FrameEnd::Lagged, arrival::Readiness::NotYet),
-            Ok(None)
-        );
+        let step = |journey: &mut Journey, end| journey.step(true, end, &scene, Rules::REFERENCE);
+        assert_eq!(step(&mut journey, FrameEnd::Lagged), Ok(None));
         let Stage::Arrival(arrival) = journey.stage else {
             panic!("the lagged handoff starts the arrival");
         };
@@ -254,10 +222,7 @@ mod tests {
         assert_eq!(arrival.preparation, arrival::Begun::Not);
 
         let waiting = journey;
-        assert_eq!(
-            step(&mut journey, CLEAR, arrival::Readiness::Ready),
-            Err(Fault::HudStartup)
-        );
+        assert_eq!(step(&mut journey, CLEAR), Err(Fault::RoomBegun));
         assert_eq!(journey, waiting);
     }
 }

@@ -409,39 +409,38 @@ told and whether it is done, and the letters the label types, compared from the 
 cut 32 (before it, the brightness alone). Not compared: the colour cycles (R4), CGRAM's setup load
 at cut 32, OAM, mode 7 VRAM, the BG1 tilemap's emptying, the letters' palette, priority and flips,
 and the PPU mirrors the stages write. A lagged frame stepped as finished differs at cut 1 in
-`flight.stage`. At every flight cut the run compares each appended music request and its delay in queue order.
+`flight.stage`. At each flight cut the run compares the appended music requests and their
+delays in queue order.
 On cut 32 the flight asks to load the Ceres tune with a delay of 8 frames, then to play it with
 a delay of 14. The other 801 cuts issue no requests. Reversing the two requests first differs
 at cut 32 in `flight.music`. Audio supplies the reply about whether a track is waiting.
 
-The same flight run can continue for 994 cuts, through movie frame 8,506.
-At cut 803 (movie frame 8,315) the flight turns the dark screen over to the arrival while the
-frame's work is still in progress. Production carries both frame counts, brightness and the
-random sequence into the preparation. The run compares the counts at every cut and the random
-number at finished flight cuts and every preparation cut. At cut 995 the start is ready, and
-the run stops at `HudStartup`. The load flow must put up the HUD before the fade begins.
-The save to cartridge memory on the handoff is outside this comparison. Delaying the handoff
-until the work finishes first differs at cut 803 in `flight.active`.
+At cut 803, movie frame 8,315, the flight turns the dark screen over to arrival during a
+lag cut. Production carries both frame counts, brightness and the random sequence into
+preparation. The run compares both counts at every cut and the random number at finished
+flight cuts and every preparation cut. The first room and its actors come from room loading
+and fresh-file Progress. The same run plays through the fade, the first room and the following
+rooms up to movie frame 11,058. It holds 3,546 cuts from the flight seed and first differs
+at 3,547 in `movement.pose`, when Ridley's tail hits Samus in flight. The cartridge save
+is outside the comparison. Delaying the flight handoff until the work finishes first differs
+at cut 803 in `flight.active`.
 
 ### Her arrival at Ceres
 
-Her arrival at Ceres (screens-arrival, F4's first piece) plays alone from the intro's last frame
-(`any-ceres-arrival`, seed movie frame 8,315): 222 of 222 cuts, and on into Ceres's first room
-with no new seed, 2,574 cuts back to back, through both his tail's hits (movie frames 8,316 to
-10,889). A
-seed in the preparation holds the intro's RAM, so the run builds State from the start: the shaft
-loaded by the room's loading with its two Ceres doors and the shaft's overlay and the colours the
-fade in heads for (her row the start's own), a fresh Samus at the start's place, the camera at the
-start's view, her health as a new file starts it, a blank HUD. From the seed come the new file's
-progress, energy and items and the other held facts, and the platform's frame counts and the
-random number, which run on through the preparation. Through the preparation (cuts 1-191) the run
-compares the screen's brightness and the random number; the stage follows the borrowed readiness
-("the start ready", R2/C1's loading with T1's lag). From cut 192 every owner is compared, but the
-HUD at cut 192: the load flow's start-up of the HUD is held from the record there, all but the
-mini-map's power, which her arrival sets and is compared from 193 (an interface-hud amendment for
-the HUD's start-up is queued). The fade in (193-222) is play, then PictureBrightens and
-PlayBegins; the brightness and the fade's count are compared. Planted fault: the fade's rhythm 0
-for 1 fails at cut 192, `arrival.fade-count`.
+The standalone `any-ceres-arrival` run holds all 222 arrival cuts, then plays on through
+movie frame 11,058 without a second seed. The start loads the shaft, its Ceres doors,
+its overlay and the colours the fade heads for, with the start's own palette row for Samus.
+Fresh-file Progress supplies the room version and Samus's energy and items. The preparation
+carries the frame clock and random number. It borrows the loading path's entry into the
+final music service and the platform's wait completions. After twenty waits, room setup
+publishes the HUD at arrival cut 184, movie frame 8,499, with the imported opening frame,
+the preview from the load station and room graphics recipe, and the clock from cut 183.
+
+The comparison checks the publication cut, every HUD State field and all 128 HUD tilemap
+cells through cut 222. Arrival at cut 192 turns the mini-map on and compares the carried
+HUD, the room's actor roster and palette, and fresh-file Progress. The arrival still borrows
+readiness from the room's loading. The first ordinary update at 193 explores the first cell
+and replaces the preview. The fade advances after each frame of play until cut 222.
 
 ### From power-on
 

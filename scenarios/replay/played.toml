@@ -47,16 +47,17 @@ seed_frame = 7512
 frames = [7513, 8314]
 power_on = false
 
-# The flight into the dark preparation from the same seed, carrying both frame counters and
-# the random sequence. The start becomes ready on the next cut, which needs the initial HUD.
+# From the flight's seed through the dark preparation, the opening HUD and the fade.
+# The run carries the room's owners into Ceres's first room and on to Ridley's room,
+# where Samus's pose first differs on the cut his tail hits her in flight.
 [[run]]
 row = "any-fly-to-ceres"
 start = 0
-end = 995
-held = 994
-stop = { failed = "HudStartup" }
+end = 4026
+held = 3546
+stop = { failed = "movement.pose" }
 seed_frame = 7512
-frames = [7513, 8506]
+frames = [7513, 11058]
 power_on = false
 
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is

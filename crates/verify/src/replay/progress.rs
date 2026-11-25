@@ -90,8 +90,8 @@ fn flags<E: enum_map::Enum + Copy>(value: u16, table: &[(u16, E)]) -> Result<Set
     Ok(result)
 }
 
-/// Decode the complete retained Progress at the seed, never reconstruct it per advance.
-pub(super) fn seed(wram: &[u8]) -> Result<Progress, Outcome> {
+/// Decode the record's retained Progress.
+pub(super) fn decode(wram: &[u8]) -> Result<Progress, Outcome> {
     let mut progress = Progress::default();
     progress.inventory.items = flags(word(wram, 0x09A4)?, &ITEMS)?;
     progress.inventory.items_switched_on = flags(word(wram, 0x09A2)?, &ITEMS)?;

@@ -81,7 +81,6 @@ pub const SEED_HELD: &[&str] = &[
     "the seed room's camera screens, size, scrollers and lead",
     "progress, which chooses the next room's version, her suit and her beams, and whether the station's boss is beaten",
     "Ceres station stage, but where Ridley's placing sets it",
-    "the HUD as the load flow puts it up for a new game, held as she arrives and not compared then, but the mini-map's power, which her arrival shows",
     "from a new game's seed: the platform's counts of finished frames and the random number, which run on through the preparation",
 ];
 
@@ -94,6 +93,7 @@ pub const BORROWED: &[&str] = &[
     "the random number as a passage's frame begins: no owner here draws it through a passage",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
     "audio: whether every sound request has been sent as the frame of work begins",
+    "the beginning of the prepared room's final music service (R2 and C1's loading, T1's lag)",
     "the start ready: the frame a new game's start is made ready (R2 and C1's loading, T1's lag)",
     "the escape countdown's start: the timer set between two records, at the time the second holds, until the station's boss raises it",
 ];
@@ -251,7 +251,7 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     }
     let seed = rows.record(start)?;
     if flight::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
-        return flight::play(&mut rows, &sources.rom, seed, row, start, end);
+        return flight::play(&mut rows, &sources.rom, &seed, row, start, end);
     }
     if let Some(part) = intro::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
         return intro::play(&mut rows, &sources.rom, seed, part, row, start, end);
@@ -273,7 +273,7 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Ok(run) => run,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
-    let mut controller = match Controller::seeded(&seed.wram) {
+    let controller = match Controller::seeded(&seed.wram) {
         Ok(controller) => controller,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
@@ -282,23 +282,14 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         let misaligned = data_failure(None, "played pad alignment");
         return Ok(report(0, Stop::At(at(start, misaligned))));
     }
-    let mut held = 0;
-    let mut previous = seed;
-    for cut in start.saturating_add(1)..=end {
-        let current = rows.record(cut)?;
-        if current.video_frame != previous.video_frame.wrapping_add(1) {
-            return Err(data_failure(Some(cut), "played rows join"));
-        }
-        let place = rows.place(cut)?;
-        let place = (place.0.as_str(), place.1);
-        if let Err(outcome) = run.step(controller, &previous, &current, cut, place) {
-            return Ok(report(held, Stop::At(at(cut, outcome))));
-        }
-        held = held.saturating_add(1);
-        controller = controller.read(current.pad.0, polled(&current));
-        previous = current;
-    }
-    Ok(report(held, Stop::End))
+    let (held, stop) = run.through(&mut rows, seed, controller, start.saturating_add(1)..=end)?;
+    Ok(report(held, stop))
+}
+
+// Comparison starts at the first published cut and includes the first ordinary updates.
+const HUD_SETUP_CUT: u64 = 184;
+fn opening_witness((row, cut): (&str, u64)) -> bool {
+    row == "any-ceres-arrival" && (HUD_SETUP_CUT..=222).contains(&cut)
 }
 
 /// The interval a cut ends: the records at its ends, and where its cut lies, as the row that
@@ -320,6 +311,7 @@ struct Run<'a> {
     content: &'a connected::Content,
     hud: super::hud::Content,
     row: &'a str,
+    upper_row: Option<interface_hud::UpperRow>,
 }
 
 impl<'a> Run<'a> {
@@ -328,6 +320,38 @@ impl<'a> Run<'a> {
         content: &'a connected::Content,
         path: &Path,
         row: &'a str,
+    ) -> Result<Self, Outcome> {
+        let arrival = arrival::seed(&seed.wram)?;
+        let fresh = if arrival.preparing() {
+            Some((arrival, frame::seed(&seed.wram)?, quake::seed(&seed.wram)?))
+        } else {
+            None
+        };
+        Self::load(seed, content, path, row, fresh)
+    }
+
+    fn after_flight(
+        seed: &FrameRecord,
+        content: &'a connected::Content,
+        path: &Path,
+        row: &'a str,
+        arrival: played::arrival::State,
+        frame: played::frame::State,
+    ) -> Result<Self, Outcome> {
+        let quake = quake::seed(&seed.wram)?;
+        Self::load(seed, content, path, row, Some((arrival, frame, quake)))
+    }
+
+    fn load(
+        seed: &FrameRecord,
+        content: &'a connected::Content,
+        path: &Path,
+        row: &'a str,
+        fresh: Option<(
+            played::arrival::State,
+            played::frame::State,
+            world_quake::State,
+        )>,
     ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played ROM image");
         let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
@@ -338,13 +362,22 @@ impl<'a> Run<'a> {
         let tail_worth = samus_health::WholeEnergy::new(rooms.actors.ceres_tail_worth)
             .ok_or_else(|| data_failure(None, "Ceres Ridley's tail's worth"))?;
         // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
-        let (room, state) = if arrival::seed(&seed.wram)?.preparing() {
-            start::admit(&seed.wram, &start, &rooms)?
+        let (room, state) = if let Some((arrival, frame, quake)) = fresh {
+            start::admit(&seed.wram, &start, &rooms, arrival, frame, quake)?
         } else {
             Self::seeded(seed, content, &rooms)?
         };
         let hud = super::hud::Content::load(path)?;
         let (_, area) = room.map;
+        let opening_hud = if fresh.is_some() {
+            match import::start::hud(image.lorom(), &start) {
+                Ok(asset) => Some(hud::opening(&asset)?),
+                Err(import::start::HudError::Room) => None,
+                Err(_) => return Err(data_failure(None, "played opening HUD import")),
+            }
+        } else {
+            None
+        };
         Ok(Self {
             state,
             played: played::Content {
@@ -353,6 +386,7 @@ impl<'a> Run<'a> {
                 colour_groups: colours::groups(),
                 rooms,
                 hud: hud.pictures,
+                opening_hud,
                 map: hud.map_of(area)?.clone(),
                 start_x: core::num::Wrapping(start.her.0),
                 ridley,
@@ -372,6 +406,7 @@ impl<'a> Run<'a> {
             content,
             hud,
             row,
+            upper_row: None,
         })
     }
 
@@ -402,6 +437,31 @@ impl<'a> Run<'a> {
             arrival: arrival::seed(&seed.wram)?,
         };
         Ok((room, state))
+    }
+
+    /// Continue room play from the active owners at the cut before this range.
+    fn through(
+        &mut self,
+        rows: &mut rows::Rows<'_>,
+        mut previous: FrameRecord,
+        mut controller: Controller,
+        cuts: core::ops::RangeInclusive<u64>,
+    ) -> Result<(u64, Stop), Outcome> {
+        let mut held: u64 = 0;
+        for cut in cuts {
+            let current = rows.record(cut)?;
+            if current.video_frame != previous.video_frame.wrapping_add(1) {
+                return Err(data_failure(Some(cut), "played rows join"));
+            }
+            let (row, local) = rows.place(cut)?;
+            if let Err(outcome) = self.step(controller, &previous, &current, cut, (&row, local)) {
+                return Ok((held, Stop::At(at(cut, outcome))));
+            }
+            held = held.saturating_add(1);
+            controller = controller.read(current.pad.0, polled(&current));
+            previous = current;
+        }
+        Ok((held, Stop::End))
     }
 
     /// Play the interval ending at `cut` and compare its owners with the record at `cut`.
@@ -454,7 +514,7 @@ impl<'a> Run<'a> {
                 Doors::Play => None,
                 Doors::Passing(_) => Some(frame::random(&previous.wram)?),
             },
-            start: arrival::start(&previous.wram, &current.wram)?,
+            start: arrival::start(previous, current)?,
         };
         let start = super::hud::countdown_start(&previous.wram, &current.wram)?;
         let hud_frame = hud::frame(&self.room.hud, controller, start);
@@ -467,30 +527,56 @@ impl<'a> Run<'a> {
             })?;
         // A frame of play gives the escape's scene an expiry answer; a passage's gives none.
         let expiry = outputs.hud.map(|hud| hud.countdown.expiry);
-        let (expected, actual) = if self.state.arrival.preparing() {
-            // The preparation's working values are its own: only the arrival and the random
-            // number are the run's.
+        let published = outputs.opening_hud.is_some();
+        if let Some(row) = outputs.opening_hud {
+            self.upper_row = Some(row);
+        }
+        let (mut expected, mut actual) = if self.state.arrival.preparing() {
+            // Before the fade the loading path is still preparing the room. Compare the
+            // arrival, the carried frame clock and the HUD once setup publishes it.
             let mut expected = arrival::expected(&current.wram, false)?;
             expected.push(frame::random_observation(frame::random(&current.wram)?));
             let mut actual = arrival::actual(self.state.arrival);
             actual.push(frame::random_observation(self.state.frame.random));
+            expected.extend(frame::expected(&current.wram)?);
+            actual.extend(frame::actual(self.state.frame));
+            if opening_witness(place) {
+                expected.extend(hud::parts(super::hud::expected(&current.wram, &self.hud)?));
+                expected.extend(hud::countdown(super::hud::countdown_origin(&current.wram)?));
+                actual.extend(hud::parts(super::hud::initial(
+                    &self.state.hud.0,
+                    &self.hud,
+                )?));
+                actual.extend(hud::countdown(self.state.hud.0.countdown));
+            }
             (expected, actual)
         } else {
-            if preparing {
-                // She arrives: the load flow puts the HUD up, which no owner here does, so it
-                // is held from the record and not compared on this cut; the mini-map's power is
-                // her arrival's.
-                self.state.hud =
-                    Model(start::hud_put_up(&current.wram, self.state.hud.0.mini_map)?);
-            }
             let frame = Frame {
                 previous,
                 current,
                 place,
                 cut,
             };
-            self.compared(&frame, hud_settled && !preparing, expiry, outputs.quake)?
+            self.compared(&frame, hud_settled, expiry, outputs.quake)?
         };
+        if preparing && !self.state.arrival.preparing() {
+            let fresh = super::progress::decode(&current.wram)?;
+            let same = |value| Observation::quantity("progress.fresh-file", i64::from(value));
+            expected.push(same(true));
+            actual.push(same(fresh == self.room.progress));
+        }
+        if place.0 == "any-ceres-arrival" {
+            let publication = |value| Observation::quantity("hud.setup-publish", i64::from(value));
+            expected.insert(0, publication(place.1 == HUD_SETUP_CUT));
+            actual.push(publication(published));
+        }
+        if opening_witness(place) {
+            expected.extend(hud::video_expected(current)?);
+            actual.extend(hud::video_actual(
+                self.upper_row.as_ref(),
+                &self.state.hud.0,
+            )?);
+        }
         compare(&expected, &actual).map_err(|fault| match fault {
             CompareFault::Difference(field) => Outcome::Difference { cut, field },
             CompareFault::EmptyExpected

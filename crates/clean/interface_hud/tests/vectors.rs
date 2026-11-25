@@ -33,6 +33,67 @@ mod shape {
         pub pictures: PicturesIn,
         pub vector: Vec<VectorIn>,
         pub countdown: Vec<CountdownIn>,
+        pub startup_observed: Vec<StartupObservedIn>,
+        pub startup: Vec<StartupIn>,
+    }
+
+    /// The opening frame's columns and rows: the upper row, then the HUD's three.
+    pub type OpeningPlaceIn = PlaceIn<32, 4>;
+    /// The opening map preview's columns and rows, the mini-map's window.
+    pub type PreviewPlaceIn = PlaceIn<5, 3>;
+
+    /// One `[[startup]]`: a new file's setup, from its opening art, preview, frame count and
+    /// fresh energy to the HUD it puts up.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct StartupIn {
+        pub id: String,
+        #[serde(rename = "source")]
+        pub _source: Source,
+        pub entries: Vec<String>,
+        pub rules: Option<RulesIn>,
+        pub frame: u8,
+        pub energy: [u16; 2],
+        pub opening_fill: TileIn,
+        pub opening: BTreeMap<OpeningPlaceIn, TileIn>,
+        pub preview: BTreeMap<PreviewPlaceIn, PictureIn>,
+        pub after: StartupAfterIn,
+    }
+
+    /// A startup's after: the lower-row cells drawn over the opening art, whether the upper row
+    /// published is the one supplied, and the HUD's State.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct StartupAfterIn {
+        pub upper_row_equal: bool,
+        pub shown: ShownIn,
+        pub selection: ItemName,
+        pub one_shot: bool,
+        pub mini_map_off: bool,
+        pub explored: Vec<[i32; 2]>,
+        pub countdown: CurrentCountdownIn,
+        pub replaced: BTreeMap<HudPlaceIn, TileIn>,
+    }
+
+    /// One `[[startup_observed]]`: the HUD's State the oracle recorded at a cut of a new file's
+    /// start, and the colour sets of the mini-map's window, the top row first.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct StartupObservedIn {
+        pub id: String,
+        /// The recordings whose cuts it names, which the independent replay reads.
+        #[serde(rename = "row")]
+        pub _row: String,
+        pub before: u32,
+        pub after: u32,
+        pub held_through: Option<u32>,
+        pub shown: ShownIn,
+        pub selection: ItemName,
+        pub one_shot: bool,
+        pub mini_map_off: bool,
+        pub explored: Vec<[i32; 2]>,
+        pub countdown: CurrentCountdownIn,
+        pub preview_colours: [[ColourSet; 5]; 3],
     }
 
     /// Whether a countdown case runs the model, or checks only the HUD's refusal of what the
@@ -598,13 +659,14 @@ mod convert {
 
     use enum_map::enum_map;
     use interface_hud::{
-        Alternation, Ammo, Ammunition, BegunCountdown, Boss, CancelButton, Controls, Countdown,
-        CountdownAge, CountdownAnswer, CountdownInputs, CountdownPicture, CountdownPlace,
-        CountdownRuns, Dropped, Energy, Equipped, FinishedFrames, FrameCount, FrameInputs,
-        FrameOutputs, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet,
-        MapPictures, MiniMapInputs, MiniMapPower, Mute, NewArea, OutOfPlayInputs, Pair, Place,
-        Reserve, ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection, Shown,
-        StartTime, Status, Stock, StockAtStart, TimeLeft,
+        Alternation, Ammo, Ammunition, BegunCountdown, Boss, CancelButton, ColourSet, Controls,
+        Countdown, CountdownAge, CountdownAnswer, CountdownInputs, CountdownPicture,
+        CountdownPlace, CountdownRuns, Dropped, Energy, Equipped, FinishedFrames, FrameCount,
+        FrameInputs, FrameOutputs, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look,
+        MapCellSet, MapPictures, MiniMapInputs, MiniMapPower, Mute, NewArea, NewFileHud,
+        OpeningFrame, OpeningPreview, OutOfPlayInputs, Pair, Place, PreviewCell, Reserve,
+        ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection, Shown,
+        StartTime, Status, Stock, StockAtStart, Tile, TimeLeft,
     };
     use serde::de::DeserializeOwned;
 
@@ -612,8 +674,9 @@ mod convert {
         AbsentIn, AfterIn, BeforeIn, BegunIn, BossName, BossScreensIn, CancelIn, CountdownExpected,
         CountdownFrameIn, CountdownIn, CountdownPictureIn, CountdownScope, CurrentCountdownIn,
         DormantIn, DropWhatIn, DropWhenIn, DroppedIn, Equipment, IconsIn, InputsIn, ItemName,
-        MapIn, MiniMapIn, MuteIn, PictureIn, PicturesIn, PlaceIn, RoomIn, RulesIn, SelectIn,
-        ShownIn, ShownPictureIn, StepIn, VectorFile, VectorIn,
+        MapIn, MiniMapIn, MuteIn, OpeningPlaceIn, PictureIn, PicturesIn, PlaceIn, PreviewPlaceIn,
+        RoomIn, RulesIn, SelectIn, ShownIn, ShownPictureIn, StartupIn, StartupObservedIn, StepIn,
+        TileIn, VectorFile, VectorIn,
     };
 
     /// The vector file.
@@ -855,6 +918,273 @@ mod convert {
             }
             Ok(problems)
         }
+    }
+
+    impl StartupIn {
+        /// Runs the new file's setup through the model: `Ok` with each way the model's HUD
+        /// differs from the case's, or `Err` when the case breaks the file's format.
+        pub fn run(&self, pictures: &HudPictures) -> Result<Vec<String>, String> {
+            let rules = self.rules.as_ref().map_or_else(Rules::reference, rules);
+            let opening = opening_frame(self.opening_fill.0, &self.opening)?;
+            let preview = opening_preview(&self.preview)?;
+            let [now, capacity] = self.energy;
+            let NewFileHud { upper_row, state } = HudState::new_file(
+                &rules,
+                pictures,
+                &opening,
+                &preview,
+                FrameCount(self.frame),
+                Energy { now, capacity },
+            );
+            let after = &self.after;
+            let mut grid = opening.lower_rows;
+            for (place, tile) in &after.replaced {
+                grid.set(place.place(), tile.0);
+            }
+            let expected = HudState {
+                grid,
+                shown: shown(&after.shown),
+                selection: selection(after.selection.item(), after.one_shot)?,
+                explored: cell_set(&after.explored)?,
+                mini_map: power(after.mini_map_off),
+                countdown: current_countdown(&after.countdown)?,
+            };
+            let mut problems = differences(&expected, &state, &[], &[]);
+            if (upper_row == opening.upper_row) != after.upper_row_equal {
+                problems.push(format!(
+                    "upper row: expected equal {}, got {upper_row:?}",
+                    after.upper_row_equal
+                ));
+            }
+            Ok(problems)
+        }
+    }
+
+    /// A new file's setup, then its first frame of play with her energy as setup drew it and
+    /// nothing else to do (no buttons, the mini-map not running): the State setup hands on, and
+    /// the State that frame leaves.
+    pub fn setup_then_quiet_frame(
+        case: &StartupIn,
+        pictures: &HudPictures,
+    ) -> Result<(HudState, HudState), String> {
+        let opening = opening_frame(case.opening_fill.0, &case.opening)?;
+        let preview = opening_preview(&case.preview)?;
+        let [now, capacity] = case.energy;
+        let rules = case.rules.as_ref().map_or_else(Rules::reference, rules);
+        let setup = HudState::new_file(
+            &rules,
+            pictures,
+            &opening,
+            &preview,
+            FrameCount(case.frame),
+            Energy { now, capacity },
+        )
+        .state;
+        let map = HerMap {
+            pictures: MapPictures::filled(pictures.map_blank),
+            charted: MapCellSet::default(),
+        };
+        let quiet = InputsIn {
+            energy: Some(case.energy),
+            ..InputsIn::default()
+        };
+        let mut played = setup.clone();
+        played
+            .frame_of_play(
+                &rules,
+                pictures,
+                &frame_inputs(FrameCount(0), &quiet, &map)?,
+            )
+            .map_err(|refused| format!("frame refused: {refused:?}"))?;
+        Ok((setup, played))
+    }
+
+    /// The opening frame: every cell of its four rows the fill, but those the case gives; row 0
+    /// is the upper row, rows 1 to 3 the HUD's.
+    fn opening_frame(
+        fill: Tile,
+        cells: &BTreeMap<OpeningPlaceIn, TileIn>,
+    ) -> Result<OpeningFrame, String> {
+        let mut opening = OpeningFrame {
+            upper_row: [fill; 32],
+            lower_rows: HudGrid::filled(fill),
+        };
+        for (place, tile) in cells {
+            let Pair { x, y } = place.place();
+            if y == 0 {
+                let column = usize::try_from(x).map_err(|_| format!("no column {x}"))?;
+                opening.upper_row[column] = tile.0;
+            } else {
+                let below_upper_row = Pair {
+                    x,
+                    y: y.saturating_sub(1),
+                };
+                opening.lower_rows.set(below_upper_row, tile.0);
+            }
+        }
+        Ok(opening)
+    }
+
+    /// The opening map preview: each cell the case gives shows its picture, every other is
+    /// empty.
+    fn opening_preview(
+        cells: &BTreeMap<PreviewPlaceIn, PictureIn>,
+    ) -> Result<OpeningPreview, String> {
+        let mut preview = [[PreviewCell::Empty; 5]; 3];
+        for (place, picture) in cells {
+            let Pair { x, y } = place.place();
+            let index = |n: i32| usize::try_from(n).map_err(|_| format!("no preview cell {n}"));
+            preview[index(y)?][index(x)?] = PreviewCell::Shows(picture.0);
+        }
+        Ok(preview)
+    }
+
+    impl StartupObservedIn {
+        /// The HUD's State it records, all but the grid, which the record gives only as the
+        /// window's colour sets.
+        fn recorded(&self, grid: &HudGrid) -> Result<HudState, String> {
+            Ok(HudState {
+                grid: *grid,
+                shown: shown(&self.shown),
+                selection: selection(self.selection.item(), self.one_shot)?,
+                explored: cell_set(&self.explored)?,
+                mini_map: power(self.mini_map_off),
+                countdown: current_countdown(&self.countdown)?,
+            })
+        }
+
+        /// The window's colour sets on `grid`, the top row first.
+        fn window_colours(grid: &HudGrid) -> [[Option<ColourSet>; 5]; 3] {
+            std::array::from_fn(|row| {
+                std::array::from_fn(|column| {
+                    let x = i32::try_from(column).expect("a window column");
+                    let y = i32::try_from(row).expect("a window row");
+                    grid.get(Pair {
+                        x: x.saturating_add(WINDOW_LEFT),
+                        y,
+                    })
+                    .map(|tile| tile.colours)
+                })
+            })
+        }
+    }
+
+    /// The window's first column on the HUD (§1.2).
+    const WINDOW_LEFT: i32 = 26;
+    /// The colour sets the mini-map draws in (§1.4): explored, charted, her blink.
+    const EXPLORED_COLOURS: u8 = 2;
+    const CHARTED_COLOURS: u8 = 3;
+    const BLINK_COLOURS: u8 = 7;
+
+    /// Checks the oracle's records of a new file's start, which the independent replay compares
+    /// with the original content: here, without that content, each record is read in the
+    /// file's format, and what the model says without it is checked.
+    ///
+    /// - The setup's record (the one held through to the first frame of play): the model's new
+    ///   file, with her fresh energy the one recorded, leaves the State recorded; and a preview
+    ///   whose pictures stand where the record shows the explored colours, at a frame count in
+    ///   the blink's lit or unlit half as her cell shows, draws the window's colours recorded.
+    /// - The first frame of play's record, which begins where the setup's is held to: the setup's
+    ///   values carry into play unchanged but for the cells she explores.
+    pub fn check_startup_observed(
+        observed: &[StartupObservedIn],
+        pictures: &HudPictures,
+    ) -> Result<Vec<String>, String> {
+        let mut problems = Vec::new();
+        let setup = observed
+            .iter()
+            .find(|record| record.held_through.is_some())
+            .ok_or("no record of the setup")?;
+        for record in observed {
+            if record.before >= record.after
+                || record.held_through.is_some_and(|held| held < record.after)
+            {
+                return Err(format!("{}: its cuts are out of order", record.id));
+            }
+        }
+        let model = setup_from_record(setup, pictures)?;
+        let recorded = setup.recorded(&model.grid)?;
+        if model != recorded {
+            problems.extend(
+                differences(&recorded, &model, &[], &[])
+                    .into_iter()
+                    .map(|problem| format!("{}: {problem}", setup.id)),
+            );
+        }
+        let colours = StartupObservedIn::window_colours(&model.grid);
+        let expected = setup.preview_colours.map(|row| row.map(Some));
+        if colours != expected {
+            problems.push(format!(
+                "{}: window colours: expected {expected:?}, got {colours:?}",
+                setup.id
+            ));
+        }
+        for play in observed
+            .iter()
+            .filter(|record| record.held_through.is_none())
+        {
+            if Some(play.before) != setup.held_through {
+                problems.push(format!(
+                    "{}: doesn't begin where the setup is held to",
+                    play.id
+                ));
+            }
+            let mut carried = setup.recorded(&model.grid)?;
+            carried.explored = cell_set(&play.explored)?;
+            if play.recorded(&model.grid)? != carried {
+                problems.push(format!(
+                    "{}: the setup's State isn't carried into play",
+                    play.id
+                ));
+            }
+        }
+        Ok(problems)
+    }
+
+    /// The model's new file for the setup's record: invented opening art (every cell the blank
+    /// cell), a preview picture wherever the record shows the explored colours, and a frame
+    /// count in the blink's lit half where her cell shows the blink colours, its unlit half
+    /// where it doesn't.
+    fn setup_from_record(
+        setup: &StartupObservedIn,
+        pictures: &HudPictures,
+    ) -> Result<HudState, String> {
+        let rules = Rules::reference();
+        let mut preview = [[PreviewCell::Empty; 5]; 3];
+        let mut lit = false;
+        for (row, colours) in preview.iter_mut().zip(&setup.preview_colours) {
+            for (cell, colour) in row.iter_mut().zip(colours) {
+                match colour.number() {
+                    EXPLORED_COLOURS => *cell = PreviewCell::Shows(pictures.map_blank),
+                    CHARTED_COLOURS => {}
+                    BLINK_COLOURS => lit = true,
+                    other => return Err(format!("{}: no window colours {other}", setup.id)),
+                }
+            }
+        }
+        let frame = if lit {
+            FrameCount(0)
+        } else {
+            FrameCount(rules.her_blink.frames_each_way)
+        };
+        let blank = pictures.blank_cell();
+        let opening = OpeningFrame {
+            upper_row: [blank; 32],
+            lower_rows: HudGrid::filled(blank),
+        };
+        let energy = setup.shown.energy;
+        let hud = HudState::new_file(
+            &rules,
+            pictures,
+            &opening,
+            &preview,
+            frame,
+            Energy {
+                now: energy,
+                capacity: energy,
+            },
+        );
+        Ok(hud.state)
     }
 
     /// Plays one frame of a countdown case on `hud`: its countdown's answer, or `None` when the
@@ -1533,13 +1863,82 @@ mod convert {
 mod tests {
     use interface_hud::{BehaviourId, CATALOGUE, Checked, HudEvent};
 
-    use crate::convert::{load, load_changed, pictures, runs_the_model};
+    use crate::convert::{
+        check_startup_observed, load, load_changed, pictures, runs_the_model,
+        setup_then_quiet_frame,
+    };
     use crate::shape::VectorIn;
+
+    #[test]
+    fn every_startup_passes() {
+        let file = load().unwrap();
+        let pictures = pictures(&file.pictures);
+        assert!(!file.startup.is_empty(), "the file holds no startups");
+        let failures: Vec<String> = file
+            .startup
+            .iter()
+            .filter_map(|case| match case.run(&pictures) {
+                Ok(problems) if problems.is_empty() => None,
+                Ok(problems) => Some(format!("{}: {}", case.id, problems.join("; "))),
+                Err(error) => Some(format!("{}: unreadable: {error}", case.id)),
+            })
+            .collect();
+        assert!(
+            failures.is_empty(),
+            "{} of {} startups fail:\n{}",
+            failures.len(),
+            file.startup.len(),
+            failures.join("\n")
+        );
+    }
+
+    #[test]
+    fn the_recorded_startup_agrees_with_the_model() {
+        let file = load().unwrap();
+        let pictures = pictures(&file.pictures);
+        let problems = check_startup_observed(&file.startup_observed, &pictures).unwrap();
+        assert!(problems.is_empty(), "{}", problems.join("\n"));
+    }
+
+    /// Spec: `NewFileStatusBar`, `NewFileMiniMap`. The State setup hands on is the one ordinary
+    /// play reads: a first frame with her energy as setup drew it and nothing else to do
+    /// redraws nothing.
+    #[test]
+    fn the_setup_state_carries_into_play() {
+        let file = load().unwrap();
+        let pictures = pictures(&file.pictures);
+        for case in &file.startup {
+            let (setup, played) = setup_then_quiet_frame(case, &pictures).unwrap();
+            assert_eq!(played, setup, "{}", case.id);
+        }
+    }
 
     /// Changes to the file that each add a key or a name its header doesn't define: a key in
     /// each table, a place off its grid or not written "column,row" in each table keyed by
     /// places, and each kind of name.
-    const UNKNOWN: [(&str, &str); 40] = [
+    const UNKNOWN: [(&str, &str); 48] = [
+        // The new file's tables: a key in each, a place off its grid in each keyed by places,
+        // and a colour set the format lacks.
+        (
+            "id = \"C-new-file-energy\"",
+            "id = \"C-new-file-energy\"\nspeed = 1",
+        ),
+        (
+            "[startup.after]\nupper_row_equal = true\nshown = { energy = 237",
+            "[startup.after]\nspeed = 1\nupper_row_equal = true\nshown = { energy = 237",
+        ),
+        (
+            "id = \"R-new-file-hud\"",
+            "id = \"R-new-file-hud\"\nspeed = 1",
+        ),
+        ("\"31,3\" = \"302:0\"", "\"31,4\" = \"302:0\""),
+        ("\"4,2\" = \"202hv\"", "\"5,2\" = \"202hv\""),
+        ("\"30,2\" = \"202:2hv\"", "\"30,3\" = \"202:2hv\""),
+        (
+            "preview_colours = [[2, 3, 3, 3, 2]",
+            "preview_colours = [[2, 3, 3, 3, 8]",
+        ),
+        ("opening_fill = \"300:6v\"", "opening_fill = \"300:6x\""),
         // A key in each table.
         ("[pictures]", "speed = 1\n[pictures]"),
         (
@@ -1813,7 +2212,11 @@ mod tests {
             .vector
             .iter()
             .map(|v| (&v.id, &v.entries))
-            .chain(file.countdown.iter().map(|v| (&v.id, &v.entries)));
+            .chain(file.countdown.iter().map(|v| (&v.id, &v.entries)))
+            .chain(file.startup.iter().map(|v| (&v.id, &v.entries)));
+        for record in &file.startup_observed {
+            assert!(ids.insert(&record.id), "{} appears twice", record.id);
+        }
         for (id, entries) in rows {
             assert!(ids.insert(id), "{id} appears twice");
             for entry in entries {
@@ -1826,8 +2229,8 @@ mod tests {
     }
 
     #[test]
-    fn the_catalogue_lists_the_specs_27_entries() {
-        assert_eq!(CATALOGUE.len(), 27);
+    fn the_catalogue_lists_the_specs_29_entries() {
+        assert_eq!(CATALOGUE.len(), 29);
     }
 
     #[test]
@@ -1841,7 +2244,8 @@ mod tests {
                     || file
                         .countdown
                         .iter()
-                        .any(|case| runs_the_model(case) && case.entries.contains(&name)),
+                        .any(|case| runs_the_model(case) && case.entries.contains(&name))
+                    || file.startup.iter().any(|case| case.entries.contains(&name)),
                 "no vector exercises {name}"
             );
         }

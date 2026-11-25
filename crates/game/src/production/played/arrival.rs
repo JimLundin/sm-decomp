@@ -24,6 +24,8 @@ pub struct State {
     pub arrival: ArrivalState,
     /// Whether the preparation's frame of work has begun.
     pub preparation: Begun,
+    /// The final music waits before the start room publishes its HUD.
+    pub setup: Setup,
 }
 
 /// Whether a new game's start is made ready this frame (the start's loading's, with the
@@ -32,6 +34,8 @@ pub struct State {
 pub enum Readiness {
     /// Not on this frame.
     NotYet,
+    /// The platform ends the first wait of the prepared room's final music service.
+    FinalMusicWait,
     /// It is ready this frame.
     Ready,
 }
@@ -45,6 +49,32 @@ pub enum Begun {
     UnderWay,
 }
 
+/// The room's opening publication relative to its final music wait.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Setup {
+    /// Waiting for the loading path to reach the final music service.
+    BeforeMusic,
+    /// The final music service has completed this many waits.
+    MusicWaits(u8),
+    /// The HUD is published and carried into the fade.
+    Published,
+}
+
+impl Setup {
+    const MUSIC_WAITS: u8 = 20;
+
+    fn advance(self, ready: Readiness, waited: bool) -> Self {
+        match self {
+            Self::BeforeMusic if ready == Readiness::FinalMusicWait && waited => {
+                Self::MusicWaits(1)
+            }
+            Self::MusicWaits(Self::MUSIC_WAITS) => Self::Published,
+            Self::MusicWaits(waits) if waited => Self::MusicWaits(waits.saturating_add(1)),
+            Self::BeforeMusic | Self::MusicWaits(_) | Self::Published => self,
+        }
+    }
+}
+
 impl State {
     /// Play: the arrival is over, the picture fully up.
     pub const PLAYING: Self = Self {
@@ -54,6 +84,7 @@ impl State {
             count: types::arrival::FadeFrames::NONE,
         },
         preparation: Begun::UnderWay,
+        setup: Setup::Published,
     };
 
     /// Enter the new game's preparation with the brightness the flight left behind.
@@ -71,6 +102,7 @@ impl State {
                 count: FadeFrames::NONE,
             },
             preparation: Begun::Not,
+            setup: Setup::BeforeMusic,
         }
     }
 
@@ -130,6 +162,33 @@ impl super::State {
             suit: suit(content, passing)?,
             goal: types::Palette(self.palette.goal),
         };
+        let setup = self.arrival.setup.advance(passing.start, passing.work_done);
+        let opening = if self.arrival.setup != Setup::Published && setup == Setup::Published {
+            let (opening, preview) = content.opening_hud.as_ref().ok_or(Fault::HudStartup)?;
+            let inventory = &passing.progress.inventory;
+            let energy = run_progress::Supply::Energy;
+            Some(interface_hud::HudState::new_file(
+                &rules.hud,
+                &content.hud,
+                opening,
+                preview,
+                self.frame.count,
+                interface_hud::Energy {
+                    now: inventory.held.0[energy].0,
+                    capacity: inventory.capacity.0[energy].0,
+                },
+            ))
+        } else {
+            None
+        };
+        if passing.start == Readiness::Ready && self.arrival.setup != Setup::Published {
+            return Err(Fault::HudStartup);
+        }
+        self.arrival.setup = setup;
+        let upper_row = opening.map(|opening| {
+            self.hud.0 = opening.state;
+            opening.upper_row
+        });
         let report = self.arrival.advance(
             if passing.start == Readiness::Ready {
                 Preparation::Ready(&start)
@@ -165,6 +224,7 @@ impl super::State {
             doors,
             health: None,
             hud: None,
+            opening_hud: upper_row,
             ceres_doors: Vec::new(),
             lights: None,
             ridley: None,
@@ -193,7 +253,7 @@ fn suit(content: &Content, passing: &Passing<'_>) -> Result<SuitColours, Fault> 
 
 #[cfg(test)]
 mod tests {
-    use super::{Begun, Readiness, State};
+    use super::{Begun, Readiness, Setup, State};
     use crate::production::played::passage::{PassageAudio, Passing};
     use crate::production::played::tests::{content, hud_frame, inputs, rules, state};
     use core::num::Wrapping;
@@ -216,6 +276,7 @@ mod tests {
                 count: FadeFrames::NONE,
             },
             preparation: Begun::Not,
+            setup: Setup::BeforeMusic,
         };
         start.frame.random.number = types::RandomNumber(0x1234);
         start
@@ -270,6 +331,81 @@ mod tests {
     }
 
     #[test]
+    fn room_setup_publishes_once_and_leaves_state_when_the_hud_provider_is_missing() {
+        let mut state = preparing();
+        let mut content = content();
+        let mut progress = run_progress::Progress::default();
+        progress.inventory.held.0[run_progress::Supply::Energy] = Wrapping(81);
+        let rules = rules();
+        let mut passing = Passing {
+            work_begun: true,
+            work_done: true,
+            audio: PassageAudio {
+                sounds_sent: true,
+                music_ready: true,
+            },
+            progress: &progress,
+            random: None,
+            start: Readiness::FinalMusicWait,
+        };
+        assert!(
+            state
+                .prepare(&passing, &content, &rules)
+                .unwrap()
+                .opening_hud
+                .is_none()
+        );
+        passing.start = Readiness::NotYet;
+        for _ in 0..19 {
+            assert!(
+                state
+                    .prepare(&passing, &content, &rules)
+                    .unwrap()
+                    .opening_hud
+                    .is_none()
+            );
+        }
+        let before = state.clone();
+        assert_eq!(
+            state.prepare(&passing, &content, &rules),
+            Err(super::Fault::HudStartup)
+        );
+        assert_eq!(state, before);
+
+        let tile = state
+            .hud
+            .0
+            .grid
+            .get(interface_hud::Place { x: 0, y: 0 })
+            .unwrap();
+        let opening = interface_hud::OpeningFrame {
+            upper_row: [tile; 32],
+            lower_rows: interface_hud::HudGrid::filled(tile),
+        };
+        content.opening_hud = Some((opening, [[interface_hud::PreviewCell::Empty; 5]; 3]));
+        let output = state.prepare(&passing, &content, &rules).unwrap();
+        assert_eq!(output.opening_hud, Some(opening.upper_row));
+        assert_eq!(state.hud.0.shown.energy, 81);
+        let published = state.hud.0.clone();
+        assert!(
+            state
+                .prepare(&passing, &content, &rules)
+                .unwrap()
+                .opening_hud
+                .is_none()
+        );
+        passing.start = Readiness::Ready;
+        assert!(
+            state
+                .prepare(&passing, &content, &rules)
+                .unwrap()
+                .opening_hud
+                .is_none()
+        );
+        assert_eq!(state.hud.0, published);
+    }
+
+    #[test]
     fn as_the_start_is_ready_she_arrives_on_the_pad_with_her_suits_colours_and_the_fade_follows() {
         let mut content = content();
         content.rooms.samus.suits.power = data::assets::art::Palette(
@@ -278,6 +414,7 @@ mod tests {
         let mut arriving = preparing();
         arriving.palette.goal = [types::Colour::new(0x7fff).unwrap(); world_doors::COLOURS];
         arriving.hud.0.mini_map = interface_hud::MiniMapPower::Off;
+        arriving.arrival.setup = super::Setup::Published;
         let progress = run_progress::Progress::default();
         let passing = Passing {
             work_begun: true,

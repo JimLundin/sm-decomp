@@ -201,6 +201,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
             slopes: data::level::slope::Slopes::default(),
         },
         hud: HudPictures::default(),
+        opening_hud: None,
         map: HerMap::default(),
         start_x: Wrapping(0x80),
         ridley: boss_ceres_ridley::RidleyContent {

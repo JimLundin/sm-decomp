@@ -26,6 +26,118 @@ pub(super) fn held(seed: &[u8]) -> Result<Held, Outcome> {
     })
 }
 
+/// A new file inherits its bindings and starts with no reserve, ammunition or map.
+pub(super) fn fresh(seed: &[u8], progress: &run_progress::Progress) -> Result<Held, Outcome> {
+    let inventory = &progress.inventory;
+    let energy = run_progress::Supply::Energy;
+    Ok(Held {
+        bindings: hud::bindings(seed)?,
+        stock_at_start: interface_hud::StockAtStart {
+            counts: enum_map::EnumMap::default(),
+            equipped: interface_hud::Equipped::default(),
+        },
+        status: interface_hud::Status {
+            energy: interface_hud::Energy {
+                now: inventory.held.0[energy].0,
+                capacity: inventory.capacity.0[energy].0,
+            },
+            reserve: interface_hud::Reserve {
+                energy: 0,
+                mode: interface_hud::ReserveMode::Manual,
+            },
+            ammunition: interface_hud::Ammunition::new(enum_map::EnumMap::default())
+                .ok_or_else(|| crate::replay::data_failure(None, "fresh ammunition"))?,
+        },
+        map_collected: false,
+    })
+}
+
+/// Checked adaptation of imported cell art into the opening HUD.
+pub(super) fn opening(
+    asset: &data::assets::start::Hud,
+) -> Result<(interface_hud::OpeningFrame, interface_hud::OpeningPreview), Outcome> {
+    use interface_hud::{ColourSet, HudGrid, OpeningFrame, Place, PreviewCell, Tile};
+    let bad = || crate::replay::data_failure(None, "played opening HUD art");
+    let tile = |cell: data::assets::start::HudCell| -> Result<Tile, Outcome> {
+        Ok(Tile::new(
+            cell.look,
+            ColourSet::new(cell.colours).ok_or_else(bad)?,
+        ))
+    };
+    let [upper, lower @ ..] = &asset.frame;
+    let upper_row = upper
+        .iter()
+        .copied()
+        .map(tile)
+        .collect::<Result<Vec<_>, _>>()?
+        .try_into()
+        .map_err(|_| bad())?;
+    let [[first, ..], ..] = lower;
+    let mut lower_rows = HudGrid::filled(tile(*first)?);
+    for (y, row) in (0..).zip(lower) {
+        for (x, &cell) in (0..).zip(row) {
+            lower_rows.set(Place { x, y }, tile(cell)?);
+        }
+    }
+    Ok((
+        OpeningFrame {
+            upper_row,
+            lower_rows,
+        },
+        asset
+            .preview
+            .map(|row| row.map(|look| look.map_or(PreviewCell::Empty, PreviewCell::Shows))),
+    ))
+}
+
+/// The full video publication in hardware order, one observation per owner.
+pub(super) fn video_expected(
+    record: &oracle_record::FrameRecord,
+) -> Result<[Observation; 2], Outcome> {
+    const TOP: usize = 0x5800;
+    const LOWER: usize = TOP + 32;
+    const END: usize = LOWER + 96;
+    let words = |range: core::ops::Range<usize>| {
+        record
+            .vram
+            .get(range)
+            .map(|words| words.iter().flat_map(|word| word.to_le_bytes()).collect())
+            .ok_or_else(|| crate::replay::data_failure(None, "played HUD VRAM"))
+    };
+    Ok([
+        Observation {
+            field: "hud.upper-row".into(),
+            bytes: words(TOP..LOWER)?,
+        },
+        Observation {
+            field: "hud.video-grid".into(),
+            bytes: words(LOWER..END)?,
+        },
+    ])
+}
+
+pub(super) fn video_actual(
+    upper_row: Option<&interface_hud::UpperRow>,
+    state: &interface_hud::HudState,
+) -> Result<[Observation; 2], Outcome> {
+    use game::production::hud::{cell, tilemap};
+    Ok([
+        Observation {
+            field: "hud.upper-row".into(),
+            bytes: upper_row
+                .into_iter()
+                .flatten()
+                .flat_map(|tile| cell(*tile))
+                .collect(),
+        },
+        Observation {
+            field: "hud.video-grid".into(),
+            bytes: tilemap(state)
+                .map_err(|_| crate::replay::data_failure(None, "played HUD grid"))?,
+        },
+    ])
+}
+
 /// What a frame of play brings the HUD: the held facts, with the item buttons `controller`
 /// reads and the countdown's start, borrowed from the records.
 pub(super) const fn frame(

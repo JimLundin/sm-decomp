@@ -75,7 +75,8 @@ pub struct HudPictures {
 }
 
 /// The look of a tilemap word: its ten bits of picture, which always name one, and its flips.
-fn look(word: u16) -> Option<Look> {
+#[must_use]
+pub fn look(word: u16) -> Option<Look> {
     let flip = match (word & FLIP_ACROSS != 0, word & FLIP_DOWN != 0) {
         (false, false) => Flip::None,
         (true, false) => Flip::Across,

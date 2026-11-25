@@ -7,6 +7,10 @@ use types::{Checked, Kind, Switch};
 /// An entry of the HUD's spec; each variant is named as the spec names its entry.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
 pub enum BehaviourId {
+    /// Spec: NewFileStatusBar.
+    NewFileStatusBar,
+    /// Spec: NewFileMiniMap.
+    NewFileMiniMap,
     /// Spec: EnergyGauge.
     EnergyGauge,
     /// Spec: AmmoCounts.
@@ -79,7 +83,21 @@ pub struct Behaviour {
 
 /// Every behaviour of the HUD's spec, one row per entry, each naming its entry; listed in the
 /// spec's order, though the order means nothing.
-pub const CATALOGUE: [Behaviour; 27] = [
+pub const CATALOGUE: [Behaviour; 29] = [
+    Behaviour {
+        id: BehaviourId::NewFileStatusBar,
+        summary: "A new file at Ceres puts up the status bar with her starting energy.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::NewFileMiniMap,
+        summary: "The mini-map has a preview before her first frame in the room.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
     Behaviour {
         id: BehaviourId::EnergyGauge,
         summary: "Her energy's last two digits, and one tank per 100 of her capacity, full while \

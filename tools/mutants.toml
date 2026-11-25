@@ -963,3 +963,33 @@ after = "sounds_sent: sounds_sent(&previous.wram).map(|_| true)?,"
 case = "played chain-any-0008-E021 0 263"
 cut = 105
 field = "doors.colours.screen"
+
+[[fault]]
+name = "played-opening-hud-publishes-after-nineteen-music-waits"
+responsibility = "played"
+file = "crates/game/src/production/played/arrival.rs"
+before = "const MUSIC_WAITS: u8 = 20;"
+after = "const MUSIC_WAITS: u8 = 19;"
+case = "played any-ceres-arrival 0 222"
+cut = 183
+field = "hud.setup-publish"
+
+[[fault]]
+name = "played-opening-hud-uses-a-later-clock"
+responsibility = "played"
+file = "crates/game/src/production/played/arrival.rs"
+before = "                self.frame.count,"
+after = "                interface_hud::FrameCount(self.frame.count.0.wrapping_add(8)),"
+case = "played any-fly-to-ceres 0 1437"
+cut = 987
+field = "hud.map-window"
+
+[[fault]]
+name = "played-opening-hud-has-no-preview"
+responsibility = "played"
+file = "crates/game/src/production/played/arrival.rs"
+before = "                preview,"
+after = "                &[[interface_hud::PreviewCell::Empty; 5]; 3],"
+case = "played any-ceres-arrival 0 222"
+cut = 184
+field = "hud.map-window"

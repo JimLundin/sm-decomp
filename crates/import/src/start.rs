@@ -103,3 +103,147 @@ mod tests {
         assert!(super::import(Lorom::new(&image[..0x4000])).is_err());
     }
 }
+
+/// A malformed opening HUD or an unsupported starting room's setup.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HudError {
+    /// An address from the image could not be read.
+    Address(AddressError),
+    /// The fresh room's load recipe is outside Ceres's supported startup.
+    Room,
+    /// The room data could not be decoded.
+    RoomData,
+    /// The opening art or map window is malformed.
+    Art,
+}
+
+impl From<AddressError> for HudError {
+    fn from(error: AddressError) -> Self {
+        Self::Address(error)
+    }
+}
+
+/// Import the opening frame and first mini-map window from the selected load station.
+///
+/// # Errors
+/// The start is outside the supported Ceres load recipe, or its content is malformed.
+pub fn hud(rom: Lorom<'_>, start: &NewGame) -> Result<data::assets::start::Hud, HudError> {
+    let loaded = data::room::decode(rom, start.room).map_err(|_| HudError::RoomData)?;
+    if loaded.area != data::room::Area::Ceres {
+        return Err(HudError::Room);
+    }
+    Ok(data::assets::start::Hud {
+        frame: opening_frame(rom)?,
+        preview: preview(rom, &loaded, start, map_masks(rom, &loaded.default)?)?,
+    })
+}
+
+/// Each of the three preview rows reads the five highest mask bits left to right.
+fn map_masks(rom: Lorom<'_>, state: &data::room::RoomState) -> Result<[u16; 3], HudError> {
+    // The elevator FX table entry registers its effect in the HDMA bank, which becomes
+    // the high byte of the first mask. Its registration is the supported load recipe.
+    const ELEVATOR_FX: u8 = 0x2a;
+    const FX_SCRIPT_BANK: RomAddress = RomAddress::new(0x89, 0xac45);
+    const FX_ENTRIES: RomAddress = RomAddress::new(0x83, 0xac18);
+    const REGISTER_FX: [u8; 4] = [0x22, 0x35, 0x84, 0x88];
+    let fx_type = byte(rom, state.fx, 9)?;
+    if fx_type != ELEVATOR_FX {
+        return Err(HudError::Room);
+    }
+    let bank = byte(rom, FX_SCRIPT_BANK, 0)?;
+    let entry = RomAddress::new(bank, word(rom, FX_ENTRIES, usize::from(fx_type))?);
+    if rom.read(entry, REGISTER_FX.len())? != REGISTER_FX {
+        return Err(HudError::Room);
+    }
+
+    // The graphics set leaves its last enemy's graphics bank and the terminator's offset.
+    let mut graphics = state.enemy_set;
+    let mut last_bank = None;
+    loop {
+        let enemy = word(rom, graphics, 0)?;
+        if enemy == u16::MAX {
+            break;
+        }
+        last_bank = Some(byte(rom, RomAddress::new(0xa0, enemy), 0x38)?);
+        graphics = graphics.advance(4).ok_or(HudError::Room)?;
+    }
+    Ok([
+        u16::from(bank) << 8,
+        u16::from(last_bank.ok_or(HudError::Room)?),
+        graphics.offset,
+    ])
+}
+
+fn preview(
+    rom: Lorom<'_>,
+    loaded: &data::room::Room,
+    start: &NewGame,
+    masks: [u16; 3],
+) -> Result<data::assets::start::MapPreview, HudError> {
+    use data::map::{AreaMaps, MAP_ROWS, PAGE_COLUMNS};
+
+    let map = AreaMaps::load(rom)?
+        .0
+        .into_iter()
+        .find(|map| map.area == loaded.area)
+        .ok_or(HudError::Art)?;
+    let left = usize::from(loaded.map_position.x)
+        .saturating_add(usize::from(start.her.0 / 256))
+        .checked_sub(2)
+        .ok_or(HudError::Art)?;
+    // The padding row in the center's Y cancels the shift to the preview's top row.
+    let top = usize::from(loaded.map_position.y).saturating_add(usize::from(start.her.1 / 256));
+    let columns = usize::from(PAGE_COLUMNS);
+    let mut preview = [[None; 5]; 3];
+    for (y, (row, mask)) in preview.iter_mut().zip(masks).enumerate() {
+        for (x, cell) in row.iter_mut().enumerate() {
+            if mask & (0x8000 >> x) != 0 {
+                let x = left.saturating_add(x);
+                let y = top.saturating_add(y);
+                if x >= columns || y >= usize::from(MAP_ROWS) {
+                    return Err(HudError::Art);
+                }
+                let index = y.saturating_mul(columns).saturating_add(x);
+                let value = map.tiles.get(index).ok_or(HudError::Art)?;
+                *cell = Some(data::hud::look(*value).ok_or(HudError::Art)?);
+            }
+        }
+    }
+    Ok(preview)
+}
+
+fn opening_frame(rom: Lorom<'_>) -> Result<[[data::assets::start::HudCell; 32]; 4], HudError> {
+    use data::assets::start::HudCell;
+
+    const FRAME: RomAddress = RomAddress::new(0x80, 0x988b);
+    let mut rows = Vec::new();
+    for bytes in rom.read(FRAME, 4 * 64)?.as_chunks::<64>().0 {
+        let cells = bytes
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|&bytes| {
+                let [_, high] = bytes;
+                let word = u16::from_le_bytes(bytes);
+                // The output encoder sets priority for every HUD cell.
+                if word & 0x2000 == 0 {
+                    return Err(HudError::Art);
+                }
+                Ok(HudCell {
+                    look: data::hud::look(word).ok_or(HudError::Art)?,
+                    colours: (high >> 2) & 7,
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        rows.push(cells.try_into().map_err(|_| HudError::Art)?);
+    }
+    rows.try_into().map_err(|_| HudError::Art)
+}
+
+fn byte(rom: Lorom<'_>, at: RomAddress, offset: usize) -> Result<u8, AddressError> {
+    let at = at.advance(offset).ok_or(AddressError::PastEnd(at))?;
+    rom.read(at, 1)?
+        .first()
+        .copied()
+        .ok_or(AddressError::PastEnd(at))
+}

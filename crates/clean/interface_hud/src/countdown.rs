@@ -7,6 +7,7 @@
 //! stays. It runs on the frames whose scene runs it and stands still on every other, shown as it
 //! stands. When its time runs out it says so; what the escape does then is the scene's.
 
+use enum_map::{Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 use types::Pair;
 
@@ -27,20 +28,53 @@ const CORNER: CountdownPlace = CountdownPlace::at_pixels(220, 48);
 /// pixel right (`x`) and up (`y`).
 const SLIDE_STEP: Pair<u16> = Pair { x: 224, y: 193 };
 
-/// Spec: CountdownTicks. A row of the rhythm as its first three rows run: 53 hundredths over 32
-/// running frames.
-const RHYTHM_ROW: [u8; 32] = [
+/// Spec: CountdownTicks. The rhythm's beats: 128, four rows of 32.
+const BEATS: usize = 128;
+
+/// Spec: CountdownTicks. A beat of the rhythm: the count of finished frames mod 128, so 0 to
+/// 127.
+///
+/// The rhythm has a cell for each of the 128 beats (`RHYTHM` is keyed by `Beat`), and every count
+/// of finished frames falls on one of them, so every count has its hundredths: the lookup can't
+/// miss. Only the count's remainder is read, so its wrapping at 16 bits changes nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Beat(usize);
+
+impl Beat {
+    /// The beat a running frame falls on: the count of finished frames mod 128.
+    fn of(finished: FinishedFrames) -> Self {
+        Self::wrapped(usize::from(finished.0))
+    }
+
+    /// The beat `count` falls on, mod 128.
+    const fn wrapped(count: usize) -> Self {
+        Self(count % BEATS)
+    }
+}
+
+/// The beats key the rhythm, a table with one cell for each.
+impl Enum for Beat {
+    type Array<V> = [V; BEATS];
+
+    fn from_usize(value: usize) -> Self {
+        Self::wrapped(value)
+    }
+
+    fn into_usize(self) -> usize {
+        self.0
+    }
+}
+
+/// Spec: CountdownTicks. The rhythm: the hundredths a running frame takes, by its beat, in the
+/// spec's four rows of 32 (beats 0 to 31, 32 to 63, 64 to 95, 96 to 127). Each row takes 53
+/// hundredths but the last, which takes 54: 213 over 128 frames, as near as whole hundredths come
+/// to 100 every 60 frames.
+const RHYTHM: EnumMap<Beat, u8> = EnumMap::from_array([
     1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2,
-];
-/// Spec: CountdownTicks. The rhythm's last row, 54 hundredths: it differs from the others at its
-/// steps 24, 25, 27, 29 and 30.
-const RHYTHM_LAST_ROW: [u8; 32] = [
+    1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2,
+    1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2,
     1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2,
-];
-/// Spec: CountdownTicks. The rhythm: the hundredths a running frame takes, by the count of
-/// finished frames mod 128, in four rows of 32, the first row's first cell for 0. It takes 213
-/// hundredths over 128 frames, as near as whole hundredths come to 100 every 60 frames.
-const RHYTHM: [[u8; 32]; 4] = [RHYTHM_ROW, RHYTHM_ROW, RHYTHM_ROW, RHYTHM_LAST_ROW];
+]);
 
 /// The hundredths in a second.
 const HUNDREDTHS_PER_SECOND: u32 = 100;
@@ -133,14 +167,9 @@ impl From<TimeLeft> for u32 {
     }
 }
 
-/// Spec: CountdownTicks. The hundredths the rhythm takes on a running frame, by the count of
-/// finished frames mod 128: only the remainder is read, so the count wrapping changes nothing.
+/// Spec: CountdownTicks. The hundredths the rhythm takes on a running frame: its beat's cell.
 fn hundredths_taken(finished: FinishedFrames) -> u32 {
-    let rhythm = RHYTHM.as_flattened();
-    usize::from(finished.0)
-        .checked_rem(rhythm.len())
-        .and_then(|step| rhythm.get(step))
-        .map_or(0, |&taken| u32::from(taken))
+    u32::from(RHYTHM[Beat::of(finished)])
 }
 
 /// A countdown's age: the frames it has run since it began, 0 to 96, counted up to 96 and no
@@ -474,15 +503,29 @@ impl Countdown {
 
 #[cfg(test)]
 mod tests {
-    use super::{RHYTHM, RHYTHM_LAST_ROW, RHYTHM_ROW};
+    use super::{Beat, FinishedFrames, RHYTHM, hundredths_taken};
 
     /// The spec's sums: each row takes 53 hundredths but the last, which takes 54; 213 in all.
     #[test]
     fn the_rhythm_takes_213_hundredths_over_128_frames() {
-        let sum = |row: &[u8]| row.iter().map(|&h| u32::from(h)).sum::<u32>();
-        assert_eq!(sum(&RHYTHM_ROW), 53);
-        assert_eq!(sum(&RHYTHM_LAST_ROW), 54);
-        assert_eq!(sum(RHYTHM.as_flattened()), 213);
-        assert_eq!(RHYTHM.as_flattened().len(), 128);
+        let cells: Vec<u32> = RHYTHM.values().map(|&h| u32::from(h)).collect();
+        assert_eq!(cells.len(), 128);
+        let rows: Vec<u32> = cells.chunks(32).map(|row| row.iter().sum()).collect();
+        assert_eq!(rows, [53, 53, 53, 54]);
+        assert_eq!(cells.iter().sum::<u32>(), 213);
+    }
+
+    /// Every count of finished frames falls on a beat, its remainder mod 128, so the count's
+    /// wrap from 65,535 to 0 is a beat like any other.
+    #[test]
+    fn every_count_has_a_beat_and_its_hundredths() {
+        for count in 0..=u16::MAX {
+            let beat = Beat::of(FinishedFrames(count));
+            assert_eq!(beat, Beat(usize::from(count % 128)));
+            assert_eq!(
+                hundredths_taken(FinishedFrames(count)),
+                u32::from(RHYTHM[beat])
+            );
+        }
     }
 }

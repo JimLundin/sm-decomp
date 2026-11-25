@@ -1,6 +1,8 @@
 //! The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own
-//! cell blinking, the bosses that blank it, and the quirks at the map's first and last columns.
+//! cell blinking, the bosses that blank it, the quirks at the map's first and last columns, and
+//! the opening preview a new file's setup draws before her first frame of play.
 
+use serde::{Deserialize, Serialize};
 use types::{Look, Pair, Picture, Screen};
 
 use crate::grid::{Place, at, plus};
@@ -100,6 +102,29 @@ impl WindowCell {
     }
 }
 
+/// A cell of the opening map preview (spec: NewFileMiniMap), from the prepared room's content.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum PreviewCell {
+    /// Nothing to show: the window shows the map's blank, in the charted colours.
+    Empty,
+    /// A map picture with its flips, which the window shows in the explored colours.
+    Shows(Look),
+}
+
+impl PreviewCell {
+    /// What the window cell it stands in shows.
+    const fn window_cell(self) -> WindowCell {
+        match self {
+            Self::Empty => WindowCell::Blank,
+            Self::Shows(look) => WindowCell::Explored(look),
+        }
+    }
+}
+
+/// The opening map preview (§1.3): the mini-map's window as a new file's setup draws it, 3 rows
+/// of 5 cells, the top row first, each row left to right; its middle cell is hers.
+pub type OpeningPreview = [[PreviewCell; 5]; 3];
+
 /// A room's screen `(sx, sy)` across and down from its top-left cell `(rx, ry)` is the map's cell
 /// `((rx + sx) mod 64, ry + sy)`: the columns wrap round the map, the rows don't (spec:
 /// Exploring, BossBlanksTheMap).
@@ -191,20 +216,40 @@ impl HudState {
             let cell = self.window_cell(inputs, pictures, reading, plus(her, offset));
             self.grid.set(place, cell.tile(pictures));
         }
-        let her_cell = self.window_cell(inputs, pictures, reading, her);
         // Spec: DiagonalPicture. Her window cell shown explored, with a picture that counts as
         // the diagonal: the cell over hers joins the explored cells, shown from the next frame.
-        if let WindowCell::Explored(look) = her_cell
+        if let WindowCell::Explored(look) = self.window_cell(inputs, pictures, reading, her)
             && is_diagonal(look.picture, pictures.diagonal)
         {
             self.explored.insert(plus(her, ABOVE));
         }
-        // Spec: HerBlink. The blink's first half shows her window cell in the blink colours; its
-        // second half leaves it as drawn.
-        let in_blink_colours = rules.her_blink.first_half(frame);
-        if in_blink_colours {
-            self.grid
-                .set(HER_CELL, her_cell.tile(pictures).in_colours(BLINK));
+        self.her_blink(rules, frame);
+    }
+
+    /// Spec: NewFileMiniMap. Room setup for a new file draws the opening map preview in the
+    /// window: each of its pictures with its flips in the explored colours, each empty cell the
+    /// map's blank in the charted colours; then her cell blinks as in play. Nothing is explored.
+    pub(crate) fn draw_opening_preview(
+        &mut self,
+        rules: &Rules,
+        pictures: &HudPictures,
+        preview: &OpeningPreview,
+        frame: FrameCount,
+    ) {
+        // The window and the preview both run from the top row, each row left to right.
+        for ((place, _), cell) in window().zip(preview.as_flattened()) {
+            self.grid.set(place, cell.window_cell().tile(pictures));
+        }
+        self.her_blink(rules, frame);
+    }
+
+    /// Spec: HerBlink. After the window is drawn, the blink's first half, `frame mod 2n < n`,
+    /// shows her window cell in the blink colours; its second half leaves it as drawn.
+    fn her_blink(&mut self, rules: &Rules, frame: FrameCount) {
+        if rules.her_blink.first_half(frame)
+            && let Some(drawn) = self.grid.get(HER_CELL)
+        {
+            self.grid.set(HER_CELL, drawn.in_colours(BLINK));
         }
     }
 

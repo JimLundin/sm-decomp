@@ -16,3 +16,24 @@ pub struct NewGame {
     /// The colours the fade in heads for in her row as it starts, which are not her suit's.
     pub her_row: [Colour; ROW_COLOURS],
 }
+
+/// One cell of the opening status bar, including its authored colour set.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HudCell {
+    /// Picture and flips.
+    pub look: types::Look,
+    /// Palette index, 0 through 7.
+    pub colours: u8,
+}
+
+/// The map looks in a new file's opening window, top row first.
+pub type MapPreview = [[Option<types::Look>; 5]; 3];
+
+/// The HUD art supplied by the new game's room setup.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Hud {
+    /// Four rows of 32 cells, with the separately published upper row first.
+    pub frame: [[HudCell; 32]; 4],
+    /// The map pictures that the prepared room's first HUD draw shows.
+    pub preview: MapPreview,
+}

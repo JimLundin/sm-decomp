@@ -43,7 +43,7 @@ pub(super) fn room(
         inputs,
         map,
         hud: super::hud::held(seed)?,
-        progress: progress::seed(seed)?,
+        progress: progress::decode(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
             0 => boss_ceres_ridley::Stage::Calm,
             1 => boss_ceres_ridley::Stage::Getaway,

@@ -5,11 +5,11 @@
 //! preparation. [`BORROWED`] names the platform, audio and loading answers it reads.
 //!
 //! The comparison checks which scene is active and both counters at every cut. In flight, the
-//! random number is checked at finished cuts. The flight's brightness and its ordered music
-//! requests with their initial delays are checked at every cut. Once the setup is done, it
+//! random number is checked at finished cuts. The flight's brightness and ordered music
+//! requests with their initial delays are checked at every cut. Once setup is done, the run
 //! also checks the stage, plane, transform, scroll, flash, fade, label, sprites and letters typed.
-//! In the preparation it checks the arrival's stage, brightness and random
-//! number at every cut. [`MASKED`] names the outputs outside this comparison.
+//! The handoff carries the frame clock and arrival into the room runner for preparation, HUD
+//! setup, the fade and the rooms. [`MASKED`] lists the streams outside the comparison.
 
 use super::{Report, Stop, arrival, frame, rows::Rows, word};
 use crate::replay::compare::{CompareFault, Observation, compare};
@@ -36,18 +36,26 @@ pub const MASKED: &[&str] = &[
     "the PPU mirrors the stages write: the layers and colour math at the turn, the layers, mode and bases at the station (E4)",
     "the random number at lag cuts during flight, where the draw depends on timing (T1)",
     "the save to cartridge memory as the new game begins (P2)",
-    "the preparation's working room, palettes, actors and HUD (R2, C1, H3)",
+    "the preparation's transient room, palettes and actors before their publication (R2, C1)",
 ];
 
 /// The frame owner's initial State comes from the flight's first frame.
-const SEED_HELD: &[&str] = &["the frame counts and random number at the flight's start"];
+const SEED_HELD: &[&str] = &[
+    "the frame counts and random number at the flight's start",
+    "item controls, sound queue occupancy and shot charge from the flight's seed",
+];
 
 /// What a flight run borrows from the record (decision 35).
 const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
     "lag: whether a frame of work begins, the last one's done",
+    "the beginning of the prepared room's final music service (R2 and C1's loading, T1's lag)",
     "the start ready: the frame a new game's start is made ready (R2 and C1's loading, T1's lag)",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
+    "audio: whether every sound request has been sent as the frame of work begins",
+    "lag: the contents' fetch done on its first frame, within the slide",
+    "the random number as a passage's frame begins: no owner here draws it through a passage",
+    "the escape countdown's start: the timer set between two records, at the time the second holds, until the station's boss raises it",
 ];
 
 /// The rules the run plays: the game as it ships.
@@ -186,7 +194,7 @@ pub(super) fn starts(wram: &[u8]) -> Result<bool, Outcome> {
 pub(super) fn play(
     rows: &mut Rows<'_>,
     rom: &Path,
-    seed: FrameRecord,
+    seed: &FrameRecord,
     row: &str,
     start: u64,
     end: u64,
@@ -207,7 +215,7 @@ pub(super) fn play(
     let frame = frame::seed(&seed.wram)?;
     // Admission requires the flight's initial function. Its setup draws before its first
     // lag cut, so a lagged seed in that function already includes the draw.
-    let journey = if super::finished(&seed) {
+    let journey = if super::finished(seed) {
         flight::Journey::start(frame)
     } else {
         flight::Journey::resume_setup(frame)
@@ -218,9 +226,10 @@ pub(super) fn play(
         scene,
         label_steps: 0,
     };
-    let mut held = 0;
+    let mut held: u64 = 0;
+    let mut controller = super::Controller::seeded(&seed.wram)?;
     let mut previous = seed.clone();
-    let mut began = seed;
+    let mut began = seed.clone();
     for cut in start.saturating_add(1)..=end {
         let current = rows.record(cut)?;
         if current.video_frame != previous.video_frame.wrapping_add(1) {
@@ -230,6 +239,20 @@ pub(super) fn play(
             return Ok(report(held, Stop::At(outcome)));
         }
         held = held.saturating_add(1);
+        controller = controller.read(current.pad.0, super::polled(&current));
+        if let flight::Stage::Arrival(arrival) = run.journey.stage {
+            if cut == end {
+                return Ok(report(held, Stop::End));
+            }
+            let content = super::connected::Content {
+                movement: super::movement::Content::load(rom)?,
+                appearance: super::appearance::Content::load(rom)?,
+            };
+            let (more, stop) =
+                super::Run::after_flight(seed, &content, rom, row, arrival, run.journey.frame)?
+                    .through(rows, current, controller, cut.saturating_add(1)..=end)?;
+            return Ok(report(held.saturating_add(more), stop));
+        }
         if super::finished(&current) {
             began = current.clone();
         }
@@ -258,33 +281,18 @@ impl Run {
         cut: u64,
     ) -> Result<(), Outcome> {
         let at = |outcome| super::at(cut, outcome);
-        let is_flight = matches!(self.journey.stage, flight::Stage::Flight(_));
         let end = if super::finished(current) {
-            FrameEnd::Finished(
-                if !is_flight || super::music_ready(&began.wram).map_err(at)? {
-                    MusicQueue::Clear
-                } else {
-                    MusicQueue::TrackWaits
-                },
-            )
+            FrameEnd::Finished(if super::music_ready(&began.wram).map_err(at)? {
+                MusicQueue::Clear
+            } else {
+                MusicQueue::TrackWaits
+            })
         } else {
             FrameEnd::Lagged
         };
-        let ready = if is_flight {
-            game::production::played::arrival::Readiness::NotYet
-        } else {
-            arrival::start(&previous.wram, &current.wram).map_err(at)?
-        };
         let report = self
             .journey
-            .step(
-                super::finished(previous),
-                end,
-                ready,
-                &self.scene,
-                RULES,
-                screens_arrival::Rules::REFERENCE,
-            )
+            .step(super::finished(previous), end, &self.scene, RULES)
             .map_err(|fault| Outcome::Unsupported {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
@@ -830,6 +838,10 @@ mod tests {
             assert_eq!(resumed.held, 32 - start, "flight setup seed {start}");
             assert_eq!(resumed.stop, super::Stop::End, "flight setup seed {start}");
         }
+        let room_one = super::super::play(&sources, "any-fly-to-ceres", 0, 1437).unwrap();
+        assert_eq!(room_one.held, 1437);
+        assert_eq!(room_one.stop, super::Stop::End);
+
         diagnostic(format_args!(
             "PLAYED_ALONE row={} start={} held={} stop={:?}",
             report.row, report.start, report.held, report.stop

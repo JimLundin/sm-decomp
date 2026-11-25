@@ -4604,3 +4604,113 @@ scene = "MaintainCountdown"
 finished = 127
 answer = "NoExpiry"
 picture = { place = [220, 48], time = [1, 57, 87] }
+
+# New-file setup.
+# [[startup]] supplies invented opening art as a fill cell, sparse overrides on the four
+# rows including the upper border, and a sparse preview of map pictures in 5 × 3 window
+# coordinates. Any preview cell left out is empty. After.replaced names every lower-row
+# cell the HUD draws over the opening art, using the usual HUD coordinates. All other
+# cells equal the opening art. After also names the upper row's output by its equality
+# to the supplied upper row. The remaining fields are ordinary HUD State.
+# [[startup_observed]] holds semantic RAM observations. The independent replay uses
+# the original content from the importer. The cited cuts identify when to compare.
+[[startup_observed]]
+id = "R-new-file-hud"
+row = "any-ceres-arrival"
+before = 183
+after = 184
+held_through = 192
+shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = false
+explored = []
+countdown = "Dormant"
+preview_colours = [[2, 3, 3, 3, 2], [3, 3, 3, 3, 3], [2, 3, 3, 2, 3]]
+
+[[startup_observed]]
+id = "R-new-file-first-play"
+row = "any-ceres-arrival"
+before = 192
+after = 193
+shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = false
+explored = [[12, 14]]
+countdown = "Dormant"
+preview_colours = [[3, 3, 3, 3, 3], [3, 3, 7, 3, 3], [3, 3, 3, 3, 3]]
+
+[[startup]]
+id = "C-new-file-energy"
+source = "constructed"
+entries = ["NewFileStatusBar", "NewFileMiniMap", "EnergyGauge", "HerBlink"]
+frame = 16
+energy = [237, 399]
+opening_fill = "300:6v"
+opening = { "0,0" = "301:1h", "31,3" = "302:0" }
+preview = { "1,0" = "200h", "2,1" = "201v", "4,2" = "202hv" }
+[startup.after]
+upper_row_equal = true
+shown = { energy = 237, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = false
+explored = []
+countdown = "Dormant"
+[startup.after.replaced]
+"26,0" = "088:3h"
+"27,0" = "200:2h"
+"28,0" = "088:3h"
+"29,0" = "088:3h"
+"30,0" = "088:3h"
+"1,1" = "0A1:2"
+"2,1" = "0A1:2"
+"3,1" = "0A2:5h"
+"26,1" = "088:3h"
+"27,1" = "088:3h"
+"28,1" = "201:7v"
+"29,1" = "088:3h"
+"30,1" = "088:3h"
+"6,2" = "1F7:3"
+"7,2" = "195:3"
+"26,2" = "088:3h"
+"27,2" = "088:3h"
+"28,2" = "088:3h"
+"29,2" = "088:3h"
+"30,2" = "202:2hv"
+
+[[startup]]
+id = "C-new-file-zero"
+source = "constructed"
+entries = ["NewFileStatusBar", "NewFileMiniMap", "HerBlink"]
+rules = { her_blink = 4 }
+frame = 4
+energy = [0, 399]
+opening_fill = "300:6v"
+opening = { "1,2" = "301:1h", "6,3" = "302:0", "7,3" = "303:0" }
+preview = {}
+[startup.after]
+upper_row_equal = true
+shown = { energy = 0, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = false
+explored = []
+countdown = "Dormant"
+[startup.after.replaced]
+"26,0" = "088:3h"
+"27,0" = "088:3h"
+"28,0" = "088:3h"
+"29,0" = "088:3h"
+"30,0" = "088:3h"
+"26,1" = "088:3h"
+"27,1" = "088:3h"
+"28,1" = "088:3h"
+"29,1" = "088:3h"
+"30,1" = "088:3h"
+"26,2" = "088:3h"
+"27,2" = "088:3h"
+"28,2" = "088:3h"
+"29,2" = "088:3h"
+"30,2" = "088:3h"
