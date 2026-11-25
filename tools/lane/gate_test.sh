@@ -15,6 +15,7 @@ trap 'rm -rf "$scratch"' EXIT
 repo=$scratch/repo bin=$scratch/bin ran=$scratch/ran
 mkdir -p "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
 cp "$here/gate.sh" "$repo/tools/lane/gate.sh"
+cp "$here/../cleanroom/lib.sh" "$repo/tools/cleanroom/lib.sh"
 echo 'channel = "0.0.0"' >"$repo/rust-toolchain.toml"
 echo 'Invented vectors.' >"$repo/scenarios/demo.toml"
 # Each fake records its name, prints $GATE_TEST_OUT_<name> and exits $GATE_TEST_STATUS_<name>.
@@ -113,8 +114,11 @@ settled
 out=$(gate CANARY_SALT=other) && ! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with a CANARY_ variable reused a pass: $out"
 mkdir -p "$scratch/.cargo" && echo '[build]' >"$scratch/.cargo/config.toml"
 ! reuses || fail "a gate under a parent .cargo/config.toml reused a pass: $out"
-echo 'include = [{ path = "more.toml" }]' >"$scratch/.cargo/config.toml"
-! reuses && ! reuses || fail "a gate under a cargo configuration that includes another reused a pass: $out"
+for include in 'include' '"include"' "'include'"; do
+  echo "$include = [{ path = \"more.toml\" }]" >"$scratch/.cargo/config.toml"
+  ! reuses && ! reuses ||
+    fail "a gate under a cargo configuration with $include reused a pass: $out"
+done
 rm -r "$scratch/.cargo"
 settled
 mkdir -p "$scratch/no-cargo-home" && echo '[build]' >"$scratch/no-cargo-home/config.toml"
@@ -139,6 +143,20 @@ settled TEMP="$elsewhere/tmp"
 mkdir -p "$elsewhere/.cargo" && echo '[build]' >"$elsewhere/.cargo/config.toml"
 ! reuses TEMP="$elsewhere/tmp" || fail "a gate with a cargo configuration above TEMP reused a pass: $out"
 rm -r "$elsewhere"
+# A TEMP in the home: the clean-room self-tests build in /tmp instead (lib.sh's
+# outside_home_temp), so cargo's configuration above /tmp is the one they read. The case runs only
+# where /tmp holds none; the planted one is an empty table, which changes no build meanwhile.
+# Its TEMP is a folder of the home, so nothing but outside_home_temp leads the gate to /tmp; the
+# scratch repository must be outside /tmp too (TEMP set, as BUILDING's Linux setup has it), or
+# the walk up from the checkout reaches /tmp and the case can't tell the two apart.
+if [ ! -e /tmp/.cargo ]; then
+  home_temp=$(mktemp -d "$HOME/.gate-test-XXXXXX")
+  settled TEMP="$home_temp"
+  mkdir /tmp/.cargo && echo '[build]' >/tmp/.cargo/config.toml
+  ! reuses TEMP="$home_temp" ||
+    fail "a gate with a cargo configuration above the self-tests' /tmp reused a pass: $out"
+  rm -r /tmp/.cargo "$home_temp"
+fi
 # A file git ignores only by a rule from outside the tree is unseen by status, not by the gate.
 settled
 echo 'hard_tabs = true' >"$repo/rustfmt.toml" && echo rustfmt.toml >"$scratch/excludes"

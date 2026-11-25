@@ -43,13 +43,14 @@ deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny
 PASSED="${SM_GATE_PASSED:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate-passed}"
 key=
 # The configuration files cargo and rustfmt read from outside the tree: in CARGO_HOME, rustfmt's
-# home and user folders, and the checkout's folder, TEMP's (where the import self-test builds) and
-# every folder above them.
+# home and user folders, and the checkout's folder, TEMP's, the folder the clean-room self-tests
+# build in (lib.sh's outside_home_temp: /tmp when TEMP is in the home) and every folder above them.
 configs=("${CARGO_HOME:-$HOME/.cargo}"/config{,.toml} "$HOME"/{rustfmt,.rustfmt}.toml
   "${XDG_CONFIG_HOME:-$HOME/.config}"/rustfmt/{rustfmt,.rustfmt}.toml)
 [ -z "${USERPROFILE:-}" ] || configs+=("$USERPROFILE"/{rustfmt,.rustfmt}.toml)
 [ -z "${APPDATA:-}" ] || configs+=("$APPDATA"/rustfmt/{rustfmt,.rustfmt}.toml)
-for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}"; do
+build_temp=$(. tools/cleanroom/lib.sh && outside_home_temp) || build_temp=
+for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}" ${build_temp:+"$build_temp"}; do
   up=
   while [ "$dir" != "$up" ]; do
     configs+=("$dir"/.cargo/config{,.toml} "$dir"/{rustfmt,.rustfmt}.toml)
@@ -61,16 +62,18 @@ included() {
   local config
   for config in "${configs[@]}"; do
     case $config in */config | */config.toml)
-      [ ! -f "$config" ] || ! grep -qE '^[[:space:]]*include[[:space:]]*=' "$config" || return 0 ;;
+      [ ! -f "$config" ] ||
+        ! grep -qE "^[[:space:]]*[\"']?include[\"']?[[:space:]]*=" "$config" || return 0 ;;
     esac
   done
   return 1
 }
 # Nothing uncommitted, nothing git is told to skip, and no file hidden only by ignore rules from
 # outside the tree (core.excludesFile, info/exclude), which status doesn't show.
-if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
+if [ -n "$build_temp" ] && [ -z "$(git status --porcelain --untracked-files=all)" ] &&
   ! git ls-files -v | grep -q '^[a-zS]' &&
-  [ -z "$(git ls-files -o --exclude-per-directory=.gitignore)" ] && ! included &&
+  [ -z "$(git -C "$(git rev-parse --show-toplevel)" ls-files -o --exclude-per-directory=.gitignore)" ] &&
+  ! included &&
   left=$(git merge-base "$BASE" HEAD); then
   ran_with=$({
     "$R/rustc" --version 2>&1
