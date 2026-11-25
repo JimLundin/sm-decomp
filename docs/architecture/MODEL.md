@@ -212,7 +212,8 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
 28. **Off-hours tasks may run in parallel under root supervision** (Jim, 2026-11-13).
     Independent structural tasks run within PROCESS's lane limits; the root supervises their
     work, reviews the evidence and lands one change at a time
-    ([PROCESS](../cleanroom/PROCESS.md#working-hours)).
+    ([PROCESS](../cleanroom/PROCESS.md#working-hours)); a landing may batch several
+    independently reviewed changes, each its own commit, on one CI run (Jim, 2026-11-25).
 29. **A model's State is serialisable, and the engine holds it through serde** (Jim,
     2026-11-13). A clean crate can't derive the engine's codec, so each model's State derives
     serde's `Serialize` and `Deserialize` ([DESIGN](../cleanroom/DESIGN.md), "State a caller can

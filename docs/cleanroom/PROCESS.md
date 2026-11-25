@@ -299,7 +299,7 @@ N to land, so the implementer starts from the landed model.
 | blind reviewer | any step | none |
 | integrator | integration or gate | both touch the engine and `crates/verify`: the second rebases on the first, and re-proves the gates |
 | engineer | any step | its files lie outside every running round |
-| root | none | it alone briefs, imports and lands; landing is one change at a time |
+| root | none | it alone briefs, imports and lands; one landing at a time, of one change or a batch of reviewed ones |
 
 A domain's spec can start before a domain it reads from has landed. Its own round then waits
 until that domain has landed, so the interface it reads is fixed.
@@ -406,7 +406,8 @@ Outside working hours new rounds wait for the nightly session. New work goes to 
 structure: tooling, movie captures, optimisations, and long computations that don't fit a session, within
 the rung's needs (decision 24). Independent short tasks may run in parallel within the
 lane limits above, supervised by the root (decision 28). Each task starts fresh, finishes
-with a handoff and lands like any other change; the root reviews and lands one change at a time.
+with a handoff and lands like any other change: reviewed, then landed by the root alone or in a
+batch with other reviewed changes ([landing](../../.agents/skills/root/SKILL.md#landing)).
 
 ## The loop
 

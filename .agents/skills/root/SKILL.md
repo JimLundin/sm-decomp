@@ -120,28 +120,35 @@ the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_b
 ## Landing
 
 Before landing a round, complete [PROCESS step 11](../../../docs/cleanroom/PROCESS.md#a-round):
-update its domain registration and regenerate the README after review. Land one change at a
-time by fast-forward through `tools/lane/land.sh` only after CI is green: Quality, content and
-replay.
+update its domain registration and regenerate the README after review. Land by fast-forward
+through `tools/lane/land.sh` only after CI is green: Quality, content and replay.
 The commands below apply to rounds and other work.
+
+One landing PR may carry several independently reviewed changes (Jim, 2026-11-25): each its own
+commit (a round still squashed to one, other work picked), in an order where each applies onto
+the one before, sharing the PR's one CI run. When that run fails, find the failing change in its
+log, reset the landing branch to the commits before it (the green prefix), push that head and land
+it once its own CI run passes, and send the failing change back to its lane.
 
 1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
 2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
    `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`, which makes the one
    commit PROCESS step 11 describes (a lane of one commit keeps that commit's body as its own)
    and refuses a branch that doesn't hold `HEAD`.
-   Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for
-   you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
+   Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; for a batch, each change's
+   commits in turn, a round's squash made first. It stops at a conflict for you to resolve by
+   hand, reading every hunk, then `git cherry-pick --continue`.
 3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
-   each lane's commits, evidence and ratchet deltas. When a gate on this machine already passed
-   the same tree over the same base with the same tools (the rebased round branch, or a lane
-   based on `origin/main`), it prints `GATE REUSED` naming that pass and runs nothing, and the
-   landing gate may rest on that recorded pass, a lane's included (Jim, 2026-11-25); the PR's CI
-   still runs every check. `SM_GATE_FRESH=1` runs the gate anyway.
+   each change's commits, its review, evidence and ratchet deltas. When a gate on this machine
+   already passed the same tree over the same base with the same tools (the rebased round branch,
+   or a lane based on `origin/main`), it prints `GATE REUSED` naming that pass and runs nothing,
+   and the landing gate may rest on that recorded pass, a lane's included (Jim, 2026-11-25); the
+   PR's CI still runs every check. `SM_GATE_FRESH=1` runs the gate anyway.
 4. In the background: `bash tools/lane/watch.sh <pr> <sha>`, with the sha you pushed: it lands only
    that head, so a push GitHub hasn't shown yet never lands the old head's green run. Exit 0
    landed (via `land.sh`, fast-forward only); 3 main moved (rebase, re-gate, re-push); 4 a run
-   failed or was cancelled (read its log, land the green prefix, hand the failure to a lane);
+   failed or was cancelled (read its log, land the green prefix as above, hand the failure to a
+   lane);
    5 timed out; 6 timed out with the PR's head still not that sha. Never loop on `land.sh` by
    hand: its exit 2 (not ready) never ends on a red run, which is its exit 4.
 5. Bundles: check the lane's SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data FILE`,

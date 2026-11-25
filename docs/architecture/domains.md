@@ -410,7 +410,7 @@ checked against the ROM by the importer. About 66 rounds.
 23 rounds.
 
 **Total:** about 155 clean-room rounds and 45-55 platform lanes. Units per round need to
-average about 30. If the round's fixed cost (export, adversary, canaries, landing one at a time)
+average about 30. If the round's fixed cost (export, adversary, canaries, landing)
 doesn't fall, root integration and review, not implementation, set the pace.
 
 ## 5. Risks and proposals
