@@ -42,6 +42,8 @@ if [ "$windows" = 0 ]; then
   candidate="$(dirname "$main")/sm-decomp-launch-test-$$"
   [ -e "$candidate" ] || { mkdir "$candidate" 2>/dev/null && sibling=$candidate; }
   root="$tmp/root"
+  quoted_sibling="$root/"'a"b'
+  mkdir "$quoted_sibling" || exit 1
 else
   root="$tmp/cleanroom"
 fi
@@ -132,6 +134,7 @@ for p in "$HOME/notes.txt" "$CLEANROOM_PRIVATE/tokens.tsv" "$tmp/root/other-doma
   grep -qx "$p Read,Glob,Grep,Edit,Write" <<<"$covered" || fail "not denied every tool: $(grep "^$p " <<<"$covered")"
 done
 grep -qxF 'Bash(*:\\*)' "$tmp/deny.txt" || fail "no deny rule for a drive path off Windows"
+grep -qxF "Read(/$quoted_sibling/**)" "$tmp/deny.txt" || fail "no deny rule for the sibling with a double quote"
 [ -z "$sibling" ] || grep -qxF "Read(/$sibling/**)" "$tmp/deny.txt" || fail "the checkout's sibling $sibling is not denied by name"
 grep -qx 'Bash(cleanroom-tests)' < <("$python" -I -c 'import json, sys; print("\n".join(json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]["allow"]))' "$lane/settings.json") ||
   fail "the runner command is not allowed"
@@ -156,6 +159,11 @@ grep -q '^ANTHROPIC_API_KEY=' "$lane2/env.txt" && fail "the API key is in the bo
 mkdir "$tmp/Foo (2)"
 CLEANROOM_AUTH="$tmp/auth" launch "with a folder named Foo (2)" >/dev/null 2>&1 && fail "a folder named Foo (2) beside the export's path goes into a rule"
 rmdir "$tmp/Foo (2)"
+backslash_sibling="$root/"'a\b'
+mkdir "$backslash_sibling" || exit 1
+CLEANROOM_AUTH="$tmp/auth" launch "with a backslash in a sibling name" >/dev/null 2>&1 &&
+  fail "a sibling with a backslash in its name goes into a rule"
+rmdir "$backslash_sibling" || exit 1
 grep -qF "\"Read(/$HOME/**)\"" "$lane/settings.json" || fail "the home is not denied whole"
 mkdir -p "$HOME/cleanroom" && cp -a "$ex" "$HOME/cleanroom/launch-probe"
 probe_export="$HOME/cleanroom/launch-probe" CLEANROOM_AUTH="$tmp/auth" launch "in the home" >/dev/null 2>&1 &&
