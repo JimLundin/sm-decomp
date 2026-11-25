@@ -287,7 +287,8 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     tooling until the frames the engine plays alone from a rung's seed grow over successive
     sessions; work that an existing decision or work item already requires is not new. Work on
     a round's cycle time is the exception: a backlog lane always runs beside the rounds
-    (Jim, 2026-11-24; [PROCESS](../cleanroom/PROCESS.md#what-can-run-at-once)). Each
+    (Jim, 2026-11-24; [PROCESS](../cleanroom/PROCESS.md#what-can-run-at-once)), and so is
+    the standing backlog lane's work on workflow cleanup and landing time (Jim, 2026-11-25). Each
     session review reports the behaviour share of its commit lines
     ([PROCESS](../cleanroom/PROCESS.md#working-hours)). The transition and prior-claim
     ledgers are pruned once the witness-shaped frame cases retire.
