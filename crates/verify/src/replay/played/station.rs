@@ -13,6 +13,7 @@ pub(super) fn seed(
 ) -> Result<played::station::State, Outcome> {
     Ok(played::station::State {
         doors,
+        vents: super::steam::decode(wram)?,
         pad_and_cover: shaft::pad_and_cover(wram)?,
         shaft_overlay: ceres::shaft_overlay(wram)?,
         ridley: ridley::seed(wram)?,

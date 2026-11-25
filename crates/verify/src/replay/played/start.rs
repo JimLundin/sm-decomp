@@ -12,7 +12,7 @@ pub(super) fn admit(
     start: &NewGame,
     rooms: &Rooms,
     arrival: played::arrival::State,
-    frame: played::frame::State,
+    mut frame: played::frame::State,
     quake: world_quake::State,
 ) -> Result<(seed::Room, played::State), Outcome> {
     let bad = || data_failure(None, "played new game's start");
@@ -27,6 +27,7 @@ pub(super) fn admit(
         },
         rooms,
         &start.her_row,
+        &mut frame.random,
     )
     .map_err(|_| bad())?;
     let inputs = connected::held_inputs(

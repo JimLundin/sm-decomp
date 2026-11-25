@@ -55,6 +55,7 @@ impl State {
             },
             station: super::station::State {
                 doors: started.actors.doors,
+                vents: started.actors.vents,
                 pad_and_cover: crate::production::shaft::GONE,
                 shaft_overlay: started.actors.shaft_overlay,
                 ridley: None,

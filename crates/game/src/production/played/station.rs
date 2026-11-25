@@ -1,14 +1,16 @@
-//! The Ceres station's actors in her room, and the order in which the room's enemies run:
-//! Ridley (`ridley`), then the Ceres doors (`ceres_doors`), then the shaft's overlay with its
-//! lights (`shaft`).
+//! The Ceres station's actors and their frame order.
+//!
+//! Ridley runs first, followed by the Ceres doors, the shaft's overlay and the steam vents.
 //!
 //! The room's enemies run before her moves. The Ceres doors read where she was at the end of the
-//! last frame, and Ridley's tail reads her as the frame starts. Fetching the next room's contents lets the last room's actors go and places its own.
+//! last frame. The tail and the vents read her from before she moves. Loading the next room
+//! replaces the station's actors.
 
 use super::passage::Passing;
 use super::{Content, Fault, Rules, ceres_doors, ridley};
 use crate::production::room_loading::{self, CeresActors};
-use boss_ceres_ridley::{CeresDoor, CeresRidley, Her, Lights, PadAndCover, RidleyRun, Stage};
+use boss_ceres_ridley::{CeresDoor, CeresRidley, Her, Lights, PadAndCover, RidleyRun, Stage, Vent};
+use types::{Hit, Pair, Parts as _};
 use world_doors::Palette;
 
 /// The station's actors in her room, carried frame to frame.
@@ -16,6 +18,8 @@ use world_doors::Palette;
 pub struct State {
     /// The room's Ceres doors, in its order of its enemies.
     pub doors: Vec<CeresDoor>,
+    /// The room's steam vents, in enemy slot order.
+    pub vents: Vec<Vent>,
     /// The Ceres shaft's elevator pad and the cover below it.
     pub pad_and_cover: PadAndCover,
     /// The room places the Ceres shaft's overlay, which shows the lights.
@@ -26,14 +30,32 @@ pub struct State {
     pub stage: Stage,
 }
 
-/// When the room's enemies run: in a frame of play, Ridley's tail reading her as her moves
-/// leave her, or while a passage is under way, when nothing of hers is there to reach.
+/// When the room's enemies run: in play they can reach her as the frame starts. During a
+/// passage she is unavailable for contact.
 #[derive(Clone, Copy)]
 pub(super) enum Running<'a> {
-    /// A frame of play, with her as his tail reads her in his room.
+    /// A frame of play, with her frame-start position, body and protection.
     Play(Option<&'a Her>),
     /// A passage is under way.
     Passage,
+}
+
+/// Which actor's contact won the frame.
+#[derive(Clone, Copy)]
+pub(super) enum Contact {
+    /// Ridley's tail.
+    Tail(Hit),
+    /// A steam puff.
+    Steam(Hit),
+}
+
+impl Contact {
+    /// The side and push duration read by movement.
+    pub(super) const fn push(self) -> Hit {
+        match self {
+            Self::Tail(hit) | Self::Steam(hit) => hit,
+        }
+    }
 }
 
 /// One run of the room's enemies: Ridley's, each Ceres door's and the shaft's lights, and the
@@ -41,6 +63,10 @@ pub(super) enum Running<'a> {
 pub(super) struct Enemies {
     /// Ridley's run; none outside his room.
     pub(super) ridley: Option<RidleyRun>,
+    /// The vents after their run, if the room ran its enemies.
+    pub(super) vents: Option<Vec<Vent>>,
+    /// The first puff hit in slot order.
+    pub(super) steam_hit: Option<Hit>,
     /// Each Ceres door's run, in the room's order of its enemies.
     pub(super) doors: Vec<boss_ceres_ridley::Run>,
     /// What the shaft's lights show; none without its overlay.
@@ -50,10 +76,20 @@ pub(super) struct Enemies {
 }
 
 impl Enemies {
+    /// The contact shared by her reaction and health. Ridley precedes vents in enemy order.
+    pub(super) fn contact(&self) -> Option<Contact> {
+        self.ridley
+            .and_then(|run| run.hit)
+            .map(Contact::Tail)
+            .or_else(|| self.steam_hit.map(Contact::Steam))
+    }
+
     /// No run of the room's enemies: the quake as it was.
     pub(super) const fn none(quake: world_quake::State) -> Self {
         Self {
             ridley: None,
+            vents: None,
+            steam_hit: None,
             doors: Vec::new(),
             lights: None,
             quake,
@@ -72,7 +108,7 @@ impl State {
     /// next room's contents place, if fetched, and the pad as the passage left it.
     pub(super) fn passed(
         &mut self,
-        enemies: &Enemies,
+        enemies: &mut Enemies,
         placed: Option<CeresActors>,
         pad_and_cover: PadAndCover,
     ) {
@@ -82,7 +118,11 @@ impl State {
         if let Some(run) = enemies.ridley {
             self.ridley = Some(run.ridley);
         }
+        if let Some(vents) = enemies.vents.take() {
+            self.vents = vents;
+        }
         if let Some(placed) = placed {
+            self.vents = placed.vents;
             self.doors = placed.doors;
             self.shaft_overlay = placed.shaft_overlay;
             self.ridley = placed.ridley.map(|placing| placing.ridley);
@@ -95,8 +135,28 @@ impl State {
 }
 
 impl super::State {
+    /// The shared contact input before movement or the health countdown changes it.
+    pub(super) fn enemy_contact(&self, content: &Content) -> Result<Option<Her>, Fault> {
+        if self.station.ridley.is_none() && self.station.vents.is_empty() {
+            return Ok(None);
+        }
+        let samus = &self.samus.movement.0;
+        let body = content
+            .movement
+            .radius(samus.pose)
+            .ok_or(Fault::Body(samus.pose))?;
+        Ok(Some(Her {
+            position: Pair {
+                x: samus.position.x.pixel(),
+                y: samus.position.y.pixel(),
+            },
+            body,
+            protection: u16::from(self.health.0.protection.get()),
+        }))
+    }
+
     /// One run of the room's enemies, in its order: Ridley, then the Ceres doors, then the
-    /// shaft's overlay. The baby's colours and the beacon's go to `palette`, and Ridley's shake
+    /// shaft's overlay and the vents. The baby's colours and the beacon's go to `palette`, and Ridley's shake
     /// and then the doors' to the room's quake as the frame began.
     pub(super) fn enemies(
         &self,
@@ -133,8 +193,21 @@ impl super::State {
             &mut quake,
         )?;
         let lights = self.lights(content, rules, palette)?;
+        let mut vents = station.vents.clone();
+        let view = self.camera.0.position();
+        let camera = Pair {
+            x: view.x.pixel(),
+            y: view.y.pixel(),
+        };
+        let her = match running {
+            Running::Play(her) => her,
+            Running::Passage => None,
+        };
+        let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres);
         Ok(Enemies {
             ridley,
+            vents: Some(vents),
+            steam_hit,
             doors,
             lights,
             quake,

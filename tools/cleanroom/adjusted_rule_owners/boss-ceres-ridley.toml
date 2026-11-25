@@ -28,3 +28,5 @@ wake = ["RidleyWaits"]
 pace = ["BodyFadesIn"]
 # TailHits: docs/behaviours/boss-ceres-ridley.md:1067
 tail_reach = ["TailHits"]
+# VentRests: docs/behaviours/boss-ceres-ridley.md:1432
+steam_rest = ["VentRests"]

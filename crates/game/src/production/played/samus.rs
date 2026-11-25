@@ -5,6 +5,7 @@
 //! stepping movement whole and then animation gives the values the original reads between
 //! them; no pause inside either model is needed.
 
+use super::station::Contact;
 use super::{Content, Fault, Rules};
 use crate::production::animation;
 use crate::production::connected::inputs::Inputs;
@@ -16,7 +17,7 @@ use core::num::Wrapping;
 use samus_appearance::{
     Ahead, Dash, Figure, GrappleActivity, HurtOpportunity, MissingClip, MoveEvent, Suit,
 };
-use samus_movement::{Dashing, Hit, StandingAnimation, WallTest};
+use samus_movement::{Dashing, StandingAnimation, WallTest};
 use types::{Pose, Set};
 
 pub use crate::production::movement::FigurePin;
@@ -139,8 +140,7 @@ impl State {
         };
         let mut appearance = self.appearance.0;
         let mut seen = turn_animation_inputs(start, after, &outcome, inputs);
-        // The energy the tail's hit leaves, before the frame's loss, against the energy the
-        // frame starts with: a hit that lands makes her energy fall.
+        // Hurt colours read the hit's energy change before the frame's periodic loss.
         seen.energy = between.energy;
 
         // The loop refuses her other suits, and no grapple is in it.
@@ -215,7 +215,13 @@ impl State {
             .moves(&frame, world, content.movement_rules)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
         let between = between(moves.position_after_moves())?;
-        let outcome = samus.react(moves, between.hit);
+        let outcome = samus.react(moves, between.hit.map(Contact::push));
+        if start.pose.action == types::Action::Leaping
+            && !inputs.held.any(types::button::JUMP)
+            && outcome.floor_response.is_some()
+        {
+            return Err(Fault::BackwardLeapLanding);
+        }
         missing_body
             .get()
             .map_or(Ok((samus, outcome, between)), |pose| Err(Fault::Body(pose)))
@@ -228,7 +234,7 @@ pub(super) struct Between<T> {
     /// What else it played.
     pub(super) played: T,
     /// The frame's hit, which her reaction reads.
-    pub(super) hit: Option<Hit>,
+    pub(super) hit: Option<Contact>,
     /// Her whole energy as the hit leaves it, which her appearance reads.
     pub(super) energy: u16,
 }
@@ -317,7 +323,7 @@ const fn dash(dashing_after_moves: Dashing, began: bool, lost: bool) -> Dash {
 
 #[cfg(test)]
 mod tests {
-    use super::{Between, dash};
+    use super::{Between, Contact, dash};
     use crate::production::played::tests::{content_with, inputs, rules, state};
     use data::assets::art::{Colour, Palette};
     use data::assets::samus::palettes::SamusPalettes;
@@ -347,7 +353,7 @@ mod tests {
             .her_frame(&frame_inputs, &content, &rules(), |_| {
                 Ok(Between {
                     played: (),
-                    hit: Some(hit),
+                    hit: Some(Contact::Tail(hit)),
                     energy: 84,
                 })
             })

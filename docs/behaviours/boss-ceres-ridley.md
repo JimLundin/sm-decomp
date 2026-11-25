@@ -1033,7 +1033,7 @@ movement's reaction in the same frame starts the push.
 
 | Output | Type | Read by |
 | --- | --- | --- |
-| the frame's hit | none, or a hit with its side and push time (§14.1), made on his run, before her moves that frame | samus-health, in the same frame (the frame's tail impact, `TailImpact`: the same event, worth 15 whole energy there); samus-movement, in the same frame, in its reaction step after her moves (its §12 input, the frame's hit: `PushTime` and the push that follows) |
+| the frame's hit | none, or a hit with its side and push time (§14.1), made on his run, before her moves that frame | samus-health, in the same frame (the frame's `Impact`, worth 15 whole energy); samus-movement, in the same frame, in its reaction step after her moves (its §12 input, the frame's hit: `PushTime` and the push that follows) |
 | the tail's place | as in §14.1 | drawing (C1) |
 
 ### TailAtRest
@@ -1069,7 +1069,7 @@ movement's reaction in the same frame starts the push.
 - summary: tangible, he hits her when her body comes within reach of his tail's tip and her
   protection has run out; she is pushed away from the tip.
 - params: the tail's reach, `t` = 14 px (rule `tail_reach`); a rule from 0 to 255. The push
-  time, 5 frames. The hit's worth, 15 whole energy: samus-health takes it off (`TailHit`).
+  time, 5 frames. The hit is worth 15 whole energy, his damage in Ceres. Samus-health takes it off (`TailHit`).
 - switch: **Parameter**, the tail's reach (params).
 - Here `dx` and `dy` are her x less the tip's x and her y less the tip's y, each taken mod 2^16
   as a signed number from −32,768 to 32,767, her position as the frame starts, and `w` and `h`
@@ -1293,3 +1293,204 @@ body she started the frame in, as part 4b's §14.3 says.
 
 **The baby in his flight.** `BabyHeld` holds as part 3 says, at his position as his move leaves
 it: on a hop's run, before the hop (recorded case L2) [L-hop-first, L-hop-second].
+
+## 16. Part 5, the escape's steam
+
+As she runs through the third and second rooms on her way out, steam vents in the station's
+floors, walls and ceilings blow puffs. From the room's start each vent waits a moment, each its
+own, then blows a puff that grows out of it and thins away over 21 frames, rests unseen for 64
+frames, and puffs again; it does all this only while it is in view. A puff that touches her
+throws her back as a hit does: she recoils, pushed away from the vent, is protected for a while
+and flashes, but loses no energy. In the movie a puff touches her twice: once in room 3, once in room 2.
+
+**What this part reads and leaves.** It reads each vent's facing and position (the room's content,
+placed as the room starts, R2), the random number each vent's placing draws (the random numbers,
+G2; where the vents' draws fall among the room's other placing draws is R2's to give), the camera
+(world-camera), her position and body (samus-movement) and her protection (samus-health). It hands
+the frame's hit to her energy (samus-health) and to her motion (samus-movement), and each vent's
+puff to drawing. Left to others: the push, its poses and its leap (samus-movement §12); the
+protection a hit grants (samus-health's `TailHit`, on the frame's impact, `Impact`, here worth 0
+whole energy); her hurt colours (samus-appearance); drawing the puffs, whose sprites are content
+(C1); her shots meeting a puff (C1); the shaft's vents in the escape, drawn where the turning room
+puts them (part 7).
+
+**Running.** The caller runs the room's vents together, in the room's order of its enemies,
+once on each frame the enemies run (the enemy framework, C1); on a frame they don't (the room
+loading, a door's passage) nothing of a vent changes. Runs below are those frames. On a run, a
+vent in view first meets her with the phase it started the run in (`PuffTouches`), then steps
+(`VentWaits`, `VentPuffs`, `VentRests`); a vent out of view does neither (`VentInView`). Like
+every hitter, the vents read her position, body and protection as the frame starts, before she
+moves this frame, as Ridley's tail does (§14.3): the frame's hit is made before her moves, and
+her movement's reaction later in the frame starts the push.
+
+### 16.1 What the player can tell
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| its facing | `VentFacing`, listed alphabetically: `Down`, `Left`, `Right`, `Up`: the way its puff blows | which way the puff grows; where it reaches | `PuffReach`; output (drawing) |
+| its position | x, y: px, 16-bit | where the puff is drawn and reaches | `VentInView`, `PuffReach`, `PuffTouches`; output |
+| its phase | `VentPhase` (below) | whether a puff is out, which figure, when the next comes | every entry of this part |
+| the puff's reach | a box: its left, top, right and bottom, px, 16-bit, each edge included, from its position, facing and phase (`PuffReach`) | where the puff touches her | `PuffTouches` |
+| the frame's hit | none, or the shared hit (§14.1): its side (`Side`: `Left` or `Right`, the way it pushes her) and its push time (`PushFrames`, frames: 5) | she recoils and flashes, her energy unchanged | output |
+
+**Phases**, listed alphabetically (the order means nothing):
+- `Placed(w)`: as the room placed it, never run; `w` from 1 to 32, its wait. Nothing is drawn,
+  but it reaches one pixel (`PuffReach`).
+- `Puffing(k, n)`: its puff out, showing figure `k`, 1 to 7, for `n` more runs, 1 to 3.
+- `Resting(n)`: no puff, for `n` more runs, 1 to 255 (the rest's range, `VentRests`).
+- `Waiting(w)`: no puff yet; `w` from 1 to 32, the runs before its first.
+
+The puff's seven figures, from a small puff at the vent to a thin one far from it, are drawn
+from the content for its facing; this part only names which one a vent shows.
+
+### 16.2 What it remembers: state a caller can hold
+
+Each vent's facing and position, which never change, and its phase with its count: nothing
+else. Whether a puff is shown, its figure and its reach follow from them. A caller can build a
+vent in any phase this part allows and read it back.
+
+### 16.3 What it reads (Inputs)
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| the random number | 16-bit: the number the vent's placing draws, one draw per vent, in the room's order (G2) | `VentPlaced` |
+| the camera | x, y: px, 16-bit: the view's top left as the last frame left it (world-camera) | `VentInView` |
+| her position | x, y: px, 16-bit: where she is as the frame starts, before she moves this frame (samus-movement) | `PuffTouches` |
+| her body | her half-width and half-height, px, of the body she started the frame in, read from her movement's content | `PuffTouches` |
+| her protection | frames, as the frame starts (samus-health's remaining protection) | `PuffTouches` |
+
+### 16.4 What it reports (Outputs)
+
+The hit is this part's alone: neither reader judges the reach, the side or the push time again.
+It is the same shared hit Ridley's tail gives (§14.4), holding only its side and push time. Its
+worth is each hitter's to state: a puff's is 0 whole energy (`PuffTouches`), and production
+hands that worth to samus-health with the hit.
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| the frame's hit | none, or a hit with its side and push time (§16.1) | samus-health, in the same frame, as the frame's impact (`Impact`), an eligible hit worth 0 whole energy: she keeps her energy and gains its protection; samus-movement, in the same frame, in its reaction step (its §12 input, the frame's hit) |
+| shown | `bool`, per vent: phase `Puffing` | drawing (C1) |
+| its figure | none, or the puff's figure 1 to 7 with the vent's facing: phase `Puffing(k, n)` shows `k` | drawing (C1) |
+
+### VentPlaced
+- kind: mechanic.
+- summary: placed with the room, each vent waits a random 1 to 32 runs before its first puff.
+- params: none.
+- switch: Fixed.
+- The room places a vent, its placing's random number `r` → `Placed(1 + (r mod 32))`
+  [ST-placed-least, ST-placed-most, ST-placed-high]
+- checked: constructed; original only (no replay row reaches this entry: every row starts after
+  its room has placed its vents, and their waits, 1 to 32, agree with the rule). It stays so
+  until R2 places the enemies of rooms 3 and 2.
+
+### VentInView
+- kind: mechanic.
+- summary: a vent runs only while it is in view, or nearly: out of view its puff stops where it
+  is and touches nothing.
+- params: the window: from 8 px left of the view's left edge to 264 px right of it, and from
+  8 px above the view's top to 248 px below it, each end included.
+- switch: Fixed.
+- Here `(x, y)` is the vent's position and `(cx, cy)` the camera; each difference is taken mod
+  2^16 as a signed number from −32,768 to 32,767.
+- `x + 8 − cx ≥ 0`, `cx + 264 − x ≥ 0`, `y + 8 − cy ≥ 0` and `cy + 248 − y ≥ 0` → the vent
+  runs: it meets her and steps [ST-view-left-edge, ST-view-right-edge, ST-view-top-edge,
+  ST-view-bottom-edge, ST-view-wrap]
+- Otherwise → nothing of it changes, and it gives no hit, whatever it reaches [ST-out-left,
+  ST-out-right, ST-out-top, ST-out-bottom, ST-out-touching]
+- checked: oracle (recorded cases ST14 to ST18; every frame of rooms 3 and 2: 814 vent-runs
+  out of view, the left, right and bottom edges met at 0 and 1 px past); constructed (the top
+  edge, the wrap).
+
+### VentWaits
+- kind: mechanic.
+- summary: its first run starts its wait; when the wait runs out its first puff comes.
+- params: none.
+- switch: Fixed.
+- A run, `Placed(w)` → `Waiting(w)` [ST-first-run, ST-placed-touched]
+- A run, `Waiting(w)`, `w` over 1 → `Waiting(w − 1)` [ST-wait]
+- A run, `Waiting(1)` → `Puffing(1, 3)` [ST-wait-ends]
+- So a vent placed with the wait `w` shows its first puff on its `w + 1`th run.
+- checked: oracle (recorded cases ST1 to ST3: 7 first runs, 116 waiting runs and 10 ends in the
+  rows); constructed.
+
+### VentPuffs
+- kind: mechanic.
+- summary: a puff shows its seven figures, three runs each, then the vent rests.
+- params: the figures, 7; their runs, 3 each.
+- switch: Fixed.
+- A run, `Puffing(k, n)`, `n` over 1 → `Puffing(k, n − 1)` [ST-puff-counts, ST-hit-left]
+- A run, `Puffing(k, 1)`, `k` under 7 → `Puffing(k + 1, 3)` [ST-puff-next, ST-hit-right,
+  ST-touch-before-step]
+- A run, `Puffing(7, 1)` → `Resting(p)`, `p` the rest (`VentRests`) [ST-puff-last,
+  ST-rest-adjusted, ST-rest-adjusted-one]
+- Every run that ends in `Puffing(k, n)` → shown, figure `k` [ST-wait-ends, ST-puff-next]
+- Every run that ends in another phase → not shown, no figure [ST-puff-last, ST-rest]
+- So a puff is out for 21 runs.
+- checked: oracle (recorded cases ST4 to ST6: 261 counting runs, 113 figure changes and 20 ends
+  in the rows); constructed.
+
+### VentRests
+- kind: mechanic and parameter.
+- summary: between puffs the vent rests unseen, then puffs again.
+- params: the rest, `p` = 64 runs (rule `steam_rest`); a rule from 1 to 255.
+- switch: **Parameter**, the rest (params).
+- A run, `Resting(n)`, `n` over 1 → `Resting(n − 1)` [ST-rest, ST-rest-first, ST-rest-adjusted-counts]
+- A run, `Resting(1)` → `Puffing(1, 3)` [ST-rest-ends, ST-rest-ends-untouched]
+- So with the rest of 64 a vent puffs every 85 runs: 21 out, 64 resting.
+- checked: oracle (recorded cases ST7 and ST8: 20 first rest runs, 695 resting runs and 5 ends
+  in the rows); constructed (the adjusted rests).
+
+### PuffReach
+- kind: mechanic.
+- summary: a puff reaches a box that grows out of the vent the way it faces; its last two
+  figures, thinned away, reach nothing, nor does a vent with no puff out.
+- params: the boxes below.
+- switch: Fixed.
+- Cells: facing; figure; the box's left, top, right and bottom, px from the vent's position,
+  x rightward, y downward, each edge included.
+
+| Facing | Figure 1 | Figure 2 | Figure 3 | Figure 4 | Figure 5 |
+| --- | --- | --- | --- | --- | --- |
+| `Down` | −8, 0, 7, 14 | −8, 0, 7, 23 | −8, 8, 7, 31 | −8, 15, 7, 39 | −8, 23, 6, 38 |
+| `Left` | −16, −8, −1, 7 | −24, −8, −2, 7 | −32, −7, −9, 7 | −40, −9, −17, 5 | −40, −11, −26, 2 |
+| `Right` | 0, −8, 15, 7 | 1, −8, 23, 7 | 9, −8, 31, 7 | 18, −9, 38, 5 | 25, −11, 40, 3 |
+| `Up` | −8, −16, 7, −1 | −8, −23, 7, −2 | −8, −32, 7, −8 | −8, −40, 7, −16 | −8, −40, 6, −24 |
+
+- `Puffing(k, n)`, `k` 1 to 5 → the box of its facing and figure `k`, each edge its position's
+  x or y plus the table's offset, mod 2^16 [ST-hit-left, ST-hit-right, ST-edge-left-in,
+  ST-edge-right-in, ST-edge-top-in, ST-edge-bottom-in, ST-wrap]
+- `Placed(w)` → the one pixel at its position: left and right its x, top and bottom its y
+  [ST-placed-touched, ST-placed-missed]
+- `Puffing(6, n)`, `Puffing(7, n)`, `Waiting(w)` or `Resting(n)` → no reach [ST-figure-6,
+  ST-figure-7, ST-waiting-untouched, ST-rest-ends-untouched]
+- checked: oracle (recorded cases ST9 to ST13, every in-view run of the rows: 276 vent-runs with
+  a reach out); constructed (each edge, the wrap); original only (the boxes of figures no row
+  brings her into).
+
+### PuffTouches
+- kind: mechanic.
+- summary: a puff that touches her once her protection is spent hits her: she is pushed away
+  from the vent and loses no energy; the frame has at most one hit.
+- params: the push time, 5 frames; the hit's worth, 0 whole energy (handed with the hit to
+  samus-health's `Impact`).
+- switch: Fixed.
+- Here `(x, y)` is the vent's position, `(hx, hy)` her position, `w` and `h` her half-width and
+  half-height, and `L`, `T`, `R`, `B` the reach's edges, with the phase the vent started the run
+  in; each difference is taken mod 2^16 as a signed number.
+- A run of a vent in view, its reach not none, her protection 0 as the frame starts, no earlier
+  vent's hit this frame, `L − (hx + w) < 0`, `R − (hx − w) ≥ 0`, `T − (hy + h) < 0` and
+  `B − (hy − h) ≥ 0` → the frame's hit, push time 5, worth 0 whole energy; side `Right` when
+  `hx − x ≥ 0`, else `Left` [ST-hit-left, ST-hit-right, ST-edge-left-in, ST-edge-right-in,
+  ST-edge-top-in, ST-edge-bottom-in, ST-side-level, ST-wrap, ST-placed-touched,
+  ST-touch-before-step, ST-second-vent]
+- Otherwise this vent gives no hit: she out of reach on either axis [ST-near-miss,
+  ST-edge-left-out, ST-edge-right-out, ST-edge-top-out, ST-edge-bottom-out, ST-placed-missed],
+  her protection over 0 as the frame starts [ST-protected-room-2, ST-protected-after-hit,
+  ST-protected-one], an earlier vent's hit this frame [ST-first-vent], or no reach
+  [ST-figure-6, ST-figure-7, ST-waiting-untouched, ST-rest-ends-untouched].
+- So a puff touches her when their boxes share a pixel column and row, her box running from
+  `hx − w` to `hx + w − 1` across and `hy − h` to `hy + h − 1` down; the vent's position, not
+  its puff's, decides the side.
+- checked: oracle (recorded cases ST9 to ST13: the two hits, room 3 at the left and room 2 at
+  the right, and every other in-view run of the rows with no hit); constructed (each edge, the
+  order of two vents, the wrap).

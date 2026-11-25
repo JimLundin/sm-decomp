@@ -1,5 +1,5 @@
 //! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, the doors',
-//! the shaft's and Ridley's (his tail's and his flight's among them), and checks the catalogue
+//! the shaft's, Ridley's (his tail's and his flight's among them) and the steam's, and checks the catalogue
 //! against the vectors. Every table refuses a key it doesn't know, and every name must be one
 //! the spec gives.
 
@@ -12,11 +12,12 @@ mod vectors {
         AlternatingLook, Attack, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
         BehaviourId, BodyColours, Boss, Bound, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind,
         DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Fight, Figure, FigureLength,
-        FigureLook, FigureSequence, FlightPhase, GiveUp, GlowFigure, Her, HoverRuns, Inputs,
-        Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase,
-        Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyRun, RidleyWait,
-        RoarWait, Rules, Shake, ShakeLayers, ShakeMotion, ShakeStart, ShownFigure, Stage, TailCurl,
-        TimedRoarFigure, TimedTakeOffFigure, Wait, WakeWait, catalogue,
+        FigureLook, FigureSequence, FirstPuffWait, FlightPhase, GiveUp, GlowFigure, Her, HoverRuns,
+        Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase,
+        Puff, PuffFigure, Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyRun,
+        RidleyWait, RoarWait, Rules, Shake, ShakeLayers, ShakeMotion, ShakeStart, ShownFigure,
+        Stage, TailCurl, TimedRoarFigure, TimedTakeOffFigure, Vent, VentFacing, VentPhase, Wait,
+        WakeWait, catalogue, run_vents,
     };
     use enum_map::Enum;
     use serde::Deserialize;
@@ -31,9 +32,10 @@ mod vectors {
     }
 
     /// A vector of any part: the doors' fields (the door of Ridley's room and the getaway's walls
-    /// among them), the shaft's (the pad and the cover, or the lights), or Ridley's. Which part
-    /// it is follows from the result it names; Ridley's part-4b vectors, his tail's, are the
-    /// ones whose ids start `T-`, and his part-4c-1a vectors, his flight's, those starting `L-`.
+    /// among them), the shaft's (the pad and the cover, or the lights), Ridley's, or the
+    /// steam's. Which part it is follows from the result it names; Ridley's part-4b vectors, his
+    /// tail's, are the ones whose ids start `T-`, and his part-4c-1a vectors, his flight's, those
+    /// starting `L-`.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Vector {
@@ -73,17 +75,26 @@ mod vectors {
         // The lights.
         lights: Option<LightsRow>,
         lights_after: Option<LightsAfter>,
+        // The steam.
+        #[serde(default)]
+        steam_placing: bool,
+        vent: Option<VentPlaceRow>,
+        vents: Option<Vec<VentRow>>,
+        camera: Option<[u16; 2]>,
+        vents_after: Option<Vec<VentAfter>>,
+        hit: Option<HitRow>,
     }
 
-    /// A vector's `her`: where she was, as a door reads her, or her as his tail reads her.
+    /// A vector's `her`: where she was, as a door reads her, or her as a hitter, his tail or
+    /// the steam, reads her.
     #[derive(Deserialize)]
     #[serde(untagged)]
     enum HerField {
         Door([String; 2]),
-        Tail(HerRow),
+        Hitter(HerRow),
     }
 
-    /// Her as his tail reads her: her position in decimal, her body's half-sizes and her
+    /// Her as a hitter reads her: her position in decimal, her body's half-sizes and her
     /// protection.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
@@ -104,8 +115,13 @@ mod vectors {
                 || self.after.is_some()
         }
 
-        /// Whether the vector names any of Ridley's own fields.
+        /// Whether the vector names any of Ridley's fields, her as his tail reads her among them.
         const fn names_ridley(&self) -> bool {
+            self.names_ridley_own() || matches!(self.her, Some(HerField::Hitter(_)))
+        }
+
+        /// Whether the vector names any of the fields Ridley alone reads.
+        const fn names_ridley_own(&self) -> bool {
             self.ridley_placing
                 || self.ridley.is_some()
                 || self.baby.is_some()
@@ -113,8 +129,17 @@ mod vectors {
                 || self.content.is_some()
                 || self.energy.is_some()
                 || self.hits_taken.is_some()
-                || matches!(self.her, Some(HerField::Tail(_)))
                 || self.ridley_after.is_some()
+        }
+
+        /// Whether the vector names any of the steam's own fields.
+        const fn names_steam(&self) -> bool {
+            self.steam_placing
+                || self.vent.is_some()
+                || self.vents.is_some()
+                || self.camera.is_some()
+                || self.vents_after.is_some()
+                || self.hit.is_some()
         }
 
         /// Whether it is one of his tail's vectors, in the part-4b form.
@@ -146,14 +171,14 @@ mod vectors {
         fn door_her(&self) -> Option<&[String; 2]> {
             match &self.her {
                 Some(HerField::Door(her)) => Some(her),
-                Some(HerField::Tail(_)) | None => None,
+                Some(HerField::Hitter(_)) | None => None,
             }
         }
 
-        /// Her as his tail reads her; none where the vector has no her to reach.
-        fn tail_her(&self) -> Option<Her> {
+        /// Her as a hitter reads her; none where the vector has no her to reach.
+        fn hitter_her(&self) -> Option<Her> {
             match &self.her {
-                Some(HerField::Tail(row)) => Some(Her {
+                Some(HerField::Hitter(row)) => Some(Her {
                     position: point(row.position),
                     body: point(row.body),
                     protection: row.protection,
@@ -264,6 +289,7 @@ mod vectors {
         wake: Option<u16>,
         pace: Option<u8>,
         tail_reach: Option<u8>,
+        steam_rest: Option<u8>,
     }
 
     #[derive(Deserialize)]
@@ -617,6 +643,9 @@ mod vectors {
                 num::NonZeroU8::new(runs).expect("a pace is 1 to 255 runs")
             }),
             tail_reach: row.tail_reach.unwrap_or(reference.tail_reach),
+            steam_rest: row.steam_rest.map_or(reference.steam_rest, |runs| {
+                num::NonZeroU8::new(runs).expect("a rest is 1 to 255 runs")
+            }),
         }
     }
 
@@ -696,7 +725,12 @@ mod vectors {
     /// The doors' vector's check: what the model answers against its `after`. A placing's
     /// palette is the doors' where the vector doesn't name one.
     fn check_door(vector: &Vector, expected: &After) -> Option<String> {
-        assert!(!vector.names_pad() && !vector.names_lights() && !vector.names_ridley());
+        assert!(
+            !vector.names_pad()
+                && !vector.names_lights()
+                && !vector.names_ridley()
+                && !vector.names_steam()
+        );
         let (actual, expected) = if vector.placing {
             let expected = After {
                 palette: Some(expected.palette.unwrap_or(PaletteName::Doors)),
@@ -797,6 +831,7 @@ mod vectors {
             !vector.names_doors()
                 && !vector.names_lights()
                 && !vector.names_ridley()
+                && !vector.names_steam()
                 && !vector.names_shared()
         );
         let step = pad_step(vector);
@@ -833,6 +868,7 @@ mod vectors {
             !vector.names_doors()
                 && !vector.names_pad()
                 && !vector.names_ridley()
+                && !vector.names_steam()
                 && !vector.names_shared()
                 && !vector.placing
         );
@@ -1537,14 +1573,14 @@ mod vectors {
         let run = ridley(vector).run(
             vector.passing.unwrap_or(false),
             vector.random(),
-            vector.tail_her().as_ref(),
+            vector.hitter_her().as_ref(),
             vector.fight(),
             &ridley_content(&content),
             &rules(&vector.rules),
         );
         if vector.names_flight() {
             assert!(
-                vector.tail_her().is_none(),
+                vector.hitter_her().is_none(),
                 "the tail in flight is part 4c-1b's"
             );
             return flight_after(&run);
@@ -1573,7 +1609,7 @@ mod vectors {
             ..part_3
         };
         if !vector.names_tail() {
-            assert!(vector.tail_her().is_none(), "the tail's her is part 4b's");
+            assert!(vector.hitter_her().is_none(), "the tail's her is part 4b's");
             return part_4a;
         }
         RidleyAfter {
@@ -1586,7 +1622,12 @@ mod vectors {
 
     /// Ridley's vector's check: his placing or his run against its `ridley_after`.
     fn check_ridley(vector: &Vector, expected: &RidleyAfter) -> Option<String> {
-        assert!(!vector.names_doors() && !vector.names_pad() && !vector.names_lights());
+        assert!(
+            !vector.names_doors()
+                && !vector.names_pad()
+                && !vector.names_lights()
+                && !vector.names_steam()
+        );
         assert!(!vector.placing, "Ridley's placing is ridley_placing");
         let actual = if vector.ridley_placing {
             ridley_placed(vector)
@@ -1597,6 +1638,207 @@ mod vectors {
             .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
     }
 
+    // ------------------------------------------------------------ the steam
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum VentFacingName {
+        Down,
+        Left,
+        Right,
+        Up,
+    }
+
+    const fn vent_facing(name: VentFacingName) -> VentFacing {
+        match name {
+            VentFacingName::Down => VentFacing::Down,
+            VentFacingName::Left => VentFacing::Left,
+            VentFacingName::Right => VentFacing::Right,
+            VentFacingName::Up => VentFacing::Up,
+        }
+    }
+
+    /// A vent's phase as the vectors name it; the vector file spells the phase before the
+    /// first puff `Waiting`.
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum VentPhaseName {
+        #[serde(rename = "Waiting")]
+        AwaitingFirstPuff,
+        Placed,
+        Puffing,
+        Resting,
+    }
+
+    /// A vent a placing places: its facing and position.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct VentPlaceRow {
+        facing: VentFacingName,
+        position: [u16; 2],
+    }
+
+    /// A vent as a run's `vents` names it: its facing, position, phase and the phase's count.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct VentRow {
+        facing: VentFacingName,
+        position: [u16; 2],
+        phase: VentPhaseName,
+        wait: Option<u8>,
+        figure: Option<u8>,
+        runs: Option<u8>,
+    }
+
+    /// A vent as `vents_after` reads it: its phase with its count, and whether its puff is shown.
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    #[serde(deny_unknown_fields)]
+    struct VentAfter {
+        phase: VentPhaseName,
+        wait: Option<u8>,
+        figure: Option<u8>,
+        runs: Option<u8>,
+        shown: bool,
+    }
+
+    /// A vent's wait for its first puff, as a vent row's `wait` names it.
+    fn first_puff_wait(runs: Option<u8>) -> FirstPuffWait {
+        runs.and_then(FirstPuffWait::new)
+            .expect("a vent's first puff's wait is named, 1 to 32")
+    }
+
+    /// The phase a vent row names; reading it back must give the same cells, so each phase
+    /// names only what it carries.
+    fn vent_phase(row: &VentRow) -> VentPhase {
+        let phase = match row.phase {
+            VentPhaseName::AwaitingFirstPuff => {
+                VentPhase::AwaitingFirstPuff(first_puff_wait(row.wait))
+            }
+            VentPhaseName::Placed => VentPhase::Placed(first_puff_wait(row.wait)),
+            VentPhaseName::Puffing => VentPhase::Puffing(
+                row.figure
+                    .and_then(PuffFigure::new)
+                    .zip(row.runs)
+                    .and_then(|(figure, remaining_hold)| Puff::new(figure, remaining_hold))
+                    .expect("a puff names its figure, 1 to 7, and its remaining hold, 1 to 3"),
+            ),
+            VentPhaseName::Resting => VentPhase::Resting(
+                row.runs
+                    .and_then(num::NonZeroU8::new)
+                    .expect("a rest names its runs, 1 to 255"),
+            ),
+        };
+        assert_eq!(
+            vent_phase_cells(phase),
+            (row.phase, row.wait, row.figure, row.runs),
+            "a vent's phase names only what it carries"
+        );
+        phase
+    }
+
+    /// A vent's phase as the vectors name it: its name, wait, figure and runs (a puff's runs are
+    /// its figure's remaining hold).
+    const fn vent_phase_cells(
+        phase: VentPhase,
+    ) -> (VentPhaseName, Option<u8>, Option<u8>, Option<u8>) {
+        match phase {
+            VentPhase::AwaitingFirstPuff(wait) => (
+                VentPhaseName::AwaitingFirstPuff,
+                Some(wait.runs()),
+                None,
+                None,
+            ),
+            VentPhase::Placed(wait) => (VentPhaseName::Placed, Some(wait.runs()), None, None),
+            VentPhase::Puffing(puff) => (
+                VentPhaseName::Puffing,
+                None,
+                Some(puff.figure().get()),
+                Some(puff.remaining_hold()),
+            ),
+            VentPhase::Resting(runs) => (VentPhaseName::Resting, None, None, Some(runs.get())),
+        }
+    }
+
+    fn vent(row: &VentRow) -> Vent {
+        Vent {
+            facing: vent_facing(row.facing),
+            position: point(row.position),
+            phase: vent_phase(row),
+        }
+    }
+
+    /// A vent as `vents_after` reads it; the puff figure it shows, its `VentPuffs` output, must
+    /// be its phase's.
+    fn vent_after(vent: Vent) -> VentAfter {
+        let (phase, wait, figure, runs) = vent_phase_cells(vent.phase);
+        assert_eq!(vent.shown_puff_figure().map(PuffFigure::get), figure);
+        VentAfter {
+            phase,
+            wait,
+            figure,
+            runs,
+            shown: vent.shown(),
+        }
+    }
+
+    /// The vents a steam vector's step leaves, and the frame's hit: a vent's placing, or one run
+    /// of the room's vents.
+    fn steam_step(vector: &Vector) -> (Vec<Vent>, Option<Hit>) {
+        if vector.steam_placing {
+            assert!(
+                vector.vents.is_none() && vector.camera.is_none() && vector.her.is_none(),
+                "a placed vent's facing, position and wait come from its vent row and the value \
+                 its wait is drawn from alone"
+            );
+            let row = vector.vent.as_ref().expect("a placing names its vent");
+            let random = vector.random.as_deref().map(hex);
+            let placed = Vent::place(
+                vent_facing(row.facing),
+                point(row.position),
+                random.expect("a placed vent's wait, 1 + (r mod 32), needs the r it is drawn from"),
+            );
+            return (vec![placed], None);
+        }
+        assert!(
+            vector.vent.is_none() && vector.random.is_none(),
+            "a run's vents carry their own counts, so none is drawn from a random number"
+        );
+        let mut vents: Vec<Vent> = vector
+            .vents
+            .as_ref()
+            .expect("a run names the room's vents")
+            .iter()
+            .map(vent)
+            .collect();
+        let camera = point(vector.camera.expect("a run names the camera"));
+        let hit = run_vents(
+            &mut vents,
+            camera,
+            vector.hitter_her().as_ref(),
+            &rules(&vector.rules),
+        );
+        (vents, hit)
+    }
+
+    /// The steam's vector's check: its step against its `vents_after` and its `hit`.
+    fn check_steam(vector: &Vector, expected: &[VentAfter]) -> Option<String> {
+        assert!(
+            !vector.names_doors()
+                && !vector.names_pad()
+                && !vector.names_lights()
+                && !vector.names_ridley_own()
+                && vector.beaten.is_none()
+                && !vector.placing
+        );
+        let (vents, hit) = steam_step(vector);
+        let actual: Vec<VentAfter> = vents.into_iter().map(vent_after).collect();
+        let actual_hit = hit.map(hit_row);
+        (actual != expected || actual_hit != vector.hit).then(|| {
+            format!(
+                "{}: expected {expected:?} and hit {:?}, got {actual:?} and hit {actual_hit:?}",
+                vector.id, vector.hit
+            )
+        })
+    }
+
     /// The vector's check, by the result it names; exactly one.
     fn check(vector: &Vector) -> Option<String> {
         match (
@@ -1604,11 +1846,13 @@ mod vectors {
             &vector.shaft_after,
             &vector.lights_after,
             &vector.ridley_after,
+            &vector.vents_after,
         ) {
-            (Some(after), None, None, None) => check_door(vector, after),
-            (None, Some(after), None, None) => check_pad(vector, after),
-            (None, None, Some(after), None) => check_lights(vector, after),
-            (None, None, None, Some(after)) => check_ridley(vector, after),
+            (Some(after), None, None, None, None) => check_door(vector, after),
+            (None, Some(after), None, None, None) => check_pad(vector, after),
+            (None, None, Some(after), None, None) => check_lights(vector, after),
+            (None, None, None, Some(after), None) => check_ridley(vector, after),
+            (None, None, None, None, Some(after)) => check_steam(vector, after),
             _ => panic!("{}: a vector names exactly one result", vector.id),
         }
     }

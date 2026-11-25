@@ -195,7 +195,7 @@ the slide's end does that. Its first frame is the earliest such frame. The colou
 compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. A
 lag cut in play is still a named stop: the M0 row has none, so no record yet shows how it plays.
 
-More facts are borrowed, the audio ones and the passage's random number only through a passage.
+Through passages, the loop borrows audio replies and some random draws.
 Audio's answer to the passage, whether a track waits in
 the queue of tracks as the frame of work begins, is read from the record's music queue as the
 main loop's start steps it once (world-doors' decode); the passage into Ridley's room waits on it
@@ -203,16 +203,14 @@ for 68 frames as his room's music loads; the earlier passages of these rows play
 Whether every sound request has been sent as the frame of work begins is read from the record at
 the preceding cut, since the original sends the sounds after the frame's work: each of the three
 sound libraries' next index at its start. The escape's passage out of room 4 waits on it, so
-`chain-any-0008-E021` holds all 263 cuts and room 5 played on holds 659, to her pose at cut 660;
-the sounds always taken as sent differ at `chain-any-0008-E021` cut 105 in
+`chain-any-0008-E021` holds all 263 cuts. Treating sounds as always sent fails at cut 105 in
 `doors.colours.screen`. Every
 frame draws the game's random number once (game-random's `AdvanceRandom`) as its work begins,
 whenever the last NMI found the last frame's work finished. In play the played State carries the
 number from the seed and every draw is the loop's; it is compared as `random` at every finished
-cut in play. Through a passage the number before the frame's draw is borrowed, the record's at
-the preceding cut: no owner here models a passage's draws, whose own frames draw it on some
-frames and not others, so a number carried through one falls out of step at the first passage
-(0002's cut 238). The loop carries on from the passage's last borrowed draw.
+cut in play. The room loader advances the sequence once for each vent in slot order and carries
+that number through the contents fetch. Room 4's cut 219 compares the result and all five room 3
+vents. Elsewhere in a passage, the number before the frame's draw comes from the preceding cut.
 
 Ridley's room as she enters (boss-ceres-ridley part 3) plays from room 5's passage into it.
 Fetching the contents of a version whose population places Ceres Ridley places him first
@@ -284,12 +282,23 @@ lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` a
 seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,520 cuts, through
 rooms 2 to 5 and on to cut 896 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,826;
 from her arrival (`any-ceres-arrival`, below) they hold 2,743, to movie frame 11,058. In the
-escape, `chain-any-0007-E06B`, room 5, alone holds all 258 cuts, and played on through room 4
-and its passage out holds 659, stopping at cut 660 in `movement.pose`; `chain-any-0008-E021`,
-room 4, alone holds all 263; `chain-any-0009-DFD7`, room 3, holds 136 and stops at cut 137 in
-`movement.pose`; and `chain-any-0010-DF8D`, room 2, holds 65 and stops at cut 66 in
-`movement.pose`. Her frame
-is two steps, her moves and then her reaction to the frame's hit, with the station and Health
+escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 722 through room 3
+without a new seed. Room 4 (`chain-any-0008-E021`) holds all 263 cuts, including the placement
+of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds 199 cuts and stops at cut 200,
+when passage drawing starts updating jump history (`PassageJumpHistory`). The same
+boundary stops the continuous run at cut 723. Room 2 (`chain-any-0010-DF8D`) holds 86 cuts.
+At cut 87 she releases jump as her backward leap lands (`BackwardLeapLanding`).
+
+Steam State is compared at finished cuts, including the puff figure. Room 3's puff pushes
+left at cut 137 and room 2's pushes right at cut 66. Both give a five-frame push, leave
+24 energy and show 95 protection at the cut. The independent held-state control matches
+341 of 840 vent steps through room 3 cut 168 and 348 of 946 through room 2 cut 86.
+Production matches all of those steps. Disabling steam contact fails at room 3 cut 137 in
+`steam.hit`. Reusing the placement seed fails at room 4 cut 219 in `steam.vents`. Room 2
+starts with all eleven vents restored from its seed. A played run does not yet reach their
+placement. Vent sprite rendering and the turning shaft are outside this comparison.
+
+Her frame is two steps, her moves and then her reaction to the frame's hit, with the station and Health
 between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,
 and her crouched turn, begun at room 6's cut 535, ends at the record's frame. Both hits of his
 tail that the runs reach play. At room 6's cut 609 she loses 15 energy, takes `Recoiling` with her

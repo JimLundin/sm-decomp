@@ -931,6 +931,159 @@ retreat's first run (4c-2). The claim holds with one unproduced input, his hits 
 | L8, L9, L10, L11 | `chain-any-0006-E0B5`:900, 915, 916, 963 | L-slow-counts, L-slow-hovers, L-hover-pull, L-pull-turns |
 | L12, L13 | `chain-any-0006-E0B5`:993, 994 | L-pull-back, L-gives-up (and the edges built on them) |
 
+## Part 5, the escape's steam
+
+### How it was made
+
+Behaviour first, from CI's lean record cache, rows `chain-any-0009-DFD7` (room 3) cuts 0-168
+and `chain-any-0010-DF8D` (room 2) cuts 0-111, read per frame by scratch readers
+(`$TEMP/collab/steam-ref/`, local only: `dump.py`, `rec.py`, `near.py`, `cases.py`): each
+steam slot (species `E1FF` in `0F78` + 40h × i) with its `0F7A`/`0F7E`, `0F86`, `0F8E`,
+`0F92`, `0F94`, `0FAE` and `0FB4`; the camera `0911`/`0915`; her `0AF6`/`0AFA`, `0AFE`/`0B00`,
+`0A1C`, `09C2`, `18A8`, `18AA` and `0A54`. The bank logs then pinned the arithmetic: A6
+`$EFB1..F4EB` (the steam), A0 `$8EB6` (the window), `$8FD4..9057` (the order of contact and the
+run), `$9A5A..9B7E` (contact with a box per figure), `$A477`/`$A4A1..A596` (the touch), `$804F`
+and `$8059` (the never-run figure and its box), and 82 `$8B44..8BAC` (the frame's order).
+
+The reference model, `$TEMP/collab/steam-ref/model.py`, run per frame by `rec.py` from the
+records' state the frame before (the camera, her position, body and protection as that record
+leaves them):
+
+| Row (play cuts) | Vent-runs compared | Model | Do-nothing (last frame's state) | Hits: model / record |
+| --- | --- | --- | --- | --- |
+| `chain-any-0009-DFD7` (0-168) | 840 | 840 | 341 | 137 Left / 137 Left |
+| `chain-any-0010-DF8D` (0-111) | 1,221 | 1,221 | 473 | 66 Right / 66 Right |
+
+A vent-run is one slot's phase and count on one frame. No other frame has a hit, in the model
+or the records: 276 vent-runs in view have a reach out, with her 21 px away at the nearest
+unprotected (0009:82), and touching but protected at 0010:9-12 and 67-74. Both hits keep her
+energy (24 before and after) and leave `18A8` 95 and `18AA` 4 at the record (her steps that
+frame spent one of each). `vecrun.py` runs the 50 ST- vectors: 50 of 50.
+
+### State (the RAM mapping)
+
+| Spec | RAM | Notes |
+| --- | --- | --- |
+| its facing | `0FB4` (parameter 1): 0 `Up`, 1 `Left`, 2 `Down`, 3 `Right`; 4 and 5 are `Left` and `Right` drawn where the turning shaft puts them (`$F019`, part 7) | rooms 3 and 2 (0009 0-168, 0010 0-111) hold 0 to 3 only; the 4s and 5s show from 0010:225, in the next room (part 7); the graphical offset (`7E7010`/`7012`) is drawing only |
+| its position | `0F7A`, `0F7E` | never changed by the steam |
+| `Placed(w)` | `0F8E` = `804F` (extended spritemap "nothing"), `0F92` the list's start, `0FAE` = `w`, `0F86` tangible and visible | from `$EFB1` |
+| `Waiting(w)` | `0F92` = list + 6 (at `$F127`), `0F94` = 1, `0FAE` = `w`, hidden (`0F86` | 0500h) | |
+| `Puffing(k, n)` | `0F8E` = figure `k`'s extended spritemap (`$F142` + 0Ah × (k − 1) for up, `$F188` left, `$F1CE` down, `$F214` right), `0F94` = `n`, `0F86` tangible and visible | |
+| `Resting(n)` | `0F92` = list + 12h (at the show, `$F135`), `0F94` = `n`, hidden; `0F8E` figure 1's | the 0040h at `$F05B` and the others is the rest, `steam_rest` |
+
+Each figure's instruction pair is `0003,<figure>`, and the puff's end (`$80ED`, go to) leads to
+the hide (`$F11D`) and the rest (`0040`). The show (`$F135`) follows the wait's end too: `$F127`
+falls through from `$F131` into `$F135`.
+
+### Inputs and order
+
+- The frame (82 `$8B44..8BAC`): which enemies run (`$A0:8EB6`, the window, on the camera as
+  the last frame left it: the scrolling, `$90:94EC`, comes later); her current state handler
+  (`$90:E695`: her radius from her pose, `$EC22`, and her pose input; no movement); the main
+  enemy routine (`$A0:8FD4`); then her new state handler (`$90:E725`), where her movement
+  (`$E94B`) moves her. So the vents meet her **before she moves this frame**, at her position
+  as the last frame left it, with the body of the pose she started it in. At 0009:137 the
+  record before shows x 101 (her box 96-105, figure 1's 104-119: touching) and the hit's
+  record 98 (93-102: not touching); reading her after her moves would miss the movie's first
+  touch. At 0010:66 both touch. This is the root's ruling for every hitter (spec-gate finding 2):
+  Ridley's tail runs inside his main AI in the same enemy routine, so it reads her as the frame
+  starts too (§14.3).
+- The window (`$8EB6`, not processed off-screen, `0F86` bit 800h clear): `x + 0F82 − 0911`,
+  `0911 + 100h + 0F82 − x`, `y + 8 − 0915` and `0915 + F8h − y`, each `BMI` to skip; `0F82` is
+  8 from the species header (`$A0:E1FF`). The rows meet the left edge at 0 (0010:22) and −1
+  (0010:32), the right at 0 (0010:28) and −1 (0010:52), the bottom at 0 (0009:104).
+- Contact before the run: `$9021` skips an intangible slot entirely; `$903E` runs contact
+  (`$9758` → `$9A5A`, extended spritemaps) before the main AI (`$908F`), whose instruction
+  processing changes the figure. So contact reads the phase the frame started with.
+- Her protection: `$9A95` returns while `18A8` is not 0, read before her own step counts it
+  down (as §14's tail). Contact damage index `0A6E` is normal in Ceres (no speed booster or
+  screw attack); the other branch is out of scope.
+- The first touching vent wins: the touch sets `18A8` = 60h, so the next slot's `$9A95` returns.
+- The random number: `$EFD8` draws one (`$80:8111`) per vent as the room places it, so
+  `0FAE` = 1 + (new number & 1Fh). Where these draws fall among the room's other placing draws
+  is R2's. The individual room seeds are after loading. Replay from room 4 into room 3
+  compares the five new vent states and the resulting random number at the settled cut 219.
+
+### Outputs
+
+| Spec | RAM / code |
+| --- | --- |
+| the frame's hit | `$A562..A596`: damage from the species header (`$A0:E1FF` + 6: 0) through `$A0:A45E` and `$91:DF51` (0 taken), `18A8` = 60h, `18AA` = 5, `0A54` = 0 (left) or 1 (right) from `0AF6 − 0F7A` (`BMI`) |
+| shown, its figure | `0F86` bits 0100h/0400h (`$F11D`, `$F135`); `0F8E` |
+
+### Sources per entry
+
+| Entry | Sources |
+| --- | --- |
+| VentPlaced | `$A6:EFB1..F00C`; `$80:8111` |
+| VentInView | `$A0:8EB6..8F54`; `$A0:E1FF` (x radius) |
+| VentWaits | `$A6:F04D..F059` (and the three other lists), `$F11D`, `$F127..F141` |
+| VentPuffs | `$A6:F061..F07F` (and the others), `$80ED`; `$A0:8BA9` (the instruction runner) |
+| VentRests | `$A6:F059..F05F` (and the others), `$F135` |
+| PuffReach | `$A6:F142..F259`, `$F25A..F373`; `$A0:804F`, `$8059` |
+| PuffTouches | `$A0:9A5A..9B7E`, `$A6:F03F`, `$A0:A477..A596`, `$A0:A45E`, `$91:DF51`; `$A0:9021..903E` |
+
+### Findings behind the spec's choices
+
+- **The reach is a box per figure, edges included on the far side.** `$9B0A..9B3B` tests
+  `box left − her right` `BPL` (skip when ≥ 0), `box right − her left` `BMI` (skip when < 0),
+  the same down: 16-bit differences, signed by bit 15. Figures 6 and 7 point at the empty
+  hitbox list `$F25A`; a hidden slot is skipped before contact (`$9021`).
+- **The never-run vent reaches one pixel.** Its spritemap is `$804F`, whose one entry's hitbox
+  `$8059` is 0,0,0,0 with the ordinary touch `$8023`: the same hit. A vent placed in view has its
+  first run on the same frame as its first contact, so this is reachable only on the frame a
+  vent first comes into view; no row has her there.
+- **The side is the vent's position**, not the puff's: `$A587` subtracts `0F7A`.
+- **The touch keeps the steam alive**: `$F03F` sets its health to 7FFFh before the touch, so the
+  touch's death check never fires; nothing of the vent changes on a touch.
+- **No energy, all the rest**: the species' damage is 0 (`$A0:E1FF` + 6, the species header's
+  damage word, read by `$A0:A45E`), so `$91:DF51` takes none; this is the source of
+  `PuffTouches`' worth, 0 whole energy, which production hands to samus-health's `Impact` (the
+  shared hit itself holds only the side and the push time). `18A8`, `18AA` and `0A54` are set as
+  by any touch: the protection, the push and the flash all follow (samus-health,
+  samus-movement, samus-appearance).
+- **The shaft's vents** (parameters 4 and 5) run the same cycle; `$F019` computes where they
+  are drawn in the turning room each run. Their reach is at their unturned position: part 7.
+- **Shots**: the hitboxes' shot pointer is `$804C` (`RTL`); C1's.
+
+### The harness (for the integrator)
+
+- **Rows:** `chain-any-0009-DFD7` 0-168 and `chain-any-0010-DF8D` 0-111 (the passages after
+  them don't run enemies: no vent changes).
+- **Compared per frame and slot:** the phase and its count decoded as in the State table;
+  shown from `0F86` 0400h clear; the frame's hit as `18A8` going from 0 to 5Fh with `0A54` as
+  its side and `18AA` + 1 as its push time; her energy (`09C2`) unchanged by it.
+- **Skipped:** the graphical offset `7E7010`/`7012` (part 7); `0F86`'s other bits; `0FAE` once
+  the wait is over (left at 0).
+
+**Production and replay.** Room loading places the vents in slot order, advancing the random
+sequence for each. A room seed restores its current vent phases and counters. The station's
+enemy step reads the frame-start camera and Samus contact state, then sends the first vent hit
+to movement and health. The shared hit carries its side and push, and the health impact carries
+zero whole energy.
+
+The played comparison checks complete vent state at finished cuts and the hit's side and push
+during play. It separately checks the resulting energy and protection. Room 3 plays through its
+cut 137 hit and starts the passage, stopping at 200 when drawing updates jump history. Room 2
+plays through its cut 66 hit, stopping at 87 when Samus releases jump as her backward leap lands.
+
+### The harness cases
+
+| Case | Row:frame (vent slot) | Vectors |
+| --- | --- | --- |
+| ST1, ST2, ST3 | `chain-any-0009-DFD7`:46 (2), 43 (3), 51 (2) | ST-first-run, ST-wait, ST-wait-ends |
+| ST4, ST5, ST6 | `chain-any-0009-DFD7`:2 (5), 1 (5), 7 (6) | ST-puff-counts, ST-puff-next, ST-puff-last |
+| ST7, ST8 | `chain-any-0009-DFD7`:8 (6), 81 (4) | ST-rest-first, ST-rest-ends |
+| ST9 | `chain-any-0009-DFD7`:137 (2) | ST-hit-left |
+| ST10 | `chain-any-0010-DF8D`:66 (0) | ST-hit-right |
+| ST11, ST12 | `chain-any-0010-DF8D`:9 (4), 67 (0) | ST-protected-room-2, ST-protected-after-hit |
+| ST13 | `chain-any-0009-DFD7`:82 (4) | ST-near-miss |
+| ST14, ST15, ST16, ST17 | `chain-any-0010-DF8D`:32 (0), 22 (6), 28 (4), 52 (3) | ST-out-left, ST-view-left-edge, ST-view-right-edge, ST-out-right |
+| ST18 | `chain-any-0009-DFD7`:104 (4) | ST-view-bottom-edge |
+
+Each case's frame is the record the run ends at; the vector's `vents` and `her` are the record
+before it, moved 1,000 px right and 600 px down with the camera.
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -943,6 +1096,7 @@ the cover, the beacon or the platform, nor for the door of Ridley's room, the wa
 (`LoadFault::LaterCeresActor`), so no area has `old`, and there is no old-code guideline to
 compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking. Part 4b has none:
 the engine has no tail. Part 4c-1a has none: the engine refuses his flight.
+Part 5 has no old model.
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
@@ -953,5 +1107,6 @@ the engine has no tail. Part 4c-1a has none: the engine refuses his flight.
 - Area ridley-wakes: EyeFadesIn, BodyFadesIn, ReadyToRoar, Roars
 - Area ridley-tail: TailAtRest, TailCurls, TailHits
 - Area ridley-flight: TakesOff, Rises, SlowsDown, Hovers, PulledToHisPoint, Flies
+- Area steam: VentPlaced, VentInView, VentWaits, VentPuffs, VentRests, PuffReach, PuffTouches
 
-Budget: 37.5 × 142.7 units = 5,348 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212)
+Budget: 37.5 × 172.0 units = 6,448 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100)
