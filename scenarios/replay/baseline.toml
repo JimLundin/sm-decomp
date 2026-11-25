@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "3032d1bd2be7159e6da3e2fc984872b0e7b5329cf39a1ac8c15479363eebd18a"
+index_sha256 = "72e026754ca6f81cadaac5aef78dcd379500606a7c7e7c9acfe942226a769617"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -894,5 +894,23 @@ replies = 0
 null_cuts = 0
 null_fields = 7
 restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "intro/flashback-from-page-one"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "ac270e91a90d02123961b216c44acce4a0b2dccbf81f191ff6bc12c3a0f5b7d5"
+
+[case.counts]
+cuts = 1298
+fields = 37507
+outputs = 9186
+publications = 0
+replies = 0
+null_cuts = 5
+null_fields = 21881
+restorations = 0
 pending_boundaries = 0
 pending_restorations = 0

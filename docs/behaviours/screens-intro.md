@@ -4,9 +4,9 @@ What the player sees at the start of the intro: the screen stays dark while the 
 loads, then slowly brightens on the opening's words; they hold while the first tune plays and the
 second follows, then the picture slowly darkens. Page 1 is made ready in the dark, and once its
 tune has loaded it slowly brightens while its text is typed beside Samus's blinking eyes; at its
-end the caret blinks and the game waits for a press, which starts the battle on Zebes
-(a later part). What the player sees at the end of the intro: page 4's text dissolves into a picture of the
-baby being examined, the baby rising into view as the picture settles; Samus's eyes
+end the caret blinks. The next press starts the flashback to the battle on Zebes. The fight
+dissolves back to the text while page 2 types. At the end of the intro, page 4's text dissolves
+into a picture of the baby being examined, the baby rising into view as the picture settles; Samus's eyes
 blink beside the text; the picture dissolves back to text and page 5 is typed out letter by
 letter, each letter glowing as it appears, with a click every other letter and a caret running
 ahead; the caret blinks and the game waits for a button; the press clears the text and page 6 is
@@ -19,12 +19,12 @@ records over time. Vectors:
 
 **Scope: the intro's model (the plan's F2), in parts.** Specced: the intro's opening and page 1,
 from the intro's start to the wait for the press that starts the battle on Zebes (§7,
-§8), and the intro's last row, from page 4's turn to its end (§2-§6). The intro's own State:
+§8), the flashback and the return to page 2 (§9), and the intro's last row, from page 4's
+turn to its end (§2-§6). The intro's own State:
 where the scene has got to, the stage's wait, the dissolve's colours and its count, the picture's
 height, the baby, the page being typed, the caret, the glowing letters, Samus's eyes, the
-screen's brightness and the fade's count. Not yet specced (§11): the press after page 1 and the
-battle on Zebes played by her, page 2, the baby's discovery played by her, page 3, the
-baby delivered and page 4.
+screen's brightness, the fade's count and whether the fight is still visible. The baby's
+discovery, page 3, the baby delivered and page 4 are follow-on work (§12).
 
 **The shared shape.** The intro is built from four mechanisms, each in a player's terms:
 1. **Picture scripts** (§2): a script is a list of steps, each showing a picture (a letter, a
@@ -45,11 +45,11 @@ baby delivered and page 4.
 - **The pad's new presses** (the movie's input): whether any button was pressed anew this frame.
 - **Whether a track waits** (audio's reply, U1): whether a tune asked for is still waiting to
   load and start, read by the opening's and page 1's waits.
+- **The fight is ready to dissolve back to text** (the flashback fight's signal): its explosions have held for their closing interval.
 - **The language** (the options' setting): this piece plays the English pages; a Japanese
   setting is Unsupported at the intro's start.
 - **The scene's content** (in our format): the scripts (the pages' letters, places and holds,
-  page 1's among them,
-  the eyes', the baby's and the caret's two), the full colours of the scene's 256 colours, which
+  including pages 1 and 2, the eyes', the baby's and the caret's two), the full colours of the scene's 256 colours, which
   colours belong to the text and which to the picture in each dissolve, the colours the caret
   takes once the text is back, and the caret's home.
 
@@ -59,13 +59,15 @@ caret), the brightness, to the renderer; each click asked for and the music's st
 to audio (U1), and the opening's and page 1's music requests (§7, §8); on the frame it begins,
 that the equipment for the played scenes is lent; on the frame it ends, that it is done, and that the equipment lent for the
 played scenes is returned: the next frame is the flight's (screens-flight `FlightIsMadeReady`).
+During the flashback, the intro asks production to start the encounter, chooses how the fight
+and text are shown, and tells the renderer when to hide Samus and her shots.
 
 **What it leaves.** The pictures themselves are content drawn by the platform; the line split
 of the colour blend during a dissolve is the platform's line program (E3); the lag frames are
 the platform's (T1); playing the click and stopping the music are audio's (U1).
 
-**What it replaces:** nothing but the intro's last row's model: the engine has no opening or
-page 1.
+**What it replaces.** The intro's opening, page 1 and last pages keep their existing rules. The
+flashback extends the intro at page 1's press boundary.
 
 **Notation.** Places on the text layer are columns and rows of 8 px; screen places are pixels,
 x rightward and y downward, 16-bit. A colour is three channels (red, green, blue); a channel's
@@ -82,11 +84,12 @@ over).
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
-| the intro's stage | `IntroStage`: the opening's `Begins`, `OpeningLoads`, `OpeningBrightens`, `OpeningPause`, `FirstTune`, `SecondTuneLoads`, `SecondTune` or `OpeningDarkens`; page 1's `PageOneMadeReady`, `PageOneLoads`, `PageOneBrightens` or `PageOneWaits`; `ToScene`, `Scene`, `ToPageFive` (the baby has signalled page 5), `ToText`, `Text`, `WaitingForPress`, `FadingOut` or `Done` | what the screen shows | every entry |
+| the intro's stage | `IntroStage`: the opening's `Begins`, `OpeningLoads`, `OpeningBrightens`, `OpeningPause`, `FirstTune`, `SecondTuneLoads`, `SecondTune` or `OpeningDarkens`; page 1's `PageOneMadeReady`, `PageOneLoads`, `PageOneBrightens` or `PageOneWaits`; `IntoFight`, `Fight`, `PageTwoPending`, `OutOfFight` or `PageTwoWaits`; `ToScene`, `Scene`, `ToPageFive` (the baby has signalled page 5), `ToText`, `Text`, `WaitingForPress`, `FadingOut` or `Done` | what the screen shows | every entry |
 | the stage's wait | frames, 0 to 32,768; 65,535 only after a hold that ran out from 0, in a stage that does not read it | how long the opening holds each part | `OpeningUnfolds` |
-| the colours | 256 colours, each three channel levels in 256ths, 16-bit | the picture's colours | `PicturesDissolve`, `PageFiveBegins`; output (the colours shown) |
-| the colours' steps | 256 colours, each three steps in 256ths: a colour's full level × 8, so 32 steps make it full | how fast each colour fades | `PicturesDissolve` |
-| the dissolve's count | frames, 0 to 65,535 | when the dissolve steps and ends | `PicturesDissolve`, `BabyRises`, `BabyLeaves` |
+| the colours | 256 colours, each three channel levels in 256ths, 16-bit | the picture's colours | `PicturesDissolve`, `BattleDissolves`; output (the colours shown) |
+| the colours' steps | 256 colours, each three steps in 256ths: a colour's full level × 8, so 32 steps make it full | how fast each colour fades | `PicturesDissolve`, `BattleDissolves` |
+| the dissolve's count | frames, 0 to 65,535 | when the dissolve steps and ends | `PicturesDissolve`, `BattleDissolves`, `BabyRises`, `BabyLeaves` |
+| the fight visible | `bool`: whether Samus and her shots appear in front of the fight sprites | `BattleDissolves`; output (the sprite drawing) |
 | the picture's height | px, signed 16-bit | where the scene's picture stands | `BabyRises`; output (the scroll) |
 | the baby | its y, px, 16-bit (x 112), and its script's place, or none | where the baby is | `BabyRises`, `BabyLeaves`, `ScriptSteps` |
 | a script's place | for each script (the page, the eyes, the baby, the caret): which script, its step, the frames its picture still holds (0 to 65,535), and the count left of a repeat it is in, or none | which picture shows and when it changes | `ScriptSteps` |
@@ -107,14 +110,15 @@ and its `after` reads them back.
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| a press | `bool`: any button pressed anew this frame (the movie's pad) | `PressTurnsThePage`, `PageEnds` |
+| a press | `bool`: any button pressed anew this frame (the movie's pad) | `PressTurnsThePage`, `PageEnds`, `BattleBegins` |
+| the fight ready to return | `bool`: event received from the flashback fight after the ordinary stage step of the same finished frame | `PageTwoBegins` |
 | a track waits | `bool`: a tune asked for still waits to load and start (audio's reply, U1) | `OpeningUnfolds`, `PageOneBegins` |
 | the language | the options' setting: English (a Japanese setting is Unsupported) | the caller, at the intro's start |
-| the scripts | content: each a list of steps (§2): the pages 1, 5 and 6, the eyes' two (blinking, page 6's), the baby's, the caret's two (steady, blinking) | `ScriptSteps`, `LetterIsTyped`, `CaretBlinks` |
-| the full colours | content: the scene's 256 colours as the dissolves head for them | `PageFiveBegins` |
-| the dissolve's sets | content: for each dissolve, the colours that dim and those that brighten; for page 5, the text's colours that start black | `PicturesDissolve`, `PageFiveBegins` |
+| the scripts | content: each a list of steps (§2): the pages 1, 2, 5 and 6, the eyes' two (blinking, page 6's), the baby's, the caret's two (steady, blinking) | `ScriptSteps`, `LetterIsTyped`, `CaretBlinks` |
+| the full colours | content: the scene's 256 colours as the dissolves head for them | `PageFiveBegins`, `BattleBegins`, `PageTwoBegins` |
+| the dissolve's sets | content: for each dissolve, the colours that dim and those that brighten; for page 5, the text's colours that start black | `PicturesDissolve`, `BattleBegins`, `BattleDissolves`, `PageTwoBegins`, `PageFiveBegins` |
 | the caret's colours | content: the colours, by index, the caret takes once the text is back | `DissolveEnds` |
-| the caret's home | content: its place as a page begins, px | `PageFiveBegins`, `PressTurnsThePage` |
+| the caret's home | content: its place as a page begins, px | `PageFiveBegins`, `PressTurnsThePage`, `PageTwoBegins` |
 
 ### 1.4 What it reports (Outputs)
 
@@ -124,11 +128,14 @@ and its `after` reads them back.
 | the pictures | each script's picture and place; each letter with its colour set; whether the caret shows | output (the tile writing, the sprite drawing) |
 | the text cleared | an event | output (the tile writing) |
 | a click | an event, per letter that clicks | U1 (the sound's request) |
-| the music stops | an event, as page 6 begins | U1 |
 | the brightness | `Brightness`, every frame | output |
 | the music's requests | events, in order: stop the music, load a tune (the opening's first or second, or the pages'), play the loaded tune after a delay, frames; each request is asked with a delay of 8 frames unless it names a longer one | U1 |
 | the equipment lent | an event, as the intro begins: her missiles and their capacity 900 and the default buttons, for the played scenes | the owners of her equipment and of the buttons |
 | the equipment returned | an event, as the intro ends: her missiles and their capacity 0 and the player's own buttons back, undoing what the played scenes lent | the owners of her equipment and of the buttons |
+| the flashback request | `StartZebesFight` or `HideFightSamusAndShots`, events. Production applies the start before room play and the hide after room play, before drawing | production and the fight owners |
+| the flashing lights begin | event as the dissolve into the fight finishes | the fight's light effect |
+| the picture layout | event choosing the split blend, the plain fight picture or the plain text picture | E3 and E4 |
+| the text updates | an event that pauses or resumes publishing text tiles | E2 |
 | the intro done | `bool`: the stage is `Done` | the caller: the next frame is the flight's |
 
 ---
@@ -154,7 +161,7 @@ and its `after` reads them back.
   [R-baby-signal, R-page5-end]
 - The hold 1, the next step "end" → the script removed [R-page5-end]
 - A script is placed at its start with its hold 1, so its first step comes the next time it
-  runs: on the same frame for a script placed by the stage's step (§9), on the next for one
+  runs: on the same frame for a script placed by the stage's step (§10), on the next for one
   placed by another script's signal [R-page6-begins, R-page5-begins, R-page5-end]
 - checked: oracle (recorded cases E1-E3, B1, P5, W1-W3); constructed.
 
@@ -282,8 +289,6 @@ and its `after` reads them back.
 - The signal "wait for a press" → the stage `WaitingForPress` [R-page5-end]
 - The signal "wait for a press, then the fight" → the stage `PageOneWaits` [R-page1-end]
 - `PageOneWaits`, no press → the stage left; the scripts run [C-page1-waits]
-- A press while page 1 waits is Unsupported: it starts the battle on Zebes, part (b) (§11),
-  not yet specced, and the caller refuses it.
 - The signal "finish" → the stage `FadingOut`, the fade's count `d` [R-page6-end, C-finish-adjusted-end]
 - checked: oracle (recorded cases P5, P8, W8); constructed.
 
@@ -295,7 +300,7 @@ and its `after` reads them back.
 - switch: Fixed.
 - `WaitingForPress`, a press → the stage `Text`; the text cleared; page 6's script placed, the
   click turn off; the caret at its home on its steady script; the eyes on page 6's script from
-  its start; the music's stop asked [R-page6-begins]
+  its start; one stop on the ordered music requests, with an 8-frame delay [R-page6-begins]
 - While the game waits and no button is pressed, nothing of the page changes (C-wait).
 - checked: oracle (recorded case P6); constructed.
 
@@ -425,17 +430,88 @@ and its `after` reads them back.
 
 ---
 
-## 9. Order that matters
+## 9. The flashback to Zebes
 
-- **Within a frame:** first the stage's step (§3, §5's turns, §6, §7, §8), then the baby (`BabyLeaves`,
+### BattleBegins
+- kind: mechanic.
+- summary: the press after page 1 begins the fight and readies the dissolve from the text.
+- params: the dissolve starts at 127 frames. The caret moves to (8, 248) px.
+- switch: Fixed.
+- `PageOneWaits`, a new press → `IntoFight`; request `StartZebesFight`; show Samus and her
+  shots over the fight sprites; move the caret offscreen without restarting its script; request
+  the split blend. Restore the full scene colours, set the colours that will brighten for the
+  fight to black, publish the colours, and set the dissolve's count to 127 [R-battle-start,
+  C-battle-palette]
+- The request selects the Zebes flashback room and demo. Samus's owners place her at (155, 115)
+  px, facing left in her standing pose, with missiles selected. The flashback fight places
+  Mother Brain and starts the ring spawner. The movie pad starts the scene. The demo supplies
+  the buttons for room play.
+- checked: oracle (recorded case F1); constructed.
+
+### BattleDissolves
+- kind: mechanic.
+- summary: the flashback and text exchange their colours as the picture dissolves each way.
+- params: the colour sets of each direction are content. The count and colour arithmetic are
+  those of `PicturesDissolve`.
+- switch: Fixed.
+- `IntoFight` or `OutOfFight` → step the dissolve with that direction's colour sets
+  [R-battle-hold, C-battle-step, C-battle-return-step]
+- `IntoFight`, the dissolve steps from count 0 → `Fight`; clear the text, choose the plain
+  fight picture and begin the fight's flashing lights [R-battle-full, C-battle-full-palette]
+- `OutOfFight`, the dissolve steps from count 1 → hide Samus and her shots and emit
+  `HideFightSamusAndShots`. Mother Brain disappears on this frame too [R-battle-hide]
+- `OutOfFight`, the dissolve steps from count 0 → `Text`; choose the plain text picture.
+  Page 2 keeps typing [R-battle-text, C-battle-text-palette]
+- At count 0, publish the last colour step before choosing either plain picture.
+- checked: oracle (recorded cases F2–F4, F8–F9); constructed.
+
+### PageTwoBegins
+- kind: mechanic.
+- summary: after the explosions around Mother Brain, page 2 starts typing as the fight fades away.
+- params: the dissolve starts at 127 frames. Page 2's script is content.
+- switch: Fixed.
+- `Fight`, no return cue by the end of room play → stay in `Fight`; keep the encounter
+  visible and advance the scripts [R-battle-waits]
+- `Fight`, the return cue received after the ordinary stage step → commit `PageTwoPending`
+  and pause text tile updates on this finished cut [R-battle-signal]
+- `PageTwoPending` → `OutOfFight`; place page 2 at its first step with the click turn off;
+  place the caret at home on its steady script; request the split blend and resume text tile
+  updates. Restore the full scene colours, set the colours that will brighten for the text to
+  black, publish the colours, and set the dissolve's count to 127 [R-page2-start,
+  C-page2-palette]
+- The first step is a blank held for one frame. The first letter, glow and click come on the
+  next frame [R-page2-letter].
+- checked: oracle (recorded cases F5–F7, F11); constructed.
+
+### PageTwoEnds
+- kind: mechanic.
+- summary: page 2 ends with a blinking caret and a wait for the press that starts the baby's
+  discovery.
+- params: none.
+- switch: Fixed.
+- The page 2 signal "wait for discovery" → end the page, put the caret on its blinking script
+  and enter `PageTwoWaits` [R-page2-end]
+- `PageTwoWaits`, no press → the stage left and the scripts run [C-page2-wait]
+- The next press starts the baby's discovery (§12).
+- checked: oracle (recorded case F10); constructed.
+
+## 10. Order that matters
+
+- **Within a frame:** first the stage's step (§3, §5's turns, §6–§9), then the baby (`BabyLeaves`,
   `BabyRises`, then its script), then the caret's script, then the page's script (its letters
   and signals), then the eyes' script, then the glows.
 - So the baby's signal for page 5 takes effect on the next frame's stage step
   (`ToPageFive`); a page placed by the stage's step runs its first step in the same frame; a
   letter's glow shows set 0 in the frame the letter appears; a caret placed by a page's signal
   runs from the next frame.
+- Apply the fight start request before Samus's first demo step. On the frame the return count
+  reaches 0, Samus and her shots take their last step before they are hidden.
+- Receive the fight's return cue after room play and before text scripts. Publish the pause
+  and commit `PageTwoPending` on the cue's cut. Page 2 starts on the next finished frame.
+  The dissolve back to text starts its countdown on the frame after that. A caller that
+  already has the current frame's cue can supply it to a single call with the same ordering.
 
-## 10. Out of scope, and who supplies it
+## 11. Out of scope, and who supplies it
 
 - **The line split (E3):** the colour blend's bands while a dissolve runs.
 - **Audio (U1):** playing the clicks; stopping the music, loading and playing the tunes asked
@@ -444,17 +520,26 @@ and its `after` reads them back.
 - **Lag (T1):** the frames that load a picture.
 - **The flight (screens-flight):** from the frame after `Done`.
 - **Her equipment and the buttons:** applying what `IntroBegins` lends and `IntroEnds` returns.
-- **Her own State as the intro begins** (the samus domains): the intro readies her for the
-  played scenes; no part of her is shown before the battle on Zebes.
+- **Samus and room play.** Movement and appearance own her placement, facing, animation,
+  motion, knockback and drawing intent. The equipment and weapons owners select and spend
+  missiles, step projectiles and accept consumed-projectile events from the fight. The demo
+  provides held and new buttons. World blocks provides the flashback room collision geometry.
+- **The flashback fight.** The encounter owns Mother Brain, the rings, their contact with Samus,
+  the explosions, their shake offset and the flashing lights. It sends the ready-to-return
+  event and hides Mother Brain on the same hide event as Samus and her shots. The intro
+  emits the event when the post-step return count reaches 0. Production delivers it after
+  room play and before drawing. A
+  scoped intro check may supply the return event. Integrated replay needs the encounter to
+  produce it.
+- **The picture.** E1 renders the sprites in their front-to-back order. E2 draws the room and
+  text tiles and consumes text update and clear events. E3 owns the split's line program and
+  E4 the layers and scroll mirrors.
 
-## 11. Open questions
+## 12. Open questions
 
-1. The parts not yet specced, by mechanism, each a later round: (b) the press after page 1, the
-   dissolve to the battle on Zebes played by her under the movie's demo, and back to page
-   2's text; (c) page 2, the dissolve to the baby's discovery played by her, back to page 3's
-   text; (d) page 3, the dissolve to the baby delivered (a picture scene like the baby being
-   examined), page 4 typed, to page 4's press. Parts (b) and (c) need her movement, beams and
-   the scene's enemies in the loop; (d) reuses this spec's dissolves and pages.
+1. Part (c) starts at the press after page 2. It covers the baby's discovery played by Samus
+   and the dissolve into page 3. Part (d) starts at page 3's press and covers the delivery
+   scene and page 4 through its wait.
 2. The brightness fade here and in the flight is one rule written twice; a later coherence
    round may make it one shared entry.
 3. The Japanese pages are other content and a different end of page 5 (an arrow and a wait);

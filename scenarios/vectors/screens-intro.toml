@@ -1,5 +1,4 @@
-# Test vectors for docs/behaviours/screens-intro.md (the intro's opening and page 1, and its last
-# pages).
+# Test vectors for docs/behaviours/screens-intro.md.
 #
 # Format
 # - Each [[vector]] is one frame of the intro, from its state as the frame begins to its state as
@@ -22,24 +21,30 @@
 #   level, 0 to 15; screen, "Blanked" or "Shown"; count, the fade's count. The opening's and page
 #   1's stages: "Begins", "OpeningLoads", "OpeningBrightens", "OpeningPause", "FirstTune",
 #   "SecondTuneLoads", "SecondTune", "OpeningDarkens", "PageOneMadeReady", "PageOneLoads",
-#   "PageOneBrightens", "PageOneWaits".
+#   "PageOneBrightens", "PageOneWaits". The flashback stages are "IntoFight", "Fight",
+#   "PageTwoPending", "OutOfFight" and "PageTwoWaits". fight_visible defaults to false.
 # - inputs (optional): press, bool (absent means false); track_waits, whether a track waits in
-#   the line of tunes still to load (absent means false); scene, the scene's content: scripts, a
+#   the line of tunes still to load (absent means false); return_to_text, the encounter's
+#   reply after room play (absent means false); scene, the scene's content: scripts, a
 #   table by name of step lists, each step one of { picture, hold }, { letter, column, row, hold }
 #   (a letter " " is a space), { hold } (shows nothing), { back = k },
-#   { repeat = k, times = n }, { signal } ("page5", "wait", "fight", "blink" or "finish") or
-#   { end = true }; a page is placed with "page1", "page5" or "page6", the eyes' page 6 script is
+#   { repeat = k, times = n }, { signal } ("page5", "wait", "fight", "blink", "finish" or "wait_discovery") or
+#   { end = true }; a page is placed with "page1", "page2", "page5" or "page6", the eyes' page 6 script is
 #   "eyes_six", the caret's are "caret_steady" and "caret_blink"; sets = { to_scene = { dims,
-#   brightens }, to_text = { dims, brightens }, text }, colour indices, text the colours page 5
+#   brightens }, to_text = { dims, brightens }, into_fight = { dims, brightens },
+#   out_of_fight = { dims, brightens }, text }, colour indices, text the colours page 5
 #   starts black; full, a table by colour index of [red, green, blue] full levels, 0 to 31;
-#   caret_colours, a table by colour index of 15-bit colours in hex; caret_home, [x, y].
+#   caret_colours, a table by colour index of 15-bit colours in hex; caret_home, [x, y] in
+#   pixels (the fixture uses [0, 0] when omitted).
 # - output (optional): shown, a table by colour index of the colours shown in hex; typed, the
 #   letters typed as [{ letter, column, row }]; clicks, the number of clicks asked; cleared, the
-#   text cleared; music_stop, the music's stop asked; caret_shown, whether the caret shows;
+#   text cleared; caret_shown, whether the caret shows;
 #   equipment_returned, the equipment returned; equipment_lent, the equipment lent; music, the
 #   music's requests in order, each "stop", "load first", "load second", "load pages" or
 #   "play N" (play the loaded tune N frames after; a stop or a load is asked with the delay of
-#   8 frames). gone (optional): the parts no longer there.
+#   8 frames); encounter, "start" for StartZebesFight or "end" for HideFightSamusAndShots;
+#   picture, "blend", "fight" or "text"; fight_lights and text_updates, boolean events.
+#   gone (optional): the parts no longer there.
 # - Content is invented: no script, picture, letter, colour index, set, full colour or place of
 #   the scene is the game's. The recorded cases (named by row and cut elsewhere) keep the State
 #   as recorded, each colour's levels and steps under an invented index, and give the scene
@@ -316,7 +321,7 @@ entries = ["PressTurnsThePage"]
 before = { stage = "WaitingForPress", dissolve = 65535, caret = { x = 8, y = 120, script = "caret_blink", step = 0, hold = 3 } }
 inputs = { press = false, scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
 after = { stage = "WaitingForPress", dissolve = 65535, caret = { x = 8, y = 120, step = 0, hold = 2 } }
-output = { cleared = false, music_stop = false }
+output = { cleared = false, music = [] }
 
 [[vector]]
 id = "R-page6-begins"
@@ -325,7 +330,7 @@ entries = ["PressTurnsThePage", "ScriptSteps"]
 before = { stage = "WaitingForPress", dissolve = 65535, eyes = { script = "eyes", step = 0, hold = 34 }, caret = { x = 8, y = 120, script = "caret_blink", step = -1, hold = 1 }, glows = [[21, 14, 2, 5], [20, 14, 3, 5]] }
 inputs = { press = true, scene = { caret_home = [8, 24], scripts = { eyes = [{ picture = "o", hold = 128 }], eyes_six = [{ picture = "s", hold = 64 }, { picture = "h", hold = 8 }, { picture = "t", hold = 16 }, { back = 2 }], page6 = [{ hold = 1 }, { letter = "C", column = 1, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
 after = { stage = "Text", page = { script = "page6", step = 0, hold = 1 }, eyes = { script = "eyes_six", step = 0, hold = 64 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 }, click = false, glows = [[21, 14, 2, 4], [20, 14, 3, 4]] }
-output = { cleared = true, music_stop = true }
+output = { cleared = true, music = ["stop"] }
 
 [[vector]]
 id = "R-page6-caret"
@@ -630,4 +635,157 @@ entries = ["PageEnds"]
 before = { stage = "PageOneWaits", dissolve = 127, height = 8, caret = { x = 8, y = 136, script = "caret_blink", step = 0, hold = 4 } }
 inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
 after = { stage = "PageOneWaits", dissolve = 127, height = 8, caret = { x = 8, y = 136, step = 0, hold = 3 } }
-output = { cleared = false, music_stop = false, music = [] }
+output = { cleared = false, music = [] }
+
+# The flashback.
+
+[[vector]]
+id = "R-battle-start"
+source = "recorded"
+entries = ["BattleBegins", "ScriptSteps"]
+before = { stage = "PageOneWaits", dissolve = 127, height = 8, eyes = { script = "eyes", step = 0, hold = 21 }, caret = { x = 8, y = 136, script = "caret_blink", step = -1, hold = 1 } }
+inputs = { press = true, scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }], eyes = [{ picture = "open", hold = 30 }] } } }
+after = { stage = "IntoFight", dissolve = 127, height = 8, fight_visible = true, eyes = { step = 0, hold = 20 }, caret = { x = 8, y = 248, script = "caret_blink", step = 0, hold = 5 } }
+output = { encounter = "start", picture = "blend" }
+
+[[vector]]
+id = "C-battle-palette"
+source = "constructed"
+entries = ["BattleBegins"]
+before = { stage = "PageOneWaits", dissolve = 9, colours = { "2" = [[0, 0, 0], [0, 0, 0]] } }
+inputs = { press = true, scene = { full = { "2" = [4, 2, 1], "3" = [3, 2, 1] }, sets = { into_fight = { dims = [2], brightens = [3] } } } }
+after = { stage = "IntoFight", dissolve = 127, fight_visible = true, colours = { "2" = [[1024, 512, 256], [32, 16, 8]], "3" = [[0, 0, 0], [24, 16, 8]] } }
+output = { shown = { "2" = "0444", "3" = "0000" }, encounter = "start", picture = "blend" }
+
+[[vector]]
+id = "R-battle-hold"
+source = "recorded"
+entries = ["BattleDissolves"]
+before = { stage = "IntoFight", dissolve = 127, fight_visible = true }
+after = { stage = "IntoFight", dissolve = 126, fight_visible = true }
+output = { shown = {} }
+
+[[vector]]
+id = "C-battle-step"
+source = "constructed"
+entries = ["BattleDissolves", "PicturesDissolve"]
+before = { stage = "IntoFight", dissolve = 124, fight_visible = true, colours = { "2" = [[1024, 512, 256], [32, 16, 8]], "3" = [[0, 0, 0], [24, 16, 8]] } }
+inputs = { scene = { sets = { into_fight = { dims = [2], brightens = [3] } } } }
+after = { stage = "IntoFight", dissolve = 123, fight_visible = true, colours = { "2" = [[992, 496, 248], [32, 16, 8]], "3" = [[24, 16, 8], [24, 16, 8]] } }
+output = { shown = { "2" = "0023", "3" = "0000" } }
+
+[[vector]]
+id = "R-battle-full"
+source = "recorded"
+entries = ["BattleDissolves"]
+before = { stage = "IntoFight", dissolve = 0, fight_visible = true }
+after = { stage = "Fight", dissolve = 65535, fight_visible = true }
+output = { cleared = true, picture = "fight", fight_lights = true }
+
+[[vector]]
+id = "C-battle-full-palette"
+source = "constructed"
+entries = ["BattleDissolves"]
+before = { stage = "IntoFight", dissolve = 0, fight_visible = true, colours = { "2" = [[8, 0, 0], [8, 0, 0]], "3" = [[248, 0, 0], [8, 0, 0]] } }
+inputs = { scene = { sets = { into_fight = { dims = [2], brightens = [3] } } } }
+after = { stage = "Fight", dissolve = 65535, fight_visible = true, colours = { "2" = [[0, 0, 0], [8, 0, 0]], "3" = [[256, 0, 0], [8, 0, 0]] } }
+output = { shown = { "2" = "0000", "3" = "0001" }, cleared = true, picture = "fight", fight_lights = true }
+
+[[vector]]
+id = "R-battle-waits"
+source = "recorded"
+entries = ["PageTwoBegins", "ScriptSteps"]
+before = { stage = "Fight", dissolve = 65535, fight_visible = true, eyes = { script = "eyes", step = 0, hold = 31 } }
+inputs = { return_to_text = false, scene = { scripts = { eyes = [{ picture = "open", hold = 40 }] } } }
+after = { stage = "Fight", dissolve = 65535, fight_visible = true, eyes = { step = 0, hold = 30 } }
+output = { shown = {}, cleared = false }
+gone = ["page"]
+
+[[vector]]
+id = "R-battle-signal"
+source = "recorded"
+entries = ["PageTwoBegins"]
+before = { stage = "Fight", dissolve = 65535, fight_visible = true }
+inputs = { return_to_text = true }
+after = { stage = "PageTwoPending", dissolve = 65535, fight_visible = true }
+output = { text_updates = false }
+gone = ["page"]
+
+[[vector]]
+id = "R-page2-start"
+source = "recorded"
+entries = ["PageTwoBegins", "ScriptSteps"]
+before = { stage = "PageTwoPending", dissolve = 65535, fight_visible = true, eyes = { script = "eyes", step = 0, hold = 29 }, caret = { x = 8, y = 248, script = "caret_blink", step = 1, hold = 5 } }
+inputs = { scene = { caret_home = [8, 24], scripts = { page2 = [{ hold = 1 }, { letter = "Q", column = 3, row = 6, hold = 5 }], eyes = [{ picture = "open", hold = 30 }], caret_steady = [{ picture = "caret", hold = 5 }] } } }
+after = { stage = "OutOfFight", dissolve = 127, fight_visible = true, page = { script = "page2", step = 0, hold = 1 }, eyes = { step = 0, hold = 28 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 }, click = false }
+output = { picture = "blend", text_updates = true, typed = [], clicks = 0 }
+
+[[vector]]
+id = "C-page2-palette"
+source = "constructed"
+entries = ["PageTwoBegins"]
+before = { stage = "PageTwoPending", dissolve = 65535, fight_visible = true, click = true }
+inputs = { scene = { full = { "2" = [4, 2, 1], "3" = [3, 2, 1] }, sets = { out_of_fight = { dims = [3], brightens = [2] } }, caret_home = [24, 56], scripts = { page2 = [{ hold = 1 }], caret_steady = [{ picture = "caret", hold = 5 }] } } }
+after = { stage = "OutOfFight", dissolve = 127, fight_visible = true, caret = { x = 24, y = 56 }, click = false, colours = { "2" = [[0, 0, 0], [32, 16, 8]], "3" = [[768, 512, 256], [24, 16, 8]] } }
+output = { shown = { "2" = "0000", "3" = "0443" }, picture = "blend", text_updates = true }
+
+[[vector]]
+id = "R-page2-letter"
+source = "recorded"
+entries = ["PageTwoBegins", "BattleDissolves", "LetterIsTyped", "LetterGlows"]
+before = { stage = "OutOfFight", dissolve = 127, fight_visible = true, page = { script = "page2", step = 0, hold = 1 }, caret = { x = 8, y = 24, script = "caret_steady", step = 0, hold = 5 } }
+inputs = { scene = { scripts = { page2 = [{ hold = 1 }, { letter = "Q", column = 3, row = 6, hold = 5 }, { letter = "X", column = 4, row = 6, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }] } } }
+after = { stage = "OutOfFight", dissolve = 126, fight_visible = true, page = { step = 1, hold = 5 }, caret = { x = 32, y = 40, hold = 4 }, click = true, glows = [[3, 6, 1, 5]] }
+output = { typed = [{ letter = "Q", column = 3, row = 6 }], clicks = 1 }
+
+[[vector]]
+id = "C-battle-return-step"
+source = "constructed"
+entries = ["BattleDissolves", "PicturesDissolve"]
+before = { stage = "OutOfFight", dissolve = 124, fight_visible = true, colours = { "2" = [[0, 0, 0], [32, 16, 8]], "3" = [[768, 512, 256], [24, 16, 8]] } }
+inputs = { scene = { sets = { out_of_fight = { dims = [3], brightens = [2] } } } }
+after = { stage = "OutOfFight", dissolve = 123, fight_visible = true, colours = { "2" = [[32, 16, 8], [32, 16, 8]], "3" = [[744, 496, 248], [24, 16, 8]] } }
+output = { shown = { "2" = "0000", "3" = "0022" } }
+
+[[vector]]
+id = "R-battle-hide"
+source = "recorded"
+entries = ["BattleDissolves"]
+before = { stage = "OutOfFight", dissolve = 1, fight_visible = true }
+after = { stage = "OutOfFight", dissolve = 0, fight_visible = false }
+output = { encounter = "end", shown = {} }
+
+[[vector]]
+id = "R-battle-text"
+source = "recorded"
+entries = ["BattleDissolves", "ScriptSteps"]
+before = { stage = "OutOfFight", dissolve = 0, fight_visible = false, page = { script = "page2", step = 0, hold = 4 } }
+after = { stage = "Text", dissolve = 65535, fight_visible = false, page = { step = 0, hold = 3 } }
+output = { picture = "text" }
+
+[[vector]]
+id = "C-battle-text-palette"
+source = "constructed"
+entries = ["BattleDissolves"]
+before = { stage = "OutOfFight", dissolve = 0, fight_visible = false, colours = { "2" = [[0, 496, 0], [0, 16, 0]], "3" = [[0, 16, 0], [0, 16, 0]] } }
+inputs = { scene = { sets = { out_of_fight = { dims = [3], brightens = [2] } } } }
+after = { stage = "Text", dissolve = 65535, fight_visible = false, colours = { "2" = [[0, 512, 0], [0, 16, 0]], "3" = [[0, 0, 0], [0, 16, 0]] } }
+output = { shown = { "2" = "0040", "3" = "0000" }, picture = "text" }
+
+[[vector]]
+id = "R-page2-end"
+source = "recorded"
+entries = ["PageTwoEnds", "ScriptSteps", "CaretBlinks"]
+before = { stage = "Text", dissolve = 65535, page = { script = "page2", step = 0, hold = 1 }, caret = { x = 8, y = 120, script = "caret_steady", step = 0, hold = 5 }, click = true }
+inputs = { scene = { scripts = { page2 = [{ letter = "Q", column = 3, row = 6, hold = 5 }, { signal = "wait_discovery" }, { end = true }], caret_steady = [{ picture = "caret", hold = 5 }] } } }
+after = { stage = "PageTwoWaits", dissolve = 65535, caret = { x = 8, y = 120, script = "caret_blink", step = -1, hold = 1 }, click = true }
+gone = ["page"]
+
+[[vector]]
+id = "C-page2-wait"
+source = "constructed"
+entries = ["PageTwoEnds", "CaretBlinks"]
+before = { stage = "PageTwoWaits", dissolve = 65535, caret = { x = 8, y = 120, script = "caret_blink", step = 0, hold = 1 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageTwoWaits", dissolve = 65535, caret = { step = 1, hold = 5 } }
+output = { caret_shown = false }

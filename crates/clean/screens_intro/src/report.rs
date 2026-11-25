@@ -1,6 +1,7 @@
 //! What the intro hands the others each frame: the colours and pictures to the renderer, the
-//! clicks, the music's stop and the tunes asked for to audio, and, as it begins and ends, the
-//! equipment lent and returned.
+//! picture layout to the line split and the picture layers, the text tiles' publishing to the
+//! tile writer, the clicks and the music's requests to audio, the flashback's requests to production
+//! and the fight's owners, and, as it begins and ends, the equipment lent and returned.
 
 use types::intro::{ColourSet, TextPlace};
 use types::{Pair, Palette, Px};
@@ -44,18 +45,57 @@ impl Equipment {
     };
 }
 
+/// What the intro asks of production and the fight's owners during the flashback to Zebes.
+/// Production applies the start before room play, and the hide after room play, before drawing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FlashbackRequest {
+    /// Start the encounter: the Zebes flashback room and its demo (`BattleBegins`).
+    StartZebesFight,
+    /// Hide Samus, her shots and Mother Brain (`BattleDissolves`).
+    HideFightSamusAndShots,
+}
+
+/// How the fight and the text are shown together, for the line split's colour blend (E3) and
+/// the picture layers and their scroll mirrors (E4).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PictureLayout {
+    /// The two blended along the line split, while a battle dissolve runs.
+    SplitBlend,
+    /// The fight's picture alone.
+    PlainFight,
+    /// The text's picture alone.
+    PlainText,
+}
+
+/// Whether the room and text tile writer (E2) publishes the text's tiles.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextTiles {
+    /// Publishing paused.
+    Paused,
+    /// Publishing resumed.
+    Resumed,
+}
+
 /// Something that happened this frame, for another part of the game to act on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IntroEvent {
-    /// The text layer is cleared (`DissolveEnds`, `PressTurnsThePage`, `PageOneIsMadeReady`).
+    /// The text layer is cleared (`DissolveEnds`, `BattleDissolves`, `PressTurnsThePage`,
+    /// `PageOneIsMadeReady`).
     TextCleared,
     /// A letter clicks: the sound is asked for (`LetterIsTyped`).
     Click,
-    /// The music is asked to stop, as page 6 begins (`PressTurnsThePage`).
-    MusicStops,
     /// Her equipment set for the played scenes (`Equipment::LENT`, `IntroBegins`) or set back
     /// (`Equipment::RETURNED`, `IntroEnds`).
-    Equipment(Equipment),
+    EquipmentSet(Equipment),
+    /// A request of the flashback's encounter (`BattleBegins`, `BattleDissolves`).
+    Flashback(FlashbackRequest),
+    /// The fight's flashing lights begin, as the dissolve into it finishes (`BattleDissolves`).
+    FlashingLightsBegin,
+    /// The way the fight and the text are shown changes, for the line split and the picture
+    /// layers (`BattleBegins`, `BattleDissolves`, `PageTwoBegins`).
+    Layout(PictureLayout),
+    /// The tile writer's publishing of the text's tiles is paused or resumed (`PageTwoBegins`).
+    TextUpdates(TextTiles),
 }
 
 /// A picture shown at a place on the screen.
@@ -94,7 +134,8 @@ pub struct Report {
     pub caret: Option<ShownPicture>,
     /// What happened, in order.
     pub events: Vec<IntroEvent>,
-    /// The music's requests, in order (`IntroBegins`, `OpeningUnfolds`, `PageOneIsMadeReady`).
+    /// The music's requests, in order (`IntroBegins`, `OpeningUnfolds`, `PageOneIsMadeReady`,
+    /// `PressTurnsThePage`).
     pub music: Vec<MusicRequest>,
 }
 

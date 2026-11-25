@@ -7,12 +7,16 @@ use types::{Colour, Pair, Palette, Px};
 
 use crate::script::Script;
 
-/// One of the intro's two dissolves.
+/// One of the intro's dissolves, each with its own colour sets.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
 pub enum Dissolve {
-    /// Page 4's text dissolving into the picture of the baby.
+    /// Page 1's text dissolving into the battle on Zebes (`BattleDissolves`).
+    IntoFight,
+    /// The battle dissolving back to the text for page 2 (`BattleDissolves`).
+    OutOfFight,
+    /// Page 4's text dissolving into the picture of the baby (`PicturesDissolve`).
     ToScene,
-    /// The picture dissolving back to the text for page 5.
+    /// The picture dissolving back to the text for page 5 (`PicturesDissolve`).
     ToText,
 }
 
@@ -45,14 +49,17 @@ pub struct IntroContent {
     pub baby: Script,
     /// The caret's scripts.
     pub caret: EnumMap<CaretScript, Script>,
-    /// The scene's 256 colours at their full, as the dissolves head for them (`PageFiveBegins`).
+    /// The scene's 256 colours at their full, as the dissolves head for them (`PageFiveBegins`,
+    /// `BattleBegins`, `PageTwoBegins`).
     pub full: Palette,
-    /// Each dissolve's colours (`PicturesDissolve`).
+    /// Each dissolve's colours (`PicturesDissolve`, `BattleDissolves`); the battle's
+    /// brightening sets also start black (`BattleBegins`, `PageTwoBegins`).
     pub sets: EnumMap<Dissolve, DissolveSets>,
     /// The text's colours, which start black as page 5 begins (`PageFiveBegins`).
     pub text: Vec<u8>,
     /// The colours the caret takes once the text is back (`DissolveEnds`).
     pub caret_colours: Vec<IndexedColour>,
-    /// The caret's place as a page begins, px (`PageFiveBegins`, `PressTurnsThePage`).
+    /// The caret's place as a page begins, px (`PageOneIsMadeReady`, `PageTwoBegins`,
+    /// `PageFiveBegins`, `PressTurnsThePage`).
     pub caret_home: Pair<Px>,
 }

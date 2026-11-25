@@ -1,7 +1,7 @@
 //! Reviewed replay floors distinguish exact behaviour from explicitly held capability boundaries.
 
 use super::index::{
-    Case, CaseId, ExpectedProvider, IndexSnapshot, Responsibility, Start, valid_hash,
+    Case, CaseId, ExpectedProvider, IndexSnapshot, InputProvider, Responsibility, Start, valid_hash,
 };
 use super::result::{CaseResult, Counts, Outcome};
 use serde::{Deserialize, Serialize};
@@ -245,6 +245,9 @@ impl Baseline {
 }
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
+    if case.inputs == InputProvider::ScopedIntroInputs {
+        return Some(super::played::intro::indexed::valid_count_shape(counts));
+    }
     if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
         return Some(
             super::early_map::field_count(case, counts.cuts) == Some(counts.fields)

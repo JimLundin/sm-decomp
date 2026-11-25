@@ -108,7 +108,6 @@ fn record_cut(
         count(&mut result.counts.null_cuts, 1)?;
     }
     append_digest(digest, cut, &expected.fields);
-    result.observation_sha256 = crate::lock::Sha256::of(digest).to_string();
     Ok(())
 }
 
@@ -139,25 +138,34 @@ pub(super) fn run(
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
     let mut digest = Vec::new();
     let mut stop = None;
-    for cut in &schedule {
-        let expected = match reader.execute(&mut production, &mut actual, *cut) {
-            Ok(compared) => compared,
-            Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
-                stop = Some((*cut, outcome));
-                break;
+    let mut compare_cuts = || -> Result<(), Outcome> {
+        for cut in &schedule {
+            let expected = match reader.execute(&mut production, &mut actual, *cut) {
+                Ok(compared) => compared,
+                Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
+                    stop = Some((*cut, outcome));
+                    break;
+                }
+                Err(outcome) => return Err(outcome),
+            };
+            record_cut(result, &mut digest, &expected, &null, *cut)?;
+            if case.checkpoints {
+                // A one-opportunity touchdown resumes across the actual advance.
+                checkpoints.push(
+                    origin
+                        .take()
+                        .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
+                );
             }
-            Err(outcome) => return Err(outcome),
-        };
-        record_cut(result, &mut digest, &expected, &null, *cut)?;
-        if case.checkpoints {
-            // A one-opportunity touchdown resumes across the actual advance.
-            checkpoints.push(
-                origin
-                    .take()
-                    .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
-            );
         }
+        Ok(())
+    };
+    let comparison = compare_cuts();
+    // The receipt covers the matching prefix even when a later cut stops the run.
+    if !digest.is_empty() {
+        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
     }
+    comparison?;
     verify_checkpoints(
         CheckpointProof {
             reader: &reader,
@@ -277,6 +285,48 @@ mod tests {
     use crate::replay::{
         Sources, admission, index::Index, readers::ExpectedReader, result::Outcome,
     };
+
+    #[test]
+    fn an_early_difference_keeps_the_matching_prefix_digest() {
+        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let mut case = index
+            .cases
+            .iter()
+            .find(|case| case.id.0 == "sender-offer/ordered-pair")
+            .unwrap()
+            .clone();
+        case.checkpoints = false;
+        let sources = Sources::default();
+        let complete = crate::replay::run(&case, &sources);
+        assert!(complete.passed());
+
+        let mut two_cuts = case.clone();
+        two_cuts.end.cut_inclusive = 1;
+        let mut admitted = admission::admit(&case, &sources).unwrap();
+        let super::InputReader::SenderOffer(offers) = &mut admitted.inputs else {
+            panic!("sender offer input");
+        };
+        // The first cut still accepts both offers. The higher allowance makes the second cut
+        // accept both again, so only the first cut's expectation matches.
+        for offer in offers {
+            offer.allowance = types::audio::CueAllowance::Nine;
+        }
+        admitted.schedule.push(1);
+        let mut partial = complete.clone();
+        partial.end_cut = 1;
+        partial.counts = crate::replay::result::Counts::default();
+        partial.observation_sha256.clear();
+
+        assert_eq!(
+            super::run(&two_cuts, admitted, &mut partial),
+            Err(Outcome::Difference {
+                cut: 1,
+                field: "sender.queue".to_owned(),
+            }),
+        );
+        assert_eq!(partial.counts, complete.counts);
+        assert_eq!(partial.observation_sha256, complete.observation_sha256);
+    }
 
     #[test]
     #[ignore = "private pinned native capture"]

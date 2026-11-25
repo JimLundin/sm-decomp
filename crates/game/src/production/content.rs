@@ -74,6 +74,8 @@ impl MovementContent {
 /// Content selected by the finite production recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionContent {
+    /// The imported intro scene.
+    Intro(Box<screens_intro::IntroContent>),
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -106,6 +108,8 @@ pub enum ProductionContent {
 /// Rules selected by the same recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionRules {
+    /// Rules of the intro scene.
+    Intro(screens_intro::Rules),
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.

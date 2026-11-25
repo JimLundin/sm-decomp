@@ -43,6 +43,14 @@ pub enum BehaviourId {
     PageOneIsMadeReady,
     /// Page 1 types while its picture brightens.
     PageOneBegins,
+    /// The press after page 1 begins the fight on Zebes.
+    BattleBegins,
+    /// The fight and the text exchange their colours as the picture dissolves each way.
+    BattleDissolves,
+    /// Page 2 starts typing as the fight fades away.
+    PageTwoBegins,
+    /// Page 2 ends with a blinking caret and a wait for a press.
+    PageTwoEnds,
 }
 
 /// A catalogue entry.
@@ -61,7 +69,7 @@ pub struct Behaviour {
 }
 
 /// The number of the spec's entries.
-const ENTRIES: usize = 18;
+const ENTRIES: usize = 22;
 
 /// The catalogue's rows, one per spec entry, in the spec's order.
 const ROWS: [Behaviour; ENTRIES] = [
@@ -211,6 +219,36 @@ const ROWS: [Behaviour; ENTRIES] = [
         id: BehaviourId::PageOneBegins,
         summary: "once the pages' tune has loaded, page 1 starts to type and the picture slowly \
                   brightens; once it is full the text goes on typing",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BattleBegins,
+        summary: "the press after page 1 begins the fight and readies the dissolve from the text",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BattleDissolves,
+        summary: "the flashback and text exchange their colours as the picture dissolves each way",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PageTwoBegins,
+        summary: "after the explosions around Mother Brain, page 2 starts typing as the fight \
+                  fades away",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PageTwoEnds,
+        summary: "page 2 ends with a blinking caret and a wait for the press that starts the \
+                  baby's discovery",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

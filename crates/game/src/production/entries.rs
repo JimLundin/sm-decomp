@@ -63,6 +63,9 @@ pub(super) fn admit(
     rules: &ProductionRules,
 ) -> Result<OwnedState, AdmissionFault> {
     Ok(match (seed, content, rules) {
+        (ProductionSeed::Intro(state), ProductionContent::Intro(_), ProductionRules::Intro(_)) => {
+            OwnedState::Intro(state)
+        }
         (
             ProductionSeed::HealthTail(state),
             ProductionContent::HealthTail(content),
@@ -115,6 +118,16 @@ pub(super) fn advance(
     input: AdvanceInput<'_>,
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
+        (
+            OwnedState::Intro(state),
+            ProductionContent::Intro(content),
+            ProductionRules::Intro(rules),
+            AdvanceInput::Intro(frame),
+        ) => ProductionOutputs::Intro(
+            super::played::intro::played(state, frame, content, *rules)
+                .map_err(|fault| ProductionFault::Unsupported(Unsupported::Intro(fault)))?
+                .map(Box::new),
+        ),
         (
             OwnedState::HealthTail(state),
             ProductionContent::HealthTail(content),

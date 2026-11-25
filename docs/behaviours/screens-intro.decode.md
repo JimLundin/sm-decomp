@@ -79,6 +79,96 @@ turn.
   missiles, their capacity and the button bindings: her owners'), Samus's own initialisation
   (`$91:E00D`, the samus domains', unseen until the fight).
 
+## The flashback and page 2
+
+The hand-on is `any-intro-0568` cut 1,650 (movie 2,218), with page 1 waiting and the new press
+latched. The row `any-intro-2219` starts at the next movie cut, inside that press's frame.
+The setup is visible in the seed, cut 0 (movie 2,219), but the work frame finishes at cut 1
+(movie and power-on cut 2,220). Take the prior intro State and the latched pad into that frame.
+The scoped production case compares the intro's battle start request, dissolve preparation and
+caret at finished cut 2,220. Integrated power-on needs the Zebes room at that cut.
+
+| Case | Row cut | Witness |
+| --- | ---: | --- |
+| F1 | 1 | Page 1's press completes. The dissolve sits at 127, the caret is offscreen and the room has been selected. |
+| F2 | 2 | The dissolve starts counting down without a colour step. |
+| F3 | 5 | The first colour step is taken at count 124. |
+| F4 | 132 | The final colour step and transition to the fight are complete. Cut 131 caught the frame before it finished. |
+| F5 | 519 | The fight signals page 2. The recorded fourth hit was at cut 391, 128 finished frames before. |
+| F6 | 521 | Page 2 shows its first blank step and the steady caret at its home (8, 24). Cut 520 caught that frame before it finished. |
+| F7 | 522 | Page 2's first letter, glow and click. |
+| F8 | 648 | The return count reaches 0. Samus, her shots and Mother Brain are removed from the picture. |
+| F9 | 649 | The return's last colour step completes. Page 2 continues typing. |
+| F10 | 1297 | Page 2 finishes and the new press for the next scene is latched. |
+| F11 | 518 | The fight still holds and the eyes advance. |
+
+The next input boundary is cut 1,298 (movie 3,517). The baby's discovery setup first finishes
+at cut 1,299 (movie 3,518).
+
+**Sources and mapping**
+
+| Entry | Sources and mapping |
+| --- | --- |
+| BattleBegins | `$8B:AEB8` reads the prior cut's new pad press (`008F`) with the English timer clear. `$B018` selects the split blend, places the caret at (8, 248) via `$ADE1`, and decomposes the full palette at `$8C:E3E9`. It clears the fight's incoming colour ranges and recomposes. On entry the outbound fade count `1A49` is already 127. The press sets the future return count `1A4B` to 127 as well, so the model can use one active count and initialise it at each dissolve. `1A57` is negative while this fight draws Samus and her shots over the cinematic sprites. |
+| BattleDissolves | `$8B:B250` fades into the fight and `$B3F4` fades back, with the same fixed-point arithmetic as `PicturesDissolve`. The outgoing text ranges are BG 0 and BG 1 colours 0–3, BG 3 and sprite 6 colours 9–14. The incoming fight ranges are BG 1 colours 4–6, BG 7, sprites 4 and 5, and sprite 7. The return dims those fight ranges and brightens BG 0, BG 3 and sprite 6 colours 9–14. The level/step representation is the shared mapping below. `$B250` clears the text and starts palette FX `$8D:E1BC` at its end. `$B82E` deletes the boss sprite and clears `1A57` when the return count has reached 0, one frame before the return's final colour step. `$B3F4` selects the plain text layers at its end. |
+| PageTwoBegins | `$8B:B80F` sets up the cue `$CB19` after 128 shake frames. The cue's `$B336` suspends text tilemap updates and picks the pending page state. `$B35F` places `$CF45` (page 2 at `$8C:C797`, VRAM `4C00h`). `$B3A1` restores the same full palette, clears the return's incoming colours, enables text tilemap updates and uses `$ADEE` to place the caret at home. The first page step is blank with hold 1; `$AE79` clears the click turn. |
+| PageTwoEnds | `$8C:C797` ends with `$8B:AE91` and `$9698`: place the blinking caret, set the wait for discovery and delete the page. The next press is read by `$AF6C`. |
+| The stage | `1F51`: `$B250` IntoFight, `$A391` Fight before the return signal, `$B35F` PageTwoPending, `$B3F4` OutOfFight, `$A391` Text after the return's last step and `$AF6C` PageTwoWaits. Page 2 uses the same BG slot and timers as page 1. |
+
+**Owners and joins**
+
+- The intro selects the room and asks for its setup. `$AEB8` loads room collision content
+  (`$8C:BEC3`), sets Samus's pose and current/previous position, sets the missile selection and
+  loads the intro demo object `$91:8784`. Apply the start intent before room play on the same
+  work frame. The room owner decodes the collision content. The Samus owners initialise her
+  movement and appearance, equipment and weapons apply the selected item and carried missiles,
+  and the demo owner supplies the held and newly pressed pad words after the start. Production
+  must keep the room, Samus and demo State across the join.
+- `$8B:B786` owns Mother Brain's missile contact and consumption. Four contacts start the
+  explosion and shake sequence. `$B80F` and `$CB19` supply the return cue after the explosion
+  hold. `$B877` writes the shake offset in `1997` in the fight and during its return. `$B896`,
+  `$B8D8` and `$B93B` are the rings' initialisation, movement and contact. The encounter,
+  projectile and Samus owners must agree on projectile consumption and ring hits. Room play
+  steps before the encounter checks contact. The encounter publishes the return cue in the
+  same work frame as the last hold, after the intro has stepped the stage. Page 2 starts on
+  the following finished frame.
+- The first comparison at cut 2,220 covers the intro's setup boundary. Room play runs in that
+  work frame too. The demo, room collision, Samus, weapons and encounter are required for
+  integrated fight replay. On the return, use the old visibility for Samus's last step at cut
+  648 and the new visibility for drawing. A scoped
+  intro replay can borrow the encounter's return cue. Its receipt should name that borrow
+  and may not claim fight behaviour. Borrow completed frames through the existing platform
+  producer. The intervening cuts with no new finished frame are 0, 101, 106, 131 and 520.
+- Compare the intro stage, brightness, active dissolve count, fade channel levels and steps,
+  page and eyes steps and holds, caret position/step/hold, glows, click turn, fight sprite order
+  intent and intro requests. The final palette/CGRAM has encounter writers (Mother Brain's
+  flash and the palette FX) as well as the dissolve writer. E2 owns VRAM, E1 owns OAM,
+  E3 owns the split line program, and E4 owns layer/scroll mirrors. The demo, gameplay and
+  encounter writers own their own State and outputs. Lag cuts do not advance the intro.
+- The next owner needs the `PageTwoWaits` State at cut 1,297 carried with the latched press.
+  A page 2 press starts part (c), including a different demo and encounter.
+
+**Reference check.** The local copies are `$TEMP/collab/intro-b-obs-notes/reference.py`
+and `battle_row.py`. The frame model carries the page 1 State, admits the previous cut's
+new press, steps only on `05B6` advances and borrows the fight cue at cut 519. The content
+reader imports the full colours and page script from the bank logs locally. It compares the
+stage, brightness, active dissolve count, fight visibility, page and eye step and hold, caret
+place, script, step and hold, glows and click turn. The flashback scripts use no repeat, so the
+witness omits script repeat counts. It also compares the 256 channel levels and
+steps, and checks the clicks against the sound library 3 queue's index during page 2. At
+the frames that publish the palette it compares the palette mirror `7EC000`, with sprite
+palette 7 on cuts 111 and 115 masked for Mother Brain's hurt flash. It leaves the fight's
+shake offset and final CGRAM to their owners.
+
+- State and fade buffers agree at 1,293 of 1,293 finished cuts. A held initial State agrees
+  at 0 of 1,293. The 67 page 2 clicks agree across all 777 finished page 2 cuts. With that
+  mask, the palette mirror agrees at all 66 publication cuts.
+- The vector model agrees on 86 of 86 vectors. Seventeen cover the flashback and page 2, ten
+  recorded and seven constructed. Constructed vectors check colour publication at both dissolve
+  endpoints.
+- A one-frame-short outbound dissolve fails at cut 1 in the dissolve count and at cut 4 in
+  the colour levels. These are the first disagreements for their comparisons.
+
 ## Sources
 
 | Entry | Sources |
@@ -95,7 +185,7 @@ turn.
 | LetterGlows | `$8B:9828`/`$9849`: timer − 1; at 0 the letter's tilemap word's palette bits = the glow's palette index; index ≠ C00h → + 400h, timer 5; else the glow cleared; up to 8 (`19F7..1A05`) |
 | CaretBlinks | caret lists `$8B:CBFB` (steady: shown 5, go to) and `$CC03` (blinking: shown 5, empty 5, go to), content; `$ADD4` places `$CC03` with timer 1; `$ADEE` places `$CBFB` at (8, 18h) |
 | PageEnds | `$8B:B1B3` (caret blinks, function `$B1DA`); page 6's `$ADD4`, hold 80h, `$B240` (function `$B72F`, fade delay and counter 1) |
-| PressTurnsThePage | the eyes' switch: `$8B:B4BC` (pre-instruction of `$CF63`) polls the function for `$B207` or `$A390` and places `$8C:D613` with timer 1 on the press's frame. `$8B:B1DA`: the Japanese timer `1BA3` (0 for English); `008F` ≠ 0 → `1A4B` = 7Fh, then (English) `$B207`: tilemap updates on, `$A856` clear the English text tilemap, spawn `$CF5D` (page 6), function `$A390`, `$ADEE`, music stop queued (U1) |
+| PressTurnsThePage | the eyes' switch: `$8B:B4BC` (pre-instruction of `$CF63`) polls the function for `$B207` or `$A390` and places `$8C:D613` with timer 1 on the press's frame. `$8B:B1DA`: the Japanese timer `1BA3` (0 for English); `008F` ≠ 0 → `1A4B` = 7Fh, then (English) `$B207`: tilemap updates on, `$A856` clear the English text tilemap, spawn `$CF5D` (page 6), function `$A390`, `$ADEE`, music stop queued through `$80:8FC1` with an 8-frame delay (U1) |
 | PictureDarkens | `$8B:B72F` → `$80:8924` (as screens-flight's) |
 | IntroBegins | `$8B:A395` (cinematic function, intro, initial): `$80DA` PPU set up for the intro (brightness 80h), `1A57` = 0, Samus initialised (`$91:E00D`), missiles and capacity 900 (`09C6`/`09C8`), bindings reset (`$BC08`), screen fade delay and counter (`0723`/`0725`) = 3 (`$A54D`..`$A553`), `198D..1C1F` cleared, the intro palettes, decompression and VRAM uploads (the long frame, cuts 1-53), `1B9F` = FFFFh, next function `$A5A7`, music stop and music data `$FF3F` queued (U1) |
 | SlowFade | `$8B:911B` (slow fade in: `0723` − 1, 8-bit; above 0 return; else brightness + 1 (& 1Fh), at Fh or more brightness Fh, delay and counter 0, done; else delay = counter) and `$8B:90D5` (slow fade out: the same count; level 0 done; level − 1 = 0 → 80h, delay and counter 0, done; else level − 1, delay = counter). Counter 2 from `$A5A7`, `$A64C`, `$A82B` |
@@ -248,7 +338,9 @@ Moved from the spec's header (MODEL §1 decision 10): the implementer is not tol
 the budget. `tools spec-units` reads k and the areas here.
 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. There is no old code:
-the engine has no intro, so no area has `old`.
+the engine had no intro before this model, so no area has `old`. The flashback replaces no
+room-play code. The existing intro model at `b7dc44c8e` scores 4,050.25 using `tools size
+crates/clean/screens_intro/src`.
 
 - Area scripts: ScriptSteps
 - Area dissolve: PicturesDissolve, DissolveEnds
@@ -257,7 +349,7 @@ the engine has no intro, so no area has `old`.
 - Area fade: PictureDarkens, IntroEnds
 - Area opening: IntroBegins, SlowFade, OpeningUnfolds
 - Area page one: PageOneIsMadeReady, PageOneBegins
+- Area flashback: BattleBegins, BattleDissolves, PageTwoBegins, PageTwoEnds
 
-The spec-units counter reports eighteen entries, 57 arms, no cells and 17 operators, and no
-findings.
-Budget: 37.5 × 62.7 units = 2,348 (scripts 287, dissolve 287, baby 87, pages 687, fade 250, opening 600, page one 150)
+The spec-units counter reports 22 entries, 67 arms, no cells and 17 operators.
+Budget: 37.5 × 72.7 units = 2,723 (scripts 287, dissolve 287, baby 87, pages 687, fade 250, opening 600, page one 150, flashback 375)

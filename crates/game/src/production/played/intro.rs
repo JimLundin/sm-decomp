@@ -1,25 +1,20 @@
-//! The intro (screens-intro): its opening and page 1, and its last pages.
+//! The intro from the opening through page 2, and from page 4's dissolve to the fade out.
 //!
-//! The opening and page 1 run from the intro's first frame to the wait for the press that starts
-//! the battle on Zebes; the last pages from page 4's text dissolving into the baby being
-//! examined, through page 5 typed, the wait for a press and page 6, to the fade to black.
-//!
-//! The intro runs ahead of the new game, with no room, and reads nothing of room play. It steps
-//! once per frame of work that finished, with the movie's press and audio's reply whether a track
-//! waits; a lag frame is the platform's and changes nothing of it. The screen keeps the colours
-//! the intro last took; the opening's and page 1's are the setup's load (content and T1), which
-//! no owner here produces, so the intro begins on black. A press while page 1 waits starts the
-//! battle on Zebes, a later piece, and is refused. On the first finished frame after the intro is
-//! done the flight to Ceres begins, which is its own owner's.
+//! A completed work frame advances the stage and scripts and publishes their outputs. The
+//! opening and page 1 leave the setup's palette to its loader. The Zebes flashback publishes
+//! encounter, layout and text requests. Its scoped entry reads the boss's return cue; integrated
+//! play requires the room as soon as the intro asks to start it.
 
 use data::assets::intro::{self as asset, Cue, Picture, Scene, Shows, Step};
 use enum_map::enum_map;
 use screens_intro::{
-    Dissolve, DissolveSets, FrameInputs, IndexedColour, IntroContent, Language, Letter,
-    PictureName, Report, Rules, Signal, TrackReply, Unsupported, plays, step,
+    Dissolve, DissolveSets, FightReply, FlashbackRequest, FrameAwaitingReply, IndexedColour,
+    IntroContent, Language, Letter, PictureName, Report, Rules, Signal, TrackReply, Unsupported,
+    begin_frame, plays,
 };
 use types::intro::{
-    Brightness, ClickTurn, FadeFrames, FadingColours, Glows, IntroStage, IntroState, StageWait,
+    Brightness, ClickTurn, FadeFrames, FadingColours, FightVisibility, Glows, IntroStage,
+    IntroState, StageWait,
 };
 use types::{Colour, Pair, Palette};
 
@@ -34,9 +29,20 @@ pub enum FrameEnd {
         pressed: bool,
         /// Audio's reply as the frame began.
         track: TrackReply,
+        /// The selected encounter producer for the work frame.
+        fight: FightInput,
     },
     /// The frame lagged: its work goes on into the next.
     Lagged,
+}
+
+/// The fight producer selected by the caller.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FightInput {
+    /// Integrated production requires a room and encounter to run the fight.
+    Integrated,
+    /// An independent encounter reply for a scoped intro frame.
+    Scoped(FightReply),
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -44,8 +50,10 @@ pub enum FrameEnd {
 pub enum Fault {
     /// The intro is done and this frame is the flight's.
     FlightBegins,
-    /// A press while page 1 waits: the battle on Zebes begins, a later piece.
-    BattleBegins,
+    /// A finished frame that requires the Zebes fight room, demo and encounter.
+    ZebesFightRoom,
+    /// The press after page 2 starts the discovery.
+    DiscoveryBegins,
 }
 
 /// The intro's State and the colours the screen shows, which the intro sets when a frame takes
@@ -73,6 +81,7 @@ pub fn begins(language: Language) -> Result<State, Unsupported> {
         colours: FadingColours::still_black(),
         dissolve: 0,
         height: 0,
+        fight: FightVisibility::Hidden,
         baby: None,
         page: None,
         eyes: None,
@@ -106,32 +115,81 @@ pub fn admit(
 ///
 /// # Errors
 /// [`Fault::FlightBegins`] on a finished frame once the intro is done, and
-/// [`Fault::BattleBegins`] on a press while page 1 waits. State is unchanged.
+/// [`Fault::ZebesFightRoom`] when the frame needs the Zebes fight room, and
+/// [`Fault::DiscoveryBegins`] on a press while page 2 waits. State is unchanged.
 pub fn played(
     state: &mut State,
     frame: FrameEnd,
     content: &IntroContent,
     rules: Rules,
 ) -> Result<Option<Report>, Fault> {
-    let FrameEnd::Finished { pressed, track } = frame else {
+    let FrameEnd::Finished {
+        pressed,
+        track,
+        fight,
+    } = frame
+    else {
         return Ok(None);
     };
+    let before = state.intro.stage;
+    play_work_frame(state, pressed, track, content, rules, |room| match fight {
+        FightInput::Integrated => without_fight_room(before, room),
+        FightInput::Scoped(reply) => Ok(reply),
+    })
+    .map(Some)
+}
+
+/// Advance a completed intro work frame with its room-play phase.
+///
+/// The callback applies a start request before it steps the room and applies a hide request
+/// after room play, before drawing. It returns the encounter's cue to the intro before the
+/// scripts run. The caller commits its room candidate together with the successful intro.
+///
+/// # Errors
+/// A missing downstream owner or a refusal by room play leaves the intro unchanged.
+pub fn play_work_frame(
+    state: &mut State,
+    pressed: bool,
+    track: TrackReply,
+    content: &IntroContent,
+    rules: Rules,
+    room_play: impl FnOnce(&FrameAwaitingReply<'_>) -> Result<FightReply, Fault>,
+) -> Result<Report, Fault> {
     if state.intro.stage == IntroStage::Done {
         return Err(Fault::FlightBegins);
     }
-    if pressed && state.intro.stage == IntroStage::PageOneWaits {
-        return Err(Fault::BattleBegins);
+    if pressed && state.intro.stage == IntroStage::PageTwoWaits {
+        return Err(Fault::DiscoveryBegins);
     }
-    let report = step(
-        &mut state.intro,
-        FrameInputs { pressed, track },
-        content,
-        rules,
-    );
+    let mut next = state.intro.clone();
+    let room = begin_frame(&mut next, pressed, track, content, rules);
+    let reply = room_play(&room)?;
+    let report = room.finish(reply);
+    state.intro = next;
     if let Some(colours) = &report.colours {
         state.colours = colours.clone();
     }
-    Ok(Some(report))
+    Ok(report)
+}
+
+fn without_fight_room(
+    stage: IntroStage,
+    room: &FrameAwaitingReply<'_>,
+) -> Result<FightReply, Fault> {
+    if matches!(
+        stage,
+        IntroStage::IntoFight
+            | IntroStage::Fight
+            | IntroStage::PageTwoPending
+            | IntroStage::OutOfFight
+    ) || room.state().fight == FightVisibility::InFront
+        || room
+            .requests()
+            .any(|request| request == FlashbackRequest::StartZebesFight)
+    {
+        return Err(Fault::ZebesFightRoom);
+    }
+    Ok(FightReply::Fighting)
 }
 
 /// The model's content from the imported scene.
@@ -145,6 +203,7 @@ pub fn content(scene: &Scene) -> IntroContent {
     IntroContent {
         pages: enum_map! {
             types::intro::PageScript::One => script(&scene.page_one),
+            types::intro::PageScript::Two => script(&scene.page_two),
             types::intro::PageScript::Five => script(&scene.page_five),
             types::intro::PageScript::Six => script(&scene.page_six),
         },
@@ -159,6 +218,8 @@ pub fn content(scene: &Scene) -> IntroContent {
         },
         full: scene.full.clone(),
         sets: enum_map! {
+            Dissolve::IntoFight => sets(&scene.into_fight),
+            Dissolve::OutOfFight => sets(&scene.out_of_fight),
             Dissolve::ToScene => sets(&scene.to_scene),
             Dissolve::ToText => sets(&scene.to_text),
         },
@@ -194,6 +255,7 @@ fn script(steps: &[Step]) -> screens_intro::Script {
                 Cue::PageFive => Signal::PageFive,
                 Cue::WaitForPress => Signal::WaitForPress,
                 Cue::WaitForPressThenFight => Signal::WaitForPressThenFight,
+                Cue::WaitForDiscovery => Signal::WaitForDiscovery,
                 Cue::CaretBlinks => Signal::CaretBlinks,
                 Cue::Finish => Signal::Finish,
             }),
@@ -209,12 +271,16 @@ fn name(picture: Picture) -> PictureName {
 
 #[cfg(test)]
 mod tests {
-    use super::{Fault, FrameEnd, State, admit, begins, content, played};
+    use super::{
+        Fault, FightInput, FrameEnd, State, admit, begins, content, play_work_frame, played,
+    };
     use data::assets::intro::{Colour, Cue, DissolveSets, Palette, Scene, Shows, Step};
-    use screens_intro::{Equipment, IntroEvent, Language, Rules, TrackReply};
+    use screens_intro::{
+        Equipment, FightReply, FlashbackRequest, IntroEvent, Language, Rules, TrackReply,
+    };
     use types::intro::{
-        Blanking, Brightness, BrightnessLevel, ClickTurn, FadeFrames, FadingColours, Glows,
-        IntroStage, IntroState, StageWait,
+        Blanking, Brightness, BrightnessLevel, ClickTurn, FadeFrames, FadingColours,
+        FightVisibility, Glows, IntroStage, IntroState, StageWait,
     };
 
     fn scene() -> Scene {
@@ -232,6 +298,7 @@ mod tests {
         ];
         Scene {
             page_one: wait.clone(),
+            page_two: wait.clone(),
             page_five: wait.clone(),
             page_six: wait.clone(),
             eyes_blinking: wait.clone(),
@@ -240,6 +307,8 @@ mod tests {
             caret_steady: wait.clone(),
             caret_blinking: wait,
             full: Palette([Colour::BLACK; 256]),
+            into_fight: none(),
+            out_of_fight: none(),
             to_scene: none(),
             to_text: none(),
             text: vec![],
@@ -255,6 +324,7 @@ mod tests {
             colours: FadingColours::still_black(),
             dissolve: 0,
             height: 0,
+            fight: FightVisibility::Hidden,
             baby: None,
             page: None,
             eyes: None,
@@ -273,6 +343,7 @@ mod tests {
     const FINISHED: FrameEnd = FrameEnd::Finished {
         pressed: false,
         track: TrackReply::NoneWaits,
+        fight: FightInput::Integrated,
     };
 
     #[test]
@@ -289,12 +360,12 @@ mod tests {
         assert!(
             report
                 .events
-                .contains(&IntroEvent::Equipment(Equipment::LENT))
+                .contains(&IntroEvent::EquipmentSet(Equipment::LENT))
         );
     }
 
     #[test]
-    fn a_press_while_page_one_waits_is_refused() {
+    fn the_fight_start_requires_its_room_to_run() {
         let mut state = fading();
         state.intro.stage = IntroStage::PageOneWaits;
         let waiting = state.clone();
@@ -302,10 +373,11 @@ mod tests {
         let pressed = FrameEnd::Finished {
             pressed: true,
             track: TrackReply::NoneWaits,
+            fight: FightInput::Integrated,
         };
         assert_eq!(
             played(&mut state, pressed, &content, Rules::REFERENCE),
-            Err(Fault::BattleBegins)
+            Err(Fault::ZebesFightRoom)
         );
         assert_eq!(state, waiting, "a refused frame changes nothing");
         assert!(
@@ -313,6 +385,50 @@ mod tests {
                 .unwrap()
                 .is_some()
         );
+    }
+
+    #[test]
+    fn room_play_sees_the_start_and_the_last_visible_frame() {
+        let mut state = fading();
+        state.intro.stage = IntroStage::PageOneWaits;
+        let content = content(&scene());
+        play_work_frame(
+            &mut state,
+            true,
+            TrackReply::NoneWaits,
+            &content,
+            Rules::REFERENCE,
+            |room| {
+                assert_eq!(room.state().stage, IntroStage::IntoFight);
+                assert!(room.requests().eq([FlashbackRequest::StartZebesFight]));
+                Ok(FightReply::Fighting)
+            },
+        )
+        .unwrap();
+
+        state.intro.stage = IntroStage::OutOfFight;
+        state.intro.dissolve = 1;
+        let report = play_work_frame(
+            &mut state,
+            false,
+            TrackReply::NoneWaits,
+            &content,
+            Rules::REFERENCE,
+            |room| {
+                assert_eq!(room.state().dissolve, 0);
+                assert_eq!(room.state().fight, FightVisibility::InFront);
+                assert!(
+                    room.requests()
+                        .eq([FlashbackRequest::HideFightSamusAndShots])
+                );
+                Ok(FightReply::Fighting)
+            },
+        )
+        .unwrap();
+        assert_eq!(state.intro.fight, FightVisibility::Hidden);
+        assert!(report.events.contains(&IntroEvent::Flashback(
+            FlashbackRequest::HideFightSamusAndShots
+        )));
     }
 
     #[test]
@@ -343,7 +459,7 @@ mod tests {
         assert!(
             report
                 .events
-                .contains(&IntroEvent::Equipment(Equipment::RETURNED))
+                .contains(&IntroEvent::EquipmentSet(Equipment::RETURNED))
         );
         let done = state.clone();
         assert_eq!(

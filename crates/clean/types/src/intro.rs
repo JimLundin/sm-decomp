@@ -1,7 +1,8 @@
 //! The intro's state (screens-intro), carried between frames, saved and restored.
 //!
 //! Where the scene has got to and how long it holds there, its colours, the baby, the page, the
-//! caret, the glowing letters, Samus's eyes and the screen's brightness.
+//! caret, the glowing letters, Samus's eyes, whether the fight shows her, and the screen's
+//! brightness.
 
 use serde::{Deserialize, Serialize};
 
@@ -32,20 +33,38 @@ pub enum IntroStage {
     PageOneLoads,
     /// Page 1 typing while the picture slowly brightens.
     PageOneBrightens,
-    /// Page 1 typed, the caret blinking, the game waiting for the press that starts the battle
-    /// on Zebes.
+    /// Page 1 typed, the caret blinking, the game waiting. A new press begins the battle on
+    /// Zebes in that frame's stage step (`BattleBegins`); without one the stage holds and the
+    /// scripts run.
     PageOneWaits,
+    /// The text dissolving into the battle on Zebes (`BattleDissolves`).
+    IntoFight,
+    /// The battle shown. It holds until the encounter's return signal, which is received after
+    /// the frame's stage step: on that same frame the stage becomes `PageTwoPending`
+    /// (`PageTwoBegins`).
+    Fight,
+    /// The encounter has signalled its return; page 2 begins in the next frame's stage step
+    /// (`PageTwoBegins`).
+    PageTwoPending,
+    /// The battle dissolving back to the text while page 2 types (`BattleDissolves`).
+    OutOfFight,
+    /// Page 2 typed, the caret blinking, the game waiting for the press that starts the baby's
+    /// discovery, a later part not yet specced (`PageTwoEnds`): until then the stage holds and
+    /// the scripts run.
+    PageTwoWaits,
     /// Page 4's text dissolving into the picture of the baby.
     ToScene,
-    /// The picture shown, the baby on its script.
+    /// The picture shown, the baby on its script. The baby's signal for page 5 makes the stage
+    /// `ToPageFive` as its script runs.
     Scene,
-    /// The baby has signalled page 5; the page begins on the next frame.
+    /// The baby has signalled page 5; the page begins in the next frame's stage step.
     ToPageFive,
     /// The picture dissolving back to the text.
     ToText,
     /// A page being typed, or holding.
     Text,
-    /// Page 5 typed, the caret blinking, the game waiting for a button.
+    /// Page 5 typed, the caret blinking, the game waiting. A new press turns to page 6 in that
+    /// frame's stage step (`PressTurnsThePage`); without one nothing of the page changes.
     WaitingForPress,
     /// The picture fading to black.
     FadingOut,
@@ -165,6 +184,8 @@ impl<S> ScriptPlace<S> {
 pub enum PageScript {
     /// Page 1, placed once the pages' tune has loaded.
     One,
+    /// Page 2, placed as the text returns after the fight.
+    Two,
     /// Page 5, placed as the picture starts back toward the text.
     Five,
     /// Page 6, placed by the press ("CERES STATION WAS UNDER ATTACK!!").
@@ -586,6 +607,16 @@ impl From<StageWait> for u16 {
     }
 }
 
+/// Whether Samus and her shots appear in front of the fight's sprites (`BattleBegins`,
+/// `BattleDissolves`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FightVisibility {
+    /// Hidden.
+    Hidden,
+    /// Drawn in front of the fight's sprites.
+    InFront,
+}
+
 /// The intro's state: everything it remembers from one frame to the next (screens-intro).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IntroState {
@@ -599,6 +630,8 @@ pub struct IntroState {
     pub dissolve: u16,
     /// The picture's height, px: where the scene's picture stands.
     pub height: i16,
+    /// Whether Samus and her shots appear in front of the fight's sprites.
+    pub fight: FightVisibility,
     /// The baby, or none.
     pub baby: Option<Baby>,
     /// The page being typed, or none.

@@ -32,7 +32,7 @@ mod flight;
 mod frame;
 mod health;
 mod hud;
-mod intro;
+pub(super) mod intro;
 mod passage;
 mod platform;
 mod power_on;
@@ -218,6 +218,26 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
     }
 }
 
+fn read_lock(sources: &Sources) -> Result<crate::lock::Lock, Outcome> {
+    let text = std::fs::read_to_string(&sources.lock)
+        .map_err(|_| data_failure(None, "record lock file"))?;
+    crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))
+}
+
+fn open_rows<'a>(
+    sources: &'a Sources,
+    lock: &'a crate::lock::Lock,
+    row: &str,
+) -> Result<rows::Rows<'a>, Outcome> {
+    // The lock is the repository's `scenarios/locks/<oracle>.toml`, under the tables of seeds.
+    let root = sources
+        .lock
+        .ancestors()
+        .nth(3)
+        .ok_or_else(|| data_failure(None, "played lock path"))?;
+    rows::Rows::open(lock, root, &sources.cache, row)
+}
+
 /// Play `row` from its cut `start` through `end` inclusive with the movie's pads alone. Cuts
 /// past the row's last go on through the rows that continue it, without a new seed.
 ///
@@ -231,17 +251,8 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
 /// Missing or mismatched lock, cache or content refuse the run before any cut is played, and a
 /// cut past every row that continues the run, or a row that doesn't follow on, stops it.
 pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report, Outcome> {
-    let text = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "record lock file"))?;
-    let lock =
-        crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
-    // The lock is the repository's `scenarios/locks/<oracle>.toml`, under the tables of seeds.
-    let root = sources
-        .lock
-        .ancestors()
-        .nth(3)
-        .ok_or_else(|| data_failure(None, "played lock path"))?;
-    let mut rows = rows::Rows::open(&lock, root, &sources.cache, row)?;
+    let lock = read_lock(sources)?;
+    let mut rows = open_rows(sources, &lock, row)?;
     let id = crate::lock::RowId(row.to_owned());
     if lock
         .row(&id)

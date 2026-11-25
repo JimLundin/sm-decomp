@@ -1,5 +1,6 @@
 //! Every vector of `scenarios/vectors/screens-intro.toml`, run through the model as one frame,
-//! and the catalogue checked against them. The file's header gives its format; a key the format
+//! both by `step` and by `begin_frame` then `finish`, which must agree, and the catalogue
+//! checked against them. The file's header gives its format; a key the format
 //! doesn't name fails the read.
 
 #[cfg(test)]
@@ -10,15 +11,16 @@ mod vectors {
 
     use enum_map::EnumMap;
     use screens_intro::{
-        Dissolve, DissolveSets, Equipment, FrameInputs, IndexedColour, IntroContent, IntroEvent,
-        Letter, MusicRequest, PictureName, Report, Rules, Shows, Signal, Step, TrackReply, Tune,
-        catalogue, step,
+        Dissolve, DissolveSets, Equipment, FightReply, FlashbackRequest, FrameInputs,
+        IndexedColour, IntroContent, IntroEvent, Letter, MusicRequest, PictureLayout, PictureName,
+        Report, Rules, Shows, Signal, Step, TextTiles, TrackReply, Tune, begin_frame, catalogue,
+        step,
     };
     use serde::Deserialize;
     use types::intro::{
         Baby, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn, ColourSet,
-        EyesScript, FadeFrames, FadingColours, Glow, Glows, IntroStage, IntroState, PageScript,
-        Progress, ScriptPlace, StageWait, StepAt, TextPlace,
+        EyesScript, FadeFrames, FadingColours, FightVisibility, Glow, Glows, IntroStage,
+        IntroState, PageScript, Progress, ScriptPlace, StageWait, StepAt, TextPlace,
     };
     use types::{Checked, Colour, PALETTE_SLOTS, Pair, Palette};
 
@@ -73,6 +75,7 @@ mod vectors {
         wait: Option<u16>,
         colours: Option<BTreeMap<String, [[u16; 3]; 2]>>,
         height: Option<i16>,
+        fight_visible: Option<bool>,
         baby: Option<Placed>,
         page: Option<Placed>,
         eyes: Option<Placed>,
@@ -102,6 +105,7 @@ mod vectors {
     struct Inputs {
         press: Option<bool>,
         track_waits: Option<bool>,
+        return_to_text: Option<bool>,
         scene: Option<Scene>,
     }
 
@@ -120,6 +124,8 @@ mod vectors {
     struct Sets {
         to_scene: Option<SetsOfDissolve>,
         to_text: Option<SetsOfDissolve>,
+        into_fight: Option<SetsOfDissolve>,
+        out_of_fight: Option<SetsOfDissolve>,
         text: Option<Vec<u8>>,
     }
 
@@ -152,11 +158,31 @@ mod vectors {
         typed: Option<Vec<Typed>>,
         clicks: Option<usize>,
         cleared: Option<bool>,
-        music_stop: Option<bool>,
         caret_shown: Option<bool>,
         equipment_returned: Option<bool>,
         equipment_lent: Option<bool>,
         music: Option<Vec<String>>,
+        encounter: Option<Encounter>,
+        picture: Option<Picture>,
+        fight_lights: Option<bool>,
+        text_updates: Option<bool>,
+    }
+
+    /// The flashback request a vector expects.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(rename_all = "lowercase")]
+    enum Encounter {
+        Start,
+        End,
+    }
+
+    /// The picture layout a vector expects.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(rename_all = "lowercase")]
+    enum Picture {
+        Blend,
+        Fight,
+        Text,
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]
@@ -187,6 +213,7 @@ mod vectors {
     fn named(name: &str) -> Named {
         match name {
             "page1" => Named::Page(PageScript::One),
+            "page2" => Named::Page(PageScript::Two),
             "page5" => Named::Page(PageScript::Five),
             "page6" => Named::Page(PageScript::Six),
             "eyes" => Named::Eyes(EyesScript::Blinking),
@@ -251,6 +278,14 @@ mod vectors {
         if on { ClickTurn::On } else { ClickTurn::Off }
     }
 
+    fn fight(visible: bool) -> FightVisibility {
+        if visible {
+            FightVisibility::InFront
+        } else {
+            FightVisibility::Hidden
+        }
+    }
+
     fn colours(part: &Part) -> FadingColours {
         let mut colours = FadingColours::still_black();
         for (key, [levels, steps]) in part.colours.iter().flatten() {
@@ -269,6 +304,7 @@ mod vectors {
             colours: colours(part),
             dissolve: part.dissolve.unwrap_or(0),
             height: part.height.unwrap_or(0),
+            fight: fight(part.fight_visible.unwrap_or(false)),
             baby: part.baby.as_ref().map(|baby| Baby {
                 y: Wrapping(baby.y.expect("the baby's y")),
                 progress: progress(baby),
@@ -308,6 +344,7 @@ mod vectors {
             "page5" => Signal::PageFive,
             "wait" => Signal::WaitForPress,
             "fight" => Signal::WaitForPressThenFight,
+            "wait_discovery" => Signal::WaitForDiscovery,
             "blink" => Signal::CaretBlinks,
             "finish" => Signal::Finish,
             other => panic!("unknown signal {other}"),
@@ -410,6 +447,9 @@ mod vectors {
         let given = scene.sets.as_ref();
         content.sets[Dissolve::ToScene] = sets(given.and_then(|sets| sets.to_scene.as_ref()));
         content.sets[Dissolve::ToText] = sets(given.and_then(|sets| sets.to_text.as_ref()));
+        content.sets[Dissolve::IntoFight] = sets(given.and_then(|sets| sets.into_fight.as_ref()));
+        content.sets[Dissolve::OutOfFight] =
+            sets(given.and_then(|sets| sets.out_of_fight.as_ref()));
         content.text = given.and_then(|sets| sets.text.clone()).unwrap_or_default();
         content.full = full(scene);
         content.caret_colours = scene
@@ -537,6 +577,7 @@ mod vectors {
         failures.check("dissolve", after.dissolve, state.dissolve);
         failures.check("wait", after.wait, state.wait.frames());
         failures.check("height", after.height, state.height);
+        failures.check("fight visible", after.fight_visible.map(fight), state.fight);
         check_colours(failures, after, state);
         check_scripts(failures, after, state);
         check_caret(failures, after, state);
@@ -604,15 +645,65 @@ mod vectors {
         failures.check("clicks", output.clicks, clicks.count());
         let cleared = happened(report, IntroEvent::TextCleared);
         failures.check("cleared", output.cleared, cleared);
-        let music_stop = happened(report, IntroEvent::MusicStops);
-        failures.check("music stop", output.music_stop, music_stop);
         failures.check("caret shown", output.caret_shown, report.caret.is_some());
-        let returned = happened(report, IntroEvent::Equipment(Equipment::RETURNED));
+        let returned = happened(report, IntroEvent::EquipmentSet(Equipment::RETURNED));
         failures.check("equipment returned", output.equipment_returned, returned);
-        let lent = happened(report, IntroEvent::Equipment(Equipment::LENT));
+        let lent = happened(report, IntroEvent::EquipmentSet(Equipment::LENT));
         failures.check("equipment lent", output.equipment_lent, lent);
         let music: Vec<String> = report.music.iter().map(|&request| asked(request)).collect();
         failures.check("music", output.music.as_ref(), &music);
+        check_flashback(failures, output, report);
+    }
+
+    /// The flashback's outputs: its requests, the picture layout, the lights and the text tiles.
+    fn check_flashback(failures: &mut Failures, output: &Output, report: &Report) {
+        let requests: Vec<FlashbackRequest> = report
+            .events
+            .iter()
+            .filter_map(|event| {
+                if let IntroEvent::Flashback(request) = event {
+                    Some(*request)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let expected = output.encounter.map(|encounter| {
+            vec![match encounter {
+                Encounter::Start => FlashbackRequest::StartZebesFight,
+                Encounter::End => FlashbackRequest::HideFightSamusAndShots,
+            }]
+        });
+        failures.check("encounter", expected.as_ref(), &requests);
+        let layouts: Vec<PictureLayout> = report
+            .events
+            .iter()
+            .filter_map(|event| {
+                if let IntroEvent::Layout(layout) = event {
+                    Some(*layout)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let expected = output.picture.map(|picture| {
+            vec![match picture {
+                Picture::Blend => PictureLayout::SplitBlend,
+                Picture::Fight => PictureLayout::PlainFight,
+                Picture::Text => PictureLayout::PlainText,
+            }]
+        });
+        failures.check("picture", expected.as_ref(), &layouts);
+        let lights = happened(report, IntroEvent::FlashingLightsBegin);
+        failures.check("fight lights", output.fight_lights, lights);
+        let tiles = report.events.iter().find_map(|event| {
+            if let IntroEvent::TextUpdates(tiles) = event {
+                Some(*tiles == TextTiles::Resumed)
+            } else {
+                None
+            }
+        });
+        failures.check("text updates", output.text_updates.map(Some), tiles);
     }
 
     /// A music request as the vectors write it.
@@ -643,6 +734,9 @@ mod vectors {
         let waits = inputs
             .and_then(|inputs| inputs.track_waits)
             .unwrap_or(false);
+        let returns = inputs
+            .and_then(|inputs| inputs.return_to_text)
+            .unwrap_or(false);
         let frame = FrameInputs {
             pressed,
             track: if waits {
@@ -650,13 +744,29 @@ mod vectors {
             } else {
                 TrackReply::NoneWaits
             },
+            fight: if returns {
+                FightReply::ReadyToReturn
+            } else {
+                FightReply::Fighting
+            },
         };
         let scene = content(inputs.and_then(|inputs| inputs.scene.as_ref()));
+        let mut split_state = state.clone();
         let report = step(&mut state, frame, &scene, rules(vector));
+        let split_report = begin_frame(
+            &mut split_state,
+            frame.pressed,
+            frame.track,
+            &scene,
+            rules(vector),
+        )
+        .finish(frame.fight);
         let mut failures = Failures {
             id: &vector.id,
             found: Vec::new(),
         };
+        failures.check("two-part frame's state", Some(&state), &split_state);
+        failures.check("two-part frame's report", Some(&report), &split_report);
         check_after(&mut failures, &vector.after, &state);
         check_gone(
             &mut failures,

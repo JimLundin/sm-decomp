@@ -106,5 +106,5 @@ pub fn intro_ends(state: &mut IntroState, report: &mut Report) {
     state.fade = FadeFrames::ZERO;
     report
         .events
-        .push(IntroEvent::Equipment(Equipment::RETURNED));
+        .push(IntroEvent::EquipmentSet(Equipment::RETURNED));
 }

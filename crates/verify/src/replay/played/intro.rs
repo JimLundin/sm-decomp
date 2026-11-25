@@ -1,47 +1,37 @@
-//! A run from the intro's first frame or from inside its last pages: the intro alone, compared
-//! at each cut.
+//! The intro's production replay and the recorded State and frame publications it compares.
 //!
-//! A run seeded as the intro begins (the opening and page 1) admits the State the options hand
-//! on, `Begins`, and decodes nothing else of the seed but the options' language. A run seeded
-//! inside the last pages admits the intro's State from the seed's work RAM: where the scene has
-//! got to, its colours, the baby, the page, the eyes, the caret, the glows, the click turn and
-//! the brightness. Either reads nothing of room play. The scenes' content is imported from the
-//! player's ROM. Each cut borrows whether its frame of work finished, and at each finished one
-//! whether a track waited in audio's queue as the frame began ([`BORROWED`]); the press is the
-//! movie's. A run from power-on plays on into the intro through the front end, and compares the
-//! intro's State fields here (`compared`) beside the front end's own.
+//! The opening starts at the options handoff. The last pages and flashback scopes admit the
+//! intro's State once from a finished cut. Later records supply the movie pad and the platform's
+//! work completion and audio queue reply. The indexed flashback also borrows the encounter's
+//! explosion hold completion. The power-on run selects integrated production.
 //!
-//! At every finished cut it compares: the stage, the stage's wait while the opening holds, the
-//! dissolve's count while one runs and from page 1's making ready on, in the last pages the
-//! colours' levels and steps and the colours shown, the picture's height, each script's name,
-//! step, hold and repeat count (the page, the eyes, the baby, the caret), the caret's place and
-//! whether it shows, the glows, the click turn, the clicks against the sound queue, the music's
-//! requests against the music queue, the brightness, the fade's count while it fades, and
-//! whether the equipment was returned. At a lag cut the record is inside the frame's work, so
-//! only the brightness is compared; while the intro has not yet begun, the stage and the
-//! brightness. A run is admitted only as the intro begins or at the dissolve to the scene, the
-//! stages the spec admits, which tells the page typed from the picture shown as the run plays
-//! on. [`OPENING_MASKED`] and [`MASKED`] name what no owner here produces, which is not
-//! compared.
+//! Finished cuts compare stage, brightness, scripts, glows, click turn and the colours owned by
+//! the intro. The scoped frame report adds the caret, clicks, ordered music requests and the
+//! flashback's encounter, layout, text and palette publications. An interrupted cut compares
+//! brightness without advancing the intro. The last-pages scope also compares equipment restoration.
+
+pub(in crate::replay) mod indexed;
 
 use super::platform::{Controller, finished, polled};
 use super::{Report, Stop, rows::Rows, word};
-use crate::replay::compare::{CompareFault, Observation, compare};
+use crate::replay::compare::Observation;
+use crate::replay::readers::ExpectedCut;
 use crate::replay::{data_failure, result::Outcome};
 use crate::source::{self, WramByte, WramWord};
 use core::num::Wrapping;
 use data::rom::Rom;
-use game::production::played::intro::{self, FrameEnd};
+use game::production::played::intro::{self, FightInput, FrameEnd};
 use import::intro::{ListPlaces, Places};
 use oracle_record::FrameRecord;
 use screens_intro::{
-    Equipment, IntroContent, IntroEvent, Language, Report as Frame, Rules, Shows, Step, TrackReply,
+    Equipment, FightReply, FlashbackRequest, IntroContent, IntroEvent, Language, MusicRequest,
+    PictureLayout, Report as Frame, Rules, Shows, Step, TextTiles, TrackReply,
 };
 use std::path::Path;
 use types::intro::{
     Baby, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn, ColourSet,
-    EyesScript, FadeFrames, FadingColour, FadingColours, Glow, Glows, IntroStage, IntroState,
-    PageScript, Progress, ScriptPlace, StageWait, StepAt, TextPlace,
+    EyesScript, FadeFrames, FadingColour, FadingColours, FightVisibility, Glow, Glows, IntroStage,
+    IntroState, PageScript, Progress, ScriptPlace, StageWait, StepAt, TextPlace,
 };
 use types::{Colour, Pair, Palette};
 
@@ -75,6 +65,32 @@ const BORROWED: &[&str] = &[
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
 ];
 
+const FLASHBACK_BORROWED: &[&str] = &[
+    "lag: whether each cut's frame of work finished",
+    "audio: whether a track waits in the queue of tracks as the frame of work begins",
+    "Zebes encounter: the independently located expiry of its explosion hold",
+];
+
+const FLASHBACK_MASKED: &[&str] = &[
+    "Zebes room play: demo, collision, movement, equipment, weapons and encounter",
+    "the encounter's shake, palette effects, renderers' VRAM, OAM and CGRAM and layer mirrors",
+];
+
+/// The boss reaches the end of its explosion hold and switches to its return callback.
+fn fight_reply(began: &FrameRecord, current: &FrameRecord) -> Result<FightReply, Outcome> {
+    const CALLBACK: WramWord = wram("ZEBES_BOSS_CALLBACK", 0x1b3d);
+    const ELAPSED: WramWord = wram("ZEBES_BOSS_EXPLOSION_HOLD", 0x1b7d);
+    let ready = word(&began.wram, CALLBACK)? == 0xb80f
+        && word(&began.wram, ELAPSED)? == 127
+        && word(&current.wram, CALLBACK)? == 0xb82e
+        && word(&current.wram, ELAPSED)? == 128;
+    Ok(if ready {
+        FightReply::ReadyToReturn
+    } else {
+        FightReply::Fighting
+    })
+}
+
 /// The rules the run plays: the game as it ships.
 const RULES: Rules = Rules::REFERENCE;
 
@@ -85,7 +101,7 @@ const TO_SCENE: u16 = 0xb2d2;
 /// The function of the picture shown and of a page typed: which is told by the part the run
 /// plays and whether page 5 has begun.
 const SHOWN: u16 = 0xa391;
-const STAGES: [(u16, IntroStage); 19] = [
+const STAGES: [(u16, IntroStage); 23] = [
     (BEGINS, IntroStage::Begins),
     (0xa5a7, IntroStage::OpeningLoads),
     (0xa5bd, IntroStage::OpeningBrightens),
@@ -98,6 +114,10 @@ const STAGES: [(u16, IntroStage); 19] = [
     (0xa82b, IntroStage::PageOneLoads),
     (0xa84a, IntroStage::PageOneBrightens),
     (0xaeb8, IntroStage::PageOneWaits),
+    (0xb250, IntroStage::IntoFight),
+    (0xb35f, IntroStage::PageTwoPending),
+    (0xb3f4, IntroStage::OutOfFight),
+    (0xaf6c, IntroStage::PageTwoWaits),
     (TO_SCENE, IntroStage::ToScene),
     (0xb392, IntroStage::ToPageFive),
     (0xb458, IntroStage::ToText),
@@ -124,7 +144,11 @@ const STEPS: [WramWord; 3] = [
     wram("INTRO_BLUE_STEPS", 0x2e00),
 ];
 const SHOWN_COLOURS: WramWord = wram("PALETTE_BUFFER", 0xc000);
-/// The picture's height.
+/// The boss flash can overwrite sprite palette 7 after the intro publishes it.
+const BOSS_FLASH_TIMER: WramWord = wram("ZEBES_BOSS_FLASH_TIMER", 0x1add);
+/// Whether the fight is drawn in front of the cinematic sprites.
+const FIGHT_VISIBILITY: WramWord = wram("INTRO_FIGHT_VISIBILITY", 0x1a57);
+/// The picture's height in the last pages.
 const HEIGHT: WramWord = wram("CINEMATIC_BG1_Y", 0x1997);
 /// The baby, the sprite object in slot 14: its y, list, timer and loop count.
 const BABY_Y: WramWord = wram("CINEMATIC_SPRITE_Y", 0x1ab9);
@@ -182,6 +206,7 @@ const fn wram(name: &'static str, offset: u16) -> WramWord {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Part {
     Opening,
+    Flashback,
     LastPages,
 }
 
@@ -221,6 +246,8 @@ impl Scenes {
                 repeat_times: repeat_times(&content),
                 part,
                 page_five_begun: false,
+                fight_returned: false,
+                previous_flashback: None,
             },
             content,
         })
@@ -242,13 +269,11 @@ impl Scenes {
             part: self.reading.part,
             state: &recorded,
             colours: &shown(&current.wram)?,
-            reported: None,
         });
         let actual = observations(&View {
             part: self.reading.part,
             state: &state.intro,
             colours: &state.colours,
-            reported: None,
         });
         Ok((expected, actual))
     }
@@ -297,9 +322,14 @@ pub(super) fn play(
         held,
         stop,
         seed_held: SEED_HELD,
-        borrowed: BORROWED,
+        borrowed: if part == Part::Flashback {
+            FLASHBACK_BORROWED
+        } else {
+            BORROWED
+        },
         masked: match part {
             Part::Opening => OPENING_MASKED,
+            Part::Flashback => FLASHBACK_MASKED,
             Part::LastPages => MASKED,
         },
     };
@@ -314,7 +344,7 @@ pub(super) fn play(
         };
         match part {
             Part::Opening => intro::begins(language).map_err(japanese),
-            Part::LastPages => {
+            Part::Flashback | Part::LastPages => {
                 let state = reading.state(&seed.wram)?;
                 intro::admit(language, state, shown(&seed.wram)?).map_err(japanese)
             }
@@ -372,22 +402,8 @@ impl Run {
         current: &FrameRecord,
         cut: u64,
     ) -> Result<(), Outcome> {
-        // The movie's pad is the input; the game's own latch only checks its alignment.
-        if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
-            return Err(data_failure(None, "played pad alignment"));
-        }
-        let frame = if finished(current) {
-            FrameEnd::Finished {
-                pressed: controller.pressed != 0,
-                track: if super::music_ready(&began.wram)? {
-                    TrackReply::NoneWaits
-                } else {
-                    TrackReply::TrackWaits
-                },
-            }
-        } else {
-            FrameEnd::Lagged
-        };
+        let part = self.reading.part;
+        let frame = frame_input(part, controller, began, previous, current)?;
         let report =
             intro::played(&mut self.state, frame, &self.content, RULES).map_err(|fault| {
                 Outcome::Unsupported {
@@ -395,46 +411,129 @@ impl Run {
                     dependency: format!("played frame {fault:?}"),
                 }
             })?;
-        let (expected, actual) = if let Some(report) = report {
-            let recorded = self.reading.state(&current.wram)?;
-            let part = self.reading.part;
-            let expected = observations(&View {
-                part,
-                state: &recorded,
-                colours: &shown(&current.wram)?,
-                reported: Some(Reported {
-                    caret_shown: caret_shown(&recorded, &self.content),
-                    clicks: i64::from(clicks(began, current)?),
-                    music: i64::from(music_requests(began, current)?),
-                    returned: returned(began, current)?,
-                }),
-            });
-            let music = report.music.len().try_into().unwrap_or(i64::MAX);
-            let actual = observations(&View {
-                part,
-                state: &self.state.intro,
-                colours: &self.state.colours,
-                reported: Some(Reported {
-                    caret_shown: report.caret.is_some(),
-                    clicks: count(&report, IntroEvent::Click),
-                    music: count(&report, IntroEvent::MusicStops).saturating_add(music),
-                    returned: count(&report, IntroEvent::Equipment(Equipment::RETURNED)) > 0,
-                }),
-            });
-            (expected, actual)
+        let expected = self.reading.expected(began, current, &self.content)?;
+        let (mut actual, outputs) = actual(part, &self.state, report.as_ref());
+        actual.extend(outputs);
+        crate::replay::compared(cut, &expected.fields, &actual)
+    }
+}
+
+/// Decode only the inputs the intro reads during this interval.
+fn frame_input(
+    part: Part,
+    controller: Controller,
+    began: &FrameRecord,
+    previous: &FrameRecord,
+    current: &FrameRecord,
+) -> Result<FrameEnd, Outcome> {
+    // The movie's pad is the input; the game's own latch only checks its alignment.
+    if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
+        return Err(data_failure(None, "played pad alignment"));
+    }
+    if !finished(current) {
+        return Ok(FrameEnd::Lagged);
+    }
+    Ok(FrameEnd::Finished {
+        pressed: controller.pressed != 0,
+        fight: if part == Part::Flashback {
+            FightInput::Scoped(fight_reply(began, current)?)
         } else {
-            // A lag cut: the record is inside the frame's work.
-            (
-                brightness(brightness_of(&current.wram)?),
-                brightness(self.state.intro.brightness),
-            )
+            FightInput::Integrated
+        },
+        track: if super::music_ready(&began.wram)? {
+            TrackReply::NoneWaits
+        } else {
+            TrackReply::TrackWaits
+        },
+    })
+}
+
+fn actual(
+    part: Part,
+    state: &intro::State,
+    report: Option<&Frame>,
+) -> (Vec<Observation>, Vec<Observation>) {
+    let Some(report) = report else {
+        let semantics = brightness(state.intro.brightness);
+        let outputs = if part == Part::Flashback {
+            vec![Observation::quantity("intro.frame-finished", 0)]
+        } else {
+            Vec::new()
         };
-        compare(&expected, &actual).map_err(|fault| match fault {
-            CompareFault::Difference(field) => Outcome::Difference { cut, field },
-            CompareFault::EmptyExpected
-            | CompareFault::DuplicateField(_)
-            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
-        })
+        return (semantics, outputs);
+    };
+    let semantics = observations(&View {
+        part,
+        state: &state.intro,
+        colours: &state.colours,
+    });
+    let outputs = Reported {
+        caret_shown: report.caret.is_some(),
+        clicks: count(report, IntroEvent::Click),
+        music: report.music.iter().copied().map(music_code).collect(),
+        returned: count(report, IntroEvent::EquipmentSet(Equipment::RETURNED)) > 0,
+    };
+    let mut outputs = outputs.observations();
+    if part == Part::Flashback {
+        outputs.extend([
+            Observation::quantity("intro.frame-finished", 1),
+            event_observation(&report.events),
+            Observation::quantity(
+                "intro.palette-published",
+                i64::from(report.colours.is_some()),
+            ),
+        ]);
+        if let Some(palette) = &report.colours {
+            outputs.extend([
+                published_palette(palette, false),
+                published_palette(palette, true),
+            ]);
+        }
+    }
+    (semantics, outputs)
+}
+
+fn event_observation(events: &[IntroEvent]) -> Observation {
+    use FlashbackRequest::{HideFightSamusAndShots, StartZebesFight};
+    use PictureLayout::{PlainFight, PlainText, SplitBlend};
+    Observation {
+        field: "intro.events".into(),
+        bytes: events
+            .iter()
+            .filter_map(|event| {
+                Some(match event {
+                    IntroEvent::Flashback(StartZebesFight) => 1,
+                    IntroEvent::Layout(SplitBlend) => 2,
+                    IntroEvent::TextCleared => 3,
+                    IntroEvent::Layout(PlainFight) => 4,
+                    IntroEvent::FlashingLightsBegin => 5,
+                    IntroEvent::TextUpdates(TextTiles::Paused) => 6,
+                    IntroEvent::TextUpdates(TextTiles::Resumed) => 7,
+                    IntroEvent::Flashback(HideFightSamusAndShots) => 8,
+                    IntroEvent::Layout(PlainText) => 9,
+                    IntroEvent::Click | IntroEvent::EquipmentSet(_) => return None,
+                })
+            })
+            .collect(),
+    }
+}
+
+/// The palette mirror has a separate owner for the last 16 entries when the boss flashes.
+fn published_palette(palette: &Palette, sprite_seven: bool) -> Observation {
+    let (field, range) = if sprite_seven {
+        ("intro.palette-sprite7", 240..256)
+    } else {
+        ("intro.palette", 0..240)
+    };
+    Observation {
+        field: field.into(),
+        bytes: palette
+            .0
+            .get(range)
+            .unwrap_or_default()
+            .iter()
+            .flat_map(|colour| colour.bits().to_le_bytes())
+            .collect(),
     }
 }
 
@@ -474,14 +573,62 @@ struct Reading {
     repeat_times: Option<u16>,
     part: Part,
     page_five_begun: bool,
+    fight_returned: bool,
+    previous_flashback: Option<(IntroStage, u16)>,
 }
 
 impl Reading {
+    fn expected(
+        &mut self,
+        began: &FrameRecord,
+        current: &FrameRecord,
+        content: &IntroContent,
+    ) -> Result<ExpectedCut, Outcome> {
+        let (semantics, outputs) = if finished(current) {
+            let prior = self.previous_flashback;
+            let state = self.state(&current.wram)?;
+            let colours = shown(&current.wram)?;
+            let semantics = observations(&View {
+                part: self.part,
+                state: &state,
+                colours: &colours,
+            });
+            let mut outputs = Reported {
+                caret_shown: caret_shown(&state, content),
+                clicks: i64::from(clicks(began, current)?),
+                music: music_requests(began, current)?,
+                returned: returned(began, current)?,
+            }
+            .observations();
+            if self.part == Part::Flashback {
+                outputs.extend(flashback_outputs(prior, &state, &colours, began)?);
+            }
+            (semantics, outputs)
+        } else {
+            let semantics = brightness(brightness_of(&current.wram)?);
+            let outputs = if self.part == Part::Flashback {
+                vec![Observation::quantity("intro.frame-finished", 0)]
+            } else {
+                Vec::new()
+            };
+            (semantics, outputs)
+        };
+        Ok(ExpectedCut {
+            fields: semantics.iter().chain(&outputs).cloned().collect(),
+            semantic_count: semantics.len(),
+            output_count: outputs.len(),
+            semantics,
+            replies: 0,
+        })
+    }
+
     /// The intro's State as the record's work RAM holds it.
     fn state(&mut self, wram: &[u8]) -> Result<IntroState, Outcome> {
         let function = word(wram, source::CINEMATIC_ACTIVE)?;
         let stage = if function == SHOWN {
-            if self.part == Part::Opening || self.page_five_begun {
+            if self.part == Part::Flashback && !self.fight_returned {
+                IntroStage::Fight
+            } else if self.part != Part::LastPages || self.page_five_begun {
                 IntroStage::Text
             } else {
                 IntroStage::Scene
@@ -496,14 +643,25 @@ impl Reading {
         if matches!(stage, IntroStage::ToPageFive | IntroStage::ToText) {
             self.page_five_begun = true;
         }
+        self.fight_returned |= matches!(
+            stage,
+            IntroStage::PageTwoPending | IntroStage::OutOfFight | IntroStage::PageTwoWaits
+        );
         let dissolve = word(
             wram,
-            if stage == IntroStage::ToText {
+            if matches!(
+                stage,
+                IntroStage::ToText | IntroStage::OutOfFight | IntroStage::PageTwoWaits
+            ) || stage == IntroStage::Text && self.fight_returned
+            {
                 TO_TEXT_COUNT
             } else {
                 TO_SCENE_COUNT
             },
         )?;
+        if self.part == Part::Flashback {
+            self.previous_flashback = Some((stage, dissolve));
+        }
         // The stage's wait is the dissolve's count's word, read only while the opening holds.
         let wait = if holding(stage) {
             StageWait::new(dissolve).ok_or_else(|| data_failure(None, "played intro wait"))?
@@ -524,13 +682,31 @@ impl Reading {
             wait,
             colours: colours(wram)?,
             dissolve,
-            height: word(wram, HEIGHT)?.cast_signed(),
-            baby: self.baby(wram)?,
+            height: if self.part == Part::Flashback {
+                0
+            } else {
+                word(wram, HEIGHT)?.cast_signed()
+            },
+            fight: if self.part == Part::Flashback && word(wram, FIGHT_VISIBILITY)? != 0 {
+                FightVisibility::InFront
+            } else {
+                FightVisibility::Hidden
+            },
+            baby: if self.part == Part::Flashback {
+                None
+            } else {
+                self.baby(wram)?
+            },
             page: script(
                 wram,
                 [PAGE_LIST, PAGE_TIMER],
                 &self.places.pages,
-                [PageScript::One, PageScript::Five, PageScript::Six],
+                [
+                    PageScript::One,
+                    PageScript::Two,
+                    PageScript::Five,
+                    PageScript::Six,
+                ],
             )?,
             eyes: script(
                 wram,
@@ -713,9 +889,20 @@ fn clicks(began: &FrameRecord, current: &FrameRecord) -> Result<u8, Outcome> {
 }
 
 /// The music's requests the frame asked for: the entries the music queue took since it began.
-fn music_requests(began: &FrameRecord, current: &FrameRecord) -> Result<u16, Outcome> {
-    let next = |record: &FrameRecord| word(&record.wram, MUSIC_QUEUE_NEXT);
-    Ok((next(current)?.wrapping_sub(next(began)?) / 2) & MUSIC_ENTRIES)
+fn music_requests(began: &FrameRecord, current: &FrameRecord) -> Result<Vec<u16>, Outcome> {
+    const QUEUE: WramWord = wram("MUSIC_QUEUE", 0x0619);
+    let first = word(&began.wram, MUSIC_QUEUE_NEXT)? / 2;
+    let last = word(&current.wram, MUSIC_QUEUE_NEXT)? / 2;
+    let length = last.wrapping_sub(first) & MUSIC_ENTRIES;
+    (0..length)
+        .map(|at| table(&current.wram, QUEUE, first.wrapping_add(at) & MUSIC_ENTRIES))
+        .collect()
+}
+
+fn music_code(request: MusicRequest) -> u16 {
+    use game::production::played::front_end::Sound;
+    super::screens::sound_code(Sound::IntroMusic(request))
+        .map_or(0, |[_, low, high]| u16::from_le_bytes([low, high]))
 }
 
 /// Whether the frame returned the equipment lent for the played scenes: her missiles and their
@@ -740,8 +927,6 @@ struct View<'a> {
     part: Part,
     state: &'a IntroState,
     colours: &'a Palette,
-    /// What the frame reported, where the run sees the intro's report.
-    reported: Option<Reported>,
 }
 
 /// What a frame of the intro reported: whether the caret shows, the clicks, the music's
@@ -749,8 +934,74 @@ struct View<'a> {
 struct Reported {
     caret_shown: bool,
     clicks: i64,
-    music: i64,
+    music: Vec<u16>,
     returned: bool,
+}
+
+impl Reported {
+    fn observations(self) -> Vec<Observation> {
+        vec![
+            Observation::quantity("intro.caret.shown", i64::from(self.caret_shown)),
+            Observation::quantity("intro.clicks", self.clicks),
+            Observation {
+                field: "intro.music-requests".into(),
+                bytes: self.music.into_iter().flat_map(u16::to_le_bytes).collect(),
+            },
+            Observation::quantity("intro.equipment-returned", i64::from(self.returned)),
+        ]
+    }
+}
+
+/// The documented scene transitions select these requests. Palette ownership is taken
+/// from the independently observed boss flash timer at the beginning of work.
+fn flashback_outputs(
+    prior: Option<(IntroStage, u16)>,
+    state: &IntroState,
+    colours: &Palette,
+    began: &FrameRecord,
+) -> Result<Vec<Observation>, Outcome> {
+    use IntroStage::{Fight, IntoFight, OutOfFight, PageOneWaits, PageTwoPending, Text};
+    use PictureLayout::{PlainFight, PlainText, SplitBlend};
+    let Some((before, count)) = prior else {
+        return Err(data_failure(None, "flashback preceding finished stage"));
+    };
+    let events: &[IntroEvent] = match (before, state.stage) {
+        (PageOneWaits, IntoFight) => &[
+            IntroEvent::Flashback(FlashbackRequest::StartZebesFight),
+            IntroEvent::Layout(SplitBlend),
+        ],
+        (IntoFight, Fight) => &[
+            IntroEvent::TextCleared,
+            IntroEvent::Layout(PlainFight),
+            IntroEvent::FlashingLightsBegin,
+        ],
+        (Fight, PageTwoPending) => &[IntroEvent::TextUpdates(TextTiles::Paused)],
+        (PageTwoPending, OutOfFight) => &[
+            IntroEvent::Layout(SplitBlend),
+            IntroEvent::TextUpdates(TextTiles::Resumed),
+        ],
+        (OutOfFight, OutOfFight) if count == 1 => &[IntroEvent::Flashback(
+            FlashbackRequest::HideFightSamusAndShots,
+        )],
+        (OutOfFight, Text) => &[IntroEvent::Layout(PlainText)],
+        _ => &[],
+    };
+    let publishes = matches!(
+        (before, state.stage),
+        (PageOneWaits, IntoFight) | (PageTwoPending, OutOfFight)
+    ) || matches!(before, IntoFight | OutOfFight) && count % 4 == 0;
+    let mut outputs = vec![
+        Observation::quantity("intro.frame-finished", 1),
+        event_observation(events),
+        Observation::quantity("intro.palette-published", i64::from(publishes)),
+    ];
+    if publishes {
+        outputs.push(published_palette(colours, false));
+        if before != IntoFight || word(&began.wram, BOSS_FLASH_TIMER)? == 0 {
+            outputs.push(published_palette(colours, true));
+        }
+    }
+    Ok(outputs)
 }
 
 /// The stages the opening holds in, counting the stage's wait down.
@@ -777,8 +1028,13 @@ const fn dissolve_compared(part: Part, stage: IntroStage) -> bool {
         | IntroStage::ToText
         | IntroStage::PageOneLoads
         | IntroStage::PageOneBrightens
-        | IntroStage::PageOneWaits => true,
-        IntroStage::Text => matches!(part, Part::Opening),
+        | IntroStage::PageOneWaits
+        | IntroStage::IntoFight
+        | IntroStage::Fight
+        | IntroStage::PageTwoPending
+        | IntroStage::OutOfFight
+        | IntroStage::PageTwoWaits => true,
+        IntroStage::Text => !matches!(part, Part::LastPages),
         IntroStage::Begins
         | IntroStage::OpeningLoads
         | IntroStage::OpeningBrightens
@@ -857,6 +1113,11 @@ const fn stage_code(stage: IntroStage) -> i64 {
         IntroStage::WaitingForPress => 5,
         IntroStage::FadingOut => 6,
         IntroStage::Done => 7,
+        IntroStage::IntoFight => 22,
+        IntroStage::Fight => 23,
+        IntroStage::PageTwoPending => 24,
+        IntroStage::OutOfFight => 25,
+        IntroStage::PageTwoWaits => 26,
     }
 }
 
@@ -870,6 +1131,7 @@ fn scripts(state: &IntroState) -> Vec<Observation> {
         state.page.map(|page| {
             let which = match page.script {
                 PageScript::One => 1,
+                PageScript::Two => 2,
                 PageScript::Five => 5,
                 PageScript::Six => 6,
             };
@@ -947,36 +1209,43 @@ fn observations(view: &View<'_>) -> Vec<Observation> {
         ),
     ];
     // The opening's and page 1's colours are the setup's load, which no owner here produces.
-    if view.part == Part::LastPages {
-        fields.extend([
-            Observation {
-                field: "intro.colours".to_owned(),
-                bytes: state
-                    .colours
-                    .0
-                    .iter()
-                    .flat_map(|colour| colour.levels.into_iter().chain(colour.steps))
-                    .flat_map(u16::to_le_bytes)
-                    .collect(),
-            },
-            Observation {
-                field: "intro.colours-shown".to_owned(),
-                bytes: view
-                    .colours
-                    .0
-                    .iter()
-                    .flat_map(|colour| colour.bits().to_le_bytes())
-                    .collect(),
-            },
-        ]);
+    if view.part != Part::Opening
+        && !(view.part == Part::Flashback && state.stage == IntroStage::PageOneWaits)
+    {
+        fields.push(Observation {
+            field: "intro.colours".to_owned(),
+            bytes: state
+                .colours
+                .0
+                .iter()
+                .flat_map(|colour| colour.levels.into_iter().chain(colour.steps))
+                .flat_map(u16::to_le_bytes)
+                .collect(),
+        });
     }
-    fields.extend([
-        quantity("intro.height", i64::from(state.height)),
-        quantity(
-            "intro.baby.y",
-            state.baby.map_or(-1, |baby| i64::from(baby.y.0)),
-        ),
-    ]);
+    if view.part == Part::LastPages {
+        fields.push(Observation {
+            field: "intro.colours-shown".to_owned(),
+            bytes: view
+                .colours
+                .0
+                .iter()
+                .flat_map(|colour| colour.bits().to_le_bytes())
+                .collect(),
+        });
+    }
+    if view.part == Part::Flashback {
+        fields.push(quantity(
+            "intro.fight-visible",
+            i64::from(state.fight == FightVisibility::InFront),
+        ));
+    } else {
+        fields.push(quantity("intro.height", i64::from(state.height)));
+    }
+    fields.push(quantity(
+        "intro.baby.y",
+        state.baby.map_or(-1, |baby| i64::from(baby.y.0)),
+    ));
     fields.extend(scripts(state));
     let caret_at = state.caret.map(|caret| caret.place);
     fields.extend([
@@ -989,21 +1258,11 @@ fn observations(view: &View<'_>) -> Vec<Observation> {
             caret_at.map_or(-1, |place| i64::from(place.y.0)),
         ),
     ]);
-    if let Some(reported) = &view.reported {
-        fields.push(quantity(
-            "intro.caret.shown",
-            i64::from(reported.caret_shown),
-        ));
-    }
     fields.push(glows_observed(&state.glows));
     fields.push(quantity(
         "intro.click-turn",
         i64::from(state.click == ClickTurn::On),
     ));
-    if let Some(reported) = &view.reported {
-        fields.push(quantity("intro.clicks", reported.clicks));
-        fields.push(quantity("intro.music-requests", reported.music));
-    }
     fields.extend(brightness(state.brightness));
     fields.push(quantity(
         "intro.fade-count",
@@ -1013,12 +1272,6 @@ fn observations(view: &View<'_>) -> Vec<Observation> {
             -1
         },
     ));
-    if let Some(reported) = &view.reported {
-        fields.push(quantity(
-            "intro.equipment-returned",
-            i64::from(reported.returned),
-        ));
-    }
     fields
 }
 

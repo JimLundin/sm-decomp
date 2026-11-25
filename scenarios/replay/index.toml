@@ -1200,3 +1200,23 @@ provider = "independent-native-hud-tail-opportunities"
 fields = ["hud-clock", "quiet-item-controls", "stock-at-start", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers", "main-gameplay-countdown"]
 phase = "each frame, after Health"
 claim = "unselected neighbour inputs only; the status bar reads whole energy from the frame's Health; her stock as the first frame begins is the origin record's and as the second begins the first frame's drawn stock; the origin's main gameplay runs the escape countdown"
+
+[[case]]
+id = "intro/flashback-from-page-one"
+kind = "scoped"
+row = "any-intro-0568"
+start = { source = "cache-cut", frame = 1650 }
+end = { cut_inclusive = 2948 }
+rules = ["screens-intro/BattleBegins", "screens-intro/BattleDissolves", "screens-intro/PageTwoBegins", "screens-intro/PageTwoEnds"]
+profile = "reference"
+responsibilities = ["intro"]
+content = "player-rom-import"
+inputs = "scoped-intro-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["intro.state"], outputs = ["intro.publications"] }
+checkpoints = false
+limits = ["The last finished cut of page 1 supplies the sole seed and latched press. Production carries State through interrupted cut 1651 in the next record row.", "Compares the intro through the last finished cut of page 2. The fight room, demo, Samus, weapons, encounter and rendering need their own cases.", "The boss owns sprite palette 7 during its hurt flash. Intro palette comparison covers the other entries on those cuts."]
+borrowed = [
+  { dependency = "platform", provider = "pinned NMI completion", fields = ["work finished"], phase = "cut", claim = "only the intro is dispatched" },
+  { dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work", claim = "audio service is outside this scope" },
+  { dependency = "Zebes encounter", provider = "pinned boss hold count and callback", fields = ["ready to return"], phase = "after room play", claim = "the intro consumes the independently observed encounter cue" },
+]

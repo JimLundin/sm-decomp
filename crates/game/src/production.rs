@@ -39,6 +39,8 @@ pub use movement::MovementInputs;
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scope {
+    /// The complete intro with a selected encounter input.
+    Intro,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
     /// Scoped Health and its late Drawing and HUD consumers.
@@ -70,6 +72,8 @@ pub enum Scope {
 /// Complete initial state, admitted once rather than reconstructed each cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionSeed {
+    /// The complete intro and its displayed palette.
+    Intro(Box<played::intro::State>),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
     /// Complete current Health, Drawing history and gauge from a single origin.
@@ -100,6 +104,8 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
+    /// An intro work-frame boundary.
+    Intro(played::intro::FrameEnd),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -168,6 +174,8 @@ pub enum AdvanceInput<'a> {
 /// Fresh complete outputs from the selected entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionOutputs {
+    /// The intro's completed frame publications, if work finished.
+    Intro(Option<Box<screens_intro::Report>>),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -232,6 +240,8 @@ pub enum AdmissionFault {
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
+    /// A required continuation beyond the intro scene provided here.
+    Intro(played::intro::Fault),
     /// A weapon impact cue needs its qualified sender mapping.
     WeaponImpactSound,
     /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
@@ -320,6 +330,7 @@ impl Production {
         rules: ProductionRules,
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
+            ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
@@ -391,6 +402,7 @@ impl Production {
     #[must_use]
     pub const fn scope(&self) -> Scope {
         match self.state {
+            OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
@@ -500,7 +512,8 @@ impl Production {
         match &self.state {
             OwnedState::Audio(state) => Some(&state.0),
             OwnedState::MovementTouchdown(state) => Some(&state.audio.0),
-            OwnedState::Connected(_)
+            OwnedState::Intro(_)
+            | OwnedState::Connected(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::WeaponsContact(_)
@@ -528,7 +541,8 @@ impl Production {
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
-            OwnedState::Blocks(_)
+            OwnedState::Intro(_)
+            | OwnedState::Blocks(_)
             | OwnedState::Progress(_)
             | OwnedState::Hud(_)
             | OwnedState::Ceres(_)
@@ -616,7 +630,12 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
-        Scope::Blocks | Scope::Progress | Scope::Hud | Scope::Ceres | Scope::Doors => Ok(()),
+        Scope::Intro
+        | Scope::Blocks
+        | Scope::Progress
+        | Scope::Hud
+        | Scope::Ceres
+        | Scope::Doors => Ok(()),
     }
     .map_err(AdmissionFault::StatePin)
 }

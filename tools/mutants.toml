@@ -993,3 +993,27 @@ after = "                &[[interface_hud::PreviewCell::Empty; 5]; 3],"
 case = "played any-ceres-arrival 0 222"
 cut = 184
 field = "hud.map-window"
+
+[[fault]]
+name = "intro-drops-zebes-start"
+responsibility = "intro"
+file = "crates/game/src/production/played/intro.rs"
+before = "    Ok(report)"
+after = '''    let mut report = report;
+    report.events.retain(|event| *event != screens_intro::IntroEvent::Flashback(FlashbackRequest::StartZebesFight));
+    Ok(report)'''
+case = "intro/flashback-from-page-one"
+cut = 1652
+field = "intro.events"
+
+[[fault]]
+name = "intro-finishes-without-encounter-reply"
+responsibility = "intro"
+file = "crates/game/src/production/played/intro.rs"
+before = """    let reply = room_play(&room)?;
+    let report = room.finish(reply);"""
+after = """    let _reply = room_play(&room)?;
+    let report = room.finish(FightReply::Fighting);"""
+case = "intro/flashback-from-page-one"
+cut = 2170
+field = "intro.stage"

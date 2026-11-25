@@ -1,8 +1,7 @@
-//! The intro (screens-intro) from the frame end the options hand on to it at: its opening and
-//! page 1, through the intro's own adapter.
+//! The front end sends completed work to the intro adapter with integrated encounter selection.
 
 use super::{Answers, Content, Fault, Screen, Sound, Stepped, Work};
-use crate::production::played::intro::{self, FrameEnd, State};
+use crate::production::played::intro::{self, FightInput, FrameEnd, State};
 use screens_intro::{IntroEvent, Rules};
 
 /// One frame end of the intro. Each finished frame of work drew the random number as it began.
@@ -18,6 +17,7 @@ pub(super) fn step(
         Work::Finished(pressed) => FrameEnd::Finished {
             pressed: pressed.values().any(|&down| down),
             track: answers.track(),
+            fight: FightInput::Integrated,
         },
         Work::FinishedTwice(_) => return Err(Fault::TwoFinished),
     };

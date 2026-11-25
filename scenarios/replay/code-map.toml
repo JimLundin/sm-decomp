@@ -455,3 +455,39 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/health_tail.rs" },
   { role = "navigation", path = "crates/verify/src/replay/health_tail/observations.rs" },
 ]
+
+[[rule]]
+id = "screens-intro/BattleBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/flashback.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/indexed.rs" },
+]
+
+[[rule]]
+id = "screens-intro/BattleDissolves"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/dissolve.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/indexed.rs" },
+]
+
+[[rule]]
+id = "screens-intro/PageTwoBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/flashback.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/indexed.rs" },
+]
+
+[[rule]]
+id = "screens-intro/PageTwoEnds"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/pages.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/indexed.rs" },
+]

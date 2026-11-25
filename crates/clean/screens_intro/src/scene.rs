@@ -3,6 +3,10 @@
 
 use types::intro::{ClickTurn, Glows, IntroState};
 
+/// The height the scene's picture settles at, px: where page 1's picture stands
+/// (`PageOneIsMadeReady`), and where the baby's rise stops it (`BabyRises`).
+pub const SETTLED_PICTURE_HEIGHT: i16 = 8;
+
 /// Everything of the scene cleared: the dissolve's count 0, the picture's height 0, no baby, no
 /// page, no eyes, no caret, no glow, the click turn off.
 pub fn clear_scene(state: &mut IntroState) {

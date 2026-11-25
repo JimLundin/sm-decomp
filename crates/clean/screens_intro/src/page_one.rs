@@ -1,16 +1,17 @@
 //! Page 1 (`PageOneIsMadeReady`, `PageOneBegins`): made ready in the dark, it starts to type
 //! once the pages' tune has loaded, while the picture slowly brightens beside Samus's blinking
-//! eyes. Its end (`PageEnds`) is a page's signal.
+//! eyes. Its end (`PageEnds`) is a page's signal, and the press that follows begins the battle on
+//! Zebes (`flashback`).
 
 use types::intro::{EyesScript, FadeFrames, IntroStage, IntroState, PageScript, ScriptPlace};
 
-use crate::baby::SETTLED_HEIGHT;
 use crate::content::IntroContent;
 use crate::dissolve::DISSOLVE_FROM;
 use crate::fade::{FadeWay, Fading, slow_fade};
 use crate::music::{TrackReply, Tune, tune_asked_to_follow};
 use crate::pages::{caret_at_home, place_page};
 use crate::report::{IntroEvent, Report};
+use crate::scene::SETTLED_PICTURE_HEIGHT;
 
 /// `PageOneIsMadeReady`: in the dark, the text cleared and no page; the dissolve's count 127,
 /// which the next part's dissolve starts from; the picture standing at 8; Samus's eyes blinking
@@ -21,7 +22,7 @@ pub fn page_one_is_made_ready(state: &mut IntroState, content: &IntroContent, re
     report.events.push(IntroEvent::TextCleared);
     state.page = None;
     state.dissolve = DISSOLVE_FROM;
-    state.height = SETTLED_HEIGHT;
+    state.height = SETTLED_PICTURE_HEIGHT;
     state.eyes = Some(ScriptPlace::start(EyesScript::Blinking));
     caret_at_home(state, content);
     report.music.extend(tune_asked_to_follow(Tune::Pages));

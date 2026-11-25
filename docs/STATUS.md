@@ -367,8 +367,8 @@ Limits: the equipment the model lends is reported but compared by neither run, a
 has no owner in the loop; the tunes' start delays (8 and 14 frames) are checked by neither run,
 because this run counts the music's requests, the power-on run's queue code is the same for
 every tune played, and whether a track waits is read from the record, so a wrong delay never
-feeds back. The press while page 1 waits starts the battle, part (b), which the
-intro's adapter refuses (`BattleBegins`).
+feeds back. The press while page 1 waits starts the battle. A finished frame with that
+press needs the Zebes room and returns `Intro(ZebesFightRoom)` in integrated play.
 
 Planted faults: the adapter ignoring audio's reply (none waits) differs
 at cut 55 in `intro.stage` (from power-on, cut 623); page 1's end imported as page 5's wait
@@ -484,11 +484,20 @@ the intro's opening and page 1 (screens-intro, through the intro's adapter) with
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
 intro in the State `Begins`. The run holds 2,219 cuts, through `any-intro-2219`'s cut 0, and
-stops at cut 2,220 with `Intro(BattleBegins)`: the press while page 1 waits starts the battle on
-Zebes, part (b) of the intro, not yet owned. From cut 568 the intro's own fields are compared
-beside the front end's, as the intro's run compares them, but the report's: the front end's
-sounds compare the intro's clicks and music requests (but the stops, which the queue holds as
-empty entries), and whether the caret shows is not compared from power-on.
+stops at cut 2,220 with `Intro(ZebesFightRoom)`. The press after page 1 makes the
+intro request the fight. The Zebes room, demo controls and encounter must run on that
+work frame. From cut 568 the run compares the intro State alongside the front end's
+fields. The front end compares clicks and queued music entries. Music stops use empty
+entries, and only the scoped intro runs compare them and the caret's picture.
+
+The scoped case `intro/flashback-from-page-one` admits the last finished cut of page 1
+and its latched pad. It carries the intro through the interrupted cut in the next row
+and through page 2's wait. It compares 1,293 finished cuts and five interrupted cuts,
+with 37,507 State fields and 9,186 outputs. Holding the seed matches the five interrupted
+cuts and no finished cuts. The scoped frame borrows the encounter's return cue from
+its explosion hold and callback. It compares the intro's requests before their
+consumers. The boss's active hurt flash owns sprite palette 7 on two palette
+publication cuts. The durable intro checkpoint codec remains unavailable.
 
 From cut 271 it compares the screen, the game state and the count of finished frames at every
 cut; at finished cuts, the random number, the sounds against the queues (accumulated over each

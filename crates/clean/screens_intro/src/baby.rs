@@ -6,9 +6,8 @@ use core::num::Wrapping;
 use types::intro::{IntroStage, IntroState};
 
 use crate::dissolve::on_beat;
+use crate::scene::SETTLED_PICTURE_HEIGHT;
 
-/// `BabyRises`, `PageOneIsMadeReady`: the height the scene's picture stands at once settled, px.
-pub const SETTLED_HEIGHT: i16 = 8;
 /// The baby's x on the screen, px.
 pub const BABY_X: u16 = 112;
 
@@ -26,7 +25,7 @@ pub fn baby_leaves(state: &mut IntroState) {
 pub fn baby_rises(state: &mut IntroState) {
     let rising = state.stage == IntroStage::ToScene
         && on_beat(state.dissolve)
-        && state.height < SETTLED_HEIGHT;
+        && state.height < SETTLED_PICTURE_HEIGHT;
     if !rising {
         return;
     }

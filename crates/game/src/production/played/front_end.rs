@@ -3,11 +3,11 @@
 //! From the console's power-on the boot runs (`power_on`, screens-boot's power-on) until the
 //! game settles. On the first frame that finishes then, the title begins (`title`), and each
 //! screen hands on to the next at its way out: file select (`file_select`), then the options
-//! menu (`options`), then the intro (`intro`), its opening and page 1, until a press while page 1
-//! waits starts the battle on Zebes, a later piece. From the title on,
+//! menu (`options`), then the intro (`intro`). The intro asks for the Zebes encounter at the
+//! press after page 1. From the title on,
 //! the frame owner's [`Counts`] carry the count of finished frames and the random number, and
-//! owners outside the rungs answer through [`Answers`]. Room play joins this State once the
-//! intro and the parts after it hand on.
+//! owners outside the rungs answer through [`Answers`]. The front end stops when the intro
+//! needs the Zebes room and encounter.
 
 mod file_select;
 mod intro;

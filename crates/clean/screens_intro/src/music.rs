@@ -1,5 +1,5 @@
-//! The music the intro asks audio for (`IntroBegins`, `OpeningUnfolds`, `PageOneIsMadeReady`),
-//! and audio's reply that a tune asked for still waits to load (`OpeningUnfolds`,
+//! The music the intro asks audio for (`IntroBegins`, `OpeningUnfolds`, `PageOneIsMadeReady`,
+//! and the stop as page 6 begins, `PressTurnsThePage`), and audio's reply that a tune asked for still waits to load (`OpeningUnfolds`,
 //! `PageOneBegins`).
 
 /// Each music request is asked 8 frames ahead unless it names a longer delay.

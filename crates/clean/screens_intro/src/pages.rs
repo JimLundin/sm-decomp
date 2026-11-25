@@ -1,18 +1,20 @@
 //! The pages (`PageFiveBegins`, `LetterIsTyped`, `LetterGlows`, `CaretBlinks`, `PageEnds`,
-//! `PressTurnsThePage`): each page is typed letter by letter, each letter glowing as it appears,
+//! `PageTwoEnds`, `PressTurnsThePage`): each page is typed letter by letter, each letter glowing
+//! as it appears,
 //! every other letter clicking and the caret running ahead; at its end the page waits for a
 //! press, or holds while the picture fades out.
 
 use core::num::Wrapping;
 
 use types::intro::{
-    Caret, CaretScript, ClickTurn, ColourSet, EyesScript, FadingColour, FadingColours, Glow,
-    IntroStage, IntroState, PageScript, ScriptPlace, TextPlace,
+    Caret, CaretScript, ClickTurn, ColourSet, EyesScript, Glow, IntroStage, IntroState, PageScript,
+    ScriptPlace, TextPlace,
 };
 use types::{Pair, Px};
 
 use crate::content::IntroContent;
-use crate::dissolve::{DISSOLVE_FROM, at_full, shown};
+use crate::dissolve::dissolve_begins;
+use crate::music::MusicRequest;
 use crate::report::{IntroEvent, Recoloured, Report};
 use crate::rules::Rules;
 use crate::script::{Letter, Shows, Signal, Step};
@@ -24,35 +26,27 @@ const GLOW_HOLD: u16 = 5;
 /// A space: typed and glowing like any letter, but never clicking.
 const SPACE: char = ' ';
 
-/// `PageFiveBegins`: the stage turns toward the text and page 5 begins. Every colour is set at
-/// its full level, its step its full level × 8, then the text's colours at 0, and the colours
-/// shown are all taken; the dissolve's count starts from 127.
+/// `PageFiveBegins`: the stage turns toward the text and page 5 begins; the dissolve begins with
+/// the text's colours black.
 pub fn page_five_begins(state: &mut IntroState, content: &IntroContent, report: &mut Report) {
     state.stage = IntroStage::ToText;
     begin_page(state, PageScript::Five, content);
-    state.colours = FadingColours(content.full.0.map(at_full));
-    for &index in &content.text {
-        if let Some(colour) = state.colours.colour_mut(index) {
-            colour.levels = FadingColour::STILL_BLACK.levels;
-        }
-    }
-    report.colours = Some(shown(&state.colours));
-    state.dissolve = DISSOLVE_FROM;
+    dissolve_begins(state, content, &content.text, report);
 }
 
 /// `PressTurnsThePage`: the text is cleared, page 6 begins, Samus's eyes start to stare from
-/// their script's start and the music is asked to stop.
+/// their script's start, and one stop joins the music's requests.
 pub fn press_turns_the_page(state: &mut IntroState, content: &IntroContent, report: &mut Report) {
     state.stage = IntroStage::Text;
     report.events.push(IntroEvent::TextCleared);
     begin_page(state, PageScript::Six, content);
     state.eyes = Some(ScriptPlace::start(EyesScript::Staring));
-    report.events.push(IntroEvent::MusicStops);
+    report.music.push(MusicRequest::Stop);
 }
 
 /// A page begins: its script placed (`place_page`), and the caret at its home on its steady
 /// script (`caret_at_home`).
-const fn begin_page(state: &mut IntroState, page: PageScript, content: &IntroContent) {
+pub const fn begin_page(state: &mut IntroState, page: PageScript, content: &IntroContent) {
     place_page(state, page);
     caret_at_home(state, content);
 }
@@ -73,7 +67,8 @@ pub const fn caret_at_home(state: &mut IntroState, content: &IntroContent) {
 
 /// A signal a script hands the scene. `PageFiveBegins`: the baby's page 5, taken while the scene
 /// shows. `PageEnds`: wait for a press (page 5's, or page 1's before the fight), or finish and
-/// start the fade from the rhythm `d`. `CaretBlinks`: the caret blinks while the page waits.
+/// start the fade from the rhythm `d`. `PageTwoEnds`: wait for the press before the baby's
+/// discovery. `CaretBlinks`: the caret blinks while the page waits.
 pub const fn take_signal(state: &mut IntroState, signal: Signal, rules: Rules) {
     match signal {
         Signal::PageFive => {
@@ -87,6 +82,10 @@ pub const fn take_signal(state: &mut IntroState, signal: Signal, rules: Rules) {
         }
         Signal::WaitForPressThenFight => {
             state.stage = IntroStage::PageOneWaits;
+            caret_blinks(state);
+        }
+        Signal::WaitForDiscovery => {
+            state.stage = IntroStage::PageTwoWaits;
             caret_blinks(state);
         }
         Signal::CaretBlinks => caret_blinks(state),

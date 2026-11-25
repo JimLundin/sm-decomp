@@ -47,6 +47,8 @@ impl Pinned for AppearancePin {
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
+    /// Complete intro State and the displayed palette.
+    Intro(Box<crate::production::played::intro::State>),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Complete Health and qualified late consumer continuation.

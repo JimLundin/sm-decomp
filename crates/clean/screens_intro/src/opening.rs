@@ -21,7 +21,9 @@ pub fn intro_begins(state: &mut IntroState, report: &mut Report) {
     state.brightness = Brightness::BLANKED;
     state.fade = FadeFrames::AS_THE_INTRO_BEGINS;
     report.music.extend(tune_asked_for(Tune::OpeningFirst));
-    report.events.push(IntroEvent::Equipment(Equipment::LENT));
+    report
+        .events
+        .push(IntroEvent::EquipmentSet(Equipment::LENT));
 }
 
 /// `OpeningUnfolds`: once no track waits, the first tune has loaded and the words start to

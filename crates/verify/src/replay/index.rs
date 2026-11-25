@@ -26,6 +26,8 @@ pub enum CaseKind {
 #[serde(rename_all = "kebab-case")]
 /// An existing selected production owner.
 pub enum Responsibility {
+    /// The intro stage, scripts and their frame publications.
+    Intro,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -138,6 +140,8 @@ pub struct End {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
+    /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
+    ScopedIntroInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -217,6 +221,12 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Intro stage, scripts, dissolves, visibility and brightness.
+    #[serde(rename = "intro.state")]
+    IntroState,
+    /// Intro encounter, layout, text, sound and palette publications.
+    #[serde(rename = "intro.publications")]
+    IntroPublications,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -634,9 +644,12 @@ pub enum IndexFault {
 }
 
 fn rule_exists(rule: &str) -> bool {
-    samus_movement::CATALOGUE
+    screens_intro::catalogue()
         .iter()
-        .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
+        .any(|(id, _)| rule == format!("screens-intro/{id:?}"))
+        || samus_movement::CATALOGUE
+            .iter()
+            .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
         || audio_transport::catalogue::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("audio-transport/{id:?}"))
@@ -688,6 +701,7 @@ fn rule_exists(rule: &str) -> bool {
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
+        O::IntroState | O::IntroPublications => Responsibility::Intro,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
@@ -775,6 +789,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         return Some(Responsibility::AudioSender);
     }
     [
+        ("screens-intro/", Responsibility::Intro),
         ("samus-movement/", Responsibility::Movement),
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
@@ -794,6 +809,10 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
 fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "screens-intro/BattleBegins"
+        | "screens-intro/BattleDissolves"
+        | "screens-intro/PageTwoBegins"
+        | "screens-intro/PageTwoEnds" => &[O::IntroState, O::IntroPublications],
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
@@ -1070,6 +1089,21 @@ fn early_map_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
+fn intro_provider_valid(case: &Case, recorded: bool) -> bool {
+    recorded
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::ScopedIntroInputs
+        && matches!(case.start, Start::CacheCut { frame: 1650 })
+        && case.row == "any-intro-0568"
+        && case.end.cut_inclusive == 2948
+        && case.expectations.fields == [ObservationId::IntroState]
+        && case.expectations.outputs == [ObservationId::IntroPublications]
+        && case.expectations.output_cut.is_none()
+        && !case.checkpoints
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::EarlyMapInputs {
@@ -1108,6 +1142,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             Responsibility::Appearance,
             Responsibility::AudioSender,
         ] => touchdown_provider_valid(case),
+        [Responsibility::Intro] => intro_provider_valid(case, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Ceres] => {
