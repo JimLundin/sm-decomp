@@ -861,7 +861,9 @@ indicator: the fit is score ÷ budget, and being over it costs in proportion to 
 as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
-  SwitchClick, OneShotFlash, IconsAppear, EscapeCountdown
+  SwitchClick, OneShotFlash, IconsAppear
+- Area countdown: 5.1, EscapeCountdown, CountdownBegins, CountdownWaits, CountdownTicks,
+  CountdownRunsOut, CountdownSlides, CountdownShown
 - Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
 - Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, OutOfPlay,
   BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift
@@ -901,24 +903,154 @@ arms, and adds one: `Switching`'s report of the selection after the controls. `C
 stock as the frame begins changes an arm's words, not its count. 73.3 → 64.3 units, 21 entries,
 47 arms.
 
-Budget: 37.5 × 64.3 units = 2,412 (status 825, selection 412, minimap 1,175)
+The countdown's running (§The escape countdown) adds six entries and nine arms with
+`EscapeCountdown` in a new area, countdown, which has no old code (the old engine had no
+countdown owner): the rhythm's table (one cell term), the clamps and the subtractions. 64.3 →
+76.7 units, 27 entries, 55 arms; status loses `EscapeCountdown`'s unit.
+
+Budget: 37.5 × 76.7 units = 2,874 (status 787, countdown 500, selection 412, minimap 1,175)
 
 
-## Dormant escape countdown contract
+## The escape countdown
 
 `EscapeCountdown` is the countdown's ownership boundary: the current countdown, its expiry
-answer and its picture contribution belong together, independently of energy, her protection
-from hits, animation and the HUD's display values.
+answer and its picture belong together, independently of energy, her protection from hits,
+animation and the HUD's display values. The amendment for the countdown running (spec §5.1:
+`CountdownBegins`, `CountdownWaits`, `CountdownTicks`, `CountdownRunsOut`, `CountdownSlides`,
+`CountdownShown`) defines every countdown the station's escape shows, from Ridley's start to the
+elevator, and its running out, which no record reaches.
 
-Sources: [bank 80](https://patrickjohnston.org/bank/80), process timer at $80:9DE7,
-timer drawing at $80:9F6C and $80:9FB3; the gameplay scene wrapper's call of the countdown
-and its two current status reads. Current status is $0943: zero means Dormant. The model stores
-the semantic Dormant quantity, not a raw status word. A nonzero status requires unsupported
-admission until the active rules are observed and specified. Carry clear from the timer's
-processing means NoExpiry; the current zero status suppresses timer presentation. These codes
-and call relationships stay outside the clean specification. The spec's `the countdown runs`
-input is whether the scene's routine calls the timer's processing that frame
-(`MaintainCountdown`) or only its drawing (`PresentationOnly`).
+### How it was made
+
+Behaviour first, from CI's lean record cache (`$SM_CACHE`, rows `chain-any-0006-E0B5` from cut
+1,000 to `chain-any-0011-DF45` cut 240), read per frame by
+`$TEMP/collab/hud-countdown/tl.py` (game state, the countdown's words below, the hack handler
+`0A5A`, both frame counters) and `oam.py` (the countdown's sprites in the OAM buffer). The bank
+logs (80, 82, 90, A6; local copies in `$TEMP/collab/escape-survey/ref/`) then pinned the
+arithmetic: the rhythm's table, the wait and hold counts, the slide's steps and clamps, the BCD
+borrow and the expiry's carry. Seen in the records: Ridley starts it at cut 1,586 (movie 11,749),
+it shows 1'00"00 in the screen's middle, holds 16 frames, runs from cut 1,603, slides from
+`chain-any-0007-E06B` cut 72 and reaches the corner at `chain-any-0008-E021` cut 81 (the right at
+80); it stands still through every passage and from the elevator (`chain-any-0011-DF45` cut 164,
+49"14) to the explosion's start (cut 241), where the game clears it.
+
+### Sources per entry
+
+| Entry | Source |
+| --- | --- |
+| EscapeCountdown | process timer `$80:9DE7` with status 0 (`$80:9E1A`: carry clear); `$90:E10A` (no draw at status 0) |
+| CountdownBegins | `$A6:C126`..`$A6:C129` (Ridley's self-destruct function Ch sets status 1); `$80:9E09` (`$80:9E93` clears the place to 8000h, 8000h and the time, `$80:9E8C` sets 1'00"00, status 8003h); Mother Brain's start `$80:9E1C` (status 2: 3'00"00) |
+| CountdownWaits* | `$80:9E2F` (status 3: the place's low byte counts 1 to 10h, then status 4; carry clear, no decrement) |
+| CountdownTicks | `$80:9E41` (status 4: the count 10h to 60h, then the low byte cleared and status 5, then the decrement), `$80:9E89` (status 6), `$80:9EA9` (decimal SBC of `$80:9EEC + (05B6 & 7Fh)` from `0945`, borrow into `0946`, then `0947` with seconds set to 59h) |
+| CountdownRunsOut | `$80:9EA9`: minutes borrowing past 0 zero all three bytes (`$80:9ED7`); carry set when `0945`/`0946`/`0947` are all 0 (`$80:9EE2`); `$90:E0EA`..`$90:E106` (game state 23h, white target palettes, handler `$E114`, palette effects off: the scene's) |
+| CountdownSlides | `$80:9E58` (x + E0h to DC00h, y − C1h (`ADC #$FF3F`) to 3000h, status 6 when both clamp) |
+| CountdownShown | `$90:E10A`..`$90:E10F` and `$90:E114` (draw when status ≠ 0); `$82:836A`, `$82:838B` (game states 20h, 21h draw before main gameplay, whose locked handler doesn't call `$90:E097`); `$80:9F6C`, `$80:9F95`, `$80:9FB3` (the place's high bytes, the TIME spritemap `$80:A060`, the digits `$80:9FD4` at −28, −4 and +20 from x, palette 5); the doors' `$82:E24A`, `$82:E292` |
+
+`scan.sh --mirror` finds 5 of the spec's 27 entries single-routine (18 %, limit 30 %): of these
+seven, `CountdownWaits` (marked *), a branch of the countdown's step.
+
+### State and inputs
+
+| Quantity | RAM | Decode |
+| --- | --- | --- |
+| current countdown | `0943` low byte (timer status) | 0 `Dormant`; 3, 4, 5, 6 `Begun`; 1 and 2 (a start not yet taken: set by Ridley or Mother Brain and taken by the same frame's countdown, never at a cut in the records) refuse admission. `0944` (80h from the start's 8003h) is read by nothing in our scope: not State |
+| time left | `0947` minutes, `0946` seconds, `0945` hundredths, each a BCD byte | as is; a byte whose nibbles aren't decimal or seconds over 59 refuse admission |
+| age | `0948` low byte at status 3 and 4 (counts 0 to 10h, then to 60h); 96 at status 5 and 6 | as is |
+| place | `0948` (x) and `094A` (y), 8.8 fixed, whole pixels in the high byte | at status 3 and 4, x is `0948`'s high byte with the fraction 0 (its low byte is the age) and y is `094A` (8000h); at 5 and 6 both as they are |
+| the countdown runs | `0A5A` = `$E0E6` (also `$E12E`, `$E1C8`, the push, which process it too) and her new state handler calling `$90:E097` (`$E725` normal, `$E8AA` Ceres) | `MaintainCountdown` on a frame of play whose record N has game state 8 in the station; `PresentationOnly` at game states 20h and 21h (the locked handler `$E8DC` doesn't call it; the game state draws it) and once `0A5A` = `$E114` after expiry |
+| the countdown starts | `0943` 0 at record N and nonzero at N+1, in a frame of play | the start, at the time record N+1 holds (`1'00"00`); borrowed until B8's self-destruct sequence raises it |
+| the count of finished frames | `05B6` at record N | as is; the frame's index is its low 7 bits (`AND #$7F`) |
+| expiry answer | game state `0998` at N+1 | Expired when it is 23h (set by `$90:E0EC` that frame); else NoExpiry |
+| countdown picture | the OAM buffer `$7E:0370` (with the high table `$7E:0570`) | the TIME label's tile 1F8h sits at (x − 16, y − 16); each digit's lower tile 1EAh + d at x − 32, x − 24 (minutes), x − 8, x (seconds), x + 16, x + 24 (hundredths), row y. The sprite encoder's (E1) to compare; the reference reads it as a cross-check |
+
+### Recorded cases
+
+| Case | Row, cuts (records N to the last) |
+| --- | --- |
+| R-countdown-start | `chain-any-0006-E0B5` 1,585 → 1,586 |
+| R-countdown-wait | `chain-any-0006-E0B5` 1,586 → 1,590 |
+| R-countdown-wait-ends | `chain-any-0006-E0B5` 1,600 → 1,603 |
+| R-countdown-first-ticks | `chain-any-0006-E0B5` 1,603 → 1,606 |
+| R-countdown-second-turns | `chain-any-0007-E06B` 51 → 53 |
+| R-countdown-hold-ends | `chain-any-0007-E06B` 69 → 72 |
+| R-countdown-x-corner | `chain-any-0008-E021` 78 → 81 |
+| R-countdown-in-place | `chain-any-0008-E021` 81 → 83 |
+| R-countdown-elevator | `chain-any-0011-DF45` 164 → 166 (game state 20h) |
+
+`gen.py` wrote them from the records and checked each frame's after against the next record's
+decoded countdown and its picture against the OAM buffer. Each holds RAM values only: the time,
+age, place, the count of finished frames, the answer and the picture's place and digits. The
+constructed cases are worked by hand from the bank logs as cited above (`$80:9EEC`'s cells for
+each count used, the clamps of `$80:9E58`, `$80:9ED7`'s zeroing).
+
+### Reference model
+
+`$TEMP/collab/hud-countdown/model.py` runs a frame in the spec's terms (time left as
+hundredths, age, place in 1/256ths, the rhythm); `vecrun.py` runs every `[[countdown]]` vector:
+29 of 29 agree (10 recorded, 19 constructed; the admission case refused). `records_run.py` runs
+it per pair over the rows above, game state 22h (the explosion) left out, with lag pairs (`05B6`
+unchanged, or a cut other than `R`) as no frame:
+
+| Part | Pairs | Model | Null (unchanged) |
+| --- | ---: | ---: | ---: |
+| the countdown's State, every pair (frames of play and passages) | 2,144 | 2,144 | 1,478 |
+| frames of play: State, answer and the picture against OAM | 1,325 | 1,325 | 675 |
+| frames of play with the countdown begun (cut 1,586 to the elevator's last) | 740 | 740 | 74 |
+
+Planted faults (`model.py`'s `faults`), each failing: the rhythm a count late (10 vectors;
+records 1,704 of 2,144, first at `chain-any-0006-E0B5` 1,603); the slide a frame early
+(R-countdown-hold-ends; records first at `chain-any-0007-E06B` 71); y not stopped at 48
+(8 vectors; records first at `chain-any-0008-E021` 81); no run on the frame the wait ends
+(R-countdown-wait-ends; records at 1,603); running out only below zero
+(C-countdown-expire-exact; no record runs out, so the records can't catch it); the age rising
+on a frame that only shows the countdown (C-countdown-shown-in-wait, C-countdown-shown-in-hold;
+the records' show-only frames are all at age 96, so they can't catch it). C-countdown-rhythm-all
+pins every cell of the rhythm: a change to any one cell fails it.
+
+### Harness note
+
+Compared, at each cut of a frame of play: the current countdown (Dormant, or the time's three
+bytes, the age and the place's two words as decoded above) and the expiry answer. The picture is
+the sprite encoder's to compare (OAM is E1's; the played runs don't compare it yet); its place
+and digits follow from the State as the spec states, and the reference matched them on all
+1,325 frames. Through a passage (game states 9, Ah, Bh) the countdown is compared unchanged; the
+doors decide on which frames of work it is drawn (world-doors `WhatRuns`: every frame of work
+but the contents' draws it while it runs, the first frame of work among them, as the door
+setup's own draw does). No mask: in these rows every field is written only by the
+countdown's own rules (of the writers of `0943` in the bank logs read, the others are the clears
+`$82:83F0`, `$82:8476` and `$82:850C`, in game states outside play, and the new game's
+`$80:A08E`).
+
+### Harness contract
+
+For the integrator, for the played rows of the survey's round 2:
+
+- **Rows.** `chain-any-0007-E06B` 0–95 and `chain-any-0008-E021` 0–99 (room 5 and room 4, the
+  slide begins at 0007's cut 72 and ends at 0008's 81), with world-quake's active quakes; then
+  their passages (0007 96–258, 0008 100–263), where the countdown stands still. The same holds in
+  `chain-any-0009-DFD7`, `chain-any-0010-DF8D` and `chain-any-0011-DF45` 0–163 (in place, running)
+  once their rooms play, and 164–240 (only shown) with the station's end.
+- **Admission.** Decode the countdown from the seed's record (§State and inputs) once, into the
+  HUD's State; carry it without oracle feedback. Status 1 or 2, or a time whose bytes aren't
+  decimal or whose seconds pass 59, is Unsupported before any effect. A seed whose countdown is
+  Dormant stays as today.
+- **Each frame of play.** `the countdown runs` is `MaintainCountdown` on main gameplay in the
+  station (`0A5A` = `$E0E6`, through her normal or Ceres new state handler, and the push
+  handlers `$E12E` and `$E1C8` as Ridley pushes her aside, which process the timer too and
+  ignore its carry; row 0006 has two such frames, Dormant, before the start),
+  `PresentationOnly` at game states 20h and 21h; any other countdown choice stays Unsupported. `the count of
+  finished frames` is the played state's carried count (`finished-frames`, `05B6` as the last
+  frame left it). `the countdown starts` is none in these rows; in room 6 (0006 cut 1,586) it is
+  borrowed from the records (the time at N+1, status 0 at N and nonzero at N+1) until B8's
+  self-destruct sequence raises it.
+- **Expiry.** Compare the answer against the game state at N+1 (23h is Expired). No row
+  expires; an Expired answer in these rows is a failure, and the time-up path is the scene's.
+- **Steps outside play** leave the countdown as it stands; compare it unchanged at each passage
+  cut. The doors' `the escape's timer running` input is this State's `Begun` (`0943` ≠ 0).
+- **Faults.** `Fault::Hud` today refuses any countdown not Dormant; it narrows to the refusals
+  above.
+
+### The dormant witness
 
 Recorded witness R-countdown-dormant is the independent ordinary gameplay source packet audited
 in `$TEMP/collab/retained-time-479/timer-source-563/check.py`. It reconstructs the physical
@@ -933,17 +1065,14 @@ later scene-controller read at 4277. The private manifest SHA256 is
 semantic observed current status and result only; its source coordinates and receipts are
 private harness evidence, not clean inputs.
 
-Integration decodes the countdown once on admission, carries it without oracle next-state
-feedback, and encodes the frame's answer and picture. Compare the current countdown, the expiry
-answer and the absent picture contribution at the cut; do not claim pixels from an absent
-contribution alone. No countdown mask based on energy, protection, unrelated zero values or the
-final presentation is allowed. No clean scene API supplies `the countdown runs` yet: a frame
-whose choice is missing or presentation-only, or whose countdown is active or expired, stays
-Unsupported before any effect. Expiry effects, digits and active advancement are not inferred
-from this dormant witness.
+### Vectors removed
 
-Countdown belongs to the status area's budget accounting. The old-code baseline is unchanged;
-it contains no countdown owner. No extra old-code allowance is claimed.
+The admission cases C-countdown-active and C-countdown-expired went: a begun countdown and one
+run out are now the model's (C-countdown-restart, C-countdown-expired-again and the rest).
+C-countdown-presentation-only became C-countdown-shown-dormant (now defined: Pass).
+C-countdown-unknown-scene stays as the one admission case. The format moved from one scene for
+`frames` frames to a list of frames, each with its scene, its count of finished frames, its
+start and its outputs.
 
 ## The whole frame
 

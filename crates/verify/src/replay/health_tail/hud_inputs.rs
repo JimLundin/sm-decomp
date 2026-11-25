@@ -6,7 +6,7 @@ use std::path::Path;
 use enum_map::EnumMap;
 use game::production::health_tail::{HudFrame, MapInput};
 use interface_hud::{
-    Ammo, Ammunition, CancelButton, Controls, CountdownRuns, Equipped, FrameCount, Reserve,
+    Ammo, Ammunition, CancelButton, Controls, CountdownInputs, Equipped, FrameCount, Reserve,
     ReserveMode, Room, SelectButton, Stock, StockAtStart,
 };
 use serde::Deserialize;
@@ -131,20 +131,33 @@ pub(super) fn load(
     {
         return Err(data_failure(None, "Health tail HUD origin and schedule"));
     }
-    // The origin is main gameplay and the HUD frames are its next two, so the
-    // scene runs the escape countdown in each.
-    let countdown = hud::countdown_runs(origin_wram, origin_wram)?;
+    // The origin is main gameplay and the HUD frames are its next two, so the scene runs the
+    // escape countdown in each, nothing starts it, and the count of finished frames goes on
+    // from the origin's by one.
+    let countdown = CountdownInputs {
+        runs: hud::countdown_runs(origin_wram, origin_wram)?,
+        start: None,
+        finished: hud::finished_frames(origin_wram)?,
+    };
     let [first, next] = source.tape.opportunity;
     let first = inputs(first, hud::stock_at_start(origin_wram)?.counts, countdown)?;
     let drawn = EnumMap::from_fn(|ammo| first.ammunition.of(ammo).count);
-    let next = inputs(next, drawn, countdown)?;
+    let finished = interface_hud::FinishedFrames(countdown.finished.0.wrapping_add(1));
+    let next = inputs(
+        next,
+        drawn,
+        CountdownInputs {
+            finished,
+            ..countdown
+        },
+    )?;
     Ok([first, next])
 }
 
 fn inputs(
     observed: Opportunity,
     counts_at_start: EnumMap<Ammo, u16>,
-    countdown: CountdownRuns,
+    countdown: CountdownInputs,
 ) -> Result<HudFrame, Outcome> {
     let Opportunity {
         end_cut,

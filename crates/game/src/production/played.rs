@@ -187,7 +187,8 @@ pub enum Fault {
     Suit,
     /// The door she touched leads into another area.
     NewArea,
-    /// The HUD refused the frame: its scene only shows the countdown.
+    /// The HUD refused the frame: the escape countdown starts on a frame whose scene only shows
+    /// it.
     Hud,
     /// The station's escape: the doors' shakes read the random numbers and the screen's
     /// shaking, which aren't in this loop, and a later piece owns the shaft's overlay.
@@ -266,6 +267,7 @@ impl State {
             self.hud_frame(hud, &samus, her.after_moves(), health.state, content, rules)?;
         let doors = self.passage.in_play(
             touched,
+            hud::countdown_begun(&hud_state),
             &passage::scene(&samus, &camera, &palette),
             passing,
             content,
@@ -314,7 +316,13 @@ impl State {
         };
         let exports = self.passage.doors.step(
             passage::scene(&self.samus.movement.0, &self.camera.0, &before),
-            &passage::doors_inputs(false, self.passage.doorway, passing, content),
+            &passage::doors_inputs(
+                false,
+                hud::countdown_begun(&self.hud.0),
+                self.passage.doorway,
+                passing,
+                content,
+            ),
             &rules.doors,
         );
         let Scene {

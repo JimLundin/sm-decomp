@@ -40,6 +40,11 @@ pub trait Pinned {
     /// Serde newtype name. Each sample applies to all matching newtypes under this pin and
     /// must exercise a representation whose shape is independent of the value.
     const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] = &[];
+    /// Representative values for `u16` fields, keyed by the Serde name of the struct holding
+    /// them, for checked types that read such a struct. Each sample applies to all matching
+    /// structs under this pin and must exercise a representation whose shape is independent of
+    /// the value.
+    const TRACE_U16_SAMPLES: &'static [(&'static str, u16)] = &[];
 }
 
 /// Trace a pin's State with its configured representative values.
@@ -47,7 +52,7 @@ pub trait Pinned {
 /// # Errors
 /// [`Unencodable`] when the State's Serde implementation cannot be traced.
 pub fn trace_shape<P: Pinned>() -> Result<u64, Unencodable> {
-    shape::with_u8_samples::<P::State>(P::TRACE_U8_SAMPLES)
+    shape::with_samples::<P::State>(P::TRACE_U8_SAMPLES, P::TRACE_U16_SAMPLES)
 }
 
 /// Whether the pinned shape is still the State's: `Err` with the shape traced now when it

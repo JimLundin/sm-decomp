@@ -3408,15 +3408,23 @@ map = { pictures = { "11,9" = "133v", "11,10" = "2E4" } }
 explored = [[11, 9], [11, 10]]
 changed = { "26,0" = "088:3h", "27,0" = "088:3h", "28,0" = "088:3h", "29,0" = "088:3h", "30,0" = "088:3h", "26,1" = "088:3h", "27,1" = "088:3h", "28,1" = "2E4:2", "29,1" = "088:3h", "30,1" = "088:3h", "26,2" = "088:3h", "27,2" = "088:3h", "28,2" = "088:3h", "29,2" = "088:3h", "30,2" = "088:3h" }
 
-# [[countdown]] cases (spec §5.1, EscapeCountdown): frames of play in which the scene
-# runs the escape countdown or only shows it. scope = "Model" cases run the model;
-# "IntegrationAdmission" cases check only that the HUD refuses what the spec leaves out (they
-# are not model coverage). before and after are the current countdown; only "Dormant" is
-# defined. scene is "MaintainCountdown" (the scene runs the countdown this frame),
-# "PresentationOnly" (it only shows it) or "Unknown". frames counts the frames of play, each
-# with that scene. answers and pictures are the frames' outputs in order. energy and
-# protection_frames (optional) are the energy and protection from hits beside it, which no rule
-# here reads. expected is "Pass" or "Unsupported" (refused before any effect).
+# [[countdown]] cases (spec §5.1): frames of play run through the escape countdown.
+# scope = "Model" cases run the model; the "IntegrationAdmission" case checks only that the HUD
+# refuses a scene whose choice isn't known (not model coverage). Each case:
+# - before and after: the current countdown, "Dormant" or { time = [minutes, seconds,
+#   hundredths], age = frames, place = [[x, x256ths], [y, y256ths]] }: its time left, its age
+#   and its place in whole screen pixels and 1/256ths of a pixel (spec §5.1).
+# - expected: "Pass", or "Unsupported" when the HUD refuses a frame before any effect; the
+#   frames before it play, and after is the countdown as the refused frame finds it.
+# - energy and protection_frames (optional): her energy and protection from hits beside it,
+#   which no rule here reads.
+# - [[countdown.frames]], in order, one per frame of play: scene, "MaintainCountdown" (the
+#   scene runs the countdown), "PresentationOnly" (it only shows it) or "Unknown"; finished
+#   (optional, default 0), the count of finished frames as the last frame left it (spec §5.1);
+#   start (optional), [minutes, seconds], the countdown starts this frame at that time; and the
+#   frame's outputs, absent on a refused frame: answer, "NoExpiry" or "Expired"; picture,
+#   "Absent" or { place = [x, y] whole screen pixels, time = [minutes, seconds, hundredths] }.
+# - The recorded cases (R) hold the records' values; the constructed ones (C) are worked from the spec's rules, each with its case in a comment.
 
 [[countdown]]
 id = "R-countdown-dormant"
@@ -3424,89 +3432,1175 @@ scope = "Model"
 source = "recorded"
 entries = ["EscapeCountdown"]
 before = "Dormant"
-scene = "MaintainCountdown"
-frames = 1
 expected = "Pass"
 after = "Dormant"
-answers = ["NoExpiry"]
-pictures = ["Absent"]
+[[countdown.frames]]
+scene = "MaintainCountdown"
+answer = "NoExpiry"
+picture = "Absent"
 
 [[countdown]]
+id = "R-countdown-start"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownBegins", "CountdownShown"]
+before = "Dormant"
+expected = "Pass"
+after = { time = [1, 0, 0], age = 0, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10764
+start = [1, 0]
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+
+[[countdown]]
+id = "R-countdown-wait"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownWaits", "CountdownShown"]
+before = { time = [1, 0, 0], age = 0, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [1, 0, 0], age = 4, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10765
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10766
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10767
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10768
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+
+[[countdown]]
+id = "R-countdown-wait-ends"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownWaits", "CountdownTicks", "CountdownShown"]
+before = { time = [1, 0, 0], age = 14, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [0, 59, 98], age = 17, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10779
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10780
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10781
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 59, 98] }
+
+[[countdown]]
+id = "R-countdown-first-ticks"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownTicks", "CountdownShown"]
+before = { time = [0, 59, 98], age = 17, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [0, 59, 94], age = 20, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10782
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 59, 97] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10783
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 59, 95] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10784
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 59, 94] }
+
+[[countdown]]
+id = "R-countdown-second-turns"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownTicks", "CountdownShown"]
+before = { time = [0, 59, 2], age = 76, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [0, 58, 98], age = 78, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10945
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 59, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10946
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 58, 98] }
+
+[[countdown]]
+id = "R-countdown-hold-ends"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownTicks", "CountdownSlides", "CountdownShown"]
+before = { time = [0, 58, 71], age = 94, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [0, 58, 66], age = 96, place = [[128, 224], [127, 63]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10963
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 58, 70] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10964
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 58, 68] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10965
+answer = "NoExpiry"
+picture = { place = [128, 127], time = [0, 58, 66] }
+
+[[countdown]]
+id = "R-countdown-x-corner"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownTicks", "CountdownSlides", "CountdownShown"]
+before = { time = [0, 56, 96], age = 96, place = [[219, 0], [49, 152]] }
+expected = "Pass"
+after = { time = [0, 56, 91], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 11173
+answer = "NoExpiry"
+picture = { place = [219, 48], time = [0, 56, 94] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 11174
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 56, 93] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 11175
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 56, 91] }
+
+[[countdown]]
+id = "R-countdown-in-place"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownTicks", "CountdownSlides", "CountdownShown"]
+before = { time = [0, 56, 91], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [0, 56, 88], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 11176
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 56, 89] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 11177
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 56, 88] }
+
+[[countdown]]
+id = "R-countdown-elevator"
+scope = "Model"
+source = "recorded"
+entries = ["CountdownShown"]
+before = { time = [0, 49, 14], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [0, 49, 14], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 11958
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 49, 14] }
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 11959
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 49, 14] }
+
+[[countdown]]
+# a frame of play that runs the countdown, before one has begun, three times over
 id = "C-countdown-repeat"
 scope = "Model"
 source = "constructed"
 entries = ["EscapeCountdown"]
 before = "Dormant"
-scene = "MaintainCountdown"
-frames = 3
 expected = "Pass"
 after = "Dormant"
-answers = ["NoExpiry", "NoExpiry", "NoExpiry"]
-pictures = ["Absent", "Absent", "Absent"]
+[[countdown.frames]]
+scene = "MaintainCountdown"
+answer = "NoExpiry"
+picture = "Absent"
+[[countdown.frames]]
+scene = "MaintainCountdown"
+answer = "NoExpiry"
+picture = "Absent"
+[[countdown.frames]]
+scene = "MaintainCountdown"
+answer = "NoExpiry"
+picture = "Absent"
 
 [[countdown]]
+# her energy and her protection from hits beside a countdown not begun: no rule reads them
 id = "C-countdown-independent"
 scope = "Model"
 source = "constructed"
 entries = ["EscapeCountdown"]
 before = "Dormant"
-scene = "MaintainCountdown"
-frames = 1
 expected = "Pass"
 after = "Dormant"
-answers = ["NoExpiry"]
-pictures = ["Absent"]
 energy = 47
 protection_frames = 9
-
-[[countdown]]
-id = "C-countdown-active"
-scope = "IntegrationAdmission"
-source = "constructed"
-entries = ["EscapeCountdown"]
-before = "Active"
+[[countdown.frames]]
 scene = "MaintainCountdown"
-frames = 1
-expected = "Unsupported"
-after = "Active"
-answers = []
-pictures = []
+answer = "NoExpiry"
+picture = "Absent"
 
 [[countdown]]
-id = "C-countdown-expired"
-scope = "IntegrationAdmission"
+# a frame that only shows the countdown, before one has begun
+id = "C-countdown-shown-dormant"
+scope = "Model"
 source = "constructed"
-entries = ["EscapeCountdown"]
-before = "Expired"
-scene = "MaintainCountdown"
-frames = 1
-expected = "Unsupported"
-after = "Expired"
-answers = []
-pictures = []
-
-[[countdown]]
-id = "C-countdown-presentation-only"
-scope = "IntegrationAdmission"
-source = "constructed"
-entries = ["EscapeCountdown"]
+entries = ["CountdownShown"]
 before = "Dormant"
-scene = "PresentationOnly"
-frames = 1
-expected = "Unsupported"
+expected = "Pass"
 after = "Dormant"
-answers = []
-pictures = []
+[[countdown.frames]]
+scene = "MaintainCountdown"
+answer = "NoExpiry"
+picture = "Absent"
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 9
+answer = "NoExpiry"
+picture = "Absent"
 
 [[countdown]]
+# a scene whose choice isn't known: refused before any effect (not model coverage)
 id = "C-countdown-unknown-scene"
 scope = "IntegrationAdmission"
 source = "constructed"
 entries = ["EscapeCountdown"]
 before = "Dormant"
-scene = "Unknown"
-frames = 1
 expected = "Unsupported"
 after = "Dormant"
-answers = []
-pictures = []
+[[countdown.frames]]
+scene = "Unknown"
+
+[[countdown]]
+# frames that only show a running countdown mid-slide: it stands still, its picture at its
+# place's whole pixels
+id = "C-countdown-shown-only"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownShown"]
+before = { time = [0, 42, 17], age = 96, place = [[175, 96], [90, 13]] }
+expected = "Pass"
+after = { time = [0, 42, 17], age = 96, place = [[175, 96], [90, 13]] }
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 5
+answer = "NoExpiry"
+picture = { place = [175, 90], time = [0, 42, 17] }
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 6
+answer = "NoExpiry"
+picture = { place = [175, 90], time = [0, 42, 17] }
+
+[[countdown]]
+# a start at three minutes, another time than the station's
+id = "C-countdown-start-three"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownBegins", "CountdownShown"]
+before = "Dormant"
+expected = "Pass"
+after = { time = [3, 0, 0], age = 0, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 77
+start = [3, 0]
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [3, 0, 0] }
+
+[[countdown]]
+# a start while a countdown runs, mid-slide: it begins again, and doesn't run this frame
+id = "C-countdown-restart"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownBegins"]
+before = { time = [0, 12, 34], age = 96, place = [[200, 128], [60, 7]] }
+expected = "Pass"
+after = { time = [1, 0, 0], age = 0, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 1
+start = [1, 0]
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+
+[[countdown]]
+# a start on a frame that only shows the countdown: refused before any effect
+id = "C-countdown-start-shown-only"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownBegins"]
+before = "Dormant"
+expected = "Unsupported"
+after = "Dormant"
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 3
+start = [1, 0]
+
+[[countdown]]
+# a countdown begun at no time left: in its first 16 frames it never runs out
+id = "C-countdown-wait-at-zero"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownWaits", "CountdownRunsOut"]
+before = { time = [0, 0, 0], age = 3, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [0, 0, 0], age = 4, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 0
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 0, 0] }
+
+[[countdown]]
+# the last two centiseconds taken exactly: it runs out
+id = "C-countdown-expire-exact"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownTicks", "CountdownRunsOut"]
+before = { time = [0, 0, 2], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [0, 0, 0], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 1
+answer = "Expired"
+picture = { place = [220, 48], time = [0, 0, 0] }
+
+[[countdown]]
+# two centiseconds taken from one: it runs out at zero, not below
+id = "C-countdown-expire-past"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownTicks", "CountdownRunsOut"]
+before = { time = [0, 0, 1], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [0, 0, 0], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 2
+answer = "Expired"
+picture = { place = [220, 48], time = [0, 0, 0] }
+
+[[countdown]]
+# a countdown already out, run again: it stays at zero and answers that it ran out again
+id = "C-countdown-expired-again"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownRunsOut"]
+before = { time = [0, 0, 0], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [0, 0, 0], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 256
+answer = "Expired"
+picture = { place = [220, 48], time = [0, 0, 0] }
+
+[[countdown]]
+# one centisecond from 0'01"00: the second turns over to 0'00"99, not out
+id = "C-countdown-last-second"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownTicks", "CountdownRunsOut"]
+before = { time = [0, 1, 0], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [0, 0, 99], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 3
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [0, 0, 99] }
+
+[[countdown]]
+# the rhythm across the count's wrap: 65535 is step 127 (two), 0 is step 0 (one)
+id = "C-countdown-rhythm-wraps"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownTicks"]
+before = { time = [2, 30, 50], age = 40, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [2, 30, 47], age = 42, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 65535
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [2, 30, 48] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 0
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [2, 30, 47] }
+
+[[countdown]]
+# the rhythm's last row differs from the others at its steps 24, 25, 27, 29 and 30: count 24
+# (the first row's step 24) takes one, 120 and 248 (the last row's step 24) take two
+id = "C-countdown-rhythm-last-row"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownTicks"]
+before = { time = [1, 10, 10], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [1, 10, 5], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 24
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 10, 9] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 120
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 10, 7] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 248
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 10, 5] }
+
+[[countdown]]
+# the slide reaching its top before its right: the height stops at 48, the right goes on
+id = "C-countdown-y-corner-first"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownSlides", "CountdownTicks"]
+before = { time = [0, 40, 0], age = 96, place = [[210, 0], [48, 100]] }
+expected = "Pass"
+after = { time = [0, 39, 96], age = 96, place = [[211, 192], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 4
+answer = "NoExpiry"
+picture = { place = [210, 48], time = [0, 39, 98] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 5
+answer = "NoExpiry"
+picture = { place = [211, 48], time = [0, 39, 96] }
+
+[[countdown]]
+# a frame that only shows the countdown in its wait (age 15): the age stays, so the running
+# frame after it still waits and takes nothing
+id = "C-countdown-shown-in-wait"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownShown", "CountdownWaits"]
+before = { time = [1, 0, 0], age = 15, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [1, 0, 0], age = 16, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 40
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 41
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [1, 0, 0] }
+
+[[countdown]]
+# a frame that only shows the countdown while it ticks in the middle (age 50): time and age
+# stay, then the running frame takes its step and the age goes on from 50
+id = "C-countdown-shown-in-hold"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownShown", "CountdownTicks"]
+before = { time = [0, 45, 30], age = 50, place = [[128, 0], [128, 0]] }
+expected = "Pass"
+after = { time = [0, 45, 28], age = 51, place = [[128, 0], [128, 0]] }
+[[countdown.frames]]
+scene = "PresentationOnly"
+finished = 7
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 45, 30] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 8
+answer = "NoExpiry"
+picture = { place = [128, 128], time = [0, 45, 28] }
+
+[[countdown]]
+# 128 running frames from count 0: every step of the rhythm, 2'00"00 less 213 hundredths
+id = "C-countdown-rhythm-all"
+scope = "Model"
+source = "constructed"
+entries = ["CountdownTicks"]
+before = { time = [2, 0, 0], age = 96, place = [[220, 0], [48, 0]] }
+expected = "Pass"
+after = { time = [1, 57, 87], age = 96, place = [[220, 0], [48, 0]] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 0
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 99] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 1
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 97] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 2
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 95] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 3
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 94] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 4
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 92] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 5
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 90] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 6
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 89] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 7
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 87] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 8
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 85] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 9
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 84] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 10
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 82] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 11
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 80] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 12
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 78] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 13
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 77] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 14
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 75] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 15
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 73] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 16
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 72] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 17
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 70] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 18
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 68] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 19
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 67] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 20
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 65] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 21
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 63] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 22
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 62] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 23
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 60] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 24
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 59] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 25
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 57] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 26
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 55] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 27
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 54] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 28
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 52] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 29
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 50] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 30
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 49] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 31
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 47] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 32
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 46] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 33
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 44] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 34
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 42] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 35
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 41] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 36
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 39] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 37
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 37] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 38
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 36] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 39
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 34] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 40
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 32] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 41
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 31] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 42
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 29] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 43
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 27] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 44
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 25] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 45
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 24] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 46
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 22] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 47
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 20] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 48
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 19] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 49
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 17] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 50
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 15] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 51
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 14] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 52
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 12] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 53
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 10] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 54
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 9] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 55
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 7] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 56
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 6] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 57
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 4] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 58
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 2] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 59
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 59, 1] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 60
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 99] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 61
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 97] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 62
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 96] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 63
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 94] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 64
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 93] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 65
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 91] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 66
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 89] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 67
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 88] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 68
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 86] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 69
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 84] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 70
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 83] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 71
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 81] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 72
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 79] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 73
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 78] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 74
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 76] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 75
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 74] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 76
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 72] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 77
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 71] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 78
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 69] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 79
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 67] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 80
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 66] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 81
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 64] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 82
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 62] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 83
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 61] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 84
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 59] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 85
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 57] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 86
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 56] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 87
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 54] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 88
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 53] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 89
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 51] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 90
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 49] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 91
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 48] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 92
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 46] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 93
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 44] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 94
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 43] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 95
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 41] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 96
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 40] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 97
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 38] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 98
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 36] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 99
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 35] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 100
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 33] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 101
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 31] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 102
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 30] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 103
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 28] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 104
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 26] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 105
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 25] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 106
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 23] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 107
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 21] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 108
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 19] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 109
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 18] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 110
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 16] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 111
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 14] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 112
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 13] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 113
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 11] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 114
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 9] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 115
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 8] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 116
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 6] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 117
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 4] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 118
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 3] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 119
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 58, 1] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 120
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 99] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 121
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 98] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 122
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 96] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 123
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 94] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 124
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 92] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 125
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 91] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 126
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 89] }
+[[countdown.frames]]
+scene = "MaintainCountdown"
+finished = 127
+answer = "NoExpiry"
+picture = { place = [220, 48], time = [1, 57, 87] }

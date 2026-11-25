@@ -49,6 +49,18 @@ pub enum BehaviourId {
     LastColumnsShift,
     /// Spec: EscapeCountdown.
     EscapeCountdown,
+    /// Spec: CountdownBegins.
+    CountdownBegins,
+    /// Spec: CountdownWaits.
+    CountdownWaits,
+    /// Spec: CountdownTicks.
+    CountdownTicks,
+    /// Spec: CountdownRunsOut.
+    CountdownRunsOut,
+    /// Spec: CountdownSlides.
+    CountdownSlides,
+    /// Spec: CountdownShown.
+    CountdownShown,
 }
 
 /// A behaviour of the HUD, as the catalogue lists it.
@@ -67,7 +79,7 @@ pub struct Behaviour {
 
 /// Every behaviour of the HUD's spec, one row per entry, each naming its entry; listed in the
 /// spec's order, though the order means nothing.
-pub const CATALOGUE: [Behaviour; 21] = [
+pub const CATALOGUE: [Behaviour; 27] = [
     Behaviour {
         id: BehaviourId::EnergyGauge,
         summary: "Her energy's last two digits, and one tank per 100 of her capacity, full while \
@@ -238,6 +250,53 @@ pub const CATALOGUE: [Behaviour; 21] = [
         summary: "Before an escape countdown begins, a frame that runs the countdown cannot \
                   expire the escape and contributes no countdown picture.",
         kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountdownBegins,
+        summary: "The escape's scene starts the countdown at a time; it appears at once in the \
+                  middle of the screen.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountdownWaits,
+        summary: "A countdown just begun stands still, its 16 first frames.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountdownTicks,
+        summary: "Once its wait is over, each frame that runs the countdown takes one or two \
+                  hundredths from it, by the rhythm.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountdownRunsOut,
+        summary: "The countdown runs out when a frame takes its last hundredth; it stops at \
+                  0'00\"00.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountdownSlides,
+        summary: "After its 96th frame the countdown slides from the middle of the screen into \
+                  its top right corner, a little under a pixel a frame each way, and stops there.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CountdownShown,
+        summary: "A begun countdown is shown each frame at its place with its time left; a frame \
+                  that only shows it leaves it standing.",
+        kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

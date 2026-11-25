@@ -10,7 +10,6 @@ use game::production::{played, room_loading};
 /// Seed-held room facts.
 pub(super) struct Room {
     pub(super) inputs: Inputs,
-    pub(super) timer_running: bool,
     /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
     pub(super) sounds_sent: bool,
     pub(super) progress: run_progress::Progress,
@@ -47,11 +46,13 @@ pub(super) fn room(
         inputs,
         map,
         hud: super::hud::held(seed)?,
-        timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
         progress: progress::seed(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
             0 => boss_ceres_ridley::Stage::Calm,
             1 => boss_ceres_ridley::Stage::Getaway,
+            // The escape, its countdown the HUD's State from the seed. The shaft rotating
+            // (8000h) is still refused.
+            2 => boss_ceres_ridley::Stage::Escape,
             _ => {
                 return Err(Outcome::Unsupported {
                     cut: None,

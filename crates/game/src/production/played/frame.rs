@@ -16,7 +16,7 @@ pub struct State {
     /// begins.
     pub count: FrameCount,
     /// The count of finished frames in sixteen bits, which nothing restarts; the shaft's lights
-    /// read it.
+    /// and the escape countdown read it.
     pub finished_frames: u16,
     /// The game's random number as the last frame left it.
     pub random: types::RandomSequence,

@@ -399,3 +399,37 @@ fn specimen_values_trace_checked_newtypes_without_changing_their_shape() {
         Err(DecodeError::Refused)
     ));
 }
+
+#[test]
+fn specimen_values_trace_a_checked_struct_of_u16_fields_without_changing_its_shape() {
+    #[derive(Deserialize, Serialize)]
+    struct Span {
+        low: u16,
+        high: u16,
+    }
+
+    #[derive(Deserialize, Serialize)]
+    #[serde(try_from = "Span")]
+    struct Within(Span);
+
+    impl TryFrom<Span> for Within {
+        type Error = &'static str;
+
+        fn try_from(span: Span) -> Result<Self, Self::Error> {
+            (span.low >= 0x8000 && span.high >= 0x8000)
+                .then_some(Self(span))
+                .ok_or("out of range")
+        }
+    }
+
+    struct WithinPin;
+    impl Pinned for WithinPin {
+        type State = Within;
+        const NAME: &'static str = "within";
+        const SHAPE: u64 = 0;
+        const TRACE_U16_SAMPLES: &'static [(&'static str, u16)] = &[("Span", 0x8000)];
+    }
+
+    assert!(shape::<Within>().is_err());
+    assert_eq!(super::trace_shape::<WithinPin>(), shape::<Span>());
+}

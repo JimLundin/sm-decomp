@@ -27,14 +27,18 @@ const DEPTH: usize = 64;
 /// [`Unencodable`] when `T`'s serde code refuses the tracer, reads a form the codec doesn't
 /// take, nests too deeply or has too many variants to trace.
 pub fn shape<T: DeserializeOwned>() -> Result<u64, Unencodable> {
-    with_u8_samples::<T>(&[])
+    with_samples::<T>(&[], &[])
 }
 
-pub(super) fn with_u8_samples<T: DeserializeOwned>(
+/// The shape of `T`, giving a `u8` read directly within a newtype its `u8_samples` value by
+/// the newtype's name, and a `u16` field of a struct its `u16_samples` value by the struct's.
+pub(super) fn with_samples<T: DeserializeOwned>(
     u8_samples: &'static [(&'static str, u8)],
+    u16_samples: &'static [(&'static str, u16)],
 ) -> Result<u64, Unencodable> {
     let mut registry = Registry {
         u8_samples,
+        u16_samples,
         ..Registry::default()
     };
     for _ in 0..PASSES {
@@ -45,6 +49,7 @@ pub(super) fn with_u8_samples<T: DeserializeOwned>(
             out: &mut root,
             depth: 0,
             newtype_name: None,
+            struct_name: None,
         })?;
         if !registry.incomplete {
             let hasher = registry.seen.iter().fold(
@@ -69,6 +74,7 @@ struct Registry {
     /// Whether the value being read reached an enum with a variant not yet read to its end.
     incomplete: bool,
     u8_samples: &'static [(&'static str, u8)],
+    u16_samples: &'static [(&'static str, u16)],
 }
 
 struct Tracer<'a> {
@@ -77,6 +83,8 @@ struct Tracer<'a> {
     depth: usize,
     /// The name available for the first Serde call within a newtype.
     newtype_name: Option<&'static str>,
+    /// The struct whose fields this tracer reads, if it reads a struct's.
+    struct_name: Option<&'static str>,
 }
 
 impl Tracer<'_> {
@@ -93,6 +101,7 @@ impl Tracer<'_> {
             out,
             depth,
             newtype_name: None,
+            struct_name: None,
         })
     }
 
@@ -242,7 +251,7 @@ impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
         deserialize_i8: "i8" => visit_i8(1), deserialize_i16: "i16" => visit_i16(1),
         deserialize_i32: "i32" => visit_i32(1), deserialize_i64: "i64" => visit_i64(1),
         deserialize_i128: "i128" => visit_i128(1),
-        deserialize_u16: "u16" => visit_u16(1), deserialize_u32: "u32" => visit_u32(1),
+        deserialize_u32: "u32" => visit_u32(1),
         deserialize_u64: "u64" => visit_u64(1), deserialize_u128: "u128" => visit_u128(1),
         deserialize_f32: "f32" => visit_f32(0.0), deserialize_f64: "f64" => visit_f64(0.0),
         deserialize_char: "char" => visit_char('\0'), deserialize_str: "str" => visit_str(""),
@@ -259,6 +268,17 @@ impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
             .unwrap_or(1);
         self.word("u8");
         visitor.visit_u8(sample)
+    }
+
+    fn deserialize_u16<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, Unencodable> {
+        let sample = self
+            .registry
+            .u16_samples
+            .iter()
+            .find_map(|&(name, sample)| (Some(name) == self.struct_name).then_some(sample))
+            .unwrap_or(1);
+        self.word("u16");
+        visitor.visit_u16(sample)
     }
 
     fn deserialize_unit<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, Unencodable> {
@@ -349,8 +369,9 @@ impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
     ) -> Result<V::Value, Unencodable> {
         self.word(name);
         let mut own = format!("struct {name} {{ ");
-        let value =
-            visitor.visit_seq(Parts::new(&mut self.into(&mut own)?, fields.len(), fields))?;
+        let mut inner = self.into(&mut own)?;
+        inner.struct_name = Some(name);
+        let value = visitor.visit_seq(Parts::new(&mut inner, fields.len(), fields))?;
         own.push('}');
         self.registry.seen.insert(own);
         Ok(value)

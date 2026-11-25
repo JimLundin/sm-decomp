@@ -7,7 +7,7 @@
 //! there; her health as a new file starts it; the arrival's State; a blank HUD.
 //!
 //! From the seed, made before the preparation: the new file's progress, her energy and items,
-//! the HUD's held inputs, the escape timer and the station's stage (the held facts of
+//! the HUD's held inputs and the station's stage (the held facts of
 //! `SEED_HELD`); the sound queue's occupancy and her shot's charge; the screen's brightness and
 //! the fade's count, and the platform's counts of finished frames and the random number, which
 //! run on through the preparation (`SEED_HELD`).
@@ -66,7 +66,6 @@ pub(super) fn admit(
     let held = seed::Room {
         sounds_sent: inputs.sounds_waiting.count() == 0,
         inputs,
-        timer_running: word(wram, source::ESCAPE_TIMER_RUNNING)? != 0,
         progress,
         ceres,
         hud: super::hud::held(wram)?,

@@ -157,12 +157,6 @@ pub const GAME_STATE: WramWord = WramWord {
     offset: 0x0998,
 };
 
-/// Nonzero while the escape's timer runs.
-pub const ESCAPE_TIMER_RUNNING: WramWord = WramWord {
-    name: "ESCAPE_TIMER_RUNNING",
-    offset: 0x0943,
-};
-
 /// Bank $90 log: Samus's X position, whole pixels.
 pub const SAMUS_X_POS: WramWord = WramWord {
     name: "SAMUS_X_POS",

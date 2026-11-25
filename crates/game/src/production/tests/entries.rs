@@ -309,7 +309,11 @@ fn hud_play_selects_once_and_preserves_both_ordered_events() {
             can_switch: true,
         },
         muted_by: None,
-        countdown: hud::CountdownRuns::MaintainCountdown,
+        countdown: hud::CountdownInputs {
+            runs: hud::CountdownRuns::MaintainCountdown,
+            start: None,
+            finished: hud::FinishedFrames(0),
+        },
         dropped_before_status_bar: hud::Dropped::Nothing,
         dropped_after_status_bar: hud::Dropped::Nothing,
         collected: None,
@@ -327,14 +331,13 @@ fn hud_play_selects_once_and_preserves_both_ordered_events() {
         },
     };
     let before = production.clone();
-    let shown_only = hud::FrameInputs {
-        countdown: hud::CountdownRuns::PresentationOnly,
-        ..inputs
-    };
+    let mut started_while_shown = inputs;
+    started_while_shown.countdown.runs = hud::CountdownRuns::PresentationOnly;
+    started_while_shown.countdown.start = hud::StartTime::new(1, 0);
     assert_eq!(
-        production.advance(AdvanceInput::Hud(HudInput::Play(&shown_only))),
+        production.advance(AdvanceInput::Hud(HudInput::Play(&started_while_shown))),
         Err(ProductionFault::Unsupported(Unsupported::Hud(
-            hud::UnsupportedFrame::CountdownOnlyShown
+            hud::UnsupportedFrame::StartWhileOnlyShown
         )))
     );
     assert!(production.eq(&before));

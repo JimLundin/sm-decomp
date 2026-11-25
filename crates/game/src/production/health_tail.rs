@@ -7,7 +7,7 @@ use canonical::{
     model::{Model, Pinned},
 };
 use interface_hud::{
-    Ammunition, CancelButton, Controls, CountdownRuns, Dropped, Energy, FrameCount, FrameInputs,
+    Ammunition, CancelButton, Controls, CountdownInputs, Dropped, Energy, FrameCount, FrameInputs,
     HudPictures, HudState, MiniMapInputs, MiniMapPower, Reserve, Room, SelectButton, Selection,
     Status, StockAtStart,
 };
@@ -71,8 +71,9 @@ pub struct HudFrame {
     pub reserve: Reserve,
     /// Her ammunition as the frame ends.
     pub ammunition: Ammunition,
-    /// Whether the scene runs the escape countdown this frame.
-    pub countdown: CountdownRuns,
+    /// What the escape countdown reads this frame: whether the scene runs it, its start and the
+    /// count of finished frames.
+    pub countdown: CountdownInputs,
 }
 
 /// One whole frame's independently observed inputs.

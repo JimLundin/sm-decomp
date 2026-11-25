@@ -2,10 +2,11 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use enum_map::enum_map;
 use interface_hud::{
-    Ammo, Ammunition, CancelButton, ColourSet, Controls, CountdownRuns, Dropped, Energy, Equipped,
-    Flip, FrameCount, FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet,
-    MapPictures, MiniMapInputs, MiniMapPower, Mute, Pair, Picture, Place, Reserve, ReserveMode,
-    Room, SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart, Tile,
+    Ammo, Ammunition, BegunCountdown, CancelButton, ColourSet, Controls, Countdown, CountdownAge,
+    CountdownInputs, CountdownPlace, CountdownRuns, Dropped, Energy, Equipped, Flip, FrameCount,
+    FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet, MapPictures,
+    MiniMapInputs, MiniMapPower, Mute, Pair, Picture, Place, Reserve, ReserveMode, Room,
+    SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart, Tile,
 };
 use std::path::Path;
 
@@ -159,15 +160,115 @@ pub fn seed(wram: &[u8], _content: &Content) -> Result<HudState, Outcome> {
     Ok(state)
 }
 
-/// Decode independently observed countdown status; active and unknown values stay unsupported.
-pub fn countdown_origin(wram: &[u8]) -> Result<interface_hud::Countdown, Outcome> {
-    if word(wram, 0x0943)? != 0 {
-        return Err(data_failure(
-            None,
-            "HUD current countdown outside dormant scope",
-        ));
+/// The escape countdown's words (bank 80's timer): its status, its time left as three BCD
+/// bytes, and its place, whose low byte counts its age while it waits and runs in the middle.
+const COUNTDOWN_STATUS: usize = 0x0943;
+const COUNTDOWN_HUNDREDTHS: usize = 0x0945;
+const COUNTDOWN_SECONDS: usize = 0x0946;
+const COUNTDOWN_MINUTES: usize = 0x0947;
+const COUNTDOWN_X: usize = 0x0948;
+const COUNTDOWN_Y: usize = 0x094a;
+/// The count of finished frames, which the countdown's rhythm reads.
+const FINISHED_FRAMES: usize = 0x05b6;
+/// The age from which the countdown slides, which its status 5 and 6 hold.
+const SLIDING_AGE: u8 = 96;
+
+fn byte(wram: &[u8], at: usize) -> Result<u8, Outcome> {
+    wram.get(at)
+        .copied()
+        .ok_or_else(|| data_failure(None, "HUD record byte"))
+}
+
+/// A BCD byte's value, if both its digits are decimal.
+const fn decimal(value: u8) -> Option<u8> {
+    let (tens, units) = (value >> 4, value & 0x0f);
+    if tens > 9 || units > 9 {
+        return None;
     }
-    Ok(interface_hud::Countdown::Dormant)
+    Some(tens.saturating_mul(10).saturating_add(units))
+}
+
+fn countdown_unsupported(what: &str) -> Outcome {
+    Outcome::Unsupported {
+        cut: None,
+        dependency: format!("HUD countdown {what}"),
+    }
+}
+
+/// A BCD byte of the countdown's time; one that isn't decimal is outside the spec.
+fn digits(wram: &[u8], at: usize) -> Result<u8, Outcome> {
+    decimal(byte(wram, at)?).ok_or_else(|| countdown_unsupported("time not decimal"))
+}
+
+/// The time left in the countdown's three BCD bytes; seconds past 59 are outside the spec.
+fn time_left(wram: &[u8]) -> Result<interface_hud::TimeLeft, Outcome> {
+    interface_hud::TimeLeft::new(
+        digits(wram, COUNTDOWN_MINUTES)?,
+        digits(wram, COUNTDOWN_SECONDS)?,
+        digits(wram, COUNTDOWN_HUNDREDTHS)?,
+    )
+    .ok_or_else(|| countdown_unsupported("time past its seconds"))
+}
+
+/// The current countdown, decoded from the timer's words (decode notes, the escape countdown's
+/// State): status 0 is Dormant; 3 and 4 wait and run in the middle, the place's low byte their
+/// age and its fraction 0; 5 and 6 slide and stand in the corner at age 96. A start not yet
+/// taken (status 1 or 2) is outside the spec.
+pub fn countdown_origin(wram: &[u8]) -> Result<Countdown, Outcome> {
+    let status = byte(wram, COUNTDOWN_STATUS)?;
+    if status == 0 {
+        return Ok(Countdown::Dormant);
+    }
+    let x = word(wram, COUNTDOWN_X)?;
+    let y = word(wram, COUNTDOWN_Y)?;
+    let (age, x) = match status {
+        1 | 2 => return Err(countdown_unsupported("start not yet taken")),
+        3 | 4 => (x.to_le_bytes()[0], x & 0xff00),
+        5 | 6 => (SLIDING_AGE, x),
+        _ => return Err(data_failure(None, "HUD countdown status")),
+    };
+    let bad = || data_failure(None, "HUD countdown age or place");
+    Ok(Countdown::Begun(BegunCountdown {
+        time_left: time_left(wram)?,
+        age: CountdownAge::new(age).ok_or_else(bad)?,
+        place: CountdownPlace::new(Pair { x, y }).ok_or_else(bad)?,
+    }))
+}
+
+/// The countdown's start, borrowed from the records until the station's boss raises it: the
+/// timer's status 0 at record N and set at N+1, at the time N+1 holds, in whole minutes and
+/// seconds.
+pub(super) fn countdown_start(
+    start: &[u8],
+    end: &[u8],
+) -> Result<Option<interface_hud::StartTime>, Outcome> {
+    if byte(start, COUNTDOWN_STATUS)? != 0 || byte(end, COUNTDOWN_STATUS)? == 0 {
+        return Ok(None);
+    }
+    if digits(end, COUNTDOWN_HUNDREDTHS)? != 0 {
+        return Err(countdown_unsupported("start past whole seconds"));
+    }
+    interface_hud::StartTime::new(
+        digits(end, COUNTDOWN_MINUTES)?,
+        digits(end, COUNTDOWN_SECONDS)?,
+    )
+    .map(Some)
+    .ok_or_else(|| countdown_unsupported("time past its seconds"))
+}
+
+/// The count of finished frames as record N holds it: the last frame left it.
+pub(super) fn finished_frames(start: &[u8]) -> Result<interface_hud::FinishedFrames, Outcome> {
+    Ok(interface_hud::FinishedFrames(word(start, FINISHED_FRAMES)?))
+}
+
+/// What the countdown reads in the frame from record N (`start`) to N+1 (`end`): main
+/// gameplay's choice, the start the records show and the count of finished frames.
+pub(super) fn countdown_inputs(start: &[u8], end: &[u8]) -> Result<CountdownInputs, Outcome> {
+    Ok(CountdownInputs {
+        runs: countdown_runs(start, end)?,
+        start: countdown_start(start, end)?,
+        finished: finished_frames(start)?,
+    })
 }
 
 /// Decode every independently observed HUD field without choosing a replay scope.
@@ -432,7 +533,7 @@ pub fn input<'a>(
             muted_by: muted_by(end)?,
             dropped_before_status_bar: Dropped::Nothing,
             dropped_after_status_bar: Dropped::Nothing,
-            countdown: countdown_runs(start, end)?,
+            countdown: countdown_inputs(start, end)?,
         },
     })
 }

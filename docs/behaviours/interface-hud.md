@@ -8,12 +8,16 @@ time. Vectors: [`scenarios/vectors/interface-hud.toml`](../../scenarios/vectors/
 
 ## Header
 
-**Scope.** The status bar, its mini-map, and the escape countdown displayed over the room (§5.1). It covers what each of
+**Scope.** The status bar, its mini-map, and the escape countdown displayed over the room (§5.1):
+its start, its wait, its running down, its slide into the corner, its picture and its running
+out. It covers what each of
 the HUD's cells shows from one frame to the next, the selected item and the one-shot item, how
 Select and item cancel change them, and the cells of her map she has explored. It reads the
 values it shows from the domains that own them (§1.3), and draws pictures the importer supplies
 (§1.4): her energy and ammunition, her reserve
-tanks, the items she has on, her room's place on her map and where she is, and the frame count.
+tanks, the items she has on, her room's place on her map and where she is, and the frame count;
+and, for the countdown, the escape's start, whether the scene runs it, and the count of finished
+frames.
 
 **What it leaves to others** (each an input where it feeds us, §6 names who supplies each): what a
 shot does to the selection (the weapons drop it); the energy, ammunition and items themselves
@@ -21,7 +25,9 @@ shot does to the selection (the weapons drop it); the energy, ammunition and ite
 importer); when a sound request is heard (the sound
 domain's queue); the HUD's first contents when a game starts or the pause screen gives the HUD
 back (the load flow, the pause screen); moving the HUD's cells to the screen (the video
-encoder); the pause screen's own map, which reads the explored cells this domain keeps.
+encoder); the pause screen's own map, which reads the explored cells this domain keeps; when the
+escape's countdown starts and what the escape does when it runs out (the escape's scene), and
+drawing the countdown's picture (the sprite encoder).
 
 **Notation.** The HUD is three rows of 32 cells, counted from 0 at the top left. A cell shows a
 picture in a colour set, perhaps flipped left to right or top to bottom; vectors write it `PPP:c`
@@ -557,29 +563,63 @@ order raised.
 
 ### 5.1 The escape countdown
 
-The countdown is the time remaining in the escape, displayed over the room rather than in the
-status bar's cells. This spec covers the frames before an escape countdown begins: the current
-countdown, its answer about expiry, and whether it contributes a countdown picture. Starting and
-advancing an active countdown, its digits, and the consequences of expiry are outside it. No
-rule here changes energy or protection from hits.
+The countdown is the time left in an escape, shown over the room rather than in the status bar's
+cells: the word TIME and six digits, minutes, seconds and hundredths of a second, `m'ss"cc`. The
+escape's scene starts it at a time it names (the station's escape at one minute). It first holds
+still in the middle of the screen for 16 frames, then runs down there, and after its 96th frame
+slides up and right into the screen's top right corner, where it stays. It runs on the frames
+whose scene runs it and stands still on every other, shown as it stands. When its time runs out,
+it says so; what the escape does then is the scene's (§6). No rule here changes energy or
+protection from hits.
 
 | Quantity | Units and domain type | Read by |
 | --- | --- | --- |
-| current countdown | `Dormant`: no escape countdown has begun; the one countdown State this spec defines | `EscapeCountdown`; output |
-| the countdown runs | an input, each frame: the scene runs the escape countdown this frame (`MaintainCountdown`), or only shows it (`PresentationOnly`) | `EscapeCountdown` |
-| expiry answer | `NoExpiry`: the escape's time hasn't run out | output (the escape scene) |
-| countdown picture | `Absent`: no countdown picture contributed this frame | output (room presentation) |
+| current countdown | `Dormant` (none has begun), or `Begun`: its time left, its age and its place | `EscapeCountdown`, `CountdownBegins`, `CountdownWaits`, `CountdownTicks`, `CountdownRunsOut`, `CountdownSlides`, `CountdownShown`; output |
+| time left | minutes 0 to 99, seconds 0 to 59, hundredths 0 to 99; as one count of hundredths, `t = m × 6000 + s × 100 + c` | `CountdownTicks`, `CountdownRunsOut`, `CountdownShown` |
+| age | frames, 0 to 96: the frames it has run since it began, counted up to 96 and no further | `CountdownWaits`, `CountdownTicks`, `CountdownSlides` |
+| place | x 128 to 220 and y 48 to 128, screen pixels in 1/256ths of a pixel, from the screen's top left | `CountdownSlides`, `CountdownShown` |
+| the countdown runs | an input, each frame of play: the scene runs the countdown this frame (`MaintainCountdown`), or only shows it (`PresentationOnly`) | `EscapeCountdown`, `CountdownBegins`, `CountdownWaits`, `CountdownTicks`, `CountdownRunsOut`, `CountdownSlides`, `CountdownShown` |
+| the countdown starts | an input, an event, each frame of play: none, or a start at a time, whole minutes 0 to 99 and seconds 0 to 59 (§6 names who raises it) | `CountdownBegins` |
+| the count of finished frames | an input: frames, 16-bit, wrapping: the frames the game has finished (a lag frame isn't one) as the last frame left it; it never starts again, at a door or anywhere, unlike the HUD's frame count (§1.3). Only its remainder mod 128 is read | `CountdownTicks` |
+| expiry answer | `NoExpiry`: the escape's time hasn't run out this frame; `Expired`: it has | output (the escape's scene) |
+| countdown picture | `Absent`, or `Shown`: its place in whole screen pixels (each 1/256ths count `div 256`) and the time left it shows | output (the room's presentation) |
 
 The current countdown is part of the HUD's State, beside the cells, the values last shown, the
 selection, the one-shot item, the explored cells and the mini-map's off; it can be set and read
-at every value it takes. Neither the HUD's other inputs nor a zero energy or protection from hits
-replaces it. The expiry answer and the picture are outputs of the frame, not State.
+at every value it takes, its time left, age and place each independently. Neither the HUD's other
+inputs nor a zero energy or protection from hits replaces it. A step outside play leaves it as it
+stands (§1.3: a door's passage, among them, shows its picture as it stands, §6). The expiry answer
+and the picture are outputs of the frame, not State.
+
+The countdown's picture is content: the word TIME and the digits' figures, and where each sits
+around the place, are the importer's; the sprite encoder draws them (§6). The vectors give the
+place and the time shown.
+
+**The rhythm.** The hundredths a running frame takes, by the count of finished frames mod 128,
+in four rows of 32, the first row's first cell for 0. Each row takes 53 hundredths but the last,
+which takes 54: 213 over 128 frames, as near as whole hundredths come to 100 every 60 frames.
+
+Cells: hundredths
+
+| Counts | Hundredths taken |
+| --- | --- |
+| 0 to 31 | 1 2 2 1 2 2 1 2 2 1 2 2 2 1 2 2 1 2 2 1 2 2 1 2 1 2 2 1 2 2 1 2 |
+| 32 to 63 | 1 2 2 1 2 2 1 2 2 1 2 2 2 1 2 2 1 2 2 1 2 2 1 2 1 2 2 1 2 2 1 2 |
+| 64 to 95 | 1 2 2 1 2 2 1 2 2 1 2 2 2 1 2 2 1 2 2 1 2 2 1 2 1 2 2 1 2 2 1 2 |
+| 96 to 127 | 1 2 2 1 2 2 1 2 2 1 2 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 2 1 2 2 |
 
 The scene decides, each frame, whether it runs the countdown; the ordinary HUD frame doesn't
-imply it. A frame that only shows the countdown, a scene whose choice isn't known, and an active
-or expired countdown are outside this spec: the HUD reports them unsupported before any effect,
-and they are not further countdown States. The `scope = Model` countdown vectors run the model;
-the `IntegrationAdmission` ones check that refusal only, and are not model coverage.
+imply it. A scene whose choice isn't known, and a start on a frame that only shows the countdown,
+are outside this spec: the HUD refuses them before any effect. The `scope = Model` countdown
+vectors run the model, the start on a frame that only shows the countdown among them
+(C-countdown-start-shown-only); the `IntegrationAdmission` one checks the unknown scene's refusal
+only (C-countdown-unknown-scene), and is not model coverage.
+
+**Order that matters.** A start comes before the frame's countdown, and takes its place: the
+countdown that begins doesn't run in the frame it begins. In a running frame the age, the time
+and the place each change from their values as the frame begins, so the frame the age reaches 96
+runs the time but doesn't move the place; the expiry answer is the time's. The picture shows the
+countdown as the frame leaves it.
 
 ### EscapeCountdown
 - kind: mechanic.
@@ -587,12 +627,108 @@ the `IntegrationAdmission` ones check that refusal only, and are not model cover
   escape and contributes no countdown picture.
 - params: none.
 - switch: none.
-- A frame whose scene runs the countdown, the current countdown Dormant → it stays Dormant, the
-  frame reports NoExpiry and contributes Absent [R-countdown-dormant, C-countdown-repeat,
-  C-countdown-independent].
+- A frame whose scene runs the countdown, the current countdown Dormant, no start → it stays
+  Dormant, the frame reports NoExpiry and contributes Absent [R-countdown-dormant,
+  C-countdown-repeat, C-countdown-independent].
 - So each such frame gives one answer and one picture contribution (C-countdown-repeat).
 - checked: oracle (R-countdown-dormant); constructed (C-countdown-repeat,
   C-countdown-independent).
+
+### CountdownBegins
+- kind: mechanic.
+- summary: the escape's scene starts the countdown at a time; it appears at once in the middle
+  of the screen.
+- params: none.
+- switch: none.
+- A frame whose scene runs the countdown, with a start at `m` minutes and `s` seconds, whatever
+  the current countdown → `Begun`: time left `m'ss"00`, age 0, place (128, 128) whole pixels;
+  NoExpiry [R-countdown-start, C-countdown-start-three, C-countdown-restart].
+- So a start while a countdown runs begins it again (C-countdown-restart).
+- checked: oracle (R-countdown-start); constructed (C-countdown-start-three,
+  C-countdown-restart, C-countdown-start-shown-only for the refusal).
+
+### CountdownWaits
+- kind: mechanic.
+- summary: a countdown just begun stands still, its 16 first frames.
+- params: none.
+- switch: none.
+- A frame whose scene runs the countdown, Begun, age below 16 → age `+ 1`; time left and place
+  unchanged; NoExpiry [R-countdown-wait, R-countdown-wait-ends, C-countdown-wait-at-zero,
+  C-countdown-shown-in-wait].
+- So it never runs out while it waits, even with no time left (C-countdown-wait-at-zero).
+- checked: oracle (R-countdown-wait, R-countdown-wait-ends); constructed
+  (C-countdown-wait-at-zero, C-countdown-shown-in-wait).
+
+### CountdownTicks
+- kind: mechanic.
+- summary: once its wait is over, each frame that runs the countdown takes one or two
+  hundredths from it, by the rhythm.
+- params: none.
+- switch: none.
+- A frame whose scene runs the countdown, Begun, age 16 or more → time left
+  `t − r(n mod 128)`, `r` the rhythm (§5.1) and `n` the count of finished frames, while that
+  stays above 0; age `+ 1` while below 96, the place unchanged while the age is below 96
+  [R-countdown-wait-ends, R-countdown-first-ticks, R-countdown-second-turns,
+  R-countdown-hold-ends, R-countdown-x-corner, R-countdown-in-place, C-countdown-last-second,
+  C-countdown-rhythm-wraps, C-countdown-rhythm-last-row, C-countdown-rhythm-all,
+  C-countdown-shown-in-hold].
+- So the minutes and seconds turn over as the hundredths do: 1'00"00 less 2 is 0'59"98
+  (R-countdown-first-ticks), 0'59"00 less 2 is 0'58"98 (R-countdown-second-turns), 0'01"00
+  less 1 is 0'00"99 (C-countdown-last-second).
+- So 128 running frames take 213 hundredths, every cell of the rhythm once: 2'00"00 becomes
+  1'57"87 (C-countdown-rhythm-all).
+- checked: oracle (R-countdown-wait-ends to R-countdown-in-place); constructed
+  (C-countdown-last-second, C-countdown-rhythm-wraps, C-countdown-rhythm-last-row,
+  C-countdown-rhythm-all, C-countdown-shown-in-hold).
+
+### CountdownRunsOut
+- kind: mechanic.
+- summary: the countdown runs out when a frame takes its last hundredth; it stops at 0'00"00.
+- params: none.
+- switch: none.
+- A frame whose scene runs the countdown, Begun, age 16 or more, `t − r(n mod 128)` 0 or below
+  → time left 0'00"00, not below, and the frame reports Expired; its age and place change as on
+  any running frame [C-countdown-expire-exact, C-countdown-expire-past, C-countdown-expired-again].
+- Any other frame → NoExpiry [R-countdown-first-ticks, C-countdown-last-second,
+  C-countdown-wait-at-zero].
+- So a countdown already at 0'00"00 that runs again reports Expired again
+  (C-countdown-expired-again). What the escape does when it runs out is the scene's (§6).
+- checked: original only (no record runs out); constructed (C-countdown-expire-exact,
+  C-countdown-expire-past, C-countdown-expired-again, C-countdown-last-second).
+
+### CountdownSlides
+- kind: mechanic.
+- summary: after its 96th frame the countdown slides from the middle of the screen into its top
+  right corner, a little under a pixel a frame each way, and stops there.
+- params: none.
+- switch: none.
+- A frame whose scene runs the countdown, Begun, age 96 → place `x = min(x + 224, 220 × 256)`,
+  `y = max(y − 193, 48 × 256)`, in 1/256ths of a pixel; each stops at its corner on its own
+  [R-countdown-hold-ends, R-countdown-x-corner, R-countdown-in-place,
+  C-countdown-y-corner-first].
+- So it reaches the right (220) a frame before the top (48) from the middle (R-countdown-x-corner),
+  and stays in the corner after (R-countdown-in-place).
+- checked: oracle (R-countdown-hold-ends, R-countdown-x-corner, R-countdown-in-place);
+  constructed (C-countdown-y-corner-first).
+
+### CountdownShown
+- kind: output.
+- summary: a begun countdown is shown each frame at its place with its time left; a frame that
+  only shows it leaves it standing.
+- params: none.
+- switch: none.
+- A frame of play, Begun → picture `Shown`: its place `(x div 256, y div 256)` and its time left,
+  as the frame leaves it [R-countdown-start, R-countdown-wait, R-countdown-first-ticks,
+  R-countdown-x-corner, R-countdown-elevator, C-countdown-shown-only].
+- A frame whose scene only shows the countdown, no start → the frame reports NoExpiry and
+  shows the countdown as it stands, `Shown` as above if Begun, Absent if Dormant; its time,
+  age and place carry to the next frame [R-countdown-elevator, C-countdown-shown-only,
+  C-countdown-shown-dormant, C-countdown-shown-in-wait, C-countdown-shown-in-hold].
+- So a frame that only shows it doesn't count toward its wait or its hold: the running frame
+  after it goes on from the same age (C-countdown-shown-in-wait, C-countdown-shown-in-hold).
+- checked: oracle (R-countdown-start, R-countdown-wait, R-countdown-first-ticks,
+  R-countdown-x-corner, R-countdown-elevator); constructed (C-countdown-shown-only,
+  C-countdown-shown-dormant, C-countdown-shown-in-wait, C-countdown-shown-in-hold).
 
 ## 6. Out of scope, and who supplies it
 
@@ -638,7 +774,23 @@ the `IntegrationAdmission` ones check that refusal only, and are not model cover
   the game's drop-the-selection option on, before the status bar; her death, on its first frame, after
   the status bar; and, on steps outside play, a door's passage with that option on,
   and the station exploding with her aboard when the escape's time runs out.
-- **The importer:** the HUD's pictures (§1.4) and her map's.
+- **The importer:** the HUD's pictures (§1.4) and her map's; the countdown's picture (§5.1): the
+  word TIME and the digits' figures, and where each sits around its place.
+- **The escape's scene (the station's boss, Ceres Ridley):** `the countdown starts`, at one
+  minute, as his self-destruct sequence ends and the escape begins, on a frame of play that runs
+  the countdown; Mother Brain's escape will start one at three minutes. The scene also reads the
+  expiry answer: when the time runs out the station's escape ends with the screen whiting out,
+  and from then the scene only shows the countdown. That ending is the scene's, not this
+  domain's.
+- **The scene and her control (`the countdown runs`):** every frame of play in the station runs
+  the countdown, from her arrival through the escape to the frame she reaches the elevator (the
+  frames Ridley pushes her aside among them); from the next frame on (she is locked, the screen
+  blacks out) frames of play only show it.
+- **The doors:** a door's passage shows the countdown's picture as it stands on its frames of
+  work while it has begun (world-doors' `WhatRuns`); the passage is a step outside play, so the
+  countdown stands still through it.
+- **The coordinator of time (T1):** the count of finished frames.
+- **The sprite encoder:** drawing the countdown's picture, in front of the room.
 - **The video encoder:** moving the HUD's cells to the screen every frame.
 - **The sound domain:** when the `Click` request is heard, or dropped.
 
@@ -652,6 +804,12 @@ the `IntegrationAdmission` ones check that refusal only, and are not model cover
    the one-shot item) or the cinematics own the selection while the opening shows no HUD is the root's
    to settle before the whole-movie run; no compared frame reaches it, since the opening shows
    no HUD.
-3. An active escape countdown, its start, advancement, digits and the consequences of its
-   expiry remain unsupported. Whether a frame's scene runs the countdown or only shows it is an
-   input from the scene (§5.1), which no domain supplies yet.
+3. The countdown's start is raised by the station's boss as its self-destruct sequence ends;
+   until that part of its spec lands, the start is borrowed from the records. Whether a frame's
+   scene runs the countdown or only shows it is the scene's (§6), which no clean domain supplies
+   yet; the harness gives it from the game's frames. The doors' passage reads "the countdown
+   has begun" from this domain (the root's ruling): `Begun` in the current countdown.
+4. Nothing clears a begun countdown in this spec. The game clears it as the station explodes,
+   in the black-out that follows when the countdown has run out, and as a game starts or
+   loads; those are the explosion's beginning, the escape's scene's (after Expired) and the load
+   flow's, which would raise a clear the way the scene raises a start.

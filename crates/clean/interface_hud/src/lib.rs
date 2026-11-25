@@ -8,10 +8,11 @@
 //! - `HudState::frame_of_play`, one whole frame of play: with the rules, the HUD's pictures
 //!   (content the importer supplies) and the frame's `FrameInputs` (her stock as the frame
 //!   begins and the buttons, her position after her moves, the values as the frame ends, the
-//!   drops, whether the scene runs the escape countdown), it leaves the State as the frame ends
+//!   drops, and the escape countdown's `CountdownInputs`: whether the scene runs it or only
+//!   shows it, its start, the count of finished frames), it leaves the State as the frame ends
 //!   and returns the `FrameOutputs`: the selection after the controls, the `HudEvent`s in the
 //!   order raised (`HudEvent::Switched { item }` for the weapons and her look, `HudEvent::Click`
-//!   for the sound domain) and the countdown's answer.
+//!   for the sound domain) and the countdown's answer, its expiry and its picture.
 //! - `HudState::out_of_play`: a step between frames of play, where only the mini-map's turn-on,
 //!   a new area's explored cells and a drop of the selection change anything.
 //! - `HudState::boss_blanks_the_map`: a boss met on entering its room, which blanks the
@@ -51,7 +52,9 @@ mod tile;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use countdown::{
-    Countdown, CountdownAnswer, CountdownExpiry, CountdownPicture, CountdownRuns, UnsupportedFrame,
+    BegunCountdown, Countdown, CountdownAge, CountdownAnswer, CountdownExpiry, CountdownInputs,
+    CountdownPicture, CountdownPlace, CountdownRuns, FinishedFrames, StartTime, TimeLeft,
+    UnsupportedFrame,
 };
 pub use events::HudEvent;
 pub use grid::{Grid, Place};

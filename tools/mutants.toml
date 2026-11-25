@@ -754,3 +754,33 @@ after = "pressed: false,"
 case = "played any-intro-6012 1 1499"
 cut = 1186
 field = "intro.stage"
+
+[[fault]]
+name = "played-doors-countdown-always-begun"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "                hud::countdown_begun(&self.hud.0),"
+after = "                true,"
+case = "played chain-any-0003-DFD7 0 300"
+cut = 183
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-countdown-start-every-frame"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "let start = super::hud::countdown_start(&previous.wram, &current.wram)?;"
+after = "let start = interface_hud::StartTime::new(1, 0);"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "hud.countdown.begun"
+
+[[fault]]
+name = "played-countdown-expiry-inverted"
+responsibility = "played"
+file = "crates/verify/src/replay/played/hud.rs"
+before = "expiry(answer == CountdownExpiry::Expired)"
+after = "expiry(answer != CountdownExpiry::Expired)"
+case = "played chain-any-0003-DFD7 0 41"
+cut = 1
+field = "hud.countdown.expiry"

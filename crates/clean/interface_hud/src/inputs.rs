@@ -1,13 +1,13 @@
 //! What the HUD reads each step (§1.3): in a frame of play, her stock as the frame begins and the
 //! buttons, which the selection reads; where she is on her map; the values other domains own as
 //! the frame ends, which the status bar draws; what other domains drop before the status bar and
-//! after it; and whether the scene runs the escape countdown. Outside play, the mini-map's
+//! after it; and what the escape countdown reads. Outside play, the mini-map's
 //! turn-on, a new area and a drop.
 
 use enum_map::EnumMap;
 use types::Pair;
 
-use crate::countdown::CountdownRuns;
+use crate::countdown::CountdownInputs;
 use crate::grid::Place;
 use crate::item::{Ammo, SelectableItem};
 use crate::map::{HerMap, MapCellSet};
@@ -250,8 +250,9 @@ pub struct FrameInputs<'map> {
     /// The selection dropped after the status bar is drawn, so the bar shows the selection
     /// before it until the next frame of play: her death, on its first frame.
     pub dropped_after_status_bar: Dropped,
-    /// Whether the scene runs the escape countdown this frame.
-    pub countdown: CountdownRuns,
+    /// What the escape countdown reads: whether the scene runs it, its start, the count of
+    /// finished frames.
+    pub countdown: CountdownInputs,
 }
 
 /// A new area (§1.3): whether a step outside play leads into another area.

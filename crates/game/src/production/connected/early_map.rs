@@ -4,7 +4,7 @@ use super::Fault;
 use crate::production::hud::HudPin;
 use canonical::{Canonical, model::Model};
 use interface_hud::{
-    CancelButton, Controls, CountdownRuns, Dropped, FrameCount, FrameInputs, HerMap, HudPictures,
+    CancelButton, Controls, CountdownInputs, Dropped, FrameCount, FrameInputs, HerMap, HudPictures,
     MiniMapInputs, MiniMapPower, Mute, Room, Rules, SelectButton, Selection, Status, StockAtStart,
 };
 use types::Parts;
@@ -28,8 +28,9 @@ pub struct Inputs<'a> {
     pub status: Status,
     /// Why a switch would make no click.
     pub muted_by: Option<Mute>,
-    /// Whether the scene runs the escape countdown this frame.
-    pub countdown: CountdownRuns,
+    /// What the escape countdown reads this frame: whether the scene runs it, its start and the
+    /// count of finished frames.
+    pub countdown: CountdownInputs,
     /// The currently observed map power.
     pub enabled: bool,
     /// Whether charted cells are always shown.

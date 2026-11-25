@@ -6,8 +6,9 @@ use super::{Content, Fault, Rules};
 use crate::production::ridley;
 use boss_ceres_ridley::RidleyPlacing;
 use interface_hud::{
-    Ammunition, CancelButton, Controls, CountdownRuns, Dropped, Energy, FrameInputs, FrameOutputs,
-    MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve, SelectButton, Status, StockAtStart,
+    Ammunition, CancelButton, Controls, Countdown, CountdownInputs, CountdownRuns, Dropped, Energy,
+    FinishedFrames, FrameInputs, FrameOutputs, MiniMapInputs, Mute, NewArea, OutOfPlayInputs,
+    Reserve, SelectButton, StartTime, Status, StockAtStart,
 };
 use types::{Action, Facing, Pair, Parts};
 
@@ -28,6 +29,14 @@ pub struct HudFrame {
     pub map_collected: bool,
     /// Whether the scene runs the escape countdown this frame.
     pub countdown: CountdownRuns,
+    /// The escape's scene starts the countdown this frame at this time, or not.
+    pub countdown_starts: Option<StartTime>,
+}
+
+/// Whether an escape countdown has begun in `hud`: the doors read it to draw the countdown
+/// through a passage and keep its colours lit.
+pub(super) const fn countdown_begun(hud: &interface_hud::HudState) -> bool {
+    matches!(hud.countdown, Countdown::Begun(_))
 }
 
 impl super::State {
@@ -144,6 +153,86 @@ fn hud_inputs<'a>(
         },
         dropped_before_status_bar: Dropped::Nothing,
         dropped_after_status_bar: Dropped::Nothing,
-        countdown: hud.countdown,
+        countdown: CountdownInputs {
+            runs: hud.countdown,
+            start: hud.countdown_starts,
+            // The count as the last frame left it: this frame's isn't counted yet.
+            finished: FinishedFrames(state.frame.finished_frames),
+        },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::tests::{content, hud_frame, inputs, rules, state};
+    use super::super::{State, arrival, passage};
+    use super::{HudFrame, countdown_begun};
+    use interface_hud::{
+        BegunCountdown, Countdown, CountdownAge, CountdownPlace, FrameOutputs, StartTime, TimeLeft,
+    };
+    use types::Pair;
+
+    fn frame_of_play(state: &mut State, hud: &HudFrame) -> FrameOutputs {
+        let progress = run_progress::Progress::default();
+        let passing = passage::Passing {
+            work_begun: true,
+            work_done: true,
+            audio: passage::PassageAudio {
+                sounds_sent: true,
+                music_ready: true,
+            },
+            progress: &progress,
+            random: None,
+            start: arrival::Readiness::NotYet,
+        };
+        let outputs = state
+            .step(
+                &inputs(types::Buttons::default()),
+                &passing,
+                hud,
+                &content(),
+                &rules(),
+            )
+            .unwrap();
+        outputs.hud.unwrap()
+    }
+
+    #[test]
+    fn the_scenes_start_begins_the_countdown_the_doors_then_read() {
+        let mut played = state(Vec::new());
+        assert!(!countdown_begun(&played.hud.0));
+        let start = StartTime::new(1, 0);
+        frame_of_play(
+            &mut played,
+            &HudFrame {
+                countdown_starts: start,
+                ..hud_frame()
+            },
+        );
+        assert!(countdown_begun(&played.hud.0));
+    }
+
+    #[test]
+    fn a_running_countdown_takes_the_rhythm_of_the_count_of_finished_frames_state_carries() {
+        let begun = BegunCountdown {
+            time_left: TimeLeft::new(1, 0, 0).unwrap(),
+            age: CountdownAge::new(16).unwrap(),
+            place: CountdownPlace::new(Pair {
+                x: 128 * 256,
+                y: 128 * 256,
+            })
+            .unwrap(),
+        };
+        // The rhythm's first cell takes one hundredth and its second two.
+        for (finished, left) in [(0, 5999), (1, 5998)] {
+            let mut played = state(Vec::new());
+            played.hud.0.countdown = Countdown::Begun(begun);
+            played.frame.finished_frames = finished;
+            frame_of_play(&mut played, &hud_frame());
+            let Countdown::Begun(after) = played.hud.0.countdown else {
+                panic!("the countdown stays begun");
+            };
+            assert_eq!(after.time_left.hundredths(), left);
+        }
     }
 }

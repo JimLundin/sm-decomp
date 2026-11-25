@@ -73,7 +73,6 @@ pub const SEED_HELD: &[&str] = &[
     "cinematic and elevator status",
     "the seed room's geometry and the boxes of its actors other than the Ceres doors",
     "the seed room's camera screens, size, scrollers and lead",
-    "escape timer",
     "passage sounds sent",
     "progress, which chooses the next room's version, her suit and her beams, and whether the station's boss is beaten",
     "Ceres station stage, but where Ridley's placing sets it",
@@ -90,6 +89,7 @@ pub const BORROWED: &[&str] = &[
     "the random number as a passage's frame begins: no owner here draws it through a passage",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
     "the start ready: the frame a new game's start is made ready (R2 and C1's loading, T1's lag)",
+    "the escape countdown's start: the timer set between two records, at the time the second holds, until the station's boss raises it",
 ];
 
 /// Where a played run stopped.
@@ -153,6 +153,7 @@ fn expected(
     fields.extend(health::parts(&health_tail::decode(wram, None)?));
     if hud_settled {
         fields.extend(hud::parts(super::hud::expected(wram, hud)?));
+        fields.extend(hud::countdown(super::hud::countdown_origin(wram)?));
     }
     fields.extend(frame::expected(wram)?);
     fields.extend(arrival::expected(wram, counted)?);
@@ -183,6 +184,7 @@ fn actual(
     fields.extend(health::parts(&state.health.0));
     if hud_settled {
         fields.extend(hud::parts(super::hud::initial(&state.hud.0, hud)?));
+        fields.extend(hud::countdown(state.hud.0.countdown));
     }
     fields.extend(frame::actual(state.frame));
     fields.extend(arrival::actual(state.arrival));
@@ -423,7 +425,6 @@ impl<'a> Run<'a> {
                 sounds_sent: self.room.sounds_sent,
                 music_ready: music_ready(&previous.wram)?,
             },
-            timer_running: self.room.timer_running,
             progress: &self.room.progress,
             // The borrowed random number, only through a passage; in play the loop carries it.
             random: match doors {
@@ -432,13 +433,17 @@ impl<'a> Run<'a> {
             },
             start: arrival::start(&previous.wram, &current.wram)?,
         };
-        let hud_frame = hud::frame(&self.room.hud, controller);
-        self.state
+        let start = super::hud::countdown_start(&previous.wram, &current.wram)?;
+        let hud_frame = hud::frame(&self.room.hud, controller, start);
+        let outputs = self
+            .state
             .step(&inputs, &passing, &hud_frame, &self.played, &self.rules)
             .map_err(|fault| Outcome::Unsupported {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        // A frame of play gives the escape's scene an expiry answer; a passage's gives none.
+        let expiry = outputs.hud.map(|hud| hud.countdown.expiry);
         let (expected, actual) = if self.state.arrival.preparing() {
             // The preparation's working values are its own: only the arrival and the random
             // number are the run's.
@@ -455,7 +460,7 @@ impl<'a> Run<'a> {
                 self.state.hud =
                     Model(start::hud_put_up(&current.wram, self.state.hud.0.mini_map)?);
             }
-            self.compared(current, hud_settled && !preparing, cut)?
+            self.compared(current, hud_settled && !preparing, expiry, cut)?
         };
         compare(&expected, &actual).map_err(|fault| match fault {
             CompareFault::Difference(field) => Outcome::Difference { cut, field },
@@ -470,9 +475,10 @@ impl<'a> Run<'a> {
         &self,
         current: &FrameRecord,
         hud_settled: bool,
+        expiry: Option<interface_hud::CountdownExpiry>,
         cut: u64,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
-        let expected = expected(
+        let mut expected = expected(
             current,
             &self.content.appearance,
             &self.hud,
@@ -481,13 +487,18 @@ impl<'a> Run<'a> {
             self.row,
             cut,
         )?;
-        let actual = actual(
+        let mut actual = actual(
             &self.state,
             &self.content.appearance,
             &self.hud,
             finished(current),
             hud_settled,
         )?;
+        // A frame of play answers the escape's scene whether its time has run out.
+        if let Some(expiry) = expiry {
+            expected.push(hud::expiry_expected(&current.wram)?);
+            actual.push(hud::expiry_actual(expiry));
+        }
         Ok((expected, actual))
     }
 }

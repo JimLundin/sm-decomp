@@ -19,7 +19,7 @@ pub struct FrameOutputs {
     /// The events, in the order raised: a `Switched` from the controls, then a `Click` from the
     /// status bar.
     pub events: Vec<HudEvent>,
-    /// Spec: EscapeCountdown. The countdown's answer for this frame.
+    /// The escape countdown's answer for this frame: its expiry answer and its picture.
     pub countdown: CountdownAnswer,
 }
 
@@ -27,8 +27,9 @@ impl HudState {
     /// Plays one frame of play, whole: the frame's inputs go in, and the State is left as the
     /// frame ends, with the frame's outputs returned. The frame's order (§5):
     ///
-    /// 1. A frame the spec leaves out (the scene only shows the countdown) is refused before
-    ///    any effect.
+    /// 1. The escape countdown takes its turn, which it alone reads and changes; a frame the
+    ///    spec leaves out (a start on a frame that only shows the countdown) is refused there,
+    ///    before any effect.
     /// 2. The selection responds to the controls, by her stock as the frame begins; that is
     ///    the selection after the controls.
     /// 3. The mini-map reflects her position after her moves.
@@ -38,15 +39,15 @@ impl HudState {
     ///
     /// # Errors
     ///
-    /// `UnsupportedFrame::CountdownOnlyShown` when the scene only shows the countdown; the State
-    /// is then unchanged.
+    /// `UnsupportedFrame::StartWhileOnlyShown` when the countdown starts on a frame whose scene
+    /// only shows it; the State is then unchanged.
     pub fn frame_of_play(
         &mut self,
         rules: &Rules,
         pictures: &HudPictures,
         inputs: &FrameInputs<'_>,
     ) -> Result<FrameOutputs, UnsupportedFrame> {
-        let countdown = self.countdown.answer(inputs.countdown)?;
+        let countdown = self.countdown.play(inputs.countdown)?;
         let switched = self
             .selection
             .respond_to_controls(inputs.controls, inputs.stock_at_start);

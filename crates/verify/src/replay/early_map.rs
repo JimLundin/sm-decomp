@@ -230,7 +230,7 @@ struct HudNeighbours {
     status: interface_hud::Status,
     muted_by: Option<interface_hud::Mute>,
     can_switch: bool,
-    countdown: interface_hud::CountdownRuns,
+    countdown: interface_hud::CountdownInputs,
 }
 
 impl HudNeighbours {
@@ -242,7 +242,7 @@ impl HudNeighbours {
             status: hud::status(&end.wram)?,
             muted_by: hud::muted_by(&end.wram)?,
             can_switch: hud::can_switch(&end.wram)?,
-            countdown: hud::countdown_runs(&start.wram, &end.wram)?,
+            countdown: hud::countdown_inputs(&start.wram, &end.wram)?,
         })
     }
 }

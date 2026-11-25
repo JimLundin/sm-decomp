@@ -93,6 +93,31 @@ a frame that chooses) and compared at every cut as `movement.choices`. The compa
 cuts; it does not compare intra-frame bus timing. While she follows the pad the game keeps no way for her run of its own, so her run's way
 is compared only while she carries on, and otherwise through her position.
 
+The escape countdown (interface-hud §5.1) is the HUD's State, carried with it. Its frame of
+play assumes main gameplay runs the countdown, a constant the runner gives rather than the
+scene's choice read from the game (every main-gameplay frame of the escape rows has the running
+handler); its start; and the count of finished frames as the last frame left it, the played
+State's sixteen-bit count. The start is
+borrowed from the records until the station's boss raises it (`BORROWED`): the timer set between
+two records, at the time the second holds. A seed's countdown is decoded from the timer's words,
+a start not yet taken refused. The doors read whether it has begun from the HUD, to draw it and
+keep its colours lit through a passage. The run compares it at every cut it compares the HUD
+(`hud.countdown.begun`, `.time` in hundredths, `.age`, and `.x` and `.y` in 1/256ths of a
+pixel) and, on each frame of play, the expiry answer against the game state turning to the
+time-up's (`hud.countdown.expiry`): a run-out reported early is caught, but a missed one stops
+as Unsupported at the time-up's game state, which the runner refuses before it compares; no row
+of the movie runs out. A seed in the escape is admitted, but not one in the
+rotating shaft; every escape row then stops at its cut 1 on the doors' shakes (`Fault::Escape`),
+and in Ridley's room the start (cut 1,586) lies past the run's stop, so no reviewed run reaches a
+begun countdown yet. With that refusal lifted in a local probe, `chain-any-0007-E06B` holds all
+258 cuts (the hold, the slide from cut 72 and the passage) and `chain-any-0008-E021` 104 (the
+slide's end at 81), stopping at its passage's cut 105 in `doors.colours.screen`; there a count of
+finished frames one ahead differs at 0007's cut 2 in `hud.countdown.time`, and the doors reading
+the countdown dormant through a passage at cut 97 in `doors.colours.goal`. On the reviewed runs,
+the doors reading it begun through a passage differ at `chain-any-0003-DFD7` cut 183 in
+`doors.colours.goal`, a start borrowed on every frame at cut 1 in `hud.countdown.begun`, and the
+expiry answer inverted at cut 1 in `hud.countdown.expiry`.
+
 The room's Ceres doors (boss-ceres-ridley's `CeresDoor`) play in the loop too. Their State is
 decoded once from the seed record, each door in the room's order of its enemies, and carried
 with nothing fed back. Each frame of play runs every door once through `CeresDoor::run`, before

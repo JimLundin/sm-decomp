@@ -43,12 +43,50 @@ mod shape {
         IntegrationAdmission,
     }
 
-    /// A current countdown, as the file names it; only `Dormant` is the spec's.
-    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    /// A current countdown: `"Dormant"`, or a begun one's table.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
     pub enum CurrentCountdownIn {
+        Dormant(DormantIn),
+        Begun(BegunIn),
+    }
+
+    /// `"Dormant"`: no countdown has begun.
+    #[derive(Deserialize)]
+    pub enum DormantIn {
         Dormant,
-        Active,
-        Expired,
+    }
+
+    /// A begun countdown: its time left `[minutes, seconds, hundredths]`, its age, and its
+    /// place, each axis `[whole pixels, 1/256ths]`.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct BegunIn {
+        pub time: [u8; 3],
+        pub age: u8,
+        pub place: [[u8; 2]; 2],
+    }
+
+    /// A frame's countdown picture: `"Absent"`, or its place in whole pixels and its time.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    pub enum CountdownPictureIn {
+        Absent(AbsentIn),
+        Shown(ShownPictureIn),
+    }
+
+    /// `"Absent"`: no countdown picture.
+    #[derive(Deserialize)]
+    pub enum AbsentIn {
+        Absent,
+    }
+
+    /// A countdown picture shown: `place = [x, y]`, `time = [minutes, seconds, hundredths]`.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct ShownPictureIn {
+        pub place: [u16; 2],
+        pub time: [u8; 3],
     }
 
     /// The scene's choice for the countdown, as the file names it.
@@ -75,7 +113,8 @@ mod shape {
         Constructed,
     }
 
-    /// One `[[countdown]]`: frames of play with one scene choice each.
+    /// One `[[countdown]]`: frames of play, in order, from the current countdown before them
+    /// to the one after them.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     pub struct CountdownIn {
@@ -85,16 +124,26 @@ mod shape {
         pub _source: CountdownSource,
         pub entries: Vec<String>,
         pub before: CurrentCountdownIn,
-        pub scene: SceneIn,
-        pub frames: usize,
         pub expected: CountdownExpected,
         pub after: CurrentCountdownIn,
-        pub answers: Vec<interface_hud::CountdownExpiry>,
-        pub pictures: Vec<interface_hud::CountdownPicture>,
         pub energy: Option<u16>,
         /// Her protection from hits, which no rule of the HUD reads: not an input of the model.
         #[serde(rename = "protection_frames")]
         pub _protection_frames: Option<u16>,
+        pub frames: Vec<CountdownFrameIn>,
+    }
+
+    /// One `[[countdown.frames]]`: a frame of play's countdown inputs and, unless it is
+    /// refused, its outputs.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct CountdownFrameIn {
+        pub scene: SceneIn,
+        #[serde(default)]
+        pub finished: u16,
+        pub start: Option<[u8; 2]>,
+        pub answer: Option<interface_hud::CountdownExpiry>,
+        pub picture: Option<CountdownPictureIn>,
     }
 
     /// `[pictures]`: the HUD's pictures by name.
@@ -549,19 +598,22 @@ mod convert {
 
     use enum_map::enum_map;
     use interface_hud::{
-        Alternation, Ammo, Ammunition, Boss, CancelButton, Controls, CountdownRuns, Dropped,
-        Energy, Equipped, FrameCount, FrameInputs, FrameOutputs, HerMap, HudEvent, HudGrid,
-        HudPictures, HudState, Icons, Look, MapCellSet, MapPictures, MiniMapInputs, MiniMapPower,
-        Mute, NewArea, OutOfPlayInputs, Pair, Place, Reserve, ReserveMode, Room, Rules, Screen,
-        SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart,
+        Alternation, Ammo, Ammunition, BegunCountdown, Boss, CancelButton, Controls, Countdown,
+        CountdownAge, CountdownAnswer, CountdownInputs, CountdownPicture, CountdownPlace,
+        CountdownRuns, Dropped, Energy, Equipped, FinishedFrames, FrameCount, FrameInputs,
+        FrameOutputs, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet,
+        MapPictures, MiniMapInputs, MiniMapPower, Mute, NewArea, OutOfPlayInputs, Pair, Place,
+        Reserve, ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection, Shown,
+        StartTime, Status, Stock, StockAtStart, TimeLeft,
     };
     use serde::de::DeserializeOwned;
 
     use super::shape::{
-        AfterIn, BeforeIn, BossName, BossScreensIn, CancelIn, CountdownExpected, CountdownIn,
-        CountdownScope, DropWhatIn, DropWhenIn, DroppedIn, Equipment, IconsIn, InputsIn, ItemName,
+        AbsentIn, AfterIn, BeforeIn, BegunIn, BossName, BossScreensIn, CancelIn, CountdownExpected,
+        CountdownFrameIn, CountdownIn, CountdownPictureIn, CountdownScope, CurrentCountdownIn,
+        DormantIn, DropWhatIn, DropWhenIn, DroppedIn, Equipment, IconsIn, InputsIn, ItemName,
         MapIn, MiniMapIn, MuteIn, PictureIn, PicturesIn, PlaceIn, RoomIn, RulesIn, SelectIn,
-        ShownIn, StepIn, VectorFile, VectorIn,
+        ShownIn, ShownPictureIn, StepIn, VectorFile, VectorIn,
     };
 
     /// The vector file.
@@ -756,13 +808,13 @@ mod convert {
     }
 
     impl CountdownIn {
-        /// Runs the case's frames of play through the model: `Ok` with each way the model
-        /// differs from the case, or `Err` when the fixture can't be built.
+        /// Runs the case's frames of play, in order, through the model: `Ok` with each way the
+        /// model differs from the case, or `Err` when the case breaks the file's format.
         ///
-        /// The case's current countdown is read into the HUD's State and its scene into the
-        /// frame's input, each through the model's own serde: a countdown or a scene the spec
-        /// leaves out has no value there, and is refused before any frame. A frame the model
-        /// refuses must leave the State as it was.
+        /// Each frame's scene is read into the frame's input through the model's own serde: a
+        /// scene the spec leaves out has no value there, and the frame is refused before any
+        /// effect, as is a frame the model refuses. A refused frame must leave the State as it
+        /// was, give no outputs, and be the case's last.
         pub fn run(&self, pictures: &HudPictures) -> Result<Vec<String>, String> {
             let map = HerMap {
                 pictures: MapPictures::filled(pictures.map_blank),
@@ -774,80 +826,115 @@ mod convert {
                 ..InputsIn::default()
             };
             let mut inputs = frame_inputs(FrameCount(0), &energy_inputs, &map)?;
-            let hud = model_value::<HudState>(with_countdown(&countdown_fixture(pictures)?, self)?);
-            let runs =
-                model_value::<CountdownRuns>(toml::Value::String(format!("{:?}", self.scene)));
-            let mut played = Played {
-                refused: true,
-                ..Played::default()
-            };
-            if let (Some(hud), Some(runs)) = (hud, runs) {
-                inputs.countdown = runs;
-                self.play(hud, &inputs, pictures, &mut played);
+            let mut hud = countdown_fixture(pictures)?;
+            hud.countdown = current_countdown(&self.before)?;
+            let mut problems = Vec::new();
+            let mut refused = false;
+            for (index, frame) in self.frames.iter().enumerate() {
+                if refused {
+                    return Err(format!("frame {index} follows a refused frame"));
+                }
+                let played = play_frame(&mut hud, frame, &mut inputs, pictures)?;
+                refused = played.is_none();
+                let expected = frame_outputs(frame)?;
+                if played != expected {
+                    problems.push(format!(
+                        "frame {index}: expected {expected:?}, got {played:?}"
+                    ));
+                }
             }
-            let Played {
-                mut problems,
-                answers,
-                contributions,
-                refused,
-            } = played;
-            let expected_refusal = self.expected == CountdownExpected::Unsupported;
-            if refused != expected_refusal {
+            if refused != (self.expected == CountdownExpected::Unsupported) {
                 problems.push(format!("expected {:?}, refused: {refused}", self.expected));
             }
-            if answers != self.answers || contributions != self.pictures {
+            let after = current_countdown(&self.after)?;
+            if hud.countdown != after {
                 problems.push(format!(
-                    "answers {answers:?} and pictures {contributions:?}, expected {:?} and {:?}",
-                    self.answers, self.pictures
+                    "countdown after: expected {after:?}, got {:?}",
+                    hud.countdown
                 ));
             }
             Ok(problems)
         }
     }
 
-    /// What a countdown case's frames gave.
-    #[derive(Default)]
-    struct Played {
-        problems: Vec<String>,
-        answers: Vec<interface_hud::CountdownExpiry>,
-        contributions: Vec<interface_hud::CountdownPicture>,
-        /// The model refused the case: it holds no value for its countdown or its scene, or it
-        /// refused a frame.
-        refused: bool,
+    /// Plays one frame of a countdown case on `hud`: its countdown's answer, or `None` when the
+    /// frame is refused, which must leave the State as it was.
+    fn play_frame(
+        hud: &mut HudState,
+        frame: &CountdownFrameIn,
+        inputs: &mut FrameInputs<'_>,
+        pictures: &HudPictures,
+    ) -> Result<Option<CountdownAnswer>, String> {
+        let Some(runs) = model_value::<CountdownRuns>(format!("{:?}", frame.scene).into()) else {
+            return Ok(None);
+        };
+        let start = frame
+            .start
+            .map(|[minutes, seconds]| {
+                StartTime::new(minutes, seconds)
+                    .ok_or_else(|| format!("no start at {minutes}:{seconds}"))
+            })
+            .transpose()?;
+        inputs.countdown = CountdownInputs {
+            runs,
+            start,
+            finished: FinishedFrames(frame.finished),
+        };
+        let before = hud.clone();
+        let result = hud.frame_of_play(&Rules::reference(), pictures, inputs);
+        if result.is_err() && *hud != before {
+            return Err("a refused frame changed the State".to_owned());
+        }
+        Ok(result.ok().map(|outputs| outputs.countdown))
     }
 
-    impl CountdownIn {
-        /// Plays the case's frames on `hud`, stopping at a refused frame, which must leave the
-        /// State as it was; then checks the countdown the frames leave.
-        fn play(
-            &self,
-            mut hud: HudState,
-            inputs: &FrameInputs<'_>,
-            pictures: &HudPictures,
-            played: &mut Played,
-        ) {
-            played.refused = false;
-            for _ in 0..self.frames {
-                let start = hud.clone();
-                let result = hud.frame_of_play(&Rules::reference(), pictures, inputs);
-                played.refused = result.is_err();
-                if played.refused && hud != start {
-                    played
-                        .problems
-                        .push("a refused frame changed the State".to_owned());
-                }
-                let Ok(outputs) = result else { return };
-                played.answers.push(outputs.countdown.expiry);
-                played.contributions.push(outputs.countdown.picture);
-            }
-            let after = format!("{:?}", hud.countdown);
-            if after != format!("{:?}", self.after) {
-                played.problems.push(format!(
-                    "countdown after: expected {:?}, got {after}",
-                    self.after
-                ));
+    /// The outputs a countdown case's frame expects: both, or neither on a refused frame.
+    fn frame_outputs(frame: &CountdownFrameIn) -> Result<Option<CountdownAnswer>, String> {
+        match (frame.answer, frame.picture.as_ref()) {
+            (None, None) => Ok(None),
+            (Some(expiry), Some(picture)) => Ok(Some(CountdownAnswer {
+                expiry,
+                picture: countdown_picture(picture)?,
+            })),
+            (Some(_), None) | (None, Some(_)) => {
+                Err("a frame gives both its answer and its picture, or neither".to_owned())
             }
         }
+    }
+
+    /// A countdown picture.
+    fn countdown_picture(given: &CountdownPictureIn) -> Result<CountdownPicture, String> {
+        match given {
+            CountdownPictureIn::Absent(AbsentIn::Absent) => Ok(CountdownPicture::Absent),
+            CountdownPictureIn::Shown(ShownPictureIn {
+                place: [x, y],
+                time,
+            }) => Ok(CountdownPicture::Shown {
+                place: Pair { x: *x, y: *y },
+                time: time_left(*time)?,
+            }),
+        }
+    }
+
+    /// A current countdown, each part within the range the spec gives it.
+    fn current_countdown(given: &CurrentCountdownIn) -> Result<Countdown, String> {
+        let BegunIn { time, age, place } = match given {
+            CurrentCountdownIn::Dormant(DormantIn::Dormant) => return Ok(Countdown::Dormant),
+            CurrentCountdownIn::Begun(begun) => begun,
+        };
+        let [x, y] = place.map(u16::from_be_bytes);
+        Ok(Countdown::Begun(BegunCountdown {
+            time_left: time_left(*time)?,
+            age: CountdownAge::new(*age).ok_or_else(|| format!("no countdown age {age}"))?,
+            place: CountdownPlace::new(Pair { x, y })
+                .ok_or_else(|| format!("no countdown place {place:?}"))?,
+        }))
+    }
+
+    /// A time left, `[minutes, seconds, hundredths]`.
+    fn time_left([minutes, seconds, hundredths]: [u8; 3]) -> Result<TimeLeft, String> {
+        TimeLeft::new(minutes, seconds, hundredths)
+            .ok_or_else(|| format!("no time left {minutes}'{seconds}\"{hundredths}"))
     }
 
     /// The energy capacity of the countdown cases' frames, which no countdown rule reads.
@@ -856,16 +943,6 @@ mod convert {
     /// A value of the model's, read by its serde from `value`, or `None` if it has no such value.
     fn model_value<T: DeserializeOwned>(value: toml::Value) -> Option<T> {
         value.try_into().ok()
-    }
-
-    /// The saved form of `hud`, holding the case's current countdown by its name.
-    fn with_countdown(hud: &HudState, case: &CountdownIn) -> Result<toml::Value, String> {
-        let mut value = toml::Value::try_from(hud).map_err(|error| error.to_string())?;
-        value
-            .as_table_mut()
-            .ok_or("a State saves as a table")?
-            .insert("countdown".to_owned(), format!("{:?}", case.before).into());
-        Ok(value)
     }
 
     /// Whether a countdown case runs the model, rather than checking only the HUD's refusal.
@@ -1127,7 +1204,11 @@ mod convert {
             }),
             dropped_before_status_bar,
             dropped_after_status_bar,
-            countdown: CountdownRuns::MaintainCountdown,
+            countdown: CountdownInputs {
+                runs: CountdownRuns::MaintainCountdown,
+                start: None,
+                finished: FinishedFrames(0),
+            },
         })
     }
 
@@ -1670,15 +1751,57 @@ mod tests {
             ("scope = \"Model\"\nsource", "scope = \"Anything\"\nsource"),
             ("before = \"Dormant\"", "before = \"Other\""),
             (
+                "after = { time = [1, 0, 0], age = 0,",
+                "after = { time = [1, 0, 0], speed = 0, age = 0,",
+            ),
+            (
+                "after = { time = [1, 0, 0], age = 0,",
+                "after = { time = [1, 0], age = 0,",
+            ),
+            (
                 "scene = \"MaintainCountdown\"",
                 "scene = \"InventedChoice\"",
             ),
-            ("frames = 1", "frames = \"one\""),
+            ("finished = 10764", "finished = 10764\nspeed = 1"),
+            ("finished = 10764", "finished = \"one\""),
+            ("start = [1, 0]", "start = [1]"),
             ("expected = \"Pass\"", "expected = \"Maybe\""),
-            ("answers = [\"NoExpiry\"]", "answers = [\"Expiry\"]"),
-            ("pictures = [\"Absent\"]", "pictures = [\"Digits\"]"),
+            ("answer = \"NoExpiry\"", "answer = \"Expiry\""),
+            ("picture = \"Absent\"", "picture = \"Digits\""),
+            (
+                "picture = { place = [128, 128], time = [1, 0, 0] }",
+                "picture = { place = [128, 128], time = [1, 0, 0], speed = 1 }",
+            ),
         ] {
             assert!(load_changed(from, to).is_err(), "accepted {to}");
+        }
+    }
+
+    /// Changes that each give a countdown case a value outside the range the spec gives it: an
+    /// age past 96, seconds past 59, a place past the corner, a start past 59 seconds; and a
+    /// refused frame that gives outputs.
+    const OUT_OF_RANGE: [(&str, &str); 5] = [
+        ("age = 4,", "age = 97,"),
+        ("time = [1, 0, 0], age = 4", "time = [1, 60, 0], age = 4"),
+        ("place = [[220, 0], [48, 0]]", "place = [[220, 1], [48, 0]]"),
+        ("start = [1, 0]", "start = [1, 60]"),
+        (
+            "scene = \"Unknown\"",
+            "scene = \"Unknown\"\nanswer = \"NoExpiry\"",
+        ),
+    ];
+
+    #[test]
+    fn a_countdown_value_out_of_range_fails_its_case() {
+        for (from, to) in OUT_OF_RANGE {
+            let file = load_changed(from, to).unwrap();
+            let pictures = pictures(&file.pictures);
+            assert!(
+                file.countdown.iter().any(
+                    |case| !matches!(case.run(&pictures), Ok(problems) if problems.is_empty())
+                ),
+                "{to} passed"
+            );
         }
     }
 
@@ -1703,8 +1826,8 @@ mod tests {
     }
 
     #[test]
-    fn the_catalogue_lists_the_specs_21_entries() {
-        assert_eq!(CATALOGUE.len(), 21);
+    fn the_catalogue_lists_the_specs_27_entries() {
+        assert_eq!(CATALOGUE.len(), 27);
     }
 
     #[test]

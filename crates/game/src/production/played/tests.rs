@@ -137,6 +137,7 @@ pub(super) fn hud_frame() -> HudFrame {
         ammunition: Ammunition::new(enum_map::EnumMap::from_fn(|_| hud::Stock::default())).unwrap(),
         map_collected: false,
         countdown: CountdownRuns::MaintainCountdown,
+        countdown_starts: None,
     }
 }
 
@@ -246,7 +247,6 @@ pub(super) fn play_with(
             sounds_sent: true,
             music_ready: true,
         },
-        timer_running: false,
         progress: &progress,
         random: None,
         start: arrival::Readiness::NotYet,

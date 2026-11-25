@@ -84,6 +84,7 @@ pub struct HudState {
     pub explored: MapCellSet,
     /// Whether the mini-map is off.
     pub mini_map: MiniMapPower,
-    /// Spec: EscapeCountdown. The current countdown; no other input of the HUD replaces it.
+    /// The current escape countdown: dormant, or begun with its time left, age and place. No
+    /// other input of the HUD replaces it.
     pub countdown: Countdown,
 }

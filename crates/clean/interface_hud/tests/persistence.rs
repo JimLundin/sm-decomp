@@ -10,12 +10,26 @@
 
 use enum_map::enum_map;
 use interface_hud::{
-    Ammo, Ammunition, CancelButton, ColourSet, Controls, CountdownRuns, Dropped, Energy, Equipped,
+    Ammo, Ammunition, BegunCountdown, CancelButton, ColourSet, Controls, Countdown, CountdownAge,
+    CountdownInputs, CountdownPlace, CountdownRuns, Dropped, Energy, Equipped, FinishedFrames,
     Flip, FrameCount, FrameInputs, Grid, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons,
     Look, MapCellSet, MiniMapInputs, MiniMapPower, Pair, Picture, Reserve, ReserveMode, Room,
-    Rules, SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart, Tile,
-    UnsupportedFrame,
+    Rules, SelectButton, SelectableItem, Selection, Shown, StartTime, Status, Stock, StockAtStart,
+    Tile, TimeLeft, UnsupportedFrame,
 };
+
+/// A countdown begun, mid-slide: its time left, age and place each set apart from a start's.
+fn begun() -> Countdown {
+    Countdown::Begun(BegunCountdown {
+        time_left: TimeLeft::new(0, 42, 17).unwrap(),
+        age: CountdownAge::new(96).unwrap(),
+        place: CountdownPlace::new(Pair {
+            x: 175 * 256 + 96,
+            y: 90 * 256 + 13,
+        })
+        .unwrap(),
+    })
+}
 
 const fn at(x: i32, y: i32) -> Pair<i32> {
     Pair { x, y }
@@ -116,6 +130,7 @@ fn pictures() -> HudPictures {
 #[test]
 fn fresh_restoration_continues_with_equal_complete_state_and_events() {
     let mut control = state();
+    control.countdown = begun();
     let mut restored = restore(control.clone());
     let pictures = pictures();
     let mut map = HerMap::default();
@@ -174,7 +189,11 @@ fn fresh_restoration_continues_with_equal_complete_state_and_events() {
         muted_by: None,
         dropped_before_status_bar: Dropped::Nothing,
         dropped_after_status_bar: Dropped::Nothing,
-        countdown: CountdownRuns::MaintainCountdown,
+        countdown: CountdownInputs {
+            runs: CountdownRuns::MaintainCountdown,
+            start: None,
+            finished: FinishedFrames(65_535),
+        },
     };
     let rules = Rules::reference();
     let outputs = control.frame_of_play(&rules, &pictures, &inputs).unwrap();
@@ -197,6 +216,7 @@ fn fresh_restoration_continues_with_equal_complete_state_and_events() {
         Selection::OneShot(super_missiles)
     );
     assert_eq!(restored, control);
+    assert_ne!(control.countdown, begun(), "the countdown ran");
     // A second frame, from the restored State and the original alike.
     inputs.frame = FrameCount(0);
     inputs.controls.select = SelectButton::NotPressed;
@@ -210,9 +230,10 @@ fn fresh_restoration_continues_with_equal_complete_state_and_events() {
 }
 
 #[test]
-fn a_frame_that_only_shows_the_countdown_is_refused_before_any_effect() {
+fn a_start_on_a_frame_that_only_shows_the_countdown_is_refused_before_any_effect() {
     let map = HerMap::default();
     let mut hud = state();
+    hud.countdown = begun();
     let before = hud.clone();
     let inputs = FrameInputs {
         frame: FrameCount(0),
@@ -257,13 +278,51 @@ fn a_frame_that_only_shows_the_countdown_is_refused_before_any_effect() {
         muted_by: None,
         dropped_before_status_bar: Dropped::Selection,
         dropped_after_status_bar: Dropped::Nothing,
-        countdown: CountdownRuns::PresentationOnly,
+        countdown: CountdownInputs {
+            runs: CountdownRuns::PresentationOnly,
+            start: StartTime::new(1, 0),
+            finished: FinishedFrames(3),
+        },
     };
     assert_eq!(
         hud.frame_of_play(&Rules::reference(), &pictures(), &inputs),
-        Err(UnsupportedFrame::CountdownOnlyShown)
+        Err(UnsupportedFrame::StartWhileOnlyShown)
     );
     assert_eq!(hud, before);
+}
+
+#[test]
+fn a_begun_countdown_round_trips_and_its_parts_keep_their_ranges() {
+    let mut control = state();
+    control.countdown = begun();
+    assert_eq!(restore(control.clone()), control);
+    let value = toml::Value::try_from(&control).unwrap();
+    let saved = &value["countdown"]["Begun"];
+    for (part, invalid) in [
+        ("age", toml::Value::Integer(97)),
+        ("time_left", toml::Value::Integer(600_000)),
+        (
+            "place",
+            toml::Value::try_from(Pair {
+                x: 220 * 256 + 1,
+                y: 48 * 256,
+            })
+            .unwrap(),
+        ),
+        (
+            "place",
+            toml::Value::try_from(Pair {
+                x: 128 * 256,
+                y: 48 * 256 - 1,
+            })
+            .unwrap(),
+        ),
+    ] {
+        assert!(saved.get(part).is_some(), "{part} is saved");
+        let mut malformed = value.clone();
+        malformed["countdown"]["Begun"][part] = invalid;
+        assert!(malformed.try_into::<HudState>().is_err(), "{part}");
+    }
 }
 
 #[test]

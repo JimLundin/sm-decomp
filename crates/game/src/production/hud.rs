@@ -44,7 +44,10 @@ pub struct HudPin;
 impl Pinned for HudPin {
     type State = HudState;
     const NAME: &'static str = "production-frame-hud";
-    const SHAPE: u64 = 0xCEC1_0497_AE70_9FF5;
+    const SHAPE: u64 = 0xE8F9_C0CF_E5D1_2326;
+    // The escape countdown's place is a pair of 1/256ths of a pixel, x from 128 to 220 whole
+    // pixels and y from 48 to 128: 128 whole pixels lies in both.
+    const TRACE_U16_SAMPLES: &'static [(&'static str, u16)] = &[("Pair", 128 * 256)];
 }
 
 #[cfg(test)]

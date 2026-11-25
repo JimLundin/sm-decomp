@@ -52,8 +52,6 @@ pub struct Passing<'a> {
     pub work_done: bool,
     /// Audio's answers.
     pub audio: PassageAudio,
-    /// The escape's: its timer is running.
-    pub timer_running: bool,
     /// Her progress, which chooses the next room's version, her suit and her beams, and says
     /// whether the station's boss is beaten.
     pub progress: &'a run_progress::Progress,
@@ -112,10 +110,12 @@ impl State {
         Ok(touched)
     }
 
-    /// The doors' step at the end of a frame of play, `touched` the door her moves reached.
+    /// The doors' step at the end of a frame of play, `touched` the door her moves reached and
+    /// `countdown_begun` whether the escape countdown has begun as the HUD's frame leaves it.
     pub(super) fn in_play(
         &self,
         touched: Option<Doorway>,
+        countdown_begun: bool,
         scene: &Scene,
         passing: &Passing<'_>,
         content: &Content,
@@ -123,7 +123,13 @@ impl State {
     ) -> Exports {
         self.doors.step(
             *scene,
-            &doors_inputs(touched.is_some(), touched, passing, content),
+            &doors_inputs(
+                touched.is_some(),
+                countdown_begun,
+                touched,
+                passing,
+                content,
+            ),
             &rules.doors,
         )
     }
@@ -239,10 +245,11 @@ pub(super) fn scene(
     }
 }
 
-/// What the doors read this frame: whether and which door she touched, and their neighbours'
-/// answers.
+/// What the doors read this frame: whether and which door she touched, whether the HUD's escape
+/// countdown has begun, and their neighbours' answers.
 pub(super) fn doors_inputs(
     touched: bool,
+    countdown_begun: bool,
     doorway: Option<Doorway>,
     passing: &Passing<'_>,
     content: &Content,
@@ -252,7 +259,7 @@ pub(super) fn doors_inputs(
         work_done: passing.work_done,
         sounds_sent: passing.audio.sounds_sent,
         music_ready: passing.audio.music_ready,
-        timer_running: passing.timer_running,
+        timer_running: countdown_begun,
         items_dark: doorway.is_some_and(|doorway| doorway.items_dark),
         doorway: doorway.map(|doorway| doorway.arrival),
         groups: content.colour_groups,
