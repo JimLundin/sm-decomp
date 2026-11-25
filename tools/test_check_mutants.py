@@ -111,8 +111,8 @@ field = "audio.reply0"
                      "measured", "zero", "audio/example", 3, "audio.reply0")
         verify = replace(game, file="crates/verify/src/replay/played.rs")
         # Case groups in manifest order: two verify faults, three pairs of game faults, then two
-        # single verify faults. Dealt to the worker with the fewest faults, the first worker
-        # would take three of the four verify faults, each about three game faults' time.
+        # single verify faults, a roster on which dealing by the number of faults puts three of
+        # the four verify faults, each about three game faults' time, on one worker.
         shapes = [("a", verify), ("a", verify), ("b", game), ("b", game), ("c", game),
                   ("c", game), ("d", game), ("d", game), ("e", verify), ("f", verify)]
         roster = tuple(replace(kind, name=f"fault-{index}", case=case)
@@ -122,6 +122,25 @@ field = "audio.reply0"
                                  for worker in workers), 2)
         for worker in workers:
             self.assertEqual(list(worker), sorted(worker, key=roster.index))
+
+    def test_partition_splits_rebuild_time_evenly_where_it_can(self) -> None:
+        game = Fault("fault", "audio", "crates/game/src/production.rs",
+                     "measured", "zero", "audio/example", 3, "audio.reply0")
+        verify = replace(game, file="crates/verify/src/replay/played.rs")
+        # A verify fault rebuilds in about three game faults' time. In manifest order: four case
+        # groups of two game faults (2 each), four of one game fault (1 each) and last one verify
+        # and one game fault (4): 16 in all, which four workers can split 4 each. Dealt in
+        # manifest order the last group lands on a worker that already holds 3; dealt to the
+        # worker with the fewest faults, the 4 shares a worker with a 2.
+        shapes = ([(f"pair-{group}", game) for group in range(4) for _ in range(2)]
+                  + [(f"one-{group}", game) for group in range(4)]
+                  + [("mixed", verify), ("mixed", game)])
+        roster = tuple(replace(kind, name=f"fault-{index}", case=case)
+                       for index, (case, kind) in enumerate(shapes))
+        workers = check_mutants.partition_faults(roster)
+        time = [sum(3 if fault.file.startswith("crates/verify/") else 1 for fault in worker)
+                for worker in workers]
+        self.assertEqual(time, [4, 4, 4, 4])
 
     def test_invalid_worker_commands_fail_before_build(self) -> None:
         for args in [["worker"], ["worker", "-1"], ["worker", "4"], ["worker", "01"],
