@@ -26,8 +26,10 @@ ABSOLUTE = re.compile(r"(?:^|[\s'\"=:(])(/[^\s'\":)]+|[A-Za-z]:[\\/][^\s'\":)]+)
 RELATIVE_OUT = re.compile(r"(?:^|[\s'\"=:(/\\])(?:\.\.|~)(?:[/\\]|$)")
 # The CLI's own refusals: a permission rule's denial, or a tool the session wasn't given. Any
 # other error (a missing file, a failed command) is the call failing, not the permission
-# system refusing it, and proves no rule.
-DENIED = re.compile(r"has been denied|denied by your permission settings|No such tool available")
+# system refusing it, and proves no rule. The CLI's text starts the result, so a command's own
+# output that happens to hold the words is not mistaken for one.
+DENIED = re.compile(r"Permission to use \S+ .*has been denied|<tool_use_error>.*(?:denied by your "
+                    r"permission settings|No such tool available)", re.DOTALL)
 
 
 @dataclass(frozen=True)
@@ -48,7 +50,7 @@ class Call:
 
     @property
     def denied(self) -> bool:
-        return self.refused is True and DENIED.search(self.result) is not None
+        return self.refused is True and DENIED.match(self.result.lstrip()) is not None
 
 
 @dataclass(frozen=True)

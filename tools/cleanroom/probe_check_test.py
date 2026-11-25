@@ -134,9 +134,17 @@ class ProbeCheck(unittest.TestCase):
         code, out = self.check(calls)
         self.assertEqual(code, 1, out)
         self.assertTrue(out.startswith("CHECK 27: failed but was not refused"), out)
-        calls = [(t, g, r, "No such tool available: Grep.") if t == "Grep" else (t, g, r, x)
+        calls = [(t, g, r, "<tool_use_error>Error: No such tool available: Grep. Grep is not "
+                  "among the tools available here.</tool_use_error>") if t == "Grep" else (t, g, r, x)
                  for t, g, r, x in full()]
         self.assertEqual(self.check(calls)[0], 0)
+        # A command's own output holding the words is the command failing, not a denial.
+        calls = [(t, g, r, "Exit code 1\n..contents..\nPermission to use it has been denied")
+                 if g.get("command") == "cat ../anything" else (t, g, r, x)
+                 for t, g, r, x in full()]
+        code, out = self.check(calls)
+        self.assertEqual(code, 1, out)
+        self.assertTrue(out.startswith("CHECK 7: failed but was not refused"), out)
 
     def test_a_check_with_no_recorded_result_is_not_refused(self):
         calls = [(t, g, None if g.get("command") == "cat ../anything" else r, x)
