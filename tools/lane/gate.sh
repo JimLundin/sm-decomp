@@ -57,13 +57,15 @@ for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}" ${build
     up=$dir dir=$(dirname "$dir")
   done
 done
-# A cargo configuration that includes another names a file this list doesn't hold.
+# A cargo configuration that includes another names a file this list doesn't hold: an `include`
+# key, bare or quoted, or an `[[include]]` table.
 included() {
   local config
   for config in "${configs[@]}"; do
     case $config in */config | */config.toml)
       [ ! -f "$config" ] ||
-        ! grep -qE "^[[:space:]]*[\"']?include[\"']?[[:space:]]*=" "$config" || return 0 ;;
+        ! grep -qE "^[[:space:]]*(\[\[)?[[:space:]]*[\"']?include[\"']?[[:space:]]*(=|\]\])" \
+          "$config" || return 0 ;;
     esac
   done
   return 1

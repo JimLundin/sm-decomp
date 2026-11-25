@@ -11,7 +11,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
 scratch=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/gate-test-XXXXXX")
-trap 'rm -rf "$scratch"' EXIT
+# The /tmp case's plantings are shared places: they go even when the test is stopped.
+planted= home_temp=
+trap 'rm -rf "$scratch" ${home_temp:+"$home_temp"}; [ -z "$planted" ] || rm -rf /tmp/.cargo' EXIT
 repo=$scratch/repo bin=$scratch/bin ran=$scratch/ran
 mkdir -p "$repo/tools/lane" "$repo/tools/cleanroom" "$repo/scenarios" "$bin" "$ran"
 cp "$here/gate.sh" "$repo/tools/lane/gate.sh"
@@ -114,8 +116,9 @@ settled
 out=$(gate CANARY_SALT=other) && ! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with a CANARY_ variable reused a pass: $out"
 mkdir -p "$scratch/.cargo" && echo '[build]' >"$scratch/.cargo/config.toml"
 ! reuses || fail "a gate under a parent .cargo/config.toml reused a pass: $out"
-for include in 'include' '"include"' "'include'"; do
-  echo "$include = [{ path = \"more.toml\" }]" >"$scratch/.cargo/config.toml"
+for include in 'include = [{ path = "more.toml" }]' '"include" = ["more.toml"]' \
+  "'include' = [\"more.toml\"]" $'[[include]]\npath = "more.toml"'; do
+  echo "$include" >"$scratch/.cargo/config.toml"
   ! reuses && ! reuses ||
     fail "a gate under a cargo configuration with $include reused a pass: $out"
 done
@@ -152,10 +155,10 @@ rm -r "$elsewhere"
 if [ ! -e /tmp/.cargo ]; then
   home_temp=$(mktemp -d "$HOME/.gate-test-XXXXXX")
   settled TEMP="$home_temp"
-  mkdir /tmp/.cargo && echo '[build]' >/tmp/.cargo/config.toml
+  mkdir /tmp/.cargo && planted=1 && echo '[build]' >/tmp/.cargo/config.toml
   ! reuses TEMP="$home_temp" ||
     fail "a gate with a cargo configuration above the self-tests' /tmp reused a pass: $out"
-  rm -r /tmp/.cargo "$home_temp"
+  rm -r /tmp/.cargo "$home_temp" && planted= home_temp=
 fi
 # A file git ignores only by a rule from outside the tree is unseen by status, not by the gate.
 settled
