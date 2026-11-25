@@ -65,13 +65,46 @@ in_entries() {
 
 # A git command that sees only the repository at $1: no inherited GIT_* overrides, and no
 # configuration the caller's environment carries (GIT_CONFIG_COUNT and its keys, or `git -c` of
-# a parent git), which belongs to the caller's session and not to the repository.
-git_isolated() {
+# a parent git), which belongs to the caller's session and not to the repository. No system or
+# user configuration either, and the programs a repository's own configuration can name for these
+# commands (hooks, fsmonitor, signature checks, a pager) are switched off on the command line,
+# which wins over it. A repository a session could have written is still read through
+# export_mirror, which leaves its configuration behind.
+git_isolated() (
   dir=$1; shift
-  env -u GIT_DIR -u GIT_WORK_TREE -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
-    -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u GIT_NAMESPACE -u GIT_CEILING_DIRECTORIES \
-    -u GIT_CONFIG_COUNT -u GIT_CONFIG_PARAMETERS \
-    git -C "$dir" "$@"
+  unset GIT_DIR GIT_WORK_TREE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_INDEX_FILE \
+    GIT_COMMON_DIR GIT_NAMESPACE GIT_CEILING_DIRECTORIES GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS \
+    GIT_EXTERNAL_DIFF
+  export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ATTR_NOSYSTEM=1 GIT_PAGER=cat
+  git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c log.showSignature=false \
+    -c core.attributesFile=/dev/null -c protocol.allow=never -C "$dir" "$@"
+)
+
+# export_mirror DIR MIRROR: a bare repository at MIRROR (new) holding DIR/.git's objects, refs
+# and HEAD and nothing else, under a configuration of its own. What a session could write in
+# .git to make a later git on the host run a program or read elsewhere (config, info/attributes,
+# hooks, commondir, alternates, grafts) stays behind. A .git that isn't a directory, or anything
+# in it but files and directories (a symlink, a fifo), stops it.
+export_mirror() {
+  local src=$1/.git odd
+  [ -d "$src" ] && [ ! -L "$src" ] || die "$1/.git is not a directory"
+  [ -d "$src/objects" ] && [ -f "$src/HEAD" ] || die "$src holds no objects or HEAD"
+  odd=$(find "$src" ! -type f ! -type d -print -quit) || die "can't list $src"
+  [ -z "$odd" ] || die "$src holds something other than files and folders: $odd"
+  env GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git init -q --bare --template= "$2" >/dev/null ||
+    die "can't make a mirror at $2"
+  cp -R "$src/objects/." "$2/objects/" || die "can't copy $src/objects"
+  rm -f "$2/objects/info/alternates" "$2/objects/info/http-alternates"
+  if [ -d "$src/refs" ]; then cp -R "$src/refs/." "$2/refs/" || die "can't copy $src/refs"; fi
+  if [ -f "$src/packed-refs" ]; then cp "$src/packed-refs" "$2/packed-refs"; fi
+  cp "$src/HEAD" "$2/HEAD"
+}
+
+# export_remotes DIR: the remote and url lines of DIR/.git/config, read as a file (no includes,
+# nothing run).
+export_remotes() {
+  GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git config --file "$1/.git/config" \
+    --get-regexp '^(remote|url)\.' || true
 }
 
 # assert_isolated DEST DOMAIN [ALLOW_EXTRA_COMMITS]: the export's isolation, each check

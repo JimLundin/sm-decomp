@@ -58,21 +58,40 @@
 #
 # Off Windows (Linux) the session runs in a box, and the rules below are a second layer inside it:
 #   - The box is a docker container (`docker run` as this user, its argv in the lane's box.txt)
-#     with no network, a read-only root made from nothing (box_relay.py image), no capabilities
-#     and no new privileges. Its file system holds only its mounts, each at its own path: the
-#     export (written), the lane's home/ and tmp/ (written), and read-only /usr, the
-#     /etc/alternatives links, cargo's bin/, rustup's home, the CLI, and the lane's settings,
-#     runner, shape scan and relay. The home, the checkout, the temporary folder, the canary
-#     record, the ROM and the record cache are not in it, so a process the session starts
-#     (cargo, a test, git) can't read them either, whatever the rules allow; nor can a search
-#     from / or the export's parents, and a folder made beside the export during the session
-#     is not in it. Bubblewrap and the CLI's own sandbox need unprivileged user namespaces,
-#     which Ubuntu's AppArmor restricts; docker needs nothing changed on the host.
+#     with no network, a read-only root made from nothing (box_relay.py image, which also checks
+#     the tag's one layer is that root before trusting it), no capabilities, no new privileges,
+#     and limits: CLEANROOM_BOX_MEMORY (12g), CLEANROOM_BOX_PIDS (4096), CLEANROOM_BOX_TMP (/tmp,
+#     2g) and CLEANROOM_SESSION_SECONDS (the CLI's deadline, 21600). Its file system holds only
+#     its mounts, each at its own path: the export (written) but its .git's config, info/ and
+#     hooks/ (read-only), the lane's home/ and tmp/ (written), and read-only /usr, the
+#     /etc/alternatives links, rustup's proxies by name from cargo's bin/ (not cargo's home or
+#     what `cargo install` put there), rustup's home, the CLI, and the lane's settings, runner,
+#     shape scan and relay. The home, the checkout, the temporary folder, the canary record, the
+#     ROM and the record cache are not in it, so a process the session starts (cargo, a test,
+#     git) can't read them either, whatever the rules allow; nor can a search from / or the
+#     export's parents, and a folder made beside the export during the session is not in it.
+#     Bubblewrap and the CLI's own sandbox need unprivileged user namespaces, which Ubuntu's
+#     AppArmor restricts; docker needs nothing changed on the host. The box can still see facts
+#     about the host that hold no game code or data: the host paths in /proc/self/mountinfo,
+#     the DNS search suffix, /proc/cmdline and the machine's DMI ids.
+#   - Every git the host runs on an export afterwards (canary.sh check, import.sh, blind_copy.sh
+#     and the checks here) reads a mirror of its objects and refs alone (lib.sh export_mirror),
+#     never its configuration, attributes, hooks, commondir or alternates, with git_isolated
+#     turning off what a configuration could still name. So nothing the box writes in .git runs
+#     on the host or chooses what the canary check sees.
 #   - The credential stays outside: box_relay.py serves the lane's api.sock outside the box and
-#     adds the key (an apiKeyHelper's output, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN) to each
-#     request on its way to the API's base URL, refusing any other path. Inside, the box's first
-#     process forwards 127.0.0.1:8765 to that socket and runs the CLI, whose settings hold that
-#     address and a placeholder key. The API is the one place the box can reach.
+#     adds the key (an apiKeyHelper's output, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN, and
+#     ANTHROPIC_CUSTOM_HEADERS) to each request. It passes an allow-list only: GET or POST of an
+#     origin-form target under the base path's v1/, plain segments and query, the configured
+#     host's own Host header, and the API's request headers. Inside, the box's first process
+#     forwards 127.0.0.1:8765 to that socket and runs the CLI, whose settings hold that address,
+#     a placeholder key, and only the model and CLAUDE_CODE_DISABLE_* lines. The API is the one
+#     place the box can reach.
+#   - The relay exits with this script, even when it is killed outright, and an exit this script
+#     sees (INT, TERM, HUP) also stops its box. A box left running by a killed launch loses the
+#     API and stops at its deadline; the next launch names any box whose launcher is gone. Box
+#     and lane names are unique per launch. The docker client runs with this user's
+#     DOCKER_CONFIG, never the lane's home.
 #   - A launch on Linux needs docker (`docker info` as this user); there is no session without
 #     the box.
 # The rules are built from that machine's paths:
@@ -180,11 +199,15 @@ else
 fi
 
 # The export is one: its own repository, one root commit, no remote. Its domain is its one model
-# crate.
-root=$(git_isolated "$export_dir" rev-list --max-parents=0 HEAD) || die "$export_dir is not a repository"
+# crate. Its history is read from a mirror of its objects and refs (lib.sh), never with its own
+# configuration, which an earlier session on it could have written.
+check_dir=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/launch-check-XXXXXX")
+export_mirror "$export_dir" "$check_dir/export.git"
+root=$(git_isolated "$check_dir/export.git" rev-list --max-parents=0 HEAD) || die "$export_dir is not a repository"
 [ "$(echo "$root" | wc -l)" -eq 1 ] || die "$export_dir has more than one root commit"
-[ -z "$(git_isolated "$export_dir" remote)" ] || die "$export_dir has a remote"
-mapfile -t models < <(git_isolated "$export_dir" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
+[ -z "$(export_remotes "$export_dir")" ] || die "$export_dir has a remote"
+mapfile -t models < <(git_isolated "$check_dir/export.git" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
+rm -rf "$check_dir"
 [ ${#models[@]} -eq 1 ] || die "the export holds ${#models[@]} model crates, not one"
 domain=$(domain_of "${models[0]#crates/clean/}")
 check_domain "$domain"
@@ -192,7 +215,14 @@ check_domain "$domain"
 
 # 2. The lane directory, outside every repository.
 private=${CLEANROOM_PRIVATE:-$HOME/.cleanroom}
-lane=$private/lanes/$(date -u +%Y%m%dT%H%M%SZ)-$domain
+# Each launch has its own: two in one second get -2, -3 and so on.
+mkdir -p "$private/lanes"
+lane_base=$private/lanes/$(date -u +%Y%m%dT%H%M%SZ)-$domain
+lane=$lane_base n=1
+until mkdir "$lane" 2>/dev/null; do
+  n=$((n + 1)) lane=$lane_base-$n
+  [ "$n" -lt 100 ] || die "can't make a lane directory at $lane_base"
+done
 mkdir -p "$lane/home/.claude" "$lane/tmp"
 lane=$(cd "$lane" && pwd -P)
 if git -C "$lane" rev-parse --git-dir >/dev/null 2>&1; then die "$lane is inside a repository"; fi
@@ -520,9 +550,10 @@ fi
 : >"$lane/home/.gitconfig"
 
 # Off Windows the session runs in a box: a container with no network whose root holds nothing but
-# the mounts below, each at its own path so the rules above still name them. Written: the export,
-# the lane's home/ and tmp/. Read-only: /usr (the system's programs and libraries), the toolchain,
-# the CLI, the lane's settings, runner and relay. The lane's api.sock is the API's way out.
+# the mounts below, each at its own path so the rules above still name them. Written: the export
+# (but its .git's config, info/ and hooks/), the lane's home/ and tmp/. Read-only: /usr (the
+# system's programs and libraries), the toolchain, the CLI, the lane's settings, runner and relay.
+# The lane's api.sock is the API's way out.
 box=()
 if [ "$windows" = 0 ]; then
   box_image=sm-cleanroom-root:1
@@ -532,16 +563,30 @@ if [ "$windows" = 0 ]; then
   cp "$here/box_relay.py" "$lane/box_relay.py"
   claude_real=$(readlink -f "$claude_bin")
   argv[0]=$claude_real
-  box_name=cleanroom-$(basename "$lane")
-  box=(docker run --rm -i --name "$box_name" --network none --read-only
-    --tmpfs /tmp:rw,nosuid,nodev,mode=1777 --cap-drop ALL --security-opt no-new-privileges
+  box_name=cleanroom-$(basename "$lane")-$(od -An -tx1 -N4 /dev/urandom | tr -d ' \n')
+  # Limits, so a runaway test can't starve the machine: memory, processes, /tmp's size, and a
+  # deadline on the CLI inside (box_relay.py box).
+  box=(docker run --rm -i --name "$box_name" --label "sm-cleanroom-lane=$lane" --network none
+    --read-only --tmpfs "/tmp:rw,nosuid,nodev,mode=1777,size=${CLEANROOM_BOX_TMP:-2g}"
+    --memory "${CLEANROOM_BOX_MEMORY:-12g}" --pids-limit "${CLEANROOM_BOX_PIDS:-4096}"
+    --cap-drop ALL --security-opt no-new-privileges
     --user "$uid:$gid" --workdir "$export_dir" --env-file "$lane/env.txt")
   box_mount() { # SRC [rw]: SRC at its own path, read-only unless rw
     case $1 in *,* | *$'\n'*) die "can't mount $1: it holds a comma or a newline" ;; esac
     [ -e "$1" ] || die "nothing to mount at $1"
     if [ "${2:-}" = rw ]; then box+=(--mount "type=bind,src=$1,dst=$1"); else box+=(--mount "type=bind,src=$1,dst=$1,readonly"); fi
   }
-  box_mount "$export_dir" rw; box_mount "$lane/home" rw; box_mount "$lane/tmp" rw
+  box_mount "$export_dir" rw
+  # The export's git configuration, attributes and hooks name programs git runs; the session may
+  # commit (objects, refs, the index, logs) but not change them. Host-side git reads the export
+  # through export_mirror besides, which leaves all of .git but objects and refs behind.
+  for g in config info hooks; do
+    [ ! -L "$export_dir/.git/$g" ] || die "$export_dir/.git/$g is a symlink"
+  done
+  [ -f "$export_dir/.git/config" ] || die "$export_dir/.git/config is not a file"
+  mkdir -p "$export_dir/.git/info" "$export_dir/.git/hooks"
+  for g in config info hooks; do box_mount "$export_dir/.git/$g"; done
+  box_mount "$lane/home" rw; box_mount "$lane/tmp" rw
   box_mount /usr; box_mount /etc/alternatives; box_mount /etc/ld.so.cache
   box+=(--mount "type=bind,src=$lane/passwd,dst=/etc/passwd,readonly"
     --mount "type=bind,src=$lane/group,dst=/etc/group,readonly")
@@ -549,15 +594,24 @@ if [ "$windows" = 0 ]; then
     case $f in bin/*) ;; *) box_mount "$lane/$f" ;; esac
   done
   box_mount "$claude_real"
-  # The toolchain: cargo's programs (not its home, which can hold a registry token) and rustup's
-  # toolchains. Anything else the PATH or the interpreter needs outside /usr is mounted too.
+  # The toolchain: rustup's proxies by name (not cargo's home, which can hold a registry token,
+  # nor the other programs `cargo install` put beside them) and rustup's toolchains. Anything else
+  # the interpreter needs outside /usr is mounted too.
+  cargo_dir=$(dirname "$cargo_bin")
+  case $cargo_dir/ in
+    /usr/*) ;;
+    *) for t in cargo rustc rustup rustdoc cargo-clippy clippy-driver cargo-fmt rustfmt; do
+         if [ -e "$cargo_dir/$t" ]; then box_mount "$cargo_dir/$t"; fi
+       done ;;
+  esac
   rustup_home=${RUSTUP_HOME:-$HOME/.rustup}
-  box_mount "$(dirname "$cargo_bin")"; box_mount "$(cd "$rustup_home" && pwd -P)"
+  if [ -d "$rustup_home" ]; then box_mount "$(cd "$rustup_home" && pwd -P)"; fi
   py_prefix=$("$python" -I -c 'import sys; print(sys.base_prefix)')
   case $py_prefix/ in /usr/*) ;; *) box_mount "$py_prefix" ;; esac
   case $awk_bin in /usr/* | /bin/*) ;; *) die "awk at $awk_bin is outside /usr, which the box holds" ;; esac
   box+=(--mount "type=bind,src=$lane/api.sock,dst=$lane/api.sock" "$box_image"
-    "$python" -I "$lane/box_relay.py" box "$box_port" "$lane/api.sock" --)
+    "$python" -I "$lane/box_relay.py" box "$box_port" "$lane/api.sock"
+    "${CLEANROOM_SESSION_SECONDS:-21600}" --)
   printf '%s\n' "${box[@]}" >"$lane/box.txt"
 fi
 printf '%s\n' "${argv[@]}" >"$lane/argv.txt"
@@ -572,19 +626,45 @@ fi
 # 3. The session, its prompt the brief, its working directory the export.
 status=0
 if [ "$windows" = 0 ]; then
+  # A box whose launcher is gone is reported, never stopped here: it may be another launch's.
+  { docker ps --filter label=sm-cleanroom-lane --format '{{.Names}} {{.Label "sm-cleanroom-lane"}}' 2>/dev/null || true; } |
+    while read -r other other_lane; do
+      other_pid=$(cat "$other_lane/launch.pid" 2>/dev/null || true)
+      if [ -z "$other_pid" ] || ! kill -0 "$other_pid" 2>/dev/null; then
+        echo "launch: the box $other runs with no launcher ($other_lane); if it is yours, docker kill $other" >&2
+      fi
+    done
+  echo "$$" >"$lane/launch.pid"
   "$python" -I "$here/box_relay.py" image "$box_image" || die "docker can't make the box's image $box_image"
   : >"$lane/api.sock"
-  "$python" -I "$here/box_relay.py" serve "$lane/api.sock" - <<<"$auth_json" 2>"$lane/relay.txt" &
+  # The relay exits when this script does, even when it is killed outright; the box and the
+  # stream are stopped on any exit this script sees. The stream runs in the background so a
+  # signal reaches the trap at once rather than after the session.
+  relay_pid= stream_pid=
+  stop_box() {
+    [ -z "$stream_pid" ] || kill "$stream_pid" 2>/dev/null || true
+    [ -z "$relay_pid" ] || kill "$relay_pid" 2>/dev/null || true
+    docker kill "$box_name" >/dev/null 2>&1 || true
+  }
+  trap stop_box EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM HUP
+  "$python" -I "$here/box_relay.py" serve "$lane/api.sock" - "$$" <<<"$auth_json" 2>"$lane/relay.txt" &
   relay_pid=$!
-  trap 'kill "$relay_pid" 2>/dev/null; docker kill "$box_name" >/dev/null 2>&1 || true' EXIT
   for _ in $(seq 100); do [ -S "$lane/api.sock" ] && break; sleep 0.1; done
   [ -S "$lane/api.sock" ] || die "the relay didn't start; see $lane/relay.txt"
-  # The docker client runs outside with the session's environment (plus DOCKER_HOST, if set);
-  # inside, the box has only env.txt.
-  env -i "${envv[@]}" ${DOCKER_HOST:+"DOCKER_HOST=$DOCKER_HOST"} "$python" -I "$here/launch_stream.py" \
+  # The docker client runs outside with the session's environment, its configuration from this
+  # user's (not the lane's home, which the box writes), and DOCKER_HOST if set; inside, the box
+  # has only env.txt.
+  env -i "${envv[@]}" "DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}" ${DOCKER_HOST:+"DOCKER_HOST=$DOCKER_HOST"} \
+    "$python" -I "$here/launch_stream.py" \
     --cwd "$export_dir" --transcript "$transcript" --stderr "$lane/stderr.txt" \
     --timeout "${CLEANROOM_COMPLETION_SECONDS:-240}" \
-    -- "${box[@]}" "${argv[@]}" <"$lane/brief.txt" || status=$?
+    -- "${box[@]}" "${argv[@]}" <"$lane/brief.txt" &
+  stream_pid=$!
+  wait "$stream_pid" || status=$?
+  stream_pid=
+  kill "$relay_pid" 2>/dev/null || true
 else
 # Inherited stdout handles keep the pipe open while background work reports. EOF proves
 # output completion for descendants that inherit the CLI stream. A deadline after CLI exit

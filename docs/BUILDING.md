@@ -139,11 +139,15 @@ first clean-room lane on a machine, and after a new CLI version:
   group). The box needs nothing else changed on the host: bubblewrap and the CLI's own sandbox
   need unprivileged user namespaces, which Ubuntu's AppArmor restricts, and docker doesn't.
 - **The box is proven.** `bash tools/cleanroom/launch_config_test.sh` prints `LAUNCH CONFIG TEST
-  OK`: it runs the box with a fake CLI that tries the home, the canary record, the temporary
-  folder, the checkout, a search from `/`, writes into the lane, the network and the key, and
-  each must fail, while the export, the relay and the test runner work.
+  OK`: it runs a launch with a fake CLI that tries the home, cargo's home, the canary record,
+  the temporary folder, the checkout, a search from `/`, the docker socket, writes into the
+  root, the lane and the export's git configuration, the network, the key and the relay's other
+  targets, and each must fail, while the export, the relay and the test runner work. The fake
+  CLI then commits a canary token, removes it and plants a textconv driver; the launch's canary
+  check must still find the token, and nothing planted may run.
 - **The key stays outside the box.** The dry run's `settings.json` holds the placeholder
-  `cleanroom-relay` and `env.txt` holds no key.
+  `cleanroom-relay` and `env.txt` holds no key. Other `ANTHROPIC_*` lines (custom headers, other
+  keys) stay with the relay too; the launch names them.
 - **The probe passes in the box** (below): every CHECK refused, and nothing outside the export
   is in the box to find, so CHECKs 29 to 31 (searches from `/` and the home) find nothing.
 - **Exports may stay in the home.** A folder made beside the export during a session is not in

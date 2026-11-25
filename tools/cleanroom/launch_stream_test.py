@@ -122,6 +122,8 @@ def launch(root, session=None):
     scratch.mkdir()
     export = root / "export"
     export.mkdir()
+    # A repository, whose .git configuration the box mounts read-only.
+    subprocess.run(["git", "init", "-q", str(export)], check=True)
     for name in ["launch.sh", "launch_stream.py", "box_relay.py"]:
         shutil.copyfile(HERE / name, tools / name)
     if session is not None:
@@ -135,6 +137,8 @@ def launch(root, session=None):
         'model_dirs() { echo crates/clean/demo; }\n'
         'domain_of() { echo demo; }\n'
         'check_domain() { :; }\n'
+        'export_mirror() { :; }\n'
+        'export_remotes() { :; }\n'
         'allowlist_section() { echo crates/clean/demo/; }\n',
         encoding="utf-8", newline="\n",
     )

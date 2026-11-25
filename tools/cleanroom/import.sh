@@ -31,10 +31,17 @@ set -euo pipefail
 dest=$1 branch=$2
 [ "$(git branch --show-current)" = "$branch" ] || die "check out $branch here first"
 [ -z "$(git status --porcelain --untracked-files=no)" ] || die "the worktree has uncommitted changes"
+# The export's history is read from a mirror of its objects and refs: the session could write its
+# .git, and its configuration, attributes or hooks must not run anything here.
+scratch=$(mktemp -d)
+checked=$scratch/checked
+mkdir "$checked"
+trap 'rm -rf "$scratch"' EXIT
+export_mirror "$dest" "$scratch/export.git"
 
 # The domain is the one model crate the export started with.
-root=$(git_isolated "$dest" rev-list --max-parents=0 HEAD)
-mapfile -t models < <(git_isolated "$dest" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
+root=$(git_isolated "$scratch/export.git" rev-list --max-parents=0 HEAD)
+mapfile -t models < <(git_isolated "$scratch/export.git" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
 [ ${#models[@]} -eq 1 ] || die "the export holds ${#models[@]} model crates, not one"
 model=${models[0]}
 domain=$(domain_of "${model#crates/clean/}")
@@ -42,20 +49,20 @@ echo "import: $domain from $dest onto $branch"
 assert_isolated "$dest" "$domain" 1
 
 mapfile -t writable < <(allowlist_section import "$domain")
-mapfile -t commits < <(git_isolated "$dest" rev-list --reverse "$root..HEAD")
+mapfile -t commits < <(git_isolated "$scratch/export.git" rev-list --reverse "$root..HEAD")
 [ ${#commits[@]} -gt 0 ] || die "no commits after the export's"
 
 refused=0
 for c in "${commits[@]}"; do
-  subject=$(git_isolated "$dest" log -1 --format=%s "$c")
+  subject=$(git_isolated "$scratch/export.git" log -1 --format=%s "$c")
   # --raw shows modes; -M off so a rename's source path is listed as a deletion.
   while read -r _ new_mode _ _ _ path; do
     in_entries "$path" "${writable[@]}" || { echo "refused ${c:0:9} $subject: touches $path"; refused=1; }
     case $new_mode in 120000|160000)
       echo "refused ${c:0:9} $subject: $path is a symlink or submodule"; refused=1 ;;
     esac
-  done < <(git_isolated "$dest" diff-tree -r --no-commit-id --no-renames --raw "$c" | sed 's/^://; s/\t/ /')
-  role=$(git_isolated "$dest" log -1 --format='%(trailers:key=Role,valueonly)' "$c" | tr -d '[:space:]')
+  done < <(git_isolated "$scratch/export.git" diff-tree -r --no-commit-id --no-renames --raw "$c" | sed 's/^://; s/\t/ /')
+  role=$(git_isolated "$scratch/export.git" log -1 --format='%(trailers:key=Role,valueonly)' "$c" | tr -d '[:space:]')
   [ "$role" = implementer ] || { echo "refused ${c:0:9} $subject: no 'Role: implementer' trailer"; refused=1; }
 done
 [ "$refused" -eq 0 ] || die "nothing applied"
@@ -64,9 +71,7 @@ done
 # an include! of another file) is checked before anything is applied: cargo runs it with this
 # user's full access, which launch.sh cannot confine. The check runs on the committed tree of the
 # export's HEAD, which is what the patches add up to.
-checked=$(mktemp -d)
-trap 'rm -rf "$checked"' EXIT
-git_isolated "$dest" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
+git_isolated "$scratch/export.git" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
 bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh refused the export's crates; nothing applied"
 
 # The clean room's scan (scan.sh's checks 1-3: the original's addresses, names and shapes) on what
@@ -149,7 +154,7 @@ for dir in crates/clean/types "$model"; do
   [ -n "$(git ls-tree --name-only HEAD -- "$dir")" ] || missing+=("$dir")
 done
 if [ ${#missing[@]} -gt 0 ]; then
-  git_isolated "$dest" archive --format=tar "$root" -- "${missing[@]}" | tar -x -m
+  git_isolated "$scratch/export.git" archive --format=tar "$root" -- "${missing[@]}" | tar -x -m
   # A new crate is a workspace member at once: the lock takes it, offline, as the clippy runs
   # below need it locked.
   "$cargo" metadata -q --offline --format-version 1 >/dev/null || die "cargo can't lock the new crates"
@@ -161,7 +166,7 @@ scaffolded=$(git rev-parse HEAD)
 
 includes=()
 for w in "${writable[@]}"; do includes+=("--include=${w}*"); done
-if ! git_isolated "$dest" format-patch --stdout "$root..HEAD" | git am -q --3way "${includes[@]}"; then
+if ! git_isolated "$scratch/export.git" format-patch --no-textconv --no-ext-diff --stdout "$root..HEAD" | git am -q --3way "${includes[@]}"; then
   git am --abort 2>/dev/null || true
   die "a patch didn't apply; $branch is at $(git rev-parse --short HEAD), the scaffold (if any) kept"
 fi

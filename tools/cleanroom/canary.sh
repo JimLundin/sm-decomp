@@ -30,6 +30,7 @@
 #   unplant    remove the planted lines and glossary files; the record stays.
 #   list       the sources currently planted.
 set -euo pipefail
+. "$(dirname "$0")/lib.sh"
 private=${CLEANROOM_PRIVATE:-$HOME/.cleanroom}
 temp=${TEMP:-${TMPDIR:-/tmp}}
 temp=$(cygpath -u "$temp" 2>/dev/null || echo "$temp")
@@ -233,13 +234,16 @@ check() (
   if [ -f "$work/fingerprints.txt" ]; then
     # Shared text in an export's first commit is not a leak. Tokens are never excluded.
     LC_ALL=C sort -u "$work/fingerprints.txt" >"$work/fingerprints"
+    n=0
     for p in "$@"; do
-      if [ -e "$p/.git" ]; then
-        git -C "$p" rev-list --max-parents=0 HEAD >"$work/roots"
+      n=$((n + 1))
+      if [ -e "$p/.git" ] || [ -L "$p/.git" ]; then
+        export_mirror "$p" "$work/mirror-$n"
+        git_isolated "$work/mirror-$n" rev-list --max-parents=0 HEAD >"$work/roots"
         root=$(head -1 "$work/roots")
         [ -n "$root" ] || die "no export root in $p"
         matches_git=0
-        git -C "$p" grep -hoIF -f "$work/fingerprints" "$root" -- . >"$work/given.raw" || matches_git=$?
+        git_isolated "$work/mirror-$n" grep -hoIF -f "$work/fingerprints" "$root" -- . >"$work/given.raw" || matches_git=$?
         [ "$matches_git" -le 1 ] || die "cannot scan export root in $p"
         LC_ALL=C sort -u "$work/given.raw" >"$work/given"
         LC_ALL=C comm -23 "$work/fingerprints" "$work/given" >"$work/kept"
@@ -264,13 +268,19 @@ check() (
       echo "BREACH $kind from $src in $1: ${m:0:80}"
     done
   }
+  n=0
   for p in "$@"; do
+    n=$((n + 1))
     [ -e "$p" ] || die "$p does not exist"
     found=$(matches -rhoIF -f "$work/patterns" -- "$p" | sort -u)
     if [ -n "$found" ]; then hits=1; report "$p" <<<"$found"; fi
-    if [ -e "$p/.git" ]; then
-      # Materialize history so git failure cannot become a grep no-match verdict.
-      git -C "$p" log --all -p --format=fuller >"$work/history"
+    if [ -e "$p/.git" ] || [ -L "$p/.git" ]; then
+      # Materialize history so git failure cannot become a grep no-match verdict. The history is
+      # read from a mirror of the objects and refs alone, never with the repository's own
+      # configuration, attributes or hooks: a session can write those, and a textconv driver or
+      # an external diff would run on the host and choose what this scan sees.
+      [ -d "$work/mirror-$n" ] || export_mirror "$p" "$work/mirror-$n"
+      git_isolated "$work/mirror-$n" log --all -p --no-textconv --no-ext-diff --format=fuller >"$work/history"
       found=$(matches -hoIF -f "$work/patterns" "$work/history" | sort -u)
       if [ -n "$found" ]; then hits=1; report "$p (history)" <<<"$found"; fi
     fi

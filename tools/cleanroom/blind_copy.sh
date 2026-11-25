@@ -20,11 +20,15 @@ set -euo pipefail
 export_dir=$1 dest=$2
 skill="$cleanroom_dir/../../.agents/skills/blind-reviewer/SKILL.md"
 [ -f "$skill" ] || die "no blind-reviewer skill at $skill"
-git_isolated "$export_dir" rev-parse -q --verify HEAD >/dev/null || die "$export_dir is not a repository with a commit"
+# Read through a mirror of the export's objects and refs: the session could write its .git.
+mirror=$(mktemp -d)
+trap 'rm -rf "$mirror"' EXIT
+export_mirror "$export_dir" "$mirror/export.git"
+git_isolated "$mirror/export.git" rev-parse -q --verify HEAD >/dev/null || die "$export_dir is not a repository with a commit"
 mkdir -p "$dest"
 [ -z "$(ls -A "$dest")" ] || die "$dest is not empty; remove it or choose another DEST"
 
-git_isolated "$export_dir" archive --format=tar HEAD | tar -x -m -C "$dest"
+git_isolated "$mirror/export.git" archive --format=tar HEAD | tar -x -m -C "$dest"
 rm -rf -- "$dest/docs" "$dest/CLEANROOM.md" "$dest/.agents"
 mkdir -p "$dest/.agents/skills/blind-reviewer"
 cp -- "$skill" "$dest/.agents/skills/blind-reviewer/SKILL.md"
