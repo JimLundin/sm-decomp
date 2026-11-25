@@ -135,3 +135,13 @@ pub struct Scene {
     /// The caret's place as a page begins, px: x and y.
     pub caret_home: [u16; 2],
 }
+
+/// Collision cells imported from the intro's two playable rooms.
+/// Both loads have neutral cell marks in their source content.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RoomCells {
+    /// Zebes fight, 16 columns by 14 populated rows.
+    pub fight: Vec<crate::level::Block>,
+    /// Discovery, 32 columns by 12 populated rows.
+    pub discovery: Vec<crate::level::Block>,
+}

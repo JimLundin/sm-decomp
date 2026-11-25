@@ -76,6 +76,8 @@ impl MovementContent {
 pub enum ProductionContent {
     /// The imported intro scene.
     Intro(Box<screens_intro::IntroContent>),
+    /// The intro's room collision and Samus's ordinary body and appearance.
+    IntroRooms(Box<super::played::intro_rooms::ScopedContent>),
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -110,6 +112,8 @@ pub enum ProductionContent {
 pub enum ProductionRules {
     /// Rules of the intro scene.
     Intro(screens_intro::Rules),
+    /// The ordinary room turn's movement and appearance rules.
+    IntroRooms(Box<super::played::intro_rooms::ScopedRules>),
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.

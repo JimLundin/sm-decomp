@@ -95,7 +95,7 @@ const fn counted(frame: FrameCount, finishing: Finishing) -> FrameCount {
 }
 
 /// The count of finished frames after a frame: every frame but one whose work overran counts.
-const fn finished(count: u16, finishing: Finishing) -> u16 {
+pub(super) const fn finished(count: u16, finishing: Finishing) -> u16 {
     match finishing {
         Finishing::Overrun => count,
         Finishing::Finished | Finishing::Restarts(_) => count.wrapping_add(1),

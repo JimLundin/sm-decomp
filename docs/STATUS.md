@@ -499,6 +499,16 @@ its explosion hold and callback. It compares the intro's requests before their
 consumers. The boss's active hurt flash owns sprite palette 7 on two palette
 publication cuts. The durable intro checkpoint codec remains unavailable.
 
+The R2 room adapter imports the populated collision grids for the Zebes fight and discovery.
+`intro-rooms/fight-first-turn` compares movie cuts 2219 and 2220. The fight opens at the
+interrupted cut and takes its first ordinary movement and appearance turn on completion.
+`intro-rooms/discovery-first-turn` compares the same handoff at movie cuts 3517 and 3518.
+The two scoped cases admit their preceding actor and backed room image once. Each compares
+2,090 fields, matches zero full cuts with the frozen origin, and restores from both cut
+checkpoints. Delaying installation first differs at movie 2219 in `intro-room.cell.0` and
+at movie 3517 in `intro-room.width`. Integrated power-on play still needs the actor and the
+room intent on the unfinished work interval, followed by the live demo and encounter.
+
 From cut 271 it compares the screen, the game state and the count of finished frames at every
 cut; at finished cuts, the random number, the sounds against the queues (accumulated over each
 finished cut, because a sound can appear at a lag cut), the title's countdown, file select's

@@ -41,6 +41,11 @@ The following limits belong to retained clean models or content readers:
   the room, then treats absent screens as closed. The original can read neighbouring RAM
   beyond that run. Admission must supply any retained scroll memory needed by a case;
   missing room-loading history is not simulated.
+- **Collision cells below the intro rooms' populated rows.** The original keeps earlier
+  memory there. Typed intro collision ends at the populated rows. The movie keeps Samus and
+  her shots inside them. Only a platform with the complete earlier memory can supply the backed
+  grid. See
+  [the intro's playable rooms](behaviours/world-intro-rooms.decode.md).
 - **Samus spritemaps with a zero pointer or past the table.**
   `data::pose::spritemap` returns no map for these pointers. The original reads a pointer or
   count from neighbouring data or work RAM. No reachable vanilla animation selects one.

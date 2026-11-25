@@ -584,8 +584,8 @@ field = "movement.pose"
 name = "played-hurt-previous-energy-higher"
 responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
-before = "seen.previous_energy = self.health.0.energy.whole.get();"
-after = "seen.previous_energy = self.health.0.energy.whole.get() + 1;"
+before = "energy: self.health.0.energy.whole.get(),"
+after = "energy: self.health.0.energy.whole.get().wrapping_add(1),"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "appearance.hurt-count"
@@ -1017,3 +1017,23 @@ after = """    let _reply = room_play(&room)?;
 case = "intro/flashback-from-page-one"
 cut = 2170
 field = "intro.stage"
+
+[[fault]]
+name = "intro-fight-room-start-delayed"
+responsibility = "intro-rooms"
+file = "crates/game/src/production/played/intro_rooms.rs"
+before = "if let Some(start) = input.start {"
+after = "if input.finished && let Some(start) = input.start {"
+case = "intro-rooms/fight-first-turn"
+cut = 1651
+field = "intro-room.cell.0"
+
+[[fault]]
+name = "intro-discovery-room-start-delayed"
+responsibility = "intro-rooms"
+file = "crates/game/src/production/played/intro_rooms.rs"
+before = "if let Some(start) = input.start {"
+after = "if input.finished && let Some(start) = input.start {"
+case = "intro-rooms/discovery-first-turn"
+cut = 1298
+field = "intro-room.width"

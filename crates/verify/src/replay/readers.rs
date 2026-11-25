@@ -12,6 +12,7 @@ use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
     Intro(super::played::intro::indexed::Inputs),
+    IntroRooms(super::intro_rooms::Inputs),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -27,6 +28,7 @@ pub(super) enum InputReader {
 
 pub(super) enum ExpectedReader {
     Intro(super::played::intro::indexed::Expected),
+    IntroRooms(Box<super::intro_rooms::Expected>),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
     SenderOffer(Vec<Observation>),
@@ -40,6 +42,7 @@ pub(super) enum ExpectedReader {
 #[derive(Clone)]
 pub(super) enum ActualReader {
     Intro,
+    IntroRooms,
     EarlyMap,
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
@@ -89,6 +92,7 @@ impl InputReader {
         match self {
             Self::Intro(inputs) => inputs.advance(production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
+            Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
                 .advance(production, cut)
                 .map(ProductionOutputs::HealthTail),
@@ -154,6 +158,9 @@ impl ActualReader {
         match (self, inputs, outputs) {
             (Self::Intro, InputReader::Intro(_), ProductionOutputs::Intro(report)) => {
                 super::played::intro::indexed::actual(production, report.as_deref())
+            }
+            (Self::IntroRooms, InputReader::IntroRooms(_), ProductionOutputs::IntroRooms(_)) => {
+                super::intro_rooms::actual(production)
             }
             (
                 Self::HealthTail,
@@ -222,6 +229,7 @@ impl ActualReader {
         match self {
             Self::Intro => super::played::intro::indexed::initial(production),
             Self::EarlyMap => super::early_map::actual(production, None),
+            Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
             Self::SenderOffer(group) => super::sender_offer::actual(production, *group),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
@@ -266,6 +274,7 @@ impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
             Self::Intro(expected) => expected.read(cut),
+            Self::IntroRooms(expected) => expected.read(cut),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),

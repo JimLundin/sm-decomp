@@ -1,0 +1,22 @@
+[[vector]]
+id = "C-fight-room"
+source = "constructed"
+entries = ["ShowIntroRoom"]
+before = { size = [2, 2], cells = ["a", "b", "c", "d", "e", "f"], marks = ["one", "neutral", "two", "neutral", "one", "two"] }
+input = { size = [2, 2], cells = ["g", "h"], clears_marks = true }
+after = { size = [2, 2], cells = ["g", "h", "c", "d", "e", "f"], marks = ["neutral", "neutral", "neutral", "neutral", "neutral", "neutral"] }
+
+[[vector]]
+id = "C-discovery-room"
+source = "constructed"
+entries = ["ShowIntroRoom"]
+before = { size = [2, 2], cells = ["a", "b", "c", "d", "e", "f"], marks = ["neutral", "two", "neutral", "neutral", "one", "two"] }
+input = { size = [3, 2], cells = ["g", "h", "i"], clears_marks = false }
+after = { size = [3, 2], cells = ["g", "h", "i", "d", "e", "f"], marks = ["neutral", "two", "neutral", "neutral", "one", "two"] }
+
+[[vector]]
+id = "C-room-kept"
+source = "constructed"
+entries = ["ShowIntroRoom"]
+before = { size = [3, 2], cells = ["g", "h", "i", "d", "e", "f"], marks = ["neutral", "neutral", "neutral", "neutral", "one", "two"] }
+after = { size = [3, 2], cells = ["g", "h", "i", "d", "e", "f"], marks = ["neutral", "neutral", "neutral", "neutral", "one", "two"] }

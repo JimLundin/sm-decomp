@@ -11,15 +11,15 @@ use world_doors::{Doors, Fetching, Passage, Phase};
 /// The controller as the game sees it: the pad read by the last polling NMI and the
 /// buttons that went down at that read.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(super) struct Controller {
-    pub(super) held: u16,
-    pub(super) pressed: u16,
+pub(in crate::replay) struct Controller {
+    pub(in crate::replay) held: u16,
+    pub(in crate::replay) pressed: u16,
 }
 
 impl Controller {
     /// The controller as the seed leaves it: the game's own last read and the buttons that
     /// went down at it. A button held through the seed went down before it, not on cut 1.
-    pub(super) fn seeded(wram: &[u8]) -> Result<Self, Outcome> {
+    pub(in crate::replay) fn seeded(wram: &[u8]) -> Result<Self, Outcome> {
         Ok(Self {
             held: word(wram, source::JOYPAD1_LASTKEYS)?,
             pressed: word(wram, source::JOYPAD1_NEWKEYS)?,
@@ -48,13 +48,13 @@ pub(super) const fn parity(counter: u16) -> Parity {
     }
 }
 
-pub(super) const fn polled(record: &FrameRecord) -> bool {
+pub(in crate::replay) const fn polled(record: &FrameRecord) -> bool {
     matches!(record.cut, Cut::NmiReturn(nmi) if nmi.polled)
 }
 
 /// The borrowed lag: the NMI found the frame's work finished, waiting for it. A lag NMI finds
 /// the work part-done, whether or not it reads the pad.
-pub(super) const fn finished(record: &FrameRecord) -> bool {
+pub(in crate::replay) const fn finished(record: &FrameRecord) -> bool {
     matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested))
 }
 

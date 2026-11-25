@@ -13,6 +13,7 @@ mod early_map;
 mod health_tail;
 mod hud;
 pub mod index;
+mod intro_rooms;
 mod movement;
 mod movement_touchdown;
 mod native_search;

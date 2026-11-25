@@ -28,6 +28,8 @@ pub enum CaseKind {
 pub enum Responsibility {
     /// The intro stage, scripts and their frame publications.
     Intro,
+    /// Intro room installation, actor handoff and the first playable turn.
+    IntroRooms,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -142,6 +144,8 @@ pub struct End {
 pub enum InputProvider {
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
     ScopedIntroInputs,
+    /// A causal intro start and the borrowed work-completion boundaries.
+    IntroRoomJoinInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -227,6 +231,15 @@ pub enum ObservationId {
     /// Intro encounter, layout, text, sound and palette publications.
     #[serde(rename = "intro.publications")]
     IntroPublications,
+    /// Logical width, height, all backed words and their marks.
+    #[serde(rename = "intro-room.grid")]
+    IntroRoomGrid,
+    /// Samus and demo at the room join.
+    #[serde(rename = "intro-room.actor")]
+    IntroRoomActor,
+    /// The carried finished-work count.
+    #[serde(rename = "intro-room.finished-frames")]
+    IntroRoomClock,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -647,6 +660,7 @@ fn rule_exists(rule: &str) -> bool {
     screens_intro::catalogue()
         .iter()
         .any(|(id, _)| rule == format!("screens-intro/{id:?}"))
+        || rule == game::production::played::intro_rooms::RULE
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -702,6 +716,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
         O::IntroState | O::IntroPublications => Responsibility::Intro,
+        O::IntroRoomGrid | O::IntroRoomActor | O::IntroRoomClock => Responsibility::IntroRooms,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
@@ -790,6 +805,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
     }
     [
         ("screens-intro/", Responsibility::Intro),
+        ("world-intro-rooms/", Responsibility::IntroRooms),
         ("samus-movement/", Responsibility::Movement),
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
@@ -813,6 +829,9 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         | "screens-intro/BattleDissolves"
         | "screens-intro/PageTwoBegins"
         | "screens-intro/PageTwoEnds" => &[O::IntroState, O::IntroPublications],
+        game::production::played::intro_rooms::RULE => {
+            &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
+        }
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
@@ -1106,6 +1125,9 @@ fn intro_provider_valid(case: &Case, recorded: bool) -> bool {
 
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
+    if case.inputs == InputProvider::IntroRoomJoinInputs {
+        return super::intro_rooms::valid(case);
+    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);
     }

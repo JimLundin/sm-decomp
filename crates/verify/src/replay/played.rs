@@ -34,7 +34,7 @@ mod health;
 mod hud;
 pub(super) mod intro;
 mod passage;
-mod platform;
+pub(super) mod platform;
 mod power_on;
 mod quake;
 mod ridley;

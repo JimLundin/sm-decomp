@@ -491,3 +491,14 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/played/intro.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/intro/indexed.rs" },
 ]
+
+[[rule]]
+id = "world-intro-rooms/ShowIntroRoom"
+targets = [
+  { role = "model", path = "crates/game/src/production/played/intro_rooms.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "navigation", path = "crates/import/src/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/intro_rooms.rs" },
+  { role = "navigation", path = "docs/behaviours/world-intro-rooms.md" },
+]

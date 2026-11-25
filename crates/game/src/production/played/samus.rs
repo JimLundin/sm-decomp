@@ -9,7 +9,8 @@ use super::{Content, Fault, Rules};
 use crate::production::animation;
 use crate::production::connected::inputs::Inputs;
 use crate::state::owned::{AppearancePin, MovementPin};
-use canonical::model::{Model, Pinned};
+use canonical::Canonical;
+use canonical::model::Model;
 use core::cell::Cell;
 use core::num::Wrapping;
 use samus_appearance::{
@@ -18,16 +19,10 @@ use samus_appearance::{
 use samus_movement::{Dashing, Hit, StandingAnimation, WallTest};
 use types::{Pose, Set};
 
-/// The figure she is drawn in as the frame starts.
-pub struct FigurePin;
-impl Pinned for FigurePin {
-    type State = Figure;
-    const NAME: &'static str = "production-played-figure";
-    const SHAPE: u64 = 0x5d1e_2c4a_93b0_7f16;
-}
+pub use crate::production::movement::FigurePin;
 
 /// Her movement, her animation and the figure she shows, carried frame to frame.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct State {
     /// Her movement.
     pub movement: Model<MovementPin>,
@@ -59,6 +54,45 @@ impl State {
     }
 }
 
+/// External inputs read by movement and appearance in an ordinary turn.
+#[derive(Clone, Copy)]
+pub(super) struct TurnInputs {
+    pub held: types::Buttons,
+    pub pressed: types::Buttons,
+    pub items: Set<types::Item>,
+    pub parity: types::Parity,
+    pub energy: u16,
+    pub liquid: samus_appearance::Liquid,
+    pub sounds_waiting: samus_appearance::SoundsWaiting,
+    pub activities: Set<samus_appearance::Activity>,
+    pub charge: samus_appearance::Charge,
+}
+
+impl From<&Inputs> for TurnInputs {
+    fn from(inputs: &Inputs) -> Self {
+        Self {
+            held: inputs.held,
+            pressed: inputs.pressed,
+            items: inputs.items,
+            parity: inputs.parity,
+            energy: inputs.energy,
+            liquid: inputs.liquid,
+            sounds_waiting: inputs.sounds_waiting,
+            activities: inputs.activities,
+            charge: inputs.charge,
+        }
+    }
+}
+
+/// Imported content and tuning for the ordinary movement and appearance turn.
+#[derive(Clone, Copy)]
+pub(super) struct TurnContent<'a> {
+    pub movement: &'a super::MovementContent,
+    pub appearance: &'a super::AppearanceContent,
+    pub movement_rules: &'a samus_movement::Rules,
+    pub appearance_rules: &'a samus_appearance::Rules,
+}
+
 impl super::State {
     /// Her own frame: her moves, then what `between` plays once they are made, given her
     /// position after them, giving the frame's hit and the energy it leaves her; then her
@@ -71,19 +105,44 @@ impl super::State {
         rules: &Rules,
         between: impl FnOnce(types::Position) -> Result<Between<T>, Fault>,
     ) -> Result<(Her, T), Fault> {
-        let start = self.samus.figure.0;
         let world = self.station.world(&self.passage.room.geometry);
-        let (samus, outcome, between) = self.movement(inputs, &world, content, rules, between)?;
+        self.samus.turn(
+            TurnInputs {
+                energy: self.health.0.energy.whole.get(),
+                ..inputs.into()
+            },
+            &world,
+            TurnContent {
+                movement: &content.movement,
+                appearance: &content.appearance,
+                movement_rules: &rules.movement,
+                appearance_rules: &rules.appearance,
+            },
+            between,
+        )
+    }
+}
+
+impl State {
+    pub(super) fn turn<T>(
+        &self,
+        inputs: TurnInputs,
+        world: &dyn types::World,
+        content: TurnContent<'_>,
+        between: impl FnOnce(types::Position) -> Result<Between<T>, Fault>,
+    ) -> Result<(Her, T), Fault> {
+        let start = self.figure.0;
+        let (samus, outcome, between) = self.movement(inputs, world, &content, between)?;
         let after = Figure {
             pose: samus.pose,
             sprite: outcome.sprite,
         };
-        let mut appearance = self.samus.appearance.0;
-        let mut seen = animation_inputs(start, after, &outcome, inputs);
+        let mut appearance = self.appearance.0;
+        let mut seen = turn_animation_inputs(start, after, &outcome, inputs);
         // The energy the tail's hit leaves, before the frame's loss, against the energy the
         // frame starts with: a hit that lands makes her energy fall.
         seen.energy = between.energy;
-        seen.previous_energy = self.health.0.energy.whole.get();
+
         // The loop refuses her other suits, and no grapple is in it.
         let hurt = HurtOpportunity::Observed {
             suit: Suit::Power,
@@ -91,8 +150,8 @@ impl super::State {
         };
         let shown = animation::play(
             &mut appearance,
-            &content.appearance,
-            &rules.appearance,
+            content.appearance,
+            content.appearance_rules,
             &animation::frame_of_play(seen, hurt),
         )
         .map_err(|fault| match fault {
@@ -119,16 +178,15 @@ impl super::State {
     /// reaction to it.
     fn movement<T>(
         &self,
-        inputs: &Inputs,
+        inputs: TurnInputs,
         world: &dyn types::World,
-        content: &Content,
-        rules: &Rules,
+        content: &TurnContent<'_>,
         between: impl FnOnce(types::Position) -> Result<Between<T>, Fault>,
     ) -> Result<(samus_movement::Samus, samus_movement::Outcome, Between<T>), Fault> {
-        let start = self.samus.figure.0;
-        let ahead = Ahead::of(&self.samus.appearance.0, start, &content.appearance)
+        let start = self.figure.0;
+        let ahead = Ahead::of(&self.appearance.0, start, content.appearance)
             .map_err(|MissingClip(figure)| Fault::Clip(figure))?;
-        let mut samus = self.samus.movement.0;
+        let mut samus = self.movement.0;
         let missing_body = Cell::new(None);
         let body = |pose: Pose| {
             content.movement.radius(pose).unwrap_or_else(|| {
@@ -154,7 +212,7 @@ impl super::State {
             cannon_heading: &heading,
         };
         let moves = samus
-            .moves(&frame, world, &rules.movement)
+            .moves(&frame, world, content.movement_rules)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
         let between = between(moves.position_after_moves())?;
         let outcome = samus.react(moves, between.hit);
@@ -203,6 +261,15 @@ pub(in crate::production) fn animation_inputs(
     after: Figure,
     outcome: &samus_movement::Outcome,
     inputs: &Inputs,
+) -> samus_appearance::Inputs {
+    turn_animation_inputs(start, after, outcome, inputs.into())
+}
+
+fn turn_animation_inputs(
+    start: Figure,
+    after: Figure,
+    outcome: &samus_movement::Outcome,
+    inputs: TurnInputs,
 ) -> samus_appearance::Inputs {
     let mut moves = Set::default();
     moves[MoveEvent::StandingRestart] = outcome.standing_animation == StandingAnimation::Restarts;

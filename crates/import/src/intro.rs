@@ -260,6 +260,25 @@ pub fn import(rom: Lorom<'_>) -> Result<Scene, ImportError> {
     Ok(scene)
 }
 
+/// Read the populated collision cells of the two playable rooms.
+///
+/// # Errors
+/// The room words must be present in the cartridge.
+pub fn room_cells(rom: Lorom<'_>) -> Result<data::assets::intro::RoomCells, ImportError> {
+    let cells = |offset, count: usize| {
+        (0..count)
+            .map(|index| {
+                word(rom, at(TEXT, offset), index.saturating_mul(2))
+                    .map(|word| data::level::Block::new(word, 0))
+            })
+            .collect::<Result<Vec<_>, _>>()
+    };
+    Ok(data::assets::intro::RoomCells {
+        fight: cells(0xbec3, 16 * 14)?,
+        discovery: cells(0xc083, 32 * 12)?,
+    })
+}
+
 /// The two kinds of list: a text object's, whose steps carry a place and a drawing, and a sprite
 /// object's, whose steps carry a picture.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

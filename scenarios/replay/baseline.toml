@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "72e026754ca6f81cadaac5aef78dcd379500606a7c7e7c9acfe942226a769617"
+index_sha256 = "73f8d898b4c2e3ae321c2ae625c3d46d447caa660de63b54a51019f318cf15d2"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -912,5 +912,41 @@ replies = 0
 null_cuts = 5
 null_fields = 21881
 restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "intro-rooms/fight-first-turn"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "742624409a88242b77de6766e23fe908d2d3eff73e7db6c9ab65628d3100f7d7"
+
+[case.counts]
+cuts = 2
+fields = 2090
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 906
+restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "intro-rooms/discovery-first-turn"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d9ad960281d84ca627c1b7b6c48816ab45080b1a7ee2af368ffddff1f7dd4a3d"
+
+[case.counts]
+cuts = 2
+fields = 2090
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1548
+restorations = 2
 pending_boundaries = 0
 pending_restorations = 0

@@ -1220,3 +1220,61 @@ borrowed = [
   { dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work", claim = "audio service is outside this scope" },
   { dependency = "Zebes encounter", provider = "pinned boss hold count and callback", fields = ["ready to return"], phase = "after room play", claim = "the intro consumes the independently observed encounter cue" },
 ]
+
+[[case]]
+id = "intro-rooms/fight-first-turn"
+kind = "scoped"
+row = "any-intro-0568"
+start = { source = "cache-cut", frame = 1650 }
+end = { cut_inclusive = 1652 }
+rules = ["world-intro-rooms/ShowIntroRoom"]
+profile = "reference"
+responsibilities = ["intro-rooms"]
+content = "player-rom-import"
+inputs = "intro-room-join-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["intro-room.grid", "intro-room.actor", "intro-room.finished-frames"], outputs = [] }
+checkpoints = true
+limits = ["row-relative cuts 1651 and 1652 continue at any-intro-2219 cuts 0 and 1, movie 2219 and 2220", "opening actor and inherited room image admitted only at the one preceding text cut", "only the first quiet actor turn, with no eligible shot or hit", "room presentation and encounter progression are outside this join"]
+
+[[case.borrowed]]
+dependency = "intro-rooms.start"
+provider = "page-one-movie-press"
+fields = ["intro.page-one-ready", "controller.new"]
+phase = "at-frame-start"
+claim = "the page-one wait and the pad latch are admitted at the origin; the production join receives the resulting start intent"
+
+[[case.borrowed]]
+dependency = "intro-rooms.turn"
+provider = "bounded-demo-and-platform"
+fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"]
+phase = "around-room-join"
+claim = "work completion is borrowed from the NMI cut; neutral demo and unselected appearance stimuli are independently admitted"
+
+[[case]]
+id = "intro-rooms/discovery-first-turn"
+kind = "scoped"
+row = "any-intro-2219"
+start = { source = "cache-cut", frame = 1297 }
+end = { cut_inclusive = 1299 }
+rules = ["world-intro-rooms/ShowIntroRoom"]
+profile = "reference"
+responsibilities = ["intro-rooms"]
+content = "player-rom-import"
+inputs = "intro-room-join-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["intro-room.grid", "intro-room.actor", "intro-room.finished-frames"], outputs = [] }
+checkpoints = true
+limits = ["scoped cuts 1298 and 1299 are movie 3517 and 3518", "preceding page-two actor and retained room image admitted once", "only the first quiet actor turn, with no eligible shot or hit", "room presentation and encounter progression are outside this join"]
+
+[[case.borrowed]]
+dependency = "intro-rooms.start"
+provider = "scoped-page-two-handoff"
+fields = ["intro.discovery-start"]
+phase = "at-frame-start"
+claim = "the discovery intent is the independently observed page-two handoff, with the preceding actor kept once at admission"
+
+[[case.borrowed]]
+dependency = "intro-rooms.turn"
+provider = "bounded-demo-and-platform"
+fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"]
+phase = "around-room-join"
+claim = "work completion is borrowed from the NMI cut; neutral demo and unselected appearance stimuli are independently admitted"

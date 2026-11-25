@@ -335,6 +335,7 @@ name = "Room loading"
 wave = 2
 lanes = 2
 before = ["R1"]
+status = "in-progress"
 
 [[platform]]
 id = "AF3"

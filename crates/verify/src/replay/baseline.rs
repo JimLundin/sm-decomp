@@ -341,7 +341,22 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
 }
 
 fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
-    let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);
+    use super::index::ObservationId;
+    let semantic_count = case
+        .expectations
+        .fields
+        .iter()
+        .map(|field| {
+            if *field == ObservationId::IntroRoomGrid {
+                super::intro_rooms::GRID_FIELDS
+            } else if *field == ObservationId::IntroRoomActor {
+                super::intro_rooms::ACTOR_FIELDS
+            } else {
+                1
+            }
+        })
+        .sum::<usize>()
+        .checked_mul(counts.cuts);
     let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {
         usize::from(
             at.checked_sub(first)

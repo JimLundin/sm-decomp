@@ -2,6 +2,7 @@
 //! Each advance carries complete clean state and publishes the complete model output.
 
 use self::audio_checkpoint::PortableAudio;
+use self::played::intro_rooms;
 use crate::state::owned::{CodecState, OwnedState};
 use canonical::model::Model;
 use canonical::{Canonical, Schema};
@@ -41,6 +42,8 @@ pub use movement::MovementInputs;
 pub enum Scope {
     /// The complete intro with a selected encounter input.
     Intro,
+    /// The intro room start and its ordinary first turn.
+    IntroRooms,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
     /// Scoped Health and its late Drawing and HUD consumers.
@@ -74,6 +77,8 @@ pub enum Scope {
 pub enum ProductionSeed {
     /// The complete intro and its displayed palette.
     Intro(Box<played::intro::State>),
+    /// The intro room join from one complete origin.
+    IntroRooms(Box<intro_rooms::Scoped>),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
     /// Complete current Health, Drawing history and gauge from a single origin.
@@ -106,6 +111,8 @@ pub enum ProductionSeed {
 pub enum AdvanceInput<'a> {
     /// An intro work-frame boundary.
     Intro(played::intro::FrameEnd),
+    /// A causal intro room opportunity.
+    IntroRooms(intro_rooms::Opportunity),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -176,6 +183,8 @@ pub enum AdvanceInput<'a> {
 pub enum ProductionOutputs {
     /// The intro's completed frame publications, if work finished.
     Intro(Option<Box<screens_intro::Report>>),
+    /// The first turn when it completed.
+    IntroRooms(Option<Box<intro_rooms::FirstTurn>>),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -242,6 +251,8 @@ pub enum AdmissionFault {
 pub enum Unsupported {
     /// A required continuation beyond the intro scene provided here.
     Intro(played::intro::Fault),
+    /// The intro room join requires a producer or content outside its scope.
+    IntroRooms(intro_rooms::Fault),
     /// A weapon impact cue needs its qualified sender mapping.
     WeaponImpactSound,
     /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
@@ -332,6 +343,7 @@ impl Production {
         validate_pins(match &seed {
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Connected(_) => Scope::Connected,
+            ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
@@ -346,6 +358,15 @@ impl Production {
             ProductionSeed::Doors(_) => Scope::Doors,
         })?;
         let state = match (seed, &content, &rules) {
+            (
+                ProductionSeed::IntroRooms(state),
+                ProductionContent::IntroRooms(content),
+                ProductionRules::IntroRooms(_),
+            ) => {
+                content.movement.validate()?;
+                OwnedState::IntroRooms(state)
+            }
+
             (
                 ProductionSeed::Connected(state),
                 ProductionContent::Connected(content),
@@ -404,6 +425,7 @@ impl Production {
         match self.state {
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Connected(_) => Scope::Connected,
+            OwnedState::IntroRooms(_) => Scope::IntroRooms,
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
@@ -439,6 +461,18 @@ impl Production {
     ) -> Result<(OwnedState, ProductionOutputs), ProductionFault> {
         let Context { content, rules } = self.context.as_ref();
         let outputs = match (&mut state, content, rules, input) {
+            (
+                OwnedState::IntroRooms(state),
+                ProductionContent::IntroRooms(content),
+                ProductionRules::IntroRooms(rules),
+                AdvanceInput::IntroRooms(input),
+            ) => ProductionOutputs::IntroRooms(
+                state
+                    .advance(input, content, rules)
+                    .map_err(|fault| ProductionFault::Unsupported(Unsupported::IntroRooms(fault)))?
+                    .map(Box::new),
+            ),
+
             (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
@@ -514,6 +548,7 @@ impl Production {
             OwnedState::MovementTouchdown(state) => Some(&state.audio.0),
             OwnedState::Intro(_)
             | OwnedState::Connected(_)
+            | OwnedState::IntroRooms(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::WeaponsContact(_)
@@ -534,6 +569,7 @@ impl Production {
     pub fn save(&self) -> Result<SavedProduction, SaveFault> {
         let state = match &self.state {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
+            OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
@@ -587,6 +623,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<movement_touchdown::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::MovementTouchdown(checkpoint.state)
+        } else if matches!(&content, ProductionContent::IntroRooms(_)) {
+            let checkpoint: Checkpoint<Box<intro_rooms::Scoped>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::IntroRooms(checkpoint.state)
         } else if matches!(&content, ProductionContent::HealthTail(_)) {
             let checkpoint: Checkpoint<Box<health_tail::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -630,6 +670,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
+        Scope::IntroRooms => intro_rooms::validate_pins(),
         Scope::Intro
         | Scope::Blocks
         | Scope::Progress

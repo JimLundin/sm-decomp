@@ -49,6 +49,8 @@ impl Pinned for AppearancePin {
 pub enum OwnedState {
     /// Complete intro State and the displayed palette.
     Intro(Box<crate::production::played::intro::State>),
+    /// The intro room join and its first-turn actors.
+    IntroRooms(Box<crate::production::played::intro_rooms::Scoped>),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Complete Health and qualified late consumer continuation.
