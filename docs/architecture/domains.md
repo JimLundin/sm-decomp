@@ -333,7 +333,7 @@ held back to back from power-on.
 **The ladder** (MODEL §1 decision 18). The milestone's number can't move until the opening's
 cinematics, the CPU side of sound and modelled lag exist, so shorter stretches of the same movie
 come first, each played alone from its first seed, as `[[rung]]` in
-[domains.toml](domains.toml) and a row each in the README's table of frames that pass:
+[domains.toml](domains.toml):
 
 | Rung | Stretch | Adds over the rung before |
 | --- | --- | --- |
@@ -454,5 +454,6 @@ doesn't fall, root integration and review, not implementation, set the pace.
    chains may cover pausing (check before recording). Rare boss phases need segment rows.
 
 The plan's domains, their waves, their progress and the rounds landed are data in
-[domains.toml](domains.toml), from which `verify::report` draws the domain graph `tools report` prints and the
-README's stretches.
+[domains.toml](domains.toml), from which `verify::report` draws the domain graph `tools report`
+prints and the README's milestone; the README's stretches come from
+[stretches.toml](../../scenarios/replay/stretches.toml).
