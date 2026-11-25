@@ -39,3 +39,6 @@ health_tail = [
     "replay::health_tail::tests::dormant_off_map_inputs_preserve_the_native_gauge_and_map",
     "replay::health_tail::tests::equal_energy_preserves_the_stale_gauge",
 ]
+
+# Every reviewed run of scenarios/replay/played.toml holds its `held` and `stop`.
+played = ["replay::played::tests::reviewed_runs_hold"]
