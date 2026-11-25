@@ -124,11 +124,19 @@ update its domain registration and regenerate the README after review. Land by f
 through `tools/lane/land.sh` only after CI is green: Quality, content and replay.
 The commands below apply to rounds and other work.
 
-One landing PR may carry several independently reviewed changes (Jim, 2026-11-25): each its own
-commit (a round still squashed to one, other work picked), in an order where each applies onto
-the one before, sharing the PR's one CI run. When that run fails, find the failing change in its
-log, reset the landing branch to the commits before it (the green prefix), push that head and land
-it once its own CI run passes, and send the failing change back to its lane.
+One landing PR may carry several independently reviewed changes (Jim, 2026-11-25), each kept as
+its own commits, in an order where each applies onto the one before, sharing the PR's one CI run.
+A batch holds at most one round, squashed first (squash.sh needs the round's branch to hold the
+landing branch's head); other work is picked after it. When that run fails:
+
+- Find the failing change in its log. The changes before it are the green prefix; when it is the
+  first, the prefix is empty and nothing lands.
+- Push the prefix as a new landing branch with its own PR (never force-push the old one), whose
+  body lists only its changes, and run `watch.sh` on that PR with the prefix's sha: it lands once
+  the prefix's own CI run passes.
+- Send the failing change back to its lane. The changes after it haven't passed CI without it:
+  re-batch them onto the landed prefix in a later landing, on their own CI run.
+- A cancelled run names no failing change: re-run it.
 
 1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
 2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
