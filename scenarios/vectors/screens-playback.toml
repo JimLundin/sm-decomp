@@ -1,0 +1,286 @@
+# Recorded cases use the scene's imported timelines for oracle comparison.
+# Each constructed case supplies the invented holds it reaches.
+# Supply any valid invented holds for timelines that case never reads.
+
+[[vector]]
+id = "R-battle-ready"
+source = "any-intro-2219:0"
+entries = ["DemoReceivesScene"]
+before = { phase = "off" }
+input = { actor_turn = false, start = "battle" }
+after = { phase = "battle", progress = 0, last = { held = [], pressed = [] } }
+output = { handoffs = ["start_battle"] }
+
+[[vector]]
+id = "R-battle-first"
+source = "any-intro-2219:1"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 0, last = { held = [], pressed = [] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 1, last = { held = [], pressed = [] } }
+output = { handoffs = [], pad = { held = [], pressed = [] }, previous = { held = [], pressed = [] } }
+
+[[vector]]
+id = "R-battle-hold"
+source = "any-intro-2219:92"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 91, last = { held = ["fire"], pressed = ["fire"] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 92, last = { held = ["fire"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["fire"], pressed = [] }, previous = { held = ["fire"], pressed = ["fire"] } }
+
+[[vector]]
+id = "R-battle-partial"
+source = "any-intro-2219:101"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 100, last = { held = ["fire"], pressed = [] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 101, last = { held = ["fire"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["fire"], pressed = [] }, previous = { held = ["fire"], pressed = [] } }
+
+[[vector]]
+id = "R-battle-paused"
+source = "any-intro-2219:102"
+entries = ["DemoReceivesScene"]
+before = { phase = "battle", progress = 101, last = { held = ["fire"], pressed = [] } }
+input = { actor_turn = false }
+after = { phase = "battle", progress = 101, last = { held = ["fire"], pressed = [] } }
+output = { handoffs = [] }
+
+[[vector]]
+id = "R-battle-before-pad"
+source = "any-intro-2219:131"
+entries = ["DemoReceivesScene"]
+before = { phase = "battle", progress = 128, last = { held = ["fire"], pressed = [] } }
+input = { actor_turn = false }
+after = { phase = "battle", progress = 128, last = { held = ["fire"], pressed = [] } }
+output = { handoffs = [] }
+
+[[vector]]
+id = "R-battle-refire"
+source = "any-intro-2219:135"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 131, last = { held = ["fire"], pressed = [] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 132, last = { held = ["fire"], pressed = ["fire"] } }
+output = { handoffs = [], pad = { held = ["fire"], pressed = ["fire"] }, previous = { held = ["fire"], pressed = [] } }
+
+[[vector]]
+id = "R-battle-jump"
+source = "any-intro-2219:263"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 259, last = { held = ["left"], pressed = [] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 260, last = { held = ["jump", "left"], pressed = ["jump"] } }
+output = { handoffs = [], pad = { held = ["jump", "left"], pressed = ["jump"] }, previous = { held = ["left"], pressed = [] } }
+
+[[vector]]
+id = "R-battle-lock"
+source = "any-intro-2219:396"
+entries = ["BattleLocksOnLeft"]
+before = { phase = "battle", progress = 392, last = { held = ["fire"], pressed = [] } }
+input = { actor_turn = true }
+after = { phase = "locked" }
+output = { handoffs = ["stand_left"], pad = { held = [], pressed = [] }, previous = { held = ["fire"], pressed = [] } }
+
+[[vector]]
+id = "R-battle-locked"
+source = "any-intro-2219:397"
+entries = ["DemoReceivesScene"]
+before = { phase = "locked" }
+input = { actor_turn = true }
+after = { phase = "locked" }
+output = { handoffs = [] }
+
+[[vector]]
+id = "R-battle-hidden"
+source = "any-intro-2219:649"
+entries = ["DemoReceivesScene"]
+before = { phase = "locked" }
+input = { actor_turn = false }
+after = { phase = "locked" }
+output = { handoffs = [] }
+
+[[vector]]
+id = "R-discovery-ready"
+source = "any-intro-2219:1298"
+entries = ["DemoReceivesScene"]
+before = { phase = "locked" }
+input = { actor_turn = false, start = "approach" }
+after = { phase = "approach", progress = 0, last = { held = [], pressed = [] } }
+output = { handoffs = ["start_discovery"] }
+
+[[vector]]
+id = "R-approach-keeps-left"
+source = "any-intro-2219:1390"
+entries = ["DemoPlaysPad", "SamusReachesEgg"]
+before = { phase = "approach", progress = 91, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, x = 375 }
+after = { phase = "approach", progress = 91, last = { held = ["left"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["left"], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+
+[[vector]]
+id = "R-approach-outside-line"
+source = "any-intro-2219:1468"
+entries = ["SamusReachesEgg"]
+before = { phase = "approach", progress = 91, last = { held = ["left"], pressed = [] } }
+input = { actor_turn = true, x = 180 }
+after = { phase = "approach", progress = 91, last = { held = ["left"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["left"], pressed = [] }, previous = { held = ["left"], pressed = [] } }
+
+[[vector]]
+id = "R-approach-reaches-baby"
+source = "any-intro-2219:1469"
+entries = ["SamusReachesEgg", "DemoPlaysPad"]
+before = { phase = "approach", progress = 91, last = { held = ["left"], pressed = [] } }
+input = { actor_turn = true, x = 177 }
+after = { phase = "watch", progress = 1, last = { held = [], pressed = [] } }
+output = { handoffs = [], pad = { held = [], pressed = [] }, previous = { held = ["left"], pressed = [] } }
+
+[[vector]]
+id = "R-watch-aim"
+source = "any-intro-2219:1769"
+entries = ["DemoPlaysPad"]
+before = { phase = "watch", progress = 300, last = { held = [], pressed = [] } }
+input = { actor_turn = true, crossfade = 127 }
+after = { phase = "watch", progress = 301, last = { held = ["aim_up"], pressed = ["aim_up"] } }
+output = { handoffs = [], pad = { held = ["aim_up"], pressed = ["aim_up"] }, previous = { held = [], pressed = [] } }
+
+[[vector]]
+id = "R-watch-keeps-left"
+source = "any-intro-4323:78"
+entries = ["DemoPlaysPad", "DiscoveryReleasesSamus"]
+before = { phase = "watch", progress = 712, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, crossfade = 50 }
+after = { phase = "watch", progress = 712, last = { held = ["left"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["left"], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+
+[[vector]]
+id = "R-discovery-release"
+source = "any-intro-4323:128"
+entries = ["DiscoveryReleasesSamus"]
+before = { phase = "watch", progress = 712, last = { held = ["left"], pressed = [] } }
+input = { actor_turn = true, crossfade = 0 }
+after = { phase = "ended" }
+output = { handoffs = ["release"], pad = { held = [], pressed = [] }, previous = { held = ["left"], pressed = [] } }
+
+[[vector]]
+id = "R-discovery-after"
+source = "any-intro-4323:129"
+entries = ["DemoReceivesScene"]
+before = { phase = "ended" }
+input = { actor_turn = false }
+after = { phase = "ended" }
+output = { handoffs = [] }
+
+[[vector]]
+id = "C-start-after-lock"
+source = "constructed"
+entries = ["DemoReceivesScene"]
+before = { phase = "locked" }
+input = { actor_turn = true, start = "approach", x = 200 }
+after = { phase = "approach", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+output = { handoffs = ["start_discovery"], pad = { held = ["left"], pressed = ["left"] }, previous = { held = [], pressed = [] } }
+[vector.content]
+approach = [{ turns = 2, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-actor-closed"
+source = "constructed"
+entries = ["DemoReceivesScene", "DiscoveryReleasesSamus"]
+before = { phase = "watch", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = false, crossfade = 0 }
+after = { phase = "watch", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+output = { handoffs = [] }
+[vector.content]
+watch = [{ turns = 4, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-two-turn-press"
+source = "constructed"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 1, last = { held = ["jump"], pressed = ["jump"] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 2, last = { held = ["jump"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["jump"], pressed = [] }, previous = { held = ["jump"], pressed = ["jump"] } }
+[vector.content]
+battle = [{ turns = 2, held = ["jump"], pressed = ["jump"] }]
+
+[[vector]]
+id = "C-approach-inside-hold"
+source = "constructed"
+entries = ["SamusReachesEgg"]
+before = { phase = "approach", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, x = 176 }
+after = { phase = "watch", progress = 1, last = { held = ["aim_up"], pressed = ["aim_up"] } }
+output = { handoffs = [], pad = { held = ["aim_up"], pressed = ["aim_up"] }, previous = { held = ["left"], pressed = ["left"] } }
+[vector.content]
+approach = [{ turns = 4, held = ["left"], pressed = ["left"] }]
+watch = [{ turns = 2, held = ["aim_up"], pressed = ["aim_up"] }, { turns = 1, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-approach-exactly-at-line"
+source = "constructed"
+entries = ["SamusReachesEgg"]
+before = { phase = "approach", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, x = 178 }
+after = { phase = "approach", progress = 2, last = { held = ["left"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["left"], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+[vector.content]
+approach = [{ turns = 3, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-lock-from-running"
+source = "constructed"
+entries = ["BattleLocksOnLeft"]
+before = { phase = "battle", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true }
+after = { phase = "locked" }
+output = { handoffs = ["stand_left"], pad = { held = [], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+[vector.content]
+battle = [{ turns = 1, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-watch-release-during-hold"
+source = "constructed"
+entries = ["DiscoveryReleasesSamus"]
+before = { phase = "watch", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, crossfade = 0 }
+after = { phase = "ended" }
+output = { handoffs = ["release"], pad = { held = [], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+[vector.content]
+watch = [{ turns = 4, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-look-on-zero"
+source = "constructed"
+entries = ["SamusReachesEgg", "DiscoveryReleasesSamus"]
+before = { phase = "approach", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, crossfade = 0, x = 150 }
+after = { phase = "watch", progress = 1, last = { held = [], pressed = [] } }
+output = { handoffs = [], pad = { held = [], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+[vector.content]
+approach = [{ turns = 2, held = ["left"], pressed = ["left"] }]
+watch = [{ turns = 1, held = [], pressed = [] }, { turns = 1, held = ["left"], pressed = ["left"] }]
+
+[[vector]]
+id = "C-repress-while-held"
+source = "constructed"
+entries = ["DemoPlaysPad"]
+before = { phase = "battle", progress = 3, last = { held = ["fire"], pressed = [] } }
+input = { actor_turn = true }
+after = { phase = "battle", progress = 4, last = { held = ["fire"], pressed = ["fire"] } }
+output = { handoffs = [], pad = { held = ["fire"], pressed = ["fire"] }, previous = { held = ["fire"], pressed = [] } }
+[vector.content]
+battle = [{ turns = 3, held = ["fire"], pressed = ["fire"] }, { turns = 2, held = ["fire"], pressed = ["fire"] }]
+
+[[vector]]
+id = "C-discovery-left-tail"
+source = "constructed"
+entries = ["DemoPlaysPad", "DiscoveryReleasesSamus"]
+before = { phase = "watch", progress = 1, last = { held = ["left"], pressed = ["left"] } }
+input = { actor_turn = true, crossfade = 2 }
+after = { phase = "watch", progress = 1, last = { held = ["left"], pressed = [] } }
+output = { handoffs = [], pad = { held = ["left"], pressed = [] }, previous = { held = ["left"], pressed = ["left"] } }
+[vector.content]
+watch = [{ turns = 1, held = ["left"], pressed = ["left"] }]

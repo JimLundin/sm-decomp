@@ -80,6 +80,8 @@ pub enum ProductionContent {
     IntroRooms(Box<super::played::intro_rooms::ScopedContent>),
     /// Checked encounter clip maps and normal sprite palette.
     Flashback(Box<data::assets::flashback::Scene>),
+    /// The imported recorded pad holds.
+    Playback(super::playback::Content),
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -118,6 +120,8 @@ pub enum ProductionRules {
     IntroRooms(Box<super::played::intro_rooms::ScopedRules>),
     /// Parameters of the Zebes flashback encounter.
     Flashback(super::played::flashback::Rules),
+    /// The playback catalogue rules are fixed.
+    Playback,
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.

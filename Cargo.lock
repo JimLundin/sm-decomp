@@ -112,6 +112,7 @@ dependencies = [
  "screens_flight",
  "screens_intro",
  "screens_options",
+ "screens_playback",
  "screens_title",
  "serde",
  "types",
@@ -322,6 +323,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "screens_playback"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
 name = "screens_title"
 version = "0.1.0"
 dependencies = [
@@ -477,6 +488,7 @@ dependencies = [
  "screens_flight",
  "screens_intro",
  "screens_options",
+ "screens_playback",
  "screens_title",
  "serde",
  "toml",

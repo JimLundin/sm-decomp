@@ -1049,3 +1049,18 @@ after = '''let mut rules = rules;
 case = "flashback/zebes-encounter"
 cut = 109
 field = "flashback.brain"
+
+[[fault]]
+name = "playback-repress-during-hold-lost"
+responsibility = "playback"
+file = "crates/game/src/production/playback.rs"
+before = "pad: report.pad,"
+after = '''pad: report.pad.map(|mut pad| {
+    for (action, fresh) in &mut pad.current.pressed {
+        *fresh &= !pad.previous.held[action];
+    }
+    pad
+}),'''
+case = "screens-playback/intro-demos"
+cut = 1786
+field = "playback.current.fresh"

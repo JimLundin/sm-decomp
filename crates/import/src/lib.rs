@@ -8,6 +8,7 @@ pub mod cache;
 pub mod flashback;
 pub mod flight;
 pub mod intro;
+pub mod playback;
 pub mod projectile;
 pub mod samus;
 pub mod start;

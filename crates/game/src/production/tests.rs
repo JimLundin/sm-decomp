@@ -221,3 +221,11 @@ fn restore_refuses_other_rules_content_and_previous_state_schema() {
         ))
     ));
 }
+
+#[test]
+fn playback_shape() {
+    assert_eq!(
+        canonical::model::pin_holds::<crate::state::owned::PlaybackPin>(),
+        Ok(())
+    );
+}

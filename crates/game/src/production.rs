@@ -22,6 +22,7 @@ pub mod hud;
 mod immutable;
 mod movement;
 pub mod movement_touchdown;
+pub mod playback;
 pub mod played;
 pub mod ridley;
 pub mod room_loading;
@@ -45,6 +46,8 @@ pub enum Scope {
     Intro,
     /// The intro room start and its ordinary first turn.
     IntroRooms,
+    /// Recorded intro pad and Samus update authority.
+    Playback,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
     /// The Zebes flashback encounter at its cinematic actor turn.
@@ -82,6 +85,8 @@ pub enum ProductionSeed {
     Intro(Box<played::intro::State>),
     /// The intro room join from one complete origin.
     IntroRooms(Box<intro_rooms::Scoped>),
+    /// Complete recorded pad phase.
+    Playback(playback::ScenePhase),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
     /// Complete flashback encounter State, including any pending start.
@@ -120,6 +125,8 @@ pub enum AdvanceInput<'a> {
     IntroRooms(intro_rooms::Opportunity),
     /// The next authorized scene phase and any completed drawing opportunity.
     Flashback(flashback::Cut<'a>),
+    /// Scene start and/or the actual room actor opportunity at this cut.
+    Playback(playback::Cut),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -194,6 +201,8 @@ pub enum ProductionOutputs {
     IntroRooms(Option<Box<intro_rooms::FirstTurn>>),
     /// Requests to the surrounding owners and the completed sprite publication.
     Flashback(flashback::Publication),
+    /// Recorded pad and immediate update authority publications.
+    Playback(playback::CutReport),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -227,6 +236,8 @@ pub enum ProductionOutputs {
 /// Why a selected start or checkpoint cannot be admitted.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AdmissionFault {
+    /// The saved playback progress or pad is outside its content.
+    Playback,
     /// Complete connected owner/content relation is invalid.
     Connected(connected::Fault),
     /// State, content and rules must select the same entry.
@@ -351,6 +362,7 @@ impl Production {
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
             ProductionSeed::Intro(_) => Scope::Intro,
+            ProductionSeed::Playback(_) => Scope::Playback,
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
             ProductionSeed::Flashback(_) => Scope::Flashback,
@@ -382,6 +394,16 @@ impl Production {
                 ProductionContent::Flashback(_),
                 ProductionRules::Flashback(_),
             ) => OwnedState::Flashback(Model(state)),
+            (
+                ProductionSeed::Playback(phase),
+                ProductionContent::Playback(content),
+                ProductionRules::Playback,
+            ) => {
+                if !playback::valid_phase(phase, content) {
+                    return Err(AdmissionFault::Playback);
+                }
+                OwnedState::Playback(Model(phase))
+            }
             (
                 ProductionSeed::Connected(state),
                 ProductionContent::Connected(content),
@@ -439,6 +461,7 @@ impl Production {
     pub const fn scope(&self) -> Scope {
         match self.state {
             OwnedState::Intro(_) => Scope::Intro,
+            OwnedState::Playback(_) => Scope::Playback,
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::IntroRooms(_) => Scope::IntroRooms,
             OwnedState::Flashback(_) => Scope::Flashback,
@@ -495,6 +518,12 @@ impl Production {
                 ProductionRules::Flashback(rules),
                 AdvanceInput::Flashback(cut),
             ) => ProductionOutputs::Flashback(flashback::advance(&mut state.0, art, *rules, cut)),
+            (
+                OwnedState::Playback(phase),
+                ProductionContent::Playback(content),
+                ProductionRules::Playback,
+                AdvanceInput::Playback(cut),
+            ) => ProductionOutputs::Playback(playback::advance(&mut phase.0, content, cut)),
             (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
@@ -572,6 +601,7 @@ impl Production {
             | OwnedState::Connected(_)
             | OwnedState::IntroRooms(_)
             | OwnedState::Flashback(_)
+            | OwnedState::Playback(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::WeaponsContact(_)
@@ -591,6 +621,7 @@ impl Production {
     /// A model without a complete codec reports its selected scope explicitly.
     pub fn save(&self) -> Result<SavedProduction, SaveFault> {
         let state = match &self.state {
+            OwnedState::Playback(phase) => return Ok(self.encode_save(*phase)),
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
@@ -642,6 +673,10 @@ impl Production {
             let checkpoint: Checkpoint<Model<crate::state::owned::FlashbackPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::Flashback(checkpoint.state.0)
+        } else if matches!(&content, ProductionContent::Playback(_)) {
+            let checkpoint: Checkpoint<Model<crate::state::owned::PlaybackPin>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Playback(checkpoint.state.0)
         } else if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -678,6 +713,7 @@ impl Production {
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
         Scope::Flashback => canonical::model::pin_holds::<crate::state::owned::FlashbackPin>(),
+        Scope::Playback => canonical::model::pin_holds::<crate::state::owned::PlaybackPin>(),
         Scope::Connected => {
             use canonical::model::pin_holds;
             pin_holds::<connected::inputs::InputsPin>()

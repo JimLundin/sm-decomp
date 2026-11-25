@@ -17,6 +17,7 @@ game_random = { path = "../clean/game_random" }
 screens_flight = { path = "../clean/screens_flight" }
 screens_intro = { path = "../clean/screens_intro" }
 screens_flashback = { path = "../clean/screens_flashback" }
+screens_playback = { path = "../clean/screens_playback" }
 game_time = { path = "../clean/game_time" }
 world_quake = { path = "../clean/world_quake" }
 world_haze = { path = "../clean/world_haze" }

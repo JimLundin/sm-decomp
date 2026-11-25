@@ -528,6 +528,14 @@ const DOMAINS: &[Domain] = &[
     },
     // The title's one file holds every entry, all of them the screen's.
     Domain {
+        name: "screens-playback",
+        bridge: None,
+        adapters: &["production/playback.rs"],
+        providers: &["playback"],
+        areas: &[("controls", &["turn.rs", "content.rs"])],
+        apart: &[],
+    },
+    Domain {
         name: "screens-title",
         bridge: None,
         adapters: &["production/played/front_end/title.rs"],

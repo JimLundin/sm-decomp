@@ -38,7 +38,7 @@ pub(super) mod platform;
 mod power_on;
 mod quake;
 mod ridley;
-mod rows;
+pub(super) mod rows;
 mod samus;
 mod screens;
 mod seed;

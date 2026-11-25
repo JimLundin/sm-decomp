@@ -116,6 +116,10 @@ name = "screens-flashback"
 rounds = 1
 
 [[model]]
+name = "screens-playback"
+rounds = 1
+
+[[model]]
 name = "screens-title"
 rounds = 1
 
@@ -381,7 +385,7 @@ wave = 3
 rounds = 8
 # Inferred: P2 for the file a file select loads.
 reads = ["S1", "S5", "W1", "P2"]
-model = ["screens-boot", "screens-title", "screens-file-select", "screens-options", "screens-intro", "screens-flashback"]
+model = ["screens-boot", "screens-title", "screens-file-select", "screens-options", "screens-intro", "screens-flashback", "screens-playback"]
 status = "in-progress"
 
 [[domain]]

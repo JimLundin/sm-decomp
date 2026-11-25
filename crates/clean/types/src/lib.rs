@@ -12,6 +12,7 @@ pub mod flight;
 pub mod haze;
 pub mod intro;
 pub mod options;
+pub mod playback;
 pub mod power_on;
 pub mod quake;
 

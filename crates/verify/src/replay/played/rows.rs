@@ -56,7 +56,7 @@ impl<'a> Chain<'a> {
 }
 
 /// The records of a run's chain of rows, each row's cache opened as the run reaches it.
-pub(super) struct Rows<'a> {
+pub(in crate::replay) struct Rows<'a> {
     chain: Chain<'a>,
     cache: &'a Path,
     /// The caches of the rows reached, in the chain's order.
@@ -66,7 +66,7 @@ pub(super) struct Rows<'a> {
 impl<'a> Rows<'a> {
     /// The rows from `row` on, their records in `cache` and their seeds' movie frames in the
     /// tables of `root`.
-    pub(super) fn open(
+    pub(in crate::replay) fn open(
         lock: &'a Lock,
         root: &'a Path,
         cache: &'a Path,
@@ -80,7 +80,7 @@ impl<'a> Rows<'a> {
     }
 
     /// The row that holds the run's `cut`, and its own cut there.
-    pub(super) fn place(&mut self, cut: u64) -> Result<(String, u64), Outcome> {
+    pub(in crate::replay) fn place(&mut self, cut: u64) -> Result<(String, u64), Outcome> {
         let (place, own) = self.chain.place(cut)?;
         let (_, row) = self
             .chain
@@ -91,7 +91,7 @@ impl<'a> Rows<'a> {
     }
 
     /// The record at the run's `cut`.
-    pub(super) fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
+    pub(in crate::replay) fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
         let (place, own) = self.chain.place(cut)?;
         while self.opened.len() <= place {
             let (_, row) = self

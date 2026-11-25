@@ -25,6 +25,7 @@ screens_arrival = { path = "../clean/screens_arrival" }
 screens_flight = { path = "../clean/screens_flight" }
 screens_intro = { path = "../clean/screens_intro" }
 screens_flashback = { path = "../clean/screens_flashback" }
+screens_playback = { path = "../clean/screens_playback" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
 screens_boot = { path = "../clean/screens_boot" }
 screens_title = { path = "../clean/screens_title" }

@@ -1314,3 +1314,47 @@ provider = "locked lean cache Samus and prior weapon slots"
 fields = ["Samus whole X", "flying missile shots with position and slot precedence", "camera origin"]
 phase = "after movement and weapon advance, with the camera read at publication"
 claim = "Missile candidates are derived from prior flight or the ammo debit before the independent impact comparison. Movement and flight are external inputs."
+
+[[case]]
+id = "screens-playback/intro-demos"
+kind = "scoped"
+row = "any-intro-0568"
+start = { source = "cache-cut", frame = 1650 }
+end = { cut_inclusive = 3884 }
+rules = [
+    "screens-playback/DemoReceivesScene",
+    "screens-playback/DemoPlaysPad",
+    "screens-playback/SamusReachesEgg",
+    "screens-playback/BattleLocksOnLeft",
+    "screens-playback/DiscoveryReleasesSamus",
+]
+profile = "reference"
+responsibilities = ["playback"]
+content = "player-rom-import"
+inputs = "cinematic-actor-opportunities"
+checkpoints = true
+limits = [
+    "One carried playback state through any-intro-2219 and through cut 129 of any-intro-4323",
+    "Actor scheduling and Samus's pre-motion whole X come from the records",
+    "Comparison ends at the pad and control handoff outputs to pose, movement, weapons and appearance",
+    "The platform owns live-pad polling and publication",
+]
+
+[case.expectations]
+provider = "pinned-record-cache"
+fields = ["playback.phase", "playback.progress", "playback.last.held", "playback.last.fresh"]
+outputs = ["playback.start", "playback.current.held", "playback.current.fresh", "playback.previous.held", "playback.previous.fresh", "playback.finish", "playback.authority"]
+
+[[case.borrowed]]
+dependency = "intro-and-platform"
+provider = "pinned cinematic actor gate, work counter, entry placement and fade count"
+fields = ["intro.scene-start", "intro.room-actors", "platform.actor-pad-opportunity", "intro.crossfade"]
+phase = "scene setup or post-stage actor opportunity before the later scene-object hide"
+claim = "The recorded work marker identifies the reached actor opportunity on these cuts."
+
+[[case.borrowed]]
+dependency = "samus"
+provider = "preceding pinned record"
+fields = ["samus.whole-x"]
+phase = "before motion on the next reached actor opportunity"
+claim = "The witness takes whole X from the movement owner for the approach cue."

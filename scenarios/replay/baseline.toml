@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "5d5cf1c5492de1ef431b5c1dc7f3e765f1744e0af54da6857fea3786ad2123fd"
+index_sha256 = "cd94353a6f88c3c36eeb27c93e43e597d51395ebdef3d02f7248aba9016e1b40"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -966,5 +966,23 @@ replies = 0
 null_cuts = 0
 null_fields = 1828
 restorations = 651
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "screens-playback/intro-demos"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d4318be3dd2e2c768456ddb0d5b906111e202fb6b9e9e139c9bf10bf873a2810"
+
+[case.counts]
+cuts = 2234
+fields = 8936
+outputs = 15638
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 4906
+restorations = 2234
 pending_boundaries = 0
 pending_restorations = 0

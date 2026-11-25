@@ -18,6 +18,7 @@ mod intro_rooms;
 mod movement;
 mod movement_touchdown;
 mod native_search;
+mod playback;
 pub mod played;
 mod progress;
 mod readers;

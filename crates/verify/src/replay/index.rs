@@ -32,6 +32,8 @@ pub enum Responsibility {
     IntroRooms,
     /// The Zebes flashback encounter.
     Flashback,
+    /// The recorded intro pad and update authority.
+    Playback,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -150,6 +152,8 @@ pub enum InputProvider {
     IntroRoomJoinInputs,
     /// Locked encounter phase, after-motion room facts and presentation opportunities.
     FlashbackInputs,
+    /// Recorded scene setup and reached room actor opportunities.
+    CinematicActorOpportunities,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -293,6 +297,39 @@ pub enum ObservationId {
     #[serde(rename = "flashback.bg1-y")]
     FlashbackBg1Y,
 
+    /// Current playback phase.
+    #[serde(rename = "playback.phase")]
+    PlaybackPhase,
+    /// Issued opportunities within the active timeline.
+    #[serde(rename = "playback.progress")]
+    PlaybackProgress,
+    /// Last retained held buttons.
+    #[serde(rename = "playback.last.held")]
+    PlaybackLastHeld,
+    /// Last retained fresh presses.
+    #[serde(rename = "playback.last.fresh")]
+    PlaybackLastFresh,
+    /// Current held buttons delivered to the actors.
+    #[serde(rename = "playback.current.held")]
+    PlaybackCurrentHeld,
+    /// Current fresh presses delivered to the actors.
+    #[serde(rename = "playback.current.fresh")]
+    PlaybackCurrentFresh,
+    /// Previous held buttons delivered to the actors.
+    #[serde(rename = "playback.previous.held")]
+    PlaybackPreviousHeld,
+    /// Previous fresh presses delivered to the actors.
+    #[serde(rename = "playback.previous.fresh")]
+    PlaybackPreviousFresh,
+    /// Scene setup handoff.
+    #[serde(rename = "playback.start")]
+    PlaybackStart,
+    /// Terminal control handoff.
+    #[serde(rename = "playback.finish")]
+    PlaybackFinish,
+    /// Work authorized on this room actor opportunity.
+    #[serde(rename = "playback.authority")]
+    PlaybackAuthority,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -717,6 +754,9 @@ fn rule_exists(rule: &str) -> bool {
         || screens_flashback::catalogue()
             .iter()
             .any(|entry| rule == format!("screens-flashback/{:?}", entry.id))
+        || screens_playback::catalogue()
+            .iter()
+            .any(|(id, _)| rule == format!("screens-playback/{id:?}"))
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -768,27 +808,44 @@ fn rule_exists(rule: &str) -> bool {
         .any(|id| rule == format!("enemy-interactions/{id:?}"))
 }
 
+macro_rules! flashback_observations {
+    () => {
+        ObservationId::FlashbackStart
+            | ObservationId::FlashbackY
+            | ObservationId::FlashbackBrain
+            | ObservationId::FlashbackPair
+            | ObservationId::FlashbackRings
+            | ObservationId::FlashbackBursts
+            | ObservationId::FlashbackTurn
+            | ObservationId::FlashbackImpact
+            | ObservationId::FlashbackPush
+            | ObservationId::FlashbackFlash
+            | ObservationId::FlashbackCue
+            | ObservationId::FlashbackHide
+            | ObservationId::FlashbackMirror
+            | ObservationId::FlashbackCgram
+            | ObservationId::FlashbackOam
+            | ObservationId::FlashbackBg1Y
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
         O::IntroState | O::IntroPublications => Responsibility::Intro,
         O::IntroRoomGrid | O::IntroRoomActor | O::IntroRoomClock => Responsibility::IntroRooms,
-        O::FlashbackStart
-        | O::FlashbackY
-        | O::FlashbackBrain
-        | O::FlashbackPair
-        | O::FlashbackRings
-        | O::FlashbackBursts
-        | O::FlashbackTurn
-        | O::FlashbackImpact
-        | O::FlashbackPush
-        | O::FlashbackFlash
-        | O::FlashbackCue
-        | O::FlashbackHide
-        | O::FlashbackMirror
-        | O::FlashbackCgram
-        | O::FlashbackOam
-        | O::FlashbackBg1Y => Responsibility::Flashback,
+        flashback_observations!() => Responsibility::Flashback,
+        O::PlaybackPhase
+        | O::PlaybackProgress
+        | O::PlaybackLastHeld
+        | O::PlaybackLastFresh
+        | O::PlaybackCurrentHeld
+        | O::PlaybackCurrentFresh
+        | O::PlaybackPreviousHeld
+        | O::PlaybackPreviousFresh
+        | O::PlaybackStart
+        | O::PlaybackFinish
+        | O::PlaybackAuthority => Responsibility::Playback,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
@@ -880,6 +937,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("world-intro-rooms/", Responsibility::IntroRooms),
         ("screens-flashback/", Responsibility::Flashback),
         ("samus-movement/", Responsibility::Movement),
+        ("screens-playback/", Responsibility::Playback),
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
         ("world-camera/", Responsibility::Camera),
@@ -978,7 +1036,7 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/Exploring" => &[O::HudExplored],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
-        _ => return flashback_fields(rule),
+        _ => return flashback_fields(rule).or_else(|| playback_fields(rule)),
     })
 }
 
@@ -1006,6 +1064,30 @@ fn flashback_fields(rule: &str) -> Option<&'static [ObservationId]> {
         "screens-flashback/BackgroundBobs" => &[O::FlashbackY, O::FlashbackBg1Y],
         "screens-flashback/ReturnToPage" => &[O::FlashbackBrain, O::FlashbackCue, O::FlashbackHide],
         "screens-flashback/FightPictures" => &[O::FlashbackOam],
+        _ => return None,
+    })
+}
+
+fn playback_fields(rule: &str) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    Some(match rule {
+        "screens-playback/DemoReceivesScene" => {
+            &[O::PlaybackPhase, O::PlaybackProgress, O::PlaybackStart]
+        }
+        "screens-playback/BattleLocksOnLeft" | "screens-playback/DiscoveryReleasesSamus" => {
+            &[O::PlaybackPhase, O::PlaybackFinish, O::PlaybackAuthority]
+        }
+        "screens-playback/DemoPlaysPad" => &[
+            O::PlaybackCurrentHeld,
+            O::PlaybackCurrentFresh,
+            O::PlaybackPreviousHeld,
+            O::PlaybackPreviousFresh,
+        ],
+        "screens-playback/SamusReachesEgg" => &[
+            O::PlaybackPhase,
+            O::PlaybackProgress,
+            O::PlaybackCurrentHeld,
+        ],
         _ => return None,
     })
 }
@@ -1259,6 +1341,38 @@ fn flashback_provider_valid(case: &Case, recorded: bool) -> bool {
         && !case.limits.is_empty()
 }
 
+fn playback_provider_valid(case: &Case, recorded: bool) -> bool {
+    use ObservationId as O;
+    recorded
+        && case.row == super::playback::ORIGIN_ROW
+        && case.start
+            == (Start::CacheCut {
+                frame: super::playback::ORIGIN,
+            })
+        && case.end.cut_inclusive == super::playback::END
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::CinematicActorOpportunities
+        && case.expectations.fields
+            == [
+                O::PlaybackPhase,
+                O::PlaybackProgress,
+                O::PlaybackLastHeld,
+                O::PlaybackLastFresh,
+            ]
+        && case.expectations.outputs
+            == [
+                O::PlaybackStart,
+                O::PlaybackCurrentHeld,
+                O::PlaybackCurrentFresh,
+                O::PlaybackPreviousHeld,
+                O::PlaybackPreviousFresh,
+                O::PlaybackFinish,
+                O::PlaybackAuthority,
+            ]
+        && case.expectations.output_cut.is_none()
+        && case.checkpoints
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::IntroRoomJoinInputs {
@@ -1304,6 +1418,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
+        [Responsibility::Playback] => playback_provider_valid(case, recorded),
         [Responsibility::Ceres] => {
             recorded
                 && case.content == ContentProvider::CeresReference

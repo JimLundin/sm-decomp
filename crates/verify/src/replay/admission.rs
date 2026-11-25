@@ -56,6 +56,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     }
     match case.responsibilities.as_slice() {
         [Responsibility::Audio] => audio(case, sources),
+        [Responsibility::Playback] => super::playback::admit(case, sources),
         [Responsibility::AudioSender] => super::sender_offer::admit(case, sources),
         [Responsibility::Movement] => movement(case, sources),
         [

@@ -601,3 +601,48 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
   { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
 ]
+
+[[rule]]
+id = "screens-playback/DemoReceivesScene"
+targets = [
+  { role = "model", path = "crates/clean/screens_playback/src/turn.rs" },
+  { role = "adapter", path = "crates/game/src/production/playback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/playback.rs" },
+  { role = "navigation", path = "crates/import/src/playback.rs" },
+]
+
+[[rule]]
+id = "screens-playback/DemoPlaysPad"
+targets = [
+  { role = "model", path = "crates/clean/screens_playback/src/turn.rs" },
+  { role = "adapter", path = "crates/game/src/production/playback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/playback.rs" },
+  { role = "navigation", path = "crates/import/src/playback.rs" },
+]
+
+[[rule]]
+id = "screens-playback/SamusReachesEgg"
+targets = [
+  { role = "model", path = "crates/clean/screens_playback/src/turn.rs" },
+  { role = "adapter", path = "crates/game/src/production/playback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/playback.rs" },
+  { role = "navigation", path = "crates/import/src/playback.rs" },
+]
+
+[[rule]]
+id = "screens-playback/BattleLocksOnLeft"
+targets = [
+  { role = "model", path = "crates/clean/screens_playback/src/turn.rs" },
+  { role = "adapter", path = "crates/game/src/production/playback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/playback.rs" },
+  { role = "navigation", path = "crates/import/src/playback.rs" },
+]
+
+[[rule]]
+id = "screens-playback/DiscoveryReleasesSamus"
+targets = [
+  { role = "model", path = "crates/clean/screens_playback/src/turn.rs" },
+  { role = "adapter", path = "crates/game/src/production/playback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/playback.rs" },
+  { role = "navigation", path = "crates/import/src/playback.rs" },
+]

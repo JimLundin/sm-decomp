@@ -519,6 +519,14 @@ missile slot, ring knockback, palette flash, page-two cue, draw gate and visible
 OAM. Weapons owns the impact continuation, and the integrated intro and renderer still
 have to consume these publications.
 
+The scoped case `screens-playback/intro-demos` carries the recorded pad from the end of
+page 1 across the fight and discovery. It compares 2,234 cuts, with 8,936 State fields
+and 15,638 output observations. All 2,234 checkpoint continuations hold. The frozen origin
+matches zero full cuts. Dropping a fresh press during a continued hold fails at run cut 1786
+in `playback.current.fresh`. The playback owner publishes held and fresh buttons and the
+scene-start and finish handoffs. The scope admits room actor opportunities, Samus's
+pre-motion whole X and the intro's fade count from the locked records.
+
 From cut 271 it compares the screen, the game state and the count of finished frames at every
 cut; at finished cuts, the random number, the sounds against the queues (accumulated over each
 finished cut, because a sound can appear at a lag cut), the title's countdown, file select's

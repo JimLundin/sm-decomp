@@ -52,6 +52,14 @@ impl Pinned for FlashbackPin {
     const SHAPE: u64 = 0x384F_FECC_395A_C5CA;
 }
 
+/// The complete carried phase and last sample of the recorded pad.
+pub struct PlaybackPin;
+impl Pinned for PlaybackPin {
+    type State = types::playback::ScenePhase;
+    const NAME: &'static str = "screens-playback";
+    const SHAPE: u64 = 0x8098_1B49_53DC_58B7;
+}
+
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
@@ -59,6 +67,8 @@ pub enum OwnedState {
     Intro(Box<crate::production::played::intro::State>),
     /// The intro room join and its first-turn actors.
     IntroRooms(Box<crate::production::played::intro_rooms::Scoped>),
+    /// The recorded pad and its current position in the scene.
+    Playback(Model<PlaybackPin>),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Every actor, pending timer and background offset of the flashback encounter.
