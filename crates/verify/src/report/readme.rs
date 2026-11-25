@@ -240,10 +240,10 @@ fn percent(count: u64, total: u64) -> String {
     format!("{}.{}%", tenths / 10, tenths % 10)
 }
 
-/// `count` of `total` as a bar of `cells`, filled ones first, rounded down: only the whole total
-/// fills them all, and a count above none fills at least one, so neither end is overstated.
-fn bar(count: u64, total: u64, cells: u64) -> String {
-    let filled = if count == 0 {
+/// The cells of `cells` that `count` of `total` fills, rounded down: only the whole total fills
+/// them all, and a count above none fills at least one, so neither end is overstated.
+fn filled(count: u64, total: u64, cells: u64) -> u64 {
+    if count == 0 {
         0
     } else {
         count
@@ -251,9 +251,24 @@ fn bar(count: u64, total: u64, cells: u64) -> String {
             .saturating_mul(cells)
             .checked_div(total)
             .map_or(0, |filled| filled.max(1))
-    };
+    }
+}
+
+/// `held` frames of `total` as a bar of `cells` in the headline's marks, filled ones first: `█`
+/// for the `started` of them held continuously from power-on, `▓` for the rest, `░` for the frames
+/// not held.
+fn bar(started: u64, held: u64, total: u64, cells: u64) -> String {
+    let (started, held) = (filled(started, total, cells), filled(held, total, cells));
     (0..cells)
-        .map(|cell| if cell < filled { '█' } else { '░' })
+        .map(|cell| {
+            if cell < started {
+                '█'
+            } else if cell < held {
+                '▓'
+            } else {
+                '░'
+            }
+        })
         .collect()
 }
 
@@ -328,7 +343,7 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
         "### By stretch\n\nThe stretches being worked, in the order the movie plays them; the \
          first not yet whole is in bold.\n\n",
     );
-    out.push_str(&stretches::table(&stretches, &runs));
+    out.push_str(&stretches::table(&stretches, &runs, started));
     out.push_str(
         "\nBuilding and checking it, and the command that prints the models' sizes and the \
          indexed replay evidence, are in [BUILDING](docs/BUILDING.md).\n",
@@ -488,17 +503,23 @@ mod tests {
 
     #[test]
     fn a_bar_fills_its_share_of_the_total() {
-        let filled = |bar: &str| bar.chars().filter(|&cell| cell == '█').count();
-        let empty = bar(0, 15_196, 40);
-        assert_eq!((filled(&empty), empty.chars().count()), (0, 40));
+        let held = |bar: &str| bar.chars().filter(|&cell| cell != '░').count();
+        let empty = bar(0, 0, 15_196, 40);
+        assert_eq!((held(&empty), empty.chars().count()), (0, 40));
         // 2,136 of 15,196 is 5.6 cells, rounded down.
-        assert_eq!(filled(&bar(2_136, 15_196, 40)), 5);
-        assert!(bar(2_136, 15_196, 40).starts_with("█████░"));
+        assert_eq!(held(&bar(0, 2_136, 15_196, 40)), 5);
+        assert!(bar(0, 2_136, 15_196, 40).starts_with("▓▓▓▓▓░"));
         // One frame shows; one frame short of the whole doesn't fill the bar.
-        assert_eq!(filled(&bar(1, 15_196, 40)), 1);
-        assert_eq!(filled(&bar(15_195, 15_196, 40)), 39);
-        assert_eq!(bar(15_196, 15_196, 40), "█".repeat(40));
-        assert_eq!(filled(&bar(0, 0, 40)), 0);
+        assert_eq!(held(&bar(0, 1, 15_196, 40)), 1);
+        assert_eq!(held(&bar(0, 15_195, 15_196, 40)), 39);
+        assert_eq!(bar(15_196, 15_196, 15_196, 40), "█".repeat(40));
+        assert_eq!(held(&bar(0, 0, 0, 40)), 0);
+        // Those held from power-on come first, each share rounded down the same way.
+        assert_eq!(
+            bar(1_000, 2_136, 15_196, 40),
+            format!("██▓▓▓{}", "░".repeat(35))
+        );
+        assert_eq!(bar(1, 2, 15_196, 40), format!("█{}", "░".repeat(39)));
     }
 
     #[test]

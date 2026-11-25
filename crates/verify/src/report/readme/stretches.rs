@@ -1,6 +1,6 @@
 //! The milestone's movie in the stretches being worked, from [`STRETCHES`]: each drawn where it
-//! lies in the whole movie, with a bar of its frames that pass or a tick once all of them do, and
-//! the first that doesn't in bold.
+//! lies in the whole movie, with a bar of its frames that pass in the headline's marks or a tick
+//! once all of them do, and the first that doesn't in bold.
 
 use std::fmt::{self, Display, Write as _};
 
@@ -61,6 +61,12 @@ impl Stretch {
         let [first, last] = self.frames;
         passing(runs, first.saturating_sub(1), last)
     }
+
+    /// The frames of it among the first `started` held continuously from power-on.
+    fn started(&self, started: u64) -> u64 {
+        let [first, last] = self.frames;
+        started.min(last).saturating_add(1).saturating_sub(first)
+    }
 }
 
 /// The stretches `text` divides `movie` into, when they cover its frames 1 to `total` back to
@@ -117,9 +123,9 @@ impl Stretch {
     }
 }
 
-/// The table of `stretches` with the frames of each that `runs` hold, each drawn in the movie
-/// they divide.
-pub(super) fn table(stretches: &[Stretch], runs: &[Run]) -> String {
+/// The table of `stretches` with the frames of each that `runs` hold, the first `started` of the
+/// movie continuously from power-on, each drawn in the movie they divide.
+pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String {
     let total = stretches.last().map_or(0, |stretch| stretch.frames[1]);
     let mut out = String::from(
         "| Stretch | In the movie | Frames that pass | Work |\n| --- | --- | --- | --- |\n",
@@ -130,7 +136,7 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run]) -> String {
         let (name, passes) = if held == of {
             (stretch.name.clone(), String::from("✓"))
         } else {
-            let passes = format!("`{}`", bar(held, of, CELLS));
+            let passes = format!("`{}`", bar(stretch.started(started), held, of, CELLS));
             if bolded {
                 (stretch.name.clone(), passes)
             } else {
@@ -150,9 +156,9 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{CELLS, STRETCHES, Stretch, stretches, table};
+    use super::{STRETCHES, Stretch, stretches, table};
     use crate::report::plan::{PLAN, Plan, seed};
-    use crate::report::readme::{PLAYED, Run, bar, listed, passing};
+    use crate::report::readme::{PLAYED, Run, listed, passing};
     use crate::report::seeds::seed_frame;
 
     /// The repository root, from this crate's manifest.
@@ -348,8 +354,9 @@ mod tests {
     #[test]
     fn a_finished_stretch_shows_a_tick_and_the_first_unfinished_is_bold() {
         let three = three();
-        // Boot plays whole, the title in part, the intro not at all.
-        let page = table(&three, &[run(0, 103)]);
+        // Boot plays whole from power-on and the title in part; a later seed holds a little of the
+        // intro.
+        let page = table(&three, &[run(0, 103), run(200, 30)], 103);
         let rows: Vec<&str> = page.lines().skip(2).collect();
         let link = |issue: u32| {
             format!("[#{issue}](https://github.com/JimLundin/sm-decomp/issues/{issue})")
@@ -364,21 +371,19 @@ mod tests {
                     link(1)
                 ),
                 format!(
-                    "| **Title** | `{}` | `{}` | {} |",
+                    "| **Title** | `{}` | `████████████░░░░░░░░` | {} |",
                     place(1).unwrap_or_default(),
-                    bar(3, 5, CELLS),
                     link(2)
                 ),
                 format!(
-                    "| Intro | `{}` | `{}` | {} |",
+                    "| Intro | `{}` | `▓▓░░░░░░░░░░░░░░░░░░` | {} |",
                     place(2).unwrap_or_default(),
-                    bar(0, 295, CELLS),
                     link(3)
                 ),
             ]
         );
         // With none whole, the first is bold; with all whole, none is.
-        assert!(table(&three, &[]).contains("| **Boot** |"));
-        assert!(!table(&three, &[run(0, 400)]).contains("**"));
+        assert!(table(&three, &[], 0).contains("| **Boot** |"));
+        assert!(!table(&three, &[run(0, 400)], 400).contains("**"));
     }
 }

@@ -199,11 +199,11 @@ over the milestone of [`docs/architecture/domains.toml`](architecture/domains.to
 across the movie that marks the frames continuous from power-on, those that pass from later
 seeds and those that don't pass yet. The stretches being worked, from
 [`scenarios/replay/stretches.toml`](../scenarios/replay/stretches.toml), each show where they lie
-in the movie on the same scale and a bar of their frames that pass, or a tick when all do; the
-first not yet whole is in bold. Its tests hold each listed run to the lock and the stretches to
-the milestone's frames. When an integrator's work moves a played run, its own commits change the
-run there and regenerate the README, and the root reviews the figures at landing (Jim,
-2026-11-25); full CI's replay witnesses hold every run to the file.
+in the movie on the same scale and a bar of their frames that pass in the headline's marks, or
+a tick when all do; the first not yet whole is in bold. Its tests hold each listed run to the
+lock and the stretches to the milestone's frames. When an integrator's work moves a played run,
+its own commits change the run there and regenerate the README, and the root reviews the figures
+at landing (Jim, 2026-11-25); full CI's replay witnesses hold every run to the file.
 `tools/check_readme.sh` in Quality, and verify's lib tests, which `tools/lane/gate.sh` runs when
 the README's inputs change, fail when the README differs from what the tree generates.
 
