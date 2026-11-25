@@ -986,17 +986,16 @@ out, she is hit as soon as her body comes within reach of the tip: she loses ene
 back, away from the tip. In the movie she stands at the tip as he turns tangible and again each
 time her protection runs out, so she is hit three times before he takes off.
 
-**What this part reads and leaves.** It reads his phase and position (§13), her position and
-body once her movement has stepped this frame (samus-movement), her protection as the frame starts
-(samus-health) and the random number (§12.3). It hands the frame's hit to her energy
-(samus-health) and to her motion (samus-movement), and the tail's place to drawing. Left to
-others: the energy a hit takes and the protection it gives (samus-health's `TailHit`); the push
-itself, its leap and its poses (samus-movement's push); her hurt colours (samus-appearance); the
-tail's motion, its whip and its sound once he takes off, and the hits his moving tail gives
-(part 4c, with this part's `TailHits` on its tip); his wings, drawn only (C1); drawing the
-tail's segments (C1). In this part he holds nothing. Once he carries the baby off in his fake
-retreat, after her 100th hit on him (a later part), his tail hits her no more: that part states
-it, and part 4c's use of `TailHits` must carry it.
+**What this part reads and leaves.** It reads his phase and position (§13), her position, her body
+and her protection as the frame starts (samus-movement, samus-health) and the random number
+(§12.3). It hands the frame's hit to her energy (samus-health) and to her motion (samus-movement),
+and the tail's place to drawing. Left to others: the energy a hit takes and the protection it gives
+(samus-health's `TailHit`); the push itself, its leap and its poses (samus-movement's push); her
+hurt colours (samus-appearance); the tail's motion, its whip and its sound once he takes off, and
+the hits his moving tail gives (part 4c, with this part's `TailHits` on its tip); his wings, drawn
+only (C1); drawing the tail's segments (C1). In this part he holds nothing. Once he carries the
+baby off in his fake retreat, after her 100th hit on him (a later part), his tail hits her no more:
+that part states it, and part 4c's use of `TailHits` must carry it.
 
 **Running.** As in §13: on each run that ends in `BodyFading`, `ReadyToRoar` or `Roaring`, this
 part's entries run after §13's, so the run he turns tangible can hit. A run that ends before
@@ -1020,7 +1019,7 @@ rests. A caller can build him in any state this part allows and read it back.
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| her position | x, y: px, 16-bit, as her moves this frame leave it, before her reaction to a hit (samus-movement) | `TailHits` |
+| her position | x, y: px, 16-bit, as the frame starts: where the last frame left her, before her moves this frame (samus-movement) | `TailHits` |
 | her body | her half-width and half-height, px, of the body she started the frame in, read from her movement's content (its body size for the pose she began the frame in); not an output of her movement | `TailHits` |
 | her protection | frames, as the frame starts (samus-health's remaining protection) | `TailHits` |
 | the random number | 16-bit, the one the baby reads on the same run (§12.3) | `TailCurls` |
@@ -1028,13 +1027,13 @@ rests. A caller can build him in any state this part allows and read it back.
 ### 14.4 What he reports (Outputs)
 
 The hit is this part's alone: neither reader judges the reach, the side or the push time again.
-The frame runs in this order: her moves; his run reads where they left her, with the body she
-started the frame in, and reports the frame's hit; Health applies the hit; then her movement's
-reaction, its second step in the same frame, starts the push.
+The frame runs in this order: his run reads her position, her body and her protection as the
+frame starts, and reports the frame's hit; Health applies the hit; then her moves, and her
+movement's reaction in the same frame starts the push.
 
 | Output | Type | Read by |
 | --- | --- | --- |
-| the frame's hit | none, or a hit with its side and push time (§14.1), made on his run, after her moves that frame | samus-health, in the same frame (the frame's tail impact, `TailImpact`: the same event, worth 15 energy there); samus-movement, in the same frame, in its reaction step after her moves (its §12 input, the frame's hit: `PushTime` and the push that follows) |
+| the frame's hit | none, or a hit with its side and push time (§14.1), made on his run, before her moves that frame | samus-health, in the same frame (the frame's tail impact, `TailImpact`: the same event, worth 15 whole energy there); samus-movement, in the same frame, in its reaction step after her moves (its §12 input, the frame's hit: `PushTime` and the push that follows) |
 | the tail's place | as in §14.1 | drawing (C1) |
 
 ### TailAtRest
@@ -1070,19 +1069,227 @@ reaction, its second step in the same frame, starts the push.
 - summary: tangible, he hits her when her body comes within reach of his tail's tip and her
   protection has run out; she is pushed away from the tip.
 - params: the tail's reach, `t` = 14 px (rule `tail_reach`); a rule from 0 to 255. The push
-  time, 5 frames.
+  time, 5 frames. The hit's worth, 15 whole energy: samus-health takes it off (`TailHit`).
 - switch: **Parameter**, the tail's reach (params).
 - Here `dx` and `dy` are her x less the tip's x and her y less the tip's y, each taken mod 2^16
-  as a signed number from −32,768 to 32,767, and `w` and `h` her half-width and half-height.
+  as a signed number from −32,768 to 32,767, her position as the frame starts, and `w` and `h`
+  the half-width and half-height of the body she started the frame in.
 - A run, tangible, her protection 0 as the frame starts, `|dx| < w + t` and `|dy| < h + t` →
-  the frame's hit, push time 5; side `Right` when `dx` ≥ 0, else `Left` [T-hit-left,
+  the frame's hit, worth 15, push time 5; side `Right` when `dx` ≥ 0, else `Left` [T-hit-left,
   T-hit-right, T-hit-jumping, T-hit-ready, T-reach-x-inside, T-reach-y-inside, T-side-left,
   T-wrap, T-wrap-across, T-wrap-y, T-reach-adjusted]
 - Otherwise there is no hit: she out of reach on either axis [T-reach-x-edge, T-reach-y-edge,
   T-reach-adjusted-edge, T-curl-least], her protection over 0 as the frame starts
   [T-protected], or he not tangible [T-rest-first, T-rest-intangible, T-curl-still].
-- So her side is judged on where her moves leave her that frame: at the tip's x or right of it
-  she is pushed right. With her protection of 96 frames she is hit every 96 frames while she
+- So her side is judged on where the last frame left her: at the tip's x or right of it she is
+  pushed right. With her protection of 96 frames she is hit every 96 frames while she
   stays in reach.
 - checked: oracle (recorded cases T2 to T7: every run 577-866 of the cached rows, three hits);
   constructed (each edge of the reach, the wraps on both axes, the adjusted reach).
+
+## 15. Part 4c-1a, his take-off and flight
+
+His roar over, Ridley takes off: he crouches and hops twice, up and to the left, then springs
+into the air and rises fast, slows, and hovers near the top right of the room, drifting to a
+point of his own above her, until she is down to her last energy and he gives up (part 4c-2) or
+he turns to an attack (later parts). In the movie he rises for 20 frames, slows for 16 and
+hovers for 79 before he gives up.
+
+**Part 4c-1 is specced in two pieces, by mechanism.** This piece, 4c-1a, is his body's flight:
+his take-off's figures and hops, his rise, his slowing, his hover and the pull to his point,
+his move by his speed within the room's bounds, and where the flight hands over. The second,
+4c-1b, is his tail in flight: its motion, its whips and their sound, and the place of its tip,
+on which part 4b's `TailHits` judges the two hits the movie shows in his flight (cuts 897 and
+993, both pushing her left). Until 4c-1b, nothing of his tail is specced from his take-off on.
+
+**What this part reads and leaves.** It reads his phase and position (§13), her energy
+(samus-health), the hits he has taken from her shots (a later part counts them) and the random
+number (§12.3). It hands drawing his look and position, her touch, her shots and his tail
+that he stays tangible and moving (§15.4), the screen's shaking (R3) a shake when he meets the
+room's left side fast, and the parts after it the bound he met and the run he gives up or
+attacks. Left to others: his tail in flight (4c-1b); his wings' flapping, which
+follows his speed and is drawing only (C1); his retreat (4c-2) and his fake retreat, after her
+100th hit on him (a later part); his attacks (later parts); his colours as her hits on him add
+up (a later part: with fewer than 50 hits nothing changes, and his colours on a hovering run
+with 50 or more are that part's); her knockback and hurt colours at the tail's hits
+(samus-movement, samus-appearance).
+
+**Running.** As in §13: every frame he runs is a run, and on a frame he doesn't run nothing of
+him changes. A run from his take-off on goes in this order: his phase's rule (`TakesOff`,
+`Rises`, `SlowsDown`, `Hovers`); his move by his speed (`Flies`); his tail (4c-1b); the baby,
+held at his position as his move leaves it (`BabyHeld`); then his take-off's figure steps on,
+with its hops and the lift-off (`TakesOff`). So a hop shows in the baby's place one run late.
+
+### 15.1 What the player can tell
+
+| Quantity | Units | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| his phase | `RidleyPhase`, part 4a's and, listed alphabetically: `FakeRetreat`, `Fireballs`, `Lunge`, `Swoop` (later parts run him), `Hovering`, `Retreating` (part 4c-2 runs him), `Rising`, `Slowing`; `Flying` is his take-off | how he moves | every entry of this part |
+| his position | x, y: px, 16-bit, each with a fraction, 0 to 255 in 1/256 px | where he is drawn and the baby held | `Flies`, `Rises`, `SlowsDown`, `Hovers`, `PulledToHisPoint`; output |
+| his speed | x, y: 1/256 px per run, each a signed 16-bit number, −32,768 to 32,767; x rightward, y downward | how fast he moves | `Flies`, `Rises`, `SlowsDown`, `PulledToHisPoint` |
+| the take-off's figure | `TakeOffFigure`, 1 to 5 (`TakesOff`), with its runs, 1 to its length; the fifth has no length and no runs | his look, his hops, his lift-off | `TakesOff` |
+| his look | `RidleyLook`: part 4a's, and `TakeOff1` and `TakeOff2`, his take-off's two crouches, facing left | which figure is drawn | output (drawing) |
+| his hover's runs | count, 0 to 123: the runs he has hovered without reaching his point; 0 from his placing | when he turns to an attack | `Hovers` |
+| the bound he met | none, or `Bound`, listed alphabetically: `Bottom`, `Left`, `Right`, `Top`, on this run | which side of the room stopped him | output (later parts) |
+
+### 15.2 What he remembers: state a caller can hold
+
+§14.2's, and his speed, his position's fractions, the take-off's figure with its runs and his
+hover's runs: nothing else. The bound he met is the run's alone. Any speed from −32,768 to 32,767
+is allowed in every phase (`PulledToHisPoint` states its cap for each). A caller can build him in
+any state this part allows and read it back.
+
+### 15.3 What he reads (Inputs)
+
+| Input | Type | Read by |
+| --- | --- | --- |
+| her energy | energy, as it stands when he runs: any hit of an earlier frame taken off (samus-health) | `Hovers` |
+| his hits taken | count, 0 to 65,535, as it stands when he runs: how many of her shots have hit him since he was placed, a shot of the same frame included (counted by a later part, her shots against him) | `Hovers` |
+| the random number | 16-bit, the one the baby reads on the same run (§12.3) | `Hovers` |
+
+### 15.4 What he reports (Outputs)
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| his drawing | his look at his position (whole px), and the baby as in §12.4 | drawing (C1) |
+| tangible | `bool`: true on every run of this part, in every phase from `Flying` through `Hovering` and on the run he turns to an attack (§13.4's `tangible`, which this part extends to `Rising`, `Slowing`, `Hovering` and the attacks' first run) | as in §13.4: her touch and her shots (C1); his tail's hits (part 4b's `TailHits`, on 4c-1b's tip) |
+| moving | `bool`: true on every run of this part, as in §13.4 | as in §13.4 |
+| roaring | `bool`: false on every run of this part; nor does any run of it ask for the fight's music or the roar | as in §13.4 |
+| the bound he met | as in §15.1 | his attacks (later parts) |
+| a shake | none, or a shake of the `Back` layers (§1.4), moving sideways, 3 px for 12 frames (`Flies`) | the screen's shaking (R3) |
+| giving up | phase `Retreating` or `FakeRetreat`: all he does on that run and after is part 4c-2's or a later part's | part 4c-2, a later part |
+| an attack | phase `Fireballs`, `Lunge` or `Swoop`: from the next run on a later part runs him | later parts |
+
+### TakesOff
+- kind: mechanic.
+- summary: he crouches, hops up and to the left twice, then springs into the air.
+- params: the take-off's figures, in order, with their lengths in runs: 1 `Rest` 3, 2 `TakeOff1`
+  4, 3 `TakeOff2` 5, 4 `TakeOff1` 17, 5 `Rest`, held from then on. The hops, at the start of
+  figure 2 (+1, −12) px and of figure 3 (−4, −8) px. The lift-off speed, (0, −352).
+- switch: Fixed.
+- The run he takes off (§13, `Roars`: `Roaring`, wait 0) → `Flying`; the take-off's figure 1,
+  its first run; his speed (0, 0) [L-takeoff]
+- A run, `Flying` → his speed (0, 0) before he moves (`Flies`) [L-figure-counts, L-hop-first]
+- At the end of every run after the one he takes off: the figure shown fewer runs than its
+  length → one run more [L-figure-counts, L-rise-counts]
+- The same, figure 1 shown its 3 runs → figure 2, its first run; he hops (+1, −12) [L-hop-first]
+- The same, figure 2 shown its 4 runs → figure 3, its first run; he hops (−4, −8)
+  [L-hop-second]
+- The same, figure 3 shown its 5 runs → figure 4, its first run; `Rising`, his speed
+  (0, −352) [L-lift-off]
+- The same, figure 4 shown its 17 runs → figure 5 [L-figure-rest]
+- The same, figure 5 → figure 5 [L-slow-counts, L-hover-pull]
+- A hop adds to his whole px, each mod 2^16, his fractions kept; it is not held to the room's
+  bounds until his next move [L-hop-first, L-hop-wrap].
+- Every run from his take-off on → his look, the figure's [L-hop-first, L-hop-second,
+  L-lift-off, L-figure-rest]
+- So he hops on his 4th and 8th runs, springs on his 13th and rests from his 30th.
+- checked: oracle (recorded cases L1 to L6, every run 867-994 of the cached rows); constructed.
+
+### Rises
+- kind: mechanic.
+- summary: he rises faster and faster until he is high enough, then starts to slow.
+- params: the rise's pull, 16 (1/256 px per run, upward, each run); the height, y 112.
+- switch: Fixed.
+- A run, `Rising` → his y speed 16 less, mod 2^16 [L-rise-counts]
+- Then, his y less 112, as a signed 16-bit number, negative → `Slowing`, and `SlowsDown` runs on
+  this run too [L-rise-slows, L-rise-hovers]
+- His y here is his whole px as the run starts, before he moves.
+- checked: oracle (recorded cases L5, L7); constructed.
+
+### SlowsDown
+- kind: mechanic.
+- summary: rising, he slows until he is high enough, then hovers.
+- params: the slowing, 20 (1/256 px per run, downward, each run); the height, y 80.
+- switch: Fixed.
+- A run, `Slowing` → his y speed 20 more, mod 2^16 [L-slow-counts, L-rise-slows]
+- Then, his y less 80, as a signed 16-bit number, negative → `Hovering`, from the next run
+  [L-slow-hovers, L-rise-hovers]
+- checked: oracle (recorded cases L7 to L9); constructed.
+
+### Hovers
+- kind: mechanic.
+- summary: he hovers, drifting to his point; once she is nearly out of energy he gives up,
+  and once he reaches his point, or has hovered a while, he attacks.
+- params: his point, (192, 100); her energy's limit, 30; his hits' limit, 100; his patience,
+  124 runs; the attacks, by the random number mod 16: 0 to 3, 9 and 15 `Fireballs`, 4 to 8
+  `Lunge`, 10 to 14 `Swoop`.
+- switch: Fixed.
+- A run, `Hovering`, his hits taken 100 or more → `FakeRetreat`, whatever her energy: all he
+  does on this run is a later part's [L-fake-retreat, L-fake-retreat-low]
+- A run, `Hovering`, his hits taken under 100, her energy under 30 → `Retreating`: all he does
+  on this run is part 4c-2's [L-gives-up, L-energy-edge-low]
+- Otherwise he is pulled to his point (`PulledToHisPoint`) and then:
+  - he is near it, his x within 16 px of 192 and his y within 16 px of 100, each difference
+    taken mod 2^16 as a signed number → an attack, by the random number; his hover's runs 0
+    [L-near, L-near-x-edge, L-attack-lunge-first, L-attack-lunge-last, L-attack-fireballs-9,
+    L-attack-swoop-last, L-attack-fireballs-15]
+  - not near, his hover's runs + 1 under 124 → his hover's runs one more, `Hovering`
+    [L-hover-pull, L-energy-edge, L-hits-edge, L-not-near-edge, L-not-near-y-edge]
+  - not near, his hover's runs + 1 of 124 or more → an attack, by the random number; his hover's
+    runs 0 [L-patience]
+- On a run he turns to an attack he still moves (`Flies`); from the next run on a later part
+  runs him.
+- Near is judged on his position as the run starts, before he moves.
+- So in the movie he hovers 79 runs, never near his point, and gives up the run after the
+  tail's second hit in his flight leaves her at 24.
+- checked: oracle (recorded cases L10 to L14, every run 916-994 of the cached rows); constructed.
+
+### PulledToHisPoint
+- kind: mechanic.
+- summary: each run he hovers, his speed on each axis is pulled to his point: harder the
+  farther he is, three times as hard while he moves away from it.
+- params: the pull's divisor, 16; the top speed, 1,280 (1/256 px per run) each way.
+- switch: Fixed.
+- Each axis on its own. Here `p` is his whole px on the axis, `q` his point's, `v` his
+  speed on it. `D` is `(p − q) mod 2^16`; the point is ahead (right of him, or below) when `D`
+  is 32,768 or more, behind when it is 1 to 32,767. The pull `d` is
+  `max(1, floor(g / 16))`, with `g` = 65,536 − `D` when the point is ahead and `D` when it is
+  behind. The odd unit `c` is 1 when `p` ≥ `q` as unsigned 16-bit numbers, else 0: 0 when the
+  point is ahead and 1 when behind, except far apart as unsigned numbers: ahead with `p` 32,768
+  or more above `q` (as when he is above the room's top) it is 1, and behind with `q` 32,769 or
+  more above `p` it is 0. Each new speed is taken mod 2^16 as a signed number.
+- `p` = `q` → his speed on that axis stays [L-pull-at-point]
+- Ahead, `v` ≥ 0 → `v + d + c` [L-hover-pull, L-pull-apart]
+- Ahead, `v` < 0 → `v + 3d + c + e`, with `e` = 1 when `v + 2d + c` ≥ 0, else 0
+  [L-pull-turns, L-pull-away, L-pull-turns-early, L-pull-turns-late]
+- Then, ahead, the new speed less 1,280, taken mod 2^16 as a signed number, not negative →
+  1,280 [L-pull-top, L-pull-wrap]
+- Behind, `v` < 0 → `v − d − (1 − c)` [L-pull-behind]
+- Behind, `v` ≥ 0 → `v − 3d − (1 − c) − e`, with `e` = 1 when `v − 2d − (1 − c)` < 0, else 0
+  [L-pull-back, L-pull-back-turns]
+- Then, behind, the new speed plus 1,280, taken mod 2^16 as a signed number, negative → −1,280
+  [L-pull-bottom]
+- So turning back to his point costs one more than three pulls, on the run he turns, and any
+  speed from −1,280 to 1,280 stays within it.
+- checked: oracle (recorded cases L10, L11, L13: every run 916-993 of the cached rows,
+  one turn at 963); constructed (each branch, the caps, the odd unit far apart).
+
+### Flies
+- kind: mechanic.
+- summary: he moves by his speed, kept within the room's bounds; meeting the left side fast, he
+  shakes the room.
+- params: the bounds, x 40 to 224 and y −32 to 176 (px); the shake's speed, 640; the shake,
+  `Back`, sideways, 3 px for 12 frames.
+- switch: Fixed.
+- A run from his take-off on, after his phase's rule: his x, in 1/256 px (his whole px × 256 +
+  his fraction), gains his x speed, mod 2^24 [L-hover-pull, L-fraction-carry]; then
+  - his whole x less 40, as a signed 16-bit number, negative → x 40, his fraction kept, his x
+    speed 0, the bound `Left`; and a shake when the larger of his two speeds' sizes, taken
+    before this stop, is 640 or more [L-bound-left, L-bound-left-slow]
+  - otherwise his whole x less 224 not negative → x 224, his fraction kept, his x speed 0, the
+    bound `Right` [L-bound-right]
+- Then the same for y, against −32 (`Top`, no shake) and 176 (`Bottom`) [L-bound-top,
+  L-bound-bottom, L-rise-counts]
+- The bound he met is y's when he met one, else x's, else none [L-bound-corner].
+- So a speed of 256 moves him 1 px a run.
+- checked: oracle (every run 867-994 of the cached rows: no bound met); constructed (each
+  bound, the shake's edge, the corner).
+
+**Where the tail's hits read her.** His runs come after her pose has been read from her
+controls and before her moves: the hits his tail gives her in his flight (part 4b's `TailHits`
+on 4c-1b's tip) read her position as the frame starts, where the last frame left her, and the
+body she started the frame in, as part 4b's §14.3 says.
+
+**The baby in his flight.** `BabyHeld` holds as part 3 says, at his position as his move leaves
+it: on a hop's run, before the hop (recorded case L2) [L-hop-first, L-hop-second].

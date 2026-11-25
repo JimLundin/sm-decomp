@@ -5,7 +5,7 @@
 
 use super::{Fault, station};
 use crate::production::world::MovementWorld;
-use boss_ceres_ridley::{CeresDoor, ShakeLayers, ShakeStart, Stage};
+use boss_ceres_ridley::{CeresDoor, ShakeLayers, ShakeMotion, ShakeStart, Stage};
 use types::{Hitbox, Pair, Parts};
 use world_quake::{QuakeDirection, QuakeDuration, QuakeKind, QuakeReach, QuakeSize, ShakeOrder};
 
@@ -56,12 +56,12 @@ pub(super) fn run(
     Ok(runs)
 }
 
-/// A door's shake as the room's quake starts it: what it moves, its strength as the size and its
-/// length as the frames, diagonally, as every door's shake moves.
+/// A shake, a door's or Ridley's, as the room's quake starts it: what it moves, its strength as
+/// the size, its length as the frames and which way it moves.
 ///
 /// # Errors
 /// [`Fault::Quake`] for a strength the quake has no size for.
-fn order(start: ShakeStart) -> Result<ShakeOrder, Fault> {
+pub(super) fn order(start: ShakeStart) -> Result<ShakeOrder, Fault> {
     let size = u8::try_from(start.shake.strength)
         .ok()
         .and_then(QuakeSize::new)
@@ -74,7 +74,10 @@ fn order(start: ShakeStart) -> Result<ShakeOrder, Fault> {
         kind: QuakeKind {
             reach,
             size,
-            direction: QuakeDirection::Diagonal,
+            direction: match start.motion {
+                ShakeMotion::Diagonal => QuakeDirection::Diagonal,
+                ShakeMotion::Sideways => QuakeDirection::Sideways,
+            },
         },
         frames: QuakeDuration(start.shake.length),
     })
@@ -183,7 +186,7 @@ mod tests {
 
     #[test]
     fn a_doors_shake_moves_what_its_kind_moves_by_its_strength_diagonally_for_its_length() {
-        use boss_ceres_ridley::{Shake, ShakeLayers, ShakeStart};
+        use boss_ceres_ridley::{Shake, ShakeLayers, ShakeMotion, ShakeStart};
         use world_quake::{QuakeDirection, QuakeDuration, QuakeReach, ShakeOrder};
         let start = |strength, layers| ShakeStart {
             shake: Shake {
@@ -191,6 +194,7 @@ mod tests {
                 length: 4,
             },
             layers,
+            motion: ShakeMotion::Diagonal,
         };
         let Ok(ShakeOrder::Start { kind, frames }) = super::order(start(3, ShakeLayers::Back))
         else {

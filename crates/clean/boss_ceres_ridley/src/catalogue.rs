@@ -77,6 +77,18 @@ pub enum BehaviourId {
     TailCurls,
     /// Tangible, his tail's tip hits her within its reach once her protection has run out.
     TailHits,
+    /// He crouches, hops up and to the left twice, then springs into the air.
+    TakesOff,
+    /// He rises faster and faster until he is high enough, then starts to slow.
+    Rises,
+    /// Rising, he slows until he is high enough, then hovers.
+    SlowsDown,
+    /// He hovers until she is nearly out of energy, or he reaches his point or tires and attacks.
+    Hovers,
+    /// Each run he hovers, his speed is pulled to his point.
+    PulledToHisPoint,
+    /// He moves by his speed within the room's bounds, shaking it as he meets its left side fast.
+    Flies,
 }
 
 /// A catalogue entry.
@@ -95,8 +107,8 @@ pub struct Behaviour {
 }
 
 /// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
-/// his waking's four and his tail's three.
-const ENTRIES: usize = 35;
+/// his waking's four, his tail's three and his flight's six.
+const ENTRIES: usize = 41;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -374,6 +386,51 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
                           tip and her protection has run out; she is pushed away from the tip",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TakesOff,
+        summary: "he crouches, hops up and to the left twice, then springs into the air",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Rises,
+        summary: "he rises faster and faster until he is high enough, then starts to slow",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SlowsDown,
+        summary: "rising, he slows until he is high enough, then hovers",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Hovers,
+        summary: "he hovers, drifting to his point; once she is nearly out of energy he gives \
+                  up, and once he reaches his point, or has hovered a while, he attacks",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PulledToHisPoint,
+        summary: "each run he hovers, his speed on each axis is pulled to his point: harder \
+                  the farther he is, three times as hard while he moves away from it",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Flies,
+        summary: "he moves by his speed, kept within the room's bounds; meeting the left side \
+                  fast, he shakes the room",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
 ];

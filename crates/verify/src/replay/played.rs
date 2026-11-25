@@ -4,7 +4,7 @@
 //! seed record and then carried with nothing fed back. Each cut's only new input is the pad
 //! the movie presented at the preceding vblank; the oracle's later records are read for
 //! comparison alone. Room facts that no selected owner produces yet are taken once from the
-//! seed and held for the whole run; [`SEED_HELD`] names them. Whether each cut's frame of work
+//! seed, or held at a constant, for the whole run; [`SEED_HELD`] names them. Whether each cut's frame of work
 //! finished is the platform's, read from the record until it is modelled (decision 35);
 //! [`BORROWED`] names it. A run stops at the first differing field or the first unsupported
 //! family, and the number of cuts it matched before that is the frames it played alone.
@@ -61,12 +61,14 @@ use platform::{
 use std::path::Path;
 use world_doors::Doors;
 
-/// Room facts taken from the seed and held, because no selected owner produces them yet.
-/// Each one is a missing owner; the list shrinks as owners join the played loop.
+/// Room facts taken from the seed and held, or held at a constant, because no selected owner
+/// produces them yet. Each one is a missing owner; the list shrinks as owners join the played
+/// loop.
 pub const SEED_HELD: &[&str] = &[
     "equipped items",
     "time running",
-    "no tail impact and no periodic energy loss",
+    "no periodic energy loss",
+    "Ridley's hits taken, held at 0: her shots against him have no owner here (the game's 11 is under the 50 and 100 his rules read)",
     "ammunition, reserve tanks and energy capacity",
     "item select and cancel bindings",
     "her map collected",

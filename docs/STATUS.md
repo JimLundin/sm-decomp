@@ -38,8 +38,8 @@ The rung measure is the number of cuts a room plays alone from its seed.
 owner [`game::production::played`](../crates/game/src/production/played.rs) once from the seed
 record. Each frame of play it steps her clip's look ahead, `Samus::step`, the animation update,
 the camera and the doors, once each, in any pose with imported content. Each frame of play
-starts with her health (samus-health's whole frame, with no tail impact: Ridley's fight is not
-in the loop) and ends, after her moves, with the HUD's frame of play. The HUD reads her position after
+runs the room's enemies before her moves, her health (samus-health's whole frame, reading the
+hit of Ridley's tail) between her moves and her reaction, and ends with the HUD's frame of play. The HUD reads her position after
 her moves, the energy Health leaves and its held neighbours. While a passage runs, the HUD takes
 its step outside play, turned on when the doors turn the mini-map on. The run also compares
 Health's State (energy, pending loss, warning, protection) and the HUD's State (the mini-map's
@@ -243,15 +243,23 @@ read from his slot's properties and his words. What is played is his eye's fade,
 his body's fade, and his turning tangible at cut 609. From his body's fade on his tail rests
 behind him (part 4b): the run compares its curl and its seven segments' places
 (`ridley.tail.curl`, `ridley.tail.0` to `ridley.tail.6`), read from his tail's words while it
-rests and none before. Tangible, his tail hits her at cuts 609 and 705: his run reads her position as her
-moves leave her, the body of the pose she started the frame in and her protection as the frame
-starts, and reports the hit, which Health takes (worth 15 energy, his tail's worth imported from
+rests and none before. Tangible, his tail hits her at cuts 609 and 705: his run reads her position,
+the body of the pose she started the frame in and her protection, all as the frame starts, and
+reports the hit, which Health takes (worth 15 energy, his tail's worth imported from
 the player's ROM as his content, and 96 frames of protection) and her movement's reaction takes
 in the same frame (her push, `Recoiling`, then her backward leap).
 The hit itself is compared where it lands: `health.*`, `movement.knockback` and her hurt colours
-in `doors.colours.screen`. His wait, his roar, moving and roaring, and the refusal of his
-flight (`Fault::RidleyFlying`, part 4c's) are reached by no played cut: they hold by the vectors
-and the production tests only. The fight's music and the roar are produced and not
+in `doors.colours.screen`. His wait, his roar, moving and roaring, and the refusal of a run
+that starts in an attack or as he gives up (`Fault::RidleyAttacks`, `Fault::RidleyGivesUp`, later
+parts') are reached by no played cut: they hold by the vectors and the production tests only.
+His take-off and flight (part 4c-1a) play from cut 867, and the played cuts, which stop at 896,
+reach only his take-off and his rise: he lifts off at cut 879 and rises to 896. His slowing (from
+cut 899), his hover and his pull to his point (from 916) are reached by no played cut, nor are
+his reading of her energy as the frame starts it, his hits taken held at 0 (an input no owner
+produces yet; the game has 11, under the 50 and 100 his rules read) and the shake he starts at
+the room's left side, which goes to the room's quake before the doors run: they hold by the
+vectors and the production tests only. The bound he meets on a run (`7E783E` in the harness
+note) is a run output and isn't compared. The fight's music and the roar are produced and not
 compared. Her going backwards, which the camera reads, is her skid, her moonwalk, or exactly
 one of a hit's push and her backward leap (world-camera's `LeadingHer`). Room 6's moonwalk at its
 left edge is the first played frame that tells the moonwalk apart, at cut 352; her leap once the
@@ -272,10 +280,10 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 867 from its
-seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,491 cuts, through
-rooms 2 to 5 and on to cut 867 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,797;
-from her arrival (`any-ceres-arrival`, below) they hold 2,714, to movie frame 11,029. In the
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 896 from its
+seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,520 cuts, through
+rooms 2 to 5 and on to cut 896 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,826;
+from her arrival (`any-ceres-arrival`, below) they hold 2,743, to movie frame 11,058. In the
 escape, `chain-any-0007-E06B`, room 5, alone holds all 258 cuts, and played on through room 4
 and its passage out holds 659, stopping at cut 660 in `movement.pose`; `chain-any-0008-E021`,
 room 4, alone holds all 263; `chain-any-0009-DFD7`, room 3, holds 136 and stops at cut 137 in
@@ -292,13 +300,13 @@ the way she travels once the push is over. World-camera's harness cases for the 
 edges' subpixel (R36 to R40, at room 6's cuts 229, 615, 621 and 623 and room 3's cut 136) are
 compared by these played runs and are not wired as indexed cases. At cut 728 she lets the second
 leap go, holding forward without jump: she follows the pad and stops dashing, and the dash she
-keeps is gone the next frame (samus-movement's backward leap let go). Each run stops at room 6's
-cut 868, Unsupported on `Fault::RidleyFlying`: his take-off (boss-ceres-ridley part 4c) isn't
-played yet.
+keeps is gone the next frame (samus-movement's backward leap let go). He takes off at cut 867 and
+flies; each run stops at room 6's cut 897 in `movement.pose`, where his tail hits her in flight
+(boss-ceres-ridley part 4c-1b), which isn't played yet.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Sixty-one planted faults in the fault matrix, those of the responsibility `played`, stop
+Sixty-two planted faults in the fault matrix, those of the responsibility `played`, stop
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at

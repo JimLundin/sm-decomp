@@ -604,8 +604,9 @@ Sprite palette 1 is drawn by none of his sprites in 0006 (OAM at 620 and 700 use
 **How the played frame runs it:**
 1. Production (`crates/game/src/production/played/ridley.rs`, `run`) steps him through this
    part's phases. From the run that makes him tangible his tail can hit her (part 4b,
-   below). A run that starts `Flying` is refused (`Fault::RidleyFlying`,
-   part 4c).
+   below). Part 4a refused a run that started `Flying`; since part 4c-1a he takes off and
+   flies through production, and a run that starts in an attack or as he gives up is refused
+   (`Fault::RidleyAttacks`, `Fault::RidleyGivesUp`, later parts).
 2. His colours go to the screen as the baby's do (`production/ridley.rs`, `show_eye` and
    `show_body`): the eye's set to sprite palette 7 colours 12-14, the body's set to sprite
    palettes 1 and 7 colours 1-11, at once.
@@ -659,7 +660,7 @@ part 3's baby), on 0006 577-866, the 290 runs that end in `BodyFading`, `ReadyTo
 | a hit (`18A8` 0 to 5Fh) | 290 (3 hits: 609, 705, 801) | 287 | 287 |
 | its side (`0A54`) | 290 | 287 | 287 |
 
-Every hit's push time is 5 (`18AA` 4 at the hit's record) and costs 15 energy. The curl rule
+Every hit's push time is 5 (`18AA` 4 at the hit's record) and costs 15 whole energy (`09C2`). The curl rule
 also holds on every run from 513 to the escape, 1,073 of 1,073 (one change, at 945, in his
 flight). Beyond this part the hit rule on the recorded tip holds 867-1585, 719 of 719 runs,
 with the two flight hits (897 and 993, both `Left`): part 4c needs only the moving tip.
@@ -684,11 +685,13 @@ sound, `$D2AA`, needs 8 or more), the whip targets.
 
 - The tail runs inside his main AI after his function (`$A28E` executes `0FA8`, then `$A299`
   checks `7E7804`), so the run that turns him tangible (`$A432`, 609) is judged tangible.
-- Her position and radius are read where the enemies run, after her own movement (the root's
-  ruling, corrected from the records: her moves, then his run reports the hit, Health applies it,
-  then her movement's reaction starts the push, all in the same frame). At 609 the record's y, 187, is after the
-  push's 5 px pose fit; her y as her moves leave 609 is 192 (crouched, unmoved), which T-hit-left
-  takes. Her body is the one she started the frame in: the hit's record keeps the old body (16 at
+- Her position and radius are read as the frame starts (the root's ruling, from game state 8's
+  order, `$82:8B44`: see part 4c-1a's findings below): his run reports the hit, Health applies
+  it, then her moves and her movement's reaction starts the push, all in the same frame. Each
+  recorded case takes her place from the record before the hit's: T-hit-left (216, 192) from
+  608, T-protected (216, 187) from 703, T-hit-right (220, 187) from 704, T-hit-jumping
+  (234, 159) from 800. At 609 the hit's record shows y 187, after the push's 5 px pose fit. Her
+  body is the one she started the frame in: the hit's record keeps the old body (16 at
   0006:609, 12 at 993) and the new one shows from the next frame; read from her movement's
   content for the pose she began the frame in.
 - Her protection is read before her own step counts it down: at 704 the record before shows
@@ -705,7 +708,7 @@ sound, `$D2AA`, needs 8 or more), the whip targets.
 
 | Spec | RAM / code |
 | --- | --- |
-| the frame's hit | `$DFD9..E01A`: `18A8` = 60h, `18AA` = 5, `0A54` = 0 (left) or 1 (right); damage `7E7838` (0Fh) through `$A0:A45E` and `$91:DF51` (samus-health's `TailHit`) |
+| the frame's hit | `$DFD9..E01A`: `18A8` = 60h, `18AA` = 5, `0A54` = 0 (left) or 1 (right); its worth, 15 whole energy: `7E7838` = 0Fh, set at his placing (`$A6:A216..A219`), taken through `$A0:A45E` and `$91:DF51` (samus-health's `TailHit`); 99 to 84 at 0006:609 |
 | the tail's place | `7E202C..20A7` (drawing, `$DB2A`) |
 
 ### Sources per entry
@@ -714,7 +717,7 @@ sound, `$D2AA`, needs 8 or more), the whip targets.
 | --- | --- |
 | TailAtRest | `$A6:CAF5..CB0D`, `$CB20`, `$CEBA..CF53`, `$CF54`, `$CF5A` |
 | TailCurls | `$A6:A2BD..A2D2`, `$D2FD` |
-| TailHits | `$A6:CB0E..CB1D`, `$DFD9..E01A`, `$DF29..DF58` |
+| TailHits | `$A6:CB0E..CB1D`, `$DFD9..E01A`, `$DF29..DF58`; the worth `$A6:A216..A219` (`7E7838`) |
 
 ### Findings behind the spec's choices
 
@@ -745,10 +748,12 @@ sound, `$D2AA`, needs 8 or more), the whip targets.
   stagger, whip targets: unchanged at rest and part 4c's).
 
 **What the integrator needs:**
-1. Production: `run_ridley` produces the frame's hit after her movement step and before her push
-   starts, and routes it to samus-health (`TailImpact`) and samus-movement (the frame's hit);
-   Health's protection as the frame starts and her position and body as her moves leave it come
-   in.
+1. Production: `run_ridley` produces the frame's hit before her moves, and routes it to
+   samus-health (`TailImpact`, worth 15) and samus-movement (the frame's hit, for its reaction
+   after her moves); her position, her body and Health's protection as the frame starts come in.
+   Part 4b's production reads her position as her moves leave it (`played.rs`, `station.rs`);
+   on every indexed hit (0006 609, 705, 801) the two readings give the same hit and side, so
+   moving the read to the frame's start changes no played outcome. It is the integrator's.
 2. The verify reader (`crates/verify/src/replay/ridley.rs`) decodes the tip, the segments and the
    curl, and the hit from `18A8`/`0A54`/`18AA` as above.
 3. The vector harness, `crates/clean/boss_ceres_ridley/tests/vectors.rs`, parses the T- fields
@@ -767,6 +772,165 @@ from 609 to 867, his take-off (part 4c).
 | T5, T6, T7 | `chain-any-0006-E0B5`:704, 705, 801 | T-protected, T-hit-right, T-hit-jumping |
 | T8 | `chain-any-0006-E0B5`:945 (his flight; the same rule) | T-curl-recorded |
 
+## Part 4c-1a, his take-off and flight
+
+### How it was made
+
+Behaviour first, from CI's lean record cache, row `chain-any-0006-E0B5` cuts 860-1000, read per
+frame by scratch readers of the lean tier (`$TEMP/collab/ridley-4c/scratch/`, local only:
+`rec4c1.py`, `cases.py`; the reader is `$TEMP/collab/escape-survey/scripts/lean.py`): his slot 0
+(`0FA8`, `0F7A`/`0F7C`, `0F7E`/`0F80`, `0FAA`, `0FAC`, `0F92`/`0F94`, `0F8E`, `0F82`/`0F84`),
+`7E7800`, `7E7802`, `7E781A`, `7E783E`, `7E8000..8007`, the baby's `7E8804`/`7E8808`, `09C2`,
+`05E5`, `183E`/`1840`. His frame count `0FA4` steps by one on every frame 866-994, so every frame
+is a run. The bank log A6 (`$A288..A2BC`, `$A354`, `$A6AF..A781`, `$D62F..D711`, `$D712`,
+`$D86B..D954`, `$E517`, `$E51F`, `$E91D..E975`) and A9 (`$EF06`, local copy
+`$TEMP/collab/ridley-4c-ref/`) then pinned the arithmetic.
+
+The reference model, `$TEMP/collab/ridley-4c/scratch/model4c1.py`, decodes him at cut N and
+steps him once to N+1, with her energy and his hits at N and the random number at N+1:
+
+| Compared, 0006 867-994 (127 runs from `Flying` on, 994 the hand-over) | Model | Do-nothing (last run's value) |
+| --- | --- | --- |
+| the phase (`0FA8`) | 127 | 123 |
+| his whole x, y (`0F7A`, `0F7E`) | 127, 127 | 113, 48 |
+| his fractions (`0F7D`, `0F81`) | 127, 127 | 48, 14 |
+| his speeds (`0FAA`, `0FAC`) | 127, 127 | 52, 11 |
+| the take-off's figure and runs (`0F92`, `0F94`) | 127, 127 | 122, 97 |
+| his look (`0F8E`) | 127 | 122 |
+| his hover's runs (`7E7800`) | 127 | 48 |
+| the bound he met (`7E783E`) | 127 (none met) | |
+| every field at once | 127 | 0 |
+
+The run 866-867 (part 4a's `Roars` hand-over) gives figure 1, its first run, speed 0, as
+`TakesOff` says. The baby's place (`BabyHeld`) agrees on 126 of the 128 runs 867-994 at his
+place as the record leaves it; the other two, 870 and 874, are the hops' runs, where it is at
+his place before the hop: 128 of 128 with the hop rule. Tangible and moving (`0F86` bit 400h
+clear, `7E7804` = 1) on all 127 records from `Flying` through `Hovering` (867-993). `vecrun.py`
+runs the 48 L- vectors: 48 of 48 agree.
+
+### State (the RAM mapping)
+
+| Spec | RAM | Notes |
+| --- | --- | --- |
+| `Flying` (his take-off) | `0FA8` = `$A354` | zeroes `0FAA`/`0FAC` each run |
+| `Rising`, `Slowing`, `Hovering` | `0FA8` = `$A6AF`, `$A6C8`, `$A6E8` | `$A6AF` falls through into `$A6C8` on the run it switches (`L-rise-slows`) |
+| `Retreating`, `FakeRetreat` | `0FA8` = `$A971`, `$BD9A`, entered by `JMP` on the same run | 4c-2 and the fake retreat |
+| `Fireballs`, `Lunge`, `Swoop` | `0FA8` = `$A782`, `$A83C`, `$A88D` (table `$A743`, random & Fh) | later parts; set, then the run goes on to his move |
+| his position and fractions | `0F7A`.`0F7D`, `0F7E`.`0F81` | the low bytes `0F7C`/`0F80` stay 0 on every run (asserted by the reader) |
+| his speed | `0FAA`, `0FAC`, 1/256 px | `$D86B` adds the low byte to the fraction byte and the sign-extended high byte, with the carry, to the whole px |
+| the take-off's figure | `0F92` = `$E925`, `$E92F`, `$E939`, `$E93F`, `$E943` for figures 1 to 5 (after the step), runs = length − `0F94` + 1 | list `$E91D` (facing left, `7E7820` = 0); figure 5 is `0011,E983` then sleep: its 17 runs change nothing seen, so the spec holds it |
+| `TakeOff1`, `TakeOff2` | `0F8E` `$EA4F`, `$EA71` | the facing-right list `$E945` is Norfair's |
+| his hover's runs | `7E7800` | 0 from his placing; reset when an attack is chosen |
+| the bound he met | `7E783E` 1, 2, 4, 8 (`Left`, `Right`, `Top`, `Bottom`) | y's store overwrites x's |
+| the room's bounds | `7E8000` y min (`FFE0h`), `8002` y max (B0h), `8004` x min (28h), `8006` x max (E0h) | set at his placing; constant in 0006 |
+| his point | (C0h, 64h) at `$A763`, inertia 10h (`$D712` with Y = 0) | |
+
+### Inputs and order
+
+- Main AI order (`$A288`): his function (`0FA8`), then, while moving (`7E7804`): hurt flash,
+  `$D86B` (his move), wings, curl (`$A2BD`), tail (`$CAF5`), palette, ribs, drawing; then the
+  baby (`$A2DC`). The framework's instruction step (`0F92`) runs after the main AI, so a hop
+  (`$E51F`) and the lift-off (`$E969`, `0FAC` = `FEA0h`) land after his move and after the
+  baby took his place.
+- Her energy is `09C2` as his function reads it: the tail's hit lands later in his own run
+  (`$DFD9`, through `$A0:A45E`), so the hit at 993 leaves 24 and the run at 994 gives up.
+- His hits taken is `7E781A` (11 in 0006 from 857 on, counted by her shots against him), as it
+  stands when he runs: her shots against enemies (`$A0:9785`) run before the main enemy routine
+  (`$A0:8FD4`) in a frame, so a shot of the same frame is already counted.
+  `$D4B5` changes his palette once it reaches 50 while `7E7802` is 1 (set at `$A6E0` as he
+  hovers): a later part; 11 in this movie, so nothing.
+- The random number is `05E5` as his run reads it, the one the curl and the baby read.
+- `$A9:EF06` returns carry clear on a collision: |C0h − x| < 8 + `0F82` (8) + 1 and the same in y
+  with `0F84` (8): within 16 px.
+
+### Outputs
+
+| Spec | RAM / code |
+| --- | --- |
+| the shake | `$D914`: max(|`0FAA`|, |`0FAC`|) ≥ 280h at the left bound → `183E` = 21h (BG2 and enemies, 3 px, horizontal), `1840` = Ch (Ceres; Norfair's 18h is not this domain's) |
+| the bound he met | `7E783E` |
+| his look | `0F8E` (drawing) |
+
+### Sources per entry
+
+| Entry | Sources |
+| --- | --- |
+| TakesOff | `$A6:A354`, `$E91D..E944`, `$E517`, `$E51F`, `$E969`, `$D467` |
+| Rises | `$A6:A6AF..A6C7` |
+| SlowsDown | `$A6:A6C8..A6E7` |
+| Hovers | `$A6:A6E8..A762`, `$A763..A781`, `$A9:EF06` |
+| PulledToHisPoint | `$A6:D62F..D711`, `$D712` |
+| Flies | `$A6:D86B..D954` |
+
+### Findings behind the spec's choices
+
+- **The pull's carries.** `$D63E`/`$D6AA` leave the compare's carry in place for the first add
+  or subtract; with both positions under 8000h it is exact, and the spec states it as the odd
+  unit `c`, with the cases far apart (above the room's top). In the three-step branch the missing `CLC`/`SEC` carry the
+  zero crossing of the first or second step into the next: the `e` term, seen once in 0006
+  (963: −5 to 5 with pulls of 3).
+- **The take-off's first figure** is set by part 4a's hand-over with its timer at 1 (`$D467`),
+  so it shows on the run he takes off (867); the hops land on 870 and 874, the lift-off on 879.
+- **The lift-off speed** is `FEA0h`, −352 (the bank log's comment says −60h).
+- **Near his point** is judged before his move, on whole px; in 0006 he never comes near
+  (he hovers 35 to 57 px above it), and his hover's runs reach 78 before he gives up.
+- **Which of her positions an enemy's contact reads.** Game state 8 (`$82:8B44`) runs her
+  current state handler (`$90:E695`: her radius `$EC22` from the pose she starts the frame in,
+  then her pose input), then the main enemy routine (`$A0:8FD4`: Ridley's main AI, the tail's
+  test `$A6:DFD9` reading `0AF6`/`0AFA`), then her new state handler (`$90:E725`: her movement
+  `$E94B`, then the hit's reaction `$DDE9`). So the tail reads her position as the frame
+  starts (the root's ruling for every hitter: her position, body and protection as the frame
+  starts). Over 0006's five hits, her place at N−1 against the tip at N: 609 (216, 192),
+  705 (220, 187), 801 (234, 159), 897 (223, 159), 993 (235, 77): each in reach, the side as
+  recorded (left, right, right, left, left). Part 4b's vectors take these places (T-hit-right
+  moved from 224 to 220, T-hit-jumping from y 161 to 159, T-protected from x 220 to 216); their
+  outcomes are unchanged. Each hit lands on the first frame with her protection 0 at the
+  frame's start, so no frame of the cached rows separates the two readings.
+- **The pull's cap is a signed test of the new speed less 500h** (`CMP #$0500`/`BMI`, and
+  `CMP #$FB00`/`BPL`), after the adds wrap at 16 bits: L-pull-wrap (32,767 + 1 wraps to
+  −32,768, then capped at 1,280). With the cap stated exactly, every speed is an allowed state.
+- **Rows past this part:** the retreat from 994 (4c-2: rises off the top to y −128, the hold,
+  the walls); his tail in flight 867-993 (4c-1b).
+
+### The harness (for the integrator)
+
+- **Rows:** `chain-any-0006-E0B5` 867-993 for this part (994 for the phase `Retreating` only).
+- **Compared per run:** `0FA8` through the phases above; `0F7A`, `0F7D`, `0F7E`, `0F81`;
+  `0FAA`, `0FAC`; `0F92`/`0F94` as the take-off's figure and runs; `0F8E` through the looks
+  (from 867, where part 4a's reader stops); `7E7800`; `7E783E`; the baby's place as part 3.
+- **Skipped:** `0F7C`/`0F80` low bytes (always 0); the wings (`7E780A..7812`, drawing); the
+  tail's block `7E2000..20AF` from 867 (4c-1b); `7E781A` (a later part's count: an input here);
+  `7E7802` (follows from the phase).
+
+**What the integrator needs:**
+1. Production (`crates/game/src/production/played/ridley.rs`): run him from `Flying` through
+   `Hovering`; refuse a run that starts `Retreating` or `FakeRetreat`, and one that starts in an
+   attack, each as its part's fault; hand R3 the shake; report him tangible and moving, not
+   roaring. Her energy comes in from samus-health as it stands when he runs. His hits taken
+   has no producer yet (her shots against him are a later part's): production holds 0. Of the
+   cached rows, two reach his flight: 0006 (11 from 857 on) and `samus-ceres-push` (6). Every
+   indexed run stays under 50 there, so `Hovers` (100) and the later palette rule (50) give the
+   same outcome with 0 as with the game's count.
+2. The verify reader (`crates/verify/src/replay/ridley.rs`) decodes the new phases, the
+   take-off's figure from `0F92`/`0F94`, the speeds, fractions, `7E7800` and `7E783E`.
+3. The vector harness, `crates/clean/boss_ceres_ridley/tests/vectors.rs`, parses the L- form;
+   until it does, its `deny_unknown_fields` rejects the file.
+
+Played alone with this piece, the run would still lack his tail in flight: the first flight
+hit lands at 897 on the moving tip, so without 4c-1b the run's first difference is her energy
+and her push at 897. With 4c-1b (and her own domains holding 868-993) it stops at 994, the
+retreat's first run (4c-2). The claim holds with one unproduced input, his hits taken (held at
+0 where the game has 11; `7E781A` skipped), which changes no outcome while under 50.
+
+### The harness cases
+
+| Case | Row:frame | Vectors |
+| --- | --- | --- |
+| L0, L1, L2, L3 | `chain-any-0006-E0B5`:867, 868, 870, 874 | L-takeoff, L-figure-counts, L-hop-first, L-hop-second |
+| L4, L5, L6, L7 | `chain-any-0006-E0B5`:879, 880, 896, 899 | L-lift-off, L-rise-counts, L-figure-rest, L-rise-slows |
+| L8, L9, L10, L11 | `chain-any-0006-E0B5`:900, 915, 916, 963 | L-slow-counts, L-slow-hovers, L-hover-pull, L-pull-turns |
+| L12, L13 | `chain-any-0006-E0B5`:993, 994 | L-pull-back, L-gives-up (and the edges built on them) |
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -778,7 +942,7 @@ samus-movement. There is no old code: the engine carries the doors unrun
 the cover, the beacon or the platform, nor for the door of Ridley's room, the walls or Ridley
 (`LoadFault::LaterCeresActor`), so no area has `old`, and there is no old-code guideline to
 compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking. Part 4b has none:
-the engine has no tail.
+the engine has no tail. Part 4c-1a has none: the engine refuses his flight.
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
@@ -788,5 +952,6 @@ the engine has no tail.
 - Area ridley: RidleyPlaced, RidleyWaits, BabyHeld, BabyFidgets, BabyCries
 - Area ridley-wakes: EyeFadesIn, BodyFadesIn, ReadyToRoar, Roars
 - Area ridley-tail: TailAtRest, TailCurls, TailHits
+- Area ridley-flight: TakesOff, Rises, SlowsDown, Hovers, PulledToHisPoint, Flies
 
-Budget: 37.5 × 108.3 units = 4,061 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 275)
+Budget: 37.5 × 142.7 units = 5,348 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212)

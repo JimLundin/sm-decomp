@@ -4,10 +4,10 @@
 //! Positions are pixels with a fraction in 65,536ths (`Fixed`), x rightward and y downward, the
 //! whole pixels signed 16-bit. Relations between content fields are the importer's.
 
+use core::num;
 use core::num::Wrapping;
 use enum_map::{Enum, EnumMap};
 use serde::{Deserialize, Serialize};
-use std::num::NonZeroU16;
 
 use crate::{Colour, Fixed, Pair, Parts, px};
 
@@ -216,7 +216,7 @@ pub struct LabelStep {
     /// What it types as it begins.
     pub keystroke: Keystroke,
     /// Its hold, in frames.
-    pub hold: NonZeroU16,
+    pub hold: num::NonZeroU16,
 }
 
 /// How the flight is made ready (`FlightIsMadeReady`).

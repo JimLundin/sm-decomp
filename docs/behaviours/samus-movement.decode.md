@@ -2988,4 +2988,6 @@ C-leap-stride, C-leap-both-right, C-leap-both-left, C-leap-jump-held, C-leap-let
 
 **Played runs:** with the let-go, `any-ceres-arrival` holds 2,714 cuts, `chain-any-0001-DF45`
 2,491, `chain-any-0003-DFD7` 1,797 and `chain-any-0006-E0B5` 867, each stopping at room 6's cut
-868, Unsupported on `Fault::RidleyFlying` (boss-ceres-ridley part 4c).
+868, Unsupported on `Fault::RidleyFlying` (boss-ceres-ridley part 4c). Since part 4c-1a he takes
+off and flies in production: they hold 2,743, 2,520, 1,826 and 896, each stopping at room 6's
+cut 897 in `movement.pose`, where his tail hits her in flight (part 4c-1b).

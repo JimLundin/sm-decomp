@@ -61,32 +61,32 @@ power_on = false
 
 # The arrival, played on into Ceres's first room and through the second to fifth into Ridley's
 # with no new seed, through Ridley's waking and his tail's two hits, her pushes and her backward
-# leaps, the camera leading the way she travels, and her second leap let go, to room 6's cut 867;
-# at 868 Ridley takes to the air, which isn't played yet.
+# leaps, the camera leading the way she travels, and her second leap let go, and Ridley's take-off
+# and flight, to room 6's cut 896; at 897 his tail hits her in flight, which isn't played yet.
 [[run]]
 row = "any-ceres-arrival"
 start = 0
 end = 3223
-held = 2714
-stop = { failed = "RidleyFlying" }
+held = 2743
+stop = { failed = "movement.pose" }
 seed_frame = 8315
-frames = [8316, 11029]
+frames = [8316, 11058]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
 # floor and lets her go, and she leaves by the room's door; played on through the second, third,
 # fourth and fifth rooms and into Ridley's with no new seed, the door slamming shut behind her,
 # through Ridley's waking and his tail's two hits, her pushes and her backward leaps, the camera
-# leading the way she travels, and her second leap let go, to room 6's cut 867; at 868 Ridley takes
-# to the air, which isn't played yet.
+# leading the way she travels, and her second leap let go, and Ridley's take-off and flight, to
+# room 6's cut 896; at 897 his tail hits her in flight, which isn't played yet.
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
 end = 3000
-held = 2491
-stop = { failed = "RidleyFlying" }
+held = 2520
+stop = { failed = "movement.pose" }
 seed_frame = 8538
-frames = [8539, 11029]
+frames = [8539, 11058]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -113,16 +113,16 @@ power_on = false
 
 # Ceres's third room, played on through the fourth and fifth and into Ridley's with no new seed,
 # through Ridley's waking and his tail's two hits, her pushes and her backward leaps, the camera
-# leading the way she travels, and her second leap let go, to room 6's cut 867; at 868 Ridley takes
-# to the air, which isn't played yet.
+# leading the way she travels, and her second leap let go, and Ridley's take-off and flight, to
+# room 6's cut 896; at 897 his tail hits her in flight, which isn't played yet.
 [[run]]
 row = "chain-any-0003-DFD7"
 start = 0
 end = 3000
-held = 1797
-stop = { failed = "RidleyFlying" }
+held = 1826
+stop = { failed = "movement.pose" }
 seed_frame = 9232
-frames = [9233, 11029]
+frames = [9233, 11058]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -139,16 +139,16 @@ power_on = false
 # Ridley's room alone, from its own seed: Ridley waits in the dark with the baby, which cries and
 # glows once, then wakes, his eye lighting and his body fading in; tangible, his tail hits her
 # twice, at cuts 609 and 705, and each push and backward leap plays, the camera leading the way
-# she travels, and her second leap let go, to cut 867; at 868 Ridley takes to the air, which isn't
-# played yet.
+# she travels, and her second leap let go; he takes off and flies, to cut 896; at 897 his tail
+# hits her in flight, which isn't played yet.
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 0
 end = 1785
-held = 867
-stop = { failed = "RidleyFlying" }
+held = 896
+stop = { failed = "movement.pose" }
 seed_frame = 10162
-frames = [10163, 11029]
+frames = [10163, 11058]
 power_on = false
 
 # The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune

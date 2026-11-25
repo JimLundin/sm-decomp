@@ -1,6 +1,6 @@
 //! Ridley's looks, and his roar: he opens his jaws, holds them wide, shuts them and sits.
 
-use crate::shown::{FigureLength, ShownFigure};
+use crate::shown::{FigureLength, FigureSequence, NextFigure};
 
 /// The figure he is drawn with, facing left. Which sprites each is belongs to his content.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -11,6 +11,10 @@ pub enum RidleyLook {
     Open,
     /// His jaws wide, roaring.
     Wide,
+    /// His take-off's first crouch.
+    TakeOff1,
+    /// His take-off's second crouch.
+    TakeOff2,
 }
 
 /// One of the roar's first four figures, each shown a fixed number of runs, in their order.
@@ -59,17 +63,6 @@ impl TimedRoarFigure {
             },
         }
     }
-
-    /// `Roars`: the figure that follows this one once it has shown its length; the fifth after
-    /// the fourth.
-    const fn next(self) -> RoarFigure {
-        match self {
-            Self::First => RoarFigure::starting(Self::Second),
-            Self::Second => RoarFigure::starting(Self::Third),
-            Self::Third => RoarFigure::starting(Self::Fourth),
-            Self::Fourth => RoarFigure::Fifth,
-        }
-    }
 }
 
 impl FigureLength for TimedRoarFigure {
@@ -78,15 +71,22 @@ impl FigureLength for TimedRoarFigure {
     }
 }
 
-/// The roar's figure, 1 to 5, with how many runs it has shown; the fifth has no length and no
-/// runs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RoarFigure {
-    /// One of the first four, with its runs.
-    Timed(ShownFigure<TimedRoarFigure>),
-    /// Figure 5: at rest, held for the rest of the roar.
-    Fifth,
+impl NextFigure for TimedRoarFigure {
+    /// `Roars`: the figure that follows this one once it has shown its length; the fifth after
+    /// the fourth.
+    fn next(self) -> Option<Self> {
+        match self {
+            Self::First => Some(Self::Second),
+            Self::Second => Some(Self::Third),
+            Self::Third => Some(Self::Fourth),
+            Self::Fourth => None,
+        }
+    }
 }
+
+/// The roar's figure, 1 to 5, with how many runs it has shown; the fifth, at rest, is held for
+/// the rest of the roar and has no length and no runs.
+pub type RoarFigure = FigureSequence<TimedRoarFigure>;
 
 /// `Roars`: the second figure at its first run, the run the roar is heard.
 const ROAR_HEARD: RoarFigure = RoarFigure::starting(TimedRoarFigure::Second);
@@ -94,11 +94,6 @@ const ROAR_HEARD: RoarFigure = RoarFigure::starting(TimedRoarFigure::Second);
 impl RoarFigure {
     /// `ReadyToRoar`: the roar as it starts: its first figure, its first run.
     pub const START: Self = Self::starting(TimedRoarFigure::First);
-
-    /// This figure at its first run.
-    const fn starting(figure: TimedRoarFigure) -> Self {
-        Self::Timed(ShownFigure::first_run(figure))
-    }
 
     /// `Roars`: his look while it shows: `Rest`, `Open`, `Wide`, `Open`, then `Rest`.
     #[must_use]
@@ -115,18 +110,6 @@ impl RoarFigure {
         match self {
             Self::Timed(shown) => shown.figure().row().roaring,
             Self::Fifth => false,
-        }
-    }
-
-    /// `Roars`: the figure a run of the roar moves on to: a figure shown fewer runs than its
-    /// length shows one run more, then gives way to the next; the fifth is held.
-    #[must_use]
-    pub fn ran(self) -> Self {
-        match self {
-            Self::Timed(shown) => shown
-                .one_run_more()
-                .map_or_else(|| shown.figure().next(), Self::Timed),
-            Self::Fifth => Self::Fifth,
         }
     }
 

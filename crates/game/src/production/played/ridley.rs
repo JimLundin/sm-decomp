@@ -9,7 +9,7 @@
 
 use super::{Content, Fault, Rules, station};
 use crate::production::ridley;
-use boss_ceres_ridley::{CeresRidley, Her, RidleyPhase, RidleyRun};
+use boss_ceres_ridley::{CeresRidley, Fight, Her, RidleyPhase, RidleyRun};
 use types::{Pair, Parts as _};
 use world_doors::Palette;
 
@@ -25,12 +25,12 @@ impl station::State {
 }
 
 impl super::State {
-    /// Her as Ridley's tail reads her in his room: her position in whole pixels as her moves
-    /// leave her (`after_moves`), the body of the pose she started the frame in, from her
+    /// Her as Ridley's tail reads her in his room: her position in whole pixels as the frame
+    /// starts (`at`), the body of the pose she started the frame in, from her
     /// movement's content, and her protection as the frame starts; none outside his room.
     pub(super) fn reached(
         &self,
-        after_moves: types::Position,
+        at: types::Position,
         content: &Content,
     ) -> Result<Option<Her>, Fault> {
         if self.station.ridley.is_none() {
@@ -40,8 +40,8 @@ impl super::State {
         let body = content.movement.radius(pose).ok_or(Fault::Body(pose))?;
         Ok(Some(Her {
             position: Pair {
-                x: after_moves.x.pixel(),
-                y: after_moves.y.pixel(),
+                x: at.x.pixel(),
+                y: at.y.pixel(),
             },
             body,
             protection: u16::from(self.health.0.protection.get()),
@@ -51,18 +51,30 @@ impl super::State {
 
 /// One run of Ridley, the baby in his hold, his tail reading her in a frame of play:
 /// the colour sets the run names go to the screen at once. His fight's music and his roar are
-/// produced, for audio, and the frame's hit for her energy and her motion. Flying, a later
-/// piece runs him.
+/// produced, for audio, the frame's hit for her energy and her motion, and the shake he starts
+/// for the room's quake. In flight he reads her energy as the frame starts it (samus-health)
+/// and his hits taken held at 0: her shots against him have no producer yet. A run that starts
+/// in an attack or as he gives up is a later part's.
 pub(super) fn run(
     ridley: CeresRidley,
     running: station::Running<'_>,
     random: types::RandomSequence,
+    her_energy: u16,
     content: &Content,
     rules: &Rules,
     palette: &mut Palette,
 ) -> Result<RidleyRun, Fault> {
-    if ridley.phase == RidleyPhase::Flying {
-        return Err(Fault::RidleyFlying);
+    match ridley.phase {
+        RidleyPhase::Attacking(_) => return Err(Fault::RidleyAttacks),
+        RidleyPhase::GivingUp(_) => return Err(Fault::RidleyGivesUp),
+        RidleyPhase::Awake
+        | RidleyPhase::BodyFading { .. }
+        | RidleyPhase::EyeFading { .. }
+        | RidleyPhase::Holding
+        | RidleyPhase::InFlight(_)
+        | RidleyPhase::ReadyToRoar { .. }
+        | RidleyPhase::Roaring { .. }
+        | RidleyPhase::Waiting { .. } => {}
     }
     let (passage_under_way, her) = match running {
         station::Running::Play(her) => (false, her),
@@ -72,6 +84,10 @@ pub(super) fn run(
         passage_under_way,
         random.number.0,
         her,
+        Fight {
+            her_energy,
+            hits_taken: 0,
+        },
         &content.ridley,
         &rules.ceres,
     );
@@ -95,7 +111,8 @@ mod tests {
     use crate::production::played::station::Running;
     use crate::production::played::tests::{content, rules};
     use boss_ceres_ridley::{
-        BodyColours, CeresRidley, EyeColours, FadeSets, Her, RidleyContent, RidleyPhase,
+        Attack, BodyColours, CeresRidley, EyeColours, FadeSets, FlightPhase, GiveUp, Her,
+        RidleyContent, RidleyPhase,
     };
     use core::num::{NonZeroU16, Wrapping};
     use types::{Colour, Hit, Pair, PushFrames, Px, RandomNumber, RandomSequence, Side};
@@ -169,6 +186,7 @@ mod tests {
             ridley(phase),
             Running::Play(Some(her)),
             random,
+            99,
             &content,
             &rules(),
             palette,
@@ -244,12 +262,26 @@ mod tests {
     }
 
     #[test]
-    fn any_run_flying_is_refused_leaving_the_screen() {
+    fn a_run_in_an_attack_or_giving_up_is_refused_leaving_the_screen() {
         let mut palette = unlit();
         assert_eq!(
-            ran(RidleyPhase::Flying, &mut palette),
-            Err(Fault::RidleyFlying)
+            ran(RidleyPhase::Attacking(Attack::Swoop), &mut palette),
+            Err(Fault::RidleyAttacks)
+        );
+        assert_eq!(
+            ran(RidleyPhase::GivingUp(GiveUp::Retreating), &mut palette),
+            Err(Fault::RidleyGivesUp)
         );
         assert_eq!(palette, unlit());
+    }
+
+    /// In flight he runs, not refused: a run rising leaves him rising.
+    #[test]
+    fn his_flight_runs() {
+        let phase = RidleyPhase::InFlight(FlightPhase::Rising);
+        assert_eq!(
+            ran(phase, &mut unlit()),
+            Ok(RidleyPhase::InFlight(FlightPhase::Rising))
+        );
     }
 }

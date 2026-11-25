@@ -1,19 +1,22 @@
 //! Runs every vector of `scenarios/vectors/boss-ceres-ridley.toml` through the model, the doors',
-//! the shaft's and Ridley's (his tail's among them), and checks the catalogue against the
-//! vectors. Every table refuses a key it doesn't know, and every name must be one the spec gives.
+//! the shaft's and Ridley's (his tail's and his flight's among them), and checks the catalogue
+//! against the vectors. Every table refuses a key it doesn't know, and every name must be one
+//! the spec gives.
 
 #[cfg(test)]
 mod vectors {
-    use core::num::{NonZeroU8, NonZeroU16, Wrapping};
+    use core::num;
+    use core::num::Wrapping;
 
     use boss_ceres_ridley::{
-        AlternatingLook, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
-        BehaviourId, BodyColours, Boss, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind,
-        DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Figure, FigureLook, GlowFigure,
-        Her, Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait,
-        Phase, Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyWait, RoarFigure,
-        RoarWait, Rules, Shake, ShakeLayers, ShakeStart, ShownFigure, Stage, TailCurl,
-        TimedRoarFigure, Wait, WakeWait, catalogue,
+        AlternatingLook, Attack, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
+        BehaviourId, BodyColours, Boss, Bound, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind,
+        DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Fight, Figure, FigureLength,
+        FigureLook, FigureSequence, FlightPhase, GiveUp, GlowFigure, Her, HoverRuns, Inputs,
+        Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase,
+        Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyRun, RidleyWait,
+        RoarWait, Rules, Shake, ShakeLayers, ShakeMotion, ShakeStart, ShownFigure, Stage, TailCurl,
+        TimedRoarFigure, TimedTakeOffFigure, Wait, WakeWait, catalogue,
     };
     use enum_map::Enum;
     use serde::Deserialize;
@@ -30,7 +33,7 @@ mod vectors {
     /// A vector of any part: the doors' fields (the door of Ridley's room and the getaway's walls
     /// among them), the shaft's (the pad and the cover, or the lights), or Ridley's. Which part
     /// it is follows from the result it names; Ridley's part-4b vectors, his tail's, are the
-    /// ones whose ids start `T-`.
+    /// ones whose ids start `T-`, and his part-4c-1a vectors, his flight's, those starting `L-`.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Vector {
@@ -58,6 +61,8 @@ mod vectors {
         baby: Option<BabyRow>,
         passing: Option<bool>,
         content: Option<ContentRow>,
+        energy: Option<u16>,
+        hits_taken: Option<u16>,
         ridley_after: Option<RidleyAfter>,
         // The pad and the cover.
         arrival: Option<[u16; 2]>,
@@ -106,6 +111,8 @@ mod vectors {
                 || self.baby.is_some()
                 || self.passing.is_some()
                 || self.content.is_some()
+                || self.energy.is_some()
+                || self.hits_taken.is_some()
                 || matches!(self.her, Some(HerField::Tail(_)))
                 || self.ridley_after.is_some()
         }
@@ -113,6 +120,26 @@ mod vectors {
         /// Whether it is one of his tail's vectors, in the part-4b form.
         fn names_tail(&self) -> bool {
             self.id.starts_with("T-")
+        }
+
+        /// Whether it is one of his flight's vectors, in the part-4c-1a form.
+        fn names_flight(&self) -> bool {
+            self.id.starts_with("L-")
+        }
+
+        /// How the fight stands, as a flight vector names it; the other forms name none, and
+        /// run with a stand-in their phases never read.
+        fn fight(&self) -> Fight {
+            assert_eq!(
+                self.names_flight(),
+                self.energy.is_some() && self.hits_taken.is_some(),
+                "{}: the part-4c-1a vectors alone name her energy and his hits taken",
+                self.id
+            );
+            Fight {
+                her_energy: self.energy.unwrap_or(0),
+                hits_taken: self.hits_taken.unwrap_or(0),
+            }
         }
 
         /// Where she was, as a door reads her.
@@ -580,14 +607,14 @@ mod vectors {
             pad_wait: row.wait.map_or(reference.pad_wait, pad_wait),
             floor: row.floor.map_or(reference.floor, Wrapping),
             rhythm: row.rhythm.map_or(reference.rhythm, |frames| {
-                NonZeroU16::new(frames).expect("a rhythm is at least 1 frame")
+                num::NonZeroU16::new(frames).expect("a rhythm is at least 1 frame")
             }),
             slam: row.slam.map_or(reference.slam, wait),
             wake: row.wake.map_or(reference.wake, |frames| {
                 WakeWait::new(frames).expect("a wake is 1 to 32,768 frames")
             }),
             pace: row.pace.map_or(reference.pace, |runs| {
-                NonZeroU8::new(runs).expect("a pace is 1 to 255 runs")
+                num::NonZeroU8::new(runs).expect("a pace is 1 to 255 runs")
             }),
             tail_reach: row.tail_reach.unwrap_or(reference.tail_reach),
         }
@@ -837,6 +864,11 @@ mod vectors {
         look: Option<RidleyLookName>,
         position: [u16; 2],
         curl: Option<u8>,
+        takeoff_figure: Option<u8>,
+        takeoff_runs: Option<u8>,
+        fraction: Option<[u8; 2]>,
+        speed: Option<[i16; 2]>,
+        hover_runs: Option<u8>,
     }
 
     impl RidleyRow {
@@ -926,6 +958,53 @@ mod vectors {
         curl: Option<u8>,
         tail: Option<[u16; 2]>,
         hit: Option<HitRow>,
+        takeoff_figure: Option<u8>,
+        takeoff_runs: Option<u8>,
+        fraction: Option<[u8; 2]>,
+        speed: Option<[i16; 2]>,
+        hover_runs: Option<u8>,
+        held: Option<[u16; 2]>,
+        bound: Option<BoundName>,
+        shake: Option<FlightShakeRow>,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+    enum BoundName {
+        Bottom,
+        Left,
+        Right,
+        Top,
+    }
+
+    const fn bound_name(bound: Bound) -> BoundName {
+        match bound {
+            Bound::Bottom => BoundName::Bottom,
+            Bound::Left => BoundName::Left,
+            Bound::Right => BoundName::Right,
+            Bound::Top => BoundName::Top,
+        }
+    }
+
+    /// The shake he starts in flight: the back layers, moving sideways, so strong for so long.
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct FlightShakeRow {
+        pixels: u16,
+        frames: u16,
+    }
+
+    /// His flight's shake as the vector names it; the form gives only the back layers moving
+    /// sideways, so the shake must be of them.
+    fn flight_shake_row(start: ShakeStart) -> FlightShakeRow {
+        assert_eq!(
+            (start.layers, start.motion),
+            (ShakeLayers::Back, ShakeMotion::Sideways),
+            "his flight's shake moves the back layers sideways"
+        );
+        FlightShakeRow {
+            pixels: start.shake.strength,
+            frames: start.shake.length,
+        }
     }
 
     /// The frame's hit of his tail: the side it pushes her and the push's frames.
@@ -948,10 +1027,18 @@ mod vectors {
         Awake,
         BodyFading,
         EyeFading,
+        FakeRetreat,
+        Fireballs,
         Flying,
         Holding,
+        Hovering,
+        Lunge,
         ReadyToRoar,
+        Retreating,
+        Rising,
         Roaring,
+        Slowing,
+        Swoop,
         Waiting,
     }
 
@@ -959,6 +1046,8 @@ mod vectors {
     enum RidleyLookName {
         Open,
         Rest,
+        TakeOff1,
+        TakeOff2,
         Wide,
     }
 
@@ -984,7 +1073,7 @@ mod vectors {
         Rest,
     }
 
-    /// The roar's first four figures, in their order.
+    /// The roar's first four figures, in their order, numbered 1 to 4.
     const TIMED_ROAR_FIGURES: [TimedRoarFigure; 4] = [
         TimedRoarFigure::First,
         TimedRoarFigure::Second,
@@ -992,40 +1081,52 @@ mod vectors {
         TimedRoarFigure::Fourth,
     ];
 
-    /// The roar's fifth figure, held, with no runs.
-    const FIFTH_ROAR_FIGURE: u8 = 5;
+    /// The take-off's first four figures, in their order, numbered 1 to 4.
+    const TIMED_TAKEOFF_FIGURES: [TimedTakeOffFigure; 4] = [
+        TimedTakeOffFigure::First,
+        TimedTakeOffFigure::Second,
+        TimedTakeOffFigure::Third,
+        TimedTakeOffFigure::Fourth,
+    ];
 
-    const fn roar_figure_number(figure: TimedRoarFigure) -> u8 {
-        match figure {
-            TimedRoarFigure::First => 1,
-            TimedRoarFigure::Second => 2,
-            TimedRoarFigure::Third => 3,
-            TimedRoarFigure::Fourth => 4,
-        }
-    }
+    /// The fifth figure of the roar or the take-off, held, with no runs.
+    const FIFTH_FIGURE: u8 = 5;
 
-    /// The roar's figure a vector's `figure` and `figure_runs` name.
-    fn roar_figure(number: Option<u8>, runs: Option<u8>) -> RoarFigure {
-        let number = number.expect("a roar names its figure");
-        if number == FIFTH_ROAR_FIGURE {
-            return RoarFigure::Fifth;
+    /// The figure a vector's number, 1 to 5, and runs name, of the four timed figures given.
+    fn figure_sequence<F: FigureLength + PartialEq>(
+        timed: [F; 4],
+        number: u8,
+        runs: Option<u8>,
+    ) -> FigureSequence<F> {
+        if number == FIFTH_FIGURE {
+            assert!(runs.is_none(), "the fifth figure has no runs");
+            return FigureSequence::Fifth;
         }
-        let figure = TIMED_ROAR_FIGURES
+        let figure = timed
             .into_iter()
-            .find(|&figure| roar_figure_number(figure) == number)
+            .zip(1..)
+            .find_map(|(figure, n)| (n == number).then_some(figure))
             .unwrap_or_else(|| panic!("figure {number} is not 1 to 5"));
-        RoarFigure::Timed(
+        FigureSequence::Timed(
             ShownFigure::new(figure, runs.expect("figures 1 to 4 name their runs"))
                 .expect("runs are 1 to the figure's length"),
         )
     }
 
-    fn roar_figure_cells(figure: RoarFigure) -> (Option<u8>, Option<u8>) {
+    /// A figure of the roar or the take-off as a vector names it: its number and its runs.
+    fn figure_sequence_cells<F: FigureLength + PartialEq>(
+        timed: [F; 4],
+        figure: FigureSequence<F>,
+    ) -> (Option<u8>, Option<u8>) {
         match figure {
-            RoarFigure::Timed(shown) => {
-                (Some(roar_figure_number(shown.figure())), Some(shown.runs()))
-            }
-            RoarFigure::Fifth => (Some(FIFTH_ROAR_FIGURE), None),
+            FigureSequence::Timed(shown) => (
+                timed
+                    .into_iter()
+                    .zip(1..)
+                    .find_map(|(figure, n)| (figure == shown.figure()).then_some(n)),
+                Some(shown.runs()),
+            ),
+            FigureSequence::Fifth => (Some(FIFTH_FIGURE), None),
         }
     }
 
@@ -1048,18 +1149,30 @@ mod vectors {
             RidleyPhaseName::EyeFading => RidleyPhase::EyeFading {
                 steps: cells
                     .steps
-                    .and_then(NonZeroU16::new)
+                    .and_then(num::NonZeroU16::new)
                     .expect("an eye's fade names its steps, 1 up"),
             },
-            RidleyPhaseName::Flying => RidleyPhase::Flying,
+            RidleyPhaseName::FakeRetreat => RidleyPhase::GivingUp(GiveUp::FakeRetreat),
+            RidleyPhaseName::Fireballs => RidleyPhase::Attacking(Attack::Fireballs),
+            RidleyPhaseName::Flying => RidleyPhase::InFlight(FlightPhase::Flying),
             RidleyPhaseName::Holding => RidleyPhase::Holding,
+            RidleyPhaseName::Hovering => RidleyPhase::InFlight(FlightPhase::Hovering),
+            RidleyPhaseName::Lunge => RidleyPhase::Attacking(Attack::Lunge),
             RidleyPhaseName::ReadyToRoar => RidleyPhase::ReadyToRoar {
                 wait: ReadyWait::new(runs_left(cells.wait)).expect("ready's wait is 0 to 4"),
             },
+            RidleyPhaseName::Retreating => RidleyPhase::GivingUp(GiveUp::Retreating),
+            RidleyPhaseName::Rising => RidleyPhase::InFlight(FlightPhase::Rising),
             RidleyPhaseName::Roaring => RidleyPhase::Roaring {
                 wait: RoarWait::new(runs_left(cells.wait)).expect("the roar's wait is 0 to 252"),
-                figure: roar_figure(cells.figure, cells.figure_runs),
+                figure: figure_sequence(
+                    TIMED_ROAR_FIGURES,
+                    cells.figure.expect("a roar names its figure"),
+                    cells.figure_runs,
+                ),
             },
+            RidleyPhaseName::Slowing => RidleyPhase::InFlight(FlightPhase::Slowing),
+            RidleyPhaseName::Swoop => RidleyPhase::Attacking(Attack::Swoop),
             RidleyPhaseName::Waiting => RidleyPhase::Waiting {
                 wait: cells
                     .wait
@@ -1094,7 +1207,15 @@ mod vectors {
                     ..none
                 },
             ),
-            RidleyPhase::Flying => (RidleyPhaseName::Flying, none),
+            RidleyPhase::GivingUp(GiveUp::FakeRetreat) => (RidleyPhaseName::FakeRetreat, none),
+            RidleyPhase::GivingUp(GiveUp::Retreating) => (RidleyPhaseName::Retreating, none),
+            RidleyPhase::Attacking(Attack::Fireballs) => (RidleyPhaseName::Fireballs, none),
+            RidleyPhase::Attacking(Attack::Lunge) => (RidleyPhaseName::Lunge, none),
+            RidleyPhase::Attacking(Attack::Swoop) => (RidleyPhaseName::Swoop, none),
+            RidleyPhase::InFlight(FlightPhase::Flying) => (RidleyPhaseName::Flying, none),
+            RidleyPhase::InFlight(FlightPhase::Hovering) => (RidleyPhaseName::Hovering, none),
+            RidleyPhase::InFlight(FlightPhase::Rising) => (RidleyPhaseName::Rising, none),
+            RidleyPhase::InFlight(FlightPhase::Slowing) => (RidleyPhaseName::Slowing, none),
             RidleyPhase::Holding => (RidleyPhaseName::Holding, none),
             RidleyPhase::ReadyToRoar { wait } => (
                 RidleyPhaseName::ReadyToRoar,
@@ -1104,7 +1225,7 @@ mod vectors {
                 },
             ),
             RidleyPhase::Roaring { wait, figure } => {
-                let (figure, figure_runs) = roar_figure_cells(figure);
+                let (figure, figure_runs) = figure_sequence_cells(TIMED_ROAR_FIGURES, figure);
                 (
                     RidleyPhaseName::Roaring,
                     PhaseCells {
@@ -1129,6 +1250,8 @@ mod vectors {
         match name {
             RidleyLookName::Open => RidleyLook::Open,
             RidleyLookName::Rest => RidleyLook::Rest,
+            RidleyLookName::TakeOff1 => RidleyLook::TakeOff1,
+            RidleyLookName::TakeOff2 => RidleyLook::TakeOff2,
             RidleyLookName::Wide => RidleyLook::Wide,
         }
     }
@@ -1137,8 +1260,19 @@ mod vectors {
         match look {
             RidleyLook::Open => RidleyLookName::Open,
             RidleyLook::Rest => RidleyLookName::Rest,
+            RidleyLook::TakeOff1 => RidleyLookName::TakeOff1,
+            RidleyLook::TakeOff2 => RidleyLookName::TakeOff2,
             RidleyLook::Wide => RidleyLookName::Wide,
         }
+    }
+
+    /// Whether he has taken off: the part-3 to part-4b forms name no look from then on, as it
+    /// is part 4c's.
+    const fn taken_off(phase: RidleyPhase) -> bool {
+        matches!(
+            phase,
+            RidleyPhase::InFlight(_) | RidleyPhase::Attacking(_) | RidleyPhase::GivingUp(_)
+        )
     }
 
     // ------------------------------------------------------------ Ridley's content
@@ -1247,7 +1381,10 @@ mod vectors {
             runs: cells.runs,
             figure: cells.figure,
             figure_runs: cells.figure_runs,
-            look: ridley.look.map(ridley_look_name),
+            look: ridley
+                .look
+                .filter(|_| !taken_off(ridley.phase))
+                .map(ridley_look_name),
             position: Some(point_row(ridley.position)),
             baby: Some(baby_after(ridley.baby)),
             shown: Some(CeresRidley::SHOWN),
@@ -1292,13 +1429,13 @@ mod vectors {
         }
     }
 
-    /// The curl a vector's `ridley` names: a part-4b vector names it; the others name none and
-    /// run with the curl he is placed with, which their checks don't read.
+    /// The curl a vector's `ridley` names: a part-4b or part-4c-1a vector names it; the others
+    /// name none and run with the curl he is placed with, which their checks don't read.
     fn curl(vector: &Vector, row: &RidleyRow) -> TailCurl {
         assert_eq!(
-            vector.names_tail(),
+            vector.names_tail() || vector.names_flight(),
             row.curl.is_some(),
-            "{}: the part-4b vectors alone name the curl",
+            "{}: the part-4b and part-4c-1a vectors alone name the curl",
             vector.id
         );
         row.curl.map_or(TailCurl::PLACED, |curl| {
@@ -1306,36 +1443,112 @@ mod vectors {
         })
     }
 
+    /// The baby a vector's `baby` names; a flight vector names none, and runs with the baby as
+    /// he is placed, whose routine its check doesn't read.
+    fn baby(vector: &Vector) -> Baby {
+        assert_eq!(
+            vector.names_flight(),
+            vector.baby.is_none(),
+            "{}: every form but the part-4c-1a one names the baby",
+            vector.id
+        );
+        vector.baby.as_ref().map_or(Baby::NEW, |row| Baby {
+            routine: routine(row),
+            position: None,
+        })
+    }
+
+    /// Ridley as a vector's `ridley` names him. The fields from his flight on are 0, or none,
+    /// where it doesn't name them: as he is placed.
+    fn ridley(vector: &Vector) -> CeresRidley {
+        let row = vector.ridley.as_ref().expect("a run starts from his state");
+        let [fraction_x, fraction_y] = row.fraction.unwrap_or_default();
+        let [speed_x, speed_y] = row.speed.unwrap_or_default();
+        CeresRidley {
+            phase: ridley_phase(row),
+            look: row.look.map(ridley_look),
+            position: point(row.position),
+            fraction: Pair {
+                x: fraction_x,
+                y: fraction_y,
+            },
+            speed: Pair {
+                x: Wrapping(speed_x),
+                y: Wrapping(speed_y),
+            },
+            takeoff: row
+                .takeoff_figure
+                .map(|number| figure_sequence(TIMED_TAKEOFF_FIGURES, number, row.takeoff_runs)),
+            hover_runs: HoverRuns::new(row.hover_runs.unwrap_or(0))
+                .expect("his hover's runs are 0 to 123"),
+            baby: baby(vector),
+            curl: curl(vector, row),
+        }
+    }
+
+    /// His flight's run as a part-4c-1a vector's `ridley_after` reads it; a run on which he
+    /// gives up is the next part's, and holds his phase alone.
+    fn flight_after(run: &RidleyRun) -> RidleyAfter {
+        let ridley = run.ridley;
+        let (phase, cells) = ridley_phase_row(ridley.phase);
+        if matches!(ridley.phase, RidleyPhase::GivingUp(_)) {
+            return RidleyAfter {
+                phase: Some(phase),
+                ..RidleyAfter::default()
+            };
+        }
+        let (takeoff_figure, takeoff_runs) = ridley.takeoff.map_or((None, None), |figure| {
+            figure_sequence_cells(TIMED_TAKEOFF_FIGURES, figure)
+        });
+        RidleyAfter {
+            phase: Some(phase),
+            wait: cells.wait,
+            figure: cells.figure,
+            figure_runs: cells.figure_runs,
+            takeoff_figure,
+            takeoff_runs,
+            look: ridley.look.map(ridley_look_name),
+            position: Some(point_row(ridley.position)),
+            fraction: Some([ridley.fraction.x, ridley.fraction.y]),
+            speed: Some([ridley.speed.x.0, ridley.speed.y.0]),
+            hover_runs: Some(ridley.hover_runs.get()),
+            curl: Some(ridley.curl.get()),
+            tangible: Some(ridley.phase.tangible()),
+            moving: Some(ridley.phase.moving()),
+            roaring: Some(ridley.phase.roaring()),
+            music: Some(run.music.is_some()),
+            roar: Some(run.roar.is_some()),
+            held: ridley.baby.position.map(point_row),
+            bound: run.bound.map(bound_name),
+            shake: run.shake.map(flight_shake_row),
+            ..RidleyAfter::default()
+        }
+    }
+
     /// One run of him and the baby from the vector's `ridley` and `baby`, with its content. A
-    /// part-4a vector, which names its content, reads his waking's outputs too.
+    /// part-4a vector, which names its content, reads his waking's outputs too; a part-4c-1a
+    /// vector reads his flight's.
     fn ridley_run(vector: &Vector) -> RidleyAfter {
         assert!(
             vector.beaten.is_none(),
             "a run reads nothing of his being beaten"
         );
-        let row = vector.ridley.as_ref().expect("a run starts from his state");
-        let baby = vector
-            .baby
-            .as_ref()
-            .expect("a run starts from the baby's state");
-        let ridley = CeresRidley {
-            phase: ridley_phase(row),
-            look: row.look.map(ridley_look),
-            position: point(row.position),
-            baby: Baby {
-                routine: routine(baby),
-                position: None,
-            },
-            curl: curl(vector, row),
-        };
         let content = vector.content.clone().unwrap_or_else(stand_in_content);
-        let run = ridley.run(
+        let run = ridley(vector).run(
             vector.passing.unwrap_or(false),
             vector.random(),
             vector.tail_her().as_ref(),
+            vector.fight(),
             &ridley_content(&content),
             &rules(&vector.rules),
         );
+        if vector.names_flight() {
+            assert!(
+                vector.tail_her().is_none(),
+                "the tail in flight is part 4c-1b's"
+            );
+            return flight_after(&run);
+        }
         let part_3 = RidleyAfter {
             cry: Some(run.cry.is_some()),
             colours: run.colours.map(baby_colours_name),

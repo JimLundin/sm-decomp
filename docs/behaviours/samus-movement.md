@@ -45,7 +45,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | transition firing aim | optional `FiringDirection`, defined below; a publication, not a distance | a shot made while her pose changes keeps the intended gun direction | output (weapons-projectiles `CannonOrigin` through caller-held pending aim) |
 | latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
-| her position after her moves | x, y: `P.S` | the mini-map shows the cell her moves leave her in, before the aim change's step and the pose change move her, so a step or a push that takes her across a screen's edge shows there a frame later | output of the frame's first step (§12): the mini-map of the HUD's domain and the hitter (Ridley's tail) read it; each frame works it out, so it isn't State; `MovesAsShePosed` |
+| her position after her moves | x, y: `P.S` | the mini-map shows the cell her moves leave her in, before the aim change's step and the pose change move her, so a step or a push that takes her across a screen's edge shows there a frame later | output of the frame's first step (§12): the mini-map of the HUD's domain reads it (a hitter reads her position as the frame starts instead); each frame works it out, so it isn't State; `MovesAsShePosed` |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround`; output (samus-appearance reads `vertical speed after her moves`, §1.4) |
@@ -2225,22 +2225,23 @@ way. How she looks is [samus-appearance](samus-appearance.md)'s.
 **What she reads.** The frame's hit, from the hitter: none, or a hit with its **side** (`Side`:
 `Left` or `Right`, the way it pushes her) and its **push time** (`PushFrames`, frames, 1 to 45).
 The hitter decides both: in Ceres, Ridley's tail (boss-ceres-ridley's `TailHits`, the same hit
-samus-health reads as `TailImpact`), from her position and body after her moves; her body is this
-domain's content (§1.3, body size). The hit is known after her moves, and after any hit that
-frame is known she reacts to it in the same frame (below). Up to 45
+samus-health takes as `Impact`), and the escape's steam (boss-ceres-ridley's `PuffTouches`), each
+from her position and body as the frame starts, before her moves; her body is this domain's
+content (§1.3, body size). The hit is known before her moves, and she reacts to it after them in
+the same frame (below). Up to 45
 frames, an `Up` push's rise stays above 0 to its end (`PushMoves`); more, or a ceiling stopping
 an `Up` push, is out of scope (§10).
 
-**The frame's two steps.** A frame of hers is two steps, in this order, and between them the
-hitter judges the frame's hit and samus-health takes its damage:
+**The frame's two steps.** A frame of hers is two steps, in this order. The hitters judge the
+frame's hit as the frame starts, before the first; samus-health takes its damage between them:
 
 1. **Her moves:** everything up to `her position after her moves` (§1, `MovesAsShePosed`): her
    horizontal and vertical moves in the pose she started the frame in, the push's moves
    (`PushMoves`), the leap's (`BackwardLeap`) and the drop the frame after a push
    (`AfterThePush`, whose falling or landing pose is the chosen one); and the choice of the pose the pad, her animation's end and her moves ask for (§7), not yet taken.
-   It gives `her position after her moves` and the §1.4 outputs. The hitter reads that position
-   and the body she started the frame in, whose size is this domain's content (§1.3); it reads
-   nothing else of hers.
+   It gives `her position after her moves` and the §1.4 outputs. A hitter reads her position as
+   the frame starts and the body she started the frame in, whose size is this domain's content
+   (§1.3); it reads nothing else of hers.
 2. **Her reaction, after any hit that frame is known:** the hit's push time and side
    (`PushTime`), the push's start (`PushStarts`) in place of the chosen pose, or else the chosen
    pose; the aim change's step (`AimingAndShooting`), pose fit (`PoseFitAfterMoves`) and the

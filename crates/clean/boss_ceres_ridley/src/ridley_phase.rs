@@ -1,17 +1,56 @@
-//! Where Ridley is from his placing to his take-off, and how each run moves him on: he holds
-//! through the door's passage, waits in the dark and wakes; his eye lights up and his body fades
-//! in; tangible, he readies his roar, roars, and takes off.
+//! Where Ridley is from his placing to the end of his flight, and how each run before his
+//! take-off moves him on: he holds through the door's passage, waits in the dark and wakes; his
+//! eye lights up and his body fades in; tangible, he readies his roar, roars, and takes off. His
+//! flight's phases are here too; the flight's own rules move him through them.
 
-use core::num::NonZeroU16;
+use core::num;
 
 use crate::ridley_wait::RidleyWait;
 use crate::roar::{RidleyLook, RoarFigure};
 use crate::rules::Rules;
 use crate::waking::{BodyColours, EyeColours, ReadyWait, RidleyContent, RoarWait};
 
+/// His flight's phases, from his take-off to his hover. Listed alphabetically; the order means
+/// nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FlightPhase {
+    /// His take-off: he crouches and hops (`TakesOff`).
+    Flying,
+    /// He hovers, drifting to his point (`Hovers`).
+    Hovering,
+    /// He rises, faster and faster (`Rises`).
+    Rising,
+    /// Rising, he slows (`SlowsDown`).
+    Slowing,
+}
+
+/// The attack he turns to from his hover; from the next run on a later part runs him. Listed
+/// alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Attack {
+    /// He breathes fireballs.
+    Fireballs,
+    /// He lunges.
+    Lunge,
+    /// He swoops.
+    Swoop,
+}
+
+/// How he gives up his hover; all he does on that run and after is a later part's. Listed
+/// alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GiveUp {
+    /// His fake retreat, after her 100th hit on him.
+    FakeRetreat,
+    /// His retreat, once she is nearly out of energy (part 4c-2).
+    Retreating,
+}
+
 /// Where he is, with what each phase carries. Listed alphabetically; the order means nothing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RidleyPhase {
+    /// He turns from his hover to an attack.
+    Attacking(Attack),
     /// His waiting is over: his eye's fade, with no step shown yet.
     Awake,
     /// His body fading in from black, his tail and wings moving.
@@ -24,12 +63,14 @@ pub enum RidleyPhase {
     /// His eye lighting up out of the dark.
     EyeFading {
         /// How many of the eye's steps it has shown, 1 to the steps' count.
-        steps: NonZeroU16,
+        steps: num::NonZeroU16,
     },
-    /// His roar over, he takes off: from this run on his next part runs him.
-    Flying,
+    /// He gives up his hover.
+    GivingUp(GiveUp),
     /// Placed, the door's passage into his room still under way.
     Holding,
+    /// His roar over, he flies: his take-off, his rise and his hover.
+    InFlight(FlightPhase),
     /// Tangible, holding still a moment before he roars.
     ReadyToRoar {
         /// The runs left before the one he starts his roar on.
@@ -63,12 +104,13 @@ impl RoarSound {
     pub const QUEUE_LIMIT: u8 = 6;
 }
 
-/// What one run of his phase leaves: the phase and his look, and what it hands on.
+/// What one run of his phase before his take-off leaves: the phase and his look, and what it
+/// hands on.
 pub struct PhaseRun {
     /// The phase as the run leaves it.
     pub phase: RidleyPhase,
-    /// His look; none from his take-off on, when his next part gives it.
-    pub look: Option<RidleyLook>,
+    /// His look.
+    pub look: RidleyLook,
     /// The eye's colour set the screen takes, if any.
     pub eye: Option<EyeColours>,
     /// The body's colour set the screen takes, if any.
@@ -85,29 +127,38 @@ impl PhaseRun {
     const fn at_rest(phase: RidleyPhase) -> Self {
         Self {
             phase,
-            look: Some(RidleyLook::Rest),
+            look: RidleyLook::Rest,
             eye: None,
             body: None,
             music: None,
             roar: None,
         }
     }
+}
 
-    /// `Roars`: his take-off: his figure and all he does from this run on are his next part's.
-    const TAKEN_OFF: Self = Self {
-        look: None,
-        ..Self::at_rest(RidleyPhase::Flying)
-    };
+/// Which rules a run of him follows, by the phase it starts in.
+pub enum PhaseStep {
+    /// A run before his take-off, by his waking's rules, and what it leaves.
+    Waking(PhaseRun),
+    /// `Roars`: his roar's wait over, he takes off on this run (`TakesOff`).
+    TakesOff,
+    /// A run of his flight, by this phase's rule (`TakesOff`, `Rises`, `SlowsDown`, `Hovers`).
+    Flies(FlightPhase),
+    /// He has turned to an attack or given up: a later part runs him.
+    HandedOver,
 }
 
 impl RidleyPhase {
-    /// Whether her touch and her shots meet him: from the run he takes his body's last set on.
-    /// Before, they go through him.
+    /// Whether her touch and her shots meet him: from the run he takes his body's last set on,
+    /// through his flight to the run he turns to an attack. Before, they go through him.
     #[must_use]
     pub const fn tangible(self) -> bool {
         matches!(
             self,
-            Self::ReadyToRoar { .. } | Self::Roaring { .. } | Self::Flying
+            Self::ReadyToRoar { .. }
+                | Self::Roaring { .. }
+                | Self::InFlight(_)
+                | Self::Attacking(_)
         )
     }
 
@@ -119,7 +170,9 @@ impl RidleyPhase {
             Self::BodyFading { .. }
                 | Self::ReadyToRoar { .. }
                 | Self::Roaring { .. }
-                | Self::Flying
+                | Self::InFlight(_)
+                | Self::Attacking(_)
+                | Self::GivingUp(_)
         )
     }
 
@@ -139,8 +192,8 @@ impl RidleyPhase {
         matches!(self, Self::Roaring { figure, .. } if figure.roaring())
     }
 
-    /// One run of his phase, reading whether a door's passage is under way, his content and
-    /// the rules.
+    /// Which rules a run starting in this phase follows; before his take-off, the run of his
+    /// phase by them, reading whether a door's passage is under way, his content and the rules.
     ///
     /// `RidleyWaits`: he holds while a door's passage is under way; once it is over he starts
     /// his wait, the first frame counted, and counts it down a run at a time; on the run he
@@ -151,8 +204,8 @@ impl RidleyPhase {
         passage_under_way: bool,
         content: &RidleyContent,
         rules: &Rules,
-    ) -> PhaseRun {
-        match self {
+    ) -> PhaseStep {
+        let waking = match self {
             Self::Holding if passage_under_way => PhaseRun::at_rest(Self::Holding),
             Self::Holding => PhaseRun::at_rest(Self::Waiting {
                 wait: rules.wake.first_count(),
@@ -171,9 +224,11 @@ impl RidleyPhase {
                 },
                 |wait| Self::ReadyToRoar { wait },
             )),
-            Self::Roaring { wait, figure } => roar_step(wait, figure),
-            Self::Flying => PhaseRun::TAKEN_OFF,
-        }
+            Self::Roaring { wait, figure } => return roar_step(wait, figure),
+            Self::InFlight(flight) => return PhaseStep::Flies(flight),
+            Self::Attacking(_) | Self::GivingUp(_) => return PhaseStep::HandedOver,
+        };
+        PhaseStep::Waking(waking)
     }
 }
 
@@ -186,7 +241,7 @@ fn eye_step(shown: u16, content: &RidleyContent) -> PhaseRun {
         |colours| PhaseRun {
             eye: Some(colours),
             ..PhaseRun::at_rest(RidleyPhase::EyeFading {
-                steps: NonZeroU16::MIN.saturating_add(shown),
+                steps: num::NonZeroU16::MIN.saturating_add(shown),
             })
         },
     )
@@ -223,13 +278,13 @@ fn body_step(sets: u16, runs: u8, content: &RidleyContent, rules: &Rules) -> Pha
 /// `Roars`: a run of his roar: while its wait is over 0 it counts down and the figure moves on,
 /// his look the figure's, the roar heard as its second figure starts; at 0 he takes off,
 /// whatever the figure.
-fn roar_step(wait: RoarWait, figure: RoarFigure) -> PhaseRun {
-    wait.counted_down().map_or(PhaseRun::TAKEN_OFF, |wait| {
+fn roar_step(wait: RoarWait, figure: RoarFigure) -> PhaseStep {
+    wait.counted_down().map_or(PhaseStep::TakesOff, |wait| {
         let figure = figure.ran();
-        PhaseRun {
-            look: Some(figure.look()),
+        PhaseStep::Waking(PhaseRun {
+            look: figure.look(),
             roar: figure.heard().then_some(RoarSound),
             ..PhaseRun::at_rest(RidleyPhase::Roaring { wait, figure })
-        }
+        })
     })
 }

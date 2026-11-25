@@ -1,7 +1,8 @@
 //! The station's tuning values, the doors', the shaft's and Ridley's, his waking's and his tail's:
 //! every number a Parameter entry of the spec lists.
 
-use core::num::{NonZeroU8, NonZeroU16, Wrapping};
+use core::num;
+use core::num::Wrapping;
 
 use types::Px;
 
@@ -41,7 +42,8 @@ const FLOOR: Px = Wrapping(72);
 /// `BeaconCycles`: the rhythm, in frames a step.
 const RHYTHM_FRAMES: u16 = 8;
 /// `BeaconCycles`: the rhythm, 8 frames a step.
-const RHYTHM: NonZeroU16 = NonZeroU16::new(RHYTHM_FRAMES).expect("the rhythm is 8 frames, not 0");
+const RHYTHM: num::NonZeroU16 =
+    num::NonZeroU16::new(RHYTHM_FRAMES).expect("the rhythm is 8 frames, not 0");
 /// `SlamShut`: the slam's hold of each figure, in frames.
 const SLAM_FRAMES: u16 = 2;
 /// `SlamShut`: the slam's hold, 2 frames for each figure.
@@ -53,7 +55,7 @@ const WAKE: WakeWait = WakeWait::new(WAKE_FRAMES).expect("the wait is 512, from 
 /// `BodyFadesIn`: the pace, in runs a set.
 const PACE_RUNS: u8 = 2;
 /// `BodyFadesIn`: the pace, 2 runs a set.
-const PACE: NonZeroU8 = NonZeroU8::new(PACE_RUNS).expect("the pace is 2 runs, not 0");
+const PACE: num::NonZeroU8 = num::NonZeroU8::new(PACE_RUNS).expect("the pace is 2 runs, not 0");
 /// `TailHits`: the tail's reach, in pixels.
 const TAIL_REACH: u8 = 14;
 
@@ -82,14 +84,14 @@ pub struct Rules {
     pub floor: Px,
     /// `BeaconCycles`: the rhythm, the frames the beacon shows each step of its cycle; a rule
     /// from 1 to 65,535 frames.
-    pub rhythm: NonZeroU16,
+    pub rhythm: num::NonZeroU16,
     /// `SlamShut`: the wait of each figure of the slam of Ridley's room's door.
     pub slam: Wait,
     /// `RidleyWaits`: how long Ridley waits in the dark once the passage into his room is over.
     pub wake: WakeWait,
     /// `BodyFadesIn`: the pace, the runs his body shows each of its colour sets for as it fades
     /// in; a rule from 1 to 255 runs.
-    pub pace: NonZeroU8,
+    pub pace: num::NonZeroU8,
     /// `TailHits`: the tail's reach, how much closer than her half-size on each axis she can
     /// come to his tail's tip before it hits her; a rule from 0 to 255 px.
     pub tail_reach: u8,

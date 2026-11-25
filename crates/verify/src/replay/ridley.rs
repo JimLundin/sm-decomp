@@ -6,9 +6,10 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField, WramWord};
 use boss_ceres_ridley::{
-    Baby, BabyFigure, BabyRoutine, CeresRidley, FidgetFigure, FigureLength as _, GlowFigure,
-    ReadyWait, RidleyLook, RidleyPhase, RidleyWait, RoarFigure, RoarWait, ShownFigure, TailCurl,
-    TimedRoarFigure,
+    Attack, Baby, BabyFigure, BabyRoutine, CeresRidley, FidgetFigure, FigureLength as _,
+    FlightPhase, GiveUp, GlowFigure, HoverRuns, ReadyWait, RidleyLook, RidleyPhase, RidleyWait,
+    RoarFigure, RoarWait, ShownFigure, TailCurl, TakeOffFigure, TimedRoarFigure,
+    TimedTakeOffFigure,
 };
 use core::num::{NonZeroU16, Wrapping};
 use enum_map::Enum as _;
@@ -81,6 +82,22 @@ const ROAR_FIGURES: [(u16, TimedRoarFigure); 4] = [
 ];
 const ROAR_FIFTH: u16 = 0xE6AC;
 
+/// His take-off's list entries for its first four figures, as the step leaves them, and for its
+/// fifth.
+const TAKEOFF_FIGURES: [(u16, TimedTakeOffFigure); 4] = [
+    (0xE925, TimedTakeOffFigure::First),
+    (0xE92F, TimedTakeOffFigure::Second),
+    (0xE939, TimedTakeOffFigure::Third),
+    (0xE93F, TimedTakeOffFigure::Fourth),
+];
+const TAKEOFF_FIFTH: u16 = 0xE943;
+
+/// His hover's runs without reaching his point.
+const HOVER_RUNS: WramWord = WramWord {
+    name: "CERES_RIDLEY_HOVER_RUNS",
+    offset: 0x7800,
+};
+
 fn unsupported(dependency: &str) -> Outcome {
     Outcome::Unsupported {
         cut: None,
@@ -141,17 +158,36 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
         return Ok(None);
     };
     let phase = phase(wram, slot)?;
-    // From his take-off his figure is his next part's.
-    let look = if phase == RidleyPhase::Flying {
-        None
+    let look = match slot_word(wram, slot, source::ENEMY_SPRITEMAP)? {
+        0x804F => None,
+        0xE983 => Some(RidleyLook::Rest),
+        0xE9C7 => Some(RidleyLook::Open),
+        0xE9E9 => Some(RidleyLook::Wide),
+        0xEA4F => Some(RidleyLook::TakeOff1),
+        0xEA71 => Some(RidleyLook::TakeOff2),
+        _ => return Err(unsupported("Ceres Ridley look observation")),
+    };
+    let [_, speed_x, speed_y, ..] = source::ENEMY_AI_VARIABLES;
+    // His fractions are his subpositions' high bytes; their low bytes stay 0, and a record
+    // with either low byte set holds a fraction he doesn't keep.
+    let fraction = |field| match slot_word(wram, slot, field)?.to_be_bytes() {
+        [high, 0] => Ok(high),
+        [_, _] => Err(unsupported("Ceres Ridley fraction observation")),
+    };
+    let flown = !matches!(
+        phase,
+        RidleyPhase::Holding
+            | RidleyPhase::Waiting { .. }
+            | RidleyPhase::Awake
+            | RidleyPhase::EyeFading { .. }
+            | RidleyPhase::BodyFading { .. }
+            | RidleyPhase::ReadyToRoar { .. }
+            | RidleyPhase::Roaring { .. }
+    );
+    let takeoff = if flown {
+        Some(takeoff_figure(wram, slot)?)
     } else {
-        match slot_word(wram, slot, source::ENEMY_SPRITEMAP)? {
-            0x804F => None,
-            0xE983 => Some(RidleyLook::Rest),
-            0xE9C7 => Some(RidleyLook::Open),
-            0xE9E9 => Some(RidleyLook::Wide),
-            _ => return Err(unsupported("Ceres Ridley look observation")),
-        }
+        None
     };
     let seen = Shows {
         tangible: slot_word(wram, slot, source::ENEMY_PROPERTIES)? & INTANGIBLE == 0,
@@ -165,6 +201,19 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
             x: Wrapping(slot_word(wram, slot, source::ENEMY_X_POS)?),
             y: Wrapping(slot_word(wram, slot, source::ENEMY_Y_POS)?),
         },
+        fraction: Pair {
+            x: fraction(source::ENEMY_X_SUBPOS)?,
+            y: fraction(source::ENEMY_Y_SUBPOS)?,
+        },
+        speed: Pair {
+            x: Wrapping(slot_word(wram, slot, speed_x)?.cast_signed()),
+            y: Wrapping(slot_word(wram, slot, speed_y)?.cast_signed()),
+        },
+        takeoff,
+        hover_runs: u8::try_from(read(wram, HOVER_RUNS)?)
+            .ok()
+            .and_then(HoverRuns::new)
+            .ok_or_else(|| unsupported("Ceres Ridley hover observation"))?,
         baby: baby(wram)?,
         curl: u8::try_from(read(wram, TAIL_CURL)?)
             .ok()
@@ -237,7 +286,15 @@ fn phase(wram: &[u8], slot: u16) -> Result<RidleyPhase, Outcome> {
             wait: RoarWait::new(runs(wait)?).ok_or_else(wait_unsupported)?,
             figure: roar_figure(wram, slot)?,
         },
-        0xA354 => RidleyPhase::Flying,
+        0xA354 => RidleyPhase::InFlight(FlightPhase::Flying),
+        0xA6AF => RidleyPhase::InFlight(FlightPhase::Rising),
+        0xA6C8 => RidleyPhase::InFlight(FlightPhase::Slowing),
+        0xA6E8 => RidleyPhase::InFlight(FlightPhase::Hovering),
+        0xA782 => RidleyPhase::Attacking(Attack::Fireballs),
+        0xA83C => RidleyPhase::Attacking(Attack::Lunge),
+        0xA88D => RidleyPhase::Attacking(Attack::Swoop),
+        0xA971 => RidleyPhase::GivingUp(GiveUp::Retreating),
+        0xBD9A => RidleyPhase::GivingUp(GiveUp::FakeRetreat),
         _ => return Err(unsupported("Ceres Ridley phase observation")),
     })
 }
@@ -275,6 +332,28 @@ fn roar_figure(wram: &[u8], slot: u16) -> Result<RoarFigure, Outcome> {
         .ok_or_else(bad)
 }
 
+/// The take-off's figure from his list and its timer, as for the roar's.
+fn takeoff_figure(wram: &[u8], slot: u16) -> Result<TakeOffFigure, Outcome> {
+    let list = slot_word(wram, slot, source::ENEMY_INSTRUCTION)?;
+    if list == TAKEOFF_FIFTH {
+        return Ok(TakeOffFigure::Fifth);
+    }
+    let bad = || unsupported("Ceres Ridley take-off observation");
+    let (_, figure) = TAKEOFF_FIGURES
+        .into_iter()
+        .find(|&(entry, _)| entry == list)
+        .ok_or_else(bad)?;
+    let timer =
+        u8::try_from(slot_word(wram, slot, source::ENEMY_INSTRUCTION_TIMER)?).map_err(|_| bad())?;
+    figure
+        .length()
+        .checked_add(1)
+        .and_then(|after| after.checked_sub(timer))
+        .and_then(|runs| ShownFigure::new(figure, runs))
+        .map(TakeOffFigure::Timed)
+        .ok_or_else(bad)
+}
+
 /// The baby as the record holds it: its routine from its list, and its position once it has run.
 fn baby(wram: &[u8]) -> Result<Baby, Outcome> {
     let list = read(wram, BABY_LIST)?;
@@ -305,6 +384,45 @@ fn baby(wram: &[u8]) -> Result<Baby, Outcome> {
     })
 }
 
+/// Each phase's code, with its count, its runs and its wait where it has them.
+fn phase_code(phase: RidleyPhase) -> (i64, u16, u8, u16) {
+    match phase {
+        RidleyPhase::Holding => (0, 0, 0, 0),
+        RidleyPhase::Waiting { wait } => (1, 0, 0, wait.runs()),
+        RidleyPhase::Awake => (2, 0, 0, 0),
+        RidleyPhase::EyeFading { steps } => (3, steps.get(), 0, 0),
+        RidleyPhase::BodyFading { sets, runs } => (4, sets, runs, 0),
+        RidleyPhase::ReadyToRoar { wait } => (5, 0, 0, u16::from(wait.runs())),
+        RidleyPhase::Roaring { wait, .. } => (6, 0, 0, u16::from(wait.runs())),
+        RidleyPhase::InFlight(FlightPhase::Flying) => (7, 0, 0, 0),
+        RidleyPhase::InFlight(FlightPhase::Rising) => (8, 0, 0, 0),
+        RidleyPhase::InFlight(FlightPhase::Slowing) => (9, 0, 0, 0),
+        RidleyPhase::InFlight(FlightPhase::Hovering) => (10, 0, 0, 0),
+        RidleyPhase::Attacking(Attack::Fireballs) => (11, 0, 0, 0),
+        RidleyPhase::Attacking(Attack::Lunge) => (12, 0, 0, 0),
+        RidleyPhase::Attacking(Attack::Swoop) => (13, 0, 0, 0),
+        RidleyPhase::GivingUp(GiveUp::Retreating) => (14, 0, 0, 0),
+        RidleyPhase::GivingUp(GiveUp::FakeRetreat) => (15, 0, 0, 0),
+    }
+}
+
+/// The take-off's figure as a code, 1 to 5 (0 before he takes off), with its runs.
+const fn takeoff_code(takeoff: Option<TakeOffFigure>) -> (i64, u8) {
+    match takeoff {
+        None => (0, 0),
+        Some(TakeOffFigure::Timed(shown)) => (
+            match shown.figure() {
+                TimedTakeOffFigure::First => 1,
+                TimedTakeOffFigure::Second => 2,
+                TimedTakeOffFigure::Third => 3,
+                TimedTakeOffFigure::Fourth => 4,
+            },
+            shown.runs(),
+        ),
+        Some(TakeOffFigure::Fifth) => (5, 0),
+    }
+}
+
 /// Ridley's State by part, so a difference names the part that differs, with what his phase
 /// shows and his tail's segments; whether he is in the room first.
 pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Vec<Observation> {
@@ -315,17 +433,7 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Ve
     let Some((ridley, seen, tail)) = ridley else {
         return fields;
     };
-    // Each phase's code, with its count, its runs and its wait where it has them.
-    let (phase, count, runs, wait) = match ridley.phase {
-        RidleyPhase::Holding => (0, 0, 0, 0),
-        RidleyPhase::Waiting { wait } => (1, 0, 0, wait.runs()),
-        RidleyPhase::Awake => (2, 0, 0, 0),
-        RidleyPhase::EyeFading { steps } => (3, steps.get(), 0, 0),
-        RidleyPhase::BodyFading { sets, runs } => (4, sets, runs, 0),
-        RidleyPhase::ReadyToRoar { wait } => (5, 0, 0, u16::from(wait.runs())),
-        RidleyPhase::Roaring { wait, .. } => (6, 0, 0, u16::from(wait.runs())),
-        RidleyPhase::Flying => (7, 0, 0, 0),
-    };
+    let (phase, count, runs, wait) = phase_code(ridley.phase);
     let (figure, figure_runs) = match ridley.phase {
         RidleyPhase::Roaring {
             figure: RoarFigure::Timed(shown),
@@ -349,13 +457,18 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Ve
         | RidleyPhase::EyeFading { .. }
         | RidleyPhase::BodyFading { .. }
         | RidleyPhase::ReadyToRoar { .. }
-        | RidleyPhase::Flying => (0, 0),
+        | RidleyPhase::InFlight(_)
+        | RidleyPhase::Attacking(_)
+        | RidleyPhase::GivingUp(_) => (0, 0),
     };
+    let (takeoff, takeoff_runs) = takeoff_code(ridley.takeoff);
     let look = match ridley.look {
         None => 0,
         Some(RidleyLook::Rest) => 1,
         Some(RidleyLook::Open) => 2,
         Some(RidleyLook::Wide) => 3,
+        Some(RidleyLook::TakeOff1) => 4,
+        Some(RidleyLook::TakeOff2) => 5,
     };
     let (routine, baby_runs) = match ridley.baby.routine {
         BabyRoutine::New => (0, 0),
@@ -384,6 +497,15 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Ve
             ("ridley.roaring", i64::from(seen.roaring)),
             ("ridley.position", place(Some(ridley.position))),
             (
+                "ridley.fraction",
+                (i64::from(ridley.fraction.x) << 8) | i64::from(ridley.fraction.y),
+            ),
+            ("ridley.speed.x", i64::from(ridley.speed.x.0)),
+            ("ridley.speed.y", i64::from(ridley.speed.y.0)),
+            ("ridley.takeoff.figure", takeoff),
+            ("ridley.takeoff.runs", i64::from(takeoff_runs)),
+            ("ridley.hover.runs", i64::from(ridley.hover_runs.get())),
+            (
                 "ridley.baby.routine",
                 i64::try_from(routine).unwrap_or(i64::MAX),
             ),
@@ -404,12 +526,59 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Ve
 #[cfg(test)]
 mod tests {
     use super::{Shows, baby, observations, observed, seed, tail_segments};
-    use boss_ceres_ridley::{BabyRoutine, RidleyLook, RidleyPhase, RoarFigure};
+    use boss_ceres_ridley::{
+        BabyRoutine, FlightPhase, RidleyLook, RidleyPhase, RoarFigure, TakeOffFigure,
+        TimedTakeOffFigure,
+    };
     use core::num::Wrapping;
     use types::Pair;
 
     fn write(wram: &mut [u8], at: usize, value: u16) {
         wram[at..at.saturating_add(2)].copy_from_slice(&value.to_le_bytes());
+    }
+
+    #[test]
+    fn his_take_off_decodes_from_his_slot_and_his_hovers_word() {
+        let mut wram = vec![0; 0x10000];
+        let slot = 0x0F78 + 2 * 0x40;
+        for (at, value) in [
+            (slot, 0xE13F),
+            (slot + 0x0E, 0x0400),
+            (0x201E, 16),
+            (0x7806, 0xBF31),
+        ] {
+            write(&mut wram, at, value);
+        }
+        // Taking off: his second figure's second run of 4, crouched; his speed and fractions from
+        // his slot, his hover's runs from their word.
+        write(&mut wram, slot + 0x30, 0xA354);
+        write(&mut wram, slot + 0x1A, 0xE92F);
+        write(&mut wram, slot + 0x1C, 3);
+        write(&mut wram, slot + 0x16, 0xEA4F);
+        write(&mut wram, slot + 0x04, 0x4000);
+        write(&mut wram, slot + 0x34, 0xFEA0);
+        write(&mut wram, 0x7800, 5);
+        let flying = seed(&wram).unwrap().unwrap();
+        assert_eq!(flying.phase, RidleyPhase::InFlight(FlightPhase::Flying));
+        assert_eq!(flying.look, Some(RidleyLook::TakeOff1));
+        assert!(matches!(
+            flying.takeoff,
+            Some(TakeOffFigure::Timed(shown))
+                if shown.figure() == TimedTakeOffFigure::Second && shown.runs() == 2
+        ));
+        assert_eq!(flying.fraction, Pair { x: 0x40, y: 0 });
+        assert_eq!(flying.speed.y, Wrapping(-352));
+        assert_eq!(flying.hover_runs.get(), 5);
+        // A fraction's low byte set is not a fraction he keeps, on either axis.
+        for subposition in [slot + 0x04, slot + 0x08] {
+            write(&mut wram, subposition, 0x4001);
+            assert!(seed(&wram).is_err());
+            write(&mut wram, subposition, 0x4000);
+        }
+        assert!(seed(&wram).is_ok());
+        // A timer past the figure's length is not one he holds.
+        write(&mut wram, slot + 0x1C, 5);
+        assert!(seed(&wram).is_err());
     }
 
     #[test]
@@ -441,7 +610,7 @@ mod tests {
         // Waiting, his tail has no resting place.
         let tail = tail_segments(&wram, ridley.phase).unwrap();
         assert_eq!(tail, vec![None; 7]);
-        assert_eq!(observations(Some((&ridley, seen, &tail))).len(), 23);
+        assert_eq!(observations(Some((&ridley, seen, &tail))).len(), 29);
         // A curl outside 8 to 23 is not one his tail holds.
         write(&mut wram, 0x201E, 24);
         assert!(seed(&wram).is_err());

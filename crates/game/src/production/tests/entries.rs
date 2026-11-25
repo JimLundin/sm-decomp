@@ -146,6 +146,7 @@ fn ceres_run_preserves_opening_sound_and_actual_shake() {
                 length: 4
             },
             layers: boss_ceres_ridley::ShakeLayers::Whole,
+            motion: boss_ceres_ridley::ShakeMotion::Diagonal,
         })
     );
     assert_eq!(production.state(), &OwnedState::Ceres(output.door));

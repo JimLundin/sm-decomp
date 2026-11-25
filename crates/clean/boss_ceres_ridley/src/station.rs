@@ -65,8 +65,8 @@ pub struct DoorColours {
     pub palette: DoorPalette,
 }
 
-/// How strong and how long a shake is, moving the view diagonally (`EscapeShakes`). The
-/// screen's shaking moves the view and counts its frames down.
+/// How strong and how long a shake is (`EscapeShakes`, `Flies`). The screen's shaking moves the
+/// view and counts its frames down.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Shake {
     /// How far it moves the view, in pixels.
@@ -75,21 +75,33 @@ pub struct Shake {
     pub length: u16,
 }
 
-/// What a shake moves (`EscapeShakes`). Listed alphabetically; the order means nothing.
+/// What a shake moves (`EscapeShakes`, `Flies`). Listed alphabetically; the order means nothing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShakeLayers {
     /// The second background and the enemies, not the first background: the shakes the door
-    /// of Ridley's room starts.
+    /// of Ridley's room starts, and the one Ridley starts as he meets his room's left side.
     Back,
     /// Both backgrounds and the enemies: the shakes every other door starts.
     Whole,
 }
 
-/// A shake a door's run starts: how strong and long it is, and what it moves.
+/// The way a shake moves what it moves. Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShakeMotion {
+    /// Diagonally: the doors' shakes during the escape (`EscapeShakes`).
+    Diagonal,
+    /// Sideways: Ridley's as he meets his room's left side fast (`Flies`).
+    Sideways,
+}
+
+/// A shake a run starts, a door's or Ridley's: how strong and long it is, what it moves and
+/// which way.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ShakeStart {
     /// How strong and long it is.
     pub shake: Shake,
     /// What it moves.
     pub layers: ShakeLayers,
+    /// Which way it moves them.
+    pub motion: ShakeMotion,
 }

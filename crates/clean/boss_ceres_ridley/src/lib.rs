@@ -54,12 +54,21 @@
 //! side and its push time ([`types::TailImpact`]), which her energy and her motion read as it
 //! stands.
 //!
+//! **His take-off and flight.** His roar over, he crouches, hops twice up and to the left and
+//! springs into the air; he rises fast, slows, and hovers, his speed drawn to his point
+//! ([`HIS_POINT`]), until she is nearly out of energy or his hits taken reach their limit and
+//! he gives up, or he reaches his point or tires of hovering and turns to an attack. The same
+//! [`CeresRidley::run`] carries him, reading how the fight stands ([`Fight`]); every run he
+//! moves by his speed within the room's bounds, and the run answers with the bound he met and
+//! the shake he starts as he meets the room's left side fast.
+//!
 //! The tuning values of all of them are in [`Rules`], whose default holds the spec's values.
 
 mod baby;
 mod catalogue;
 mod door;
 mod figure;
+mod flight;
 mod inputs;
 mod lights;
 mod look;
@@ -74,6 +83,7 @@ mod rules;
 mod shown;
 mod station;
 mod tail;
+mod takeoff;
 mod waking;
 
 pub use baby::{
@@ -83,6 +93,7 @@ pub use baby::{
 pub use catalogue::{Behaviour, BehaviourId, catalogue};
 pub use door::{BOX_RADIUS, CeresDoor, DoorKind, OpeningSound, Placement, Run};
 pub use figure::{Figure, FigureLook};
+pub use flight::{Bound, Fight, HIS_POINT, HoverRuns, Speed};
 pub use inputs::Inputs;
 pub use lights::{BeaconStep, FadeSteps, Lights, LightsInputs};
 pub use look::AlternatingLook;
@@ -93,11 +104,14 @@ pub use ridley::{
     Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyPlacing, RidleyRun,
     RoomColours, ShakeStop,
 };
-pub use ridley_phase::{FightMusic, RidleyPhase, RoarSound};
+pub use ridley_phase::{Attack, FightMusic, FlightPhase, GiveUp, RidleyPhase, RoarSound};
 pub use ridley_wait::{RidleyWait, WakeWait};
 pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
-pub use shown::{FigureLength, ShownFigure};
-pub use station::{ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeStart, Stage};
+pub use shown::{FigureLength, FigureSequence, NextFigure, ShownFigure};
+pub use station::{
+    ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeMotion, ShakeStart, Stage,
+};
 pub use tail::{Her, TailCurl};
+pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
 pub use waking::{BodyColours, EyeColours, FadeSets, ReadyWait, RidleyContent, RoarWait, RunsLeft};

@@ -28,10 +28,11 @@
 //! passage's calls is done, the room's loading loads its part of the next room; building it
 //! replaces her room: what her moves meet, its doors to other rooms and the camera's room.
 //!
-//! Her movement's frame is two steps: her moves, then her reaction to the frame's hit. Between
-//! them the station's actors run and then Health. Ridley's tail judges the frame's hit, reading
-//! her position as her moves leave her, the body of the pose she started the frame in and her
-//! protection as the frame starts; Health and her reaction both read that one hit. The Ceres
+//! Her movement's frame is two steps: her moves, then her reaction to the frame's hit. The
+//! station's actors run before her moves, and Health between the two steps. Every hitter reads
+//! her position, body and protection as the frame starts: Ridley's tail judges the frame's hit
+//! from her position as the frame starts, the body of the pose she started the frame in and her
+//! protection; Health and her reaction both read that one hit. The Ceres
 //! doors read where she was at the end of the last frame, and her motion meets the boxes of the
 //! Ceres doors that were solid as the frame began. Her appearance reads the energy the frame
 //! starts with against the energy the hit leaves, and whether her reaction started a push, and
@@ -210,8 +211,10 @@ pub enum Fault {
     Quake,
     /// The shaft's lights could not be shown.
     Lights(LightsFault),
-    /// Ridley has taken off: his flight is a later piece's.
-    RidleyFlying,
+    /// Ridley starts a run in an attack: a later part's.
+    RidleyAttacks,
+    /// Ridley starts a run giving up his hover, his retreat or his fake one: a later part's.
+    RidleyGivesUp,
     /// A colour of the baby's content has more than 15 bits.
     BabyColours,
     /// Her suit's content is not sixteen colours of 15 bits.
@@ -226,7 +229,7 @@ impl State {
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
     /// room inputs, the escape with the shaft's overlay in the room ([`Fault::Escape`]), a shake
-    /// the room's quake can't take ([`Fault::Quake`]), Ridley flying ([`Fault::RidleyFlying`]),
+    /// the room's quake can't take ([`Fault::Quake`]), Ridley in an attack or giving up ([`Fault::RidleyAttacks`], [`Fault::RidleyGivesUp`]),
     /// and a next room that doesn't load, such as one placing an
     /// actor no owner here places ([`LoadFault::OtherActors`]).
     pub fn step(
@@ -254,25 +257,29 @@ impl State {
         let room = camera::room(&self.passage.room.camera)?;
         let random = self.frame.drawn(passing);
         let mut palette = self.palette;
-        // Between her moves and her reaction: the enemies, Ridley's tail reading her as her
-        // moves leave her, then Health, reading the hit his run reports.
-        let mut between = |after_moves: types::Position| {
-            let her = self.reached(after_moves, content)?;
-            let running = station::Running::Play(her.as_ref());
-            let enemies = self.enemies(running, random, passing, content, rules, &mut palette)?;
-            let hit = enemies.ridley.and_then(|run| run.hit);
-            Ok(samus::Between {
-                played: (enemies, self.health_frame(hit, content, rules)),
-                hit,
-                energy: self.energy_the_hit_leaves(hit, content, rules),
-            })
+        // Every hitter reads her position, body and protection as the frame starts, as the
+        // game's frame runs the enemies before her moves: Ridley's tail reads her so, and Health
+        // reads the hit his run reports between her moves and her reaction.
+        let at_start = self.reached(self.samus.movement.0.position, content)?;
+        let enemies = self.enemies(
+            station::Running::Play(at_start.as_ref()),
+            random,
+            passing,
+            content,
+            rules,
+            &mut palette,
+        )?;
+        let hit = enemies.ridley.and_then(|run| run.hit);
+        let between = samus::Between {
+            played: (enemies, self.health_frame(hit, content, rules)),
+            hit,
+            energy: self.energy_the_hit_leaves(hit, content, rules),
         };
         let (her, (enemies, health)) = if self.station.pad_and_cover.holds_her() {
             // The pad holds her in the shaft, where no tail reaches her.
-            let between = between(self.samus.movement.0.position)?;
             (self.samus.held(), between.played)
         } else {
-            self.her_frame(inputs, content, rules, between)?
+            self.her_frame(inputs, content, rules, |_| Ok(between))?
         };
         if let (Some(row), Some(colours)) =
             (room_loading::suit_row(&mut palette.screen), her.colours)

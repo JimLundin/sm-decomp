@@ -1,4 +1,4 @@
-# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; parts 2, 3, 4a and 4b below).
+# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors; parts 2, 3, 4a, 4b and 4c-1a below).
 #
 # Format
 # - Each [[vector]] is one run of one door, from its state at the run's start to its state at the
@@ -1840,9 +1840,10 @@ ridley_after = { phase = "Roaring", wait = 99, figure = 5, look = "Rest", positi
 # form (content, ridley, baby, random, rules, ridley_after), or (T-placed) his placing in the
 # part-3 form, with:
 # - ridley.curl and ridley_after.curl: the tail's curl, 8 to 23 (TailCurls).
-# - her (optional, absent: no her to reach): position = [x, y], her position as her moves this
-#   frame leave it, before her reaction to a hit, 16-bit, in decimal; body = [half-width,
-#   half-height], px, of the body she started the frame in; protection, frames, her protection as the frame starts (samus-health).
+# - her (optional, absent: no her to reach): position = [x, y], her position as the frame starts
+#   (where the last frame left her), 16-bit, in decimal; body = [half-width, half-height], px, of
+#   the body she started the frame in; protection, frames, her protection as the frame starts
+#   (samus-health).
 # - ridley_after.tail = [x, y]: where the tail's tip and all seven of its segments are, absent
 #   on a run that ends before he moves; ridley_after.hit = { side, push }: the frame's hit, side
 #   "Left" or "Right", push how long the push lasts, in frames, absent for none.
@@ -1907,7 +1908,7 @@ content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
 ridley = { phase = "Roaring", wait = 163, figure = 3, figure_runs = 76, look = "Wide", position = [186, 169], curl = 16 }
 baby = { routine = "Fidget", step = 1, runs = 7 }
 random = "F86D"
-her = { position = [220, 187], body = [5, 21], protection = 1 }
+her = { position = [216, 187], body = [5, 21], protection = 1 }
 ridley_after = { phase = "Roaring", wait = 162, figure = 3, figure_runs = 77, look = "Wide", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 8, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false, curl = 16, tail = [218, 185] }
 
 [[vector]]
@@ -1919,11 +1920,11 @@ content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
 ridley = { phase = "Roaring", wait = 162, figure = 3, figure_runs = 77, look = "Wide", position = [186, 169], curl = 16 }
 baby = { routine = "Fidget", step = 1, runs = 8 }
 random = "DB32"
-her = { position = [224, 187], body = [5, 21], protection = 0 }
+her = { position = [220, 187], body = [5, 21], protection = 0 }
 ridley_after = { phase = "Roaring", wait = 161, figure = 3, figure_runs = 78, look = "Wide", position = [186, 169], baby = { routine = "Fidget", step = 1, runs = 9, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = true, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Right", push = 5 } }
 
 [[vector]]
-# recorded case T7: in the air, 16 px right of the tip and 24 above it: the hit, to the right
+# recorded case T7: in the air, 16 px right of the tip and 26 above it: the hit, to the right
 id = "T-hit-jumping"
 source = "constructed"
 entries = ["TailHits"]
@@ -1931,7 +1932,7 @@ content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
 ridley = { phase = "Roaring", wait = 66, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
 baby = { routine = "Glow", step = 8, runs = 2 }
 random = "228B"
-her = { position = [234, 161], body = [5, 19], protection = 0 }
+her = { position = [234, 159], body = [5, 19], protection = 0 }
 ridley_after = { phase = "Roaring", wait = 65, figure = 5, look = "Rest", position = [186, 169], baby = { routine = "Glow", step = 8, runs = 3, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false, curl = 16, tail = [218, 185], hit = { side = "Right", push = 5 } }
 
 [[vector]]
@@ -2116,3 +2117,599 @@ baby = { routine = "Fidget", step = 0, runs = 1 }
 random = "FFFF"
 her = { position = [218, 185], body = [5, 16], protection = 0 }
 ridley_after = { phase = "EyeFading", steps = 3, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 1, curl = 16 }
+
+
+# ================================================================ part 4c-1a: his take-off and flight
+#
+# Format of the part-4c-1a vectors (spec §15), ids L-: one run of him in the part-4a form
+# (content, ridley, random, ridley_after; no baby), with:
+# - ridley.takeoff_figure, 1 to 5, and ridley.takeoff_runs, 1 to its length, absent for figure 5
+#   (TakesOff); ridley.fraction = [x, y], his position's fractions, 0 to 255 (1/256 px);
+#   ridley.speed = [x, y], 1/256 px per run, signed, in decimal; ridley.hover_runs, 0 to 123
+#   (Hovers); ridley.curl as in part 4b. L-takeoff's ridley is in the part-4a form (Roaring).
+# - energy: her energy as he runs (samus-health); hits_taken: the hits he has taken (§15.3).
+# - ridley_after: the same fields after the run; tangible, moving, roaring, music and roar as in
+#   part 4a (§15.4: true, true, false, false, false on every run of this part); held = [x, y],
+#   where the baby is held (BabyHeld); bound (absent for none): "Bottom", "Left", "Right" or "Top"; shake (absent for
+#   none): { pixels, frames }, the Back layers moving sideways. A run that gives up (phase
+#   "Retreating" or "FakeRetreat") is the next part's: its ridley_after holds the phase alone.
+# - The L- vectors carry no baby, tail or hit: the baby's routine is part 3's (checked by the K-
+#   and F- vectors), and his tail in flight is part 4c-1b's.
+# - The recorded cases L0 to L13 (whose rows and frames the observer keeps) keep the records'
+#   places, speeds, energy, hits and random numbers. The rest are worked from the spec's rules.
+
+[[vector]]
+# recorded case L0: his roar's wait over, he takes off: the take-off's figure 1, its first run, his speed 0
+id = "L-takeoff"
+source = "constructed"
+entries = ["TakesOff", "Roars"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+energy = 54
+hits_taken = 11
+random = "4DB7"
+ridley_after = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
+
+[[vector]]
+# recorded case L1: taking off, his figure one run on; his speed held at 0
+id = "L-figure-counts"
+source = "constructed"
+entries = ["TakesOff"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "85A4"
+ridley_after = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 2, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
+
+[[vector]]
+# recorded case L2: figure 1 shown its 3 runs: figure 2, and his first hop, (+1, -12); the baby held where his move left him, before the hop
+id = "L-hop-first"
+source = "constructed"
+entries = ["TakesOff", "BabyHeld"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "136A"
+ridley_after = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
+
+[[vector]]
+# recorded case L3: figure 2 shown its 4 runs: figure 3, and his second hop, (-4, -8)
+id = "L-hop-second"
+source = "constructed"
+entries = ["TakesOff", "BabyHeld"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 4, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "0C26"
+ridley_after = { phase = "Flying", takeoff_figure = 3, takeoff_runs = 1, look = "TakeOff2", position = [183, 149], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [171, 179] }
+
+[[vector]]
+# recorded case L4: figure 3 shown its 5 runs: figure 4, and the lift-off: Rising at 352 up; he hasn't moved yet
+id = "L-lift-off"
+source = "constructed"
+entries = ["TakesOff"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Flying", takeoff_figure = 3, takeoff_runs = 5, look = "TakeOff2", position = [183, 149], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "8CBB"
+ridley_after = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 1, look = "TakeOff1", position = [183, 149], fraction = [0, 0], speed = [0, -352], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 171] }
+
+[[vector]]
+# recorded case L5: rising: 16 more up, then he moves 368/256 px up
+id = "L-rise-counts"
+source = "constructed"
+entries = ["Rises", "Flies", "TakesOff"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 1, look = "TakeOff1", position = [183, 149], fraction = [0, 0], speed = [0, -352], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "C0B8"
+ridley_after = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 2, look = "TakeOff1", position = [183, 147], fraction = [0, 144], speed = [0, -368], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 169] }
+
+[[vector]]
+# recorded case L6: figure 4 shown its 17 runs: figure 5, Rest, held
+id = "L-figure-rest"
+source = "constructed"
+entries = ["TakesOff", "Rises"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 17, look = "TakeOff1", position = [183, 118], fraction = [0, 128], speed = [0, -608], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "5DA8"
+ridley_after = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 116], fraction = [0, 16], speed = [0, -624], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 138] }
+
+[[vector]]
+# recorded case L7: his y 111, above 112: Slowing, and the slowing on the same run
+id = "L-rise-slows"
+source = "constructed"
+entries = ["Rises", "SlowsDown"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 111], fraction = [0, 0], speed = [0, -656], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "DC17"
+ridley_after = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [183, 108], fraction = [0, 116], speed = [0, -652], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 130] }
+
+[[vector]]
+# recorded case L8: slowing: 20 less up
+id = "L-slow-counts"
+source = "constructed"
+entries = ["SlowsDown", "TakesOff"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [183, 108], fraction = [0, 116], speed = [0, -652], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "4D84"
+ridley_after = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [183, 105], fraction = [0, 252], speed = [0, -632], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 127] }
+
+[[vector]]
+# recorded case L9: his y 79, above 80: Hovering from the next run
+id = "L-slow-hovers"
+source = "constructed"
+entries = ["SlowsDown"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [183, 79], fraction = [0, 160], speed = [0, -352], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "3147"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 100] }
+
+[[vector]]
+# recorded case L10: his first hover: pulled to (192, 100), right by 1 and down by 3 (going away from it); his hover's runs 1
+id = "L-hover-pull"
+source = "constructed"
+entries = ["Hovers", "PulledToHisPoint", "Flies", "TakesOff"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "F774"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99] }
+
+[[vector]]
+# recorded case L11: rising at 5, his point 58 px below: three pulls of 3 and one more as he turns: 5 down
+id = "L-pull-turns"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [187, 42], fraction = [104, 248], speed = [47, -5], hover_runs = 47, curl = 17 }
+energy = 39
+hits_taken = 11
+random = "68D7"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [187, 42], fraction = [152, 253], speed = [48, 5], hover_runs = 48, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [171, 64] }
+
+[[vector]]
+# recorded case L12: 2 px right of his point, going right: three pulls of 1 back
+id = "L-pull-back"
+source = "constructed"
+entries = ["PulledToHisPoint", "Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 48], fraction = [97, 167], speed = [53, 92], hover_runs = 77, curl = 17 }
+energy = 39
+hits_taken = 11
+random = "9D79"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [147, 6], speed = [50, 95], hover_runs = 78, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [178, 71] }
+
+[[vector]]
+# recorded case L13: her energy 24, under 30: he gives up, Retreating; this run is part 4c-2's
+id = "L-gives-up"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [147, 6], speed = [50, 95], hover_runs = 78, curl = 17 }
+energy = 24
+hits_taken = 11
+random = "146E"
+ridley_after = { phase = "Retreating" }
+
+[[vector]]
+# the same with her energy 30: he hovers on
+id = "L-energy-edge"
+source = "constructed"
+entries = ["Hovers", "PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [147, 6], speed = [50, 95], hover_runs = 78, curl = 17 }
+energy = 30
+hits_taken = 11
+random = "146E"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [194, 104], speed = [47, 98], hover_runs = 79, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [178, 71] }
+
+[[vector]]
+# her energy 29: he gives up
+id = "L-energy-edge-low"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 48], fraction = [97, 167], speed = [53, 92], hover_runs = 77, curl = 17 }
+energy = 29
+hits_taken = 11
+random = "9D79"
+ridley_after = { phase = "Retreating" }
+
+[[vector]]
+# his 100th hit taken, her energy high: the fake retreat, a later part's
+id = "L-fake-retreat"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 48], fraction = [97, 167], speed = [53, 92], hover_runs = 77, curl = 17 }
+energy = 39
+hits_taken = 100
+random = "9D79"
+ridley_after = { phase = "FakeRetreat" }
+
+[[vector]]
+# 99 hits taken: he hovers on
+id = "L-hits-edge"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 48], fraction = [97, 167], speed = [53, 92], hover_runs = 77, curl = 17 }
+energy = 39
+hits_taken = 99
+random = "9D79"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [147, 6], speed = [50, 95], hover_runs = 78, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [178, 71] }
+
+[[vector]]
+# his 100th hit taken and her energy 24, under 30: the fake retreat still, the hits judged first
+id = "L-fake-retreat-low"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [147, 6], speed = [50, 95], hover_runs = 78, curl = 17 }
+energy = 24
+hits_taken = 100
+random = "146E"
+ridley_after = { phase = "FakeRetreat" }
+
+[[vector]]
+# near his point, 8 right and 10 below it: an attack by the random number (5: Lunge), his hover's runs 0; he still moves
+id = "L-near"
+source = "constructed"
+entries = ["Hovers", "PulledToHisPoint", "Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 110], fraction = [0, 0], speed = [-40, -30], hover_runs = 40, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "8015"
+ridley_after = { phase = "Lunge", takeoff_figure = 5, look = "Rest", position = [199, 109], fraction = [215, 225], speed = [-41, -31], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [183, 131] }
+
+[[vector]]
+# 16 px right of his point and 16 above it: near (10: Swoop)
+id = "L-near-x-edge"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [208, 84], fraction = [0, 0], speed = [10, 10], hover_runs = 3, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "003A"
+ridley_after = { phase = "Swoop", takeoff_figure = 5, look = "Rest", position = [208, 84], fraction = [7, 11], speed = [7, 11], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [192, 106] }
+
+[[vector]]
+# 17 px right of his point: not near; his hover's runs one more
+id = "L-not-near-edge"
+source = "constructed"
+entries = ["Hovers", "PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [209, 100], fraction = [0, 0], speed = [-20, 0], hover_runs = 50, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "0005"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [208, 100], fraction = [235, 0], speed = [-21, 0], hover_runs = 51, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [192, 122] }
+
+[[vector]]
+# 17 px below his point, at its x: not near; his hover's runs one more
+id = "L-not-near-y-edge"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 117], fraction = [0, 0], speed = [0, 0], hover_runs = 50, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "0004"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 116], fraction = [0, 252], speed = [0, -4], hover_runs = 51, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 138] }
+
+[[vector]]
+# at his point: an attack by the random number, 4: Lunge
+id = "L-attack-lunge-first"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 20, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Lunge", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 122] }
+
+[[vector]]
+# at his point: the random number's 8: Lunge
+id = "L-attack-lunge-last"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 20, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "5678"
+ridley_after = { phase = "Lunge", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 122] }
+
+[[vector]]
+# at his point: the random number's 9: Fireballs
+id = "L-attack-fireballs-9"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 20, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "9AB9"
+ridley_after = { phase = "Fireballs", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 122] }
+
+[[vector]]
+# at his point: the random number's 14: Swoop
+id = "L-attack-swoop-last"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 20, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "3C2E"
+ridley_after = { phase = "Swoop", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 122] }
+
+[[vector]]
+# at his point: the random number's 15: Fireballs
+id = "L-attack-fireballs-15"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 20, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "7F0F"
+ridley_after = { phase = "Fireballs", takeoff_figure = 5, look = "Rest", position = [192, 100], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 122] }
+
+[[vector]]
+# his 124th run of hovering, not near: an attack (3: Fireballs), his hover's runs 0
+id = "L-patience"
+source = "constructed"
+entries = ["Hovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [150, 50], fraction = [0, 0], speed = [30, 20], hover_runs = 123, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "C0F3"
+ridley_after = { phase = "Fireballs", takeoff_figure = 5, look = "Rest", position = [150, 50], fraction = [32, 23], speed = [32, 23], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [134, 72] }
+
+[[vector]]
+# his x at his point's: his x speed stays
+id = "L-pull-at-point"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 50], fraction = [0, 0], speed = [-7, 40], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [191, 50], fraction = [249, 43], speed = [-7, 43], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [175, 72] }
+
+[[vector]]
+# above the room's top (y -16): the point ahead, d 7, and the carry 1: 100 + 7 + 1
+id = "L-pull-apart"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [150, 65520], fraction = [0, 0], speed = [20, 100], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [150, 65520], fraction = [22, 108], speed = [22, 108], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [134, 6] }
+
+[[vector]]
+# rising at 400, his point 80 px below: three pulls of 5, no turn
+id = "L-pull-away"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 20], fraction = [0, 0], speed = [0, -400], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 18], fraction = [0, 127], speed = [0, -385], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 40] }
+
+[[vector]]
+# rising at 2, three pulls of 3: he turns on the first: one more
+id = "L-pull-turns-early"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 52], fraction = [0, 0], speed = [0, -2], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 52], fraction = [0, 8], speed = [0, 8], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 74] }
+
+[[vector]]
+# rising at 6, three pulls of 4: he turns on the second: one more
+id = "L-pull-turns-late"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 36], fraction = [0, 0], speed = [0, -6], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 36], fraction = [0, 7], speed = [0, 7], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 58] }
+
+[[vector]]
+# sinking at 1,278, a pull of 5: capped at 1,280
+id = "L-pull-top"
+source = "constructed"
+entries = ["PulledToHisPoint", "Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 20], fraction = [0, 0], speed = [0, 1278], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 25], fraction = [0, 0], speed = [0, 1280], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 47] }
+
+[[vector]]
+# 1 px left of his point, going right at 32,767: a pull of 1 makes 32,768, taken as -32,768, which less 1,280 is 31,488 as a signed number, not negative: capped at 1,280
+id = "L-pull-wrap"
+source = "constructed"
+entries = ["PulledToHisPoint", "Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [191, 60], fraction = [0, 0], speed = [32767, 0], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [196, 60], fraction = [0, 2], speed = [1280, 2], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [180, 82] }
+
+[[vector]]
+# rising at 100, his point 50 px above: one pull of 3
+id = "L-pull-behind"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 150], fraction = [0, 0], speed = [0, -100], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 149], fraction = [0, 153], speed = [0, -103], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 171] }
+
+[[vector]]
+# sinking at 1, his point 18 px above: three pulls of 1 and one more as he turns
+id = "L-pull-back-turns"
+source = "constructed"
+entries = ["PulledToHisPoint"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 118], fraction = [0, 0], speed = [0, 1], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 117], fraction = [0, 253], speed = [0, -3], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 139] }
+
+[[vector]]
+# rising at 1,278, a pull of 4: held at -1,280
+id = "L-pull-bottom"
+source = "constructed"
+entries = ["PulledToHisPoint", "Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 175], fraction = [0, 0], speed = [0, -1278], hover_runs = 10, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [192, 170], fraction = [0, 0], speed = [0, -1280], hover_runs = 11, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [176, 192] }
+
+[[vector]]
+# slowing, his x fraction 240 and his x speed 32: a whole px more, fraction 16
+id = "L-fraction-carry"
+source = "constructed"
+entries = ["Flies", "SlowsDown"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [150, 90], fraction = [240, 0], speed = [32, -200], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [151, 89], fraction = [16, 76], speed = [32, -180], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [135, 111] }
+
+[[vector]]
+# going left 640 at x 41: stopped at 40, his fraction kept, the bound Left, and a shake
+id = "L-bound-left"
+source = "constructed"
+entries = ["Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [41, 90], fraction = [0, 0], speed = [-640, -200], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [40, 89], fraction = [128, 76], speed = [0, -180], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [24, 111], bound = "Left", shake = { pixels = 3, frames = 12 } }
+
+[[vector]]
+# going left 1 at x 40: stopped at 40, his fraction 255 kept; too slow to shake
+id = "L-bound-left-slow"
+source = "constructed"
+entries = ["Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [40, 90], fraction = [0, 0], speed = [-1, -300], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [40, 88], fraction = [255, 232], speed = [0, -280], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [24, 110], bound = "Left" }
+
+[[vector]]
+# going right 128 at x 223 and a half: stopped at 224, the bound Right
+id = "L-bound-right"
+source = "constructed"
+entries = ["Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [223, 90], fraction = [128, 0], speed = [128, -200], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [224, 89], fraction = [0, 76], speed = [0, -180], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [208, 111], bound = "Right" }
+
+[[vector]]
+# slowing, above the top (y -30), rising: stopped at -32, the bound Top; Hovering from the next run
+id = "L-bound-top"
+source = "constructed"
+entries = ["Flies", "SlowsDown"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [150, 65506], fraction = [0, 0], speed = [0, -700], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [150, 65504], fraction = [0, 88], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [134, 65526], bound = "Top" }
+
+[[vector]]
+# rising with a downward speed at y 175: stopped at 176, the bound Bottom
+id = "L-bound-bottom"
+source = "constructed"
+entries = ["Flies", "Rises"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 5, look = "TakeOff1", position = [150, 175], fraction = [0, 0], speed = [0, 300], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 6, look = "TakeOff1", position = [150, 176], fraction = [0, 28], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [134, 198], bound = "Bottom" }
+
+[[vector]]
+# at the left and the top at once: the bound Top; his y speed's size 680 shakes the room
+id = "L-bound-corner"
+source = "constructed"
+entries = ["Flies"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [41, 65506], fraction = [0, 0], speed = [-512, -700], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [40, 65504], fraction = [0, 88], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [24, 65526], bound = "Top", shake = { pixels = 3, frames = 12 } }
+
+[[vector]]
+# rising already above 80: Slowing and then Hovering on the same run
+id = "L-rise-hovers"
+source = "constructed"
+entries = ["Rises", "SlowsDown"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 70], fraction = [0, 0], speed = [0, -400], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 68], fraction = [0, 116], speed = [0, -396], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 90] }
+
+[[vector]]
+# taking off at y -28: his first hop takes him to y -40, past the top, mod 2^16, until his next move
+id = "L-hop-wrap"
+source = "constructed"
+entries = ["TakesOff"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 65508], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "1234"
+ridley_after = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 65496], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 65530] }

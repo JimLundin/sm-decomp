@@ -10,7 +10,7 @@ use crate::figure::{Figure, figures};
 use crate::inputs::Inputs;
 use crate::phase::{Phase, Quarter, Wait};
 use crate::rules::Rules;
-use crate::station::{DoorColours, DoorPalette, ShakeLayers, ShakeStart, Stage};
+use crate::station::{DoorColours, DoorPalette, ShakeLayers, ShakeMotion, ShakeStart, Stage};
 
 /// `Solid`: a door's box reaches 8 px to the left and right of its position and 32 px up and
 /// down: 16 px wide and 64 px tall. The box is the doors' content and never changes; only
@@ -176,7 +176,7 @@ impl CeresDoor {
     /// `Waiting`: while its wait is over 1 the run only counts it off; when it runs out the
     /// door steps. `Opening`: the run that steps into the opening's first figure asks for the
     /// opening sound. `EscapeShakes`: every run may start a shake, whether it steps or not, of
-    /// what its kind's shakes move.
+    /// what its kind's shakes move, diagonally.
     #[must_use]
     pub fn run(self, inputs: &Inputs, rules: &Rules) -> Run {
         let counted = self.phase.counted_down();
@@ -192,9 +192,11 @@ impl CeresDoor {
             door: Self { phase, ..self },
             sound: (counted.is_none() && opening_starts).then_some(OpeningSound),
             shake: self.kind.shake_layers().and_then(|layers| {
-                inputs
-                    .escape_shake(rules)
-                    .map(|shake| ShakeStart { shake, layers })
+                inputs.escape_shake(rules).map(|shake| ShakeStart {
+                    shake,
+                    layers,
+                    motion: ShakeMotion::Diagonal,
+                })
             }),
         }
     }

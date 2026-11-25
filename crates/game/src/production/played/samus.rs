@@ -60,9 +60,10 @@ impl State {
 }
 
 impl super::State {
-    /// Her own frame: her moves, then what `between` plays once they are made, from her
+    /// Her own frame: her moves, then what `between` plays once they are made, given her
     /// position after them, giving the frame's hit and the energy it leaves her; then her
-    /// reaction to that hit, and her appearance from what both steps report.
+    /// reaction to that hit, and her appearance from what both steps report. The played frame's
+    /// `between` ignores the position: its hitters read her as the frame starts.
     pub(super) fn her_frame<T>(
         &self,
         inputs: &Inputs,
@@ -113,8 +114,9 @@ impl super::State {
     }
 
     /// Her movement's two steps: her moves, after her clip's look ahead from the figure she
-    /// starts the frame in; `between`, from her position after them, giving the frame's hit;
-    /// then her reaction to it.
+    /// starts the frame in; `between`, given her position after them, giving the frame's hit
+    /// (the played frame judges the hit before her moves and ignores the position); then her
+    /// reaction to it.
     fn movement<T>(
         &self,
         inputs: &Inputs,
