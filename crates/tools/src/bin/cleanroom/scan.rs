@@ -399,6 +399,55 @@ fn identity_names(src: &str) -> Cow<'_, str> {
     masked.map_or(Cow::Borrowed(src), Cow::Owned)
 }
 
+/// Rust's non-zero integers, which the name check would split into the words "non zero". One is
+/// masked only where a `.rs` file's code writes it under its module, `num::NonZeroU16` (after
+/// `use core::num;`, or within `core::num::NonZeroU16`): the spelling no declaration of the
+/// file's own can take. A bare `NonZeroU16`, a declaration, a comment, a string and any other file
+/// are always scanned. Every entry is a spelling the barrier no longer reads, so an addition needs
+/// the same anchoring and a reviewer's sign-off.
+const NUM_TYPES: &[&str] = &[
+    "NonZeroU8",
+    "NonZeroU16",
+    "NonZeroU32",
+    "NonZeroU64",
+    "NonZeroU128",
+    "NonZeroUsize",
+    "NonZeroI8",
+    "NonZeroI16",
+    "NonZeroI32",
+    "NonZeroI64",
+    "NonZeroI128",
+    "NonZeroIsize",
+];
+
+/// `src` with each of `NUM_TYPES` written as `num::` its name blanked; the `::` before it already
+/// ends the phrase, so no words join across it.
+fn library_names(src: &str) -> Cow<'_, str> {
+    let tokens = text::rust_spans(src);
+    let mut masked: Option<String> = None;
+    for path in tokens.windows(4) {
+        let [module, first, second, name] = path else {
+            continue;
+        };
+        let qualified = matches!(&module.token, Tok::Ident(word) if word == "num")
+            && first.token == Tok::Punct(':')
+            && second.token == Tok::Punct(':')
+            && first.end == second.start;
+        let Tok::Ident(word) = &name.token else {
+            continue;
+        };
+        if !qualified || !NUM_TYPES.contains(&word.as_str()) {
+            continue;
+        }
+        let text = masked.get_or_insert_with(|| src.to_owned());
+        text.replace_range(
+            name.start..name.end,
+            &" ".repeat(name.end.saturating_sub(name.start)),
+        );
+    }
+    masked.map_or(Cow::Borrowed(src), Cow::Owned)
+}
+
 /// Every check that applies to `path`'s contents.
 pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<Finding>) {
     let mut push = |line: usize, class: Class, detail: String| {
@@ -422,7 +471,7 @@ pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<F
         .extension()
         .is_some_and(|e| e.eq_ignore_ascii_case("rs"));
     let name_src = if rust {
-        identity_names(src)
+        Cow::Owned(library_names(&identity_names(src)).into_owned())
     } else {
         Cow::Borrowed(src)
     };
@@ -482,5 +531,67 @@ mod tests {
         ];
         assert_eq!(scan(leak), expected);
         assert_eq!(scan(&format!("::core::ptr::eq(a, b); {leak}")), expected);
+    }
+
+    /// The lines of `src`, scanned as `path`, with a name finding, against an invented lexicon of
+    /// the names "non zero" and "read wait".
+    fn name_lines(path: &str, src: &str) -> Vec<usize> {
+        let mut lex = Lexicon::default();
+        for name in ["non zero", "read wait"] {
+            lex.names.insert(text::hash(
+                &lex.salt,
+                &format!("n:{}", text::normalise(name)),
+            ));
+        }
+        let mut out = Vec::new();
+        file(&lex, &Allow::parse(""), path, src, &mut out);
+        out.into_iter()
+            .filter(|f| f.class == Class::Name)
+            .map(|f| f.line)
+            .collect()
+    }
+
+    #[test]
+    fn non_zero_integers_written_under_num_are_not_the_phrase() {
+        let none = Vec::<usize>::new();
+        let src = "use core::num;\nstruct Wait(num::NonZeroU16);\nfn f(n: num::NonZeroU8) {}";
+        assert_eq!(name_lines("x.rs", src), none);
+        assert_eq!(
+            name_lines("x.rs", "struct Wait(core::num::NonZeroU16);"),
+            none
+        );
+        assert_eq!(
+            name_lines("x.rs", "struct Wait(::std::num::NonZeroU32);"),
+            none
+        );
+    }
+
+    #[test]
+    fn every_other_spelling_is_still_the_phrase() {
+        for src in [
+            // Bare, even when imported: the import itself is under `num::`, the use isn't.
+            "use core::num::NonZeroU16;\nstruct Wait(NonZeroU16);",
+            // The file's own names.
+            "enum Wait { NonZero, Zero }",
+            "enum Wait { NonZeroU16 }",
+            "struct NonZero;",
+            "type NonZeroU8 = u8;",
+            "let r#NonZero = 1;",
+            "struct S { NonZeroU8: u8 }",
+            // A module of the file's own named `num`: its declaration still scans.
+            "mod num { pub struct NonZeroU16; }\nfn f(_: num::NonZeroU16) {}",
+            // Comments and strings, even written under `num::`.
+            "/// The `NonZero` gate, a num::NonZeroU16.",
+            "let s = \"num::NonZeroU16\";",
+        ] {
+            assert_ne!(name_lines("x.rs", src), Vec::<usize>::new(), "{src} passed");
+        }
+        assert_ne!(
+            name_lines(
+                "brief.md",
+                "The `NonZero` routine, a `core::num::NonZeroU16`."
+            ),
+            Vec::<usize>::new()
+        );
     }
 }

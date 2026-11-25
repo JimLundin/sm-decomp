@@ -32,8 +32,10 @@ report.
    `crates/clean/types`. Keep tables as data and the logic small. Name each quirk the spec states
    in one place, with a doc saying what it reproduces. Every number in the logic comes from `Rules`
    or a named constant holding a number the spec gives ([DESIGN](../../../docs/cleanroom/DESIGN.md)
-   lists what the checks refuse). Done when the model compiles and every spec entry has code that
-   carries it out.
+   lists what the checks refuse). Write `core::num`'s integer types under their module: `use
+   core::num;`, then `num::` and the type's name at each use. The import's name scan reads the
+   bare name as words. Done when the model compiles and every spec entry has code that carries it
+   out.
 4. **Vectors.** Write a test that runs every vector in the vector file through the model, and
    fails on any key it doesn't know. Run it with the runner command at the end of your brief. Done
    when every vector passes, or each one that doesn't is a gap (below).
