@@ -153,18 +153,13 @@ the first clean-room lane there:
 1. `bash tools/lane/gate.sh` prints `GATE OK`, and `bash tools/lane/self_tests.sh` (all of them,
    with no base) prints `SELF TESTS OK`. It includes `launch_config_test.sh`, which checks the
    launch's Linux rules without a session.
-2. The played runs reproduce `scenarios/replay/played.toml`: each prints one `PLAYED_ALONE` line,
-   whose cuts held and stop match its run's `held` and `stop`. Where `tools/lane/played.sh` is on
-   main it runs them, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree
-   has no `rom/`); else this loop, as CI's `played` target does:
+2. The played runs reproduce `scenarios/replay/played.toml`: `tools/lane/played.sh` plays them
+   all, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree has no `rom/`).
+   Each run prints a `PLAYED` line with its cuts held and stop beside its run's `held` and `stop`,
+   ending `HOLDS` when they match, and the test passes when every run holds:
 
    ```sh
-   cargo build --locked --profile verify -p tools
-   awk -F' = ' '/^row = /{gsub(/"/,"",$2); r=$2} /^start = /{s=$2} /^end = /{print r, s, $2}' \
-     scenarios/replay/played.toml | while read -r row start end; do
-     target/verify/tools replay played "$row" "$start" "$end" --cache "$SM_CACHE" \
-       --rom rom/sm.smc --lock scenarios/locks/lsnes.toml </dev/null
-   done
+   SM_ROM=$PWD/rom/sm.smc bash tools/lane/played.sh
    ```
 
 3. The launch probe and the canary ([launch.sh](../tools/cleanroom/launch.sh)'s header). On a
