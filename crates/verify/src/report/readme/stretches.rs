@@ -156,7 +156,7 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String
 
 #[cfg(test)]
 mod tests {
-    use super::{STRETCHES, Stretch, stretches, table};
+    use super::{Issue, STRETCHES, Stretch, stretches, table};
     use crate::report::plan::{PLAN, Plan, seed};
     use crate::report::readme::{PLAYED, Run, listed, passing};
     use crate::report::seeds::seed_frame;
@@ -349,6 +349,16 @@ mod tests {
                 format!("{}{}", "·".repeat(10), "━".repeat(30)),
             ]
         );
+        // A stretch whose last frame is a cell's first frame draws that cell.
+        let ending = Stretch {
+            name: String::from("Ending"),
+            frames: [50, 101],
+            issue: Issue(1),
+        };
+        assert_eq!(
+            ending.place(400),
+            format!("{}{}{}", "·".repeat(4), "━".repeat(7), "·".repeat(29))
+        );
     }
 
     #[test]
@@ -381,6 +391,15 @@ mod tests {
                     link(3)
                 ),
             ]
+        );
+        // One frame short of whole is a bar, not a tick.
+        assert!(
+            table(&three, &[run(0, 99)], 99)
+                .lines()
+                .nth(2)
+                .is_some_and(|boot| boot.starts_with("| **Boot** |")
+                    && boot.contains("`███████████████████░`")
+                    && !boot.contains('✓'))
         );
         // With none whole, the first is bold; with all whole, none is.
         assert!(table(&three, &[], 0).contains("| **Boot** |"));

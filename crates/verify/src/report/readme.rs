@@ -230,13 +230,21 @@ fn from_start(runs: &[Run], total: u64) -> u64 {
         .unwrap_or_default()
 }
 
-/// `count` of `total` as a percentage to a tenth.
+/// `count` of `total` as a percentage to a tenth, rounded down as the bars are: only the whole
+/// total shows 100.0%, and a count above none shows at least 0.1%.
 fn percent(count: u64, total: u64) -> String {
     let tenths = count
+        .min(total)
         .saturating_mul(1000)
-        .saturating_add(total / 2)
         .checked_div(total)
         .unwrap_or(0);
+    let tenths = if count == 0 || total == 0 {
+        0
+    } else if count >= total {
+        1000
+    } else {
+        tenths.clamp(1, 999)
+    };
     format!("{}.{}%", tenths / 10, tenths % 10)
 }
 
@@ -286,13 +294,22 @@ fn cell_frames(cell: u64, total: u64) -> (u64, u64) {
 /// The movie of `total` frames as one bar: a cell passes when most of its frames pass, and is
 /// drawn `█` when most of those are among the first `started` held from power-on, `▓` when they
 /// pass from other seeds, and `░` when it doesn't pass.
+///
+/// Like the stretches' bars, it fills only when the movie is whole: when it isn't and no cell is
+/// drawn `░`, the cell with the most frames not held, the first of those, is.
 fn headline(runs: &[Run], total: u64, started: u64) -> String {
-    (0..MOVIE)
+    let counted: Vec<(u64, u64, u64)> = (0..MOVIE)
         .map(|cell| {
             let (first, last) = cell_frames(cell, total);
             let frames = last.saturating_add(1).saturating_sub(first);
             let held = passing(runs, first.saturating_sub(1), last);
             let from_start = started.min(last).saturating_add(1).saturating_sub(first);
+            (frames, held, from_start)
+        })
+        .collect();
+    let mut cells: Vec<char> = counted
+        .iter()
+        .map(|&(frames, held, from_start)| {
             if held <= frames.saturating_sub(held) {
                 '░'
             } else if from_start > held.saturating_sub(from_start) {
@@ -301,7 +318,20 @@ fn headline(runs: &[Run], total: u64, started: u64) -> String {
                 '▓'
             }
         })
-        .collect()
+        .collect();
+    let whole = passing(runs, 0, total) >= total;
+    if !whole && !cells.contains(&'░') {
+        let unheld = |&(frames, held, _): &(u64, u64, u64)| frames.saturating_sub(held);
+        let most = counted.iter().map(unheld).max().unwrap_or_default();
+        if let Some(cell) = counted
+            .iter()
+            .position(|counts| unheld(counts) == most)
+            .and_then(|cell| cells.get_mut(cell))
+        {
+            *cell = '░';
+        }
+    }
+    cells.into_iter().collect()
 }
 
 /// The README for the tree at `root`.
@@ -566,12 +596,40 @@ mod tests {
             Some('▓')
         );
         assert_eq!(headline(&[], 400, 0), "░".repeat(40));
+        // A tie between power-on's frames and a later seed's draws the lesser claim.
+        assert_eq!(
+            headline(&[run(0, 5, true), run(5, 5, false)], 400, 5)
+                .chars()
+                .next(),
+            Some('▓')
+        );
     }
 
     #[test]
-    fn percentages_round_to_a_tenth() {
-        assert_eq!(percent(607, 15_196), "4.0%");
+    fn the_headline_fills_only_when_the_movie_is_whole() {
+        // Each cell holds 6 of its 10 frames, most of them, but the movie isn't whole: the cell
+        // with the most frames not held, the first, is drawn not passing.
+        let most: Vec<Run> = (0..40).map(|cell| run(cell * 10, 6, false)).collect();
+        assert_eq!(headline(&most, 400, 0), format!("░{}", "▓".repeat(39)));
+        // Cell 3 holds least.
+        let mut fewer = most;
+        if let Some(third) = fewer.get_mut(3) {
+            third.held = 5;
+        }
+        assert_eq!(headline(&fewer, 400, 0), format!("▓▓▓░{}", "▓".repeat(36)));
+        assert_eq!(headline(&[run(0, 400, true)], 400, 400), "█".repeat(40));
+    }
+
+    #[test]
+    fn percentages_round_down_to_a_tenth() {
+        // 3.99%, 34.56%.
+        assert_eq!(percent(607, 15_196), "3.9%");
+        assert_eq!(percent(5_252, 15_196), "34.5%");
         assert_eq!(percent(0, 15_196), "0.0%");
         assert_eq!(percent(15_196, 15_196), "100.0%");
+        // Neither end is overstated: one frame short of whole isn't 100.0%, one frame isn't 0.0%.
+        assert_eq!(percent(15_195, 15_196), "99.9%");
+        assert_eq!(percent(1, 15_196), "0.1%");
+        assert_eq!(percent(0, 0), "0.0%");
     }
 }
