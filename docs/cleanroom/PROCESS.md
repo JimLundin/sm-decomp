@@ -126,17 +126,18 @@ Each step names its owner, what it waits for, and its done-condition.
    crate at `crates/clean/<area>_<name>`.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
-7. **Import** (root): `import.sh` runs `code_check.sh --import`, which refuses a variant import
-   (L4) even in a crate whose older ones still only warn on the trunk, and `scan.sh` on each file
-   the commits add or change, which refuses a hit that file didn't hold at the export's start (the
-   trunk's own hits stay until a round removes them), applies the commits to a
-   lane branch, takes the branch back if the export's crates break the capability rule (clippy's
+7. **Import** (root): `import.sh` first runs `code_check.sh --import`, which refuses a variant
+   import (L4) even in a crate whose older ones still only warn on the trunk. Then it runs
+   `scan.sh` on each file the commits add or change, and refuses a hit that file didn't hold at
+   the export's start; the trunk's own hits don't block. It applies the commits to a lane
+   branch, takes the branch back if the export's crates break the capability rule (clippy's
    forbidden lints), then runs both clippy configurations of `tools/lane/gate.sh` over every clean
    crate in the workspace: an export holds one domain's model and `types`, so a change to
    `types` can break a crate its implementer never saw. Done when the import passes. A
    refusal goes back to the same implementer's export as a short follow-up session: the brief
    quotes each finding (file, line, the rule it breaks) in the coding standards' words, and the
-   import runs again.
+   import runs again. A scan hit that is a word a player uses may instead become a reviewed
+   entry in `tools/cleanroom/scan_allow.txt`, with its reason, before the import runs again.
    A clippy failure names the crates and leaves the patches applied:
    - a **mechanical** fix (a parameter by value instead of by reference, a derive, `assert_eq!`
      for `assert!(a == b)`, an import path; no item's logic changed) is the root's own commit,

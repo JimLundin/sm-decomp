@@ -3,7 +3,8 @@
 # copy, import, squash, worktree, the gate, and the code check, score scan and adjusted vectors),
 # at once, at most one per processor, each reported in a fixed order. With BASE, only when the branch
 # changes their subject since BASE: tools/cleanroom/ or tools/lane/, and for the import's self-test
-# also the toolchain, the workspace manifests and the shared types, whose clippy runs it holds.
+# also the toolchain, the workspace manifests and the shared types, whose clippy runs it holds,
+# and the scanner whose report it reads.
 # Without BASE (main pushes and scheduled runs) all run. Run from the repository root; exit 1
 # prints each failing self-test's output.
 set -u
@@ -19,7 +20,8 @@ if changed tools/cleanroom tools/lane; then
     tools/cleanroom/adjusted_vectors_test.sh)
 fi
 # The import self-test builds a throwaway worktree cold (about seven minutes).
-if changed tools/cleanroom tools/lane rust-toolchain.toml Cargo.toml Cargo.lock crates/clean/types; then
+if changed tools/cleanroom tools/lane rust-toolchain.toml Cargo.toml Cargo.lock crates/clean/types \
+  crates/tools/src/bin/cleanroom; then
   tests+=(tools/cleanroom/import_check_test.sh)
 fi
 if [ ${#tests[@]} -eq 0 ]; then

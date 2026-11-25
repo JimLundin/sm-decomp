@@ -74,6 +74,9 @@ bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh re
 # detail, more often than it did at the start, so the hits already on the trunk (a clean type
 # documented in the player's words that the lexicon also holds) don't block, and one the patches
 # add anywhere does. Line numbers are left out of the comparison: an edit above a hit moves it.
+# A file moved or renamed has no start, so each of its hits is new. A scan that reports a finding
+# this can't read refuses the import rather than passing it. A hit that is a legitimate word goes
+# back to the implementer, or into scan_allow.txt as a reviewed entry before the import runs again.
 mapfile -t changed < <(git_isolated "$dest" diff --name-only --no-renames --diff-filter=d "$root" HEAD -- crates/clean)
 existed=()
 [ ${#changed[@]} -eq 0 ] || mapfile -t existed < <(git_isolated "$dest" ls-tree -r --name-only "$root" -- "${changed[@]}")
@@ -81,14 +84,18 @@ started=$(mktemp -d) hits=$(mktemp -d)
 trap 'rm -rf "$checked" "$started" "$hits"' EXIT
 [ ${#existed[@]} -eq 0 ] || git_isolated "$dest" archive --format=tar "$root" -- "${existed[@]}" | tar -x -m -C "$started"
 scan_hits() { # DIR FILE...: the scan's findings in DIR's FILEs, as `file: class: detail`
-  local dir=$1 out status=0 line
+  local dir=$1 out status=0 line parsed=0
   shift
   [ $# -gt 0 ] || return 0
   out=$(bash "$cleanroom_dir/scan.sh" "${@/#/$dir/}") || status=$?
   [ "$status" -le 1 ] || die "scan.sh failed; nothing applied"
   while IFS= read -r line; do
-    case $line in "$dir/"*) line=${line#"$dir/"}; echo "${line%%:*}: ${line#*:*: }" ;; esac
+    case $line in "$dir/"*:[0-9]*:\ *:\ *)
+      line=${line#"$dir/"}; echo "${line%%:*}: ${line#*:*: }"; parsed=$((parsed + 1)) ;;
+    esac
   done <<<"$out"
+  # Exit 1 is a finding: one this can't read would leave both sides empty and pass the import.
+  [ "$status" -eq 0 ] || [ "$parsed" -gt 0 ] || die "scan.sh found something in a form import.sh can't read; nothing applied"
 }
 scan_hits "$started" "${existed[@]}" >"$hits/start"
 scan_hits "$checked" "${changed[@]}" >"$hits/head"

@@ -95,9 +95,9 @@ From a checkout of `main`:
 4. Read the session's report: the last `result` event of the transcript.
 5. `bash tools/cleanroom/import.sh ROOT/DOMAIN lane/<domain>-rN`. Done on `IMPORT OK`:
    `code_check.sh` passes, `scan.sh` finds nothing new in the changed files, and both clippy runs
-   pass over every clean crate. On `IMPORT CLIPPY
-   FAIL`, commit a mechanical fix yourself, right after the import, as `[exact]` with
-   `Role: root` and the lint it answers, so the squashed commit records it under your role.
+   pass over every clean crate. On `IMPORT CLIPPY FAIL`, commit a mechanical fix yourself, right
+   after the import, as `[exact]` with `Role: root` and the lint it answers, so the squashed
+   commit records it under your role.
    Send anything that changes an item's logic back to an implementer
    ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7).
 
