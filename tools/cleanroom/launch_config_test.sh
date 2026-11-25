@@ -19,8 +19,8 @@ case "$(uname -s)" in
 esac
 . "$here/lib.sh"
 # Outside the home, where host tools would open and fetch the repositories this makes.
-tmp=$(mktemp -d "$(outside_home_temp)/launch-config-XXXXXX")
-tmp=$(cd "$tmp" && pwd -P)
+tmp=$(mktemp -d "$(outside_home_temp)/launch-config-XXXXXX") || exit 1
+tmp=$(cd "$tmp" && pwd -P) || exit 1
 sibling=
 trap 'rm -rf "$tmp" ${sibling:+"$sibling"}' EXIT
 bad=0
