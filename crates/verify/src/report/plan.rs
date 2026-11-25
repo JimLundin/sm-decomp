@@ -28,15 +28,15 @@ pub(super) struct Plan {
 /// two seeds, that the engine is to play alone first, and the plan items it needs.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct Rung {
+struct Rung {
     /// Its id, `M0` onwards.
-    pub(super) id: String,
-    /// What the README calls it.
-    pub(super) name: String,
+    id: String,
+    /// What the player sees, as domains.md §4 calls it.
+    name: String,
     /// The seed whose movie frame starts the stretch, `CAPTURE:INDEX`.
-    pub(super) starts: String,
+    starts: String,
     /// The seed whose movie frame ends it, `CAPTURE:INDEX`.
-    pub(super) ends: String,
+    ends: String,
     /// The plan ids of the domains and platform work the stretch needs.
     needs: Vec<String>,
 }
@@ -283,8 +283,12 @@ impl Plan {
             }
         }
         plan.milestone.end()?;
-        let stretches = std::iter::once(("the milestone", &plan.milestone.needs))
-            .chain(plan.rung.iter().map(|rung| (rung.id.as_str(), &rung.needs)));
+        let stretches = std::iter::once((String::from("the milestone"), &plan.milestone.needs))
+            .chain(
+                plan.rung
+                    .iter()
+                    .map(|rung| (format!("{} {}", rung.id, rung.name), &rung.needs)),
+            );
         for (who, needs) in stretches {
             if let Some(need) = needs.iter().find(|need| plan.stage_of(need).is_none()) {
                 return Err(format!("{PLAN}: {who} needs {need}, which the plan lacks"));
@@ -308,11 +312,6 @@ impl Plan {
     /// The headline milestone.
     pub(super) const fn milestone(&self) -> &Milestone {
         &self.milestone
-    }
-
-    /// The ladder toward the milestone, in order.
-    pub(super) fn rungs(&self) -> &[Rung] {
-        &self.rung
     }
 
     /// The stage of the domain or platform work whose plan id is `id`.

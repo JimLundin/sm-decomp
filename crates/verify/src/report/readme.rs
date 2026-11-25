@@ -1,6 +1,7 @@
-//! The README: the project's thesis and its progress in frames of the milestone's movie, counted
-//! from the reviewed played runs of [`PLAYED`]: over the whole movie, by the stretches being
-//! worked and by the plan's rungs.
+//! The README: the project's thesis and its progress over the milestone's movie, counted in
+//! frames from the reviewed played runs of [`PLAYED`] and shown as bars and percentages: over the
+//! whole movie and by the stretches being worked. It states no frame numbers or counts, and its
+//! shape is the same whatever the runs hold: a place in the movie is an interval drawn over it.
 //!
 //! A lock row's cut c is movie frame f + c, f its seed's movie frame, or 0 for a row from
 //! power-on, so a row's cut 0 is the frame after the previous row's last cut. A run seeded at
@@ -14,9 +15,9 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-use super::plan::{Plan, seed};
+use super::plan::Plan;
 use super::seeds::{first_frame, following, row_movie, seed_frame};
-use super::{COMMAND, grouped, read};
+use super::{COMMAND, read};
 use crate::lock::{Lock, Row, RowId, Start};
 
 /// The README, from the repository root.
@@ -66,27 +67,23 @@ struct Listing {
 }
 
 /// Where a reviewed run stopped.
-#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 enum Stop {
     /// Every cut it asked for held.
     End,
-    /// The first difference, missing owner or bad data, at the cut after the last it held.
+    /// The first difference, missing owner or bad data, at the cut after the last it held; it
+    /// names one.
     Failed(String),
 }
 
 /// A reviewed played run, in movie frames.
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Run {
-    /// The lock row played.
-    row: String,
-    /// The seed cut.
-    start: u64,
     /// The seed cut's movie frame.
     seed: u64,
     /// The frames held after the seed.
     held: u64,
-    stop: Stop,
     /// Whether the seed is power-on.
     power_on: bool,
 }
@@ -174,6 +171,9 @@ fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<R
     let asked = listing.end.saturating_sub(listing.start);
     let stopped = match &listing.stop {
         Stop::End => listing.held == asked,
+        Stop::Failed(why) if why.is_empty() => {
+            return Err(wrong(String::from("its failed stop names no cause")));
+        }
         Stop::Failed(_) => listing.held < asked,
     };
     if listing.held > asked || !stopped {
@@ -183,11 +183,8 @@ fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<R
         )));
     }
     let run = Run {
-        row: listing.row.clone(),
-        start: listing.start,
         seed: first.saturating_add(listing.start),
         held: listing.held,
-        stop: listing.stop.clone(),
         power_on: row.start == Start::PowerOn && listing.start == 0,
     };
     if listing.seed_frame != run.seed {
@@ -223,35 +220,14 @@ fn passing(runs: &[Run], after: u64, through: u64) -> u64 {
     counted
 }
 
-/// The frames held back to back from power-on, with nothing fed back.
-#[derive(Debug, PartialEq, Eq)]
-struct FromStart {
-    /// How many.
-    held: u64,
-    /// Why the frame after them failed; none when they reach the milestone's end.
-    stop: Option<String>,
-}
-
-/// The longest reviewed run from power-on, within the milestone's `total` frames.
-fn from_start(runs: &[Run], total: u64) -> FromStart {
-    let Some(run) = runs
-        .iter()
+/// The frames held back to back from power-on, with nothing fed back: the longest reviewed run
+/// from power-on, within the milestone's `total` frames.
+fn from_start(runs: &[Run], total: u64) -> u64 {
+    runs.iter()
         .filter(|run| run.power_on)
-        .max_by_key(|run| run.held)
-    else {
-        return FromStart {
-            held: 0,
-            stop: Some(String::from(
-                "power-on is not played, as no reviewed run starts there",
-            )),
-        };
-    };
-    let held = run.held.min(total);
-    let stop = (held < total).then(|| match &run.stop {
-        Stop::Failed(why) => why.clone(),
-        Stop::End => format!("the reviewed run of `{}` ends there", run.row),
-    });
-    FromStart { held, stop }
+        .map(|run| run.held.min(total))
+        .max()
+        .unwrap_or_default()
 }
 
 /// `count` of `total` as a percentage to a tenth.
@@ -263,14 +239,6 @@ fn percent(count: u64, total: u64) -> String {
         .unwrap_or(0);
     format!("{}.{}%", tenths / 10, tenths % 10)
 }
-
-/// A movie frame or a count as the README writes it.
-fn frame(value: u64) -> String {
-    usize::try_from(value).map_or_else(|_| value.to_string(), grouped)
-}
-
-/// The cells of a headline bar: [`BAR`] wide in a monospace font, whatever the count.
-const BAR: u64 = 40;
 
 /// `count` of `total` as a bar of `cells`, filled ones first, rounded down: only the whole total
 /// fills them all, and a count above none fills at least one, so neither end is overstated.
@@ -289,27 +257,36 @@ fn bar(count: u64, total: u64, cells: u64) -> String {
         .collect()
 }
 
-/// The README's figures of `total` frames as aligned bars, each with its count and percentage.
-fn bars(figures: &[(&str, u64)], total: u64) -> String {
-    let label = figures
-        .iter()
-        .map(|(name, _)| name.len())
-        .max()
-        .unwrap_or_default();
-    let of = frame(total);
-    let mut out = String::from("```text\n");
-    for (name, count) in figures {
-        let _ = writeln!(
-            out,
-            "{name:<label$}  {}  {:>width$} of {of}  {:>6}",
-            bar(*count, total, BAR),
-            frame(*count),
-            percent(*count, total),
-            width = of.len()
-        );
-    }
-    out.push_str("```\n");
-    out
+/// The cells the whole movie is drawn in, in a monospace font: the headline and each stretch's
+/// place in the movie alike, so they share one scale.
+const MOVIE: u64 = 40;
+
+/// The first and last movie frame of `total` that cell `cell` of [`MOVIE`] draws; the last comes
+/// before the first when the movie has fewer frames than cells and the cell draws none.
+fn cell_frames(cell: u64, total: u64) -> (u64, u64) {
+    let edge = |cell: u64| cell.saturating_mul(total) / MOVIE;
+    (edge(cell).saturating_add(1), edge(cell.saturating_add(1)))
+}
+
+/// The movie of `total` frames as one bar: a cell passes when most of its frames pass, and is
+/// drawn `█` when most of those are among the first `started` held from power-on, `▓` when they
+/// pass from other seeds, and `░` when it doesn't pass.
+fn headline(runs: &[Run], total: u64, started: u64) -> String {
+    (0..MOVIE)
+        .map(|cell| {
+            let (first, last) = cell_frames(cell, total);
+            let frames = last.saturating_add(1).saturating_sub(first);
+            let held = passing(runs, first.saturating_sub(1), last);
+            let from_start = started.min(last).saturating_add(1).saturating_sub(first);
+            if held <= frames.saturating_sub(held) {
+                '░'
+            } else if from_start > held.saturating_sub(from_start) {
+                '█'
+            } else {
+                '▓'
+            }
+        })
+        .collect()
 }
 
 /// The README for the tree at `root`.
@@ -322,88 +299,36 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
     let milestone = plan.milestone();
     let total = frame_at(root, milestone.end()?)?;
     let runs = runs(root, &milestone.movie)?;
-    let mut out = format!(
-        "# sm-decomp\n\n{THESIS}\n\n<!-- Generated by `{COMMAND}` from {PLAYED}, the lock and \
-         the plan (`verify::report::readme`); never edit it by hand. -->\n\n## Progress\n\n"
-    );
-    let _ = writeln!(
-        out,
-        "The milestone is **{}**: the {}% movie from power-on through frame {}. A frame passes \
-         when the engine, playing alone from a recorded seed on the movie's pads, matches every \
-         compared field at its cut.\n",
-        milestone.name,
-        milestone.movie,
-        frame(total)
-    );
-    let passes = passing(&runs, 0, total);
-    let start = from_start(&runs, total);
-    out.push_str(&bars(
-        &[
-            ("Frames that pass", passes),
-            ("Continuous from power-on", start.held),
-        ],
-        total,
-    ));
-    out.push_str(
-        "\n- **Frames that pass:** every frame some reviewed run holds, counted once.\n\
-         - **Continuous from power-on:** the frames held back to back from power-on, with nothing \
-         fed back.",
-    );
-    match &start.stop {
-        Some(why) => {
-            let _ = writeln!(
-                out,
-                " It stops at frame {}: {why}.",
-                frame(start.held.saturating_add(1))
-            );
-        }
-        None => out.push('\n'),
-    }
-    if let Some((run, (from, to))) = runs
-        .iter()
-        .filter_map(|run| Some((run, run.frames()?)))
-        .max_by_key(|(run, _)| run.held)
-    {
-        let _ = writeln!(
-            out,
-            "- **Longest continuous run from any seed:** frames {} to {} ({} frames), `{}` from \
-             its cut {}.",
-            frame(from),
-            frame(to),
-            frame(run.held),
-            run.row,
-            run.start
-        );
-    }
-    out.push_str(
-        "\n### By stretch\n\nThe movie in the stretches being worked, in the order it plays; the \
-         first not yet whole is next.\n\n",
-    );
     let stretches = stretches::stretches(
         &read(&root.join(stretches::STRETCHES))?,
         &milestone.movie,
         total,
     )?;
-    out.push_str(&stretches::table(&stretches, &runs));
-    out.push_str(
-        "\n### By rung\n\nThe plan's ladder of shorter stretches toward the milestone \
-         ([domains.md §4](docs/architecture/domains.md#4-order)).\n\n| Rung | Movie frames | \
-         Frames that pass |\n| --- | --- | ---: |\n",
+    let mut out = format!(
+        "# sm-decomp\n\n{THESIS}\n\n<!-- Generated by `{COMMAND}` from {PLAYED}, {}, the lock \
+         and the plan (`verify::report::readme`); never edit it by hand. -->\n\n## Progress\n\n",
+        stretches::STRETCHES
     );
-    for rung in plan.rungs() {
-        let after = frame_at(root, seed(&rung.starts)?)?;
-        let through = frame_at(root, seed(&rung.ends)?)?;
-        let _ = writeln!(
-            out,
-            "| {} {} | {} to {} | {} of {} |",
-            rung.id,
-            rung.name,
-            frame(after.saturating_add(1)),
-            frame(through),
-            frame(passing(&runs, after, through)),
-            frame(through.saturating_sub(after))
-        );
-    }
+    let _ = writeln!(
+        out,
+        "The milestone is **{}** in the {}% movie. A frame passes when the engine, playing alone \
+         from a recorded seed on the movie's pads, matches every compared field at its cut.\n",
+        milestone.name, milestone.movie,
+    );
+    let started = from_start(&runs, total);
+    let _ = writeln!(
+        out,
+        "```text\n{}  {} from power-on · {} pass\n```\n\n`█` held continuously from power-on \
+         · `▓` passes from a later seed · `░` doesn't pass yet\n",
+        headline(&runs, total, started),
+        percent(started, total),
+        percent(passing(&runs, 0, total), total),
+    );
+    out.push_str(
+        "### By stretch\n\nThe stretches being worked, in the order the movie plays them; the \
+         first not yet whole is in bold.\n\n",
+    );
+    out.push_str(&stretches::table(&stretches, &runs));
     out.push_str(
         "\nBuilding and checking it, and the command that prints the models' sizes and the \
          indexed replay evidence, are in [BUILDING](docs/BUILDING.md).\n",
@@ -414,17 +339,14 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BAR, FromStart, PLAYED, Run, Stop, bar, bars, from_start, listed, passing, percent,
+        MOVIE, PLAYED, Run, bar, cell_frames, from_start, headline, listed, passing, percent,
     };
 
     /// A run seeded at movie frame `seed` that held `held` frames.
     fn run(seed: u64, held: u64, power_on: bool) -> Run {
         Run {
-            row: String::from("row"),
-            start: 0,
             seed,
             held,
-            stop: Stop::Failed(String::from("a difference")),
             power_on,
         }
     }
@@ -473,9 +395,10 @@ mod tests {
         // The file written back unchanged lists the same runs, so a fault below is its figure.
         assert_eq!(listed(&root, &file.to_string(), "any"), runs);
         // Each figure every run states is held to the lock: its row, its cuts within the rows it
-        // plays back to back, its stop, its seed's frame, the frames it held and power-on. Each
-        // fault is one figure of one run moved off the committed one.
-        let faults: [(&str, Fault); 8] = [
+        // plays back to back, its stop and the cause a failed one names, its seed's frame, the
+        // frames it held and power-on. Each fault is one figure of one run moved off the committed
+        // one.
+        let faults: [(&str, Fault); 9] = [
             ("a row not in the lock", |run| {
                 let row = format!("{}-NONE", run.get("row")?.as_str()?);
                 run.insert(String::from("row"), toml::Value::String(row));
@@ -501,6 +424,11 @@ mod tests {
             ("power-on the other way", |run| {
                 let power_on = !run.get("power_on")?.as_bool()?;
                 run.insert(String::from("power_on"), toml::Value::Boolean(power_on));
+                Some(())
+            }),
+            ("a failed stop that names no cause", |run| {
+                let stop = run.get_mut("stop")?.as_table_mut()?.get_mut("failed")?;
+                *stop = toml::Value::String(String::new());
                 Some(())
             }),
             ("the other stop", |run| {
@@ -550,51 +478,73 @@ mod tests {
     #[test]
     fn only_a_run_from_power_on_counts_from_the_start() {
         let seeded = run(10, 50, false);
-        let none = from_start(std::slice::from_ref(&seeded), 100);
-        assert_eq!(none.held, 0);
-        assert!(none.stop.is_some());
+        assert_eq!(from_start(std::slice::from_ref(&seeded), 100), 0);
         assert_eq!(
             from_start(&[seeded, run(0, 7, true), run(0, 3, true)], 100),
-            FromStart {
-                held: 7,
-                stop: Some(String::from("a difference"))
-            }
+            7
         );
-        assert_eq!(
-            from_start(&[run(0, 120, true)], 100),
-            FromStart {
-                held: 100,
-                stop: None
-            }
-        );
+        assert_eq!(from_start(&[run(0, 120, true)], 100), 100);
     }
 
     #[test]
     fn a_bar_fills_its_share_of_the_total() {
         let filled = |bar: &str| bar.chars().filter(|&cell| cell == '█').count();
-        let empty = bar(0, 15_196, BAR);
+        let empty = bar(0, 15_196, 40);
         assert_eq!((filled(&empty), empty.chars().count()), (0, 40));
         // 2,136 of 15,196 is 5.6 cells, rounded down.
-        assert_eq!(filled(&bar(2_136, 15_196, BAR)), 5);
-        assert!(bar(2_136, 15_196, BAR).starts_with("█████░"));
+        assert_eq!(filled(&bar(2_136, 15_196, 40)), 5);
+        assert!(bar(2_136, 15_196, 40).starts_with("█████░"));
         // One frame shows; one frame short of the whole doesn't fill the bar.
-        assert_eq!(filled(&bar(1, 15_196, BAR)), 1);
-        assert_eq!(filled(&bar(15_195, 15_196, BAR)), 39);
-        assert_eq!(bar(15_196, 15_196, BAR), "█".repeat(40));
-        assert_eq!(filled(&bar(0, 0, BAR)), 0);
+        assert_eq!(filled(&bar(1, 15_196, 40)), 1);
+        assert_eq!(filled(&bar(15_195, 15_196, 40)), 39);
+        assert_eq!(bar(15_196, 15_196, 40), "█".repeat(40));
+        assert_eq!(filled(&bar(0, 0, 40)), 0);
     }
 
     #[test]
-    fn the_bars_line_up_with_their_counts() {
+    fn the_movies_cells_draw_each_frame_once_in_order() {
+        for total in [15_196, MOVIE, 1_000, 7] {
+            let mut next = 1;
+            for cell in 0..MOVIE {
+                let (first, last) = cell_frames(cell, total);
+                assert_eq!(first, next, "{total}: cell {cell}");
+                next = last.saturating_add(1);
+            }
+            assert_eq!(next, total.saturating_add(1), "{total}");
+        }
+        // Equal shares: 15,196 frames in 40 cells are 379 or 380 frames each.
+        assert_eq!(cell_frames(0, 15_196), (1, 379));
+        assert_eq!(cell_frames(39, 15_196), (14_817, 15_196));
+    }
+
+    #[test]
+    fn the_headline_draws_each_cell_as_most_of_its_frames() {
+        // 400 frames, 10 a cell: power-on holds 1 to 25, a seed at 50 holds 51 to 64 and one at
+        // 100 holds 101 to 104.
+        let runs = [run(0, 25, true), run(50, 14, false), run(100, 4, false)];
+        let drawn = headline(&runs, 400, 25);
+        let cells: Vec<char> = drawn.chars().collect();
+        assert_eq!(cells.len(), 40);
+        // Cells 0 and 1 are held from power-on; cell 2 holds 5 of its 10, not most of them.
+        assert_eq!(cells.get(..3), Some(&['█', '█', '░'][..]));
+        // Cell 5 passes from a later seed; cell 6 holds 4 of its 10; cell 10 holds 4 of its 10.
+        assert_eq!(cells.get(5..7), Some(&['▓', '░'][..]));
+        assert_eq!(cells.get(10), Some(&'░'));
+        assert_eq!(drawn.chars().filter(|&cell| cell != '░').count(), 3);
+        // Of the frames a cell holds, most from power-on draw it as power-on's.
         assert_eq!(
-            bars(&[("Passing", 2_136), ("From start", 0)], 15_196),
-            format!(
-                "```text\nPassing     {}   2,136 of 15,196   14.1%\nFrom start  {}       0 of \
-                 15,196    0.0%\n```\n",
-                bar(2_136, 15_196, BAR),
-                bar(0, 15_196, BAR)
-            )
+            headline(&[run(0, 6, true), run(5, 10, false)], 400, 6)
+                .chars()
+                .next(),
+            Some('█')
         );
+        assert_eq!(
+            headline(&[run(0, 4, true), run(4, 10, false)], 400, 4)
+                .chars()
+                .next(),
+            Some('▓')
+        );
+        assert_eq!(headline(&[], 400, 0), "░".repeat(40));
     }
 
     #[test]

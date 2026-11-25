@@ -664,8 +664,8 @@ needs = [
 ]
 
 # The ladder toward the milestone (domains.md §4): shorter stretches of the same movie, each
-# played alone from its first seed, so the README counts frames that pass over a stretch that
-# can be reached before the whole milestone. Each rung's needs are a first estimate from
+# played alone from its first seed, that can be reached before the whole milestone; the report
+# checks each rung's needs and seeds against the plan. Each rung's needs are a first estimate from
 # domains.md §4's table; a session's planning corrects them from what the stretch's rows show.
 
 [[rung]]

@@ -1,6 +1,6 @@
-# The milestone's movie in the stretches being worked, in movie order: the README gives each its
-# frames that pass, collapses a stretch whose every frame passes, and marks the first one that
-# doesn't as next, with its work issue (verify::report::readme). The stretches cover the
+# The milestone's movie in the stretches being worked, in movie order: the README draws each where
+# it lies in the movie, with a bar of its frames that pass or a tick once all of them do, and its
+# work issue, the first one not yet whole in bold (verify::report::readme). The stretches cover the
 # milestone's frames back to back, frame 1 to the frame of the seed that ends it, and the report
 # fails when they leave a gap or overlap. Adding a scoped piece of the movie is splitting a row.
 #

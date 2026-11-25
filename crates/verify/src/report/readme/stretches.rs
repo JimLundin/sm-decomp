@@ -1,11 +1,12 @@
-//! The milestone's movie in the stretches being worked, from [`STRETCHES`]: each with its frames
-//! that pass, collapsed once all of them do, and the first that doesn't marked as next.
+//! The milestone's movie in the stretches being worked, from [`STRETCHES`]: each drawn where it
+//! lies in the whole movie, with a bar of its frames that pass or a tick once all of them do, and
+//! the first that doesn't in bold.
 
 use std::fmt::{self, Display, Write as _};
 
 use serde::Deserialize;
 
-use super::{Run, bar, frame, passing};
+use super::{MOVIE, Run, bar, cell_frames, passing};
 
 /// The stretches, from the repository root.
 pub(super) const STRETCHES: &str = "scenarios/replay/stretches.toml";
@@ -13,7 +14,7 @@ pub(super) const STRETCHES: &str = "scenarios/replay/stretches.toml";
 /// Where the README links a work issue.
 const ISSUES: &str = "https://github.com/JimLundin/sm-decomp/issues";
 
-/// The cells of a stretch's bar, half the headline's, so the table stays narrow.
+/// The cells of a stretch's bar of frames that pass, half the movie's, so the table stays narrow.
 const CELLS: u64 = 20;
 
 /// The stretches file.
@@ -98,36 +99,49 @@ pub(super) fn stretches(text: &str, movie: &str, total: u64) -> Result<Vec<Stret
     Ok(listed.stretch)
 }
 
-/// The table of `stretches` with the frames of each that `runs` hold.
+impl Stretch {
+    /// Where it lies in the movie of `total` frames: the cells of [`MOVIE`] that draw any of its
+    /// frames, `█`, among the others, `·`.
+    fn place(&self, total: u64) -> String {
+        let [first, last] = self.frames;
+        (0..MOVIE)
+            .map(|cell| {
+                let (from, to) = cell_frames(cell, total);
+                if from <= to && from <= last && first <= to {
+                    '█'
+                } else {
+                    '·'
+                }
+            })
+            .collect()
+    }
+}
+
+/// The table of `stretches` with the frames of each that `runs` hold, each drawn in the movie
+/// they divide.
 pub(super) fn table(stretches: &[Stretch], runs: &[Run]) -> String {
+    let total = stretches.last().map_or(0, |stretch| stretch.frames[1]);
     let mut out = String::from(
-        "| Stretch | Movie frames | Frames that pass | Work |\n| --- | --- | --- | --- |\n",
+        "| Stretch | In the movie | Frames that pass | Work |\n| --- | --- | --- | --- |\n",
     );
-    let mut next_marked = false;
+    let mut bolded = false;
     for stretch in stretches {
-        let [first, last] = stretch.frames;
         let (held, of) = (stretch.passing(runs), stretch.len());
         let (name, passes) = if held == of {
-            (stretch.name.clone(), format!("✓ all {}", frame(of)))
+            (stretch.name.clone(), String::from("✓"))
         } else {
-            let passes = format!(
-                "`{}` {} of {}",
-                bar(held, of, CELLS),
-                frame(held),
-                frame(of)
-            );
-            if next_marked {
+            let passes = format!("`{}`", bar(held, of, CELLS));
+            if bolded {
                 (stretch.name.clone(), passes)
             } else {
-                next_marked = true;
-                (format!("**Next: {}**", stretch.name), passes)
+                bolded = true;
+                (format!("**{}**", stretch.name), passes)
             }
         };
         let _ = writeln!(
             out,
-            "| {name} | {} to {} | {passes} | {} |",
-            frame(first),
-            frame(last),
+            "| {name} | `{}` | {passes} | {} |",
+            stretch.place(total),
             stretch.issue
         );
     }
@@ -138,7 +152,7 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run]) -> String {
 mod tests {
     use super::{CELLS, STRETCHES, Stretch, stretches, table};
     use crate::report::plan::{PLAN, Plan, seed};
-    use crate::report::readme::{PLAYED, Run, Stop, bar, listed, passing};
+    use crate::report::readme::{PLAYED, Run, bar, listed, passing};
     use crate::report::seeds::seed_frame;
 
     /// The repository root, from this crate's manifest.
@@ -175,11 +189,8 @@ mod tests {
     /// A run seeded at movie frame `seed` that held `held` frames.
     fn run(seed: u64, held: u64) -> Run {
         Run {
-            row: String::from("row"),
-            start: 0,
             seed,
             held,
-            stop: Stop::Failed(String::from("a difference")),
             power_on: false,
         }
     }
@@ -305,41 +316,69 @@ mod tests {
         }
     }
 
-    #[test]
-    fn a_finished_stretch_collapses_and_the_first_unfinished_is_next() {
-        let three = stretches(
+    /// Three stretches of a 400-frame movie, 10 frames a cell of it: Boot frames 1 to 100,
+    /// Title 101 to 105 and Intro 106 to 400.
+    fn three() -> Vec<Stretch> {
+        stretches(
             "movie = \"any\"\n\
-             [[stretch]]\nname = \"Boot\"\nframes = [1, 10]\nissue = 1\n\
-             [[stretch]]\nname = \"Title\"\nframes = [11, 20]\nissue = 2\n\
-             [[stretch]]\nname = \"Intro\"\nframes = [21, 30]\nissue = 3\n",
+             [[stretch]]\nname = \"Boot\"\nframes = [1, 100]\nissue = 1\n\
+             [[stretch]]\nname = \"Title\"\nframes = [101, 105]\nissue = 2\n\
+             [[stretch]]\nname = \"Intro\"\nframes = [106, 400]\nissue = 3\n",
             "any",
-            30,
+            400,
         )
-        .unwrap_or_default();
+        .unwrap_or_default()
+    }
+
+    #[test]
+    fn a_stretch_is_drawn_where_it_lies_in_the_movie() {
+        let three = three();
+        let places: Vec<String> = three.iter().map(|stretch| stretch.place(400)).collect();
+        assert_eq!(
+            places,
+            [
+                format!("{}{}", "█".repeat(10), "·".repeat(30)),
+                // Five frames still draw the cell that holds them, which the next shares.
+                format!("{}█{}", "·".repeat(10), "·".repeat(29)),
+                format!("{}{}", "·".repeat(10), "█".repeat(30)),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_finished_stretch_shows_a_tick_and_the_first_unfinished_is_bold() {
+        let three = three();
         // Boot plays whole, the title in part, the intro not at all.
-        let page = table(&three, &[run(0, 14)]);
+        let page = table(&three, &[run(0, 103)]);
         let rows: Vec<&str> = page.lines().skip(2).collect();
         let link = |issue: u32| {
             format!("[#{issue}](https://github.com/JimLundin/sm-decomp/issues/{issue})")
         };
+        let place = |stretch: usize| three.get(stretch).map(|stretch| stretch.place(400));
         assert_eq!(
             rows,
             [
-                format!("| Boot | 1 to 10 | ✓ all 10 | {} |", link(1)),
                 format!(
-                    "| **Next: Title** | 11 to 20 | `{}` 4 of 10 | {} |",
-                    bar(4, 10, CELLS),
+                    "| Boot | `{}` | ✓ | {} |",
+                    place(0).unwrap_or_default(),
+                    link(1)
+                ),
+                format!(
+                    "| **Title** | `{}` | `{}` | {} |",
+                    place(1).unwrap_or_default(),
+                    bar(3, 5, CELLS),
                     link(2)
                 ),
                 format!(
-                    "| Intro | 21 to 30 | `{}` 0 of 10 | {} |",
-                    bar(0, 10, CELLS),
+                    "| Intro | `{}` | `{}` | {} |",
+                    place(2).unwrap_or_default(),
+                    bar(0, 295, CELLS),
                     link(3)
                 ),
             ]
         );
-        // With none whole, the first is next; with all whole, none is.
-        assert!(table(&three, &[]).contains("| **Next: Boot** |"));
-        assert!(!table(&three, &[run(0, 30)]).contains("Next"));
+        // With none whole, the first is bold; with all whole, none is.
+        assert!(table(&three, &[]).contains("| **Boot** |"));
+        assert!(!table(&three, &[run(0, 400)]).contains("**"));
     }
 }

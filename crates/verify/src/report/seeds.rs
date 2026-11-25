@@ -1,5 +1,5 @@
-//! The movie frames of the recorded room seeds, which place the plan's milestone and rungs, and
-//! the rows that follow one another back to back by them.
+//! The movie frames of the recorded room seeds, which place the plan's milestone and the played
+//! runs, and the rows that follow one another back to back by them.
 
 use std::collections::BTreeMap;
 use std::path::Path;
