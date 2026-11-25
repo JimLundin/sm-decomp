@@ -11,12 +11,12 @@
 # A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
 # of the commit where the branch left BASE) and what it ran with: the toolchain, cargo-deny and
 # shellcheck or their absence, Python, the environment variables cargo, rustc, the gate and the
-# self-tests read, and the cargo and rustfmt configuration files outside the tree (in the
-# checkout's folder and each folder above it, in CARGO_HOME and in rustfmt's user folder). Those
+# self-tests read, and the cargo and rustfmt configuration files outside the tree (below). Those
 # decide what every check reads, which checks run and how, so a later gate of the same key with
 # nothing uncommitted passed already: the root's gate of a squashed or picked commit whose tree is
 # the lane's, on the base the lane was gated on, says whose pass it reuses and runs nothing. A file
-# git is told to ignore changes to (skip-worktree, assume-unchanged) turns this off.
+# git is told to ignore changes to (skip-worktree, assume-unchanged), a file hidden by ignore rules
+# from outside the tree, or a cargo configuration that includes another turns this off.
 # SM_GATE_FRESH=1 runs the checks anyway.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR, SM_GATE_BASE (the base,
 # default origin/main; a stacked branch names the branch it builds on), SM_GATE_PASSED (where the
@@ -42,8 +42,36 @@ deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny
 [ -x "$deny" ] || [ -x "$deny.exe" ] || deny=
 PASSED="${SM_GATE_PASSED:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate-passed}"
 key=
+# The configuration files cargo and rustfmt read from outside the tree: in CARGO_HOME, rustfmt's
+# home and user folders, and the checkout's folder, TEMP's (where the import self-test builds) and
+# every folder above them.
+configs=("${CARGO_HOME:-$HOME/.cargo}"/config{,.toml} "$HOME"/{rustfmt,.rustfmt}.toml
+  "${XDG_CONFIG_HOME:-$HOME/.config}"/rustfmt/{rustfmt,.rustfmt}.toml)
+[ -z "${USERPROFILE:-}" ] || configs+=("$USERPROFILE"/{rustfmt,.rustfmt}.toml)
+[ -z "${APPDATA:-}" ] || configs+=("$APPDATA"/rustfmt/{rustfmt,.rustfmt}.toml)
+for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}"; do
+  up=
+  while [ "$dir" != "$up" ]; do
+    configs+=("$dir"/.cargo/config{,.toml} "$dir"/{rustfmt,.rustfmt}.toml)
+    up=$dir dir=$(dirname "$dir")
+  done
+done
+# A cargo configuration that includes another names a file this list doesn't hold.
+included() {
+  local config
+  for config in "${configs[@]}"; do
+    case $config in */config | */config.toml)
+      [ ! -f "$config" ] || ! grep -qE '^[[:space:]]*include[[:space:]]*=' "$config" || return 0 ;;
+    esac
+  done
+  return 1
+}
+# Nothing uncommitted, nothing git is told to skip, and no file hidden only by ignore rules from
+# outside the tree (core.excludesFile, info/exclude), which status doesn't show.
 if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
-  ! git ls-files -v | grep -q '^[a-zS]' && left=$(git merge-base "$BASE" HEAD); then
+  ! git ls-files -v | grep -q '^[a-zS]' &&
+  [ -z "$(git ls-files -o --exclude-per-directory=.gitignore)" ] && ! included &&
+  left=$(git merge-base "$BASE" HEAD); then
   ran_with=$({
     "$R/rustc" --version 2>&1
     if [ -n "$deny" ]; then echo "cargo-deny $deny"; cksum <"$deny" 2>/dev/null || cksum <"$deny.exe"
@@ -53,16 +81,9 @@ if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
     "${SM_PY:-python3}" --version 2>&1
     env | LC_ALL=C grep -E '^(RUST|CARGO|CLEANROOM_|CANARY_|CLIPPY_CONF_DIR=|SM_RUST_BIN=|SM_PY=)' |
       LC_ALL=C sort
-    configs=("${CARGO_HOME:-$HOME/.cargo}"/config{,.toml}
-      "${XDG_CONFIG_HOME:-$HOME/.config}"/rustfmt/{rustfmt,.rustfmt}.toml)
-    [ -z "${APPDATA:-}" ] || configs+=("$APPDATA"/rustfmt/{rustfmt,.rustfmt}.toml)
-    dir=$(git rev-parse --show-toplevel) up=
-    while [ "$dir" != "$up" ]; do
-      configs+=("$dir"/.cargo/config{,.toml} "$dir"/{rustfmt,.rustfmt}.toml)
-      up=$dir dir=$(dirname "$dir")
-    done
+    # A link at a configuration's name counts even when it leads nowhere readable.
     for config in "${configs[@]}"; do
-      [ ! -f "$config" ] || { echo "$config"; cksum <"$config"; }
+      [ ! -f "$config" ] && [ ! -L "$config" ] || { echo "$config"; { cksum <"$config"; } 2>&1; }
     done
   } | git hash-object --stdin)
   key=$(git rev-parse HEAD^{tree})-$(git rev-parse "$left^{tree}")-$ran_with

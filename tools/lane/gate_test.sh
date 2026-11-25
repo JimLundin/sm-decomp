@@ -3,7 +3,8 @@
 # record that they ran, stops before any check on a base that doesn't resolve; passes a clean
 # branch; reuses that pass for a new commit of the same tree over the same base, running nothing,
 # unless SM_GATE_FRESH=1, other compiler flags or overrides, cargo-deny's or shellcheck's presence,
-# a rustfmt configuration above the checkout or a skip-worktree file says otherwise; never reuses a failed gate; runs a check for an untracked file in its subject
+# a cargo or rustfmt configuration outside the tree, a configuration that includes another, a
+# file only an outside ignore rule hides, or a skip-worktree file says otherwise; never reuses a failed gate; runs a check for an untracked file in its subject
 # even where git status hides untracked files; and shows a failing check's last lines when its tool prints none of the lines the gate
 # looks for. Run from anywhere; exit 1 lists what went wrong.
 here=$(cd "$(dirname "$0")" && pwd)
@@ -104,6 +105,47 @@ fake shellcheck "$bin/shellcheck"
 out=$(gate) || fail "a gate with shellcheck failed: $out"
 ! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with shellcheck installed reused a pass made without it: $out"
 rm "$bin/shellcheck"
+# Whether a gate run with these settings reused a pass; each case first records a pass with the
+# same settings, then changes one thing outside the tree.
+reuses() { out=$(gate "$@") || fail "a gate with ${*:-no settings} failed: $out"; grep -q '^GATE REUSED: ' <<<"$out"; }
+settled() { reuses "$@" || reuses "$@" || fail "a second gate with ${*:-no settings} reused nothing: $out"; }
+settled
+out=$(gate CANARY_SALT=other) && ! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with a CANARY_ variable reused a pass: $out"
+mkdir -p "$scratch/.cargo" && echo '[build]' >"$scratch/.cargo/config.toml"
+! reuses || fail "a gate under a parent .cargo/config.toml reused a pass: $out"
+echo 'include = [{ path = "more.toml" }]' >"$scratch/.cargo/config.toml"
+! reuses && ! reuses || fail "a gate under a cargo configuration that includes another reused a pass: $out"
+rm -r "$scratch/.cargo"
+settled
+mkdir -p "$scratch/no-cargo-home" && echo '[build]' >"$scratch/no-cargo-home/config.toml"
+! reuses || fail "a gate with a CARGO_HOME configuration reused a pass: $out"
+rm "$scratch/no-cargo-home/config.toml"
+settled XDG_CONFIG_HOME="$scratch/xdg" HOME="$scratch/home"
+mkdir -p "$scratch/xdg/rustfmt" && echo 'hard_tabs = true' >"$scratch/xdg/rustfmt/.rustfmt.toml"
+! reuses XDG_CONFIG_HOME="$scratch/xdg" HOME="$scratch/home" || fail "a gate with rustfmt's user configuration reused a pass: $out"
+rm -r "$scratch/xdg"
+settled XDG_CONFIG_HOME="$scratch/xdg" HOME="$scratch/home"
+mkdir -p "$scratch/home" && echo 'hard_tabs = true' >"$scratch/home/rustfmt.toml"
+! reuses XDG_CONFIG_HOME="$scratch/xdg" HOME="$scratch/home" || fail "a gate with a rustfmt.toml in the home reused a pass: $out"
+rm "$scratch/home/rustfmt.toml"
+settled
+ln -s rustfmt.toml "$scratch/rustfmt.toml"
+! reuses || fail "a gate under a rustfmt.toml that is a link loop reused a pass: $out"
+rm "$scratch/rustfmt.toml"
+# Cargo's configuration above TEMP, where the import self-test builds.
+elsewhere=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/gate-test-temp-XXXXXX")
+mkdir -p "$elsewhere/tmp"
+settled TEMP="$elsewhere/tmp"
+mkdir -p "$elsewhere/.cargo" && echo '[build]' >"$elsewhere/.cargo/config.toml"
+! reuses TEMP="$elsewhere/tmp" || fail "a gate with a cargo configuration above TEMP reused a pass: $out"
+rm -r "$elsewhere"
+# A file git ignores only by a rule from outside the tree is unseen by status, not by the gate.
+settled
+echo 'hard_tabs = true' >"$repo/rustfmt.toml" && echo rustfmt.toml >"$scratch/excludes"
+! reuses GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0="$scratch/excludes" &&
+  ! reuses GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0="$scratch/excludes" ||
+  fail "a gate beside a file only an outside ignore rule hides reused a pass: $out"
+rm "$repo/rustfmt.toml"
 
 # A failed gate is not reused: the same tree's next gate runs the checks again.
 echo 'Invented crate rules.' >"$repo/scenarios/rules.toml"
