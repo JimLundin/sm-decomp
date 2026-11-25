@@ -255,7 +255,10 @@ decide what may overlap.
 **A backlog item is always in flight** (Jim, 2026-11-24). Beside the rounds, at least one lane
 works a `status:backlog` work issue until none is left, and the items that shorten a round's
 cycle time go first: the time from an issue's opening to its landing, most of which is fix loops
-after reviews and waiting on a shared file, not CI.
+after reviews and waiting on a shared file, not CI. A standing backlog lane on workflow cleanup
+and landing time runs beside the rounds at all times (Jim, 2026-11-25): it works one item at a
+time, each on its own branch, and the root starts its next item as soon as one lands. Each item
+lands with independent review, like other work.
 
 **Parallel lanes don't share files.** A rebase after main has moved costs a
 rebuild and a re-proof on this machine, which can wipe out the time running in parallel saved.

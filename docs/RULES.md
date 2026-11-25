@@ -55,7 +55,8 @@ ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the
     ([MODEL decision 35](architecture/MODEL.md#1-the-goal-and-what-is-exact)).
 6g. Behaviour work leads: no new decision or process tooling until played-alone frames grow;
     each session review reports its behaviour share of commit lines (decision 36).
-    A backlog lane always runs beside the rounds, cycle-time items first
+    A standing backlog lane on workflow cleanup and landing time always runs beside the
+    rounds, cycle-time items first, each item reviewed
     ([PROCESS](cleanroom/PROCESS.md#what-can-run-at-once)).
 6h. Audio is verified at its boundary with gameplay: requests out (a scene's music requests
     are its domain's) and the replies the game reads, at frame cuts; its CPU timing is borrowed
