@@ -353,8 +353,9 @@ else
   for o in "${outside[@]}"; do
     case "$export_dir/" in "$o"/*) die "the export $export_dir is inside $o, which the session must not read" ;; esac
     # A rule is a glob closed by `)`: a name holding one of these would deny something else.
-    ! grep -q '[][()*?{}!\\]' <<<"$o" || die "can't write a deny rule for $o: rename it, it holds one of ()[]*?{}!\\"
-    if [ -d "$o" ]; then r="$(rule_path "$o")/**"; else r=$(rule_path "$o"); fi
+    # No subprocess per entry here or in rules(): a crowded /tmp beside the export makes thousands.
+    case $o in *[]\[\(\)\*\?\{\}\!\\]*) die "can't write a deny rule for $o: rename it, it holds one of ()[]*?{}!\\" ;; esac
+    if [ -d "$o" ]; then r="/$o/**"; else r="/$o"; fi
     outside_reads+=("Read($r)" "Glob($r)" "Grep($r)")
     outside_writes+=("Edit($r)" "Write($r)")
   done
@@ -393,11 +394,13 @@ q() { # a JSON string: backslashes and quotes escaped
   s=${1//"$bs"/"$bs$bs"}
   printf '"%s"' "${s//"$dq"/"$bs$dq"}"
 }
-rules() { # each argument a rule; prints a JSON array body
+rules() { # each argument a rule; prints a JSON array body, each rule escaped as q does
+  local bs='\' dq='"' s
   first=1
   for r in "$@"; do
     [ $first = 1 ] || printf ',\n'
-    printf '      %s' "$(q "$r")"; first=0
+    s=${r//"$bs"/"$bs$bs"}
+    printf '      "%s"' "${s//"$dq"/"$bs$dq"}"; first=0
   done
   printf '\n'
 }
