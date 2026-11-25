@@ -42,7 +42,7 @@ ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the
    the score: [MODEL §4](architecture/MODEL.md#4-size-the-score-its-gates-and-its-lints)).
 6a. The lowest rung's needs list is a limit: nothing outside it starts (decision 24).
 6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
-    planted fault, in production or verify and never a clean crate, makes it fail
+    planted fault, in production or verify's played runner and never a clean crate, makes it fail
     (decisions 24, 25). The process freezes once that holds (26).
 6c. Each session's plan and review is an issue (decision 27).
 6d. The root measures Code Health after independent review and records dispositions

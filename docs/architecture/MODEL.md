@@ -197,10 +197,11 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     a model's headline is its gain over a step that does nothing, and planted faults show each
     check can fail (decision 25).
 25. **A check is trusted once it is shown to fail** (Jim, 2026-11-12). Each domain's replay
-    cases are run against planted one-line faults in its model, and a fault no vector or case
-    catches is a finding against the cases. This runs in parallel with the rung's work, not
-    ahead of it. A planted fault goes in production or in verify's played runner, never in a
-    clean crate: `tools/check_mutants.py` refuses any other file (2026-11-24).
+    cases are run against planted one-line faults in the production paths that run its model,
+    and a fault no vector or case catches is a finding against the cases. This runs in parallel
+    with the rung's work, not ahead of it. A planted fault goes in production or in verify's
+    played runner, never in a clean crate: `tools/check_mutants.py` refuses any other file
+    (Jim, 2026-11-25).
 26. **The process freezes once the checks are shown to work** (Jim, 2026-11-12). When decision
     25's planted faults are caught on the rung's rows for the domains it needs, and the gain over
     the null model is the headline, the process freezes until the rung is reached: no new rule
