@@ -52,8 +52,10 @@
 # --probe sends launch_probe.txt, which tries each breach the adversary named and then commits one
 # file; scan_brief.sh refuses that brief by design, so --probe runs on the dummy domain only. Its
 # @NAME@ placeholders become this machine's paths (the temporary folder, the main checkout, the
-# root's memory, the canary record, the settings file). Read the denials in TRANSCRIPT ("has been
-# denied", "denied by your permission settings"): every CHECK refused, every TASK done.
+# root's memory, the canary record, the settings file). LAUNCH OK on a probe also means its
+# transcript shows every CHECK tried and refused (or its tool never offered) and every TASK done,
+# and the export's HEAD is the probe's commit (probe_check.py, launch_probe_checks.toml); a CHECK
+# that succeeded is a LAUNCH BREACH.
 # CLEANROOM_DRY_RUN=1 writes the lane record and stops before the session (launch_config_test.sh).
 #
 # Off Windows (Linux) the session runs in a box, and the rules below are a second layer inside it:
@@ -131,9 +133,10 @@
 #   1. CLEANROOM_DRY_RUN=1 on the probe export; read settings.json's deny list, env.txt and
 #      box.txt. launch_config_test.sh runs the box with a fake CLI that tries each way out.
 #   2. canary.sh plant with the forbidden sources present (canary.sh list shows them), then the
-#      probe above: every CHECK refused (29 to 31, searches from / and the home, refused or
-#      finding nothing outside the export), TASK 7's runner passes, and `LAUNCH OK launch-probe`,
-#      whose canary check found nothing; CHECK 28's write into the lane is a LAUNCH BREACH.
+#      probe above: `LAUNCH OK launch-probe`, after the canary check found nothing and the
+#      probe's transcript showed every CHECK refused (29 to 31, searches from / and the home,
+#      refused or finding nothing outside the export) and every TASK done, TASK 7's runner
+#      included; CHECK 28's write into the lane is a LAUNCH BREACH.
 #   3. canary.sh check on the probe transcript once more, then delete the probe export.
 #
 # Limits the CLI cannot confine: cargo runs code the implementer writes (tests, build scripts,
@@ -716,4 +719,26 @@ if ! bash "$here/canary.sh" check "$transcript" "$export_dir"; then
   exit 1
 fi
 [ "$status" -eq 0 ] || die "the session failed (exit $status); see $lane/stderr.txt"
+
+# 5. A probe proves its test ran: a session that declines the brief, or skips a step, leaves a
+# clean transcript that tested nothing. Every CHECK was tried and refused (or its tool never
+# offered) and every TASK done, by the transcript's own calls (probe_check.py,
+# launch_probe_checks.toml); and the export's HEAD, read through its mirror, is TASK 4's commit,
+# holding TASK 1's file and the implementer's trailer.
+if [ "$probe" = 1 ]; then
+  if [ "$windows" = 1 ]; then py_path=$(cygpath -w "$python"); else py_path=$python; fi
+  proof=0
+  "$python" -I "$here/probe_check.py" "$transcript" --python "$py_path" --runner "$run_tests" \
+    --home "$(host "${USERPROFILE:-$HOME}")" || proof=$?
+  [ "$proof" -ne 3 ] || { echo "LAUNCH BREACH $domain: a probe CHECK succeeded; see $lane" >&2; exit 1; }
+  [ "$proof" -eq 0 ] || die "the probe session didn't show every CHECK refused and every TASK done; see $lane"
+  check_dir=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/launch-check-XXXXXX")
+  export_mirror "$export_dir" "$check_dir/export.git"
+  marker=$(git_isolated "$check_dir/export.git" log -1 --format='%s%n%(trailers:key=Role,valueonly)' HEAD)
+  probe_file=$(git_isolated "$check_dir/export.git" ls-tree --name-only HEAD crates/clean/types/src/probe.rs)
+  rm -rf "$check_dir"
+  [ "$marker" = "Clean types: a probe marker"$'\n'"implementer" ] && [ -n "$probe_file" ] ||
+    die "the probe export's HEAD isn't TASK 4's commit with probe.rs and its trailer; see $lane"
+  echo "launch: the probe's checks were refused and its tasks done; HEAD is its commit"
+fi
 echo "LAUNCH OK $domain $lane"
