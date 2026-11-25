@@ -296,7 +296,9 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     ready), both at frame cuts. The audio CPU's own timing, such as when its turns run within a
     frame, stays a declared borrowed input until T1. The sequencer (U2: which note on which
     voice at which tick) is a separate comparison stream, decided later, that gates no rung;
-    the audio waveform is never compared (decision 23).
+    the audio waveform is never compared (decision 23). A scene's music requests are its
+    domain's output at that boundary, not audio's (U1's) (2026-11-25); a spec that still gives
+    them to audio follows at its next touch.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
