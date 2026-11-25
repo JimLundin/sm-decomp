@@ -112,6 +112,11 @@ impl Run {
         self.way = Side::of(facing);
     }
 
+    /// `BackwardLeap`'s let-go: she follows the pad again, her speed and dash as they are.
+    pub(crate) const fn follow_the_pad(&mut self) {
+        self.carry = Carry::FollowsPad;
+    }
+
     /// `PadChart`'s "as running": her horizontal speed 0 at the frame's start (`start`) or
     /// after the frame's move, she follows the pad again, keeping the speed the move left her;
     /// else the dash joins her speed and she carries on, braking.

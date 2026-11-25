@@ -232,8 +232,10 @@ impl Samus {
         response
     }
 
-    /// `PoseFollows`, `Dashing`: the change's effects, in order: its row's, then those of the
-    /// change of action itself. A let-go effect among them ends her dashing first.
+    /// `PoseFollows`, `Dashing`, `BackwardLeap`: the change's effects, in order: its row's, then
+    /// those of the change of action itself, then the row's that follow them (the leap's let-go,
+    /// `Effect::follows_the_change_of_action`). A let-go effect among them ends her dashing
+    /// first.
     fn apply_effects(&mut self, start: &Self, accepted: Choice, t: &Tick) {
         if accepted.effects.iter().any(|e| e.lets_go()) {
             self.run.dashing = Dashing::Off;
@@ -242,7 +244,11 @@ impl Samus {
             .iter()
             .filter(|e| e.on(start.pose.action, accepted.pose))
             .map(|e| e.effect);
-        for effect in accepted.effects.iter().copied().chain(entered) {
+        let (after, before): (Vec<Effect>, Vec<Effect>) = accepted
+            .effects
+            .iter()
+            .partition(|e| e.follows_the_change_of_action());
+        for effect in before.into_iter().chain(entered).chain(after) {
             self.apply(effect, start, t);
         }
     }
@@ -278,11 +284,12 @@ pub fn transition_firing_aim(
 }
 
 impl Effect {
-    /// `Dashing`: a let-go effect other than none ends her dashing at the pose change.
+    /// `Dashing`: a let-go effect of the pad chart other than none, or the backward leap's
+    /// let-go, ends her dashing at the pose change.
     pub(crate) const fn lets_go(self) -> bool {
         matches!(
             self,
-            Self::EndSkid | Self::AsRunning | Self::LoseDash | Self::Halt
+            Self::EndSkid | Self::AsRunning | Self::LoseDash | Self::Halt | Self::LeapLetGo
         )
     }
 }
@@ -310,6 +317,7 @@ impl Samus {
             Effect::ComesToTheGround => self.vertical.come_to_the_ground(),
             Effect::EndsTheBounce => self.vertical.end_bounce(),
             Effect::AlongHerFacing => self.run.way = Side::of(pose.facing),
+            Effect::LeapLetGo => self.run.follow_the_pad(),
             Effect::LiftIfUnaimed | Effect::TurnRoundIfFacingChanges => {}
         }
     }

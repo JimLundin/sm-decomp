@@ -7337,7 +7337,27 @@ pad = ["right"]
 jump_pressed = false
 pressed = ["right"]
 next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
-after = { position = ["004C.D000", "00B4.D3FF"], speed_x = "+0005.C000", dash = "0001.A000", speed_y = "+0001.F800" }
+after = { position = ["004C.D000", "00B4.D3FF"], speed_x = "+0005.C000", dash = "0001.A000", speed_y = "+0001.F800", dashing = false, dashing_after_moves = true, dash_lost = true }
+
+# PL5: the frame after PL3's let-go. Her dashing ended there with the run's dash still on her, and
+# the let-go left her following the pad, so the dash is gone before this move and forward builds
+# to the straight jump's top speed: 5.C000 + 0.C000 is cut to 1.4000.
+
+[[vector]]
+id = "PL5"
+source = "chain-any-0006-E0B5:729"
+entries = ["BackwardLeap", "Dashing", "Dash", "DriftInTheAir"]
+world = {}
+before = { position = ["0054.3000", "00B2.F7FF"], speed_x = "-0005.0000", dash = "0001.A000", speed_y = "+0001.DC00", dashing = true }
+lead_in = [
+    { pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
+]
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["right", "shoot"]
+jump_pressed = false
+pressed = ["shoot"]
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", legs = "Striding", radius = [5, 19] }
+after = { position = ["004E.1000", "00B6.CBFF"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0002.1400", dashing = false }
 
 [[vector]]
 id = "PE1"
@@ -7579,6 +7599,42 @@ pad = ["right", "jump"]
 jump_pressed = false
 next_pose = { body = "Upright", action = "Jumping", facing = "Right", legs = "Striding", radius = [5, 19] }
 after = { position = ["00FD.4000", "007E.0000"], speed_x = "+0002.C000", speed_y = "-0001.E400" }
+
+# C-leap-jump-held: jump held with neither side in the leap, dashing with a dash. Her speed is 0
+# and she makes no horizontal move; the row is the straight jump, legs together, not a let-go:
+# the jump's start has her carry on (she has a dash) and she goes on dashing.
+
+[[vector]]
+id = "C-leap-jump-held"
+source = "constructed"
+entries = ["BackwardLeap", "Dashing"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0002.0000", dash = "0001.0000", speed_y = "+0001.0000", dashing = true }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = false
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+after = { position = ["0100.0000", "0081.0000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0001.1C00", dashing = true, dash_lost = false }
+
+# C-leap-letgo-dash: the leap let go holding nothing, dashing with a dash, then a frame holding
+# nothing. The let-go acts after the jump's start: she follows the pad, not carrying on, and is
+# no longer dashing, the dash 1.0000 still on her. The next frame the dash is gone before her move,
+# and following the pad with neither side held she stops drifting: no horizontal move. Carrying
+# on and dashing she would gain 0.C000 and move it with the dash, 1.C000.
+
+[[vector]]
+id = "C-leap-letgo-dash"
+source = "constructed"
+entries = ["BackwardLeap", "Dashing", "Dash", "DriftInTheAir"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_x = "-0002.0000", dash = "0001.0000", speed_y = "+0001.0000", dashing = true }
+lead_in = [
+    { pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0082.1C00"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.3800", dashing = false }
 
 [[vector]]
 id = "C-leap-both-right"

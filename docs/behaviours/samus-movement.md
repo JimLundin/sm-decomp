@@ -343,11 +343,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   included [C-dash-stand, C-dash-landing-moves, W17, C-dash-against-wall, C-dash-turn-moves,
   C-dash-begins-wall, C-dash-jump-wall, C-dash-ball-rest, C-dash-spring-rest, C-dash-ball-fall]
 - The pose change taking a let-go effect of the pad chart other than `none` (she follows the pad
-  again, as running, dash 0, or horizontal speed 0, dash 0, following the pad: `PadChart`), a spin
+  again, as running, dash 0, or horizontal speed 0, dash 0, following the pad: `PadChart`), the
+  backward leap's let-go (`BackwardLeap`), a spin
   reversed, or either ball turning round → she stops dashing at the pose change, after her moves
   (a wall jump's let-go with the screw attack or space jump takes no effect, `PadChart`)
-  [AS1, MB4, C-dash-letgo-run, C-dash-letgo-crouched, C-dash-fall-letgo, C-dash-spin-reversed,
-  C-dash-ball-turn]
+  [AS1, MB4, PL3, C-dash-letgo-run, C-dash-letgo-crouched, C-dash-fall-letgo, C-dash-spin-reversed,
+  C-dash-ball-turn, C-leap-letgo-dash]
 - So anything else leaves her dashing as she was: crouched, where her dash is 0 (C-dash-crouched),
   facing the screen, whose moves don't end it, and on the elevator's ride, where no pose is
   chosen (`RidingTheElevator`; C-dash-screen), a spin let go (C-dash-spin), the frame she lands, until the
@@ -364,7 +365,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   the frames it alone decides: a run with run held starting it, 89; ended in her moves by a
   running wall stop 9, standing 5, a landing's moves 13, a turn's moves 12, a wall stop in the
   air 5; at the pose change by "as running" 19, "she follows the pad again" 9, the ball's halt
-  2, a fall's "dash 0" 3, a spin reversed 15, a ball turning 3; and kept crouched, against 13
+  2, a fall's "dash 0" 3, a spin reversed 15, a ball turning 3, the backward leap's let-go 1
+  (PL3); and kept crouched, against 13
   frames a crouch ending it would miss; W20 a dash begun, W17 one ended by a landing's moves, AS1 and MB4
   at the pose change, and the recorded vectors' `after.dashing`); constructed only (no record
   decides them: against the wall's own moves, C-dash-against-wall; either ball at rest,
@@ -373,7 +375,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   C-dash-takeoff-end); constructed besides (C-dash-begins, C-dash-kept-run, C-dash-begins-wall,
   C-dash-stand, C-dash-crouched, C-dash-letgo-crouched, C-dash-turn-start, C-dash-turn-moves,
   C-dash-letgo-run, C-dash-spin, C-dash-spin-reversed, C-dash-landing, C-dash-landing-moves,
-  C-dash-ball-turn, C-dash-fall-letgo, C-dash-jump-wall).
+  C-dash-ball-turn, C-dash-fall-letgo, C-dash-jump-wall, C-leap-letgo-dash).
 
 ### TurningRound
 - kind: mechanic.
@@ -2367,12 +2369,23 @@ push is over (its `LeadingHer`).
   below; so with left, right and jump all held she goes on leaping facing right and takes the
   striding jump facing left [C-leap-both-right, C-leap-both-left]. Otherwise: back and jump held →
   she goes on leaping; forward and jump held →
-  a straight jump with her legs striding (§2, aim `Forward`); anything else, nothing held
-  included → a straight jump, legs together, aim `Forward` [PL2, PL3]. The jump keeps her
+  a straight jump with her legs striding (§2, aim `Forward`); jump held with neither side → a
+  straight jump, legs together, aim `Forward` [C-leap-jump-held]; jump not held, nothing held
+  included → the same straight jump, legs together, aim `Forward` [PL2, PL3]. The jump keeps her
   speed's size, now pointing her facing's way [PL2, PL3, C-leap-stride]
-- Meeting a floor in the leap is out of scope (§10): no record lands in one.
-- checked: oracle (0006: PL1-PL3, PE1; r05: PL4); constructed (C-leap-top, C-leap-gain,
-  C-leap-stride, C-leap-both-right, C-leap-both-left).
+- Each jump starts as any straight jump does (`Jumping`): with a dash she carries on along her
+  facing, without one she follows the pad; with jump held, her dashing is kept
+  [C-leap-jump-held]
+- Jump not held → that row is her let-go: after the jump has started she follows the pad again,
+  not carrying on even with a dash, and she is no longer dashing (`Dashing`); her dash stays on
+  her, so the next frame she moves it is gone (`Dash`) [PL3, PL5, C-leap-letgo-dash]
+- So a leap begun from a dashing run and let go ends her dashing that frame with the run's dash
+  still on her, and the next frame, holding forward, she drifts at the straight jump's top
+  speed alone (PL5: 1.A000 of dash gone, 5.C000 cut to 1.4000); holding nothing she stops
+  drifting there (C-leap-letgo-dash).
+- Meeting a floor in the leap is out of scope (§10).
+- checked: oracle (0006: PL1-PL3, PL5, PE1; r05: PL4); constructed (C-leap-top, C-leap-gain,
+  C-leap-stride, C-leap-both-right, C-leap-both-left, C-leap-jump-held, C-leap-letgo-dash).
 
 ### PushEnds
 - kind: mechanic.

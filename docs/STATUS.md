@@ -240,10 +240,10 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 727 from its
-seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,351 cuts, through
-rooms 2 to 5 and on to cut 727 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,657;
-from her arrival (`any-ceres-arrival`, below) they hold 2,574, to movie frame 10,889. Her frame
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 867 from its
+seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,491 cuts, through
+rooms 2 to 5 and on to cut 867 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,797;
+from her arrival (`any-ceres-arrival`, below) they hold 2,714, to movie frame 11,029. Her frame
 is two steps, her moves and then her reaction to the frame's hit, with the station and Health
 between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,
 and her crouched turn, begun at room 6's cut 535, ends at the record's frame. Both hits of his
@@ -253,12 +253,15 @@ loses 15 more, the push ends at cut 710, and she leaps again. The camera reads h
 backwards in exactly one of the push and the leap (world-camera §1.3), so in the leap it leads
 the way she travels once the push is over. World-camera's harness cases for the leap and the
 edges' subpixel (R36 to R40, at room 6's cuts 229, 615, 621 and 623 and room 3's cut 136) are
-compared by these played runs and are not wired as indexed cases. Each run stops at room 6's cut
-728 on `movement.run`, before his take-off at 867 (part 4c).
+compared by these played runs and are not wired as indexed cases. At cut 728 she lets the second
+leap go, holding forward without jump: she follows the pad and stops dashing, and the dash she
+keeps is gone the next frame (samus-movement's backward leap let go). Each run stops at room 6's
+cut 868, Unsupported on `Fault::RidleyFlying`: his take-off (boss-ceres-ridley part 4c) isn't
+played yet.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Fifty-two planted faults in the fault matrix, those of the responsibility `played`, stop
+Fifty-three planted faults in the fault matrix, those of the responsibility `played`, stop
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
@@ -285,8 +288,9 @@ whose work finished after the fetch, in `doors.colours.goal`; and the HUD meetin
 Norfair rather than in Ceres at cut 211 in `hud.explored`. Played from room 6's seed, the baby's
 colour sets not shown differ at cut 151 in `doors.colours.screen` (its first set, at 145, holds
 the colours the row holds), the random number not drawn as the frame's work begins at cut 1
-in `random`, and the camera reading her as going backwards by the push alone, the leap left out,
-at cut 621 in `camera.view.x.fraction`.
+in `random`, the camera reading her as going backwards by the push alone, the leap left out,
+at cut 621 in `camera.view.x.fraction`, and jump fed to her as held while she leaps dashing,
+which keeps jump held through her let-go, so at cut 728 she takes the striding jump, in `movement.pose`.
 
 The M0 row never shows a door blocking her: a fault that drops the doors' boxes from what her
 motion meets holds all 344 cuts, and rows 0004 and 0005 as far as they play; the door of

@@ -1685,11 +1685,12 @@ static RECOILING: Situation = Situation {
 };
 
 /// `BackwardLeap`: a straight jump travelling backward. At the frame's end back and jump held
-/// keep her leaping; forward and jump held make it a straight jump, striding; anything else a
-/// straight jump, legs together; each jump keeps her speed's size, pointing her facing's way.
-/// Left and right held together with jump, the row holding left is taken, left before right:
-/// facing right that is back, and she goes on leaping; facing left it is forward, and she takes
-/// the striding jump.
+/// keep her leaping; forward and jump held make it a straight jump, striding; jump held with
+/// neither side a straight jump, legs together, her dashing kept; jump not held the same
+/// straight jump as her let-go, following the pad and no longer dashing, her dash left on her.
+/// Each jump keeps her speed's size, pointing her facing's way. Left and right held together
+/// with jump, the row holding left is taken, left before right: facing right that is back, and
+/// she goes on leaping; facing left it is forward, and she takes the striding jump.
 static LEAPING: Situation = Situation {
     doing: Doing::StraightJump,
     moves: Moves::Leap,
@@ -1714,11 +1715,20 @@ static LEAPING: Situation = Situation {
             effects: &[Effect::AlongHerFacing],
             ..NO_CHANGE
         },
+        // Jump held with neither side: either side held with it is a row naming more buttons,
+        // which outranks this one.
+        Row {
+            id: RowId::JumpHeld,
+            needs: &[Test::Held(key::JUMP)],
+            next: TO_JUMPING,
+            effects: &[Effect::AlongHerFacing],
+            ..NO_CHANGE
+        },
     ],
     last: Row {
         id: RowId::AnythingElse,
         next: TO_JUMPING,
-        effects: &[Effect::AlongHerFacing],
+        effects: &[Effect::AlongHerFacing, Effect::LeapLetGo],
         ..NO_CHANGE
     },
 };

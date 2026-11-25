@@ -2820,10 +2820,12 @@ speeds, dash, `0A52`, `0A54`, `18AA`, `18A8`, energy, handlers) and `vals.py`.
   handler `$A337`; `$90:A7CA` is `$90:8FB3`, the straight jump's movement, with the air X speed
   table's 19h row (`0000,C000,0005,0000,0000,8000`: gain 0.C000, top 5.0000). Its rows
   (`$91:A3F6`, `$91:A40A`): held back + A → itself, forward + A → 52h/51h, A → 4Eh/4Dh;
-  no row or no input → `$91:82D9`, the let-go column 4Eh/4Dh (command 2, stop, which at a
-  base speed ≠ 0 leaves it). After the change the speed's magnitude `0B46` is kept and `0A1E`
-  turns to the jump's facing, so the decoded signed speed flips (0006 727 → 728: −5.0000 →
-  +5.C000; 729: snapped to 1.4000). A floor in the leap: not on record (open).
+  no row or no input → `$91:82D9`, the let-go column 4Eh/4Dh with command 2, stop (type 19h's
+  `$91:8332` entry is 2 itself, so the base-speed test for 1 doesn't apply; the let-go and its
+  dashing end are in "The backward leap let go" below). After the change the speed's magnitude
+  `0B46` is kept and `0A1E` turns to the jump's facing, so the decoded signed speed flips (0006
+  727 → 728: −5.0000 → +5.C000; 729: snapped to 1.4000). A floor in the leap: out of scope; the
+  records that land in one are listed below.
 - **The moonfall after a floor stop.** With `0B36` = 0 the leap's and the jump's `$90:8FB3` skip
   the let-go test and `$90:90E2` subtracts 0.1C00 from the magnitude each frame, moving her by the
   old one: r05 394-399, FFFF.E400 → FFFF.5800, no limit; she sinks 2 px as her body shrinks 15h →
@@ -2859,8 +2861,8 @@ Compared, as the movement harness compares her motion, on the frames she starts 
 and the knockback's three parts. The pose map's rows 4Fh, 50h, 53h, 54h (above, "unreachable")
 become reachable. The hit is an input from Ridley's tail (boss-ceres-ridley part 4b); until it
 exists the played run can't produce these frames. The frame after a push ends in the ball, a
-push in a liquid, the push braking from a carrying-on start and a floor in the leap are not on
-record; the spec marks them original only. The old rule that deferred the end frame (`0A52` ≠ 0
+push in a liquid and the push braking from a carrying-on start are not on record; the spec marks
+them original only. A floor in the leap is on record (below) and out of scope. The old rule that deferred the end frame (`0A52` ≠ 0
 and `18AA` = 0 under the normal handler, gap 33) now compares it.
 
 **Harness cases for the push's poses' clips** (samus-appearance, content): 0006 609-614 and
@@ -2940,3 +2942,50 @@ PK1 now also compares `position_after_moves` (00D8.2000, 00C0.FFFF) and `rising`
      (`0A2E`, the let-go) are both skipped, whatever pose the row names. Her animation's end on
      that frame is out of scope.
    - The ball's push (its moves, rows, let-go and end) is out of scope.
+
+## The backward leap let go (0006:728, #753)
+
+Room 6 (`chain-any-0006-E0B5`) 727 → 728 is hit 2's leap let go (record 727's pad 0100h: forward, no A). The record has
+`0B3C` 1 → 0 and `0B4A` 0, with `0B42` 1.A000 kept (the run's dash, kept through the push and
+the leap); at 729 `0B42` is 0 and `0B46` 1.4000, x +1.4000. Without the let-go a model keeps her dashing
+and, the jump's start seeing a dash, has her carry on.
+
+**Sources.** `$91:81A9`: no row of `$91:A40A`/`$91:A3F6` fits (each needs A held) → `$91:82D9` →
+`$91:8304`: `$91:8332` for type 19h is 2, stored as the prospective command (stop). `$91:EB88`
+takes the prospective pose 4Dh/4Eh (`$91:B8A9`/`$91:B8A1` byte 2), `$91:F404` runs the pose's
+initialisation first: type 2's `$91:F543`, `$91:F59A`: `0B42` ≠ 0 → `$91:F5A9` `0B4A` = 2 (the
+spec's carrying on, `Jumping`), else 0; then `$91:EBF0` runs the command: `$91:ECD0` `0B4A` = 0 and
+`$91:DE53`, which clears `0B3C` (with `0B3E` and the boost colours) and leaves `0B42`. So the
+let-go acts after the jump's start: she follows the pad and stops dashing, the dash kept, and
+`Dash`'s "a dash she has while not dashing" takes it the next frame she moves. A row that fits
+(A alone → 4Dh/4Eh, forward + A → 51h/52h) sets no command (`$91:81E4`), so with A held the
+jump's start stands and `0B3C` is kept.
+
+**Records.** Every leap frame with no push under way across the 63 cached rows that the pad
+lets go (no A): boss-kraid-defeated 678 and 817, 0006 636 and 728, samus-screw-attack 166 and
+598; only 0006 728 starts dashing with a dash. chain-0106-AD5E 109 is a further witness inside a
+push (`0A52` = 1): `0B3C` 1 → 0, `0B42` 2.0000 kept, 0 at 110. With A held (0006 824,
+samus-ceres-push 825) no record starts dashing. A floor in the leap: 0006 1030,
+samus-ceres-push 621 and 716, event-zebes-awake 36 and 135, chain-any-0010-DF8D 87 and
+boss-kraid-defeated 1073 (each lands in A4h/A5h); 0006's is past Ridley's flight.
+
+**Vectors.** PL3 (0006:728) now compares `dashing` false, `dashing_after_moves` true and
+`dash_lost` true; PL5 (0006:729) the next frame, its lead-in PL3's frame; C-leap-jump-held
+(constructed: A alone keeps her dashing, carrying on with a dash) and C-leap-letgo-dash
+(constructed: let go holding nothing, then a frame holding nothing: no move, dash gone). A
+model without the let-go fails PL3, PL5 and C-leap-letgo-dash; one that takes the let-go before
+the jump's start still fails C-leap-letgo-dash (she carries on, x +0.C000), so it checks the order.
+
+**The reference model** (`$TEMP/collab/movement-728/leapref.py`, `vecrun.py`): per record pair
+over the 63 cached rows, the frames she starts in the leap with no push under way, comparing x,
+speed's size and way, dash, dashing, carrying on and the pose's class. Rows kept (A held): 223
+frames, this spec 223, a spec without the let-go 223, do-nothing 0; let go: 6, this spec 6, without 5
+(0006 728), do-nothing 0; the jump's next frame (x, speed, dash): 7, this spec 7, without 6 (0006
+729), do-nothing 3. Excluded: 20 frames a wall stops the leap (samus-screw-attack 150-159,
+582-591) and the 7 floors above. The Ceres rows alone: rows 132/132/132/0, let go 2/2/1/0.
+`vecrun.py` agrees with all 11 leap vectors (PL1-PL3, PL5, C-leap-top, C-leap-gain,
+C-leap-stride, C-leap-both-right, C-leap-both-left, C-leap-jump-held, C-leap-letgo-dash).
+
+**Played runs:** with the let-go, `any-ceres-arrival` holds 2,714 cuts, `chain-any-0001-DF45`
+2,491, `chain-any-0003-DFD7` 1,797 and `chain-any-0006-E0B5` 867, each stopping at room 6's cut
+868, Unsupported on `Fault::RidleyFlying` (boss-ceres-ridley part 4c).

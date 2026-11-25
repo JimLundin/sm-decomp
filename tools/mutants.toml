@@ -824,3 +824,13 @@ after = "&& true)"
 case = "played chain-any-0006-E0B5 0 727"
 cut = 621
 field = "camera.view.x.fraction"
+
+[[fault]]
+name = "played-leap-letgo-jump-held"
+responsibility = "played"
+file = "crates/game/src/production/played/samus.rs"
+before = "pad: inputs.held,"
+after = "pad: if samus.run.dashing == Dashing::On && samus.pose.action == types::Action::Leaping { types::Buttons(inputs.held.0 | types::button::JUMP.0) } else { inputs.held },"
+case = "played chain-any-0006-E0B5 0 867"
+cut = 728
+field = "movement.pose"

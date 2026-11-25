@@ -298,6 +298,22 @@ pub enum Effect {
     /// `BackwardLeap`: the straight jump the pad makes of the leap keeps her speed's size, now
     /// pointing her facing's way.
     AlongHerFacing,
+    /// `BackwardLeap`, `Dashing`: the leap's let-go, its last row (jump not held): once the
+    /// jump has started she follows the pad again, not carrying on even with a dash, and she is
+    /// no longer dashing; her dash stays on her, for `Dash` to take the next frame she moves.
+    LeapLetGo,
+}
+
+impl Effect {
+    /// `BackwardLeap`: whether the effect acts after the change of action's own (`ENTERING`)
+    /// rather than before it, as every other row effect does. The leap's let-go alone does: the
+    /// spec has it act once the jump has started, because the jump's start (`Launch`) carries
+    /// her on along her facing where she has a dash, and the let-go has her follow the pad all
+    /// the same.
+    #[must_use]
+    pub const fn follows_the_change_of_action(self) -> bool {
+        matches!(self, Self::LeapLetGo)
+    }
 }
 
 /// A change of action's own effect, whatever brought the change.
