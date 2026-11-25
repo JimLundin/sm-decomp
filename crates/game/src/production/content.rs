@@ -78,6 +78,8 @@ pub enum ProductionContent {
     Intro(Box<screens_intro::IntroContent>),
     /// The intro's room collision and Samus's ordinary body and appearance.
     IntroRooms(Box<super::played::intro_rooms::ScopedContent>),
+    /// Checked encounter clip maps and normal sprite palette.
+    Flashback(Box<data::assets::flashback::Scene>),
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -114,6 +116,8 @@ pub enum ProductionRules {
     Intro(screens_intro::Rules),
     /// The ordinary room turn's movement and appearance rules.
     IntroRooms(Box<super::played::intro_rooms::ScopedRules>),
+    /// Parameters of the Zebes flashback encounter.
+    Flashback(super::played::flashback::Rules),
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.

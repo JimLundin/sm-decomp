@@ -2,6 +2,7 @@
 //! Each advance carries complete clean state and publishes the complete model output.
 
 use self::audio_checkpoint::PortableAudio;
+use self::played::flashback;
 use self::played::intro_rooms;
 use crate::state::owned::{CodecState, OwnedState};
 use canonical::model::Model;
@@ -46,6 +47,8 @@ pub enum Scope {
     IntroRooms,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
+    /// The Zebes flashback encounter at its cinematic actor turn.
+    Flashback,
     /// Scoped Health and its late Drawing and HUD consumers.
     HealthTail,
     /// Movement and semantic pose.
@@ -81,6 +84,8 @@ pub enum ProductionSeed {
     IntroRooms(Box<intro_rooms::Scoped>),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
+    /// Complete flashback encounter State, including any pending start.
+    Flashback(Box<flashback::EncounterState>),
     /// Complete current Health, Drawing history and gauge from a single origin.
     HealthTail(Box<health_tail::State>),
     /// Full movement memory.
@@ -113,6 +118,8 @@ pub enum AdvanceInput<'a> {
     Intro(played::intro::FrameEnd),
     /// A causal intro room opportunity.
     IntroRooms(intro_rooms::Opportunity),
+    /// The next authorized scene phase and any completed drawing opportunity.
+    Flashback(flashback::Cut<'a>),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -185,6 +192,8 @@ pub enum ProductionOutputs {
     Intro(Option<Box<screens_intro::Report>>),
     /// The first turn when it completed.
     IntroRooms(Option<Box<intro_rooms::FirstTurn>>),
+    /// Requests to the surrounding owners and the completed sprite publication.
+    Flashback(flashback::Publication),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -344,6 +353,7 @@ impl Production {
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
+            ProductionSeed::Flashback(_) => Scope::Flashback,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
@@ -367,6 +377,11 @@ impl Production {
                 OwnedState::IntroRooms(state)
             }
 
+            (
+                ProductionSeed::Flashback(state),
+                ProductionContent::Flashback(_),
+                ProductionRules::Flashback(_),
+            ) => OwnedState::Flashback(Model(state)),
             (
                 ProductionSeed::Connected(state),
                 ProductionContent::Connected(content),
@@ -426,6 +441,7 @@ impl Production {
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::IntroRooms(_) => Scope::IntroRooms,
+            OwnedState::Flashback(_) => Scope::Flashback,
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
@@ -473,6 +489,12 @@ impl Production {
                     .map(Box::new),
             ),
 
+            (
+                OwnedState::Flashback(state),
+                ProductionContent::Flashback(art),
+                ProductionRules::Flashback(rules),
+                AdvanceInput::Flashback(cut),
+            ) => ProductionOutputs::Flashback(flashback::advance(&mut state.0, art, *rules, cut)),
             (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
@@ -549,6 +571,7 @@ impl Production {
             OwnedState::Intro(_)
             | OwnedState::Connected(_)
             | OwnedState::IntroRooms(_)
+            | OwnedState::Flashback(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::WeaponsContact(_)
@@ -570,6 +593,7 @@ impl Production {
         let state = match &self.state {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
@@ -614,7 +638,11 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if matches!(&content, ProductionContent::Audio(_)) {
+        let seed = if matches!(&content, ProductionContent::Flashback(_)) {
+            let checkpoint: Checkpoint<Model<crate::state::owned::FlashbackPin>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Flashback(checkpoint.state.0)
+        } else if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             let PortableAudio(state) = checkpoint.state;
@@ -649,6 +677,7 @@ impl Production {
 
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
+        Scope::Flashback => canonical::model::pin_holds::<crate::state::owned::FlashbackPin>(),
         Scope::Connected => {
             use canonical::model::pin_holds;
             pin_holds::<connected::inputs::InputsPin>()

@@ -1,0 +1,5 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+[owners]
+contact = ["BrainEndures"]
+shake_travel = ["BackgroundBobs"]
+shake_hold = ["ReturnToPage"]

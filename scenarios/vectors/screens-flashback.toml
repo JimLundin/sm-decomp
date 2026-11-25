@@ -1,0 +1,1135 @@
+# Each step advances the encounter unless advance is false. The optional steps list
+# replaces inputs with consecutive steps that carry State. The case checks the last
+# step's State and output. A start with advance false admits pending_start and Y.
+# State fields
+# omitted from before take their absent or zero defaults. Inputs omitted take defaults:
+# advance true, start false, start_offset 8 px, odd false, return_zero false,
+# samus_x 155 px and shots empty. Shots are listed highest precedence first.
+# expect.state and expect.output name the fields the case checks. "none" denotes absence.
+# A ring's x and y count 1/65536 px. Draw entries are [name, x, y, picture, palette].
+# Rank 0 is foremost. Clip step -1 denotes a burst waiting to show its first image.
+# Rules override contact.limit (84 px), contact.hits (4), shake_travel (4 px)
+# or shake_hold (128 beats). The other values retain their reference settings.
+
+[[vector]]
+id = "R-start-pending"
+source = "recorded"
+entries = ["EncounterStarts", "EncounterBeats"]
+# any-intro-2219 cut 0
+
+[vector.inputs]
+start = true
+start_offset = 8
+advance = false
+
+[vector.expect.state]
+pending_start = true
+brain = "none"
+offset = 8
+pair = "none"
+
+[vector.expect.output]
+draw = []
+
+[[vector]]
+id = "R-start"
+source = "recorded"
+entries = ["EncounterStarts", "EncounterBeats", "BackgroundBobs"]
+# any-intro-2219 cut 1
+
+[vector.before]
+pending_start = true
+offset = 8
+
+[vector.expect.state]
+pending_start = false
+brain = { phase = "endures", progress = 0, flash = 0, step = 0, hold = 16 }
+offset = 8
+pair = { which = "first", hold = 74 }
+
+[vector.expect.output]
+draw = [["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "R-breathe-next"
+source = "recorded"
+entries = ["BrainBreathes"]
+# any-intro-2219 cut 17
+
+[vector.before]
+brain = { phase = "endures", progress = 0, flash = 0, step = 0, hold = 1 }
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 0, flash = 0, step = 1, hold = 16 }
+
+[vector.expect.output]
+draw = [["brain", 56, 111, 2, 7]]
+
+[[vector]]
+id = "R-breathe-wrap"
+source = "recorded"
+entries = ["BrainBreathes"]
+# any-intro-2219 cut 65
+
+[vector.before]
+brain = { phase = "endures", progress = 0, flash = 0, step = 3, hold = 1 }
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 0, flash = 0, step = 0, hold = 16 }
+
+[vector.expect.output]
+draw = [["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "R-before-pair"
+source = "recorded"
+entries = ["RingsAppear"]
+# any-intro-2219 cut 74
+
+[vector.before]
+pair = { which = "first", hold = 2 }
+
+[vector.expect.state]
+pair = { which = "first", hold = 1 }
+
+[[vector]]
+id = "R-first-pair"
+source = "recorded"
+entries = ["RingsAppear", "FightPictures"]
+# any-intro-2219 cut 75
+
+[vector.before]
+pair = { which = "first", hold = 1 }
+rings = {}
+brain = { phase = "endures", progress = 0, flash = 0, step = 0, hold = 7 }
+
+[vector.expect.state]
+pair = { which = "second", hold = 128 }
+brain = { phase = "endures", progress = 0, flash = 0, step = 0, hold = 6 }
+
+[vector.expect.state.rings]
+first_across = { x = 12582912, y = 3670016, step = 0, hold = 10, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 0, hold = 10, rank = 1 }
+
+[vector.expect.output]
+draw = [["first_toward", 112, 72, 1, 7], ["first_across", 192, 56, 1, 7], ["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "R-long-after"
+source = "recorded"
+entries = ["EncounterBeats"]
+# any-intro-2219 cut 101
+
+[vector.before]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 13 }
+pair = { which = "second", hold = 103 }
+
+[vector.before.rings]
+first_across = { x = 12582912, y = 3670016, step = 2, hold = 5, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 2, hold = 5, rank = 1 }
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 12 }
+pair = { which = "second", hold = 102 }
+
+[vector.expect.state.rings]
+first_across = { x = 12582912, y = 3670016, step = 2, hold = 4, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 2, hold = 4, rank = 1 }
+
+[[vector]]
+id = "R-ring-ready"
+source = "recorded"
+entries = ["RingsAppear", "EncounterBeats"]
+# any-intro-2219 cut 106
+
+[vector.before]
+pair = { which = "second", hold = 99 }
+
+[vector.before.rings]
+first_across = { x = 12582912, y = 3670016, step = 2, hold = 1, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 2, hold = 1, rank = 1 }
+
+[vector.inputs]
+samus_x = 155
+
+[vector.expect.state]
+pair = { which = "second", hold = 98 }
+
+[vector.expect.state.rings]
+first_across = { x = 12582912, y = 3670016, step = 3, hold = 10, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 3, hold = 10, rank = 1 }
+
+[[vector]]
+id = "R-long-finishes"
+source = "recorded"
+entries = ["EncounterBeats"]
+# any-intro-2219 cut 107
+
+[vector.before]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 8 }
+pair = { which = "second", hold = 98 }
+
+[vector.before.rings]
+first_across = { x = 12582912, y = 3670016, step = 3, hold = 10, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 3, hold = 10, rank = 1 }
+
+[vector.inputs]
+advance = false
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 8 }
+pair = { which = "second", hold = 98 }
+
+[vector.expect.state.rings]
+first_across = { x = 12582912, y = 3670016, step = 3, hold = 10, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 3, hold = 10, rank = 1 }
+
+[vector.expect.output]
+impact = "none"
+cue = false
+
+[[vector]]
+id = "R-ring-moves"
+source = "recorded"
+entries = ["RingsAppear", "RingsSweep"]
+# any-intro-2219 cut 108
+
+[vector.before]
+pair = { which = "second", hold = 98 }
+
+[vector.before.rings]
+first_across = { x = 12582912, y = 3670016, step = 3, hold = 10, rank = 2 }
+first_toward = { x = 7340032, y = 4718592, step = 3, hold = 10, rank = 1 }
+
+[vector.expect.state]
+pair = { which = "second", hold = 97 }
+
+[vector.expect.state.rings]
+first_across = { x = 12550144, y = 3702784, step = 3, hold = 9, rank = 2 }
+first_toward = { x = 7372800, y = 4751360, step = 3, hold = 9, rank = 1 }
+
+[[vector]]
+id = "R-contact-edge"
+source = "recorded"
+entries = ["BrainEndures"]
+# any-intro-2219 cut 109
+
+[vector.before]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 7 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 84 }]
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 6 }
+
+[vector.expect.output]
+impact = "none"
+
+[[vector]]
+id = "R-first-contact"
+source = "recorded"
+entries = ["BrainEndures", "BrainFlashes"]
+# any-intro-2219 cut 110
+
+[vector.before]
+brain = { phase = "endures", progress = 0, flash = 0, step = 2, hold = 6 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 78 }]
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 1, flash = 8, step = 2, hold = 5 }
+
+[vector.expect.output]
+impact = 0
+palette = "none"
+
+[[vector]]
+id = "R-flash-white"
+source = "recorded"
+entries = ["BrainFlashes"]
+# any-intro-2219 cut 111
+
+[vector.before]
+brain = { phase = "endures", progress = 1, flash = 8, step = 2, hold = 5 }
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 1, flash = 7, step = 2, hold = 4 }
+
+[vector.expect.output]
+palette = "white"
+
+[[vector]]
+id = "R-flash-normal"
+source = "recorded"
+entries = ["BrainFlashes"]
+# any-intro-2219 cut 112
+
+[vector.before]
+brain = { phase = "endures", progress = 1, flash = 7, step = 2, hold = 4 }
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 1, flash = 6, step = 2, hold = 3 }
+
+[vector.expect.output]
+palette = "base"
+
+[[vector]]
+id = "R-flash-ends"
+source = "recorded"
+entries = ["BrainFlashes"]
+# any-intro-2219 cut 118
+
+[vector.before]
+brain = { phase = "endures", progress = 1, flash = 1, step = 3, hold = 14 }
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 1, flash = 0, step = 3, hold = 13 }
+
+[vector.expect.output]
+palette = "base"
+
+[[vector]]
+id = "R-long-before"
+source = "recorded"
+entries = ["EncounterBeats"]
+# any-intro-2219 cut 131
+
+[vector.before]
+brain = { phase = "endures", progress = 1, flash = 0, step = 3, hold = 1 }
+pair = { which = "second", hold = 75 }
+
+[vector.before.rings]
+first_across = { x = 11829248, y = 4423680, step = 5, hold = 7, rank = 2 }
+first_toward = { x = 8093696, y = 5472256, step = 5, hold = 7, rank = 1 }
+
+[vector.inputs]
+advance = false
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 1, flash = 0, step = 3, hold = 1 }
+pair = { which = "second", hold = 75 }
+
+[vector.expect.state.rings]
+first_across = { x = 11829248, y = 4423680, step = 5, hold = 7, rank = 2 }
+first_toward = { x = 8093696, y = 5472256, step = 5, hold = 7, rank = 1 }
+
+[vector.expect.output]
+impact = "none"
+cue = false
+
+[[vector]]
+id = "R-second-contact"
+source = "recorded"
+entries = ["BrainEndures"]
+# any-intro-2219 cut 152
+
+[vector.before]
+brain = { phase = "endures", progress = 1, flash = 0, step = 1, hold = 13 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 78 }]
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 2, flash = 8, step = 1, hold = 12 }
+
+[vector.expect.output]
+impact = 0
+
+[[vector]]
+id = "R-ring-before-hit"
+source = "recorded"
+entries = ["RingsSweep"]
+# any-intro-2219 cut 167
+
+[vector.before]
+
+[vector.before.rings]
+first_across = { x = 10682368, y = 5570560, step = 4, hold = 2, rank = 2 }
+first_toward = { x = 9240576, y = 6619136, step = 4, hold = 2, rank = 1 }
+
+[vector.inputs]
+samus_x = 155
+
+[vector.expect.state]
+
+[vector.expect.state.rings]
+first_across = { x = 10649600, y = 5603328, step = 4, hold = 1, rank = 2 }
+first_toward = { x = 9273344, y = 6651904, step = 4, hold = 1, rank = 1 }
+
+[vector.expect.output]
+ring_hit = "none"
+
+[[vector]]
+id = "R-ring-contact"
+source = "recorded"
+entries = ["RingsSweep"]
+# any-intro-2219 cut 168
+
+[vector.before]
+
+[vector.before.rings]
+first_across = { x = 10649600, y = 5603328, step = 4, hold = 1, rank = 2 }
+first_toward = { x = 9273344, y = 6651904, step = 4, hold = 1, rank = 1 }
+
+[vector.inputs]
+samus_x = 155
+
+[vector.expect.state]
+
+[vector.expect.state.rings]
+first_across = { x = 10616832, y = 5636096, step = 5, hold = 10, rank = 2 }
+
+[vector.expect.output]
+ring_hit = { direction = "right", invincible = 11, knockback = 11 }
+
+[[vector]]
+id = "R-second-pair"
+source = "recorded"
+entries = ["RingsAppear", "FightPictures"]
+# any-intro-2219 cut 206
+
+[vector.before]
+pair = { which = "second", hold = 1 }
+brain = { phase = "endures", progress = 2, flash = 0, step = 0, hold = 7 }
+
+[vector.before.rings]
+first_across = { x = 9404416, y = 6848512, step = 4, hold = 3, rank = 2 }
+
+[vector.inputs]
+samus_x = 204
+
+[vector.expect.state]
+pair = "none"
+brain = { phase = "endures", progress = 2, flash = 0, step = 0, hold = 6 }
+
+[vector.expect.state.rings]
+second_across = { x = 15204352, y = 5242880, step = 0, hold = 10, rank = 3 }
+first_across = { x = 9371648, y = 6881280, step = 4, hold = 2, rank = 2 }
+second_toward = { x = 8388608, y = 3145728, step = 0, hold = 10, rank = 1 }
+
+[vector.expect.output]
+draw = [["second_toward", 128, 48, 1, 7], ["first_across", 143, 105, 1, 7], ["second_across", 232, 80, 1, 7], ["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "R-third-contact"
+source = "recorded"
+entries = ["BrainEndures"]
+# any-intro-2219 cut 350
+
+[vector.before]
+brain = { phase = "endures", progress = 2, flash = 0, step = 1, hold = 7 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 83 }]
+
+[vector.expect.state]
+brain = { phase = "endures", progress = 3, flash = 8, step = 1, hold = 6 }
+
+[vector.expect.output]
+impact = 0
+
+[[vector]]
+id = "R-last-contact"
+source = "recorded"
+entries = ["BrainEndures", "BurstsPulse", "BackgroundBobs", "FightPictures"]
+# any-intro-2219 cut 391
+
+[vector.before]
+brain = { phase = "endures", progress = 3, flash = 0, step = 0, hold = 14 }
+bursts = {}
+offset = 8
+
+[vector.before.rings]
+second_across = { x = 10158080, y = 10289152, step = 6, hold = 6, rank = 3 }
+first_across = { x = 3342336, y = 12910592, step = 3, hold = 8, rank = 2 }
+second_toward = { x = 13434880, y = 8192000, step = 6, hold = 6, rank = 1 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 83 }]
+samus_x = 148
+odd = false
+
+[vector.expect.state]
+brain = { phase = "shaking", progress = 0, flash = 8, step = 0, hold = 13 }
+offset = 8
+
+[vector.expect.state.rings]
+second_across = { x = 10125312, y = 10321920, step = 6, hold = 5, rank = 3 }
+first_across = { x = 3309568, y = 12943360, step = 3, hold = 7, rank = 2 }
+second_toward = { x = 13467648, y = 8224768, step = 6, hold = 5, rank = 1 }
+
+[vector.expect.state.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 64, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 48, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 32, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = -1, hold = 16, rank = 7 }
+large_center = { x = 56, y = 111, step = -1, hold = 1, rank = 6 }
+small_high = { x = 40, y = 103, step = -1, hold = 16, rank = 5 }
+small_low = { x = 40, y = 115, step = -1, hold = 8, rank = 4 }
+small_near = { x = 72, y = 111, step = -1, hold = 1, rank = 0 }
+
+[vector.expect.output]
+impact = 0
+palette = "none"
+draw = [["second_toward", 205, 125, 3, 7], ["first_across", 50, 197, 2, 7], ["second_across", 154, 157, 3, 7], ["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "R-first-bursts"
+source = "recorded"
+entries = ["BurstsPulse", "RingsSweep", "BackgroundBobs", "FightPictures"]
+# any-intro-2219 cut 392
+
+[vector.before]
+brain = { phase = "shaking", progress = 0, flash = 8, step = 0, hold = 13 }
+offset = 8
+
+[vector.before.rings]
+second_across = { x = 10125312, y = 10321920, step = 6, hold = 5, rank = 3 }
+first_across = { x = 3309568, y = 12943360, step = 3, hold = 7, rank = 2 }
+second_toward = { x = 13467648, y = 8224768, step = 6, hold = 5, rank = 1 }
+
+[vector.before.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 64, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 48, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 32, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = -1, hold = 16, rank = 7 }
+large_center = { x = 56, y = 111, step = -1, hold = 1, rank = 6 }
+small_high = { x = 40, y = 103, step = -1, hold = 16, rank = 5 }
+small_low = { x = 40, y = 115, step = -1, hold = 8, rank = 4 }
+small_near = { x = 72, y = 111, step = -1, hold = 1, rank = 0 }
+
+[vector.inputs]
+odd = true
+samus_x = 148
+
+[vector.expect.state]
+brain = { phase = "shaking", progress = 1, flash = 7, step = 0, hold = 12 }
+rings = {}
+offset = 4
+
+[vector.expect.state.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 63, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 47, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 31, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = -1, hold = 15, rank = 7 }
+large_center = { x = 56, y = 111, step = 0, hold = 6, rank = 6 }
+small_high = { x = 40, y = 103, step = -1, hold = 15, rank = 5 }
+small_low = { x = 40, y = 115, step = -1, hold = 7, rank = 4 }
+small_near = { x = 72, y = 111, step = 0, hold = 3, rank = 0 }
+
+[vector.expect.output]
+palette = "white"
+draw = [["small_near", 72, 111, 1, 5], ["large_center", 56, 111, 1, 5], ["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "R-rings-clear"
+source = "recorded"
+entries = ["RingsSweep"]
+# any-intro-2219 cut 392
+
+[vector.before]
+brain = { phase = "shaking", progress = 0, flash = 8, step = 0, hold = 13 }
+
+[vector.before.rings]
+second_across = { x = 10125312, y = 10321920, step = 6, hold = 5, rank = 3 }
+first_across = { x = 3309568, y = 12943360, step = 3, hold = 7, rank = 2 }
+second_toward = { x = 13467648, y = 8224768, step = 6, hold = 5, rank = 1 }
+
+[vector.inputs]
+odd = true
+samus_x = 148
+
+[vector.expect.state]
+brain = { phase = "shaking", progress = 1, flash = 7, step = 0, hold = 12 }
+rings = {}
+
+[[vector]]
+id = "R-later-burst"
+source = "recorded"
+entries = ["BurstsPulse"]
+# any-intro-2219 cut 399
+
+[vector.before]
+
+[vector.before.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 57, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 41, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 25, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = -1, hold = 9, rank = 7 }
+large_center = { x = 56, y = 111, step = 1, hold = 6, rank = 6 }
+small_high = { x = 40, y = 103, step = -1, hold = 9, rank = 5 }
+small_low = { x = 40, y = 115, step = -1, hold = 1, rank = 4 }
+small_near = { x = 72, y = 111, step = 2, hold = 3, rank = 0 }
+
+[vector.expect.state]
+
+[vector.expect.state.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 56, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 40, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 24, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = -1, hold = 8, rank = 7 }
+large_center = { x = 56, y = 111, step = 1, hold = 5, rank = 6 }
+small_high = { x = 40, y = 103, step = -1, hold = 8, rank = 5 }
+small_low = { x = 40, y = 115, step = 0, hold = 3, rank = 4 }
+small_near = { x = 72, y = 111, step = 2, hold = 2, rank = 0 }
+
+[[vector]]
+id = "R-burst-blank"
+source = "recorded"
+entries = ["BurstsPulse", "FightPictures"]
+# any-intro-2219 cut 410
+
+[vector.before]
+brain = { phase = "shaking", progress = 18, flash = 0, step = 1, hold = 11 }
+
+[vector.before.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 46, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 30, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 14, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = 0, hold = 4, rank = 7 }
+large_center = { x = 56, y = 111, step = 2, hold = 1, rank = 6 }
+small_high = { x = 40, y = 103, step = 0, hold = 1, rank = 5 }
+small_low = { x = 40, y = 115, step = 3, hold = 2, rank = 4 }
+small_near = { x = 72, y = 111, step = 5, hold = 1, rank = 0 }
+
+[vector.inputs]
+odd = true
+
+[vector.expect.state]
+brain = { phase = "shaking", progress = 19, flash = 0, step = 1, hold = 10 }
+
+[vector.expect.state.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 45, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 29, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 13, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = 0, hold = 3, rank = 7 }
+large_center = { x = 56, y = 111, step = 3, hold = 6, rank = 6 }
+small_high = { x = 40, y = 103, step = 1, hold = 3, rank = 5 }
+small_low = { x = 40, y = 115, step = 3, hold = 1, rank = 4 }
+small_near = { x = 72, y = 111, step = 6, hold = 16, rank = 0 }
+
+[vector.expect.output]
+draw = [["small_low", 40, 115, 4, 5], ["small_high", 40, 103, 2, 5], ["large_center", 56, 111, 4, 5], ["large_upper_right", 72, 95, 1, 5], ["brain", 56, 111, 2, 7]]
+
+[[vector]]
+id = "R-burst-repeat"
+source = "recorded"
+entries = ["BurstsPulse"]
+# any-intro-2219 cut 426
+
+[vector.before]
+
+[vector.before.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 30, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 14, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = 0, hold = 4, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = 3, hold = 6, rank = 7 }
+large_center = { x = 56, y = 111, step = 5, hold = 3, rank = 6 }
+small_high = { x = 40, y = 103, step = 6, hold = 16, rank = 5 }
+small_low = { x = 40, y = 115, step = 6, hold = 8, rank = 4 }
+small_near = { x = 72, y = 111, step = 6, hold = 1, rank = 0 }
+
+[vector.expect.state]
+
+[vector.expect.state.bursts]
+large_lower_right = { x = 64, y = 119, step = -1, hold = 29, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 13, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = 0, hold = 3, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = 3, hold = 5, rank = 7 }
+large_center = { x = 56, y = 111, step = 5, hold = 2, rank = 6 }
+small_high = { x = 40, y = 103, step = 6, hold = 15, rank = 5 }
+small_low = { x = 40, y = 115, step = 6, hold = 7, rank = 4 }
+small_near = { x = 72, y = 111, step = 0, hold = 3, rank = 0 }
+
+[[vector]]
+id = "R-before-cue"
+source = "recorded"
+entries = ["ReturnToPage"]
+# any-intro-2219 cut 518
+
+[vector.before]
+brain = { phase = "shaking", progress = 126, flash = 0, step = 0, hold = 15 }
+
+[vector.inputs]
+odd = true
+
+[vector.expect.state]
+brain = { phase = "shaking", progress = 127, flash = 0, step = 0, hold = 14 }
+
+[vector.expect.output]
+cue = false
+
+[[vector]]
+id = "R-cue"
+source = "recorded"
+entries = ["ReturnToPage", "BackgroundBobs"]
+# any-intro-2219 cut 519
+
+[vector.before]
+brain = { phase = "shaking", progress = 127, flash = 0, step = 0, hold = 14 }
+offset = 4
+
+[vector.inputs]
+odd = false
+
+[vector.expect.state]
+brain = { phase = "returning", flash = 0, step = 0, hold = 16 }
+offset = 8
+
+[vector.expect.output]
+cue = true
+
+[[vector]]
+id = "R-setup-long-before"
+source = "recorded"
+entries = ["EncounterBeats"]
+# any-intro-2219 cut 520
+
+[vector.before]
+brain = { phase = "returning", flash = 0, step = 0, hold = 16 }
+offset = 8
+
+[vector.inputs]
+advance = false
+
+[vector.expect.state]
+brain = { phase = "returning", flash = 0, step = 0, hold = 16 }
+offset = 8
+
+[vector.expect.output]
+cue = false
+
+[[vector]]
+id = "R-return-first"
+source = "recorded"
+entries = ["BrainBreathes", "BrainFlashes", "BackgroundBobs"]
+# any-intro-2219 cut 521
+
+[vector.before]
+brain = { phase = "returning", flash = 0, step = 0, hold = 16 }
+offset = 8
+
+[vector.inputs]
+odd = true
+
+[vector.expect.state]
+brain = { phase = "returning", flash = 0, step = 0, hold = 15 }
+offset = 4
+
+[vector.expect.output]
+cue = false
+palette = "none"
+
+[[vector]]
+id = "R-hide"
+source = "recorded"
+entries = ["BackgroundBobs", "ReturnToPage", "FightPictures", "BurstsPulse"]
+# any-intro-2219 cut 648
+
+[vector.before]
+brain = { phase = "returning", flash = 0, step = 3, hold = 1 }
+offset = 4
+
+[vector.before.bursts]
+large_lower_right = { x = 64, y = 119, step = 5, hold = 1, rank = 10 }
+large_upper_left = { x = 48, y = 95, step = 6, hold = 1, rank = 9 }
+large_lower_left = { x = 40, y = 119, step = 2, hold = 3, rank = 8 }
+large_upper_right = { x = 72, y = 95, step = 5, hold = 5, rank = 7 }
+large_center = { x = 56, y = 111, step = 6, hold = 6, rank = 6 }
+small_high = { x = 40, y = 103, step = 0, hold = 2, rank = 5 }
+small_low = { x = 40, y = 115, step = 3, hold = 3, rank = 4 }
+small_near = { x = 72, y = 111, step = 5, hold = 2, rank = 0 }
+
+[vector.inputs]
+return_zero = true
+odd = false
+
+[vector.expect.state]
+brain = "none"
+bursts = {}
+offset = 8
+
+[vector.expect.output]
+hide = true
+cue = false
+draw = []
+
+[[vector]]
+id = "R-after-hide"
+source = "recorded"
+entries = ["BackgroundBobs"]
+# any-intro-2219 cut 649
+
+[vector.before]
+offset = 8
+
+[vector.inputs]
+odd = true
+
+[vector.expect.state]
+brain = "none"
+offset = 8
+
+[vector.expect.output]
+hide = false
+
+[[vector]]
+id = "C-start-impact"
+source = "constructed"
+entries = ["EncounterStarts", "BrainEndures"]
+
+[vector.inputs]
+start = true
+start_offset = 12
+shots = [{ id = 0, kind = "missile", x = 80 }]
+
+[vector.expect.state]
+brain = { phase = "endures", flash = 8, step = 0, hold = 16, progress = 1 }
+offset = 12
+
+[vector.expect.output]
+impact = 0
+palette = "none"
+
+[[vector]]
+id = "C-start-resume"
+source = "constructed"
+entries = ["EncounterStarts", "EncounterBeats", "BrainEndures"]
+steps = [{ start = true, start_offset = 12, advance = false }, { shots = [{ id = 0, kind = "missile", x = 80 }] }]
+
+[vector.expect.state]
+pending_start = false
+brain = { phase = "endures", flash = 8, step = 0, hold = 16, progress = 1 }
+offset = 12
+pair = { which = "first", hold = 74 }
+
+[vector.expect.output]
+impact = 0
+palette = "none"
+
+[[vector]]
+id = "C-screened-shot"
+source = "constructed"
+entries = ["BrainEndures"]
+
+[vector.before]
+brain = { phase = "endures", flash = 0, step = 0, hold = 5, progress = 0 }
+
+[vector.inputs]
+shots = [{ id = 4, kind = "missile", x = 100 }, { id = 0, kind = "missile", x = 60 }]
+
+[vector.expect.state]
+brain = { phase = "endures", flash = 0, step = 0, hold = 4, progress = 0 }
+
+[vector.expect.output]
+impact = "none"
+
+[[vector]]
+id = "C-other-shot"
+source = "constructed"
+entries = ["BrainEndures"]
+
+[vector.before]
+brain = { phase = "endures", flash = 0, step = 0, hold = 5, progress = 0 }
+
+[vector.inputs]
+shots = [{ id = 4, kind = "super", x = 8 }, { id = 0, kind = "beam", x = 80 }]
+
+[vector.expect.state]
+brain = { phase = "endures", flash = 0, step = 0, hold = 4, progress = 0 }
+
+[vector.expect.output]
+impact = "none"
+
+[[vector]]
+id = "C-missiles-after-defeat"
+source = "constructed"
+entries = ["BrainEndures"]
+
+[vector.before]
+brain = { phase = "shaking", flash = 0, step = 0, hold = 5, progress = 0 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 40 }]
+
+[vector.expect.state]
+brain = { phase = "shaking", flash = 0, step = 0, hold = 4, progress = 1 }
+
+[vector.expect.output]
+impact = "none"
+
+[[vector]]
+id = "C-flash-and-impact"
+source = "constructed"
+entries = ["BrainFlashes", "BrainEndures"]
+
+[vector.before]
+brain = { phase = "endures", flash = 5, step = 0, hold = 5, progress = 1 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 72 }]
+
+[vector.expect.state]
+brain = { phase = "endures", flash = 8, step = 0, hold = 4, progress = 2 }
+
+[vector.expect.output]
+impact = 0
+palette = "base"
+
+[[vector]]
+id = "C-short-return"
+source = "constructed"
+entries = ["ReturnToPage", "BrainFlashes"]
+
+[vector.before]
+brain = { phase = "returning", flash = 6, step = 0, hold = 5 }
+
+[vector.expect.state]
+brain = { phase = "returning", flash = 6, step = 0, hold = 4 }
+
+[vector.expect.output]
+cue = false
+palette = "none"
+
+[[vector]]
+id = "C-pass-no-contact"
+source = "constructed"
+entries = ["RingsSweep"]
+
+[vector.before]
+
+[vector.before.rings]
+second_toward = { x = 9502720, y = 5242880, rank = 0, step = 3, hold = 7 }
+
+[vector.inputs]
+samus_x = 145
+
+[vector.expect.state]
+
+[vector.expect.state.rings]
+second_toward = { x = 9535488, y = 5275648, rank = 0, step = 3, hold = 6 }
+
+[vector.expect.output]
+ring_hit = "none"
+
+[[vector]]
+id = "C-ring-contact-during-defeat"
+source = "constructed"
+entries = ["RingsSweep"]
+
+[vector.before]
+brain = { phase = "shaking", flash = 0, step = 0, hold = 5, progress = 0 }
+
+[vector.before.rings]
+first_toward = { x = 9273344, y = 2752512, rank = 0, step = 3, hold = 7 }
+
+[vector.inputs]
+samus_x = 155
+
+[vector.expect.state]
+rings = {}
+
+[vector.expect.output]
+ring_hit = { direction = "right", invincible = 11, knockback = 11 }
+
+[[vector]]
+id = "C-ring-exits"
+source = "constructed"
+entries = ["RingsSweep"]
+
+[vector.before]
+
+[vector.before.rings]
+second_across = { x = 6848512, y = 13598720, rank = 0, step = 3, hold = 7 }
+
+[vector.expect.state]
+rings = {}
+
+[vector.expect.output]
+ring_hit = "none"
+
+[[vector]]
+id = "C-shake-wrap"
+source = "constructed"
+entries = ["BackgroundBobs"]
+
+[vector.before]
+brain = { phase = "shaking", flash = 0, step = 0, hold = 5, progress = 0 }
+offset = 32767
+
+[vector.expect.state]
+offset = -32765
+
+[[vector]]
+id = "C-shared-beat"
+source = "constructed"
+entries = ["RingsAppear", "RingsSweep", "BrainEndures", "BurstsPulse", "FightPictures"]
+
+[vector.before]
+brain = { phase = "endures", flash = 0, step = 0, hold = 5, progress = 3 }
+pair = { which = "second", hold = 1 }
+
+[vector.before.rings]
+first_toward = { x = 9273344, y = 5242880, rank = 1, step = 3, hold = 7 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 80 }]
+samus_x = 155
+
+[vector.expect.state]
+brain = { phase = "shaking", flash = 8, step = 0, hold = 4, progress = 0 }
+pair = "none"
+
+[vector.expect.state.rings]
+second_toward = { x = 8388608, y = 3145728, rank = 2, step = 0, hold = 10 }
+second_across = { x = 15204352, y = 5242880, rank = 3, step = 0, hold = 10 }
+
+[vector.expect.state.bursts]
+small_near = { x = 72, y = 111, step = -1, hold = 1, rank = 0 }
+small_low = { x = 40, y = 115, step = -1, hold = 8, rank = 1 }
+small_high = { x = 40, y = 103, step = -1, hold = 16, rank = 4 }
+large_center = { x = 56, y = 111, step = -1, hold = 1, rank = 5 }
+large_upper_right = { x = 72, y = 95, step = -1, hold = 16, rank = 6 }
+large_lower_left = { x = 40, y = 119, step = -1, hold = 32, rank = 7 }
+large_upper_left = { x = 48, y = 95, step = -1, hold = 48, rank = 8 }
+large_lower_right = { x = 64, y = 119, step = -1, hold = 64, rank = 9 }
+
+[vector.expect.output]
+impact = 0
+ring_hit = { direction = "right", invincible = 11, knockback = 11 }
+draw = [["second_toward", 128, 48, 1, 7], ["second_across", 232, 80, 1, 7], ["brain", 56, 111, 1, 7]]
+
+[[vector]]
+id = "C-hide-with-ring"
+source = "constructed"
+entries = ["ReturnToPage", "FightPictures", "BurstsPulse", "RingsAppear", "RingsSweep"]
+
+[vector.before]
+brain = { phase = "returning", flash = 0, step = 0, hold = 5 }
+pair = { which = "second", hold = 2 }
+offset = 4
+
+[vector.before.rings]
+first_toward = { x = 9240576, y = 5242880, rank = 1, step = 3, hold = 7 }
+
+[vector.before.bursts]
+large_center = { x = 56, y = 111, step = 0, hold = 5, rank = 2 }
+
+[vector.inputs]
+return_zero = true
+
+[vector.expect.state]
+brain = "none"
+bursts = {}
+pair = { which = "second", hold = 1 }
+offset = 8
+
+[vector.expect.state.rings]
+first_toward = { x = 9273344, y = 5275648, rank = 1, step = 3, hold = 6 }
+
+[vector.expect.output]
+hide = true
+ring_hit = "none"
+draw = [["first_toward", 141, 80, 2, 7]]
+
+[[vector]]
+id = "C-rings-after-hide"
+source = "constructed"
+entries = ["ReturnToPage", "FightPictures", "RingsAppear", "RingsSweep"]
+steps = [{ return_zero = true }, {}]
+
+[vector.before]
+brain = { phase = "returning", flash = 0, step = 0, hold = 5 }
+pair = { which = "second", hold = 2 }
+offset = 4
+
+[vector.before.rings]
+first_toward = { x = 9240576, y = 5242880, rank = 1, step = 3, hold = 7 }
+
+[vector.before.bursts]
+large_center = { x = 56, y = 111, step = 0, hold = 5, rank = 2 }
+
+[vector.expect.state]
+brain = "none"
+bursts = {}
+pair = "none"
+offset = 8
+
+[vector.expect.state.rings]
+second_toward = { x = 8388608, y = 3145728, rank = 2, step = 0, hold = 10 }
+second_across = { x = 15204352, y = 5242880, rank = 3, step = 0, hold = 10 }
+
+[vector.expect.output]
+hide = false
+ring_hit = { direction = "right", invincible = 11, knockback = 11 }
+draw = [["second_toward", 128, 48, 1, 7], ["second_across", 232, 80, 1, 7]]
+
+[[vector]]
+id = "A-contact-line"
+source = "constructed"
+entries = ["BrainEndures"]
+rules = { contact = { limit = 96 } }
+
+[vector.before]
+brain = { phase = "endures", flash = 0, step = 0, hold = 5, progress = 0 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 95 }]
+
+[vector.expect.state]
+brain = { phase = "endures", flash = 8, step = 0, hold = 4, progress = 1 }
+
+[vector.expect.output]
+impact = 0
+
+[[vector]]
+id = "A-one-impact"
+source = "constructed"
+entries = ["BrainEndures", "BurstsPulse"]
+rules = { contact = { hits = 1 } }
+
+[vector.before]
+brain = { phase = "endures", flash = 0, step = 0, hold = 5, progress = 0 }
+
+[vector.inputs]
+shots = [{ id = 0, kind = "missile", x = 60 }]
+
+[vector.expect.state]
+brain = { phase = "shaking", flash = 8, step = 0, hold = 4, progress = 0 }
+
+[vector.expect.output]
+impact = 0
+
+[[vector]]
+id = "A-shake-travel"
+source = "constructed"
+entries = ["BackgroundBobs"]
+rules = { shake_travel = 6 }
+
+[vector.before]
+brain = { phase = "shaking", flash = 0, step = 0, hold = 5, progress = 0 }
+offset = 8
+
+[vector.inputs]
+odd = true
+
+[vector.expect.state]
+offset = 2
+
+[[vector]]
+id = "A-quick-return"
+source = "constructed"
+entries = ["ReturnToPage"]
+rules = { shake_hold = 3 }
+
+[vector.before]
+brain = { phase = "shaking", flash = 1, step = 0, hold = 5, progress = 2 }
+
+[vector.expect.state]
+brain = { phase = "returning", flash = 0, step = 0, hold = 16 }
+
+[vector.expect.output]
+cue = true
+palette = "base"

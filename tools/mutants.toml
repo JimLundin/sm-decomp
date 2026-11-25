@@ -1037,3 +1037,15 @@ after = "if input.finished && let Some(start) = input.start {"
 case = "intro-rooms/discovery-first-turn"
 cut = 1298
 field = "intro-room.width"
+
+[[fault]]
+name = "flashback-contact-line-shifted"
+responsibility = "flashback"
+file = "crates/game/src/production/played/flashback.rs"
+before = '''screens_flashback::beat(state, rules, parity, dissolve, play)'''
+after = '''let mut rules = rules;
+    rules.contact.limit.0 = rules.contact.limit.0.saturating_add(1);
+    screens_flashback::beat(state, rules, parity, dissolve, play)'''
+case = "flashback/zebes-encounter"
+cut = 109
+field = "flashback.brain"

@@ -502,3 +502,102 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/intro_rooms.rs" },
   { role = "navigation", path = "docs/behaviours/world-intro-rooms.md" },
 ]
+
+[[rule]]
+id = "screens-flashback/EncounterBeats"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/encounter.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/EncounterStarts"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/encounter.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/BrainBreathes"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/brain.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/BrainEndures"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/contacts.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/BrainFlashes"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/brain.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/RingsAppear"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/rings.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/RingsSweep"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/rings.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/BurstsPulse"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/bursts.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/BackgroundBobs"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/encounter.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/ReturnToPage"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/encounter.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]
+
+[[rule]]
+id = "screens-flashback/FightPictures"
+targets = [
+  { role = "model", path = "crates/clean/screens_flashback/src/pictures.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/flashback.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/flashback.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-flashback.md" },
+]

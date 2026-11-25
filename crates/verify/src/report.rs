@@ -507,6 +507,25 @@ const DOMAINS: &[Domain] = &[
         ],
         apart: &[],
     },
+    Domain {
+        name: "screens-flashback",
+        bridge: None,
+        adapters: &["production/played/flashback.rs"],
+        providers: &["flashback"],
+        areas: &[
+            ("timing", &["encounter.rs"]),
+            ("boss", &["brain.rs", "contacts.rs"]),
+            ("rings", &["rings.rs", "ranks.rs"]),
+            ("return", &["bursts.rs"]),
+            ("drawing", &["pictures.rs"]),
+        ],
+        apart: &[Apart {
+            file: "encounter.rs",
+            function: "bobbed",
+            occurrences: 1,
+            area: "return",
+        }],
+    },
     // The title's one file holds every entry, all of them the screen's.
     Domain {
         name: "screens-title",

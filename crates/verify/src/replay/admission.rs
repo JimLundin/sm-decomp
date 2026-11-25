@@ -15,6 +15,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::IntroRoomJoinInputs {
         return super::intro_rooms::admit(case, sources);
     }
+    if case.inputs == InputProvider::FlashbackInputs {
+        return super::flashback::admit(case, sources);
+    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);
     }

@@ -30,6 +30,8 @@ pub enum Responsibility {
     Intro,
     /// Intro room installation, actor handoff and the first playable turn.
     IntroRooms,
+    /// The Zebes flashback encounter.
+    Flashback,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -146,6 +148,8 @@ pub enum InputProvider {
     ScopedIntroInputs,
     /// A causal intro start and the borrowed work-completion boundaries.
     IntroRoomJoinInputs,
+    /// Locked encounter phase, after-motion room facts and presentation opportunities.
+    FlashbackInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -240,6 +244,55 @@ pub enum ObservationId {
     /// The carried finished-work count.
     #[serde(rename = "intro-room.finished-frames")]
     IntroRoomClock,
+    /// Pending scene start.
+    #[serde(rename = "flashback.pending-start")]
+    FlashbackStart,
+    /// Carried background Y.
+    #[serde(rename = "flashback.background-y")]
+    FlashbackY,
+    /// Complete boss State.
+    #[serde(rename = "flashback.brain")]
+    FlashbackBrain,
+    /// Any scheduled pair and its remaining wait.
+    #[serde(rename = "flashback.pair-schedule")]
+    FlashbackPair,
+    /// Each ring, with position, rank and clip.
+    #[serde(rename = "flashback.rings")]
+    FlashbackRings,
+    /// Each burst, with position, rank and clip.
+    #[serde(rename = "flashback.bursts")]
+    FlashbackBursts,
+    /// A fresh encounter turn.
+    #[serde(rename = "flashback.turn")]
+    FlashbackTurn,
+    /// The weapon slot requested for conversion to impact.
+    #[serde(rename = "flashback.missile-impact")]
+    FlashbackImpact,
+    /// The push direction and holds the ring sets.
+    #[serde(rename = "flashback.ring-knockback")]
+    FlashbackPush,
+    /// The selection of colours written by the flash.
+    #[serde(rename = "flashback.flash")]
+    FlashbackFlash,
+    /// The one-turn page-two cue.
+    #[serde(rename = "flashback.page-two")]
+    FlashbackCue,
+    /// The request to hide Samus and her shots.
+    #[serde(rename = "flashback.hide")]
+    FlashbackHide,
+    /// The flash write to the palette mirror.
+    #[serde(rename = "flashback.palette-mirror")]
+    FlashbackMirror,
+    /// The flash row as observed in CGRAM.
+    #[serde(rename = "flashback.cgram")]
+    FlashbackCgram,
+    /// Each visible encounter OAM piece and its high bits in order.
+    #[serde(rename = "flashback.oam")]
+    FlashbackOam,
+    /// The signed Y published to the room background.
+    #[serde(rename = "flashback.bg1-y")]
+    FlashbackBg1Y,
+
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -661,6 +714,9 @@ fn rule_exists(rule: &str) -> bool {
         .iter()
         .any(|(id, _)| rule == format!("screens-intro/{id:?}"))
         || rule == game::production::played::intro_rooms::RULE
+        || screens_flashback::catalogue()
+            .iter()
+            .any(|entry| rule == format!("screens-flashback/{:?}", entry.id))
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -717,6 +773,22 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
     match field {
         O::IntroState | O::IntroPublications => Responsibility::Intro,
         O::IntroRoomGrid | O::IntroRoomActor | O::IntroRoomClock => Responsibility::IntroRooms,
+        O::FlashbackStart
+        | O::FlashbackY
+        | O::FlashbackBrain
+        | O::FlashbackPair
+        | O::FlashbackRings
+        | O::FlashbackBursts
+        | O::FlashbackTurn
+        | O::FlashbackImpact
+        | O::FlashbackPush
+        | O::FlashbackFlash
+        | O::FlashbackCue
+        | O::FlashbackHide
+        | O::FlashbackMirror
+        | O::FlashbackCgram
+        | O::FlashbackOam
+        | O::FlashbackBg1Y => Responsibility::Flashback,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
@@ -806,6 +878,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
     [
         ("screens-intro/", Responsibility::Intro),
         ("world-intro-rooms/", Responsibility::IntroRooms),
+        ("screens-flashback/", Responsibility::Flashback),
         ("samus-movement/", Responsibility::Movement),
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
@@ -905,6 +978,34 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/Exploring" => &[O::HudExplored],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
+        _ => return flashback_fields(rule),
+    })
+}
+
+fn flashback_fields(rule: &str) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    Some(match rule {
+        "screens-flashback/EncounterBeats" => &[O::FlashbackTurn],
+        "screens-flashback/EncounterStarts" => &[
+            O::FlashbackStart,
+            O::FlashbackY,
+            O::FlashbackBrain,
+            O::FlashbackPair,
+        ],
+        "screens-flashback/BrainBreathes" => &[O::FlashbackBrain],
+        "screens-flashback/BrainEndures" => &[O::FlashbackBrain, O::FlashbackImpact],
+        "screens-flashback/BrainFlashes" => &[
+            O::FlashbackBrain,
+            O::FlashbackFlash,
+            O::FlashbackMirror,
+            O::FlashbackCgram,
+        ],
+        "screens-flashback/RingsAppear" => &[O::FlashbackPair, O::FlashbackRings],
+        "screens-flashback/RingsSweep" => &[O::FlashbackRings, O::FlashbackPush],
+        "screens-flashback/BurstsPulse" => &[O::FlashbackBursts],
+        "screens-flashback/BackgroundBobs" => &[O::FlashbackY, O::FlashbackBg1Y],
+        "screens-flashback/ReturnToPage" => &[O::FlashbackBrain, O::FlashbackCue, O::FlashbackHide],
+        "screens-flashback/FightPictures" => &[O::FlashbackOam],
         _ => return None,
     })
 }
@@ -1119,6 +1220,41 @@ fn intro_provider_valid(case: &Case, recorded: bool) -> bool {
         && case.expectations.outputs == [ObservationId::IntroPublications]
         && case.expectations.output_cut.is_none()
         && !case.checkpoints
+}
+
+fn flashback_provider_valid(case: &Case, recorded: bool) -> bool {
+    use ObservationId as O;
+
+    recorded
+        && case.start == Start::CacheCut { frame: 0 }
+        && case.row == super::flashback::ROW
+        && case.end.cut_inclusive == super::flashback::END
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::FlashbackInputs
+        && case.expectations.output_cut.is_none()
+        && case.expectations.fields
+            == [
+                O::FlashbackStart,
+                O::FlashbackY,
+                O::FlashbackBrain,
+                O::FlashbackPair,
+                O::FlashbackRings,
+                O::FlashbackBursts,
+            ]
+        && case.expectations.outputs
+            == [
+                O::FlashbackTurn,
+                O::FlashbackImpact,
+                O::FlashbackPush,
+                O::FlashbackFlash,
+                O::FlashbackCue,
+                O::FlashbackHide,
+                O::FlashbackMirror,
+                O::FlashbackCgram,
+                O::FlashbackOam,
+                O::FlashbackBg1Y,
+            ]
+        && case.checkpoints
         && !case.borrowed.is_empty()
         && !case.limits.is_empty()
 }
@@ -1165,6 +1301,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             Responsibility::AudioSender,
         ] => touchdown_provider_valid(case),
         [Responsibility::Intro] => intro_provider_valid(case, recorded),
+        [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Ceres] => {
@@ -1377,6 +1514,11 @@ impl Case {
     /// First original comparison coordinate in this uninterrupted case.
     #[must_use]
     pub const fn first_cut(&self) -> Option<u64> {
+        if matches!(self.inputs, InputProvider::FlashbackInputs) {
+            // The lookup's anchor is the pending-start cut. Setup itself is an opportunity
+            // driven by the predecessor's press.
+            return Some(0);
+        }
         match self.start {
             Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => frame.checked_add(1),
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),

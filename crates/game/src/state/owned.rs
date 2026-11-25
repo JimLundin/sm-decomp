@@ -44,6 +44,14 @@ impl Pinned for AppearancePin {
     const SHAPE: u64 = 0xB2DA_FEFF_DE5F_DB9F;
 }
 
+/// Complete Zebes flashback encounter State.
+pub struct FlashbackPin;
+impl Pinned for FlashbackPin {
+    type State = Box<types::flashback::EncounterState>;
+    const NAME: &'static str = "screens-flashback";
+    const SHAPE: u64 = 0x384F_FECC_395A_C5CA;
+}
+
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
@@ -53,6 +61,8 @@ pub enum OwnedState {
     IntroRooms(Box<crate::production::played::intro_rooms::Scoped>),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
+    /// Every actor, pending timer and background offset of the flashback encounter.
+    Flashback(Model<FlashbackPin>),
     /// Complete Health and qualified late consumer continuation.
     HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.

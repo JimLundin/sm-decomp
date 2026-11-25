@@ -146,7 +146,7 @@ start clippy "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -
 # The clean crates under the clean room's ceilings (G5): tools/cleanroom/clippy.toml, the export's.
 # Clippy fingerprints CLIPPY_CONF_DIR, so this pass keeps its own target directory; sharing one
 # would re-check `types` and everything that depends on it in both passes on every run.
-CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" start clean-clippy "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze -p screens_boot -p screens_arrival -p screens_flight -p screens_intro -p screens_title -p screens_file_select -p screens_options --all-targets --no-deps -- -D warnings
+CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" start clean-clippy "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze -p screens_boot -p screens_arrival -p screens_flight -p screens_intro -p screens_flashback -p screens_title -p screens_file_select -p screens_options --all-targets --no-deps -- -D warnings
 if [ -n "$deny" ]; then
   PATH="$R:$PATH" start deny "$deny" --locked check bans
 else

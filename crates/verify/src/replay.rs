@@ -10,6 +10,7 @@ mod ceres;
 mod compare;
 mod connected;
 mod early_map;
+mod flashback;
 mod health_tail;
 mod hud;
 pub mod index;

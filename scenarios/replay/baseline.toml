@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "73f8d898b4c2e3ae321c2ae625c3d46d447caa660de63b54a51019f318cf15d2"
+index_sha256 = "5d5cf1c5492de1ef431b5c1dc7f3e765f1744e0af54da6857fea3786ad2123fd"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -948,5 +948,23 @@ replies = 0
 null_cuts = 0
 null_fields = 1548
 restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "flashback/zebes-encounter"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "af9eb3ee9dbd16f00e91e25828bbaadfd2b22a7645d9a0f6bedd272e85dc2428"
+
+[case.counts]
+cuts = 651
+fields = 3906
+outputs = 6510
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1828
+restorations = 651
 pending_boundaries = 0
 pending_restorations = 0

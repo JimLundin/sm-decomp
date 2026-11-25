@@ -1278,3 +1278,39 @@ provider = "bounded-demo-and-platform"
 fields = ["clock.work-finished", "demo.pad", "appearance.items", "appearance.charge", "appearance.sound-occupancy"]
 phase = "around-room-join"
 claim = "work completion is borrowed from the NMI cut; neutral demo and unselected appearance stimuli are independently admitted"
+
+[[case]]
+id = "flashback/zebes-encounter"
+kind = "scoped"
+row = "any-intro-2219"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 650 }
+rules = ["screens-flashback/EncounterBeats", "screens-flashback/EncounterStarts", "screens-flashback/BrainBreathes", "screens-flashback/BrainEndures", "screens-flashback/BrainFlashes", "screens-flashback/RingsAppear", "screens-flashback/RingsSweep", "screens-flashback/BurstsPulse", "screens-flashback/BackgroundBobs", "screens-flashback/ReturnToPage", "screens-flashback/FightPictures"]
+profile = "reference"
+responsibilities = ["flashback"]
+content = "player-rom-import"
+inputs = "flashback-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["flashback.pending-start", "flashback.background-y", "flashback.brain", "flashback.pair-schedule", "flashback.rings", "flashback.bursts"], outputs = ["flashback.turn", "flashback.missile-impact", "flashback.ring-knockback", "flashback.flash", "flashback.page-two", "flashback.hide", "flashback.palette-mirror", "flashback.cgram", "flashback.oam", "flashback.bg1-y"] }
+checkpoints = true
+limits = ["Room collision, demo, Samus, weapons and intro are external in this witness", "The missile result ends at the encounter's requested slot. Weapons carries the impact State and cinematic sound policy.", "OAM compares visible encounter pieces at finished cuts and omits absolute slot placement among other owners' sprites", "Flash cuts compare the encounter's flash row to the WRAM mirror and CGRAM. The dissolve, palette effects and upload sequence need their own producers.", "The cue and hide compare to the observed intro stage and draw gate transition. Integrated scheduling requires the live consumers."]
+
+[[case.borrowed]]
+dependency = "intro.setup-and-clock"
+provider = "locked lean cache"
+fields = ["any-intro-0568 cut 1650 latched press and inherited background Y", "cinematic counter parity", "return dissolve reaches zero"]
+phase = "start and after-stage actor phase"
+claim = "Setup is dispatched from the page-one handoff. The intro's cue and visibility replies come from the encounter's carried state."
+
+[[case.borrowed]]
+dependency = "platform.completion-and-actor-phase"
+provider = "recorded NMI completion and cinematic counter"
+fields = ["finished", "actor phase reached in work frame"]
+phase = "each NMI cut"
+claim = "The witness carries actor state through all four overruns. Work that already reached the encounter holds that state when it finishes."
+
+[[case.borrowed]]
+dependency = "room.after-motion-play"
+provider = "locked lean cache Samus and prior weapon slots"
+fields = ["Samus whole X", "flying missile shots with position and slot precedence", "camera origin"]
+phase = "after movement and weapon advance, with the camera read at publication"
+claim = "Missile candidates are derived from prior flight or the ammo debit before the independent impact comparison. Movement and flight are external inputs."

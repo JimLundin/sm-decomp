@@ -509,6 +509,16 @@ checkpoints. Delaying installation first differs at movie 2219 in `intro-room.ce
 at movie 3517 in `intro-room.width`. Integrated power-on play still needs the actor and the
 room intent on the unfinished work interval, followed by the live demo and encounter.
 
+The scoped case `flashback/zebes-encounter` starts with the latched press and inherited
+background Y from `any-intro-0568` cut 1650. It compares the encounter through
+`any-intro-2219` cuts 0 to 650, with 3,906 State fields and 6,510 outputs. The frozen
+origin matches zero full cuts. All 651 checkpoint restorations hold. Moving the contact
+line one pixel farther fails at cut 109 in `flashback.brain`. Room, demo, Samus, weapons
+and intro inputs are admitted for this witness. The encounter publishes the selected
+missile slot, ring knockback, palette flash, page-two cue, draw gate and visible encounter
+OAM. Weapons owns the impact continuation, and the integrated intro and renderer still
+have to consume these publications.
+
 From cut 271 it compares the screen, the game state and the count of finished frames at every
 cut; at finished cuts, the random number, the sounds against the queues (accumulated over each
 finished cut, because a sound can appear at a lag cut), the title's countdown, file select's
