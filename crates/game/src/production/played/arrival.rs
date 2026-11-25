@@ -135,6 +135,7 @@ impl super::State {
             lights: None,
             ridley: None,
             ridley_placed: None,
+            quake: None,
         })
     }
 }

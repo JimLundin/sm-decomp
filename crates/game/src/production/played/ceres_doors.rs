@@ -5,8 +5,9 @@
 
 use super::{Fault, station};
 use crate::production::world::MovementWorld;
-use boss_ceres_ridley::{CeresDoor, Stage};
+use boss_ceres_ridley::{CeresDoor, ShakeLayers, ShakeStart, Stage};
 use types::{Hitbox, Pair, Parts};
+use world_quake::{QuakeDirection, QuakeDuration, QuakeKind, QuakeReach, QuakeSize, ShakeOrder};
 
 impl station::State {
     /// The room's `geometry`, with the Ceres doors that block her.
@@ -16,36 +17,67 @@ impl station::State {
 }
 
 /// One run of each of the room's Ceres doors in `station`, in its order of its enemies,
-/// reading where `her` was at the end of the last frame. In the escape a later piece owns the
-/// shaft's overlay.
+/// reading where `her` was at the end of the last frame, with the room's quake as `quake` holds
+/// it. Door by door: each reads the shake's frames left as the doors before it left them, and
+/// the shake it starts, if any, starts in `quake` before the next door runs. In the escape a
+/// later piece owns the shaft's overlay.
 pub(super) fn run(
     station: &station::State,
     her: &samus_movement::Samus,
     ridley_beaten: bool,
     random: types::RandomSequence,
     rules: &boss_ceres_ridley::Rules,
+    quake: &mut world_quake::State,
 ) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
     let stage = station.stage;
-    if stage == Stage::Escape && (station.shaft_overlay || !station.doors.is_empty()) {
+    if stage == Stage::Escape && station.shaft_overlay {
         return Err(Fault::Escape);
     }
-    let inputs = boss_ceres_ridley::Inputs {
-        her: Pair {
-            x: her.position.x.pixel(),
-            y: her.position.y.pixel(),
-        },
-        stage,
-        random: random.number.0,
-        // Outside the escape no door reads the screen's shaking, and the escape is refused.
-        shake_frames_left: 0,
-        // In his room Ridley runs first, and his run in this piece leaves him unbeaten.
-        ridley_beaten,
+    let her = Pair {
+        x: her.position.x.pixel(),
+        y: her.position.y.pixel(),
     };
-    Ok(station
-        .doors
-        .iter()
-        .map(|door| door.run(&inputs, rules))
-        .collect())
+    let mut runs = Vec::with_capacity(station.doors.len());
+    for door in &station.doors {
+        let inputs = boss_ceres_ridley::Inputs {
+            her,
+            stage,
+            random: random.number.0,
+            shake_frames_left: quake.remaining().0,
+            // In his room Ridley runs first, and his run in this piece leaves him unbeaten.
+            ridley_beaten,
+        };
+        let run = door.run(&inputs, rules);
+        if let Some(shake) = run.shake {
+            world_quake::start_or_stop(quake, order(shake)?);
+        }
+        runs.push(run);
+    }
+    Ok(runs)
+}
+
+/// A door's shake as the room's quake starts it: what it moves, its strength as the size and its
+/// length as the frames, diagonally, as every door's shake moves.
+///
+/// # Errors
+/// [`Fault::Quake`] for a strength the quake has no size for.
+fn order(start: ShakeStart) -> Result<ShakeOrder, Fault> {
+    let size = u8::try_from(start.shake.strength)
+        .ok()
+        .and_then(QuakeSize::new)
+        .ok_or(Fault::Quake)?;
+    let reach = match start.layers {
+        ShakeLayers::Whole => QuakeReach::Whole,
+        ShakeLayers::Back => QuakeReach::Back,
+    };
+    Ok(ShakeOrder::Start {
+        kind: QuakeKind {
+            reach,
+            size,
+            direction: QuakeDirection::Diagonal,
+        },
+        frames: QuakeDuration(start.shake.length),
+    })
 }
 
 /// The room's geometry, with the Ceres doors that block her after its other solid actors.
@@ -132,10 +164,55 @@ mod tests {
         assert!(blocked.samus.movement.0.position.x.0 < open.samus.movement.0.position.x.0);
     }
 
+    /// In the escape the first door finds the room steady and starts a shake; the second finds
+    /// it under way and starts none. The frame's update then spends the shake's first frame.
     #[test]
-    fn the_escape_refuses_a_room_with_ceres_doors_and_leaves_state_as_it_was() {
+    fn in_the_escape_the_first_door_starts_a_shake_and_the_next_finds_it_under_way() {
+        let mut far = door(opening_ends());
+        far.position.x = Wrapping(far.position.x.0.wrapping_add(200));
+        let mut escaping = state(vec![door(opening_ends()), far]);
+        escaping.station.stage = Stage::Escape;
+        let outputs = play(&mut escaping, types::Buttons::default(), Stage::Escape).unwrap();
+        let shakes: Vec<_> = outputs.ceres_doors.iter().map(|run| run.shake).collect();
+        assert!(shakes[0].is_some());
+        assert_eq!(shakes[1], None);
+        let length = shakes[0].unwrap().shake.length;
+        assert_eq!(escaping.quake.0.remaining().0, length - 1);
+        assert!(outputs.quake.unwrap().actors_asked);
+    }
+
+    #[test]
+    fn a_doors_shake_moves_what_its_kind_moves_by_its_strength_diagonally_for_its_length() {
+        use boss_ceres_ridley::{Shake, ShakeLayers, ShakeStart};
+        use world_quake::{QuakeDirection, QuakeDuration, QuakeReach, ShakeOrder};
+        let start = |strength, layers| ShakeStart {
+            shake: Shake {
+                strength,
+                length: 4,
+            },
+            layers,
+        };
+        let Ok(ShakeOrder::Start { kind, frames }) = super::order(start(3, ShakeLayers::Back))
+        else {
+            panic!("a 3 px shake starts");
+        };
+        assert_eq!(kind.reach, QuakeReach::Back);
+        assert_eq!(kind.size.pixels(), 3);
+        assert_eq!(kind.direction, QuakeDirection::Diagonal);
+        assert_eq!(frames, QuakeDuration(4));
+        for strength in [0, 4, 256] {
+            assert_eq!(
+                super::order(start(strength, ShakeLayers::Whole)),
+                Err(Fault::Quake)
+            );
+        }
+    }
+
+    #[test]
+    fn the_escape_refuses_the_shafts_overlay_and_leaves_state_as_it_was() {
         let mut escaping = state(vec![door(opening_ends())]);
         escaping.station.stage = Stage::Escape;
+        escaping.station.shaft_overlay = true;
         let before = escaping.clone();
         assert_eq!(
             play(&mut escaping, types::Buttons::default(), Stage::Escape),

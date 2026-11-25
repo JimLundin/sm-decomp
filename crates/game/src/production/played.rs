@@ -1,16 +1,18 @@
 //! One whole frame of Samus, in any pose, or of a passage.
 //!
 //! A frame of play steps her health, the room's enemies (the station's actors), her clip's look
-//! ahead and her moves, her animation, the camera following her, the HUD, then the doors to other
-//! rooms. While a passage is under way, the doors to other rooms step alone, the station's actors
-//! run on the frames the passage runs the enemies, and the HUD takes its step outside play.
+//! ahead and her moves, her animation, the camera following her, the HUD, the room's quake, then
+//! the doors to other rooms. While a passage is under way, the doors to other rooms step alone,
+//! the station's actors run on the frames the passage runs the enemies, and the HUD takes its
+//! step outside play.
 //!
 //! This file holds only that order. Each owner's State, its step and what it reads of the others
 //! live in its own module: [`samus`] her moves and animation, `camera` the camera, `health`
 //! and `hud` her energy and the HUD, [`passage`] her room, its doors to other rooms and the
 //! passage through them, [`station`] the order of the Ceres station's actors and their State,
 //! with `ridley` Ridley and the baby, `ceres_doors` the Ceres doors and `shaft` the shaft's pad
-//! and lights, [`frame`] the counts of frames and the random number, and [`arrival`] her
+//! and lights, [`quake`] the room's quake, the shakes the doors start and the stops,
+//! [`frame`] the counts of frames and the random number, and [`arrival`] her
 //! arrival as a new game begins. The screen's colours are the doors model's [`Palette`], which
 //! the passage, the lights and the baby each set in turn. The fixture every owner's tests build
 //! State from is `tests`. Ahead of room play, [`front_end`] is which part of the game runs, from
@@ -53,6 +55,7 @@ mod health;
 mod hud;
 pub mod intro;
 pub mod passage;
+pub mod quake;
 mod ridley;
 pub mod samus;
 mod shaft;
@@ -74,9 +77,10 @@ use boss_ceres_ridley::{Lights, RidleyContent, RidleyPlacing, RidleyRun};
 use canonical::model::Model;
 use interface_hud::{FrameOutputs, HerMap, HudPictures};
 use passage::Passing;
+use quake::QuakePin;
 use samus_appearance::Figure;
 use types::{Item, Pose};
-use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, Scene};
+use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scene};
 
 /// Imported pose bodies, cannon headings, clips, run paces and the HUD's colours.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -140,6 +144,8 @@ pub struct State {
     pub palette: Palette,
     /// The Ceres station's doors, pad and cover, lights and Ridley.
     pub station: station::State,
+    /// The room's quake: the shake under way and the phase.
+    pub quake: Model<QuakePin>,
     /// The counts of finished frames and the game's random number.
     pub frame: frame::State,
     /// Her arrival as a new game begins: the preparation, the fade in, or play.
@@ -168,6 +174,9 @@ pub struct Outputs {
     /// His placing, with the music's stop and the shake's stop it asks for; none on a frame
     /// that doesn't place him.
     pub ridley_placed: Option<RidleyPlacing>,
+    /// The room quake's update: the layers' offsets and the actors' request; none while a
+    /// passage runs.
+    pub quake: Option<world_quake::Effects>,
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -192,9 +201,11 @@ pub enum Fault {
     /// The HUD refused the frame: the escape countdown starts on a frame whose scene only shows
     /// it.
     Hud,
-    /// The station's escape: the doors' shakes read the random numbers and the screen's
-    /// shaking, which aren't in this loop, and a later piece owns the shaft's overlay.
+    /// The station's escape in the shaft: a later piece owns the shaft's overlay.
     Escape,
+    /// The room's quake can't take the frame: a door's shake of a strength it has no size for,
+    /// or an update it refuses.
+    Quake,
     /// The shaft's lights could not be shown.
     Lights(LightsFault),
     /// Ridley has taken off: his flight is a later piece's.
@@ -212,8 +223,9 @@ impl State {
     ///
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
-    /// room inputs, the escape with Ceres doors in the room ([`Fault::Escape`]), Ridley flying
-    /// ([`Fault::RidleyFlying`]), and a next room that doesn't load, such as one placing an
+    /// room inputs, the escape with the shaft's overlay in the room ([`Fault::Escape`]), a shake
+    /// the room's quake can't take ([`Fault::Quake`]), Ridley flying ([`Fault::RidleyFlying`]),
+    /// and a next room that doesn't load, such as one placing an
     /// actor no owner here places ([`LoadFault::OtherActors`]).
     pub fn step(
         &mut self,
@@ -271,6 +283,8 @@ impl State {
         let touched = self.passage.touched(&her)?;
         let (hud_state, hud_outputs) =
             self.hud_frame(hud, &samus, her.after_moves(), health.state, content, rules)?;
+        let mut quake = enemies.quake;
+        let shaken = quake::update(&mut quake)?;
         let doors = self.passage.in_play(
             touched,
             hud::countdown_begun(&hud_state),
@@ -290,6 +304,7 @@ impl State {
         self.health = Model(health.state);
         self.hud = Model(hud_state);
         self.station.ran(&enemies);
+        self.quake = Model(quake);
         self.frame = self.frame.after(doors.report.finishing, random);
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
@@ -302,11 +317,14 @@ impl State {
             lights: enemies.lights,
             ridley: enemies.ridley,
             ridley_placed: None,
+            quake: Some(shaken),
         })
     }
 
     /// A frame of a passage: the doors alone, moving her position, the view, where the camera
-    /// last saw her and the colours, then the room's loading of what the doors' call names.
+    /// last saw her and the colours, then the room's loading of what the doors' call names. The
+    /// doors' runs on its frames of work start shakes, and building the next room stops the
+    /// shake; the room's quake has no update.
     fn pass(
         &mut self,
         passing: &Passing<'_>,
@@ -354,7 +372,7 @@ impl State {
                 rules,
                 &mut palette,
             )?,
-            None => station::Enemies::default(),
+            None => station::Enemies::none(self.quake.0),
         };
         let mut moved = self.samus.movement.0;
         moved.position = her;
@@ -365,10 +383,19 @@ impl State {
         };
         let loaded = self.load(exports.report.call, passing, content, &mut palette)?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
+        let mut quake = enemies.quake;
+        // Room loading's effects set-up, inside the building, stops the shake.
+        if exports.report.call == Some(RoomCall::BuildRoom) {
+            quake::stop(&mut quake);
+        }
         if let Some(placing) = ridley_placed {
             self.meet_the_boss(placing, content, rules);
+            // His placing asks for the shake's stop.
+            let boss_ceres_ridley::ShakeStop = placing.shake;
+            quake::stop(&mut quake);
         }
         self.station.passed(&enemies, loaded.actors, pad_and_cover);
+        self.quake = Model(quake);
         self.samus.movement.0 = moved;
         self.camera.0 = camera::passed(self.camera.0, view, seen);
         self.palette = palette;
@@ -385,6 +412,7 @@ impl State {
             lights: enemies.lights,
             ridley: enemies.ridley,
             ridley_placed,
+            quake: None,
         })
     }
 }

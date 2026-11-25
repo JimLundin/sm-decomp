@@ -13,6 +13,7 @@ boss_ceres_ridley = { path = "../clean/boss_ceres_ridley" }
 world_blocks = { path = "../clean/world_blocks" }
 world_camera = { path = "../clean/world_camera" }
 world_doors = { path = "../clean/world_doors" }
+world_quake = { path = "../clean/world_quake" }
 interface_hud = { path = "../clean/interface_hud" }
 samus_health = { path = "../clean/samus_health" }
 run_progress = { path = "../clean/run_progress" }

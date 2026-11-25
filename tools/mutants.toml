@@ -834,3 +834,86 @@ after = "pad: if samus.run.dashing == Dashing::On && samus.pose.action == types:
 case = "played chain-any-0006-E0B5 0 867"
 cut = 728
 field = "movement.pose"
+
+[[fault]]
+name = "played-quake-sign-flipped"
+responsibility = "played"
+file = "crates/game/src/production/played/quake.rs"
+before = "Outcome::Updated(effects) => Ok(effects),"
+after = "Outcome::Updated(effects) => Ok(Effects { front: world_quake::Offset { x: -effects.front.x, y: -effects.front.y }, back: world_quake::Offset { x: -effects.back.x, y: -effects.back.y }, ..effects }),"
+case = "played chain-any-0007-E06B 0 258"
+cut = 1
+field = "quake.front"
+
+[[fault]]
+name = "played-quake-update-before-doors"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = '''        let mut quake = enemies.quake;
+        let shaken = quake::update(&mut quake)?;'''
+after = '''        let mut quake = self.quake.0;
+        let shaken = quake::update(&mut quake)?;
+        if enemies.quake.shake != self.quake.0.shake {
+            quake.shake = enemies.quake.shake;
+        }'''
+case = "played chain-any-0007-E06B 0 258"
+cut = 2
+field = "quake.remaining"
+
+[[fault]]
+name = "played-quake-phase-held-while-shaking"
+responsibility = "played"
+file = "crates/game/src/production/played/quake.rs"
+before = '''    match world_quake::step(quake, Opportunity::Ordinary, Time::Running) {
+        Outcome::Updated(effects) => Ok(effects),'''
+after = '''    let held = quake.shake.map(|_| quake.phase);
+    match world_quake::step(quake, Opportunity::Ordinary, Time::Running) {
+        Outcome::Updated(effects) => {
+            if let Some(phase) = held {
+                quake.phase = phase;
+            }
+            Ok(effects)
+        }'''
+case = "played chain-any-0007-E06B 0 258"
+cut = 1
+field = "quake.phase"
+
+[[fault]]
+name = "played-doors-read-no-shake-left"
+responsibility = "played"
+file = "crates/game/src/production/played/ceres_doors.rs"
+before = "shake_frames_left: quake.remaining().0,"
+after = "shake_frames_left: 0,"
+case = "played chain-any-0007-E06B 0 258"
+cut = 1
+field = "quake.remaining"
+
+[[fault]]
+name = "played-countdown-finished-frames-ahead"
+responsibility = "played"
+file = "crates/game/src/production/played/hud.rs"
+before = "finished: FinishedFrames(state.frame.finished_frames),"
+after = "finished: FinishedFrames(state.frame.finished_frames.wrapping_add(1)),"
+case = "played chain-any-0007-E06B 0 258"
+cut = 2
+field = "hud.countdown.time"
+
+[[fault]]
+name = "played-doors-countdown-dormant-in-passage"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "                hud::countdown_begun(&self.hud.0),"
+after = "                false,"
+case = "played chain-any-0007-E06B 0 258"
+cut = 97
+field = "doors.colours.goal"
+
+[[fault]]
+name = "played-sounds-always-sent"
+responsibility = "played"
+file = "crates/verify/src/replay/played.rs"
+before = "sounds_sent: sounds_sent(&previous.wram)?,"
+after = "sounds_sent: sounds_sent(&previous.wram).map(|_| true)?,"
+case = "played chain-any-0008-E021 0 263"
+cut = 105
+field = "doors.colours.screen"

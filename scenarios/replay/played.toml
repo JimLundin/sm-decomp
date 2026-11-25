@@ -165,6 +165,66 @@ seed_frame = 568
 frames = [569, 2218]
 power_on = false
 
+# The escape's room 5 alone, from its own seed: the station shaking as she runs back through it,
+# each door's run starting a shake while none is under way, with the countdown held and sliding
+# into its corner; the passage, the shake it cut short stopped as the next room is built, and
+# room 4's first frames, to the row's last cut.
+[[run]]
+row = "chain-any-0007-E06B"
+start = 0
+end = 258
+held = 258
+stop = "end"
+seed_frame = 11939
+frames = [11940, 12197]
+power_on = false
+
+# The escape's room 5, played on into room 4 and through the passage out of it into room 3 with
+# no new seed, until her pose first differs.
+[[run]]
+row = "chain-any-0007-E06B"
+start = 0
+end = 3000
+held = 659
+stop = { failed = "movement.pose" }
+seed_frame = 11939
+frames = [11940, 12598]
+power_on = false
+
+# The escape's room 4 alone, from its own seed, shaking, and the passage out of it, the doors
+# waiting for the frame's sounds to go out, to the row's last cut.
+[[run]]
+row = "chain-any-0008-E021"
+start = 0
+end = 263
+held = 263
+stop = "end"
+seed_frame = 12198
+frames = [12199, 12461]
+power_on = false
+
+# The escape's room 3 alone, from its own seed, shaking, until her pose first differs.
+[[run]]
+row = "chain-any-0009-DFD7"
+start = 0
+end = 330
+held = 136
+stop = { failed = "movement.pose" }
+seed_frame = 12462
+frames = [12463, 12598]
+power_on = false
+
+# The escape's room 2 alone, from its own seed, shaking, until her pose first differs.
+[[run]]
+row = "chain-any-0010-DF8D"
+start = 0
+end = 278
+held = 65
+stop = { failed = "movement.pose" }
+seed_frame = 12793
+frames = [12794, 12858]
+power_on = false
+
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being
 # examined, its rise, the dissolve back to page 5's typed text, the wait for a press, page 6 and
 # the fade, to the row's last cut. The blank and the intro's end fall in the next frame, the

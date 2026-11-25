@@ -36,8 +36,8 @@ pub(super) enum Running<'a> {
     Passage,
 }
 
-/// One run of the room's enemies: Ridley's, each Ceres door's and the shaft's lights.
-#[derive(Default)]
+/// One run of the room's enemies: Ridley's, each Ceres door's and the shaft's lights, and the
+/// room's quake as the doors' shakes leave it.
 pub(super) struct Enemies {
     /// Ridley's run; none outside his room.
     pub(super) ridley: Option<RidleyRun>,
@@ -45,6 +45,20 @@ pub(super) struct Enemies {
     pub(super) doors: Vec<boss_ceres_ridley::Run>,
     /// What the shaft's lights show; none without its overlay.
     pub(super) lights: Option<Lights>,
+    /// The room's quake after the doors' starts.
+    pub(super) quake: world_quake::State,
+}
+
+impl Enemies {
+    /// No run of the room's enemies: the quake as it was.
+    pub(super) const fn none(quake: world_quake::State) -> Self {
+        Self {
+            ridley: None,
+            doors: Vec::new(),
+            lights: None,
+            quake,
+        }
+    }
 }
 
 impl State {
@@ -82,7 +96,8 @@ impl State {
 
 impl super::State {
     /// One run of the room's enemies, in its order: Ridley, then the Ceres doors, then the
-    /// shaft's overlay. The baby's colours and the beacon's go to `palette`.
+    /// shaft's overlay. The baby's colours and the beacon's go to `palette`, and the doors'
+    /// shakes to the room's quake as the frame began.
     pub(super) fn enemies(
         &self,
         running: Running<'_>,
@@ -102,18 +117,21 @@ impl super::State {
             ceres: station.stage,
         }
         .ridley_beaten();
+        let mut quake = self.quake.0;
         let doors = ceres_doors::run(
             station,
             &self.samus.movement.0,
             ridley_beaten,
             random,
             &rules.ceres,
+            &mut quake,
         )?;
         let lights = self.lights(content, rules, palette)?;
         Ok(Enemies {
             ridley,
             doors,
             lights,
+            quake,
         })
     }
 }

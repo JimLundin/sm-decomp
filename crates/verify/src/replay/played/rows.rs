@@ -79,6 +79,17 @@ impl<'a> Rows<'a> {
         })
     }
 
+    /// The row that holds the run's `cut`, and its own cut there.
+    pub(super) fn place(&mut self, cut: u64) -> Result<(String, u64), Outcome> {
+        let (place, own) = self.chain.place(cut)?;
+        let (_, row) = self
+            .chain
+            .reached
+            .get(place)
+            .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
+        Ok((row.id.0.clone(), own))
+    }
+
     /// The record at the run's `cut`.
     pub(super) fn record(&mut self, cut: u64) -> Result<FrameRecord, Outcome> {
         let (place, own) = self.chain.place(cut)?;

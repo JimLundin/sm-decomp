@@ -10,7 +10,8 @@
 //! the HUD's held inputs and the station's stage (the held facts of
 //! `SEED_HELD`); the sound queue's occupancy and her shot's charge; the screen's brightness and
 //! the fade's count, and the platform's counts of finished frames and the random number, which
-//! run on through the preparation (`SEED_HELD`).
+//! run on through the preparation (`SEED_HELD`); the room's quake, which the preparation leaves
+//! as it is.
 
 use super::{seed, word};
 use crate::replay::{connected, data_failure, hud, movement, progress, result::Outcome};
@@ -64,7 +65,6 @@ pub(super) fn admit(
         started.room.camera.clone(),
     )?;
     let held = seed::Room {
-        sounds_sent: inputs.sounds_waiting.count() == 0,
         inputs,
         progress,
         ceres,
@@ -103,6 +103,7 @@ pub(super) fn admit(
             ridley: None,
             stage: ceres,
         },
+        quake: Model(super::quake::seed(wram)?),
         frame: super::frame::seed(wram)?,
         arrival: super::arrival::seed(wram)?,
     };

@@ -118,6 +118,7 @@ dependencies = [
  "world_blocks",
  "world_camera",
  "world_doors",
+ "world_quake",
 ]
 
 [[package]]

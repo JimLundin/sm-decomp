@@ -107,16 +107,12 @@ pixel) and, on each frame of play, the expiry answer against the game state turn
 time-up's (`hud.countdown.expiry`): a run-out reported early is caught, but a missed one stops
 as Unsupported at the time-up's game state, which the runner refuses before it compares; no row
 of the movie runs out. A seed in the escape is admitted, but not one in the
-rotating shaft; every escape row then stops at its cut 1 on the doors' shakes (`Fault::Escape`),
-and in Ridley's room the start (cut 1,586) lies past the run's stop, so no reviewed run reaches a
-begun countdown yet. With that refusal lifted in a local probe, `chain-any-0007-E06B` holds all
-258 cuts (the hold, the slide from cut 72 and the passage) and `chain-any-0008-E021` 104 (the
-slide's end at 81), stopping at its passage's cut 105 in `doors.colours.screen`; there a count of
-finished frames one ahead differs at 0007's cut 2 in `hud.countdown.time`, and the doors reading
-the countdown dormant through a passage at cut 97 in `doors.colours.goal`. On the reviewed runs,
-the doors reading it begun through a passage differ at `chain-any-0003-DFD7` cut 183 in
-`doors.colours.goal`, a start borrowed on every frame at cut 1 in `hud.countdown.begun`, and the
-expiry answer inverted at cut 1 in `hud.countdown.expiry`.
+rotating shaft. `chain-any-0007-E06B` holds a begun countdown through its hold, the slide from
+cut 72, the passage and room 4; there a count of finished frames one ahead differs at cut 2 in
+`hud.countdown.time`, and the doors reading the countdown dormant through a passage at cut 97 in
+`doors.colours.goal`. The doors reading it begun through a passage differ at
+`chain-any-0003-DFD7` cut 183 in `doors.colours.goal`, a start borrowed on every frame at cut 1
+in `hud.countdown.begun`, and the expiry answer inverted at cut 1 in `hud.countdown.expiry`.
 
 The room's Ceres doors (boss-ceres-ridley's `CeresDoor`) play in the loop too. Their State is
 decoded once from the seed record, each door in the room's order of its enemies, and carried
@@ -130,8 +126,11 @@ from the imported world: the version her progress chooses lists the Ceres doors 
 population places. The run compares how many doors the room holds, and each door's phase, wait, figure,
 shown and solid, by its place (`ceres.0.phase`), at every cut whose frame of work finished,
 since a lag cut can find the room's enemies part-built, with whether Ridley draws it
-(`ceres.0.drawn-with-ridley`). The escape refuses the frame: its shakes read the screen's
-shaking, which is not in the loop. A door's
+(`ceres.0.drawn-with-ridley`). In the escape each door reads the room quake's frames of shake
+left as the doors before it left them, and the shake it starts, if any, starts the quake before
+the next door runs (below). No record checks that door-by-door order: the doors in these rooms
+start the same shake from the same random number, so no played row tells it from every door
+reading the shake left as the frame began. Only a unit test checks the fold. A door's
 request for its opening sound is produced but not compared: it belongs to the audio boundary
 (MODEL decision 37), whose owner is not in the loop yet.
 
@@ -153,7 +152,32 @@ the loop doesn't draw: it is produced and not compared. As the colours come up t
 the fade's step, and read its steps taken without it; no record yet shows that order or that
 case in a played run, since room 1 is not entered by a door before the escape, so unit tests
 alone check them. In the escape a later piece owns the
-overlay, so a room holding it refuses the frame (`Fault::Escape`). The count of finished frames
+overlay, so a room holding it refuses the frame (`Fault::Escape`).
+
+The room's quake (world-quake) is the played State's, decoded once from the seed record (the
+frames of shake left, the kind while some are left, a kind code past the 36 refused, and the
+phase) and carried. The Ceres doors start its shakes as the enemies run, a door's shake moving
+what its kind's shakes move by its strength, diagonally, for its length. Building the next room
+in a passage stops the shake (room loading's effects set-up, inside the building), and so does
+Ridley's placing. Each frame of play, and of its fade in, updates it once, last, with time
+running (a seed that holds time is refused); a passage's frames have no update. Its offsets
+and the actors' request are produced and compared, not drawn: no loop owner draws the layers or
+the enemies, and Drawing's query for the actors' projectiles is not asked. The run compares the
+frames left (`quake.remaining`), the phase (`quake.phase`) and, while frames are left, the kind
+(`quake.kind`) at every cut whose frame of work finished. On a frame the record shows the update
+ran (the last cut in main gameplay or its fade in, both cuts finished) it compares each layer's
+offset, the scroll past where its owner placed the layer (`quake.front`, `quake.back`, x and
+y); on an axis whose back layer the room holds still the game writes no place, so there it is
+the scroll's change since the last cut. The front offset is not compared at
+`chain-any-0006-E0B5` cuts 1,158 to 1,270, where the getaway draws its picture through the
+front layer's scroll. Where the record shows a shake reaching the actors under way as the update
+began, it compares that every Ceres door's slot was asked to shake (`quake.actors`); a slot reads
+asked for a frame after its request too, so where none is made none is compared, and only the
+constructed vectors check that no request is made. A shake a passage cuts short leaves the held
+axis moved until the next room places it; that place is the layer's owner's. A sign flipped
+differs at `chain-any-0007-E06B` cut 1 in `quake.front`, the update run before the doors' starts
+at cut 2 in `quake.remaining`, the phase held while shaking at cut 1 in `quake.phase`, and the
+doors reading no shake left at cut 1 in `quake.remaining`. The count of finished frames
 in sixteen bits, which nothing restarts, is the played owner's: carried from the seed's value,
 it counts each frame the doors report finished or restarting, so the borrowed lag decides it.
 It is compared as `finished-frames` at every cut, and her parity is its parity as the frame
@@ -171,10 +195,17 @@ the slide's end does that. Its first frame is the earliest such frame. The colou
 compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. A
 lag cut in play is still a named stop: the M0 row has none, so no record yet shows how it plays.
 
-Two more facts are borrowed, the second only through a passage. Audio's answer to the passage, whether a track waits in
+More facts are borrowed, the audio ones and the passage's random number only through a passage.
+Audio's answer to the passage, whether a track waits in
 the queue of tracks as the frame of work begins, is read from the record's music queue as the
 main loop's start steps it once (world-doors' decode); the passage into Ridley's room waits on it
-for 68 frames as his room's music loads; the earlier passages of these rows play as ready. Every
+for 68 frames as his room's music loads; the earlier passages of these rows play as ready.
+Whether every sound request has been sent as the frame of work begins is read from the record at
+the preceding cut, since the original sends the sounds after the frame's work: each of the three
+sound libraries' next index at its start. The escape's passage out of room 4 waits on it, so
+`chain-any-0008-E021` holds all 263 cuts and room 5 played on holds 659, to her pose at cut 660;
+the sounds always taken as sent differ at `chain-any-0008-E021` cut 105 in
+`doors.colours.screen`. Every
 frame draws the game's random number once (game-random's `AdvanceRandom`) as its work begins,
 whenever the last NMI found the last frame's work finished. In play the played State carries the
 number from the seed and every draw is the loop's; it is compared as `random` at every finished
@@ -194,9 +225,9 @@ frame of play (interface-hud's `BossBlanksTheMap`, Ridley in Ceres: no screens e
 one producer here; the stage, which the played State carries from the seed and his placing sets
 (calm); his room's colours, which the contents' fetch writes as the fade's goal (the baby's and
 the door's own palette from his room's imported colours, the doors' palette black but for its
-first colour, then the door's calm set in its own palette); and the music's stop and the shake's
-stop, which are produced and not compared (audio's boundary and the screen's shaking are not in
-the loop). Each frame the room's enemies run, his run comes first, reading whether a passage is
+first colour, then the door's calm set in its own palette); the music's stop, which is produced
+and not compared (audio's boundary is not in the loop); and the shake's stop, which stops the
+room's quake. Each frame the room's enemies run, his run comes first, reading whether a passage is
 under way and the frame's random number; the doors run after him reading whether he is beaten
 (progress's, held: no run here beats him). The baby's colour sets go to the screen's sprite row 3
 at once, compared as `doors.colours.screen`, and its cry is produced and not compared. His
@@ -243,7 +274,12 @@ lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` a
 281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 867 from its
 seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,491 cuts, through
 rooms 2 to 5 and on to cut 867 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,797;
-from her arrival (`any-ceres-arrival`, below) they hold 2,714, to movie frame 11,029. Her frame
+from her arrival (`any-ceres-arrival`, below) they hold 2,714, to movie frame 11,029. In the
+escape, `chain-any-0007-E06B`, room 5, alone holds all 258 cuts, and played on through room 4
+and its passage out holds 659, stopping at cut 660 in `movement.pose`; `chain-any-0008-E021`,
+room 4, alone holds all 263; `chain-any-0009-DFD7`, room 3, holds 136 and stops at cut 137 in
+`movement.pose`; and `chain-any-0010-DF8D`, room 2, holds 65 and stops at cut 66 in
+`movement.pose`. Her frame
 is two steps, her moves and then her reaction to the frame's hit, with the station and Health
 between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,
 and her crouched turn, begun at room 6's cut 535, ends at the record's frame. Both hits of his
@@ -261,7 +297,7 @@ played yet.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
-Fifty-three planted faults in the fault matrix, those of the responsibility `played`, stop
+Sixty planted faults in the fault matrix, those of the responsibility `played`, stop
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at

@@ -124,6 +124,28 @@ pub(super) fn music_ready(wram: &[u8]) -> Result<bool, Outcome> {
     Ok(timers.iter().all(|&timer| timer == 0))
 }
 
+/// The three sound libraries' queue start indices, and after them their next indices.
+const SOUND_QUEUE_STARTS: usize = 0x0643;
+const SOUND_QUEUE_NEXTS: usize = 0x0646;
+const SOUND_LIBRARIES: usize = 3;
+
+/// Audio's answer, borrowed: every sound request has been sent as the frame of work begins.
+/// The sounds are sent after the frame's game work, so a frame reads the queues as the last
+/// one left them: each library's next index at its start index.
+pub(super) fn sounds_sent(wram: &[u8]) -> Result<bool, Outcome> {
+    let bad = || data_failure(None, "played sound queues");
+    let starts = wram
+        .get(SOUND_QUEUE_STARTS..SOUND_QUEUE_STARTS + SOUND_LIBRARIES)
+        .ok_or_else(bad)?;
+    let nexts = wram
+        .get(SOUND_QUEUE_NEXTS..SOUND_QUEUE_NEXTS + SOUND_LIBRARIES)
+        .ok_or_else(bad)?;
+    Ok(starts
+        .iter()
+        .zip(nexts)
+        .all(|(start, next)| next.wrapping_sub(*start) % 16 == 0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::Controller;

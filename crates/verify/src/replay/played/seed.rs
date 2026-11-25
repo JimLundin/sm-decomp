@@ -10,8 +10,6 @@ use game::production::{played, room_loading};
 /// Seed-held room facts.
 pub(super) struct Room {
     pub(super) inputs: Inputs,
-    /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
-    pub(super) sounds_sent: bool,
     pub(super) progress: run_progress::Progress,
     pub(super) ceres: boss_ceres_ridley::Stage,
     /// The HUD's neighbours outside the loop.
@@ -42,7 +40,6 @@ pub(super) fn room(
         camera: inputs.camera.clone(),
     };
     let held = Room {
-        sounds_sent: inputs.sounds_waiting.count() == 0,
         inputs,
         map,
         hud: super::hud::held(seed)?,

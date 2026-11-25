@@ -1,13 +1,28 @@
-# A vector is one quiet room opportunity. The complete State of the room
-# quake is required before and after. An independent start uses its own full
-# State. A continuation preserves both values in a fresh restoration.
-# The active-duration admission case exercises the production boundary.
+# A vector is one frame of the room's quake: its State before, the frame's inputs, what Drawing's
+# query gives, what the frame's update publishes, and its State after.
+#
+# State: `remaining` (frames), `phase`, and `kind` exactly while remaining is over 0:
+#   kind = { reach = "Whole" | "Back" | "Front" | "Scenery", size = 1..3,
+#            direction = "Diagonal" | "Sideways" | "UpAndDown" }.
+# Inputs, each optional:
+#   `start = { kind = {...}, frames = 0..65535 }`, or `stop = true`: another part of the game
+#     starts or stops a shake before the frame's update (spec, Order that matters);
+#   `opportunity = "Absent"`: the scheduler skips the update (a passage); default ordinary;
+#   `time = "Held"`: time is stopped this frame; default running.
+# `drawn = { x, y }`: Drawing's query for an actor's projectile, after the inputs and before
+#   the update; omitted where a recorded vector cannot observe it.
+# `effects`: what the update publishes, `front` and `back` offsets `{ x, y }` and `actors`
+#   (every actor the room runs is asked to shake); omitted when there is no opportunity.
+# An independent start uses its own full State. A continuation (`continues`) starts from the
+# full result of the vector it names, carried through a fresh restoration.
+# The admission case exercises the production boundary.
 
 [[vector]]
 id = "R-quiet-frame"
 source = "recorded"
 entries = ["QuietQuakePhase"]
 before = { remaining = 0, phase = 402 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
 after = { remaining = 0, phase = 403 }
 
 [[vector]]
@@ -15,6 +30,7 @@ id = "C-other-phase"
 source = "constructed"
 entries = ["QuietQuakePhase"]
 before = { remaining = 0, phase = 290 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
 after = { remaining = 0, phase = 291 }
 
 [[vector]]
@@ -22,6 +38,8 @@ id = "C-mid-cycle"
 source = "constructed"
 entries = ["QuietQuakePhase"]
 before = { remaining = 0, phase = 32767 }
+drawn = { x = 0, y = 0 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
 after = { remaining = 0, phase = 32768 }
 
 [[vector]]
@@ -29,26 +47,273 @@ id = "C-wrap"
 source = "constructed"
 entries = ["QuietQuakePhase"]
 before = { remaining = 0, phase = 65535 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
 after = { remaining = 0, phase = 0 }
 
 [[vector]]
 id = "C-after-wrap"
 source = "constructed"
 entries = ["QuietQuakePhase"]
-before = { remaining = 0, phase = 0 }
-after = { remaining = 0, phase = 1 }
 continues = "C-wrap"
+before = { remaining = 0, phase = 0 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 0, phase = 1 }
 
 [[vector]]
 id = "C-restored-next"
 source = "constructed"
 entries = ["QuietQuakePhase"]
-before = { remaining = 0, phase = 291 }
-after = { remaining = 0, phase = 292 }
 continues = "C-other-phase"
+before = { remaining = 0, phase = 291 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 0, phase = 292 }
+
+[[vector]]
+id = "C-quiet-time-held"
+source = "constructed"
+entries = ["QuietQuakePhase", "ShakenActors"]
+time = "Held"
+before = { remaining = 0, phase = 77 }
+drawn = { x = 0, y = 0 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 0, phase = 78 }
+
+# The doors' small escape shake in room 5: started and spent over two frames.
+
+[[vector]]
+id = "R-small-starts"
+source = "recorded"
+entries = ["ShakeStarts", "ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 0, phase = 2396 }
+start = { kind = { reach = "Whole", size = 1, direction = "Diagonal" }, frames = 2 }
+effects = { front = { x = -1, y = -1 }, back = { x = -1, y = -1 }, actors = true }
+after = { remaining = 1, phase = 2397, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+
+[[vector]]
+id = "R-small-ends"
+source = "recorded"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 1, phase = 2397, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+effects = { front = { x = 1, y = 1 }, back = { x = 1, y = 1 }, actors = true }
+after = { remaining = 0, phase = 2398 }
+
+# The doors' strong escape shake in room 5: four frames.
+
+[[vector]]
+id = "R-strong-starts"
+source = "recorded"
+entries = ["ShakeStarts", "ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 0, phase = 2400 }
+start = { kind = { reach = "Whole", size = 3, direction = "Diagonal" }, frames = 4 }
+effects = { front = { x = 3, y = 3 }, back = { x = 3, y = 3 }, actors = true }
+after = { remaining = 3, phase = 2401, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+
+[[vector]]
+id = "R-strong-second"
+source = "recorded"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 3, phase = 2401, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+effects = { front = { x = -3, y = -3 }, back = { x = -3, y = -3 }, actors = true }
+after = { remaining = 2, phase = 2402, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+
+[[vector]]
+id = "R-strong-third"
+source = "recorded"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 2, phase = 2402, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+effects = { front = { x = -3, y = -3 }, back = { x = -3, y = -3 }, actors = true }
+after = { remaining = 1, phase = 2403, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+
+[[vector]]
+id = "R-strong-ends"
+source = "recorded"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 1, phase = 2403, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+effects = { front = { x = 3, y = 3 }, back = { x = 3, y = 3 }, actors = true }
+after = { remaining = 0, phase = 2404 }
+
+# A passage: the next room's building stops the shake, and a door of the next room starts one
+# while the passage runs; neither frame has an update.
+
+[[vector]]
+id = "R-stop-building"
+source = "recorded"
+entries = ["ShakeStarts", "ShakeCountsDown"]
+opportunity = "Absent"
+before = { remaining = 1, phase = 2491, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+stop = true
+after = { remaining = 0, phase = 2491 }
+
+[[vector]]
+id = "R-start-in-passage"
+source = "recorded"
+entries = ["ShakeStarts", "ShakeCountsDown"]
+opportunity = "Absent"
+before = { remaining = 0, phase = 2491 }
+start = { kind = { reach = "Whole", size = 1, direction = "Diagonal" }, frames = 2 }
+after = { remaining = 2, phase = 2491, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+
+# Ridley's room: the getaway's long shake of the back layer, its last frame, and the small shake
+# the door of his room starts in the escape.
+
+[[vector]]
+id = "R-getaway-starts"
+source = "recorded"
+entries = ["ShakeStarts", "ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 0, phase = 2045 }
+start = { kind = { reach = "Back", size = 3, direction = "Diagonal" }, frames = 64 }
+effects = { front = { x = 0, y = 0 }, back = { x = 3, y = 3 }, actors = true }
+after = { remaining = 63, phase = 2046, kind = { reach = "Back", size = 3, direction = "Diagonal" } }
+
+[[vector]]
+id = "R-back-ends"
+source = "recorded"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 1, phase = 2108, kind = { reach = "Back", size = 3, direction = "Diagonal" } }
+effects = { front = { x = 0, y = 0 }, back = { x = 3, y = 3 }, actors = true }
+after = { remaining = 0, phase = 2109 }
+
+[[vector]]
+id = "R-back-small-starts"
+source = "recorded"
+entries = ["ShakeStarts", "ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 0, phase = 2389 }
+start = { kind = { reach = "Back", size = 1, direction = "Diagonal" }, frames = 2 }
+effects = { front = { x = 0, y = 0 }, back = { x = -1, y = -1 }, actors = true }
+after = { remaining = 1, phase = 2390, kind = { reach = "Back", size = 1, direction = "Diagonal" } }
+
+# Reaches, sizes and directions no Ceres record shows.
+
+[[vector]]
+id = "C-sideways-front"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 5, phase = 10, kind = { reach = "Front", size = 2, direction = "Sideways" } }
+drawn = { x = 0, y = 0 }
+effects = { front = { x = 2, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 4, phase = 11, kind = { reach = "Front", size = 2, direction = "Sideways" } }
+
+[[vector]]
+id = "C-up-and-down-scenery"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 7, phase = 1200, kind = { reach = "Scenery", size = 3, direction = "UpAndDown" } }
+drawn = { x = 0, y = 0 }
+effects = { front = { x = 0, y = -3 }, back = { x = 0, y = -3 }, actors = false }
+after = { remaining = 6, phase = 1201, kind = { reach = "Scenery", size = 3, direction = "UpAndDown" } }
+
+[[vector]]
+id = "C-whole-sideways"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 6, phase = 4000, kind = { reach = "Whole", size = 2, direction = "Sideways" } }
+drawn = { x = -2, y = 0 }
+effects = { front = { x = -2, y = 0 }, back = { x = -2, y = 0 }, actors = true }
+after = { remaining = 5, phase = 4001, kind = { reach = "Whole", size = 2, direction = "Sideways" } }
+
+[[vector]]
+id = "C-back-up-and-down"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 4, phase = 61, kind = { reach = "Back", size = 1, direction = "UpAndDown" } }
+drawn = { x = 0, y = 1 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 1 }, actors = true }
+after = { remaining = 3, phase = 62, kind = { reach = "Back", size = 1, direction = "UpAndDown" } }
+
+[[vector]]
+id = "C-drawn-strong"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 3, phase = 800, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+drawn = { x = -3, y = -3 }
+effects = { front = { x = -3, y = -3 }, back = { x = -3, y = -3 }, actors = true }
+after = { remaining = 2, phase = 801, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+
+# Starts and stops.
+
+[[vector]]
+id = "C-start-replaces"
+source = "constructed"
+entries = ["ShakeStarts", "ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 40, phase = 300, kind = { reach = "Back", size = 3, direction = "Diagonal" } }
+start = { kind = { reach = "Whole", size = 1, direction = "Diagonal" }, frames = 2 }
+drawn = { x = -1, y = -1 }
+effects = { front = { x = -1, y = -1 }, back = { x = -1, y = -1 }, actors = true }
+after = { remaining = 1, phase = 301, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+
+[[vector]]
+id = "C-continued"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+continues = "C-start-replaces"
+before = { remaining = 1, phase = 301, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+drawn = { x = 1, y = 1 }
+effects = { front = { x = 1, y = 1 }, back = { x = 1, y = 1 }, actors = true }
+after = { remaining = 0, phase = 302 }
+
+[[vector]]
+id = "C-start-long"
+source = "constructed"
+entries = ["ShakeStarts", "ShakeCountsDown", "ShakenLayers", "ShakenActors"]
+before = { remaining = 0, phase = 65535 }
+start = { kind = { reach = "Front", size = 3, direction = "Sideways" }, frames = 65535 }
+drawn = { x = 0, y = 0 }
+effects = { front = { x = -3, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 65534, phase = 0, kind = { reach = "Front", size = 3, direction = "Sideways" } }
+
+[[vector]]
+id = "C-restored-long"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenLayers"]
+continues = "C-start-long"
+before = { remaining = 65534, phase = 0, kind = { reach = "Front", size = 3, direction = "Sideways" } }
+effects = { front = { x = -3, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 65533, phase = 1, kind = { reach = "Front", size = 3, direction = "Sideways" } }
+
+[[vector]]
+id = "C-stop-mid-shake"
+source = "constructed"
+entries = ["ShakeStarts"]
+opportunity = "Absent"
+before = { remaining = 37, phase = 5150, kind = { reach = "Back", size = 3, direction = "Diagonal" } }
+stop = true
+drawn = { x = 0, y = 0 }
+after = { remaining = 0, phase = 5150 }
+
+[[vector]]
+id = "C-start-zero"
+source = "constructed"
+entries = ["ShakeStarts"]
+opportunity = "Absent"
+before = { remaining = 12, phase = 640, kind = { reach = "Scenery", size = 2, direction = "Sideways" } }
+start = { kind = { reach = "Whole", size = 3, direction = "Diagonal" }, frames = 0 }
+drawn = { x = 0, y = 0 }
+after = { remaining = 0, phase = 640 }
+
+# Time held, and no opportunity, while a shake is under way.
+
+[[vector]]
+id = "C-held-shaking"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenActors"]
+time = "Held"
+before = { remaining = 3, phase = 500, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+drawn = { x = 0, y = 0 }
+effects = { front = { x = 0, y = 0 }, back = { x = 0, y = 0 }, actors = false }
+after = { remaining = 3, phase = 501, kind = { reach = "Whole", size = 3, direction = "Diagonal" } }
+
+[[vector]]
+id = "C-absent-shaking"
+source = "constructed"
+entries = ["ShakeCountsDown", "ShakenActors"]
+opportunity = "Absent"
+before = { remaining = 3, phase = 9, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
+drawn = { x = -1, y = -1 }
+after = { remaining = 3, phase = 9, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
 
 [[admission]]
-id = "A-active-duration"
-before = { remaining = 5, phase = 42 }
+id = "A-unestablished"
+opportunity = "Unestablished"
+before = { remaining = 5, phase = 42, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }
 outcome = "Unsupported"
-after = { remaining = 5, phase = 42 }
+after = { remaining = 5, phase = 42, kind = { reach = "Whole", size = 1, direction = "Diagonal" } }

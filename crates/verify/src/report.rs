@@ -377,7 +377,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "world-quake",
         bridge: None,
-        adapters: &[],
+        adapters: &["production/played/quake.rs"],
         providers: &[],
         areas: &[("quiet-quake", &["lib.rs"])],
         apart: &[],

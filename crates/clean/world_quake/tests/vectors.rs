@@ -1,22 +1,17 @@
 //! Run the supplied world-quake vectors against the public model.
 
+use core::num;
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 
 use enum_map::{Array, Enum};
 use serde::Deserialize;
-use types::{Pair, ZERO};
 use world_quake::{
-    Behaviour, BehaviourId, CATALOGUE, Check, Opportunity, Outcome, QuakeDuration, QuakePhase,
-    QuietEffects, State, UnsupportedReason, displacement, step,
+    BehaviourId, CATALOGUE, Check, Effects, Offset, Opportunity, Outcome, QuakeDuration, QuakeKind,
+    QuakePhase, QuakeSize, Shake, ShakeOrder, State, Time, drawn_offset, start_or_stop, step,
 };
 
 const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-quake.toml");
-const QUIET_DISPLACEMENT: Pair<types::Fixed> = Pair { x: ZERO, y: ZERO };
-const QUIET_OUTCOME: Outcome = Outcome::Quiet(QuietEffects {
-    displacement: QUIET_DISPLACEMENT,
-    actor_shake_requested: false,
-});
 
 type TestResult = Result<(), Box<dyn Error>>;
 
@@ -27,11 +22,74 @@ struct Vectors {
     admission: Vec<Admission>,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "lowercase")]
 enum Source {
     Recorded,
     Constructed,
+}
+
+/// The vector file's State: remaining, phase, and the kind exactly while remaining is over 0.
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Record {
+    remaining: u16,
+    phase: u16,
+    kind: Option<QuakeKind>,
+}
+
+impl Record {
+    fn state(self) -> Result<State, String> {
+        let shake = match (num::NonZeroU16::new(self.remaining), self.kind) {
+            (Some(remaining), Some(kind)) => Some(Shake { kind, remaining }),
+            (None, None) => None,
+            (Some(_), None) | (None, Some(_)) => {
+                return Err(format!(
+                    "a kind is present exactly while frames are left: {self:?}"
+                ));
+            }
+        };
+        Ok(State {
+            phase: QuakePhase(self.phase),
+            shake,
+        })
+    }
+}
+
+#[derive(Clone, Copy, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StartRecord {
+    kind: QuakeKind,
+    frames: u16,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+enum OpportunityRecord {
+    Absent,
+    Unestablished,
+}
+
+impl OpportunityRecord {
+    const fn opportunity(record: Option<Self>) -> Opportunity {
+        match record {
+            None => Opportunity::Ordinary,
+            Some(Self::Absent) => Opportunity::Absent,
+            Some(Self::Unestablished) => Opportunity::Unestablished,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Deserialize)]
+enum TimeRecord {
+    Held,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EffectsRecord {
+    front: Offset,
+    back: Offset,
+    actors: bool,
 }
 
 #[derive(Deserialize)]
@@ -40,9 +98,64 @@ struct Vector {
     id: String,
     source: Source,
     entries: Vec<String>,
-    before: State,
-    after: State,
     continues: Option<String>,
+    before: Record,
+    start: Option<StartRecord>,
+    stop: Option<bool>,
+    opportunity: Option<OpportunityRecord>,
+    time: Option<TimeRecord>,
+    drawn: Option<Offset>,
+    effects: Option<EffectsRecord>,
+    after: Record,
+}
+
+impl Vector {
+    /// The frame's starts and stops, in the order the file states them.
+    fn orders(&self) -> Vec<ShakeOrder> {
+        let start = self.start.map(|start| ShakeOrder::Start {
+            kind: start.kind,
+            frames: QuakeDuration(start.frames),
+        });
+        let stop = (self.stop == Some(true)).then_some(ShakeOrder::Stop);
+        start.into_iter().chain(stop).collect()
+    }
+
+    const fn time(&self) -> Time {
+        match self.time {
+            None => Time::Running,
+            Some(TimeRecord::Held) => Time::Held,
+        }
+    }
+
+    fn expected_outcome(&self) -> Outcome {
+        self.effects.map_or(Outcome::NoOpportunity, |effects| {
+            Outcome::Updated(Effects {
+                front: effects.front,
+                back: effects.back,
+                actors_asked: effects.actors,
+            })
+        })
+    }
+
+    /// Run the vector's frame on `state`: its starts and stops, Drawing's query, the update.
+    fn run(&self, state: &mut State) -> TestResult {
+        let id = &self.id;
+        assert_eq!(*state, self.before.state()?, "{id}: before");
+        for order in self.orders() {
+            start_or_stop(state, order);
+        }
+        if let Some(drawn) = self.drawn {
+            assert_eq!(drawn_offset(*state, self.time()), drawn, "{id}: drawn");
+        }
+        let outcome = step(
+            state,
+            OpportunityRecord::opportunity(self.opportunity),
+            self.time(),
+        );
+        assert_eq!(outcome, self.expected_outcome(), "{id}: effects");
+        assert_eq!(*state, self.after.state()?, "{id}: after");
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
@@ -54,107 +167,76 @@ enum AdmissionOutcome {
 #[serde(deny_unknown_fields)]
 struct Admission {
     id: String,
-    before: State,
+    opportunity: OpportunityRecord,
+    before: Record,
     outcome: AdmissionOutcome,
-    after: State,
+    after: Record,
 }
 
 fn restore(state: State) -> Result<State, Box<dyn Error>> {
     Ok(toml::from_str(&toml::to_string(&state)?)?)
 }
 
-fn check_quiet_step(state: &mut State, vector: &Vector) {
-    let id = &vector.id;
-    assert_eq!(*state, vector.before, "{id}: before");
-    assert!(!state.is_active(), "{id}: quiet before update");
-    assert_eq!(
-        displacement(state),
-        Ok(QUIET_DISPLACEMENT),
-        "{id}: before drawing"
-    );
-    assert_eq!(
-        step(state, Opportunity::Ordinary),
-        QUIET_OUTCOME,
-        "{id}: effects"
-    );
-    assert_eq!(*state, vector.after, "{id}: after");
-    assert_eq!(
-        displacement(state),
-        Ok(QUIET_DISPLACEMENT),
-        "{id}: after drawing"
-    );
-}
-
-fn check_entries(
-    vector: &Vector,
-    catalogue: &BTreeMap<&str, &Behaviour>,
-    exercised: &mut BTreeSet<BehaviourId>,
-) -> TestResult {
-    assert!(!vector.entries.is_empty(), "{}: missing entries", vector.id);
-    for entry in &vector.entries {
-        let behaviour = catalogue
-            .get(entry.as_str())
-            .ok_or_else(|| format!("{}: unknown entry {entry}", vector.id))?;
-        let Check::OracleWithConstructedStartsAndWrap { recorded } = behaviour.checked;
-        let expected_source = if vector.id == recorded {
-            Source::Recorded
-        } else {
-            Source::Constructed
-        };
-        assert_eq!(vector.source, expected_source, "{}: source", vector.id);
-        exercised.insert(behaviour.id);
-    }
-    Ok(())
-}
-
 fn check_admission(admission: &Admission) -> TestResult {
     let id = &admission.id;
-    let mut state = restore(admission.before)?;
-    assert_eq!(state, admission.before, "{id}: restored state");
-    assert!(state.is_active(), "{id}: active before update");
-    assert_eq!(
-        displacement(&state),
-        Err(UnsupportedReason::ActiveQuake),
-        "{id}: drawing"
-    );
+    let mut state = restore(admission.before.state()?)?;
     let expected = match admission.outcome {
-        AdmissionOutcome::Unsupported => Outcome::Unsupported(UnsupportedReason::ActiveQuake),
+        AdmissionOutcome::Unsupported => Outcome::Unsupported,
     };
+    let opportunity = OpportunityRecord::opportunity(Some(admission.opportunity));
     assert_eq!(
-        step(&mut state, Opportunity::Ordinary),
+        step(&mut state, opportunity, Time::Running),
         expected,
         "{id}: admission"
     );
-    assert_eq!(state, admission.after, "{id}: after");
+    assert_eq!(state, admission.after.state()?, "{id}: after");
     Ok(())
+}
+
+/// The State a vector starts from: its own, restored, or the full result of the vector it
+/// continues, restored; a continuation also runs on the uninterrupted result.
+fn starting_state(
+    vector: &Vector,
+    completed: &BTreeMap<String, State>,
+) -> Result<State, Box<dyn Error>> {
+    let Some(previous) = &vector.continues else {
+        return restore(vector.before.state()?);
+    };
+    let prior = completed.get(previous).ok_or_else(|| {
+        format!(
+            "{}: unknown or not yet completed vector {previous}",
+            vector.id
+        )
+    })?;
+    let mut uninterrupted = *prior;
+    vector.run(&mut uninterrupted)?;
+    restore(*prior)
 }
 
 #[test]
 fn world_quake_vectors() -> TestResult {
     let vectors: Vectors = toml::from_str(VECTORS)?;
-    let catalogue: BTreeMap<_, _> = CATALOGUE.iter().map(|row| (row.id.as_str(), row)).collect();
-    let mut exercised = BTreeSet::new();
+    let catalogue: BTreeMap<_, _> = CATALOGUE
+        .iter()
+        .map(|row| (row.id.as_str(), row.id))
+        .collect();
+    let mut sources: BTreeMap<BehaviourId, BTreeSet<Source>> = BTreeMap::new();
     let mut completed = BTreeMap::new();
     for vector in &vectors.vector {
-        let mut state = vector.before;
-        if let Some(previous) = &vector.continues {
-            let prior = completed.get(previous).ok_or_else(|| {
-                format!(
-                    "{}: unknown or not yet completed vector {previous}",
-                    vector.id
-                )
-            })?;
-            state = restore(*prior)?;
-            let mut uninterrupted = *prior;
-            check_quiet_step(&mut uninterrupted, vector);
-        }
-        check_quiet_step(&mut state, vector);
+        let mut state = starting_state(vector, &completed)?;
+        vector.run(&mut state)?;
         assert!(
             completed.insert(vector.id.clone(), state).is_none(),
             "duplicate id {}",
             vector.id
         );
-        check_entries(vector, &catalogue, &mut exercised)?;
+        assert!(!vector.entries.is_empty(), "{}: missing entries", vector.id);
+        for entry in &vector.entries {
+            let id = catalogue
+                .get(entry.as_str())
+                .ok_or_else(|| format!("{}: unknown entry {entry}", vector.id))?;
+            sources.entry(*id).or_default().insert(vector.source);
+        }
     }
     for admission in &vectors.admission {
         check_admission(admission)?;
@@ -165,33 +247,23 @@ fn world_quake_vectors() -> TestResult {
         <BehaviourId as Enum>::Array::<()>::LENGTH,
         "incomplete catalogue"
     );
-    assert_eq!(exercised, CATALOGUE.iter().map(|row| row.id).collect());
     for row in CATALOGUE {
-        let Check::OracleWithConstructedStartsAndWrap { recorded } = row.checked;
-        assert!(
-            completed.contains_key(recorded),
-            "missing oracle {recorded}"
+        let Check::OracleAndConstructed { .. } = row.checked;
+        let both = BTreeSet::from([Source::Recorded, Source::Constructed]);
+        assert_eq!(
+            sources.get(&row.id),
+            Some(&both),
+            "{}: evidence",
+            row.id.as_str()
         );
     }
     Ok(())
 }
 
 #[test]
-fn scheduler_boundary() {
-    const START: State = State {
-        phase: QuakePhase(u16::MAX),
-        remaining: QuakeDuration(0),
-    };
-    let mut state = START;
-    assert_eq!(
-        step(&mut state, Opportunity::Absent),
-        Outcome::NoOpportunity
-    );
-    assert_eq!(state, START);
-    assert_eq!(
-        step(&mut state, Opportunity::Unestablished),
-        Outcome::Unsupported(UnsupportedReason::UnestablishedOpportunity),
-    );
-    assert_eq!(state, START);
-    assert_eq!(displacement(&state), Ok(QUIET_DISPLACEMENT));
+fn sizes_are_one_to_three_pixels() {
+    assert_eq!(QuakeSize::new(0), None);
+    assert_eq!(QuakeSize::new(1).map(QuakeSize::pixels), Some(1));
+    assert_eq!(QuakeSize::new(3).map(QuakeSize::pixels), Some(3));
+    assert_eq!(QuakeSize::new(4), None);
 }

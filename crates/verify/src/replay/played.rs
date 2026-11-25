@@ -15,7 +15,8 @@
 //! This file holds the run and the order in which the owners' fields are compared, which is
 //! the order a difference is reported in. Each owner's seed, record reading and compared fields
 //! live in its own module: `samus`, `passage`, `colours`, `ceres_doors`, `ridley`, `shaft`,
-//! `health`, `hud`, `frame` and `arrival`, with `station` the station's State; the camera's are
+//! `quake`, `health`, `hud`, `frame` and `arrival`, with `station` the station's State; the
+//! camera's are
 //! the camera replay's. `platform` holds the borrowed lag, pad and audio answers, `seed` the
 //! facts held from the seed, and `rows` the chain of rows a run plays through. A row from the
 //! console's power-on plays the front end alone, from its own power-on State with no seed, on
@@ -35,6 +36,7 @@ mod intro;
 mod passage;
 mod platform;
 mod power_on;
+mod quake;
 mod ridley;
 mod rows;
 mod samus;
@@ -54,6 +56,7 @@ use game::production::played;
 use oracle_record::FrameRecord;
 use platform::{
     Controller, fetch_under_way, fetching_contents, finished, music_ready, parity, polled,
+    sounds_sent,
 };
 use std::path::Path;
 use world_doors::Doors;
@@ -74,7 +77,6 @@ pub const SEED_HELD: &[&str] = &[
     "cinematic and elevator status",
     "the seed room's geometry and the boxes of its actors other than the Ceres doors",
     "the seed room's camera screens, size, scrollers and lead",
-    "passage sounds sent",
     "progress, which chooses the next room's version, her suit and her beams, and whether the station's boss is beaten",
     "Ceres station stage, but where Ridley's placing sets it",
     "the HUD as the load flow puts it up for a new game, held as she arrives and not compared then, but the mini-map's power, which her arrival shows",
@@ -89,6 +91,7 @@ pub const BORROWED: &[&str] = &[
     "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
     "the random number as a passage's frame begins: no owner here draws it through a passage",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
+    "audio: whether every sound request has been sent as the frame of work begins",
     "the start ready: the frame a new game's start is made ready (R2 and C1's loading, T1's lag)",
     "the escape countdown's start: the timer set between two records, at the time the second holds, until the station's boss raises it",
 ];
@@ -284,7 +287,9 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         if current.video_frame != previous.video_frame.wrapping_add(1) {
             return Err(data_failure(Some(cut), "played rows join"));
         }
-        if let Err(outcome) = run.step(controller, &previous, &current, cut) {
+        let place = rows.place(cut)?;
+        let place = (place.0.as_str(), place.1);
+        if let Err(outcome) = run.step(controller, &previous, &current, cut, place) {
             return Ok(report(held, Stop::At(at(cut, outcome))));
         }
         held = held.saturating_add(1);
@@ -292,6 +297,16 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         previous = current;
     }
     Ok(report(held, Stop::End))
+}
+
+/// The interval a cut ends: the records at its ends, and where its cut lies, as the row that
+/// holds it and the cut there.
+#[derive(Clone, Copy)]
+struct Frame<'a> {
+    previous: &'a FrameRecord,
+    current: &'a FrameRecord,
+    place: (&'a str, u64),
+    cut: u64,
 }
 
 /// One played run's carried owners and the facts held from its seed.
@@ -378,6 +393,7 @@ impl<'a> Run<'a> {
             hud: Model(super::hud::decode_state(&seed.wram)?),
             frame: frame::seed(&seed.wram)?,
             station: station::seed(&seed.wram, ceres_doors, room.ceres)?,
+            quake: Model(quake::seed(&seed.wram)?),
             arrival: arrival::seed(&seed.wram)?,
         };
         Ok((room, state))
@@ -390,6 +406,7 @@ impl<'a> Run<'a> {
         previous: &FrameRecord,
         current: &FrameRecord,
         cut: u64,
+        place: (&str, u64),
     ) -> Result<(), Outcome> {
         // While a new game's start is made ready no frame of play reads the pad, and the
         // preparation's own waits for the frame's end are its lag.
@@ -423,7 +440,7 @@ impl<'a> Run<'a> {
             work_begun: finished(previous),
             work_done: finished(current) || fetching_contents(doors),
             audio: played::passage::PassageAudio {
-                sounds_sent: self.room.sounds_sent,
+                sounds_sent: sounds_sent(&previous.wram)?,
                 music_ready: music_ready(&previous.wram)?,
             },
             progress: &self.room.progress,
@@ -461,7 +478,13 @@ impl<'a> Run<'a> {
                 self.state.hud =
                     Model(start::hud_put_up(&current.wram, self.state.hud.0.mini_map)?);
             }
-            self.compared(current, hud_settled && !preparing, expiry, cut)?
+            let frame = Frame {
+                previous,
+                current,
+                place,
+                cut,
+            };
+            self.compared(&frame, hud_settled && !preparing, expiry, outputs.quake)?
         };
         compare(&expected, &actual).map_err(|fault| match fault {
             CompareFault::Difference(field) => Outcome::Difference { cut, field },
@@ -471,14 +494,21 @@ impl<'a> Run<'a> {
         })
     }
 
-    /// Every owner's fields at `current`, as the record and as the played State hold them.
+    /// Every owner's fields at the frame's cut, as the record and as the played State hold
+    /// them, with the room quake's `update`, if the frame had one.
     fn compared(
         &self,
-        current: &FrameRecord,
+        frame: &Frame<'_>,
         hud_settled: bool,
         expiry: Option<interface_hud::CountdownExpiry>,
-        cut: u64,
+        update: Option<world_quake::Effects>,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
+        let Frame {
+            previous,
+            current,
+            place,
+            cut,
+        } = *frame;
         let mut expected = expected(
             current,
             &self.content.appearance,
@@ -499,6 +529,10 @@ impl<'a> Run<'a> {
         if let Some(expiry) = expiry {
             expected.push(hud::expiry_expected(&current.wram)?);
             actual.push(hud::expiry_actual(expiry));
+        }
+        if finished(current) {
+            expected.extend(quake::expected(previous, current, place)?);
+            actual.extend(quake::actual(&self.state, update));
         }
         Ok((expected, actual))
     }

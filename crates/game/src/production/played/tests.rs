@@ -89,6 +89,10 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
             ridley: None,
             stage: Stage::Calm,
         },
+        quake: Model(world_quake::State {
+            phase: world_quake::QuakePhase(0),
+            shake: None,
+        }),
         frame: frame::State {
             count: FrameCount(0),
             finished_frames: 0,
