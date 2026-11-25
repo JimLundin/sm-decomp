@@ -2,8 +2,8 @@
 # gate_test.sh: gate.sh, run in a scratch repository whose tools and toolchain are fakes that
 # record that they ran, stops before any check on a base that doesn't resolve; passes a clean
 # branch; reuses that pass for a new commit of the same tree over the same base, running nothing,
-# unless SM_GATE_FRESH=1, other compiler flags, cargo-deny's presence or a skip-worktree file
-# says otherwise; never reuses a failed gate; runs a check for an untracked file in its subject
+# unless SM_GATE_FRESH=1, other compiler flags or overrides, cargo-deny's or shellcheck's presence,
+# a rustfmt configuration above the checkout or a skip-worktree file says otherwise; never reuses a failed gate; runs a check for an untracked file in its subject
 # even where git status hides untracked files; and shows a failing check's last lines when its tool prints none of the lines the gate
 # looks for. Run from anywhere; exit 1 lists what went wrong.
 here=$(cd "$(dirname "$0")" && pwd)
@@ -90,6 +90,20 @@ git -C "$repo" update-index --skip-worktree scenarios/demo.toml
 out=$(gate) || fail "a gate with a skip-worktree file failed: $out"
 ! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with a skip-worktree file reused a pass: $out"
 git -C "$repo" update-index --no-skip-worktree scenarios/demo.toml
+# A rustfmt configuration above the checkout, a self-test's interpreter override, and shellcheck
+# installed each change what a gate runs: none reuses the pass recorded without them.
+out=$(gate) || fail "the gate before the outside changes failed: $out"
+out=$(gate) && grep -q '^GATE REUSED: ' <<<"$out" || fail "the same tree's gate reused nothing: $out"
+echo 'hard_tabs = true' >"$scratch/rustfmt.toml"
+out=$(gate) || fail "a gate under a rustfmt.toml failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate under a rustfmt.toml reused a pass: $out"
+rm "$scratch/rustfmt.toml"
+out=$(gate CLEANROOM_PY=/elsewhere/python) || fail "a gate with CLEANROOM_PY failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with CLEANROOM_PY reused a pass: $out"
+fake shellcheck "$bin/shellcheck"
+out=$(gate) || fail "a gate with shellcheck failed: $out"
+! grep -q '^GATE REUSED: ' <<<"$out" || fail "a gate with shellcheck installed reused a pass made without it: $out"
+rm "$bin/shellcheck"
 
 # A failed gate is not reused: the same tree's next gate runs the checks again.
 echo 'Invented crate rules.' >"$repo/scenarios/rules.toml"

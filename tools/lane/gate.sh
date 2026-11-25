@@ -9,13 +9,15 @@
 # They don't wait on each other's build locks: each clippy pass has its own target directory, and
 # verify's lib tests link for an explicit target triple (tools/lane/test_dll.py).
 # A gate that passed with nothing uncommitted records its key: its tree, its base's tree (the tree
-# of the commit where the branch left BASE) and what it ran with (the toolchain, cargo-deny or its
-# absence, Python, and the environment cargo, rustc and the gate read). Those decide what every
-# check reads, which checks run and how, so a later gate of the same key with nothing uncommitted
-# passed already: the root's gate of a squashed or picked commit whose tree is the lane's, on the
-# base the lane was gated on, says whose pass it reuses and runs nothing. A file git is told to
-# ignore changes to (skip-worktree, assume-unchanged) turns this off. SM_GATE_FRESH=1 runs the
-# checks anyway.
+# of the commit where the branch left BASE) and what it ran with: the toolchain, cargo-deny and
+# shellcheck or their absence, Python, the environment variables cargo, rustc, the gate and the
+# self-tests read, and the cargo and rustfmt configuration files outside the tree (in the
+# checkout's folder and each folder above it, in CARGO_HOME and in rustfmt's user folder). Those
+# decide what every check reads, which checks run and how, so a later gate of the same key with
+# nothing uncommitted passed already: the root's gate of a squashed or picked commit whose tree is
+# the lane's, on the base the lane was gated on, says whose pass it reuses and runs nothing. A file
+# git is told to ignore changes to (skip-worktree, assume-unchanged) turns this off.
+# SM_GATE_FRESH=1 runs the checks anyway.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python), SM_GATE_DIR, SM_GATE_BASE (the base,
 # default origin/main; a stacked branch names the branch it builds on), SM_GATE_PASSED (where the
 # passes are recorded). Off Windows the toolchain is the cargo on PATH, which rustup points at
@@ -46,8 +48,22 @@ if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
     "$R/rustc" --version 2>&1
     if [ -n "$deny" ]; then echo "cargo-deny $deny"; cksum <"$deny" 2>/dev/null || cksum <"$deny.exe"
     else echo "no cargo-deny"; fi
+    if shellcheck=$(command -v shellcheck); then echo "shellcheck $shellcheck"; cksum <"$shellcheck"
+    else echo "no shellcheck"; fi
     "${SM_PY:-python3}" --version 2>&1
-    env | LC_ALL=C grep -E '^(RUST|CARGO|CLIPPY_CONF_DIR=|SM_RUST_BIN=|SM_PY=)' | LC_ALL=C sort
+    env | LC_ALL=C grep -E '^(RUST|CARGO|CLEANROOM_|CANARY_|CLIPPY_CONF_DIR=|SM_RUST_BIN=|SM_PY=)' |
+      LC_ALL=C sort
+    configs=("${CARGO_HOME:-$HOME/.cargo}"/config{,.toml}
+      "${XDG_CONFIG_HOME:-$HOME/.config}"/rustfmt/{rustfmt,.rustfmt}.toml)
+    [ -z "${APPDATA:-}" ] || configs+=("$APPDATA"/rustfmt/{rustfmt,.rustfmt}.toml)
+    dir=$(git rev-parse --show-toplevel) up=
+    while [ "$dir" != "$up" ]; do
+      configs+=("$dir"/.cargo/config{,.toml} "$dir"/{rustfmt,.rustfmt}.toml)
+      up=$dir dir=$(dirname "$dir")
+    done
+    for config in "${configs[@]}"; do
+      [ ! -f "$config" ] || { echo "$config"; cksum <"$config"; }
+    done
   } | git hash-object --stdin)
   key=$(git rev-parse HEAD^{tree})-$(git rev-parse "$left^{tree}")-$ran_with
 fi
