@@ -6,7 +6,9 @@
 # `git archive` from COMMIT (default HEAD), plus the generated files. It has no history, no other
 # ref, no remote and no alternates, and DEST must lie outside the project's directories. The
 # script ends by asserting all of that. DEST defaults to ROOT/DOMAIN, ROOT the exports' root:
-# $CLEANROOM_ROOT, else C:/cleanroom on Windows and ~/cleanroom elsewhere.
+# $CLEANROOM_ROOT, else C:/cleanroom on Windows and /cleanroom elsewhere. Off Windows DEST must lie
+# outside the home: host tools run git in the repositories they find there (an editor's source
+# control runs `git status` under its workspace), and a session writes the export.
 #
 # The clean workspace shape, inside the export and in this repository alike:
 #   Cargo.toml                         generated: members below, the root's [workspace.lints]
@@ -36,7 +38,7 @@ domain=$1
 check_domain "$domain"
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*) windows=1 root_default=C:/cleanroom ;;
-  *) windows=0 root_default=$HOME/cleanroom ;;
+  *) windows=0 root_default=/cleanroom ;;
 esac
 dest=${2:-${CLEANROOM_ROOT:-$root_default}/$domain}
 src=$(git rev-parse --show-toplevel)
@@ -49,6 +51,10 @@ dest=$(cd "$dest" && pwd -P)
 [ -z "$(ls -A "$dest")" ] || die "$dest is not empty; remove it or choose another DEST"
 main=$(cd "$(git rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
 under() { case "$1/" in "$2"/*) return 0 ;; esac; return 1; }
+if [ "$windows" = 0 ] && under "$dest" "$(cd "$HOME" && pwd -P)"; then
+  rmdir "$dest" 2>/dev/null || true
+  die "$dest is in the home; exports go under a root outside it (CLEANROOM_ROOT, default /cleanroom)"
+fi
 while IFS= read -r wt; do
   wt=$(cd "$wt" 2>/dev/null && pwd -P) || continue
   under "$dest" "$wt" && die "$dest is inside the worktree $wt"

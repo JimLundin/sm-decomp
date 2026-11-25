@@ -89,7 +89,7 @@ From a checkout of `main`:
 1. `bash tools/cleanroom/canary.sh plant`.
 2. `bash tools/cleanroom/export.sh DOMAIN`, adding `-c COMMIT` when the spec is an amendment
    still on its branch. It writes `ROOT/DOMAIN`, ROOT `$CLEANROOM_ROOT` (default `C:/cleanroom`
-   on Windows, `~/cleanroom` elsewhere).
+   on Windows, `/cleanroom` elsewhere, outside the home).
 3. `bash tools/cleanroom/launch.sh ROOT/DOMAIN BRIEF TRANSCRIPT`, with the transcript
    under `~/.cleanroom/transcripts/`. Done on `LAUNCH OK` and `CANARY CLEAN`.
 4. Read the session's report: the last `result` event of the transcript.

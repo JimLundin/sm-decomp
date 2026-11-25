@@ -139,6 +139,7 @@ def launch(root, session=None):
         'check_domain() { :; }\n'
         'export_mirror() { :; }\n'
         'export_remotes() { :; }\n'
+        'export_git_odd() { :; }\n'
         'allowlist_section() { echo crates/clean/demo/; }\n',
         encoding="utf-8", newline="\n",
     )
@@ -155,6 +156,13 @@ def launch(root, session=None):
                CLEANROOM_PRIVATE=(root / "private").as_posix(), CLEANROOM_AUTH=(root / "auth").as_posix(),
                CLEANROOM_COMPLETION_SECONDS="0.2", TEMP=str(scratch), TMPDIR=str(scratch))
     env["USERPROFILE"] = root.as_posix()
+    if os.name != "nt":
+        # The export is outside this home, as launch.sh demands; the toolchain keeps its own.
+        home = pathlib.Path.home()
+        env.setdefault("CARGO_HOME", str(home / ".cargo"))
+        env.setdefault("RUSTUP_HOME", str(home / ".rustup"))
+        env["HOME"] = (root / "home").as_posix()
+        (root / "home").mkdir()
     if os.name != "nt":
         # launch.sh's Windows path conversion is immaterial to the invented export.
         binary = root / "bin"

@@ -75,28 +75,83 @@ git_isolated() (
   unset GIT_DIR GIT_WORK_TREE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_INDEX_FILE \
     GIT_COMMON_DIR GIT_NAMESPACE GIT_CEILING_DIRECTORIES GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS \
     GIT_EXTERNAL_DIFF
-  export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ATTR_NOSYSTEM=1 GIT_PAGER=cat
+  export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ATTR_NOSYSTEM=1 GIT_PAGER=cat \
+    GIT_NO_REPLACE_OBJECTS=1
   git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c log.showSignature=false \
     -c core.attributesFile=/dev/null -c protocol.allow=never -C "$dir" "$@"
 )
 
+# The entries a session's git leaves at the top of an export's .git. Anything else (commondir,
+# config.worktree, gitdir, worktrees/, shallow, modules/) points git elsewhere or changes what it
+# reads, and is refused.
+export_git_entries=" HEAD config description index index.lock info hooks objects refs logs packed-refs ORIG_HEAD COMMIT_EDITMSG branches "
+
+# export_git_odd DIR [ALSO...]: each thing in the export DIR that a session's ordinary git work
+# doesn't leave, one a line: a .git that is not a plain directory, an entry at its top outside
+# export_git_entries, alternates, a ref but refs/heads/main (a replace ref among them), and any
+# other repository (a .git, or a folder holding HEAD and objects/) in DIR or in the ALSO folders.
+# Prints nothing for a clean export. A host tool that runs git where the box wrote (an editor's
+# git status, a shell prompt) would read these, so launch.sh reports them as a breach.
+export_git_odd() {
+  local dir=$1 src=$1/.git e name ref
+  shift
+  if [ -L "$src" ] || [ ! -d "$src" ]; then echo "$src is not a directory"; return 0; fi
+  for e in "$src"/* "$src"/.[!.]* "$src"/..?*; do
+    [ -e "$e" ] || [ -L "$e" ] || continue
+    name=${e##*/}
+    case $export_git_entries in *" $name "*) ;; *) echo "$e" ;; esac
+  done
+  for e in "$src/objects/info/alternates" "$src/objects/info/http-alternates"; do
+    [ ! -e "$e" ] || echo "$e"
+  done
+  if [ -d "$src/refs" ]; then
+    find "$src/refs" ! -type d ! -path "$src/refs/heads/main" -print
+  fi
+  if [ -f "$src/packed-refs" ]; then
+    while read -r _ ref; do
+      case $ref in '' | refs/heads/main) ;; *) echo "$src/packed-refs: $ref" ;; esac
+    done < <(grep -v '^[#^]' "$src/packed-refs")
+  fi
+  for d in "$dir" "$@"; do
+    [ -d "$d" ] || continue
+    find "$d" -path "$src" -prune -o -name .git -print -o -type f -name HEAD -print |
+      while IFS= read -r e; do
+        case ${e##*/} in
+          .git) echo "$e" ;;
+          HEAD) [ ! -d "${e%/HEAD}/objects" ] || echo "${e%/HEAD}" ;;
+        esac
+      done
+  done
+}
+
 # export_mirror DIR MIRROR: a bare repository at MIRROR (new) holding DIR/.git's objects, refs
-# and HEAD and nothing else, under a configuration of its own. What a session could write in
-# .git to make a later git on the host run a program or read elsewhere (config, info/attributes,
-# hooks, commondir, alternates, grafts) stays behind. A .git that isn't a directory, or anything
-# in it but files and directories (a symlink, a fifo), stops it.
+# (but replace refs) and HEAD and nothing else, under a configuration of its own. What a session
+# could write in .git to make a later git on the host run a program or read elsewhere (config,
+# info/attributes, hooks, grafts, replace refs) stays behind. A .git that isn't a directory, an
+# entry that points git elsewhere (commondir, alternates and the rest export_git_odd names),
+# anything in it but files and directories (a symlink, a fifo), or objects over
+# CLEANROOM_MIRROR_MAX_MB (default 1024) stop it.
 export_mirror() {
-  local src=$1/.git odd
+  local src=$1/.git odd size max=${CLEANROOM_MIRROR_MAX_MB:-1024}
   [ -d "$src" ] && [ ! -L "$src" ] || die "$1/.git is not a directory"
   [ -d "$src/objects" ] && [ -f "$src/HEAD" ] || die "$src holds no objects or HEAD"
   odd=$(find "$src" ! -type f ! -type d -print -quit) || die "can't list $src"
   [ -z "$odd" ] || die "$src holds something other than files and folders: $odd"
+  for odd in "$src"/* "$src"/.[!.]* "$src"/..?* "$src/objects/info/alternates" "$src/objects/info/http-alternates"; do
+    [ -e "$odd" ] || continue
+    case $odd in
+      */objects/info/*) die "$src holds $odd, which points git elsewhere" ;;
+      *) case $export_git_entries in *" ${odd##*/} "*) ;; *) die "$src holds ${odd##*/}, which no session's git leaves" ;; esac ;;
+    esac
+  done
+  size=$(du -sm "$src/objects" | cut -f1) || die "can't measure $src/objects"
+  [ "$size" -le "$max" ] || die "$src/objects holds $size MB, over CLEANROOM_MIRROR_MAX_MB=$max"
   env GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git init -q --bare --template= "$2" >/dev/null ||
     die "can't make a mirror at $2"
   cp -R "$src/objects/." "$2/objects/" || die "can't copy $src/objects"
-  rm -f "$2/objects/info/alternates" "$2/objects/info/http-alternates"
   if [ -d "$src/refs" ]; then cp -R "$src/refs/." "$2/refs/" || die "can't copy $src/refs"; fi
-  if [ -f "$src/packed-refs" ]; then cp "$src/packed-refs" "$2/packed-refs"; fi
+  rm -rf "$2/refs/replace"
+  if [ -f "$src/packed-refs" ]; then grep -v ' refs/replace/' "$src/packed-refs" >"$2/packed-refs" || true; fi
   cp "$src/HEAD" "$2/HEAD"
 }
 

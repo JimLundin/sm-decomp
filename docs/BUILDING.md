@@ -121,7 +121,7 @@ Then point the variables of `verify.yml`'s witness environment at it: `SM_AUDIO_
 again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
 
 **The clean room.** `tools/cleanroom/export.sh` writes exports under `$CLEANROOM_ROOT` (default
-`~/cleanroom`), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. Off Windows
+`/cleanroom` off Windows, outside the home), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. Off Windows
 the session runs in a box: a docker container with no network whose file system holds only the
 export, the lane's home and temporary folder, and read-only `/usr`, toolchain, CLI and settings.
 Inside it the launch's pattern rules still deny every place beside the export's path, as a
@@ -135,6 +135,12 @@ so it never enters the box.
 The operating system confines the session, and the pattern rules are a second layer. Before the
 first clean-room lane on a machine, and after a new CLI version:
 
+- **The exports' root is outside the home.** Make `/cleanroom` once, owned by you and private
+  (`sudo install -d -o "$USER" -m 700 /cleanroom`). export.sh and launch.sh refuse an export
+  under the home: host tools run git in the repositories they find there (VS Code's source
+  control runs `git status` in every repository under its workspace, with the repository's own
+  configuration), and the session writes the export. For the same reason, keep `CLEANROOM_ROOT`
+  out of any editor's workspace.
 - **Docker runs as you.** `docker info` works without `sudo` (your user is in the `docker`
   group). The box needs nothing else changed on the host: bubblewrap and the CLI's own sandbox
   need unprivileged user namespaces, which Ubuntu's AppArmor restricts, and docker doesn't.
@@ -143,16 +149,15 @@ first clean-room lane on a machine, and after a new CLI version:
   the temporary folder, the checkout, a search from `/`, the docker socket, writes into the
   root, the lane and the export's git configuration, the network, the key and the relay's other
   targets, and each must fail, while the export, the relay and the test runner work. The fake
-  CLI then commits a canary token, removes it and plants a textconv driver; the launch's canary
-  check must still find the token, and nothing planted may run.
+  CLI then commits a canary token, removes it, and plants a replace ref, a commondir with a
+  textconv driver, a nested repository and a renamed `.git`; the launch must report each as a
+  breach, and nothing planted may run. canary.sh must still find a removed token behind a
+  textconv driver or a replace ref.
 - **The key stays outside the box.** The dry run's `settings.json` holds the placeholder
   `cleanroom-relay` and `env.txt` holds no key. Other `ANTHROPIC_*` lines (custom headers, other
   keys) stay with the relay too; the launch names them.
 - **The probe passes in the box** (below): every CHECK refused, and nothing outside the export
   is in the box to find, so CHECKs 29 to 31 (searches from `/` and the home) find nothing.
-- **Exports may stay in the home.** A folder made beside the export during a session is not in
-  the box. With the exports' root outside the home (`CLEANROOM_ROOT=/cleanroom`, made once with
-  `sudo`) the rules also deny the home whole rather than entry by entry.
 
 ### First run on the box
 
@@ -178,7 +183,7 @@ first clean-room lane on a machine, and after a new CLI version:
    bash tools/cleanroom/canary.sh plant
    bash tools/cleanroom/canary.sh list
    CLEANROOM_ALLOW_MISSING=1 bash tools/cleanroom/export.sh launch-probe
-   ex=${CLEANROOM_ROOT:-$HOME/cleanroom}/launch-probe t=~/.cleanroom/transcripts/probe.jsonl
+   ex=${CLEANROOM_ROOT:-/cleanroom}/launch-probe t=~/.cleanroom/transcripts/probe.jsonl
    CLEANROOM_DRY_RUN=1 bash tools/cleanroom/launch.sh --probe "$ex" "$t"
    bash tools/cleanroom/launch.sh --probe "$ex" "$t"
    bash tools/cleanroom/canary.sh check "$t" "$ex"

@@ -4,7 +4,7 @@
 # a read afterwards; this stops it happening.
 #
 # How the root runs a clean-room lane, end to end (from a checkout of this repository), with
-# ROOT the exports' root, $CLEANROOM_ROOT (default C:/cleanroom on Windows, ~/cleanroom elsewhere):
+# ROOT the exports' root, $CLEANROOM_ROOT (default C:/cleanroom on Windows, /cleanroom elsewhere):
 #   1. bash tools/cleanroom/canary.sh plant              fresh tokens and fingerprints
 #   2. bash tools/cleanroom/export.sh DOMAIN             into ROOT/DOMAIN
 #   3. bash tools/cleanroom/launch.sh ROOT/DOMAIN BRIEF TRANSCRIPT
@@ -59,7 +59,8 @@
 # Off Windows (Linux) the session runs in a box, and the rules below are a second layer inside it:
 #   - The box is a docker container (`docker run` as this user, its argv in the lane's box.txt)
 #     with no network, a read-only root made from nothing (box_relay.py image, which also checks
-#     the tag's one layer is that root before trusting it), no capabilities, no new privileges,
+#     the tag's one layer is that root and its configuration empty before trusting it), no
+#     capabilities, no new privileges,
 #     and limits: CLEANROOM_BOX_MEMORY (12g), CLEANROOM_BOX_PIDS (4096), CLEANROOM_BOX_TMP (/tmp,
 #     2g) and CLEANROOM_SESSION_SECONDS (the CLI's deadline, 21600). Its file system holds only
 #     its mounts, each at its own path: the export (written) but its .git's config, info/ and
@@ -75,10 +76,14 @@
 #     about the host that hold no game code or data: the host paths in /proc/self/mountinfo,
 #     the DNS search suffix, /proc/cmdline and the machine's DMI ids.
 #   - Every git the host runs on an export afterwards (canary.sh check, import.sh, blind_copy.sh
-#     and the checks here) reads a mirror of its objects and refs alone (lib.sh export_mirror),
-#     never its configuration, attributes, hooks, commondir or alternates, with git_isolated
-#     turning off what a configuration could still name. So nothing the box writes in .git runs
-#     on the host or chooses what the canary check sees.
+#     and the checks here) reads a mirror of its objects and refs alone (lib.sh export_mirror,
+#     capped at CLEANROOM_MIRROR_MAX_MB), never its configuration, attributes, hooks, replace
+#     refs, commondir or alternates, with git_isolated turning off what a configuration could
+#     still name and replace objects. So nothing the box writes in .git runs on the host or
+#     chooses what the canary check sees. After the session, anything in the export's .git or
+#     the lane's home/ and tmp/ that a session's git work doesn't leave (commondir,
+#     config.worktree, alternates, a replace ref or another branch, a renamed .git, another
+#     repository) is a LAUNCH BREACH (lib.sh export_git_odd): a host tool's git would read it.
 #   - The credential stays outside: box_relay.py serves the lane's api.sock outside the box and
 #     adds the key (an apiKeyHelper's output, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN, and
 #     ANTHROPIC_CUSTOM_HEADERS) to each request. It passes an allow-list only: GET or POST of an
@@ -97,18 +102,17 @@
 # The rules are built from that machine's paths:
 #   - The CLI is `claude` on PATH or CLAUDE_BIN, run by absolute path; nothing goes through cygpath.
 #   - Rule paths are the CLI's absolute form, `//` and the path (`//home/me/**` is /home/me).
+#   - The export is outside the home (export.sh and launch.sh refuse one in it): host tools run
+#     git in the repositories they find under the home (an editor's source control runs
+#     `git status` with the repository's own configuration), and the box writes the export.
 #   - Reads (Read, Glob, Grep) and writes (Edit, Write) are denied for every entry of every
-#     directory on the way from / to the export but the one leading to it: the system folders,
-#     the other users' homes, the user's whole home but the exports' root, and the other exports.
-#     The Windows rules deny the home outright, but here the exports' root is in the home, and a
-#     deny rule wins over an allow, so the home is denied entry by entry around it. On top, by
-#     name: the main checkout's folder and its sm-decomp* siblings, every worktree, the temporary
-#     folder ($TEMP, else $TMPDIR, else /tmp), CLEANROOM_PRIVATE (the canary record and the lane)
-#     and, when the exports' root is outside it, the home itself. The entries are those present
-#     at launch: one made beside the export's path during the session is not denied, so keep the
-#     exports' root outside the home (CLEANROOM_ROOT=/cleanroom) where the home is denied whole.
-#     A name holding one of ()[]*?{}!\ can't be written as a rule, so it stops the launch, as
-#     does a launch from outside a checkout, whose trees the rules then couldn't name.
+#     directory on the way from / to the export but the one leading to it (the system folders,
+#     the other exports), and by name: the home whole, the main checkout's folder and its
+#     sm-decomp* siblings, every worktree, the temporary folder ($TEMP, else $TMPDIR, else
+#     /tmp) and CLEANROOM_PRIVATE (the canary record and the lane). The entries are those
+#     present at launch; the box holds none of them anyway. A name holding one of ()[]*?{}!\
+#     can't be written as a rule, so it stops the launch, as does a launch from outside a
+#     checkout, whose trees the rules then couldn't name.
 #   - Bash commands holding `:\` (a drive path) are denied here too; on Windows they can't be,
 #     since the runner command names two, and the options that read or write a file they name
 #     (--pathspec-from-file, --output, --logfile, --target-dir) are denied on both.
@@ -208,6 +212,17 @@ root=$(git_isolated "$check_dir/export.git" rev-list --max-parents=0 HEAD) || di
 [ -z "$(export_remotes "$export_dir")" ] || die "$export_dir has a remote"
 mapfile -t models < <(git_isolated "$check_dir/export.git" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
 rm -rf "$check_dir"
+if [ "$windows" = 0 ]; then
+  # Off Windows the exports' root is outside the home: host tools run git in repositories they
+  # find there (an editor's source control opens every repository under its workspace and runs
+  # `git status` with the repository's own configuration), and the box writes the export.
+  real_home=$(cd "$HOME" && pwd -P)
+  case "$export_dir/" in
+    "$real_home"/*) die "the export $export_dir is in the home; exports go under a root outside it (CLEANROOM_ROOT=/cleanroom), where host tools don't run git" ;;
+  esac
+  odd=$(export_git_odd "$export_dir")
+  [ -z "$odd" ] || die "the export's .git holds what no session's git leaves, so it is not launched: $odd"
+fi
 [ ${#models[@]} -eq 1 ] || die "the export holds ${#models[@]} model crates, not one"
 domain=$(domain_of "${models[0]#crates/clean/}")
 check_domain "$domain"
@@ -329,7 +344,7 @@ else
   [ -d "$tmp_dir" ] && outside+=("$(cd "$tmp_dir" && pwd -P)")
   outside+=("$(cd "$private" && pwd -P)" "$lane")
   real_home=$(cd "$HOME" && pwd -P)
-  case "$export_dir/" in "$real_home"/*) ;; *) outside+=("$real_home") ;; esac
+  outside+=("$real_home")
   outside_reads=() outside_writes=()
   for o in "${outside[@]}"; do
     case "$export_dir/" in "$o"/*) die "the export $export_dir is inside $o, which the session must not read" ;; esac
@@ -682,6 +697,18 @@ echo "launch: session exited $status; transcript $transcript ($(wc -l <"$transcr
 [ "$(runner_digest)" = "$runner_sum" ] || { echo "LAUNCH BREACH $domain: the runner, its shape scan or its awk.path in $lane changed during the session" >&2; exit 1; }
 
 [ "$probe" = 0 ] || [ ! -e "$lane/probe-written.txt" ] || { echo "LAUNCH BREACH $domain: the probe wrote $lane/probe-written.txt" >&2; exit 1; }
+
+# Off Windows, the export's .git and the box's other writable folders hold only what a session's
+# git leaves: no commondir, config.worktree, alternates, replace ref, other branch, renamed .git or
+# other repository, any of which a host tool's git would read.
+if [ "$windows" = 0 ]; then
+  odd=$(export_git_odd "$export_dir" "$lane/home" "$lane/tmp")
+  if [ -n "$odd" ]; then
+    echo "LAUNCH BREACH $domain: the box left what no session's git leaves:" >&2
+    sed 's/^/  /' <<<"$odd" >&2
+    exit 1
+  fi
+fi
 
 # 4. The canary check, on the transcript and on the export's history.
 if ! bash "$here/canary.sh" check "$transcript" "$export_dir"; then

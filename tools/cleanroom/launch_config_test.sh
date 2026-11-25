@@ -29,15 +29,17 @@ python=${CLEANROOM_PY:-${SM_PY:-$py_default}}
 if [ "$windows" = 0 ]; then
   export CARGO_HOME=${CARGO_HOME:-$HOME/.cargo} RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
   export HOME="$tmp/home" TEMP="$tmp/scratch"
-  mkdir -p "$HOME/cleanroom/other-domain" "$TEMP/c4a/logs"
+  # The exports' root is outside the home, as launch.sh demands, with another export in it.
+  mkdir -p "$HOME" "$tmp/root/other-domain" "$TEMP/c4a/logs"
   echo private >"$HOME/notes.txt"
-  # A dotfile in a folder on the export's path, which only the walk's `.[!.]*` names.
   mkdir -p "$HOME/.ssh" && echo key >"$HOME/.ssh/id"
+  # A dotfile in a folder on the export's path, which only the walk's `.[!.]*` names.
+  mkdir -p "$tmp/.dot" && echo key >"$tmp/.dot/id"
   # A sibling of the main checkout, which the rules name as sm-decomp*.
   main=$(cd "$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)/.." && pwd -P)
   candidate="$(dirname "$main")/sm-decomp-launch-test-$$"
   [ -e "$candidate" ] || { mkdir "$candidate" 2>/dev/null && sibling=$candidate; }
-  root="$HOME/cleanroom"
+  root="$tmp/root"
 else
   root="$tmp/cleanroom"
 fi
@@ -105,8 +107,8 @@ fi
 
 # Which paths the deny rules cover: a rule `Read(//P)` the path P, `Read(//P/**)` all under P.
 covered=$("$python" -I - "$lane/settings.json" "$ex/Cargo.toml" "$HOME/notes.txt" \
-  "$CLEANROOM_PRIVATE/tokens.tsv" "$HOME/cleanroom/other-domain/x" "$TEMP/c4a/logs/b90.txt" \
-  "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" /proc/self/environ <<'PY'
+  "$CLEANROOM_PRIVATE/tokens.tsv" "$tmp/root/other-domain/x" "$TEMP/c4a/logs/b90.txt" \
+  "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" "$tmp/.dot/id" /proc/self/environ <<'PY'
 import json, sys
 deny = json.load(open(sys.argv[1], encoding="utf-8"))["permissions"]["deny"]
 def covers(tool, path):
@@ -123,8 +125,8 @@ for path in sys.argv[2:]:
 PY
 ) || fail "the deny rules can't be read"
 grep -qx "$ex/Cargo.toml none" <<<"$covered" || fail "the export is denied: $(grep "^$ex/" <<<"$covered")"
-for p in "$HOME/notes.txt" "$CLEANROOM_PRIVATE/tokens.tsv" "$HOME/cleanroom/other-domain/x" \
-  "$TEMP/c4a/logs/b90.txt" "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" /proc/self/environ; do
+for p in "$HOME/notes.txt" "$CLEANROOM_PRIVATE/tokens.tsv" "$tmp/root/other-domain/x" \
+  "$TEMP/c4a/logs/b90.txt" "$repo/AGENTS.md" /etc/passwd "$HOME/.ssh/id" "$tmp/.dot/id" /proc/self/environ; do
   grep -qx "$p Read,Glob,Grep,Edit,Write" <<<"$covered" || fail "not denied every tool: $(grep "^$p " <<<"$covered")"
 done
 grep -qxF 'Bash(*:\\*)' "$tmp/deny.txt" || fail "no deny rule for a drive path off Windows"
@@ -147,13 +149,43 @@ grep -q 'sk-test-launch-secret' "$lane2/settings.json" "$lane2/env.txt" "$lane2/
 grep -q '^ANTHROPIC_API_KEY=' "$lane2/env.txt" && fail "the API key is in the box's environment"
 (unset ANTHROPIC_API_KEY; launch "without a key" >/dev/null 2>&1) && fail "a launch without a key goes on"
 
-# A name the rules can't hold stops the launch; an export outside the home denies the home whole.
-mkdir "$HOME/Foo (2)"
+# A name the rules can't hold stops the launch; the home is denied whole; an export in the home,
+# or one whose .git holds what no session's git leaves, is not launched.
+mkdir "$tmp/Foo (2)"
 CLEANROOM_AUTH="$tmp/auth" launch "with a folder named Foo (2)" >/dev/null 2>&1 && fail "a folder named Foo (2) beside the export's path goes into a rule"
-rmdir "$HOME/Foo (2)"
-mkdir -p "$tmp/outside" && cp -a "$ex" "$tmp/outside/launch-probe"
-lane3=$(probe_export="$tmp/outside/launch-probe" CLEANROOM_AUTH="$tmp/auth" launch "outside the home") || exit 1
-grep -qF "\"Read(/$HOME/**)\"" "$lane3/settings.json" || fail "the home is not denied whole for an export outside it"
+rmdir "$tmp/Foo (2)"
+grep -qF "\"Read(/$HOME/**)\"" "$lane/settings.json" || fail "the home is not denied whole"
+mkdir -p "$HOME/cleanroom" && cp -a "$ex" "$HOME/cleanroom/launch-probe"
+probe_export="$HOME/cleanroom/launch-probe" CLEANROOM_AUTH="$tmp/auth" launch "in the home" >/dev/null 2>&1 &&
+  fail "an export in the home is launched"
+rm -rf "$HOME/cleanroom"
+echo "$tmp/elsewhere.git" >"$ex/.git/commondir"
+CLEANROOM_AUTH="$tmp/auth" launch "with a commondir" >/dev/null 2>&1 && fail "an export with a .git/commondir is launched"
+rm "$ex/.git/commondir"
+
+# What export_git_odd reports, each on an export's copy: everything a host tool's git would read
+# besides objects, refs/heads/main and the configuration, and nothing for a clean export.
+odd() { (. "$here/lib.sh"; export_git_odd "$@"); }
+[ -z "$(odd "$ex")" ] || fail "a clean export is odd: $(odd "$ex")"
+plant() { # NAME COMMAND: COMMAND run in a fresh copy of the export, then the copy must be odd
+  rm -rf "$tmp/odd" && cp -a "$ex" "$tmp/odd"
+  (cd "$tmp/odd" && eval "$2") >/dev/null 2>&1
+  [ -n "$(odd "$tmp/odd")" ] || fail "export_git_odd misses $1"
+}
+gx() { git -c user.name=t -c user.email=t@invalid "$@"; }
+plant commondir 'echo /elsewhere >.git/commondir'
+plant config.worktree 'echo "[core]" >.git/config.worktree'
+plant gitdir 'echo /elsewhere >.git/gitdir'
+plant worktrees 'mkdir -p .git/worktrees/x'
+plant alternates 'mkdir -p .git/objects/info && echo /elsewhere >.git/objects/info/alternates'
+plant replace-ref 'gx replace -f HEAD "$(gx commit-tree HEAD^{tree} -m other)"'
+plant packed-replace 'gx replace -f HEAD "$(gx commit-tree HEAD^{tree} -m other)" && gx pack-refs --all'
+plant branch 'gx branch other'
+plant renamed-git 'cp -a .git .git-old'
+plant nested-git 'mkdir -p crates/x && gx init -q crates/x'
+plant git-file 'mv .git .git-real && echo "gitdir: $PWD/.git-real" >.git'
+plant git-symlink 'mv .git .git-real && ln -s .git-real .git'
+rm -rf "$tmp/odd"
 
 # The test command as the session runs it: the lane's environment alone, from the export.
 mapfile -t envv <"$lane/env.txt"
@@ -205,17 +237,21 @@ mkdir -p "$blind" && git -C "$blind" init -q && echo a >"$blind/f.rs"
 gc() { git -C "$blind" -c user.name=t -c user.email=t@invalid -c commit.gpgsign=false "$@"; }
 gc add . && gc commit -qm root && echo "$token" >>"$blind/f.rs" && gc commit -qam leak &&
   sed -i '$d' "$blind/f.rs" && gc commit -qam unleak
-printf '#!/bin/sh\ntouch "%s"\ngrep -v crtest "$1"\n' "$tmp/textconv-ran" >"$blind/.git/conv.sh"
-chmod +x "$blind/.git/conv.sh"
-git -C "$blind" config diff.pwn.textconv "$blind/.git/conv.sh"
+printf '#!/bin/sh\ntouch "%s"\ngrep -v crtest "$1"\n' "$tmp/textconv-ran" >"$tmp/conv.sh"
+chmod +x "$tmp/conv.sh"
+git -C "$blind" config diff.pwn.textconv "$tmp/conv.sh"
 git -C "$blind" config log.showSignature true
-git -C "$blind" config gpg.program "$blind/.git/conv.sh"
+git -C "$blind" config gpg.program "$tmp/conv.sh"
 echo '* diff=pwn' >"$blind/.git/info/attributes"
-cp "$blind/.git/conv.sh" "$blind/.git/hooks/post-checkout"
+cp "$tmp/conv.sh" "$blind/.git/hooks/post-checkout"
 : >"$tmp/empty.jsonl"
 check=$(bash "$here/canary.sh" check "$tmp/empty.jsonl" "$blind" 2>&1)
 grep -q "^BREACH token .*(history)" <<<"$check" || fail "a textconv driver in the export's .git hides a token from canary.sh: $check"
 [ ! -e "$tmp/textconv-ran" ] || fail "canary.sh ran a program the export's .git names"
+# A replace ref that swaps the leaking commit for a clean one doesn't hide it either.
+gc replace "$(gc rev-parse HEAD~1)" "$(gc commit-tree "$(gc rev-parse 'HEAD~2^{tree}')" -p HEAD~2 -m leak)"
+check=$(bash "$here/canary.sh" check "$tmp/empty.jsonl" "$blind" 2>&1)
+grep -q "^BREACH token .*(history)" <<<"$check" || fail "a replace ref hides a token from canary.sh: $check"
 # A .git that is a file, or holds a symlink, stops the check.
 ln -s /etc/passwd "$blind/.git/refs/heads/odd"
 bash "$here/canary.sh" check "$tmp/empty.jsonl" "$blind" >/dev/null 2>&1 && fail "canary.sh reads a .git holding a symlink"
@@ -228,6 +264,15 @@ rm "$blind/.git/refs/heads/odd"
 if ! docker info >/dev/null 2>&1; then
   fail "no docker: launch.sh confines a session on Linux in a docker box"
 else
+  # The root image is trusted only when it is exactly the empty root: a tag with the same layer
+  # and an environment of its own (LD_PRELOAD, say) is made again.
+  evil=sm-cleanroom-root:test-$$
+  "$python" -I -c 'import sys; sys.path.insert(0, sys.argv[1]); import box_relay; sys.stdout.buffer.write(box_relay.root_tar())' "$here" |
+    docker import --change 'ENV LD_PRELOAD=/x' - "$evil" >/dev/null || fail "docker can't import a test image"
+  "$python" -I "$here/box_relay.py" image "$evil" || fail "box_relay.py image failed"
+  [ "$(docker image inspect --format '{{json .Config.Env}}' "$evil")" = null ] ||
+    fail "box_relay.py image trusts a root with its own environment"
+  docker rmi "$evil" >/dev/null 2>&1
   port_file="$tmp/api.port"
   "$python" -I - "$port_file" "$tmp/api.seen" >"$tmp/api.log" 2>&1 <<'PY' &
 import http.server, sys
@@ -265,8 +310,8 @@ try canary-record cat '$CLEANROOM_PRIVATE/tokens.tsv'
 try temp-source cat '$TEMP/c4a/logs/b90.txt'
 try checkout cat '$repo/AGENTS.md'
 try checkout-git git -C '$repo' show HEAD:AGENTS.md
-try other-export cat '$HOME/cleanroom/other-domain/x'
-try export-parent-lists sh -c "ls -A '$HOME/cleanroom' | grep -vqx launch-probe"
+try other-export cat '$tmp/root/other-domain/x'
+try export-parent-lists sh -c "ls -A '$tmp/root' | grep -vqx launch-probe"
 try search-from-root sh -c "grep -rIl crtestcanarytoke[n] / --exclude-dir=proc --exclude-dir=sys --exclude-dir=dev --exclude-dir=usr --exclude-dir=target 2>/dev/null | grep -vx '$(readlink -f "$CLAUDE_BIN")' | grep -q ."
 try cargo-home sh -c "ls -A '$CARGO_HOME' | grep -vqx bin"
 try cargo-installs sh -c "ls -A '$CARGO_HOME/bin' | grep -vqxE 'cargo|rustc|rustup|rustdoc|cargo-clippy|clippy-driver|cargo-fmt|rustfmt'"
@@ -289,11 +334,15 @@ try relay-raw-backslash python3 -I "\$TMPDIR/raw.py" 'POST /api/v1/..\\..\\admin
 try relay-raw-encoded python3 -I "\$TMPDIR/raw.py" "POST /api/v1/%2e%2e/admin"
 try relay-raw-allowed python3 -I "\$TMPDIR/raw.py" "POST /api/v1/messages"
 try runner sh -c "cleanroom-tests | grep -q 'vector_runner: all targets passed'"
-# The leak and the cover-up: a token committed and removed, and a textconv driver through a
-# commondir the box can write in the lane's tmp/.
+# The leak and the cover-ups a host tool's git would read: a token committed and removed, a
+# replace ref, a textconv driver through a commondir in the lane's tmp/, a nested repository and
+# a renamed .git with a fresh one in its place.
 try commit-token sh -c "echo $token >leak.txt && git add leak.txt && git commit -qm leak && git rm -q leak.txt && git commit -qm unleak"
+try replace-ref sh -c "git replace HEAD~1 \"\\\$(git commit-tree 'HEAD~2^{tree}' -p HEAD~2 -m leak)\""
 printf '#!/bin/sh\ntouch "%s"\ngrep -v crtest "\$1"\n' '$tmp/textconv-ran-box' >conv.sh; chmod +x conv.sh
 try commondir sh -c "git init -q --bare \"\\\$TMPDIR/evil.git\" && git -C \"\\\$TMPDIR/evil.git\" config diff.pwn.textconv '$ex/conv.sh' && echo '* diff=pwn' >\"\\\$TMPDIR/evil.git/info/attributes\" && echo \"\\\$TMPDIR/evil.git\" >.git/commondir"
+try nested-repo git init -q crates/nested
+try rename-git sh -c "mv .git .git-old && git init -q"
 echo '{"type":"result","subtype":"success"}'
 EOF
   out=$(cd "$repo" && CLEANROOM_AUTH="$tmp/box-auth" CLEANROOM_DRY_RUN=0 CLEANROOM_COMPLETION_SECONDS=20 \
@@ -301,7 +350,7 @@ EOF
   lane4=$(sed -n 's/^launch: launch-probe in .*; lane record //p' <<<"$out")
   result=$(sed -n 's/^{"type":"probe","result":"\(.*\)"}$/\1/p' "$tmp/transcripts/box.jsonl" 2>/dev/null)
   kill "$api_pid" 2>/dev/null
-  for open in export-write relay relay-raw-allowed runner commit-token; do
+  for open in export-write relay relay-raw-allowed runner commit-token replace-ref commondir nested-repo rename-git; do
     grep -qx "OPEN $open" <<<"$result" || fail "the box refuses what the session needs, $open: $result"
   done
   for shut in home-file home-dotfile canary-record temp-source checkout checkout-git other-export \
@@ -310,8 +359,12 @@ EOF
     relay-elsewhere relay-raw-absolute relay-raw-semicolon relay-raw-backslash relay-raw-encoded; do
     grep -qx "SHUT $shut" <<<"$result" || fail "the box lets $shut through: $result"
   done
-  grep -q "^BREACH token .*(history)" <<<"$out" || fail "launch.sh's canary check missed the token the box committed and removed: $out"
-  grep -q "^LAUNCH BREACH launch-probe" <<<"$out" || fail "launch.sh didn't report the breach: $out"
+  # The export's .git and the lane: each thing a host tool's git would read is named a breach.
+  grep -q "^LAUNCH BREACH launch-probe: the box left what no session's git leaves" <<<"$out" ||
+    fail "launch.sh didn't report the box's git leftovers: $out"
+  for left in "$ex/.git-old" "$ex/crates/nested/.git" "$lane4/tmp/evil.git"; do
+    grep -qxF "  $left" <<<"$out" || fail "launch.sh didn't name $left: $out"
+  done
   [ ! -e "$tmp/textconv-ran-box" ] || fail "a program the box planted ran on the host"
   grep -v " host=127.0.0.1:$(cat "$port_file")\$" "$tmp/api.seen" | grep -q . &&
     fail "the fake API saw another Host: $(cat "$tmp/api.seen")"

@@ -25,7 +25,8 @@ x-stainless-*, x-claude-*, x-app) go with it.
                               SECONDS, exits with its status.
   image NAME                  makes the box's root image NAME unless docker's NAME is exactly
                               it: one layer holding the folders the mounts go in and the
-                              /usr-merged symlinks, made here, so no registry is reached.
+                              /usr-merged symlinks and an empty configuration, made here, so no
+                              registry is reached.
 """
 
 import hashlib
@@ -292,21 +293,30 @@ def root_tar() -> bytes:
     return data.getvalue()
 
 
+def image_ok(name: str, want: list[str]) -> bool:
+    """Whether docker's NAME is exactly the root: its one layer this tar, and a configuration
+    with nothing in it (no entrypoint, command, environment, user or working directory, which
+    docker would apply to the box)."""
+    seen = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RootFS.Layers}}\n{{json .Config}}", name],
+                          capture_output=True, text=True)
+    if seen.returncode != 0:
+        return False
+    layers, _, config = seen.stdout.partition("\n")
+    config = json.loads(config or "null") or {}
+    return json.loads(layers or "null") == want and not any(config.values())
+
+
 def image(name: str) -> int:
-    # The tag is trusted only when its one layer is this tar, byte for byte (docker's diff ID is
-    # the layer tar's SHA-256); else it is made again, which moves the tag.
+    # The tag is trusted only when it is exactly this root (docker's diff ID is the layer tar's
+    # SHA-256); else it is made again, which moves the tag.
     tar = root_tar()
     want = [f"sha256:{hashlib.sha256(tar).hexdigest()}"]
-    seen = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RootFS.Layers}}", name],
-                          capture_output=True, text=True)
-    if seen.returncode == 0 and json.loads(seen.stdout or "null") == want:
+    if image_ok(name, want):
         return 0
     made = subprocess.run(["docker", "import", "-", name], input=tar, stdout=subprocess.DEVNULL).returncode
     if made != 0:
         return made
-    seen = subprocess.run(["docker", "image", "inspect", "--format", "{{json .RootFS.Layers}}", name],
-                          capture_output=True, text=True)
-    return 0 if seen.returncode == 0 and json.loads(seen.stdout or "null") == want else 1
+    return 0 if image_ok(name, want) else 1
 
 
 def main() -> int:

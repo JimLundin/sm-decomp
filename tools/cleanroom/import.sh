@@ -83,12 +83,12 @@ bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh re
 # A file moved or renamed has no start, so each of its hits is new. A scan that reports a finding
 # this can't read refuses the import rather than passing it. A hit that is a legitimate word goes
 # back to the implementer, or into scan_allow.txt as a reviewed entry before the import runs again.
-mapfile -t changed < <(git_isolated "$dest" diff --name-only --no-renames --diff-filter=d "$root" HEAD -- crates/clean)
+mapfile -t changed < <(git_isolated "$scratch/export.git" diff --name-only --no-renames --diff-filter=d "$root" HEAD -- crates/clean)
 existed=()
-[ ${#changed[@]} -eq 0 ] || mapfile -t existed < <(git_isolated "$dest" ls-tree -r --name-only "$root" -- "${changed[@]}")
-started=$(mktemp -d) hits=$(mktemp -d)
-trap 'rm -rf "$checked" "$started" "$hits"' EXIT
-[ ${#existed[@]} -eq 0 ] || git_isolated "$dest" archive --format=tar "$root" -- "${existed[@]}" | tar -x -m -C "$started"
+[ ${#changed[@]} -eq 0 ] || mapfile -t existed < <(git_isolated "$scratch/export.git" ls-tree -r --name-only "$root" -- "${changed[@]}")
+started=$scratch/started hits=$scratch/hits
+mkdir "$started" "$hits"
+[ ${#existed[@]} -eq 0 ] || git_isolated "$scratch/export.git" archive --format=tar "$root" -- "${existed[@]}" | tar -x -m -C "$started"
 scan_hits() { # DIR FILE...: the scan's findings in DIR's FILEs, as `file: class: detail`
   local dir=$1 out status=0 line parsed=0
   shift

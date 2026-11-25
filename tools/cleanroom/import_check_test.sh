@@ -36,8 +36,12 @@ implementer_commit() { # EXPORT FILE CONTENT
     commit -q -m "Implement" -m "Role: implementer"
 }
 
+# export.sh refuses a DEST in the home, so it runs with the test's own (its record goes there too).
+mkdir -p "$tmp/home"
+export CARGO_HOME=${CARGO_HOME:-$HOME/.cargo} RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
 mkexport() { # DEST
-  CLEANROOM_ALLOW_MISSING=1 bash "$here/export.sh" import-test "$1" >/dev/null 2>&1 || fail "export to $1"
+  HOME="$tmp/home" \
+    CLEANROOM_ALLOW_MISSING=1 bash "$here/export.sh" import-test "$1" >/dev/null 2>&1 || fail "export to $1"
 }
 
 git -C "$repo" worktree add -q -b "$branch" "$tmp/wt" HEAD || exit 1
