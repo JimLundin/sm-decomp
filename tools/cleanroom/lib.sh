@@ -88,8 +88,9 @@ export_git_entries=" HEAD config description index index.lock info hooks objects
 
 # export_git_odd DIR [ALSO...]: each thing in the export DIR that a session's ordinary git work
 # doesn't leave, one a line: a .git that is not a plain directory, an entry at its top outside
-# export_git_entries, alternates, a ref but refs/heads/main (a replace ref among them), and any
-# other repository (a .git, or a folder holding HEAD and objects/) in DIR or in the ALSO folders.
+# export_git_entries, alternates, anything in branches/, a ref but refs/heads/main (a replace ref
+# among them), and any other repository (a .git, a folder holding HEAD and objects/, or a HEAD
+# that is a symlink) in DIR or in the ALSO folders.
 # Prints nothing for a clean export. A host tool that runs git where the box wrote (an editor's
 # git status, a shell prompt) would read these, so launch.sh reports them as a breach.
 export_git_odd() {
@@ -104,6 +105,8 @@ export_git_odd() {
   for e in "$src/objects/info/alternates" "$src/objects/info/http-alternates"; do
     [ ! -e "$e" ] || echo "$e"
   done
+  # branches/ is an old way to name remotes; git leaves it empty or absent.
+  if [ -d "$src/branches" ] && [ -n "$(ls -A "$src/branches")" ]; then echo "$src/branches"; fi
   if [ -d "$src/refs" ]; then
     find "$src/refs" ! -type d ! -path "$src/refs/heads/main" -print
   fi
@@ -114,11 +117,11 @@ export_git_odd() {
   fi
   for d in "$dir" "$@"; do
     [ -d "$d" ] || continue
-    find "$d" -path "$src" -prune -o -name .git -print -o -type f -name HEAD -print |
+    find "$d" -path "$src" -prune -o -name .git -print -o \( -type f -o -type l \) -name HEAD -print |
       while IFS= read -r e; do
         case ${e##*/} in
           .git) echo "$e" ;;
-          HEAD) [ ! -d "${e%/HEAD}/objects" ] || echo "${e%/HEAD}" ;;
+          HEAD) [ ! -d "${e%/HEAD}/objects" ] && [ ! -L "$e" ] || echo "${e%/HEAD}" ;;
         esac
       done
   done

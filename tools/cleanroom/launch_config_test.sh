@@ -185,6 +185,8 @@ plant renamed-git 'cp -a .git .git-old'
 plant nested-git 'mkdir -p crates/x && gx init -q crates/x'
 plant git-file 'mv .git .git-real && echo "gitdir: $PWD/.git-real" >.git'
 plant git-symlink 'mv .git .git-real && ln -s .git-real .git'
+plant branches 'mkdir -p .git/branches && echo /elsewhere >.git/branches/origin'
+plant symlink-head 'mkdir -p crates/r && ln -s ../../.git/HEAD crates/r/HEAD'
 rm -rf "$tmp/odd"
 
 # The test command as the session runs it: the lane's environment alone, from the export.

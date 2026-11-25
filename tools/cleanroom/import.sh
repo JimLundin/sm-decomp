@@ -122,9 +122,9 @@ top=$(git rev-parse --show-toplevel)
 spec=$top/docs/behaviours/$domain.md decode=$top/docs/behaviours/$domain.decode.md
 [ -f "$spec" ] || die "no spec docs/behaviours/$domain.md on $branch for the mirror scan; nothing applied"
 [ -f "$decode" ] || decode=-
-started_model=$(mktemp -d)
-trap 'rm -rf "$checked" "$started" "$hits" "$started_model"' EXIT
-git_isolated "$dest" archive --format=tar "$root" -- "$model" | tar -x -m -C "$started_model"
+started_model=$scratch/started_model
+mkdir "$started_model"
+git_isolated "$scratch/export.git" archive --format=tar "$root" -- "$model" | tar -x -m -C "$started_model"
 mirror_hits() { # DIR: the mirror scan's entry-point findings in DIR's model crate, as `file: detail`
   local dir=$1 out status=0 line parsed=0 counted
   [ -d "$dir/$model" ] || return 0

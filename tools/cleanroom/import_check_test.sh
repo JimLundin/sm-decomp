@@ -28,6 +28,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# import.sh reads the export through its mirror alone (assert_isolated, which checks the export's
+# own layout, aside) and cleans up with its one trap: a step that reads "$dest" with git, or sets
+# a second trap that replaces the first and leaves the mirror behind, fails here.
+grep -n 'git_isolated "\$dest"\|git -C "\$dest"' "$here/import.sh" && fail "import.sh runs git on the export itself, not its mirror"
+[ "$(grep -c '^[[:space:]]*trap ' "$here/import.sh")" -eq 1 ] || fail "import.sh sets more than one trap"
+
 implementer_commit() { # EXPORT FILE CONTENT
   mkdir -p "$(dirname "$1/$2")"
   printf '%s\n' "$3" >"$1/$2"

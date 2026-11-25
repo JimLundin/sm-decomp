@@ -139,8 +139,10 @@ first clean-room lane on a machine, and after a new CLI version:
   (`sudo install -d -o "$USER" -m 700 /cleanroom`). export.sh and launch.sh refuse an export
   under the home: host tools run git in the repositories they find there (VS Code's source
   control runs `git status` in every repository under its workspace, with the repository's own
-  configuration), and the session writes the export. For the same reason, keep `CLEANROOM_ROOT`
-  out of any editor's workspace.
+  configuration), and the session writes the export. For the same reason, while a session runs,
+  don't open `/cleanroom` (or a folder above it) in VS Code, and don't run git or a shell whose
+  prompt runs git there; the launch reports what the box left in `.git` afterwards, but a tool
+  that reads it during the session would already have run it.
 - **Docker runs as you.** `docker info` works without `sudo` (your user is in the `docker`
   group). The box needs nothing else changed on the host: bubblewrap and the CLI's own sandbox
   need unprivileged user namespaces, which Ubuntu's AppArmor restricts, and docker doesn't.
