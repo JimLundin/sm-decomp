@@ -231,17 +231,29 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
     if {fault.responsibility for fault in faults} != required:
         raise ValueError("every supported replay responsibility needs a production fault")
 
+def rebuild_cost(fault: Fault) -> int:
+    """A fault's time is its rebuild: one in crates/verify rebuilds the verify crate, about
+    three times a game fault's (15-22 s against 4-6 s on CI's runners); its replay is under 1 s."""
+    return 3 if fault.file.startswith("crates/verify/") else 1
+
 def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]:
-    """Assign each case's faults together so only one worker runs its healthy baseline."""
+    """Assign each case's faults together so only one worker runs its healthy baseline.
+
+    The costliest case groups are dealt first, each to the worker with the least rebuild cost so
+    far, so the workers finish together. Each worker runs its faults in the manifest's order.
+    """
     if not faults:
         raise ValueError("cannot partition an empty fault manifest")
     by_case: dict[str, list[Fault]] = {}
     for fault in faults:
         by_case.setdefault(fault.case, []).append(fault)
+    def cost(group: list[Fault]) -> int:
+        return sum(map(rebuild_cost, group))
     workers: list[list[Fault]] = [[] for _ in range(min(WORKER_COUNT, len(by_case)))]
-    for group in by_case.values():
-        min(workers, key=len).extend(group)
-    return tuple(tuple(worker) for worker in workers)
+    for group in sorted(by_case.values(), key=cost, reverse=True):
+        min(workers, key=cost).extend(group)
+    order = {fault: index for index, fault in enumerate(faults)}
+    return tuple(tuple(sorted(worker, key=order.__getitem__)) for worker in workers)
 
 
 def main(argv: list[str] | None = None) -> int:

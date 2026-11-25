@@ -106,6 +106,23 @@ field = "audio.reply0"
             self.assertEqual(error.exception.code, 2)
         self.assertEqual(json.loads(output.getvalue()), {"worker": [0]})
 
+    def test_partition_balances_rebuild_cost_and_keeps_manifest_order(self) -> None:
+        game = Fault("fault", "audio", "crates/game/src/production.rs",
+                     "measured", "zero", "audio/example", 3, "audio.reply0")
+        verify = replace(game, file="crates/verify/src/replay/played.rs")
+        # Case groups in manifest order: two verify faults, three pairs of game faults, then two
+        # single verify faults. Dealt to the worker with the fewest faults, the first worker
+        # would take three of the four verify faults, each about three game faults' time.
+        shapes = [("a", verify), ("a", verify), ("b", game), ("b", game), ("c", game),
+                  ("c", game), ("d", game), ("d", game), ("e", verify), ("f", verify)]
+        roster = tuple(replace(kind, name=f"fault-{index}", case=case)
+                       for index, (case, kind) in enumerate(shapes))
+        workers = check_mutants.partition_faults(roster)
+        self.assertLessEqual(max(sum(fault.file == verify.file for fault in worker)
+                                 for worker in workers), 2)
+        for worker in workers:
+            self.assertEqual(list(worker), sorted(worker, key=roster.index))
+
     def test_invalid_worker_commands_fail_before_build(self) -> None:
         for args in [["worker"], ["worker", "-1"], ["worker", "4"], ["worker", "01"],
                      ["worker", "0", "0"], ["worker", "0", "worker", "1"],
