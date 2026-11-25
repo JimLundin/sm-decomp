@@ -59,6 +59,11 @@ case "${1:-}" in
         how=copied
       fi
     done
+    # Cargo recreates profile locks on demand. Unlink the lane's entries so its builds can
+    # run independently of the seed and other lanes.
+    find "$path/target" -type f \( \
+      -name .cargo-lock -o -name .cargo-build-lock -o -name .cargo-artifact-lock \
+    \) -delete
     git -C "$path" ls-files -z | (cd "$path" && xargs -0r touch -c -h -d '2000-01-01 00:00:00' --)
     git -C "$path" diff --name-only -z "$from" HEAD -- | (cd "$path" && xargs -0r touch -c --)
     echo "worktree: $how the build of seed $(git -C "$seed" rev-parse --short HEAD)"

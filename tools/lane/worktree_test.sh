@@ -27,6 +27,16 @@ mkdir -p "$built/deps" "$built/.fingerprint/x-1" "$tmp/seed/target/release"
 echo built >"$built/deps/x.rlib" && echo info >"$built/deps/x.d"
 echo info >"$built/.fingerprint/x-1/dep-lib-x" && echo shipped >"$tmp/seed/target/release/out"
 
+# Cargo takes independent locks in each seeded profile, including cross builds.
+profiles=(debug clean-clippy/debug x86_64-pc-windows-gnu/debug)
+locks=(.cargo-lock .cargo-build-lock .cargo-artifact-lock)
+for profile in "${profiles[@]}"; do
+  mkdir -p "$tmp/seed/target/$profile"
+  for lock in "${locks[@]}"; do
+    touch "$tmp/seed/target/$profile/$lock"
+  done
+done
+
 export SM_SEED_DIR="$tmp/seed" SM_TEST_DLL_DIR="$tmp/dll"
 bash "$worktree" add cold "$tmp/cold" HEAD | grep -q "first build is cold" || fail "an unbuilt seed is used"
 [ -e "$tmp/cold/target" ] && fail "an unbuilt seed is copied"
@@ -46,6 +56,16 @@ for lane in linked copied; do
   else
     linked "$lane_built/deps/x.rlib" "$built/deps/x.rlib" && fail "copied: an artifact is linked"
   fi
+  for profile in "${profiles[@]}"; do
+    for lock in "${locks[@]}"; do
+      seed_lock="$tmp/seed/target/$profile/$lock"
+      lane_lock="$tmp/$lane/target/$profile/$lock"
+      [ -f "$seed_lock" ] || fail "$lane: the seed's $profile/$lock is missing"
+      # Cargo creates the lock on demand if the lane did not inherit a private copy.
+      touch "$lane_lock"
+      linked "$lane_lock" "$seed_lock" && fail "$lane: $profile/$lock is shared"
+    done
+  done
   for info in deps/x.d .fingerprint/x-1/dep-lib-x; do
     [ "$(cat "$lane_built/$info" 2>/dev/null)" = info ] || fail "$lane: $info is missing"
     linked "$lane_built/$info" "$built/$info" && fail "$lane: $info is shared"
