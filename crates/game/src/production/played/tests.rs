@@ -84,6 +84,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
         }),
         station: station::State {
             doors,
+            vents: Vec::new(),
             pad_and_cover: crate::production::shaft::GONE,
             shaft_overlay: false,
             ridley: None,

@@ -1,5 +1,5 @@
-//! The station's tuning values, the doors', the shaft's and Ridley's, his waking's and his tail's:
-//! every number a Parameter entry of the spec lists.
+//! The station's tuning values, the doors', the shaft's and Ridley's, his waking's and his tail's,
+//! and the escape's steam's: every number a Parameter entry of the spec lists.
 
 use core::num;
 use core::num::Wrapping;
@@ -58,6 +58,11 @@ const PACE_RUNS: u8 = 2;
 const PACE: num::NonZeroU8 = num::NonZeroU8::new(PACE_RUNS).expect("the pace is 2 runs, not 0");
 /// `TailHits`: the tail's reach, in pixels.
 const TAIL_REACH: u8 = 14;
+/// `VentRests`: the rest between a vent's puffs, in runs.
+const STEAM_REST_RUNS: u8 = 64;
+/// `VentRests`: the rest, 64 runs.
+const STEAM_REST: num::NonZeroU8 =
+    num::NonZeroU8::new(STEAM_REST_RUNS).expect("the rest is 64 runs, not 0");
 
 /// The station's tuning values. Its default holds the spec's values; another value is an
 /// adjusted game.
@@ -95,13 +100,17 @@ pub struct Rules {
     /// `TailHits`: the tail's reach, how much closer than her half-size on each axis she can
     /// come to his tail's tip before it hits her; a rule from 0 to 255 px.
     pub tail_reach: u8,
+    /// `VentRests`: the rest, the runs a vent rests unseen between its puffs; a rule from 1 to
+    /// 255 runs.
+    pub steam_rest: num::NonZeroU8,
 }
 
 impl Default for Rules {
     /// The spec's values: reach 48 px, poll 2 frames, hold 5 frames, a strong shake below 128 in
     /// 4,096, the small shake 1 px for 2 frames and the strong 3 px for 4; the pad's wait 60
     /// frames, the floor 72 px and the beacon's rhythm 8 frames a step; the slam's hold 2
-    /// frames, Ridley's wait 512 frames, his body's pace 2 runs a set and his tail's reach 14 px.
+    /// frames, Ridley's wait 512 frames, his body's pace 2 runs a set and his tail's reach 14 px;
+    /// the steam's rest 64 runs.
     fn default() -> Self {
         Self {
             reach: REACH,
@@ -117,6 +126,7 @@ impl Default for Rules {
             wake: WAKE,
             pace: PACE,
             tail_reach: TAIL_REACH,
+            steam_rest: STEAM_REST,
         }
     }
 }

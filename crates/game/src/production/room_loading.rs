@@ -11,21 +11,23 @@ use super::played::passage::{Doorway, Room};
 use super::world::{Boundary, MovementWorld};
 use boss_ceres_ridley::{
     CeresDoor, CeresRidley, ColourSet, DoorColours, DoorKind, DoorPalette, GoalColours,
-    RidleyPlacing, Stage,
+    RidleyPlacing, Stage, Vent, VentFacing,
 };
 use core::num::Wrapping;
 use data::assets::actors::{self, Actors, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
 use data::assets::samus::palettes::SamusPalettes;
 use data::assets::tilesets::Tilesets;
-use data::assets::world::{self, CeresDoorKind, Door, DoorRule, ItemLighting, RoomSetup, World};
+use data::assets::world::{
+    self, CeresDoorKind, CeresVentFacing, Door, DoorRule, ItemLighting, RoomSetup, World,
+};
 use data::id::DoorwayId;
 use data::level::slope::{Shape, Slopes};
 use data::level::{BlockKind, PlmChoice, ScrollArea};
 use data::plm::PlmKind;
 use data::room::Area;
 use run_progress::{EnteredRoom, Progress, RoomStates, Version};
-use types::{BossKind, Item, Side};
+use types::{BossKind, Item, RandomSequence, Side};
 use world_doors::{COLOURS, Palette, RoomCall};
 
 /// The rooms, tilesets and sprite colours a passage loads from.
@@ -76,9 +78,10 @@ pub enum LoadFault {
     Beams,
     /// The version loads a species that has no palette of its own.
     Species(data::id::SpeciesId),
-    /// The version places actors other than Ceres Ridley and the Ceres doors, whose boxes no
-    /// owner here places.
+    /// The version places an actor with no owner in the room loader.
     OtherActors,
+    /// A steam vent attached to the turning shaft.
+    TurningShaftVent,
     /// The version places a PLM whose blocks no owner here places.
     Plm,
     /// The version's setup runs what no owner here runs.
@@ -150,6 +153,8 @@ pub struct CeresActors {
     pub ridley: Option<RidleyPlacing>,
     /// Its Ceres doors, in its order of its enemies.
     pub doors: Vec<CeresDoor>,
+    /// Its steam vents, in enemy slot order.
+    pub vents: Vec<Vent>,
     /// It places the shaft's overlay, which shows the shaft's lights.
     pub shaft_overlay: bool,
 }
@@ -200,25 +205,20 @@ fn placed(version: &world::Version, run: Run<'_>) -> Placed {
     placed
 }
 
-/// The Ceres doors and the shaft's overlay the room `through` leads to places as its contents
-/// are fetched.
+/// The station actors the room `through` leads to places as its contents are fetched.
 ///
-/// Ceres Ridley comes first, then the doors in its order of its enemies, each as a room's start
-/// places it (`RidleyPlaced`, `RoomStart`). He, the doors and the overlay, which has no box,
-/// are the only actors it places: he is passable, and her motion meets no other actor's box in
-/// it. The doorway's rule and the version's setup run then too, and only those that change
-/// nothing play reads are let through: none; the way out of the station's elevator room, which
-/// only turns the screen out of its rotating view; the station's haze, which only blends a
-/// colour over the screen; and the haze of Ridley's room, which also sets the tile bases and
-/// the screen mode its floor is drawn with.
+/// Ridley places before the doors because his placing can change the stage they read. Each
+/// steam vent draws once from `random`, in slot order. The supported doorway rules and room
+/// setups affect the station's drawing only.
 ///
 /// # Errors
-/// A doorway or room the content lacks, another actor, or another door rule or setup, places
-/// none.
+/// A missing room, unsupported doorway rule or room setup, or unowned actor leaves `random`
+/// unchanged.
 pub fn ceres_actors(
     through: DoorwayId,
     run: Run<'_>,
     rooms: &Rooms,
+    random: &mut RandomSequence,
 ) -> Result<CeresActors, LoadFault> {
     let version = version(rooms, through, run.progress)?;
     let rule = rooms
@@ -229,11 +229,15 @@ pub fn ceres_actors(
     if !matches!(rule, DoorRule::Nothing | DoorRule::FromCeresElevatorShaft) {
         return Err(LoadFault::DoorRule(rule));
     }
-    actors_of(version, run)
+    actors_of(version, run, random)
 }
 
 /// The Ceres actors `version` places, refusing another actor or a setup no owner here runs.
-fn actors_of(version: &world::Version, run: Run<'_>) -> Result<CeresActors, LoadFault> {
+fn actors_of(
+    version: &world::Version,
+    run: Run<'_>,
+    random: &mut RandomSequence,
+) -> Result<CeresActors, LoadFault> {
     let placed = placed(version, run);
     let owned = |species| {
         species == actors::CERES_DOOR || (version.ceres_ridley && species == actors::CERES_RIDLEY)
@@ -247,7 +251,24 @@ fn actors_of(version: &world::Version, run: Run<'_>) -> Result<CeresActors, Load
     ) {
         return Err(LoadFault::RoomSetup(version.setup));
     }
+    let mut drawn = *random;
+    let mut vents = Vec::with_capacity(version.ceres_vents.len());
+    for vent in &version.ceres_vents {
+        let facing = match vent.facing {
+            CeresVentFacing::Up => VentFacing::Up,
+            CeresVentFacing::Left => VentFacing::Left,
+            CeresVentFacing::Down => VentFacing::Down,
+            CeresVentFacing::Right => VentFacing::Right,
+            CeresVentFacing::ShaftLeft | CeresVentFacing::ShaftRight => {
+                return Err(LoadFault::TurningShaftVent);
+            }
+        };
+        game_random::advance_random(&mut drawn);
+        vents.push(Vent::place(facing, vent.position, drawn.number.0));
+    }
+    *random = drawn;
     Ok(CeresActors {
+        vents,
         ridley: placed.ridley,
         doors: placed.doors,
         shaft_overlay: placed.shaft_overlay,
@@ -510,6 +531,7 @@ pub fn start(
     run: Run<'_>,
     rooms: &Rooms,
     her_row: &[Colour; ROW_COLOURS],
+    random: &mut RandomSequence,
 ) -> Result<Started, LoadFault> {
     let room = rooms.world.room(room).ok_or(LoadFault::Start)?;
     let version = version_of(room, None, run.progress)?.ok_or(LoadFault::Start)?;
@@ -543,7 +565,7 @@ pub fn start(
                 lead: Lead::Ahead,
             },
         )?,
-        actors: actors_of(version, run)?,
+        actors: actors_of(version, run, random)?,
         goal: palette.goal,
         map: (map_room(room), room.place.area),
     })
@@ -772,6 +794,12 @@ mod tests {
     use types::Side;
     use world_doors::{COLOURS, Palette, RoomCall};
 
+    const fn test_random() -> types::RandomSequence {
+        types::RandomSequence {
+            number: types::RandomNumber(0),
+        }
+    }
+
     const ROOM: RoomId = RoomId(1);
     /// The doorway the room's conditional version is entered by, and another into it.
     const CHOSEN: DoorwayId = DoorwayId(1);
@@ -799,6 +827,7 @@ mod tests {
             }],
             ceres_doors: vec![placed(CeresDoorKind::Door(Side::Left))],
             ceres_ridley: false,
+            ceres_vents: Vec::new(),
             setup: RoomSetup::CeresHaze,
         }
     }
@@ -1014,6 +1043,7 @@ mod tests {
             },
             &rooms(),
             &her_row,
+            &mut test_random(),
         )
         .unwrap();
         let colours = |bits| [types::Colour::new(bits).unwrap(); 16];
@@ -1041,6 +1071,7 @@ mod tests {
                 },
                 &rooms(),
                 &her_row,
+                &mut test_random(),
             )
             .map(|_| ()),
             Err(LoadFault::Start)
@@ -1125,10 +1156,13 @@ mod tests {
         shut.setup = RoomSetup::CeresHazeDoorShut;
         let rooms = rooms_of(shut, version(0));
         assert_eq!(
-            super::ceres_actors(CHOSEN, run, &rooms),
+            super::ceres_actors(CHOSEN, run, &rooms, &mut test_random()),
             Err(LoadFault::RoomSetup(RoomSetup::CeresHazeDoorShut))
         );
-        assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
+        assert_eq!(
+            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
+            Ok(no_actors())
+        );
         let mut rooms = rooms;
         rooms.world = World::new(
             rooms.world.rooms().cloned().collect(),
@@ -1144,7 +1178,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            super::ceres_actors(OTHER, run, &rooms),
+            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
             Err(LoadFault::DoorRule(DoorRule::ToCeresElevatorShaft))
         );
         // The way out of the elevator room only turns the screen out of its rotating view.
@@ -1159,7 +1193,10 @@ mod tests {
                 .to_vec(),
         )
         .unwrap();
-        assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
+        assert_eq!(
+            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
+            Ok(no_actors())
+        );
     }
 
     /// What the fixture's version places: its one door.
@@ -1174,6 +1211,7 @@ mod tests {
             .door
         };
         super::CeresActors {
+            vents: Vec::new(),
             ridley: None,
             doors: vec![door(boss_ceres_ridley::DoorKind::Door, Side::Left)],
             shaft_overlay: false,
@@ -1203,7 +1241,8 @@ mod tests {
         }
         let mut progress = run_progress::Progress::default();
         let rooms = rooms_of(ridleys_room(), version(0));
-        let actors = super::ceres_actors(CHOSEN, run(&progress), &rooms).unwrap();
+        let actors =
+            super::ceres_actors(CHOSEN, run(&progress), &rooms, &mut test_random()).unwrap();
         let placing = actors.ridley.unwrap();
         assert_eq!(placing.stage, boss_ceres_ridley::Stage::Calm);
         assert_eq!(placing.boss, boss_ceres_ridley::Boss::CeresRidley);
@@ -1214,13 +1253,19 @@ mod tests {
         );
         assert_eq!(actors.doors[0].facing, Side::Right);
         progress.defeated[types::Area::Ceres][types::BossKind::MainBoss] = true;
-        let beaten = super::ceres_actors(CHOSEN, run(&progress), &rooms).unwrap();
+        let beaten =
+            super::ceres_actors(CHOSEN, run(&progress), &rooms, &mut test_random()).unwrap();
         assert_eq!(beaten.ridley, None);
         // Ridley's species, loaded where the version doesn't place him, is another actor.
         let mut unplaced = ridleys_room();
         unplaced.ceres_ridley = false;
         assert_eq!(
-            super::ceres_actors(CHOSEN, run(&progress), &rooms_of(unplaced, version(0))),
+            super::ceres_actors(
+                CHOSEN,
+                run(&progress),
+                &rooms_of(unplaced, version(0)),
+                &mut test_random()
+            ),
             Err(LoadFault::OtherActors)
         );
     }
@@ -1256,7 +1301,7 @@ mod tests {
             placed(CeresDoorKind::Door(Side::Left)),
         ];
         let rooms = rooms_of(shaft, version(0));
-        let actors = super::ceres_actors(CHOSEN, run, &rooms).unwrap();
+        let actors = super::ceres_actors(CHOSEN, run, &rooms, &mut test_random()).unwrap();
         assert!(actors.shaft_overlay);
         assert_eq!(actors.doors.len(), 1);
         let mut overlay = version(1);
@@ -1286,10 +1331,13 @@ mod tests {
         };
         let rooms = rooms_of(other, version(0));
         assert_eq!(
-            super::ceres_actors(CHOSEN, run, &rooms),
+            super::ceres_actors(CHOSEN, run, &rooms, &mut test_random()),
             Err(LoadFault::OtherActors)
         );
-        assert_eq!(super::ceres_actors(OTHER, run, &rooms), Ok(no_actors()));
+        assert_eq!(
+            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
+            Ok(no_actors())
+        );
     }
 
     #[test]

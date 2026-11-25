@@ -45,6 +45,7 @@ mod seed;
 mod shaft;
 mod start;
 mod station;
+mod steam;
 
 use super::compare::{CompareFault, Observation, compare};
 use super::result::Outcome;
@@ -90,7 +91,7 @@ pub const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
     "lag: the contents' fetch done on its first frame, within the slide",
     "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
-    "the random number as a passage's frame begins: no owner here draws it through a passage",
+    "the random number through a passage, except the draws held from placing the room's vents to the end of that frame",
     "audio: whether a track waits in the queue of tracks as the frame of work begins",
     "audio: whether every sound request has been sent as the frame of work begins",
     "the beginning of the prepared room's final music service (R2 and C1's loading, T1's lag)",
@@ -154,6 +155,7 @@ fn expected(
         fields.extend(colours::observations(&colours::palette(wram)?));
         fields.extend(ceres_doors::expected(wram)?);
         fields.extend(ridley::expected(wram)?);
+        fields.push(steam::state(&steam::decode(wram)?));
     }
     fields.extend(shaft::expected(wram)?);
     fields.extend(health::parts(&health_tail::decode(wram, None)?));
@@ -185,6 +187,7 @@ fn actual(
         fields.extend(colours::observations(&state.palette));
         fields.extend(ceres_doors::actual(&state.station));
         fields.extend(ridley::actual(&state.station));
+        fields.push(steam::state(&state.station.vents));
     }
     fields.extend(shaft::actual(&state.station));
     fields.extend(health::parts(&state.health.0));
@@ -500,6 +503,11 @@ impl<'a> Run<'a> {
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
         inputs.parity = parity(self.state.frame.finished_frames);
+        // The fetch can span lag cuts. Its vent draws are ours until that frame finishes.
+        let owns_vent_draws = fetch_under_way(doors)
+            && !fetching_contents(doors)
+            && !self.state.station.vents.is_empty()
+            && !finished(previous);
         let passing = played::passage::Passing {
             // The borrowed lag: the last NMI found the frame's work finished, so the next began.
             work_begun: finished(previous),
@@ -509,11 +517,10 @@ impl<'a> Run<'a> {
                 music_ready: music_ready(&previous.wram)?,
             },
             progress: &self.room.progress,
-            // The borrowed random number, only through a passage; in play the loop carries it.
-            random: match doors {
-                Doors::Play => None,
-                Doors::Passing(_) => Some(frame::random(&previous.wram)?),
-            },
+            // Borrow random draws during passages outside the vent placement work frame.
+            random: (matches!(doors, Doors::Passing(_)) && !owns_vent_draws)
+                .then(|| frame::random(&previous.wram))
+                .transpose()?,
             start: arrival::start(previous, current)?,
         };
         let start = super::hud::countdown_start(&previous.wram, &current.wram)?;
@@ -525,8 +532,6 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        // A frame of play gives the escape's scene an expiry answer; a passage's gives none.
-        let expiry = outputs.hud.map(|hud| hud.countdown.expiry);
         let published = outputs.opening_hud.is_some();
         if let Some(row) = outputs.opening_hud {
             self.upper_row = Some(row);
@@ -557,7 +562,7 @@ impl<'a> Run<'a> {
                 place,
                 cut,
             };
-            self.compared(&frame, hud_settled, expiry, outputs.quake)?
+            self.compared(&frame, hud_settled, owns_vent_draws, &outputs)?
         };
         if preparing && !self.state.arrival.preparing() {
             let fresh = super::progress::decode(&current.wram)?;
@@ -591,8 +596,8 @@ impl<'a> Run<'a> {
         &self,
         frame: &Frame<'_>,
         hud_settled: bool,
-        expiry: Option<interface_hud::CountdownExpiry>,
-        update: Option<world_quake::Effects>,
+        owns_vent_draws: bool,
+        outputs: &played::Outputs,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let Frame {
             previous,
@@ -617,13 +622,21 @@ impl<'a> Run<'a> {
             hud_settled,
         )?;
         // A frame of play answers the escape's scene whether its time has run out.
-        if let Some(expiry) = expiry {
+        if let Some(hud) = &outputs.hud {
             expected.push(hud::expiry_expected(&current.wram)?);
-            actual.push(hud::expiry_actual(expiry));
+            actual.push(hud::expiry_actual(hud.countdown.expiry));
+            // These rooms have no other contact hitter.
+            if !self.state.station.vents.is_empty() {
+                expected.insert(0, steam::expected_hit(&previous.wram, &current.wram)?);
+                actual.push(steam::actual_hit(outputs.steam_hit));
+            }
         }
         if finished(current) {
             expected.extend(quake::expected(previous, current, place)?);
-            actual.extend(quake::actual(&self.state, update));
+            actual.extend(quake::actual(&self.state, outputs.quake));
+            if owns_vent_draws && passage::passing(&current.wram)? {
+                expected.push(frame::random_observation(frame::random(&current.wram)?));
+            }
         }
         Ok((expected, actual))
     }

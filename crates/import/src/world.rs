@@ -149,8 +149,7 @@ pub enum WorldError {
         /// Why.
         error: data::enemy::EnemyError,
     },
-    /// A version of the room places a Ceres door actor whose first parameter names no actor
-    /// of the doors' species.
+    /// A version of the room places a station actor with an unknown first parameter.
     CeresActor {
         /// The room.
         room: RoomId,
@@ -450,8 +449,10 @@ fn version(
         return Err(WorldError::ScrollSize(room));
     }
     let ceres_actor = |error| match error {
-        crate::actors::CeresDoorsError::Population(error) => WorldError::Population { room, error },
-        crate::actors::CeresDoorsError::Kind(parameter) => {
+        crate::actors::CeresActorsError::Population(error) => {
+            WorldError::Population { room, error }
+        }
+        crate::actors::CeresActorsError::Kind(parameter) => {
             WorldError::CeresActor { room, parameter }
         }
     };
@@ -472,6 +473,8 @@ fn version(
         ceres_doors: crate::actors::ceres_doors(image, state.enemy_population)
             .map_err(ceres_actor)?,
         ceres_ridley: crate::actors::ceres_ridley(image, state.enemy_population)
+            .map_err(ceres_actor)?,
+        ceres_vents: crate::actors::ceres_vents(image, state.enemy_population)
             .map_err(ceres_actor)?,
         setup,
     })

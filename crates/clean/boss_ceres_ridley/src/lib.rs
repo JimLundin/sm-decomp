@@ -1,6 +1,6 @@
 //! The boss-ceres-ridley model, built from its behaviour spec alone. The parts of the Ceres
 //! station so far: the doors, the shaft as she arrives, Ridley's room as she enters, Ridley's
-//! waking, and his tail at rest and its hit. Each
+//! waking, his tail at rest and its hit, his take-off and flight, and the escape's steam. Each
 //! piece has its own state, inputs and outputs, and its caller steps it on its own schedule.
 //!
 //! **The doors.** A Ceres door stands between two of the station's rooms. It slides open as
@@ -51,7 +51,7 @@
 //! tail hangs still behind him ([`CeresRidley::tail`]), its curl changing now and then at
 //! random. Once he is tangible its tip hits her when her body comes within its reach and her
 //! protection has run out: the run reads her ([`Her`]) and answers with the frame's hit, its
-//! side and its push time ([`types::TailImpact`]), which her energy and her motion read as it
+//! side and its push time ([`types::Hit`]), which her energy and her motion read as it
 //! stands.
 //!
 //! **His take-off and flight.** His roar over, he crouches, hops twice up and to the left and
@@ -62,6 +62,13 @@
 //! moves by his speed within the room's bounds, and the run answers with the bound he met and
 //! the shake he starts as he meets the room's left side fast.
 //!
+//! **The escape's steam.** On her way out, steam vents in the station's floors, walls and
+//! ceilings blow puffs. A caller holds one [`Vent`] for each vent the room holds and places each
+//! as the room starts ([`Vent::place`]); each waits a random while, then puffs, rests and puffs
+//! again, only while it is in view. On each frame the enemies run, [`run_vents`] runs the room's
+//! vents together in the room's order, reading the camera and her ([`Her`]), and answers with the
+//! frame's one hit, the same shared hit his tail gives, which here takes no energy.
+//!
 //! The tuning values of all of them are in [`Rules`], whose default holds the spec's values.
 
 mod baby;
@@ -69,12 +76,15 @@ mod catalogue;
 mod door;
 mod figure;
 mod flight;
+mod her;
 mod inputs;
 mod lights;
 mod look;
 mod pad;
 mod pad_wait;
 mod phase;
+mod puff;
+mod reach;
 mod ridley;
 mod ridley_phase;
 mod ridley_wait;
@@ -82,6 +92,7 @@ mod roar;
 mod rules;
 mod shown;
 mod station;
+mod steam;
 mod tail;
 mod takeoff;
 mod waking;
@@ -94,12 +105,14 @@ pub use catalogue::{Behaviour, BehaviourId, catalogue};
 pub use door::{BOX_RADIUS, CeresDoor, DoorKind, OpeningSound, Placement, Run};
 pub use figure::{Figure, FigureLook};
 pub use flight::{Bound, Fight, HIS_POINT, HoverRuns, Speed};
+pub use her::Her;
 pub use inputs::Inputs;
 pub use lights::{BeaconStep, FadeSteps, Lights, LightsInputs};
 pub use look::AlternatingLook;
 pub use pad::{Cover, Pad, PadAndCover, PadAndCoverFigures, PadAndCoverStep, PadFigure};
 pub use pad_wait::PadWait;
 pub use phase::{Phase, Quarter, Wait};
+pub use puff::{Puff, PuffFigure, VentFacing};
 pub use ridley::{
     Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyPlacing, RidleyRun,
     RoomColours, ShakeStop,
@@ -112,6 +125,7 @@ pub use shown::{FigureLength, FigureSequence, NextFigure, ShownFigure};
 pub use station::{
     ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeMotion, ShakeStart, Stage,
 };
-pub use tail::{Her, TailCurl};
+pub use steam::{FirstPuffWait, Vent, VentPhase, run_vents};
+pub use tail::TailCurl;
 pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
 pub use waking::{BodyColours, EyeColours, FadeSets, ReadyWait, RidleyContent, RoarWait, RunsLeft};

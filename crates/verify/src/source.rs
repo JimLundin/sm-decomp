@@ -1569,6 +1569,12 @@ pub const COOLDOWN_TIMER: WramWord = WramWord {
     name: "COOLDOWN_TIMER",
     offset: 0x0CCC,
 };
+/// Remaining protection after contact, counted down at the end of play.
+pub const SAMUS_HIT_PROTECTION: WramWord = WramWord {
+    name: "SAMUS_HIT_PROTECTION",
+    offset: 0x18A8,
+};
+
 /// Bank $A0 log, `$A0:9169`: her push time left, counted down at the frame's very end.
 pub const SAMUS_KNOCKBACK_TIMER: WramWord = WramWord {
     name: "SAMUS_KNOCKBACK_TIMER",

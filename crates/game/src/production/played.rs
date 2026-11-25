@@ -30,10 +30,9 @@
 //!
 //! Her movement's frame is two steps: her moves, then her reaction to the frame's hit. The
 //! station's actors run before her moves, and Health between the two steps. Every hitter reads
-//! her position, body and protection as the frame starts: Ridley's tail judges the frame's hit
-//! from her position as the frame starts, the body of the pose she started the frame in and her
-//! protection; Health and her reaction both read that one hit. The Ceres
-//! doors read where she was at the end of the last frame, and her motion meets the boxes of the
+//! her position, body and protection as the frame starts. Health and her reaction read the
+//! same hit from the tail or the first touching vent. The Ceres doors read where she was at
+//! the end of the last frame, and her motion meets the boxes of the
 //! Ceres doors that were solid as the frame began. Her appearance reads the energy the frame
 //! starts with against the energy the hit leaves, and whether her reaction started a push, and
 //! sets her row of the screen's colours while her hurt colours pulse; the HUD plays after her
@@ -148,7 +147,7 @@ pub struct State {
     pub passage: passage::State,
     /// The screen's colours and the colours they head for.
     pub palette: Palette,
-    /// The Ceres station's doors, pad and cover, lights and Ridley.
+    /// The Ceres station's doors, pad and cover, lights, Ridley and steam vents.
     pub station: station::State,
     /// The room's quake: the shake under way and the phase.
     pub quake: Model<QuakePin>,
@@ -179,6 +178,8 @@ pub struct Outputs {
     pub lights: Option<Lights>,
     /// Ridley's run, with the baby's cry; none on a frame he doesn't run.
     pub ridley: Option<RidleyRun>,
+    /// The steam hit offered to her movement and health.
+    pub steam_hit: Option<types::Hit>,
     /// His placing, with the music's stop and the shake's stop it asks for; none on a frame
     /// that doesn't place him.
     pub ridley_placed: Option<RidleyPlacing>,
@@ -206,6 +207,10 @@ pub enum Fault {
     Suit,
     /// The door she touched leads into another area.
     NewArea,
+    /// Drawing during a passage can advance her jump history.
+    PassageJumpHistory,
+    /// Releasing jump as a backward leap lands needs its landing pose selection.
+    BackwardLeapLanding,
     /// The HUD refused the frame: the escape countdown starts on a frame whose scene only shows
     /// it.
     Hud,
@@ -253,7 +258,7 @@ impl State {
             return self.prepare(passing, content, rules);
         }
         if matches!(self.passage.doors, Doors::Passing(_)) {
-            return self.pass(passing, content, rules);
+            return self.pass(inputs, passing, content, rules);
         }
         self.passage
             .room
@@ -267,9 +272,9 @@ impl State {
         let random = self.frame.drawn(passing);
         let mut palette = self.palette;
         // Every hitter reads her position, body and protection as the frame starts, as the
-        // game's frame runs the enemies before her moves: Ridley's tail reads her so, and Health
-        // reads the hit his run reports between her moves and her reaction.
-        let at_start = self.reached(self.samus.movement.0.position, content)?;
+        // game's frame runs the enemies before her moves. Health reads their hit between
+        // her moves and her reaction.
+        let at_start = self.enemy_contact(content)?;
         let enemies = self.enemies(
             station::Running::Play(at_start.as_ref()),
             random,
@@ -278,7 +283,7 @@ impl State {
             rules,
             &mut palette,
         )?;
-        let hit = enemies.ridley.and_then(|run| run.hit);
+        let hit = enemies.contact();
         let between = samus::Between {
             played: (enemies, self.health_frame(hit, content, rules)),
             hit,
@@ -322,6 +327,9 @@ impl State {
         self.health = Model(health.state);
         self.hud = Model(hud_state);
         self.station.ran(&enemies);
+        if let Some(vents) = enemies.vents {
+            self.station.vents = vents;
+        }
         self.quake = Model(quake);
         self.frame = self.frame.after(doors.report.finishing, random);
         self.arrival = self.arrival.after_play(rules);
@@ -335,6 +343,7 @@ impl State {
             ceres_doors: enemies.doors,
             lights: enemies.lights,
             ridley: enemies.ridley,
+            steam_hit: enemies.steam_hit,
             ridley_placed: None,
             quake: Some(shaken),
         })
@@ -346,11 +355,12 @@ impl State {
     /// shake; the room's quake has no update.
     fn pass(
         &mut self,
+        inputs: &Inputs,
         passing: &Passing<'_>,
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
-        let random = self.frame.drawn(passing);
+        let mut random = self.frame.drawn(passing);
         let mut before = self.palette;
         let early = if passage::brightening(self.passage.doors, passing) {
             Some(self.enemies(
@@ -375,13 +385,14 @@ impl State {
             ),
             &rules.doors,
         );
+        passage::check_jump_history(&exports.report, self.samus.movement.0.jump_held, inputs)?;
         let Scene {
             her,
             seen,
             camera: view,
             mut palette,
         } = exports.scene;
-        let enemies = match early {
+        let mut enemies = match early {
             Some(enemies) => enemies,
             None if exports.report.runs[Activity::Enemies] => self.enemies(
                 station::Running::Passage,
@@ -400,7 +411,13 @@ impl State {
         } else {
             self.station.pad_and_cover
         };
-        let loaded = self.load(exports.report.call, passing, content, &mut palette)?;
+        let loaded = self.load(
+            exports.report.call,
+            passing,
+            content,
+            &mut palette,
+            &mut random,
+        )?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         let mut quake = enemies.quake;
         // Room loading's effects set-up, inside the building, stops the shake.
@@ -413,7 +430,8 @@ impl State {
             let boss_ceres_ridley::ShakeStop = placing.shake;
             quake::stop(&mut quake);
         }
-        self.station.passed(&enemies, loaded.actors, pad_and_cover);
+        self.station
+            .passed(&mut enemies, loaded.actors, pad_and_cover);
         self.quake = Model(quake);
         self.samus.movement.0 = moved;
         self.camera.0 = camera::passed(self.camera.0, view, seen);
@@ -431,6 +449,7 @@ impl State {
             ceres_doors: enemies.doors,
             lights: enemies.lights,
             ridley: enemies.ridley,
+            steam_hit: enemies.steam_hit,
             ridley_placed,
             quake: None,
         })
