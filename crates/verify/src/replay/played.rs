@@ -599,6 +599,7 @@ mod tests {
             "/../../scenarios/replay/played.toml"
         );
         let listed: Listed = toml::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+        assert!(!listed.run.is_empty(), "{path} lists no run");
         let name = |run: &Listing| format!("{}/{}-{}", run.row, run.start, run.end);
         let asked = std::env::var("SM_PLAYED").unwrap_or_default();
         let asked: Vec<&str> = asked.split_whitespace().collect();
