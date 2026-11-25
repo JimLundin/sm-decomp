@@ -20,14 +20,14 @@ The stretches being worked, in the order the movie plays them; the first not yet
 
 | Stretch | In the movie | Frames that pass | Work |
 | --- | --- | --- | --- |
-| Boot | `█·······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| **The title and menus** | `██······································` | `███████████████████░` | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| The intro | `·███████████████████····················` | `▓▓▓▓░░░░░░░░░░░░░░░░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| The flight to Ceres | `···················███··················` | `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Her arrival | `·····················██·················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Rooms 1 to 5 | `······················█████·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
-| Ridley's room | `··························█████·········` | `▓▓▓▓▓▓░░░░░░░░░░░░░░` | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
-| The escape | `······························█████·····` | `░░░░░░░░░░░░░░░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
-| The explosion and the flight to Zebes | `··································██████` | `░░░░░░░░░░░░░░░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| Boot | `━·······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| **The title and menus** | `━━······································` | `███████████████████░` | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| The intro | `·━━━━━━━━━━━━━━━━━━━····················` | `▓▓▓▓░░░░░░░░░░░░░░░░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| The flight to Ceres | `···················━━━··················` | `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Her arrival | `·····················━━·················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Rooms 1 to 5 | `······················━━━━━·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
+| Ridley's room | `··························━━━━━·········` | `▓▓▓▓▓▓░░░░░░░░░░░░░░` | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
+| The escape | `······························━━━━━·····` | `░░░░░░░░░░░░░░░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| The explosion and the flight to Zebes | `··································━━━━━━` | `░░░░░░░░░░░░░░░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 
 Building and checking it, and the command that prints the models' sizes and the indexed replay evidence, are in [BUILDING](docs/BUILDING.md).

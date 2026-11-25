@@ -107,14 +107,14 @@ pub(super) fn stretches(text: &str, movie: &str, total: u64) -> Result<Vec<Stret
 
 impl Stretch {
     /// Where it lies in the movie of `total` frames: the cells of [`MOVIE`] that draw any of its
-    /// frames, `█`, among the others, `·`.
+    /// frames, `━`, among the others, `·`.
     fn place(&self, total: u64) -> String {
         let [first, last] = self.frames;
         (0..MOVIE)
             .map(|cell| {
                 let (from, to) = cell_frames(cell, total);
                 if from <= to && from <= last && first <= to {
-                    '█'
+                    '━'
                 } else {
                     '·'
                 }
@@ -343,10 +343,10 @@ mod tests {
         assert_eq!(
             places,
             [
-                format!("{}{}", "█".repeat(10), "·".repeat(30)),
+                format!("{}{}", "━".repeat(10), "·".repeat(30)),
                 // Five frames still draw the cell that holds them, which the next shares.
-                format!("{}█{}", "·".repeat(10), "·".repeat(29)),
-                format!("{}{}", "·".repeat(10), "█".repeat(30)),
+                format!("{}━{}", "·".repeat(10), "·".repeat(29)),
+                format!("{}{}", "·".repeat(10), "━".repeat(30)),
             ]
         );
     }
