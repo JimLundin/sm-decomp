@@ -2713,3 +2713,533 @@ energy = 54
 hits_taken = 11
 random = "1234"
 ridley_after = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 65496], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 65530] }
+
+# ================================================================ part 5: the escape's steam
+#
+# Format of the part-5 vectors (spec §16), ids ST-: one run of the room's vents, or
+# (steam_placing = true) one vent's placing. Every position is a 16-bit number written in
+# decimal, x rightward and y downward, in pixels.
+# - vents: the room's vents in its order, each { facing, position = [x, y], phase, and its
+#   count }: facing "Down", "Left", "Right" or "Up"; phase "Placed" or "Waiting" with wait (1 to
+#   32), "Puffing" with figure (1 to 7) and runs (1 to 3), or "Resting" with runs (1 to 255).
+# - camera = [x, y]: the camera as the last frame left it.
+# - her (optional, absent: no her to reach): position = [x, y], where she is as the frame starts,
+#   before she moves; body = [half-width, half-height], px, of the body she started the frame
+#   in; protection, frames, her protection as the frame starts.
+# - vents_after: each vent at the run's end, in the same order: its phase and count as in vents,
+#   and shown, whether its puff is drawn (its figure is the phase's, Puffing only).
+# - hit = { side, push }: the frame's hit, the shared hit (spec §16.4): side "Left" or "Right",
+#   push the push time, in frames; absent for none. Its worth, 0 whole energy, is PuffTouches'
+#   to state and production's to hand to samus-health; no vector holds it.
+# - placing: vent = { facing, position }, random, 16-bit hex, the number its placing draws;
+#   vents_after holds the one vent placed.
+# - rules may hold steam_rest (runs, VentRests). Without it: steam_rest 64.
+# - The recorded cases ST1 to ST18 (whose rows and frames the observer keeps) are moved, with her
+#   and the camera, 1,000 px right and 600 px down; their phases, her body and protection are the
+#   records'. The rest are worked from the spec's rules.
+
+# ---------------------------------------------------------------- the placing
+
+[[vector]]
+# a random number of 0: the least wait, 1
+id = "ST-placed-least"
+source = "constructed"
+entries = ["VentPlaced"]
+steam_placing = true
+vent = { facing = "Up", position = [400, 300] }
+random = "0000"
+vents_after = [{ phase = "Placed", wait = 1, shown = false }]
+
+[[vector]]
+# 63 mod 32 = 31: the longest wait, 32
+id = "ST-placed-most"
+source = "constructed"
+entries = ["VentPlaced"]
+steam_placing = true
+vent = { facing = "Down", position = [400, 300] }
+random = "003F"
+vents_after = [{ phase = "Placed", wait = 32, shown = false }]
+
+[[vector]]
+# FFE4h mod 32 = 4: wait 5; only the number's low five bits count
+id = "ST-placed-high"
+source = "constructed"
+entries = ["VentPlaced"]
+steam_placing = true
+vent = { facing = "Left", position = [400, 300] }
+random = "FFE4"
+vents_after = [{ phase = "Placed", wait = 5, shown = false }]
+
+# ---------------------------------------------------------------- the wait
+
+[[vector]]
+# recorded case ST1 (room 3): its first run in view only starts its wait, unseen
+id = "ST-first-run"
+source = "constructed"
+entries = ["VentWaits", "VentInView"]
+vents = [{ facing = "Up", position = [1112, 756], phase = "Placed", wait = 5 }]
+camera = [1000, 762]
+vents_after = [{ phase = "Waiting", wait = 5, shown = false }]
+
+[[vector]]
+# recorded case ST2 (room 3): a run of the wait counts it
+id = "ST-wait"
+source = "constructed"
+entries = ["VentWaits"]
+vents = [{ facing = "Right", position = [1194, 776], phase = "Waiting", wait = 6 }]
+camera = [1000, 781]
+vents_after = [{ phase = "Waiting", wait = 5, shown = false }]
+
+[[vector]]
+# recorded case ST3 (room 3): the wait's last run shows its first puff, figure 1
+id = "ST-wait-ends"
+source = "constructed"
+entries = ["VentWaits", "VentPuffs"]
+vents = [{ facing = "Up", position = [1112, 756], phase = "Waiting", wait = 1 }]
+camera = [1000, 745]
+vents_after = [{ phase = "Puffing", figure = 1, runs = 3, shown = true }]
+
+# ---------------------------------------------------------------- the puff
+
+[[vector]]
+# recorded case ST4 (room 3): a figure's run counts down
+id = "ST-puff-counts"
+source = "constructed"
+entries = ["VentPuffs"]
+vents = [{ facing = "Left", position = [1062, 904], phase = "Puffing", figure = 5, runs = 3 }]
+camera = [1000, 856]
+vents_after = [{ phase = "Puffing", figure = 5, runs = 2, shown = true }]
+
+[[vector]]
+# recorded case ST5 (room 3): a figure's last run brings the next figure
+id = "ST-puff-next"
+source = "constructed"
+entries = ["VentPuffs"]
+vents = [{ facing = "Left", position = [1062, 904], phase = "Puffing", figure = 4, runs = 1 }]
+camera = [1000, 856]
+vents_after = [{ phase = "Puffing", figure = 5, runs = 3, shown = true }]
+
+[[vector]]
+# recorded case ST6 (room 3): the seventh figure's last run: the puff is gone, the rest starts
+id = "ST-puff-last"
+source = "constructed"
+entries = ["VentPuffs", "VentRests"]
+vents = [{ facing = "Up", position = [1136, 1004], phase = "Puffing", figure = 7, runs = 1 }]
+camera = [1000, 856]
+vents_after = [{ phase = "Resting", runs = 64, shown = false }]
+
+# ---------------------------------------------------------------- the rest
+
+[[vector]]
+# recorded case ST7 (room 3): the rest's first run
+id = "ST-rest-first"
+source = "constructed"
+entries = ["VentRests"]
+vents = [{ facing = "Up", position = [1136, 1004], phase = "Resting", runs = 64 }]
+camera = [1000, 856]
+vents_after = [{ phase = "Resting", runs = 63, shown = false }]
+
+[[vector]]
+# a run in the middle of the rest
+id = "ST-rest"
+source = "constructed"
+entries = ["VentRests", "VentPuffs"]
+vents = [{ facing = "Down", position = [300, 100], phase = "Resting", runs = 30 }]
+camera = [200, 0]
+vents_after = [{ phase = "Resting", runs = 29, shown = false }]
+
+[[vector]]
+# recorded case ST8 (room 3): the rest's last run: the next puff, figure 1
+id = "ST-rest-ends"
+source = "constructed"
+entries = ["VentRests"]
+vents = [{ facing = "Up", position = [1120, 878], phase = "Resting", runs = 1 }]
+camera = [1000, 726]
+vents_after = [{ phase = "Puffing", figure = 1, runs = 3, shown = true }]
+
+[[vector]]
+# a rest of 10: the puff's end starts a rest of 10
+id = "ST-rest-adjusted"
+source = "constructed"
+entries = ["VentRests", "VentPuffs"]
+rules = { steam_rest = 10 }
+vents = [{ facing = "Right", position = [300, 100], phase = "Puffing", figure = 7, runs = 1 }]
+camera = [200, 0]
+vents_after = [{ phase = "Resting", runs = 10, shown = false }]
+
+[[vector]]
+# a rest of 1: the puff's end starts a rest of one run
+id = "ST-rest-adjusted-one"
+source = "constructed"
+entries = ["VentRests", "VentPuffs"]
+rules = { steam_rest = 1 }
+vents = [{ facing = "Right", position = [300, 100], phase = "Puffing", figure = 7, runs = 1 }]
+camera = [200, 0]
+vents_after = [{ phase = "Resting", runs = 1, shown = false }]
+
+[[vector]]
+# a rest of 200 counts down as the game's does
+id = "ST-rest-adjusted-counts"
+source = "constructed"
+entries = ["VentRests"]
+rules = { steam_rest = 200 }
+vents = [{ facing = "Left", position = [300, 100], phase = "Resting", runs = 150 }]
+camera = [200, 0]
+vents_after = [{ phase = "Resting", runs = 149, shown = false }]
+
+# ---------------------------------------------------------------- in view
+
+[[vector]]
+# recorded case ST14 (room 2): its x 9 px left of the camera's: out of view, it waits as it was
+id = "ST-out-left"
+source = "constructed"
+entries = ["VentInView"]
+vents = [{ facing = "Up", position = [1160, 804], phase = "Placed", wait = 27 }]
+camera = [1169, 600]
+vents_after = [{ phase = "Placed", wait = 27, shown = false }]
+
+[[vector]]
+# recorded case ST15 (room 2): its x 8 px left of the camera's: in view, its first run
+id = "ST-view-left-edge"
+source = "constructed"
+entries = ["VentInView", "VentWaits"]
+vents = [{ facing = "Down", position = [1192, 666], phase = "Placed", wait = 13 }]
+camera = [1200, 600]
+vents_after = [{ phase = "Waiting", wait = 13, shown = false }]
+
+[[vector]]
+# recorded case ST16 (room 2): its x 264 px right of the camera's: in view
+id = "ST-view-right-edge"
+source = "constructed"
+entries = ["VentInView", "VentPuffs"]
+vents = [{ facing = "Left", position = [1440, 768], phase = "Puffing", figure = 1, runs = 2 }]
+camera = [1176, 600]
+vents_after = [{ phase = "Puffing", figure = 1, runs = 1, shown = true }]
+
+[[vector]]
+# recorded case ST17 (room 2): its x 265 px right of the camera's: out of view
+id = "ST-out-right"
+source = "constructed"
+entries = ["VentInView"]
+vents = [{ facing = "Up", position = [1352, 804], phase = "Resting", runs = 21 }]
+camera = [1087, 600]
+vents_after = [{ phase = "Resting", runs = 21, shown = false }]
+
+[[vector]]
+# recorded case ST18 (room 3): its y 248 px below the camera's: in view
+id = "ST-view-bottom-edge"
+source = "constructed"
+entries = ["VentInView", "VentRests"]
+vents = [{ facing = "Up", position = [1120, 878], phase = "Resting", runs = 40 }]
+camera = [1000, 630]
+vents_after = [{ phase = "Resting", runs = 39, shown = false }]
+
+[[vector]]
+# its y 249 px below the camera's: out of view
+id = "ST-out-bottom"
+source = "constructed"
+entries = ["VentInView"]
+vents = [{ facing = "Up", position = [300, 279], phase = "Resting", runs = 40 }]
+camera = [200, 30]
+vents_after = [{ phase = "Resting", runs = 40, shown = false }]
+
+[[vector]]
+# its y 8 px above the camera's: in view
+id = "ST-view-top-edge"
+source = "constructed"
+entries = ["VentInView"]
+vents = [{ facing = "Down", position = [300, 92], phase = "Waiting", wait = 3 }]
+camera = [200, 100]
+vents_after = [{ phase = "Waiting", wait = 2, shown = false }]
+
+[[vector]]
+# its y 9 px above the camera's: out of view
+id = "ST-out-top"
+source = "constructed"
+entries = ["VentInView"]
+vents = [{ facing = "Down", position = [300, 91], phase = "Waiting", wait = 3 }]
+camera = [200, 100]
+vents_after = [{ phase = "Waiting", wait = 3, shown = false }]
+
+[[vector]]
+# the view's left edge near 65,536 and the vent's position past it: the differences wrap, in view
+id = "ST-view-wrap"
+source = "constructed"
+entries = ["VentInView"]
+vents = [{ facing = "Up", position = [4, 100], phase = "Puffing", figure = 3, runs = 2 }]
+camera = [65530, 0]
+vents_after = [{ phase = "Puffing", figure = 3, runs = 1, shown = true }]
+
+[[vector]]
+# out of view by 1 px, her body over its puff: no run and no hit
+id = "ST-out-touching"
+source = "constructed"
+entries = ["VentInView", "PuffTouches"]
+vents = [{ facing = "Right", position = [300, 100], phase = "Puffing", figure = 2, runs = 2 }]
+camera = [309, 0]
+her = { position = [310, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 2, runs = 2, shown = true }]
+
+# ---------------------------------------------------------------- the touch
+
+[[vector]]
+# recorded case ST9 (room 3, the movie's first touch): as the frame starts she is 11 px left of the vent and 31 above, her right edge 2 px inside figure 1: the hit, to the left
+id = "ST-hit-left"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach", "VentPuffs"]
+vents = [{ facing = "Up", position = [1112, 756], phase = "Puffing", figure = 1, runs = 3 }]
+camera = [1000, 600]
+her = { position = [1101, 725], body = [5, 19], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 2, shown = true }]
+hit = { side = "Left", push = 5 }
+
+[[vector]]
+# recorded case ST10 (room 2, the second touch): 11 px right of the vent, inside figure 2's last run: the hit, to the right
+id = "ST-hit-right"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach", "VentPuffs"]
+vents = [{ facing = "Up", position = [1160, 804], phase = "Puffing", figure = 2, runs = 1 }]
+camera = [1011, 600]
+her = { position = [1171, 777], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 3, runs = 3, shown = true }]
+hit = { side = "Right", push = 5 }
+
+[[vector]]
+# recorded case ST11 (room 2): inside a left puff's figure 1 with 54 frames of protection left: no hit
+id = "ST-protected-room-2"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Left", position = [1440, 768], phase = "Puffing", figure = 1, runs = 3 }]
+camera = [1256, 600]
+her = { position = [1429, 765], body = [5, 21], protection = 54 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 2, shown = true }]
+
+[[vector]]
+# recorded case ST12 (room 2): the frame after the second touch, still inside the puff, protected: no hit
+id = "ST-protected-after-hit"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Up", position = [1160, 804], phase = "Puffing", figure = 3, runs = 3 }]
+camera = [1008, 600]
+her = { position = [1168, 772], body = [5, 12], protection = 95 }
+vents_after = [{ phase = "Puffing", figure = 3, runs = 2, shown = true }]
+
+[[vector]]
+# recorded case ST13 (room 3): a puff out, she 21 px clear of it across: no hit
+id = "ST-near-miss"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Up", position = [1120, 878], phase = "Puffing", figure = 1, runs = 3 }]
+camera = [1000, 723]
+her = { position = [1153, 835], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 2, shown = true }]
+
+[[vector]]
+# inside the puff with one frame of protection left: no hit
+id = "ST-protected-one"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Down", position = [300, 100], phase = "Puffing", figure = 2, runs = 2 }]
+camera = [200, 0]
+her = { position = [300, 120], body = [5, 21], protection = 1 }
+vents_after = [{ phase = "Puffing", figure = 2, runs = 1, shown = true }]
+
+[[vector]]
+# a left puff's figure 4 reaches x 260 to 283: her box (x 256, half-width 5) runs 251 to 260, sharing its first column: the hit
+id = "ST-edge-left-in"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach"]
+vents = [{ facing = "Left", position = [300, 100], phase = "Puffing", figure = 4, runs = 2 }]
+camera = [200, 0]
+her = { position = [256, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 4, runs = 1, shown = true }]
+hit = { side = "Left", push = 5 }
+
+[[vector]]
+# her x 255: her box runs 250 to 259, short of 260: no hit
+id = "ST-edge-left-out"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Left", position = [300, 100], phase = "Puffing", figure = 4, runs = 2 }]
+camera = [200, 0]
+her = { position = [255, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 4, runs = 1, shown = true }]
+
+[[vector]]
+# her x 288: her box runs 283 to 292, sharing the reach's last column: the hit
+id = "ST-edge-right-in"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach"]
+vents = [{ facing = "Left", position = [300, 100], phase = "Puffing", figure = 4, runs = 2 }]
+camera = [200, 0]
+her = { position = [288, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 4, runs = 1, shown = true }]
+hit = { side = "Left", push = 5 }
+
+[[vector]]
+# her x 289: her box starts at 284, past the reach: no hit
+id = "ST-edge-right-out"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Left", position = [300, 100], phase = "Puffing", figure = 4, runs = 2 }]
+camera = [200, 0]
+her = { position = [289, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 4, runs = 1, shown = true }]
+
+[[vector]]
+# a down puff's figure 5 reaches y 123 to 138: her box (y 103, half-height 21) runs 82 to 123, sharing its first row: the hit
+id = "ST-edge-top-in"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach"]
+vents = [{ facing = "Down", position = [300, 100], phase = "Puffing", figure = 5, runs = 3 }]
+camera = [200, 0]
+her = { position = [303, 103], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 5, runs = 2, shown = true }]
+hit = { side = "Right", push = 5 }
+
+[[vector]]
+# her y 102: her box runs 81 to 122, short of 123: no hit
+id = "ST-edge-top-out"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Down", position = [300, 100], phase = "Puffing", figure = 5, runs = 3 }]
+camera = [200, 0]
+her = { position = [303, 102], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 5, runs = 2, shown = true }]
+
+[[vector]]
+# her y 159: her box starts at 138, the reach's last row: the hit
+id = "ST-edge-bottom-in"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach"]
+vents = [{ facing = "Down", position = [300, 100], phase = "Puffing", figure = 5, runs = 3 }]
+camera = [200, 0]
+her = { position = [297, 159], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 5, runs = 2, shown = true }]
+hit = { side = "Left", push = 5 }
+
+[[vector]]
+# her y 160: her box starts at 139: no hit
+id = "ST-edge-bottom-out"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Down", position = [300, 100], phase = "Puffing", figure = 5, runs = 3 }]
+camera = [200, 0]
+her = { position = [297, 160], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 5, runs = 2, shown = true }]
+
+[[vector]]
+# her x the vent's: the side is right
+id = "ST-side-level"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Right", position = [300, 100], phase = "Puffing", figure = 1, runs = 1 }]
+camera = [200, 0]
+her = { position = [300, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 2, runs = 3, shown = true }]
+hit = { side = "Right", push = 5 }
+
+[[vector]]
+# a right puff at x 65,530 reaches across 0 (65,530 to 9): she at x 2, inside: the hit, and her x less the vent's wraps to 8: right
+id = "ST-wrap"
+source = "constructed"
+entries = ["PuffTouches", "PuffReach"]
+vents = [{ facing = "Right", position = [65530, 100], phase = "Puffing", figure = 1, runs = 2 }]
+camera = [65400, 0]
+her = { position = [2, 100], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 1, shown = true }]
+hit = { side = "Right", push = 5 }
+
+[[vector]]
+# figure 6 reaches nothing: she over the vent, no hit
+id = "ST-figure-6"
+source = "constructed"
+entries = ["PuffReach", "PuffTouches"]
+vents = [{ facing = "Up", position = [300, 100], phase = "Puffing", figure = 6, runs = 2 }]
+camera = [200, 0]
+her = { position = [300, 80], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 6, runs = 1, shown = true }]
+
+[[vector]]
+# figure 7 reaches nothing either
+id = "ST-figure-7"
+source = "constructed"
+entries = ["PuffReach", "PuffTouches"]
+vents = [{ facing = "Up", position = [300, 100], phase = "Puffing", figure = 7, runs = 3 }]
+camera = [200, 0]
+her = { position = [300, 80], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 7, runs = 2, shown = true }]
+
+[[vector]]
+# waiting, she over the vent: no reach, no hit; the wait ends and the puff shows
+id = "ST-waiting-untouched"
+source = "constructed"
+entries = ["PuffReach", "PuffTouches", "VentWaits"]
+vents = [{ facing = "Up", position = [300, 100], phase = "Waiting", wait = 1 }]
+camera = [200, 0]
+her = { position = [300, 90], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 3, shown = true }]
+
+[[vector]]
+# the rest's last run, she where figure 1 will reach: it meets her before it steps, so no hit
+id = "ST-rest-ends-untouched"
+source = "constructed"
+entries = ["PuffReach", "PuffTouches", "VentRests"]
+vents = [{ facing = "Up", position = [300, 100], phase = "Resting", runs = 1 }]
+camera = [200, 0]
+her = { position = [300, 90], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 3, shown = true }]
+
+[[vector]]
+# figure 5's last run, she in its reach: it meets her with figure 5, then shows figure 6: the hit
+id = "ST-touch-before-step"
+source = "constructed"
+entries = ["PuffTouches", "VentPuffs"]
+vents = [{ facing = "Up", position = [300, 100], phase = "Puffing", figure = 5, runs = 1 }]
+camera = [200, 0]
+her = { position = [304, 60], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 6, runs = 3, shown = true }]
+hit = { side = "Right", push = 5 }
+
+[[vector]]
+# never run, it reaches the one pixel at its position; her box over it: the hit, and its first run
+id = "ST-placed-touched"
+source = "constructed"
+entries = ["PuffReach", "PuffTouches", "VentWaits"]
+vents = [{ facing = "Left", position = [300, 100], phase = "Placed", wait = 9 }]
+camera = [200, 0]
+her = { position = [296, 110], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Waiting", wait = 9, shown = false }]
+hit = { side = "Left", push = 5 }
+
+[[vector]]
+# her box's right edge 1 px left of that pixel: no hit
+id = "ST-placed-missed"
+source = "constructed"
+entries = ["PuffReach", "PuffTouches"]
+vents = [{ facing = "Left", position = [300, 100], phase = "Placed", wait = 9 }]
+camera = [200, 0]
+her = { position = [295, 110], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Waiting", wait = 9, shown = false }]
+
+[[vector]]
+# two vents touch her: the first in the room's order gives the hit, to the right; the second's would push left
+id = "ST-first-vent"
+source = "constructed"
+entries = ["PuffTouches"]
+vents = [{ facing = "Up", position = [290, 140], phase = "Puffing", figure = 1, runs = 2 }, { facing = "Up", position = [310, 140], phase = "Puffing", figure = 1, runs = 2 }]
+camera = [200, 0]
+her = { position = [300, 120], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Puffing", figure = 1, runs = 1, shown = true }, { phase = "Puffing", figure = 1, runs = 1, shown = true }]
+hit = { side = "Right", push = 5 }
+
+[[vector]]
+# the first vent resting, the second touching: its hit, to the left; both step
+id = "ST-second-vent"
+source = "constructed"
+entries = ["PuffTouches", "VentRests"]
+vents = [{ facing = "Up", position = [290, 140], phase = "Resting", runs = 5 }, { facing = "Up", position = [310, 140], phase = "Puffing", figure = 2, runs = 3 }]
+camera = [200, 0]
+her = { position = [300, 120], body = [5, 21], protection = 0 }
+vents_after = [{ phase = "Resting", runs = 4, shown = false }, { phase = "Puffing", figure = 2, runs = 2, shown = true }]
+hit = { side = "Left", push = 5 }

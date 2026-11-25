@@ -125,6 +125,13 @@ for every version that loads the Ceres door. The engine places no enemies yet, s
 for every Ceres door alike. Before Ridley's getaway, the door in Ridley's room puts the calm
 set in the row its species loads to instead. No other species' placement changes a colour.
 
+## Ceres escape boundaries
+
+Drawing during a lit door passage can update Samus's jump counter while movement is paused.
+The played loop stops at this dependency with `PassageJumpHistory`. Releasing jump as a
+backward leap meets the floor needs the landing pose selection (`BackwardLeapLanding`).
+Vents attached to the turning shaft need the shaft's motion (`TurningShaftVent`).
+
 ## The engine: planned differences from the original
 
 The engine executes no game code, including the uploaded sound driver. Driver upload bytes are

@@ -888,7 +888,8 @@ impl From<PushFrames> for u8 {
 /// The frame's hit on Samus: the side it pushes her to and how long its push lasts.
 ///
 /// The hitter judges it (samus-movement §12, `PushTime`): in Ceres, Ridley's tail
-/// (boss-ceres-ridley `TailHits`); samus-health reads the same hit for its damage.
+/// (boss-ceres-ridley `TailHits`) and the escape's steam (`PuffTouches`); samus-health reads the
+/// same hit, with the worth its hitter states, for its damage and protection.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Hit {
     /// The way it pushes her.

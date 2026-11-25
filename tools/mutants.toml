@@ -574,8 +574,8 @@ field = "movement.choices"
 name = "played-reaction-state-dropped"
 responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
-before = "let outcome = samus.react(moves, between.hit);"
-after = "let outcome = { let mut dropped = samus; dropped.react(moves, between.hit) };"
+before = "let outcome = samus.react(moves, between.hit.map(Contact::push));"
+after = "let outcome = { let mut dropped = samus; dropped.react(moves, between.hit.map(Contact::push)) };"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "movement.pose"
@@ -1103,3 +1103,23 @@ after = '''owner.write_file(cut, run, live_map, stage)?;
 case = "save-files/power-on-through-ceres"
 cut = 19
 field = "save-files.battery.byte-0164"
+
+[[fault]]
+name = "played-steam-contact-disabled"
+responsibility = "played"
+file = "crates/game/src/production/played/station.rs"
+before = "let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres);"
+after = "let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her.filter(|_| false), &rules.ceres);"
+case = "played chain-any-0009-DFD7 0 199"
+cut = 137
+field = "steam.hit"
+
+[[fault]]
+name = "played-steam-reuses-placement-seed"
+responsibility = "played"
+file = "crates/game/src/production/room_loading.rs"
+before = "vents.push(Vent::place(facing, vent.position, drawn.number.0));"
+after = "vents.push(Vent::place(facing, vent.position, random.number.0));"
+case = "played chain-any-0008-E021 0 263"
+cut = 219
+field = "steam.vents"

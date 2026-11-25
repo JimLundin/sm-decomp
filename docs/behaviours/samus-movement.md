@@ -137,7 +137,7 @@ or falling at 0.
 | spin turned far | `bool`: the spin's sprite has turned far enough to kick off a wall | `WallJump` |
 | her animation's end | none, an end, or an end unless a jump: the end her animation reaches this frame, known from the frame's start (samus-appearance's `ClipEnds`) | `PoseFollows`, `AnimationEnds` |
 | elevator moving | `bool` | `RidingTheElevator` |
-| the frame's hit | none, or a hit with its side and push time (§12), known after her moves and read by the frame's second step (§12, the frame's two steps) | `PushTime` |
+| the frame's hit | none, or a hit with its side and push time (§12), known before her moves and read by the frame's second step (§12, the frame's two steps) | `PushTime` |
 | frame parity | `Even` or `Odd`: the game's frame count, alternating every frame | `BlocksStopFlush` |
 | body size | each pose's half-width and half-height in px (`radius`): the game's data, for any pose, the one the step chooses included. A frame's moves use the body of the pose she starts it in; the chosen pose's body is read within the frame only where it grows (`PoseFitAfterMoves`) or a change of shape lowers her (`ShrinkingLowersHer`), and otherwise first holds on the next frame, so a record's body at a frame's end can still be the body she started it in (J1's spin start shows 21 px). While a moving elevator carries her facing the screen (`RidingTheElevator`), the caller gives, as the body of the pose she starts the frame in, the body she had as the ride began, which the ride keeps, not the body of facing the screen (her y there is the elevator's) | §8, `PoseFitAfterMoves` |
 
@@ -2214,22 +2214,20 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 
 ## 12. Thrown back by a hit
 
-A hit (Ridley's tail in Ceres, the only one in scope) pushes her back for a few frames: she is
-thrown upward and clear, or, holding forward as it lands, driven down and clear along the ground.
+A hit from Ridley's tail or a steam puff pushes her back for a few frames. It throws her up
+and clear, or drives her down and along the ground if she holds forward as it lands.
 Holding back and jump during the push turns it into the backward leap, a long backward jump.
-Damage is [samus-health](samus-health.md)'s; whether a hit comes is the hitter's (in Ceres,
-Ridley's tail, [boss-ceres-ridley](boss-ceres-ridley.md) `TailHits`), which gives none while
-her protection lasts, and protection outlasts the push, so in scope no hit reaches a push under
-way. How she looks is [samus-appearance](samus-appearance.md)'s.
+Damage is [samus-health](samus-health.md)'s. In Ceres, [boss-ceres-ridley](boss-ceres-ridley.md)'s
+`TailHits` and `PuffTouches` give no hit while her protection lasts. Protection outlasts the
+push, so in scope no hit reaches a push under way. How she looks is
+[samus-appearance](samus-appearance.md)'s.
 
 **What she reads.** The frame's hit, from the hitter: none, or a hit with its **side** (`Side`:
 `Left` or `Right`, the way it pushes her) and its **push time** (`PushFrames`, frames, 1 to 45).
-The hitter decides both: in Ceres, Ridley's tail (boss-ceres-ridley's `TailHits`, the same hit
-samus-health takes as `Impact`), and the escape's steam (boss-ceres-ridley's `PuffTouches`), each
-from her position and body as the frame starts, before her moves; her body is this domain's
-content (§1.3, body size). The hit is known before her moves, and she reacts to it after them in
-the same frame (below). Up to 45
-frames, an `Up` push's rise stays above 0 to its end (`PushMoves`); more, or a ceiling stopping
+In Ceres, Ridley's tail or a steam puff decides the side and push time from her position, body
+and protection as the frame starts. Her body size comes from this domain's content (§1.3).
+Samus-health takes the same event as `Impact`. She reacts after her moves in the same frame.
+Up to 45 frames, an `Up` push's rise stays above 0 to its end (`PushMoves`); more, or a ceiling stopping
 an `Up` push, is out of scope (§10).
 
 **The frame's two steps.** A frame of hers is two steps, in this order. The hitters judge the
@@ -2239,9 +2237,7 @@ frame's hit as the frame starts, before the first; samus-health takes its damage
    horizontal and vertical moves in the pose she started the frame in, the push's moves
    (`PushMoves`), the leap's (`BackwardLeap`) and the drop the frame after a push
    (`AfterThePush`, whose falling or landing pose is the chosen one); and the choice of the pose the pad, her animation's end and her moves ask for (§7), not yet taken.
-   It gives `her position after her moves` and the §1.4 outputs. A hitter reads her position as
-   the frame starts and the body she started the frame in, whose size is this domain's content
-   (§1.3); it reads nothing else of hers.
+   It gives `her position after her moves` to the mini-map and the other outputs in §1.4.
 2. **Her reaction, after any hit that frame is known:** the hit's push time and side
    (`PushTime`), the push's start (`PushStarts`) in place of the chosen pose, or else the chosen
    pose; the aim change's step (`AimingAndShooting`), pose fit (`PoseFitAfterMoves`) and the

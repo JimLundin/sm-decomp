@@ -228,6 +228,7 @@ impl super::State {
             ceres_doors: Vec::new(),
             lights: None,
             ridley: None,
+            steam_hit: None,
             ridley_placed: None,
             quake: None,
         })

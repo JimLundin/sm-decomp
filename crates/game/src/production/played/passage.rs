@@ -159,6 +159,7 @@ impl super::State {
         passing: &Passing<'_>,
         content: &Content,
         palette: &mut Palette,
+        random: &mut types::RandomSequence,
     ) -> Result<Loaded, Fault> {
         let mut loaded = Loaded {
             room: None,
@@ -189,7 +190,7 @@ impl super::State {
             // The next room's contents let the last room's Ceres actors go and place its own.
             Some(RoomCall::FetchContents) => {
                 loaded.actors = Some(
-                    room_loading::ceres_actors(doorway.through, run, &content.rooms)
+                    room_loading::ceres_actors(doorway.through, run, &content.rooms, random)
                         .map_err(Fault::Load)?,
                 );
             }
@@ -205,6 +206,22 @@ impl super::State {
         }
         Ok(loaded)
     }
+}
+
+/// Drawing Samus during a passage can change her jump counter while her movement is paused.
+pub(super) fn check_jump_history(
+    report: &world_doors::Report,
+    jump: samus_movement::JumpHeld,
+    inputs: &crate::production::connected::inputs::Inputs,
+) -> Result<(), Fault> {
+    use types::button::JUMP;
+    use world_doors::Activity;
+
+    let held_through = inputs.held.any(JUMP) && !inputs.pressed.any(JUMP);
+    if report.runs[Activity::Drawn] && (held_through || jump.frames.0 != 0) {
+        return Err(Fault::PassageJumpHistory);
+    }
+    Ok(())
 }
 
 /// What a passage's call loaded of the next room.

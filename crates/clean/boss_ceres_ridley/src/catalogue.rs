@@ -89,6 +89,20 @@ pub enum BehaviourId {
     PulledToHisPoint,
     /// He moves by his speed within the room's bounds, shaking it as he meets its left side fast.
     Flies,
+    /// Placed with the room, each vent waits a random 1 to 32 runs before its first puff.
+    VentPlaced,
+    /// A vent runs only while it is in view, or nearly.
+    VentInView,
+    /// A vent's first run starts its wait; when the wait runs out its first puff comes.
+    VentWaits,
+    /// A puff shows its seven figures, three runs each, then the vent rests.
+    VentPuffs,
+    /// Between puffs the vent rests unseen, then puffs again.
+    VentRests,
+    /// A puff reaches a box that grows out of the vent the way it faces.
+    PuffReach,
+    /// A puff that touches her once her protection is spent pushes her away from the vent.
+    PuffTouches,
 }
 
 /// A catalogue entry.
@@ -107,8 +121,8 @@ pub struct Behaviour {
 }
 
 /// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
-/// his waking's four, his tail's three and his flight's six.
-const ENTRIES: usize = 41;
+/// his waking's four, his tail's three, his flight's six and the escape's steam's seven.
+const ENTRIES: usize = 48;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -429,6 +443,59 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
         id: BehaviourId::Flies,
         summary: "he moves by his speed, kept within the room's bounds; meeting the left side \
                   fast, he shakes the room",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::VentPlaced,
+        summary: "placed with the room, each vent waits a random 1 to 32 runs before its first \
+                  puff",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::VentInView,
+        summary: "a vent runs only while it is in view, or nearly: out of view its puff stops \
+                  where it is and touches nothing",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::VentWaits,
+        summary: "its first run starts its wait; when the wait runs out its first puff comes",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::VentPuffs,
+        summary: "a puff shows its seven figures, three runs each, then the vent rests",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::VentRests,
+        summary: "between puffs the vent rests unseen, then puffs again",
+        kind: Kind::Mechanic,
+        switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PuffReach,
+        summary: "a puff reaches a box that grows out of the vent the way it faces; its last two \
+                  figures, thinned away, reach nothing, nor does a vent with no puff out",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PuffTouches,
+        summary: "a puff that touches her once her protection is spent hits her: she is pushed \
+                  away from the vent and loses no energy; the frame has at most one hit",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

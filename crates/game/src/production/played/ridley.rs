@@ -9,8 +9,7 @@
 
 use super::{Content, Fault, Rules, station};
 use crate::production::ridley;
-use boss_ceres_ridley::{CeresRidley, Fight, Her, RidleyPhase, RidleyRun};
-use types::{Pair, Parts as _};
+use boss_ceres_ridley::{CeresRidley, Fight, RidleyPhase, RidleyRun};
 use world_doors::Palette;
 
 impl station::State {
@@ -21,31 +20,6 @@ impl station::State {
         self.ridley
             .as_ref()
             .map(|ridley| ridley::drawing(ridley, &self.doors))
-    }
-}
-
-impl super::State {
-    /// Her as Ridley's tail reads her in his room: her position in whole pixels as the frame
-    /// starts (`at`), the body of the pose she started the frame in, from her
-    /// movement's content, and her protection as the frame starts; none outside his room.
-    pub(super) fn reached(
-        &self,
-        at: types::Position,
-        content: &Content,
-    ) -> Result<Option<Her>, Fault> {
-        if self.station.ridley.is_none() {
-            return Ok(None);
-        }
-        let pose = self.samus.movement.0.pose;
-        let body = content.movement.radius(pose).ok_or(Fault::Body(pose))?;
-        Ok(Some(Her {
-            position: Pair {
-                x: at.x.pixel(),
-                y: at.y.pixel(),
-            },
-            body,
-            protection: u16::from(self.health.0.protection.get()),
-        }))
     }
 }
 

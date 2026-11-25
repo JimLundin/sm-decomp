@@ -17,11 +17,12 @@ use types::{Hit, Pair, Px};
 
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
 use crate::flight::{Bound, Fight, HoverRuns, Ruled, STILL, Speed, Steered, flown};
+use crate::her::Her;
 use crate::ridley_phase::{FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyPhase, RoarSound};
 use crate::roar::RidleyLook;
 use crate::rules::Rules;
 use crate::station::{ShakeStart, Stage};
-use crate::tail::{Her, TailCurl, place_at_rest};
+use crate::tail::{TailCurl, place_at_rest, tip_hit};
 use crate::takeoff::{LIFT_OFF, TakeOffFigure, TakeOffStart, hopped};
 use crate::waking::{BodyColours, EyeColours, RidleyContent};
 
@@ -388,7 +389,7 @@ impl CeresRidley {
     /// her there and within its tip's reach.
     fn tail_hit(&self, her: Option<&Her>, rules: &Rules) -> Option<Hit> {
         let tip = self.tail().filter(|_| self.phase.tangible())?;
-        her?.hit_by(tip, rules.tail_reach)
+        tip_hit(her?, tip, rules.tail_reach)
     }
 
     /// His drawing: his look at his position, the baby's look at its position and his tail's

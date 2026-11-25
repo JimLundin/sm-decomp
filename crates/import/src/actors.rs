@@ -12,7 +12,9 @@ use data::assets::actors::{
     ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
-use data::assets::world::{CeresDoorKind, CeresDoorPlacement, Pair, Side};
+use data::assets::world::{
+    CeresDoorKind, CeresDoorPlacement, CeresVentFacing, CeresVentPlacement, Pair, Side,
+};
 use data::enemy::{EnemyError, SpeciesKey};
 use data::id::SpeciesId;
 use data::rom::{AddressError, Lorom, RomAddress};
@@ -37,6 +39,8 @@ const PLACES: [(SpeciesId, u16); 10] = [
 const CERES_DOOR_PLACE: u16 = 0xe23f;
 /// Ceres Ridley's header, which his placement names him by.
 const CERES_RIDLEY_PLACE: u16 = 0xe13f;
+/// The Ceres steam vent's header, which its placements name it by.
+const CERES_STEAM_PLACE: u16 = 0xe1ff;
 /// The species headers' bank.
 const SPECIES_BANK: u8 = 0xa0;
 /// Where a header holds its palette's pointer, and its bank.
@@ -180,22 +184,22 @@ fn beacon(rom: Lorom<'_>) -> Result<BeaconColours, AddressError> {
 ///
 /// # Errors
 ///
-/// [`CeresDoorsError::Population`] when the population runs outside the image or its bank,
-/// and [`CeresDoorsError::Kind`] when a door's first parameter names none of these.
+/// [`CeresActorsError::Population`] when the population runs outside the image or its bank,
+/// and [`CeresActorsError::Kind`] when a door's first parameter names none of these.
 pub fn ceres_doors(
     rom: Lorom<'_>,
     at: RomAddress,
-) -> Result<Vec<CeresDoorPlacement>, CeresDoorsError> {
+) -> Result<Vec<CeresDoorPlacement>, CeresActorsError> {
     let door = SpeciesKey(CERES_DOOR_PLACE);
     data::enemy::population(rom, at)
-        .map_err(CeresDoorsError::Population)?
+        .map_err(CeresActorsError::Population)?
         .placements
         .iter()
         .filter(|placed| placed.species == door)
         .map(|placed| {
             Ok(CeresDoorPlacement {
                 kind: ceres_door_kind(placed.parameter_1)
-                    .ok_or(CeresDoorsError::Kind(placed.parameter_1))?,
+                    .ok_or(CeresActorsError::Kind(placed.parameter_1))?,
                 position: Pair {
                     x: Wrapping(placed.x),
                     y: Wrapping(placed.y),
@@ -209,14 +213,48 @@ pub fn ceres_doors(
 ///
 /// # Errors
 ///
-/// [`CeresDoorsError::Population`] when the population runs outside the image or its bank.
-pub fn ceres_ridley(rom: Lorom<'_>, at: RomAddress) -> Result<bool, CeresDoorsError> {
+/// [`CeresActorsError::Population`] when the population runs outside the image or its bank.
+pub fn ceres_ridley(rom: Lorom<'_>, at: RomAddress) -> Result<bool, CeresActorsError> {
     let ridley = SpeciesKey(CERES_RIDLEY_PLACE);
     Ok(data::enemy::population(rom, at)
-        .map_err(CeresDoorsError::Population)?
+        .map_err(CeresActorsError::Population)?
         .placements
         .iter()
         .any(|placed| placed.species == ridley))
+}
+
+/// The steam vents the room places, in enemy slot order.
+///
+/// # Errors
+/// The population fails to decode or names an unknown vent direction.
+pub fn ceres_vents(
+    rom: Lorom<'_>,
+    at: RomAddress,
+) -> Result<Vec<CeresVentPlacement>, CeresActorsError> {
+    data::enemy::population(rom, at)
+        .map_err(CeresActorsError::Population)?
+        .placements
+        .iter()
+        .filter(|placed| placed.species == SpeciesKey(CERES_STEAM_PLACE))
+        .map(|placed| {
+            let facing = match placed.parameter_1 {
+                0 => CeresVentFacing::Up,
+                1 => CeresVentFacing::Left,
+                2 => CeresVentFacing::Down,
+                3 => CeresVentFacing::Right,
+                4 => CeresVentFacing::ShaftLeft,
+                5 => CeresVentFacing::ShaftRight,
+                other => return Err(CeresActorsError::Kind(other)),
+            };
+            Ok(CeresVentPlacement {
+                facing,
+                position: Pair {
+                    x: Wrapping(placed.x),
+                    y: Wrapping(placed.y),
+                },
+            })
+        })
+        .collect()
 }
 
 /// What a Ceres door actor's first parameter names it: 2 is the shaft's overlay, 3 the door of
@@ -234,12 +272,12 @@ const fn ceres_door_kind(parameter: u16) -> Option<CeresDoorKind> {
     }
 }
 
-/// Why a population's Ceres doors don't import.
+/// Why a population's Ceres actors don't import.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CeresDoorsError {
+pub enum CeresActorsError {
     /// The population doesn't decode.
     Population(EnemyError),
-    /// A door actor's first parameter, which names no actor of the doors' species.
+    /// An unknown first parameter for a station actor.
     Kind(u16),
 }
 

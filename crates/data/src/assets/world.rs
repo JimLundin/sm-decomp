@@ -159,8 +159,36 @@ pub struct Version {
     /// It places Ceres Ridley, who stands at his own place whatever his placement says, as
     /// the room's first enemy, before its door actors.
     pub ceres_ridley: bool,
+    /// The steam vents it places, in enemy slot order.
+    pub ceres_vents: Vec<CeresVentPlacement>,
     /// What it runs as its contents are fetched, beyond placing them.
     pub setup: RoomSetup,
+}
+
+/// A steam vent as the room places it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CeresVentPlacement {
+    /// Which way the vent blows.
+    pub facing: CeresVentFacing,
+    /// The centre of the vent in the room.
+    pub position: Pair<Px>,
+}
+
+/// The direction the room places a steam vent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CeresVentFacing {
+    /// Up from the floor.
+    Up,
+    /// Left from a wall.
+    Left,
+    /// Down from the ceiling.
+    Down,
+    /// Right from a wall.
+    Right,
+    /// Left relative to the turning shaft.
+    ShaftLeft,
+    /// Right relative to the turning shaft.
+    ShaftRight,
 }
 
 /// A Ceres door actor as a room's start places it: what it is and where.
@@ -340,6 +368,7 @@ mod tests {
             enemies: Vec::new(),
             ceres_doors: Vec::new(),
             ceres_ridley: false,
+            ceres_vents: Vec::new(),
             setup: RoomSetup::Nothing,
         };
         Room {
