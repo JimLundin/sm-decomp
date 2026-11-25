@@ -7,7 +7,7 @@
 //!
 //! [`step`] runs one frame: it reads the flight's [`State`], the scene's content and whether a
 //! track waits in audio's queue, and reports what the renderer, the sprite drawing and the tile
-//! writing show that frame.
+//! writing show that frame, with the music requests it hands to audio.
 
 mod catalogue;
 mod frame;

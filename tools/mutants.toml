@@ -802,6 +802,16 @@ cut = 1
 field = "flight.stage"
 
 [[fault]]
+name = "played-flight-music-reversed"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "Some(step(state, scene, music, rules))"
+after = "let mut report = step(state, scene, music, rules); report.music.reverse(); Some(report)"
+case = "played any-fly-to-ceres 0 802"
+cut = 32
+field = "flight.music"
+
+[[fault]]
 name = "played-flight-arrival-waits-for-finished"
 responsibility = "played"
 file = "crates/game/src/production/played/flight.rs"

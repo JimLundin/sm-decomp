@@ -69,7 +69,8 @@ impl Journey {
     }
 
     /// Step the flight or its handoff into the dark preparation. The frame of work that
-    /// changes scenes runs before the preparation's own frame of work.
+    /// changes scenes runs before the preparation's own frame of work. A finished flight
+    /// frame returns its report, including the ordered music requests and their delays for audio.
     ///
     /// # Errors
     /// [`Fault::HudStartup`] when the start is ready and its HUD has no startup owner.
@@ -146,8 +147,8 @@ mod tests {
     use screens_flight::{MusicQueue, Rules};
     use std::num::NonZeroU16;
     use types::flight::{
-        Angle, Brightness, FlightStage, Keystroke, LabelStep, RushSpeed, Scene, SceneSetup,
-        SceneTurn, Zoom,
+        Angle, Brightness, FlightStage, Keystroke, LabelStep, MusicRequest, RushSpeed, Scene,
+        SceneSetup, SceneTurn, TuneDelay, Zoom,
     };
     use types::{Pair, flight::WholePlace};
 
@@ -175,6 +176,37 @@ mod tests {
     }
 
     const CLEAR: FrameEnd = FrameEnd::Finished(MusicQueue::Clear);
+
+    #[test]
+    fn the_setup_reports_music_requests_in_order() {
+        let frame = crate::production::played::tests::state(Vec::new()).frame;
+        let mut journey = Journey::start(frame);
+        let scene = scene();
+        let mut step = |end| {
+            journey
+                .step(
+                    true,
+                    end,
+                    arrival::Readiness::NotYet,
+                    &scene,
+                    Rules::REFERENCE,
+                    screens_arrival::Rules::REFERENCE,
+                )
+                .unwrap()
+        };
+        assert_eq!(step(FrameEnd::Lagged), None);
+        let report = step(CLEAR).unwrap();
+        assert_eq!(
+            report.music,
+            [
+                MusicRequest::LoadCeresFlightTune(TuneDelay(8)),
+                MusicRequest::PlayCeresFlightTune(TuneDelay(14)),
+            ]
+        );
+        assert_eq!(step(FrameEnd::Lagged), None);
+        let report = step(CLEAR).unwrap();
+        assert_eq!(report.music, []);
+    }
 
     #[test]
     fn a_lagged_frame_changes_nothing() {

@@ -32,11 +32,16 @@ importer will give it.
   tilemap in VRAM changes in one word at each of 484 to 628, and at 468 in 960 words (the layer
   emptied, the first letter with it).
 
+The music-only reference model in the observer's local evidence directory checks the ordered
+requests on all 27 vectors and every interval of the cached row. It matches 802 of 802 cuts
+(743 finished and 59 lag). An empty request list on every cut matches 801 of 802 and first
+differs at cut 32. Reversing the requests or swapping their delays also first differs at 32.
+
 ## Sources
 
 | Entry | Sources |
 | --- | --- |
-| FlightIsMadeReady | `$8B:BCA0` (cinematic function, fly to Ceres, initial): first `$8B:819B` (set up the PPU for the Ceres cutscene): `0051` = 80h (blanked, level 0), `0074..0076` = 20h/40h/80h (flash 0, 0, 0), `1991`..`1997` zeroed (so the fractions are 0); then palettes, decompression and VRAM uploads under NMI off (the long frame, cuts 1-31); matrix identity, origin (38h, 18h); `1993` = −48h, `1997` = −68h (the integer words, the fractions already zeroed); angle `198D` = E0h; zoom `198F` = 200h; palette FX cleared and enabled; cinematic BG objects cleared; spawn cinematic sprite object `$CF0F` (Ceres stars) parameter 0 (`$8B:BE7E`: velocity `1B7D` = −400h, X 70h, Y 57h); next function `$BDE4`; music data `$FF2D` queued, track 5 with 14 frame delay (U1) |
+| FlightIsMadeReady | `$8B:BCA0` (cinematic function, fly to Ceres, initial): first `$8B:819B` (set up the PPU for the Ceres cutscene): `0051` = 80h (blanked, level 0), `0074..0076` = 20h/40h/80h (flash 0, 0, 0), `1991`..`1997` zeroed (so the fractions are 0); then palettes, decompression and VRAM uploads under NMI off (the long frame, cuts 1-31); matrix identity, origin (38h, 18h); `1993` = −48h, `1997` = −68h (the integer words, the fractions already zeroed); angle `198D` = E0h; zoom `198F` = 200h; palette FX cleared and enabled; cinematic BG objects cleared; spawn cinematic sprite object `$CF0F` (Ceres stars) parameter 0 (`$8B:BE7E`: velocity `1B7D` = −400h, X 70h, Y 57h); next function `$BDE4`; at `$8B:BDD2`..`$8B:BDE3`, music data `$FF2D` queued via `$80:8FC1` with its default 8-frame delay, then track 5 via `$80:8FF7` with a 14-frame delay |
 | PictureAppears | `$8B:BDE4`: `$80:8EF4` (carry set if any of the eight music queue timers is non-zero) → return; else `0051` = 0Fh, next function `$BDF9` |
 | GunshipRushesIn | `$8B:BDF9`: zoom ≥ 20h → zoom − 10h, return; else the turn (below) |
 | StarsRushPast | `$8B:BEB5` (pre-instruction of `$CF0F`): only while the cinematic function is `$BDF9`; velocity += 80h; delta = velocity as signed 8.8 (`$12` sign-extended high byte, `$14` low byte × 100h) added to the object's X and Y and to cinematic BG1 X and Y (16.16) |
@@ -67,6 +72,7 @@ importer will give it.
 | the fade's count | `0725`; rhythm `0723` | |
 | transformation (output) | `0078`, `007A`, `007C`, `007E` (M7A-D mirrors) | |
 | scroll (output) | `00B1`, `00B3` | |
+| music requests (output) | queue entries `0619..0628`, corresponding initial delays `0629..0638`, next index `0639` | read the slots appended between adjacent cuts by walking the previous next index to the current one in order, advancing two bytes modulo 16. At cut 32 the slots contain `$FF2D` (load, 8 frames), then `$0005` (play, 14 frames). The next index is unchanged at every other cut. |
 | a track waits (input) | music queue timers `0629..0637` | false from cut 84 |
 
 ## Harness (for the integrator)
@@ -82,9 +88,15 @@ The row is `any-fly-to-ceres` (seed at movie frame 7,512, 803 cuts). What it nee
    whether a track waits in the queue of tracks as the frame of work begins", the previous
    record's queue stepped once), not a second reader. The reference model reads the cut's own
    record's timers; the two agree on this row (the queue's last timer leaves 1 for 0 at cut 84).
-   The flight's music request at cut 32 (`$BCA0`: music data `$FF2D`, track 5 with a 14-frame
-   wait) stays U1's, as the arrival's does.
-4. **Compare at each cut from 32 to 802:** the RAM mapping's State fields and outputs. Cuts 1-31
+   The reply lets the picture appear. The flight's music requests are a separate output.
+4. **Music output at every cut after the seed.** Give the ordered requests in the flight's
+   `FrameReport` to U1 through `production::played::flight`. In the played comparison
+   use the index, entries and initial delays in the RAM mapping. Compare the fresh report
+   from this step, with an empty list on lag cuts. Keep the order and delays in the observation.
+   The front-end's sorted queue-entry comparison omits both. An empty list is also expected
+   during the wait and on the frame the picture appears. The audio queue starts each delay
+   when its request reaches the head (`$80:8F0C`).
+5. **Compare at each cut from 32 to 802:** the RAM mapping's State fields and outputs. Cuts 1-31
    are the setup frame's working values: compare only the brightness (blanked, 0). The streams
    no owner here produces, each masked with its writer:
    - CGRAM: the setup's content load at cut 32 (197 colours; AF5 content, through T1's load),
@@ -100,7 +112,7 @@ The row is `any-fly-to-ceres` (seed at movie frame 7,512, 803 cuts). What it nee
    - The BG1 tilemap: its emptying at 468 (E2) and the label's letter words (E2 from the `typed`
      output).
    - OAM and the sprites' instruction pointers: AF5's sprite programs, drawn by E1.
-5. **The join:** the flight's cut 802 is movie 8,314; the arrival's seed (`any-ceres-arrival`
+6. **The join:** the flight's cut 802 is movie 8,314; the arrival's seed (`any-ceres-arrival`
    cut 0) is movie 8,315. The flight ends `Done`, blanked at 0, which is the arrival's
    `Preparing` brightness; the frame between them (`$8B:C100`, the save) is the arrival row's
    first. The runner needs the same capture-crossing link the arrival needs into room 1.
@@ -111,7 +123,7 @@ The row is `any-fly-to-ceres` (seed at movie frame 7,512, 803 cuts). What it nee
 | --- | --- | --- |
 | S1 | 0 → 32 (the setup frame, lag 1-31) | R-setup |
 | D1 | 116 → 117 (two sprites' places, with invented drifts) | R-drift |
-| S2 | 50 → 51 | R-wait |
+| S2 | 39 → 40 | R-wait |
 | S3 | 83 → 84 | R-appear |
 | R1, R2, R3 | 84 → 85, 100 → 101, 115 → 116 | R-rush-first, R-rush-mid, R-turn |
 | A1, A2, A3 | 116 → 117, 330 → 331, 467 → 468 | R-away-first, R-away-fast, R-station |
@@ -161,6 +173,6 @@ has `old`.
 - Area fade: PictureDarkens, FlightEnds
 - Area plane: PlaneTransforms
 
-The spec-units counter reports thirteen entries, 23 arms, no cells and 25 operators, and no
+The spec-units counter reports thirteen entries, 24 arms, no cells and 25 operators, and no
 findings.
-Budget: 37.5 × 31.3 units = 1,174 (scene 662, label 125, fade 250, plane 137)
+Budget: 37.5 × 32.3 units = 1,212 (scene 700, label 125, fade 250, plane 137)

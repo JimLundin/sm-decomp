@@ -1,5 +1,5 @@
 # Reviewed ownership of vector-format rule subtrees by Parameter entry.
 # Remove the whole subtree to restore reference semantics at the vector adapter.
 [owners]
-# PictureDarkens: docs/behaviours/screens-flight.md:246; crates/clean/screens_flight/tests/vectors.rs:399
+# PictureDarkens: docs/behaviours/screens-flight.md:250; crates/clean/screens_flight/tests/vectors.rs:399
 rhythm = ["PictureDarkens"]

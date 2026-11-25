@@ -1,12 +1,14 @@
 //! One frame of the flight, in the order that matters, and what it hands the others.
 
 use types::Colour;
-use types::flight::{Brightness, FlightStage, Scene, State, TypedLetter, WholePlace, whole_pixels};
+use types::flight::{
+    Brightness, FlightStage, MusicRequest, Scene, State, TypedLetter, WholePlace, whole_pixels,
+};
 
 use crate::plane::{PlaneTransform, transform};
 use crate::rules::Rules;
 use crate::sprites::{SpriteView, drift, rush, views};
-use crate::stages::{MusicQueue, advance};
+use crate::stages::{MusicQueue, StageEvents, advance};
 
 /// What the flight hands the others this frame.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,6 +25,9 @@ pub struct FrameReport {
     pub typed: Option<TypedLetter>,
     /// The screen's brightness, to the renderer.
     pub brightness: Brightness,
+    /// Spec: `FlightIsMadeReady`. The music requests this frame, in order, to audio: load and
+    /// play the Ceres flight tune on the frame the flight is made ready, none on any other.
+    pub music: Vec<MusicRequest>,
     /// Spec: `FlightEnds`. Whether the flight is done: the next frame starts the new game.
     pub done: bool,
 }
@@ -34,7 +39,10 @@ pub struct FrameReport {
 /// every placed sprite's drift (so the turn's sprites drift on the frame they are placed); then
 /// the transformation and the scroll from what the frame left.
 pub fn step(state: &mut State, scene: &Scene, music: MusicQueue, rules: Rules) -> FrameReport {
-    let typed = advance(state, scene, music, rules);
+    let StageEvents {
+        typed,
+        music: requests,
+    } = advance(state, scene, music, rules);
     if state.stage == FlightStage::RushingIn {
         rush(&mut state.sprites, &mut state.plane);
     }
@@ -46,6 +54,7 @@ pub fn step(state: &mut State, scene: &Scene, music: MusicQueue, rules: Rules) -
         sprites: views(&state.sprites),
         typed,
         brightness: state.brightness,
+        music: requests,
         done: state.stage == FlightStage::Done,
     }
 }

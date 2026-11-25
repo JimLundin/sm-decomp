@@ -10,8 +10,9 @@ use screens_flight::{BehaviourId, MusicQueue, Rules, State, catalogue, step};
 use serde::Deserialize;
 use types::flight::{
     Angle, Brightness, BrightnessLevel, Drift, Drifter, DriftingSprite, FadeFrames, FlightSprites,
-    FlightStage, Keystroke, LabelPlace, LabelProgress, LabelStep, Plane, RushSpeed, Scene,
-    SceneSetup, SceneTurn, SpritePlacement, SpriteWrap, StarRush, TypedLetter, Visibility, Zoom,
+    FlightStage, Keystroke, LabelPlace, LabelProgress, LabelStep, MusicRequest, Plane, RushSpeed,
+    Scene, SceneSetup, SceneTurn, SpritePlacement, SpriteWrap, StarRush, TuneDelay, TypedLetter,
+    Visibility, Zoom,
 };
 use types::{Checked, Colour, Fixed, Pair, fixed};
 
@@ -165,6 +166,32 @@ struct OutputRow {
     scroll: Option<[i16; 2]>,
     typed: Option<Vec<TypedRow>>,
     done: Option<bool>,
+    music: Option<Vec<MusicRow>>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MusicRow {
+    request: String,
+    delay: u16,
+}
+
+fn music_request(row: &MusicRow) -> MusicRequest {
+    let delay = TuneDelay(row.delay);
+    match row.request.as_str() {
+        "LoadCeresFlightTune" => MusicRequest::LoadCeresFlightTune(delay),
+        "PlayCeresFlightTune" => MusicRequest::PlayCeresFlightTune(delay),
+        other => panic!("unknown music request {other}"),
+    }
+}
+
+/// The music requests a vector expects, an absent field (or an absent output) expecting none,
+/// against those the model reported.
+fn music_difference(output: Option<&OutputRow>, got: &[MusicRequest]) -> Option<String> {
+    let wanted: Vec<MusicRequest> = output
+        .and_then(|output| output.music.as_ref())
+        .map_or_else(Vec::new, |rows| rows.iter().map(music_request).collect());
+    (wanted != got).then(|| format!("music: expected {wanted:?}, got {got:?}"))
 }
 
 #[derive(Deserialize, Clone, Copy)]
@@ -413,6 +440,7 @@ fn run(vector: &Vector) -> Vec<String> {
     if actual != expected {
         differences.push(format!("state: expected {expected:?}, got {actual:?}"));
     }
+    differences.extend(music_difference(vector.output.as_ref(), &report.music));
     let Some(output) = vector.output.as_ref() else {
         return differences;
     };

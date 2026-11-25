@@ -105,7 +105,7 @@ rounds = 1
 
 [[model]]
 name = "screens-flight"
-rounds = 1
+rounds = 2
 
 [[model]]
 name = "screens-intro"

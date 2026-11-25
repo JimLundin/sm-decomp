@@ -427,6 +427,20 @@ impl From<FadeFrames> for u16 {
     }
 }
 
+/// How many frames audio waits before it carries out a music request, 0 to 65,535.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TuneDelay(pub u16);
+
+/// What the flight asks audio to do with its tune (`MusicRequest`), each request with its delay.
+/// Audio carries the requests out in the order the flight hands them over.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MusicRequest {
+    /// Load the Ceres flight tune, after this delay.
+    LoadCeresFlightTune(TuneDelay),
+    /// Play the Ceres flight tune, after this delay.
+    PlayCeresFlightTune(TuneDelay),
+}
+
 /// Everything the flight remembers from one frame to the next.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {

@@ -16,7 +16,7 @@ State: where the scene has got to, the turning plane that shows the gunship (its
 and its position across the screen), the sprites (their places and motion), the white flash,
 the label's step, the screen's brightness and the fade's count; and what it hands the renderer
 each frame (the plane's transformation, the scroll, the flash, the sprites' places, the label's
-letters).
+letters), and the music requests it hands to audio (U1).
 
 **The plane's transformation** (`PlaneTransforms`) is the rule every cinematic plane shares
 (this flight, the flight to Zebes and the station's explosion use the same one): it is
@@ -38,19 +38,19 @@ the second scene needs it.
 **What it hands the others, each frame:** the plane's transformation (four values) and its
 scroll, to the renderer (the plane's drawing is the platform's); the flash, to the renderer's colour blend; the sprites'
 places, to the sprite drawing; each letter as its step begins, to the tile writing; the screen's
-brightness, to the renderer. On the frame the flight ends, that it is done: the next frame
-starts the new game (screens-arrival).
+brightness, to the renderer. On the first finished frame it asks audio to load and play the
+Ceres flight tune. The flight reports when it is done. The next frame starts the new game
+(screens-arrival).
 
 **What it leaves.** The colours that cycle while it plays (the gunship's engine, the station's
 lights) are the colour cycles' (the plan's R4). The pictures on the plane (the gunship from the
 front, then from behind), how the picture's layers mix as each stage sets them, and the
 sprites' pictures are content, drawn by the platform, and not compared here. Loading the
 flight's content (its colours included), its length and the lag frames are the platform's (T1).
-Asking for the music and loading it are audio's (U1): a scene's music request stays U1's, and
-only the reply the flight reads, whether a track waits, is borrowed. Saving the file as the new game begins is P2's.
+Loading and playing the music are audio's (U1). The flight borrows audio's reply about whether
+a track waits. Saving the file as the new game begins is P2's.
 
-**What it replaces:** nothing. The engine has no flight: the played runner refuses a seed
-outside ordinary play.
+**What it extends.** The flight's frame report carries the music requests to audio.
 
 **Notation.** Positions are pixels across the screen, x rightward and y downward, signed 16-bit
 whole pixels with a fraction in 65,536ths (`-72.0`); a fraction written in hex is in
@@ -103,6 +103,7 @@ and restore them; a vector's `before` builds them and its `after` reads them bac
 | the sprites' places | each sprite's kind and whole-pixel place | output (the sprite drawing) |
 | a letter typed | an event: the letter and its place, as its step begins | output (the tile writing) |
 | the screen's brightness | `Brightness`, every frame | output (the renderer) |
+| the music requests | an ordered list of `MusicRequest` events, `LoadCeresFlightTune` and `PlayCeresFlightTune`, each with an unsigned 16-bit delay in frames | output (U1) |
 | the flight done | `bool`: the stage is `Done` | the caller: the next frame starts the new game |
 
 ---
@@ -113,15 +114,18 @@ and restore them; a vector's `before` builds them and its `after` reads them bac
 - kind: mechanic.
 - summary: the flight's first frame makes it ready as the scene says: the plane shows the
   gunship from the front, turned and small, and the stars are placed to rush; the screen is
-  dark and the flash black.
-- params: none (the angle, the zoom and the places are the scene's content).
+  dark and the flash black. The flight asks audio to load and play its tune.
+- params: the load delay of 8 frames and the play delay of 14 frames. The angle, zoom and places
+  come from the scene.
 - switch: Fixed.
 - `Starting`, the scene made ready with the angle `a`, the zoom `z`, the plane's place `(x, y)`
   and the rushing stars at `(p, q)` with speed `v` → the stage `WaitingForMusic`; the angle `a`,
   the zoom `z`, the plane's position `(x.0, y.0)`, fractions 0; the sprites: the rushing stars
   alone at `(p.0, q.0)` with speed `v`; the flash `(0, 0, 0)`; the brightness `Blanked` at level
-  0 [R-setup, C-setup-lit]
-- checked: oracle (recorded case S1); constructed.
+  0. The frame reports `LoadCeresFlightTune` with delay 8, then `PlayCeresFlightTune` with delay
+  14 [R-setup, C-setup-lit]
+- Any stage other than `Starting` → an empty list of music requests [R-wait, R-appear, C-done]
+- checked: oracle (recorded cases S1, S2, S3); constructed.
 
 ### PictureAppears
 - kind: mechanic.
@@ -310,9 +314,8 @@ and restore them; a vector's `before` builds them and its `after` reads them bac
 
 - **The flight's loading and its lag (T1):** how long the first frame takes, and the frames that
   lag while the music loads.
-- **Audio (U1):** asking for the flight's music as the flight is made ready and loading it; a
-  scene's music request stays U1's, as the arrival's does. Whether a track waits in the queue
-  is U1's reply, borrowed.
+- **Audio (U1)** handles the requests, loads and plays the tune and supplies the borrowed reply
+  about whether a track waits.
 - **The plane's drawing (E4, the platform):** the picture on the plane and its swap at the turn,
   how the picture's layers mix as each stage sets them; the transformation rule (§7) is to be
   lifted there when a second scene uses it.

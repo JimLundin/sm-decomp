@@ -55,7 +55,7 @@ const ROWS: [Behaviour; 13] = [
         id: BehaviourId::FlightIsMadeReady,
         summary: "the flight's first frame makes it ready: the plane shows the gunship from the \
                   front, turned and small, the stars are placed to rush, the screen is dark and \
-                  the flash black",
+                  the flash black; the flight asks audio to load and play its tune",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

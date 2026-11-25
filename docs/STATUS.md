@@ -409,7 +409,12 @@ told and whether it is done, and the letters the label types, compared from the 
 cut 32 (before it, the brightness alone). Not compared: the colour cycles (R4), CGRAM's setup load
 at cut 32, OAM, mode 7 VRAM, the BG1 tilemap's emptying, the letters' palette, priority and flips,
 and the PPU mirrors the stages write. A lagged frame stepped as finished differs at cut 1 in
-`flight.stage`. The same flight run can continue for 994 cuts, through movie frame 8,506.
+`flight.stage`. At every flight cut the run compares each appended music request and its delay in queue order.
+On cut 32 the flight asks to load the Ceres tune with a delay of 8 frames, then to play it with
+a delay of 14. The other 801 cuts issue no requests. Reversing the two requests first differs
+at cut 32 in `flight.music`. Audio supplies the reply about whether a track is waiting.
+
+The same flight run can continue for 994 cuts, through movie frame 8,506.
 At cut 803 (movie frame 8,315) the flight turns the dark screen over to the arrival while the
 frame's work is still in progress. Production carries both frame counts, brightness and the
 random sequence into the preparation. The run compares the counts at every cut and the random

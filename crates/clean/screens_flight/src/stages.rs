@@ -6,8 +6,8 @@ use core::num::Wrapping;
 
 use types::flight::{
     Angle, Brightness, BrightnessLevel, DriftingSprite, FadeFrames, FlightSprites, FlightStage,
-    Keystroke, LabelProgress, LabelStep, Plane, Scene, SceneSetup, SceneTurn, StarRush, State,
-    TypedLetter, Visibility, Zoom, place_at,
+    Keystroke, LabelProgress, LabelStep, MusicRequest, Plane, Scene, SceneSetup, SceneTurn,
+    StarRush, State, TuneDelay, TypedLetter, Visibility, Zoom, place_at,
 };
 use types::{Colour, Fixed, Pair, Parts, ZERO};
 
@@ -22,6 +22,38 @@ pub enum MusicQueue {
     /// No track waits.
     Clear,
 }
+
+/// What a stage's step hands the others this frame, as events.
+pub struct StageEvents {
+    /// Spec: `LabelIsTyped`. The letter typed as its step began, if one did.
+    pub typed: Option<TypedLetter>,
+    /// Spec: `FlightIsMadeReady`. The music requests for audio, in order; empty but on the frame
+    /// the flight is made ready.
+    pub music: Vec<MusicRequest>,
+}
+
+impl StageEvents {
+    /// Nothing handed over: no letter typed and no music asked for.
+    const NONE: Self = Self {
+        typed: None,
+        music: Vec::new(),
+    };
+
+    /// Only the letter typed, if any.
+    const fn typing(typed: Option<TypedLetter>) -> Self {
+        Self {
+            typed,
+            music: Vec::new(),
+        }
+    }
+}
+
+/// Spec: `FlightIsMadeReady`. As it is made ready, the flight asks audio to load its tune after
+/// 8 frames, then to play it after 14.
+const CERES_FLIGHT_TUNE: [MusicRequest; 2] = [
+    MusicRequest::LoadCeresFlightTune(TuneDelay(8)),
+    MusicRequest::PlayCeresFlightTune(TuneDelay(14)),
+];
 
 /// Spec: `GunshipRushesIn`. The zoom falls by this each frame of the rush.
 const RUSH_ZOOM_STEP: i16 = -16;
@@ -70,41 +102,36 @@ const PLANE_CLEARED: Plane = Plane {
 /// The screen's top-left corner, `(0.0, 0.0)`.
 const ORIGIN: Pair<Fixed> = Pair { x: ZERO, y: ZERO };
 
-/// The stage's step for this frame; the letter the label types as a step begins, if any. Only
-/// the flight away (which may bring the station's view) and the label type letters. Once done,
-/// nothing of the flight changes here.
-pub fn advance(
-    state: &mut State,
-    scene: &Scene,
-    music: MusicQueue,
-    rules: Rules,
-) -> Option<TypedLetter> {
+/// The stage's step for this frame, and what it hands the others. Only the flight away (which may
+/// bring the station's view) and the label type letters; only the first frame asks for music.
+/// Once done, nothing of the flight changes here.
+pub fn advance(state: &mut State, scene: &Scene, music: MusicQueue, rules: Rules) -> StageEvents {
     match state.stage {
-        FlightStage::FlyingAway => fly_away(state, scene, rules),
-        FlightStage::Label(progress) => type_label(state, progress, &scene.label, rules),
-        FlightStage::Starting => {
-            make_ready(state, &scene.setup);
-            None
+        FlightStage::FlyingAway => StageEvents::typing(fly_away(state, scene, rules)),
+        FlightStage::Label(progress) => {
+            StageEvents::typing(type_label(state, progress, &scene.label, rules))
         }
+        FlightStage::Starting => make_ready(state, &scene.setup),
         FlightStage::WaitingForMusic => {
             appear(state, music);
-            None
+            StageEvents::NONE
         }
         FlightStage::RushingIn => {
             rush_in(state, &scene.turn);
-            None
+            StageEvents::NONE
         }
         FlightStage::FadingOut => {
             fade_out(state, rules);
-            None
+            StageEvents::NONE
         }
-        FlightStage::Done => None,
+        FlightStage::Done => StageEvents::NONE,
     }
 }
 
 /// Spec: `FlightIsMadeReady`. The plane as the scene makes it ready, the rushing stars alone
-/// placed, the flash black and the screen dark; the fade's count is left.
-fn make_ready(state: &mut State, setup: &SceneSetup) {
+/// placed, the flash black and the screen dark; the fade's count is left. The flight asks audio
+/// to load its tune and then to play it.
+fn make_ready(state: &mut State, setup: &SceneSetup) -> StageEvents {
     state.stage = FlightStage::WaitingForMusic;
     state.plane = Plane {
         angle: setup.angle,
@@ -120,6 +147,10 @@ fn make_ready(state: &mut State, setup: &SceneSetup) {
     };
     state.flash = Colour::BLACK;
     state.brightness = Brightness::DARK;
+    StageEvents {
+        typed: None,
+        music: CERES_FLIGHT_TUNE.to_vec(),
+    }
 }
 
 /// Spec: `PictureAppears`. While a track waits nothing changes; once none does, the picture

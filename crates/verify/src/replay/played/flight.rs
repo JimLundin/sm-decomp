@@ -5,9 +5,10 @@
 //! preparation. [`BORROWED`] names the platform, audio and loading answers it reads.
 //!
 //! The comparison checks which scene is active and both counters at every cut. In flight, the
-//! random number is checked at finished cuts, and the flight's brightness at every cut. Once the
-//! setup is done, it also checks the stage, plane, transform, scroll, flash, fade, label, sprites,
-//! and letters typed. In the preparation it checks the arrival's stage, brightness and random
+//! random number is checked at finished cuts. The flight's brightness and its ordered music
+//! requests with their initial delays are checked at every cut. Once the setup is done, it
+//! also checks the stage, plane, transform, scroll, flash, fade, label, sprites and letters typed.
+//! In the preparation it checks the arrival's stage, brightness and random
 //! number at every cut. [`MASKED`] names the outputs outside this comparison.
 
 use super::{Report, Stop, arrival, frame, rows::Rows, word};
@@ -22,7 +23,9 @@ use oracle_record::FrameRecord;
 use screens_flight::{FrameReport, MusicQueue, Rules};
 use std::path::Path;
 use types::Fixed;
-use types::flight::{Drifter, FlightSprite, FlightStage, Scene, State, TypedLetter, Visibility};
+use types::flight::{
+    Drifter, FlightSprite, FlightStage, MusicRequest, Scene, State, TypedLetter, Visibility,
+};
 
 /// The streams outside the comparison and their owners.
 pub const MASKED: &[&str] = &[
@@ -55,6 +58,13 @@ const FLIGHT: u16 = 0x1e;
 const FIRST_FRAME: u16 = 0xbca0;
 /// The cinematic function while the label is typed.
 const LABEL_FUNCTION: u16 = 0xa38f;
+
+/// Audio's queue holds eight words and its write index counts bytes.
+const MUSIC_QUEUE_BYTES: u16 = 16;
+const MUSIC_QUEUE_MASK: u16 = MUSIC_QUEUE_BYTES - 1;
+const MUSIC_QUEUE_NEXT: WramWord = wram("MUSIC_QUEUE_NEXT", 0x0639);
+const MUSIC_TRACKS: WramWord = wram("MUSIC_TRACKS", 0x0619);
+const MUSIC_DELAYS: WramWord = wram("MUSIC_DELAYS", 0x0629);
 
 /// The cinematic function of each stage.
 const STAGES: [(u16, Stage); 7] = [
@@ -319,6 +329,11 @@ impl Run {
         current: &FrameRecord,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let typed = report.as_ref().and_then(|report| report.typed);
+        let music = played_music(
+            report
+                .as_ref()
+                .map_or(&[], |report| report.music.as_slice()),
+        );
         if let Some(report) = report {
             self.report = Some(report);
         }
@@ -326,7 +341,7 @@ impl Run {
             self.label_steps = self.label_steps.saturating_add(1);
         }
         let recorded = recorded(previous, current, self.label_steps)?;
-        Ok(self.report.as_ref().map_or_else(
+        let (mut expected, mut actual) = self.report.as_ref().map_or_else(
             // Not yet made ready: the record holds the setup's working values.
             || {
                 (
@@ -340,7 +355,59 @@ impl Run {
                     played(state, report, typed).observations(),
                 )
             },
-        ))
+        );
+        expected.push(music_observation(recorded_music(previous, current)?));
+        actual.push(music_observation(music));
+        Ok((expected, actual))
+    }
+}
+
+/// Read the entries appended between cuts, with their initial delays in write order.
+fn recorded_music(previous: &FrameRecord, current: &FrameRecord) -> Result<Vec<[u16; 2]>, Outcome> {
+    let next = |record: &FrameRecord| {
+        let next = word(&record.wram, MUSIC_QUEUE_NEXT)?;
+        if next < MUSIC_QUEUE_BYTES && next.is_multiple_of(2) {
+            Ok(next)
+        } else {
+            Err(data_failure(None, MUSIC_QUEUE_NEXT.name))
+        }
+    };
+    let start = next(previous)?;
+    let end = next(current)?;
+    let bytes = end.wrapping_sub(start) & MUSIC_QUEUE_MASK;
+    (0..bytes)
+        .step_by(2)
+        .map(|distance| {
+            let entry = start.wrapping_add(distance) & MUSIC_QUEUE_MASK;
+            let slot = |table: WramWord| {
+                word(
+                    &current.wram,
+                    wram(table.name, table.offset.wrapping_add(entry)),
+                )
+            };
+            Ok([slot(MUSIC_TRACKS)?, slot(MUSIC_DELAYS)?])
+        })
+        .collect()
+}
+
+fn played_music(requests: &[MusicRequest]) -> Vec<[u16; 2]> {
+    requests
+        .iter()
+        .map(|request| match request {
+            MusicRequest::LoadCeresFlightTune(delay) => [0xff2d, delay.0],
+            MusicRequest::PlayCeresFlightTune(delay) => [0x0005, delay.0],
+        })
+        .collect()
+}
+
+fn music_observation(requests: Vec<[u16; 2]>) -> Observation {
+    Observation {
+        field: "flight.music".to_owned(),
+        bytes: requests
+            .into_iter()
+            .flatten()
+            .flat_map(u16::to_le_bytes)
+            .collect(),
     }
 }
 

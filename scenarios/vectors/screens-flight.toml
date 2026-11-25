@@ -20,7 +20,9 @@
 #   plane = [x, y], sprites = { Kind = [x, y, drift, wraps] } }, label = the label's steps in
 #   order, each { letter, column, row, hold }, letter absent for a step that types none.
 # - output (optional): transform, [a, b, c, d]; scroll, [x, y]; typed, the letters typed this
-#   frame as [{ letter, column, row }]; done, bool. Absent fields are not checked.
+#   frame as [{ letter, column, row }]; done, bool; music, the requests this frame in order,
+#   each { request, delay }, with delay in frames. An absent music field expects no requests.
+#   Other absent fields are not checked.
 # - Content is invented: no place, angle, zoom, speed, drift, letter or hold of a scene is the
 #   game's. The recorded cases (named by row and cut elsewhere) keep the State as recorded and
 #   give the scene invented content, the label with the holds recorded.
@@ -34,21 +36,21 @@ entries = ["FlightIsMadeReady", "PlaneTransforms"]
 before = { stage = "Starting", angle = "00", zoom = 0, plane = [[0, "0000"], [0, "0000"]], sprites = {}, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
 inputs = { scene = { ready = { angle = "C0", zoom = 400, plane = [-50, -90], stars = [100, 70], speed = -900 } } }
 after = { stage = "WaitingForMusic", angle = "C0", zoom = 400, plane = [[-50, "0000"], [-90, "0000"]], sprites = { RushingStars = [100, "0000", 70, "0000", -900] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
-output = { transform = [0, -400, 400, 0], scroll = [-50, -90] }
+output = { transform = [0, -400, 400, 0], scroll = [-50, -90], music = [{ request = "LoadCeresFlightTune", delay = 8 }, { request = "PlayCeresFlightTune", delay = 14 }] }
 
 [[vector]]
 id = "C-setup-lit"
 source = "constructed"
 entries = ["FlightIsMadeReady", "PlaneTransforms"]
 before = { stage = "Starting", angle = "41", zoom = 300, plane = [[5, "4000"], [-3, "C000"]], sprites = {}, flash = [2, 3, 4], level = 9, screen = "Shown", count = 6 }
-inputs = { scene = { ready = { angle = "40", zoom = 1000, plane = [3, 4], stars = [5, 6], speed = 7 } } }
+inputs = { track_waits = true, scene = { ready = { angle = "40", zoom = 1000, plane = [3, 4], stars = [5, 6], speed = 7 } } }
 after = { stage = "WaitingForMusic", angle = "40", zoom = 1000, plane = [[3, "0000"], [4, "0000"]], sprites = { RushingStars = [5, "0000", 6, "0000", 7] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 6 }
-output = { transform = [0, 1000, -1000, 0], scroll = [3, 4] }
+output = { transform = [0, 1000, -1000, 0], scroll = [3, 4], music = [{ request = "LoadCeresFlightTune", delay = 8 }, { request = "PlayCeresFlightTune", delay = 14 }] }
 
 [[vector]]
 id = "R-wait"
 source = "recorded"
-entries = ["PictureAppears", "StarsRushPast"]
+entries = ["PictureAppears", "StarsRushPast", "FlightIsMadeReady"]
 before = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0000"], [-104, "0000"]], sprites = { RushingStars = [112, "0000", 87, "0000", -1024] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
 inputs = { track_waits = true }
 after = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0000"], [-104, "0000"]], sprites = { RushingStars = [112, "0000", 87, "0000", -1024] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
@@ -56,7 +58,7 @@ after = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0
 [[vector]]
 id = "R-appear"
 source = "recorded"
-entries = ["PictureAppears", "StarsRushPast"]
+entries = ["PictureAppears", "StarsRushPast", "FlightIsMadeReady"]
 before = { stage = "WaitingForMusic", angle = "E0", zoom = 512, plane = [[-72, "0000"], [-104, "0000"]], sprites = { RushingStars = [112, "0000", 87, "0000", -1024] }, flash = [0, 0, 0], level = 0, screen = "Blanked", count = 0 }
 inputs = { track_waits = false }
 after = { stage = "RushingIn", angle = "E0", zoom = 512, plane = [[-76, "8000"], [-108, "8000"]], sprites = { RushingStars = [108, "8000", 83, "8000", -896] }, flash = [0, 0, 0], level = 15, screen = "Shown", count = 0 }
@@ -250,7 +252,7 @@ output = { done = false }
 [[vector]]
 id = "C-done"
 source = "constructed"
-entries = ["FlightEnds", "PlaneTransforms"]
+entries = ["FlightEnds", "PlaneTransforms", "FlightIsMadeReady"]
 before = { stage = "Done", angle = "E0", zoom = 3, plane = [[7, "0000"], [-2, "0000"]], sprites = {}, flash = [1, 2, 3], level = 0, screen = "Blanked", count = 0 }
 inputs = { track_waits = true }
 after = { stage = "Done", angle = "E0", zoom = 3, plane = [[7, "0000"], [-2, "0000"]], sprites = {}, flash = [1, 2, 3], level = 0, screen = "Blanked", count = 0 }
