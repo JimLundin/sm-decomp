@@ -460,7 +460,13 @@ impl State {
                 passing,
             )
             .ok_or(Fault::Hud)?;
-        let mut loaded = self.load(exports.report.call, passing, content, &mut palette, &mut random)?;
+        let mut loaded = self.load(
+            exports.report.call,
+            passing,
+            content,
+            &mut palette,
+            &mut random,
+        )?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         let mut quake = enemies.quake;
         // Room loading's effects set-up, inside the building, stops the shake.

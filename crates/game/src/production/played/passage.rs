@@ -194,6 +194,7 @@ impl super::State {
     pub(super) fn load(
         &self,
         call: Option<RoomCall>,
+        passing: &Passing,
         content: &Content,
         palette: &mut Palette,
         random: &mut types::RandomSequence,
