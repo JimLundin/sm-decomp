@@ -148,12 +148,26 @@ fn compare_arrival(
         expected.push(field(native));
         actual.push(field(video.staged_enemy_tiles().unwrap_or_default()));
     }
-    if readiness == Readiness::BeamGraphics {
+    let strip = if readiness == Readiness::BeamGraphics {
+        Some((
+            "room-video.beam-tiles",
+            "room-video.beam-tile-dma",
+            0x6300..0x6380,
+        ))
+    } else if readiness == Readiness::EnemyActors {
+        Some((
+            "room-video.arrival-overlay",
+            "room-video.arrival-overlay-dma",
+            0x7000..0x7200,
+        ))
+    } else {
+        None
+    };
+    if let Some((tiles, descriptor, range)) = strip {
         let field = |words: &[u16]| Observation {
-            field: "room-video.beam-tiles".into(),
+            field: tiles.into(),
             bytes: words.iter().copied().flat_map(u16::to_le_bytes).collect(),
         };
-        let range = 0x6300..0x6380;
         let native = current
             .vram
             .get(range.clone())
@@ -163,7 +177,7 @@ fn compare_arrival(
             video.video.memory.vram.get(range).unwrap_or_default(),
         ));
         let dma = |channel: [u8; 11]| Observation {
-            field: "room-video.beam-tile-dma".into(),
+            field: descriptor.into(),
             bytes: channel[..7].to_vec(),
         };
         expected.push(dma(current.ppu.dma[1]));

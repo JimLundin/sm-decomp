@@ -334,6 +334,27 @@ impl RoomVideo {
         });
     }
 
+    /// Queue the overlay requested by the initial Ceres door actor.
+    pub(super) fn queue_overlay_tiles(&mut self, bytes: &[u8; OVERLAY_BYTES]) {
+        self.video.batch.vram.push(VramTransfer {
+            to: VramWord(0x7000),
+            step: VramStep::Row,
+            source: VramSource::Words {
+                from: BusAddress {
+                    bank: 0xb0,
+                    offset: 0xc400,
+                },
+                words: bytes
+                    .as_chunks::<2>()
+                    .0
+                    .iter()
+                    .copied()
+                    .map(u16::from_le_bytes)
+                    .collect(),
+            },
+        });
+    }
+
     /// Publish standard text tiles and advance the interrupted object upload.
     ///
     /// Returns `None` for incomplete graphics or inconsistent transfer progress.

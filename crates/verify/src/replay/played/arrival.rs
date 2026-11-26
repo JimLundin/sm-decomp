@@ -106,6 +106,12 @@ pub(super) fn start(
     if enemy_tiles_written(previous, current)?.is_some() {
         return Ok(Readiness::EnemyGraphics);
     }
+    if super::finished(current)
+        && previous.wram.get(0xe7c..0xe7e) == Some(&0xfffe_u16.to_le_bytes())
+        && current.wram.get(0xe7c..0xe7e) == Some(&0xffff_u16.to_le_bytes())
+    {
+        return Ok(Readiness::EnemyActors);
+    }
     if word(&current.wram, source::GAME_STATE)? == FADING_IN {
         return Ok(Readiness::Ready);
     }

@@ -494,6 +494,11 @@ impl<'a> Run<'a> {
                     import::start::beam_tiles(image.lorom())
                         .map_err(|_| data_failure(None, "startup beam tiles"))?,
                 ),
+                arrival_overlay: Some(Box::new(
+                    import::shaft::import(image.lorom())
+                        .map_err(|_| data_failure(None, "startup Ceres door overlay"))?
+                        .overlay,
+                )),
                 arrival_graphics: Some(
                     import::landing_site::import(image.lorom())
                         .map_err(|_| data_failure(None, "standard room graphics"))?,

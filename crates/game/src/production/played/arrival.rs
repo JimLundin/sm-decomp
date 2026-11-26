@@ -47,6 +47,8 @@ pub enum Readiness {
     RoomEffects,
     /// A requested NMI publishes the next prepared enemy tile chunk.
     EnemyGraphics,
+    /// The starting room initializes its enemy actors.
+    EnemyActors,
     /// The platform ends the first wait of the prepared room's final music service.
     FinalMusicWait,
     /// It is ready this frame.
@@ -311,7 +313,17 @@ impl super::State {
                     .ok_or(Fault::ArrivalGraphics)?;
                 self.room_video.publish(None);
             }
-            Readiness::BeamGraphics | Readiness::EnemyGraphics => {
+            Readiness::EnemyActors if work_done => {
+                if self.station.shaft_overlay {
+                    let bytes = content
+                        .arrival_overlay
+                        .as_deref()
+                        .ok_or(Fault::ArrivalGraphics)?;
+                    self.room_video.queue_overlay_tiles(bytes);
+                    self.room_video.publish();
+                }
+            }
+            Readiness::BeamGraphics | Readiness::EnemyGraphics | Readiness::EnemyActors => {
                 return Err(Fault::ArrivalGraphics);
             }
             Readiness::NotYet | Readiness::FinalMusicWait | Readiness::Ready => {}

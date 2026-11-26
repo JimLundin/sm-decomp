@@ -182,6 +182,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         shaft_raster: None,
         arrival_graphics: None,
         arrival_beam_tiles: None,
+        arrival_overlay: None,
         movement: MovementContent::new(
             poses
                 .clone()

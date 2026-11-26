@@ -122,6 +122,8 @@ pub struct Content {
     pub arrival_graphics: Option<data::assets::landing_site::Graphics>,
     /// The starting beam tiles and their cartridge source.
     pub arrival_beam_tiles: Option<(data::dma::BusAddress, Vec<u16>)>,
+    /// The starting Ceres door's overlay art, if the room uses that actor.
+    pub arrival_overlay: Option<Box<[u8; data::assets::shaft::OVERLAY_BYTES]>>,
     /// Pose bodies and cannon headings.
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.
