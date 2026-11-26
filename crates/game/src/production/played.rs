@@ -55,6 +55,7 @@ pub mod front_end;
 mod health;
 mod hud;
 pub mod intro;
+pub mod intro_missiles;
 pub mod intro_rooms;
 pub mod passage;
 pub mod quake;

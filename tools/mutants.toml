@@ -1123,3 +1123,13 @@ after = "vents.push(Vent::place(facing, vent.position, random.number.0));"
 case = "played chain-any-0008-E021 0 263"
 cut = 219
 field = "steam.vents"
+
+[[fault]]
+name = "cinematic-missile-second-draw-omitted"
+responsibility = "weapons"
+file = "crates/game/src/production/played/intro_missiles.rs"
+before = '''let second = draw(&mut next, view, content)?;'''
+after = '''let second = SpriteDraw::default();'''
+case = "weapons/intro-ordinary-missiles"
+cut = 91
+field = "weapons.intro-oam"

@@ -1,7 +1,7 @@
 //! One entry for each named behaviour in the supplied specification.
 use enum_map::{Enum, EnumMap, enum_map};
 use types::{Checked, Kind, Switch};
-/// Spec: ShotSpacing through BeamVisibility. Exhaustive catalogue identifiers.
+/// Spec: ShotSpacing through CinematicMissilePictures. Exhaustive catalogue identifiers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
 pub enum BehaviourId {
     /// Waiting between shots.
@@ -28,8 +28,18 @@ pub enum BehaviourId {
     BeamPictures,
     /// Phased, separately ordered picture producers.
     BeamVisibility,
+    /// Fresh-press release of an ordinary missile.
+    MissileRelease,
+    /// Slow launch, acceleration and point contact.
+    MissileTravel,
+    /// A stopped missile bursts in place.
+    MissileBurst,
+    /// Periodic exhaust puffs.
+    MissileExhaust,
+    /// Intro drawing of missiles and exhaust.
+    CinematicMissilePictures,
 }
-/// Spec: ShotSpacing through BeamVisibility. Catalogue metadata and vector evidence.
+/// Spec: ShotSpacing through CinematicMissilePictures. Catalogue metadata and vector evidence.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Behaviour {
     /// Matching spec entry identifier.
@@ -54,7 +64,7 @@ impl Behaviour {
         }
     }
 }
-/// Spec: ShotSpacing through BeamVisibility. One compiler-exhaustive row per entry.
+/// Spec: ShotSpacing through CinematicMissilePictures. One compiler-exhaustive row per entry.
 #[must_use]
 pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
     enum_map! {
@@ -70,5 +80,10 @@ pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
         BehaviourId::EndingShot => Behaviour::new(BehaviourId::EndingShot, "Actor contact spends a shot and completed clips disappear", Kind::Mechanic, Switch::Fixed),
         BehaviourId::BeamPictures => Behaviour::new(BehaviourId::BeamPictures, "Flight repeats a clip and a burst plays to its end", Kind::Timing, Switch::Fixed),
         BehaviourId::BeamVisibility => Behaviour::new(BehaviourId::BeamVisibility, "Beam slots alternate visibility while impacts stay visible", Kind::Mechanic, Switch::Fixed),
+        BehaviourId::MissileRelease => Behaviour::new(BehaviourId::MissileRelease, "A fresh shoot press spends one selected ordinary missile when the cannon is ready", Kind::Mechanic, Switch::Fixed),
+        BehaviourId::MissileTravel => Behaviour::new(BehaviourId::MissileTravel, "A leftward missile starts slowly, then accelerates and checks the block at its centre", Kind::Mechanic, Switch::Fixed),
+        BehaviourId::MissileBurst => Behaviour::new(BehaviourId::MissileBurst, "A stopped missile bursts at its own position", Kind::Mechanic, Switch::Fixed),
+        BehaviourId::MissileExhaust => Behaviour::new(BehaviourId::MissileExhaust, "A flying missile drops an exhaust puff every fourth update", Kind::Timing, Switch::Fixed),
+        BehaviourId::CinematicMissilePictures => Behaviour::new(BehaviourId::CinematicMissilePictures, "The intro draws flying missiles and exhaust", Kind::Timing, Switch::Fixed),
     }
 }

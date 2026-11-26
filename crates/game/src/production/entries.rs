@@ -111,13 +111,21 @@ pub(super) fn admit(
     })
 }
 
-pub(super) fn advance(
+pub(super) fn advance_intro(
     state: &mut OwnedState,
     content: &ProductionContent,
     rules: &ProductionRules,
     input: AdvanceInput<'_>,
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
+        (
+            OwnedState::IntroMissiles(state),
+            ProductionContent::IntroMissiles(content),
+            ProductionRules::IntroMissiles(rules),
+            AdvanceInput::IntroMissiles(input),
+        ) => ProductionOutputs::IntroMissiles(Box::new(super::intro_missile_scope::advance(
+            state, input, content, *rules,
+        )?)),
         (
             OwnedState::Intro(state),
             ProductionContent::Intro(content),
@@ -128,6 +136,17 @@ pub(super) fn advance(
                 .map_err(|fault| ProductionFault::Unsupported(Unsupported::Intro(fault)))?
                 .map(Box::new),
         ),
+        (state, content, rules, input) => advance(state, content, rules, input)?,
+    })
+}
+
+fn advance(
+    state: &mut OwnedState,
+    content: &ProductionContent,
+    rules: &ProductionRules,
+    input: AdvanceInput<'_>,
+) -> Result<ProductionOutputs, ProductionFault> {
+    Ok(match (state, content, rules, input) {
         (
             OwnedState::HealthTail(state),
             ProductionContent::HealthTail(content),

@@ -1,4 +1,5 @@
-//! Uncharged power beam model. Spec: HoldingShoot through BeamVisibility.
+//! Uncharged power beam and intro-fight missile model. Spec: ShotSpacing through
+//! CinematicMissilePictures.
 //! The caller owns State, imports content values, supplies World, and consumes requests.
 //!
 //! Ordinary frame protocol: call [`update`] once, dispatch its [`Event`] requests in returned
@@ -11,6 +12,12 @@
 //! do not replace the ordinary entry: spacing, preparation, muzzle probing, descending slot
 //! updates, late consumption and drawing must still occur in the specified order. Stage calls
 //! do not gate stopped time themselves; [`update`] owns that update-mode decision.
+//!
+//! Intro fight protocol (Spec: MissileRelease through CinematicMissilePictures): on each work
+//! beat call [`update_intro_fight`] in the mode the demo chose, give its candidates to the
+//! encounter and apply the identity it hits with [`encounter_hit`], then, while the intro shows
+//! Samus and her shots, call [`intro_pictures`] at each of its two drawing opportunities. A
+//! hidden beat calls none of these: weapon State, including exhaust ageing, simply holds.
 #![expect(
     clippy::doc_markdown,
     reason = "Plain spec entry ids in Spec citations are intentional, not Rust item links"
@@ -47,6 +54,20 @@ const VIEW_HIGH: i16 = 320;
 const SCREEN_HEIGHT: u16 = 256;
 const IMPACT_LOW: i16 = -48;
 const IMPACT_HIGH: i16 = 304;
+/// Spec: MissileRelease. Spacing after a released missile.
+const MISSILE_SPACING: u16 = 10;
+/// Spec: MissileRelease. Incoming-shot protection after a released missile.
+const MISSILE_PROTECTION: u16 = 20;
+/// Spec: MissileTravel. Launch base subtracted from the inherited first speed.
+const MISSILE_LAUNCH_BASE: u16 = 256;
+/// Spec: MissileTravel. Leftward speed gained on every update after launch.
+const LEFT_SPEED_GAIN: i16 = 80;
+/// Spec: MissileBurst. Cooldown cap applied when a missile bursts.
+const BURST_COOLDOWN_CAP: u16 = 20;
+/// Spec: MissileExhaust. Updates between exhaust puffs.
+const EXHAUST_INTERVAL: u16 = 4;
+/// Spec: CinematicMissilePictures. Puffs are drawn while both screen coordinates are below this.
+const VISIBLE_SCREEN_END: u16 = 256;
 
 /// Spec: FlyingBeam, BeamTrail. Adjustable parameters; other named behaviours are fixed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -92,6 +113,16 @@ impl FixedPosition {
         *self = Self::from_parts(self.integer().wrapping_add_signed(amount), self.fraction());
     }
 }
+impl ShotBody {
+    /// Spec: ShotContact. The body's integer pixel centre.
+    #[must_use]
+    pub const fn centre(&self) -> Axes<u16> {
+        Axes {
+            x: self.position.x.integer(),
+            y: self.position.y.integer(),
+        }
+    }
+}
 /// Spec: ShotSpacing. Cooldown updates before availability, including frozen cannon updates.
 ///
 /// Running CannonAndShots decrements only a signed-positive whole word, otherwise sets zero.
@@ -131,18 +162,19 @@ pub fn cannon_origin(input: &CannonInput) -> Option<(Heading, SamusCentre)> {
                 .centre
                 .0
                 .x
-                .wrapping_add(origin_word(offset.x.cast_unsigned())),
+                .wrapping_add(offset_word(offset.x.cast_unsigned())),
             y: input
                 .centre
                 .0
                 .y
-                .wrapping_add(origin_word(offset.y.cast_unsigned()))
-                .wrapping_sub(origin_word(input.muzzle.lift)),
+                .wrapping_add(offset_word(offset.y.cast_unsigned()))
+                .wrapping_sub(offset_word(input.muzzle.lift)),
         }),
     ))
 }
-/// Spec: CannonOrigin. Offset and lift storage widths do not bound the wrapping origin.
-const fn origin_word(value: u64) -> u16 {
+/// Spec: CannonOrigin, MissileExhaust. Offset and lift storage widths do not bound the
+/// wrapping pixel they displace; only the low word counts.
+const fn offset_word(value: u64) -> u16 {
     let [_, _, _, _, _, _, high, low] = value.to_be_bytes();
     u16::from_be_bytes([high, low])
 }
@@ -251,20 +283,8 @@ fn prepared_body(
         },
     };
     let clip = content.flying_clips[heading].clone();
-    // Valid imported clips always have a first frame. This total fallback is not validation
-    // and does not turn radius zero (valid content) into a missing-content sentinel.
-    let radius = content
-        .clips
-        .get(&clip)
-        .and_then(|clip| clip.frames.first())
-        .map_or(
-            Axes {
-                x: Radius(0),
-                y: Radius(0),
-            },
-            |frame| frame.radius,
-        );
     ShotBody {
+        kind: ShotKind::Beam,
         position: Axes {
             x: FixedPosition::from_parts(centre.0.x, fractions.x),
             y: FixedPosition::from_parts(centre.0.y, fractions.y),
@@ -274,7 +294,7 @@ fn prepared_body(
             x: BeamSpeed(0),
             y: BeamSpeed(0),
         },
-        radius,
+        radius: first_radius(&content.clips, &clip),
         damage: content.damage,
         trail: FrameWord(INITIAL_TRAIL),
         clip,
@@ -284,6 +304,19 @@ fn prepared_body(
         trail_appearance: old.body().and_then(|body| body.trail_appearance.clone()),
     }
 }
+/// Spec: HoldingShoot, MissileRelease. A new body takes its clip's first-frame radius.
+///
+/// Valid imported clips always have a first frame. This total fallback is not validation
+/// and does not turn radius zero (valid content) into a missing-content sentinel.
+fn first_radius(clips: &ClipLibrary, clip: &ClipId) -> Axes<Radius> {
+    clips.get(clip).and_then(|clip| clip.frames.first()).map_or(
+        Axes {
+            x: Radius(0),
+            y: Radius(0),
+        },
+        |frame| frame.radius,
+    )
+}
 /// Spec: HoldingShoot. Availability reservation uses independent count, not occupancy.
 /// Signed wrapping count-minus-five must be negative and only the cooldown's low byte must
 /// be zero (unlike spacing's signed whole-word test). Reserve count wrapping and cooldown 1.
@@ -291,21 +324,26 @@ fn prepared_body(
 /// removal decrement. Search ascending, falling back to the final slot if every damage is
 /// nonzero. These rules intentionally support independently restored count and occupancy.
 fn reserve_shot(state: &mut State, shoot: bool) -> Option<ShotSlot> {
-    if !shoot
-        || state.count.0.wrapping_sub(SLOT_COUNT).cast_signed() >= 0
-        || state.cooldown.0 & LOW_BYTE != 0
-    {
+    if !shoot || !cannon_available(state) {
         return None;
     }
     state.count.0 = state.count.0.wrapping_add(1);
     state.cooldown = FrameWord(1);
-    Some(
-        state
-            .slots
-            .iter()
-            .find(|(_, shot)| shot.body().is_none_or(|body| body.damage.value() == 0))
-            .map_or(ShotSlot::Slot4, |(slot, _)| slot),
-    )
+    Some(first_zero_damage_slot(state).unwrap_or(ShotSlot::Slot4))
+}
+/// Spec: HoldingShoot, MissileRelease. The cannon is available while signed
+/// `word(count - 5)` is negative and the spaced cooldown's low byte is zero.
+const fn cannon_available(state: &State) -> bool {
+    state.count.0.wrapping_sub(SLOT_COUNT).cast_signed() < 0 && state.cooldown.0 & LOW_BYTE == 0
+}
+/// Spec: HoldingShoot, MissileRelease. The first slot, ascending, whose damage is zero; a
+/// Free slot counts as zero damage.
+fn first_zero_damage_slot(state: &State) -> Option<ShotSlot> {
+    state
+        .slots
+        .iter()
+        .find(|(_, shot)| shot.body().is_none_or(|body| body.damage.value() == 0))
+        .map(|(slot, _)| slot)
 }
 /// Spec: FlyingBeam. Accelerate all aimed components before moving either axis.
 ///
@@ -564,12 +602,12 @@ pub fn remove_shot(shot: &mut ShotState, count: &mut ShotCount) {
 /// contact and any eligible lifetime removal; true requires the caller to remove_shot so count
 /// and free-slot trail are updated. Existing impacts only run this stage, not motion/view.
 #[must_use]
-pub fn update_clip(body: &mut ShotBody, content: &PowerBeam) -> bool {
+pub fn update_clip(body: &mut ShotBody, clips: &ClipLibrary) -> bool {
     body.remaining_hold.0 = body.remaining_hold.0.wrapping_sub(1);
     if body.remaining_hold.0 != 0 {
         return false;
     }
-    let Some(clip) = content.clips.get(&body.clip) else {
+    let Some(clip) = clips.get(&body.clip) else {
         return false;
     };
     let index = if body.next_frame.index() < clip.frames.len() {
@@ -592,60 +630,356 @@ pub fn update_clip(body: &mut ShotBody, content: &PowerBeam) -> bool {
     body.next_frame = ClipFrame::at(index.index().wrapping_add(1));
     false
 }
-/// Spec: ShotContact. One update's ordered reactions and requests, shared across slot work.
+/// Spec: ShotContact. One update's ordered reactions and requests, shared across slot work by
+/// the ordinary beam update and the intro fight's full-content update.
 struct UpdatePass<'a, W> {
     input: &'a UpdateInput,
-    content: &'a PowerBeam,
+    beam: &'a PowerBeam,
+    /// Missile content, absent when the caller supplied beam content alone.
+    missile: Option<&'a MissileContent>,
     rules: Rules,
     world: &'a mut W,
     events: Vec<Event>,
 }
-impl<W: World> UpdatePass<'_, W> {
-    /// Spec: EndingShot, FlyingBeam, BeamPictures. Complete one slot before visiting the next.
-    fn update_slot(&mut self, shot: &mut ShotState, slot: ShotSlot, count: &mut ShotCount) {
-        let Self {
-            input,
-            content,
-            rules,
-            world,
-            events,
-        } = self;
+impl<'a, W: World> UpdatePass<'a, W> {
+    /// Spec: ShotSpacing. Cooldown changes first. Stopped time then suspends a CannonAndShots
+    /// update entirely, while ShotsOnly always updates existing shots. In a running
+    /// CannonAndShots update the cannon fires, by the given weapon's rule, before every slot
+    /// updates. Returns the requests in the order they arose.
+    fn run(mut self, state: &mut State, fire: impl FnOnce(&mut Self, &mut State)) -> Vec<Event> {
+        update_spacing(
+            &mut state.cooldown,
+            self.input.mode,
+            self.input.time_stopped,
+        );
+        let running = !self.input.time_stopped;
+        match self.input.mode {
+            UpdateMode::CannonAndShots if running => {
+                fire(&mut self, state);
+                self.update_slots(state);
+            }
+            UpdateMode::CannonAndShots => {}
+            UpdateMode::ShotsOnly => self.update_slots(state),
+        }
+        self.events
+    }
+    /// Spec: BeamPictures. Each kind of shot plays clips from its own weapon's library; None
+    /// when the caller did not supply that weapon's content.
+    fn clips(&self, kind: ShotKind) -> Option<&'a ClipLibrary> {
+        match kind {
+            ShotKind::Beam => Some(&self.beam.clips),
+            ShotKind::Missile(_) => self.missile.map(|missile| &missile.clips),
+        }
+    }
+    /// Spec: ShotContact. Every slot updates in descending stable order.
+    fn update_slots(&mut self, state: &mut State) {
+        for slot in ShotSlot::DESCENDING {
+            self.update_slot(state, slot);
+        }
+    }
+    /// Spec: EndingShot, LeavingView, BeamPictures. Complete one slot before visiting the next:
+    /// a spent shot is removed; a flying one moves by its weapon's rules and leaves when far
+    /// from view; then the clip of whatever remains advances. A shot whose weapon content the
+    /// caller did not supply (a missile in a beam-only update) is held exactly as it is.
+    fn update_slot(&mut self, state: &mut State, slot: ShotSlot) {
+        let State {
+            cooldown,
+            count,
+            slots,
+            exhaust,
+        } = state;
+        let shot = &mut slots[slot];
+        // A free slot has nothing to update.
+        let Some(clips) = shot.body().and_then(|body| self.clips(body.kind)) else {
+            return;
+        };
         if matches!(shot, ShotState::Flying { consumed: true, .. }) {
             remove_shot(shot, count);
             return;
         }
         if let ShotState::Flying { body, .. } = shot {
-            update_trail(body, slot, *rules, events);
-            accelerate(body, *rules);
-            motion_axis(
-                shot,
-                slot,
-                Axis::Horizontal,
-                content,
-                input.room,
-                *world,
-                events,
-            );
-            motion_axis(
-                shot,
-                slot,
-                Axis::Vertical,
-                content,
-                input.room,
-                *world,
-                events,
-            );
-            if remove_outside_lifetime_view(shot, count, input.camera) {
+            match body.kind {
+                ShotKind::Beam => self.fly_beam(shot, slot),
+                ShotKind::Missile(_) => self.fly_missile(shot, slot, cooldown, exhaust),
+            }
+            if remove_outside_lifetime_view(shot, count, self.input.camera) {
                 return;
             }
         }
-        if shot
-            .body_mut()
-            .is_some_and(|body| update_clip(body, content))
-        {
+        if shot.body_mut().is_some_and(|body| update_clip(body, clips)) {
             remove_shot(shot, count);
         }
     }
+    /// Spec: BeamTrail, FlyingBeam, ShotContact. Trail before motion, acceleration, then
+    /// horizontal and (while still Flying) vertical motion and edge contact.
+    fn fly_beam(&mut self, shot: &mut ShotState, slot: ShotSlot) {
+        let Self {
+            input,
+            beam,
+            rules,
+            world,
+            events,
+            ..
+        } = self;
+        if let ShotState::Flying { body, .. } = shot {
+            update_trail(body, slot, *rules, events);
+            accelerate(body, *rules);
+        }
+        for axis in [Axis::Horizontal, Axis::Vertical] {
+            motion_axis(shot, slot, axis, beam, input.room, *world, events);
+        }
+    }
+    /// Spec: MissileExhaust, MissileTravel, MissileBurst. Exhaust before motion, leftward
+    /// motion, then one point contact at the moved centre, asked only when the moved x lies
+    /// within the room's horizontal extent in screens.
+    fn fly_missile(
+        &mut self,
+        shot: &mut ShotState,
+        slot: ShotSlot,
+        cooldown: &mut FrameWord,
+        exhaust: &mut [ExhaustSlot; EXHAUST_POSITIONS],
+    ) {
+        let (ShotState::Flying { body, .. }, Some(missile)) = (&mut *shot, self.missile) else {
+            return;
+        };
+        missile_exhaust(body, slot, exhaust, missile, &mut self.events);
+        missile_travel(body, self.input.inheritance);
+        let centre = body.centre();
+        if width_admits_contact(centre.x, self.input.room.0.x)
+            && self.world.contact_point(slot, centre) == ContactResponse::Blocks
+        {
+            missile_burst(shot, cooldown, &missile.impact_clip);
+        }
+    }
+    /// Spec: HoldingShoot, MuzzleContact, LeavingView. Launch the power beam, probe its muzzle,
+    /// and drop a fresh muzzle impact far from view before its first impact picture.
+    fn launch_beam(&mut self, state: &mut State) {
+        let Self {
+            input,
+            beam,
+            world,
+            events,
+            ..
+        } = self;
+        let Some(slot) = prepare_shot(state, &input.cannon, beam, events) else {
+            return;
+        };
+        muzzle_contact(&mut state.slots[slot], slot, input, beam, *world, events);
+        if matches!(state.slots[slot], ShotState::Impact { .. }) {
+            remove_outside_lifetime_view(&mut state.slots[slot], &mut state.count, input.camera);
+        }
+    }
+    /// Spec: MissileRelease. A fresh press attempts a release when the cannon is ready. The
+    /// attempt reserves cooldown 1 even when no missile, zero-damage slot or muzzle is
+    /// available; success spends one missile, counts the shot and spaces the next by ten.
+    /// The cinematic release makes no firing sound.
+    fn release_missile(
+        &mut self,
+        state: &mut State,
+        supply: MissileSupply,
+        missile: &MissileContent,
+    ) {
+        let cannon = &self.input.cannon;
+        let fresh = cannon.new_press || cannon.previous_new_press;
+        if !(supply.eligible && supply.selected && fresh && cannon_available(state)) {
+            return;
+        }
+        state.cooldown = FrameWord(1);
+        let Some(slot) = first_zero_damage_slot(state) else {
+            return;
+        };
+        if supply.ammo == 0 {
+            return;
+        }
+        let Some((heading, origin)) = cannon_origin(cannon) else {
+            return;
+        };
+        state.slots[slot] = ShotState::Flying {
+            body: missile_body(heading, origin, missile),
+            consumed: false,
+        };
+        state.count.0 = state.count.0.wrapping_add(1);
+        state.cooldown = FrameWord(MISSILE_SPACING);
+        self.events.push(Event::MissileDebit);
+        self.events
+            .push(Event::Protection(FrameWord(MISSILE_PROTECTION)));
+        if cannon.pending_aim.is_some() {
+            self.events.push(Event::PendingAimConsumed);
+        }
+        if supply.ammo == 1 || supply.cancel_after_shot {
+            self.events.push(Event::ClearSelection);
+        }
+    }
+}
+/// Spec: MissileRelease. A released missile starts at the cannon origin with zero fractions,
+/// awaiting its initial speed, with imported damage and first radius, its flight clip primed with hold
+/// 1 and its exhaust countdown at four.
+fn missile_body(heading: Heading, origin: SamusCentre, missile: &MissileContent) -> ShotBody {
+    ShotBody {
+        kind: ShotKind::Missile(MissileLaunch::Pending),
+        position: Axes {
+            x: FixedPosition::from_parts(origin.0.x, PixelFraction(0)),
+            y: FixedPosition::from_parts(origin.0.y, PixelFraction(0)),
+        },
+        heading,
+        speed: Axes {
+            x: BeamSpeed(0),
+            y: BeamSpeed(0),
+        },
+        radius: first_radius(&missile.clips, &missile.flight_clip),
+        damage: missile.damage,
+        trail: FrameWord(INITIAL_TRAIL),
+        clip: missile.flight_clip.clone(),
+        next_frame: ClipFrame::at(0),
+        remaining_hold: FrameWord(1),
+        picture: None,
+        trail_appearance: None,
+    }
+}
+/// Spec: MissileTravel. A missile launches slowly, then accelerates leftward.
+///
+/// The first movement clears the pending launch and sets the launch speed
+/// `word(low(left_whole) * 256 + high(camera_vertical_fraction) - 256)` with no vertical
+/// speed; every later movement subtracts 80, wrapping. Either way x then moves by the signed
+/// speed with FlyingBeam's fixed-point addition.
+pub fn missile_travel(body: &mut ShotBody, movement: Inheritance) {
+    body.speed.x = if body.kind == ShotKind::Missile(MissileLaunch::Pending) {
+        body.kind = ShotKind::Missile(MissileLaunch::Launched);
+        body.speed.y = BeamSpeed(0);
+        let launch = low_whole(movement.left)
+            .wrapping_add(high_fraction(movement.camera_vertical_fraction))
+            .wrapping_sub(MISSILE_LAUNCH_BASE);
+        BeamSpeed(launch.cast_signed())
+    } else {
+        BeamSpeed(body.speed.x.0.wrapping_sub(LEFT_SPEED_GAIN))
+    };
+    body.position.x.move_by(body.speed.x);
+}
+/// Spec: MissileTravel. Contact is conditional on the room's horizontal extent: World is asked
+/// only while its whole x in screens is signed-below the horizontal extent. A skipped
+/// contact still lets the missile move; during the intro fight the width is zero, so no
+/// contact is asked.
+const fn width_admits_contact(whole_x: u16, width_screens: u16) -> bool {
+    whole_x
+        .wrapping_shr(BYTE_BITS)
+        .wrapping_sub(width_screens)
+        .cast_signed()
+        < 0
+}
+/// Spec: MissileBurst. A flying missile becomes an impact where it is.
+///
+/// Unlike a beam's shifted burst, speeds, heading, picture, radii and trail countdown stay;
+/// damage becomes 8 and the impact clip is primed with hold 1. A signed-nonnegative
+/// `word(cooldown - 21)` caps cooldown at 20. The cinematic impact is silent: no impact sound
+/// is requested. Other slots are unchanged; returns whether the missile burst.
+pub fn missile_burst(shot: &mut ShotState, cooldown: &mut FrameWord, impact_clip: &ClipId) -> bool {
+    let ShotState::Flying { body, .. } = shot else {
+        return false;
+    };
+    if body.kind == ShotKind::Beam {
+        return false;
+    }
+    body.damage = IMPACT_DAMAGE;
+    body.clip = impact_clip.clone();
+    body.next_frame = ClipFrame::at(0);
+    body.remaining_hold = FrameWord(1);
+    *shot = ShotState::Impact { body: body.clone() };
+    if cooldown
+        .0
+        .wrapping_sub(BURST_COOLDOWN_CAP)
+        .wrapping_sub(1)
+        .cast_signed()
+        >= 0
+    {
+        *cooldown = FrameWord(BURST_COOLDOWN_CAP);
+    }
+    true
+}
+/// Spec: MissileBurst. Apply the encounter's hit report, after the weapons update.
+///
+/// Call it before drawing. The named flying missile bursts in place and keeps showing its
+/// flight picture through this cut; its first impact picture comes with the next weapons
+/// update. A report naming a free, beam or already bursting slot changes nothing. Returns
+/// whether it burst.
+pub fn encounter_hit(state: &mut State, slot: ShotSlot, missile: &MissileContent) -> bool {
+    missile_burst(
+        &mut state.slots[slot],
+        &mut state.cooldown,
+        &missile.impact_clip,
+    )
+}
+/// Spec: MissileExhaust. Every fourth update, before it moves, a missile drops a puff.
+///
+/// The trail countdown decrements, wrapping; at zero it restores four and requests a puff at
+/// the whole centre with the flight appearance displayed before this update's clip change.
+pub fn missile_exhaust(
+    body: &mut ShotBody,
+    slot: ShotSlot,
+    exhaust: &mut [ExhaustSlot; EXHAUST_POSITIONS],
+    missile: &MissileContent,
+    events: &mut Vec<Event>,
+) {
+    body.trail.0 = body.trail.0.wrapping_sub(1);
+    if body.trail.0 != 0 {
+        return;
+    }
+    body.trail = FrameWord(EXHAUST_INTERVAL);
+    let centre = body.centre();
+    events.push(Event::PuffRequest {
+        slot,
+        centre,
+        appearance: body.trail_appearance.clone(),
+    });
+    if let Some(appearance) = &body.trail_appearance {
+        place_puff(exhaust, centre, appearance, missile);
+    }
+}
+/// Spec: MissileExhaust. The highest free position takes the puff at the centre plus its
+/// appearance's offset, wrapping per axis, primed to show its first picture at the next
+/// presentation visit. With every position occupied the request is dropped; so is one whose
+/// appearance has no imported puff.
+fn place_puff(
+    exhaust: &mut [ExhaustSlot; EXHAUST_POSITIONS],
+    centre: Axes<u16>,
+    appearance: &TrailAppearanceId,
+    missile: &MissileContent,
+) {
+    let Some(offset) = missile.exhaust.get(appearance).map(|puff| puff.offset) else {
+        return;
+    };
+    let Some(free) = exhaust
+        .iter_mut()
+        .rev()
+        .find(|position| matches!(position, ExhaustSlot::Free))
+    else {
+        return;
+    };
+    *free = ExhaustSlot::Puff(ExhaustPuff {
+        position: Axes {
+            x: centre.x.wrapping_add(offset_word(offset.x.cast_unsigned())),
+            y: centre.y.wrapping_add(offset_word(offset.y.cast_unsigned())),
+        },
+        appearance: appearance.clone(),
+        picture: None,
+        next_frame: ClipFrame::at(0),
+        remaining_hold: FrameWord(1),
+    });
+}
+/// Spec: MissileTravel. Surviving flying ordinary missiles and their whole x, in descending
+/// slot order, after this update's motion and clip changes.
+fn missile_candidates(state: &State) -> Vec<MissileCandidate> {
+    ShotSlot::DESCENDING
+        .into_iter()
+        .filter_map(|slot| match &state.slots[slot] {
+            ShotState::Flying { body, .. } if body.kind != ShotKind::Beam => {
+                Some(MissileCandidate {
+                    slot,
+                    whole_x: body.position.x.integer(),
+                })
+            }
+            ShotState::Free { .. } | ShotState::Flying { .. } | ShotState::Impact { .. } => None,
+        })
+        .collect()
 }
 /// Spec: LeavingView. Flying and newly formed impacts share this lifetime decision, before
 /// their clip changes. Existing impacts do not use it; drawing has separate eligibility.
@@ -675,47 +1009,148 @@ fn remove_outside_lifetime_view(
 /// CannonAndShots updates spacing first; stopped time sets cooldown 32 and suspends firing,
 /// motion, removal and clips. ShotsOnly ignores stopped time, leaves cooldown unchanged and
 /// never fires. Running cannon preparation and muzzle contact precede descending slot work.
+/// Beam content alone drives it: a missile left in the table has no content here and is held
+/// as it is, so only [`update_intro_fight`] moves missiles.
 #[must_use]
 pub fn update(
     state: &mut State,
     input: &UpdateInput,
-    content: &PowerBeam,
+    beam: &PowerBeam,
     rules: Rules,
     world: &mut impl World,
 ) -> Vec<Event> {
-    let mut events = Vec::new();
-    update_spacing(&mut state.cooldown, input.mode, input.time_stopped);
-    if input.mode == UpdateMode::CannonAndShots && input.time_stopped {
-        return events;
-    }
-    if input.mode == UpdateMode::CannonAndShots
-        && let Some(slot) = prepare_shot(state, &input.cannon, content, &mut events)
-    {
-        muzzle_contact(
-            &mut state.slots[slot],
-            slot,
-            input,
-            content,
-            world,
-            &mut events,
-        );
-        // Spec: LeavingView. A fresh muzzle impact, like a flight impact, is checked
-        // after its contact and before its first impact picture.
-        if matches!(state.slots[slot], ShotState::Impact { .. }) {
-            remove_outside_lifetime_view(&mut state.slots[slot], &mut state.count, input.camera);
-        }
-    }
-    let mut pass = UpdatePass {
+    let pass = UpdatePass {
         input,
-        content,
+        beam,
+        missile: None,
         rules,
         world,
-        events,
+        events: Vec::new(),
     };
-    for slot in ShotSlot::DESCENDING {
-        pass.update_slot(&mut state.slots[slot], slot, &mut state.count);
+    pass.run(state, UpdatePass::launch_beam)
+}
+/// Spec: MissileRelease through MissileExhaust. One intro-fight weapons update.
+///
+/// The demo chooses the mode: CannonAndShots spaces the cannon and may release a missile on
+/// the lock turn; ShotsOnly leaves cooldown and the cannon alone while existing shots, beams
+/// included, keep moving. Then give the returned candidates to the encounter and apply its
+/// report with [`encounter_hit`] before drawing. Only visible beats run this.
+#[must_use]
+pub fn update_intro_fight(
+    state: &mut State,
+    input: &UpdateInput,
+    supply: MissileSupply,
+    content: &WeaponContent,
+    rules: Rules,
+    world: &mut impl World,
+) -> IntroFightUpdate {
+    let pass = UpdatePass {
+        input,
+        beam: &content.beam,
+        missile: Some(&content.missile),
+        rules,
+        world,
+        events: Vec::new(),
+    };
+    let events = pass.run(state, |pass, state| {
+        pass.release_missile(state, supply, &content.missile);
+    });
+    IntroFightUpdate {
+        events,
+        candidates: missile_candidates(state),
     }
-    pass.events
+}
+/// Spec: CinematicMissilePictures. The intro fight's final step, run only on visible beats.
+///
+/// Call it at each of the intro's two drawing opportunities. A beat on which the intro hides
+/// Samus and her shots does not run it, so exhaust does not age there. Flying ordinary missiles are drawn on either flicker phase in descending slot order, with
+/// BeamVisibility's vertical check; impacts are omitted. Each puff then ages by one visit,
+/// disappearing after its last picture, and survivors are drawn in descending position
+/// order when both screen coordinates lie in 0..256.
+pub fn intro_pictures(
+    state: &mut State,
+    view: ScreenOrigin,
+    missile: &MissileContent,
+) -> IntroPictures {
+    let missiles = ShotSlot::DESCENDING
+        .into_iter()
+        .filter_map(|slot| flying_missile_picture(&state.slots[slot], slot, view))
+        .collect();
+    let exhaust = state
+        .exhaust
+        .iter_mut()
+        .enumerate()
+        .rev()
+        .filter_map(|(position, puff)| visit_puff(puff, position, view, missile))
+        .collect();
+    IntroPictures { missiles, exhaust }
+}
+fn flying_missile_picture(
+    shot: &ShotState,
+    slot: ShotSlot,
+    view: ScreenOrigin,
+) -> Option<PictureIntent> {
+    let ShotState::Flying { body, .. } = shot else {
+        return None;
+    };
+    if body.kind == ShotKind::Beam {
+        return None;
+    }
+    let picture = body.picture.clone()?;
+    let screen = screen_centre(body.centre(), view);
+    (screen.0.y < SCREEN_HEIGHT).then_some(PictureIntent {
+        slot,
+        picture,
+        screen,
+    })
+}
+fn visit_puff(
+    exhaust: &mut ExhaustSlot,
+    position: usize,
+    view: ScreenOrigin,
+    missile: &MissileContent,
+) -> Option<ExhaustIntent> {
+    let ExhaustSlot::Puff(puff) = exhaust else {
+        return None;
+    };
+    if age_puff(puff, missile) {
+        *exhaust = ExhaustSlot::Free;
+        return None;
+    }
+    let picture = puff.picture.clone()?;
+    let screen = screen_centre(puff.position, view);
+    (screen.0.x < VISIBLE_SCREEN_END && screen.0.y < VISIBLE_SCREEN_END).then_some(ExhaustIntent {
+        position,
+        picture,
+        screen,
+    })
+}
+/// Spec: CinematicMissilePictures. A visit counts the shown picture's hold down, wrapping; at
+/// zero the next picture shows with its hold, and after the last one the puff is finished.
+/// True when the puff is finished.
+fn age_puff(puff: &mut ExhaustPuff, missile: &MissileContent) -> bool {
+    puff.remaining_hold.0 = puff.remaining_hold.0.wrapping_sub(1);
+    if puff.remaining_hold.0 != 0 {
+        return false;
+    }
+    let Some(frame) = missile
+        .exhaust
+        .get(&puff.appearance)
+        .and_then(|appearance| appearance.frames.get(puff.next_frame.index()))
+    else {
+        return true;
+    };
+    puff.picture = Some(frame.picture.clone());
+    puff.remaining_hold = FrameWord(frame.hold.get());
+    puff.next_frame = ClipFrame::at(puff.next_frame.index().wrapping_add(1));
+    false
+}
+/// Spec: BeamVisibility. Normal view subtracts its origin from the integer centre, wrapping.
+const fn screen_centre(centre: Axes<u16>, view: ScreenOrigin) -> ScreenCentre {
+    ScreenCentre(Axes {
+        x: centre.x.wrapping_sub(view.0.x),
+        y: centre.y.wrapping_sub(view.0.y),
+    })
 }
 /// Spec: BeamVisibility. Separate descending producers use caller presentation phase and view;
 /// consumed Flying remains eligible, rotating views bypass impact's normal horizontal cutoff.
@@ -749,10 +1184,7 @@ fn picture_for(
         return None;
     }
     let screen = match view {
-        DrawView::Normal(origin) => ScreenCentre(Axes {
-            x: body.position.x.integer().wrapping_sub(origin.0.x),
-            y: body.position.y.integer().wrapping_sub(origin.0.y),
-        }),
+        DrawView::Normal(origin) => screen_centre(body.centre(), *origin),
         DrawView::Rotating(centres) => centres[slot],
     };
     if screen.0.y >= SCREEN_HEIGHT {

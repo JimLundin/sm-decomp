@@ -226,10 +226,14 @@ Importer and World bridge logic are outside the clean model baseline.
 
 - Area shots (old 2604.75): ShotSpacing, HoldingShoot, CannonOrigin, InheritedMotion, MuzzleContact, FlyingBeam, ShotContact, BeamTrail, LeavingView, EndingShot, BeamPictures, BeamVisibility, Content and inputs
 
-Budget: 37.5 × 55.0 units = 2,062 (shots 2,062).
+At the same baseline the ordinary missile routines are stubs. None of the old score is
+assigned to this missile behaviour.
 
-Official count: 12 entries, 42 arms, 7 cell terms, 32 formula operators; no findings.
+- Area missiles (old 0): MissileRelease, MissileTravel, MissileBurst, MissileExhaust, CinematicMissilePictures, Missile content
 
+Budget: 37.5 × 77.0 units = 2,887 (shots 2,062, missiles 825).
+
+Official count: 17 entries, 62 arms, 7 cell terms, 38 formula operators. No findings.
 
 ## Picture eligibility and presentation boundary
 
@@ -368,3 +372,128 @@ upstream pose result rather than a complete movement reference. Prior-new contro
 with preceding newly pressed controls; SHOOT is present only81/157. The new focused movement
 publication vectors pass6/6. These do not prove engine wiring or whole movement free-run gain.
 The existing gaps remain until the producer and retained caller consumption are integrated.
+
+## Intro fight ordinary missiles
+
+| Entry | Original sources |
+| --- | --- |
+| MissileRelease | $90:AC1C–AC8C, $BE62–BF44, $BA56–BAFB, $C204/$C218, $C27B, $DCDD–DD63. The shot reserves one cooldown update before the ammo, slot and muzzle checks. The shared cannon origin consumes pending aim. The original y addition for the left standing pose is +1 px before the descriptor's 6 px lift. $90:BEEC–BEF3 skips the sound queue in a cinematic. |
+| MissileTravel | $90:B1DD–B2C6, $AF68–AFB2, $AFDD–AFE4, $B2F6–B365, $C303/$C353/$C367, $B16A–B196. The high byte of $0C7C denotes a missile that has moved. The ordinary release path has zero extra base speed. The initial update replaces the velocity before translating. Subsequent leftward updates combine -16 and -64 before translation. |
+| Missile point contact | $94:A46F–A4D8 and $A1B5. One cell at the translated whole centre is checked if signed word((x >> 8) - width_in_screens) is negative. The perpendicular word is the whole centre, without shot radius. The World bridge owns the ordered horizontal reaction and the cell addressing width. |
+| MissileBurst | $90:AE06–AE39, $93:80F8–814D, and $8B:B786–B7AA. The latter searches descending ordinary missile positions after movement and converts the first only if its whole X is below 84. $93:80F8–8104 suppresses the impact sound. $93:81E9–8240 applies the clip and its end. |
+| MissileExhaust | $90:AF75–AF87, $B657–B6A8 and $B5BB/$B609. See $93:81D1 and $9B:A3CC–A4B2 for the offset. During leftward flight the actual offset is (-4, -4) px from the pre-motion whole centre. The left exhaust stream uses $90:B5A1. The right stream points to the empty list at $B4C9, so only one puff draws. |
+| CinematicMissilePictures | $8B:A373–A389, $8E2D–8E51, $90:EB35–EB3E and $93:8254–82FC. EB35 draws Samus then calls the flying producer. The intro calls that producer again immediately after EB35. Each producer draws live missiles then exhaust, with exhaust aged by $90:B6A9–B7F4. $93:834D's impact producer is absent from this scene. |
+
+Use the shared W1 RAM mapping for shot State. A live ordinary missile has $0C18 = $8100
+and its impact has $8800. Decode the leftward clip beginning at $93:9F03 and the impact
+clip beginning at $93:A039. The impact state first points at the beginning of its clip
+with hold 1 and a still-retained flight picture. Use the pointer and the visible picture
+together when comparing this cut. Flight's one frame repeats with hold 15 and radii
+(4, 4). Impact's six frames have hold 3 and radii (8, 8). The missile uses $93:8641 damage
+100 and the burst writes damage 8. Audio owns the actual queue, which receives no shot or
+impact request from this cinematic path.
+
+Each of 18 exhaust positions uses two-byte stride. $7E:D658 is the live hold, $D6A0
+the next frame, $D6E8 the displayed tile and attributes, and $D730/$D778 the
+whole position of the only drawn puff. The right side uses $D67C/$D6C4/$D70C/$D754/$D79C.
+Its hold is zero at each compared cut. Its retained coordinates match the drawing side while a
+puff is live. Mask the idle picture, pointer and coordinates of free exhaust slots because
+they have no reader before reuse. Mask the free-shot hold and pre-instruction using the
+existing W1 rule. These masks leave the five shot trail countdowns visible after individual
+shot retirement.
+
+### Caller and replay joins
+
+Use the flashback encounter contract reviewed at 65a5c811d. The intro calls Samus and
+weapons before the encounter. W1 returns the candidate slot identities and their after-flight
+whole X in descending slot order. The encounter alone chooses the hit and returns the identity
+to W1. W1 converts it during the encounter interval. Neither owner feeds back the next cut's
+shot data. Existing C1 consumption returns a distinct report.
+
+The demo owner runs before the cannon call inside the active update. Its imported battle
+timeline supplies held and newly pressed input separately. $90:E6C9–E710 saves the movie
+controls, and its pose handler at $E91D calls $91:83C0 before $DCDD. The previous fresh input
+comes from $0E00 with the actual shoot binding $09B2. The intro POST handler at $90:E851–E864
+restores movie input before $EAD2–EAD4 updates retained history. Thus the held demo shoot and
+previous demo shoot fresh are both unsuitable substitutes for the prior fresh control read by
+weapons. On this row that prior shoot bit stays clear. All four releases originate at the
+current demo fresh input. Menu selection is established by the intro setup. Missile ammo
+at $09C6 and selection at $09D2/$0A04 belong to the equipment owner. $90:BEB4 reports
+incoming-shot protection to $18AC. It writes 20 on a successful shot and stays there during
+this fight, because the original intro update only advances $18A8 and $18AA at $8B:8E1A–8E29.
+The demo-owned pose and movement supply the cannon inputs. At the four releases the
+previous centre is (155, 115), (155, 115), (148, 115), (148, 115). Movement and the camera
+supply the left whole and vertical fractional receipts, zero at the four releases.
+
+The flashback sets the room grid to 16 by 16 cells with $8B:A39F–A3A7. It leaves $07A9,
+width in screens, zero in the witness. All 68 missile travel updates skip the World request.
+Deriving width in screens from the grid dimensions would manufacture 68 contacts. Both
+weapons and Samus movement receive the flashback room and its separately retained geometry.
+
+The stage's starting cut is any-intro-2219 cut 0 (movie 2219), with the demo and
+equipment installed and all five shots free. The following work beat enters the ordinary cannon
+mode. The first W1 firing difference is cut 91 (movie 2310). The record proof covers through
+cut 649 (movie 2868), the first hidden work beat after the hide. The latest live weapon
+cut is 409. This proof admits the intro fight only.
+
+| Row cut | W1 effect |
+| --- | --- |
+| 91, 135, 335, 376 | Ordinary missile launches. Ammo changes 900 → 899 → 898 → 897 → 896. Cooldown is 10 on each release. The first held repeat opportunity passes without a release. |
+| 94 | First exhaust spawns from the centre before this frame's motion. It has received two presentation visits by this cut. |
+| 101, 106 | Overrun cuts already include gameplay and both weapon draws. The following NMI cuts 102 and 107 commit those pictures without advancing W1 State. |
+| 109, 110 | At 109 the missile is at whole X 84 and remains flying. At 110 it bursts at whole X 78 with unchanged fixed-point centre and still holds the flight picture in State. The intro draws the exhaust and omits the burst. |
+| 152, 350, 391 | Later encounter-requested impacts. The first two impacts are at 78 + 3/16 px. The last two are at 83 + 1/2 px. |
+| 129, 171, 369, 410 | The four impacts retire at clip end. Shot count decrements and the trail countdown survives. |
+| 396, 397 | The final demo input action installs locked mode on 396 during the ordinary cannon interval. 397 is the first ShotsOnly interval. The fourth impact ages on both cuts and retires in ShotsOnly. |
+| 131, 520 | The work beat has not opened at 131. By 520 the intro beat advances and the encounter is incomplete. All shots and exhaust are absent at those cuts. Preserve the intro owner's work and draw boundaries. |
+| 648, 649 | Gameplay and the encounter get their final update before the intro hides Samus and shots at 648. 649 holds W1 State with presentation closed. The remaining ammo is unchanged and there are no live shots or puffs. |
+
+Within a visible beat the sign of $1A57 places encounter pictures either before both Samus and
+weapons or after both. It is negative throughout a visible battle in the indexed row. The two
+weapon producer visits remain successive in the shared output, with Samus drawn before them.
+The first visit runs inside Samus's drawing call. Apply the final gate after the encounter for
+both visits. Use the camera's presentation position. In this row it is static. The work
+opportunity uses the preceding gate before the encounter may hide her. A wait for the NMI of an
+already-produced work frame must preserve the prepared pictures and avoid another projectile,
+cannon or exhaust update.
+
+### Reference evidence
+
+The independent Python reference imports authored controls and content from local assets. It
+carries slot, clip, cooldown, count, exhaust and ammo through cut 649. It reads the demo's
+current control outputs from authored tape and borrows the preceding pose, centre, camera and
+equipment eligibility. It derives a hit request from the predicted ordered candidates through
+the encounter's contact rule using the independently observed preceding boss phase. The
+weapons inputs contain no ammo-debit or impact outputs. Width and the work gate come from the
+caller. Record cut kinds and the cinematic beat identify work and display opportunities.
+Cut 520 has no live weapon picture or exhaust State, so either presentation position yields
+the same W1 comparison.
+
+The 31 invented vectors separate dry or obstructed cannon attempts, late impact versus block
+impact, locks, skip boundaries, exhaust capacity and both presentation visits. The model
+matches all 650 State cuts (5,850 field-group comparisons), versus 91 cuts (3,625
+field-group comparisons) for the held cut-0 baseline. Active State matches 142/142 versus
+0/142. There are four ammo debits, 68 flight movements, four impact requests and 16 puff
+requests. The record covers 393 cannon updates and 251 ShotsOnly updates.
+
+The independent drawing comparison selects the flying missile and exhaust tile attributes
+from the committed OAM list with ordered x, y and size, and compares all 644 OAM publications
+across the checked interval. It also tests absence of the live impact's hypothetical pieces at
+their exact coordinates in 76 publications. The reference matches 644/644 versus 552/644
+for a held empty picture list. OAM for unrelated producers and all audio queues remain
+outside this reference. The existing indexed production floor still needs the model and join.
+
+Seeded faults are local options in the reference. Applying later acceleration on the launch
+beat first fails at 91 in flight x, speed and OAM. Using held shoot instead of current fresh
+shoot spends another missile at 101. Dropping the encounter request first changes the
+phase and producer output at 110. Drawing only one weapon visit loses one flight copy at
+91 and first changes exhaust State at 94. Drawing the live impact first changes output at 110
+with State still matching all 650 cuts. Substituting a screen count derived from the grid first
+produces an unearned World query on cut 91 and 68 queries total. The locked-cooldown example
+fails if ShotsOnly enters the cannon clock. The authentic fight's cooldown at lock is zero.
+
+The stale-hit vectors name a free slot, a live impact and a flying beam. The latter two
+retain their normal advance, cooldown and silence. The full exhaust vector compares all
+18 carried puffs by slot, position and clip age, so a replacement cannot pass by leaving
+the occupancy count unchanged. Re-priming the impact, bursting the beam and replacing an
+occupied exhaust position each fail their respective vector.

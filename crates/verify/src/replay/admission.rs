@@ -21,6 +21,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::SaveFileBoundaries {
         return super::save_files::admit(sources);
     }
+    if case.inputs == InputProvider::IntroMissileInputs {
+        return super::intro_missiles::admit(case, sources);
+    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);
     }

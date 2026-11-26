@@ -158,6 +158,8 @@ pub enum InputProvider {
     CinematicActorOpportunities,
     /// Ordered startup and save boundaries from pinned preceding cuts.
     SaveFileBoundaries,
+    /// Authored demo controls and borrowed cinematic weapon opportunities.
+    IntroMissileInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -337,6 +339,40 @@ pub enum ObservationId {
     /// The complete cartridge image at the selected cut.
     #[serde(rename = "save-files.battery")]
     Battery,
+    /// Carried ammunition, selection and protection.
+    #[serde(rename = "weapons.intro-stock")]
+    IntroMissileStock,
+    /// Cannon clock and shot count.
+    #[serde(rename = "weapons.intro-spacing")]
+    IntroMissileSpacing,
+    /// Five weapon slots and retained trail holds.
+    #[serde(rename = "weapons.intro-slots")]
+    IntroMissileSlots,
+    /// Live exhaust positions and clip holds.
+    #[serde(rename = "weapons.intro-exhaust")]
+    IntroMissileExhaust,
+    /// Fresh ammunition debit.
+    #[serde(rename = "weapons.intro-release")]
+    IntroMissileRelease,
+    /// Applied encounter request by weapon slot.
+    #[serde(rename = "weapons.intro-impact")]
+    IntroMissileImpact,
+    /// Exhaust requests and their pre-motion centres.
+    #[serde(rename = "weapons.intro-puffs")]
+    IntroMissilePuffs,
+    /// After-flight positions in encounter precedence.
+    #[serde(rename = "weapons.intro-candidates")]
+    IntroMissileCandidates,
+    /// Missile point contact requests.
+    #[serde(rename = "weapons.intro-point-reads")]
+    IntroMissilePoints,
+    /// Weapon launch and impact sound requests.
+    #[serde(rename = "weapons.intro-sound")]
+    IntroMissileSound,
+    /// Ordered missile and exhaust OAM bytes.
+    #[serde(rename = "weapons.intro-oam")]
+    IntroMissileOam,
+
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -839,6 +875,26 @@ macro_rules! flashback_observations {
     };
 }
 
+macro_rules! weapons_observations {
+    () => {
+        ObservationId::IntroMissileStock
+            | ObservationId::IntroMissileSpacing
+            | ObservationId::IntroMissileSlots
+            | ObservationId::IntroMissileExhaust
+            | ObservationId::IntroMissileRelease
+            | ObservationId::IntroMissileImpact
+            | ObservationId::IntroMissilePuffs
+            | ObservationId::IntroMissileCandidates
+            | ObservationId::IntroMissilePoints
+            | ObservationId::IntroMissileSound
+            | ObservationId::IntroMissileOam
+            | ObservationId::WeaponsState
+            | ObservationId::WeaponsUpdateEvents
+            | ObservationId::WeaponsFlyingPictures
+            | ObservationId::WeaponsOamInsertion
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -904,10 +960,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::HudSelected
         | O::HudOneShot
         | O::HudMapOff => Responsibility::Hud,
-        O::WeaponsState
-        | O::WeaponsUpdateEvents
-        | O::WeaponsFlyingPictures
-        | O::WeaponsOamInsertion => Responsibility::Weapons,
+        weapons_observations!() => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
         O::DrawingEnergy
         | O::TouchdownGraphics
@@ -1053,7 +1106,38 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/Exploring" => &[O::HudExplored],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
-        _ => return flashback_fields(rule).or_else(|| playback_fields(rule)),
+        _ => {
+            return flashback_fields(rule)
+                .or_else(|| playback_fields(rule))
+                .or_else(|| intro_missile_fields(rule));
+        }
+    })
+}
+
+fn intro_missile_fields(rule: &str) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    Some(match rule {
+        "weapons-projectiles/MissileRelease" => &[
+            O::IntroMissileStock,
+            O::IntroMissileSpacing,
+            O::IntroMissileRelease,
+            O::IntroMissileSound,
+        ],
+        "weapons-projectiles/MissileTravel" => &[
+            O::IntroMissileSlots,
+            O::IntroMissileCandidates,
+            O::IntroMissilePoints,
+        ],
+        "weapons-projectiles/MissileBurst" => &[
+            O::IntroMissileSlots,
+            O::IntroMissileImpact,
+            O::IntroMissileSound,
+        ],
+        "weapons-projectiles/MissileExhaust" => &[O::IntroMissileExhaust, O::IntroMissilePuffs],
+        "weapons-projectiles/CinematicMissilePictures" => {
+            &[O::IntroMissileOam, O::IntroMissileExhaust]
+        }
+        _ => return None,
     })
 }
 
@@ -1358,6 +1442,38 @@ fn flashback_provider_valid(case: &Case, recorded: bool) -> bool {
         && !case.limits.is_empty()
 }
 
+fn intro_missile_provider_valid(case: &Case, recorded: bool) -> bool {
+    use ObservationId as O;
+
+    recorded
+        && case.start == Start::CacheCut { frame: 0 }
+        && case.row == super::intro_missiles::ROW
+        && case.end.cut_inclusive == super::intro_missiles::END
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::IntroMissileInputs
+        && case.expectations.output_cut.is_none()
+        && case.expectations.fields
+            == [
+                O::IntroMissileStock,
+                O::IntroMissileSpacing,
+                O::IntroMissileSlots,
+                O::IntroMissileExhaust,
+            ]
+        && case.expectations.outputs
+            == [
+                O::IntroMissileRelease,
+                O::IntroMissileImpact,
+                O::IntroMissilePuffs,
+                O::IntroMissileCandidates,
+                O::IntroMissilePoints,
+                O::IntroMissileSound,
+                O::IntroMissileOam,
+            ]
+        && case.checkpoints
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+}
+
 fn playback_provider_valid(case: &Case, recorded: bool) -> bool {
     use ObservationId as O;
     recorded
@@ -1403,6 +1519,21 @@ fn save_files_provider_valid(case: &Case) -> bool {
         && case.checkpoints
 }
 
+fn unavailable_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    case.kind == CaseKind::Scoped
+        && matches!(
+            case.responsibilities.as_slice(),
+            [Responsibility::Blocks
+                | Responsibility::Doors
+                | Responsibility::AudioSender
+                | Responsibility::Appearance]
+        )
+        && case.rules.is_empty()
+        && observations.is_empty()
+        && !case.checkpoints
+        && !case.limits.is_empty()
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::IntroRoomJoinInputs {
@@ -1415,18 +1546,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         return early_map_provider_valid(case);
     }
     if case.inputs == InputProvider::Unavailable {
-        return case.kind == CaseKind::Scoped
-            && matches!(
-                case.responsibilities.as_slice(),
-                [Responsibility::Blocks
-                    | Responsibility::Doors
-                    | Responsibility::AudioSender
-                    | Responsibility::Appearance]
-            )
-            && case.rules.is_empty()
-            && observations.is_empty()
-            && !case.checkpoints
-            && !case.limits.is_empty();
+        return unavailable_provider_valid(case, observations);
     }
     let recorded = case.kind == CaseKind::Scoped
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -1449,6 +1569,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         ] => touchdown_provider_valid(case),
         [Responsibility::Intro] => intro_provider_valid(case, recorded),
         [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
+        [Responsibility::Weapons] => intro_missile_provider_valid(case, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Playback] => playback_provider_valid(case, recorded),
@@ -1665,6 +1786,10 @@ impl Case {
         if matches!(self.inputs, InputProvider::FlashbackInputs) {
             // The lookup's anchor is the pending-start cut. Setup itself is an opportunity
             // driven by the predecessor's press.
+            return Some(0);
+        }
+        if matches!(self.inputs, InputProvider::IntroMissileInputs) {
+            // Compare the admitted setup before the first actor turn.
             return Some(0);
         }
         match self.start {

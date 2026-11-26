@@ -153,6 +153,13 @@ impl PowerContent {
     /// # Errors
     /// Unknown clips/pictures/trails, invalid frame cursors or zero-count flying occupants.
     pub fn validate_state(&self, state: &beam::State) -> Result<(), Fault> {
+        if state
+            .exhaust
+            .iter()
+            .any(|puff| !matches!(puff, beam::ExhaustSlot::Free))
+        {
+            return Err(Fault::Applicability);
+        }
         let mut flying = false;
         for shot in state.slots.values() {
             let body = match shot {
@@ -163,6 +170,9 @@ impl PowerContent {
                 }
                 beam::ShotState::Impact { body } => body,
             };
+            if body.kind != beam::ShotKind::Beam {
+                return Err(Fault::Applicability);
+            }
             let expected_clip = match shot {
                 beam::ShotState::Flying { body, .. } => &self.model.flying_clips[body.heading],
                 beam::ShotState::Impact { .. } => &self.model.impact_clip,
@@ -240,7 +250,15 @@ impl PowerContent {
             .find(|entry| entry.id == pose)
             .ok_or(Fault::Muzzle)?
             .key;
-        let muzzle = self.assets.muzzle(key).ok_or(Fault::Muzzle)?;
+        self.muzzle_for(key)
+    }
+
+    /// Resolve a semantic pose's cannon descriptor.
+    ///
+    /// # Errors
+    /// The pose has no supported imported muzzle.
+    pub fn muzzle_for(&self, pose: types::Pose) -> Result<beam::Muzzle, Fault> {
+        let muzzle = self.assets.muzzle(pose).ok_or(Fault::Muzzle)?;
         let aim = match muzzle.aim {
             asset::MuzzleAim::Forbidden => beam::MuzzleAim::Forbidden,
             asset::MuzzleAim::PreviousAim => beam::MuzzleAim::PreviousAim,

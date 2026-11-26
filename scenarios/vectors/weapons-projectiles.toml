@@ -677,3 +677,267 @@ entries = ["BeamVisibility"]
 operation = "draw"
 before = { flicker = "Odd", view = "Rotating", view_origin = [25, 25], screen_centres = { "0" = [500, 40] }, slots = [{slot = 0, phase = "Flying", centre = [100, 300], picture = "Spark", consumed = false}] }
 after = { flying = [{slot = 0, picture = "Spark", screen = [500, 40]}], impact = [] }
+
+# Cinematic missile cases use invented content. The origin displacement is [-9, -3].
+# The flying picture Dart holds 6 updates with radii [3, 2], damage is 37, and it
+# repeats. The impact pictures Star and Fade hold 2 and 5 updates with radii [6, 6]
+# and [7, 7]. Exhaust offset is [-2, 1]. Exhaust pictures Air1 and Air2 hold for
+# 3 and 2 presentation visits. A puff's age is elapsed visits since its first picture;
+# -1 awaits the first picture. Initial shot defaults to a flying ordinary missile at [20, 27] pixels,
+# x speed -256, trail countdown 2, Dart hold 4 and next frame 1. Initial Burst values
+# are supplied in the case. Missing position fractions are zero. In shot tables x
+# and y are fixed-point integers, speed is in 1/256 px per update and hold/trail
+# are measured in gameplay updates. Unlisted expected fields are outside that case's
+# check. All five slots start free unless listed, ammo defaults to 3, cannon mode to
+# CannonAndShots, and width to one screen. contacts and candidates encode [slot, x, y]
+# and [slot, whole_x] respectively, with coordinates in pixels. debit, protection and
+# deselect stand for reports to inventory and incoming-shot protection. Pictures
+# encode [picture, x, y] in screen pixels; the picture names here are invented.
+
+[[vector]]
+id = "W-missile-press"
+source = "constructed"
+entries = ["MissileRelease", "MissileTravel", "MissileExhaust"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, fresh = true }
+after = { ammo = 2, cooldown = 10, count = 1, debit = 1, protection = 20, sounds = [], contacts = [], candidates = [[0, 20]], shots = [{ slot = 0, x = 1310720, y = 1769472, speed = -256, trail = 3, damage = 37, hold = 6, next_frame = 1, radius = [3, 2], picture = "Dart", phase = "Flying" }] }
+
+[[vector]]
+id = "W-missile-prior"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, prior = true }
+after = { ammo = 2, cooldown = 10, count = 1, debit = 1, protection = 20, sounds = [], contacts = [], candidates = [[0, 20]], shots = [{ slot = 0, x = 1310720, y = 1769472, speed = -256, trail = 3, damage = 37, hold = 6, next_frame = 1, radius = [3, 2], picture = "Dart", phase = "Flying" }] }
+
+[[vector]]
+id = "W-missile-last-ammo"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, fresh = true, ammo = 1 }
+after = { ammo = 0, cooldown = 10, count = 1, debit = 1, protection = 20, sounds = [], contacts = [], candidates = [[0, 20]], shots = [{ slot = 0, x = 1310720, y = 1769472, speed = -256, trail = 3, damage = 37, hold = 6, next_frame = 1, radius = [3, 2], picture = "Dart", phase = "Flying" }], deselect = true }
+
+[[vector]]
+id = "W-missile-cancel"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, fresh = true, cancel_on_fire = true }
+after = { ammo = 2, cooldown = 10, count = 1, debit = 1, protection = 20, sounds = [], contacts = [], candidates = [[0, 20]], shots = [{ slot = 0, x = 1310720, y = 1769472, speed = -256, trail = 3, damage = 37, hold = 6, next_frame = 1, radius = [3, 2], picture = "Dart", phase = "Flying" }], deselect = true }
+
+[[vector]]
+id = "W-missile-empty"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, fresh = true, ammo = 0 }
+after = { ammo = 0, cooldown = 1, count = 0, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-no-origin"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, fresh = true, muzzle_available = false }
+after = { ammo = 3, cooldown = 1, count = 0, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-no-slot"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { fresh = true, count = 4, shots = [{ slot = 0 }, { slot = 1 }, { slot = 2 }, { slot = 3 }, { slot = 4 }] }
+after = { ammo = 3, cooldown = 1, count = 4, debit = 0 }
+
+[[vector]]
+id = "W-missile-held"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { held = true }
+after = { ammo = 3, cooldown = 0, count = 0, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-cooling"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { fresh = true, cooldown = 2 }
+after = { ammo = 3, cooldown = 1, count = 0, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-count-cap"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { fresh = true, count = 5 }
+after = { ammo = 3, cooldown = 0, count = 5, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-ineligible"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { fresh = true, eligible = false }
+after = { ammo = 3, cooldown = 0, count = 0, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-unselected"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { fresh = true, selected = false }
+after = { ammo = 3, cooldown = 0, count = 0, debit = 0, shots = [] }
+
+[[vector]]
+id = "W-missile-locked"
+source = "constructed"
+entries = ["MissileRelease", "MissileBurst"]
+operation = "cinematic_missile_update"
+before = { mode = "ShotsOnly", fresh = true, count = 1, cooldown = 7, shots = [{ slot = 0, phase = "Impact", hold = 1, next_frame = 0, trail = 3, damage = 8 }] }
+after = { ammo = 3, count = 1, cooldown = 7, debit = 0, candidates = [], shots = [{ slot = 0, phase = "Impact", hold = 2, next_frame = 1, trail = 3, damage = 8, radius = [6, 6], picture = "Star", x = 1310720, y = 1769472, speed = -256 }] }
+
+[[vector]]
+id = "W-missile-hidden"
+source = "constructed"
+entries = ["MissileRelease"]
+operation = "cinematic_missile_update"
+before = { mode = "Hold", fresh = true, count = 1, cooldown = 7, shots = [{ slot = 0 }] }
+after = { ammo = 3, count = 1, cooldown = 7, debit = 0, contacts = [], candidates = [], shots = [{ slot = 0, x = 1310720, hold = 4 }] }
+
+[[vector]]
+id = "W-missile-drift"
+source = "constructed"
+entries = ["MissileTravel"]
+operation = "cinematic_missile_update"
+before = { x = 30, y = 30, width_screens = 0, fresh = true, drift = -128 }
+after = { contacts = [], candidates = [[0, 19]], shots = [{ slot = 0, x = 1277952, speed = -384 }] }
+
+[[vector]]
+id = "W-missile-no-grid-probe"
+source = "constructed"
+entries = ["MissileTravel"]
+operation = "cinematic_missile_update"
+before = { count = 1, width_screens = 0, block = true, shots = [{ slot = 0 }] }
+after = { contacts = [], candidates = [[0, 18]], shots = [{ slot = 0, x = 1224704, speed = -336 }] }
+
+[[vector]]
+id = "W-missile-fly"
+source = "constructed"
+entries = ["MissileTravel"]
+operation = "cinematic_missile_update"
+before = { count = 1, shots = [{ slot = 0 }] }
+after = { contacts = [[0, 18, 27]], candidates = [[0, 18]], shots = [{ slot = 0, x = 1224704, speed = -336, hold = 3, trail = 1 }] }
+
+[[vector]]
+id = "W-missile-block"
+source = "constructed"
+entries = ["MissileTravel", "MissileBurst"]
+operation = "cinematic_missile_update"
+before = { count = 1, cooldown = 30, block = true, shots = [{ slot = 0 }] }
+after = { contacts = [[0, 18, 27]], candidates = [], cooldown = 20, sounds = [], shots = [{ slot = 0, x = 1224704, speed = -336, hold = 2, next_frame = 1, trail = 1, damage = 8, phase = "Impact", radius = [6, 6], picture = "Star" }] }
+
+[[vector]]
+id = "W-missile-hit"
+source = "constructed"
+entries = ["MissileBurst"]
+operation = "cinematic_missile_update"
+before = { count = 1, cooldown = 30, hit_slot = 0, shots = [{ slot = 0 }] }
+after = { contacts = [[0, 18, 27]], candidates = [[0, 18]], hit = 0, cooldown = 20, sounds = [], shots = [{ slot = 0, x = 1224704, speed = -336, hold = 1, next_frame = 0, trail = 1, damage = 8, phase = "Impact", radius = [3, 2], picture = "Dart" }] }
+
+[[vector]]
+id = "W-missile-stale-hit"
+source = "constructed"
+entries = ["MissileBurst"]
+operation = "cinematic_missile_update"
+before = { mode = "ShotsOnly", count = 1, cooldown = 30, hit_slot = 1, shots = [{ slot = 0, phase = "Impact", hold = 2, damage = 8, radius = [6, 6], picture = "Star" }] }
+after = { count = 1, cooldown = 30, sounds = [], candidates = [], shots = [{ slot = 0, phase = "Impact", hold = 1, damage = 8, radius = [6, 6], picture = "Star", x = 1310720, y = 1769472, speed = -256, trail = 2, next_frame = 1 }] }
+
+[[vector]]
+id = "W-missile-stale-impact"
+source = "constructed"
+entries = ["MissileBurst"]
+operation = "cinematic_missile_update"
+before = { mode = "ShotsOnly", count = 1, cooldown = 30, hit_slot = 0, shots = [{ slot = 0, phase = "Impact", hold = 2, damage = 8, radius = [6, 6], picture = "Star" }] }
+after = { count = 1, cooldown = 30, sounds = [], candidates = [], shots = [{ slot = 0, phase = "Impact", hold = 1, damage = 8, radius = [6, 6], picture = "Star", x = 1310720, y = 1769472, speed = -256, trail = 2, next_frame = 1 }] }
+
+[[vector]]
+id = "W-missile-stale-beam"
+source = "constructed"
+entries = ["MissileBurst"]
+operation = "cinematic_missile_update"
+before = { mode = "ShotsOnly", count = 1, cooldown = 30, hit_slot = 0, shots = [{ slot = 0, kind = "Beam" }] }
+after = { count = 1, cooldown = 30, sounds = [], candidates = [], shots = [{ slot = 0, kind = "Beam", phase = "Flying", x = 1241088, y = 1769472, speed = -272, damage = 37, trail = 1, hold = 3, next_frame = 1, radius = [3, 2], picture = "Dart" }] }
+
+[[vector]]
+id = "W-missile-candidate-order"
+source = "constructed"
+entries = ["MissileTravel"]
+operation = "cinematic_missile_update"
+before = { count = 2, shots = [{ slot = 0 }, { slot = 4, x = 2293760 }] }
+after = { contacts = [[4, 33, 27], [0, 18, 27]], candidates = [[4, 33], [0, 18]] }
+
+[[vector]]
+id = "W-missile-exhaust"
+source = "constructed"
+entries = ["MissileExhaust", "MissileTravel"]
+operation = "cinematic_missile_update"
+before = { count = 1, shots = [{ slot = 0, trail = 1 }], puffs = [{ slot = 17, x = 4, y = 5, age = 1 }] }
+after = { exhaust = [[0, 20, 27]], puffs = [{ slot = 16, x = 18, y = 28, age = -1 }, { slot = 17, x = 4, y = 5, age = 1 }], shots = [{ slot = 0, x = 1224704, trail = 4 }] }
+
+[[vector]]
+id = "W-missile-exhaust-full"
+source = "constructed"
+entries = ["MissileExhaust"]
+operation = "cinematic_missile_update"
+before = { count = 1, shots = [{ slot = 0, trail = 1 }], puffs = [{ slot = 0, x = 40, y = 60, age = 0 }, { slot = 1, x = 41, y = 61, age = 1 }, { slot = 2, x = 42, y = 62, age = 2 }, { slot = 3, x = 43, y = 63, age = 3 }, { slot = 4, x = 44, y = 64, age = 4 }, { slot = 5, x = 45, y = 65, age = 0 }, { slot = 6, x = 46, y = 66, age = 1 }, { slot = 7, x = 47, y = 67, age = 2 }, { slot = 8, x = 48, y = 68, age = 3 }, { slot = 9, x = 49, y = 69, age = 4 }, { slot = 10, x = 50, y = 70, age = 0 }, { slot = 11, x = 51, y = 71, age = 1 }, { slot = 12, x = 52, y = 72, age = 2 }, { slot = 13, x = 53, y = 73, age = 3 }, { slot = 14, x = 54, y = 74, age = 4 }, { slot = 15, x = 55, y = 75, age = 0 }, { slot = 16, x = 56, y = 76, age = 1 }, { slot = 17, x = 57, y = 77, age = 2 }] }
+after = { exhaust = [[0, 20, 27]], puffs = [{ slot = 0, x = 40, y = 60, age = 0 }, { slot = 1, x = 41, y = 61, age = 1 }, { slot = 2, x = 42, y = 62, age = 2 }, { slot = 3, x = 43, y = 63, age = 3 }, { slot = 4, x = 44, y = 64, age = 4 }, { slot = 5, x = 45, y = 65, age = 0 }, { slot = 6, x = 46, y = 66, age = 1 }, { slot = 7, x = 47, y = 67, age = 2 }, { slot = 8, x = 48, y = 68, age = 3 }, { slot = 9, x = 49, y = 69, age = 4 }, { slot = 10, x = 50, y = 70, age = 0 }, { slot = 11, x = 51, y = 71, age = 1 }, { slot = 12, x = 52, y = 72, age = 2 }, { slot = 13, x = 53, y = 73, age = 3 }, { slot = 14, x = 54, y = 74, age = 4 }, { slot = 15, x = 55, y = 75, age = 0 }, { slot = 16, x = 56, y = 76, age = 1 }, { slot = 17, x = 57, y = 77, age = 2 }], shots = [{ slot = 0, trail = 4 }] }
+
+[[vector]]
+id = "W-missile-draw-first"
+source = "constructed"
+entries = ["CinematicMissilePictures"]
+operation = "cinematic_missile_draw"
+before = { visits = 1, shots = [{ slot = 0 }], puffs = [{ slot = 17, x = 18, y = 28, age = -1 }] }
+after = { pictures = [["Dart", 20, 27], ["Air1", 18, 28]], puffs = [{ slot = 17, x = 18, y = 28, age = 0 }] }
+
+[[vector]]
+id = "W-missile-draw-twice"
+source = "constructed"
+entries = ["CinematicMissilePictures"]
+operation = "cinematic_missile_draw"
+before = { visits = 2, shots = [{ slot = 0 }, { slot = 2, x = 1441792 }], puffs = [{ slot = 17, x = 18, y = 28, age = -1 }], view = [2, 3] }
+after = { pictures = [["Dart", 20, 24], ["Dart", 18, 24], ["Air1", 16, 25], ["Dart", 20, 24], ["Dart", 18, 24], ["Air1", 16, 25]], puffs = [{ slot = 17, x = 18, y = 28, age = 1 }] }
+
+[[vector]]
+id = "W-missile-draw-retire"
+source = "constructed"
+entries = ["CinematicMissilePictures"]
+operation = "cinematic_missile_draw"
+before = { visits = 2, puffs = [{ slot = 17, x = 18, y = 28, age = 4 }, { slot = 16, x = 256, y = 28, age = 0 }] }
+after = { pictures = [], puffs = [{ slot = 16, x = 256, y = 28, age = 2 }] }
+
+[[vector]]
+id = "W-missile-draw-clip"
+source = "constructed"
+entries = ["CinematicMissilePictures"]
+operation = "cinematic_missile_draw"
+before = { visits = 2, puffs = [{ slot = 17, x = 18, y = 28, age = 2 }] }
+after = { pictures = [["Air2", 18, 28], ["Air2", 18, 28]], puffs = [{ slot = 17, x = 18, y = 28, age = 4 }] }
+
+[[vector]]
+id = "W-missile-draw-impact"
+source = "constructed"
+entries = ["CinematicMissilePictures"]
+operation = "cinematic_missile_draw"
+before = { visits = 2, shots = [{ slot = 0, phase = "Impact", picture = "Dart" }], puffs = [{ slot = 17, x = 18, y = 28, age = 0 }] }
+after = { pictures = [["Air1", 18, 28], ["Air1", 18, 28]], puffs = [{ slot = 17, x = 18, y = 28, age = 2 }] }
+
+[[vector]]
+id = "W-missile-draw-hidden"
+source = "constructed"
+entries = ["CinematicMissilePictures"]
+operation = "cinematic_missile_draw"
+before = { visits = 0, shots = [{ slot = 0 }], puffs = [{ slot = 17, x = 18, y = 28, age = 0 }] }
+after = { pictures = [], puffs = [{ slot = 17, x = 18, y = 28, age = 0 }] }

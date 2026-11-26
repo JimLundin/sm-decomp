@@ -689,3 +689,43 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/save_files.rs" },
   { role = "navigation", path = "crates/verify/src/replay/save_files.rs" },
 ]
+
+[[rule]]
+id = "weapons-projectiles/MissileRelease"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/intro_missile_scope.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/intro_missiles.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/MissileTravel"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/intro_missile_scope.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/intro_missiles.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/MissileBurst"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/intro_missile_scope.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/intro_missiles.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/MissileExhaust"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/intro_missile_scope.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/intro_missiles.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/CinematicMissilePictures"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/intro_missile_scope.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/intro_missiles.rs" },
+]

@@ -126,6 +126,22 @@ impl QuietBeamWorld {
         })
     }
 
+    /// Answer a missile's whole-centre contact within this grid.
+    ///
+    /// # Errors
+    /// The centre lies outside the grid or the cell requires a reaction.
+    pub fn missile_point(
+        &self,
+        centre: beam::Axes<u16>,
+    ) -> Result<beam::ContactResponse, ProductionFault> {
+        let row = centre.y / BLOCK_PIXELS;
+        let column = centre.x / BLOCK_PIXELS;
+        if row >= self.height || column >= self.width {
+            return Err(unsupported(Unsupported::BeamContinuation));
+        }
+        self.response(row, column)
+    }
+
     fn response(&self, row: u16, column: u16) -> Result<beam::ContactResponse, ProductionFault> {
         let cell = usize::from(row)
             .checked_mul(usize::from(self.width))
@@ -270,6 +286,16 @@ struct CandidateWorld<'a> {
 }
 
 impl beam::World for CandidateWorld<'_> {
+    fn contact_point(
+        &mut self,
+        _slot: beam::ShotSlot,
+        _centre: beam::Axes<u16>,
+    ) -> beam::ContactResponse {
+        self.fault
+            .get_or_insert_with(|| unsupported(Unsupported::BeamContinuation));
+        beam::ContactResponse::Passes
+    }
+
     fn contact_cell(&mut self, contact: &beam::Contact, ordinal: u16) -> beam::ContactResponse {
         let start = contact.perpendicular_start >> 4;
         let perpendicular = start.checked_add(ordinal);

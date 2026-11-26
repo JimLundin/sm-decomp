@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "6902f786022dd2128f2f2c48a53a3c8f8a691d7f25a95f940276af58c6cadc1d"
+index_sha256 = "cead40deb449a28406f902df525a718a97d0243e4d306d03eafe8db5d0d2f981"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1004,3 +1004,21 @@ null_fields = 1
 restorations = 27
 pending_boundaries = 2
 pending_restorations = 2
+
+[[case]]
+id = "weapons/intro-ordinary-missiles"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "31a46f0b45703506d7ff770b80302d4ee546c19d46d0c9f9358d0cfe4dbcb04c"
+
+[case.counts]
+cuts = 650
+fields = 2600
+outputs = 4550
+publications = 0
+replies = 0
+null_cuts = 91
+null_fields = 1258
+restorations = 650
+pending_boundaries = 0
+pending_restorations = 0

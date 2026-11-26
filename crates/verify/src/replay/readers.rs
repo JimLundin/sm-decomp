@@ -16,6 +16,7 @@ pub(super) enum InputReader {
     Flashback(super::flashback::Inputs),
     Playback(Vec<game::production::playback::Cut>),
     SaveFiles(Box<super::save_files::Inputs>),
+    IntroMissiles(super::intro_missiles::Inputs),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -35,6 +36,7 @@ pub(super) enum ExpectedReader {
     Flashback(super::flashback::Expectations),
     Playback(Vec<ExpectedCut>),
     SaveFiles(super::save_files::Expected),
+    IntroMissiles(super::intro_missiles::Expected),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
     SenderOffer(Vec<Observation>),
@@ -52,6 +54,7 @@ pub(super) enum ActualReader {
     Flashback,
     Playback,
     SaveFiles,
+    IntroMissiles,
     EarlyMap,
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
@@ -103,6 +106,7 @@ impl InputReader {
             Self::Flashback(inputs) => inputs.advance(production, cut),
             Self::Playback(inputs) => super::playback::advance(production, inputs, cut),
             Self::SaveFiles(inputs) => inputs.advance(production, cut),
+            Self::IntroMissiles(inputs) => inputs.advance(production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
@@ -184,6 +188,11 @@ impl ActualReader {
                 Ok(vec![super::save_files::observed(output.image)])
             }
             (
+                Self::IntroMissiles,
+                InputReader::IntroMissiles(_),
+                ProductionOutputs::IntroMissiles(output),
+            ) => super::intro_missiles::actual(production, Some(&output)),
+            (
                 Self::HealthTail,
                 InputReader::HealthTail(_),
                 ProductionOutputs::HealthTail(outputs),
@@ -260,6 +269,7 @@ impl ActualReader {
                 .map(super::save_files::observed)
                 .map(|battery| vec![battery])
                 .ok_or_else(|| data_failure(None, "battery null scope")),
+            Self::IntroMissiles => super::intro_missiles::actual(production, None),
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
@@ -310,6 +320,7 @@ impl ExpectedReader {
             Self::Flashback(expected) => expected.at(cut),
             Self::Playback(expected) => super::playback::at(expected, cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
+            Self::IntroMissiles(expected) => expected.at(cut),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),

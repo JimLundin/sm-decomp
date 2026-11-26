@@ -2,6 +2,7 @@
 //! other operations intentionally observe only the named isolated cut and expected fields.
 //! Invented content is valid even when a stage does not read all its clips.
 use super::*;
+use core::num;
 use enum_map::{Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -14,7 +15,7 @@ const TEST_POSITION: [u32; 2] = [6_553_600, 13_107_200];
 const TEST_DAMAGE: u16 = 12;
 const TEST_ROOM: [u16; 2] = [4, 4];
 const TEST_SLOTS: usize = 5;
-const SUPPLIED_CASES: usize = 81;
+const SUPPLIED_CASES: usize = 112;
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Suite {
@@ -306,8 +307,394 @@ fn invented_content(r: Axes<Radius>) -> PowerBeam {
         .collect(),
     }
 }
+// Invented cinematic missile content, as the vector file's missile notes describe it.
+const MISSILE_DAMAGE: u16 = 37;
+const MISSILE_ORIGIN: [i64; 2] = [-9, -3];
+const SAMUS_X: u16 = 30;
+const SAMUS_Y: u16 = 30;
+const MISSILE_AT: [u32; 2] = [1_310_720, 1_769_472];
+const MISSILE_SPEED: i16 = -256;
+const MISSILE_TRAIL: u16 = 2;
+const MISSILE_HOLD: u16 = 4;
+const MISSILE_NEXT: usize = 1;
+const MISSILE_AMMO: u16 = 3;
+const DART_HOLD: u16 = 6;
+const STAR_HOLD: u16 = 2;
+const FADE_HOLD: u16 = 5;
+const STAR_RADIUS: [u8; 2] = [6, 6];
+const FADE_RADIUS: [u8; 2] = [7, 7];
+const EXHAUST_OFFSET: [i64; 2] = [-2, 1];
+const AIR1_HOLD: u16 = 3;
+const AIR2_HOLD: u16 = 2;
+const PLUME: &str = "Plume";
+const BYTE: u32 = 8;
+const BYTE_MASK: u16 = 255;
+fn missile_frame(hold: u16, picture: &str, r: [u8; 2], appearance: Option<&str>) -> Frame {
+    Frame {
+        hold: FrameHold(hold),
+        picture: PictureId(picture.into()),
+        radius: radius(r),
+        trail_appearance: appearance.map(|a| TrailAppearanceId(a.into())),
+    }
+}
+fn exhaust_frame(hold: u16, picture: &str) -> ExhaustFrame {
+    ExhaustFrame {
+        hold: num::NonZeroU16::new(hold).expect("invented exhaust holds are positive"),
+        picture: PictureId(picture.into()),
+    }
+}
+fn missile_content() -> MissileContent {
+    let flight = Clip {
+        frames: vec![missile_frame(DART_HOLD, "Dart", TEST_RADIUS, Some(PLUME))],
+        ending: ClipEnding::RepeatFrom(ClipFrame::at(0)),
+    };
+    let impact = Clip {
+        frames: vec![
+            missile_frame(STAR_HOLD, "Star", STAR_RADIUS, None),
+            missile_frame(FADE_HOLD, "Fade", FADE_RADIUS, None),
+        ],
+        ending: ClipEnding::Remove,
+    };
+    MissileContent {
+        damage: Damage(MISSILE_DAMAGE),
+        flight_clip: ClipId("Flight".into()),
+        impact_clip: ClipId("Burst".into()),
+        clips: [
+            (ClipId("Flight".into()), flight),
+            (ClipId("Burst".into()), impact),
+        ]
+        .into_iter()
+        .collect(),
+        exhaust: std::iter::once((
+            TrailAppearanceId(PLUME.into()),
+            ExhaustAppearance {
+                offset: offset(EXHAUST_OFFSET),
+                frames: vec![
+                    exhaust_frame(AIR1_HOLD, "Air1"),
+                    exhaust_frame(AIR2_HOLD, "Air2"),
+                ],
+            },
+        ))
+        .collect(),
+    }
+}
+fn arsenal(beam: PowerBeam) -> WeaponContent {
+    WeaponContent {
+        beam,
+        missile: missile_content(),
+    }
+}
+fn intro_shot(v: Value) -> Result<(ShotSlot, ShotState), String> {
+    let mut f = Fields::new(v)?;
+    let slot = slot(f.required("slot")?)?;
+    let kind = match f.or("kind", "Missile".to_owned())?.as_str() {
+        "Missile" => ShotKind::Missile(MissileLaunch::Launched),
+        "Beam" => ShotKind::Beam,
+        _ => return Err("unknown kind".into()),
+    };
+    let impact = match f.or("phase", "Flying".to_owned())?.as_str() {
+        "Flying" => false,
+        "Impact" => true,
+        _ => return Err("unknown phase".into()),
+    };
+    let clip = match (kind, impact) {
+        (ShotKind::Beam, false) => "Power",
+        (ShotKind::Beam, true) => "Impact",
+        (ShotKind::Missile(_), false) => "Flight",
+        (ShotKind::Missile(_), true) => "Burst",
+    };
+    let [x, y] = MISSILE_AT;
+    let body = ShotBody {
+        kind,
+        position: Axes {
+            x: FixedPosition(f.or("x", x)?),
+            y: FixedPosition(f.or("y", y)?),
+        },
+        heading: Heading::Left,
+        speed: Axes {
+            x: BeamSpeed(f.or("speed", MISSILE_SPEED)?),
+            y: BeamSpeed(0),
+        },
+        radius: radius(f.or("radius", TEST_RADIUS)?),
+        damage: Damage::try_from(f.or::<u16>("damage", MISSILE_DAMAGE)?).map_err(str::to_owned)?,
+        trail: FrameWord(f.or("trail", MISSILE_TRAIL)?),
+        clip: ClipId(clip.into()),
+        next_frame: ClipFrame::at(f.or("next_frame", MISSILE_NEXT)?),
+        remaining_hold: FrameWord(f.or("hold", MISSILE_HOLD)?),
+        picture: Some(PictureId(f.or("picture", "Dart".to_owned())?)),
+        trail_appearance: Some(TrailAppearanceId(PLUME.into())),
+    };
+    f.finish()?;
+    let shot = if impact {
+        ShotState::Impact { body }
+    } else {
+        ShotState::Flying {
+            body,
+            consumed: false,
+        }
+    };
+    Ok((slot, shot))
+}
+fn intro_shot_value(slot: ShotSlot, shot: &ShotState) -> Option<Value> {
+    let b = shot.body()?;
+    let kind = if b.kind == ShotKind::Beam {
+        "Beam"
+    } else {
+        "Missile"
+    };
+    Some(
+        object!("slot":slot_number(slot),"kind":kind,"phase":phase(shot),"x":b.position.x.0,"y":b.position.y.0,"speed":b.speed.x.0,"trail":b.trail.0,"damage":b.damage.value(),"hold":b.remaining_hold.0,"next_frame":b.next_frame.index(),"radius":pair(b.radius).map(|v|v.0),"picture":b.picture.as_ref().map_or("None",|p|p.0.as_str())),
+    )
+}
+// A puff's fixture age counts visits since its first picture; -1 awaits that picture.
+fn exhaust_clip_position(
+    age: i64,
+    frames: &[ExhaustFrame],
+) -> Result<(Option<PictureId>, usize, u16), String> {
+    if age < 0 {
+        return Ok((None, 0, 1));
+    }
+    let mut start: i64 = 0;
+    for (index, frame) in frames.iter().enumerate() {
+        let end = start.wrapping_add(i64::from(frame.hold.get()));
+        if age < end {
+            let remaining = u16::try_from(end.wrapping_sub(age)).map_err(|e| e.to_string())?;
+            return Ok((
+                Some(frame.picture.clone()),
+                index.wrapping_add(1),
+                remaining,
+            ));
+        }
+        start = end;
+    }
+    Err("age beyond exhaust clip".into())
+}
+fn exhaust_age(puff: &ExhaustPuff, frames: &[ExhaustFrame]) -> i64 {
+    if puff.picture.is_none() {
+        return -1;
+    }
+    let held = frames
+        .iter()
+        .take(puff.next_frame.index())
+        .map(|f| i64::from(f.hold.get()))
+        .fold(0_i64, i64::wrapping_add);
+    held.wrapping_sub(i64::from(puff.remaining_hold.0))
+}
+fn plume_frames(missile: &MissileContent) -> &[ExhaustFrame] {
+    &missile.exhaust[&TrailAppearanceId(PLUME.into())].frames
+}
+fn intro_puff(v: Value, frames: &[ExhaustFrame]) -> Result<(usize, ExhaustSlot), String> {
+    let mut f = Fields::new(v)?;
+    let position: usize = f.required("slot")?;
+    if position >= EXHAUST_POSITIONS {
+        return Err("invalid exhaust position".into());
+    }
+    let at = Axes {
+        x: f.required("x")?,
+        y: f.required("y")?,
+    };
+    let (picture, next, remaining) = exhaust_clip_position(f.required("age")?, frames)?;
+    f.finish()?;
+    Ok((
+        position,
+        ExhaustSlot::Puff(ExhaustPuff {
+            position: at,
+            appearance: TrailAppearanceId(PLUME.into()),
+            picture,
+            next_frame: ClipFrame::at(next),
+            remaining_hold: FrameWord(remaining),
+        }),
+    ))
+}
+fn puffs_value(s: &State, frames: &[ExhaustFrame]) -> Vec<Value> {
+    s.exhaust
+        .iter()
+        .enumerate()
+        .filter_map(|(position, e)| match e {
+            ExhaustSlot::Puff(p) => Some(
+                object!("slot":position,"x":p.position.x,"y":p.position.y,"age":exhaust_age(p,frames)),
+            ),
+            ExhaustSlot::Free => None,
+        })
+        .collect()
+}
+fn intro_state(f: &mut Fields, missile: &MissileContent) -> Result<State, String> {
+    let mut s = empty_state();
+    s.count = ShotCount(f.or("count", 0)?);
+    s.cooldown = FrameWord(f.or("cooldown", 0)?);
+    for v in f.or::<Vec<Value>>("shots", vec![])? {
+        let (slot, shot) = intro_shot(v)?;
+        s.slots[slot] = shot;
+    }
+    for v in f.or::<Vec<Value>>("puffs", vec![])? {
+        let (position, puff) = intro_puff(v, plume_frames(missile))?;
+        s.exhaust[position] = puff;
+    }
+    Ok(s)
+}
+fn intro_input(f: &mut Fields, mode: UpdateMode) -> Result<UpdateInput, String> {
+    let drift = f.or::<i16>("drift", 0)?.cast_unsigned();
+    let flat = offset(MISSILE_ORIGIN);
+    let aim = if f.or("muzzle_available", true)? {
+        MuzzleAim::Aimed(Heading::Left)
+    } else {
+        MuzzleAim::Forbidden
+    };
+    let width = f.or("width_screens", 1)?;
+    let cannon = CannonInput {
+        shoot: f.or("held", false)?,
+        new_press: f.or("fresh", false)?,
+        previous_new_press: f.or("prior", false)?,
+        muzzle: Muzzle {
+            aim,
+            lift: 0,
+            stationary: EnumMap::from_fn(|_| flat),
+            moving: EnumMap::from_fn(|_| flat),
+        },
+        previous_muzzle: MuzzleAim::Forbidden,
+        moving_muzzle: false,
+        pending_aim: None,
+        centre: SamusCentre(Axes {
+            x: f.or("x", SAMUS_X)?,
+            y: f.or("y", SAMUS_Y)?,
+        }),
+    };
+    let mut inheritance = Inheritance::stationary();
+    // The drift fixture is the launch's signed `low(left_whole) * 256 + high(fraction)`.
+    inheritance.left.whole = drift.wrapping_shr(BYTE);
+    inheritance.camera_vertical_fraction = PixelFraction((drift & BYTE_MASK).wrapping_shl(BYTE));
+    Ok(UpdateInput {
+        mode,
+        time_stopped: false,
+        cannon,
+        inheritance,
+        camera: ScreenOrigin(axes([0, 0])),
+        room: RoomScreens(axes([width, width])),
+    })
+}
+fn intro_update(f: &mut Fields) -> Result<Value, String> {
+    let content = arsenal(invented_content(radius(TEST_RADIUS)));
+    let mut s = intro_state(f, &content.missile)?;
+    // Hold is a hidden beat: the intro skips the whole weapons step.
+    let mode = match f.or("mode", "CannonAndShots".to_owned())?.as_str() {
+        "CannonAndShots" => Some(UpdateMode::CannonAndShots),
+        "ShotsOnly" => Some(UpdateMode::ShotsOnly),
+        "Hold" => None,
+        _ => return Err("unknown mode".into()),
+    };
+    let input = intro_input(f, mode.unwrap_or(UpdateMode::ShotsOnly))?;
+    let supply = MissileSupply {
+        eligible: f.or("eligible", true)?,
+        selected: f.or("selected", true)?,
+        ammo: f.or("ammo", MISSILE_AMMO)?,
+        cancel_after_shot: f.or("cancel_on_fire", false)?,
+    };
+    let mut world = ScriptedWorld::new(vec![]);
+    world.point_blocks = f.or("block", false)?;
+    let hit_slot = f.take::<usize>("hit_slot")?;
+    let outcome = match mode {
+        Some(_) => update_intro_fight(
+            &mut s,
+            &input,
+            supply,
+            &content,
+            Rules::REFERENCE,
+            &mut world,
+        ),
+        None => IntroFightUpdate {
+            events: vec![],
+            candidates: vec![],
+        },
+    };
+    let hit = match hit_slot {
+        Some(index) => encounter_hit(&mut s, slot(index)?, &content.missile).then_some(index),
+        None => None,
+    };
+    let restored: State = value(&s)
+        .try_into()
+        .map_err(|e: toml::de::Error| e.to_string())?;
+    assert_eq!(s, restored, "complete State serde roundtrip");
+    let mut out = intro_outcome(&s, &outcome, &world, supply, &content.missile);
+    if let (Value::Table(table), Some(index)) = (&mut out, hit) {
+        table.insert("hit".into(), value(index));
+    }
+    Ok(out)
+}
+fn intro_outcome(
+    s: &State,
+    outcome: &IntroFightUpdate,
+    world: &ScriptedWorld,
+    supply: MissileSupply,
+    missile: &MissileContent,
+) -> Value {
+    let events = &outcome.events;
+    let debit = events.iter().filter(|e| **e == Event::MissileDebit).count();
+    let protection = events
+        .iter()
+        .find_map(|e| {
+            if let Event::Protection(n) = e {
+                Some(n.0)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(0);
+    let sounds = events
+        .iter()
+        .filter(|e| matches!(e, Event::FireSound(_) | Event::ImpactSound(_)))
+        .map(|e| format!("{e:?}"))
+        .collect::<Vec<_>>();
+    let exhaust = events
+        .iter()
+        .filter_map(|e| {
+            if let Event::PuffRequest { slot, centre, .. } = e {
+                Some([
+                    slot_number(*slot),
+                    usize::from(centre.x),
+                    usize::from(centre.y),
+                ])
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+    let contacts = world
+        .points
+        .iter()
+        .map(|(slot, c)| [slot_number(*slot), usize::from(c.x), usize::from(c.y)])
+        .collect::<Vec<_>>();
+    let candidates = outcome
+        .candidates
+        .iter()
+        .map(|c| [slot_number(c.slot), usize::from(c.whole_x)])
+        .collect::<Vec<_>>();
+    let shots = s
+        .slots
+        .iter()
+        .filter_map(|(slot, shot)| intro_shot_value(slot, shot))
+        .collect::<Vec<_>>();
+    let ammo = usize::from(supply.ammo).saturating_sub(debit);
+    object!("ammo":ammo,"cooldown":s.cooldown.0,"count":s.count.0,"debit":debit,"protection":protection,"sounds":sounds,"contacts":contacts,"candidates":candidates,"shots":shots,"deselect":events.contains(&Event::ClearSelection),"exhaust":exhaust,"puffs":puffs_value(s,plume_frames(missile)))
+}
+fn intro_draw(f: &mut Fields) -> Result<Value, String> {
+    let missile = missile_content();
+    let mut s = intro_state(f, &missile)?;
+    let view = ScreenOrigin(axes(f.or("view", [0, 0])?));
+    let visits: usize = f.required("visits")?;
+    let mut drawn = vec![];
+    for _ in 0..visits {
+        let p = intro_pictures(&mut s, view, &missile);
+        let missiles = p.missiles.into_iter().map(|i| (i.picture, i.screen));
+        let exhaust = p.exhaust.into_iter().map(|i| (i.picture, i.screen));
+        drawn.extend(missiles.chain(exhaust).map(|(picture, screen)| {
+            Value::Array(vec![value(picture.0), value(screen.0.x), value(screen.0.y)])
+        }));
+    }
+    Ok(object!("pictures":drawn,"puffs":puffs_value(&s,plume_frames(&missile))))
+}
 fn body(f: &mut Fields) -> Result<ShotBody, String> {
     let mut body = ShotBody {
+        kind: ShotKind::Beam,
         position: axes(
             f.or::<[u32; 2]>("position", TEST_POSITION)?
                 .map(FixedPosition),
@@ -442,21 +829,42 @@ fn event_value(e: &Event) -> Value {
         } => {
             object!("kind":"Trail","slot":slot_number(*slot),"position":pair(*position).map(|v|v.0),"picture":picture.as_ref().map_or("None",|v|v.0.as_str()),"appearance":appearance.as_ref().map_or("None",|v|v.0.as_str()))
         }
+        Event::MissileDebit => object!("kind":"MissileDebit"),
+        Event::ClearSelection => object!("kind":"ClearSelection"),
+        Event::PuffRequest {
+            slot,
+            centre,
+            appearance,
+        } => {
+            object!("kind":"PuffRequest","slot":slot_number(*slot),"centre":pair(*centre),"appearance":appearance.as_ref().map_or("None",|v|v.0.as_str()))
+        }
     }
 }
 struct ScriptedWorld {
     responses: Vec<Vec<bool>>,
     visits: Vec<(Contact, Vec<u16>)>,
+    point_blocks: bool,
+    points: Vec<(ShotSlot, Axes<u16>)>,
 }
 impl ScriptedWorld {
     fn new(responses: Vec<Vec<bool>>) -> Self {
         Self {
             responses,
             visits: vec![],
+            point_blocks: false,
+            points: vec![],
         }
     }
 }
 impl World for ScriptedWorld {
+    fn contact_point(&mut self, slot: ShotSlot, centre: Axes<u16>) -> ContactResponse {
+        self.points.push((slot, centre));
+        if self.point_blocks {
+            ContactResponse::Blocks
+        } else {
+            ContactResponse::Passes
+        }
+    }
     fn contact_cell(&mut self, contact: &Contact, cell: u16) -> ContactResponse {
         if cell == 0 {
             self.visits.push((contact.clone(), vec![]));
@@ -776,7 +1184,7 @@ fn animation(f: &mut Fields) -> Result<Value, String> {
     let mut content = invented_content(b.radius);
     content.clips.insert(b.clip.clone(), c);
     validate_content(&content)?;
-    let removed = update_clip(&mut b, &content);
+    let removed = update_clip(&mut b, &content.clips);
     let mut out = body_value(&b);
     out.insert("removed".into(), value(removed));
     Ok(Value::Table(out))
@@ -851,6 +1259,8 @@ fn observe(case: &Case, rules: Rules) -> Result<Value, String> {
         "clip" => animation(&mut f)?,
         "update" => complete(&mut f, rules)?,
         "draw" => draw(&mut f)?,
+        "cinematic_missile_update" => intro_update(&mut f)?,
+        "cinematic_missile_draw" => intro_draw(&mut f)?,
         _ => return Err(format!("unknown operation {}", case.operation)),
     };
     f.finish()?;
@@ -1017,6 +1427,99 @@ fn draw(f: &mut Fields) -> Result<Value, String> {
         object!("flying":pictures.flying.into_iter().map(intent).collect::<Vec<_>>(),"impact":pictures.impact.into_iter().map(intent).collect::<Vec<_>>()),
     )
 }
+// One invented intro fight: the lock turn releases, ShotsOnly turns fly and drop exhaust, the
+// encounter hits the same missile, its impact plays, then the intro hides. Values follow
+// MissileRelease through CinematicMissilePictures by hand from the invented content.
+#[test]
+fn intro_fight_lock_shots_only_hit_and_hide() -> Result<(), String> {
+    const LOCK_X: u16 = 20;
+    const FLIGHT_X: [u16; 3] = [18, 17, 15];
+    const PUFF_AT: [u16; 2] = [15, 28];
+    const HIT_X: u16 = 12;
+    const PUFF_POSITION: usize = 17;
+    let content = arsenal(invented_content(radius(TEST_RADIUS)));
+    let supply = MissileSupply {
+        eligible: true,
+        selected: true,
+        ammo: MISSILE_AMMO,
+        cancel_after_shot: false,
+    };
+    let lock = intro_input(
+        &mut Fields::new(object!("fresh":true,"width_screens":0))?,
+        UpdateMode::CannonAndShots,
+    )?;
+    // Shots-only turns keep reading a fresh press; the inactive cannon ignores it.
+    let shots_only = intro_input(
+        &mut Fields::new(object!("fresh":true,"width_screens":0))?,
+        UpdateMode::ShotsOnly,
+    )?;
+    let mut world = ScriptedWorld::new(vec![]);
+    let mut s = empty_state();
+    let mut turn = |s: &mut State, input: &UpdateInput| {
+        update_intro_fight(s, input, supply, &content, Rules::REFERENCE, &mut world)
+    };
+    let view = ScreenOrigin(axes([0, 0]));
+    let released = turn(&mut s, &lock);
+    assert_eq!(
+        released.events,
+        vec![
+            Event::MissileDebit,
+            Event::Protection(FrameWord(MISSILE_PROTECTION))
+        ]
+    );
+    let flying = |slot, whole_x| MissileCandidate { slot, whole_x };
+    assert_eq!(released.candidates, vec![flying(ShotSlot::Slot0, LOCK_X)]);
+    assert_eq!(s.cooldown, FrameWord(MISSILE_SPACING));
+    for expected_x in FLIGHT_X {
+        let flown = turn(&mut s, &shots_only);
+        assert_eq!(flown.candidates, vec![flying(ShotSlot::Slot0, expected_x)]);
+    }
+    assert_eq!(
+        s.cooldown,
+        FrameWord(MISSILE_SPACING),
+        "ShotsOnly holds cooldown"
+    );
+    assert_eq!(s.count, ShotCount(1), "ShotsOnly never releases");
+    for _ in 0..2 {
+        let drawn = intro_pictures(&mut s, view, &content.missile);
+        assert_eq!(drawn.missiles.len(), 1);
+        let puff = drawn.exhaust.first().ok_or("missing exhaust picture")?;
+        assert_eq!(
+            (puff.position, &puff.picture.0, pair(puff.screen.0)),
+            (PUFF_POSITION, &"Air1".to_owned(), PUFF_AT)
+        );
+    }
+    let flown = turn(&mut s, &shots_only);
+    assert_eq!(flown.candidates, vec![flying(ShotSlot::Slot0, HIT_X)]);
+    assert!(encounter_hit(&mut s, ShotSlot::Slot0, &content.missile));
+    assert!(!encounter_hit(&mut s, ShotSlot::Slot0, &content.missile));
+    let ShotState::Impact { body } = &s.slots[ShotSlot::Slot0] else {
+        return Err("the same missile becomes the impact".into());
+    };
+    assert_eq!(body.picture, Some(PictureId("Dart".into())));
+    let mut exhaust_pictures = vec![];
+    for _ in 0..2 {
+        let drawn = intro_pictures(&mut s, view, &content.missile);
+        assert!(drawn.missiles.is_empty(), "impacts are omitted");
+        exhaust_pictures.extend(drawn.exhaust.into_iter().map(|e| e.picture.0));
+    }
+    assert_eq!(exhaust_pictures, ["Air1", "Air2"]);
+    let burst = turn(&mut s, &shots_only);
+    assert_eq!(burst.candidates, vec![]);
+    let ShotState::Impact { body } = &s.slots[ShotSlot::Slot0] else {
+        return Err("impact continues".into());
+    };
+    assert_eq!(body.picture, Some(PictureId("Star".into())));
+    // The intro hides after both updates and on later beats: no presentation, no ageing,
+    // and no implicit weapon reset.
+    let hidden = s.clone();
+    let ExhaustSlot::Puff(puff) = &hidden.exhaust[PUFF_POSITION] else {
+        return Err("exhaust survives the hide".into());
+    };
+    assert_eq!(exhaust_age(puff, plume_frames(&content.missile)), 3);
+    assert_eq!(hidden.count, ShotCount(1));
+    Ok(())
+}
 #[test]
 fn fresh_muzzle_impact_outside_view() -> Result<(), String> {
     const FAR_CAMERA: [u16; 2] = [500, 500];
@@ -1097,9 +1600,9 @@ fn unusual_restored_state_and_content() -> Result<(), String> {
         RESTORED_COUNT.wrapping_add(1).wrapping_add(1)
     );
     if let Some(body) = state.slots[ShotSlot::Slot0].body_mut() {
-        assert!(!update_clip(body, &content));
+        assert!(!update_clip(body, &content.clips));
         assert_eq!(body.remaining_hold, FrameWord(0));
-        assert!(!update_clip(body, &content));
+        assert!(!update_clip(body, &content.clips));
         assert_eq!(body.remaining_hold, FrameWord(u16::MAX));
     }
     let restored: State = value(&state)
@@ -1362,5 +1865,43 @@ fn ordinary_zero_content_hold_and_trail_interval() -> Result<(), String> {
     assert_eq!(s, expected);
     assert_eq!(events, vec![]);
     assert_eq!(world.visits, vec![]);
+    Ok(())
+}
+
+// The ordinary update runs from beam content alone: beams move as usual, while a missile the
+// caller supplied no content for is held exactly as it is, asking World nothing.
+#[test]
+fn beam_only_update_holds_a_missile() -> Result<(), String> {
+    let mut s = empty_state();
+    s.count = ShotCount(2);
+    let (missile_slot, missile) = intro_shot(object!("slot":1))?;
+    s.slots[missile_slot] = missile.clone();
+    let mut fields = Fields::new(object!("remaining":2,"trail":2))?;
+    s.slots[ShotSlot::Slot0] = ShotState::Flying {
+        body: body(&mut fields)?,
+        consumed: false,
+    };
+    fields.finish()?;
+    let beam_before = s.slots[ShotSlot::Slot0].clone();
+    let mut fields = Fields::new(object!("mode":"ShotsOnly","room_screens":[0,0]))?;
+    let i = input(&mut fields)?;
+    fields.finish()?;
+    let mut world = ScriptedWorld::new(vec![]);
+    let events = update(
+        &mut s,
+        &i,
+        &invented_content(radius(TEST_RADIUS)),
+        Rules::REFERENCE,
+        &mut world,
+    );
+    assert_eq!(s.slots[missile_slot], missile);
+    assert_ne!(
+        s.slots[ShotSlot::Slot0],
+        beam_before,
+        "the beam still flies"
+    );
+    assert_eq!(s.count, ShotCount(2));
+    assert_eq!(events, vec![]);
+    assert_eq!(world.points, vec![]);
     Ok(())
 }

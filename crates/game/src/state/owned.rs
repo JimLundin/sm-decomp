@@ -25,7 +25,7 @@ pub struct PowerPin;
 impl Pinned for PowerPin {
     type State = Box<weapons_projectiles::State>;
     const NAME: &'static str = "weapons-projectiles";
-    const SHAPE: u64 = 0x98F6_AF73_265D_2556;
+    const SHAPE: u64 = 0x04F9_034D_ACF0_8659;
 }
 
 /// The complete clean following-camera state and retained height receipt.
@@ -85,6 +85,8 @@ pub enum OwnedState {
     Audio(Model<AudioPin>),
     /// Current power shots and late contact consumption.
     WeaponsContact(Model<PowerPin>),
+    /// Complete cinematic weapon State and pending drawing.
+    IntroMissiles(Box<crate::production::intro_missile_scope::State>),
     /// Complete room tiles, running places and scroll screens.
     Blocks(Box<world_blocks::State>),
     /// Following view, remembered centre and height receipt.

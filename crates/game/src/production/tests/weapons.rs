@@ -59,6 +59,7 @@ fn state(x: u16, radius: u8) -> beam::State {
     state.slots[beam::ShotSlot::Slot0] = beam::ShotState::Flying {
         consumed: false,
         body: beam::ShotBody {
+            kind: beam::ShotKind::Beam,
             position: beam::Axes {
                 x: beam::FixedPosition::from_parts(x, beam::PixelFraction(0)),
                 y: beam::FixedPosition::from_parts(128, beam::PixelFraction(0)),

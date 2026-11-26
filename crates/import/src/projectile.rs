@@ -351,6 +351,18 @@ impl Pools {
     }
 
     fn clip(&mut self, rom: Lorom<'_>, start: u16, id: ClipId) -> Result<Clip, ImportError> {
+        let (clip, frames, end) =
+            self.read_clip(rom, start, |pool, selector| pool.trail(rom, id, selector))?;
+        self.places.clips.push(ClipPlaces { id, frames, end });
+        Ok(clip)
+    }
+
+    fn read_clip(
+        &mut self,
+        rom: Lorom<'_>,
+        start: u16,
+        mut trail: impl FnMut(&mut Self, u16) -> Result<TrailAppearanceId, ImportError>,
+    ) -> Result<(Clip, Vec<u16>, u16), ImportError> {
         let mut pointer = start;
         let mut frames = Vec::new();
         let mut starts = Vec::new();
@@ -376,8 +388,7 @@ impl Pools {
                 .map_err(ImportError::Address)?;
             let [_, _, low, high, x, y, trail_low, trail_high] =
                 *bytes.first_chunk::<8>().ok_or(ImportError::Identifier)?;
-            let trail_appearance =
-                self.trail(rom, id, u16::from_le_bytes([trail_low, trail_high]))?;
+            let trail_appearance = trail(self, u16::from_le_bytes([trail_low, trail_high]))?;
             let picture = self.picture(rom, u16::from_le_bytes([low, high]))?;
             starts.push(pointer);
             frames.push(Frame {
@@ -391,14 +402,12 @@ impl Pools {
         if frames.is_empty() {
             return Err(ImportError::EmptyClip);
         }
-        self.places.clips.push(ClipPlaces {
-            id,
-            frames: starts,
-            end: pointer,
-        });
-        Ok(Clip { frames, end })
+        Ok((Clip { frames, end }, starts, pointer))
     }
 }
 
 #[cfg(test)]
 mod tests;
+
+mod intro_missile;
+pub use intro_missile::import_intro_missile;

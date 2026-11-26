@@ -20,6 +20,7 @@ mod entries;
 pub mod health_tail;
 pub mod hud;
 mod immutable;
+pub mod intro_missile_scope;
 mod movement;
 pub mod movement_touchdown;
 pub mod playback;
@@ -65,6 +66,8 @@ pub enum Scope {
     Audio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
     WeaponsContact,
+    /// Ordinary missiles in the intro fight.
+    IntroMissiles,
     /// Ordered block requests and running reactions.
     Blocks,
     /// Following camera and retained receipts.
@@ -106,6 +109,8 @@ pub enum ProductionSeed {
     Audio(Box<audio_transport::State>),
     /// Full ordinary power shot/trail/spacing state.
     WeaponsContact(Box<weapons_projectiles::State>),
+    /// Complete cinematic weapon State and pending sprite publication.
+    IntroMissiles(Box<intro_missile_scope::State>),
     /// Full tiles, places and screens.
     Blocks(Box<world_blocks::State>),
     /// Full camera memory and receipt.
@@ -134,6 +139,8 @@ pub enum AdvanceInput<'a> {
     Playback(playback::Cut),
     /// The current cartridge operation.
     SaveFiles(save_files::Input<'a>),
+    /// Cinematic weapon work, encounter and presentation opportunities.
+    IntroMissiles(intro_missile_scope::Input<'a>),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -212,6 +219,8 @@ pub enum ProductionOutputs {
     Playback(playback::CutReport),
     /// The full battery image and operation receipt.
     SaveFiles(Box<save_files::Output>),
+    /// Complete scoped cinematic weapon requests and publication.
+    IntroMissiles(Box<intro_missile_scope::Output>),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -383,6 +392,7 @@ impl Production {
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
+            ProductionSeed::IntroMissiles(_) => Scope::IntroMissiles,
             ProductionSeed::Blocks(_) => Scope::Blocks,
             ProductionSeed::Camera(_) => Scope::Camera,
             ProductionSeed::Appearance(_) => Scope::Appearance,
@@ -421,6 +431,11 @@ impl Production {
                 ProductionContent::SaveFiles(_),
                 ProductionRules::SaveFiles,
             ) => OwnedState::SaveFiles(state),
+            (
+                ProductionSeed::IntroMissiles(state),
+                ProductionContent::IntroMissiles(_),
+                ProductionRules::IntroMissiles(_),
+            ) => OwnedState::IntroMissiles(state),
             (
                 ProductionSeed::Connected(state),
                 ProductionContent::Connected(content),
@@ -499,6 +514,7 @@ impl Production {
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
+            OwnedState::IntroMissiles(_) => Scope::IntroMissiles,
             OwnedState::Blocks(_) => Scope::Blocks,
             OwnedState::Camera(_) => Scope::Camera,
             OwnedState::Appearance(_) => Scope::Appearance,
@@ -623,7 +639,7 @@ impl Production {
                     scope,
                 )));
             }
-            (state, content, rules, input) => entries::advance(state, content, rules, input)?,
+            (state, content, rules, input) => entries::advance_intro(state, content, rules, input)?,
         };
         Ok((state, outputs))
     }
@@ -643,6 +659,7 @@ impl Production {
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::WeaponsContact(_)
+            | OwnedState::IntroMissiles(_)
             | OwnedState::Blocks(_)
             | OwnedState::Camera(_)
             | OwnedState::Appearance(_)
@@ -671,6 +688,7 @@ impl Production {
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
+            OwnedState::IntroMissiles(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
             OwnedState::Intro(_)
@@ -722,6 +740,10 @@ impl Production {
             let checkpoint: Checkpoint<Model<crate::state::owned::PlaybackPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::Playback(checkpoint.state.0)
+        } else if matches!(&content, ProductionContent::IntroMissiles(_)) {
+            let checkpoint: Checkpoint<Box<intro_missile_scope::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::IntroMissiles(checkpoint.state)
         } else if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -777,7 +799,9 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
                 .and_then(|()| canonical::model::pin_holds::<crate::state::owned::AudioPin>())
         }
         Scope::Audio => canonical::model::pin_holds::<crate::state::owned::AudioPin>(),
-        Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
+        Scope::WeaponsContact | Scope::IntroMissiles => {
+            canonical::model::pin_holds::<crate::state::owned::PowerPin>()
+        }
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
         Scope::IntroRooms => intro_rooms::validate_pins(),

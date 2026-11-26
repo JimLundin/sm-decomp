@@ -320,3 +320,29 @@ mod tests {
         assert!(Hold::try_from(32768).is_err());
     }
 }
+
+/// One displayed exhaust tile and its hold in presentation visits.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExhaustFrame {
+    /// Duration of the displayed tile.
+    pub hold: std::num::NonZeroU16,
+    /// The tile, palette, priority and flips.
+    pub look: crate::spritemap::SpriteAttributes,
+}
+
+/// Imported ordinary missile art for the leftward cinematic flight.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IntroMissile {
+    /// Sprite maps for flight and impact.
+    pub sheet: SpriteSheet,
+    /// The repeating flight clip.
+    pub flight: Clip,
+    /// The finite impact clip.
+    pub impact: Clip,
+    /// Damage on release.
+    pub damage: Damage,
+    /// Exhaust displacement from the pre-motion whole centre.
+    pub exhaust_offset: Offset,
+    /// The exhaust tile sequence.
+    pub exhaust: Vec<ExhaustFrame>,
+}

@@ -334,6 +334,9 @@ pub(super) fn actual(
                     beam::Event::FireSound(_) => Some(0),
                     beam::Event::Trail { .. } => Some(1),
                     beam::Event::ImpactSound(_) => Some(2),
+                    beam::Event::MissileDebit => Some(3),
+                    beam::Event::ClearSelection => Some(4),
+                    beam::Event::PuffRequest { .. } => Some(5),
                     beam::Event::Protection(_) | beam::Event::PendingAimConsumed => None,
                 })
                 .collect(),

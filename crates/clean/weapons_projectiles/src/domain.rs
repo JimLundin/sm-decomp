@@ -1,7 +1,11 @@
-//! Quantities and caller contracts for the uncharged power beam.
+//! Quantities and caller contracts for the uncharged power beam and the intro fight's missiles.
+use core::num;
 use enum_map::{Enum, EnumMap};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+
+/// Spec: MissileExhaust. Number of stable exhaust positions.
+pub const EXHAUST_POSITIONS: usize = 18;
 
 /// Spec: HoldingShoot. Five stable slots, in ascending reservation order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, Serialize, Deserialize)]
@@ -147,7 +151,7 @@ pub struct ClipId(pub String);
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PictureId(pub String);
 /// Spec: BeamTrail. Caller-supplied trail appearance identifier.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct TrailAppearanceId(pub String);
 /// Spec: BeamPictures. Frame index, including a clip's end index.
 /// Index-to-clip relations, including restored indices, belong to the importer.
@@ -201,6 +205,8 @@ pub struct Clip {
     /// What happens after the last hold.
     pub ending: ClipEnding,
 }
+/// Spec: BeamPictures. Imported clips by identifier, one library per weapon.
+pub type ClipLibrary = BTreeMap<ClipId, Clip>;
 /// Spec: HoldingShoot, BeamPictures. Imported beam content.
 ///
 /// The importer supplies every heading's clip, resolves flying and impact ClipIds in clips,
@@ -217,7 +223,60 @@ pub struct PowerBeam {
     /// Common burst clip.
     pub impact_clip: ClipId,
     /// Imported animation values.
-    pub clips: BTreeMap<ClipId, Clip>,
+    pub clips: ClipLibrary,
+}
+/// Spec: MissileExhaust. One stationary exhaust picture, held for a positive number of
+/// presentation visits rather than gameplay updates.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExhaustFrame {
+    /// Presentation visits this picture stays.
+    pub hold: num::NonZeroU16,
+    /// Picture shown.
+    pub picture: PictureId,
+}
+/// Spec: MissileExhaust. Where a puff appears relative to the missile and how it animates.
+/// A nonempty frame list is the importer's contract; the puff disappears after its last hold.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExhaustAppearance {
+    /// Displacement from the missile's whole centre.
+    pub offset: Offset,
+    /// Pictures shown in order, then the puff ends.
+    pub frames: Vec<ExhaustFrame>,
+}
+/// Spec: MissileRelease, MissileBurst, MissileExhaust. Imported ordinary missile content.
+///
+/// The importer resolves both clip identifiers in `clips` and gives each flying frame's trail
+/// appearance an exhaust entry. Flight repeats; impact ends with Remove.
+#[derive(Clone, Debug)]
+pub struct MissileContent {
+    /// Damage assigned at release.
+    pub damage: Damage,
+    /// Leftward flight clip.
+    pub flight_clip: ClipId,
+    /// Stationary impact clip.
+    pub impact_clip: ClipId,
+    /// Imported animation values for both clips.
+    pub clips: ClipLibrary,
+    /// Exhaust puff for each flight trail appearance.
+    pub exhaust: BTreeMap<TrailAppearanceId, ExhaustAppearance>,
+}
+/// Spec: BeamPictures, MissileTravel. All weapon content a shared slot table can hold.
+#[derive(Clone, Debug)]
+pub struct WeaponContent {
+    /// Uncharged power beam.
+    pub beam: PowerBeam,
+    /// Ordinary missile.
+    pub missile: MissileContent,
+}
+impl WeaponContent {
+    /// Spec: BeamPictures. Each kind of shot plays clips from its own weapon's library.
+    #[must_use]
+    pub const fn clips(&self, kind: ShotKind) -> &ClipLibrary {
+        match kind {
+            ShotKind::Beam => &self.beam.clips,
+            ShotKind::Missile(_) => &self.missile.clips,
+        }
+    }
 }
 /// Spec: CannonOrigin. Integer muzzle offset.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -337,6 +396,21 @@ pub struct CannonInput {
     /// Samus's integer centre.
     pub centre: SamusCentre,
 }
+/// Spec: MissileRelease. What Samus and inventory say about the ordinary missile cannon.
+///
+/// Fresh presses (this frame's and the retained previous frame's) come from the shared
+/// [`CannonInput`]; its held `shoot` does not release a missile.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MissileSupply {
+    /// Her pose and state permit firing the cannon.
+    pub eligible: bool,
+    /// Inventory has ordinary missiles selected.
+    pub selected: bool,
+    /// Missiles remaining before this update.
+    pub ammo: u16,
+    /// The selection cancels itself after a shot.
+    pub cancel_after_shot: bool,
+}
 /// Spec: ShotContact. Room extents in screens, not an implicit outside solid boundary.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RoomScreens(pub Axes<u16>);
@@ -356,9 +430,27 @@ pub struct UpdateInput {
     /// Room extents for contact.
     pub room: RoomScreens,
 }
+/// Spec: MissileTravel. Whether a flying missile is still awaiting its initial speed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MissileLaunch {
+    /// A fresh missile awaiting its initial speed.
+    Pending,
+    /// Already moving; each update accelerates it.
+    Launched,
+}
+/// Spec: MissileTravel, MissileBurst. Which weapon a body is, kept through flight and impact.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ShotKind {
+    /// An uncharged power beam.
+    Beam,
+    /// An ordinary missile and its launch progress.
+    Missile(MissileLaunch),
+}
 /// Spec: HoldingShoot. Every live body's copied values are caller-owned state.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ShotBody {
+    /// Which weapon this body is.
+    pub kind: ShotKind,
     /// Wrapping fixed-point centre.
     pub position: Axes<FixedPosition>,
     /// Aim retained for acceleration, contact and bursts.
@@ -421,7 +513,30 @@ impl ShotState {
         }
     }
 }
-/// Spec: HoldingShoot, EndingShot. Complete serializable memory, independent of occupancy.
+/// Spec: MissileExhaust, CinematicMissilePictures. A puff of missile exhaust in the room.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ExhaustPuff {
+    /// Whole-pixel room position, wrapping on each axis.
+    pub position: Axes<u16>,
+    /// Appearance whose pictures this puff plays.
+    pub appearance: TrailAppearanceId,
+    /// Picture now shown; None until the first presentation visit after placement.
+    pub picture: Option<PictureId>,
+    /// Next exhaust frame, or the end index.
+    pub next_frame: ClipFrame,
+    /// Wrapping presentation visits left on the shown picture.
+    pub remaining_hold: FrameWord,
+}
+/// Spec: MissileExhaust. One stable exhaust position.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ExhaustSlot {
+    /// No puff here.
+    Free,
+    /// A puff ageing with each presentation visit.
+    Puff(ExhaustPuff),
+}
+/// Spec: HoldingShoot, EndingShot, MissileExhaust. Complete serializable memory, independent
+/// of occupancy.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
     /// Wrapping cannon cooldown.
@@ -430,9 +545,12 @@ pub struct State {
     pub count: ShotCount,
     /// Complete table in stable slot order.
     pub slots: EnumMap<ShotSlot, ShotState>,
+    /// Missile exhaust positions, in stable ascending order.
+    pub exhaust: [ExhaustSlot; EXHAUST_POSITIONS],
 }
 impl State {
-    /// Room/elevator reset clears everything except caller-supplied slot fractions.
+    /// Room/elevator reset clears everything except caller-supplied slot fractions; the room
+    /// starts with no exhaust.
     #[must_use]
     pub fn reset(fractions: EnumMap<ShotSlot, Axes<PixelFraction>>) -> Self {
         Self {
@@ -442,6 +560,7 @@ impl State {
                 trail: FrameWord(0),
                 retained_fraction: fractions[slot],
             }),
+            exhaust: std::array::from_fn(|_| ExhaustSlot::Free),
         }
     }
     /// Spec: EndingShot. Late actor consumption changes Flying only, without removing it.
@@ -505,6 +624,9 @@ pub enum ContactResponse {
 pub trait World {
     /// Answer and react to zero-based ordinal `cell` in this ordered geometric span.
     fn contact_cell(&mut self, contact: &Contact, cell: u16) -> ContactResponse;
+    /// Spec: MissileTravel. Answer and react to one horizontal point contact at a moved
+    /// missile's integer centre; World owns its aliasing and reactions to shots.
+    fn contact_point(&mut self, slot: ShotSlot, centre: Axes<u16>) -> ContactResponse;
 }
 /// Spec: BeamTrail, HoldingShoot, ShotContact. Requests returned instead of side effects.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -528,6 +650,37 @@ pub enum Event {
         /// Retained appearance before the clip update.
         appearance: Option<TrailAppearanceId>,
     },
+    /// Spec: MissileRelease. Inventory spends one missile.
+    MissileDebit,
+    /// Spec: MissileRelease. Inventory clears the selection and its automatic cancellation.
+    ClearSelection,
+    /// Spec: MissileExhaust. A flying missile asked for a puff, before it moved; the model has
+    /// already placed it when a position was free.
+    PuffRequest {
+        /// Stable producing slot.
+        slot: ShotSlot,
+        /// Whole centre before motion.
+        centre: Axes<u16>,
+        /// Previously displayed flight appearance.
+        appearance: Option<TrailAppearanceId>,
+    },
+}
+/// Spec: MissileTravel. A surviving flying missile the encounter may hit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MissileCandidate {
+    /// Stable missile identity.
+    pub slot: ShotSlot,
+    /// Whole x after this update's motion.
+    pub whole_x: u16,
+}
+/// Spec: MissileRelease, MissileTravel. One intro-fight weapons update's requests and the
+/// missiles the encounter reads afterwards.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IntroFightUpdate {
+    /// Requests in the order they arose.
+    pub events: Vec<Event>,
+    /// Flying ordinary missiles in descending slot order.
+    pub candidates: Vec<MissileCandidate>,
 }
 /// Spec: BeamVisibility. Presentation phase supplied by drawing, not remembered in State.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -562,4 +715,23 @@ pub struct PictureIntents {
     pub flying: Vec<PictureIntent>,
     /// Impact pictures in descending slot order.
     pub impact: Vec<PictureIntent>,
+}
+/// Spec: CinematicMissilePictures. One drawn exhaust puff.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExhaustIntent {
+    /// Stable exhaust position, 0 through 17.
+    pub position: usize,
+    /// Puff picture.
+    pub picture: PictureId,
+    /// Integer screen pixels.
+    pub screen: ScreenCentre,
+}
+/// Spec: CinematicMissilePictures. One intro drawing opportunity: its missiles are drawn
+/// first, then its exhaust.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IntroPictures {
+    /// Flying ordinary missiles in descending slot order.
+    pub missiles: Vec<PictureIntent>,
+    /// Surviving puffs in descending position order.
+    pub exhaust: Vec<ExhaustIntent>,
 }

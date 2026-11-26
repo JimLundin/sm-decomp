@@ -22,7 +22,7 @@ const HEADINGS: [beam::Heading; 10] = [
     beam::Heading::UpFacingLeft,
 ];
 
-fn word(wram: &[u8], at: usize) -> Result<u16, Outcome> {
+pub(super) fn word(wram: &[u8], at: usize) -> Result<u16, Outcome> {
     let bytes = wram
         .get(at..at.saturating_add(2))
         .ok_or_else(|| data_failure(None, "weapons record word"))?;
@@ -188,7 +188,7 @@ pub(super) fn ordinary_input(wram: &[u8], content: &Content) -> Result<Input, Ou
     })
 }
 
-fn terrain(wram: &[u8]) -> Result<QuietBeamWorld, Outcome> {
+pub(super) fn terrain(wram: &[u8]) -> Result<QuietBeamWorld, Outcome> {
     let width = word(wram, 0x07a5)?;
     let height = word(wram, 0x07a7)?;
     let count = usize::from(width)
@@ -321,6 +321,7 @@ fn observed_slot(
         .or_else(|| (pointer == places.end).then_some(places.frames.len()))
         .ok_or_else(|| data_failure(None, "weapons cursor observation"))?;
     let body = beam::ShotBody {
+        kind: beam::ShotKind::Beam,
         position: beam::Axes {
             x: beam::FixedPosition::from_parts(w(0x0b64)?, fraction.x),
             y: beam::FixedPosition::from_parts(w(0x0b78)?, fraction.y),

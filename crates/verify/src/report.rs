@@ -96,8 +96,11 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "weapons-projectiles",
         bridge: Some("weapons_projectiles_bridge"),
-        adapters: &[],
-        providers: &["weapons", "shot_drawing"],
+        adapters: &[
+            "production/played/intro_missiles.rs",
+            "production/intro_missile_scope.rs",
+        ],
+        providers: &["weapons", "shot_drawing", "intro_missiles"],
         areas: &[("shots", &["lib.rs", "domain.rs"])],
         apart: &[],
     },

@@ -69,7 +69,7 @@ rounds = 1
 
 [[model]]
 name = "weapons-projectiles"
-rounds = 1
+rounds = 2
 
 [[model]]
 name = "enemy-interactions"

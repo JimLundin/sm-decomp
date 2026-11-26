@@ -1387,3 +1387,39 @@ provider = "preceding locked cut's working profile, progress and maps"
 fields = ["options and profile", "persistent progress", "explored area maps", "live explored grid", "location", "save opportunities"]
 phase = "before selection and each save"
 claim = "save uses the prior live owners; the staged save image is only an expectation"
+
+[[case]]
+id = "weapons/intro-ordinary-missiles"
+kind = "scoped"
+row = "any-intro-2219"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 649 }
+rules = ["weapons-projectiles/MissileRelease", "weapons-projectiles/MissileTravel", "weapons-projectiles/MissileBurst", "weapons-projectiles/MissileExhaust", "weapons-projectiles/CinematicMissilePictures"]
+profile = "reference"
+responsibilities = ["weapons"]
+content = "player-rom-import"
+inputs = "intro-missile-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["weapons.intro-stock", "weapons.intro-spacing", "weapons.intro-slots", "weapons.intro-exhaust"], outputs = ["weapons.intro-release", "weapons.intro-impact", "weapons.intro-puffs", "weapons.intro-candidates", "weapons.intro-point-reads", "weapons.intro-sound", "weapons.intro-oam"] }
+checkpoints = true
+limits = ["The scoped witness compares the intro battle's ordinary missiles and exhaust", "OAM is compared in encounter publication order among weapon pieces. Samus and encounter graphics remain external.", "The comparison checks silent weapon requests against the cinematic source rule. The receiving sound queue is outside this witness.", "The room has zero width in screens. This recording supplies no point-contact reaction."]
+
+[[case.borrowed]]
+dependency = "intro.cannon-and-shot-phase"
+provider = "authored ROM demo controls and pinned lean record"
+fields = ["work opportunity", "cannon mode and eligibility", "fresh and held demo buttons", "prior fresh movie shoot", "muzzle pose", "centre and inherited motion"]
+phase = "before weapons"
+claim = "Cannon and projectile timing are borrowed. Inventory debits, live shots and the protection result advance from a single seed."
+
+[[case.borrowed]]
+dependency = "encounter.late-hit"
+provider = "independently observed preceding boss phase and reference contact rule"
+fields = ["boss can take hits", "reference contact line"]
+phase = "after flight"
+claim = "The scoped callback chooses from the production candidate slots. Impact columns are read only in the independent comparison."
+
+[[case.borrowed]]
+dependency = "platform.publication-and-world"
+provider = "pinned lean record"
+fields = ["view origin", "room grid and width in screens", "drawing gate", "NMI completion"]
+phase = "work and presentation"
+claim = "Two drawing visits age exhaust on the authorized beat. A later NMI can publish the retained output."
