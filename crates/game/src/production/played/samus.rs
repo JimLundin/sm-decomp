@@ -477,9 +477,20 @@ impl Her {
 
     pub(super) fn tiles(
         &self,
-        tiles: &data::pose::tiles::SamusTiles,
-    ) -> Result<crate::state::video::SamusTileUploads, Fault> {
-        super::samus_tiles::uploads(tiles, self.figure, self.appearance.animation.playhead.step)
+        content: &super::Content,
+    ) -> Result<Option<crate::state::video::SamusTileUploads>, Fault> {
+        content
+            .samus_tiles
+            .as_ref()
+            .filter(|_| self.outcome.is_some())
+            .map(|(tiles, _)| {
+                super::samus_tiles::uploads(
+                    tiles,
+                    self.figure,
+                    self.appearance.animation.playhead.step,
+                )
+            })
+            .transpose()
     }
 
     /// Where her moves leave her, which the mini-map reads.

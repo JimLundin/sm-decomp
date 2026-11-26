@@ -372,12 +372,7 @@ impl State {
         let mut palette = self.palette;
         let (mut her, (mut enemies, health)) =
             self.play_actors_and_samus(inputs, passing, content, rules, &mut random, &mut palette)?;
-        let uploads = content
-            .samus_tiles
-            .as_ref()
-            .filter(|_| her.outcome.is_some())
-            .map(|(tiles, _)| her.tiles(tiles))
-            .transpose()?;
+        let uploads = her.tiles(content)?;
         if let (Some(row), Some(colours)) =
             (room_loading::suit_row(&mut palette.screen), her.colours)
         {
