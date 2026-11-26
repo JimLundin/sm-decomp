@@ -442,7 +442,7 @@ impl<'a> Run<'a> {
         let tail_worth = samus_health::WholeEnergy::new(rooms.actors.ceres_tail_worth)
             .ok_or_else(|| data_failure(None, "Ceres Ridley's tail's worth"))?;
         // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
-        let (room, state) = match origin {
+        let (room, mut state) = match origin {
             Start::Preparing(arrival, frame, carried) => {
                 start::admit(carried, &start, &rooms, arrival, frame)?
             }
@@ -472,14 +472,18 @@ impl<'a> Run<'a> {
         };
         let timer = import::countdown::import(image.lorom())
             .map_err(|_| data_failure(None, "warning countdown content"))?;
-        let warning_picture = warning::Picture::new(
-            timer.clone(),
-            warning_art.as_ref(),
-            match origin {
-                Start::Room(seed) => Some(seed),
-                Start::Preparing(..) => None,
-            },
-        )?;
+        let warning_seed = match origin {
+            Start::Room(seed) if super::ridley_warning_native::is_warning_room(seed) => Some(seed),
+            Start::Room(_) | Start::Preparing(..) => None,
+        };
+        if let Some(seed) = warning_seed {
+            if seed.vram.len() != game::state::video::VRAM_WORDS {
+                return Err(data_failure(None, "warning admitted drawing"));
+            }
+            state.room_video.video.memory.vram = seed.vram.to_vec();
+        }
+        let warning_picture =
+            warning::Picture::new(timer.clone(), warning_art.as_ref(), warning_seed.is_some());
         let shaft = import::shaft::import(image.lorom()).ok();
         let art = room_video::ArrivalArt::load(image.lorom())?;
         Ok(Self {

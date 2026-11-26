@@ -1,57 +1,52 @@
-//! The warning picture's carried tile words and prepared and published text palettes.
+//! Apply the warning's drawing outputs to carried room memory.
 
 use super::{Fault, warning::Output};
 use crate::exact::ridley_warning;
-use crate::state::video::VRAM_WORDS;
 use types::Colour;
 use world_doors::Palette;
+
+pub(super) fn publish(vram: &mut Vec<u16>, warning: Option<&Output>) -> Result<(), Fault> {
+    let Some(warning) =
+        warning.filter(|warning| !warning.art.is_empty() || !warning.text.is_empty())
+    else {
+        return Ok(());
+    };
+    let mut updated = vram.clone();
+    for patch in &warning.art {
+        ridley_warning::sheet(&mut updated, patch).ok_or(Fault::RidleyWarning)?;
+    }
+    for glyph in &warning.text {
+        ridley_warning::letter(&mut updated, glyph).ok_or(Fault::RidleyWarning)?;
+    }
+    *vram = updated;
+    Ok(())
+}
 
 const ENGLISH: std::ops::Range<usize> = 81..84;
 const HEADING: std::ops::Range<usize> = 97..100;
 
-/// Carried room memory used by the warning drawing consumer.
+/// The warning text's last NMI palette publication.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Drawing {
-    vram: Vec<u16>,
+pub struct TextColours {
     live: [[Colour; 3]; 2],
     published: [[Colour; 3]; 2],
 }
 
-impl Drawing {
-    /// A live drawing or an admitted room image.
-    ///
-    /// Returns `None` when an admitted room picture has the wrong memory size.
-    #[must_use]
-    pub fn admit(vram: Option<&[u16]>) -> Option<Self> {
-        if vram.is_some_and(|vram| vram.len() != VRAM_WORDS) {
-            return None;
-        }
-        Some(Self {
-            vram: vram.map_or_else(|| vec![0; VRAM_WORDS], <[u16]>::to_vec),
+impl Default for TextColours {
+    fn default() -> Self {
+        Self {
             live: [[Colour::BLACK; 3]; 2],
             published: [[Colour::BLACK; 3]; 2],
-        })
+        }
     }
+}
 
-    /// Apply the room's warning effects and commit the palette when the platform publishes.
+impl TextColours {
+    /// Read the room's current warning palette and its last published values.
     ///
     /// # Errors
-    ///
-    /// A picture update cannot be represented in the admitted frame.
-    pub fn advance(
-        &mut self,
-        warning: Option<&Output>,
-        palette: &Palette,
-        publishes: bool,
-    ) -> Result<(), Fault> {
-        if let Some(warning) = warning {
-            for patch in &warning.art {
-                ridley_warning::sheet(&mut self.vram, patch).ok_or(Fault::RidleyWarning)?;
-            }
-            for glyph in &warning.text {
-                ridley_warning::letter(&mut self.vram, glyph).ok_or(Fault::RidleyWarning)?;
-            }
-        }
+    /// The room must provide both warning palette ranges.
+    pub fn advance(&mut self, palette: &Palette, publishes: bool) -> Result<(), Fault> {
         self.live = [
             row(palette, ENGLISH).ok_or(Fault::RidleyWarning)?,
             row(palette, HEADING).ok_or(Fault::RidleyWarning)?,
@@ -62,15 +57,9 @@ impl Drawing {
         Ok(())
     }
 
-    /// Carried video memory after the warning's art and text writes.
-    #[must_use]
-    pub fn vram(&self) -> &[u16] {
-        &self.vram
-    }
-
     /// The two prepared or physically published text palette ranges.
     #[must_use]
-    pub const fn text_colours(&self) -> ([[Colour; 3]; 2], [[Colour; 3]; 2]) {
+    pub const fn values(&self) -> ([[Colour; 3]; 2], [[Colour; 3]; 2]) {
         (self.live, self.published)
     }
 }

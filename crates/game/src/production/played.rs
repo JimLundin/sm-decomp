@@ -343,6 +343,10 @@ impl State {
         } else {
             self.play(inputs, passing, hud, content, rules)
         }?;
+        warning_drawing::publish(
+            &mut self.room_video.video.memory.vram,
+            output.warning.as_ref(),
+        )?;
         if passing.publishes {
             self.room_video.publish_ordinary_sprites();
             if let Some((tiles, graphics)) = &content.samus_tiles {

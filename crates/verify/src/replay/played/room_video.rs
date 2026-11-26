@@ -970,3 +970,46 @@ fn ridley_doorway_publishes_the_selected_enemy_sheets() {
     let same = run.state.room_video.video.memory.vram[0x6d00..] == native.vram[0x6d00..];
     assert!(same, "the sheets carry through actor placement");
 }
+
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn warning_object_upload_restores_the_live_video() {
+    use super::{Run, Stop, appearance, connected, movement, seed_controller};
+
+    let sources = sources();
+    let lock = read_lock(&sources).unwrap();
+    let row = "chain-any-0006-E0B5";
+    let mut rows = open_rows(&sources, &lock, row).unwrap();
+    let seed = rows.record(1270).unwrap();
+    let content = connected::Content {
+        movement: movement::Content::load(&sources.rom).unwrap(),
+        appearance: appearance::Content::load(&sources.rom).unwrap(),
+    };
+    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let controller = seed_controller(&seed).unwrap();
+    assert_eq!(
+        run.through(&mut rows, seed, controller, 1271..=1271)
+            .unwrap(),
+        (1, Stop::End)
+    );
+    let previous = rows.record(1271).unwrap();
+    let published = &run.state.room_video.video;
+    let same = published.memory.vram[0x7e00..0x7f00] == previous.vram[0x7e00..0x7f00];
+    assert!(same, "the first warning sheet reaches carried VRAM");
+    let mut restored = run.clone();
+    restored.state.room_video.video =
+        canonical::from_bytes(&canonical::to_bytes(published)).unwrap();
+    let controller = seed_controller(&previous).unwrap();
+    for run in [&mut run, &mut restored] {
+        assert_eq!(
+            run.through(&mut rows, previous.clone(), controller, 1272..=1277)
+                .unwrap(),
+            (6, Stop::End)
+        );
+    }
+    let same = restored.state.room_video == run.state.room_video;
+    assert!(
+        same,
+        "the remaining sheets match after restoring physical video"
+    );
+}

@@ -299,7 +299,7 @@ impl super::State {
                     .as_ref()
                     .ok_or(Fault::ArrivalGraphics)?;
                 self.room_video.queue_beam_tiles(*from, words);
-                self.room_video.publish();
+                self.room_video.publish(None);
             }
             Readiness::RoomEffects => {
                 self.room_video
@@ -320,7 +320,7 @@ impl super::State {
                         .as_deref()
                         .ok_or(Fault::ArrivalGraphics)?;
                     self.room_video.queue_overlay_tiles(bytes);
-                    self.room_video.publish();
+                    self.room_video.publish(None);
                 }
             }
             Readiness::BeamGraphics | Readiness::EnemyGraphics | Readiness::EnemyActors => {

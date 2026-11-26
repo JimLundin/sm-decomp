@@ -5,7 +5,7 @@ use crate::replay::compare::Observation;
 use crate::replay::ridley_warning_native as native;
 use crate::replay::{data_failure, result::Outcome};
 use data::assets::ridley_warning::{Art, Place};
-use game::production::played::warning_drawing::Drawing;
+use game::production::played::warning_drawing::TextColours;
 use std::ops::Range;
 use types::ceres_warning::{StrokeBeat, TypingWait, WarningPhase};
 
@@ -23,7 +23,7 @@ pub(super) fn selected(station: &played::station::State) -> bool {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Picture {
-    drawing: Drawing,
+    colours: TextColours,
     footprint: Option<Footprint>,
     admitted_warning_plane: bool,
     timer: data::assets::countdown::Figures,
@@ -33,17 +33,15 @@ impl Picture {
     pub(super) fn new(
         timer: data::assets::countdown::Figures,
         art: Option<&Art>,
-        seed: Option<&oracle_record::FrameRecord>,
-    ) -> Result<Self, Outcome> {
-        let drawing = Drawing::admit(seed.map(|seed| seed.vram.as_ref()))
-            .ok_or_else(|| data_failure(None, "warning admitted drawing"))?;
+        admitted_warning_plane: bool,
+    ) -> Self {
         let footprint = art.and_then(Footprint::new);
-        Ok(Self {
-            drawing,
+        Self {
+            colours: TextColours::default(),
             footprint,
-            admitted_warning_plane: seed.is_some_and(native::is_warning_room),
+            admitted_warning_plane,
             timer,
-        })
+        }
     }
 
     pub(super) fn checked(
@@ -113,10 +111,10 @@ impl Picture {
                 i64::from(warning.is_some_and(|warning| warning.stroke.is_some())),
             ),
         ];
-        self.drawing
-            .advance(warning, &room.palette, frame.publishes)
+        self.colours
+            .advance(&room.palette, frame.publishes)
             .map_err(|_| bad())?;
-        let (live, published) = self.drawing.text_colours();
+        let (live, published) = self.colours.values();
         for ((field, slots), (live, published)) in [("english", 81..84), ("heading", 97..100)]
             .into_iter()
             .zip(live.into_iter().zip(published))
@@ -144,7 +142,8 @@ impl Picture {
             ("ridley.warning.text", text),
         ] {
             fields.push(art_words(name, &current.vram, &spans).ok_or_else(bad)?);
-            actual.push(art_words(name, self.drawing.vram(), &spans).ok_or_else(bad)?);
+            actual
+                .push(art_words(name, &room.room_video.video.memory.vram, &spans).ok_or_else(bad)?);
         }
         Ok((fields, actual))
     }
