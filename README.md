@@ -9,7 +9,7 @@
 The milestone is **Power-on through Ceres** in the any% movie. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-███████░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▓▓░░░░░░  17.2% from power-on · 59.1% pass
+████████░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▓▓░░░░░░  18.8% from power-on · 60.8% pass
 ```
 
 `█` held continuously from power-on · `▓` passes from a later seed · `░` doesn't pass yet
@@ -22,7 +22,7 @@ The stretches being worked, in the order the movie plays them; the first not yet
 | --- | --- | --- | --- |
 | Boot | `━·······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
 | The title and menus | `━━······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| **The intro** | `·━━━━━━━━━━━━━━━━━━━····················` | `█████▓▓▓▓▓░░░░░░░░░░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| **The intro** | `·━━━━━━━━━━━━━━━━━━━····················` | `██████▓▓▓▓░░░░░░░░░░` | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | The flight to Ceres | `···················━━━··················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Her arrival | `·····················━━·················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Rooms 1 to 5 | `······················━━━━━·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
