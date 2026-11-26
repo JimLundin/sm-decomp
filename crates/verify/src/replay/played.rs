@@ -696,24 +696,7 @@ impl<'a> Run<'a> {
             self.upper_row = Some(row);
         }
         let (mut expected, mut actual) = if self.state.arrival.preparing() {
-            // Before the fade the loading path is still preparing the room. Compare the
-            // arrival, the carried frame clock and the HUD once setup publishes it.
-            let mut expected = arrival::expected(&current.wram, false)?;
-            expected.push(frame::random_observation(frame::random(&current.wram)?));
-            let mut actual = arrival::actual(self.state.arrival);
-            actual.push(frame::random_observation(self.state.frame.random));
-            expected.extend(frame::expected(&current.wram)?);
-            actual.extend(frame::actual(self.state.frame));
-            if opening_witness(place) {
-                expected.extend(hud::parts(super::hud::expected(&current.wram, &self.hud)?));
-                expected.extend(hud::countdown(super::hud::countdown_origin(&current.wram)?));
-                actual.extend(hud::parts(super::hud::initial(
-                    &self.state.hud.0,
-                    &self.hud,
-                )?));
-                actual.extend(hud::countdown(self.state.hud.0.countdown));
-            }
-            (expected, actual)
+            self.preparing_fields(current, place)?
         } else {
             let frame = Frame {
                 previous,
@@ -747,6 +730,31 @@ impl<'a> Run<'a> {
         Ok(expected)
     }
 
+    fn preparing_fields(
+        &self,
+        current: &FrameRecord,
+        place: (&str, u64),
+    ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
+        // Before the fade the loading path is still preparing the room. Compare the
+        // arrival, the carried frame clock and the HUD once setup publishes it.
+        let mut expected = arrival::expected(&current.wram, false)?;
+        expected.push(frame::random_observation(frame::random(&current.wram)?));
+        let mut actual = arrival::actual(self.state.arrival);
+        actual.push(frame::random_observation(self.state.frame.random));
+        expected.extend(frame::expected(&current.wram)?);
+        actual.extend(frame::actual(self.state.frame));
+        if opening_witness(place) {
+            expected.extend(hud::parts(super::hud::expected(&current.wram, &self.hud)?));
+            expected.extend(hud::countdown(super::hud::countdown_origin(&current.wram)?));
+            actual.extend(hud::parts(super::hud::initial(
+                &self.state.hud.0,
+                &self.hud,
+            )?));
+            actual.extend(hud::countdown(self.state.hud.0.countdown));
+        }
+        Ok((expected, actual))
+    }
+
     /// Every owner's fields at the frame's cut, as the record and as the played State hold
     /// them, with the room quake's `update`, if the frame had one.
     fn compared(
@@ -757,10 +765,7 @@ impl<'a> Run<'a> {
         outputs: &played::Outputs,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let Frame {
-            previous,
-            current,
-            place,
-            ..
+            previous, current, ..
         } = *frame;
         let retiring_return =
             self.state.passage.doorway.is_some_and(|door| {
@@ -789,26 +794,7 @@ impl<'a> Run<'a> {
             hud_settled,
             retiring_return,
         )?;
-        if retiring_return {
-            if !finished(current) {
-                expected.extend(ceres_doors::expected(&current.wram)?);
-                actual.extend(ceres_doors::actual(&self.state.station));
-            }
-            expected.push(ridley::placement(&current.wram)?);
-            actual.push(ridley::placed(self.state.station.ridley.is_some()));
-        }
-        if place.0 == super::shaft_entry::ROW && (222..=278).contains(&place.1) {
-            expected.extend(super::shaft_entry::expected(current)?);
-            actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
-            if !finished(current) {
-                expected.extend(colours::observations(&colours::palette(&current.wram)?));
-                actual.extend(colours::observations(&self.state.palette));
-                expected.extend(ceres_doors::expected(&current.wram)?);
-                actual.extend(ceres_doors::actual(&self.state.station));
-                expected.push(steam::state(&steam::decode(&current.wram)?));
-                actual.push(steam::state(&self.state.station.vents));
-            }
-        }
+        self.population_fields(frame, retiring_return, &mut expected, &mut actual)?;
         // A frame of play answers the escape's scene whether its time has run out.
         if let Some(hud) = &outputs.hud {
             expected.push(hud::expiry_expected(&current.wram)?);
@@ -861,6 +847,48 @@ impl<'a> Run<'a> {
                 expected.push(frame::random_observation(frame::random(&current.wram)?));
             }
         }
+        self.warning_fields(frame, outputs, &mut expected, &mut actual)?;
+        Ok((expected, actual))
+    }
+
+    fn population_fields(
+        &self,
+        frame: &Frame<'_>,
+        retiring_return: bool,
+        expected: &mut Vec<Observation>,
+        actual: &mut Vec<Observation>,
+    ) -> Result<(), Outcome> {
+        let current = frame.current;
+        if retiring_return {
+            if !finished(current) {
+                expected.extend(ceres_doors::expected(&current.wram)?);
+                actual.extend(ceres_doors::actual(&self.state.station));
+            }
+            expected.push(ridley::placement(&current.wram)?);
+            actual.push(ridley::placed(self.state.station.ridley.is_some()));
+        }
+        if frame.place.0 == super::shaft_entry::ROW && (222..=278).contains(&frame.place.1) {
+            expected.extend(super::shaft_entry::expected(current)?);
+            actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
+            if !finished(current) {
+                expected.extend(colours::observations(&colours::palette(&current.wram)?));
+                actual.extend(colours::observations(&self.state.palette));
+                expected.extend(ceres_doors::expected(&current.wram)?);
+                actual.extend(ceres_doors::actual(&self.state.station));
+                expected.push(steam::state(&steam::decode(&current.wram)?));
+                actual.push(steam::state(&self.state.station.vents));
+            }
+        }
+        Ok(())
+    }
+
+    fn warning_fields(
+        &mut self,
+        frame: &Frame<'_>,
+        outputs: &played::Outputs,
+        expected: &mut Vec<Observation>,
+        actual: &mut Vec<Observation>,
+    ) -> Result<(), Outcome> {
         let warning_turn = matches!(
             frame.doors_before,
             Doors::Play
@@ -869,7 +897,7 @@ impl<'a> Run<'a> {
                     ..
                 })
         );
-        if self.state.station.warning.is_some() && finished(current) && warning_turn {
+        if self.state.station.warning.is_some() && finished(frame.current) && warning_turn {
             let (warning_expected, warning_actual) =
                 self.warning_picture.checked(frame, &self.state, outputs)?;
             expected.extend(warning_expected);
@@ -880,7 +908,7 @@ impl<'a> Run<'a> {
             expected.extend(clock_expected);
             actual.extend(clock_actual);
         }
-        Ok((expected, actual))
+        Ok(())
     }
 }
 
