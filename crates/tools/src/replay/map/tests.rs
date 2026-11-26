@@ -63,14 +63,20 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
 }
 
 /// Every indexed case that reaches the travelled-distance rule, in index order.
-const TRAVEL_CASES: [&str; 3] = [
+const TRAVEL_CASES: [&str; 5] = [
     "movement/D-inherited-cut",
     "integrated/missing-dependency-closure",
     "movie/missing-power-on",
+    "movement/getaway-shove-door",
+    "movement/getaway-shove-floor-and-wall",
 ];
 
 /// The travel cases whose reviewed requirement is a pass; the others are held boundaries.
-const PASSING_TRAVEL_CASES: [&str; 1] = ["movement/D-inherited-cut"];
+const PASSING_TRAVEL_CASES: [&str; 3] = [
+    "movement/D-inherited-cut",
+    "movement/getaway-shove-door",
+    "movement/getaway-shove-floor-and-wall",
+];
 
 #[test]
 fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
@@ -137,17 +143,26 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
                 },
             )
             .unwrap();
-        assert!(
-            views(&mapping, &baseline, &by_case)
-                .unwrap()
-                .first()
-                .unwrap()
-                .declared_relevance
+        let report = views(&mapping, &baseline, &by_case).unwrap();
+        let travel = report[0]
+            .declared_relevance
+            .iter()
+            .find(|rule| rule.id == "samus-movement/TravelledDistances")
+            .unwrap();
+        assert_eq!(
+            travel
+                .targets
                 .iter()
-                .any(|rule| rule
-                    .targets
-                    .iter()
-                    .any(|target| target.path == "crates/clean/samus_movement/src/travel.rs"))
+                .map(|target| (target.role, target.path.as_str()))
+                .collect::<Vec<_>>(),
+            [
+                (Role::Model, "crates/clean/samus_movement/src/travel.rs"),
+                (Role::Adapter, "crates/game/src/production/movement.rs"),
+                (
+                    Role::Navigation,
+                    "crates/clean/samus_movement/src/catalogue.rs"
+                ),
+            ]
         );
     }
 }
