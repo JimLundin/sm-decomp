@@ -1,13 +1,14 @@
 //! The Ceres room's physical display writes.
 
-use super::Fault;
+use super::{Content, Fault};
 use crate::commit::VRAM_CHANNEL;
+use crate::exact::countdown;
 use crate::exact::art::planar_4bpp;
 use crate::exact::direct_dma::Transfer;
 use crate::exact::tilemap::{TileQueue, View};
 use crate::intent::{OverlayRows, SpriteDraw, TileWrite, on_screen};
 use crate::production::blackout::Platform;
-use crate::production::hud;
+use crate::production::{blackout, hud};
 use crate::state::video::{
     DmaChannel, NmiBatch, TilemapEntry, VRAM_WORDS, Video, VramSource, VramStep, VramTransfer,
     VramWord,
@@ -20,6 +21,7 @@ use data::assets::shaft::{OVERLAY_BYTES, Shaft};
 use data::dma::BusAddress;
 use data::pose::tiles::Graphics;
 use types::{Pair, Px};
+use interface_hud::{CountdownPicture, HudState};
 
 const SHADOW_WORDS: usize = 1024;
 const SHAFT_BG2_STAGING: core::ops::Range<usize> = 0x0800..0x0c00;
@@ -395,24 +397,67 @@ impl RoomVideo {
         Some(())
     }
 
-    /// Prepare the status bar's three changing rows for the next NMI.
-    pub(super) fn prepare_hud(&mut self, state: &interface_hud::HudState) -> Option<()> {
-        let bytes = hud::tilemap(state).ok()?;
+    /// Prepare the HUD rows and, once the elevator locks, its timer and standing drawing.
+    pub(super) fn prepare_play_picture(
+        &mut self,
+        hud: &HudState,
+        standing: Option<blackout::StandingFrame>,
+        timer: CountdownPicture,
+        content: &Content,
+    ) -> Result<(), Fault> {
+        let bytes = hud::tilemap(hud).map_err(|_| Fault::Hud)?;
         let cells = bytes
             .as_chunks::<2>()
             .0
             .iter()
             .map(|&cell| TilemapEntry::from_word(u16::from_le_bytes(cell)))
             .collect();
+        if let Some(standing) = standing {
+            self.prepare_locked_sprites(timer, standing, content)?;
+        }
         TileQueue::new(&mut self.video.batch).write(
             View::default(),
             &TileWrite::Overlay(OverlayRows { row: 1, cells }),
         );
-        Some(())
+        Ok(())
     }
 
-    /// Commit the room's pending VRAM writes in NMI order.
-    pub(super) fn publish(&mut self) {
+    /// Build the locked frame in the room's pending picture, in draw order.
+    fn prepare_locked_sprites(
+        &mut self,
+        timer: CountdownPicture,
+        standing: blackout::StandingFrame,
+        content: &Content,
+    ) -> Result<(), Fault> {
+        let CountdownPicture::Shown { place, time } = timer else {
+            return Err(Fault::Hud);
+        };
+        let figures = content.clock_figures.as_ref().ok_or(Fault::Hud)?;
+        let art = content
+            .standing
+            .as_ref()
+            .ok_or(Fault::StandingPicture(blackout::Fault::StandingArt))?;
+        let draw = countdown::sprites(figures, place, time).ok_or(Fault::Hud)?;
+
+        let mut batch = self.video.batch.clone();
+        batch.restart_sprites();
+        batch.clear_high_oam();
+        batch.draw_sprites(&draw);
+        blackout::body::prepare(&mut batch, standing, art).map_err(Fault::StandingPicture)?;
+        self.video.batch = batch;
+        Ok(())
+    }
+
+    /// Commit the room's pending sprites and VRAM writes in NMI order.
+    pub(super) fn publish(
+        &mut self,
+        standing: Option<&crate::samus_appearance_bridge::elevator::Art>,
+    ) {
+        if let Some(art) = standing.filter(|art| art.accepts(self.video.batch.standing_strips)) {
+            self.video.batch.finalise_oam();
+            self.video.upload_oam();
+            self.video.publish_standing_strips(&art.graphics);
+        }
         self.video.process_vram_writes(&Graphics::default());
     }
 

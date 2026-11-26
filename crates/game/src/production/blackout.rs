@@ -1,5 +1,5 @@
 //! The Ceres elevator's scheduler, the interrupted room picture and its two-stage cartridge save.
-mod body;
+pub(super) mod body;
 mod hud;
 mod live_room;
 mod picture;

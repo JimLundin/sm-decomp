@@ -105,6 +105,8 @@ use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scen
 pub struct Content {
     /// Imported timer sprite figures for room drawing.
     pub clock_figures: Option<data::assets::countdown::Figures>,
+    /// Imported body maps and graphics for the locked elevator pose.
+    pub standing: Option<crate::samus_appearance_bridge::elevator::Art>,
     /// Ordered tilt samples admitted with the escape shaft assets.
     pub shaft_track: Option<shaft::Track>,
     /// Sprite graphics written when the escape shaft places its overlay.
@@ -277,6 +279,8 @@ pub enum Fault {
     Escape,
     /// The shaft burst requested an unsupported sound queue limit.
     ShaftSoundAllowance,
+    /// The locked standing picture could not be prepared.
+    StandingPicture(super::blackout::Fault),
     /// The room's quake can't take the frame: a door's shake of a strength it has no size for,
     /// or an update it refuses.
     Quake,
@@ -323,7 +327,7 @@ impl State {
             self.play(inputs, passing, hud, content, rules)
         }?;
         if passing.publishes {
-            self.room_video.publish();
+            self.room_video.publish(content.standing.as_ref());
         }
         Ok(output)
     }
@@ -385,6 +389,19 @@ impl State {
             rules,
         );
 
+        let standing = locked.then(|| {
+            super::blackout::StandingFrame::from_locked(
+                &self.samus,
+                camera.position(),
+                self.passage.room.entry.view.transform,
+            )
+        });
+        self.room_video.prepare_play_picture(
+            &hud_state,
+            standing,
+            hud_outputs.countdown.picture,
+            content,
+        )?;
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
         self.room_video.prepare_hud(&hud_state).ok_or(Fault::Hud)?;

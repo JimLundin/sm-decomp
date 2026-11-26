@@ -55,7 +55,11 @@ impl StandingFrame {
     }
 }
 
-pub(super) fn prepare(batch: &mut NmiBatch, frame: StandingFrame, art: &Art) -> Result<(), Fault> {
+pub(in crate::production) fn prepare(
+    batch: &mut NmiBatch,
+    frame: StandingFrame,
+    art: &Art,
+) -> Result<(), Fault> {
     let body = elevator_standing_picture(
         ElevatorDrawing::Locked {
             pose: frame.pose,

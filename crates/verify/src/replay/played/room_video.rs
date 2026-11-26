@@ -636,3 +636,52 @@ fn return_hall_prepares_then_publishes_the_shaft_picture() {
         (200, Stop::End)
     );
 }
+/// The hall origin enters and locks the shaft before reaching the room's last unfinished work.
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
+    use super::{Run, appearance, connected, movement, seed_controller};
+
+    let sources = sources();
+    let lock = read_lock(&sources)?;
+    let row = "chain-any-0010-DF8D";
+    let mut rows = open_rows(&sources, &lock, row)?;
+    let seed = rows.record(0)?;
+    let content = connected::Content {
+        movement: movement::Content::load(&sources.rom)?,
+        appearance: appearance::Content::load(&sources.rom)?,
+    };
+    let mut run = Run::admit(&seed, &content, &sources.rom, row)?;
+    let mut controller = seed_controller(&seed)?;
+    let mut previous = seed;
+    let rom = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
+    let first_locked = 444;
+    let final_overrun = 518;
+    for cut in 1..=final_overrun {
+        let current = rows.record(cut)?;
+        let (row, local) = rows.place(cut)?;
+        run.step(controller, &previous, &current, cut, (&row, local))?;
+        if cut >= first_locked {
+            assert_eq!(row, "chain-any-0011-DF45");
+            assert_eq!(local, cut - first_locked + 165);
+            super::super::blackout::standing::compare_live(
+                &run.state.room_video.video,
+                &current,
+                rom.lorom(),
+                local,
+            )?;
+        }
+        controller = controller.read(current.pad.0, super::polled(&current));
+        previous = current;
+    }
+    assert!(
+        run.blackout
+            .as_ref()
+            .is_some_and(|scene| scene.awaits_blank())
+    );
+    super::tests::diagnostic(format_args!(
+        "LOCKED_SHAFT hall=0..{final_overrun} shaft=165..239 cuts={}",
+        final_overrun - first_locked + 1
+    ));
+    Ok(())
+}

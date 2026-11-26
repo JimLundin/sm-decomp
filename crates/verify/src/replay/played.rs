@@ -494,6 +494,7 @@ impl<'a> Run<'a> {
             state,
             played: played::Content {
                 clock_figures: Some(timer),
+                standing: game::samus_appearance_bridge::elevator::Art::load(image.lorom()).ok(),
                 shaft_track: shaft.as_ref().map(played::shaft::track),
                 shaft_overlay_art: shaft,
                 shaft_effects: import::countdown::shaft_effects(image.lorom())

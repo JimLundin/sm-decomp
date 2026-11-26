@@ -56,6 +56,7 @@ game_time = ["replay::played::play_time::continuous::ceres_clock_prefix"]
 # Every reviewed run of scenarios/replay/played.toml holds its `held` and `stop`.
 played = [
     "replay::blackout::owned_standing::first_locked_turn_reads_the_carried_look",
+    "replay::played::room_video::locked_shaft_publishes_timer_then_standing",
     "replay::played::tests::warning_defeat_is_carried_by_production",
     "replay::played::flyby_scope::tests::flyby_restores_both_native_paths_through_the_warning_handoff",
     "replay::played::tests::reviewed_runs_hold",

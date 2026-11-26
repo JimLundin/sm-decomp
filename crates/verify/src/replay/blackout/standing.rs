@@ -165,15 +165,15 @@ fn strip_bytes(strips: StandingStrips) -> Vec<u8> {
     .collect()
 }
 
-fn packed_oam(raw: &[u8]) -> Option<Vec<u8>> {
+fn packed_oam(raw: &[u8], slots: core::ops::Range<usize>) -> Option<Vec<u8>> {
     let (low, high) = raw.split_at_checked(512)?;
     let entries = low
-        .get(OAM_START.wrapping_mul(4)..OAM_END.wrapping_mul(4))?
+        .get(slots.start.wrapping_mul(4)..slots.end.wrapping_mul(4))?
         .as_chunks::<4>()
         .0;
     entries
         .iter()
-        .zip(OAM_START..OAM_END)
+        .zip(slots)
         .flat_map(|(entry, slot)| {
             let bits = high
                 .get(slot / 4)
@@ -196,9 +196,15 @@ fn observe(
         bytes,
     };
     let mut observations = vec![
-        field("pending-oam", packed_oam(prepared).ok_or_else(bad)?),
+        field(
+            "pending-oam",
+            packed_oam(prepared, OAM_START..OAM_END).ok_or_else(bad)?,
+        ),
         field("pending-strips", strip_bytes(pending)),
-        field("published-oam", packed_oam(published).ok_or_else(bad)?),
+        field(
+            "published-oam",
+            packed_oam(published, OAM_START..OAM_END).ok_or_else(bad)?,
+        ),
         field("publication", strip_bytes(serviced)),
     ];
     for (name, start) in [
@@ -257,4 +263,59 @@ pub(super) fn expected(record: &FrameRecord, rom: Lorom<'_>) -> Result<ExpectedC
         output_count: outputs.len(),
         replies: 0,
     })
+}
+
+#[cfg(test)]
+pub(in crate::replay) fn compare_live(
+    video: &game::state::video::Video,
+    record: &FrameRecord,
+    rom: Lorom<'_>,
+    cut: u64,
+) -> Result<(), Outcome> {
+    let bad = || data_failure(Some(cut), "live locked OAM");
+    let shadow = record.wram.get(0x370..0x590).ok_or_else(bad)?;
+    let batch = super::observe::oam_bytes(&video.batch.oam);
+    let live = super::observe::oam_bytes(&video.memory.oam);
+    let different = |field: &str| Outcome::Difference {
+        cut,
+        field: field.into(),
+    };
+    for (stage, expected, actual) in [
+        ("pending", shadow, batch.as_slice()),
+        ("published", &record.oam[..], live.as_slice()),
+    ] {
+        for (draw, slots) in [("timer", 0..OAM_START), ("standing", OAM_START..OAM_END)] {
+            if packed_oam(expected, slots.clone()).ok_or_else(bad)?
+                != packed_oam(actual, slots).ok_or_else(bad)?
+            {
+                return Err(different(&format!("live-shaft.{draw}-{stage}-oam")));
+            }
+        }
+    }
+    if super::word(&record.wram, 0x0590)? != video.batch.sprites.0.saturating_mul(4) {
+        return Err(different("live-shaft.oam-cursor"));
+    }
+    let strips = pending(record, rom)?;
+    if strips != video.batch.standing_strips {
+        return Err(different("live-shaft.standing-strips"));
+    }
+    for (name, start, strip) in [
+        ("upper-first", 0x6000_usize, strips.upper_first),
+        ("upper-second", 0x6100, strips.upper_second),
+        ("lower-first", 0x6080, strips.lower_first),
+        ("lower-second", 0x6180, strips.lower_second),
+    ] {
+        if let Some(strip) = strip {
+            let end = start.wrapping_add(usize::from(strip.words));
+            let range = start..end;
+            if video.memory.vram.get(range.clone()) != record.vram.get(range) {
+                return Err(different(&format!("live-shaft.standing-{name}")));
+            }
+        }
+    }
+    let hud_rows = 0x5820..0x5880;
+    if video.memory.vram.get(hud_rows.clone()) != record.vram.get(hud_rows) {
+        return Err(different("live-shaft.hud-tilemap"));
+    }
+    Ok(())
 }
