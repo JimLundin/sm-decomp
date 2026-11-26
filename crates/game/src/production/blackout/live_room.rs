@@ -6,7 +6,8 @@ use super::{
     WorkPass, picture, save_files,
 };
 use crate::production::played::{self, front_end};
-use crate::state::video::{Registers, Video};
+use crate::state::video::Video;
+use boss_ceres_ridley::ElevatorLock;
 use canonical::model::Model;
 use types::ceres_blackout::{
     BlackoutLevel, BlackoutTimer, FinishedPasses, PreparedPicture, PublishedPicture, TimerSprite,
@@ -24,7 +25,7 @@ impl LiveRoom {
     /// The live timer, display light and finished-pass count must agree with the handoff.
     pub fn reached(
         room: &played::State,
-        video: &Video,
+        reach: ElevatorLock,
         before: FinishedPasses,
         publishes: bool,
     ) -> Result<Self, Fault> {
@@ -32,12 +33,12 @@ impl LiveRoom {
             return Err(Fault::Timer);
         };
         let time = TimerCentiseconds(timer.time_left.hundredths());
-        let light = lit(&video.batch.registers)?;
+        let light = room_light(room)?;
         let mut scene = BlackoutState {
             phase: BlackoutPhase::Shaft,
             light,
             published: PublishedPicture {
-                light: lit(&video.committed)?,
+                light,
                 timer_sprites: sprites(&room.clock_picture.published),
             },
             pass: WorkPass::Finished,
@@ -55,7 +56,9 @@ impl LiveRoom {
                 picture: prepared(room),
             }),
         );
-        if requests != [Request::StandAndLock] {
+        if requests != [Request::StandAndLock]
+            || !matches!(scene.phase, BlackoutPhase::Hold(wait) if wait.get() == reach.hold)
+        {
             return Err(Fault::State);
         }
         publish(&mut scene, room, publishes)?;
@@ -79,12 +82,7 @@ impl LiveRoom {
     ///
     /// # Errors
     /// The phase must accept new room work and publication must agree with the carried count.
-    pub fn worked(
-        &mut self,
-        room: &played::State,
-        video: &mut Video,
-        publishes: bool,
-    ) -> Result<(), Fault> {
+    pub fn worked(&mut self, room: &mut played::State, publishes: bool) -> Result<(), Fault> {
         if !matches!(self.0.phase, BlackoutPhase::Hold(_) | BlackoutPhase::Fade)
             || !matches!(self.0.pass, WorkPass::Finished)
         {
@@ -102,6 +100,7 @@ impl LiveRoom {
             return Err(Fault::State);
         }
         publish(&mut scene, room, publishes)?;
+        let video = &mut room.room_video.video;
         picture::light(&mut video.batch.registers, scene.light);
         if publishes {
             picture::light(&mut video.committed, scene.published.light);
@@ -156,11 +155,12 @@ pub enum TransferFault {
     Cartridge(front_end::Fault),
 }
 
-fn lit(registers: &Registers) -> Result<BlackoutLight, Fault> {
-    if registers.forced_blank {
+fn room_light(room: &played::State) -> Result<BlackoutLight, Fault> {
+    let brightness = room.arrival.arrival.brightness;
+    if brightness.blanking != types::brightness::Blanking::Shown {
         return Err(Fault::Picture);
     }
-    BlackoutLevel::new(registers.brightness.0)
+    BlackoutLevel::new(brightness.level.get())
         .map(BlackoutLight::Lit)
         .ok_or(Fault::Picture)
 }

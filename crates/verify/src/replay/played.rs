@@ -391,6 +391,7 @@ struct Run<'a> {
     warning_picture: warning::Picture,
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
+    blackout: Option<game::production::blackout::LiveRoom>,
 }
 
 #[derive(Clone, Copy)]
@@ -517,6 +518,7 @@ impl<'a> Run<'a> {
             warning_picture,
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
+            blackout: None,
         })
     }
 
@@ -613,6 +615,7 @@ impl<'a> Run<'a> {
         mut matched: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
     ) -> Result<(u64, Stop), Outcome> {
         let mut held: u64 = 0;
+        let end = *cuts.end();
         for cut in cuts {
             let current = rows.record(cut)?;
             if current.video_frame != previous.video_frame.wrapping_add(1) {
@@ -638,6 +641,22 @@ impl<'a> Run<'a> {
                 Err(outcome) => return Ok((held, Stop::At(at(cut, outcome)))),
             }
             held = held.saturating_add(1);
+            if cut < end
+                && self
+                    .blackout
+                    .as_ref()
+                    .is_some_and(game::production::blackout::LiveRoom::awaits_blank)
+            {
+                return Ok((
+                    held,
+                    Stop::At(Outcome::Unsupported {
+                        cut: Some(cut.saturating_add(1)),
+                        dependency:
+                            "live shaft departure needs the retained room video and map owners"
+                                .into(),
+                    }),
+                ));
+            }
             controller = controller.read(current.pad.0, polled(&current));
             previous = current;
         }
@@ -680,8 +699,13 @@ impl<'a> Run<'a> {
             controller.check_poll(&previous.wram, cut)?;
         }
         let doors = self.state.passage.doors;
-        // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
-        if !preparing && doors == Doors::Play && !finished(current) {
+        let final_room_work = self
+            .blackout
+            .as_ref()
+            .is_some_and(game::production::blackout::LiveRoom::needs_final_room_work)
+            && super::blackout::final_room_overrun(previous, current);
+        // A shaft pass can be complete while its publication waits for vblank end and the save.
+        if !preparing && doors == Doors::Play && !finished(current) && !final_room_work {
             return Err(Outcome::Unsupported {
                 cut: None,
                 dependency: "lag cut in play (T1)".into(),
@@ -728,6 +752,7 @@ impl<'a> Run<'a> {
         };
         let start = borrowed_start;
         let hud_frame = hud::frame(&self.room.hud, controller, start);
+        let before = types::ceres_blackout::FinishedPasses(self.state.frame.finished_frames);
         let outputs = self
             .state
             .step(&inputs, &passing, &hud_frame, &self.played, &self.rules)
@@ -735,6 +760,13 @@ impl<'a> Run<'a> {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        self.blackout_turn(
+            outputs.elevator_reach,
+            before,
+            passing.work_begun,
+            platform.publishes,
+            cut,
+        )?;
         let published = outputs.opening_hud.is_some();
         let frame = Frame {
             previous,
@@ -777,6 +809,42 @@ impl<'a> Run<'a> {
         actual.push(play_time::observation(self.state.play_time));
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
         Ok((expected, outputs))
+    }
+
+    fn blackout_turn(
+        &mut self,
+        reach: Option<boss_ceres_ridley::ElevatorLock>,
+        before: types::ceres_blackout::FinishedPasses,
+        worked: bool,
+        publishes: bool,
+        cut: u64,
+    ) -> Result<(), Outcome> {
+        use game::production::blackout::LiveRoom;
+        let unsupported = |fault| Outcome::Unsupported {
+            cut: None,
+            dependency: format!("live shaft blackout {fault:?}"),
+        };
+        match (&mut self.blackout, reach) {
+            (None, Some(reach)) => {
+                self.blackout = Some(
+                    LiveRoom::reached(&self.state, reach, before, publishes)
+                        .map_err(unsupported)?,
+                );
+            }
+            (Some(_), Some(_)) => {
+                return Err(Outcome::Difference {
+                    cut,
+                    field: "shaft.elevator-reach".into(),
+                });
+            }
+            (Some(scene), None) if worked => {
+                scene
+                    .worked(&mut self.state, publishes)
+                    .map_err(unsupported)?;
+            }
+            (Some(_) | None, None) => {}
+        }
+        Ok(())
     }
 
     fn preparing_fields(

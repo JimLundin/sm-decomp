@@ -215,6 +215,18 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     })
 }
 
+const FINAL_ROOM_WAIT: u32 = 0x0080_82ce;
+
+/// A new room turn finished its work before the NMI suspended publication.
+pub(super) fn final_room_overrun(
+    previous: &oracle_record::FrameRecord,
+    current: &oracle_record::FrameRecord,
+) -> bool {
+    matches!(previous.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)
+        && matches!(current.cut, Cut::NmiReturn(nmi)
+            if nmi.kind == NmiKind::Overrun && nmi.interrupted_pc == FINAL_ROOM_WAIT)
+}
+
 pub(super) fn work(
     previous: &oracle_record::FrameRecord,
     current: &oracle_record::FrameRecord,
@@ -225,7 +237,7 @@ pub(super) fn work(
     };
     let work = match previous.cut {
         Cut::NmiReturn(prior) => match prior.interrupted_pc {
-            0x0080_82ce => blackout::Work::VerticalEnded,
+            FINAL_ROOM_WAIT => blackout::Work::VerticalEnded,
             0x0081_8066 if nmi.kind == NmiKind::Requested => blackout::Work::SaveCompleted,
             _ if prior.kind == NmiKind::Requested => blackout::Work::Fresh { reached },
             _ => blackout::Work::Interrupted,

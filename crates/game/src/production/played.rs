@@ -195,6 +195,8 @@ pub struct State {
 /// What one frame published.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outputs {
+    /// The escape shaft's once-only movement lock after reaching the elevator.
+    pub elevator_reach: Option<boss_ceres_ridley::ElevatorLock>,
     /// Movement's complete outcome; none while a passage runs.
     pub movement: Option<samus_movement::Outcome>,
     /// Her appearance's sounds, in the order asked; none while a passage runs.
@@ -405,6 +407,7 @@ impl State {
         self.play_time = play_time::after_work(self.play_time, health.state, passing.work_begun);
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
+            elevator_reach: None,
             movement: her.outcome,
             sounds: her.sounds,
             doors: doors.report,
@@ -585,6 +588,7 @@ impl State {
         self.hud.0.out_of_play(&hud::out_of_play(&exports.report));
         self.finish_passage(&exports, loaded, passing.actor_fetch);
         Ok(Outputs {
+            elevator_reach: None,
             movement: None,
             sounds: Vec::new(),
             doors: exports.report,
