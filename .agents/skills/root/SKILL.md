@@ -117,6 +117,10 @@ narrow a run) and the exact vector-runner command `launch.sh` appends. Before `l
 the toolchain's bin directory on `PATH` (`export.sh` runs cargo) and run `scan_brief.sh`; a
 `name` hit is usually an ordinary phrase that matches the lexicon, which rewording clears.
 
+## Lane closeout
+
+Send every final lane handoff to the [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end), including work that ends before a PR lands. Check the receipt for removed remote and local refs and worktrees. Carry retained items to the named consumer.
+
 ## Landing
 
 Before landing a round, complete [PROCESS step 11](../../../docs/cleanroom/PROCESS.md#a-round):

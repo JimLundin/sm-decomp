@@ -81,8 +81,8 @@ under the commit rules above.
 ## Guardrails and traps
 
 - The root alone updates `main` and publishes `land/*` branches. The designated
-  [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-after-landing) can delete a
-  finished branch handed off by the root. Never run `git stash` or change the shared git config.
+  [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end) deletes
+  released branches. Never run `git stash` or change the shared git config.
 - Kill only processes you started, by PID. Delete your own build outputs. Releasing a worktree
   in your handoff also authorizes the cleanup agent to remove its build outputs.
 - The root alone uploads to ci-data and posts to issues.
@@ -131,6 +131,12 @@ Branch <branch>, based on <base hash>. GATE OK <tip hash>.
 
 At completion, transfer or a context change, use [handoff](../handoff/SKILL.md).
 Link the batch report and its receipts where they already contain the proof.
+
+## Close the lane
+
+Send the root the local and remote branch names and tips, worktrees and build outputs you
+release. Name the consumer of anything you hand over. The cleanup agent removes released
+items and verifies the remote branches are gone under [Cleanup at lane end](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end).
 
 ## Land (root only)
 
