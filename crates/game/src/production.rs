@@ -6,6 +6,7 @@ use self::played::discovery;
 use self::played::explosion;
 use self::played::flashback;
 use self::played::intro_rooms;
+use self::played::zebes;
 use crate::state::owned::{CodecState, OwnedState};
 use canonical::model::Model;
 use canonical::{Canonical, Schema};
@@ -60,6 +61,8 @@ pub enum Scope {
     Playback,
     /// Cartridge persistence.
     SaveFiles,
+    /// Scheduled flight to Zebes and its drawing and health outputs.
+    Zebes,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
     /// The Zebes flashback encounter at its cinematic actor turn.
@@ -111,6 +114,8 @@ pub enum ProductionSeed {
     Playback(playback::ScenePhase),
     /// Complete cartridge, working profile and pending work.
     SaveFiles(Box<save_files::State>),
+    /// Complete flight, palette, sprite buffer and retained destination.
+    Zebes(Box<zebes::State>),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
     /// Complete flashback encounter State, including any pending start.
@@ -169,6 +174,8 @@ pub enum AdvanceInput<'a> {
     JumpHistory(Option<samus_movement::JumpButton>),
     /// The next authorized scene phase and any completed drawing opportunity.
     Discovery(discovery::Frame),
+    /// A scheduled flight cut.
+    Zebes(screens_zebes::FrameAdvance),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -257,6 +264,8 @@ pub enum ProductionOutputs {
     JumpHistory,
     /// Requests to the surrounding owners and the completed sprite publication.
     Discovery(discovery::Publication),
+    /// The flight and its consumers on this cut.
+    Zebes(Box<zebes::Output>),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -296,6 +305,8 @@ pub enum AdmissionFault {
     Blackout(blackout::Fault),
     /// The saved playback progress or pad is outside its content.
     Playback,
+    /// Inconsistent flight owners or missing content.
+    Zebes(zebes::Fault),
     /// Complete connected owner/content relation is invalid.
     Connected(connected::Fault),
     /// State, content and rules must select the same entry.
@@ -337,6 +348,8 @@ pub enum Unsupported {
     IntroRooms(intro_rooms::Fault),
     /// The cartridge cannot accept this request in its current state.
     SaveFiles(::save_files::Refusal),
+    /// A required Zebes flight consumer or continuation is unavailable.
+    Zebes(zebes::Fault),
     /// A weapon impact cue needs its qualified sender mapping.
     WeaponImpactSound,
     /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
@@ -430,6 +443,7 @@ impl Production {
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Playback(_) => Scope::Playback,
             ProductionSeed::SaveFiles(_) => Scope::SaveFiles,
+            ProductionSeed::Zebes(_) => Scope::Zebes,
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
             ProductionSeed::Flashback(_) => Scope::Flashback,
@@ -550,6 +564,7 @@ impl Production {
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Playback(_) => Scope::Playback,
             OwnedState::SaveFiles(_) => Scope::SaveFiles,
+            OwnedState::Zebes(_) => Scope::Zebes,
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::IntroRooms(_) => Scope::IntroRooms,
             OwnedState::Flashback(_) => Scope::Flashback,
@@ -705,6 +720,7 @@ impl Production {
             | OwnedState::Discovery(_)
             | OwnedState::Blackout(_)
             | OwnedState::Explosion(_)
+            | OwnedState::Zebes(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::JumpHistory(_)
@@ -737,6 +753,7 @@ impl Production {
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Discovery(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::Zebes(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::JumpHistory(state) => return Ok(self.encode_save(*state)),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
@@ -827,6 +844,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<intro_rooms::Scoped>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::IntroRooms(checkpoint.state)
+        } else if matches!(&content, ProductionContent::Zebes(_)) {
+            let checkpoint: Checkpoint<Box<zebes::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Zebes(checkpoint.state)
         } else if matches!(&content, ProductionContent::HealthTail(_)) {
             let checkpoint: Checkpoint<Box<health_tail::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -854,6 +875,8 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Flashback => canonical::model::pin_holds::<crate::state::owned::FlashbackPin>(),
         Scope::Playback => canonical::model::pin_holds::<crate::state::owned::PlaybackPin>(),
         Scope::Discovery => canonical::model::pin_holds::<crate::state::owned::DiscoveryPin>(),
+        Scope::Zebes => canonical::model::pin_holds::<zebes::ScenePin>()
+            .and_then(|()| canonical::model::pin_holds::<health_tail::HealthPin>()),
         Scope::Connected => {
             use canonical::model::pin_holds;
             pin_holds::<connected::inputs::InputsPin>()

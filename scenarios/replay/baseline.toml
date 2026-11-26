@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "d144f4e6d3512dbea19efd5e5eb8b73589fd6eae5dd8b26953299e2a5a10ffe2"
+index_sha256 = "c332451c445229ef13f3611236fd6c9928cc029b1c725c2dc3d3b760e3ce8ba3"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1326,5 +1326,44 @@ replies = 0
 null_cuts = 0
 null_fields = 913
 restorations = 763
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "zebes/flight-to-zebes"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "9b4dbd8c216cfab65559ee5aca6ec51e5f3336f277cdf3edbc33cfe6354b9697"
+
+[case.counts]
+cuts = 1119
+fields = 16659
+outputs = 1119
+publications = 0
+replies = 0
+null_cuts = 9
+null_fields = 3935
+restorations = 1119
+pending_boundaries = 0
+pending_restorations = 0
+
+
+
+
+[[case]]
+id = "zebes/station-blackout-to-landing-load"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "0a8728b69fa11375c372a92dc87dde0ad91a6944e8b283fc8e6e76ce045f5ef4"
+
+[case.counts]
+cuts = 1119
+fields = 22254
+outputs = 3345
+publications = 0
+replies = 0
+null_cuts = 9
+null_fields = 8418
+restorations = 1119
 pending_boundaries = 0
 pending_restorations = 0

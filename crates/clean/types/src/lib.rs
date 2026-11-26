@@ -25,6 +25,7 @@ pub mod power_on;
 pub struct GameFrames(pub u16);
 pub mod quake;
 pub mod save_files;
+pub mod zebes;
 
 /// The title sequence's State: its stage and the screen, from the power-on's hand-over until
 /// file select begins. The game carries it from one frame end to the next and may save and

@@ -42,6 +42,12 @@ pub enum Responsibility {
     SaveFiles,
     /// The egg and baby in the intro.
     Discovery,
+    /// The complete flight to Zebes.
+    Zebes,
+    /// Page, sprite and palette consumers selected alongside the flight.
+    ZebesDrawing,
+    /// The scheduler's published landing request and retained destination.
+    ZebesScheduler,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -180,6 +186,8 @@ pub enum InputProvider {
     ScopedIntroDeliveryInputs,
     /// The intro requests, completion and resulting actor position in the discovery room.
     DiscoveryInputs,
+    /// Recorded work completion after the station handoff.
+    ZebesFlightInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -530,6 +538,33 @@ pub enum ObservationId {
     #[serde(rename = "discovery.oam")]
     DiscoveryOam,
 
+    /// The flight stage and stage-local counters.
+    #[serde(rename = "zebes.stage")]
+    ZebesStage,
+    /// Brightness, view, mosaic, pose and affine output.
+    #[serde(rename = "zebes.picture")]
+    ZebesPicture,
+    /// The presence and motion of each placed picture.
+    #[serde(rename = "zebes.motion")]
+    ZebesMotion,
+    /// Requests the flight publishes on this cut.
+    #[serde(rename = "zebes.requests")]
+    ZebesRequests,
+    /// The energy held and restored by the receiving owner.
+    #[serde(rename = "zebes.health")]
+    ZebesHealth,
+    /// Current game flow and retained Landing Site context.
+    #[serde(rename = "zebes.schedule")]
+    ZebesSchedule,
+    /// Exact page and graphics transfers.
+    #[serde(rename = "zebes.pages")]
+    ZebesPages,
+    /// Ordered visible sprite entries and high-table bits.
+    #[serde(rename = "zebes.oam")]
+    ZebesOam,
+    /// Complete published BGR555 palette, including the engine accent and caption.
+    #[serde(rename = "zebes.palette")]
+    ZebesPalette,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -970,6 +1005,9 @@ fn rule_exists(rule: &str) -> bool {
         || screens_discovery::catalogue::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("screens-discovery/{id:?}"))
+        || screens_zebes::BehaviourId::ALL
+            .iter()
+            .any(|id| rule == format!("screens-zebes/{id:?}"))
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -1167,11 +1205,17 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::PlaybackFinish
         | O::PlaybackAuthority => Responsibility::Playback,
         O::Battery => Responsibility::SaveFiles,
+        O::ZebesStage | O::ZebesPicture | O::ZebesMotion | O::ZebesRequests => {
+            Responsibility::Zebes
+        }
+        O::ZebesSchedule => Responsibility::ZebesScheduler,
+        O::ZebesPages | O::ZebesOam | O::ZebesPalette => Responsibility::ZebesDrawing,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState
         | O::HealthTailWarning
         | O::HealthTailDrawnProtection
-        | O::CeresTailHealth => Responsibility::Health,
+        | O::CeresTailHealth
+        | O::ZebesHealth => Responsibility::Health,
         explosion_observations!() => Responsibility::StationExplosion,
         blackout_observations!() => Responsibility::Blackout,
         O::CeresTailKnockback
@@ -1245,6 +1289,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("world-intro-rooms/", Responsibility::IntroRooms),
         ("screens-flashback/", Responsibility::Flashback),
         ("screens-discovery/", Responsibility::Discovery),
+        ("screens-zebes/", Responsibility::Zebes),
         ("samus-movement/", Responsibility::Movement),
         ("screens-explosion/", Responsibility::StationExplosion),
         ("screens-blackout/", Responsibility::Blackout),
@@ -1306,6 +1351,16 @@ fn movement_witnessed_fields(
         "samus-movement/BackwardLeap" | "samus-movement/WhatHerMovesMet" => {
             &[O::LandingPose, O::LandingFloor]
         }
+        "screens-zebes/GunshipAppears" | "screens-zebes/ShipApproachesPlanet" => {
+            &[O::ZebesStage, O::ZebesPicture]
+        }
+        "screens-zebes/PlanetAppears" | "screens-zebes/PlanetAndStarsSlide" => {
+            &[O::ZebesStage, O::ZebesMotion]
+        }
+        "screens-zebes/PlanetIsNamed" | "screens-zebes/LandingSiteLoadBegins" => {
+            &[O::ZebesStage, O::ZebesRequests]
+        }
+        "screens-zebes/PlanetHolds" => &[O::ZebesStage],
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
@@ -1945,6 +2000,30 @@ fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
             ]
 }
 
+fn zebes_provider_valid(case: &Case) -> bool {
+    use super::zebes::{INTEGRATED_FIELDS, INTEGRATED_OUTPUTS, SCOPED_FIELDS, SCOPED_OUTPUTS};
+    use Responsibility::{Health, Zebes, ZebesDrawing, ZebesScheduler};
+
+    let supported = match case.kind {
+        CaseKind::Scoped => {
+            case.responsibilities == [Zebes]
+                && case.expectations.fields == SCOPED_FIELDS
+                && case.expectations.outputs == SCOPED_OUTPUTS
+        }
+        CaseKind::Integrated => {
+            case.responsibilities == [Zebes, ZebesDrawing, Health, ZebesScheduler]
+                && case.expectations.fields == INTEGRATED_FIELDS
+                && case.expectations.outputs == INTEGRATED_OUTPUTS
+        }
+        CaseKind::Movie => false,
+    };
+    supported
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && case.expectations.output_cut.is_none()
+        && matches!(case.start, Start::CacheCut { .. })
+}
+
 fn station_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
     case.kind == CaseKind::Scoped
@@ -1983,6 +2062,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     }
     if case.inputs == InputProvider::SaveFileBoundaries {
         return save_files_provider_valid(case);
+    }
+    if case.inputs == InputProvider::ZebesFlightInputs {
+        return zebes_provider_valid(case);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);

@@ -37,6 +37,7 @@ mod shaft;
 mod shot_drawing;
 mod touched_cells;
 mod weapons;
+mod zebes;
 
 use compare::{CompareFault, Observation};
 use index::{Case, Start};

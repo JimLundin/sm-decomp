@@ -66,6 +66,7 @@ pub mod samus;
 mod shaft;
 mod start;
 pub mod station;
+pub mod zebes;
 
 pub use hud::HudFrame;
 pub(super) use samus::animation_inputs;

@@ -533,6 +533,19 @@ const DOMAINS: &[Domain] = &[
         ],
         apart: &[],
     },
+    Domain {
+        name: "screens-zebes",
+        bridge: None,
+        adapters: &["production/played/zebes.rs"],
+        providers: &["zebes"],
+        areas: &[
+            ("reveal", &["reveal.rs"]),
+            ("caption", &["caption.rs"]),
+            ("flight", &["approach.rs", "plane.rs"]),
+            ("departure", &["hold.rs", "slide.rs", "handoff.rs"]),
+        ],
+        apart: &[],
+    },
     // The frame's order, its report, the content and the catalogue are the domain's shared code.
     Domain {
         name: "screens-intro",

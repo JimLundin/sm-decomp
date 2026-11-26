@@ -21,6 +21,7 @@ pub(super) enum InputReader {
     IntroMissiles(super::intro_missiles::Inputs),
     JumpHistory(Vec<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
+    Zebes(super::zebes::Inputs),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -45,6 +46,7 @@ pub(super) enum ExpectedReader {
     IntroMissiles(super::intro_missiles::Expected),
     JumpHistory(Vec<ExpectedCut>),
     Discovery(super::discovery::Expectations),
+    Zebes(super::zebes::Expected),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
     SenderOffer(Vec<Observation>),
@@ -67,6 +69,10 @@ pub(super) enum ActualReader {
     IntroMissiles,
     JumpHistory,
     Discovery,
+    Zebes {
+        integrated: bool,
+        scene: types::zebes::ZebesScene,
+    },
     EarlyMap,
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
@@ -123,6 +129,7 @@ impl InputReader {
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::Discovery(inputs) => inputs.advance(production, cut),
+            Self::Zebes(inputs) => inputs.advance(production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
@@ -183,6 +190,39 @@ fn movement_state_fields(state: &samus_movement::Samus) -> Vec<Observation> {
     ]
 }
 
+fn movement_actual(
+    production: &Production,
+    outputs: &samus_movement::Outcome,
+    cut: u64,
+) -> Result<Vec<Observation>, Outcome> {
+    let OwnedState::Movement(state) = production.state() else {
+        return Err(data_failure(Some(cut), "movement owned scope"));
+    };
+    let mut actual = movement_state_fields(&state.0);
+    actual.extend(outputs.travelled.iter().map(|(direction, travel)| {
+        Observation::quantity(
+            format!("movement.travel.{direction:?}"),
+            i64::from(travel.0.0),
+        )
+    }));
+    let wall = match outputs.wall_test {
+        samus_movement::WallTest::Neither => 0,
+        samus_movement::WallTest::Readied => 1,
+        samus_movement::WallTest::Kicked => 2,
+    };
+    actual.push(Observation::quantity("movement.wall_test", wall));
+    actual.push(movement::reached(outputs));
+    actual.push(Observation::quantity(
+        "movement.landing.floor",
+        i64::from(
+            outputs
+                .floor_response
+                .is_some_and(|floor| floor.kind == types::FloorResponseKind::UprightTouchdown),
+        ),
+    ));
+    Ok(actual)
+}
+
 impl ActualReader {
     pub fn accept(
         &mut self,
@@ -225,6 +265,11 @@ impl ActualReader {
                 super::blackout::actual(production, &out, *late)
             }
             (
+                Self::Zebes { integrated, .. },
+                InputReader::Zebes(_),
+                ProductionOutputs::Zebes(output),
+            ) => super::zebes::actual(production, &output, *integrated),
+            (
                 Self::HealthTail,
                 InputReader::HealthTail(_),
                 ProductionOutputs::HealthTail(outputs),
@@ -263,32 +308,7 @@ impl ActualReader {
                 Self::Movement,
                 InputReader::Movement { .. },
                 ProductionOutputs::Movement(outputs),
-            ) => {
-                let OwnedState::Movement(state) = production.state() else {
-                    return Err(data_failure(Some(cut), "movement owned scope"));
-                };
-                let mut actual = movement_state_fields(&state.0);
-                actual.extend(outputs.travelled.iter().map(|(direction, travel)| {
-                    Observation::quantity(
-                        format!("movement.travel.{direction:?}"),
-                        i64::from(travel.0.0),
-                    )
-                }));
-                let wall = match outputs.wall_test {
-                    samus_movement::WallTest::Neither => 0,
-                    samus_movement::WallTest::Readied => 1,
-                    samus_movement::WallTest::Kicked => 2,
-                };
-                actual.push(Observation::quantity("movement.wall_test", wall));
-                actual.push(movement::reached(&outputs));
-                actual.push(Observation::quantity(
-                    "movement.landing.floor",
-                    i64::from(outputs.floor_response.is_some_and(|floor| {
-                        floor.kind == types::FloorResponseKind::UprightTouchdown
-                    })),
-                ));
-                Ok(actual)
-            }
+            ) => movement_actual(production, &outputs, cut),
             _ => Err(data_failure(Some(cut), "actual projection scope")),
         }
     }
@@ -316,6 +336,9 @@ impl ActualReader {
                 &game::production::blackout::Output::default(),
                 *late,
             ),
+            Self::Zebes { integrated, scene } => {
+                super::zebes::initial(production, scene, *integrated)
+            }
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
@@ -372,6 +395,7 @@ impl ExpectedReader {
             Self::IntroMissiles(expected) => expected.at(cut),
             Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
             Self::Discovery(expected) => expected.at(cut),
+            Self::Zebes(expected) => expected.read(cut),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),

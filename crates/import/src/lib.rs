@@ -19,3 +19,4 @@ pub mod tileset;
 pub mod world;
 
 pub mod explosion;
+pub mod zebes;

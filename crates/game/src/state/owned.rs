@@ -82,6 +82,8 @@ pub enum OwnedState {
     Playback(Model<PlaybackPin>),
     /// The whole cartridge and its pending operation.
     SaveFiles(Box<crate::production::save_files::State>),
+    /// Complete flight to Zebes and its receiving owners.
+    Zebes(Box<crate::production::played::zebes::State>),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Every actor, pending timer and background offset of the flashback encounter.

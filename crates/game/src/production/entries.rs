@@ -96,6 +96,14 @@ pub(super) fn admit(
             ProductionRules::Discovery,
         ) => OwnedState::Discovery(Model(state)),
         (
+            ProductionSeed::Zebes(state),
+            ProductionContent::Zebes(content),
+            ProductionRules::Zebes(_),
+        ) => {
+            state.validate(content).map_err(AdmissionFault::Zebes)?;
+            OwnedState::Zebes(state)
+        }
+        (
             ProductionSeed::HealthTail(state),
             ProductionContent::HealthTail(content),
             ProductionRules::HealthTail(_),
@@ -184,6 +192,16 @@ pub(super) fn advance_intro(
             ProductionRules::Discovery,
             AdvanceInput::Discovery(cut),
         ) => ProductionOutputs::Discovery(art.scoped(&mut state.0, cut)),
+        (
+            OwnedState::Zebes(state),
+            ProductionContent::Zebes(content),
+            ProductionRules::Zebes(rules),
+            AdvanceInput::Zebes(cut),
+        ) => {
+            ProductionOutputs::Zebes(Box::new(state.advance(content, *rules, cut).map_err(
+                |fault| ProductionFault::Unsupported(super::Unsupported::Zebes(fault)),
+            )?))
+        }
         (state, content, rules, input) => advance(state, content, rules, input)?,
     })
 }

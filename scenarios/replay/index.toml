@@ -1830,3 +1830,63 @@ provider = "pinned-post-service-music"
 fields = ["music.busy"]
 phase = "after audio service"
 claim = "the scene reads the independent queued music reply before advancing the reveal"
+
+[[case]]
+id = "zebes/flight-to-zebes"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 1004 }
+end = { cut_inclusive = 2123 }
+rules = ["screens-zebes/GunshipAppears", "screens-zebes/PlanetAppears", "screens-zebes/PlanetIsNamed", "screens-zebes/ShipApproachesPlanet", "screens-zebes/PlanetHolds", "screens-zebes/PlanetAndStarsSlide", "screens-zebes/LandingSiteLoadBegins"]
+profile = "reference"
+responsibilities = ["zebes"]
+content = "player-rom-import"
+inputs = "zebes-flight-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["zebes.stage", "zebes.picture", "zebes.motion"], outputs = ["zebes.requests"] }
+checkpoints = true
+limits = ["the station blackout and its carried palette, energy and destination are admitted at cut 1004", "setup work in progress is masked until its first finished cut", "English caption observed", "full pixel composition and off-screen OAM retention outside the compared drawing outputs", "the receiving loader starts after the final compared cut"]
+
+[[case.borrowed]]
+dependency = "zebes.scheduler-cadence"
+provider = "pinned-record-nmi-work-completion"
+fields = ["scheduler.finished"]
+phase = "per cut"
+claim = "T1 owns the work spanning setup's nine borrowed lag cuts"
+
+[[case.borrowed]]
+dependency = "zebes.entry-and-options"
+provider = "pinned-record-station-blackout"
+fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
+phase = "seed cut"
+claim = "the incoming station owner, retained outputs and subtitle selection are admitted at the boundary"
+
+
+
+[[case]]
+id = "zebes/station-blackout-to-landing-load"
+kind = "integrated"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 1004 }
+end = { cut_inclusive = 2123 }
+rules = ["screens-zebes/GunshipAppears", "screens-zebes/PlanetAppears", "screens-zebes/PlanetIsNamed", "screens-zebes/ShipApproachesPlanet", "screens-zebes/PlanetHolds", "screens-zebes/PlanetAndStarsSlide", "screens-zebes/LandingSiteLoadBegins"]
+profile = "reference"
+responsibilities = ["zebes", "zebes-drawing", "health", "zebes-scheduler"]
+content = "player-rom-import"
+inputs = "zebes-flight-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["zebes.stage", "zebes.picture", "zebes.motion", "zebes.health", "zebes.schedule"], outputs = ["zebes.requests", "zebes.pages", "zebes.oam", "zebes.palette"] }
+checkpoints = true
+limits = ["the station blackout and its carried palette, energy and destination are admitted at cut 1004", "setup work in progress is masked until its first finished cut", "English caption observed", "full pixel composition and off-screen OAM retention outside the compared drawing outputs", "the receiving loader starts after the final compared cut"]
+
+[[case.borrowed]]
+dependency = "zebes.scheduler-cadence"
+provider = "pinned-record-nmi-work-completion"
+fields = ["scheduler.finished"]
+phase = "per cut"
+claim = "T1 owns the work spanning setup's nine borrowed lag cuts"
+
+[[case.borrowed]]
+dependency = "zebes.entry-and-options"
+provider = "pinned-record-station-blackout"
+fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
+phase = "seed cut"
+claim = "the incoming station owner, retained outputs and subtitle selection are admitted at the boundary"

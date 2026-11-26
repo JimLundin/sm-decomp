@@ -292,6 +292,9 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
                 && counts.pending_boundaries == 2,
         );
     }
+    if case.inputs == InputProvider::ZebesFlightInputs {
+        return Some(super::zebes::valid_counts(case, counts));
+    }
     if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
         return Some(
             super::early_map::field_count(case, counts.cuts) == Some(counts.fields)

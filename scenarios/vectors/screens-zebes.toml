@@ -1,0 +1,289 @@
+# One finished frame per vector. Pose is [angle in 256ths of a turn, zoom in 256ths, x, y].
+# Positions are signed screen pixels with fractions in 65,536ths. Pictures are indexed by a
+# scene label and hold [x, y, upward speed in 256ths of a pixel per frame].
+# before/after use stage, view, level (0 means blanked), block (pixels), beat (frames modulo 4),
+# fade, age and hold (frames), pose and pictures. Omitted assertions are unconstrained.
+# A before with omitted fields means MosaicPage, blanked, block 1, beat/fade/age/hold 0, zero
+# pose and no pictures. Omitted content means the sample scene below. The names in pictures
+# belong to that sample scene. output checks caption events, install (the E2 graphics references), palette_replace (the
+# R4 effect reference and starting-palette policy), restore_full_energy and begin_landing_site_load
+# (independent outputs published on the same cut), matrix (four signed values in 256ths) and
+# scroll (two signed whole pixels). A per-vector last_field overrides the sample scene marker.
+# subtitle defaults to false. rules.hold_frames defaults to 64 and belongs to PlanetHolds.
+# All content here is invented. Recorded vectors compare RAM observations, with source cuts
+# listed in the replay evidence. Where the recorded drawing needs original content,
+# the same rule is checked independently by the recorded scene replay.
+
+[scene]
+places = { Planet = [112, 98], UpperLeft = [20, 33], UpperRight = [219, 31], LowerLeft = [27, 177], LowerRight = [213, 180] }
+last_field = "LowerRight"
+engine_accent = "AmberPulse"
+graphics = { flat_map = "Grid", flat_tiles = "FlatTiles", ship_map = "Scout", ship_tiles = "ShipTiles", sprite_graphics = "NightSky" }
+holds = [5, 2, 4, 3]
+english = [100, 168]
+japanese = [102, 181]
+
+[[vector]]
+id = "C-setup"
+source = "constructed"
+entries = ["GunshipAppears"]
+before = { stage = "Pending", level = 4 }
+after = { stage = "Revealing", view = "MosaicPage", level = 0, block = 9, beat = 1, fade = 1, pose = [0, 256, 0, 0], pictures = {} }
+output = { install = { flat_map = "Grid", flat_tiles = "FlatTiles", ship_map = "Scout", ship_tiles = "ShipTiles", sprite_graphics = "NightSky" }, palette_replace = { effect = "AmberPulse", retain_colours = true }, matrix = [256, 0, 0, 256], scroll = [0, 0] }
+
+[[vector]]
+id = "R-fade-waits"
+source = "recorded"
+entries = ["GunshipAppears"]
+before = { stage = "Revealing", block = 9, beat = 1, fade = 1 }
+after = { stage = "Revealing", level = 0, block = 9, beat = 2, fade = 0 }
+
+[[vector]]
+id = "R-first-light"
+source = "recorded"
+entries = ["GunshipAppears"]
+before = { stage = "Revealing", block = 9, beat = 2 }
+after = { stage = "Revealing", level = 1, block = 9, beat = 3, fade = 1 }
+
+[[vector]]
+id = "R-mosaic-step"
+source = "recorded"
+entries = ["GunshipAppears"]
+before = { stage = "Revealing", level = 1, block = 9, beat = 0 }
+after = { stage = "Revealing", level = 2, block = 8, beat = 1, fade = 1 }
+
+[[vector]]
+id = "R-full-light"
+source = "recorded"
+entries = ["GunshipAppears"]
+before = { stage = "Revealing", level = 14, block = 2, beat = 2 }
+after = { stage = "Revealing", view = "MosaicPage", level = 15, block = 2, beat = 3, fade = 0 }
+
+[[vector]]
+id = "R-lit-waits"
+source = "recorded"
+entries = ["GunshipAppears"]
+before = { stage = "Revealing", view = "MosaicPage", level = 15, block = 2, beat = 3, fade = 0 }
+after = { stage = "Revealing", view = "MosaicPage", level = 15, block = 2, beat = 0, fade = 0 }
+
+[[vector]]
+id = "R-planet"
+source = "recorded"
+entries = ["PlanetAppears", "GunshipAppears"]
+before = { stage = "Revealing", level = 15, block = 2, beat = 0 }
+after = { stage = "Caption", view = "ShipAndSprites", level = 15, block = 1, age = 0, pose = [32, 256, 128, -104] }
+output = { matrix = [181, 181, -181, 181], scroll = [128, -104] }
+
+[[vector]]
+id = "C-planet"
+source = "constructed"
+entries = ["PlanetAppears"]
+before = { stage = "Revealing", level = 15, block = 2 }
+after = { stage = "Caption", view = "ShipAndSprites", age = 0, pictures = { Planet = [112, 98, 0], UpperLeft = [20, 33, 0], UpperRight = [219, 31, 0], LowerLeft = [27, 177, 0], LowerRight = [213, 180, 0] } }
+output = { events = [] }
+
+[[vector]]
+id = "C-caption-start"
+source = "constructed"
+entries = ["PlanetIsNamed"]
+before = { stage = "Caption", age = 4, pictures = { Planet = [112, 98, 0] } }
+after = { stage = "Caption", age = 5, pictures = { Planet = [112, 98, 0], English = [100, 168, 0] } }
+output = { events = ["CaptionBrightens"] }
+
+[[vector]]
+id = "C-subtitle"
+source = "constructed"
+entries = ["PlanetIsNamed"]
+subtitle = true
+before = { stage = "Caption", age = 6, pictures = { English = [100, 168, 0] } }
+after = { stage = "Caption", age = 7, pictures = { English = [100, 168, 0], Japanese = [102, 181, 0] } }
+output = { events = [] }
+
+[[vector]]
+id = "C-english"
+source = "constructed"
+entries = ["PlanetIsNamed"]
+subtitle = false
+before = { stage = "Caption", age = 6, pictures = { English = [100, 168, 0] } }
+after = { stage = "Caption", age = 7, pictures = { English = [100, 168, 0] } }
+output = { events = [] }
+
+[[vector]]
+id = "C-caption-holds"
+source = "constructed"
+entries = ["PlanetIsNamed"]
+subtitle = true
+before = { stage = "Caption", view = "ShipAndSprites", level = 15, age = 7, pictures = { English = [100, 168, 0], Japanese = [102, 181, 0] } }
+after = { stage = "Caption", view = "ShipAndSprites", level = 15, age = 8, pictures = { English = [100, 168, 0], Japanese = [102, 181, 0] } }
+output = { events = [] }
+
+[[vector]]
+id = "C-caption-dims"
+source = "constructed"
+entries = ["PlanetIsNamed"]
+subtitle = true
+before = { stage = "Caption", age = 10, pictures = { English = [100, 168, 0], Japanese = [102, 181, 0] } }
+after = { stage = "Caption", age = 11, pictures = { English = [100, 168, 0] } }
+output = { events = ["CaptionDims"] }
+
+[[vector]]
+id = "C-caption-ends"
+source = "constructed"
+entries = ["PlanetIsNamed"]
+before = { stage = "Caption", age = 13, pose = [32, 256, 128, -104], pictures = { English = [100, 168, 0] } }
+after = { stage = "Rightward", pose = [32, 16, 62, -112], pictures = {} }
+output = { events = [], matrix = [11, 11, -11, 11], scroll = [62, -112] }
+
+[[vector]]
+id = "R-right"
+source = "recorded"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Rightward", pose = [32, 16, 62, -112] }
+after = { stage = "Rightward", pose = [32, 20, 61.5, -111.875] }
+output = { matrix = [14, 14, -14, 14], scroll = [61, -112] }
+
+[[vector]]
+id = "R-bank-starts"
+source = "recorded"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Rightward", pose = [32, 1152, -80, -76.5] }
+after = { stage = "Banking", pose = [32, 1152, -80.5, -76.375] }
+
+[[vector]]
+id = "R-bank"
+source = "recorded"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Banking", pose = [32, 1152, -80.5, -76.375] }
+after = { stage = "Banking", pose = [31, 1168, -81, -76.25] }
+output = { matrix = [844, 803, -803, 844], scroll = [-81, -77] }
+
+[[vector]]
+id = "C-turn-wrap"
+source = "constructed"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Banking", pose = [0, 256, 0, 0] }
+after = { stage = "Banking", pose = [255, 272, -0.5, 0.125] }
+output = { matrix = [270, -7, 7, 270], scroll = [-1, 0] }
+
+[[vector]]
+id = "R-bank-held"
+source = "recorded"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Banking", pose = [224, 2656, -127.5, -64.625] }
+after = { stage = "Banking", pose = [224, 2672, -128, -64.5] }
+
+[[vector]]
+id = "R-left-starts"
+source = "recorded"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Banking", pose = [224, 2672, -128, -64.5] }
+after = { stage = "Leftward", pose = [224, 2672, -128.5, -64.375] }
+
+[[vector]]
+id = "R-left"
+source = "recorded"
+entries = ["ShipApproachesPlanet"]
+before = { stage = "Leftward", pose = [224, 2672, -128.5, -64.375] }
+after = { stage = "Leftward", pose = [224, 2704, -128.375, -64.25] }
+output = { matrix = [1911, -1912, 1912, 1911], scroll = [-129, -65] }
+
+[[vector]]
+id = "R-hold-starts"
+source = "recorded"
+entries = ["ShipApproachesPlanet", "PlanetHolds"]
+before = { stage = "Leftward", view = "ShipAndSprites", pose = [224, 8208, -106.875, -42.75] }
+after = { stage = "Still", view = "SpritesOnly", pose = [224, 8208, -106.75, -42.625], hold = 64 }
+
+[[vector]]
+id = "C-short-hold"
+source = "constructed"
+entries = ["ShipApproachesPlanet", "PlanetHolds"]
+rules = { hold_frames = 3 }
+before = { stage = "Leftward", view = "ShipAndSprites", pose = [224, 8192, 0, 0] }
+after = { stage = "Still", view = "SpritesOnly", pose = [224, 8192, 0.125, 0.125], hold = 3 }
+
+[[vector]]
+id = "R-hold-ticks"
+source = "recorded"
+entries = ["PlanetHolds"]
+before = { stage = "Still", hold = 64 }
+after = { stage = "Still", hold = 63 }
+
+[[vector]]
+id = "R-slide-starts"
+source = "recorded"
+entries = ["PlanetHolds"]
+before = { stage = "Still", hold = 1, pose = [224, 8208, -106.75, -42.625] }
+after = { stage = "Sliding", hold = 0, pose = [224, 8208, -106.75, -42.625] }
+
+[[vector]]
+id = "R-slide-first"
+source = "recorded"
+entries = ["PlanetAndStarsSlide"]
+before = { stage = "Sliding", pictures = { Planet = [136, 111, 0], LowerRight = [208, 207, 0] } }
+after = { stage = "Sliding", pictures = { Planet = [136, 110.75, 64], LowerRight = [208, 206.875, 32] } }
+
+[[vector]]
+id = "C-slide-floor"
+source = "constructed"
+entries = ["PlanetAndStarsSlide"]
+before = { stage = "Sliding", pictures = { LowerRight = [213, -127, 224] } }
+after = { stage = "Sliding", pictures = { LowerRight = [213, -128, 256] } }
+
+[[vector]]
+id = "R-slide-removes"
+source = "recorded"
+entries = ["PlanetAndStarsSlide"]
+before = { stage = "Sliding", pictures = { Planet = [136, -125.5, 2752] } }
+after = { stage = "Sliding", pictures = {} }
+output = { events = [] }
+
+[[vector]]
+id = "R-last-star"
+source = "recorded"
+entries = ["PlanetAndStarsSlide"]
+before = { stage = "Sliding", pictures = { LowerRight = [208, -121.5, 2304] } }
+after = { stage = "Leaving", pictures = {} }
+output = { events = [] }
+
+[[vector]]
+id = "C-last-star"
+source = "constructed"
+entries = ["PlanetAndStarsSlide"]
+last_field = "UpperRight"
+before = { stage = "Sliding", pictures = { UpperRight = [219, -128, 0], LowerRight = [213, 31, 0] } }
+after = { stage = "Leaving", pictures = { LowerRight = [213, 30.875, 32] } }
+output = { events = [] }
+
+[[vector]]
+id = "C-unmarked-star"
+source = "constructed"
+entries = ["PlanetAndStarsSlide"]
+last_field = "UpperRight"
+before = { stage = "Sliding", pictures = { LowerRight = [213, -128, 0], UpperRight = [219, 31, 0] } }
+after = { stage = "Sliding", pictures = { UpperRight = [219, 30.875, 32] } }
+output = { events = [] }
+
+[[vector]]
+id = "R-handoff"
+source = "recorded"
+entries = ["LandingSiteLoadBegins"]
+before = { stage = "Leaving", view = "SpritesOnly", level = 15, pose = [224, 8208, -106.75, -42.625] }
+after = { stage = "Complete", view = "SpritesOnly", level = 0, pose = [0, 0, 0, 0], pictures = {} }
+output = { restore_full_energy = true, begin_landing_site_load = true, matrix = [0, 0, 0, 0], scroll = [0, 0] }
+
+[[vector]]
+id = "C-handoff"
+source = "constructed"
+entries = ["LandingSiteLoadBegins"]
+before = { stage = "Leaving", view = "SpritesOnly", level = 15, pose = [128, 481, 5.25, 6.5], pictures = { UpperRight = [219, 30.875, 32] } }
+after = { stage = "Complete", view = "SpritesOnly", level = 0, pose = [0, 0, 0, 0], pictures = {} }
+output = { restore_full_energy = true, begin_landing_site_load = true, matrix = [0, 0, 0, 0], scroll = [0, 0] }
+
+[[vector]]
+id = "C-complete"
+source = "constructed"
+entries = ["LandingSiteLoadBegins"]
+before = { stage = "Complete", view = "SpritesOnly" }
+after = { stage = "Complete", view = "SpritesOnly", level = 0, pose = [0, 0, 0, 0], pictures = {} }
+output = { restore_full_energy = false, begin_landing_site_load = false }

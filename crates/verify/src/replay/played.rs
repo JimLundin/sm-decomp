@@ -53,6 +53,7 @@ mod shaft;
 mod start;
 mod station;
 mod steam;
+mod zebes;
 
 use super::compare::{CompareFault, Observation, compare};
 use super::result::Outcome;
@@ -271,6 +272,9 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         return power_on::play(&mut rows, &sources.rom, row, start, end);
     }
     let seed = rows.record(start)?;
+    if super::zebes::starts(&seed).map_err(|outcome| at(start, outcome))? {
+        return zebes::play(&mut rows, &sources.rom, seed, row, start, end);
+    }
     if let Some(before) = start.checked_sub(1)
         && super::explosion::pending(&seed)?
         && super::explosion::enters_from(&rows.record(before)?)?

@@ -1101,3 +1101,78 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
   { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
 ]
+
+[[rule]]
+id = "screens-zebes/GunshipAppears"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/reveal.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]
+
+
+
+[[rule]]
+id = "screens-zebes/PlanetAppears"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/reveal.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]
+
+
+
+[[rule]]
+id = "screens-zebes/PlanetIsNamed"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/caption.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]
+
+
+
+[[rule]]
+id = "screens-zebes/ShipApproachesPlanet"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/approach.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]
+
+
+
+[[rule]]
+id = "screens-zebes/PlanetHolds"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/hold.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]
+
+
+
+[[rule]]
+id = "screens-zebes/PlanetAndStarsSlide"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/slide.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]
+
+
+
+[[rule]]
+id = "screens-zebes/LandingSiteLoadBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_zebes/src/handoff.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
+  { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+]

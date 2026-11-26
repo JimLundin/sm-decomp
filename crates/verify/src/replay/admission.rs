@@ -36,6 +36,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::DiscoveryInputs {
         return super::discovery::admit(case, sources);
     }
+    if case.inputs == InputProvider::ZebesFlightInputs {
+        return super::zebes::admit(case, sources);
+    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);
     }

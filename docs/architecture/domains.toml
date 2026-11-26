@@ -116,6 +116,10 @@ name = "screens-flight"
 rounds = 2
 
 [[model]]
+name = "screens-zebes"
+rounds = 1
+
+[[model]]
 name = "screens-intro"
 rounds = 4
 
@@ -409,10 +413,10 @@ id = "F4"
 name = "Cinematics and credits"
 area = "screens"
 wave = 3
-rounds = 5
+rounds = 6
 # The elevator receives the shaft reach and carries the timer, Health, room clocks and cartridge.
 reads = ["B8", "G1", "G2", "H1", "H2", "P2"]
-model = ["screens-arrival", "screens-flight", "screens-blackout", "screens-explosion"]
+model = ["screens-arrival", "screens-flight", "screens-blackout", "screens-explosion", "screens-zebes"]
 status = "in-progress"
 
 [[domain]]

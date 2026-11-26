@@ -1754,3 +1754,48 @@ after = "Pages::Ship(MapRegion::Upper, content.ship_back.clone())"
 case = "explosion/station-blackout-to-zebes"
 cut = 733
 field = "explosion.ship-front"
+
+[[fault]]
+name = "zebes-skips-finished-setup"
+responsibility = "zebes"
+file = "crates/game/src/production/played/zebes.rs"
+before = "let scene = screens_zebes::step(&mut self.scene.0, &content.scene, rules, subtitles, cut);"
+after = "let scene = screens_zebes::step(&mut self.scene.0, &content.scene, rules, subtitles, FrameAdvance::BorrowedLag);"
+case = "zebes/flight-to-zebes"
+cut = 1014
+field = "zebes.stage"
+
+
+
+[[fault]]
+name = "zebes-rear-map-omitted"
+responsibility = "zebes-drawing"
+file = "crates/game/src/production/played/zebes.rs"
+before = "ship_map: content.ship_map.clone(),"
+after = "ship_map: Vec::new(),"
+case = "zebes/station-blackout-to-landing-load"
+cut = 1014
+field = "zebes.pages.ship"
+
+
+
+[[fault]]
+name = "zebes-landing-load-not-scheduled"
+responsibility = "zebes-scheduler"
+file = "crates/game/src/production/played/zebes.rs"
+before = "self.flow = Flow::Loading(self.flow.destination());"
+after = "self.flow = Flow::Flight(self.flow.destination());"
+case = "zebes/station-blackout-to-landing-load"
+cut = 2123
+field = "zebes.flow"
+
+
+[[fault]]
+name = "zebes-landing-context-substituted"
+responsibility = "zebes-scheduler"
+file = "crates/game/src/production/played/zebes.rs"
+before = "self.flow = Flow::Loading(self.flow.destination());"
+after = "self.flow = Flow::Loading(LoadDestination::CeresStart);"
+case = "zebes/station-blackout-to-landing-load"
+cut = 2123
+field = "zebes.destination"
