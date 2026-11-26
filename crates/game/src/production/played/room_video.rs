@@ -21,6 +21,9 @@ use data::dma::BusAddress;
 use data::pose::tiles::Graphics;
 use types::{Pair, Px};
 
+const SHADOW_WORDS: usize = 1024;
+const SHAFT_BG2_STAGING: core::ops::Range<usize> = 0x0800..0x0c00;
+
 const SHAFT_SHEET: core::ops::Range<usize> = 0..0x4000;
 const STANDARD_BG3: core::ops::Range<usize> = 0x4000..0x4800;
 
@@ -139,6 +142,7 @@ pub struct RoomVideo {
     standard_objects: Option<Transfer>,
     shaft_picture: Option<ShaftPicture>,
     shaft_raster_finished: bool,
+    shaft_bg2: Option<Box<[u16]>>,
     enemy_uploads: Option<EnemyUploads>,
     effects_initialized: bool,
 }
@@ -154,6 +158,7 @@ impl Default for RoomVideo {
             standard_objects: None,
             shaft_picture: None,
             shaft_raster_finished: false,
+            shaft_bg2: None,
             enemy_uploads: None,
             effects_initialized: false,
         }
@@ -351,10 +356,23 @@ impl RoomVideo {
         if !trailing.is_empty() || source.len() != vram.len() {
             return None;
         }
+        let shadow = source
+            .get(SHAFT_BG2_STAGING)?
+            .iter()
+            .copied()
+            .map(u16::from_le_bytes)
+            .collect();
         for (word, &pair) in vram.iter_mut().zip(source) {
             *word = u16::from_le_bytes(pair);
         }
+        self.shaft_bg2 = Some(shadow);
         Some(())
+    }
+
+    /// The complete BG2 shadow left in work RAM by the shaft tileset fetch.
+    #[must_use]
+    pub fn shaft_bg2_shadow(&self) -> Option<&[u16]> {
+        self.shaft_bg2.as_deref()
     }
 
     /// Install the opening HUD, including the fixed upper row.
@@ -444,5 +462,20 @@ impl RoomVideo {
     pub fn standard_bg3(&self) -> Option<&[u16]> {
         self.standard_objects?;
         self.video.memory.vram.get(STANDARD_BG3)
+    }
+}
+
+impl super::State {
+    /// The two work RAM pages retained after fetching the escape shaft.
+    #[must_use]
+    pub fn departure_shadows(&self) -> Option<super::landing_site::ShadowTilemaps> {
+        use super::room_tiles::ShaftBackground;
+        if self.room_tiles != ShaftBackground::BackgroundTransferred {
+            return None;
+        }
+        Some(super::landing_site::ShadowTilemaps {
+            bg1: vec![self.room_tiles.shadow_word()?; SHADOW_WORDS],
+            bg2: self.room_video.shaft_bg2_shadow()?.to_vec(),
+        })
     }
 }

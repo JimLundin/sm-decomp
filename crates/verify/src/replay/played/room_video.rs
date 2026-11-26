@@ -13,6 +13,7 @@ use oracle_record::FrameRecord;
 use super::{Observation, Outcome};
 #[cfg(test)]
 use game::production::played::room_video::ShaftOverlay;
+#[cfg(test)]
 use game::state::video::Video;
 
 type Fields<'a> = (
@@ -74,7 +75,7 @@ pub(super) fn compare(
         frame.cut,
         (expected, actual),
     )?;
-    compare_shaft_sheet(&room.video, frame.current, frame.place, frame.cut)?;
+    compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
     compare_arrival(room, readiness, frame.previous, frame.current, expected, actual)
 }
@@ -291,7 +292,7 @@ fn arrival_produces_standard_background_before_hud() {
 
 /// The first requested publication after the shaft tile transfer compares the entire sheet.
 pub(super) fn compare_shaft_sheet(
-    video: &Video,
+    room: &RoomVideo,
     record: &oracle_record::FrameRecord,
     (row, local): (&str, u64),
     cut: u64,
@@ -302,10 +303,31 @@ pub(super) fn compare_shaft_sheet(
             .vram
             .get(sheet)
             .ok_or_else(|| super::data_failure(Some(cut), "shaft sheet VRAM"))?;
-        if video.memory.vram.get(sheet) != Some(expected) {
+        if room.video.memory.vram.get(sheet) != Some(expected) {
             return Err(super::Outcome::Difference {
                 cut,
                 field: "room-video.shaft-sheet".into(),
+            });
+        }
+    }
+    if row == "chain-any-0010-DF8D" && (221..=278).contains(&local) {
+        let shadow = record
+            .wram
+            .get(0x3000..0x3800)
+            .ok_or_else(|| super::data_failure(Some(cut), "shaft BG2 shadow extent"))?;
+        let expected = shadow
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .copied()
+            .map(u16::from_le_bytes);
+        if room
+            .shaft_bg2_shadow()
+            .is_none_or(|words| words.iter().copied().ne(expected))
+        {
+            return Err(super::Outcome::Difference {
+                cut,
+                field: "room-video.shaft-bg2-shadow".into(),
             });
         }
     }
