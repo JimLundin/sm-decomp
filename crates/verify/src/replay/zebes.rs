@@ -147,6 +147,13 @@ pub(super) fn starts(seed: &FrameRecord) -> Result<bool, Outcome> {
         && byte(seed, 0x0051)? & 0x80 != 0)
 }
 
+pub(super) fn content(rom: &std::path::Path) -> Result<data::assets::zebes::Zebes, Outcome> {
+    let image = std::fs::read(rom).map_err(|_| data_failure(None, "flight ROM file"))?;
+    let rom = Rom::new(image).map_err(|_| data_failure(None, "flight ROM pin"))?;
+    import::zebes::import(rom.lorom())
+        .map_err(|fault| data_failure(None, &format!("flight content {fault:?}")))
+}
+
 pub(super) fn admit_seed(
     rom: &std::path::Path,
     seed: &FrameRecord,
@@ -162,11 +169,7 @@ pub(super) fn admit_seed(
         CERES_START => LoadDestination::CeresStart,
         _ => return Err(data_failure(Some(seed.index), "flight loading context")),
     };
-    let image = std::fs::read(rom).map_err(|_| data_failure(None, "flight ROM file"))?;
-    let rom = Rom::new(image).map_err(|_| data_failure(None, "flight ROM pin"))?;
-    let content = import::zebes::import(rom.lorom())
-        .map_err(|fault| data_failure(None, &format!("flight content {fault:?}")))?;
-    let content = ProductionContent::Zebes(Box::new(content));
+    let content = ProductionContent::Zebes(Box::new(content(rom)?));
     let rules = ProductionRules::Zebes(screens_zebes::Rules::REFERENCE);
     let mut palette = [Colour(0); 256];
     if palette.len() != seed.cgram.len() {

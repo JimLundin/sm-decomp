@@ -48,6 +48,7 @@
 pub mod arrival;
 mod camera;
 mod ceres_doors;
+pub mod departure;
 pub mod discovery;
 pub mod explosion;
 pub mod flashback;

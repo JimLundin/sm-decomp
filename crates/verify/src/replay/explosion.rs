@@ -34,7 +34,7 @@ fn byte(record: &FrameRecord, at: usize) -> Result<u8, Outcome> {
         .copied()
         .ok_or_else(|| data_failure(Some(record.index), "station record byte"))
 }
-fn word(record: &FrameRecord, at: usize) -> Result<u16, Outcome> {
+pub(super) fn word(record: &FrameRecord, at: usize) -> Result<u16, Outcome> {
     Ok(u16::from_le_bytes([
         byte(record, at)?,
         byte(record, at.saturating_add(1))?,
