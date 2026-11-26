@@ -32,7 +32,7 @@ const FULL_COUNT: usize = 0x1_0000;
 impl Video {
     /// Bank `$80` log, update OAM and CGRAM `$80:933A`: DMA 0 copies the OAM buffer to OAM
     /// and DMA 1 the whole palette buffer to CGRAM, both one register a byte.
-    pub fn upload_oam_and_cgram(&mut self) {
+    pub const fn upload_oam_and_cgram(&mut self) {
         self.memory.oam = self.batch.oam;
         self.memory.cgram = self.batch.cgram;
         self.dma[OAM_CHANNEL].upload_oam();
