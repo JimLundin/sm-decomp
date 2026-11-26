@@ -389,7 +389,6 @@ struct Run<'a> {
     row: &'a str,
     drawing: ridley::flyby::Drawing,
     warning_picture: warning::Picture,
-    upper_row: Option<interface_hud::UpperRow>,
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
 }
@@ -516,7 +515,6 @@ impl<'a> Run<'a> {
             row,
             drawing,
             warning_picture,
-            upper_row: None,
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
         })
@@ -738,9 +736,6 @@ impl<'a> Run<'a> {
                 dependency: format!("played frame {fault:?}"),
             })?;
         let published = outputs.opening_hud.is_some();
-        if let Some(row) = outputs.opening_hud {
-            self.upper_row = Some(row);
-        }
         let frame = Frame {
             previous,
             current,
@@ -766,10 +761,9 @@ impl<'a> Run<'a> {
             actual.push(publication(published));
         }
         if opening_witness(place) {
-            expected.extend(hud::video_expected(current)?);
-            actual.extend(hud::video_actual(
-                self.upper_row.as_ref(),
-                &self.state.hud.0,
+            expected.extend(hud::video_observations(&current.vram)?);
+            actual.extend(hud::video_observations(
+                &self.state.room_video.video.memory.vram,
             )?);
         }
         room_video::compare(

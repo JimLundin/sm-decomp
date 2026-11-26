@@ -192,6 +192,11 @@ impl super::State {
                 .standard_background(background)
                 .ok_or(Fault::HudStartup)?;
         }
+        if let Some(opening) = &opening {
+            self.room_video
+                .opening_hud(opening)
+                .ok_or(Fault::HudStartup)?;
+        }
         self.arrival.setup = setup;
         let upper_row = opening.map(|opening| {
             self.hud.0 = opening.state;

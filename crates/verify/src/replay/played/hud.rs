@@ -95,16 +95,12 @@ pub(super) fn opening(
 }
 
 /// The full video publication in hardware order, one observation per owner.
-pub(super) fn video_expected(
-    record: &oracle_record::FrameRecord,
-) -> Result<[Observation; 2], Outcome> {
+pub(super) fn video_observations(vram: &[u16]) -> Result<[Observation; 2], Outcome> {
     const TOP: usize = 0x5800;
     const LOWER: usize = TOP + 32;
     const END: usize = LOWER + 96;
     let words = |range: core::ops::Range<usize>| {
-        record
-            .vram
-            .get(range)
+        vram.get(range)
             .map(|words| words.iter().flat_map(|word| word.to_le_bytes()).collect())
             .ok_or_else(|| crate::replay::data_failure(None, "played HUD VRAM"))
     };
@@ -116,28 +112,6 @@ pub(super) fn video_expected(
         Observation {
             field: "hud.video-grid".into(),
             bytes: words(LOWER..END)?,
-        },
-    ])
-}
-
-pub(super) fn video_actual(
-    upper_row: Option<&interface_hud::UpperRow>,
-    state: &interface_hud::HudState,
-) -> Result<[Observation; 2], Outcome> {
-    use game::production::hud::{cell, tilemap};
-    Ok([
-        Observation {
-            field: "hud.upper-row".into(),
-            bytes: upper_row
-                .into_iter()
-                .flatten()
-                .flat_map(|tile| cell(*tile))
-                .collect(),
-        },
-        Observation {
-            field: "hud.video-grid".into(),
-            bytes: tilemap(state)
-                .map_err(|_| crate::replay::data_failure(None, "played HUD grid"))?,
         },
     ])
 }

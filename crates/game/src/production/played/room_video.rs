@@ -3,12 +3,18 @@
 use super::Fault;
 use crate::intent::{SpriteDraw, on_screen};
 use crate::production::blackout::Platform;
-use crate::state::video::{NmiBatch, VRAM_WORDS, Video, VramWord};
+use crate::state::video::{NmiBatch, TilemapEntry, VRAM_WORDS, Video, VramWord};
 use boss_ceres_ridley::{AlternatingLook, OverlayTurn};
 use data::assets::shaft::{OVERLAY_BYTES, Shaft};
 use types::{Pair, Px};
+use crate::exact::tilemap::{TileQueue, View};
+use crate::intent::{OverlayRows, TileWrite};
+use crate::production::hud;
+use data::pose::tiles::Graphics;
 
 const STANDARD_BG3: core::ops::Range<usize> = 0x4000..0x4800;
+
+const OPENING_HUD: core::ops::Range<usize> = 0x5800..0x5880;
 
 const OVERLAY_START: usize = 0x7000;
 const OVERLAY_END: usize = 0x7200;
@@ -131,6 +137,47 @@ impl RoomVideo {
         words.copy_from_slice(background.get(..words.len())?);
         self.standard_bg3_published = true;
         Some(())
+    }
+
+    /// Install the opening HUD, including the fixed upper row.
+    pub(super) fn opening_hud(&mut self, opening: &interface_hud::NewFileHud) -> Option<()> {
+        let lower = hud::tilemap(&opening.state).ok()?;
+        let words = self.video.memory.vram.get_mut(OPENING_HUD)?;
+        let upper = opening
+            .upper_row
+            .iter()
+            .map(|&cell| u16::from_le_bytes(hud::cell(cell)));
+        let lower = lower
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .copied()
+            .map(u16::from_le_bytes);
+        for (slot, word) in words.iter_mut().zip(upper.chain(lower)) {
+            *slot = word;
+        }
+        Some(())
+    }
+
+    /// Prepare the status bar's three changing rows for the next NMI.
+    pub(super) fn prepare_hud(&mut self, state: &interface_hud::HudState) -> Option<()> {
+        let bytes = hud::tilemap(state).ok()?;
+        let cells = bytes
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|&cell| TilemapEntry::from_word(u16::from_le_bytes(cell)))
+            .collect();
+        TileQueue::new(&mut self.video.batch).write(
+            View::default(),
+            &TileWrite::Overlay(OverlayRows { row: 1, cells }),
+        );
+        Some(())
+    }
+
+    /// Commit the room's pending VRAM writes in NMI order.
+    pub(super) fn publish(&mut self) {
+        self.video.process_vram_writes(&Graphics::default());
     }
 
     /// The published BG3 prefix as it now stands in physical VRAM.

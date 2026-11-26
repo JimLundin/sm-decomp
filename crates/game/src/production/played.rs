@@ -301,13 +301,17 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
-        if self.arrival.preparing() {
-            return self.prepare(passing, content, rules);
+        let output = if self.arrival.preparing() {
+            self.prepare(passing, content, rules)
+        } else if matches!(self.passage.doors, Doors::Passing(_)) {
+            self.pass(inputs, passing, content, rules)
+        } else {
+            self.play(inputs, passing, hud, content, rules)
+        }?;
+        if passing.publishes {
+            self.room_video.publish();
         }
-        if matches!(self.passage.doors, Doors::Passing(_)) {
-            return self.pass(inputs, passing, content, rules);
-        }
-        self.play(inputs, passing, hud, content, rules)
+        Ok(output)
     }
 
     fn play(
@@ -369,6 +373,7 @@ impl State {
 
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
+        self.room_video.prepare_hud(&hud_state).ok_or(Fault::Hud)?;
 
         // Her room and where it sits on her map stay as they are through a frame of play.
         self.samus
