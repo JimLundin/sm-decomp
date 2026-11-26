@@ -401,7 +401,6 @@ struct PreparedDeparture {
     room: played::departure::Room,
     landing: played::landing_site::State,
     location: (types::Area, types::StationId),
-    platform: Option<game::production::blackout::Platform>,
     assets: game::production::escape_departure::Content,
 }
 
@@ -721,6 +720,7 @@ impl<'a> Run<'a> {
         let (locked_hud, hud_content) = self
             .state
             .locked_hud(&self.played, &hud::frame(&self.room.hud, controller, None));
+        let platform = self.state.room_video.pending_platform();
         let video = std::mem::take(&mut self.state.room_video.video);
         let blackout = scene
             .into_blackout(
@@ -728,7 +728,7 @@ impl<'a> Run<'a> {
                 video,
                 live.cartridge,
                 prepared.location,
-                prepared.platform,
+                platform,
                 locked_hud,
             )
             .map_err(|fault| unsupported(format!("live shaft departure {fault:?}")))?;
@@ -890,7 +890,12 @@ impl<'a> Run<'a> {
             &mut actual,
         )?;
         if let Some(scene) = &self.blackout {
-            super::blackout::observe::live_scene(current, scene.scene(), (&mut expected, &mut actual))?;
+            super::blackout::observe::live_scene(
+                current,
+                scene.scene(),
+                &self.state.room_video.video,
+                (&mut expected, &mut actual),
+            )?;
         }
         expected.push(play_time::observation(play_time::read(&current.wram)?));
         actual.push(play_time::observation(self.state.play_time));
@@ -915,7 +920,7 @@ impl<'a> Run<'a> {
         match (&mut self.blackout, reach) {
             (None, Some(reach)) => {
                 self.blackout = Some(
-                    LiveRoom::reached(&self.state, reach, before, publishes)
+                    LiveRoom::reached(&mut self.state, reach, before, publishes)
                         .map_err(unsupported)?,
                 );
             }

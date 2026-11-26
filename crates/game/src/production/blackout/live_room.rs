@@ -33,7 +33,7 @@ impl LiveRoom {
     /// # Errors
     /// The live timer, display light and finished-pass count must agree with the handoff.
     pub fn reached(
-        room: &played::State,
+        room: &mut played::State,
         reach: ElevatorLock,
         before: FinishedPasses,
         publishes: bool,
@@ -71,6 +71,7 @@ impl LiveRoom {
             return Err(Fault::State);
         }
         publish(&mut scene, room, publishes)?;
+        present(&mut room.room_video.video, &scene, publishes);
         Ok(Self {
             scene,
             standing: None,
@@ -119,11 +120,7 @@ impl LiveRoom {
             return Err(Fault::State);
         }
         publish(&mut scene, room, publishes)?;
-        let video = &mut room.room_video.video;
-        picture::light(&mut video.batch.registers, scene.light);
-        if publishes {
-            picture::light(&mut video.committed, scene.published.light);
-        }
+        present(&mut room.room_video.video, &scene, publishes);
         self.scene = scene;
         self.standing = Some(standing);
         Ok(())
@@ -195,6 +192,13 @@ fn sprites(entries: &[[u8; 5]]) -> Vec<TimerSprite> {
 fn prepared(room: &played::State) -> PreparedPicture {
     PreparedPicture {
         timer_sprites: sprites(&room.clock_picture.prepared),
+    }
+}
+
+fn present(video: &mut Video, scene: &BlackoutState, publishes: bool) {
+    picture::light(&mut video.batch.registers, scene.light);
+    if publishes {
+        picture::light(&mut video.committed, scene.published.light);
     }
 }
 

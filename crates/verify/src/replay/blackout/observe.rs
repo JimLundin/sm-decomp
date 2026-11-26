@@ -40,6 +40,7 @@ fn phase_and_wait(phase: BlackoutPhase) -> (u16, u16) {
 pub(in crate::replay) fn live_scene(
     r: &FrameRecord,
     scene: &types::ceres_blackout::BlackoutState,
+    video: &game::state::video::Video,
     (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
 ) -> Result<(), Outcome> {
     let lamp = |raw| {
@@ -49,7 +50,8 @@ pub(in crate::replay) fn live_scene(
             u16::from(raw & 15)
         }
     };
-    let prepared_light = lamp(super::byte(&r.wram, 0x51)?);
+    let display_mirror = super::byte(&r.wram, 0x51)?;
+    let prepared_light = lamp(display_mirror);
     let phase = match word(&r.wram, 0x998)? {
         8 => 0,
         32 => 1,
@@ -58,6 +60,9 @@ pub(in crate::replay) fn live_scene(
         _ => return Err(data_failure(Some(r.index), "live blackout phase")),
     };
     let (carried_phase, wait) = phase_and_wait(scene.phase);
+    let display = |registers: &game::state::video::Registers| {
+        u16::from(registers.brightness.0) | if registers.forced_blank { 128 } else { 0 }
+    };
     for (name, observed, carried) in [
         ("phase", phase, carried_phase),
         ("wait", word(&r.wram, 0xaa0)?, wait),
@@ -72,6 +77,16 @@ pub(in crate::replay) fn live_scene(
             "prepared-pass",
             u16::from(matches!(r.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Overrun)),
             u16::from(matches!(scene.pass, WorkPass::Prepared(_))),
+        ),
+        (
+            "video-prepared-light",
+            u16::from(display_mirror & 0x8f),
+            display(&video.batch.registers),
+        ),
+        (
+            "video-published-light",
+            u16::from(r.ppu.inidisp & 0x8f),
+            display(&video.committed),
         ),
     ] {
         expected.push(field(name, words([observed])));
