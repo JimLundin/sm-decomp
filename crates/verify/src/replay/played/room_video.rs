@@ -683,7 +683,7 @@ fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
     assert!(
         run.blackout
             .as_ref()
-            .is_some_and(|scene| scene.awaits_blank())
+            .is_some_and(game::production::blackout::LiveRoom::awaits_blank)
     );
     super::tests::diagnostic(format_args!(
         "LOCKED_SHAFT hall=0..{final_overrun} shaft=165..239 cuts={}",

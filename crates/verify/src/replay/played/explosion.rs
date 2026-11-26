@@ -341,7 +341,7 @@ fn load_content(rom: data::rom::Lorom<'_>) -> Result<Content, Outcome> {
 
 pub(super) fn live_content(
     path: &Path,
-    room: &game::production::played::Content,
+    content: &game::production::played::Content,
     format: game::exact::save_files::Format,
     hud: game::production::blackout::HudContent,
 ) -> Result<game::production::escape_departure::Content, Outcome> {
@@ -352,11 +352,11 @@ pub(super) fn live_content(
 
     let rom = Rom::new(std::fs::read(path).map_err(|_| data_failure(None, "departure ROM"))?)
         .map_err(|_| data_failure(None, "departure ROM pin"))?;
-    let figures = room
+    let figures = content
         .clock_figures
         .clone()
         .ok_or_else(|| data_failure(None, "departure timer art"))?;
-    let programs = room
+    let programs = content
         .shaft_raster
         .ok_or_else(|| data_failure(None, "departure shaft raster programs"))?;
     Ok(escape_departure::Content {
@@ -365,7 +365,7 @@ pub(super) fn live_content(
             graphics: Graphics::load(rom.lorom(), GRAPHICS_BANKS)
                 .map_err(|_| data_failure(None, "departure sprite graphics"))?,
             format,
-            standing: room.standing.clone(),
+            standing: content.standing.clone(),
             hud: Some(hud),
         },
         raster_opening: shaft_opening(programs),

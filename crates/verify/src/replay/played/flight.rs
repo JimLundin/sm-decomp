@@ -291,7 +291,6 @@ impl Continuation {
             carry,
             video,
         } = self;
-        let carried_video = video.is_some();
         let mut run = Run {
             journey,
             report: None,
@@ -334,12 +333,9 @@ impl Continuation {
                         rows.clock_cuts.push(cut);
                     }
                     cartridge.as_mut().map_or(Ok(()), |cartridge| {
-                        cartridge.observe(&current, cut, entered)
-                    })?;
-                    if carried_video {
-                        super::power_on::compare_oam_dma(run.video.dma[0], &current, cut)?;
-                    }
-                    Ok(())
+                        cartridge.observe(&current, cut, entered)?;
+                        super::power_on::compare_oam_dma(run.video.dma[0], &current, cut)
+                    })
                 });
             if let Err(outcome) = compared {
                 return Ok((held, Stop::At(super::at(cut, outcome))));
@@ -366,10 +362,9 @@ impl Continuation {
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
                 let mut play = super::Run::load(start, &content, rom, row)?;
-                let video = run.video;
-                let restored = canonical::from_bytes(&canonical::to_bytes(&video))
+                let restored = canonical::from_bytes(&canonical::to_bytes(&run.video))
                     .map_err(|_| Outcome::CheckpointFailure { cut })?;
-                if video != restored {
+                if run.video != restored {
                     return Err(Outcome::CheckpointFailure { cut });
                 }
                 play.state.room_video.video = restored;
