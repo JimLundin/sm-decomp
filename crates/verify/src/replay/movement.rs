@@ -463,7 +463,7 @@ pub(super) fn roster_slots(wram: &[u8]) -> Result<Vec<u16>, Outcome> {
     ))
 }
 
-fn enemy_roster(wram: &[u8]) -> Result<Vec<types::Hitbox>, Outcome> {
+pub(super) fn enemy_roster(wram: &[u8]) -> Result<Vec<types::Hitbox>, Outcome> {
     let mut boxes = Vec::new();
     for slot in roster_slots(wram)? {
         let read = |field| {
