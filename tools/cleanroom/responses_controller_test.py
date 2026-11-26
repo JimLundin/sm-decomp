@@ -535,6 +535,41 @@ class LinuxExecution(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout.strip(), "invented-controller.toml")
 
+    @unittest.skipUnless(sys.platform == "linux", "Linux launcher")
+    def test_wrapper_forwards_termination_and_checks_canaries(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            base = Path(raw)
+            here = Path(__file__).resolve().parent
+            shutil.copyfile(here / "launch_responses.sh", base / "launch_responses.sh")
+            (base / "responses_controller.py").write_text(
+                "import pathlib, signal, sys\n"
+                "if '--prepare' in sys.argv:\n"
+                "    print('invented-controller.toml')\n"
+                "    sys.exit(0)\n"
+                "def stop(*_):\n"
+                "    pathlib.Path('cleaned').touch()\n"
+                "    sys.exit(143)\n"
+                "signal.signal(signal.SIGTERM, stop)\n"
+                "pathlib.Path('ready').touch()\n"
+                "signal.pause()\n", encoding="utf-8")
+            (base / "canary.sh").write_text("test -f cleaned && touch checked\n", encoding="utf-8")
+            with subprocess.Popen(["bash", str(base / "launch_responses.sh"), "export", "brief", "transcript", "lane"],
+                                  cwd=base, env={"PATH": "/usr/bin:/bin", "CLEANROOM_PY": sys.executable},
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE) as wrapper:
+                try:
+                    deadline = time.monotonic() + 5
+                    while time.monotonic() < deadline and not (base / "ready").exists():
+                        time.sleep(0.025)
+                    self.assertTrue((base / "ready").exists())
+                    wrapper.terminate()
+                    out, err = wrapper.communicate(timeout=5)
+                    self.assertEqual(wrapper.returncode, 143, err.decode())
+                    self.assertNotIn(b"LAUNCH OK", out)
+                    self.assertTrue((base / "checked").exists())
+                finally:
+                    if wrapper.poll() is None:
+                        wrapper.kill()
+
     @unittest.skipUnless(sys.platform == "linux" and os.environ.get("CLEANROOM_DOCKER_TEST") == "1",
                          "local Linux Docker integration")
     def test_box_boundary_and_timeout(self) -> None:
@@ -570,13 +605,21 @@ class LinuxExecution(unittest.TestCase):
                 self.assertEqual(box.run("test", [sys.executable, "-I", "-c", script, str(outside)], out, err),
                                  0, err.read_text())
             self.assertEqual((export / "target/proof").read_text(), "executed")
-            config["command_seconds"] = 0.25
-            identifier = uuid.uuid4()
-            with patch("responses_box.uuid.uuid4", return_value=identifier):
-                self.assertEqual(box.run("test", ["/usr/bin/sleep", "30"], out, err), 124)
-            present = subprocess.check_output(box.docker + [
-                "ps", "-aq", "--filter", f"name=^/cleanroom-responses-{identifier.hex}$"], env=box.docker_env)
-            self.assertEqual(present, b"")
+            self.assertRegex(box.image_id, r"^sha256:[0-9a-f]{64}$")
+            config["command_seconds"] = 0.5
+            stubborn = ("import pathlib, signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+                        "pathlib.Path('target/stubborn').touch(); time.sleep(30)")
+            for command in (["/usr/bin/sleep", "30"], [sys.executable, "-I", "-c", stubborn]):
+                with self.subTest(command=command):
+                    identifier = uuid.uuid4()
+                    start = time.monotonic()
+                    with patch("responses_box.uuid.uuid4", return_value=identifier):
+                        self.assertEqual(box.run("test", command, out, err), 124)
+                    self.assertLess(time.monotonic() - start, 15)
+                    present = subprocess.check_output(box.docker + [
+                        "ps", "-aq", "--filter", f"name=^/cleanroom-responses-{identifier.hex}$"], env=box.docker_env)
+                    self.assertEqual(present, b"")
+            self.assertTrue((export / "target/stubborn").exists())
 
 
 class Preparation(unittest.TestCase):

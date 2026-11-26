@@ -27,6 +27,7 @@ x-stainless-*, x-claude-*, x-app) go with it.
                               it: one layer holding the folders the mounts go in and the
                               /usr-merged symlinks and an empty configuration, made here, so no
                               registry is reached.
+  image-id NAME               makes the same root image and prints its verified immutable ID.
 """
 
 import hashlib
@@ -319,6 +320,20 @@ def image(name: str) -> int:
     return 0 if image_ok(name, want) else 1
 
 
+def image_id(name: str) -> int:
+    status = image(name)
+    if status:
+        return status
+    selected = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", name],
+                              capture_output=True, text=True)
+    identity = selected.stdout.strip()
+    want = [f"sha256:{hashlib.sha256(root_tar()).hexdigest()}"]
+    if selected.returncode or not re.fullmatch(r"sha256:[0-9a-f]{64}", identity) or not image_ok(identity, want):
+        return 1
+    print(identity)
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     if len(args) in (3, 4) and args[0] == "serve":
@@ -329,6 +344,8 @@ def main() -> int:
         return 0
     if len(args) == 2 and args[0] == "image":
         return image(args[1])
+    if len(args) == 2 and args[0] == "image-id":
+        return image_id(args[1])
     if len(args) >= 6 and args[0] == "box" and args[4] == "--":
         return box(int(args[1]), args[2], float(args[3]), args[5:])
     print(__doc__, file=sys.stderr)

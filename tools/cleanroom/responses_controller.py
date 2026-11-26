@@ -682,6 +682,16 @@ def main() -> int:
     config = tomllib.loads(args.config.read_text(encoding="utf-8"))
     if sys.platform == "linux" and config.get("execution") != "docker":
         raise Refused("Linux Responses commands require Docker")
+    if sys.platform == "linux":
+        stop_signals = (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)
+
+        def interrupted(signum: int, _frame: Any) -> None:
+            for stop_signal in stop_signals:
+                signal.signal(stop_signal, signal.SIG_IGN)
+            raise SystemExit(128 + signum)
+
+        for signum in stop_signals:
+            signal.signal(signum, interrupted)
     root, lane = Path(config["export"]), Path(config["lane"])
     broker = Broker(root, lane, config)
     if broker.box is not None:
@@ -703,11 +713,6 @@ def main() -> int:
         with opener.open(request, timeout=180) as response:
             return json.load(response)
     brief_text = Path(config["brief"]).read_text(encoding="utf-8")
-    if sys.platform == "linux":
-        def interrupted(signum: int, _frame: Any) -> None:
-            raise SystemExit(128 + signum)
-        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
-            signal.signal(signum, interrupted)
     response_loop(broker, brief_text, send, Path(config["transcript"]))
     print("RESPONSES COMPLETE (operator must run import and canary checks)")
     return 0

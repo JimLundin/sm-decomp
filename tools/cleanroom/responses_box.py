@@ -25,7 +25,7 @@ class CommandBox:
         self.environment = environment
         self.docker_env = {"PATH": "/usr/bin:/bin", "HOME": str(lane / "home")}
         self.docker = ["/usr/bin/docker", "--host", "unix:///var/run/docker.sock"]
-        self.initialized = False
+        self.image_id = ""
 
     def argv(self, name: str, container: str) -> list[str]:
         # The shared root image supplies the /usr-merged symlinks and empty system configuration.
@@ -77,14 +77,14 @@ class CommandBox:
             argv.extend(("--env", f"{key}={value}"))
         # This deadline also works if the controller is killed before it can remove the box.
         seconds = self.config.get("command_seconds", 300)
-        return argv + [IMAGE, "/usr/bin/timeout", "--kill-after=5", str(seconds)]
+        return argv + [self.image_id, "/usr/bin/timeout", "--kill-after=5", str(seconds)]
 
     def initialize(self) -> None:
-        if not self.initialized:
-            subprocess.run([sys.executable, "-I", str(HERE / "box_relay.py"), "image", IMAGE],
-                           cwd=self.lane, env={**self.docker_env, "DOCKER_HOST": "unix:///var/run/docker.sock"},
-                           timeout=180, check=True)
-            self.initialized = True
+        if not self.image_id:
+            self.image_id = subprocess.check_output(
+                [sys.executable, "-I", str(HERE / "box_relay.py"), "image-id", IMAGE],
+                cwd=self.lane, env={**self.docker_env, "DOCKER_HOST": "unix:///var/run/docker.sock"},
+                timeout=180, text=True).strip()
 
     def run(self, name: str, command: list[str], stdout: Path, stderr: Path) -> int:
         self.initialize()
@@ -96,8 +96,9 @@ class CommandBox:
                            float(self.config.get("completion_seconds", 60)), validate_result=False,
                              environment=self.docker_env,
                              runtime_timeout=float(self.config.get("command_seconds", 300)) + 10)
-            # These statuses cannot distinguish an executable's result from a Docker failure.
-            return 124 if status in (125, 126, 127) else status
+            # Docker startup errors and a forced SIGKILL (including timeout escalation) leave
+            # command completion uncertified.
+            return 124 if status in (125, 126, 127, 137) else status
         finally:
             # Killing the Docker client alone can leave its workload on the daemon.
             removed = subprocess.run(self.docker + ["rm", "-f", container], env=self.docker_env,
