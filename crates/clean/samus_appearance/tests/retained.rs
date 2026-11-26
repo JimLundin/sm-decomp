@@ -104,6 +104,7 @@ mod retained {
             cannon: CannonDelay::new(1).expect("expected a delay of 1 in range"),
             colours: COLOURS,
             hurt_count: HurtCount::new(17).expect("expected a hurt count of 17 in range"),
+            dust: None,
         }
     }
 

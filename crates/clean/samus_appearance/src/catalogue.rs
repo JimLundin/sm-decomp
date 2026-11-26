@@ -58,6 +58,10 @@ pub enum BehaviourId {
     ElevatorStandingPicture,
     /// After push time runs out, protection hides the body on alternate draws.
     ProtectionFlicker,
+    /// A new wall jump raises a puff that rises and changes look on fresh draws.
+    WallJumpDust,
+    /// The puff's placement ahead of Samus in the ordinary room picture.
+    WallJumpDustPicture,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -82,7 +86,7 @@ pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
 }
 
 /// The catalogue's rows, each naming its behaviour, in any order.
-const ROWS: [Behaviour; 26] = [
+const ROWS: [Behaviour; 28] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -282,6 +286,22 @@ const ROWS: [Behaviour; 26] = [
         id: BehaviourId::ProtectionFlicker,
         summary: "after a hit's push time runs out, protection hides the body on alternate draws",
         kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    // The spec calls this state and timing; the catalogue classifies when it advances.
+    Behaviour {
+        id: BehaviourId::WallJumpDust,
+        summary: "A new wall-jumping pose raises a puff that rises for four looks or \
+                  disappears at a dry touchdown",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WallJumpDustPicture,
+        summary: "The puff draws ahead of Samus in screen space",
+        kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

@@ -5,6 +5,8 @@
 //! spritemap tables and tile uploads) and bakes, frame by frame, what each of her poses
 //! draws.
 
+pub mod dust;
+
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
