@@ -131,7 +131,7 @@ pub(super) fn check(
         &blackout::actual(production, output, true)?,
     )?;
     compared(
-        current.index,
+        cut,
         &blackout::hud::expected(previous, current)?.fields,
         &blackout::hud::actual(production, &output.regular_publication)?,
     )?;

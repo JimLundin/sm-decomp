@@ -13,7 +13,6 @@ use oracle_record::FrameRecord;
 use super::{Observation, Outcome};
 #[cfg(test)]
 use game::production::played::room_video::ShaftOverlay;
-#[cfg(test)]
 use game::state::video::Video;
 
 type Fields<'a> = (

@@ -704,7 +704,7 @@ impl<'a> Run<'a> {
         ),
         Outcome,
     > {
-        use game::production::escape_departure::{Content, Shaft};
+        use game::production::escape_departure::Shaft;
         let unsupported = |dependency| Outcome::Unsupported {
             cut: Some(next),
             dependency,
