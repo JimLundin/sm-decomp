@@ -32,6 +32,11 @@ pub(in crate::replay) fn admit(
     path: &Path,
     record: &FrameRecord,
 ) -> Result<(Production, ProductionContent, ProductionRules), Outcome> {
+    let (shaft, assets) = seed(path, record)?;
+    admit_owned(shaft, assets, record.index)
+}
+
+pub(super) fn seed(path: &Path, record: &FrameRecord) -> Result<(Shaft, Content), Outcome> {
     let image = std::fs::read(path).map_err(|_| data_failure(None, "shaft ROM file"))?;
     let rom = Rom::new(image).map_err(|_| data_failure(None, "shaft ROM pin"))?;
     let rom = rom.lorom();
@@ -47,13 +52,13 @@ pub(in crate::replay) fn admit(
     setup_scroll(&mut blackout.video.batch.registers.scroll, record)?;
     let raster_opening = raster_opening(record, &blackout.video.dma, rom)?;
     let (placement, area, maps, shadow) = carry::room(record)?;
-    let state = State::Shaft(Box::new(Shaft {
+    let shaft = Shaft {
         blackout,
         room: placement,
         landing: landing_site::State::new(area, maps, shadow),
         progress: (&crate::replay::progress::decode(&record.wram)?).into(),
-    }));
-    let content = ProductionContent::Escape(Box::new(Content {
+    };
+    let assets = Content {
         shaft: owner::Content {
             figures,
             format,
@@ -63,14 +68,24 @@ pub(in crate::replay) fn admit(
         },
         raster_opening,
         departure: load_content(rom)?,
-    }));
+    };
+    Ok((shaft, assets))
+}
+
+/// Admit the shaft owners already carried by the caller. No record is needed by production.
+pub(super) fn admit_owned(
+    shaft: Shaft,
+    assets: Content,
+    cut: u64,
+) -> Result<(Production, ProductionContent, ProductionRules), Outcome> {
+    let content = ProductionContent::Escape(Box::new(assets));
     let rules = ProductionRules::Departure(departure::Rules::REFERENCE);
     let production = Production::admit(
-        ProductionSeed::Escape(Box::new(state)),
+        ProductionSeed::Escape(Box::new(State::Shaft(Box::new(shaft)))),
         content.clone(),
         rules.clone(),
     )
-    .map_err(|why| data_failure(Some(record.index), &format!("shaft intake {why:?}")))?;
+    .map_err(|why| data_failure(Some(cut), &format!("shaft intake {why:?}")))?;
     Ok((production, content, rules))
 }
 
@@ -108,9 +123,10 @@ pub(super) fn check(
     output: &owner::Output,
     previous: &FrameRecord,
     current: &FrameRecord,
+    cut: u64,
 ) -> Result<(), Outcome> {
     compared(
-        current.index,
+        cut,
         &blackout::observe::expected(previous, current, true)?.fields,
         &blackout::actual(production, output, true)?,
     )?;
@@ -125,7 +141,7 @@ pub(super) fn check(
     {
         let shaft = production
             .blackout()
-            .ok_or_else(|| data_failure(Some(current.index), "shaft publication"))?;
+            .ok_or_else(|| data_failure(Some(cut), "shaft publication"))?;
         if let Some(i) = shaft
             .video
             .dma
@@ -134,7 +150,7 @@ pub(super) fn check(
             .position(|(actual, expected)| *actual != expected)
         {
             return Err(Outcome::Difference {
-                cut: current.index,
+                cut,
                 field: format!("blackout.dma[{i}]"),
             });
         }

@@ -17,25 +17,31 @@ use std::path::Path;
 pub(super) fn play(
     rows: &mut Rows<'_>,
     path: &Path,
-    mut previous: FrameRecord,
+    previous: FrameRecord,
     row: &str,
     start: u64,
     end: u64,
 ) -> Result<Report, Outcome> {
-    let (mut production, content, _) = if shaft::starts(&previous)? {
-        shaft::admit(path, &previous)?
+    let (held, stop, seed_held) = if shaft::starts(&previous)? {
+        let (shaft, assets) = shaft::seed(path, &previous)?;
+        let (held, stop) =
+            through_shaft(shaft, assets, rows, previous, start.saturating_add(1)..=end)?;
+        (held, stop, SHAFT_SEED)
     } else {
-        admit_seed(path, &previous)?
+        let (production, content, _) = admit_seed(path, &previous)?;
+        let ProductionContent::Departure(assets) = &content else {
+            return Err(data_failure(Some(start), "departure assets"));
+        };
+        let (held, stop) = through(
+            production,
+            assets,
+            rows,
+            previous,
+            start.saturating_add(1)..=end,
+        )?;
+        (held, stop, STATION_SEED)
     };
-    let (assets, seed_held) = if let ProductionContent::Departure(assets) = &content {
-        (assets.as_ref(), STATION_SEED)
-    } else if let ProductionContent::Escape(assets) = &content {
-        (&assets.departure, SHAFT_SEED)
-    } else {
-        return Err(data_failure(Some(start), "departure assets"));
-    };
-    let mut observer = explosion::Observed::default();
-    let report = |held, stop| Report {
+    Ok(Report {
         row: row.to_owned(),
         start,
         held,
@@ -50,9 +56,38 @@ pub(super) fn play(
             "in-progress cinematic setup transfers",
             "E3 flash scanline composition and retained HDMA channels 2 and 3",
         ],
+    })
+}
+
+/// Admit complete live shaft owners and continue on the caller's row chain.
+pub(super) fn through_shaft(
+    shaft: game::production::escape_departure::Shaft,
+    assets: game::production::escape_departure::Content,
+    rows: &mut Rows<'_>,
+    previous: FrameRecord,
+    cuts: core::ops::RangeInclusive<u64>,
+) -> Result<(u64, Stop), Outcome> {
+    let (production, content, _) =
+        shaft::admit_owned(shaft, assets, cuts.start().saturating_sub(1))?;
+    let ProductionContent::Escape(assets) = &content else {
+        return Err(data_failure(None, "escape departure assets"));
     };
+    through(production, &assets.departure, rows, previous, cuts)
+}
+
+/// Continue the selected shaft or cinematic on the caller's existing row chain.
+/// The preceding record supplies timing and observations. Production retains its
+/// owned state across row changes.
+fn through(
+    mut production: Production,
+    assets: &Content,
+    rows: &mut Rows<'_>,
+    mut previous: FrameRecord,
+    cuts: core::ops::RangeInclusive<u64>,
+) -> Result<(u64, Stop), Outcome> {
+    let mut observer = explosion::Observed::default();
     let mut held = 0_u64;
-    for cut in start.saturating_add(1)..=end {
+    for cut in cuts {
         let current = rows.record(cut)?;
         if current.video_frame != previous.video_frame.wrapping_add(1) {
             return Err(data_failure(Some(cut), "departure row join"));
@@ -73,7 +108,7 @@ pub(super) fn play(
                 Ok(output) => output,
                 Err(ProductionFault::Unsupported(Unsupported::Departure(Fault::Landing(
                     landing_site::Fault::Dma(game::exact::direct_dma::Fault::Source),
-                )))) => return Ok(report(
+                )))) => return Ok((
                     held,
                     Stop::At(Outcome::Unsupported {
                         cut: Some(cut),
@@ -104,12 +139,12 @@ pub(super) fn play(
             }
             shaft::check_cartridge(&production, &current, cut)
         }) {
-            return Ok(report(held, Stop::At(why)));
+            return Ok((held, Stop::At(why)));
         }
         held = held.saturating_add(1);
         previous = current;
     }
-    Ok(report(held, Stop::End))
+    Ok((held, Stop::End))
 }
 
 fn check_outputs(
@@ -122,7 +157,7 @@ fn check_outputs(
     observer: &mut explosion::Observed,
 ) -> Result<(), Outcome> {
     if let ProductionOutputs::Blackout(output) = output {
-        shaft::check(production, output, previous, current)
+        shaft::check(production, output, previous, current, cut)
     } else if let ProductionOutputs::Explosion(output) = output {
         compared(
             cut,
@@ -254,4 +289,31 @@ fn load_content(rom: data::rom::Lorom<'_>) -> Result<Content, Outcome> {
         flight,
         landing,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn owned_shaft_uses_the_existing_movie_coordinates() {
+        let sources = super::super::tests::sources();
+        let lock = super::super::read_lock(&sources).unwrap();
+        let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
+        assert_eq!(
+            rows.place(13_311).unwrap(),
+            ("chain-any-0011-DF45".into(), 239)
+        );
+        let previous = rows.record(13_311).unwrap();
+        // This scoped routing witness supplies the same admitted state as the
+        // cut-239 run. The shared continuation receives no state from later records.
+        let (shaft, assets) = super::shaft::seed(&sources.rom, &previous).unwrap();
+        let (held, stop) =
+            super::through_shaft(shaft, assets, &mut rows, previous, 13_312..=15_197).unwrap();
+        assert_eq!(held, 1885);
+        assert!(matches!(
+            stop,
+            super::Stop::At(super::Outcome::Unsupported { cut: Some(15_197), dependency })
+                if dependency == "Landing Site sprite DMA needs the live source after the ROM bank wraps"
+        ));
+    }
 }
