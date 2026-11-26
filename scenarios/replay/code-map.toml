@@ -1341,3 +1341,12 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
 ]
+
+[[rule]]
+id = "samus-appearance/ProtectionFlicker"
+targets = [
+  { role = "model", path = "crates/clean/samus_appearance/src/flicker.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus_picture.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/samus_picture.rs" },
+]

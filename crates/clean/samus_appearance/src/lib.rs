@@ -14,6 +14,9 @@
 //! On a locked elevator room drawing, [`elevator_standing_picture`] reads the current pose's
 //! facing and displayed step after admitting the pose, without advancing the frame. Video
 //! receives body work to publish separately from any drawing errors.
+//!
+//! On an ordinary room drawing, [`OrdinaryBodyDraw::body_drawn`] decides whether to submit
+//! body placements, independently of the art and tile requests.
 
 mod ahead;
 mod cannon;
@@ -21,6 +24,7 @@ mod catalogue;
 mod clip;
 mod colours;
 mod elevator;
+mod flicker;
 mod hurt;
 mod inputs;
 mod moves;
@@ -49,6 +53,7 @@ pub use elevator::{
     ObjectStyle, ScreenPoint, ShaftView, StandingLook, StandingPoseArt, StandingStepArt,
     elevator_standing_picture,
 };
+pub use flicker::OrdinaryBodyDraw;
 pub use hurt::HurtOpportunity;
 pub use inputs::{
     Activity, AppearanceContent, Charge, Dash, Figure, GrappleActivity, Inputs, Liquid,

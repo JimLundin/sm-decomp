@@ -16,6 +16,13 @@ const SOLID_CONTACT: WramWord = WramWord {
     offset: 0x0DD0,
 };
 
+pub(super) fn body_art(
+    rom: data::rom::Lorom<'_>,
+) -> Result<data::assets::samus::SamusAssets, Outcome> {
+    import::samus::import(rom)
+        .map_err(|_| crate::replay::data_failure(None, "ordinary Samus body art"))
+}
+
 /// Her State as the seed holds it.
 pub(in crate::replay) fn seed(
     wram: &[u8],

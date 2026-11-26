@@ -64,6 +64,7 @@ impl State {
         Her {
             samus: self.movement.0,
             outcome: None,
+            push_at_draw: None,
             appearance: self.appearance.0,
             figure: self.figure.0,
             colours: None,
@@ -270,6 +271,11 @@ impl State {
     ) -> Result<(Her, T), Fault> {
         let start = self.figure.0;
         let (samus, outcome, between) = self.movement(inputs, world, &content, between)?;
+        let push_at_draw = (self.movement.0.getaway == samus_movement::Getaway::Idle).then(|| {
+            between
+                .hit
+                .map_or(self.movement.0.knockback.time_left, |hit| hit.push().push)
+        });
         let after = Figure {
             pose: samus.pose,
             sprite: outcome.sprite,
@@ -317,6 +323,7 @@ impl State {
             Her {
                 samus,
                 outcome: Some(outcome),
+                push_at_draw,
                 appearance,
                 figure: after,
                 colours: shown.her_colours,
@@ -403,6 +410,8 @@ pub(super) struct Her {
     pub(super) samus: samus_movement::Samus,
     /// None while the pad holds her.
     pub(super) outcome: Option<samus_movement::Outcome>,
+    // Movement spends this time before returning the settled state.
+    pub(super) push_at_draw: Option<types::PushFrames>,
     appearance: samus_appearance::AppearanceState,
     figure: Figure,
     /// The colours her row of the screen's colours takes; none leaves it as it is.
@@ -449,6 +458,21 @@ impl Her {
         samus.pose = pose;
         self.figure = figure;
         Ok(())
+    }
+
+    pub(super) fn body_picture(
+        &self,
+        art: &data::assets::samus::SamusAssets,
+        camera: types::Position,
+        rotation: Option<crate::state::video::Mode7>,
+    ) -> Result<crate::intent::SpriteDraw, Fault> {
+        crate::exact::samus::draw(
+            art,
+            self.figure,
+            self.appearance.animation.playhead.step,
+            crate::exact::samus::project(self.samus.position, camera, rotation),
+        )
+        .ok_or(Fault::SamusBody(self.figure))
     }
 
     /// Where her moves leave her, which the mini-map reads.

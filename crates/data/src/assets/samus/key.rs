@@ -47,6 +47,23 @@ pub struct Dress {
     pub suit: Suit,
 }
 
+impl From<types::Sprite> for Dress {
+    fn from(sprite: types::Sprite) -> Self {
+        use types::Sprite;
+        let spin = match sprite {
+            Sprite::Plain | Sprite::OtherSuit => SpinSprite::Plain,
+            Sprite::SpaceJump => SpinSprite::SpaceJump,
+            Sprite::ScrewAttack => SpinSprite::ScrewAttack,
+        };
+        let suit = if sprite == Sprite::OtherSuit {
+            Suit::VariaOrGravity
+        } else {
+            Suit::First
+        };
+        Self { spin, suit }
+    }
+}
+
 /// When an asset is the one shown for its pose.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Worn {

@@ -241,6 +241,7 @@ impl super::State {
         );
         Ok(Outputs {
             movement: None,
+            samus_body: None,
             sounds: Vec::new(),
             doors,
             health: None,

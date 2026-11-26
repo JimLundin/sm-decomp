@@ -147,6 +147,7 @@ pub struct RoomVideo {
     shaft_bg2: Option<Box<[u16]>>,
     enemy_uploads: Option<EnemyUploads>,
     effects_initialized: bool,
+    ordinary_oam_pending: bool,
 }
 
 impl Default for RoomVideo {
@@ -163,6 +164,7 @@ impl Default for RoomVideo {
             shaft_bg2: None,
             enemy_uploads: None,
             effects_initialized: false,
+            ordinary_oam_pending: false,
         }
     }
 }
@@ -446,6 +448,28 @@ impl RoomVideo {
         blackout::body::prepare(&mut batch, standing, art).map_err(Fault::StandingPicture)?;
         self.video.batch = batch;
         Ok(())
+    }
+
+    pub(super) fn begin_ordinary_sprites(&mut self) {
+        self.video.batch.restart_sprites();
+        self.video.batch.clear_high_oam();
+        self.ordinary_oam_pending = true;
+    }
+
+    pub(super) fn append_ordinary_body(
+        &mut self,
+        body: &crate::intent::SpriteDraw,
+    ) -> core::ops::Range<usize> {
+        let start = usize::from(self.video.batch.sprites.0);
+        self.video.batch.draw_sprites(body);
+        start..usize::from(self.video.batch.sprites.0)
+    }
+
+    pub(super) fn publish_ordinary_sprites(&mut self) {
+        if std::mem::take(&mut self.ordinary_oam_pending) {
+            self.video.batch.finalise_oam();
+            self.video.upload_oam();
+        }
     }
 
     /// Commit the room's pending sprites and VRAM writes in NMI order.

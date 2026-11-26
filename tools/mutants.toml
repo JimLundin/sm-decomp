@@ -4,6 +4,7 @@
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 rules = [
+    "samus-appearance/ProtectionFlicker",
     "boss-ceres-ridley/WarningArt",
     "boss-ceres-ridley/WarningGlow",
     "boss-ceres-ridley/WarningEnds",
@@ -2169,3 +2170,14 @@ after = '''        let view = self.vent_camera();
 case = "audio-sender/shaft-bursts"
 cut = 2941
 field = "sender.queue"
+
+[[fault]]
+name = "appearance-ordinary-body-loses-flicker-phase"
+responsibility = "appearance"
+rule = "samus-appearance/ProtectionFlicker"
+file = "crates/game/src/production/played/samus_picture.rs"
+before = "finished_frame_parity: parity,"
+after = "finished_frame_parity: match parity { Parity::Even => Parity::Odd, Parity::Odd => Parity::Even },"
+case = "samus-appearance/fight-first-protection"
+cut = 614
+field = "samus-oam.piece-count"

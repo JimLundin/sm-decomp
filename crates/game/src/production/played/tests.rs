@@ -171,6 +171,7 @@ pub(super) fn content() -> Content {
 pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalettes) -> Content {
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
+        samus_body_art: None,
         clock_figures: None,
         standing: None,
         shaft_track: None,
@@ -229,43 +230,47 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         opening_hud: None,
         map: HerMap::default(),
         start_x: Wrapping(0x80),
-        ridley: boss_ceres_ridley::RidleyContent {
-            flyby: boss_ceres_ridley::FlybyContent {
-                path: boss_ceres_ridley::FlybyPath {
-                    first: boss_ceres_ridley::FlybyFrame {
-                        shift: types::Pair { x: 0, y: 0 },
-                        zoom: boss_ceres_ridley::FlybyZoom::new(0).unwrap(),
-                    },
-                    rest: Vec::new(),
-                },
-                body_shades: [[types::Colour::BLACK; 15]; 9],
-                baby_looks: enum_map::EnumMap::default(),
-                wing_looks: enum_map::EnumMap::default(),
-            },
-            getaway: boss_ceres_ridley::GetawayContent {
-                left_wall: types::Pair {
-                    x: Wrapping(8),
-                    y: Wrapping(127),
-                },
-                right_wall: types::Pair {
-                    x: Wrapping(248),
-                    y: Wrapping(127),
-                },
-                body_colours: [types::Colour::BLACK; 15],
-                wall_colours: [types::Colour::BLACK; 8],
-            },
-            eye_steps: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::EyeColours(
-                [types::Colour::BLACK; 3],
-            )])
-            .unwrap(),
-            body_sets: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::BodyColours(
-                [types::Colour::BLACK; 11],
-            )])
-            .unwrap(),
-        },
+        ridley: ridley_content(),
         warning: None,
         // The worth the player's ROM gives his tail's hit.
         tail_worth: samus_health::WholeEnergy::new(15).unwrap(),
+    }
+}
+
+fn ridley_content() -> boss_ceres_ridley::RidleyContent {
+    boss_ceres_ridley::RidleyContent {
+        flyby: boss_ceres_ridley::FlybyContent {
+            path: boss_ceres_ridley::FlybyPath {
+                first: boss_ceres_ridley::FlybyFrame {
+                    shift: types::Pair { x: 0, y: 0 },
+                    zoom: boss_ceres_ridley::FlybyZoom::new(0).unwrap(),
+                },
+                rest: Vec::new(),
+            },
+            body_shades: [[types::Colour::BLACK; 15]; 9],
+            baby_looks: enum_map::EnumMap::default(),
+            wing_looks: enum_map::EnumMap::default(),
+        },
+        getaway: boss_ceres_ridley::GetawayContent {
+            left_wall: types::Pair {
+                x: Wrapping(8),
+                y: Wrapping(127),
+            },
+            right_wall: types::Pair {
+                x: Wrapping(248),
+                y: Wrapping(127),
+            },
+            body_colours: [types::Colour::BLACK; 15],
+            wall_colours: [types::Colour::BLACK; 8],
+        },
+        eye_steps: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::EyeColours(
+            [types::Colour::BLACK; 3],
+        )])
+        .unwrap(),
+        body_sets: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::BodyColours(
+            [types::Colour::BLACK; 11],
+        )])
+        .unwrap(),
     }
 }
 

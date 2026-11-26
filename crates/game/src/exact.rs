@@ -8,5 +8,6 @@ pub mod oam;
 pub mod ppu;
 pub mod ridley_flyby;
 pub mod ridley_warning;
+pub mod samus;
 pub mod save_files;
 pub mod tilemap;

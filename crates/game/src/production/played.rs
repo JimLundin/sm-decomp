@@ -70,6 +70,7 @@ mod room_palette;
 pub mod room_tiles;
 pub mod room_video;
 pub mod samus;
+mod samus_picture;
 pub mod save_snapshot;
 pub mod shaft;
 pub mod shaft_sound;
@@ -121,6 +122,8 @@ pub struct Content {
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.
     pub appearance: AppearanceContent,
+    /// Imported body maps of the ordinary drawing.
+    pub samus_body_art: Option<data::assets::samus::SamusAssets>,
     /// Which group each of the screen's colours is in, for the passage's fades.
     pub colour_groups: [ColourGroup; COLOURS],
     /// The rooms, tilesets and sprite colours the passages load.
@@ -207,6 +210,8 @@ pub struct State {
 pub struct Outputs {
     /// Movement's complete outcome; none while a passage runs.
     pub movement: Option<samus_movement::Outcome>,
+    /// OAM slots appended by the ordinary body, empty when it was hidden.
+    pub samus_body: Option<core::ops::Range<usize>>,
     /// Her appearance's sounds, in the order asked; none while a passage runs.
     pub sounds: Vec<samus_appearance::SoundOffer>,
     /// What the doors report.
@@ -296,6 +301,8 @@ pub enum Fault {
     BabyColours,
     /// Her suit's content is not sixteen colours of 15 bits.
     SuitColours,
+    /// The ordinary body figure or step has no imported art.
+    SamusBody(Figure),
 }
 
 impl State {
@@ -325,6 +332,7 @@ impl State {
             self.play(inputs, passing, hud, content, rules)
         }?;
         if passing.publishes {
+            self.room_video.publish_ordinary_sprites();
             self.room_video.publish(content.standing.as_ref());
         }
         Ok(output)
@@ -353,6 +361,8 @@ impl State {
         let pad_and_cover = self.station.pad(&mut samus, rules);
         let camera = self.followed(&room, &her, &samus, rules);
         let touched = self.passage.touched(&her)?;
+        let draw_at = passing.work_begun.then_some(inputs.parity);
+        let body = self.ordinary_fight_body(&her, health, camera.position(), draw_at, content)?;
         let hud = warning::countdown_input(hud, enemies.warning.as_ref())?;
         let hud = if locked { hud.during_elevator() } else { hud };
         let (hud_state, hud_outputs) = self.hud_frame(
@@ -383,6 +393,7 @@ impl State {
             rules,
         );
 
+        let samus_body = body.map(|body| self.write_ordinary_fight_body(&body));
         self.prepare_room_picture(&hud_state, &hud_outputs, camera.position(), content)?;
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
@@ -412,6 +423,7 @@ impl State {
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
             movement: her.outcome,
+            samus_body,
             sounds: her.sounds,
             doors: doors.report,
             health: Some(health),
@@ -625,6 +637,7 @@ impl State {
         self.finish_passage(&exports, loaded, passing);
         Ok(Outputs {
             movement: None,
+            samus_body: None,
             sounds: Vec::new(),
             doors: exports.report,
             health: None,

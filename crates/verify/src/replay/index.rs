@@ -175,6 +175,8 @@ pub enum InputProvider {
     StationExplosion,
     /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
     PlayedCeresInputs,
+    /// Ordinary fight draws at finished movie cuts through the played room.
+    PlayedSamusPicture,
     /// One elevator arrival and T1 scheduling.
     Blackout,
     /// One admitted room and finished opportunities for the flyby’s owned producers.
@@ -801,6 +803,18 @@ pub enum ObservationId {
     /// Complete currently playing Figure.
     #[serde(rename = "appearance.playing")]
     AppearancePlaying,
+    /// Whether the ordinary draw submitted body placements.
+    #[serde(rename = "samus-oam.visible")]
+    OrdinaryBodyVisible,
+    /// Number of placements contributed by the ordinary body.
+    #[serde(rename = "samus-oam.piece-count")]
+    OrdinaryBodyCount,
+    /// The body's entries in the prepared OAM batch.
+    #[serde(rename = "samus-oam.prepared")]
+    OrdinaryBodyPrepared,
+    /// The body's entries in physical OAM after NMI.
+    #[serde(rename = "samus-oam.physical")]
+    OrdinaryBodyPhysical,
     /// Complete ordered reaction-facing reaches.
     #[serde(rename = "movement.reached.complete")]
     CompleteReached,
@@ -1428,6 +1442,10 @@ macro_rules! appearance_observations {
             | O::StandingLowerSecond
             | O::DrawingEnergy
             | O::TouchdownGraphics
+            | O::OrdinaryBodyVisible
+            | O::OrdinaryBodyCount
+            | O::OrdinaryBodyPrepared
+            | O::OrdinaryBodyPhysical
             | O::AppearancePlaying
             | O::AppearanceStep
             | O::AppearanceTimeLeft
@@ -1717,6 +1735,7 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
         "interface-hud/Exploring" => &[O::HudExplored],
         super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
+        "samus-appearance/ProtectionFlicker" => super::played::samus_picture::OUTPUTS,
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
         _ => {
@@ -2451,6 +2470,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             | InputProvider::CeresShaftActors
     ) {
         return super::played::indexed::valid(case);
+    }
+    if case.inputs == InputProvider::PlayedSamusPicture {
+        return super::played::samus_picture::valid(case);
     }
     if case.inputs == InputProvider::StationExplosion {
         return station_provider_valid(case);

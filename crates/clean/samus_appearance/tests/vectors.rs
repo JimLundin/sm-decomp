@@ -7,6 +7,7 @@ mod vectors {
     mod cannon_vectors;
     mod colour_vectors;
     mod elevator_vectors;
+    mod flicker_vectors;
     mod hurt_vectors;
 
     use core::num::Wrapping;
@@ -32,7 +33,7 @@ mod vectors {
 
     /// The vector file: her State at initialization, the paces, the clips by name, the animation
     /// vectors, the sound opportunities, the combined frames, the cannon histories, the palette
-    /// histories and the hurt colours frames.
+    /// histories, the hurt colours frames and the body drawing opportunities.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct VectorFile {
@@ -46,6 +47,7 @@ mod vectors {
         ordinary_dry_colours: colour_vectors::ColourVectors,
         hurt_colours: Vec<hurt_vectors::HurtVector>,
         elevator_body: Vec<elevator_vectors::ElevatorVector>,
+        protection_flicker: Vec<flicker_vectors::FlickerVector>,
     }
 
     /// Her appearance State as initialization leaves it, quantity by quantity.
@@ -1131,6 +1133,11 @@ mod vectors {
             )
             .chain(file.hurt_colours.iter().flat_map(|frame| &frame.entries))
             .chain(file.elevator_body.iter().flat_map(|body| &body.entries))
+            .chain(
+                file.protection_flicker
+                    .iter()
+                    .flat_map(|draw| &draw.entries),
+            )
             .map(|entry| behaviour(entry))
             .chain(file.ordinary_dry_colours.entries().map(behaviour))
             .collect();

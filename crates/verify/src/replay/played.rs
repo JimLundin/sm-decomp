@@ -52,6 +52,7 @@ mod room_picture;
 mod room_video;
 pub(super) mod rows;
 pub(super) mod samus;
+pub(super) mod samus_picture;
 mod screens;
 pub(super) mod seed;
 mod shaft;
@@ -448,7 +449,6 @@ impl<'a> Run<'a> {
             Start::Room(seed) => Self::seeded(seed, content, &rooms)?,
         };
         let hud = super::hud::Content::load(path)?;
-        let (_, area) = room.map;
         let opening_hud = if matches!(origin, Start::Preparing(..)) {
             match import::start::hud(image.lorom(), &start) {
                 Ok(asset) => Some(hud::opening(&asset)?),
@@ -500,11 +500,12 @@ impl<'a> Run<'a> {
                 ),
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
+                samus_body_art: Some(samus::body_art(image.lorom())?),
                 colour_groups: colours::groups(),
                 rooms,
                 hud: hud.pictures,
                 opening_hud,
-                map: hud.map_of(area)?.clone(),
+                map: hud.map_of(room.map.1)?.clone(),
                 start_x: core::num::Wrapping(start.her.0),
                 ridley,
                 warning,
@@ -925,6 +926,12 @@ impl<'a> Run<'a> {
                 &self.state.room_video.video.memory.vram,
             )?);
         }
+        samus_picture::compare(
+            frame,
+            &self.state.room_video.video,
+            outputs.samus_body.clone(),
+            (expected, actual),
+        )?;
         room_video::compare(
             &self.state.room_video,
             outputs.shaft_overlay_placement.is_some(),

@@ -2421,3 +2421,114 @@ look = ["Left", 0]
 centre = [144, 75]
 origin = [237, 75]
 piece_counts = [4, 3]
+
+# Ordinary room body admission. The counts and phase are the drawing opportunity's inputs.
+[[protection_flicker]]
+id = "C-protection-odd"
+source = "constructed"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 1
+push_time = 0
+timed_special_colour = false
+parity = "Odd"
+body_drawn = false
+
+[[protection_flicker]]
+id = "C-protection-even"
+source = "constructed"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 1
+push_time = 0
+timed_special_colour = false
+parity = "Even"
+body_drawn = true
+
+[[protection_flicker]]
+id = "C-protection-spent"
+source = "constructed"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 0
+push_time = 0
+timed_special_colour = false
+parity = "Odd"
+body_drawn = true
+
+[[protection_flicker]]
+id = "C-protection-push"
+source = "constructed"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 1
+push_time = 1
+timed_special_colour = false
+parity = "Odd"
+body_drawn = true
+
+[[protection_flicker]]
+id = "C-protection-colour-effect"
+source = "constructed"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 1
+push_time = 0
+timed_special_colour = true
+parity = "Odd"
+body_drawn = true
+
+[[protection_flicker]]
+id = "R-protection-hidden"
+source = "chain-any-0006-E0B5:701"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 4
+push_time = 0
+timed_special_colour = false
+parity = "Odd"
+body_drawn = false
+
+[[protection_flicker]]
+id = "R-protection-visible"
+source = "chain-any-0006-E0B5:702"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 3
+push_time = 0
+timed_special_colour = false
+parity = "Even"
+body_drawn = true
+
+[[protection_flicker]]
+id = "R-protection-new-push"
+source = "chain-any-0006-E0B5:609"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 96
+push_time = 5
+timed_special_colour = false
+parity = "Odd"
+body_drawn = true
+
+[[protection_flicker]]
+id = "R-protection-last-push"
+source = "chain-any-0006-E0B5:613"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 92
+push_time = 1
+timed_special_colour = false
+parity = "Odd"
+body_drawn = true
+
+[[protection_flicker]]
+id = "R-protection-first-visible"
+source = "chain-any-0006-E0B5:614"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 91
+push_time = 0
+timed_special_colour = false
+parity = "Even"
+body_drawn = true
+
+[[protection_flicker]]
+id = "R-protection-first-hidden"
+source = "chain-any-0006-E0B5:615"
+entries = ["ProtectionFlicker"]
+protection_while_drawn = 90
+push_time = 0
+timed_special_colour = false
+parity = "Odd"
+body_drawn = false

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "fb54103f4ff0adc86189da4220dc8d79dcc09588fc64c343e3f97342dac2f81c"
+index_sha256 = "e68a81fae3ef9be7815a57eeb6256838523b28d3ff5dc6897d4d6e81a20d90c7"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1658,3 +1658,57 @@ null_fields = 141
 restorations = 84
 pending_boundaries = 1
 pending_restorations = 1
+
+[[case]]
+id = "samus-appearance/fight-initial-body"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "2c54abe8a2dcc728969db6e4340d76c13f63edbab14b670d1a115f311ed83c83"
+
+[case.counts]
+cuts = 6
+fields = 0
+outputs = 24
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 6
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "samus-appearance/fight-first-protection"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "b8f2d08ea19b2bf6b51059a5c7a2573f9a8325824833546ebda02da514fb44c9"
+
+[case.counts]
+cuts = 7
+fields = 0
+outputs = 28
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 7
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "samus-appearance/fight-protection-hold"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "a843f52bf2dac4cbaa6bec65ac3a996d5a87a78e43a20d20f701bca2af188eef"
+
+[case.counts]
+cuts = 23
+fields = 0
+outputs = 92
+publications = 0
+replies = 0
+null_cuts = 11
+null_fields = 0
+restorations = 23
+pending_boundaries = 0
+pending_restorations = 0

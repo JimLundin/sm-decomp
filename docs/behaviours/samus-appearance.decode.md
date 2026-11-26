@@ -472,8 +472,12 @@ together, not split by area.
 - Area run: RunPace, BoostStages, CountedLapHold, BoostingLap
 - Area cannon: CannonItemDelay, CannonReadinessReset
 - Area palette (old 183): OrdinaryDryColours
-- Area hurt (old 0: no old code models the pulse): HurtColours, 12
+- Area hurt (old 0): HurtColours, 12
 - Area elevator body (old 0): ElevatorStandingPicture
+- Area ordinary body (old 0): ProtectionFlicker
+
+The old code has no hurt palette pulse. The active ordinary picture has no
+protection-visibility producer to replace.
 
 
 ## Stride, spin and passage sound opportunities
@@ -1169,3 +1173,69 @@ For historical context, `tools size` gives 2,679 weighted tokens to
 general body, echoes and positions outside this standing scope.
 
 The four elevator body arms add 4.0 spec units and 150 weighted tokens at k = 37.5.
+
+## Ordinary protection flicker
+
+### Sources and inputs
+
+| Entry | Source and mapping |
+| --- | --- |
+| ProtectionFlicker | [Bank 90](https://patrickjohnston.org/bank/90/) `$90:EB52..EB85` supplies the ordinary room draw. `$90:85EC..8606` tests then-current WRAM `$18AA` (push time), `$18A8` (protection while drawn), `$0A68` (special palette time) and bit 0 of `$05B6` (finished gameplay turns). `$90:861C/$8643` submit the body's maps. Both outcomes reach `$90:8647` for tile definitions in [bank 92](https://patrickjohnston.org/bank/92/). |
+| Timing | [Bank A6](https://patrickjohnston.org/bank/A6/) `$A6:E000/$E006` grant protection and push on tail contact. [Bank 82](https://patrickjohnston.org/bank/82/) `$82:8B98` initiates the room draw before `$82:8BB3` spends the timers via [bank A0](https://patrickjohnston.org/bank/A0/) `$A0:9169`. [Bank 80](https://patrickjohnston.org/bank/80/) `$80:95F4` increases the finished-turn count on requested publication. A held NMI alone cannot supply a new drawing parity. |
+| Scope | `$90:C663..C67A` gives the separate cannon draw its own test. The body's timed-colour bypass reads `$0A68`; the hurt colour pulse reads `$0A48` and does not suppress body flicker. Separate cannon placement, special effects and drawing handlers outside the ordinary room body are outside this entry. |
+
+Health already publishes its post-hit, pre-spend protection count. Movement owns push time.
+Read its value after any current hit and before its late spend. Its start and settled states
+can each give the wrong answer. Keep the scheduler's existing start parity for the draw.
+The live Ceres row has zero special palette time on every qualified cut. Supply that zero
+from the validated inactive scene capability. The constructed positive case checks the
+bypass without adding a special effect producer.
+
+### Witness
+
+Row `chain-any-0006-E0B5`. The independent LakeSnes power-on run uses the continuous movie
+through the fight. It samples the four draw operands at `$90:85EC` and records admission
+at `$90:8606`. The pinned lsnes cache qualifies a single-draw cut when all 544 prepared
+bytes and all 544 physical OAM bytes agree between oracles. On the qualified cuts the
+reference matches 1,641 of 1,641 at admission. Always submitting the body matches 1,416,
+never submitting it matches 225, and inverted parity or outgoing parity matches 1,186.
+Using start-of-frame push time first fails at 609 and matches 1,636. Using cut-end push
+time first fails at 613 and also matches 1,636. Protection alone has no independent
+visibility difference between start and draw or draw and cut end on this row. The hit
+starts a push, and the last protected draw has even parity. The one-frame protection
+case in the constructed vectors distinguishes a premature spend on odd parity.
+
+The writer trace attributes each new body piece through the body map writer
+(`$81:8A20` is the continuation after the attribute store). Piece presence agrees with
+admission on 1,640 qualified cuts. Cut 1621 enters the body draw and emits no such piece,
+so do not use zero pieces alone to classify admission there. The 135 cuts with no body
+draw and one single-draw cut whose two images do not both qualify are outside these
+counts. The scoped rule compares the current drawing's submission, not retained physical
+pieces. Delivery checks compare both complete images at the room renderer boundary.
+
+| Cut | Push at draw | Protection at draw | Parity at draw | Body pieces | Why it matters |
+| --- | ---: | ---: | --- | ---: | --- |
+| 609 | 5 | 96 | odd | 7 | First hit grants the push during the frame |
+| 613 | 1 | 92 | odd | 7 | Last push frame ends at zero |
+| 614 | 0 | 91 | even | 7 | First failure with the shifted phase |
+| 615 | 0 | 90 | odd | 0 | First failure with the always-visible control |
+| 681 | 0 | 24 | odd | 0 | Hidden control before the first retained writer |
+| 682 | 0 | 23 | even | 12 | Attached door starts at slot 59 |
+| 701 | 0 | 4 | odd | 0 | Hidden control before the second retained writer |
+| 702 | 0 | 3 | even | 11 | Attached door starts at slot 58 |
+| 703 | 0 | 2 | odd | 0 | Hidden control after the second retained writer |
+| 704 | 0 | 1 | even | 6 | Last protection frame ends at zero |
+
+At `chain-any-0011-DF45` cut 240, fight cut 682 is the last writer of the retained
+door lanes in slot 66, and fight cut 702 is the last writer of those in slots 64 and 65.
+These are writer-trace results. The room pipeline derives the prefix by drawing its
+earlier objects in order, including the admitted body. The body rule supplies no cursor.
+
+### Budget
+
+At `922da47ee` the active ordinary picture has no landed protection-visibility
+producer to replace. The historical `crates/sm_game/src/scene/samus_body.rs` at
+`18cc7f8b0` scores 2,679 weighted tokens with `tools size`, including body placement,
+maps, other drawing modes and the rest of that file. This is historical context for
+the whole module. The two `ProtectionFlicker` arms add 2.0 spec units and 75 weighted
+tokens at k = 37.5.

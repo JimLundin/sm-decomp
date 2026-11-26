@@ -11,7 +11,8 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 
 **Scope.** Her animation's timing, its sound opportunities (§9), when her cannon may follow
 the selected item (§10), the ordinary dry palette opportunity (§11), her hurt colours and the
-push's poses (§12), and her standing picture during the elevator hold and fade (§13).
+push's poses (§12), her standing picture during the elevator hold and fade (§13), and her
+body's protection flicker during ordinary play in Ceres (§14).
 Her sprite and colours belong to the same domain because the player sees one figure.
 The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -33,8 +34,8 @@ room effects, Environment, Grapple and the charge and effect owners supply curre
 supply their own palette changes, and video owns delivery of the current palette.
 
 **What it leaves to others**: which pose follows a clip's end (samus-movement, `AnimationEnds`);
-delivery of her elevator picture and tiles (video, §13); drawing outside the elevator
-picture's scope, invincibility flicker, splashes and dust (remaining part 2, §7); the poses other domains drive (§7); whether a
+delivery of her picture and tiles (video); body placement and art selection outside §13,
+splashes and dust (remaining part 2, §7); the poses other domains drive (§7); whether a
 sound it asks for is heard (the sound domain).
 
 **Notation.** A clip's steps are numbered from 0. "The clip moves on" means it goes to the step
@@ -570,7 +571,7 @@ ends hands over in the frame it ends [R-restart-a, C-ready, C-end].
 
 - **Part 2 of this domain:** her sprite (the picture each step shows, where its halves sit, what
   it uploads), her suits and active palette effects (visor, charge, booster glow, screw attack,
-  the colour effects that own her colours outright), the flicker while she is invincible, splashes and dust, and the echoes'
+  the colour effects that own her colours outright), splashes and dust, and the echoes'
   pictures. They read her step and the boost stage.
 - **Poses other domains drive**, whose clips those domains step or set: the x-ray scope, the
   grapple beam, the shinespark (its windup sets the stage to 4 and its end clears it; the crouch's
@@ -1023,3 +1024,38 @@ publication installs the prepared pieces and present tile strips. A strip's dest
 reserved for its own row of its own half. An absent strip leaves that row unchanged, and
 the other strips still write to their reserved rows. The constructed suspended case follows
 the prepared and live values across those video opportunities.
+
+
+## 14. Her body flickers during protection
+
+An ordinary room drawing opportunity in Ceres can omit Samus's body for one frame.
+This decision applies to her whole body, including both halves when her pose has them.
+The room still uses her current pose and displayed clip step to request her body tiles.
+The room's other sprites have their own drawing rules.
+
+| Quantity | Domain type and units | Read by |
+| --- | --- | --- |
+| Protected while drawn | `bool`, whether [Health](samus-health.md) has any protection frames left at the draw | `ProtectionFlicker` |
+| Push time left | `bool`, whether [Movement](samus-movement.md) has any push frames left at the draw | `ProtectionFlicker` |
+| Special suit colour effect is timed | `bool`, whether a special suit colour effect has time left at the draw | `ProtectionFlicker` |
+| Parity of finished frames | `Parity`, even or odd at the start of ordinary gameplay work | `ProtectionFlicker` |
+| Body drawn | `bool`, whether to submit the body placements for this opportunity | output (room picture) |
+
+### ProtectionFlicker
+
+- kind: timing and output.
+- summary: after a hit's push time runs out, protection hides the body on alternate draws.
+- params: none.
+- switch: Fixed.
+- Protection above zero, zero push time, no timed special suit colour effect, and odd
+  finished-frame parity → omit the body placements [C-protection-odd, R-protection-first-hidden,
+  R-protection-hidden].
+- Otherwise → submit the usual body placements [C-protection-even, C-protection-spent,
+  C-protection-push, C-protection-colour-effect, R-protection-new-push, R-protection-last-push,
+  R-protection-first-visible, R-protection-visible].
+- checked: oracle (ordinary Ridley fight cuts with a body drawing opportunity), constructed.
+
+**Order that matters.** Drawing reads protection and push time after any hit this frame and
+before the frame spends one of each. One frame left can still affect the current picture.
+Parity comes from the count as the frame's gameplay work starts. Push time is separate from
+her pose. The hurt colour pulse has its own timing (§12). The decision adds no State.
