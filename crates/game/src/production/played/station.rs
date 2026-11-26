@@ -419,7 +419,7 @@ mod tests {
         room.station.retire_before(0);
         assert_eq!(room.station.ridley, Some(ridley));
         room.station.retire_before(1);
-        assert!(room.station.ridley.is_none());
+        assert_eq!(room.station.ridley, None);
         assert_eq!(room.station.doors, vec![door]);
         assert_eq!(room.station.stage, Stage::Escape);
         room.station.retire_before(2);
