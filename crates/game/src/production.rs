@@ -533,21 +533,6 @@ impl Production {
                 ProductionRules::IntroMissiles(_),
             ) => OwnedState::IntroMissiles(state),
             (
-                ProductionSeed::ShaftEntry(state),
-                ProductionContent::ShaftEntry(_),
-                ProductionRules::ShaftEntry,
-            ) => {
-                if !state.valid() {
-                    return Err(AdmissionFault::ShaftLevel);
-                }
-                OwnedState::ShaftEntry(state)
-            }
-            (
-                ProductionSeed::JumpHistory(state),
-                ProductionContent::JumpHistory,
-                ProductionRules::JumpHistory,
-            ) => OwnedState::JumpHistory(Model(state)),
-            (
                 ProductionSeed::Connected(state),
                 ProductionContent::Connected(content),
                 ProductionRules::Connected(_),
@@ -732,26 +717,6 @@ impl Production {
                 |refusal| ProductionFault::Unsupported(Unsupported::SaveFiles(refusal)),
             )?)),
             (
-                OwnedState::ShaftEntry(state),
-                ProductionContent::ShaftEntry(setup),
-                ProductionRules::ShaftEntry,
-                AdvanceInput::ShaftEntry(opportunity),
-            ) => {
-                state
-                    .advance(*setup, opportunity)
-                    .map_err(ProductionFault::RoomLoad)?;
-                ProductionOutputs::ShaftEntry
-            }
-            (
-                OwnedState::JumpHistory(state),
-                ProductionContent::JumpHistory,
-                ProductionRules::JumpHistory,
-                AdvanceInput::JumpHistory(sample),
-            ) => {
-                jump_history::advance(&mut state.0, sample);
-                ProductionOutputs::JumpHistory
-            }
-            (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
                 ProductionRules::Connected(rules),
@@ -813,7 +778,7 @@ impl Production {
                     scope,
                 )));
             }
-            (state, content, rules, input) => entries::advance_intro(state, content, rules, input)?,
+            (state, content, rules, input) => entries::advance_scene(state, content, rules, input)?,
         };
         Ok((state, outputs))
     }

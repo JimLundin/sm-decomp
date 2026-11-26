@@ -206,7 +206,7 @@ fn origin(
         movement: movement::Content::load(&sources.rom)?,
         appearance: super::appearance::Content::load(&sources.rom)?,
     };
-    let room = seed::room(&previous.wram, &content, &rooms.world)?.1;
+    let room = seed::room(previous, &content, &rooms.world)?.1;
     let pointer = read(&previous.wram, 0x078d)?;
     let identity = import::world::doorway(RomAddress::new(0x83, pointer)).unwrap();
     let door = *room

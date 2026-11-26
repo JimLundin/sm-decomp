@@ -151,6 +151,16 @@ fn admit_standalone(
             OwnedState::Audio(Model(state))
         }
         (
+            ProductionSeed::ShaftEntry(state),
+            ProductionContent::ShaftEntry(_),
+            ProductionRules::ShaftEntry,
+        ) => {
+            if !state.valid() {
+                return Err(AdmissionFault::ShaftLevel);
+            }
+            OwnedState::ShaftEntry(state)
+        }
+        (
             ProductionSeed::JumpHistory(state),
             ProductionContent::JumpHistory,
             ProductionRules::JumpHistory,
@@ -184,7 +194,7 @@ fn admit_standalone(
     })
 }
 
-pub(super) fn advance_intro(
+pub(super) fn advance_scene(
     state: &mut OwnedState,
     content: &ProductionContent,
     rules: &ProductionRules,
@@ -258,6 +268,17 @@ pub(super) fn advance_intro(
         ) => state
             .advance(content, *rules, input)
             .map_err(|fault| ProductionFault::Unsupported(Unsupported::Departure(fault)))?,
+        (
+            OwnedState::ShaftEntry(state),
+            ProductionContent::ShaftEntry(setup),
+            ProductionRules::ShaftEntry,
+            AdvanceInput::ShaftEntry(opportunity),
+        ) => {
+            state
+                .advance(*setup, opportunity)
+                .map_err(ProductionFault::RoomLoad)?;
+            ProductionOutputs::ShaftEntry
+        }
         (state, content, rules, input) => advance(state, content, rules, input)?,
     })
 }
