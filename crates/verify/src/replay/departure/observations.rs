@@ -103,7 +103,7 @@ pub(super) fn native(
             _ => 0,
         }
     };
-    let remembered = Remembered::from(&crate::replay::progress::seed(&record.wram)?);
+    let remembered = Remembered::from(&crate::replay::progress::decode(&record.wram)?);
     let health = canonical::model::Model::<HealthPin>(crate::replay::health_tail::decode(
         &record.wram,
         Some(record.index),

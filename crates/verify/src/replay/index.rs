@@ -1438,26 +1438,6 @@ fn movement_witnessed_fields(
         return cinematic_witnesses(rule, provider);
     }
     Some(match rule {
-        "screens-explosion/StationPictureArrives" => {
-            &[O::ExplosionStage, O::ExplosionDrawing, O::ExplosionRequests]
-        }
-        "screens-explosion/StationAwaitsMusic" | "screens-explosion/SpaceHolds" => {
-            &[O::ExplosionStage]
-        }
-        "screens-explosion/StationBrightens" | "screens-explosion/ShipDeparts" => {
-            &[O::ExplosionStage, O::ExplosionMotion]
-        }
-        "screens-explosion/SpaceDrifts" => &[O::ExplosionMotion, O::ExplosionDrawing],
-        "screens-explosion/StationBursts" => &[O::ExplosionBursts, O::ExplosionDrawing],
-        "screens-explosion/StationBreaks" => &[
-            O::ExplosionStage,
-            O::ExplosionBursts,
-            O::ExplosionRequests,
-            O::ExplosionDrawing,
-        ],
-        "screens-explosion/SceneBlacksOut" => {
-            &[O::ExplosionStage, O::ExplosionCarry, O::ExplosionRequests]
-        }
         "screens-blackout/ElevatorStopsSamus"
         | "screens-blackout/PlatformWait"
         | "screens-blackout/DepartureHandoff" => &[
@@ -1473,17 +1453,6 @@ fn movement_witnessed_fields(
         "samus-movement/BackwardLeap" | "samus-movement/WhatHerMovesMet" => {
             &[O::LandingPose, O::LandingFloor]
         }
-        "game-random/AdvanceRandom" => &[O::LandingRandom],
-        "screens-zebes/GunshipAppears" | "screens-zebes/ShipApproachesPlanet" => {
-            &[O::ZebesStage, O::ZebesPicture]
-        }
-        "screens-zebes/PlanetAppears" | "screens-zebes/PlanetAndStarsSlide" => {
-            &[O::ZebesStage, O::ZebesMotion]
-        }
-        "screens-zebes/PlanetIsNamed" | "screens-zebes/LandingSiteLoadBegins" => {
-            &[O::ZebesStage, O::ZebesRequests]
-        }
-        "screens-zebes/PlanetHolds" => &[O::ZebesStage],
         "game-random/AdvanceRandom" => &[O::LandingRandom],
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]

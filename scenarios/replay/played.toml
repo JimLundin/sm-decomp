@@ -270,18 +270,6 @@ power_on = false
 
 [[run]]
 row = "chain-any-0011-DF45"
-start = 241
-end = 1005
-held = 763
-stop = { failed = "station dispatched the flight to Zebes" }
-seed_frame = 13313
-frames = [13314, 14076]
-power_on = false
-
-# The flight to Zebes from the station blackout through the frame that clears the
-# picture and restores full energy. The next frame needs the Landing Site loader.
-[[run]]
-row = "chain-any-0011-DF45"
 start = 1004
 end = 2124
 held = 1119

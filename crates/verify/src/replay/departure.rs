@@ -67,13 +67,14 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         .ok_or_else(|| data_failure(None, "departure lock path"))?;
     let mut rows = Rows::open(&lock, root, &sources.cache, &case.row)?;
     let mut previous = rows.record(seed)?;
-    if !explosion::starts(
-        &rows.record(
-            seed.checked_sub(1)
-                .ok_or_else(|| data_failure(Some(seed), "departure predecessor"))?,
-        )?,
-        &previous,
-    )? {
+    if !explosion::pending(&previous)?
+        || !explosion::enters_from(
+            &rows.record(
+                seed.checked_sub(1)
+                    .ok_or_else(|| data_failure(Some(seed), "departure predecessor"))?,
+            )?,
+        )?
+    {
         return Err(data_failure(Some(seed), "departure elevator blackout"));
     }
     let (mut production, content, rules) = joined::admit_seed(&sources.rom, &previous)?;

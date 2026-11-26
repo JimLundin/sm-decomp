@@ -84,7 +84,7 @@ pub(in crate::replay) fn origin(
     Ok(Carry {
         room,
         landing: landing_site::State::new(area, maps, shadow),
-        progress: (&crate::replay::progress::seed(&record.wram)?).into(),
+        progress: (&crate::replay::progress::decode(&record.wram)?).into(),
         publication: crate::replay::landing_site::registers(&record.ppu),
         random: word(record, 0x05e5)?,
         work_ready: matches!(
@@ -133,7 +133,7 @@ pub(super) fn check(run: &Run, record: &FrameRecord, timing: Cut, cut: u64) -> R
     {
         return Err(differs("room-map"));
     }
-    if carry.progress != (&crate::replay::progress::seed(&record.wram)?).into() {
+    if carry.progress != (&crate::replay::progress::decode(&record.wram)?).into() {
         return Err(differs("progress"));
     }
     let (health, settled) = match &run.scene {
