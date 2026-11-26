@@ -150,21 +150,6 @@ fn admit_standalone(
             super::audio::validate(&state, content)?;
             OwnedState::Audio(Model(state))
         }
-        (
-            ProductionSeed::ShaftEntry(state),
-            ProductionContent::ShaftEntry(_),
-            ProductionRules::ShaftEntry,
-        ) => {
-            if !state.valid() {
-                return Err(AdmissionFault::ShaftLevel);
-            }
-            OwnedState::ShaftEntry(state)
-        }
-        (
-            ProductionSeed::JumpHistory(state),
-            ProductionContent::JumpHistory,
-            ProductionRules::JumpHistory,
-        ) => OwnedState::JumpHistory(Model(state)),
         (ProductionSeed::Blocks(state), ProductionContent::Blocks, ProductionRules::Blocks(_)) => {
             OwnedState::Blocks(state)
         }
@@ -190,6 +175,31 @@ fn admit_standalone(
         (ProductionSeed::Doors(state), ProductionContent::Doors, ProductionRules::Doors(_)) => {
             OwnedState::Doors(state)
         }
+        (seed, content, rules) => admit_room(seed, content, rules)?,
+    })
+}
+
+fn admit_room(
+    seed: ProductionSeed,
+    content: &ProductionContent,
+    rules: &ProductionRules,
+) -> Result<OwnedState, AdmissionFault> {
+    Ok(match (seed, content, rules) {
+        (
+            ProductionSeed::ShaftEntry(state),
+            ProductionContent::ShaftEntry(_),
+            ProductionRules::ShaftEntry,
+        ) => {
+            if !state.valid() {
+                return Err(AdmissionFault::ShaftLevel);
+            }
+            OwnedState::ShaftEntry(state)
+        }
+        (
+            ProductionSeed::JumpHistory(state),
+            ProductionContent::JumpHistory,
+            ProductionRules::JumpHistory,
+        ) => OwnedState::JumpHistory(Model(state)),
         _ => return Err(AdmissionFault::WrongScope),
     })
 }
