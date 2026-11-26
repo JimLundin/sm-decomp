@@ -351,6 +351,14 @@ impl State {
             &mut self.room_video.video.memory.vram,
             output.warning.as_ref(),
         )?;
+        let entry = &self.passage.room.entry;
+        if entry.view.affine {
+            let video = &mut self.room_video.video;
+            video.batch.registers.mode7.matrix = entry.view.transform.matrix;
+            video.batch.registers.mode7.centre = entry.view.transform.centre;
+            video.committed.mode7.matrix = entry.displayed.matrix;
+            video.committed.mode7.centre = entry.displayed.centre;
+        }
         if passing.publishes {
             self.room_video.publish_ordinary_sprites();
             if let Some((tiles, graphics)) = &content.samus_tiles {

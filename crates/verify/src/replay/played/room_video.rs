@@ -100,6 +100,7 @@ pub(super) fn compare(
     compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
     compare_ridley_hdma(room, frame.current, frame.place, frame.cut)?;
     compare_gameplay_tile_layout(room, frame.current, frame.place, frame.cut)?;
+    compare_shaft_affine(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
     if passing.enemy_tiles == game::production::played::passage::EnemyTileTransfer::Published {
         compare_door_enemy_tiles(room, frame.current, expected, actual)?;
@@ -265,6 +266,44 @@ pub(super) fn compare_gameplay_tile_layout(
                 field: field.into(),
             });
         }
+    }
+    Ok(())
+}
+
+/// Compare the live and pending shaft transform at the late room's ordinary cuts.
+pub(super) fn compare_shaft_affine(
+    room: &RoomVideo,
+    record: &FrameRecord,
+    place: (&str, u64),
+    cut: u64,
+) -> Result<(), Outcome> {
+    if !matches!(place, ("chain-any-0011-DF45", 0..=239)) || room.standard_bg3().is_none() {
+        return Ok(());
+    }
+    let (matrix, centre) = record.ppu.m7.split_at(4);
+    let live = room.video.committed.mode7;
+    if live.matrix != matrix || live.centre != centre {
+        return Err(Outcome::Difference {
+            cut,
+            field: "room-video.shaft-affine".into(),
+        });
+    }
+    let mirrors = record
+        .wram
+        .get(0x78..0x84)
+        .ok_or_else(|| super::data_failure(Some(cut), "shaft affine mirrors"))?;
+    let pending = room.video.batch.registers.mode7;
+    let matches = pending
+        .matrix
+        .into_iter()
+        .chain(pending.centre)
+        .zip(mirrors.as_chunks::<2>().0)
+        .all(|(actual, &expected)| actual == i16::from_le_bytes(expected));
+    if !matches {
+        return Err(Outcome::Difference {
+            cut,
+            field: "room-video.shaft-affine-mirrors".into(),
+        });
     }
     Ok(())
 }
