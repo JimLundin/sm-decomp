@@ -680,6 +680,25 @@ impl DmaChannel {
     };
 }
 
+impl Video {
+    /// Initialize the room's effect channels before any new HDMA objects program them.
+    ///
+    /// Room setup points channels 2 through 7 at BG4 horizontal scroll and clears
+    /// their transfer and table addresses. The indirect bank and line counter keep
+    /// their preceding values.
+    pub fn reset_room_hdma(&mut self) {
+        for channel in self.dma.iter_mut().skip(2) {
+            *channel = DmaChannel {
+                control: DmaControl::TO_ONE_REGISTER,
+                destination: BBusRegister::Other(0x13),
+                indirect_bank: channel.indirect_bank,
+                line_counter: channel.line_counter,
+                ..DmaChannel::default()
+            };
+        }
+    }
+}
+
 /// The CPU's eight DMA channels.
 pub const DMA_CHANNELS: usize = 8;
 
