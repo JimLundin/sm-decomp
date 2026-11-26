@@ -547,6 +547,18 @@ const DOMAINS: &[Domain] = &[
             area: "return",
         }],
     },
+    Domain {
+        name: "screens-discovery",
+        bridge: None,
+        adapters: &["production/played/discovery.rs"],
+        providers: &["discovery"],
+        areas: &[
+            ("hatch", &["egg.rs", "shell.rs", "drawing.rs"]),
+            ("baby", &["baby.rs", "pulse.rs", "slime.rs"]),
+            ("handoff", &["encounter.rs"]),
+        ],
+        apart: &[],
+    },
     // The title's one file holds every entry, all of them the screen's.
     Domain {
         name: "screens-playback",

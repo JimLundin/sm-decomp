@@ -4,8 +4,10 @@ use super::{
     ActorFile, Actors, ActorsContent, Answers, Content, Fault, Pressed, Screen, Sound, Stepped,
     Work,
 };
-use crate::production::played::intro::{self, State};
-use screens_intro::{FightReply, FlashbackRequest, IntroEvent, Report, Rules, TrackReply};
+use crate::production::played::intro::{self, EncounterReplies, PendingRoomCheckpoint, State};
+use screens_intro::{
+    DiscoveryRequest, FightReply, FlashbackRequest, IntroEvent, Report, Rules, TrackReply,
+};
 use types::Parity;
 use types::intro::IntroStage;
 use types::options::Settings;
@@ -18,6 +20,8 @@ pub enum IntroTiming {
     Unspecified,
     /// The stage is setting up the room and its first palette, ahead of actor work.
     SettingUpFight,
+    /// Discovery setup has published before its room turn.
+    SettingUpDiscovery,
     /// The last outbound dissolve is clearing text, ahead of actor work.
     ClearingText,
     /// The return stage is preparing its first palette, ahead of actor work.
@@ -42,6 +46,8 @@ enum Pending {
     Opening(Box<(State, Report)>),
     /// Room installation is visible, but its actor turn and the scene scripts have yet to finish.
     Fight { pressed: Pressed, track: TrackReply },
+    /// Discovery installed its actors and published its stage.
+    Discovery(Box<PendingRoomCheckpoint>),
     /// Room and scene work is complete. The platform still owes this frame its commit.
     SpriteCommit,
     /// The frame was interrupted inside its stage, before any room turn.
@@ -101,6 +107,25 @@ impl PlayingIntro {
         if self.scene.intro.stage == IntroStage::Begins {
             return self.begin_opening(pressed, track, content, rules);
         }
+        if timing == IntroTiming::SettingUpDiscovery {
+            let (pending, report) = intro::interrupt_work_frame(
+                self.scene.clone(),
+                pressed.values().any(|&down| down),
+                track,
+                &content.intro,
+                rules,
+            )?;
+            if !report
+                .events
+                .contains(&IntroEvent::Discovery(DiscoveryRequest::StartDiscovery))
+            {
+                return Err(intro::Fault::IntroTiming);
+            }
+            self.actors.start_discovery(actors_content(content)?)?;
+            self.scene = pending.state().clone();
+            self.pending = Some(Pending::Discovery(Box::new(pending.checkpoint())));
+            return Ok(());
+        }
         if self.scene.intro.stage == IntroStage::PageOneWaits && pressed.values().any(|&down| down)
         {
             // Apply the room install before the NMI. Retain the frame inputs for the
@@ -132,11 +157,36 @@ impl PlayingIntro {
         rules: Rules,
         waiting: samus_appearance::SoundsWaiting,
     ) -> Result<(Report, Vec<Sound>), intro::Fault> {
+        let parity = if count & 1 == 0 {
+            Parity::Even
+        } else {
+            Parity::Odd
+        };
         let (pressed, track, installed) = match self.pending.take() {
             Some(Pending::Opening(completed)) => {
                 let (scene, report) = *completed;
                 self.scene = scene;
                 return Ok((report, Vec::new()));
+            }
+            Some(Pending::Discovery(saved)) => {
+                let pending = intro::PendingRoom::restore(*saved);
+                let discovery = self.actors.discovery_turn(
+                    pending.state().intro.dissolve,
+                    false,
+                    parity,
+                    waiting,
+                    actors_content(content)?,
+                )?;
+                let (scene, report) = pending.resume(
+                    &content.intro,
+                    rules,
+                    EncounterReplies {
+                        discovery: discovery.reply,
+                        ..EncounterReplies::QUIET
+                    },
+                );
+                self.scene = scene;
+                return Ok((report, discovery.sounds));
             }
             Some(Pending::Fight { pressed, track }) => (pressed, track, true),
             Some(Pending::BeforeRoom { pressed, track }) => (pressed, track, false),
@@ -146,7 +196,7 @@ impl PlayingIntro {
         let actors = &mut self.actors;
         let mut flash = None;
         let mut sounds = Vec::new();
-        let report = intro::play_work_frame(
+        let report = intro::play_scene_frame(
             &mut self.scene,
             pressed.values().any(|&down| down),
             track,
@@ -160,19 +210,40 @@ impl PlayingIntro {
                 {
                     actors.start(frame.state().height, actors_content(content)?)?;
                 }
-                if actors.battle.is_none() {
-                    return Ok(FightReply::Fighting);
+                if frame
+                    .discovery_requests()
+                    .any(|request| request == DiscoveryRequest::StartDiscovery)
+                {
+                    actors.start_discovery(actors_content(content)?)?;
                 }
-                let parity = if count & 1 == 0 {
-                    Parity::Even
-                } else {
-                    Parity::Odd
-                };
+                if actors.discovery.is_some() {
+                    let closes = frame
+                        .discovery_requests()
+                        .any(|request| request == DiscoveryRequest::FinishDiscovery);
+                    let discovery = actors.discovery_turn(
+                        frame.state().dissolve,
+                        closes,
+                        parity,
+                        waiting,
+                        actors_content(content)?,
+                    )?;
+                    sounds = discovery.sounds;
+                    return Ok(EncounterReplies {
+                        discovery: discovery.reply,
+                        ..EncounterReplies::QUIET
+                    });
+                }
+                if actors.battle.is_none() {
+                    return Ok(EncounterReplies::QUIET);
+                }
                 let battle =
                     actors.turn(frame, parity, pressed, waiting, actors_content(content)?)?;
                 flash = battle.flash;
                 sounds = battle.sounds;
-                Ok(battle.reply)
+                Ok(EncounterReplies {
+                    fight: battle.reply,
+                    ..EncounterReplies::QUIET
+                })
             },
         )?;
         if let Some(flash) = flash {
@@ -198,7 +269,10 @@ pub(super) fn step(
     let mut drawn = work.finished();
     let report = match work {
         Work::Unfinished if state.pending.is_some() => None,
-        Work::Unfinished if state.actors.battle.is_some() => {
+        Work::Unfinished
+            if state.actors.battle.is_some()
+                && answers.intro_timing() != IntroTiming::SettingUpDiscovery =>
+        {
             let pressed = answers.pending_buttons();
             let track = answers.track();
             match answers.intro_timing() {
@@ -222,10 +296,24 @@ pub(super) fn step(
                     drawn = 1;
                     None
                 }
-                IntroTiming::SettingUpFight | IntroTiming::Unspecified => {
+                IntroTiming::SettingUpFight
+                | IntroTiming::SettingUpDiscovery
+                | IntroTiming::Unspecified => {
                     return Err(Fault::Intro(intro::Fault::IntroTiming));
                 }
             }
+        }
+        Work::Unfinished
+            if state.actors.discovery.as_ref().is_some_and(|discovery| {
+                discovery.encounter().order != types::discovery::DiscoveryOrder::Hidden
+            }) =>
+        {
+            state.pending = Some(Pending::BeforeRoom {
+                pressed: answers.pending_buttons(),
+                track: answers.track(),
+            });
+            drawn = 1;
+            None
         }
         Work::Unfinished => {
             state
@@ -262,7 +350,17 @@ pub(super) fn step(
         }
         Work::FinishedTwice(_) => return Err(Fault::TwoFinished),
     };
-    let sounds = report.map_or_else(Vec::new, |(report, room_sounds)| {
+    let finished = work.finished();
+    Ok(Stepped {
+        screen: Screen::Intro(Box::new(state)),
+        finished,
+        drawn,
+        sounds: sounds(report),
+    })
+}
+
+fn sounds(report: Option<(Report, Vec<Sound>)>) -> Vec<Sound> {
+    report.map_or_else(Vec::new, |(report, room_sounds)| {
         let clicks = report
             .events
             .iter()
@@ -275,12 +373,5 @@ pub(super) fn step(
             .chain(room_sounds)
             .chain(clicks)
             .collect()
-    });
-    let finished = work.finished();
-    Ok(Stepped {
-        screen: Screen::Intro(Box::new(state)),
-        finished,
-        drawn,
-        sounds,
     })
 }

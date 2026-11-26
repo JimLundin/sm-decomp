@@ -1,0 +1,667 @@
+# One cut per vector. Recorded values are observations at its end. The row and cut identify
+# its source. A recorded vector whose drawing depends on
+# the room's own art or timing has a corresponding constructed case with invented content.
+#
+# The constructed cases restore before, apply inputs, then compare only the supplied after
+# fields. Missing before fields default to absent actors, zero ages and velocities, no pulse
+# picture (age -1), empty cohorts and Hidden. Supplying an active baby defaults its anchor to
+# the sample home. Omitted input centre is (180, 147) whole pixels. finished defaults to true.
+# All positions, displacements, and velocities in the tables are in eighths of a pixel or
+# eighths of a pixel per frame. "closed" is the waiting phase. x and y are the baby's place.
+# A particle lists bit (its identity in the sample cohort), x, y, applied flight steps (age)
+# while in flight, and splash age (-1 for flight). A splash drops its flight age.
+# A rising baby defaults to droplets still to shed (drops_shed = false). An observation
+# may compare a selected subset of fields.
+# cue is true when ReadyForPageThree is sent. sound lists sound identities in offer order.
+# Sound offers in the sample have a queue allowance of six.
+#
+# Content is invented. Each fragment is [x, y, drift, vertical displacements]. Each droplet
+# is [drift, vertical displacements], starting at the baby's whole-pixel place on release.
+
+[scene]
+home = [720, 1232]
+closed = "QuietShell"
+spent = "EmptyShell"
+hatch = [["Shake", 2], ["Crack", 3], ["Open", 2]]
+burst_at = 2
+rise_at = 2
+baby = [["Small", 2], ["Tall", 1], ["Wide", 2]]
+fragment = [
+  [800, 1338, -2, [-2, 8]],
+  [808, 1232, 2, [3]],
+  [816, 1343, 4, [1]],
+  [824, 1300, -1, [1, 2, 3]],
+  [832, 1290, 5, [-2, 9]],
+  [840, 1270, 0, [-2, 8]],
+]
+drop = [
+  [-2, [-9, 8, 16]],
+  [-4, [-2, 4, 12]],
+  [4, [-5, 8, 8]],
+  [8, [-1, 5, 9]],
+]
+splash = [["Wet", 2], ["Drying", 1]]
+shatter = "ShellBreak"
+cry = "BabyCry"
+
+[[vector]]
+id = "C-start"
+source = "constructed"
+entries = ["EggHatches"]
+before = {}
+inputs = { start = true, finished = false }
+after = { phase = "closed", baby_phase = "inside", draw = "SceneFirst", egg = "none", baby = "none", x = 720, y = 1232, sound = [], cue = false }
+
+[[vector]]
+id = "C-boundary"
+source = "constructed"
+entries = ["EggHatches"]
+before = { phase = "closed", baby_phase = "inside", draw = "SceneFirst" }
+inputs = { centre = [169, 147] }
+after = { phase = "closed", egg = "QuietShell" }
+
+[[vector]]
+id = "C-trigger"
+source = "constructed"
+entries = ["EggHatches"]
+before = { phase = "closed", baby_phase = "inside", draw = "SceneFirst" }
+inputs = { centre = [168, 147] }
+after = { phase = "hatching", hatch_age = 0, egg = "Shake", cue = false }
+
+[[vector]]
+id = "C-next-picture"
+source = "constructed"
+entries = ["EggHatches"]
+before = { phase = "hatching", hatch_age = 4, baby_phase = "inside" }
+inputs = { centre = [200, 147] }
+after = { phase = "hatching", hatch_age = 5, egg = "Open", cue = false }
+
+[[vector]]
+id = "C-burst"
+source = "constructed"
+entries = ["ShellScatters", "BabyEmerges"]
+before = { phase = "hatching", hatch_age = 1, baby_phase = "inside", draw = "SceneFirst" }
+[vector.after]
+hatch_age = 2
+egg = "Crack"
+baby_phase = "rising"
+vy = 0
+x = 720
+y = 1232
+sound = ["ShellBreak"]
+fragments = [
+    { bit = 0, x = 798, y = 1336, age = 1, splash = -1 },
+    { bit = 1, x = 810, y = 1235, age = 1, splash = -1 },
+    { bit = 3, x = 823, y = 1301, age = 1, splash = -1 },
+    { bit = 4, x = 837, y = 1288, age = 1, splash = -1 },
+    { bit = 5, x = 840, y = 1268, age = 1, splash = -1 }
+  ]
+
+[[vector]]
+id = "C-fragment-floor"
+source = "constructed"
+entries = ["ShellScatters"]
+before = { phase = "hatching", hatch_age = 2, fragments = [{ bit = 0, x = 798, y = 1336, age = 1, splash = -1 }] }
+after = { fragments = [], sound = [] }
+
+[[vector]]
+id = "C-fragment-exit"
+source = "constructed"
+entries = ["ShellScatters"]
+before = { phase = "hatching", hatch_age = 2, fragments = [{ bit = 1, x = 810, y = 1235, age = 1, splash = -1 }] }
+after = { fragments = [], sound = [] }
+
+[[vector]]
+id = "C-rise-equal"
+source = "constructed"
+entries = ["BabyEmerges"]
+before = { phase = "hatching", hatch_age = 2, baby_phase = "rising", x = 720, y = 960, vy = -2 }
+inputs = { centre = [180, 152] }
+after = { baby_phase = "rising", vy = -1, y = 959, sound = [] }
+
+[[vector]]
+id = "C-hover-start"
+source = "constructed"
+entries = ["BabyEmerges"]
+before = { phase = "hatching", hatch_age = 3, baby_phase = "rising", x = 720, y = 920, vy = -1 }
+inputs = { centre = [180, 147] }
+after = { baby_phase = "hover", hover = 128, vy = 0, y = 920, sound = [] }
+
+[[vector]]
+id = "C-hover-end"
+source = "constructed"
+entries = ["BabyEmerges"]
+before = { phase = "spent", baby_phase = "hover", hover = 1, x = 720, y = 920, draw = "SceneFirst" }
+after = { baby_phase = "following", hover = 0, x = 720, y = 920, vx = 0, vy = 0, cry = 0, draw = "SceneFirst", sound = [] }
+
+[[vector]]
+id = "C-slime"
+source = "constructed"
+entries = ["SlimeFalls"]
+before = { phase = "hatching", hatch_age = 3, baby_phase = "rising", x = 722, y = 1165, vy = -7 }
+[vector.after]
+y = 1157
+sound = ["BabyCry"]
+drops_shed = true
+drops = [
+    { bit = 0, x = 718, y = 1151, age = 1, splash = -1 },
+    { bit = 1, x = 716, y = 1158, age = 1, splash = -1 },
+    { bit = 2, x = 724, y = 1155, age = 1, splash = -1 },
+    { bit = 3, x = 728, y = 1159, age = 1, splash = -1 }
+  ]
+
+[[vector]]
+id = "C-slime-repeat"
+source = "constructed"
+entries = ["SlimeFalls"]
+before = { phase = "hatching", hatch_age = 3, baby_phase = "rising", x = 720, y = 1165, vy = -2, drops_shed = true, drops = [{ bit = 0, x = 718, y = 1151, age = 1, splash = -1 }] }
+inputs = { centre = [180, 147] }
+after = { y = 1162, vy = -3, drops_shed = true, sound = [], drops = [{ bit = 0, x = 716, y = 1159, age = 2, splash = -1 }] }
+
+[[vector]]
+id = "C-impact"
+source = "constructed"
+entries = ["SlimeFalls"]
+before = { phase = "spent", drops = [{ bit = 0, x = 720, y = 1330, age = 5, splash = -1 }] }
+after = { drops = [{ bit = 0, x = 718, y = 1346, splash = 0 }] }
+
+[[vector]]
+id = "C-splash-end"
+source = "constructed"
+entries = ["SlimeFalls"]
+before = { phase = "spent", drops = [{ bit = 0, x = 718, y = 1346, splash = 2 }] }
+after = { drops = [] }
+
+[[vector]]
+id = "C-first-pulse"
+source = "constructed"
+entries = ["BabyPulses"]
+before = { phase = "closed", baby_phase = "inside" }
+after = { baby_age = 0, baby = "Small" }
+
+[[vector]]
+id = "C-pulse-advance"
+source = "constructed"
+entries = ["BabyPulses"]
+before = { phase = "closed", baby_phase = "inside", baby_age = 1 }
+after = { baby_age = 2, baby = "Tall" }
+
+[[vector]]
+id = "C-pulse-loop"
+source = "constructed"
+entries = ["BabyPulses"]
+before = { phase = "closed", baby_phase = "inside", baby_age = 4 }
+after = { baby_age = 0, baby = "Small" }
+
+[[vector]]
+id = "C-follow-equal"
+source = "constructed"
+entries = ["BabyFollows"]
+before = { phase = "spent", baby_phase = "following", x = 723, y = 1123, vx = -1, vy = 0, draw = "SceneFirst" }
+inputs = { centre = [90, 148] }
+after = { x = 723, y = 1124, vx = 0, vy = 1, cry = 1, draw = "SamusFirst", sound = [] }
+
+[[vector]]
+id = "C-follow-cap"
+source = "constructed"
+entries = ["BabyFollows"]
+before = { phase = "spent", baby_phase = "following", x = 720, y = 1120, vx = -20, vy = 17, draw = "SceneFirst" }
+inputs = { centre = [89, 148] }
+after = { x = 700, y = 1137, vx = -20, vy = 17, draw = "SceneFirst" }
+
+[[vector]]
+id = "C-cry"
+source = "constructed"
+entries = ["BabyFollows"]
+before = { phase = "spent", baby_phase = "following", cry = 63 }
+after = { cry = 64, sound = ["BabyCry"] }
+
+[[vector]]
+id = "C-quiet"
+source = "constructed"
+entries = ["BabyFollows"]
+before = { phase = "spent", baby_phase = "following", cry = 128 }
+after = { cry = 128, sound = [] }
+
+[[vector]]
+id = "C-page-cue"
+source = "constructed"
+entries = ["PageThreeApproaches", "BabyFollows"]
+before = { phase = "hatching", hatch_age = 6, baby_phase = "following", x = 800, y = 1010, vx = 1, vy = 2 }
+after = { phase = "spent", egg = "EmptyShell", cue = true, x = 802, y = 1013, draw = "SamusFirst" }
+
+[[vector]]
+id = "C-spent"
+source = "constructed"
+entries = ["PageThreeApproaches", "BabyPulses"]
+before = { phase = "spent", egg = "EmptyShell", baby_phase = "following", baby_age = 1 }
+after = { phase = "spent", egg = "EmptyShell", baby = "Tall", baby_age = 2, cue = false }
+
+[[vector]]
+id = "C-hide"
+source = "constructed"
+entries = ["PageThreeApproaches"]
+before = { phase = "spent", egg = "EmptyShell", baby_phase = "following", baby_age = 1, cry = 63, draw = "SceneFirst" }
+inputs = { finish = true }
+after = { phase = "absent", egg = "none", baby = "none", draw = "Hidden", cue = false, sound = [] }
+
+[[vector]]
+id = "C-absent"
+source = "constructed"
+entries = ["PageThreeApproaches"]
+before = {}
+after = { phase = "absent", draw = "Hidden", cue = false, sound = [] }
+
+[[vector]]
+id = "C-lag"
+source = "constructed"
+entries = ["PageThreeApproaches"]
+before = { phase = "spent", egg = "EmptyShell", baby_phase = "following", baby_age = 1, cry = 63, draw = "SceneFirst" }
+inputs = { finished = false }
+after = { phase = "spent", egg = "EmptyShell", baby_age = 1, cry = 63, draw = "SceneFirst", cue = false, sound = [] }
+
+[[vector]]
+id = "R-placement"
+source = "recorded"
+entries = ["EggHatches"]
+row = "any-intro-2219"
+cut = 1298
+[vector.after]
+x = 896
+y = 1240
+baby_phase = "inside"
+draw = "SceneFirst"
+
+[[vector]]
+id = "R-first-draw"
+source = "recorded"
+entries = ["EggHatches", "BabyPulses"]
+row = "any-intro-2219"
+cut = 1299
+[vector.after]
+x = 896
+y = 1240
+baby_age = 0
+
+[[vector]]
+id = "R-pulse"
+source = "recorded"
+entries = ["BabyPulses"]
+row = "any-intro-2219"
+cut = 1309
+[vector.after]
+baby_age = 10
+
+[[vector]]
+id = "R-trigger"
+source = "recorded"
+entries = ["EggHatches"]
+row = "any-intro-2219"
+cut = 1471
+[vector.after]
+phase = "hatching"
+hatch_age = 0
+baby_phase = "inside"
+x = 896
+y = 1240
+draw = "SceneFirst"
+
+[[vector]]
+id = "R-break"
+source = "recorded"
+entries = ["ShellScatters"]
+row = "any-intro-2219"
+cut = 1723
+[vector.after]
+fragments = [
+  { bit = 0, x = 858, y = 1160, age = 1, splash = -1 },
+  { bit = 1, x = 922, y = 1160, age = 1, splash = -1 },
+  { bit = 2, x = 836, y = 1200, age = 1, splash = -1 },
+  { bit = 3, x = 889, y = 1184, age = 1, splash = -1 },
+  { bit = 4, x = 948, y = 1208, age = 1, splash = -1 },
+  { bit = 5, x = 921, y = 1224, age = 1, splash = -1 },
+]
+sound = ["ShellBreak"]
+
+[[vector]]
+id = "R-release"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1723
+[vector.after]
+baby_phase = "rising"
+x = 896
+y = 1240
+vy = 0
+
+[[vector]]
+id = "R-fragment-motion"
+source = "recorded"
+entries = ["ShellScatters"]
+row = "any-intro-2219"
+cut = 1724
+[vector.after]
+fragments = [
+  { bit = 0, x = 852, y = 1150, age = 2, splash = -1 },
+  { bit = 1, x = 924, y = 1150, age = 2, splash = -1 },
+  { bit = 2, x = 832, y = 1190, age = 2, splash = -1 },
+  { bit = 3, x = 882, y = 1174, age = 2, splash = -1 },
+  { bit = 4, x = 952, y = 1198, age = 2, splash = -1 },
+  { bit = 5, x = 922, y = 1214, age = 2, splash = -1 },
+]
+sound = []
+
+[[vector]]
+id = "R-rise"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1724
+[vector.after]
+baby_phase = "rising"
+x = 896
+y = 1239
+vy = -1
+
+[[vector]]
+id = "R-slime"
+source = "recorded"
+entries = ["SlimeFalls"]
+row = "any-intro-2219"
+cut = 1736
+[vector.after]
+drops = [
+  { bit = 0, x = 888, y = 1136, splash = -1, age = 1 },
+  { bit = 1, x = 892, y = 1144, splash = -1, age = 1 },
+  { bit = 2, x = 904, y = 1136, splash = -1, age = 1 },
+  { bit = 3, x = 900, y = 1144, splash = -1, age = 1 },
+]
+sound = ["BabyCry"]
+x = 896
+y = 1149
+vy = -13
+drops_shed = true
+
+[[vector]]
+id = "R-slime-flight"
+source = "recorded"
+entries = ["SlimeFalls"]
+row = "any-intro-2219"
+cut = 1737
+[vector.after]
+drops = [
+  { bit = 0, x = 880, y = 1118, splash = -1, age = 2 },
+  { bit = 1, x = 888, y = 1134, splash = -1, age = 2 },
+  { bit = 2, x = 912, y = 1118, splash = -1, age = 2 },
+  { bit = 3, x = 904, y = 1134, splash = -1, age = 2 },
+]
+sound = []
+
+[[vector]]
+id = "R-rise-limit"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1743
+[vector.after]
+baby_phase = "rising"
+y = 1036
+vy = -17
+
+[[vector]]
+id = "R-turn"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1751
+[vector.after]
+baby_phase = "rising"
+y = 901
+vy = -16
+
+[[vector]]
+id = "R-fragment-floor"
+source = "recorded"
+entries = ["ShellScatters"]
+row = "any-intro-2219"
+cut = 1758
+[vector.after]
+fragments = [
+  { bit = 0, x = 648, y = 1281, age = 36, splash = -1 },
+  { bit = 1, x = 992, y = 1281, age = 36, splash = -1 },
+  { bit = 2, x = 696, y = 1321, age = 36, splash = -1 },
+  { bit = 3, x = 644, y = 1305, age = 36, splash = -1 },
+  { bit = 4, x = 1088, y = 1329, age = 36, splash = -1 },
+]
+
+[[vector]]
+id = "R-fragment-exit"
+source = "recorded"
+entries = ["ShellScatters"]
+row = "any-intro-2219"
+cut = 1761
+[vector.after]
+fragments = []
+
+[[vector]]
+id = "R-hover-start"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1767
+[vector.after]
+baby_phase = "hover"
+y = 781
+hover = 128
+
+[[vector]]
+id = "R-hover"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1768
+[vector.after]
+baby_phase = "hover"
+y = 781
+hover = 127
+
+[[vector]]
+id = "R-impact"
+source = "recorded"
+entries = ["SlimeFalls"]
+row = "any-intro-2219"
+cut = 1775
+[vector.after]
+drops = [
+  { bit = 0, x = 576, y = 1058, splash = -1, age = 40 },
+  { bit = 1, x = 736, y = 1359, splash = 0 },
+  { bit = 2, x = 1216, y = 1058, splash = -1, age = 40 },
+  { bit = 3, x = 1056, y = 1359, splash = 0 },
+]
+
+[[vector]]
+id = "R-splash"
+source = "recorded"
+entries = ["SlimeFalls"]
+row = "any-intro-2219"
+cut = 1776
+[vector.after]
+drops = [
+  { bit = 0, x = 568, y = 1077, splash = -1, age = 41 },
+  { bit = 1, x = 736, y = 1359, splash = 1 },
+  { bit = 2, x = 1224, y = 1077, splash = -1, age = 41 },
+  { bit = 3, x = 1056, y = 1359, splash = 1 },
+]
+
+[[vector]]
+id = "R-splash-end"
+source = "recorded"
+entries = ["SlimeFalls"]
+row = "any-intro-2219"
+cut = 1827
+[vector.after]
+drops = []
+
+[[vector]]
+id = "R-follow-ready"
+source = "recorded"
+entries = ["BabyEmerges"]
+row = "any-intro-2219"
+cut = 1895
+[vector.after]
+baby_phase = "following"
+x = 896
+y = 781
+vx = 0
+vy = 0
+cry = 0
+draw = "SceneFirst"
+
+[[vector]]
+id = "R-follow"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-2219"
+cut = 1896
+[vector.after]
+baby_phase = "following"
+x = 897
+y = 782
+vx = 1
+vy = 1
+cry = 1
+draw = "SamusFirst"
+sound = []
+
+[[vector]]
+id = "R-follow-cap"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-2219"
+cut = 1920
+[vector.after]
+x = 1206
+y = 1070
+vx = 20
+vy = 17
+draw = "SamusFirst"
+
+[[vector]]
+id = "R-cry-one"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-2219"
+cut = 1959
+[vector.after]
+cry = 64
+sound = ["BabyCry"]
+
+[[vector]]
+id = "R-cry-two"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-2219"
+cut = 2023
+[vector.after]
+cry = 128
+sound = ["BabyCry"]
+
+[[vector]]
+id = "R-quiet"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-2219"
+cut = 2024
+[vector.after]
+cry = 128
+sound = []
+
+[[vector]]
+id = "R-order-zero"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-2219"
+cut = 2065
+[vector.after]
+x = 1096
+vx = 0
+draw = "SamusFirst"
+
+[[vector]]
+id = "R-page-cue"
+source = "recorded"
+entries = ["PageThreeApproaches"]
+row = "any-intro-2219"
+cut = 2103
+[vector.after]
+x = 1495
+y = 989
+draw = "SamusFirst"
+cue = true
+sound = []
+
+[[vector]]
+id = "R-return-start"
+source = "recorded"
+entries = ["PageThreeApproaches"]
+row = "any-intro-4323"
+cut = 0
+[vector.after]
+x = 1495
+y = 989
+draw = "SamusFirst"
+cue = false
+
+[[vector]]
+id = "R-order-left"
+source = "recorded"
+entries = ["BabyFollows"]
+row = "any-intro-4323"
+cut = 3
+[vector.after]
+x = 1495
+vx = -1
+draw = "SceneFirst"
+
+[[vector]]
+id = "R-before-hide"
+source = "recorded"
+entries = ["PageThreeApproaches"]
+row = "any-intro-4323"
+cut = 127
+[vector.after]
+x = 786
+y = 1088
+vx = -20
+vy = -16
+draw = "SceneFirst"
+cue = false
+
+[[vector]]
+id = "R-hide"
+source = "recorded"
+entries = ["PageThreeApproaches"]
+row = "any-intro-4323"
+cut = 128
+[vector.after]
+draw = "Hidden"
+baby_phase = "absent"
+fragments = []
+drops = []
+sound = []
+cue = false
+
+[[vector]]
+id = "R-after-hide"
+source = "recorded"
+entries = ["PageThreeApproaches"]
+row = "any-intro-4323"
+cut = 129
+[vector.after]
+draw = "Hidden"
+baby_phase = "absent"
+fragments = []
+drops = []
+sound = []
+cue = false

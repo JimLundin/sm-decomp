@@ -88,6 +88,8 @@ pub enum ProductionContent {
     IntroMissiles(Box<super::played::intro_missiles::Content>),
     /// Jump history requires only the observed draw button sample.
     JumpHistory,
+    /// Imported discovery drawings, poses and particle paths.
+    Discovery(Box<super::played::discovery::Discovery>),
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -134,6 +136,8 @@ pub enum ProductionRules {
     IntroMissiles(weapons_projectiles::Rules),
     /// Fixed jump history on paused draws.
     JumpHistory,
+    /// The fixed shipping discovery rules.
+    Discovery,
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.

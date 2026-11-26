@@ -9,6 +9,7 @@ mod camera;
 mod ceres;
 mod compare;
 mod connected;
+mod discovery;
 mod early_map;
 mod flashback;
 mod health_tail;

@@ -1663,3 +1663,39 @@ provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness"]
 phase = "frame boundary"
 claim = "The played room draws its own random number and calculates the body, tail, hit and backdrop. The pad comes from the movie."
+
+[[case]]
+id = "discovery/egg-to-page-three"
+kind = "scoped"
+row = "any-intro-2219"
+start = { source = "cache-cut", frame = 1297 }
+end = { cut_inclusive = 2233 }
+rules = ["screens-discovery/EggHatches", "screens-discovery/ShellScatters", "screens-discovery/BabyEmerges", "screens-discovery/SlimeFalls", "screens-discovery/BabyPulses", "screens-discovery/BabyFollows", "screens-discovery/PageThreeApproaches"]
+profile = "reference"
+responsibilities = ["discovery"]
+content = "player-rom-import"
+inputs = "discovery-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["discovery.egg", "discovery.baby", "discovery.pulse", "discovery.fragments", "discovery.droplets", "discovery.order"], outputs = ["discovery.sounds", "discovery.page-three", "discovery.room-turn", "discovery.oam"] }
+checkpoints = true
+limits = ["Run cut 2104 is any-intro-4323 cut 0. Both rows carry one encounter, from before setup through the return.", "OAM covers visible discovery pieces on finished cuts. An invented room piece exercises the production compositor against the native relative order. The caret, Samus and projectile art, tile graphics, palette installation and transfers belong to other owners.", "Sound queues witness the identity and order of the scene's offers. The allowance follows the observed call site; transport acceptance and playback are separate.", "The live intro, T1, demo, camera and Samus must supply the scoped dependencies for power-on play."]
+
+[[case.borrowed]]
+dependency = "intro.stage-and-return"
+provider = "locked lean records"
+fields = ["intro discovery setup stage", "post-stage page-three dissolve count"]
+phase = "before the room turn and at the encounter's late finish"
+claim = "The intro requests setup and finish. The encounter produces its own page-three cue."
+
+[[case.borrowed]]
+dependency = "platform.finished-frame"
+provider = "locked lean records"
+fields = ["completed frame count"]
+phase = "each NMI cut"
+claim = "The scene can place the pair on an unfinished setup, then run its first turn on completion."
+
+[[case.borrowed]]
+dependency = "room.after-movement"
+provider = "locked lean records"
+fields = ["whole Samus centre", "camera scroll"]
+phase = "after the room and before discovery's turn"
+claim = "The room runs when the incoming discovery order permits it, including the return's final hide. Recorded geometry, controls and movement are outside this scope."

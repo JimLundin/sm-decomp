@@ -1596,3 +1596,35 @@ after = '''        let mut discarded_actor = room.clone();
 case = "played any-power-on 0 2866"
 cut = 2616
 field = "intro-room.actor.clip-hold"
+
+[[fault]]
+name = "discovery-return-skips-final-room-turn"
+responsibility = "discovery"
+file = "crates/game/src/production/played/discovery.rs"
+before = "let room_runs = cut == Cut::Finished && next.order != DiscoveryOrder::Hidden;"
+after = "let room_runs = cut == Cut::Finished && next.order != DiscoveryOrder::Hidden && request != IntroRequest::FinishDiscovery;"
+case = "discovery/egg-to-page-three"
+cut = 2232
+field = "discovery.room-turn"
+
+[[fault]]
+name = "discovery-shell-drawn-behind-samus"
+responsibility = "discovery"
+file = "crates/game/src/production/played/discovery.rs"
+before = "draw.pieces.append(&mut room.pieces);"
+after = """core::mem::swap(&mut draw.pieces, &mut room.pieces);
+                draw.pieces.append(&mut room.pieces);"""
+case = "discovery/egg-to-page-three"
+cut = 1299
+field = "discovery.oam"
+
+
+[[fault]]
+name = "played-intro-discovery-install-skipped"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro.rs"
+before = '            self.actors.start_discovery(actors_content(content)?)?;'
+after = '            let _ = actors_content(content)?;'
+case = "played any-power-on 0 3517"
+cut = 3517
+field = "intro-actor.shown"

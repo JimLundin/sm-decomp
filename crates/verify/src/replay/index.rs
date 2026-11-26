@@ -36,6 +36,8 @@ pub enum Responsibility {
     Playback,
     /// Complete cartridge persistence.
     SaveFiles,
+    /// The egg and baby in the intro.
+    Discovery,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -166,6 +168,8 @@ pub enum InputProvider {
     PassageJumpDraws,
     /// Scoped discovery and delivery inputs, including the interrupted start.
     ScopedIntroDeliveryInputs,
+    /// The intro requests, completion and resulting actor position in the discovery room.
+    DiscoveryInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -428,6 +432,36 @@ pub enum ObservationId {
     /// The grounded upright floor response.
     #[serde(rename = "movement.landing.floor")]
     LandingFloor,
+    /// Native shell phase and hatch age.
+    #[serde(rename = "discovery.egg")]
+    DiscoveryEgg,
+    /// The baby’s position and current motion memory.
+    #[serde(rename = "discovery.baby")]
+    DiscoveryBaby,
+    /// Current pulse age, including an unseen first frame.
+    #[serde(rename = "discovery.pulse")]
+    DiscoveryPulse,
+    /// All live shell fragments.
+    #[serde(rename = "discovery.fragments")]
+    DiscoveryFragments,
+    /// All live droplets, including splashes.
+    #[serde(rename = "discovery.droplets")]
+    DiscoveryDroplets,
+    /// The scene’s relative foreground order.
+    #[serde(rename = "discovery.order")]
+    DiscoveryOrder,
+    /// Ordered shell and baby sound offers.
+    #[serde(rename = "discovery.sounds")]
+    DiscoverySounds,
+    /// The page-three cue.
+    #[serde(rename = "discovery.page-three")]
+    DiscoveryCue,
+    /// Whether the playable room got its last turn.
+    #[serde(rename = "discovery.room-turn")]
+    DiscoveryTurn,
+    /// Visible discovery pieces and priority relative to the room.
+    #[serde(rename = "discovery.oam")]
+    DiscoveryOam,
 
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
@@ -859,6 +893,9 @@ fn rule_exists(rule: &str) -> bool {
         || save_files::CATALOGUE
             .iter()
             .any(|entry| rule == format!("save-files/{:?}", entry.id))
+        || screens_discovery::catalogue::catalogue()
+            .iter()
+            .any(|(id, _)| rule == format!("screens-discovery/{id:?}"))
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -975,9 +1012,25 @@ macro_rules! progress_observations {
     };
 }
 
+macro_rules! discovery_observations {
+    () => {
+        ObservationId::DiscoveryEgg
+            | ObservationId::DiscoveryBaby
+            | ObservationId::DiscoveryPulse
+            | ObservationId::DiscoveryFragments
+            | ObservationId::DiscoveryDroplets
+            | ObservationId::DiscoveryOrder
+            | ObservationId::DiscoverySounds
+            | ObservationId::DiscoveryCue
+            | ObservationId::DiscoveryTurn
+            | ObservationId::DiscoveryOam
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
+        discovery_observations!() => Responsibility::Discovery,
         O::IntroState | O::IntroPublications => Responsibility::Intro,
         O::IntroRoomGrid | O::IntroRoomActor | O::IntroRoomClock => Responsibility::IntroRooms,
         flashback_observations!() => Responsibility::Flashback,
@@ -1080,6 +1133,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("screens-intro/", Responsibility::Intro),
         ("world-intro-rooms/", Responsibility::IntroRooms),
         ("screens-flashback/", Responsibility::Flashback),
+        ("screens-discovery/", Responsibility::Discovery),
         ("samus-movement/", Responsibility::Movement),
         ("screens-playback/", Responsibility::Playback),
         ("audio-transport/", Responsibility::Audio),
@@ -1240,6 +1294,21 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
 fn intro_fields(rule: &str) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "screens-discovery/EggHatches" => &[O::DiscoveryEgg, O::DiscoveryOam],
+        "screens-discovery/ShellScatters" => {
+            &[O::DiscoveryFragments, O::DiscoverySounds, O::DiscoveryOam]
+        }
+        "screens-discovery/BabyEmerges" => &[O::DiscoveryBaby],
+        "screens-discovery/SlimeFalls" => {
+            &[O::DiscoveryDroplets, O::DiscoverySounds, O::DiscoveryOam]
+        }
+        "screens-discovery/BabyPulses" => &[O::DiscoveryPulse, O::DiscoveryOam],
+        "screens-discovery/BabyFollows" => {
+            &[O::DiscoveryBaby, O::DiscoveryOrder, O::DiscoverySounds]
+        }
+        "screens-discovery/PageThreeApproaches" => {
+            &[O::DiscoveryCue, O::DiscoveryTurn, O::DiscoveryOam]
+        }
         "screens-intro/DiscoveryBegins"
         | "screens-intro/DiscoveryReturns"
         | "screens-intro/DeliveryBegins"
@@ -1695,6 +1764,39 @@ fn unavailable_provider_valid(case: &Case, observations: &BTreeSet<ObservationId
         && !case.limits.is_empty()
 }
 
+fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
+    use ObservationId as O;
+    recorded
+        && case.row == super::discovery::ROW
+        && case.start
+            == Start::CacheCut {
+                frame: super::discovery::SEED,
+            }
+        && case.end.cut_inclusive == super::discovery::END
+        && case.inputs == InputProvider::DiscoveryInputs
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.output_cut.is_none()
+        && case.checkpoints
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+        && case.expectations.fields
+            == [
+                O::DiscoveryEgg,
+                O::DiscoveryBaby,
+                O::DiscoveryPulse,
+                O::DiscoveryFragments,
+                O::DiscoveryDroplets,
+                O::DiscoveryOrder,
+            ]
+        && case.expectations.outputs
+            == [
+                O::DiscoverySounds,
+                O::DiscoveryCue,
+                O::DiscoveryTurn,
+                O::DiscoveryOam,
+            ]
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::PlayedCeresInputs {
@@ -1734,6 +1836,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         [Responsibility::Intro] => intro_provider_valid(case, recorded),
         [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
         [Responsibility::Weapons] => intro_missile_provider_valid(case, recorded),
+        [Responsibility::Discovery] => discovery_provider_valid(case, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Playback] => playback_provider_valid(case, recorded),

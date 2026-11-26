@@ -108,6 +108,7 @@ dependencies = [
  "save_files",
  "screens_arrival",
  "screens_boot",
+ "screens_discovery",
  "screens_file_select",
  "screens_flashback",
  "screens_flight",
@@ -275,6 +276,16 @@ dependencies = [
 
 [[package]]
 name = "screens_boot"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "screens_discovery"
 version = "0.1.0"
 dependencies = [
  "enum-map",
@@ -495,6 +506,7 @@ dependencies = [
  "save_files",
  "screens_arrival",
  "screens_boot",
+ "screens_discovery",
  "screens_file_select",
  "screens_flashback",
  "screens_flight",

@@ -59,6 +59,13 @@ impl Pinned for PlaybackPin {
     const NAME: &'static str = "screens-playback";
     const SHAPE: u64 = 0x8098_1B49_53DC_58B7;
 }
+/// Complete discovery encounter State.
+pub struct DiscoveryPin;
+impl Pinned for DiscoveryPin {
+    type State = Box<types::discovery::DiscoveryState>;
+    const NAME: &'static str = "screens-discovery";
+    const SHAPE: u64 = 0x8358_6614_AD5D_8D3A;
+}
 
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -75,6 +82,8 @@ pub enum OwnedState {
     Connected(Box<crate::production::connected::State>),
     /// Every actor, pending timer and background offset of the flashback encounter.
     Flashback(Model<FlashbackPin>),
+    /// The egg, baby, particles and draw order of the discovery encounter.
+    Discovery(Model<DiscoveryPin>),
     /// Complete Health and qualified late consumer continuation.
     HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.

@@ -125,6 +125,7 @@ struct Run {
     content: Content,
     scenes: Scenes,
     missile_observations: crate::replay::intro_missiles::Expected,
+    discovery_observations: crate::replay::discovery::Played,
     ended: Option<u64>,
     controller: Controller,
     queues: Option<Queues>,
@@ -157,6 +158,13 @@ impl Run {
                     },
                     encounter: import::flashback::load(rom.lorom())
                         .map_err(|_| data_failure(None, "intro encounter art"))?,
+                    discovery: Some(
+                        game::production::played::discovery::Discovery::new(
+                            import::discovery::load(rom.lorom())
+                                .map_err(|_| data_failure(None, "intro discovery art"))?,
+                        )
+                        .map_err(|_| data_failure(None, "intro discovery scene"))?,
+                    ),
                     missiles: game::production::played::intro_missiles::Content::new(
                         import::projectile::import_intro_missile(rom.lorom())
                             .map_err(|_| data_failure(None, "intro missile assets"))?,
@@ -169,6 +177,7 @@ impl Run {
             },
             scenes,
             missile_observations: crate::replay::intro_missiles::Expected::load(rom.lorom())?,
+            discovery_observations: crate::replay::discovery::Played::default(),
             ended: None,
             controller: Controller::default(),
             queues: None,
@@ -284,7 +293,7 @@ impl Run {
                 }
                 self.sounds
                     .extend(sounds.into_iter().filter_map(screens::sound_code));
-                self.compare_screens(&after, record, finished, cut)
+                self.compare_screens(&after, previous, record, finished, cut)
             }
             (front_end::State::Screens(_), front_end::State::PowerOn(_)) => {
                 Err(data_failure(Some(cut), "played front end back at power-on"))
@@ -312,6 +321,7 @@ impl Run {
     fn compare_screens(
         &mut self,
         after: &front_end::Screens,
+        previous: &FrameRecord,
         record: &FrameRecord,
         finished: bool,
         cut: u64,
@@ -326,12 +336,14 @@ impl Run {
         {
             return Err(data_failure(Some(cut), "played pad alignment"));
         }
+        let discovery_selected = matches!(after.screen, front_end::Screen::Intro(_))
+            && super::intro::delivery::discovery_selected(&record.wram)?;
         let asked = match (finished, &self.queues) {
             (true, Some(queues)) => {
                 let mut played = std::mem::take(&mut self.sounds);
                 played.sort_unstable();
                 let expected = queues
-                    .added(record)
+                    .added(record, discovery_selected)
                     .map_err(|outcome| super::at(cut, outcome))?;
                 self.queues =
                     Some(Queues::read(record).map_err(|outcome| super::at(cut, outcome))?);
@@ -342,67 +354,121 @@ impl Run {
         let mut pairs = screens::compared(record, after, finished, asked)
             .map_err(|outcome| super::at(cut, outcome))?;
         if let front_end::Screen::Intro(intro) = &after.screen {
-            let (expected, actual) = self
-                .scenes
-                .compared(record, &intro.scene)
-                .map_err(|outcome| super::at(cut, outcome))?;
-            pairs.expected.extend(expected);
-            pairs.actual.extend(actual);
+            let scene = self.compare_intro(intro, after.counts, previous, record, finished, cut)?;
+            pairs.expected.extend(scene.expected);
+            pairs.actual.extend(scene.actual);
+        }
+        differs(&pairs.expected, &pairs.actual, cut)
+    }
+    fn compare_intro(
+        &mut self,
+        intro: &front_end::PlayingIntro,
+        counts: game::production::played::frame::Counts,
+        previous: &FrameRecord,
+        record: &FrameRecord,
+        finished: bool,
+        cut: u64,
+    ) -> Result<screens::Pairs, Outcome> {
+        use game::production::played::intro_rooms as rooms;
+        use types::intro::FightVisibility;
+
+        let mut pairs = screens::Pairs::default();
+        let discovery_selected = super::intro::delivery::discovery_selected(&record.wram)?;
+        let (expected, actual) = self
+            .scenes
+            .compared(record, &intro.scene)
+            .map_err(|outcome| super::at(cut, outcome))?;
+        pairs.expected.extend(expected);
+        pairs.actual.extend(actual);
+        let fight_visible =
+            intro.scene.intro.fight == FightVisibility::InFront
+                || intro.actors.rooms.as_ref().is_some_and(|room| {
+                    room.pending() && room.active() == Some(rooms::Start::Fight)
+                });
+        let room = intro
+            .actors
+            .rooms
+            .as_ref()
+            .and_then(rooms::State::active)
+            .filter(|kind| match kind {
+                rooms::Start::Fight => fight_visible,
+                rooms::Start::Discovery => intro.actors.discovery.as_ref().is_some_and(|room| {
+                    room.encounter().order != types::discovery::DiscoveryOrder::Hidden
+                }),
+            });
+        let content = self
+            .content
+            .actors
+            .as_ref()
+            .ok_or_else(|| data_failure(Some(cut), "power-on intro room content"))?;
+        let shown = crate::replay::intro_rooms::fight_shown(&record.wram)?;
+        let (expected, actual) = crate::replay::intro_rooms::populated(
+            room,
+            &content.room.rooms,
+            &record.wram,
+            shown,
+            discovery_selected,
+        )?;
+        pairs.expected.extend(expected);
+        pairs.actual.extend(actual);
+        let encounter = intro
+            .actors
+            .battle
+            .as_ref()
+            .filter(|_| fight_visible)
+            .map(|battle| &battle.encounter);
+        let (expected, actual) = crate::replay::flashback::played_state(
+            record,
+            shown && !discovery_selected,
+            encounter,
+        )?;
+        pairs.expected.extend(expected);
+        pairs.actual.extend(actual);
+        let (expected, actual) =
+            crate::replay::intro_rooms::opening_fields(&intro.actors, &record.wram)?;
+        pairs.expected.extend(expected);
+        pairs.actual.extend(actual);
+        let (expected, actual) = self
+            .discovery_observations
+            .compared(
+                previous,
+                record,
+                intro
+                    .actors
+                    .discovery
+                    .as_ref()
+                    .map(front_end::DiscoveryRoom::encounter),
+                finished,
+            )
+            .map_err(|outcome| super::at(cut, outcome))?;
+        pairs.expected.extend(expected);
+        pairs.actual.extend(actual);
+        if let Some(battle) = &intro.actors.battle {
+            if !finished && intro_timing(record)? != front_end::IntroTiming::Unspecified {
+                pairs.expected.push(Observation::quantity(
+                    "front-end.random",
+                    i64::from(word(&record.wram, source::RANDOM_NUMBER)?),
+                ));
+                pairs.actual.push(Observation::quantity(
+                    "front-end.random",
+                    i64::from(counts.random.number.0),
+                ));
+            }
             let room = intro
                 .actors
                 .rooms
                 .as_ref()
-                .and_then(game::production::played::intro_rooms::State::active);
-            let content = self
-                .content
-                .actors
-                .as_ref()
-                .ok_or_else(|| data_failure(Some(cut), "power-on intro room content"))?;
-            let shown = crate::replay::intro_rooms::fight_shown(&record.wram)?;
-            let (expected, actual) = crate::replay::intro_rooms::populated(
-                room,
-                &content.room.rooms,
-                &record.wram,
-                shown,
+                .ok_or_else(|| data_failure(Some(cut), "played battle room"))?;
+            let (expected, actual) = self.missile_observations.played(
+                record,
+                &room.actor.shots.0,
+                battle.supplies(&room.actor),
+                finished.then_some(&battle.weapon_draws),
             )?;
             pairs.expected.extend(expected);
             pairs.actual.extend(actual);
-            let encounter = intro.actors.battle.as_ref().map(|battle| &battle.encounter);
-            let (expected, actual) =
-                crate::replay::flashback::played_state(record, shown, encounter)?;
-            pairs.expected.extend(expected);
-            pairs.actual.extend(actual);
-            let (expected, actual) =
-                crate::replay::intro_rooms::opening_fields(&intro.actors, &record.wram)?;
-            pairs.expected.extend(expected);
-            pairs.actual.extend(actual);
-            if let Some(battle) = &intro.actors.battle {
-                if !finished && intro_timing(record)? != front_end::IntroTiming::Unspecified {
-                    pairs.expected.push(Observation::quantity(
-                        "front-end.random",
-                        i64::from(word(&record.wram, source::RANDOM_NUMBER)?),
-                    ));
-                    pairs.actual.push(Observation::quantity(
-                        "front-end.random",
-                        i64::from(after.counts.random.number.0),
-                    ));
-                }
-                let room = intro
-                    .actors
-                    .rooms
-                    .as_ref()
-                    .ok_or_else(|| data_failure(Some(cut), "played battle room"))?;
-                let (expected, actual) = self.missile_observations.played(
-                    record,
-                    &room.actor.shots.0,
-                    battle.supplies(&room.actor),
-                    finished.then_some(&battle.weapon_draws),
-                )?;
-                pairs.expected.extend(expected);
-                pairs.actual.extend(actual);
-            }
         }
-        differs(&pairs.expected, &pairs.actual, cut)
+        Ok(pairs)
     }
 }
 
@@ -443,6 +509,7 @@ pub(super) fn intro_timing(record: &FrameRecord) -> Result<front_end::IntroTimin
     };
     let timing = match interrupted_pc {
         0x0080_8a37 | 0x0080_8985 if far(2) == Some(0x0082_8975) => IntroTiming::FinalisingSprites,
+        0x008b_8cf1 if stage(2, 0xb072) => IntroTiming::SettingUpDiscovery,
         0x008b_8d09 if stage(2, 0xb072) => IntroTiming::SettingUpFight,
         0x008b_a876 if stage(6, 0xb2be) => IntroTiming::ClearingText,
         0x008b_8d1e if stage(2, 0xb3e5) => IntroTiming::PreparingReturn,
@@ -610,7 +677,7 @@ mod tests {
         };
         const SHOOT: u16 = 0x0040;
         const FIRST_MISSILE: u64 = 2310;
-        const LAST_HELD_CUT: u64 = 2866;
+        const LAST_HELD_CUT: u64 = 7512;
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
@@ -618,7 +685,7 @@ mod tests {
         let mut began = previous.clone();
         let mut uninterrupted = super::Run::begin(&sources.rom, &previous).unwrap();
         let mut resumed = Vec::<super::Run>::new();
-        let checkpoints = [569, 2219, 2320, 2325, 2350];
+        let checkpoints = [569, 2219, 2320, 2325, 2350, 3517, 4323];
         for cut in 1..=LAST_HELD_CUT {
             let frame = rows.record(cut).unwrap();
             if cut == FIRST_MISSILE {
@@ -647,6 +714,186 @@ mod tests {
             previous = frame;
         }
         assert_eq!(resumed.len(), checkpoints.len() + 3);
+    }
+
+    fn discovery_seed(
+        sources: &crate::replay::Sources,
+        lock: &crate::lock::Lock,
+        seed: &oracle_record::FrameRecord,
+    ) -> (super::Run, super::Scenes) {
+        use crate::replay::{intro_rooms, played::frame};
+        use game::production::played::{frame::Counts, intro_rooms as rooms};
+
+        let mut power_row = super::super::open_rows(sources, lock, "any-power-on").unwrap();
+        let mut previous = power_row.record(0).unwrap();
+        let mut began = previous.clone();
+        let mut run = super::Run::begin(&sources.rom, &previous).unwrap();
+
+        // Take the chosen file and its loan from their ordinary entry. The local window then
+        // admits the preceding scene, actor, latch and frame counts once at the page-two cut.
+        for cut in 1..=2220 {
+            let current = power_row.record(cut).unwrap();
+            run.step(&began, &previous, &current, cut).unwrap();
+            if super::super::finished(&current) {
+                began = current.clone();
+            }
+            previous = current;
+        }
+
+        let mut scenes = super::Scenes::import(&sources.rom, super::Part::Delivery).unwrap();
+        let super::front_end::State::Screens(screens) = &mut run.state else {
+            panic!("intro front end");
+        };
+        let super::front_end::Screen::Intro(intro) = &mut screens.screen else {
+            panic!("intro playing");
+        };
+        let appearance = crate::replay::appearance::Content::load(&sources.rom).unwrap();
+        intro.scene = scenes.page_two_seed(seed).unwrap();
+        intro.actors.rooms = Some(rooms::State::new(
+            intro_rooms::actor(&seed.wram, &appearance).unwrap(),
+            None,
+        ));
+        intro.actors.battle = None;
+        screens.counts = Counts {
+            finished_frames: super::word(&seed.wram, super::source::NMI_FRAME_COUNTER_WORD)
+                .unwrap(),
+            random: frame::random(&seed.wram).unwrap(),
+        };
+
+        (run, scenes)
+    }
+
+    fn check_discovery_actor(
+        cut: u64,
+        finished: bool,
+        intro: &super::front_end::PlayingIntro,
+        current: &oracle_record::FrameRecord,
+    ) {
+        use crate::replay::{discovery, intro_rooms};
+        use game::production::played::intro_rooms as rooms;
+        use types::discovery::DiscoveryOrder;
+
+        let discovery = intro.actors.discovery.as_ref().unwrap();
+        let room = intro.actors.rooms.as_ref().unwrap();
+        if cut == discovery::SEED + 1 {
+            assert!(!finished);
+            assert!(room.pending());
+            assert_eq!(room.active(), Some(rooms::Start::Discovery));
+            assert_eq!(
+                intro.scene.intro.stage,
+                types::intro::IntroStage::IntoDiscovery
+            );
+        }
+        if cut == discovery::SEED + 2 {
+            assert!(finished);
+            assert!(!room.pending());
+        }
+        if discovery.encounter().order != DiscoveryOrder::Hidden || cut == discovery::END - 1 {
+            let (centre, pad) = intro_rooms::discovery_actor(&current.wram).unwrap();
+            assert!(
+                room.actor.samus.movement.0.position == centre,
+                "discovery room position at {cut}"
+            );
+            assert!(
+                room.actor.carry.0.demo == pad,
+                "discovery demo controls at {cut}"
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn discovery_plays_from_page_two_and_resumes_across_interruptions() {
+        use crate::replay::discovery;
+        use std::io::Write as _;
+
+        let sources = crate::replay::played::tests::sources();
+        let lock = super::super::read_lock(&sources).unwrap();
+        let mut rows = super::super::open_rows(&sources, &lock, discovery::ROW).unwrap();
+        let mut previous = rows.record(discovery::SEED).unwrap();
+        let (mut run, mut scenes) = discovery_seed(&sources, &lock, &previous);
+        let mut began = previous.clone();
+        let mut controller = super::Controller::seeded(&previous.wram).unwrap();
+        let mut witness = discovery::PlayedWitness::default();
+        let mut restored = Vec::new();
+        for cut in discovery::SEED + 1..=discovery::END {
+            let current = rows.record(cut).unwrap();
+            let finished = super::super::finished(&current);
+            let pressed = super::screens::pressed(controller);
+            let answers = super::Borrowed::read(&began, &previous, &current).unwrap();
+            let end = super::FrameEnd {
+                work: if finished {
+                    super::Work::Finished(pressed)
+                } else {
+                    super::Work::Unfinished
+                },
+                upload: super::DriverUpload::Continuing,
+            };
+            let advance = |state: &mut super::front_end::State,
+                           cartridge: &mut super::Cartridge| {
+                state
+                    .step_with_cartridge(
+                        cartridge,
+                        &run.format,
+                        &super::CartridgeFrame {
+                            end,
+                            in_flight: pressed,
+                            rules: &super::RULES,
+                            content: &run.content,
+                            platform: &answers,
+                        },
+                    )
+                    .unwrap_or_else(|fault| panic!("discovery production cut {cut}: {fault:?}"))
+            };
+            let sound = advance(&mut run.state, &mut run.cartridge);
+            for (state, cartridge) in &mut restored {
+                assert!(advance(state, cartridge) == sound, "sound at {cut}");
+                assert!(*state == run.state, "front end at {cut}");
+                assert!(*cartridge == run.cartridge, "cartridge at {cut}");
+            }
+            let super::front_end::State::Screens(screens) = &run.state else {
+                panic!("discovery front end at {cut}");
+            };
+            let super::front_end::Screen::Intro(intro) = &screens.screen else {
+                panic!("discovery intro at {cut}");
+            };
+            let (expected, actual) = scenes.compared(&current, &intro.scene).unwrap();
+            super::differs(&expected, &actual, cut).unwrap();
+            let discovery = intro.actors.discovery.as_ref().unwrap();
+            check_discovery_actor(cut, finished, intro, &current);
+            let publication = (finished || cut == discovery::SEED + 1)
+                .then(|| discovery.publication.as_ref().unwrap());
+            let sent = sound.into_iter().filter_map(|offer| {
+                let super::front_end::Sound::Discovery(offer) = offer else {
+                    return None;
+                };
+                Some(offer)
+            });
+            let expected_offers = publication
+                .into_iter()
+                .flat_map(|cut| cut.sounds.iter().copied());
+            assert!(sent.eq(expected_offers), "discovery sent sounds at {cut}");
+            witness
+                .check(&previous, &current, discovery.encounter(), publication, cut)
+                .unwrap();
+            if !finished {
+                restored.push((run.state.clone(), run.cartridge.clone()));
+            }
+            controller = controller.read(current.pad.0, super::polled(&current));
+            if finished {
+                began = current.clone();
+            }
+            previous = current;
+        }
+        assert_eq!(restored.len(), 3);
+        writeln!(
+            std::io::stdout().lock(),
+            "DISCOVERY_LOCAL cuts={} interrupted_checkpoints={} end={}",
+            discovery::END.saturating_sub(discovery::SEED),
+            restored.len(),
+            discovery::END,
+        )
+        .unwrap();
     }
 
     fn write(port: u8, value: u8) -> ApuAccess {

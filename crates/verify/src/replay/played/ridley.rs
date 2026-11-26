@@ -43,7 +43,7 @@ pub(super) fn expected_swish(
     previous: &FrameRecord,
     current: &FrameRecord,
 ) -> Result<Observation, Outcome> {
-    let added = super::screens::Queues::read(previous)?.added(current)?;
+    let added = super::screens::Queues::read(previous)?.added(current, false)?;
     // The native cue is 21h in Library 3. Decode that tag independently of the model.
     Ok(swish(added.contains(&[3, 0x21, 0])))
 }

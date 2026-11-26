@@ -79,6 +79,11 @@ const LIBRARY_ONE: Library = Library {
     end: 0x0646,
     entries: 0x0656,
 };
+const LIBRARY_TWO: Library = Library {
+    tag: 2,
+    end: 0x0647,
+    entries: 0x0666,
+};
 const LIBRARY_THREE: Library = Library {
     tag: 3,
     end: 0x0648,
@@ -182,7 +187,7 @@ impl Platform for Borrowed {
 #[derive(Clone)]
 pub(super) struct Queues {
     music: [u16; MUSIC_ENTRIES],
-    ends: [u8; 2],
+    ends: [u8; 3],
 }
 
 impl Queues {
@@ -201,12 +206,16 @@ impl Queues {
         let end = |library: &Library| wram.get(library.end).copied().ok_or_else(bad);
         Ok(Self {
             music,
-            ends: [end(&LIBRARY_ONE)?, end(&LIBRARY_THREE)?],
+            ends: [end(&LIBRARY_ONE)?, end(&LIBRARY_TWO)?, end(&LIBRARY_THREE)?],
         })
     }
 
     /// The sounds `record` holds that these queues didn't, each as its code, in order.
-    pub(super) fn added(&self, record: &FrameRecord) -> Result<Vec<[u8; 3]>, Outcome> {
+    pub(super) fn added(
+        &self,
+        record: &FrameRecord,
+        discovery: bool,
+    ) -> Result<Vec<[u8; 3]>, Outcome> {
         let bad = || data_failure(None, "played sound queues");
         let now = Self::read(record)?;
         let mut added: Vec<[u8; 3]> = now
@@ -216,11 +225,14 @@ impl Queues {
             .filter(|&(&entry, before)| entry != 0 && entry != before)
             .map(|(&entry, _)| code(MUSIC, entry))
             .collect();
-        for ((library, before), after) in [LIBRARY_ONE, LIBRARY_THREE]
+        for ((library, before), after) in [LIBRARY_ONE, LIBRARY_TWO, LIBRARY_THREE]
             .iter()
             .zip(self.ends)
             .zip(now.ends)
         {
+            if library.tag == LIBRARY_TWO.tag && !discovery {
+                continue;
+            }
             let count = usize::from(after.wrapping_sub(before)) % RING;
             for step in 0..count {
                 let slot = usize::from(before).wrapping_add(step) % RING;
@@ -277,6 +289,10 @@ pub(super) const fn sound_code(sound: Sound) -> Option<[u8; 3]> {
                 Cue::Hurt => 0x35,
             };
             code(queue, number)
+        }
+        Sound::Discovery(offer) => {
+            let [library, number] = offer.sound.0.to_be_bytes();
+            [library, number, 0]
         }
         Sound::IntroMusic(MusicRequest::Stop) => return None,
         Sound::IntroMusic(MusicRequest::Load(Tune::OpeningFirst)) => code(MUSIC, 0xFF3F),

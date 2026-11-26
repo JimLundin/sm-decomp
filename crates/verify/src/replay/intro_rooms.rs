@@ -234,7 +234,7 @@ pub(super) fn room_content(
     ))
 }
 
-fn actor(wram: &[u8], content: &appearance::Content) -> Result<rooms::Actor, Outcome> {
+pub(super) fn actor(wram: &[u8], content: &appearance::Content) -> Result<rooms::Actor, Outcome> {
     let observed = ActorView::read(wram)?;
     let samus = super::played::samus::seed(wram, content)?;
     let mut shots = beam::State::reset(enum_map::EnumMap::from_fn(|_| beam::Axes {
@@ -456,6 +456,12 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
     Ok(fields)
 }
 
+#[cfg(test)]
+pub(super) fn discovery_actor(wram: &[u8]) -> Result<(Position, rooms::DemoPad), Outcome> {
+    let recorded = ActorView::read(wram)?;
+    Ok((recorded.centre, recorded.demo))
+}
+
 fn actor_fields(actor: &rooms::Actor) -> Result<[Observation; ACTOR_FIELDS], Outcome> {
     let carry = &actor.carry.0;
     let playhead = actor.samus.appearance.0.animation.playhead;
@@ -605,12 +611,13 @@ pub(super) fn fight_shown(wram: &[u8]) -> Result<bool, Outcome> {
     Ok(raw_word(wram, 0x1a57, "intro fight visibility")? != 0)
 }
 
-/// Compare the first fight's installed rectangle, omitting its two inherited rows.
+/// Compare the installed rectangle, omitting the inherited rows.
 pub(super) fn populated(
     room: Option<rooms::Start>,
     content: &rooms::Content,
     wram: &[u8],
     shown: bool,
+    discovery_selected: bool,
 ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
     let quantity = Observation::quantity;
     let mut expected = vec![quantity("intro-actor.shown", i64::from(shown))];
@@ -618,7 +625,10 @@ pub(super) fn populated(
     if shown {
         let width = word(wram, source::ROOM_WIDTH_IN_BLOCKS)?;
         let height = word(wram, source::ROOM_HEIGHT_IN_BLOCKS)?;
-        let length = usize::from(width).saturating_mul(14).saturating_mul(2);
+        let populated_rows = if discovery_selected { 12 } else { 14 };
+        let length = usize::from(width)
+            .saturating_mul(populated_rows)
+            .saturating_mul(2);
         let bytes = wram
             .get(0x10002..0x10002usize.saturating_add(length))
             .ok_or_else(|| data_failure(None, "intro room installed rectangle"))?;

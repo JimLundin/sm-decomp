@@ -73,6 +73,8 @@ pub struct Actors {
     pub buttons: ControlBindings,
     /// The fight when it has begun.
     pub battle: Option<Battle>,
+    /// The discovery encounter when page 2 selects it.
+    pub discovery: Option<super::DiscoveryRoom>,
 }
 
 /// The two owners that take a turn on either side of Samus.
@@ -218,6 +220,7 @@ impl Actors {
             missile_capacity: file.ammunition[Ammunition::Missiles].maximum,
             buttons: file.buttons,
             battle: None,
+            discovery: None,
         }
     }
 
@@ -293,6 +296,38 @@ impl Actors {
             encounter,
         });
         Ok(())
+    }
+
+    pub(super) fn start_discovery(&mut self, content: &ActorsContent) -> Result<(), Fault> {
+        let room = self.rooms.as_mut().ok_or(Fault::ActorUnstarted)?;
+        let discovery = super::DiscoveryRoom::start(room, content)?;
+        self.battle = None;
+        self.discovery = Some(discovery);
+        Ok(())
+    }
+
+    pub(super) fn discovery_turn(
+        &mut self,
+        dissolve: u16,
+        closes: bool,
+        parity: Parity,
+        waiting: samus_appearance::SoundsWaiting,
+        content: &ActorsContent,
+    ) -> Result<super::intro_discovery::DiscoveryTurn, Fault> {
+        let room = self.rooms.as_mut().ok_or(Fault::ActorUnstarted)?;
+        let motion = rooms::Motion {
+            movement: &content.room.movement,
+            appearance: &content.room.appearance,
+            movement_rules: &content.rules.movement,
+            appearance_rules: &content.rules.appearance,
+            items: self.file.gear.items,
+            sounds_waiting: waiting,
+            charge: samus_appearance::Charge::new(0).ok_or(Fault::IntroControls)?,
+        };
+        self.discovery
+            .as_mut()
+            .ok_or(Fault::DiscoveryRoom)?
+            .turn(room, dissolve, closes, parity, &motion, content)
     }
 
     pub(super) fn turn(

@@ -15,9 +15,11 @@ mod file_select;
 mod intro;
 mod intro_actor;
 mod intro_cannon;
+mod intro_discovery;
 
 pub use intro::{IntroTiming, PlayingIntro};
 pub use intro_actor::{ActorFile, Actors, Battle, intro_buttons};
+pub use intro_discovery::DiscoveryRoom;
 mod options;
 mod power_on;
 mod title;
@@ -163,6 +165,8 @@ pub struct ActorsContent {
     pub rules: super::intro_rooms::ScopedRules,
     /// Mother Brain’s flash palette and encounter pictures.
     pub encounter: data::assets::flashback::Scene,
+    /// Imported egg, hatchling and discovery particle content.
+    pub discovery: Option<super::discovery::Discovery>,
     /// Missile flight, impact, exhaust and pose descriptors.
     pub missiles: super::intro_missiles::Content,
     /// Recorded intro controls.
@@ -216,6 +220,8 @@ pub enum Sound {
     IntroClick,
     /// Samus's appearance offers a sound during room play.
     Appearance(samus_appearance::SoundOffer),
+    /// Ordered shell and hatchling offers from the discovery encounter.
+    Discovery(screens_discovery::scene::SoundOffer),
 }
 
 /// Why a frame end was not played. State is unchanged.

@@ -931,3 +931,59 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
 ]
+
+[[rule]]
+id = "screens-discovery/EggHatches"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/egg.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]
+
+[[rule]]
+id = "screens-discovery/ShellScatters"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/shell.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]
+
+[[rule]]
+id = "screens-discovery/BabyEmerges"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/baby.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]
+
+[[rule]]
+id = "screens-discovery/SlimeFalls"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/slime.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]
+
+[[rule]]
+id = "screens-discovery/BabyPulses"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/pulse.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]
+
+[[rule]]
+id = "screens-discovery/BabyFollows"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/baby.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]
+
+[[rule]]
+id = "screens-discovery/PageThreeApproaches"
+targets = [
+  { role = "model", path = "crates/clean/screens_discovery/src/encounter.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
+]

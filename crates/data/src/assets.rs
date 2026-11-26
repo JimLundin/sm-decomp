@@ -5,6 +5,7 @@
 pub mod actors;
 pub mod art;
 pub mod audio;
+pub mod discovery;
 pub mod fingerprint;
 pub mod flashback;
 pub mod flight;

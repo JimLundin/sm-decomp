@@ -257,6 +257,16 @@ impl Scenes {
         })
     }
 
+    #[cfg(test)]
+    pub(super) fn page_two_seed(&mut self, record: &FrameRecord) -> Result<intro::State, Outcome> {
+        let seed = self.reading.state(&record.wram)?;
+        if seed.stage != IntroStage::PageTwoWaits || !finished(record) {
+            return Err(data_failure(None, "discovery seed after page two"));
+        }
+        intro::admit(Language::English, seed, shown(&record.wram)?)
+            .map_err(|_| data_failure(None, "discovery intro seed"))
+    }
+
     /// The intro's State fields at `current`, recorded and played, for a run that plays on into
     /// the intro from power-on: those of the State alone, as the front end reports no frame of
     /// the intro's.
@@ -268,9 +278,7 @@ impl Scenes {
         if !finished(current) || state.intro.stage == IntroStage::Begins {
             return not_begun(current, state);
         }
-        if word(&current.wram, source::CINEMATIC_ACTIVE)? == 0xb250 {
-            self.reading.part = Part::Flashback;
-        }
+        self.reading.part = delivery::next_part(self.reading.part, &current.wram)?;
         let recorded = self.reading.state(&current.wram)?;
         let expected = observations(&View {
             part: self.reading.part,

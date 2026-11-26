@@ -67,6 +67,19 @@ pub(super) fn admit(
             OwnedState::Intro(state)
         }
         (
+            ProductionSeed::IntroRooms(state),
+            ProductionContent::IntroRooms(content),
+            ProductionRules::IntroRooms(_),
+        ) => {
+            content.movement.validate()?;
+            OwnedState::IntroRooms(state)
+        }
+        (
+            ProductionSeed::Discovery(state),
+            ProductionContent::Discovery(_),
+            ProductionRules::Discovery,
+        ) => OwnedState::Discovery(Model(state)),
+        (
             ProductionSeed::HealthTail(state),
             ProductionContent::HealthTail(content),
             ProductionRules::HealthTail(_),
@@ -141,6 +154,12 @@ pub(super) fn advance_intro(
                 .map_err(|fault| ProductionFault::Unsupported(Unsupported::Intro(fault)))?
                 .map(Box::new),
         ),
+        (
+            OwnedState::Discovery(state),
+            ProductionContent::Discovery(art),
+            ProductionRules::Discovery,
+            AdvanceInput::Discovery(cut),
+        ) => ProductionOutputs::Discovery(art.scoped(&mut state.0, cut)),
         (state, content, rules, input) => advance(state, content, rules, input)?,
     })
 }

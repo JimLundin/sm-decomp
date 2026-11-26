@@ -2,6 +2,7 @@
 //! Each advance carries complete clean state and publishes the complete model output.
 
 use self::audio_checkpoint::PortableAudio;
+use self::played::discovery;
 use self::played::flashback;
 use self::played::intro_rooms;
 use crate::state::owned::{CodecState, OwnedState};
@@ -57,6 +58,8 @@ pub enum Scope {
     Connected,
     /// The Zebes flashback encounter at its cinematic actor turn.
     Flashback,
+    /// The intro discovery encounter at its room turn.
+    Discovery,
     /// Scoped Health and its late Drawing and HUD consumers.
     HealthTail,
     /// Movement and semantic pose.
@@ -102,6 +105,8 @@ pub enum ProductionSeed {
     Connected(Box<connected::State>),
     /// Complete flashback encounter State, including any pending start.
     Flashback(Box<flashback::EncounterState>),
+    /// Complete discovery encounter State, including every particle and the baby.
+    Discovery(Box<discovery::DiscoveryState>),
     /// Complete current Health, Drawing history and gauge from a single origin.
     HealthTail(Box<health_tail::State>),
     /// Full movement memory.
@@ -148,6 +153,8 @@ pub enum AdvanceInput<'a> {
     IntroMissiles(intro_missile_scope::Input<'a>),
     /// A history-writing draw button sample or an interval without a draw.
     JumpHistory(Option<samus_movement::JumpButton>),
+    /// The next authorized scene phase and any completed drawing opportunity.
+    Discovery(discovery::Frame),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -230,6 +237,8 @@ pub enum ProductionOutputs {
     IntroMissiles(Box<intro_missile_scope::Output>),
     /// No external request accompanies the carried jump history.
     JumpHistory,
+    /// Requests to the surrounding owners and the completed sprite publication.
+    Discovery(discovery::Publication),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -396,6 +405,7 @@ impl Production {
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
             ProductionSeed::Flashback(_) => Scope::Flashback,
+            ProductionSeed::Discovery(_) => Scope::Discovery,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::JumpHistory(_) => Scope::JumpHistory,
@@ -412,15 +422,6 @@ impl Production {
             ProductionSeed::Doors(_) => Scope::Doors,
         })?;
         let state = match (seed, &content, &rules) {
-            (
-                ProductionSeed::IntroRooms(state),
-                ProductionContent::IntroRooms(content),
-                ProductionRules::IntroRooms(_),
-            ) => {
-                content.movement.validate()?;
-                OwnedState::IntroRooms(state)
-            }
-
             (
                 ProductionSeed::Flashback(state),
                 ProductionContent::Flashback(_),
@@ -519,6 +520,7 @@ impl Production {
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::IntroRooms(_) => Scope::IntroRooms,
             OwnedState::Flashback(_) => Scope::Flashback,
+            OwnedState::Discovery(_) => Scope::Discovery,
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::JumpHistory(_) => Scope::JumpHistory,
@@ -667,6 +669,7 @@ impl Production {
             | OwnedState::Flashback(_)
             | OwnedState::Playback(_)
             | OwnedState::SaveFiles(_)
+            | OwnedState::Discovery(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::JumpHistory(_)
@@ -695,6 +698,7 @@ impl Production {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::Discovery(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::JumpHistory(state) => return Ok(self.encode_save(*state)),
@@ -761,6 +765,10 @@ impl Production {
             let checkpoint: Checkpoint<Model<jump_history::Pin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::JumpHistory(checkpoint.state.0)
+        } else if matches!(&content, ProductionContent::Discovery(_)) {
+            let checkpoint: Checkpoint<Model<crate::state::owned::DiscoveryPin>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Discovery(checkpoint.state.0)
         } else if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -798,6 +806,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
         Scope::Flashback => canonical::model::pin_holds::<crate::state::owned::FlashbackPin>(),
         Scope::Playback => canonical::model::pin_holds::<crate::state::owned::PlaybackPin>(),
+        Scope::Discovery => canonical::model::pin_holds::<crate::state::owned::DiscoveryPin>(),
         Scope::Connected => {
             use canonical::model::pin_holds;
             pin_holds::<connected::inputs::InputsPin>()

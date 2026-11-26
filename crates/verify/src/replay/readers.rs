@@ -18,6 +18,7 @@ pub(super) enum InputReader {
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
     JumpHistory(Vec<Option<samus_movement::JumpButton>>),
+    Discovery(super::discovery::Inputs),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -39,6 +40,7 @@ pub(super) enum ExpectedReader {
     SaveFiles(super::save_files::Expected),
     IntroMissiles(super::intro_missiles::Expected),
     JumpHistory(Vec<ExpectedCut>),
+    Discovery(super::discovery::Expectations),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
     SenderOffer(Vec<Observation>),
@@ -58,6 +60,7 @@ pub(super) enum ActualReader {
     SaveFiles,
     IntroMissiles,
     JumpHistory,
+    Discovery,
     EarlyMap,
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
@@ -111,6 +114,7 @@ impl InputReader {
             Self::SaveFiles(inputs) => inputs.advance(production, cut),
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
+            Self::Discovery(inputs) => inputs.advance(production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
@@ -203,6 +207,9 @@ impl ActualReader {
             (Self::JumpHistory, InputReader::JumpHistory(_), ProductionOutputs::JumpHistory) => {
                 super::jump_history::actual(production)
             }
+            (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
+                super::discovery::actual(production, Some(&outputs))
+            }
             (
                 Self::HealthTail,
                 InputReader::HealthTail(_),
@@ -288,6 +295,7 @@ impl ActualReader {
                 .ok_or_else(|| data_failure(None, "battery null scope")),
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
             Self::JumpHistory => super::jump_history::actual(production),
+            Self::Discovery => super::discovery::actual(production, None),
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
@@ -341,6 +349,7 @@ impl ExpectedReader {
             Self::SaveFiles(expected) => expected.read(cut),
             Self::IntroMissiles(expected) => expected.at(cut),
             Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
+            Self::Discovery(expected) => expected.at(cut),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),

@@ -8,6 +8,24 @@ use super::{
 const SCENE_TILEMAP: super::WramWord = wram("CINEMATIC_SCENE_TILEMAP", 0x58);
 const HORIZONTAL: super::WramWord = wram("CINEMATIC_BG1_X", 0x1993);
 
+/// Select the observation decoder from the recorded cinematic function and tilemap.
+pub(super) fn next_part(part: super::Part, wram: &[u8]) -> Result<super::Part, Outcome> {
+    use super::Part::{Delivery, Flashback, LastPages};
+    let background = word(wram, SCENE_TILEMAP)? & 0xff;
+    Ok(
+        match (part, word(wram, source::CINEMATIC_ACTIVE)?, background) {
+            (Flashback, 0xb250, 0x54) => Delivery,
+            (super::Part::Opening, 0xb250, _) => Flashback,
+            (Delivery, 0xb2d2, background) if background != 0x58 => LastPages,
+            _ => part,
+        },
+    )
+}
+
+pub(in crate::replay) fn discovery_selected(wram: &[u8]) -> Result<bool, Outcome> {
+    Ok(word(wram, SCENE_TILEMAP)? & 0xff == 0x54)
+}
+
 pub(super) fn stage(wram: &[u8]) -> Result<IntroStage, Outcome> {
     use IntroStage::{
         Delivery, Discovery, IntoDelivery, IntoDiscovery, OutOfDelivery, OutOfDiscovery,

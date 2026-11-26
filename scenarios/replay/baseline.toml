@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "3141280a6c522e5508c606520e751e19b15b25645ae5a318fa4682905ea05e1b"
+index_sha256 = "138da4ed4b7edef40bd50b725f6f285b100aa57ceb797e7ad937060cd50f59c7"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1218,5 +1218,23 @@ replies = 0
 null_cuts = 0
 null_fields = 9186
 restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "discovery/egg-to-page-three"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "364ca11d0878b4b856dbfed5b343d63c49f3d2da8c2e270c09692b55a2b0fcd7"
+
+[case.counts]
+cuts = 936
+fields = 5616
+outputs = 3744
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1752
+restorations = 936
 pending_boundaries = 0
 pending_restorations = 0

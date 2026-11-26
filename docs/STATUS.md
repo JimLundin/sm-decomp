@@ -536,11 +536,14 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 2,866 cuts, including the sound
-Samus requests when she leaves her spin at 2,517. The standing handoff at 2,615
-runs before the final pad. The locked fight keeps its body sample while her
-clip and existing shots advance. The first difference at 2,867 is
-`intro-actor.shown`.
+intro in the State `Begins`. The run holds 7,512 cuts through the last intro display.
+It carries the fight through the locked actor turns and return, then runs the live
+discovery, delivery and examination. Flight owns the next cut at 7,513, where the
+separately seeded flight run compares its active state and display blanking.
+
+The sound Samus requests when she leaves her spin reaches the front end at 2,517. The standing
+handoff at 2,615 runs before the final pad. The locked fight keeps its body sample
+while her clip and existing shots advance.
 At 569 the intro creates the hidden actor with the chosen file's energy, lends her missiles and switches to the intro controls.
 The next 1,650 cuts carry those owners through the opening and page 1. The press latched at
 2,218 installs the populated room, recorded controls and Mother Brain before interrupted
@@ -862,3 +865,25 @@ and hardware service are outside the scope.
 The [drawing fixture installer](../tools/ci/fetch_shot_contact.sh) installs its hash-pinned
 files.
 
+
+## Discovery in the intro
+
+The scoped case `discovery/egg-to-page-three` starts before the egg and baby are placed,
+at `any-intro-2219:1297`. It follows the same encounter into `any-intro-4323:0` and
+through cut 129 of that row. The intro supplies the start and the return count, T1
+supplies completion, and the room supplies Samus's centre and the camera after movement.
+The production callback runs the final room turn before the encounter hides.
+
+Each cut compares the shell, baby, pulse, every piece in flight or splashing, and draw
+order. The hatch and cry offers and the page-three cue are compared on their issue cuts.
+On finished cuts, the visible discovery pieces are compared to the OAM shadow with
+their high bits and foreground order. A single invented room piece exercises the
+compositor's relative ordering while the rest of the room art is outside this scope.
+Every cut has a complete saved continuation.
+
+The front end also plays the discovery with the live intro requests and the demo driving
+Samus. The page-two qualification admits the preceding intro, actor and platform state
+once at `any-intro-2219:1297`. It compares the encounter state, its drawing and offers,
+and Samus's centre and demo controls through the return. It resumes each interrupted
+cut through the end. The power-on run reaches the same scenes with its state carried
+across the fight return. [Discovery sources and record mapping](behaviours/screens-discovery.decode.md)
