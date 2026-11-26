@@ -24,11 +24,11 @@ The shaft's resident SPC state, producer replies and effect playback are unprove
 ## Room background publication
 
 Ordinary camera movement and continuous door slides queue BG1 block lines from the loaded
-level and tileset. Each line uses the level coordinates for its physical tilemap destination.
-Passage-specific scroll offsets, first-slide redraws, room fills, and PLM tile writes still
-need production owners. A line reading beyond the loaded level or tile table leaves the
-physical page carried. Scoped room seeds leave earlier graphics unadmitted unless the
-witness supplies them explicitly.
+level and tileset. Horizontal door slides re-anchor the incoming view to the carried
+background scroll and publish the first column. Vertical first-slide redraws, room fills,
+and PLM tile writes still need production owners. A line reading beyond the loaded level
+or tile table leaves the physical page carried. Scoped room seeds leave earlier graphics
+unadmitted unless the witness supplies them explicitly.
 
 ## Comparison representation limits
 

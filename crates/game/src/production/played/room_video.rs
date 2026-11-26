@@ -143,6 +143,8 @@ pub struct RoomVideo {
     pub video: Box<Video>,
     standard_objects: Option<Transfer>,
     shaft_picture: Option<ShaftPicture>,
+    /// The background's pixel displacement from the room camera across a passage.
+    pub bg1_offset: crate::state::video::Scroll,
     shaft_raster_finished: bool,
     shaft_bg2: Option<Box<[u16]>>,
     enemy_uploads: Option<EnemyUploads>,

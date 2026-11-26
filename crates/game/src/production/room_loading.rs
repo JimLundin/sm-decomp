@@ -812,6 +812,19 @@ pub(super) fn shaft_sheet<'a>(
         .ok_or(LoadFault::Tileset)
 }
 
+/// Select the graphics of the room version entered, including a fresh start.
+///
+/// # Errors
+/// The room must be in an area progress tracks.
+pub fn tileset_of(
+    room: &world::Room,
+    entrance: Option<DoorwayId>,
+    progress: &Progress,
+) -> Result<Option<data::id::TilesetId>, LoadFault> {
+    version_of(room, entrance.map(|door| types::Entrance(door.0)), progress)
+        .map(|version| version.map(|version| version.tileset))
+}
+
 /// The version of the room `through` leads to that loads: the first whose condition holds for
 /// `progress` as she comes in through it, or the default.
 fn version<'a>(

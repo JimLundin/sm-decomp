@@ -3,7 +3,11 @@
 use super::word;
 use crate::replay::{connected, data_failure, movement, progress, result::Outcome};
 use crate::source;
-use data::{assets::world, rom::Rom, room::RoomKey};
+use data::{
+    assets::world,
+    rom::{Rom, RomAddress},
+    room::RoomKey,
+};
 use game::production::connected::inputs::Inputs;
 use game::production::{played, room_loading};
 use game::{exact::save_files::Format, production::save_files};
@@ -41,6 +45,22 @@ impl Battery {
         }
         Ok(())
     }
+}
+
+pub(super) fn bg1_offset(wram: &[u8]) -> Result<game::state::video::Scroll, Outcome> {
+    let offset = |offset| {
+        word(
+            wram,
+            source::WramWord {
+                name: "BG1 scroll offset",
+                offset,
+            },
+        )
+    };
+    Ok(game::state::video::Scroll {
+        x: offset(0x091d)?,
+        y: offset(0x091f)?,
+    })
 }
 
 pub(super) fn language(wram: &[u8]) -> Result<types::options::Language, Outcome> {
@@ -106,21 +126,24 @@ pub(super) fn room(
         movement::borrowed(seed, seed, &content.movement)?.world
     };
     let inputs = connected::seed_inputs(seed, items, geometry)?;
-    let (doorways, room) = doorways(seed, world)?;
+    let room = imported_room(seed, world)?;
+    let (doorways, map) = doorways(seed, world, room)?;
+    let progress = progress::decode(seed)?;
+    let entrance = word(
+        seed,
+        source::WramWord {
+            name: "played incoming door",
+            offset: 0x078d,
+        },
+    )?;
+    let entrance = import::world::doorway(RomAddress::new(0x83, entrance));
+    let tileset = room_loading::tileset_of(room, entrance, &progress)
+        .map_err(|_| data_failure(None, "played room graphics"))?;
     let played = played::passage::Room {
         id: room.id,
         area: room.place.area,
-        entered_through: import::world::doorway(data::rom::RomAddress::new(
-            0x83,
-            word(
-                seed,
-                source::WramWord {
-                    name: "current doorway",
-                    offset: 0x078d,
-                },
-            )?,
-        )),
-        tileset: None,
+        entered_through: entrance,
+        tileset,
         entry: crate::replay::shaft_entry::observed(record)?,
         geometry: inputs.geometry.clone(),
         doorways,
@@ -128,7 +151,7 @@ pub(super) fn room(
     };
     let held = Room {
         inputs,
-        map: (room_loading::map_room(room), room.place.area),
+        map,
         hud: super::hud::held(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
             0 => boss_ceres_ridley::Stage::Calm,
@@ -144,18 +167,22 @@ pub(super) fn room(
             }
         },
     };
-    Ok((held, played, progress::decode(seed)?))
+    Ok((held, played, progress))
 }
 
-type Doorways<'a> = (Vec<played::passage::Doorway>, &'a world::Room);
+type Doorways = (Vec<played::passage::Doorway>, (interface_hud::Room, data::room::Area));
 
-/// The seed room's doors to other rooms, by the seed's door cells, and where the room sits on
-/// her map, from the imported world.
-fn doorways<'a>(seed: &[u8], world: &'a world::World) -> Result<Doorways<'a>, Outcome> {
+fn imported_room<'a>(seed: &[u8], world: &'a world::World) -> Result<&'a world::Room, Outcome> {
     let bad = || data_failure(None, "played room doors");
     let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
         .ok_or_else(bad)?;
-    let room = world.room(id).ok_or_else(bad)?;
+    world.room(id).ok_or_else(bad)
+}
+
+/// The seed room's doors to other rooms, by the seed's door cells, and where the room sits on
+/// her map, from the imported world.
+fn doorways(seed: &[u8], world: &world::World, room: &world::Room) -> Result<Doorways, Outcome> {
+    let bad = || data_failure(None, "played room doors");
     let doorways =
         room_loading::doorways(world, room, movement::door_cells(seed)?).map_err(|_| bad())?;
     Ok((doorways, room))
@@ -190,7 +217,6 @@ pub(super) fn return_fetch(
     world: &world::World,
 ) -> Result<Option<ReturnFetch>, Outcome> {
     use data::assets::world::{doorways::RIDLEY_TO_ESCAPE_58, rooms::CERES_RIDLEY_ROOM};
-    use data::rom::RomAddress;
     use world_doors::{Fetching, Passage, Phase, WorkFrames};
 
     let wram = &record.wram;

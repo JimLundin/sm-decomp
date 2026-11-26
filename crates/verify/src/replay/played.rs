@@ -562,8 +562,10 @@ impl<'a> Run<'a> {
             room.inputs.geometry = geometry.clone();
             seeded.geometry = geometry;
         }
+        let mut room_video = played::room_video::RoomVideo::default();
+        room_video.bg1_offset = seed::bg1_offset(&seed.wram)?;
         let state = played::State {
-            room_video: played::room_video::RoomVideo::default(),
+            room_video,
             shaft_sound: shaft_sound::seed(&seed.wram)?,
             play_time: play_time::read(&seed.wram)?,
             clock_picture: played::clock_picture::ClockPicture::default(),
