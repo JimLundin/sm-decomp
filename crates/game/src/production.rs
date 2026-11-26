@@ -45,7 +45,7 @@ pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRul
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
 pub use immutable::{BlockRules, CameraRules, HudRules};
 pub use movement::MovementInputs;
-use played::landing_site;
+use played::{departure, landing_site};
 
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -62,6 +62,8 @@ pub enum Scope {
     Playback,
     /// Cartridge persistence.
     SaveFiles,
+    /// The continuous station, flight and Landing Site loader.
+    Departure,
     /// The first Landing Site work interval.
     LandingSite,
     /// Scheduled flight to Zebes and its drawing and health outputs.
@@ -117,6 +119,8 @@ pub enum ProductionSeed {
     Playback(playback::ScenePhase),
     /// Complete cartridge, working profile and pending work.
     SaveFiles(Box<save_files::State>),
+    /// The continuous station, flight and Landing Site loader.
+    Departure(Box<departure::Run>),
     /// Complete state carried into or through the receiving load.
     LandingSite(Box<landing_site::Run>),
     /// Complete flight, palette, sprite buffer and retained destination.
@@ -179,6 +183,8 @@ pub enum AdvanceInput<'a> {
     JumpHistory(Option<samus_movement::JumpButton>),
     /// The next authorized scene phase and any completed drawing opportunity.
     Discovery(discovery::Frame),
+    /// The continuous station, flight and Landing Site loader.
+    Departure(departure::Input),
     /// T1 work and transfer receipts for the receiving load.
     LandingSite(landing_site::Work),
     /// A scheduled flight cut.
@@ -308,6 +314,8 @@ pub enum ProductionOutputs {
 /// Why a selected start or checkpoint cannot be admitted.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AdmissionFault {
+    /// The continuous station, flight and Landing Site loader.
+    Departure(departure::Fault),
     /// Inconsistent cinematic owners or missing content.
     Explosion(explosion::Fault),
     /// The shaft blackout and its suspended departure.
@@ -357,6 +365,8 @@ pub enum Unsupported {
     IntroRooms(intro_rooms::Fault),
     /// The cartridge cannot accept this request in its current state.
     SaveFiles(::save_files::Refusal),
+    /// The continuous station, flight and Landing Site loader.
+    Departure(departure::Fault),
     /// The receiving load needs an unavailable source or work opportunity.
     LandingSite(landing_site::Fault),
     /// A required Zebes flight consumer or continuation is unavailable.
@@ -454,6 +464,7 @@ impl Production {
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Playback(_) => Scope::Playback,
             ProductionSeed::SaveFiles(_) => Scope::SaveFiles,
+            ProductionSeed::Departure(_) => Scope::Departure,
             ProductionSeed::LandingSite(_) => Scope::LandingSite,
             ProductionSeed::Zebes(_) => Scope::Zebes,
             ProductionSeed::Connected(_) => Scope::Connected,
@@ -576,6 +587,7 @@ impl Production {
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Playback(_) => Scope::Playback,
             OwnedState::SaveFiles(_) => Scope::SaveFiles,
+            OwnedState::Departure(_) => Scope::Departure,
             OwnedState::LandingSite(_) => Scope::LandingSite,
             OwnedState::Zebes(_) => Scope::Zebes,
             OwnedState::Connected(_) => Scope::Connected,
@@ -726,6 +738,7 @@ impl Production {
             OwnedState::MovementTouchdown(state) => Some(&state.audio.0),
             OwnedState::Intro(_)
             | OwnedState::LandingSite(_)
+            | OwnedState::Departure(_)
             | OwnedState::Connected(_)
             | OwnedState::IntroRooms(_)
             | OwnedState::Flashback(_)
@@ -762,6 +775,7 @@ impl Production {
             }
             OwnedState::Blackout(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Explosion(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::Departure(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::LandingSite(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
@@ -859,6 +873,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<intro_rooms::Scoped>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::IntroRooms(checkpoint.state)
+        } else if matches!(&content, ProductionContent::Departure(_)) {
+            let checkpoint: Checkpoint<Box<departure::Run>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Departure(checkpoint.state)
         } else if matches!(&content, ProductionContent::LandingSite(_)) {
             let checkpoint: Checkpoint<Box<landing_site::Run>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -889,6 +907,12 @@ impl Production {
 
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
+        Scope::Departure => {
+            use canonical::model::pin_holds;
+            pin_holds::<explosion::ScenePin>()
+                .and_then(|()| pin_holds::<zebes::ScenePin>())
+                .and_then(|()| pin_holds::<health_tail::HealthPin>())
+        }
         Scope::Explosion => canonical::model::pin_holds::<explosion::ScenePin>()
             .and_then(|()| canonical::model::pin_holds::<health_tail::HealthPin>()),
         Scope::Flashback => canonical::model::pin_holds::<crate::state::owned::FlashbackPin>(),

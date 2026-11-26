@@ -201,7 +201,9 @@ impl Baseline {
                 .find(|case| case.id == result.id)
                 .ok_or_else(|| BaselineFault::MissingCase(result.id.clone()))?;
             let start_cut = match case.start {
-                Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => Some(frame),
+                Start::CacheCut { frame }
+                | Start::NativeRecord { frame, .. }
+                | Start::PlayedContinuation { frame, .. } => Some(frame),
                 Start::NativeOpportunity { .. }
                 | Start::NativeSeed { .. }
                 | Start::NativeSenderOffer { .. }
@@ -257,6 +259,9 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
     }
     if case.inputs == InputProvider::ScopedIntroInputs {
         return Some(super::played::intro::indexed::valid_count_shape(counts));
+    }
+    if case.inputs == InputProvider::Departure {
+        return Some(super::departure::valid_counts(counts));
     }
     if case.inputs == InputProvider::StationExplosion {
         let base = counts.cuts.checked_mul(4)?;

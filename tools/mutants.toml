@@ -1874,3 +1874,24 @@ case = "movement/getaway-shove-door"
 cut = 1264
 field = "movement.getaway-phase"
 rule = "samus-movement/GetawayTravels"
+
+[[fault]]
+name = "departure-loses-flight-capacity"
+responsibility = "zebes-scheduler"
+file = "crates/game/src/production/played/departure.rs"
+before = "station.maximum,"
+after = "station.health.0.energy.whole.get(),"
+case = "departure/station-dispatches-flight"
+cut = 1005
+field = "departure.schedule"
+
+
+[[fault]]
+name = "departure-drops-placement-draw"
+responsibility = "station-explosion"
+file = "crates/game/src/production/played/explosion.rs"
+before = "self.draw(content, &placement)?;"
+after = "let _ = placement;"
+case = "departure/interrupted-station-setup"
+cut = 283
+field = "departure.oam"

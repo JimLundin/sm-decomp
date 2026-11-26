@@ -178,6 +178,12 @@ impl State {
         }
     }
 
+    /// The carried caption option used by the flight.
+    #[must_use]
+    pub const fn subtitles_enabled(&self) -> bool {
+        self.japanese_subtitles
+    }
+
     pub(crate) fn validate(&self, content: &Zebes) -> Result<(), Fault> {
         if self.flow.destination() != LoadDestination::LandingSite {
             return Err(Fault::Destination(self.flow.destination()));

@@ -286,6 +286,11 @@ fn origin_checkpoint(
     if !case.checkpoints {
         return Ok(None);
     }
+    if let (InputReader::Departure(_), Start::PlayedContinuation { frame, .. }) =
+        (inputs, &case.start)
+    {
+        return capture_checkpoint(production, actual, *frame).map(Some);
+    }
     let Start::CacheCut { frame } = &case.start else {
         return Ok(None);
     };

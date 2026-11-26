@@ -36,6 +36,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::DiscoveryInputs {
         return super::discovery::admit(case, sources);
     }
+    if case.inputs == InputProvider::Departure {
+        return super::departure::admit(case, sources);
+    }
     if case.inputs == InputProvider::LandingSiteTiming {
         return super::landing_site::admit(case, sources);
     }

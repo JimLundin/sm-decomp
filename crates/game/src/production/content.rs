@@ -94,6 +94,8 @@ pub enum ProductionContent {
     JumpHistory,
     /// Imported discovery drawings, poses and particle paths.
     Discovery(Box<super::played::discovery::Discovery>),
+    /// Art and receiving graphics for the complete departure.
+    Departure(Box<super::played::departure::Content>),
     /// Checked standard graphics for the receiving load.
     LandingSite(Box<data::assets::landing_site::Graphics>),
     /// Checked flight scene and its page, palette and sprite content.
@@ -150,6 +152,8 @@ pub enum ProductionRules {
     JumpHistory,
     /// The fixed shipping discovery rules.
     Discovery,
+    /// Both departing cinematics.
+    Departure(super::played::departure::Rules),
     /// The platform receiving loader.
     LandingSite,
     /// The flight scene’s tuning parameters.

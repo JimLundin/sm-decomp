@@ -82,6 +82,8 @@ pub enum OwnedState {
     Playback(Model<PlaybackPin>),
     /// The whole cartridge and its pending operation.
     SaveFiles(Box<crate::production::save_files::State>),
+    /// Both departing cinematics and their common game and loader owners.
+    Departure(Box<crate::production::played::departure::Run>),
     /// Complete in-flight Landing Site load and live video.
     LandingSite(Box<crate::production::played::landing_site::Run>),
     /// Complete flight to Zebes and its receiving owners.

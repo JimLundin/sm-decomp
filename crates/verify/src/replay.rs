@@ -10,6 +10,7 @@ mod camera;
 mod ceres;
 mod compare;
 mod connected;
+mod departure;
 mod discovery;
 mod early_map;
 mod explosion;
@@ -68,7 +69,9 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         kind: case.kind,
         row: case.row.clone(),
         start_cut: match case.start {
-            Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => Some(frame),
+            Start::CacheCut { frame }
+            | Start::NativeRecord { frame, .. }
+            | Start::PlayedContinuation { frame, .. } => Some(frame),
             Start::NativeOpportunity { .. }
             | Start::NativeSeed { .. }
             | Start::NativeSenderOffer { .. }

@@ -5,27 +5,16 @@ mod progress;
 pub use progress::Remembered;
 
 use super::{explosion, landing_site, zebes};
-use crate::production::{
-    AdvanceInput, Production, ProductionContent, ProductionFault, ProductionOutputs,
-    ProductionRules, ProductionSeed, SavedProduction,
-};
-use crate::state::owned::OwnedState;
+use crate::production::ProductionOutputs;
 use crate::state::video::{VRAM_WORDS, Video};
 use canonical::Canonical;
-use std::sync::Arc;
 use types::zebes::SubtitleChoice;
 
 /// The shaft placement and map owners retained during the cinematics.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Room {
-    /// Current room header.
-    pub room: u16,
-    /// Most recently selected door.
-    pub door: u16,
-    /// Camera position in the room.
-    pub camera: [u16; 2],
-    /// Samus's position in the room.
-    pub samus: [u16; 2],
+    /// The shaft's current room, doorway, camera and Samus placement.
+    pub placement: landing_site::Placement,
     /// Station selected at the elevator origin, before the loader opens its destination.
     pub station: u16,
 }
@@ -52,222 +41,229 @@ pub struct Carry {
 /// Static assets reached after the station publishes its blackout.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Content {
+    /// Station artwork and the cinematic before the flight.
+    pub station: data::assets::explosion::Station,
     /// The flight and the artwork installed by its setup.
     pub flight: data::assets::zebes::Zebes,
     /// Standard gameplay graphics at the start of the room load.
     pub landing: data::assets::landing_site::Graphics,
 }
 
-/// Publications of one cinematic cut or an unfinished room load.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Output {
-    /// Existing production owner and its drawing outputs.
-    Scene(ProductionOutputs),
-    /// The receiver has opened or advanced work; the game frame is unfinished.
-    Landing,
+/// Selected rule settings for both cinematic owners.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Rules {
+    /// Station reveal, breakup and departure rules.
+    pub station: screens_explosion::Rules,
+    /// Flight, caption and departure rules.
+    pub flight: screens_zebes::Rules,
 }
 
-/// A single scheduled cinematic and the owners shared across scene transitions.
-#[derive(Clone, Debug, PartialEq, Eq)]
+impl Rules {
+    /// The original game's settings.
+    pub const REFERENCE: Self = Self {
+        station: screens_explosion::Rules::REFERENCE,
+        flight: screens_zebes::Rules::REFERENCE,
+    };
+}
+
+/// A scheduler opportunity or a direct DMA receipt from the platform.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Input {
+    /// Borrowed work completion and post-service music occupancy.
+    Scene(explosion::Cut),
+    /// Progress of an unfinished receiving loader.
+    Loader(landing_site::Work),
+}
+
+/// The station or flight whose complete state is carried through the blackout.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub enum Scene {
+    /// The station and its scheduler, including a pending dispatch of the flight.
+    Station(Box<explosion::State>),
+    /// The flight and its scheduler, including the pending Landing Site destination.
+    Flight(Box<zebes::State>),
+}
+
+/// The complete continuation from an elevator blackout to the first room load.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Run {
-    scene: Production,
-    content: Arc<Content>,
-    carry: Carry,
+    /// The running or last completed cinematic.
+    pub scene: Scene,
+    /// The shared owners and unfinished loader.
+    pub carry: Carry,
 }
 
-/// Canonical scene and game continuation with its admitted immutable content.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Saved {
-    scene: SavedProduction,
-    content: Arc<Content>,
-    carry: Vec<u8>,
-}
-
-/// A missing producer, invalid origin, checkpoint or drawing transfer.
+/// A missing producer, invalid origin or unavailable drawing transfer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
-    /// Admission requires a running station and the full physical VRAM.
+    /// One of the carried memories does not have its admitted size.
     Intake,
-    /// An existing cinematic declined the frame.
-    Scene(ProductionFault),
-    /// The running station's handoff is invalid for the receiving scene.
-    Handoff,
-    /// A drawing write exceeds the size of the receiving page.
+    /// The station declined its state or inputs.
+    Station(explosion::Fault),
+    /// The flight declined its state or inputs.
+    Flight(zebes::Fault),
+    /// A drawing transfer extends outside the receiving page.
     Drawing,
-    /// Work or the next transfer source is unavailable to the loader.
+    /// Work or a transfer source is unavailable to the room loader.
     Landing(landing_site::Fault),
-    /// The borrowed scheduler has no receipt for the continuation.
+    /// Work belongs to another scheduler phase.
     Timing,
-    /// A canonical checkpoint could not be decoded or admitted.
-    Checkpoint,
 }
 
 impl Run {
-    /// Begin with an already admitted station and the live game owners.
-    ///
-    /// # Errors
-    /// Refuses an origin outside the station or incomplete VRAM.
-    pub fn start(
-        scene: Production,
-        content: Content,
-        carry: Carry,
-    ) -> Result<Self, Fault> {
-        if !matches!(scene.state(), OwnedState::Explosion(_))
-            || carry.video.memory.vram.len() != VRAM_WORDS
+    pub(in crate::production) fn validate(&self, content: &Content) -> Result<(), Fault> {
+        if self.carry.video.memory.vram.len() != VRAM_WORDS
+            || self.carry.landing.shadow.bg1.len() != 1024
+            || self.carry.landing.shadow.bg2.len() != 1024
         {
             return Err(Fault::Intake);
         }
-        Ok(Self {
-            scene,
-            content: Arc::new(content),
-            carry,
-        })
+        match &self.scene {
+            Scene::Station(state) => state.validate(&content.station).map_err(Fault::Station),
+            Scene::Flight(state) => state.validate(&content.flight).map_err(Fault::Flight),
+        }
     }
 
-    /// The currently scheduled production entry.
+    /// The scheduler has dispatched the loader.
     #[must_use]
-    pub const fn scene(&self) -> &Production {
-        &self.scene
+    pub fn loading(&self) -> bool {
+        matches!(&self.scene, Scene::Flight(flight) if matches!(flight.flow,zebes::Flow::Loading(_)))
     }
 
-    /// The carried physical state, room and next work opportunity.
-    #[must_use]
-    pub const fn carry(&self) -> &Carry {
-        &self.carry
-    }
-
-    /// Capture both the selected scene and the state shared with its successor.
-    ///
-    /// # Errors
-    /// Refuses a scene without canonical checkpoint support.
-    pub fn save(&self) -> Result<Saved, Fault> {
-        Ok(Saved {
-            scene: self.scene.save().map_err(|_| Fault::Checkpoint)?,
-            content: Arc::clone(&self.content),
-            carry: canonical::to_bytes(&self.carry),
-        })
-    }
-
-    /// Restore the scene, physical memory and pending work from their canonical encodings.
-    ///
-    /// # Errors
-    /// Refuses an invalid checkpoint or changed content.
-    pub fn restore(saved: &Saved) -> Result<Self, Fault> {
-        let context = &saved.scene.context;
-        let scene =
-            Production::restore(&saved.scene, context.content.clone(), context.rules.clone())
-                .map_err(|_| Fault::Checkpoint)?;
-        Ok(Self {
-            scene,
-            content: Arc::clone(&saved.content),
-            carry: canonical::from_bytes(&saved.carry).map_err(|_| Fault::Checkpoint)?,
-        })
-    }
-
-    /// Advance one externally timed cut. Commit the scene and its receivers together.
-    ///
-    /// # Errors
-    /// The next loader or an unavailable drawing write leaves the whole run untouched.
-    pub fn advance(&mut self, cut: explosion::Cut, loader_work: Option<landing_site::Work>) -> Result<Output, Fault> {
-        let mut next = self.clone();
-        let output = if let OwnedState::Zebes(flight) = next.scene.state()
-            && matches!(flight.flow, zebes::Flow::Loading(_))
-        {
-            let work = loader_work.ok_or(Fault::Timing)?;
-            let mut sequence = types::RandomSequence { number: types::RandomNumber(next.carry.random) };
-            next.carry.landing.advance(flight.flow, &mut sequence, &mut next.carry.video, &next.content.landing, work).map_err(Fault::Landing)?;
-            next.carry.random = sequence.number.0;
-            next.carry.work_ready = false;
-            Output::Landing
-        } else {
-            Output::Scene(next.step(cut)?)
+    pub(in crate::production) fn advance(
+        &mut self,
+        content: &Content,
+        rules: Rules,
+        input: Input,
+    ) -> Result<ProductionOutputs, Fault> {
+        if let Input::Loader(work) = input {
+            if !self.loading()
+                || matches!(work, landing_site::Work::Open { .. }) && !self.carry.work_ready
+            {
+                return Err(Fault::Timing);
+            }
+            let Scene::Flight(flight) = &self.scene else {
+                return Err(Fault::Timing);
+            };
+            let mut sequence = types::RandomSequence {
+                number: types::RandomNumber(self.carry.random),
+            };
+            self.carry
+                .landing
+                .advance(
+                    flight.flow,
+                    &mut sequence,
+                    &mut self.carry.video,
+                    &content.landing,
+                    work,
+                )
+                .map_err(Fault::Landing)?;
+            self.carry.random = sequence.number.0;
+            self.carry.work_ready = false;
+            return Ok(ProductionOutputs::LandingSite);
+        }
+        let Input::Scene(cut) = input else {
+            return Err(Fault::Timing);
         };
-        *self = next;
-        Ok(output)
-    }
-
-    fn step(&mut self, cut: explosion::Cut) -> Result<ProductionOutputs, Fault> {
         let finished = matches!(cut, explosion::Cut::Finished { .. });
-        if let OwnedState::Explosion(station) = self.scene.state()
+        if let Scene::Station(station) = &self.scene
             && station.flow == explosion::Flow::ZebesFlight
         {
             display::opening(&mut self.carry.video, types::zebes::FlightView::MosaicPage);
-            let state = zebes::State::start(
-                station.finished,
-                station.health.0,
-                station.maximum,
-                station.palette,
-                station.oam,
-                if station.japanese_subtitles {
-                    SubtitleChoice::WithJapanese
-                } else {
-                    SubtitleChoice::EnglishOnly
-                },
-                match station.destination {
-                    explosion::Destination::LandingSite => zebes::LoadDestination::LandingSite,
-                    explosion::Destination::CeresStart => zebes::LoadDestination::CeresStart,
-                },
-            );
-            self.scene = Production::admit(
-                ProductionSeed::Zebes(Box::new(state)),
-                ProductionContent::Zebes(Box::new(self.content.flight.clone())),
-                ProductionRules::Zebes(screens_zebes::Rules::REFERENCE),
-            )
-            .map_err(|_| Fault::Handoff)?;
+            let flight = from_station(station);
+            flight.validate(&content.flight).map_err(Fault::Flight)?;
+            self.scene = Scene::Flight(Box::new(flight));
         }
-        let (input, draw) = match self.scene.state() {
-            OwnedState::Explosion(station) => {
+
+        let output = match &mut self.scene {
+            Scene::Station(station) => {
                 let draw = match station.flow {
                     explosion::Flow::Blank(9) => self.carry.work_ready,
                     explosion::Flow::Blank(_) | explosion::Flow::ZebesFlight => false,
                     explosion::Flow::Installing | explosion::Flow::Station => finished,
                 };
-                if station.flow == explosion::Flow::Installing {
-                    self.carry.room.door = 0;
-                    display::opening(&mut self.carry.video, types::zebes::FlightView::ShipAndSprites);
+                if draw {
+                    self.carry.draw();
                 }
-                (AdvanceInput::Explosion(cut), draw)
-            }
-            OwnedState::Zebes(_) => (
-                AdvanceInput::Zebes(if finished {
-                    screens_zebes::FrameAdvance::Finished
-                } else {
-                    screens_zebes::FrameAdvance::BorrowedLag
-                }),
-                self.carry.work_ready,
-            ),
-            _ => return Err(Fault::Intake),
-        };
-        if draw {
-            let mut sequence = types::RandomSequence {
-                number: types::RandomNumber(self.carry.random),
-            };
-            self.carry.random = game_random::advance_random(&mut sequence).0;
-        }
-        self.carry.work_ready = finished;
-        let output = self.scene.advance(input).map_err(Fault::Scene)?;
-        match (&output, self.scene.state()) {
-            (ProductionOutputs::Explosion(out), OwnedState::Explosion(state)) => {
+                if station.flow == explosion::Flow::Installing {
+                    self.carry.room.placement.door = data::id::DoorwayId(0);
+                    display::opening(
+                        &mut self.carry.video,
+                        types::zebes::FlightView::ShipAndSprites,
+                    );
+                }
+                let out = station
+                    .advance(&content.station, rules.station, cut)
+                    .map_err(Fault::Station)?;
                 for page in &out.pages {
                     self.carry.station_page(page)?;
                 }
-                if finished { display::station(&mut self.carry.video,state,out); }
+                if finished {
+                    display::station(&mut self.carry.video, station, &out);
+                }
+                ProductionOutputs::Explosion(Box::new(out))
             }
-            (ProductionOutputs::Zebes(out), OwnedState::Zebes(state)) => {
+            Scene::Flight(flight) => {
+                if self.carry.work_ready {
+                    self.carry.draw();
+                }
+                let advance = if finished {
+                    screens_zebes::FrameAdvance::Finished
+                } else {
+                    screens_zebes::FrameAdvance::BorrowedLag
+                };
+                let out = flight
+                    .advance(&content.flight, rules.flight, advance)
+                    .map_err(Fault::Flight)?;
                 if let Some(pages) = &out.pages {
                     pages.install(&mut self.carry.video.memory.vram);
                 }
-                if out.scene.requests.handoff.is_some() { self.carry.progress.restore_energy(state.health.0.energy.whole.get()); }
-                if finished { display::flight(&mut self.carry.video,state,out); }
+                if out.scene.requests.handoff.is_some() {
+                    self.carry
+                        .progress
+                        .restore_energy(flight.health.0.energy.whole.get());
+                }
+                if finished {
+                    display::flight(&mut self.carry.video, flight, &out);
+                }
+                ProductionOutputs::Zebes(Box::new(out))
             }
-            _ => return Err(Fault::Intake),
+        };
+        self.carry.work_ready = finished;
+        if finished {
+            self.carry.publication = self.carry.video.committed;
         }
-        if finished { self.carry.publication = self.carry.video.committed; }
         Ok(output)
     }
 }
 
+fn from_station(station: &explosion::State) -> zebes::State {
+    zebes::State::start(
+        station.finished,
+        station.health.0,
+        station.maximum,
+        station.palette,
+        station.oam,
+        if station.japanese_subtitles {
+            SubtitleChoice::WithJapanese
+        } else {
+            SubtitleChoice::EnglishOnly
+        },
+        match station.destination {
+            explosion::Destination::LandingSite => zebes::LoadDestination::LandingSite,
+            explosion::Destination::CeresStart => zebes::LoadDestination::CeresStart,
+        },
+    )
+}
+
 impl Carry {
+    fn draw(&mut self) {
+        let mut sequence = types::RandomSequence {
+            number: types::RandomNumber(self.random),
+        };
+        self.random = game_random::advance_random(&mut sequence).0;
+    }
+
     fn station_page(&mut self, page: &explosion::Pages) -> Result<(), Fault> {
         match page {
             explosion::Pages::Station {
@@ -324,5 +320,4 @@ impl Carry {
         }
         Ok(())
     }
-
 }

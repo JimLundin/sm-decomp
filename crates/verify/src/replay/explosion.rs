@@ -62,6 +62,17 @@ pub(super) fn admit_seed(
         .map_err(|why| data_failure(None, &format!("station content {why:?}")))?;
     let content = ProductionContent::Explosion(Box::new(station));
     let rules = ProductionRules::Explosion(screens_explosion::Rules::REFERENCE);
+    let state = seed_state(seed)?;
+    let production = Production::admit(
+        ProductionSeed::Explosion(Box::new(state)),
+        content.clone(),
+        rules.clone(),
+    )
+    .map_err(|why| data_failure(Some(seed.index), &format!("station intake {why:?}")))?;
+    Ok((production, content, rules))
+}
+
+pub(super) fn seed_state(seed: &FrameRecord) -> Result<State, Outcome> {
     let cols: &[u16; 256] = seed
         .cgram
         .as_ref()
@@ -83,7 +94,7 @@ pub(super) fn admit_seed(
             attributes,
         };
     }
-    let state = State::start(
+    Ok(State::start(
         word(seed, FINISHED)?,
         super::health_tail::decode(&seed.wram, Some(seed.index))?,
         word(seed, 0x09c4)?,
@@ -95,14 +106,7 @@ pub(super) fn admit_seed(
         word(seed, 0x09e2)? != 0,
         cols.map(Colour),
         oam,
-    );
-    let production = Production::admit(
-        ProductionSeed::Explosion(Box::new(state)),
-        content.clone(),
-        rules.clone(),
-    )
-    .map_err(|why| data_failure(Some(seed.index), &format!("station intake {why:?}")))?;
-    Ok((production, content, rules))
+    ))
 }
 
 pub(super) fn timing(record: &FrameRecord) -> Result<Cut, Outcome> {

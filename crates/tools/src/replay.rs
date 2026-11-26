@@ -388,7 +388,9 @@ mod tests {
             kind: case.kind,
             row: case.row.clone(),
             start_cut: match case.start {
-                Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => Some(frame),
+                Start::CacheCut { frame }
+                | Start::NativeRecord { frame, .. }
+                | Start::PlayedContinuation { frame, .. } => Some(frame),
                 Start::NativeOpportunity { .. }
                 | Start::NativeSeed { .. }
                 | Start::NativeSenderOffer { .. }

@@ -82,6 +82,13 @@ pub enum Responsibility {
 #[serde(tag = "source", rename_all = "kebab-case", deny_unknown_fields)]
 /// The sole source of initial selected state.
 pub enum Start {
+    /// An uninterrupted production continuation played from an earlier recorded origin.
+    PlayedContinuation {
+        /// The only record admitted as initial state.
+        seed: u64,
+        /// The carried cut before the indexed comparisons begin.
+        frame: u64,
+    },
     /// Direct scoped opportunity within one video frame, rather than an NMI-cut start.
     NativeOpportunity {
         /// Frozen independent source/input packet directory.
@@ -190,6 +197,8 @@ pub enum InputProvider {
     ScopedIntroDeliveryInputs,
     /// The intro requests, completion and resulting actor position in the discovery room.
     DiscoveryInputs,
+    /// Station, flight and direct transfer work from one elevator origin.
+    Departure,
     /// Receiving T1 work opening and byte progress.
     LandingSiteTiming,
     /// Recorded work completion after the station handoff.
@@ -558,6 +567,24 @@ pub enum ObservationId {
     /// Visible discovery pieces and priority relative to the room.
     #[serde(rename = "discovery.oam")]
     DiscoveryOam,
+    /// The scheduled scene, finished count, capacity, caption and destination.
+    #[serde(rename = "departure.schedule")]
+    DepartureSchedule,
+    /// Complete health across the station blackout and flight refill.
+    #[serde(rename = "departure.health")]
+    DepartureHealth,
+    /// The once-per-work RNG across interrupted scene and room setup.
+    #[serde(rename = "departure.random")]
+    DepartureRandom,
+    /// The room, active and stored maps, tilemaps and whole run progress.
+    #[serde(rename = "departure.room")]
+    DepartureRoom,
+    /// Every byte of settled VRAM, OAM and CGRAM, and the affine transform.
+    #[serde(rename = "departure.picture")]
+    DeparturePicture,
+    /// Live and published registers and the accepted and committed loader transfer.
+    #[serde(rename = "departure.loader")]
+    DepartureLoader,
     /// Receiving loader random.
     #[serde(rename = "landing.random")]
     LandingRandom,
@@ -1245,7 +1272,10 @@ macro_rules! ceres_observations {
 
 macro_rules! landing_observations {
     () => {
-        O::LandingRandom
+        O::DepartureRandom
+            | O::DepartureRoom
+            | O::DepartureLoader
+            | O::LandingRandom
             | O::LandingCarried
             | O::LandingMap
             | O::LandingPipeline
@@ -1283,13 +1313,16 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         O::ZebesStage | O::ZebesPicture | O::ZebesMotion | O::ZebesRequests => {
             Responsibility::Zebes
         }
-        O::ZebesSchedule => Responsibility::ZebesScheduler,
-        O::ZebesPages | O::ZebesOam | O::ZebesPalette => Responsibility::ZebesDrawing,
+        O::DepartureSchedule | O::ZebesSchedule => Responsibility::ZebesScheduler,
+        O::DeparturePicture | O::ZebesPages | O::ZebesOam | O::ZebesPalette => {
+            Responsibility::ZebesDrawing
+        }
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState
         | O::HealthTailWarning
         | O::HealthTailDrawnProtection
         | O::CeresTailHealth
+        | O::DepartureHealth
         | O::ZebesHealth => Responsibility::Health,
         explosion_observations!() => Responsibility::StationExplosion,
         blackout_observations!() => Responsibility::Blackout,
@@ -1398,6 +1431,12 @@ fn movement_witnessed_fields(
     provider: InputProvider,
 ) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
+    if provider == InputProvider::Departure
+        || rule.starts_with("screens-zebes/")
+        || rule.starts_with("screens-explosion/")
+    {
+        return cinematic_witnesses(rule, provider);
+    }
     Some(match rule {
         "screens-explosion/StationPictureArrives" => {
             &[O::ExplosionStage, O::ExplosionDrawing, O::ExplosionRequests]
@@ -1693,6 +1732,55 @@ fn playback_fields(rule: &str) -> Option<&'static [ObservationId]> {
     })
 }
 
+fn cinematic_witnesses(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    if provider == InputProvider::Departure {
+        return match rule {
+            "screens-explosion/SceneBlacksOut" => Some(&[O::DepartureSchedule, O::DepartureHealth]),
+            "screens-zebes/LandingSiteLoadBegins" => {
+                Some(&[O::DepartureSchedule, O::DepartureHealth, O::DepartureLoader])
+            }
+            "game-random/AdvanceRandom" => Some(&[O::DepartureRandom]),
+            _ => None,
+        };
+    }
+    Some(match rule {
+        "game-random/AdvanceRandom" => &[O::LandingRandom],
+        "screens-zebes/GunshipAppears" | "screens-zebes/ShipApproachesPlanet" => {
+            &[O::ZebesStage, O::ZebesPicture]
+        }
+        "screens-zebes/PlanetAppears" | "screens-zebes/PlanetAndStarsSlide" => {
+            &[O::ZebesStage, O::ZebesMotion]
+        }
+        "screens-zebes/PlanetIsNamed" | "screens-zebes/LandingSiteLoadBegins" => {
+            &[O::ZebesStage, O::ZebesRequests]
+        }
+        "screens-zebes/PlanetHolds" => &[O::ZebesStage],
+        "screens-explosion/StationPictureArrives" => {
+            &[O::ExplosionStage, O::ExplosionDrawing, O::ExplosionRequests]
+        }
+        "screens-explosion/StationAwaitsMusic" | "screens-explosion/SpaceHolds" => {
+            &[O::ExplosionStage]
+        }
+        "screens-explosion/StationBrightens" | "screens-explosion/ShipDeparts" => {
+            &[O::ExplosionStage, O::ExplosionMotion]
+        }
+        "screens-explosion/SpaceDrifts" => &[O::ExplosionMotion, O::ExplosionDrawing],
+        "screens-explosion/StationBursts" => &[O::ExplosionBursts, O::ExplosionDrawing],
+        "screens-explosion/StationBreaks" => &[
+            O::ExplosionStage,
+            O::ExplosionBursts,
+            O::ExplosionRequests,
+            O::ExplosionDrawing,
+        ],
+        "screens-explosion/SceneBlacksOut" => {
+            &[O::ExplosionStage, O::ExplosionCarry, O::ExplosionRequests]
+        }
+
+        _ => return None,
+    })
+}
+
 fn native_search_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     let source = match &case.start {
@@ -1717,6 +1805,7 @@ fn native_search_provider_valid(case: &Case, observations: &BTreeSet<Observation
         Start::NativeOpportunity { .. }
         | Start::NativeSeed { .. }
         | Start::NativeRecord { .. }
+        | Start::PlayedContinuation { .. }
         | Start::CacheCut { .. }
         | Start::NativeSenderOffer { .. }
         | Start::ConstructedSenderOffer { .. }
@@ -2357,6 +2446,9 @@ fn scope_valid(case: &Case) -> bool {
     if case.inputs == InputProvider::ScopedGetawayInputs {
         return super::played::getaway::valid(case);
     }
+    if case.inputs == InputProvider::Departure {
+        return super::departure::valid(case);
+    }
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
 }
 
@@ -2373,6 +2465,11 @@ fn start_valid(case: &Case) -> bool {
                 && valid_hash(sha256)
                 && *video_frame == case.end.cut_inclusive
                 && source_start_index < source_completion_index
+        }
+        Start::PlayedContinuation { seed, frame } => {
+            *seed < *frame
+                && *frame < case.end.cut_inclusive
+                && case.inputs == InputProvider::Departure
         }
         Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
         Start::NativeRecord {
@@ -2454,7 +2551,9 @@ impl Case {
             Start::CacheCut { frame } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {
                 super::played::flyby_scope::first_cut(frame)
             }
-            Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => frame.checked_add(1),
+            Start::CacheCut { frame }
+            | Start::NativeRecord { frame, .. }
+            | Start::PlayedContinuation { frame, .. } => frame.checked_add(1),
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
             Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {
                 Some(self.end.cut_inclusive)

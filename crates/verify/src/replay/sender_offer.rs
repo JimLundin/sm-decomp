@@ -499,6 +499,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         Start::ConstructedSenderOffer { control } => constructed(control),
         Start::NativeOpportunity { .. }
         | Start::NativeRecord { .. }
+        | Start::PlayedContinuation { .. }
         | Start::CacheCut { .. }
         | Start::NativeSeed { .. }
         | Start::PowerOn => return Err(data_failure(Some(cut), "sender offer start contract")),

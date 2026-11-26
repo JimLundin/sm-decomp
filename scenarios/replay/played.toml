@@ -289,3 +289,15 @@ stop = { failed = "Zebes flight LandingSiteLoader" }
 seed_frame = 14076
 frames = [14077, 15195]
 power_on = false
+
+# The completed elevator exit plays both cinematics and opens the Landing Site
+# loader. On the next cut the sprite DMA needs the live source beyond its ROM bank.
+[[run]]
+row = "chain-any-0011-DF45"
+start = 241
+end = 2125
+held = 1883
+stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
+seed_frame = 13313
+frames = [13314, 15196]
+power_on = false

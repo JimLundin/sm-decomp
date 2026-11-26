@@ -8,7 +8,8 @@ use data::assets::explosion::Station;
 use screens_explosion::{BurstFrame, MapRegion, SceneEvent, SpritePicture};
 use types::Pair;
 use types::explosion::{
-    AsteroidField, BackdropFrame, ExplosionStage, ExplosionState, SampleLook, ScreenPoint, SpriteDrawing,
+    AsteroidField, BackdropFrame, ExplosionStage, ExplosionState, SampleLook, ScreenPoint,
+    SpriteDrawing,
 };
 
 use crate::intent::SpriteDraw;
@@ -220,8 +221,14 @@ impl State {
                     // unused slots in OAM when the second backdrop hides them by Y.
                     let mut placement = picture.clone();
                     placement.backdrop = BackdropFrame::Second;
-                    placement.large_asteroids.x = placement.large_asteroids.x.minus(content.scene.sky.asteroids[AsteroidField::Large].speed);
-                    placement.small_asteroids.x = placement.small_asteroids.x.minus(content.scene.sky.asteroids[AsteroidField::Small].speed);
+                    placement.large_asteroids.x = placement
+                        .large_asteroids
+                        .x
+                        .minus(content.scene.sky.asteroids[AsteroidField::Large].speed);
+                    placement.small_asteroids.x = placement
+                        .small_asteroids
+                        .x
+                        .minus(content.scene.sky.asteroids[AsteroidField::Small].speed);
                     self.draw(content, &placement)?;
                 }
                 self.colour_lights(content)?;

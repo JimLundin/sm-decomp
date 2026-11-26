@@ -1100,6 +1100,8 @@ targets = [
   { role = "model", path = "crates/clean/screens_explosion/src/departure.rs" },
   { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
   { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/departure.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/departure/observations.rs" },
 ]
 
 [[rule]]
@@ -1175,6 +1177,8 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/zebes.rs" },
   { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
   { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
+  { role = "adapter", path = "crates/game/src/production/played/departure.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/departure/observations.rs" },
 ]
 
 [[rule]]
@@ -1183,6 +1187,8 @@ targets = [
   { role = "model", path = "crates/clean/game_random/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/played/landing_site.rs" },
   { role = "navigation", path = "crates/verify/src/replay/landing_site.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/departure.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/departure/observations.rs" },
 ]
 
 [[rule]]

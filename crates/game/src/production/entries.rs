@@ -64,6 +64,14 @@ pub(super) fn admit(
 ) -> Result<OwnedState, AdmissionFault> {
     Ok(match (seed, content, rules) {
         (
+            ProductionSeed::Departure(run),
+            ProductionContent::Departure(content),
+            ProductionRules::Departure(_),
+        ) => {
+            run.validate(content).map_err(AdmissionFault::Departure)?;
+            OwnedState::Departure(run)
+        }
+        (
             ProductionSeed::Explosion(state),
             ProductionContent::Explosion(content),
             ProductionRules::Explosion(_),
@@ -218,6 +226,14 @@ pub(super) fn advance_intro(
                 .map_err(|fault| ProductionFault::Unsupported(Unsupported::LandingSite(fault)))?;
             ProductionOutputs::LandingSite
         }
+        (
+            OwnedState::Departure(state),
+            ProductionContent::Departure(content),
+            ProductionRules::Departure(rules),
+            AdvanceInput::Departure(input),
+        ) => state
+            .advance(content, *rules, input)
+            .map_err(|fault| ProductionFault::Unsupported(Unsupported::Departure(fault)))?,
         (state, content, rules, input) => advance(state, content, rules, input)?,
     })
 }

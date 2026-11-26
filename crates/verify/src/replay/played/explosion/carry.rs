@@ -3,21 +3,19 @@
 use crate::replay::explosion::word;
 use crate::replay::{data_failure, result::Outcome};
 use data::map::{MAP_BIT_BYTES, MapCells};
-use game::production::{
-    Production,
-    played::{
-        departure::{Carry, Room, Run},
-        explosion::{Cut, Flow},
-    },
+use game::production::played::landing_site::{
+    self, Area, AreaMaps, Entrance, ExploredMap, ShadowTilemaps,
 };
-use game::state::{
-    owned::OwnedState,
-    video::{Video, VideoMemory},
+use game::production::played::{
+    departure::{Carry, Room, Run, Scene},
+    explosion::{Cut, Flow},
 };
+use game::state::video::{Video, VideoMemory};
 use oracle_record::FrameRecord;
-use game::production::played::landing_site::{self, Area, AreaMaps, Entrance, ExploredMap, ShadowTilemaps};
 
-fn room(record: &FrameRecord) -> Result<(Room, Area, AreaMaps, ShadowTilemaps), Outcome> {
+pub(in crate::replay) fn room(
+    record: &FrameRecord,
+) -> Result<(Room, Area, AreaMaps, ShadowTilemaps), Outcome> {
     let w = |at| word(record, at);
     let bytes = |at: usize, count| {
         record
@@ -41,22 +39,51 @@ fn room(record: &FrameRecord) -> Result<(Room, Area, AreaMaps, ShadowTilemaps), 
             .map(u16::from_le_bytes)
             .collect())
     };
-    let area = u8::try_from(w(0x079f)?).ok().and_then(|id| Area::try_from(id).ok()).ok_or_else(||data_failure(Some(record.index), "departure area"))?;
-    Ok((Room {
-        room: w(0x079b)?, door: w(0x078d)?, camera: [w(0x0911)?,w(0x0915)?], samus: [w(0x0af6)?,w(0x0afa)?], station: w(0x078b)?,
-    }, area, AreaMaps {
-        active: ExploredMap { cells: cells(0x07f7)?, available: w(0x0789)? != 0 },
-        crateria: ExploredMap { cells: cells(0xcd52)?, available: record.wram.get(0xd908).copied().ok_or_else(|| data_failure(Some(record.index), "Crateria map flag"))? != 0 },
-    }, ShadowTilemaps { bg1: shadow(0x4000)?, bg2: shadow(0x3000)? }))
+    let area = u8::try_from(w(0x079f)?)
+        .ok()
+        .and_then(|id| Area::try_from(id).ok())
+        .ok_or_else(|| data_failure(Some(record.index), "departure area"))?;
+    Ok((
+        Room {
+            placement: landing_site::Placement {
+                room: data::id::RoomId(w(0x079b)?),
+                door: data::id::DoorwayId(w(0x078d)?),
+                camera: [w(0x0911)?, w(0x0915)?],
+                samus: [w(0x0af6)?, w(0x0afa)?],
+            },
+            station: w(0x078b)?,
+        },
+        area,
+        AreaMaps {
+            active: ExploredMap {
+                cells: cells(0x07f7)?,
+                available: w(0x0789)? != 0,
+            },
+            crateria: ExploredMap {
+                cells: cells(0xcd52)?,
+                available: record
+                    .wram
+                    .get(0xd908)
+                    .copied()
+                    .ok_or_else(|| data_failure(Some(record.index), "Crateria map flag"))?
+                    != 0,
+            },
+        },
+        ShadowTilemaps {
+            bg1: shadow(0x4000)?,
+            bg2: shadow(0x3000)?,
+        },
+    ))
 }
 
-pub(super) fn origin(production: &Production, record: &FrameRecord) -> Result<Carry, Outcome> {
-    let OwnedState::Explosion(station) = production.state() else {
-        return Err(data_failure(Some(record.index), "departure seed scope"));
-    };
+pub(in crate::replay) fn origin(
+    station: &game::production::played::explosion::State,
+    record: &FrameRecord,
+) -> Result<Carry, Outcome> {
     let (room, area, maps, shadow) = room(record)?;
     Ok(Carry {
-        room, landing: landing_site::State::new(area,maps,shadow),
+        room,
+        landing: landing_site::State::new(area, maps, shadow),
         progress: (&crate::replay::progress::seed(&record.wram)?).into(),
         publication: crate::replay::landing_site::registers(&record.ppu),
         random: word(record, 0x05e5)?,
@@ -84,7 +111,7 @@ pub(super) fn origin(production: &Production, record: &FrameRecord) -> Result<Ca
 }
 
 pub(super) fn check(run: &Run, record: &FrameRecord, timing: Cut, cut: u64) -> Result<(), Outcome> {
-    let carry = run.carry();
+    let carry = &run.carry;
     let differs = |field: &str| Outcome::Difference {
         cut,
         field: format!("departure.{field}"),
@@ -94,24 +121,35 @@ pub(super) fn check(run: &Run, record: &FrameRecord, timing: Cut, cut: u64) -> R
     }
     let (observed_room, area, maps, shadow) = room(record)?;
     let mut actual_room = carry.room.clone();
-    if carry.landing.entrance == Entrance::LandingSite { actual_room.station = 0x12; }
-    if actual_room != observed_room || area != carry.landing.area || maps != carry.landing.maps || shadow != carry.landing.shadow { return Err(differs("room-map")); }
-    if carry.progress != (&crate::replay::progress::seed(&record.wram)?).into() { return Err(differs("progress")); }
-    let (health, settled) = match run.scene().state() {
-        OwnedState::Explosion(state) => (
+    if carry.landing.entrance == Entrance::LandingSite {
+        actual_room.station = 0x12;
+    }
+    if actual_room != observed_room
+        || area != carry.landing.area
+        || maps != carry.landing.maps
+        || shadow != carry.landing.shadow
+    {
+        return Err(differs("room-map"));
+    }
+    if carry.progress != (&crate::replay::progress::seed(&record.wram)?).into() {
+        return Err(differs("progress"));
+    }
+    let (health, settled) = match &run.scene {
+        Scene::Station(state) => (
             &state.health.0,
             matches!(state.flow, Flow::Station | Flow::ZebesFlight),
         ),
-        OwnedState::Zebes(state) => (
+        Scene::Flight(state) => (
             &state.health.0,
             state.scene.0.stage != types::zebes::ZebesStage::Pending,
         ),
-        _ => return Err(data_failure(Some(cut), "departure scope")),
     };
     if *health != crate::replay::health_tail::decode(&record.wram, Some(cut))? {
         return Err(differs("health"));
     }
-    if (settled && matches!(timing, Cut::Finished { .. })) || carry.landing.entrance == Entrance::LandingSite {
+    if (settled && matches!(timing, Cut::Finished { .. }))
+        || carry.landing.entrance == Entrance::LandingSite
+    {
         if let Some(i) = carry
             .video
             .memory
@@ -124,10 +162,14 @@ pub(super) fn check(run: &Run, record: &FrameRecord, timing: Cut, cut: u64) -> R
         }
         let actual = &carry.video.committed;
         let native = crate::replay::landing_site::registers(&record.ppu);
-        if actual.mode7 != native.mode7 || actual.scroll != native.scroll { return Err(differs("affine")); }
+        if actual.mode7 != native.mode7 || actual.scroll != native.scroll {
+            return Err(differs("affine"));
+        }
         // E3's line-window owner retains its hardware settings after breakup. The
         // flight clears them on setup; its settled cuts compare every display register.
-        if matches!(run.scene().state(), OwnedState::Zebes(_)) && *actual != native { return Err(differs("display")); }
+        if matches!(&run.scene, Scene::Flight(_)) && *actual != native {
+            return Err(differs("display"));
+        }
         let oam = &carry.video.memory.oam;
         if let Some(i) = oam
             .low

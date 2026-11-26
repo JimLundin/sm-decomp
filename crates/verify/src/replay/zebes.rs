@@ -344,10 +344,15 @@ fn bytes(field: &str, bytes: Vec<u8>) -> Observation {
 }
 
 fn state(production: &Production) -> Result<&State, Outcome> {
-    let OwnedState::Zebes(state) = production.state() else {
-        return Err(data_failure(None, "flight actual state"));
-    };
-    Ok(state)
+    if let OwnedState::Zebes(state) = production.state() {
+        Ok(state)
+    } else if let OwnedState::Departure(run) = production.state()
+        && let game::production::played::departure::Scene::Flight(state) = &run.scene
+    {
+        Ok(state)
+    } else {
+        Err(data_failure(None, "flight actual state"))
+    }
 }
 
 pub(super) fn initial(

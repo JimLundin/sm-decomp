@@ -63,7 +63,11 @@ impl From<&Progress> for Remembered {
                 MapStatus::Downloaded => Map::Downloaded,
                 MapStatus::OnArrival => Map::OnArrival,
             }),
-            stations: run.stations.as_array().each_ref().map(|stations| stations.iter().map(|station| station.0).collect()),
+            stations: run
+                .stations
+                .as_array()
+                .each_ref()
+                .map(|stations| stations.iter().map(|station| station.0).collect()),
             items_placed: run.items_placed.0,
         }
     }

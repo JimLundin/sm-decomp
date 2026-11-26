@@ -21,6 +21,7 @@ pub(super) enum InputReader {
     IntroMissiles(super::intro_missiles::Inputs),
     JumpHistory(Vec<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
+    Departure(super::departure::Tape<game::production::played::departure::Input>),
     LandingSite(super::landing_site::Inputs),
     Zebes(super::zebes::Inputs),
     EarlyMap(Box<super::early_map::InputTape>),
@@ -47,6 +48,7 @@ pub(super) enum ExpectedReader {
     IntroMissiles(super::intro_missiles::Expected),
     JumpHistory(Vec<ExpectedCut>),
     Discovery(super::discovery::Expectations),
+    Departure(super::departure::Tape<ExpectedCut>),
     LandingSite(Box<[ExpectedCut; 2]>),
     Zebes(super::zebes::Expected),
     EarlyMap(Box<super::early_map::Expectations>),
@@ -71,6 +73,7 @@ pub(super) enum ActualReader {
     IntroMissiles,
     JumpHistory,
     Discovery,
+    Departure,
     LandingSite,
     Zebes {
         integrated: bool,
@@ -132,6 +135,9 @@ impl InputReader {
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::Discovery(inputs) => inputs.advance(production, cut),
+            Self::Departure(tape) => production
+                .advance(AdvanceInput::Departure(*tape.get(cut)?))
+                .map_err(|fault| super::production_failure(cut, fault)),
             Self::LandingSite(inputs) => super::landing_site::advance(inputs, production, cut),
             Self::Zebes(inputs) => inputs.advance(production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
@@ -262,6 +268,9 @@ impl ActualReader {
             (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
                 super::discovery::actual(production, Some(&outputs))
             }
+            (Self::Departure, InputReader::Departure(_), _) => {
+                super::departure::actual(production, cut)
+            }
             (Self::Explosion, InputReader::Explosion(_), ProductionOutputs::Explosion(output)) => {
                 super::explosion::actual(production, Some(&output))
             }
@@ -343,6 +352,7 @@ impl ActualReader {
                 &game::production::blackout::Output::default(),
                 *late,
             ),
+            Self::Departure => super::departure::actual(production, 0),
             Self::LandingSite => super::landing_site::actual(production),
             Self::Zebes { integrated, scene } => {
                 super::zebes::initial(production, scene, *integrated)
@@ -403,6 +413,7 @@ impl ExpectedReader {
             Self::IntroMissiles(expected) => expected.at(cut),
             Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
             Self::Discovery(expected) => expected.at(cut),
+            Self::Departure(tape) => tape.get(cut).cloned(),
             Self::LandingSite(expected) => match cut {
                 super::landing_site::RECEIVING => Ok(expected
                     .first()

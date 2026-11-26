@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "da11dd75dbd265976665da950677ba05c7ebdc08cc6fe3eb1486bd5a066e38b3"
+index_sha256 = "4bc983a467332b123a8c077927f98ad8f1a5021fc86291b27a999af683da4e3a"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1419,5 +1419,80 @@ replies = 0
 null_cuts = 0
 null_fields = 43
 restorations = 9
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "departure/interrupted-station-setup"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "61452e579bffbc9b4422b90b8185709dd8eaf3ecc98179c393269a31d78509d3"
+
+[case.counts]
+cuts = 35
+fields = 175
+outputs = 43
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 104
+restorations = 35
+pending_boundaries = 0
+pending_restorations = 0
+
+
+[[case]]
+id = "departure/music-transfer"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "4a3bdba88c8487ab8c7e59ffd1113b3d0eb97c11c07d882406c373c6f0060a48"
+
+[case.counts]
+cuts = 30
+fields = 150
+outputs = 42
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 90
+restorations = 30
+pending_boundaries = 0
+pending_restorations = 0
+
+
+[[case]]
+id = "departure/station-dispatches-flight"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "b00cad002cee145e3795866149471e6e63f52be471cb72f426b6f62d83fc0595"
+
+[case.counts]
+cuts = 12
+fields = 60
+outputs = 24
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 36
+restorations = 12
+pending_boundaries = 0
+pending_restorations = 0
+
+
+[[case]]
+id = "departure/flight-dispatches-loader"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "bbac8bf298b58e69cb790ab9476f3011bab88fb17ea91d4e357f0a62fa7e5356"
+
+[case.counts]
+cuts = 2
+fields = 10
+outputs = 13
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 2
 pending_boundaries = 0
 pending_restorations = 0

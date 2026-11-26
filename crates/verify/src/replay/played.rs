@@ -29,7 +29,7 @@ mod arrival;
 mod ceres_doors;
 mod colours;
 mod contact;
-mod explosion;
+pub(super) mod explosion;
 mod flight;
 pub(super) mod flyby_scope;
 mod frame;

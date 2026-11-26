@@ -61,7 +61,13 @@ pub(in crate::replay) fn actual(
     production: &Production,
     output: Option<&Output>,
 ) -> Result<Vec<Observation>, Outcome> {
-    let OwnedState::Explosion(state) = production.state() else {
+    let state = if let OwnedState::Explosion(state) = production.state() {
+        state
+    } else if let OwnedState::Departure(run) = production.state()
+        && let game::production::played::departure::Scene::Station(state) = &run.scene
+    {
+        state
+    } else {
         return Err(data_failure(None, "station actual scope"));
     };
     let scene = &state.scene.0;
