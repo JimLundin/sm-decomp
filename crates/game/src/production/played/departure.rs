@@ -378,3 +378,24 @@ impl Carry {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Remembered;
+    use core::num::Wrapping;
+    use run_progress::Supply;
+    use samus_health::WholeEnergy;
+
+    #[test]
+    fn handoff_keeps_live_energy_and_the_rest_of_progress() {
+        let mut room = super::super::tests::state(Vec::new());
+        room.health.0.energy.whole = WholeEnergy::new(61).unwrap();
+        room.health.0.energy.fraction = 0x8000;
+        room.progress.inventory.held.0[Supply::Missiles] = Wrapping(3);
+        room.progress.opened.0.insert(types::DoorId(1));
+
+        let mut expected = room.progress.clone();
+        expected.inventory.held.0[Supply::Energy] = Wrapping(61);
+        assert_eq!(room.departure_progress(), Remembered::from(&expected));
+    }
+}
