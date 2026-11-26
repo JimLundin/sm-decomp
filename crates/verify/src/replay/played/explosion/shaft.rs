@@ -125,6 +125,30 @@ pub(super) fn check(
     current: &FrameRecord,
     cut: u64,
 ) -> Result<(), Outcome> {
+    let disable_interrupts = output
+        .requests
+        .contains(&owner::Request::DisableShaftInterrupts);
+    let shaft = if disable_interrupts {
+        Some(
+            production
+                .blackout()
+                .ok_or_else(|| data_failure(Some(cut), "shaft publication"))?,
+        )
+    } else {
+        None
+    };
+    if let Some(shaft) = shaft {
+        let actual = shaft.video.memory.vram.as_slice();
+        let native = current.vram.as_ref();
+        // The standing draw leaves these parts of the ordinary body strips in place.
+        let mut words = (0x6060..0x6080).chain(0x60e0..0x6100).chain(0x6140..0x6180);
+        if let Some(word) = words.find(|&word| actual.get(word) != native.get(word)) {
+            return Err(Outcome::Difference {
+                cut,
+                field: format!("room-video.samus-strips[{word:04x}]"),
+            });
+        }
+    }
     compared(
         cut,
         &blackout::observe::expected(previous, current, true)?.fields,
@@ -135,13 +159,7 @@ pub(super) fn check(
         &blackout::hud::expected(previous, current)?.fields,
         &blackout::hud::actual(production, &output.regular_publication)?,
     )?;
-    if output
-        .requests
-        .contains(&owner::Request::DisableShaftInterrupts)
-    {
-        let shaft = production
-            .blackout()
-            .ok_or_else(|| data_failure(Some(cut), "shaft publication"))?;
+    if let Some(shaft) = shaft {
         if let Some(i) = shaft
             .video
             .dma
