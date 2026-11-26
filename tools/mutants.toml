@@ -972,6 +972,16 @@ cut = 2
 field = "hud.countdown.time"
 
 [[fault]]
+name = "played-return-fetch-installs-during-graphics"
+responsibility = "played"
+file = "crates/game/src/production/played/passage.rs"
+before = "if loaded.awaiting_actors && passing.actor_fetch == ActorFetch::Place {"
+after = "if loaded.awaiting_actors && !matches!(passing.actor_fetch, ActorFetch::Clearing(_)) {"
+case = "played chain-any-0006-E0B5 1690 1781"
+cut = 1691
+field = "ceres.doors"
+
+[[fault]]
 name = "played-return-passage-drops-carried-position"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"

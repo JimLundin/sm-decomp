@@ -180,6 +180,18 @@ seed_frame = 568
 frames = [569, 2218]
 power_on = false
 
+# The outgoing actors have cleared and the destination population has yet to be placed.
+# Play its graphics and placement, the remaining passage and room 5's first five turns.
+[[run]]
+row = "chain-any-0006-E0B5"
+start = 1690
+end = 1781
+held = 91
+stop = "end"
+seed_frame = 11852
+frames = [11853, 11943]
+power_on = false
+
 # Start in the slide's wait after the destination content has loaded. The remaining
 # slide, landing, music and brightening carry a held countdown into room 5.
 [[run]]

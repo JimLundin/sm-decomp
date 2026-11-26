@@ -77,14 +77,24 @@ pub(super) fn room(
     world: &world::World,
 ) -> Result<(Room, played::passage::Room, run_progress::Progress), Outcome> {
     let seed = &record.wram;
-    let borrowed = movement::borrowed(seed, seed, &content.movement)?;
-    if borrowed.cinematic || borrowed.elevator || crate::replay::hud::time_stopped(seed)? {
+    let unsupported = word(seed, source::CINEMATIC_ACTIVE)? != 0
+        || word(seed, source::ELEVATOR_STATUS)? != 0
+        || crate::replay::hud::time_stopped(seed)?;
+    if unsupported {
         return Err(Outcome::Unsupported {
             cut: None,
             dependency: "played seed outside ordinary play".into(),
         });
     }
-    let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
+    let items = movement::items(word(seed, source::EQUIPPED_ITEMS)?);
+    // The interactive list still describes the old population during
+    // retirement, when passage does not query Samus's collision world.
+    let geometry = if return_fetch(record, world)?.is_some_and(|seed| seed.awaiting_actors) {
+        movement::level_world(seed, &content.movement, Vec::new())?
+    } else {
+        movement::borrowed(seed, seed, &content.movement)?.world
+    };
+    let inputs = connected::seed_inputs(seed, items, geometry)?;
     let (doorways, map) = doorways(seed, world)?;
     let played = played::passage::Room {
         entry: crate::replay::shaft_entry::observed(record)?,
@@ -145,11 +155,19 @@ pub(in crate::replay) fn rooms(image: &Rom) -> Result<room_loading::Rooms, Outco
     })
 }
 
-/// A Ceres return after the destination population has finished loading.
-pub(super) fn completed_fetch(
+/// The pending return and whether its destination population still needs placing.
+#[derive(Clone, Copy)]
+pub(super) struct ReturnFetch {
+    pub(super) passage: world_doors::Passage,
+    pub(super) doorway: played::passage::Doorway,
+    pub(super) awaiting_actors: bool,
+}
+
+/// A Ceres return after the outgoing population has cleared or the fetch has completed.
+pub(super) fn return_fetch(
     record: &oracle_record::FrameRecord,
     world: &world::World,
-) -> Result<Option<(world_doors::Passage, played::passage::Doorway)>, Outcome> {
+) -> Result<Option<ReturnFetch>, Outcome> {
     use data::assets::world::{doorways::RIDLEY_TO_ESCAPE_58, rooms::CERES_RIDLEY_ROOM};
     use data::rom::RomAddress;
     use world_doors::{Fetching, Passage, Phase, WorkFrames};
@@ -173,13 +191,19 @@ pub(super) fn completed_fetch(
     }
     let slide_frames = read(0x0925)?;
     let ended = read(0x0931)? & 0x8000 != 0;
+    let awaiting_actors = !ended
+        && matches!(
+            super::platform::actor_fetch(record),
+            played::passage::ActorFetch::Clearing(_) | played::passage::ActorFetch::Graphics
+        )
+        && read(0x0f78)? == 0
+        && read(0x0fb8)? == 0
+        && read(0x0ff8)? == 0
+        && read(0x1038)? == 0;
     let phase = if ended && super::finished(record) {
         Phase::Landing(WorkFrames::FIRST)
-    } else if !ended
-        && matches!(
-            record.nmi(),
-            Some(nmi) if nmi.interrupted_pc == 0x0082_e529
-        )
+    } else if awaiting_actors
+        || (!ended && matches!(record.nmi(), Some(nmi) if nmi.interrupted_pc == 0x0082_e529))
     {
         Phase::Arriving {
             placed: true,
@@ -212,5 +236,9 @@ pub(super) fn completed_fetch(
         arrival: Some(doorway.arrival),
         slide_frames,
     };
-    Ok(Some((passage, doorway)))
+    Ok(Some(ReturnFetch {
+        passage,
+        doorway,
+        awaiting_actors,
+    }))
 }

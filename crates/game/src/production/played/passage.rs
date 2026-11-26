@@ -245,8 +245,9 @@ impl super::State {
                         room.doorways.retain(|door| door.cell != at);
                     }
                 }
-                if setup.door == data::assets::world::DoorRule::ToCeresElevatorShaft
-                    && setup.room.closing_anchor().is_some()
+                if doorway.through == data::assets::world::doorways::RIDLEY_TO_ESCAPE_58
+                    || (setup.door == data::assets::world::DoorRule::ToCeresElevatorShaft
+                        && setup.room.closing_anchor().is_some())
                 {
                     loaded.awaiting_actors = true;
                 } else {

@@ -122,6 +122,11 @@ impl State {
         }
         retire(&mut self.vents, &mut self.slots.vents, first_live);
         retire(&mut self.doors, &mut self.slots.doors, first_live);
+        // The Ceres room places Ridley first. The walls, door and other
+        // actors have their own slot indices.
+        if first_live > 0 {
+            self.ridley = None;
+        }
     }
 
     /// The station after a frame of play's run of its enemies.
@@ -394,6 +399,31 @@ mod tests {
         room.station.ridley = Some(ridley);
         room.health.0.energy.whole = samus_health::WholeEnergy::new(energy).unwrap();
         room
+    }
+
+    #[test]
+    fn population_clear_retires_ridley_at_slot_zero_before_later_doors() {
+        let ridley = CeresRidley::place(false).unwrap().ridley;
+        let door = CeresDoor {
+            kind: DoorKind::Door,
+            facing: Side::Left,
+            position: Pair {
+                x: Wrapping(32),
+                y: Wrapping(127),
+            },
+            phase: Phase::Placed,
+        };
+        let mut room = his_room(ridley, 24, vec![door]);
+        room.station.slots.doors = vec![1];
+        room.station.stage = Stage::Escape;
+        room.station.retire_before(0);
+        assert_eq!(room.station.ridley, Some(ridley));
+        room.station.retire_before(1);
+        assert!(room.station.ridley.is_none());
+        assert_eq!(room.station.doors, vec![door]);
+        assert_eq!(room.station.stage, Stage::Escape);
+        room.station.retire_before(2);
+        assert!(room.station.doors.is_empty());
     }
 
     /// Slowing at x 41 with 1,000/256 px a run leftward: his move meets the room's left side

@@ -505,12 +505,17 @@ impl<'a> Run<'a> {
     ) -> Result<(seed::Room, played::State), Outcome> {
         let (mut room, mut seeded, progress) = seed::room(seed, content, &rooms.world)?;
         let (map_room, _) = room.map;
-        let pending = seed::completed_fetch(seed, &rooms.world)?;
-        let (ceres_doors, owns_roster) = ceres_doors::seed(
-            &seed.wram,
-            types::World::solid_enemies(&seeded.geometry),
-            pending.is_some(),
-        )?;
+        let pending = seed::return_fetch(seed, &rooms.world)?;
+        let awaiting_actors = pending.is_some_and(|seed| seed.awaiting_actors);
+        let (ceres_doors, owns_roster) = if awaiting_actors {
+            (Vec::new(), false)
+        } else {
+            ceres_doors::seed(
+                &seed.wram,
+                types::World::solid_enemies(&seeded.geometry),
+                pending.is_some(),
+            )?
+        };
         if owns_roster {
             let geometry = movement::level_world(&seed.wram, &content.movement, Vec::new())?;
             room.inputs.geometry = geometry.clone();
@@ -522,9 +527,9 @@ impl<'a> Run<'a> {
             camera: Model(camera::seed(&seed.wram, &camera::Content)?),
             progress,
             passage: played::passage::State {
-                doors: pending.map_or(Doors::Play, |(passing, _)| Doors::Passing(passing)),
-                doorway: pending.map(|(_, doorway)| doorway),
-                awaiting_actors: false,
+                doors: pending.map_or(Doors::Play, |seed| Doors::Passing(seed.passage)),
+                doorway: pending.map(|seed| seed.doorway),
+                awaiting_actors,
                 room: seeded,
                 map_room,
             },
@@ -762,6 +767,25 @@ impl<'a> Run<'a> {
             finished(current),
             hud_settled,
         )?;
+        let retiring_return =
+            self.state.passage.doorway.is_some_and(|door| {
+                door.through == data::assets::world::doorways::RIDLEY_TO_ESCAPE_58
+            }) && matches!(
+                self.state.passage.doors,
+                Doors::Passing(world_doors::Passage {
+                    phase: world_doors::Phase::Arriving {
+                        fetching: world_doors::Fetching::Done,
+                        ..
+                    },
+                    ..
+                })
+            );
+        if retiring_return && !finished(current) {
+            expected.extend(ceres_doors::expected(&current.wram)?);
+            actual.extend(ceres_doors::actual(&self.state.station));
+            expected.extend(ridley::expected(&current.wram)?);
+            actual.extend(ridley::actual(&self.state.station));
+        }
         if place.0 == super::shaft_entry::ROW && (222..=278).contains(&place.1) {
             expected.extend(super::shaft_entry::expected(current)?);
             actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
