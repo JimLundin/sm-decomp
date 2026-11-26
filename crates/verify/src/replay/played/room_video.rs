@@ -691,3 +691,46 @@ fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
     ));
     Ok(())
 }
+
+/// Continue the return hall’s live passage across its final two column uploads.
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn return_hall_scrolls_live_bg1() {
+    use super::{Run, Stop, appearance, connected, movement, seed_controller};
+
+    let sources = sources();
+    let lock = read_lock(&sources).unwrap();
+    let row = "chain-any-0010-DF8D";
+    let mut rows = open_rows(&sources, &lock, row).unwrap();
+    let seed = rows.record(0).unwrap();
+    let content = connected::Content {
+        movement: movement::Content::load(&sources.rom).unwrap(),
+        appearance: appearance::Content::load(&sources.rom).unwrap(),
+    };
+    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let controller = seed_controller(&seed).unwrap();
+    assert_eq!(
+        run.through(&mut rows, seed, controller, 1..=214).unwrap(),
+        (214, Stop::End)
+    );
+
+    let page = 0x5000..0x5800;
+    let mut previous = rows.record(214).unwrap();
+    // Earlier room fills are outside this scope. Admit the two physical pages once.
+    run.state.room_video.video.memory.vram[page.clone()]
+        .copy_from_slice(&previous.vram[page.clone()]);
+    for cut in 215..=224 {
+        let current = rows.record(cut).unwrap();
+        let controller = seed_controller(&previous).unwrap();
+        assert_eq!(
+            run.through(&mut rows, previous, controller, cut..=cut)
+                .unwrap(),
+            (1, Stop::End)
+        );
+        let expected = &current.vram[page.clone()];
+        let actual = &run.state.room_video.video.memory.vram[page.clone()];
+        let differs = actual.iter().zip(expected).filter(|(a, b)| a != b).count();
+        assert_eq!(differs, 0, "room-video.bg1 at cut {cut}");
+        previous = current;
+    }
+}

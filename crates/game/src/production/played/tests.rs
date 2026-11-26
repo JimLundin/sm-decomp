@@ -58,6 +58,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
                 id: data::assets::world::rooms::CERES_ELEVATOR_ROOM,
                 area: data::room::Area::Ceres,
                 entered_through: None,
+                tileset: None,
                 entry: crate::production::shaft_entry::State::default(),
                 geometry: empty_world(),
                 doorways: Vec::new(),

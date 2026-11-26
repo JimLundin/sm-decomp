@@ -42,6 +42,8 @@ pub struct Room {
     pub area: data::room::Area,
     /// The entrance that built this room, if it was entered through a doorway.
     pub entered_through: Option<data::id::DoorwayId>,
+    /// The loaded version’s tileset, when room graphics are admitted.
+    pub tileset: Option<data::id::TilesetId>,
     /// The built level and the room setup carried through the passage.
     pub entry: shaft_entry::State,
     /// The room's blocks and the boxes of its solid actors other than the Ceres doors.

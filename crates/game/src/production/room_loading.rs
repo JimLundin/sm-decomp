@@ -389,6 +389,7 @@ fn built(
         id: room.id,
         area: room.place.area,
         entered_through,
+        tileset: Some(version.tileset),
         entry: shaft_entry::State {
             width,
             cells: level,

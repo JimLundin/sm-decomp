@@ -66,6 +66,7 @@ pub mod passage;
 pub mod play_time;
 pub mod quake;
 mod ridley;
+mod room_bg1;
 mod room_palette;
 pub mod room_tiles;
 pub mod room_video;
@@ -417,6 +418,7 @@ impl State {
         if let Some(uploads) = uploads {
             self.room_video.video.batch.samus_tiles = uploads;
         }
+        self.prepare_bg1(content, camera.position());
 
         // Her room and where it sits on her map stay as they are through a frame of play.
         self.samus
@@ -648,7 +650,7 @@ impl State {
         self.quake = Model(quake);
         self.samus.movement.0 = moved;
         self.samus.last_draw_jump.0 = last_draw_jump;
-        self.camera.0 = camera::passed(self.camera.0, view, seen);
+        self.apply_passage_view(content, view, seen, exports.report.layer_2);
         self.palette = palette;
         self.prepare_room_palette(passing.publishes);
         self.frame = self.frame.after(exports.report.finishing, random);

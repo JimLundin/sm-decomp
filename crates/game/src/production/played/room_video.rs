@@ -483,6 +483,7 @@ impl RoomVideo {
             self.video.publish_standing_strips(&art.graphics);
         }
         self.video.process_vram_writes(&Graphics::default());
+        crate::exact::tilemap::commit_exposures(&mut self.video);
     }
 
     /// Advance through ROM and, when available, the mapped low WRAM at the source wrap.

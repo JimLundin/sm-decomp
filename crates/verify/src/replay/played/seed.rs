@@ -120,6 +120,7 @@ pub(super) fn room(
                 },
             )?,
         )),
+        tileset: None,
         entry: crate::replay::shaft_entry::observed(record)?,
         geometry: inputs.geometry.clone(),
         doorways,

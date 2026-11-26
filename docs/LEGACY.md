@@ -21,6 +21,15 @@ sender through delivery and release. The room supplies sound permission. The
 service opportunity and the reply it reads come from the replay platform inputs.
 The shaft's resident SPC state, producer replies and effect playback are unproved.
 
+## Room background publication
+
+Ordinary camera movement and continuous door slides queue BG1 block lines from the loaded
+level and tileset. Each line uses the level coordinates for its physical tilemap destination.
+Passage-specific scroll offsets, first-slide redraws, room fills, and PLM tile writes still
+need production owners. A line reading beyond the loaded level or tile table leaves the
+physical page carried. Scoped room seeds leave earlier graphics unadmitted unless the
+witness supplies them explicitly.
+
 ## Comparison representation limits
 
 Pending aim represented as `Option<FiringDirection>` preserves presence and direction but not
