@@ -9,7 +9,7 @@
 The milestone is **Power-on through Ceres** in the any% movie. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-██████░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓░░▓▓▓░░░░░░  15.1% from power-on · 56.1% pass
+██████░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▓▓░░░░░░  15.1% from power-on · 57.1% pass
 ```
 
 `█` held continuously from power-on · `▓` passes from a later seed · `░` doesn't pass yet
@@ -26,7 +26,7 @@ The stretches being worked, in the order the movie plays them; the first not yet
 | The flight to Ceres | `···················━━━··················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Her arrival | `·····················━━·················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
 | Rooms 1 to 5 | `······················━━━━━·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
-| Ridley's room | `··························━━━━━·········` | `▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░` | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
+| Ridley's room | `··························━━━━━·········` | `▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░` | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
 | The escape | `······························━━━━━·····` | `▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 | The explosion and the flight to Zebes | `··································━━━━━━` | `░░░░░░░░░░░░░░░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 

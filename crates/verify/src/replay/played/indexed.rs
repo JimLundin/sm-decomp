@@ -1,4 +1,4 @@
-//! Indexed flight-tail windows through the ordinary played room runner.
+//! Indexed flight-tail and retreat windows through the ordinary played room runner.
 
 use super::{Run, Stop, actual, contact, open_rows, read_lock, ridley, seed_controller};
 use crate::replay::{
@@ -23,13 +23,29 @@ const OUTPUTS: &[ObservationId] = &[
     ObservationId::CeresTailSwish,
 ];
 
+const RETREAT_STATE: &[ObservationId] = &[
+    ObservationId::CeresRetreatBody,
+    ObservationId::CeresTailState,
+    ObservationId::CeresTailKnockback,
+    ObservationId::CeresTailHealth,
+];
+const RETREAT_OUTPUTS: &[ObservationId] = &[
+    ObservationId::CeresRetreatBound,
+    ObservationId::CeresBackdropWalls,
+    ObservationId::CeresBackdropColours,
+    ObservationId::CeresTailPlaces,
+    ObservationId::CeresTailHit,
+    ObservationId::CeresTailSwish,
+];
+
 pub(in crate::replay) fn valid(case: &Case) -> bool {
     case.kind == CaseKind::Integrated
         && matches!(case.start, Start::CacheCut { .. })
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields == STATE
-        && case.expectations.outputs == OUTPUTS
+        && (case.expectations.fields == STATE && case.expectations.outputs == OUTPUTS
+            || case.expectations.fields == RETREAT_STATE
+                && case.expectations.outputs == RETREAT_OUTPUTS)
         && case.expectations.output_cut.is_none()
         && case.responsibilities
             == [
@@ -41,7 +57,10 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
 }
 
 /// Comparison fields for the indexed claim. Other played fields still gate every turn.
-fn selection(field: &str) -> Option<bool> {
+fn selection(field: &str, retreat: bool) -> Option<bool> {
+    if retreat && (field == "ridley.retreat.bound" || field.starts_with("ridley.backdrop.")) {
+        return Some(true);
+    }
     if matches!(field, "ridley.tail.hit" | "ridley.tail.swish-request")
         || field.starts_with("ridley.tail.place.")
     {
@@ -51,6 +70,7 @@ fn selection(field: &str) -> Option<bool> {
         || field.starts_with("health.")
         || field == "movement.pose"
         || field == "movement.knockback"
+        || (retreat && field.starts_with("ridley."))
     {
         return Some(false);
     }
@@ -85,6 +105,10 @@ pub(in crate::replay) fn run(
     {
         frozen.extend(ridley::places(&tail.places()));
     }
+    let retreat = case.expectations.fields == RETREAT_STATE;
+    if retreat {
+        frozen.extend(ridley::retreat::actual(&run.state, None));
+    }
     let mut digest = Vec::new();
     let played = run.witness_through(
         &mut rows,
@@ -98,10 +122,10 @@ pub(in crate::replay) fn run(
                     "flight tail comparison opportunity",
                 ));
             }
-            fields.retain(|field| selection(&field.field).is_some());
+            fields.retain(|field| selection(&field.field, retreat).is_some());
             let semantics: Vec<_> = fields
                 .iter()
-                .filter(|field| selection(&field.field) == Some(false))
+                .filter(|field| selection(&field.field, retreat) == Some(false))
                 .cloned()
                 .collect();
             let observed = ExpectedCut {

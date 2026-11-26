@@ -379,6 +379,9 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
             boss_ceres_ridley::TAIL_SEGMENTS,
         ),
         (ObservationId::CeresTailKnockback, 2),
+        (ObservationId::CeresRetreatBody, 23),
+        (ObservationId::CeresBackdropWalls, 2),
+        (ObservationId::CeresBackdropColours, 6),
         (ObservationId::CeresTailHealth, 6),
     ];
     let width = |field: &ObservationId| {

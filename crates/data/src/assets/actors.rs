@@ -168,6 +168,36 @@ pub struct CeresRidleyColours {
     pub eye_steps: Vec<EyeShades>,
     /// His body's colour sets, in the order it shows them.
     pub body_sets: Vec<BodyShades>,
+    /// Getaway backdrop assets.
+    pub getaway: Getaway,
+}
+
+/// Positions and palette spans used when Ridley stops coasting.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Getaway {
+    /// Left wall centre in room pixels.
+    pub left_wall: types::Pair<types::Px>,
+    /// Right wall centre in room pixels.
+    pub right_wall: types::Pair<types::Px>,
+    /// Colours 1 through 15 of the backdrop body.
+    pub body_colours: [Colour; 15],
+    /// Colours 1 through 8 of both wall palettes.
+    pub wall_colours: [Colour; 8],
+}
+
+impl Default for Getaway {
+    fn default() -> Self {
+        let unset = types::Pair {
+            x: types::Px::default(),
+            y: types::Px::default(),
+        };
+        Self {
+            left_wall: unset,
+            right_wall: unset,
+            body_colours: [Colour::default(); 15],
+            wall_colours: [Colour::default(); 8],
+        }
+    }
 }
 
 /// The colours of the sprites other than hers, and the worth of Ceres Ridley's tail's hit.

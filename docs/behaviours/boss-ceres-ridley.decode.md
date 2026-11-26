@@ -1083,6 +1083,113 @@ plays through its cut 66 hit, stopping at 87 when Samus releases jump as her bac
 
 Each case's frame is the record the run ends at; the vector's `vents` and `her` are the record
 before it, moved 1,000 px right and 600 px down with the camera.
+## Part 4c-2, Ridley leaves the room
+
+### Cuts and source mapping
+
+Both `chain-any-0006-E0B5` and `samus-ceres-push` show him still hovering at cut 993.
+The tail hit has taken her from 39 energy to 24, pushed her left, and left 95 frames of
+protection at the cut. At 994 he already has a new speed and both fractions change.
+His flight's tangible and moving outputs still hold. The first unsupported cut after flight
+and its tail is 994 (`Fault::RidleyGivesUp`). Carry the body and tail produced by 993 into
+the low-energy retreat. The other handoff at 100 hits, the fake retreat, remains separate.
+
+| Entry | Sources |
+| --- | --- |
+| FliesOutOfReach | `$A6:A6E8..A708`, `$A6:A971..A9A4`, `$A6:D62F..D713`, `$A6:D86B..D954`, `$A6:A294..A2BA`, `$A6:CAF5..CB20` |
+| GetawayBackdrop | `$A6:A9A0..AA10`, `$A6:AA20..AA4E`, `$A6:CAF5..CB32`, `$A6:CEBA..CF59`, `$A6:CF5A..D09E`, `$A6:D2AA..D2D5`, `$A6:DFD9..E01A`, `$A0:9275`, `$A9:D2E4..D2F5` |
+
+`A988` uses acceleration factor 1, which selects divisor 15. The compare at `A98E`
+tests the incoming whole y, after the speed adjustment but before the position advances.
+The switch to `A9A0` falls through that function on the same run. Its countdown therefore
+first reads 63 in a cut, then reaches 0 a full run before the walls. In the airborne
+main AI, `093F` is still clear when the walls are placed. The tail function's switch to
+0 skips the neutral swing only. The common swish, linking, stretch and hit code still runs.
+
+| Physical quantity | Source-side check |
+| --- | --- |
+| body, bounds and phase | `0FA8` goes from `A6E8` to `A971`, `A9A0`, then `AA11`. §15's positions, fractions, speeds, look, hover count and `7E783E` remain comparable. The top limit at `7E8000` becomes −192. Compare `0FB2` while coasting. |
+| held baby, tail, eligibility | `7E8804/8808`; all §17 segment, mark, pace, swish and curl observations; `7E2000` switches from 1 to 0 on the wall placement. `0F86`'s intangible bit stays clear and `7E7804` remains set. |
+| walls | Cut 1157 places species `E23F` as slots 2/3 with parameter 5/6 and content positions (8,127)/(248,127). Their own frame counters still read 0. Part 3's N12 covers `Placed`, N13 their first run in the getaway. |
+| active colours | The 15 words at A6:`A9E3` go to current BG palette 5, entries 1–15. The eight words at A6:`AA01` go to current BG palette 2 and sprite palette 7, entries 1–8. Compare the three spans at `7EC0A2`, `7EC042`, `7EC1E2` and their CGRAM counterparts, offsets `A2`, `42`, `1E2`. The middle span already has the selected colours before 1157. Placing a wall separately writes the doors' **target** colours (§11). |
+
+### Reference and integration
+
+`$TEMP/collab/ridley-retreat-evidence/reference.py` seeds the boss and full tail once at cut
+993. It advances them to 1157 from predicted state, takes her body and protection from the
+frame start and advances game-random's shared sequence once per run from its initial
+number. His hit count and her energy come from their respective owners. His phase, speeds,
+fractions, bound, held baby, segments and the wall placement come from the prediction.
+The two rows are distinct player paths through the same boss sequence. No later record
+supplies the boss a phase, a wait, a bound, a place, a tail tip or a reason to stop.
+
+| Both rows separately, cuts 994–1157 | Reference | Do nothing |
+| --- | --- | --- |
+| complete body state | 164/164 | 0/164 |
+| complete tail state (tip alone) | 164/164 (164/164) | 1/164 (9/164) |
+| held baby's position | 164/164 | 50/164 |
+| hit, and placement of the pair | 164/164 each | 164/164 no hit, 163/164 no placement |
+
+The reference checks both walls' end-of-frame slots and all three current and physical CGRAM
+spans against the imported assets on 1157. It compares the body's bound on every cut,
+including the upper bound at 1115. Holding the boss on the handoff fails first on phase at
+994. Substituting the hover divisor fails first on the position fraction at 1004. Each
+fault was applied in the reference, on both rows. Production fault planting remains part
+of the integration. No recorded retreat hit occurs. The constructed contact cases make
+the shared hit positive and test its side, push and worth.
+
+In RT-near-her the last base is at x 227, her x is 228 and the chance-to-whip draw
+would accept mark 16,385 while hovering. The retreat keeps pace 2 and no mark. In
+RT-walls-and-tip the base is held on its existing mark, the next segment grows, the third
+shrinks, and the tip stays within its 5 px cap. Retaining the chain's offsets still puts
+the tip in reach of her body while a swish falls on that same last run.
+
+The RT vectors carry RAM quantities and symbolic outputs. The recorded cases are the
+transition from the previous cut to the named cut in either row's boss sequence. Their
+player inputs come from `chain-any-0006-E0B5`.
+
+| Cut | Vector | Witness |
+| --- | --- | --- |
+| 994 | RT-first-pull | the handoff already moves both axes |
+| 1005 | RT-pull-divisor | differing pull with the hover divisor, also from a restored body |
+| 1092 | RT-crosses | the move takes him above the target height |
+| 1093 | RT-coasts | the last pull and first counted coast |
+| 1094 | RT-momentum | both speeds carry over |
+| 1115 | RT-ceiling | y stops at −192, x still moves |
+| 1156 | RT-last-coast | horizontal motion on the run with one coast left |
+| 1157 | RT-walls | final fractions and tail tip held, new wall actors present |
+
+The integration can decode these quantities at a checkpoint. In continuous play the
+camera, progress, health, time and random owners supply their normal inputs. Compare both
+players' resulting health, protection and movement alongside the boss. Use the drawing
+and room adapters' wall content and imported palette colours for the terminal placements
+and current-colour outputs. The baby has its own animation and colours, and the wings,
+ribs and poses have their usual drawing owners. Compare this part's named spans, without
+masking one palette behind the other. The next original cut after the proposed scope is
+1158. It needs the getaway picture, its sound request and the station stage advance.
+
+### From the getaway to the running timer
+
+`$TEMP/collab/ridley-retreat-evidence/timeline.py` checks these joins against each row.
+Movie frame is 10,163 plus the cut for the any% row. This table identifies the next
+owners' outputs. It supplies no elapsed-time trigger to the retreat model.
+
+| Cut (movie frame for any%) | Source and effect |
+| --- | --- |
+| 1158 (11,321) | A6:`AA11..AA1F` sets `093F` to Getaway and enters the plane setup. The wall actors run in Getaway for the first time. Room work runs A6:`AABD` on the same frame. Its first picture requests the getaway sound in effects channel 2, cap six. The channel's write cursor advances and its entry records the sound. |
+| 1262 (11,425) | A6:`AAD4..AAE8` requests the directional push and starts the diagonal 3 px Back shake for 64 frames. R3 leaves 63 at the cut. Her health stays 24 and her protection stays zero. Movement's push setup (`90:E119`) begins at 1262, her knockback pose at 1263. The left push in the movie releases at 1264. The other row pushes her right until 1269. |
+| 1270 (11,433) | The getaway path ends (`A6:AB2E..AB5E`), restores the room presentation and selects self-destruct. The station stays Getaway. The text colours load at 1271. The sprite tile batches finish at 1277 and the background batches at 1284. |
+| 1284 (11,447) | Finishing the background tiles draws EMERGENCY, arms its 128-run hold and queues the escape track (`A6:C09F..C0BA`). The music queue's write cursor `0639` advances, its new track is 7 with delay 8. `07F5`, the current track, changes on **1293** (11,456). These are two different audio observations. |
+| 1412 (11,575) to 1585 (11,748) | The hold ends, arming the English typewriter (`A6:C0BB..C0F4`). Its completion selects the escape start on 1585 (`C104..C116`), while the station and countdown still read Getaway and dormant. |
+| 1586 (11,749) | A6:`C117..C135` emits the Ceres countdown start, changes `093F` to Escape and sets the area boss bit in `7ED82E`. H2 consumes the start on this same maintained frame. Its end-of-frame status `0943` is `8003` with 1:00.00 in `0945..0947`. The door clears its lock and starts its shake. Both walls hide in the new stage. |
+| 1602–1611 (11,765–11,774) | H2 finishes the initial hold at 1602. The first changed digits are 59.98 on 1603. The movie triggers the door on 1610, still ticking to 59.87. Its passage holds that time from 1611. The other player stays in the room and continues ticking. |
+
+The last health hit in both rows is 993. Neither the offscreen flight nor the getaway
+push starts another protection interval. Use the boss's placement event to create walls,
+the getaway's push to drive movement, the self-destruct completion to drive progress,
+and its one-minute start as the input to H2. Reading the recorded wall slots, stage,
+boss bit or timer status as new inputs each frame would hide a missing producer.
+
 ## Part 4c-1b, his tail in flight
 
 ### How it was made
@@ -1278,6 +1385,7 @@ the cover, the beacon or the platform, nor for the door of Ridley's room, the wa
 compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking. Part 4b has none:
 the engine has no tail. Part 4c-1a has none: the engine refuses his flight.
 Part 5 has no old model.
+At 63a431866 the played path refuses the real retreat, with no retreat implementation to replace.
 Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implementation.
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
@@ -1292,4 +1400,6 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 - Area steam: VentPlaced, VentInView, VentWaits, VentPuffs, VentRests, PuffReach, PuffTouches
 - Area ridley-tail-flight: TailComesLoose, TailFollows, TailSwings, TailWhips, TailRecovers, TailStretches, TailBends, TailSwishes
 
-Budget: 37.5 × 208.0 units = 7,798 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350)
+- Area ridley-retreat: FliesOutOfReach, GetawayBackdrop
+
+Budget: 37.5 × 217.3 units = 8,148 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350, ridley-retreat 350)

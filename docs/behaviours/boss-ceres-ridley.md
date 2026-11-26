@@ -1294,6 +1294,77 @@ body she started the frame in, as part 4b's §14.3 says.
 **The baby in his flight.** `BabyHeld` holds as part 3 says, at his position as his move leaves
 it: on a hop's run, before the hop (recorded case L2) [L-hop-first, L-hop-second].
 
+## Part 4c-2, Ridley leaves the room
+
+When her energy falls below the limit in `Hovers`, he changes course and flies above the room.
+He still carries the baby, drifts sideways, and swings his tail as he leaves her behind.
+He can pass his point before he stops pulling toward it. He coasts farther up, until the
+room's upper limit stops him. His getaway picture and the walls take their colours while the
+station is still calm.
+
+This part runs from the real retreat selected by `Hovers` through the placing of the walls.
+The next run starts the getaway picture. His retreat after her hundredth shot takes the
+`FakeRetreat` handoff in §15. A caller can hold and restore the body, baby and tail in §§12–17,
+including each of these phases of the real retreat.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| his retreat | `RidleyPhase` continues with `CoastingAbove`, `GetawayReady` and `Retreating`. In `CoastingAbove` he has 0 through 63 more runs to coast before he stops | `FliesOutOfReach`, `GetawayBackdrop`, the getaway |
+| the person he can hit | her whole-pixel position, body half-sizes and protection at the start of the frame (§14.3) | `TailHits` |
+| placing the walls | a pair of `GetawayWall` placements, left and right, at the room's wall positions in its content | the actor framework, `GetawayWalls`, `TheDoorsColours` |
+| preparing the colours | the three current colour selections in `GetawayBackdrop`, with the colours supplied by the room's content | drawing |
+
+His position, fractions and speed use §15.1's units. The tail and baby read the same random
+number as in §12.3. He stays tangible and moving on each run, including the run that places
+the walls. `BabyHeld` uses his whole-pixel position after his move. The baby's own fidgets and
+cries continue. The tail can still swish or hit her. A hit passes its side and five-frame push
+to her movement and its worth of 15 whole energy to her health. He neither roars nor requests
+music here. The door still reads `Calm`. The station's stage, her progress and the countdown
+keep their incoming values through these runs.
+
+### FliesOutOfReach
+
+- kind: mechanic.
+- summary: he pulls away from her, then coasts once he is high enough above the room.
+- params: his point is (192, −128) px. The pull's divisor is 15. His upper bound is −192 px.
+  His coast lasts 64 runs including its first run.
+- switch: Fixed.
+- `Hovers` selects the real retreat, or he starts the run `Retreating` → pull each speed by
+  `PulledToHisPoint` using the retreat's point and divisor, including its odd unit, turn and caps.
+  Move by `Flies` with the retreat's upper bound [RT-first-pull, RT-pull-divisor, RT-near-her]
+- His whole y before that move is at or below the height of his point
+  (`signed16(y + 128) >= 0`, y increasing down) → stay `Retreating`, even when this move
+  crosses the point [RT-at-height, RT-crosses]
+- His whole y before that move is above the point (`signed16(y + 128) < 0`) → this run's pull
+  is the last. He ends it `CoastingAbove` with 63 more runs to coast [RT-coasts]
+- `CoastingAbove` with more runs to coast → take one run off. Carry the speed into `Flies`
+  with the same retreat bounds. A bound can stop him on one axis while he keeps moving on the
+  other [RT-momentum, RT-ceiling, RT-last-coast]
+- On these rising and coasting runs → swing the tail at the position left by his move, as in
+  §17. He cannot aim a new whip in either phase. A whip already in motion can finish, and the
+  usual curl, recovery, swish, stretch and hit still apply [RT-first-pull, RT-near-her]
+- `CoastingAbove` with zero runs left at the start → stop both speeds before his move and
+  prepare the room by `GetawayBackdrop` [RT-walls]
+- checked: oracle (real retreat, crossing the point, coasting, upper bound and stop). Constructed
+  at the exact height and with her in reach on a chance to whip.
+
+### GetawayBackdrop
+
+- kind: mechanic.
+- summary: when he finishes coasting, the two wall actors are placed and the picture takes its colours.
+- params: the wall positions, the getaway body's 15 colours and the walls' eight colours are content.
+- switch: Fixed.
+- His coast ends → place the left and right getaway walls in `Placed` (§11). Select the body's
+  colours for `BackgroundBody` and the same wall colours for `BackgroundWalls` and
+  `SpriteWalls`. Each selection starts after the transparent colour of its palette. He ends
+  this run `GetawayReady`, with the station still `Calm` [RT-walls, RT-walls-and-tip]
+- The tail on this last run → keep its swing directions, angles, lag, marks, pace and offsets.
+  It keeps each segment's swinging state. Relink its places from the stopped body with those
+  offsets (`TailBends`), and apply `TailStretches` with the stretching each segment brought
+  in. `TailCurls`, `TailSwishes` and `TailHits` still apply [RT-walls, RT-walls-and-tip]
+- checked: oracle (body stops, walls placed, colours reach the screen). Constructed with a
+  fast, stretching tail and her within reach of the last tip.
+
 ## 16. Part 5, the escape's steam
 
 As she runs through the third and second rooms on her way out, steam vents in the station's

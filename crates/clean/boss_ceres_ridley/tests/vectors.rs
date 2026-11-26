@@ -10,14 +10,14 @@ mod vectors {
 
     use boss_ceres_ridley::{
         AlternatingLook, Attack, Baby, BabyColours, BabyFigure, BabyLook, BabyRoutine, BeaconStep,
-        BehaviourId, BodyColours, Boss, Bound, CeresDoor, CeresRidley, ColourSet, Cover, DoorKind,
-        DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Fight, Figure, FigureLength,
-        FigureLook, FigureSequence, FirstPuffWait, FlightPhase, GiveUp, GlowFigure, Her, HoverRuns,
-        Inputs, Lights, LightsInputs, Pad, PadAndCover, PadAndCoverStep, PadFigure, PadWait, Phase,
-        Puff, PuffFigure, Quarter, ReadyWait, RidleyContent, RidleyLook, RidleyPhase, RidleyRun,
-        RidleyWait, RoarWait, Rules, Shake, ShakeLayers, ShakeMotion, ShakeStart, ShownFigure,
-        Stage, TailCurl, TimedRoarFigure, TimedTakeOffFigure, Vent, VentFacing, VentPhase, Wait,
-        WakeWait, catalogue, run_vents,
+        BehaviourId, BodyColours, Boss, Bound, CeresDoor, CeresRidley, CoastRuns, ColourSet, Cover,
+        DoorKind, DoorPalette, EyeColours, FadeSets, FadeSteps, FidgetFigure, Fight, Figure,
+        FigureLength, FigureLook, FigureSequence, FirstPuffWait, FlightPhase, GetawayContent,
+        GlowFigure, Her, HoverRuns, Inputs, Lights, LightsInputs, Pad, PadAndCover,
+        PadAndCoverStep, PadFigure, PadWait, Phase, Puff, PuffFigure, Quarter, ReadyWait,
+        RidleyContent, RidleyLook, RidleyPhase, RidleyRun, RidleyWait, RoarWait, Rules, Shake,
+        ShakeLayers, ShakeMotion, ShakeStart, ShownFigure, Stage, TailCurl, TimedRoarFigure,
+        TimedTakeOffFigure, Vent, VentFacing, VentPhase, Wait, WakeWait, catalogue, run_vents,
     };
     use boss_ceres_ridley::{
         FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
@@ -280,6 +280,7 @@ mod vectors {
     #[serde(rename_all = "lowercase")]
     enum Source {
         Constructed,
+        Recorded,
     }
 
     #[derive(Deserialize, Default)]
@@ -433,7 +434,7 @@ mod vectors {
 
     fn vectors() -> Vec<Vector> {
         toml::from_str::<VectorFile>(VECTORS)
-            .expect("the vector file reads")
+            .unwrap_or_else(|error| panic!("the vector file must read: {}", error.message()))
             .vector
     }
 
@@ -914,6 +915,7 @@ mod vectors {
         fraction: Option<[u8; 2]>,
         speed: Option<[i16; 2]>,
         hover_runs: Option<u8>,
+        coast_runs: Option<u8>,
     }
 
     impl RidleyRow {
@@ -926,6 +928,7 @@ mod vectors {
                 runs: self.runs,
                 figure: self.figure,
                 figure_runs: self.figure_runs,
+                coast_runs: self.coast_runs,
             }
         }
     }
@@ -939,6 +942,7 @@ mod vectors {
         runs: Option<u8>,
         figure: Option<u8>,
         figure_runs: Option<u8>,
+        coast_runs: Option<u8>,
     }
 
     /// The invented content of a part-4a vector: the eye's steps, each the number of the set it
@@ -992,7 +996,9 @@ mod vectors {
         stage_calm: Option<bool>,
         room_colours: Option<bool>,
         cry: Option<bool>,
-        colours: Option<BabyColoursName>,
+        colours: Option<RidleyColoursRow>,
+        walls: Option<[SideName; 2]>,
+        coast_runs: Option<u8>,
         tangible: Option<bool>,
         moving: Option<bool>,
         roaring: Option<bool>,
@@ -1059,18 +1065,22 @@ mod vectors {
     struct HitRow {
         side: SideName,
         push: u8,
+        worth: Option<u16>,
     }
 
     const fn hit_row(hit: Hit) -> HitRow {
         HitRow {
             side: side_name(hit.side),
             push: hit.push.frames(),
+            worth: None,
         }
     }
 
     #[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
     enum RidleyPhaseName {
         Awake,
+        CoastingAbove,
+        GetawayReady,
         BodyFading,
         EyeFading,
         FakeRetreat,
@@ -1117,6 +1127,20 @@ mod vectors {
         Glow2,
         Glow3,
         Rest,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(untagged)]
+    enum RidleyColoursRow {
+        Baby(BabyColoursName),
+        Backdrop([BackdropPalette; 3]),
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum BackdropPalette {
+        BackgroundBody,
+        BackgroundWalls,
+        SpriteWalls,
     }
 
     /// The roar's first four figures, in their order, numbered 1 to 4.
@@ -1198,7 +1222,14 @@ mod vectors {
                     .and_then(num::NonZeroU16::new)
                     .expect("an eye's fade names its steps, 1 up"),
             },
-            RidleyPhaseName::FakeRetreat => RidleyPhase::GivingUp(GiveUp::FakeRetreat),
+            RidleyPhaseName::FakeRetreat => RidleyPhase::FakeRetreat,
+            RidleyPhaseName::GetawayReady => RidleyPhase::GetawayReady,
+            RidleyPhaseName::CoastingAbove => RidleyPhase::CoastingAbove(
+                cells
+                    .coast_runs
+                    .and_then(CoastRuns::new)
+                    .expect("coast runs are 0 to 63"),
+            ),
             RidleyPhaseName::Fireballs => RidleyPhase::Attacking(Attack::Fireballs),
             RidleyPhaseName::TakingOff => RidleyPhase::InFlight(FlightPhase::TakingOff),
             RidleyPhaseName::Holding => RidleyPhase::Holding,
@@ -1207,7 +1238,7 @@ mod vectors {
             RidleyPhaseName::ReadyToRoar => RidleyPhase::ReadyToRoar {
                 wait: ReadyWait::new(runs_left(cells.wait)).expect("ready's wait is 0 to 4"),
             },
-            RidleyPhaseName::Retreating => RidleyPhase::GivingUp(GiveUp::Retreating),
+            RidleyPhaseName::Retreating => RidleyPhase::Retreating,
             RidleyPhaseName::Rising => RidleyPhase::InFlight(FlightPhase::Rising),
             RidleyPhaseName::Roaring => RidleyPhase::Roaring {
                 wait: RoarWait::new(runs_left(cells.wait)).expect("the roar's wait is 0 to 252"),
@@ -1253,8 +1284,16 @@ mod vectors {
                     ..none
                 },
             ),
-            RidleyPhase::GivingUp(GiveUp::FakeRetreat) => (RidleyPhaseName::FakeRetreat, none),
-            RidleyPhase::GivingUp(GiveUp::Retreating) => (RidleyPhaseName::Retreating, none),
+            RidleyPhase::FakeRetreat => (RidleyPhaseName::FakeRetreat, none),
+            RidleyPhase::Retreating => (RidleyPhaseName::Retreating, none),
+            RidleyPhase::GetawayReady => (RidleyPhaseName::GetawayReady, none),
+            RidleyPhase::CoastingAbove(runs) => (
+                RidleyPhaseName::CoastingAbove,
+                PhaseCells {
+                    coast_runs: Some(runs.runs()),
+                    ..none
+                },
+            ),
             RidleyPhase::Attacking(Attack::Fireballs) => (RidleyPhaseName::Fireballs, none),
             RidleyPhase::Attacking(Attack::Lunge) => (RidleyPhaseName::Lunge, none),
             RidleyPhase::Attacking(Attack::Swoop) => (RidleyPhaseName::Swoop, none),
@@ -1317,7 +1356,12 @@ mod vectors {
     const fn taken_off(phase: RidleyPhase) -> bool {
         matches!(
             phase,
-            RidleyPhase::InFlight(_) | RidleyPhase::Attacking(_) | RidleyPhase::GivingUp(_)
+            RidleyPhase::InFlight(_)
+                | RidleyPhase::Attacking(_)
+                | RidleyPhase::FakeRetreat
+                | RidleyPhase::Retreating
+                | RidleyPhase::CoastingAbove(_)
+                | RidleyPhase::GetawayReady
         )
     }
 
@@ -1343,6 +1387,16 @@ mod vectors {
         RidleyContent {
             eye_steps: FadeSets::new(eye_steps).expect("the eye has at least one step"),
             body_sets: FadeSets::new(body_sets).expect("the body has at least one set"),
+            getaway: GetawayContent {
+                left_wall: point([12, 34]),
+                right_wall: point([210, 56]),
+                body_colours: core::array::from_fn(|i| {
+                    numbered_colour(10_u16.saturating_add(u16::try_from(i).unwrap()))
+                }),
+                wall_colours: core::array::from_fn(|i| {
+                    numbered_colour(100_u16.saturating_add(u16::try_from(i).unwrap()))
+                }),
+            },
         }
     }
 
@@ -1533,12 +1587,21 @@ mod vectors {
         }
     }
 
-    /// His flight's run as a part-4c-1a vector's `ridley_after` reads it; a run on which he
-    /// gives up is the next part's, and holds his phase alone.
-    fn flight_after(run: &RidleyRun, checks_tail: bool) -> RidleyAfter {
+    /// Flight and retreat outputs. Older Hovers vectors check only the handoff phase.
+    fn flight_after(run: &RidleyRun, vector: &Vector) -> RidleyAfter {
         let ridley = run.ridley;
         let (phase, cells) = ridley_phase_row(ridley.phase);
-        if matches!(ridley.phase, RidleyPhase::GivingUp(_)) {
+        let retreat = vector.flight_tail_after.is_some()
+            && matches!(
+                ridley.phase,
+                RidleyPhase::Retreating | RidleyPhase::CoastingAbove(_) | RidleyPhase::GetawayReady
+            );
+        if !retreat
+            && matches!(
+                ridley.phase,
+                RidleyPhase::FakeRetreat | RidleyPhase::Retreating
+            )
+        {
             return RidleyAfter {
                 phase: Some(phase),
                 ..RidleyAfter::default()
@@ -1568,10 +1631,48 @@ mod vectors {
             held: ridley.baby.position.map(point_row),
             bound: run.bound.map(bound_name),
             shake: run.shake.map(flight_shake_row),
-            whip: checks_tail.then_some(run.swish.is_some()),
-            hit: run.hit.map(hit_row),
+            whip: vector
+                .flight_tail_after
+                .is_some()
+                .then_some(run.swish.is_some()),
+            hit: run.hit.map(|hit| HitRow {
+                worth: retreat.then_some(boss_ceres_ridley::TAIL_DAMAGE),
+                ..hit_row(hit)
+            }),
+            coast_runs: cells.coast_runs,
+            walls: run.backdrop.map(|backdrop| {
+                [
+                    side_name(backdrop.left_wall.door.facing),
+                    side_name(backdrop.right_wall.door.facing),
+                ]
+            }),
+            colours: run.backdrop.map(|_| {
+                RidleyColoursRow::Backdrop([
+                    BackdropPalette::BackgroundBody,
+                    BackdropPalette::BackgroundWalls,
+                    BackdropPalette::SpriteWalls,
+                ])
+            }),
             ..RidleyAfter::default()
         }
+    }
+
+    /// Vectors name the wall sides and destinations; verify the payloads against the content too.
+    fn check_backdrop(backdrop: boss_ceres_ridley::GetawayBackdrop, content: &GetawayContent) {
+        for (placement, position) in [
+            (backdrop.left_wall, content.left_wall),
+            (backdrop.right_wall, content.right_wall),
+        ] {
+            assert_eq!(placement.door.kind, DoorKind::GetawayWall);
+            assert_eq!(placement.door.phase, Phase::Placed);
+            assert_eq!(placement.door.position, position);
+            assert_eq!(placement.colours.palette, DoorPalette::Doors);
+            assert_eq!(placement.colours.set, ColourSet::Calm);
+        }
+        assert_eq!(boss_ceres_ridley::GetawayColours::FIRST_INDEX, 1);
+        assert_eq!(backdrop.colours.background_body, content.body_colours);
+        assert_eq!(backdrop.colours.background_walls, content.wall_colours);
+        assert_eq!(backdrop.colours.sprite_walls, content.wall_colours);
     }
 
     /// One run of him and the baby from the vector's `ridley` and `baby`, with its content. A
@@ -1582,24 +1683,29 @@ mod vectors {
             vector.beaten.is_none(),
             "a run reads nothing of his being beaten"
         );
-        let content = vector.content.clone().unwrap_or_else(stand_in_content);
+        let content = ridley_content(&vector.content.clone().unwrap_or_else(stand_in_content));
         let run = ridley(vector).run(
             vector.passing.unwrap_or(false),
             vector.random(),
             vector.hitter_her().as_ref(),
             vector.fight(),
-            &ridley_content(&content),
+            &content,
             &rules(&vector.rules),
         );
         if vector.names_flight() {
             if let Some(expected) = &vector.flight_tail_after {
                 check_tail_run(vector, &run, expected);
             }
-            return flight_after(&run, vector.flight_tail_after.is_some());
+            if let Some(backdrop) = run.backdrop {
+                check_backdrop(backdrop, &content.getaway);
+            }
+            return flight_after(&run, vector);
         }
         let part_3 = RidleyAfter {
             cry: Some(run.cry.is_some()),
-            colours: run.colours.map(baby_colours_name),
+            colours: run
+                .colours
+                .map(|colours| RidleyColoursRow::Baby(baby_colours_name(colours))),
             ..ridley_after(run.ridley)
         };
         if vector.content.is_none() {
@@ -2006,8 +2112,52 @@ mod vectors {
             run.hit.map(hit_row),
             Some(HitRow {
                 side: side_name(Side::Right),
-                push: 5
+                push: 5,
+                worth: None,
             })
+        );
+    }
+
+    #[test]
+    fn retreat_handoffs_do_not_step_the_saved_body_baby_or_tail() {
+        let vectors = vectors();
+        let seed = vectors
+            .iter()
+            .find(|vector| vector.id == "RT-first-pull")
+            .unwrap();
+        let saved = ridley(seed);
+        let content = ridley_content(&stand_in_content());
+        let fight = Fight {
+            her_energy: 24,
+            hits_taken: 100,
+        };
+        let rules = Rules::default();
+        let fake = saved.run(false, 0xffff, None, fight, &content, &rules);
+        assert_eq!(
+            fake.ridley,
+            CeresRidley {
+                phase: RidleyPhase::FakeRetreat,
+                ..saved
+            }
+        );
+        assert_eq!(
+            (fake.hit, fake.swish, fake.tail_places, fake.backdrop),
+            (None, None, None, None)
+        );
+
+        let coast = vectors
+            .iter()
+            .find(|vector| vector.id == "RT-walls")
+            .unwrap();
+        let ready = ridley(coast)
+            .run(false, coast.random(), None, coast.fight(), &content, &rules)
+            .ridley;
+        assert_eq!(ready.phase, RidleyPhase::GetawayReady);
+        let run = ready.run(false, 0xffff, None, fight, &content, &rules);
+        assert_eq!(run.ridley, ready);
+        assert_eq!(
+            (run.hit, run.swish, run.tail_places, run.backdrop),
+            (None, None, None, None)
         );
     }
 
@@ -2025,9 +2175,8 @@ mod vectors {
         assert!(!vectors.is_empty());
         let failures: Vec<String> = vectors
             .iter()
-            .filter_map(|vector| {
-                let Source::Constructed = vector.source;
-                check(vector)
+            .filter_map(|vector| match vector.source {
+                Source::Constructed | Source::Recorded => check(vector),
             })
             .collect();
         assert!(failures.is_empty(), "{}", failures.join("\n"));

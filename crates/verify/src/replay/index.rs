@@ -247,6 +247,18 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Ridley's carried body, held baby and retreat phase, with the station still calm.
+    #[serde(rename = "ridley.retreat.body")]
+    CeresRetreatBody,
+    /// The boundary his move met, if any.
+    #[serde(rename = "ridley.retreat.bound")]
+    CeresRetreatBound,
+    /// The pair of placements at the stopped cut.
+    #[serde(rename = "ridley.backdrop.walls")]
+    CeresBackdropWalls,
+    /// Three independent current and native physical palette spans at publication.
+    #[serde(rename = "ridley.backdrop.colours")]
+    CeresBackdropColours,
     /// Complete carried flight tail, compared by segment and field.
     #[serde(rename = "ridley.tail.state")]
     CeresTailState,
@@ -1015,6 +1027,10 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CeresFigure
         | O::CeresShown
         | O::CeresSolid
+        | O::CeresRetreatBody
+        | O::CeresRetreatBound
+        | O::CeresBackdropWalls
+        | O::CeresBackdropColours
         | O::CeresTailState
         | O::CeresTailPlaces
         | O::CeresTailHit
@@ -1197,6 +1213,12 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
 fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "boss-ceres-ridley/FliesOutOfReach" => &[O::CeresRetreatBody, O::CeresRetreatBound],
+        "boss-ceres-ridley/GetawayBackdrop" => &[
+            O::CeresRetreatBody,
+            O::CeresBackdropWalls,
+            O::CeresBackdropColours,
+        ],
         "boss-ceres-ridley/TailComesLoose"
         | "boss-ceres-ridley/TailFollows"
         | "boss-ceres-ridley/TailSwings"

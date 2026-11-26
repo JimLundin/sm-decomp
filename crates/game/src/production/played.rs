@@ -226,8 +226,10 @@ pub enum Fault {
     Lights(LightsFault),
     /// Ridley starts a run in an attack: a later part's.
     RidleyAttacks,
-    /// Ridley begins or continues a retreat, including the fake retreat.
+    /// Ridley begins or continues the fake retreat.
     RidleyGivesUp,
+    /// Ridley has set up the backdrop and would start the getaway.
+    RidleyGetaway,
     /// A colour of the baby's content has more than 15 bits.
     BabyColours,
     /// Her suit's content is not sixteen colours of 15 bits.
@@ -242,7 +244,7 @@ impl State {
     /// # Errors
     /// Every [`Fault`] leaves State unchanged: missing pose content, an unknown pose, malformed
     /// room inputs, the escape with the shaft's overlay in the room ([`Fault::Escape`]), a shake
-    /// the room's quake can't take ([`Fault::Quake`]), Ridley in an attack or giving up ([`Fault::RidleyAttacks`], [`Fault::RidleyGivesUp`]),
+    /// the room's quake can't take ([`Fault::Quake`]), Ridley at a later fight handoff,
     /// and a next room that doesn't load, such as one placing an
     /// actor no owner here places ([`LoadFault::OtherActors`]).
     pub fn step(

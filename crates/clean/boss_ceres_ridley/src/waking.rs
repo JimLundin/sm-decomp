@@ -3,6 +3,8 @@
 
 use types::Colour;
 
+use crate::getaway::GetawayContent;
+
 /// How many colours of his palette his eye's colour sets cover: colours 12 to 14.
 const EYE_COLOURS: usize = 3;
 /// How many colours of his palettes his body's colour sets cover: colours 1 to 11.
@@ -73,13 +75,15 @@ pub struct RidleyContent {
     pub eye_steps: FadeSets<EyeColours>,
     /// `BodyFadesIn`: the body's colour sets, one shown every `p` runs.
     pub body_sets: FadeSets<BodyColours>,
+    /// `GetawayBackdrop`: the two walls and the picture's colour sets.
+    pub getaway: GetawayContent,
 }
 
 /// A count of runs left, 0 to `LONGEST`: a wait he counts down a run at a time.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RunsLeft<const LONGEST: u8>(u8);
+pub struct RemainingTurns<const LONGEST: u8>(u8);
 
-impl<const LONGEST: u8> RunsLeft<LONGEST> {
+impl<const LONGEST: u8> RemainingTurns<LONGEST> {
     /// The wait at its longest, as it starts.
     pub const FULL: Self = Self(LONGEST);
 
@@ -115,6 +119,6 @@ const READY_RUNS: u8 = 4;
 const ROAR_RUNS: u8 = 252;
 
 /// His wait while `ReadyToRoar`: 0 to 4 runs.
-pub type ReadyWait = RunsLeft<READY_RUNS>;
+pub type ReadyWait = RemainingTurns<READY_RUNS>;
 /// His wait while `Roaring`: 0 to 252 runs.
-pub type RoarWait = RunsLeft<ROAR_RUNS>;
+pub type RoarWait = RemainingTurns<ROAR_RUNS>;

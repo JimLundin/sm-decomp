@@ -98,10 +98,19 @@ impl Enemies {
 }
 
 impl State {
+    /// Newly placed walls first run on the following frame.
+    fn place_backdrop(&mut self, enemies: &Enemies) {
+        if let Some(backdrop) = enemies.ridley.and_then(|run| run.backdrop) {
+            self.doors
+                .extend([backdrop.left_wall.door, backdrop.right_wall.door]);
+        }
+    }
+
     /// The station after a frame of play's run of its enemies.
     pub(super) fn ran(&mut self, enemies: &Enemies) {
         self.doors = enemies.doors.iter().map(|run| run.door).collect();
         self.ridley = enemies.ridley.map(|run| run.ridley);
+        self.place_backdrop(enemies);
     }
 
     /// The station after a passage's frame: what its enemies' run left, then the actors the
@@ -118,6 +127,7 @@ impl State {
         if let Some(run) = enemies.ridley {
             self.ridley = Some(run.ridley);
         }
+        self.place_backdrop(enemies);
         if let Some(vents) = enemies.vents.take() {
             self.vents = vents;
         }
@@ -217,8 +227,8 @@ impl super::State {
 
 #[cfg(test)]
 mod tests {
+    use crate::production::played::State;
     use crate::production::played::tests::{play, state};
-    use crate::production::played::{Fault, State};
     use crate::production::tests::fixtures;
     use boss_ceres_ridley::{
         CeresDoor, CeresRidley, DoorKind, FlightPhase, Phase, RidleyPhase, Stage, Wait,
@@ -279,7 +289,7 @@ mod tests {
     }
 
     /// Hovering far from his point, he reads her energy as the frame starts it: at 29 he gives
-    /// up and starts the unsupported retreat, at 30 he hovers on.
+    /// up and starts retreating, at 30 he hovers on.
     #[test]
     fn her_energy_as_the_frame_starts_reaches_his_hover() {
         let hovering = flying(
@@ -288,11 +298,10 @@ mod tests {
             Pair { x: 0, y: 0 },
         );
         let mut room = his_room(hovering, 29, Vec::new());
-        assert_eq!(
-            play(&mut room, types::Buttons::default(), Stage::Calm),
-            Err(Fault::RidleyGivesUp)
-        );
-        assert_eq!(room.station.ridley, Some(hovering));
+        play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
+        let retreating = room.station.ridley.unwrap();
+        assert_eq!(retreating.phase, RidleyPhase::Retreating);
+        assert_ne!(retreating.speed, hovering.speed);
 
         let mut room = his_room(hovering, 30, Vec::new());
         play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
@@ -300,6 +309,61 @@ mod tests {
             room.station.ridley.map(|ridley| ridley.phase),
             Some(hovering.phase)
         );
+    }
+
+    #[test]
+    fn a_restored_stop_places_the_walls_and_the_tip_still_hits() {
+        use crate::production::played::Fault;
+        use boss_ceres_ridley::{CoastRuns, FlightTail};
+        use types::{Hit, PushFrames};
+
+        let her = fixtures::samus().position;
+        let position = Pair {
+            x: her.x.pixel() - Wrapping(31),
+            y: her.y.pixel() - Wrapping(16),
+        };
+        let mut tail = FlightTail::comes_loose(position);
+        for segment in &mut tail.segments {
+            segment.offset = Pair { x: 0, y: 0 };
+        }
+        let ridley = CeresRidley {
+            phase: RidleyPhase::CoastingAbove(CoastRuns::new(0).unwrap()),
+            position,
+            flight_tail: Some(tail),
+            ..CeresRidley::place(false).unwrap().ridley
+        };
+        let mut room = his_room(ridley, 24, Vec::new());
+        let outputs = play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
+        let run = outputs.ridley.unwrap();
+        assert_eq!(run.ridley.phase, RidleyPhase::GetawayReady);
+        assert_eq!(
+            run.hit,
+            Some(Hit {
+                side: Side::Left,
+                push: PushFrames::new(5).unwrap(),
+            })
+        );
+        assert_eq!(room.health.0.energy.whole.get(), 9);
+        assert_eq!(room.health.0.protection.get(), 95);
+        assert_eq!(room.samus.movement.0.knockback.side, Side::Left);
+        let backdrop = run.backdrop.unwrap();
+        assert_eq!(
+            room.station.doors,
+            [backdrop.left_wall.door, backdrop.right_wall.door]
+        );
+        assert!(
+            room.station
+                .doors
+                .iter()
+                .all(|wall| wall.phase == Phase::Placed)
+        );
+        assert_eq!(room.station.stage, Stage::Calm);
+        let stopped = room.clone();
+        assert_eq!(
+            play(&mut room, types::Buttons::default(), Stage::Calm),
+            Err(Fault::RidleyGetaway)
+        );
+        assert_eq!(room, stopped);
     }
 
     /// Meeting the room's left side fast, his shake reaches the room's quake: the back layers,

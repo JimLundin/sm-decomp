@@ -628,16 +628,7 @@ fn contents(
         room_colours(ridley, &rooms.actors.ceres_ridley, &mut goal)?;
     }
     for colours in placed.door_colours {
-        let doors = &rooms.actors.ceres_doors;
-        let shades = match colours.set {
-            ColourSet::Calm => &doors.calm,
-            ColourSet::Escape => &doors.escape,
-        };
-        let row = match colours.palette {
-            DoorPalette::Doors => SpriteRow::CERES_DOORS,
-            DoorPalette::Own => SpriteRow::RIDLEY_DOOR,
-        };
-        set(&mut goal, row, 1, shades)?;
+        door_goal(colours, &rooms.actors, &mut goal)?;
     }
     set(&mut goal, SpriteRow::SUIT, 0, &suit(rooms, inventory).0)?;
     palette.screen = screen;
@@ -683,6 +674,23 @@ fn room_colours(
         }
     }
     Ok(())
+}
+
+/// Set the goal colours selected by a door's placement.
+pub(super) fn door_goal(
+    colours: DoorColours,
+    actors: &Actors,
+    goal: &mut [types::Colour; COLOURS],
+) -> Result<(), LoadFault> {
+    let shades = match colours.set {
+        ColourSet::Calm => &actors.ceres_doors.calm,
+        ColourSet::Escape => &actors.ceres_doors.escape,
+    };
+    let row = match colours.palette {
+        DoorPalette::Doors => SpriteRow::CERES_DOORS,
+        DoorPalette::Own => SpriteRow::RIDLEY_DOOR,
+    };
+    set(goal, row, 1, shades)
 }
 
 /// Set `colours` in sprite row `row` of `screen`, from its colour `from` on.

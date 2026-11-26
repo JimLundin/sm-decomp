@@ -8,7 +8,7 @@ use core::num;
 use crate::ridley_wait::RidleyWait;
 use crate::roar::{RidleyLook, RoarFigure};
 use crate::rules::Rules;
-use crate::waking::{BodyColours, EyeColours, ReadyWait, RidleyContent, RoarWait};
+use crate::waking::{BodyColours, EyeColours, ReadyWait, RemainingTurns, RidleyContent, RoarWait};
 
 /// His flight's phases, from his take-off to his hover. Listed alphabetically; the order means
 /// nothing.
@@ -36,17 +36,13 @@ pub enum Attack {
     Swoop,
 }
 
-/// How he gives up his hover; all he does on that run and after is a later part's. Listed
-/// alphabetically; the order means nothing.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum GiveUp {
-    /// His fake retreat, after her 100th hit on him.
-    FakeRetreat,
-    /// His retreat, once she is nearly out of energy (part 4c-2).
-    Retreating,
-}
+/// `FliesOutOfReach`: the first coast run leaves 63 more before the stopped run.
+const AFTER_FIRST_COAST: u8 = 63;
 
-/// Where he is, with what each phase carries. Listed alphabetically; the order means nothing.
+/// The coast runs remaining, 0 through 63. Zero means the next run stops him.
+pub type CoastRuns = RemainingTurns<AFTER_FIRST_COAST>;
+
+/// Where he is, with what each phase carries. The declaration order does not determine transitions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RidleyPhase {
     /// He turns from his hover to an attack.
@@ -65,8 +61,15 @@ pub enum RidleyPhase {
         /// How many of the eye's steps it has shown, 1 to the steps' count.
         steps: num::NonZeroU16,
     },
-    /// He gives up his hover.
-    GivingUp(GiveUp),
+    /// `FliesOutOfReach`: he pulls toward a spot above the room.
+    Retreating,
+    /// `FliesOutOfReach`: he coasts without pulling until the remaining runs are spent.
+    CoastingAbove(CoastRuns),
+    /// `GetawayBackdrop`: stopped after the walls and current colours have been offered.
+    /// The next run belongs to the getaway.
+    GetawayReady,
+    /// Her 100th hit ended his hover. A later part owns the fake retreat.
+    FakeRetreat,
     /// Placed, the door's passage into his room still under way.
     Holding,
     /// His roar over, he flies: his take-off, his rise and his hover.
@@ -144,13 +147,18 @@ pub enum PhaseStep {
     TakesOff,
     /// A run of his flight, by this phase's rule (`TakesOff`, `Rises`, `SlowsDown`, `Hovers`).
     Flies(FlightPhase),
-    /// He has turned to an attack or given up: a later part runs him.
+    /// Start or continue his pull out of reach.
+    PullsAway,
+    /// Carry his momentum, or stop if the count is already zero.
+    Coasts(CoastRuns),
+    /// An attack, the fake retreat, or the getaway takes over.
     HandedOver,
 }
 
 impl RidleyPhase {
-    /// Whether her touch and her shots meet him: from the run he takes his body's last set on,
-    /// through his flight to the run he turns to an attack. Before, they go through him.
+    /// Whether her touch and her shots meet him. They go through him before he takes his body's
+    /// last colour set. He stays tangible through his flight, on the run he turns to an attack,
+    /// and throughout the real retreat, including the last coast run when he stops.
     #[must_use]
     pub const fn tangible(self) -> bool {
         matches!(
@@ -159,6 +167,9 @@ impl RidleyPhase {
                 | Self::Roaring { .. }
                 | Self::InFlight(_)
                 | Self::Attacking(_)
+                | Self::Retreating
+                | Self::CoastingAbove(_)
+                | Self::GetawayReady
         )
     }
 
@@ -172,7 +183,10 @@ impl RidleyPhase {
                 | Self::Roaring { .. }
                 | Self::InFlight(_)
                 | Self::Attacking(_)
-                | Self::GivingUp(_)
+                | Self::Retreating
+                | Self::CoastingAbove(_)
+                | Self::GetawayReady
+                | Self::FakeRetreat
         )
     }
 
@@ -226,7 +240,11 @@ impl RidleyPhase {
             )),
             Self::Roaring { wait, figure } => return roar_step(wait, figure),
             Self::InFlight(flight) => return PhaseStep::Flies(flight),
-            Self::Attacking(_) | Self::GivingUp(_) => return PhaseStep::HandedOver,
+            Self::Retreating => return PhaseStep::PullsAway,
+            Self::CoastingAbove(runs) => return PhaseStep::Coasts(runs),
+            Self::Attacking(_) | Self::FakeRetreat | Self::GetawayReady => {
+                return PhaseStep::HandedOver;
+            }
         };
         PhaseStep::Waking(waking)
     }

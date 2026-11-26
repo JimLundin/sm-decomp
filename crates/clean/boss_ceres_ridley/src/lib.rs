@@ -1,6 +1,6 @@
 //! The boss-ceres-ridley model, built from its behaviour spec alone. The parts of the Ceres
 //! station so far: the doors, the shaft as she arrives, Ridley's room as she enters, Ridley's
-//! waking, his tail at rest and its hit, his take-off and flight, and the escape's steam. Each
+//! waking, his tail at rest and its hit, his take-off, flight and real retreat, and the escape's steam. Each
 //! piece has its own state, inputs and outputs, and its caller steps it on its own schedule.
 //!
 //! **The doors.** A Ceres door stands between two of the station's rooms. It slides open as
@@ -69,6 +69,13 @@
 //! any swish, and the same [`types::Hit`] as at rest, now judged from the moved tip.
 //! Aiming describes the ordinary Ceres loadout, without missiles.
 //!
+//! **His real retreat.** `Hovers` starts the pull away on the same run that selects it.
+//! The caller can restore [`RidleyPhase::Retreating`], [`RidleyPhase::CoastingAbove`]
+//! with its remaining [`CoastRuns`], or [`RidleyPhase::GetawayReady`] with the same body,
+//! baby and tail state. The stopped run reports [`GetawayBackdrop`] for the wall actors
+//! and drawing without changing the station's stage. The getaway and the fake retreat
+//! are separate handoffs.
+//!
 //! **The escape's steam.** On her way out, steam vents in the station's floors, walls and
 //! ceilings blow puffs. A caller holds one [`Vent`] for each vent the room holds and places each
 //! as the room starts ([`Vent::place`]); each waits a random while, then puffs, rests and puffs
@@ -85,6 +92,7 @@ mod door;
 mod figure;
 mod flight;
 mod flight_tail;
+mod getaway;
 mod her;
 mod inputs;
 mod lights;
@@ -119,6 +127,7 @@ pub use flight_tail::{
     FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
     TailLength, TailMark, TailSegment, TailSwish,
 };
+pub use getaway::{GetawayBackdrop, GetawayColours, GetawayContent};
 pub use her::Her;
 pub use inputs::Inputs;
 pub use lights::{BeaconStep, FadeSteps, Lights, LightsInputs};
@@ -131,7 +140,7 @@ pub use ridley::{
     Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyPlacing, RidleyRun,
     RoomColours, ShakeStop,
 };
-pub use ridley_phase::{Attack, FightMusic, FlightPhase, GiveUp, RidleyPhase, RoarSound};
+pub use ridley_phase::{Attack, CoastRuns, FightMusic, FlightPhase, RidleyPhase, RoarSound};
 pub use ridley_wait::{RidleyWait, WakeWait};
 pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
@@ -142,4 +151,7 @@ pub use station::{
 pub use steam::{FirstPuffWait, Vent, VentPhase, run_vents};
 pub use tail::{TAIL_DAMAGE, TailCurl};
 pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
-pub use waking::{BodyColours, EyeColours, FadeSets, ReadyWait, RidleyContent, RoarWait, RunsLeft};
+pub use waking::{
+    BodyColours, EyeColours, FadeSets, ReadyWait, RemainingTurns as RunsLeft, RidleyContent,
+    RoarWait,
+};

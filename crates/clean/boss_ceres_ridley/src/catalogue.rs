@@ -89,6 +89,10 @@ pub enum BehaviourId {
     PulledToHisPoint,
     /// He moves by his speed within the room's bounds, shaking it as he meets its left side fast.
     Flies,
+    /// He pulls toward a spot above the room, then coasts.
+    FliesOutOfReach,
+    /// When he stops, he places both walls and selects the getaway colours.
+    GetawayBackdrop,
     /// Placed with the room, each vent waits a random 1 to 32 runs before its first puff.
     VentPlaced,
     /// A vent runs only while it is in view, or nearly.
@@ -137,8 +141,8 @@ pub struct Behaviour {
 }
 
 /// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
-/// his waking's four, his tail's three, his flight's six, the flight tail's eight and the escape's steam's seven.
-const ENTRIES: usize = 56;
+/// his waking's four, his tail's three, his flight's six, his retreat's two, the flight tail's eight and the escape's steam's seven.
+const ENTRIES: usize = 58;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -459,6 +463,20 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
         id: BehaviourId::Flies,
         summary: "he moves by his speed, kept within the room's bounds; meeting the left side \
                   fast, he shakes the room",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::FliesOutOfReach,
+        summary: "he pulls toward a spot above the room, then coasts until he stops",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayBackdrop,
+        summary: "when he stops, he places both walls and selects the getaway colours",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

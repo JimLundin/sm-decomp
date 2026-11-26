@@ -5,6 +5,8 @@
 
 rules = [
     "samus-movement/PadChart",
+    "boss-ceres-ridley/FliesOutOfReach",
+    "boss-ceres-ridley/GetawayBackdrop",
     "boss-ceres-ridley/TailHits",
     "boss-ceres-ridley/TailSwishes",
     "boss-ceres-ridley/VentPlaced",
@@ -396,8 +398,8 @@ field = "doors.colours.goal"
 name = "played-contents-doors-escape-set"
 responsibility = "played"
 file = "crates/game/src/production/room_loading.rs"
-before = "ColourSet::Calm => &doors.calm,"
-after = "ColourSet::Calm => &doors.escape,"
+before = "ColourSet::Calm => &actors.ceres_doors.calm,"
+after = "ColourSet::Calm => &actors.ceres_doors.escape,"
 case = "played chain-any-0003-DFD7 0 300"
 cut = 300
 field = "doors.colours.goal"
@@ -1203,13 +1205,13 @@ name = "airborne-tail-hit-withheld"
 rule = "boss-ceres-ridley/TailHits"
 responsibility = "ceres"
 file = "crates/game/src/production/played/ridley.rs"
-before = "    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"
+before = "    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"
 after = """
     let mut run = run;
     if run.ridley.flight_tail.is_some() {
         run.hit = None;
     }
-    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"""
+    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
 case = "ridley/flight-tail"
 cut = 897
 field = "movement.pose"
@@ -1219,11 +1221,11 @@ name = "airborne-tail-swish-withheld"
 rule = "boss-ceres-ridley/TailSwishes"
 responsibility = "ceres"
 file = "crates/game/src/production/played/ridley.rs"
-before = "    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"
+before = "    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"
 after = """
     let mut run = run;
     run.swish = None;
-    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"""
+    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
 case = "ridley/flight-tail"
 cut = 931
 field = "ridley.tail.swish-request"
@@ -1353,3 +1355,32 @@ after = '''        let mut discarded_encounter = battle.encounter.clone();
 case = "played any-power-on 0 2309"
 cut = 2221
 field = "flashback.brain"
+
+[[fault]]
+name = "retreat-handoff-keeps-hovering"
+rule = "boss-ceres-ridley/FliesOutOfReach"
+responsibility = "ceres"
+file = "crates/game/src/production/played/ridley.rs"
+before = "    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"
+after = """
+    let mut run = run;
+    if matches!(ridley.phase, RidleyPhase::InFlight(_)) && run.ridley.phase == RidleyPhase::Retreating {
+        run.ridley = ridley;
+    }
+    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {"""
+case = "ridley/offscreen-retreat"
+cut = 994
+field = "ridley.phase"
+
+[[fault]]
+name = "retreat-wall-placement-withheld"
+rule = "boss-ceres-ridley/GetawayBackdrop"
+responsibility = "ceres"
+file = "crates/game/src/production/played/station.rs"
+before = """
+            self.doors
+                .extend([backdrop.left_wall.door, backdrop.right_wall.door]);"""
+after = "            let _ = backdrop;"
+case = "ridley/offscreen-retreat"
+cut = 1157
+field = "ceres.doors"

@@ -49,15 +49,15 @@ power_on = false
 
 # From the flight's seed through the dark preparation, the opening HUD and the fade.
 # The run carries the room's owners through Ceres and both hits of Ridley's tail in flight.
-# His first retreat move needs the next phase.
+# Ridley retreats above the room, stops and places the getaway walls.
 [[run]]
 row = "any-fly-to-ceres"
 start = 0
 end = 4026
-held = 3643
-stop = { failed = "RidleyGivesUp" }
+held = 3807
+stop = { failed = "RidleyGetaway" }
 seed_frame = 7512
-frames = [7513, 11155]
+frames = [7513, 11319]
 power_on = false
 
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
@@ -75,15 +75,15 @@ power_on = false
 # The arrival, played on into Ceres's first room and through the second to fifth into Ridley's
 # with no new seed, through Ridley's waking and his tail's two hits, her pushes and her backward
 # leaps, the camera leading the way she travels, and her second leap let go, and Ridley's take-off
-# and flight, including both airborne tail hits. Room 6 cut 994 starts his retreat.
+# and flight, including both airborne tail hits. He retreats and places the walls before the getaway starts.
 [[run]]
 row = "any-ceres-arrival"
 start = 0
 end = 3223
-held = 2840
-stop = { failed = "RidleyGivesUp" }
+held = 3004
+stop = { failed = "RidleyGetaway" }
 seed_frame = 8315
-frames = [8316, 11155]
+frames = [8316, 11319]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
@@ -91,15 +91,15 @@ power_on = false
 # fourth and fifth rooms and into Ridley's with no new seed, the door slamming shut behind her,
 # through Ridley's waking and his tail's two hits, her pushes and her backward leaps, the camera
 # leading the way she travels, and her second leap let go, and Ridley's take-off and flight,
-# including both airborne tail hits. Room 6 cut 994 starts his retreat.
+# including both airborne tail hits. He retreats and places the walls before the getaway starts.
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
 end = 3000
-held = 2617
-stop = { failed = "RidleyGivesUp" }
+held = 2781
+stop = { failed = "RidleyGetaway" }
 seed_frame = 8538
-frames = [8539, 11155]
+frames = [8539, 11319]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -127,15 +127,15 @@ power_on = false
 # Ceres's third room, played on through the fourth and fifth and into Ridley's with no new seed,
 # through Ridley's waking and his tail's two hits, her pushes and her backward leaps, the camera
 # leading the way she travels, and her second leap let go, and Ridley's take-off and flight,
-# including both airborne tail hits. Room 6 cut 994 starts his retreat.
+# including both airborne tail hits. He retreats and places the walls before the getaway starts.
 [[run]]
 row = "chain-any-0003-DFD7"
 start = 0
 end = 3000
-held = 1923
-stop = { failed = "RidleyGivesUp" }
+held = 2087
+stop = { failed = "RidleyGetaway" }
 seed_frame = 9232
-frames = [9233, 11155]
+frames = [9233, 11319]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -153,15 +153,15 @@ power_on = false
 # glows once, then wakes, his eye lighting and his body fading in; tangible, his tail hits her
 # twice, at cuts 609 and 705, and each push and backward leap plays, the camera leading the way
 # she travels, and her second leap let go. His tail hits in flight at cuts 897 and 993. He
-# starts his retreat at 994.
+# retreats through the run that places the getaway walls.
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 0
 end = 1785
-held = 993
-stop = { failed = "RidleyGivesUp" }
+held = 1157
+stop = { failed = "RidleyGetaway" }
 seed_frame = 10162
-frames = [10163, 11155]
+frames = [10163, 11319]
 power_on = false
 
 # The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune

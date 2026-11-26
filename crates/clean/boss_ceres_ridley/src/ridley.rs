@@ -2,8 +2,9 @@
 //! dark with the baby in his hold, waiting a fixed while once the door's passage is over, then
 //! waking: his eye lights up, his body fades in, and tangible he roars, his tail at rest behind
 //! him from his body's fade on and hitting her when she comes within its reach. Then he takes
-//! off, rises, slows and hovers, drawn to his point, until he gives up or turns to an attack,
-//! which later parts run. In flight his tail swings loose and can whip toward her.
+//! off, rises, slows and hovers, drawn to his point, until he retreats or turns to an attack.
+//! In flight his tail swings loose and can whip toward her. In the real retreat he carries the
+//! baby and tail above the room, then stops and prepares the getaway's walls and colours.
 //!
 //! The caller holds a [`CeresRidley`] between frames and steps it on the frame the room places
 //! him ([`CeresRidley::place`]) and on each frame he runs ([`CeresRidley::run`]): whether a
@@ -18,6 +19,7 @@ use types::{Hit, Pair, Px};
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
 use crate::flight::{Bound, Fight, HoverRuns, Ruled, STILL, Speed, Steered, flown};
 use crate::flight_tail::{FlightTail, TAIL_SEGMENTS, TailSwish};
+use crate::getaway::GetawayBackdrop;
 use crate::her::Her;
 use crate::ridley_phase::{FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyPhase, RoarSound};
 use crate::roar::RidleyLook;
@@ -145,7 +147,8 @@ pub struct RidleyRun {
     pub music: Option<FightMusic>,
     /// The roar's sound, for audio, on the run it is heard (`Roars`).
     pub roar: Option<RoarSound>,
-    /// The contact from `TailHits` on this run.
+    /// The shared contact event from `TailHits` on this run. Health applies
+    /// [`crate::TAIL_DAMAGE`] whole energy when this is present.
     pub hit: Option<Hit>,
     /// The tail's seven places from base to tip on a flight run.
     pub tail_places: Option<[Pair<Px>; TAIL_SEGMENTS]>,
@@ -156,20 +159,17 @@ pub struct RidleyRun {
     /// The shake he starts as he meets the room's left side fast, for the screen's shaking
     /// (`Flies`).
     pub shake: Option<ShakeStart>,
+    /// The wall placements and current palettes, only on the stopped run (`GetawayBackdrop`).
+    pub backdrop: Option<GetawayBackdrop>,
 }
 
 impl RidleyRun {
-    /// A run that leaves him so, the baby run in his hold at his position, handing on nothing
-    /// else.
-    fn holding_the_baby(ridley: CeresRidley, random: u16) -> Self {
-        let baby = ridley.baby.run(ridley.position, random);
+    /// A handoff with no actions from this part.
+    const fn handoff(ridley: CeresRidley) -> Self {
         Self {
-            ridley: CeresRidley {
-                baby: baby.baby,
-                ..ridley
-            },
-            cry: baby.cry,
-            colours: baby.colours,
+            ridley,
+            cry: None,
+            colours: None,
             eye_colours: None,
             body_colours: None,
             music: None,
@@ -179,6 +179,20 @@ impl RidleyRun {
             swish: None,
             bound: None,
             shake: None,
+            backdrop: None,
+        }
+    }
+
+    /// `BabyHeld`: run the baby at the position left by the body's move.
+    fn holding_the_baby(ridley: CeresRidley, random: u16) -> Self {
+        let baby = ridley.baby.run(ridley.position, random);
+        Self {
+            cry: baby.cry,
+            colours: baby.colours,
+            ..Self::handoff(CeresRidley {
+                baby: baby.baby,
+                ..ridley
+            })
         }
     }
 }
@@ -247,11 +261,11 @@ impl CeresRidley {
     /// One run of him, on a frame he runs, reading whether a door's passage is under way as he
     /// runs (the door passage), the frame's random number, as the doors read it, her as his
     /// tail reads her, if she is there to reach, how the fight stands and his content. The baby
-    /// runs in his hold every run, whatever his phase (`BabyHeld`, `BabyFidgets`, `BabyCries`).
+    /// runs in his hold on each run this part owns (`BabyHeld`, `BabyFidgets`, `BabyCries`).
     ///
-    /// Before his take-off he moves on by his phase (`waking`); his roar over, he takes off
-    /// (`took_off`); in flight he flies (`flying`). Once he has turned to an attack or given up,
-    /// a later part runs him: here only the baby runs.
+    /// `FliesOutOfReach` starts on the run `Hovers` selects the real retreat.
+    /// `GetawayBackdrop` ends it; the next run belongs to the getaway. The fake retreat
+    /// is a separate handoff and does not run these rules.
     #[must_use]
     pub fn run(
         self,
@@ -266,7 +280,16 @@ impl CeresRidley {
             PhaseStep::Waking(phase) => self.waking(&phase, random, her, rules),
             PhaseStep::TakesOff => self.took_off(random, her, rules),
             PhaseStep::Flies(phase) => self.flying(phase, fight, random, her, rules),
-            PhaseStep::HandedOver => RidleyRun::holding_the_baby(self, random),
+            PhaseStep::PullsAway => self.pulls_away(random, her, rules),
+            PhaseStep::Coasts(runs) => {
+                let steered = Steered::coasts(runs, self.speed, self.hover_runs);
+                RidleyRun {
+                    backdrop: (steered.phase == RidleyPhase::GetawayReady)
+                        .then(|| content.getaway.prepare()),
+                    ..self.moved(&steered, random, her, rules)
+                }
+            }
+            PhaseStep::HandedOver => RidleyRun::handoff(self),
         }
     }
 
@@ -323,8 +346,8 @@ impl CeresRidley {
 
     /// A run of his flight, in this order: his phase's rule (`TakesOff`, `Rises`, `SlowsDown`,
     /// `Hovers`); his move by his speed (`Flies`); his tail; the baby, held at his position as his move
-    /// leaves it (`BabyHeld`); then his take-off's figure steps on (`TakesOff`). A run on which
-    /// he gives up is a later part's: only his phase changes, and the baby runs.
+    /// leaves it (`BabyHeld`); then his take-off's figure steps on (`TakesOff`). When he gives
+    /// up, the real retreat starts now and the fake retreat is handed off without stepping.
     fn flying(
         self,
         phase: FlightPhase,
@@ -334,13 +357,11 @@ impl CeresRidley {
         rules: &Rules,
     ) -> RidleyRun {
         match phase.rule(self.position, self.speed, self.hover_runs, fight, random) {
-            Ruled::GivesUp(give_up) => RidleyRun::holding_the_baby(
-                Self {
-                    phase: RidleyPhase::GivingUp(give_up),
-                    ..self
-                },
-                random,
-            ),
+            Ruled::PullAway => self.pulls_away(random, her, rules),
+            Ruled::FakeHandoff => RidleyRun::handoff(Self {
+                phase: RidleyPhase::FakeRetreat,
+                ..self
+            }),
             Ruled::FliesOn(steered) => {
                 let run = self.moved(&steered, random, her, rules);
                 RidleyRun {
@@ -351,10 +372,17 @@ impl CeresRidley {
         }
     }
 
-    /// `Flies`, `TailCurls`, `TailBends`, `TailHits`, `BabyHeld`: move in bounds, swing the tail,
+    /// `FliesOutOfReach`: on entry from `Hovers` and on every subsequent pull, carry the
+    /// existing body, baby and tail through the retreat's move without stepping take-off.
+    fn pulls_away(self, random: u16, her: Option<&Her>, rules: &Rules) -> RidleyRun {
+        let steered = Steered::pulls_away(self.position, self.speed, self.hover_runs);
+        self.moved(&steered, random, her, rules)
+    }
+
+    /// `Flies`, `TailCurls`, `TailBends`, `TailHits`, `BabyHeld`: move in bounds, run the tail,
     /// test the new tip against her starting body, and hold the baby, all before any hop.
     fn moved(self, steered: &Steered, random: u16, her: Option<&Her>, rules: &Rules) -> RidleyRun {
-        let moved = flown(self.position, self.fraction, steered.speed);
+        let moved = flown(self.position, self.fraction, steered);
         let curl = self.curl.curled(random);
         let mut tail = self
             .flight_tail

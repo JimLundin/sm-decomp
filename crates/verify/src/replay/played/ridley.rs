@@ -1,5 +1,6 @@
 //! Ceres Ridley and the baby: his content and their compared fields.
 
+pub(super) mod retreat;
 use crate::replay::compare::Observation;
 use crate::replay::result::Outcome;
 use crate::replay::{data_failure, ridley};

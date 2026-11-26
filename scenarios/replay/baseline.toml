@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "3ac0b43a9acccf68b5c0e72785729f0ab1070ea28cf0843b76f108da8fd343b3"
+index_sha256 = "3141280a6c522e5508c606520e751e19b15b25645ae5a318fa4682905ea05e1b"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1184,3 +1184,39 @@ null_fields = 48870
 restorations = 0
 pending_boundaries = 1
 pending_restorations = 1
+
+[[case]]
+id = "ridley/offscreen-retreat"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "402a5b43f7774612c0b0361443e04f60b2d4a489c97cb6066b970ee1e1585950"
+
+[case.counts]
+cuts = 164
+fields = 16072
+outputs = 2952
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 9184
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/alternate-offscreen-retreat"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "59108b60cecaaafe0276916d95547b1b71f49d853e659294bd617f4d9d383d5d"
+
+[case.counts]
+cuts = 164
+fields = 16072
+outputs = 2952
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 9186
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0

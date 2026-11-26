@@ -10,7 +10,7 @@ use core::num::Wrapping;
 
 use types::{Pair, Px};
 
-use crate::ridley_phase::{Attack, FlightPhase, GiveUp, RidleyPhase};
+use crate::ridley_phase::{Attack, CoastRuns, FlightPhase, RidleyPhase};
 use crate::station::{Shake, ShakeLayers, ShakeMotion, ShakeStart};
 
 /// A speed along one axis, in 1/256 px a run, signed 16-bit: its arithmetic wraps mod 2^16.
@@ -88,7 +88,7 @@ pub enum Bound {
     Left,
     /// Its right side, x 224.
     Right,
-    /// Its top, y −32.
+    /// Its top, y −32 in flight or −192 during retreat.
     Top,
 }
 
@@ -169,13 +169,13 @@ pub struct Fight {
 impl Fight {
     /// `Hovers`: whether the fight ends his hover: from her 100th hit on him his fake retreat,
     /// whatever her energy; else with her energy under 30 his retreat.
-    const fn gives_up(self) -> Option<GiveUp> {
+    fn hover_rule(self, on_hover: impl FnOnce() -> Steered) -> Ruled {
         if self.hits_taken >= HIS_HITS_LIMIT {
-            Some(GiveUp::FakeRetreat)
+            Ruled::FakeHandoff
         } else if self.her_energy < HER_ENERGY_LIMIT {
-            Some(GiveUp::Retreating)
+            Ruled::PullAway
         } else {
-            None
+            Ruled::FliesOn(on_hover())
         }
     }
 }
@@ -205,8 +205,10 @@ impl Steered {
 pub enum Ruled {
     /// He flies on: he moves by his speed, and his take-off's figure steps on.
     FliesOn(Steered),
-    /// He gives up: all he does on this run is a later part's.
-    GivesUp(GiveUp),
+    /// He starts the real retreat on this run.
+    PullAway,
+    /// The fake retreat takes over on this run.
+    FakeHandoff,
 }
 
 impl FlightPhase {
@@ -238,10 +240,7 @@ impl FlightPhase {
                 })
             }
             Self::Slowing => Ruled::FliesOn(slowed(position.y, speed, hover_runs)),
-            Self::Hovering => fight.gives_up().map_or_else(
-                || Ruled::FliesOn(hover(position, speed, hover_runs, random)),
-                Ruled::GivesUp,
-            ),
+            Self::Hovering => fight.hover_rule(|| hover(position, speed, hover_runs, random)),
         }
     }
 }
@@ -266,10 +265,7 @@ fn slowed(y: Px, speed: Pair<Speed>, hover_runs: HoverRuns) -> Steered {
 /// attack, his hover's runs 0; not near, he hovers on a run more, until his hover's runs reach
 /// his patience, when he attacks too.
 fn hover(position: Pair<Px>, speed: Pair<Speed>, hover_runs: HoverRuns, random: u16) -> Steered {
-    let speed = Pair {
-        x: pulled(position.x, HIS_POINT.x, speed.x),
-        y: pulled(position.y, HIS_POINT.y, speed.y),
-    };
+    let speed = pulled_to(position, HIS_POINT, speed, PULL_DIVISOR);
     let hovers_on = if near_his_point(position) {
         None
     } else {
@@ -302,6 +298,61 @@ const fn attack(random: u16) -> Attack {
     }
 }
 
+/// `FliesOutOfReach`: the new point, and the stronger pull on the way to it.
+const RETREAT_POINT: Pair<Px> = Pair {
+    x: Wrapping(192),
+    y: RETREAT_HEIGHT,
+};
+const RETREAT_Y: i16 = -128;
+const RETREAT_HEIGHT: Px = Wrapping(RETREAT_Y.cast_unsigned());
+const RETREAT_DIVISOR: u16 = 15;
+const RETREAT_CEILING: i16 = -192;
+
+impl Steered {
+    /// `FliesOutOfReach`: choose the last pull by the height before moving, not after.
+    pub(crate) fn pulls_away(
+        position: Pair<Px>,
+        speed: Pair<Speed>,
+        hover_runs: HoverRuns,
+    ) -> Self {
+        Self {
+            phase: if short_of(position.y, RETREAT_POINT.y) {
+                RidleyPhase::CoastingAbove(CoastRuns::FULL)
+            } else {
+                RidleyPhase::Retreating
+            },
+            speed: pulled_to(position, RETREAT_POINT, speed, RETREAT_DIVISOR),
+            hover_runs,
+        }
+    }
+
+    /// `FliesOutOfReach`: even the coast run that leaves zero remaining carries momentum.
+    /// Only a run starting at zero stops both axes before moving.
+    pub(crate) fn coasts(runs: CoastRuns, speed: Pair<Speed>, hover_runs: HoverRuns) -> Self {
+        runs.counted_down().map_or(
+            Self {
+                phase: RidleyPhase::GetawayReady,
+                speed: STILL,
+                hover_runs,
+            },
+            |remaining| Self {
+                phase: RidleyPhase::CoastingAbove(remaining),
+                speed,
+                hover_runs,
+            },
+        )
+    }
+}
+
+/// `PulledToHisPoint`: use the same pull rule on both axes, with the point and divisor
+/// chosen by the flight phase.
+fn pulled_to(position: Pair<Px>, point: Pair<Px>, speed: Pair<Speed>, divisor: u16) -> Pair<Speed> {
+    Pair {
+        x: pulled(position.x, point.x, speed.x, divisor),
+        y: pulled(position.y, point.y, speed.y, divisor),
+    }
+}
+
 /// Where his point lies from him on one axis.
 #[derive(Clone, Copy)]
 enum PointLies {
@@ -325,17 +376,18 @@ impl PointLies {
 
     /// `PulledToHisPoint`: the pull `d`: `max(1, floor(g / 16))`, with `g` the gap to his point
     /// the way it lies, `65,536 − D` ahead and `D` behind.
-    fn pull(self, p: Px, q: Px) -> Speed {
+    fn pull(self, p: Px, q: Px, divisor: u16) -> Speed {
         let gap = match self {
             Self::Ahead => q - p,
             Self::Behind => p - q,
         };
-        Wrapping((gap.0 / PULL_DIVISOR).max(1).cast_signed())
+        Wrapping(gap.0.checked_div(divisor).unwrap_or(1).max(1).cast_signed())
     }
 
-    /// `PulledToHisPoint`: the odd unit added to each pull: `c` ahead and `1 − c` behind, with
-    /// `c` 1 when `p` ≥ `q` as unsigned 16-bit numbers. So it is 0 ahead and 1 behind, except
-    /// far apart as unsigned numbers (as when he is above the room's top).
+    /// `PulledToHisPoint`: the odd unit added to each pull is `c` ahead and `1 − c` behind.
+    /// As unsigned 16-bit numbers, `p` ≥ `q` gives `c = 1`; otherwise `c = 0`. Ordinarily `c`
+    /// is 0 ahead and 1 behind, so the contribution is 0 in both directions. This reverses
+    /// when `p` and `q` are far apart as unsigned numbers (as when he is above the room's top).
     fn odd_unit(self, p: Px, q: Px) -> Speed {
         let c = p.0 >= q.0;
         let odd = match self {
@@ -370,11 +422,11 @@ impl PointLies {
 /// have turned him. Each new speed is taken mod 2^16 as a signed number; then a speed past
 /// the top speed while closing on it, the difference read signed, is the top speed. So any speed
 /// from −1,280 to 1,280 stays within it.
-fn pulled(p: Px, q: Px, v: Speed) -> Speed {
+fn pulled(p: Px, q: Px, v: Speed, divisor: u16) -> Speed {
     let Some(lies) = PointLies::of(p, q) else {
         return v;
     };
-    let d = lies.pull(p, q);
+    let d = lies.pull(p, q, divisor);
     let odd = lies.odd_unit(p, q);
     let speed = if lies.heads_to(v) {
         lies.toward(v, d + odd)
@@ -454,9 +506,22 @@ pub struct Moved {
 /// `Flies`: his move by his speed, after his phase's rule: x, then y, each kept within the
 /// room's bounds. Meeting the left side with the larger of his two speeds' sizes, taken before
 /// he is stopped, 640 or more, he shakes the room.
-pub fn flown(position: Pair<Px>, fraction: Pair<u8>, speed: Pair<Speed>) -> Moved {
+pub fn flown(position: Pair<Px>, fraction: Pair<u8>, steered: &Steered) -> Moved {
+    let speed = steered.speed;
+    let ceiling = if matches!(
+        steered.phase,
+        RidleyPhase::Retreating | RidleyPhase::CoastingAbove(_) | RidleyPhase::GetawayReady
+    ) {
+        RETREAT_CEILING
+    } else {
+        ROOM.y.least
+    };
     let x = ROOM.x.moved(position.x, fraction.x, speed.x);
-    let y = ROOM.y.moved(position.y, fraction.y, speed.y);
+    let y = Span {
+        least: ceiling,
+        ..ROOM.y
+    }
+    .moved(position.y, fraction.y, speed.y);
     let fast = speed.x.0.unsigned_abs().max(speed.y.0.unsigned_abs()) >= SHAKING_SPEED;
     Moved {
         position: Pair {

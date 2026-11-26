@@ -8,8 +8,8 @@
 
 use data::assets::actors::{
     Actors, BLUE_BRINSTAR_FACE_BLOCK, BeaconColours, CERES_DOOR, CERES_RIDLEY, CeresDoorColours,
-    CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, EyeShades, GEEGA, MORPH_BALL_EYE,
-    ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
+    CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, EyeShades, GEEGA, Getaway,
+    MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
 use data::assets::world::{
@@ -72,6 +72,11 @@ const END_OF_STEPS: u8 = 0xff;
 const EYE_SETS: RomAddress = RomAddress::new(0xa6, 0xe2aa);
 /// The body's colour sets, each of 11 colours, in the order it shows them.
 const BODY_SETS: RomAddress = RomAddress::new(0xa6, 0xe30a);
+/// Backdrop palettes and the enemy placements for the getaway's two walls.
+const GETAWAY_BODY: RomAddress = RomAddress::new(0xa6, 0xa9e3);
+const GETAWAY_WALLS: RomAddress = RomAddress::new(0xa6, 0xaa01);
+const GETAWAY_LEFT: RomAddress = RomAddress::new(0xa6, 0xaa2f);
+const GETAWAY_RIGHT: RomAddress = RomAddress::new(0xa6, 0xaa3f);
 /// Ceres Ridley's set-up's load of his tail's hit worth (`$A6:A216`), and the store after it
 /// that holds it where his tail's hit reads it (`$7E:7838`): his species header's contact damage
 /// is his body's, not his tail's.
@@ -330,7 +335,19 @@ fn ceres_ridley_colours(rom: Lorom<'_>) -> Result<CeresRidleyColours, ActorsErro
         .collect::<Option<Vec<_>>>()
         .filter(|steps| !steps.is_empty())
         .ok_or(ActorsError::EyeSteps)?;
+    let wall_position = |at| -> Result<_, AddressError> {
+        Ok(Pair {
+            x: Wrapping(word(rom, at, 2)?),
+            y: Wrapping(word(rom, at, 4)?),
+        })
+    };
     Ok(CeresRidleyColours {
+        getaway: Getaway {
+            left_wall: wall_position(GETAWAY_LEFT)?,
+            right_wall: wall_position(GETAWAY_RIGHT)?,
+            body_colours: colour_set(rom, GETAWAY_BODY)?,
+            wall_colours: colour_set(rom, GETAWAY_WALLS)?,
+        },
         eye_steps,
         body_sets: colour_sets(rom, BODY_SETS)?,
         door: palette(rom, RIDLEY_ROOM)?,

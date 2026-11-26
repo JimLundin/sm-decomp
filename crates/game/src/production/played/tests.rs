@@ -207,6 +207,18 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         map: HerMap::default(),
         start_x: Wrapping(0x80),
         ridley: boss_ceres_ridley::RidleyContent {
+            getaway: boss_ceres_ridley::GetawayContent {
+                left_wall: types::Pair {
+                    x: Wrapping(8),
+                    y: Wrapping(127),
+                },
+                right_wall: types::Pair {
+                    x: Wrapping(248),
+                    y: Wrapping(127),
+                },
+                body_colours: [types::Colour::BLACK; 15],
+                wall_colours: [types::Colour::BLACK; 8],
+            },
             eye_steps: boss_ceres_ridley::FadeSets::new(vec![boss_ceres_ridley::EyeColours(
                 [types::Colour::BLACK; 3],
             )])

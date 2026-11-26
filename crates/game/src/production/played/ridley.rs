@@ -8,7 +8,7 @@
 //! tangible, the moved tip can hit her. Her energy and motion read the same hit.
 
 use super::{Content, Fault, Rules, station};
-use crate::production::ridley;
+use crate::production::{ridley, room_loading};
 use boss_ceres_ridley::{CeresRidley, Fight, RidleyPhase, RidleyRun};
 use world_doors::Palette;
 
@@ -40,11 +40,14 @@ pub(super) fn run(
 ) -> Result<RidleyRun, Fault> {
     match ridley.phase {
         RidleyPhase::Attacking(_) => return Err(Fault::RidleyAttacks),
-        RidleyPhase::GivingUp(_) => return Err(Fault::RidleyGivesUp),
+        RidleyPhase::FakeRetreat => return Err(Fault::RidleyGivesUp),
+        RidleyPhase::GetawayReady => return Err(Fault::RidleyGetaway),
         RidleyPhase::Awake
         | RidleyPhase::BodyFading { .. }
         | RidleyPhase::EyeFading { .. }
         | RidleyPhase::Holding
+        | RidleyPhase::Retreating
+        | RidleyPhase::CoastingAbove(_)
         | RidleyPhase::InFlight(_)
         | RidleyPhase::ReadyToRoar { .. }
         | RidleyPhase::Roaring { .. }
@@ -65,7 +68,7 @@ pub(super) fn run(
         &content.ridley,
         &rules.ceres,
     );
-    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {
+    if matches!(run.ridley.phase, RidleyPhase::FakeRetreat) {
         return Err(Fault::RidleyGivesUp);
     }
     if let Some(colours) = run.colours {
@@ -78,6 +81,13 @@ pub(super) fn run(
     if let Some(colours) = run.body_colours {
         ridley::show_body(colours, palette);
     }
+    if let Some(backdrop) = run.backdrop {
+        for wall in [backdrop.left_wall, backdrop.right_wall] {
+            room_loading::door_goal(wall.colours, &content.rooms.actors, &mut palette.goal)
+                .map_err(Fault::Load)?;
+        }
+        ridley::show_getaway(backdrop.colours, palette);
+    }
     Ok(run)
 }
 
@@ -88,8 +98,8 @@ mod tests {
     use crate::production::played::station::Running;
     use crate::production::played::tests::{content, rules};
     use boss_ceres_ridley::{
-        Attack, BodyColours, CeresRidley, EyeColours, FadeSets, FlightPhase, GiveUp, Her,
-        RidleyContent, RidleyPhase,
+        Attack, BodyColours, CeresRidley, EyeColours, FadeSets, FlightPhase, Her, RidleyContent,
+        RidleyPhase,
     };
     use core::num::{NonZeroU16, Wrapping};
     use types::{Colour, Hit, Pair, PushFrames, Px, RandomNumber, RandomSequence, Side};
@@ -112,6 +122,7 @@ mod tests {
             ])
             .unwrap(),
             body_sets: FadeSets::new(vec![body(0x300), body(0x400)]).unwrap(),
+            getaway: content().ridley.getaway,
         }
     }
 
@@ -246,8 +257,12 @@ mod tests {
             Err(Fault::RidleyAttacks)
         );
         assert_eq!(
-            ran(RidleyPhase::GivingUp(GiveUp::Retreating), &mut palette),
+            ran(RidleyPhase::FakeRetreat, &mut palette),
             Err(Fault::RidleyGivesUp)
+        );
+        assert_eq!(
+            ran(RidleyPhase::GetawayReady, &mut palette),
+            Err(Fault::RidleyGetaway)
         );
         assert_eq!(palette, unlit());
     }

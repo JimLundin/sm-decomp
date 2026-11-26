@@ -6,7 +6,7 @@
 
 use boss_ceres_ridley::{
     BabyColours, BodyColours, Boss, CeresDoor, CeresRidley, EyeColours, FadeSets, FlightTail,
-    RidleyContent, RidleyDrawing, TAIL_SEGMENTS,
+    GetawayColours, GetawayContent, RidleyContent, RidleyDrawing, TAIL_SEGMENTS,
 };
 use data::assets::actors::{BabyShades, CeresRidleyColours, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
@@ -42,6 +42,12 @@ pub fn content(colours: &CeresRidleyColours) -> Result<RidleyContent, ColourFaul
     Ok(RidleyContent {
         eye_steps: fade(&colours.eye_steps, EyeColours)?,
         body_sets: fade(&colours.body_sets, BodyColours)?,
+        getaway: GetawayContent {
+            left_wall: colours.getaway.left_wall,
+            right_wall: colours.getaway.right_wall,
+            body_colours: checked(&colours.getaway.body_colours)?,
+            wall_colours: checked(&colours.getaway.wall_colours)?,
+        },
     })
 }
 
@@ -68,8 +74,16 @@ fn checked<const N: usize>(shades: &[Colour; N]) -> Result<[types::Colour; N], C
 
 /// The screen shows `colours` at once in sprite row `row`, from its colour `from` on.
 fn show(palette: &mut Palette, row: SpriteRow, from: usize, colours: &[types::Colour]) {
-    let mut rows = palette.screen.as_chunks_mut::<ROW_COLOURS>().0.iter_mut();
-    if let Some(row) = rows.nth(SPRITE_ROW.saturating_add(usize::from(row.get()))) {
+    show_row(
+        palette,
+        SPRITE_ROW.saturating_add(usize::from(row.get())),
+        from,
+        colours,
+    );
+}
+
+fn show_row(palette: &mut Palette, row: usize, from: usize, colours: &[types::Colour]) {
+    if let Some(row) = palette.screen.as_chunks_mut::<ROW_COLOURS>().0.get_mut(row) {
         for (colour, &shown) in row.iter_mut().skip(from).zip(colours) {
             *colour = shown;
         }
@@ -107,6 +121,19 @@ pub fn show_body(colours: BodyColours, palette: &mut Palette) {
     for row in [HIS_ROW, SpriteRow::RIDLEY_SECOND] {
         show(palette, row, FIRST_SHOWN, &colours.0);
     }
+}
+
+/// Publish the three current getaway palettes at the stopped cut.
+pub(super) fn show_getaway(colours: GetawayColours, palette: &mut Palette) {
+    let first = GetawayColours::FIRST_INDEX;
+    show_row(palette, 5, first, &colours.background_body);
+    show_row(palette, 2, first, &colours.background_walls);
+    show(
+        palette,
+        SpriteRow::CERES_DOORS,
+        first,
+        &colours.sprite_walls,
+    );
 }
 
 /// What Ridley's drawing draws: him and the baby, and the door of his room while it is drawn

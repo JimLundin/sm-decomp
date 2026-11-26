@@ -1619,3 +1619,47 @@ borrowed = [
   { dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work", claim = "The intro runs with the queue reply while audio service stays outside the scope" },
   { dependency = "discovery encounter", provider = "pinned egg instruction and hold", fields = ["ready for page 3"], phase = "after room play", claim = "Only the intro consumes the externally observed cue" },
 ]
+
+[[case]]
+id = "ridley/offscreen-retreat"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 993 }
+end = { cut_inclusive = 1157 }
+rules = ["boss-ceres-ridley/FliesOutOfReach", "boss-ceres-ridley/GetawayBackdrop", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailSwishes", "boss-ceres-ridley/TailHits"]
+profile = "reference"
+responsibilities = ["ceres", "movement", "health"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.retreat.body", "ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.retreat.bound", "ridley.backdrop.walls", "ridley.backdrop.colours", "ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
+checkpoints = false
+limits = ["Ordinary played Ceres admits the actors, Samus, health and RNG once at cut 993. Continuation from observed retreat states is checked separately. The played room has no saved State codec.", "Both routes use movie controls and prove no new hit during retreat. The swish comparison ends at the returned request. The live palette producer is compared separately to each native current and CGRAM span on the stopped cut.", "The next cut requires the getaway picture and stage advance. The distinct fake-retreat branch and a live shot counter in this fight are outside these routes."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness"]
+phase = "frame boundary"
+claim = "The played room draws its own random number and calculates the body, tail, hit and backdrop. The pad comes from the movie."
+
+[[case]]
+id = "ridley/alternate-offscreen-retreat"
+kind = "integrated"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 993 }
+end = { cut_inclusive = 1157 }
+rules = ["boss-ceres-ridley/FliesOutOfReach", "boss-ceres-ridley/GetawayBackdrop", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailSwishes", "boss-ceres-ridley/TailHits"]
+profile = "reference"
+responsibilities = ["ceres", "movement", "health"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.retreat.body", "ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.retreat.bound", "ridley.backdrop.walls", "ridley.backdrop.colours", "ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
+checkpoints = false
+limits = ["Ordinary played Ceres admits the actors, Samus, health and RNG once at cut 993. Continuation from observed retreat states is checked separately. The played room has no saved State codec.", "Both routes use movie controls and prove no new hit during retreat. The swish comparison ends at the returned request. The live palette producer is compared separately to each native current and CGRAM span on the stopped cut.", "The next cut requires the getaway picture and stage advance. The distinct fake-retreat branch and a live shot counter in this fight are outside these routes."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness"]
+phase = "frame boundary"
+claim = "The played room draws its own random number and calculates the body, tail, hit and backdrop. The pad comes from the movie."

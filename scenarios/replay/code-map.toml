@@ -779,6 +779,24 @@ targets = [
 ]
 
 [[rule]]
+id = "boss-ceres-ridley/FliesOutOfReach"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/ridley/retreat.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/GetawayBackdrop"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/getaway.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/station.rs" },
+  { role = "adapter", path = "crates/game/src/production/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/ridley/retreat.rs" },
+]
+
+[[rule]]
 id = "boss-ceres-ridley/TailComesLoose"
 targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },

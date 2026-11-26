@@ -5,6 +5,7 @@ use core::num;
 use types::{Pair, Px};
 
 use crate::her::Her;
+use crate::ridley_phase::RidleyPhase;
 use crate::tail::{TailCurl, place_at_rest};
 use crate::tail_aim::CeresAim;
 
@@ -255,7 +256,11 @@ impl FlightTail {
         her: Option<&Her>,
     ) -> Option<TailSwish> {
         let swish = self.swish.tick(self.pace);
-        self.aim_or_recover(position, aim, her);
+        // `GetawayBackdrop`: keep the stopped tail's swing state, but still relink and resize.
+        let swings = aim.phase != RidleyPhase::GetawayReady;
+        if swings {
+            self.aim_or_recover(position, aim, her);
+        }
         let mut preceding = None;
         let mut passed_way = None;
         for ((segment, rest), cap) in self.segments.iter_mut().zip(REST_LENGTHS).zip(CAPS) {
@@ -263,9 +268,10 @@ impl FlightTail {
                 segment.swinging = true;
                 segment.way = way;
             }
-            if !segment.swinging
-                || (segment.ready(curl, self.pace, &mut passed_way)
-                    && segment.swing(self.pace, self.mark, preceding))
+            if swings
+                && (!segment.swinging
+                    || (segment.ready(curl, self.pace, &mut passed_way)
+                        && segment.swing(self.pace, self.mark, preceding)))
             {
                 segment.bend(preceding);
             }

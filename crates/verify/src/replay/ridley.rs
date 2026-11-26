@@ -6,11 +6,11 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField, WramWord};
 use boss_ceres_ridley::{
-    Attack, Baby, BabyFigure, BabyRoutine, CeresRidley, FidgetFigure, FigureLength as _,
-    FlightPhase, FlightTail, GiveUp, GlowFigure, HoverRuns, LagCount, ReadyWait, RidleyLook,
-    RidleyPhase, RidleyWait, RoarFigure, RoarWait, ShownFigure, SwingLag, SwingPace, SwingWay,
-    SwishRuns, TailAngle, TailCurl, TailLength, TailMark, TailSegment, TakeOffFigure,
-    TimedRoarFigure, TimedTakeOffFigure,
+    Attack, Baby, BabyFigure, BabyRoutine, CeresRidley, CoastRuns, FidgetFigure, FigureLength as _,
+    FlightPhase, FlightTail, GlowFigure, HoverRuns, LagCount, ReadyWait, RidleyLook, RidleyPhase,
+    RidleyWait, RoarFigure, RoarWait, ShownFigure, SwingLag, SwingPace, SwingWay, SwishRuns,
+    TailAngle, TailCurl, TailLength, TailMark, TailSegment, TakeOffFigure, TimedRoarFigure,
+    TimedTakeOffFigure,
 };
 use core::num::{NonZeroU16, Wrapping};
 use enum_map::Enum as _;
@@ -384,8 +384,12 @@ fn phase(wram: &[u8], slot: u16) -> Result<RidleyPhase, Outcome> {
         0xA782 => RidleyPhase::Attacking(Attack::Fireballs),
         0xA83C => RidleyPhase::Attacking(Attack::Lunge),
         0xA88D => RidleyPhase::Attacking(Attack::Swoop),
-        0xA971 => RidleyPhase::GivingUp(GiveUp::Retreating),
-        0xBD9A => RidleyPhase::GivingUp(GiveUp::FakeRetreat),
+        0xA971 => RidleyPhase::Retreating,
+        0xA9A0 => {
+            RidleyPhase::CoastingAbove(CoastRuns::new(runs(wait)?).ok_or_else(wait_unsupported)?)
+        }
+        0xAA11 => RidleyPhase::GetawayReady,
+        0xBD9A => RidleyPhase::FakeRetreat,
         _ => return Err(unsupported("Ceres Ridley phase observation")),
     })
 }
@@ -492,8 +496,10 @@ fn phase_code(phase: RidleyPhase) -> (i64, u16, u8, u16) {
         RidleyPhase::Attacking(Attack::Fireballs) => (11, 0, 0, 0),
         RidleyPhase::Attacking(Attack::Lunge) => (12, 0, 0, 0),
         RidleyPhase::Attacking(Attack::Swoop) => (13, 0, 0, 0),
-        RidleyPhase::GivingUp(GiveUp::Retreating) => (14, 0, 0, 0),
-        RidleyPhase::GivingUp(GiveUp::FakeRetreat) => (15, 0, 0, 0),
+        RidleyPhase::Retreating => (14, 0, 0, 0),
+        RidleyPhase::FakeRetreat => (15, 0, 0, 0),
+        RidleyPhase::CoastingAbove(runs) => (16, 0, runs.runs(), 0),
+        RidleyPhase::GetawayReady => (17, 0, 0, 0),
     }
 }
 
@@ -514,18 +520,9 @@ const fn takeoff_code(takeoff: Option<TakeOffFigure>) -> (i64, u8) {
     }
 }
 
-/// Ridley's State by part, so a difference names the part that differs, with what his phase
-/// shows and his tail's segments; whether he is in the room first.
-pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Vec<Observation> {
-    let mut fields = vec![Observation::quantity(
-        "ridley.placed",
-        i64::from(ridley.is_some()),
-    )];
-    let Some((ridley, seen, tail)) = ridley else {
-        return fields;
-    };
-    let (phase, count, runs, wait) = phase_code(ridley.phase);
-    let (figure, figure_runs) = match ridley.phase {
+/// The held roaring figure and its number of elapsed runs.
+const fn roar_figure_code(phase: RidleyPhase) -> (i64, u8) {
+    match phase {
         RidleyPhase::Roaring {
             figure: RoarFigure::Timed(shown),
             ..
@@ -550,8 +547,25 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Ve
         | RidleyPhase::ReadyToRoar { .. }
         | RidleyPhase::InFlight(_)
         | RidleyPhase::Attacking(_)
-        | RidleyPhase::GivingUp(_) => (0, 0),
+        | RidleyPhase::Retreating
+        | RidleyPhase::CoastingAbove(_)
+        | RidleyPhase::GetawayReady
+        | RidleyPhase::FakeRetreat => (0, 0),
+    }
+}
+
+/// Ridley's State by part, so a difference names the part that differs, with what his phase
+/// shows and his tail's segments; whether he is in the room first.
+pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Vec<Observation> {
+    let mut fields = vec![Observation::quantity(
+        "ridley.placed",
+        i64::from(ridley.is_some()),
+    )];
+    let Some((ridley, seen, tail)) = ridley else {
+        return fields;
     };
+    let (phase, count, runs, wait) = phase_code(ridley.phase);
+    let (figure, figure_runs) = roar_figure_code(ridley.phase);
     let (takeoff, takeoff_runs) = takeoff_code(ridley.takeoff);
     let look = match ridley.look {
         None => 0,

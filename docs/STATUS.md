@@ -253,8 +253,8 @@ from 899, enters hover at 915 and moves toward his point. His hits taken are hel
 at 0 because her shots against him do not have a producer in this loop. The count
 of 11 in the record is below both flight thresholds. The room quake reads any
 shake he starts before the doors run. The left-side shake holds by vectors and a
-production test. The bound he meets (the harness note's `7E783E`) is outside the
-comparison.
+production test. The flight comparison leaves out the bound he meets. The retreat
+compares it at every cut.
 
 The in-flight tail (part 4c-1b) carries its seven links, curl, pace, whip aim
 and swish count. At each finished cut, the replay compares all those fields
@@ -276,6 +276,15 @@ Each row also continues from observed checkpoints at 930, 940 and 992 through
 993, admitting all tail fields at each origin. Serialised room snapshots still
 require a production codec.
 
+The ordinary fight carries its body and tail into the offscreen retreat on cut 994.
+The indexed cases `ridley/offscreen-retreat` and `ridley/alternate-offscreen-retreat`
+compare both routes through cut 1,157. Ridley starts coasting at 1,093, hits the
+ceiling at 1,115 and places the two walls at 1,157. The station is still calm.
+The terminal comparison checks each of the three live palette spans against
+both the native current mirror and CGRAM. Neither route takes another hit during
+the retreat. The cut-1,157 witness restores the station's actors into the carried
+room state. The next turn stops at the getaway boundary on 1,158.
+
 Her going backwards, which the camera reads, is her skid, her moonwalk, or exactly
 one of a hit's push and her backward leap (world-camera's `LeadingHer`). Room 6's moonwalk at its
 left edge is the first played frame that tells the moonwalk apart, at cut 352; her leap once the
@@ -296,10 +305,10 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 896 from its
-seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,617 cuts, through
-rooms 2 to 5 and on to cut 993 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,923.
-From her arrival (`any-ceres-arrival`, below) they hold 2,840, to movie frame 11,155. In the
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 1,157 from
+its seed. The Ceres rows from `chain-any-0001-DF45` hold 2,781 cuts through room 6's cut 1,157.
+Starting at `chain-any-0003-DFD7` holds 2,087 cuts. From her arrival
+(`any-ceres-arrival`, below) they hold 3,004, to movie frame 11,319. In the
 escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 1,075 through room 2
 without a new seed. Room 4 (`chain-any-0008-E021`) holds all 263 cuts, including the placement
 of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds all 330 cuts. Its passage counts jump
@@ -330,8 +339,8 @@ edges' subpixel (R36 to R40, at room 6's cuts 229, 615, 621 and 623 and room 3's
 compared by these played runs and are not wired as indexed cases. At cut 728 she lets the second
 leap go, holding forward without jump: she follows the pad and stops dashing, and the dash she
 keeps is gone the next frame (samus-movement's backward leap let go). He takes off at cut 867 and
-lands both airborne hits. Room 6 plays 993 cuts from its seed. At 994 the first retreat move
-requires part 4c-2, so the run stops at `RidleyGivesUp`.
+lands both airborne hits. Room 6 plays 1,157 cuts from its seed. Cut 1,158 starts the
+getaway and returns `RidleyGetaway`.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
@@ -464,15 +473,15 @@ lag cut. Production carries both frame counts, brightness and the random sequenc
 preparation. The run compares both counts at every cut and the random number at finished
 flight cuts and every preparation cut. The first room and its actors come from room loading
 and fresh-file Progress. The same run plays through the fade, the first room and the following
-rooms up to movie frame 11,155. It holds 3,643 cuts from the flight seed and stops at
-3,644 with `RidleyGivesUp`, the first retreat move. The cartridge save is outside the
+rooms up to movie frame 11,319. It holds 3,807 cuts from the flight seed and stops at
+3,808 with `RidleyGetaway`. The cartridge save is outside the
 comparison. Delaying the flight handoff until the work finishes first differs
 at cut 803 in `flight.active`.
 
 ### Her arrival at Ceres
 
 The standalone `any-ceres-arrival` run holds all 222 arrival cuts, then plays on through
-movie frame 11,155 without a second seed. The start loads the shaft, its Ceres doors,
+movie frame 11,319 without a second seed. The start loads the shaft, its Ceres doors,
 its overlay and the colours the fade heads for, with the start's own palette row for Samus.
 Fresh-file Progress supplies the room version and Samus's energy and items. The preparation
 carries the frame clock and random number. It borrows the loading path's entry into the
