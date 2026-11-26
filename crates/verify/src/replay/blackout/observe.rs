@@ -24,6 +24,66 @@ fn light(value: BlackoutLight) -> u16 {
         BlackoutLight::Lit(l) => u16::from(l.get()),
     }
 }
+
+fn phase_and_wait(phase: BlackoutPhase) -> (u16, u16) {
+    match phase {
+        BlackoutPhase::Shaft => (0, 0),
+        BlackoutPhase::Hold(left) => (1, u16::from(left.get())),
+        BlackoutPhase::Fade => (2, 0),
+        BlackoutPhase::AwaitBlank => (3, 0),
+        BlackoutPhase::Saving(_) => (4, 0),
+        BlackoutPhase::Explosion(_) => (5, 0),
+        BlackoutPhase::Dispatched(_) => (6, 0),
+    }
+}
+
+pub(in crate::replay) fn live_scene(
+    r: &FrameRecord,
+    scene: &types::ceres_blackout::BlackoutState,
+    (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
+) -> Result<(), Outcome> {
+    let lamp = |raw| {
+        if raw & 128 != 0 {
+            128
+        } else {
+            u16::from(raw & 15)
+        }
+    };
+    let prepared_light = lamp(super::byte(&r.wram, 0x51)?);
+    let phase = match word(&r.wram, 0x998)? {
+        8 => 0,
+        32 => 1,
+        33 if prepared_light < 128 => 2,
+        33 => 3,
+        _ => return Err(data_failure(Some(r.index), "live blackout phase")),
+    };
+    let (carried_phase, wait) = phase_and_wait(scene.phase);
+    for (name, observed, carried) in [
+        ("phase", phase, carried_phase),
+        ("wait", word(&r.wram, 0xaa0)?, wait),
+        ("prepared-light", prepared_light, light(scene.light)),
+        (
+            "published-light",
+            lamp(r.ppu.inidisp),
+            light(scene.published.light),
+        ),
+        ("finished", word(&r.wram, 0x5b6)?, scene.finished.0),
+        (
+            "prepared-pass",
+            u16::from(matches!(r.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Overrun)),
+            u16::from(matches!(scene.pass, WorkPass::Prepared(_))),
+        ),
+    ] {
+        expected.push(field(name, words([observed])));
+        actual.push(field(name, words([carried])));
+    }
+    expected.push(field("frozen-clock", digits(&r.wram)?.to_le_bytes().into()));
+    actual.push(field(
+        "frozen-clock",
+        scene.timer.time.0.to_le_bytes().into(),
+    ));
+    Ok(())
+}
 pub(super) fn oam_bytes(o: &Oam) -> Vec<u8> {
     o.low
         .iter()
@@ -89,15 +149,7 @@ pub(in crate::replay) fn actual(
         .ok_or_else(|| data_failure(None, "blackout projection"))?;
     let o = &state.owners.0;
     let scene = &o.scene;
-    let (phase, wait) = match scene.phase {
-        BlackoutPhase::Shaft => (0, 0),
-        BlackoutPhase::Hold(left) => (1, u16::from(left.get())),
-        BlackoutPhase::Fade => (2, 0),
-        BlackoutPhase::AwaitBlank => (3, 0),
-        BlackoutPhase::Saving(_) => (4, 0),
-        BlackoutPhase::Explosion(_) => (5, 0),
-        BlackoutPhase::Dispatched(_) => (6, 0),
-    };
+    let (phase, wait) = phase_and_wait(scene.phase);
     let regs = &state.video.committed;
     let prepared = matches!(scene.pass, WorkPass::Prepared(_));
     let mut shape = words([

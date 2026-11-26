@@ -165,12 +165,12 @@ fn through(
 
 fn shaft_checkpoint(
     production: &Production,
-    context: Option<(&ProductionContent, &ProductionRules)>,
+    admitted: Option<(&ProductionContent, &ProductionRules)>,
     input: Input,
     cut: u64,
 ) -> Result<Option<Production>, Outcome> {
     use game::production::blackout::{Cut, Work};
-    let Some((content, rules)) = context else {
+    let Some((content, rules)) = admitted else {
         return Ok(None);
     };
     if !matches!(

@@ -871,6 +871,9 @@ impl<'a> Run<'a> {
             &mut expected,
             &mut actual,
         )?;
+        if let Some(scene) = &self.blackout {
+            super::blackout::observe::live_scene(current, scene.scene(), (&mut expected, &mut actual))?;
+        }
         expected.push(play_time::observation(play_time::read(&current.wram)?));
         actual.push(play_time::observation(self.state.play_time));
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;

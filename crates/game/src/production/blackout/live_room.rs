@@ -22,6 +22,12 @@ pub struct LiveRoom {
 }
 
 impl LiveRoom {
+    /// The carried phase, light and pass count before departure takes ownership.
+    #[must_use]
+    pub const fn scene(&self) -> &BlackoutState {
+        &self.scene
+    }
+
     /// Consume the elevator reach after the ordinary room has already worked.
     ///
     /// # Errors

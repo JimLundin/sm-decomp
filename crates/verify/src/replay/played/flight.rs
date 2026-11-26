@@ -355,18 +355,18 @@ impl Continuation {
                     "Ceres entry checkpoint",
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
-                let mut room = super::Run::load(start, &content, rom, row)?;
+                let mut play = super::Run::load(start, &content, rom, row)?;
                 if let Some(video) = run.video {
                     let restored = canonical::from_bytes(&canonical::to_bytes(&video))
                         .map_err(|_| Outcome::CheckpointFailure { cut })?;
                     if video != restored {
                         return Err(Outcome::CheckpointFailure { cut });
                     }
-                    room.state.room_video.video = restored;
+                    play.state.room_video.video = restored;
                 }
-                room.cartridge = cartridge;
+                play.cartridge = cartridge;
                 let (more, stop) =
-                    room.through(rows, current, entry.controller, cut.saturating_add(1)..=end)?;
+                    play.through(rows, current, entry.controller, cut.saturating_add(1)..=end)?;
                 return Ok((held.saturating_add(more), stop));
             }
             if super::finished(&current) {
