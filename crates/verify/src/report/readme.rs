@@ -1,7 +1,6 @@
 //! The README: the project's thesis and its progress over the milestone's movie, counted in
-//! frames from the reviewed played runs of [`PLAYED`] and shown as bars and percentages: over the
-//! whole movie and by the stretches being worked. Each stretch shows its frame count from power-on and its place in the
-//! movie.
+//! frames from the reviewed played runs of [`PLAYED`]. The headline shows progress across the
+//! movie. Each stretch shows its place in the movie and its progress from power-on.
 //!
 //! A lock row's cut c is movie frame f + c, f its seed's movie frame, or 0 for a row from
 //! power-on, so a row's cut 0 is the frame after the previous row's last cut. A run seeded at
@@ -353,7 +352,7 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
     let started = from_start(&runs, total);
     let _ = writeln!(
         out,
-        "```text\n{}  {} from power-on · {} pass\n```\n\n`█` held continuously from power-on \
+        "```text\n{}  {} · {}\n```\n\n`█` held continuously from power-on \
          · `▓` passes from a later seed · `░` doesn't pass yet\n",
         headline(&runs, total, started),
         percent(started, total),
@@ -361,10 +360,9 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
     );
     out.push_str(
         "### By stretch\n\nA ✓ marks a stretch completed in a single run from power-on. The first \
-         stretch still in progress from power-on is in bold. The All runs column includes coverage from \
-         later seeds.\n\n",
+         stretch still in progress from power-on is in bold.\n\n",
     );
-    out.push_str(&stretches::table(&stretches, &runs, started));
+    out.push_str(&stretches::table(&stretches, started));
     out.push_str(
         "\nBuilding and checking it, and the command that prints the models' sizes and the \
          indexed replay evidence, are in [BUILDING](docs/BUILDING.md).\n",

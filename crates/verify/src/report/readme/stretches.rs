@@ -1,12 +1,12 @@
 //! The milestone's movie in the stretches being worked, from [`STRETCHES`]: each drawn where it
 //! lies in the whole movie, with a bar of its frames held from power-on, a tick when those frames
-//! cover the whole stretch, and coverage across all runs.
+//! cover the whole stretch.
 
 use std::fmt::{self, Display, Write as _};
 
 use serde::Deserialize;
 
-use super::{MOVIE, Run, cell_frames, passing, percent, power_on_bar};
+use super::{MOVIE, cell_frames, power_on_bar};
 
 /// The stretches, from the repository root.
 pub(super) const STRETCHES: &str = "scenarios/replay/stretches.toml";
@@ -54,12 +54,6 @@ impl Stretch {
     const fn len(&self) -> u64 {
         let [first, last] = self.frames;
         last.saturating_sub(first).saturating_add(1)
-    }
-
-    /// The frames of it some run holds.
-    fn passing(&self, runs: &[Run]) -> u64 {
-        let [first, last] = self.frames;
-        passing(runs, first.saturating_sub(1), last)
     }
 
     /// The frames of it among the first `started` held continuously from power-on.
@@ -123,13 +117,12 @@ impl Stretch {
     }
 }
 
-/// The table of `stretches` with the frames of each that `runs` hold, the first `started` of the
-/// movie continuously from power-on, each drawn in the movie they divide.
-pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String {
+/// The table of `stretches` plotted in the movie, whose first `started` frames pass from power-on.
+pub(super) fn table(stretches: &[Stretch], started: u64) -> String {
     let total = stretches.last().map_or(0, |stretch| stretch.frames[1]);
     let mut out = String::from(
-        "| Stretch | In the movie | From power-on | All runs | Work |\n\
-         | --- | --- | --- | ---: | --- |\n",
+        "| Stretch | In the movie | From power-on | Work |\n\
+         | --- | --- | --- | --- |\n",
     );
     let mut bolded = false;
     for stretch in stretches {
@@ -142,14 +135,12 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String
             bolded = true;
             format!("**{}**", stretch.name)
         };
-        let mark = if complete { " ✓" } else { "" };
+        let mark = if complete { "&nbsp;✓" } else { "" };
         let _ = writeln!(
             out,
-            "| {name} | `{}` | `{}` {from_power_on}/{frames} ({}){mark} | {} | {} |",
+            "| {name} | `{}` | `{}`{mark} | {} |",
             stretch.place(total),
             power_on_bar(from_power_on, frames, CELLS),
-            percent(from_power_on, frames),
-            percent(stretch.passing(runs), frames),
             stretch.issue
         );
     }
@@ -160,7 +151,7 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String
 mod tests {
     use super::{Issue, STRETCHES, Stretch, stretches, table};
     use crate::report::plan::{PLAN, Plan, seed};
-    use crate::report::readme::{PLAYED, Run, from_start, listed, passing};
+    use crate::report::readme::{Run, from_start, passing};
     use crate::report::seeds::seed_frame;
 
     /// The repository root, from this crate's manifest.
@@ -307,23 +298,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn the_stretches_count_every_frame_the_runs_hold_once() {
-        let Ok(all) = committed().2 else {
-            panic!("the committed stretches don't parse");
-        };
-        let text = std::fs::read_to_string(root().join(PLAYED)).unwrap_or_default();
-        let committed = listed(root(), &text, "any").unwrap_or_default();
-        assert_ne!(committed, []);
-        for runs in [
-            committed,
-            vec![run(0, 271), run(260, 400), run(10_000, 5_196)],
-        ] {
-            let by_stretch: u64 = all.iter().map(|stretch| stretch.passing(&runs)).sum();
-            assert_eq!(by_stretch, passing(&runs, 0, total()));
-        }
-    }
-
     /// Three stretches of a 400-frame movie, 10 frames a cell of it: Boot frames 1 to 100,
     /// Title 101 to 105 and Intro 106 to 400.
     fn three() -> Vec<Stretch> {
@@ -372,30 +346,32 @@ mod tests {
         };
         // Later seeds cover the remaining title frames and the whole intro.
         let runs = [boot, run(103, 2), run(105, 295)];
-        let page = table(&three, &runs, from_start(&runs, 400));
+        assert_eq!(passing(&runs, 0, 400), 400);
+        let page = table(&three, from_start(&runs, 400));
         let expected = [
-            ("| Boot |", "`████████████████████` 100/100 (100.0%) ✓"),
-            ("| **Title** |", "`████████████░░░░░░░░` 3/5 (60.0%)"),
-            ("| Intro |", "`░░░░░░░░░░░░░░░░░░░░` 0/295 (0.0%)"),
+            ("| Boot |", "`████████████████████`&nbsp;✓"),
+            ("| **Title** |", "`████████████░░░░░░░░`"),
+            ("| Intro |", "`░░░░░░░░░░░░░░░░░░░░`"),
         ];
         assert_eq!(page.lines().skip(2).count(), expected.len());
         for (row, (name, progress)) in page.lines().skip(2).zip(expected) {
             assert!(row.starts_with(name), "{row}");
-            assert!(row.contains(&format!("| {progress} | 100.0% |")), "{row}");
+            assert_eq!(row.split('|').nth(3).map(str::trim), Some(progress));
+            assert_eq!(row.split('|').count(), 6, "{row}");
         }
-        let one_short = table(&three, &[run(0, 99), run(99, 301)], 99);
+        let one_short = table(&three, 99);
         assert!(
             one_short
                 .lines()
                 .nth(2)
                 .is_some_and(|boot| boot.starts_with("| **Boot** |")
-                    && boot.contains("`███████████████████░` 99/100 (99.0%) | 100.0% |")
+                    && boot.contains("`███████████████████░` |")
                     && !boot.contains('✓'))
         );
-        let none = table(&three, &[], 0);
+        let none = table(&three, 0);
         assert!(none.contains("| **Boot** |"));
         assert!(!none.contains('✓'));
-        let all = table(&three, &[run(0, 400)], 400);
+        let all = table(&three, 400);
         assert!(!all.contains("**"));
         assert_eq!(all.matches('✓').count(), 3);
     }

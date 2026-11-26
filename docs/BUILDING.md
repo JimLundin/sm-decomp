@@ -210,11 +210,9 @@ reviewed runs in [`scenarios/replay/played.toml`](../scenarios/replay/played.tom
 bar covers the milestone in [`docs/architecture/domains.toml`](architecture/domains.toml) and
 shows which frames pass from power-on or later seeds and which still need work. Each stretch in
 [`scenarios/replay/stretches.toml`](../scenarios/replay/stretches.toml) shows its place on the
-same movie scale, drawn `━` on `·`. Its power-on bar shows the frame count and percentage
-reached in a single run from power-on. A tick marks completion, and the first stretch still
-in progress from power-on is in bold. The All runs percentage counts frames that pass from
-any seed, counting each frame once. The tests hold each
-listed run to the lock and the stretches to the milestone's frames. When an integrator's work
+same movie scale, drawn `━` on `·`. Its power-on bar shows how much a single run from power-on
+covers. A tick after the bar marks completion. The first incomplete stretch is in bold.
+The tests hold each listed run to the lock and the stretches to the milestone's frames. When an integrator's work
 moves a played run, its own commits change the run there and regenerate the README, and the root
 reviews the figures at landing (Jim, 2026-11-25); full CI's replay witnesses hold every run to
 the file.

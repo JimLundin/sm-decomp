@@ -9,25 +9,25 @@
 The milestone is **Power-on through Ceres** in the any% movie. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-███████████████████████████████████▓▓▓▓▓  87.5% from power-on · 100.0% pass
+███████████████████████████████████▓▓▓▓▓  87.5% · 100.0%
 ```
 
 `█` held continuously from power-on · `▓` passes from a later seed · `░` doesn't pass yet
 
 ### By stretch
 
-A ✓ marks a stretch completed in a single run from power-on. The first stretch still in progress from power-on is in bold. The All runs column includes coverage from later seeds.
+A ✓ marks a stretch completed in a single run from power-on. The first stretch still in progress from power-on is in bold.
 
-| Stretch | In the movie | From power-on | All runs | Work |
-| --- | --- | --- | ---: | --- |
-| Boot | `━·······································` | `████████████████████` 270/270 (100.0%) ✓ | 100.0% | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| The title and menus | `━━······································` | `████████████████████` 298/298 (100.0%) ✓ | 100.0% | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| The intro | `·━━━━━━━━━━━━━━━━━━━····················` | `████████████████████` 6944/6944 (100.0%) ✓ | 100.0% | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| The flight to Ceres | `···················━━━··················` | `████████████████████` 803/803 (100.0%) ✓ | 100.0% | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Her arrival | `·····················━━·················` | `████████████████████` 223/223 (100.0%) ✓ | 100.0% | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Rooms 1 to 5 | `······················━━━━━·············` | `████████████████████` 1624/1624 (100.0%) ✓ | 100.0% | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
-| Ridley's room | `··························━━━━━·········` | `████████████████████` 1610/1610 (100.0%) ✓ | 100.0% | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
-| The escape | `······························━━━━━·····` | `████████████████████` 1464/1464 (100.0%) ✓ | 100.0% | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
-| **The explosion and the flight to Zebes** | `··································━━━━━━` | `█░░░░░░░░░░░░░░░░░░░` 75/1960 (3.8%) | 100.0% | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| Stretch | In the movie | From power-on | Work |
+| --- | --- | --- | --- |
+| Boot | `━·······································` | `████████████████████`&nbsp;✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| The title and menus | `━━······································` | `████████████████████`&nbsp;✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| The intro | `·━━━━━━━━━━━━━━━━━━━····················` | `████████████████████`&nbsp;✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| The flight to Ceres | `···················━━━··················` | `████████████████████`&nbsp;✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Her arrival | `·····················━━·················` | `████████████████████`&nbsp;✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Rooms 1 to 5 | `······················━━━━━·············` | `████████████████████`&nbsp;✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
+| Ridley's room | `··························━━━━━·········` | `████████████████████`&nbsp;✓ | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
+| The escape | `······························━━━━━·····` | `████████████████████`&nbsp;✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| **The explosion and the flight to Zebes** | `··································━━━━━━` | `█░░░░░░░░░░░░░░░░░░░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 
 Building and checking it, and the command that prints the models' sizes and the indexed replay evidence, are in [BUILDING](docs/BUILDING.md).
