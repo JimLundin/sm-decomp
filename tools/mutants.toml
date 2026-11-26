@@ -1628,3 +1628,53 @@ after = '            let _ = actors_content(content)?;'
 case = "played any-power-on 0 3517"
 cut = 3517
 field = "intro-actor.shown"
+
+[[fault]]
+name = "played-ceres-arrival-save-waits-for-finished-cut"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/cartridge.rs"
+before = "        if entered {"
+after = "        if entered && finished {"
+case = "played any-power-on 0 8315"
+cut = 8315
+field = "save-files.battery"
+
+[[fault]]
+name = "played-intro-flight-waits-until-shown"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "if intro.intro.stage != types::intro::IntroStage::Done {"
+after = "if intro.intro.stage != types::intro::IntroStage::Done || intro.intro.brightness == types::intro::Brightness::BLANKED {"
+case = "played any-intro-6012 1 1532"
+cut = 1501
+field = "flight.active"
+
+[[fault]]
+name = "played-intro-flight-loses-blanking"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "types::intro::Blanking::Blanked => types::flight::Visibility::Blanked,"
+after = "types::intro::Blanking::Blanked => types::flight::Visibility::Shown,"
+case = "played any-intro-6012 1 1532"
+cut = 1501
+field = "flight.brightness.blanked"
+
+[[fault]]
+name = "played-boot-intro-flight-waits-until-shown"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "if intro.intro.stage != types::intro::IntroStage::Done {"
+after = "if intro.intro.stage != types::intro::IntroStage::Done || intro.intro.brightness == types::intro::Brightness::BLANKED {"
+case = "played any-power-on 0 7513"
+cut = 7513
+field = "flight.active"
+
+[[fault]]
+name = "played-boot-intro-flight-loses-blanking"
+responsibility = "played"
+file = "crates/game/src/production/played/flight.rs"
+before = "types::intro::Blanking::Blanked => types::flight::Visibility::Blanked,"
+after = "types::intro::Blanking::Blanked => types::flight::Visibility::Shown,"
+case = "played any-power-on 0 7513"
+cut = 7513
+field = "flight.brightness.blanked"

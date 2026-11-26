@@ -27,11 +27,14 @@ pub(super) fn held(seed: &[u8]) -> Result<Held, Outcome> {
 }
 
 /// A new file inherits its bindings and starts with no reserve, ammunition or map.
-pub(super) fn fresh(seed: &[u8], progress: &run_progress::Progress) -> Result<Held, Outcome> {
+pub(super) fn fresh(
+    bindings: hud::Bindings,
+    progress: &run_progress::Progress,
+) -> Result<Held, Outcome> {
     let inventory = &progress.inventory;
     let energy = run_progress::Supply::Energy;
     Ok(Held {
-        bindings: hud::bindings(seed)?,
+        bindings,
         stock_at_start: interface_hud::StockAtStart {
             counts: enum_map::EnumMap::default(),
             equipped: interface_hud::Equipped::default(),

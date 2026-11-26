@@ -232,29 +232,55 @@ pub(super) fn held_inputs(
     geometry: game::production::world::MovementWorld,
     camera: CameraInputs,
 ) -> Result<connected::inputs::Inputs, Outcome> {
-    let queue = |at: usize| {
-        seed.get(at)
-            .copied()
-            .ok_or_else(|| data_failure(None, "seed queue source"))
-    };
-    let waiting = queue(0x0648)?.wrapping_sub(queue(0x0645)?) & 0x0f;
-    Ok(connected::inputs::Inputs {
-        held: types::Buttons::default(),
-        pressed: types::Buttons::default(),
+    Ok(AppearanceInputs::seed(seed)?.inputs(
+        word(seed, 0x09c2)?,
         items,
-        parity: types::Parity::Even,
-        energy: word(seed, 0x09c2)?,
-        liquid: samus_appearance::Liquid::NONE,
-        sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
-            .ok_or_else(|| data_failure(None, "seed queue occupancy"))?,
         activities,
-        // Held from the seed like the room's facts: only a passage's first entry reads it, and
-        // no frame these inputs play has one.
-        charge: appearance::charge(seed)?,
         geometry,
         camera,
-        activity: Activity::Inactive,
-    })
+    ))
+}
+
+/// Sound queue occupancy and shot charge read by appearance.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub(super) struct AppearanceInputs {
+    pub(super) waiting: samus_appearance::SoundsWaiting,
+    pub(super) charge: samus_appearance::Charge,
+}
+
+impl AppearanceInputs {
+    pub(super) fn seed(wram: &[u8]) -> Result<Self, Outcome> {
+        Ok(Self {
+            waiting: appearance::sounds_waiting(wram)?,
+            charge: appearance::charge(wram)?,
+        })
+    }
+
+    pub(super) fn inputs(
+        self,
+        energy: u16,
+        items: types::Set<types::Item>,
+        activities: types::Set<samus_appearance::Activity>,
+        geometry: game::production::world::MovementWorld,
+        camera: CameraInputs,
+    ) -> connected::inputs::Inputs {
+        connected::inputs::Inputs {
+            held: types::Buttons::default(),
+            pressed: types::Buttons::default(),
+            items,
+            parity: types::Parity::Even,
+            energy,
+            liquid: samus_appearance::Liquid::NONE,
+            sounds_waiting: self.waiting,
+            activities,
+            // Held from the seed like the room's facts: only a passage's first entry reads it, and
+            // no frame these inputs play has one.
+            charge: self.charge,
+            geometry,
+            camera,
+            activity: Activity::Inactive,
+        }
+    }
 }
 
 impl Inputs {

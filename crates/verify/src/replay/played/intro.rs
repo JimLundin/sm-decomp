@@ -51,6 +51,8 @@ pub const MASKED: &[&str] = &[
     "OAM: the baby and the caret (E1)",
     "the colour blend's bands while a dissolve runs, the HDMA object (E3)",
     "the PPU mirrors the stages write: the layers and colour math (E3)",
+    "during flight: cycling colours, mode 7 art, sprite pictures, label tile attributes and the random draw during lag",
+    "during arrival: the cartridge write and intermediate room setup before HUD publication",
 ];
 
 /// What an intro run holds from its seed: the intro's State, the language and the pad's latch.
@@ -58,6 +60,12 @@ const SEED_HELD: &[&str] = &[
     "from inside the last pages, the intro's State as the seed's work RAM holds it: the stage, the dissolve's count, the colours' levels and steps and the colours shown, the picture's height, the baby, the page, the eyes, the caret, the glows, the click turn and the brightness; as the intro begins, only that it begins",
     "the language, from the options' setting",
     "the pad as the game last latched it, which the movie's presses follow",
+];
+
+const LAST_PAGES_HELD: &[&str] = &[
+    "the last pages' stage, scripts, colours, brightness, and options language",
+    "the pad latch, both frame counts and the random sequence",
+    "Samus's health, the player's saved item bindings, shot charge, sound occupancy and room quake",
 ];
 
 /// What an intro run borrows from the record (decision 35).
@@ -336,11 +344,15 @@ pub(super) fn play(
         start,
         held,
         stop,
-        seed_held: SEED_HELD,
-        borrowed: if part == Part::Flashback {
-            FLASHBACK_BORROWED
+        seed_held: if part == Part::LastPages {
+            LAST_PAGES_HELD
         } else {
-            BORROWED
+            SEED_HELD
+        },
+        borrowed: match part {
+            Part::Flashback => FLASHBACK_BORROWED,
+            Part::LastPages => super::flight::BORROWED,
+            Part::Opening | Part::Delivery => BORROWED,
         },
         masked: match part {
             Part::Opening => OPENING_MASKED,
@@ -369,34 +381,139 @@ pub(super) fn play(
         Ok(state) => state,
         Err(outcome) => return Ok(report(0, Stop::At(super::at(start, outcome)))),
     };
-    let mut controller = match Controller::seeded(&seed.wram) {
+    let controller = match Controller::seeded(&seed.wram) {
         Ok(controller) => controller,
         Err(outcome) => return Ok(report(0, Stop::At(super::at(start, outcome)))),
     };
-    let mut run = Run {
+    let run = Run {
         state,
         content,
         reading,
     };
-    let mut held = 0;
-    let mut previous = seed.clone();
-    let mut began = seed;
-    for cut in start.saturating_add(1)..=end {
-        let current = rows.record(cut)?;
-        if current.video_frame != previous.video_frame.wrapping_add(1) {
-            return Err(data_failure(Some(cut), "played rows join"));
+    let (held, stop) = run.through(
+        rows,
+        rom,
+        row,
+        seed,
+        start.saturating_add(1)..=end,
+        (part, controller),
+    )?;
+    Ok(report(held, stop))
+}
+
+impl Run {
+    fn through(
+        mut self,
+        rows: &mut Rows<'_>,
+        rom: &Path,
+        row: &str,
+        seed: FrameRecord,
+        cuts: core::ops::RangeInclusive<u64>,
+        (part, mut controller): (Part, Controller),
+    ) -> Result<(u64, Stop), Outcome> {
+        let mut held = 0;
+        let mut last_pages = if part == Part::LastPages {
+            Some((
+                super::frame::seed(&seed.wram)?,
+                super::start::Carried::last_pages(&seed.wram)?,
+            ))
+        } else {
+            None
+        };
+        let mut previous = seed.clone();
+        let mut began = seed;
+        let end = *cuts.end();
+        for cut in cuts {
+            let current = rows.record(cut)?;
+            if current.video_frame != previous.video_frame.wrapping_add(1) {
+                return Err(data_failure(Some(cut), "played rows join"));
+            }
+            if let Err(outcome) = self.step(controller, &began, &previous, &current, cut) {
+                return Ok((held, Stop::At(super::at(cut, outcome))));
+            }
+            controller = controller.read(current.pad.0, polled(&current));
+            if let Some((frame, carry)) = &mut last_pages {
+                if super::flight::starts(&previous.wram)? {
+                    return Ok((
+                        held,
+                        Stop::At(Outcome::Difference {
+                            cut,
+                            field: "flight.active".into(),
+                        }),
+                    ));
+                }
+                *frame = frame.after_intro_frame(finished(&current));
+                let mut expected = super::frame::expected(&current.wram)?.to_vec();
+                let mut actual = super::frame::actual(*frame).to_vec();
+                if finished(&current) {
+                    expected.push(super::frame::random_observation(super::frame::random(
+                        &current.wram,
+                    )?));
+                    actual.push(super::frame::random_observation(frame.random));
+                }
+                if let Err(outcome) = crate::replay::compared(cut, &expected, &actual) {
+                    return Ok((held, Stop::At(outcome)));
+                }
+                if cut < end
+                    && let Some(journey) =
+                        game::production::played::flight::Journey::after_intro(&self.state, *frame)
+                {
+                    let checkpoint = Departure {
+                        intro: self.state,
+                        frame: *frame,
+                        controller,
+                        carry: *carry,
+                    };
+                    let next = checkpoint.continue_flight(journey, cut)?;
+                    let (more, stop) = next.through(
+                        rows,
+                        rom,
+                        row,
+                        current,
+                        cut.saturating_add(1)..=end,
+                        |_, _, _| Ok(()),
+                    )?;
+                    return Ok((held.saturating_add(1).saturating_add(more), stop));
+                }
+            }
+            held = held.saturating_add(1);
+            if finished(&current) {
+                began = current.clone();
+            }
+            previous = current;
         }
-        if let Err(outcome) = run.step(controller, &began, &previous, &current, cut) {
-            return Ok(report(held, Stop::At(super::at(cut, outcome))));
-        }
-        held = held.saturating_add(1);
-        controller = controller.read(current.pad.0, polled(&current));
-        if finished(&current) {
-            began = current.clone();
-        }
-        previous = current;
+        Ok((held, Stop::End))
     }
-    Ok(report(held, Stop::End))
+}
+
+/// All the owners of the scoped run at the last intro cut. The next work starts the flight.
+#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct Departure {
+    pub(super) intro: intro::State,
+    pub(super) frame: game::production::played::frame::State,
+    pub(super) controller: Controller,
+    pub(super) carry: super::start::Carried,
+}
+
+impl Departure {
+    pub(super) fn continue_flight(
+        self,
+        journey: game::production::played::flight::Journey,
+        cut: u64,
+    ) -> Result<super::flight::Continuation, Outcome> {
+        let restored = super::flight::restored(&self, cut, "intro departure checkpoint")?;
+        Ok(super::flight::Continuation {
+            journey: game::production::played::flight::Journey::after_intro(
+                &restored.intro,
+                restored.frame,
+            )
+            .filter(|after| *after == journey)
+            .ok_or(Outcome::CheckpointFailure { cut })?,
+            controller: restored.controller,
+            carry: restored.carry,
+        })
+    }
 }
 
 /// The intro's owner, its content, and the record's reader.

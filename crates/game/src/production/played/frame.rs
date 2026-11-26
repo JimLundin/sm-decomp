@@ -10,10 +10,11 @@ use interface_hud::FrameCount;
 use world_doors::Finishing;
 
 /// The counts of finished frames and the game's random number.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct State {
     /// The game's count of finished frames, in eight bits, which the HUD reads as the frame
     /// begins.
+    #[serde(with = "SavedFrameCount")]
     pub count: FrameCount,
     /// The count of finished frames in sixteen bits, which nothing restarts; the shaft's lights
     /// and the escape countdown read it.
@@ -22,7 +23,20 @@ pub struct State {
     pub random: types::RandomSequence,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(remote = "FrameCount")]
+struct SavedFrameCount(u8);
+
 impl State {
+    /// One non-playable intro frame, accounting for its draw when its work completes.
+    #[must_use]
+    pub fn after_intro_frame(self, done: bool) -> Self {
+        self.after(
+            finishing(done),
+            if done { draw(self.random) } else { self.random },
+        )
+    }
+
     /// The random number the frame's enemies read: drawn once as a frame of work begins.
     pub(super) fn drawn(self, passing: &Passing<'_>) -> types::RandomSequence {
         let random = passing.random.unwrap_or(self.random);
@@ -54,6 +68,16 @@ pub struct Counts {
 }
 
 impl Counts {
+    /// Before the first door, neither count has restarted since the game settled.
+    #[must_use]
+    pub const fn before_room(self) -> State {
+        State {
+            count: FrameCount(self.finished_frames.to_le_bytes()[0]),
+            finished_frames: self.finished_frames,
+            random: self.random,
+        }
+    }
+
     /// The counts after a frame end at which `finished` frames of work finished, `drawn` of
     /// them having drawn the random number as they began. A frame of work drew as it began,
     /// but only a finished frame end shows it, so it is counted where the frame finishes.

@@ -42,11 +42,11 @@ pub const MASKED: &[&str] = &[
 /// The frame owner's initial State comes from the flight's first frame.
 const SEED_HELD: &[&str] = &[
     "the frame counts and random number at the flight's start",
-    "item controls, sound queue occupancy and shot charge from the flight's seed",
+    "health, item controls, room quake, sound queue occupancy and shot charge from the flight's seed",
 ];
 
 /// What a flight run borrows from the record (decision 35).
-const BORROWED: &[&str] = &[
+pub(super) const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
     "lag: whether a frame of work begins, the last one's done",
     "the beginning of the prepared room's final music service (R2 and C1's loading, T1's lag)",
@@ -199,10 +199,6 @@ pub(super) fn play(
     start: u64,
     end: u64,
 ) -> Result<Report, Outcome> {
-    let bad = || data_failure(None, "played ROM image");
-    let image = Rom::new(std::fs::read(rom).map_err(|_| bad())?).map_err(|_| bad())?;
-    let scene = import::flight::import(image.lorom())
-        .map_err(|_| data_failure(None, "played flight scene"))?;
     let report = |held, stop| Report {
         row: row.to_owned(),
         start,
@@ -220,45 +216,146 @@ pub(super) fn play(
     } else {
         flight::Journey::resume_setup(frame)
     };
-    let mut run = Run {
+    let carry = super::start::Carried::seed(&seed.wram)?;
+    let controller = super::Controller::seeded(&seed.wram)?;
+    let next = Continuation {
         journey,
-        report: None,
-        scene,
-        label_steps: 0,
+        controller,
+        carry,
     };
-    let mut held: u64 = 0;
-    let mut controller = super::Controller::seeded(&seed.wram)?;
-    let mut previous = seed.clone();
-    let mut began = seed.clone();
-    for cut in start.saturating_add(1)..=end {
-        let current = rows.record(cut)?;
-        if current.video_frame != previous.video_frame.wrapping_add(1) {
-            return Err(data_failure(Some(cut), "played rows join"));
-        }
-        if let Err(outcome) = run.step(&began, &previous, &current, cut) {
-            return Ok(report(held, Stop::At(outcome)));
-        }
-        held = held.saturating_add(1);
-        controller = controller.read(current.pad.0, super::polled(&current));
-        if let flight::Stage::Arrival(arrival) = run.journey.stage {
-            if cut == end {
-                return Ok(report(held, Stop::End));
-            }
-            let content = super::connected::Content {
-                movement: super::movement::Content::load(rom)?,
-                appearance: super::appearance::Content::load(rom)?,
-            };
-            let (more, stop) =
-                super::Run::after_flight(seed, &content, rom, row, arrival, run.journey.frame)?
-                    .through(rows, current, controller, cut.saturating_add(1)..=end)?;
-            return Ok(report(held.saturating_add(more), stop));
-        }
-        if super::finished(&current) {
-            began = current.clone();
-        }
-        previous = current;
+    let (held, stop) = next.through(
+        rows,
+        rom,
+        row,
+        seed.clone(),
+        start.saturating_add(1)..=end,
+        |_, _, _| Ok(()),
+    )?;
+    Ok(report(held, stop))
+}
+
+#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+struct ArrivalEntry {
+    arrival: game::production::played::arrival::State,
+    frame: game::production::played::frame::State,
+    controller: super::Controller,
+    carry: super::start::Carried,
+}
+
+pub(super) fn restored<T: serde::Serialize + serde::de::DeserializeOwned + PartialEq>(
+    original: &T,
+    cut: u64,
+    owner: &'static str,
+) -> Result<T, Outcome> {
+    let failure = || data_failure(Some(cut), owner);
+    let wire = toml::to_string(original).map_err(|_| failure())?;
+    let restored = toml::from_str(&wire).map_err(|_| failure())?;
+    if original != &restored {
+        return Err(failure());
     }
-    Ok(report(held, Stop::End))
+    Ok(restored)
+}
+
+/// A live flight and the owners that continue with it through arrival and room play.
+pub(super) struct Continuation {
+    pub(super) journey: flight::Journey,
+    pub(super) controller: super::Controller,
+    pub(super) carry: super::start::Carried,
+}
+
+impl Continuation {
+    /// Continue the active flight. Records after entry supply observations and borrowed
+    /// platform/audio replies. Additional comparisons may follow owners across the handoff.
+    pub(super) fn through(
+        self,
+        rows: &mut Rows<'_>,
+        rom: &Path,
+        row: &str,
+        mut previous: FrameRecord,
+        cuts: core::ops::RangeInclusive<u64>,
+        mut observe: impl FnMut(&FrameRecord, u64, bool) -> Result<(), Outcome>,
+    ) -> Result<(u64, Stop), Outcome> {
+        let bad = || data_failure(None, "played ROM image");
+        let image = Rom::new(std::fs::read(rom).map_err(|_| bad())?).map_err(|_| bad())?;
+        let scene = import::flight::import(image.lorom())
+            .map_err(|_| data_failure(None, "played flight scene"))?;
+        let Self {
+            journey,
+            mut controller,
+            carry,
+        } = self;
+        let mut run = Run {
+            journey,
+            report: None,
+            scene,
+            label_steps: 0,
+        };
+        let mut held: u64 = 0;
+        let mut began = previous.clone();
+        let end = *cuts.end();
+        for cut in cuts {
+            let current = rows.record(cut)?;
+            if current.video_frame != previous.video_frame.wrapping_add(1) {
+                return Err(data_failure(Some(cut), "played rows join"));
+            }
+            let in_flight = matches!(run.journey.stage, flight::Stage::Flight(_));
+            let compared = run
+                .step(&began, &previous, &current, cut)
+                .and_then(|()| {
+                    let expected = crate::replay::health_tail::decode(&current.wram, Some(cut))?;
+                    crate::replay::compared(
+                        cut,
+                        &super::health::parts(&expected),
+                        &super::health::parts(&carry.health),
+                    )
+                })
+                .and_then(|()| {
+                    observe(
+                        &current,
+                        cut,
+                        in_flight && matches!(run.journey.stage, flight::Stage::Arrival(_)),
+                    )
+                });
+            if let Err(outcome) = compared {
+                return Ok((held, Stop::At(super::at(cut, outcome))));
+            }
+            held = held.saturating_add(1);
+            controller = controller.read(current.pad.0, super::polled(&current));
+            if let flight::Stage::Arrival(arrival) = run.journey.stage {
+                if cut == end {
+                    break;
+                }
+                let content = super::connected::Content {
+                    movement: super::movement::Content::load(rom)?,
+                    appearance: super::appearance::Content::load(rom)?,
+                };
+                let entry = restored(
+                    &ArrivalEntry {
+                        arrival,
+                        frame: run.journey.frame,
+                        controller,
+                        carry,
+                    },
+                    cut,
+                    "Ceres entry checkpoint",
+                )?;
+                let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
+                let (more, stop) = super::Run::load(start, &content, rom, row)?.through_observing(
+                    rows,
+                    current,
+                    entry.controller,
+                    cut.saturating_add(1)..=end,
+                    |record, cut| observe(record, cut, false),
+                )?;
+                return Ok((held.saturating_add(more), stop));
+            }
+            if super::finished(&current) {
+                began = current.clone();
+            }
+            previous = current;
+        }
+        Ok((held, Stop::End))
+    }
 }
 
 /// The flight's State, what its last frame reported, its scene, and the label's steps the
@@ -297,7 +394,11 @@ impl Run {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        let recorded_flight = word(&current.wram, source::GAME_STATE).map_err(at)? == FLIGHT;
+        let previous_function = word(&previous.wram, source::CINEMATIC_ACTIVE).map_err(at)?;
+        let recorded_flight = word(&current.wram, source::GAME_STATE).map_err(at)? == FLIGHT
+            && STAGES
+                .iter()
+                .any(|(function, _)| previous_function == *function);
         if recorded_flight != matches!(self.journey.stage, flight::Stage::Flight(_)) {
             return Err(Outcome::Difference {
                 cut,
@@ -364,6 +465,25 @@ impl Run {
                 )
             },
         );
+        let display = |value| Observation::quantity("flight.display", i64::from(value));
+        expected.push(display(current.ppu.inidisp & (BLANK | LEVEL)));
+        actual.push(display(
+            state.brightness.level.get()
+                | if state.brightness.visibility == Visibility::Blanked {
+                    BLANK
+                } else {
+                    0
+                },
+        ));
+        let effects = super::screens::Queues::read(previous)?.effects_added(current)?;
+        expected.push(Observation {
+            field: "flight.sound-effects".into(),
+            bytes: effects.concat(),
+        });
+        actual.push(Observation {
+            field: "flight.sound-effects".into(),
+            bytes: Vec::new(),
+        });
         expected.push(music_observation(recorded_music(previous, current)?));
         actual.push(music_observation(music));
         Ok((expected, actual))

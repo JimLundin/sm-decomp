@@ -10,7 +10,7 @@ use world_doors::{Doors, Fetching, Passage, Phase};
 
 /// The controller as the game sees it: the pad read by the last polling NMI and the
 /// buttons that went down at that read.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub(in crate::replay) struct Controller {
     pub(in crate::replay) held: u16,
     pub(in crate::replay) pressed: u16,

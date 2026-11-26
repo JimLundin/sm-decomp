@@ -333,6 +333,12 @@ struct Run<'a> {
     upper_row: Option<interface_hud::UpperRow>,
 }
 
+#[derive(Clone, Copy)]
+enum Start<'a> {
+    Room(&'a FrameRecord),
+    Preparing(played::arrival::State, played::frame::State, start::Carried),
+}
+
 impl<'a> Run<'a> {
     fn admit(
         seed: &FrameRecord,
@@ -341,36 +347,23 @@ impl<'a> Run<'a> {
         row: &'a str,
     ) -> Result<Self, Outcome> {
         let arrival = arrival::seed(&seed.wram)?;
-        let fresh = if arrival.preparing() {
-            Some((arrival, frame::seed(&seed.wram)?, quake::seed(&seed.wram)?))
+        let origin = if arrival.preparing() {
+            Start::Preparing(
+                arrival,
+                frame::seed(&seed.wram)?,
+                start::Carried::seed(&seed.wram)?,
+            )
         } else {
-            None
+            Start::Room(seed)
         };
-        Self::load(seed, content, path, row, fresh)
-    }
-
-    fn after_flight(
-        seed: &FrameRecord,
-        content: &'a connected::Content,
-        path: &Path,
-        row: &'a str,
-        arrival: played::arrival::State,
-        frame: played::frame::State,
-    ) -> Result<Self, Outcome> {
-        let quake = quake::seed(&seed.wram)?;
-        Self::load(seed, content, path, row, Some((arrival, frame, quake)))
+        Self::load(origin, content, path, row)
     }
 
     fn load(
-        seed: &FrameRecord,
+        origin: Start<'_>,
         content: &'a connected::Content,
         path: &Path,
         row: &'a str,
-        fresh: Option<(
-            played::arrival::State,
-            played::frame::State,
-            world_quake::State,
-        )>,
     ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played ROM image");
         let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
@@ -381,14 +374,15 @@ impl<'a> Run<'a> {
         let tail_worth = samus_health::WholeEnergy::new(rooms.actors.ceres_tail_worth)
             .ok_or_else(|| data_failure(None, "Ceres Ridley's tail's worth"))?;
         // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
-        let (room, state) = if let Some((arrival, frame, quake)) = fresh {
-            start::admit(&seed.wram, &start, &rooms, arrival, frame, quake)?
-        } else {
-            Self::seeded(seed, content, &rooms)?
+        let (room, state) = match origin {
+            Start::Preparing(arrival, frame, carried) => {
+                start::admit(carried, &start, &rooms, arrival, frame)?
+            }
+            Start::Room(seed) => Self::seeded(seed, content, &rooms)?,
         };
         let hud = super::hud::Content::load(path)?;
         let (_, area) = room.map;
-        let opening_hud = if fresh.is_some() {
+        let opening_hud = if matches!(origin, Start::Preparing(..)) {
             match import::start::hud(image.lorom(), &start) {
                 Ok(asset) => Some(hud::opening(&asset)?),
                 Err(import::start::HudError::Room) => None,
@@ -469,12 +463,35 @@ impl<'a> Run<'a> {
         self.witness_through(rows, previous, controller, cuts, |_, _| Ok(()))
     }
 
+    fn through_observing(
+        &mut self,
+        rows: &mut rows::Rows<'_>,
+        previous: FrameRecord,
+        controller: Controller,
+        cuts: core::ops::RangeInclusive<u64>,
+        observe: impl FnMut(&FrameRecord, u64) -> Result<(), Outcome>,
+    ) -> Result<(u64, Stop), Outcome> {
+        self.through_with(rows, previous, controller, cuts, observe, |_, _| Ok(()))
+    }
+
     fn witness_through(
+        &mut self,
+        rows: &mut rows::Rows<'_>,
+        previous: FrameRecord,
+        controller: Controller,
+        cuts: core::ops::RangeInclusive<u64>,
+        matched: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
+    ) -> Result<(u64, Stop), Outcome> {
+        self.through_with(rows, previous, controller, cuts, |_, _| Ok(()), matched)
+    }
+
+    fn through_with(
         &mut self,
         rows: &mut rows::Rows<'_>,
         mut previous: FrameRecord,
         mut controller: Controller,
         cuts: core::ops::RangeInclusive<u64>,
+        mut observe: impl FnMut(&FrameRecord, u64) -> Result<(), Outcome>,
         mut matched: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
     ) -> Result<(u64, Stop), Outcome> {
         let mut held: u64 = 0;
@@ -485,7 +502,12 @@ impl<'a> Run<'a> {
             }
             let (row, local) = rows.place(cut)?;
             match self.step(controller, &previous, &current, cut, (&row, local)) {
-                Ok(fields) => matched(cut, fields)?,
+                Ok(fields) => {
+                    if let Err(outcome) = observe(&current, cut) {
+                        return Ok((held, Stop::At(at(cut, outcome))));
+                    }
+                    matched(cut, fields)?;
+                }
                 Err(outcome) => return Ok((held, Stop::At(at(cut, outcome)))),
             }
             held = held.saturating_add(1);

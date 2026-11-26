@@ -21,7 +21,7 @@ impl State {
     pub fn new_game(
         start: &NewGame,
         started: crate::production::room_loading::Started,
-        progress: &run_progress::Progress,
+        health: samus_health::State,
         arrival: arrival::State,
         frame: frame::State,
         quake: world_quake::State,
@@ -39,9 +39,7 @@ impl State {
                 RememberedPosition(her),
                 types::VerticalFraction(0),
             )),
-            health: Model(new_file_health(
-                progress.inventory.held.0[run_progress::Supply::Energy].0,
-            )?),
+            health: Model(health),
             hud: Model(blank_hud()?),
             passage: super::passage::State {
                 doors: Doors::Play,

@@ -543,13 +543,17 @@ pub(super) fn frame_count(start: &[u8]) -> Result<FrameCount, Outcome> {
 }
 
 /// The buttons item select and item cancel are bound to.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub(super) struct Bindings {
     select: u16,
     cancel: u16,
 }
 
 impl Bindings {
+    pub(super) const fn new(select: u16, cancel: u16) -> Self {
+        Self { select, cancel }
+    }
+
     /// Item select and item cancel, from the buttons that went down this frame and those held.
     pub(super) const fn buttons(self, pressed: u16, held: u16) -> (SelectButton, CancelButton) {
         let select = if pressed & self.select != 0 {
@@ -570,10 +574,7 @@ impl Bindings {
 
 /// The item controls' bindings, from record N.
 pub(super) fn bindings(start: &[u8]) -> Result<Bindings, Outcome> {
-    Ok(Bindings {
-        select: word(start, 0x09ba)?,
-        cancel: word(start, 0x09b8)?,
-    })
+    Ok(Bindings::new(word(start, 0x09ba)?, word(start, 0x09b8)?))
 }
 
 pub(super) fn room_from_words([x, y]: [u16; 2], [width, height]: [u16; 2]) -> Room {

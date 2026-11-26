@@ -24,15 +24,16 @@ movie = "any"
 # turned on, and start game fading out; the options hand on to the intro, played on through
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
 # The fight returns to page two. The recorded demo drives discovery before the delivery and examination.
-# The run ends on the last intro cut before the flight takes over.
+# The live intro hands the dark screen to the flight. The selected file carries into arrival.
+# Room play continues until Ridley retreats and places the getaway walls.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 7512
-held = 7512
-stop = "end"
+end = 11320
+held = 11319
+stop = { failed = "RidleyGetaway" }
 seed_frame = 0
-frames = [1, 7512]
+frames = [1, 11319]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -253,4 +254,16 @@ held = 1498
 stop = "end"
 seed_frame = 6013
 frames = [6014, 7511]
+power_on = false
+
+# The last pages return the equipment and hand the dark screen to the flight. The same
+# clock, controller and health continue through arrival, HUD setup and the first rooms.
+[[run]]
+row = "any-intro-6012"
+start = 1
+end = 5308
+held = 5306
+stop = { failed = "RidleyGetaway" }
+seed_frame = 6013
+frames = [6014, 11319]
 power_on = false

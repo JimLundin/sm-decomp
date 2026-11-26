@@ -18,7 +18,7 @@ use types::flight::Visibility;
 use world_doors::Finishing;
 
 /// The arrival, carried frame to frame.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct State {
     /// The arrival's own State: its stage, the screen's brightness and the fade's count.
     pub arrival: ArrivalState,
@@ -41,7 +41,7 @@ pub enum Readiness {
 }
 
 /// Whether the one frame of work that makes the start ready has begun.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Begun {
     /// It begins as the next frame of work does.
     Not,
@@ -50,7 +50,7 @@ pub enum Begun {
 }
 
 /// The room's opening publication relative to its final music wait.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Setup {
     /// Waiting for the loading path to reach the final music service.
     BeforeMusic,

@@ -49,6 +49,28 @@ pub enum Fault {
 }
 
 impl Journey {
+    /// Hand the intro's last picture and clock to the flight that owns the next frame.
+    #[must_use]
+    pub fn after_intro(intro: &super::intro::State, frame: frame::State) -> Option<Self> {
+        if intro.intro.stage != types::intro::IntroStage::Done {
+            return None;
+        }
+        let brightness = intro.intro.brightness;
+        let mut state = start();
+        state.brightness = Brightness {
+            level: types::flight::BrightnessLevel::new(brightness.level.number())?,
+            visibility: match brightness.blanking {
+                types::intro::Blanking::Blanked => types::flight::Visibility::Blanked,
+                types::intro::Blanking::Shown => types::flight::Visibility::Shown,
+            },
+        };
+        Some(Self {
+            stage: Stage::Flight(state),
+            frame,
+            setup_already_drew: false,
+        })
+    }
+
     /// Begin the flight with the frame owner's State as the scene starts.
     #[must_use]
     pub fn start(frame: frame::State) -> Self {

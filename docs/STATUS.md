@@ -444,9 +444,10 @@ caret's place and whether it shows, the glows, the click turn, the clicks agains
 queue's index, the music's stop against the music queue's, the brightness, the fade's count and
 the equipment returned; at the 2 lag cuts, 129 and 403, which are borrowed, the brightness
 alone. VRAM (E2), OAM (E1), the colour blend's bands (E3) and the PPU mirrors (E3) are masked.
-The intro's end, the blank, `IntroEnds` and the equipment returned, falls in the next frame,
-the flight's seed, outside the row: the played run does not witness it, its vectors and unit
-test do, and it becomes live at the join into the flight. A model that never moves differs at
+The scoped run from movie frame 6,013 continues across the last page at 7,512. The flight
+restores the entry checkpoint and carries the same clock, controller and actor through movie
+frame 11,319. The next cut requires `RidleyGetaway`.
+A model that never moves differs at
 cut 2 in `intro.dissolve`; a press dropped by the runner differs at cut 1186 in `intro.stage`.
 
 ### The flight to Ceres
@@ -536,10 +537,15 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 7,512 cuts through the last intro display.
-It carries the fight through the locked actor turns and return, then runs the live
-discovery, delivery and examination. Flight owns the next cut at 7,513, where the
-separately seeded flight run compares its active state and display blanking.
+intro in the State `Begins`. The run holds 11,319 cuts. It carries the fight through
+the locked actor turns and return, then plays discovery, delivery and examination.
+The last page ends at 7,512. Flight owns the active scene and forced blank at 7,513.
+The flight takes the intro's frame counts, random sequence, pad latch, health and item bindings.
+At 8,315 it hands its State to arrival during an unfinished work interval. The selected
+file's save publishes its payload on that cut and both checks at 8,316. The continuation
+restores the arrival and pending save checkpoints at 8,315. It checks the active slot
+and the original selected file as well as every battery byte through room play. The movie starts a new file, so arrival initializes fresh-file Progress.
+The next cut at 11,320 requires `RidleyGetaway`.
 
 The sound Samus requests when she leaves her spin reaches the front end at 2,517. The standing
 handoff at 2,615 runs before the final pad. The locked fight keeps its body sample

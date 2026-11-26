@@ -55,6 +55,36 @@ impl Cartridge {
         self.started.as_ref().map(|start| &start.run)
     }
 
+    /// Publish the Ceres arrival save at the cut reached by the frame owner.
+    ///
+    /// # Errors
+    /// The arrival requires an active run and a cartridge ready for its save.
+    pub fn arrival(&mut self, format: &Format, entered: bool, finished: bool) -> Result<(), Fault> {
+        if entered {
+            let start = self.started.as_ref().ok_or(Fault::FileUnstarted)?;
+            let run = &start.run;
+            let stage = if finished {
+                save_files::WriteStage::ChecksWritten
+            } else {
+                save_files::WriteStage::PayloadWritten
+            };
+            advance(
+                &mut self.state,
+                format,
+                Input::Write {
+                    cut: save_files::SaveCut::CeresArrival,
+                    run,
+                    live_map: &run.maps[types::Area::Ceres],
+                    stage,
+                },
+            )
+            .map_err(Fault::Cartridge)?;
+        } else if finished && matches!(self.state.pending, PendingAction::Write { .. }) {
+            self.request(format, Input::FinishWrite)?;
+        }
+        Ok(())
+    }
+
     fn request(&mut self, format: &Format, input: Input<'_>) -> Result<Receipt, Fault> {
         advance(&mut self.state, format, input)
             .map(|output| output.receipt)

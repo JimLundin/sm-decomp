@@ -210,6 +210,15 @@ impl Queues {
         })
     }
 
+    /// New sound effects independent of music, which the flight compares in queue order.
+    pub(super) fn effects_added(&self, record: &FrameRecord) -> Result<Vec<[u8; 3]>, Outcome> {
+        Ok(self
+            .added(record, false)?
+            .into_iter()
+            .filter(|sound| sound[0] != MUSIC)
+            .collect())
+    }
+
     /// The sounds `record` holds that these queues didn't, each as its code, in order.
     pub(super) fn added(
         &self,

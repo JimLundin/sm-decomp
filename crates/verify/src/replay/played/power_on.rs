@@ -1,6 +1,6 @@
 //! A run from the console's power-on: the front end's boot, then its screens from the title on
 //! (`screens`), compared at each cut through the options' hand-on to the intro and on through
-//! the intro's opening and page 1, whose own fields are the intro run's (`intro`).
+//! the intro, the flight and Ceres.
 //!
 //! The run admits the power-on State itself: of cut 0 it reads only where the next cut's
 //! interval begins, as its work RAM is the emulator's power-on fill. Each cut borrows the inputs
@@ -61,6 +61,8 @@ pub(super) const BORROWED: &[&str] = &[
     "audio from the intro on: whether a track waits and the sound count read by Samus at the start of her playable turn",
     "T1 timing of an interrupted fight frame, from its CPU program counter and calling stack",
     "the initial platform battery and the cut at which the startup diagnostic and scan have finished",
+    "flight and Ceres: NMI work boundaries, audio queue replies, room setup readiness and passage fetch timing",
+    "room passages: the random number at frame start; escape countdown initiation until the boss owns the start",
 ];
 
 /// Play the power-on row `row` from power-on through `end`, the intro's scenes imported from
@@ -84,6 +86,8 @@ pub(super) fn play(
             "room tiles, sprite pixels, non-weapon sprite attributes and layer mirrors (E1, E2, E3 and E4)",
             "partly written palette, text and sprite shadow buffers inside an interrupted stage or drawing pass (T1)",
             "the unproduced retained tail of room memory and the opening palette transfers (T1)",
+            "flight sprites, station lettering, layer mirrors and preparation transfers outside the current rendering checks",
+            "the random number at lag cuts during flight (T1)",
         ],
     };
     if start != 0 {
@@ -102,10 +106,32 @@ pub(super) fn play(
         if current.video_frame != previous.video_frame.wrapping_add(1) {
             return Err(data_failure(Some(cut), "played rows join"));
         }
+        if super::flight::starts(&previous.wram)? {
+            return Ok(report(
+                held,
+                Stop::At(Outcome::Difference {
+                    cut,
+                    field: "flight.active".into(),
+                }),
+            ));
+        }
         if let Err(outcome) = run.step(&began, &previous, &current, cut) {
             return Ok(report(held, Stop::At(outcome)));
         }
         held = held.saturating_add(1);
+        if cut < end
+            && let Some(continuation) = run.flight(&current, cut)?
+        {
+            let (more, stop) = run.continue_flight(
+                continuation,
+                rows,
+                rom,
+                row,
+                current,
+                cut.saturating_add(1)..=end,
+            )?;
+            return Ok(report(held.saturating_add(more), stop));
+        }
         if super::finished(&current) {
             began = current.clone();
         }
@@ -264,12 +290,7 @@ impl Run {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        if cut >= 271 && self.cartridge.image(&self.format).as_slice() != record.sram.as_ref() {
-            return Err(Outcome::Difference {
-                cut,
-                field: "save-files.battery".to_owned(),
-            });
-        }
+        self.compare_battery(record, cut)?;
         if !was_started
             && let Some(run) = self.cartridge.started()
             && record.wram.get(0x09a2..0x0a02) != Some(&profile_bytes(&run.profile))
@@ -299,6 +320,105 @@ impl Run {
                 Err(data_failure(Some(cut), "played front end back at power-on"))
             }
         }
+    }
+
+    fn compare_battery(&self, record: &FrameRecord, cut: u64) -> Result<(), Outcome> {
+        if cut >= 271 && self.cartridge.image(&self.format).as_slice() != record.sram.as_ref() {
+            return Err(Outcome::Difference {
+                cut,
+                field: "save-files.battery".to_owned(),
+            });
+        }
+        Ok(())
+    }
+
+    fn flight(
+        &self,
+        record: &FrameRecord,
+        cut: u64,
+    ) -> Result<Option<super::flight::Continuation>, Outcome> {
+        let front_end::State::Screens(screens) = &self.state else {
+            return Ok(None);
+        };
+        let front_end::Screen::Intro(intro) = &screens.screen else {
+            return Ok(None);
+        };
+        let Some(journey) = game::production::played::flight::Journey::after_intro(
+            &intro.scene,
+            screens.counts.before_room(),
+        ) else {
+            return Ok(None);
+        };
+        let room = intro
+            .actors
+            .rooms
+            .as_ref()
+            .ok_or_else(|| data_failure(None, "intro actor at flight entry"))?;
+        let [_, _, _, cancel, select, _, _] =
+            game::exact::save_files::control_words(&intro.actors.buttons);
+        let carry = super::start::Carried {
+            health: room.actor.health.0,
+            bindings: crate::replay::hud::Bindings::new(select, cancel),
+            appearance: crate::replay::connected::AppearanceInputs {
+                waiting: crate::replay::appearance::sounds_waiting(&record.wram)?,
+                charge: samus_appearance::Charge::new(0)
+                    .ok_or_else(|| data_failure(None, "intro actor charge"))?,
+            },
+            quake: world_quake::State {
+                phase: world_quake::QuakePhase(0),
+                shake: None,
+            },
+        };
+        Ok(Some(
+            super::intro::Departure {
+                intro: intro.scene.clone(),
+                frame: screens.counts.before_room(),
+                controller: self.controller,
+                carry,
+            }
+            .continue_flight(journey, cut)?,
+        ))
+    }
+
+    fn continue_flight(
+        &mut self,
+        continuation: super::flight::Continuation,
+        rows: &mut Rows<'_>,
+        rom: &Path,
+        row: &str,
+        previous: FrameRecord,
+        cuts: core::ops::RangeInclusive<u64>,
+    ) -> Result<(u64, Stop), Outcome> {
+        let selected = self.cartridge.state.active;
+        let Some(started) = self.cartridge.started().cloned() else {
+            return Err(data_failure(
+                None,
+                "Ceres flight requires the selected file",
+            ));
+        };
+        continuation.through(rows, rom, row, previous, cuts, |record, cut, entered| {
+            self.cartridge
+                .arrival(&self.format, entered, super::finished(record))
+                .map_err(|fault| Outcome::Unsupported {
+                    cut: Some(cut),
+                    dependency: format!("played cartridge {fault:?}"),
+                })?;
+            if entered {
+                self.cartridge.state = super::flight::restored(
+                    &self.cartridge.state,
+                    cut,
+                    "Ceres arrival cartridge checkpoint",
+                )?;
+            }
+            if self.cartridge.state.active != selected || self.cartridge.started() != Some(&started)
+            {
+                return Err(Outcome::Difference {
+                    cut,
+                    field: "save-files.selected-file".into(),
+                });
+            }
+            self.compare_battery(record, cut)
+        })
     }
 
     /// The boot's fields at `cut`.
