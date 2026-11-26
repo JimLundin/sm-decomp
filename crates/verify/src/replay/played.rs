@@ -873,12 +873,11 @@ impl<'a> Run<'a> {
             .transpose()?,
             start: arrival::start(previous, current)?,
         };
-        let borrowed_start = if warning::selected(&self.state.station) {
+        let start = if warning::selected(&self.state.station) {
             None
         } else {
             super::hud::countdown_start(&previous.wram, &current.wram)?
         };
-        let start = borrowed_start;
         let hud_frame = hud::frame(&self.room.hud, controller, start);
         let standing_view = self.state.passage.room.entry.view.transform;
         let before = types::ceres_blackout::FinishedPasses(self.state.frame.finished_frames);
