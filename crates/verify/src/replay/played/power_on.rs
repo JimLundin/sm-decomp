@@ -66,6 +66,9 @@ pub(super) const BORROWED: &[&str] = &[
     "flight and Ceres: NMI work boundaries, audio queue replies, room setup readiness and passage fetch timing",
     "lag: completed shaft background work during the interrupted contents fetch",
     "room passages: the random number at frame start; escape countdown initiation until the boss owns the start",
+    "shaft departure: vblank end, staged save and publication timing",
+    "station and flight: T1 work completion and post-service music queue reply",
+    "Landing Site: accepted and selected bytes during direct DMA",
 ];
 
 /// Play the power-on row `row` from power-on through `end`, the intro's scenes imported from
@@ -91,6 +94,7 @@ pub(super) fn play(
             "the unproduced retained tail of room memory and the opening palette transfers (T1)",
             "flight sprites, station lettering, layer mirrors and preparation transfers outside the current rendering checks",
             "the random number at lag cuts during flight (T1)",
+            "departure cinematics: in-progress setup transfers, flash scanline composition and retained HDMA channels 2 and 3",
         ],
     };
     if start != 0 {
