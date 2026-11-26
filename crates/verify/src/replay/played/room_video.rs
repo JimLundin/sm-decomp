@@ -117,7 +117,7 @@ fn compare_background(
     expected: &mut Vec<super::Observation>,
     actual: &mut Vec<super::Observation>,
 ) -> Result<(), super::Outcome> {
-    if let Some(words) = &video.standard_bg3 {
+    if let Some(words) = video.standard_bg3() {
         let native = record
             .vram
             .get(0x4000..0x4800)
@@ -153,14 +153,14 @@ fn arrival_produces_standard_background_before_hud() {
         run.through(&mut rows, seed, controller, 1..=1).unwrap(),
         (1, Stop::End)
     );
-    assert!(run.state.room_video.standard_bg3.is_none());
+    assert!(run.state.room_video.standard_bg3().is_none());
     let prior = rows.record(1).unwrap();
     let controller = seed_controller(&prior).unwrap();
     assert_eq!(
         run.through(&mut rows, prior, controller, 2..=2).unwrap(),
         (1, Stop::End)
     );
-    let written = run.state.room_video.standard_bg3.clone().unwrap();
+    let written = run.state.room_video.standard_bg3().unwrap().to_vec();
     let sampled = rows.record(2).unwrap();
     let matches = written == sampled.vram[0x4000..0x4800];
     assert!(matches, "standard BG3 native words");
@@ -170,7 +170,7 @@ fn arrival_produces_standard_background_before_hud() {
             .unwrap(),
         (220, Stop::End)
     );
-    let matches = run.state.room_video.standard_bg3.as_ref() == Some(&written);
+    let matches = run.state.room_video.standard_bg3() == Some(written.as_slice());
     assert!(matches, "standard BG3 retained");
 }
 

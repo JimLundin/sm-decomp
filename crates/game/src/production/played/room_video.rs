@@ -8,6 +8,8 @@ use boss_ceres_ridley::{AlternatingLook, OverlayTurn};
 use data::assets::shaft::{OVERLAY_BYTES, Shaft};
 use types::{Pair, Px};
 
+const STANDARD_BG3: core::ops::Range<usize> = 0x4000..0x4800;
+
 const OVERLAY_START: usize = 0x7000;
 const OVERLAY_END: usize = 0x7200;
 const PLATFORM_START: VramWord = VramWord(0x060e);
@@ -64,6 +66,7 @@ pub struct RoomVideo {
     /// The first 2,048 words of standard background tiles from Ceres setup.
     pub standard_bg3: Option<Vec<u16>>,
     shaft_picture: Option<ShaftPicture>,
+    standard_bg3_published: bool,
 }
 
 impl RoomVideo {
@@ -124,7 +127,19 @@ impl RoomVideo {
     /// Returns `None` when the required source prefix is unavailable.
     #[must_use]
     pub fn standard_background(&mut self, background: &[u16]) -> Option<()> {
-        self.standard_bg3 = Some(background.get(..2048)?.to_vec());
+        let words = self.video.memory.vram.get_mut(STANDARD_BG3)?;
+        words.copy_from_slice(background.get(..words.len())?);
+        self.standard_bg3_published = true;
         Some(())
+    }
+
+    /// The published BG3 prefix as it now stands in physical VRAM.
+    #[must_use]
+    pub fn standard_bg3(&self) -> Option<&[u16]> {
+        if self.standard_bg3_published {
+            self.video.memory.vram.get(STANDARD_BG3)
+        } else {
+            None
+        }
     }
 }
