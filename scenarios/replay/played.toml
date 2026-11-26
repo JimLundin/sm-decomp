@@ -268,6 +268,8 @@ seed_frame = 6013
 frames = [6014, 11432]
 power_on = false
 
+# The flight to Zebes from the station blackout through the frame that clears the
+# picture and restores full energy. The next frame needs the Landing Site loader.
 [[run]]
 row = "chain-any-0011-DF45"
 start = 1004
