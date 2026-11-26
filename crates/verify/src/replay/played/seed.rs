@@ -170,7 +170,10 @@ pub(super) fn room(
     Ok((held, played, progress))
 }
 
-type Doorways = (Vec<played::passage::Doorway>, (interface_hud::Room, data::room::Area));
+type Doorways = (
+    Vec<played::passage::Doorway>,
+    (interface_hud::Room, data::room::Area),
+);
 
 fn imported_room<'a>(seed: &[u8], world: &'a world::World) -> Result<&'a world::Room, Outcome> {
     let bad = || data_failure(None, "played room doors");

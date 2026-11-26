@@ -350,7 +350,7 @@ pub(super) fn live_content(
     use data::rom::Rom;
     use game::production::{blackout, escape_departure};
 
-    let rom = Rom::new(std::fs::read(path).map_err(|_| data_failure(None, "departure ROM"))?)
+    let image = Rom::new(std::fs::read(path).map_err(|_| data_failure(None, "departure ROM"))?)
         .map_err(|_| data_failure(None, "departure ROM pin"))?;
     let figures = content
         .clock_figures
@@ -362,14 +362,14 @@ pub(super) fn live_content(
     Ok(escape_departure::Content {
         shaft: blackout::Content {
             figures,
-            graphics: Graphics::load(rom.lorom(), GRAPHICS_BANKS)
+            graphics: Graphics::load(image.lorom(), GRAPHICS_BANKS)
                 .map_err(|_| data_failure(None, "departure sprite graphics"))?,
             format,
             standing: content.standing.clone(),
             hud: Some(hud),
         },
         raster_opening: shaft_opening(programs),
-        departure: load_content(rom.lorom())?,
+        departure: load_content(image.lorom())?,
     })
 }
 
