@@ -30,10 +30,10 @@ movie = "any"
 row = "any-power-on"
 start = 0
 end = 13311
-held = 13310
-stop = { failed = "lag cut in play (T1)" }
+held = 13311
+stop = "end"
 seed_frame = 0
-frames = [1, 13310]
+frames = [1, 13311]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -56,10 +56,10 @@ power_on = false
 row = "any-fly-to-ceres"
 start = 0
 end = 5799
-held = 5798
-stop = { failed = "lag cut in play (T1)" }
+held = 5799
+stop = "end"
 seed_frame = 7512
-frames = [7513, 13310]
+frames = [7513, 13311]
 power_on = false
 
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
@@ -82,10 +82,10 @@ power_on = false
 row = "any-ceres-arrival"
 start = 0
 end = 4996
-held = 4995
-stop = { failed = "lag cut in play (T1)" }
+held = 4996
+stop = "end"
 seed_frame = 8315
-frames = [8316, 13310]
+frames = [8316, 13311]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
@@ -98,10 +98,10 @@ power_on = false
 row = "chain-any-0001-DF45"
 start = 0
 end = 4773
-held = 4772
-stop = { failed = "lag cut in play (T1)" }
+held = 4773
+stop = "end"
 seed_frame = 8538
-frames = [8539, 13310]
+frames = [8539, 13311]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -134,10 +134,10 @@ power_on = false
 row = "chain-any-0003-DFD7"
 start = 0
 end = 4079
-held = 4078
-stop = { failed = "lag cut in play (T1)" }
+held = 4079
+stop = "end"
 seed_frame = 9232
-frames = [9233, 13310]
+frames = [9233, 13311]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -160,10 +160,10 @@ power_on = false
 row = "chain-any-0006-E0B5"
 start = 0
 end = 3149
-held = 3148
-stop = { failed = "lag cut in play (T1)" }
+held = 3149
+stop = "end"
 seed_frame = 10162
-frames = [10163, 13310]
+frames = [10163, 13311]
 power_on = false
 
 # The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune
@@ -198,10 +198,10 @@ power_on = false
 row = "chain-any-0006-E0B5"
 start = 1690
 end = 3149
-held = 1458
-stop = { failed = "lag cut in play (T1)" }
+held = 1459
+stop = "end"
 seed_frame = 11852
-frames = [11853, 13310]
+frames = [11853, 13311]
 power_on = false
 
 # Start in the slide's wait after the destination content has loaded. The remaining
@@ -247,10 +247,10 @@ power_on = false
 row = "chain-any-0007-E06B"
 start = 0
 end = 3000
-held = 1371
-stop = { failed = "lag cut in play (T1)" }
+held = 1372
+stop = { failed = "live shaft departure needs the selected cartridge" }
 seed_frame = 11939
-frames = [11940, 13310]
+frames = [11940, 13311]
 power_on = false
 
 # The escape's room 4 alone, from its own seed, shaking, and the passage out of it, the doors
@@ -283,10 +283,10 @@ power_on = false
 row = "chain-any-0010-DF8D"
 start = 0
 end = 518
-held = 517
-stop = { failed = "lag cut in play (T1)" }
+held = 518
+stop = "end"
 seed_frame = 12793
-frames = [12794, 13310]
+frames = [12794, 13311]
 power_on = false
 
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being
@@ -309,10 +309,10 @@ power_on = false
 row = "any-intro-6012"
 start = 1
 end = 7299
-held = 7297
-stop = { failed = "lag cut in play (T1)" }
+held = 7298
+stop = "end"
 seed_frame = 6013
-frames = [6014, 13310]
+frames = [6014, 13311]
 power_on = false
 
 # The flight to Zebes from the station blackout through the frame that clears the
@@ -358,8 +358,8 @@ power_on = false
 row = "chain-any-0006-E0B5"
 start = 1270
 end = 3149
-held = 1878
-stop = { failed = "lag cut in play (T1)" }
+held = 1879
+stop = "end"
 seed_frame = 11432
-frames = [11433, 13310]
+frames = [11433, 13311]
 power_on = false

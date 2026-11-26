@@ -9,7 +9,7 @@
 The milestone is **Power-on through Ceres** in the any% movie. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-███████████████████████████████████░▓▓▓▓  87.5% from power-on · 99.9% pass
+███████████████████████████████████▓▓▓▓▓  87.5% from power-on · 100.0% pass
 ```
 
 `█` held continuously from power-on · `▓` passes from a later seed · `░` doesn't pass yet
@@ -28,6 +28,6 @@ The stretches being worked, in the order the movie plays them; the first not yet
 | Rooms 1 to 5 | `······················━━━━━·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
 | Ridley's room | `··························━━━━━·········` | ✓ | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
 | The escape | `······························━━━━━·····` | ✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
-| **The explosion and the flight to Zebes** | `··································━━━━━━` | `█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░` | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| The explosion and the flight to Zebes | `··································━━━━━━` | ✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 
 Building and checking it, and the command that prints the models' sizes and the indexed replay evidence, are in [BUILDING](docs/BUILDING.md).
