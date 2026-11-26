@@ -11,9 +11,12 @@ import signal
 import stat
 import subprocess
 import sys
+import time
 import tomllib
 import urllib.request
 import urllib.error
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -27,6 +30,9 @@ OBSERVED_MODEL = "global.openai.gpt-6.2-sol"
 OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-2-sol-gs"})
 PAGE_CHARACTERS = 25000
 COMMAND_CHARACTERS = 100000
+RESPONSE_SECONDS = 180
+RATE_LIMIT_RETRIES = 3
+MAX_RETRY_AFTER_SECONDS = 30
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",
            "fmt", "fmtcheck", "test", "runner", "status", "diff", "log", "add", "commit")
 FIELDS = {
@@ -666,6 +672,51 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
     return config_path
 
 
+def retry_delay(header: str | None, fallback: int) -> float:
+    if header is None:
+        return fallback
+    value = header.strip()
+    if re.fullmatch(r"[0-9]+", value):
+        digits = value.lstrip("0")
+        if len(digits) > len(str(MAX_RETRY_AFTER_SECONDS)):
+            return float("inf")
+        return int(digits or "0")
+    try:
+        when = parsedate_to_datetime(value)
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+        return max(0, when.timestamp() - time.time())
+    except (ValueError, OverflowError, OSError):
+        return fallback
+
+
+def open_response(opener: urllib.request.OpenerDirector, request: urllib.request.Request) -> Any:
+    deadline = time.monotonic() + RESPONSE_SECONDS
+    remaining = RESPONSE_SECONDS
+    for attempt in range(RATE_LIMIT_RETRIES + 1):
+        try:
+            response = opener.open(request, timeout=remaining)
+        except urllib.error.HTTPError as failure:
+            if failure.code != 429 or attempt == RATE_LIMIT_RETRIES:
+                raise
+            retry_after = failure.headers.get("Retry-After") if failure.headers is not None else None
+            delay = retry_delay(retry_after, 2 ** attempt)
+            if delay > MAX_RETRY_AFTER_SECONDS or delay >= deadline - time.monotonic():
+                raise
+            try:
+                time.sleep(delay)
+                remaining = deadline - time.monotonic()
+            except BaseException:
+                failure.close()
+                raise
+            if remaining <= 0:
+                raise
+            failure.close()
+        else:
+            with response:
+                return json.load(response)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("config", type=Path, nargs="?")
@@ -710,8 +761,7 @@ def main() -> int:
         request = urllib.request.Request(provider["base_url"].rstrip("/") + "/responses",
                                          data=json.dumps(body).encode(),
                                          headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
-        with opener.open(request, timeout=180) as response:
-            return json.load(response)
+        return open_response(opener, request)
     brief_text = Path(config["brief"]).read_text(encoding="utf-8")
     response_loop(broker, brief_text, send, Path(config["transcript"]))
     print("RESPONSES COMPLETE (operator must run import and canary checks)")

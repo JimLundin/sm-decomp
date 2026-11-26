@@ -5,6 +5,7 @@ import io
 from contextlib import redirect_stderr
 import os
 import shutil
+import signal
 import sys
 import tempfile
 import subprocess
@@ -12,6 +13,8 @@ import tomllib
 import time
 import unittest
 import uuid
+from urllib.error import HTTPError, URLError
+from urllib.request import Request
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -19,7 +22,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from launch_stream import capture
-from responses_controller import Broker, Refused, RefusalCategory, OBSERVED_MODEL, prepare, response_loop, unique_object
+from responses_controller import Broker, Refused, RefusalCategory, OBSERVED_MODEL, main, open_response, prepare, response_loop, unique_object
 
 
 class Contract(unittest.TestCase):
@@ -274,6 +277,73 @@ class Contract(unittest.TestCase):
             response_loop(self.broker, "Invented", send, self.lane / "transcript")
         return requests
 
+    def run_transport(self, open_request: Any) -> None:
+        config = self.lane / "controller.toml"
+        config.touch()
+        brief = self.lane / "brief"
+        brief.write_text("Invented", encoding="utf-8")
+        provider_config = self.lane / "provider.toml"
+        provider_config.touch()
+        launch = {"execution": "docker", "export": self.root, "lane": self.lane,
+                  "provider_config": provider_config, "brief": brief,
+                  "transcript": self.lane / "transcript"}
+        provider = {"wire_api": "responses", "base_url": "https://fixture.invalid/",
+                    "env_key": "RESPONSES_FIXTURE_TOKEN"}
+        deployment = {"model_provider": "fixture", "model_providers": {"fixture": provider}}
+        opener = unittest.mock.Mock(open=open_request)
+        self.broker.config["max_turns"] = 2
+        with patch("sys.argv", ["responses_controller.py", str(config)]), \
+                patch.dict(os.environ, {"RESPONSES_FIXTURE_TOKEN": "synthetic-token"}), \
+                patch("responses_controller.Broker", return_value=self.broker), \
+                patch("tomllib.loads", side_effect=[launch, deployment]), \
+                patch("urllib.request.build_opener", return_value=opener):
+            with patch("sys.stdout", new_callable=io.StringIO):
+                self.assertEqual(main(), 0)
+
+    def test_transport_retries_the_same_turn_after_a_tool_execution(self) -> None:
+        accepted = {"model": OBSERVED_MODEL, "status": "completed", "output": [{
+            "type": "function_call", "status": "completed", "name": "cleanroom",
+            "call_id": "call-1", "arguments": '{"action":"status"}',
+        }]}
+        finished = {"model": OBSERVED_MODEL, "status": "completed", "output": [{
+            "type": "message", "role": "assistant", "status": "completed",
+            "content": [{"type": "output_text", "text": "Done"}],
+        }]}
+        rate_limit = HTTPError("https://fixture.invalid/responses", 429, "fixture",
+                               {"Retry-After": "0"}, io.BytesIO(b"{}"))
+        open_request = unittest.mock.Mock(side_effect=[
+            io.BytesIO(json.dumps(accepted).encode()), rate_limit,
+            io.BytesIO(json.dumps(finished).encode()),
+        ])
+        with patch("signal.signal"), patch.object(self.broker, "dispatch", return_value="tool result") as dispatch:
+            self.run_transport(open_request)
+        dispatch.assert_called_once_with("cleanroom", {"action": "status"})
+        first, rejected, retried = (call.args[0] for call in open_request.call_args_list)
+        self.assertEqual(json.loads(first.data)["model"], "gpt-6.2-sol")
+        self.assertEqual(retried.full_url, rejected.full_url)
+        self.assertEqual(retried.header_items(), rejected.header_items())
+        self.assertEqual(retried.data, rejected.data)
+        self.assertEqual(json.loads(retried.data)["input"][-1],
+                         {"type": "function_call_output", "call_id": "call-1", "output": "tool result"})
+        records = (self.lane / "transcript").read_text(encoding="utf-8").splitlines()
+        self.assertEqual(len(records), 3)
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux controller cancellation")
+    def test_transport_cancellation_during_retry_wait(self) -> None:
+        rate_limit = HTTPError("https://fixture.invalid/responses", 429, "fixture",
+                               {"Retry-After": "1"}, io.BytesIO(b"{}"))
+        open_request = unittest.mock.Mock(side_effect=rate_limit)
+        handlers = {}
+        def interrupt(_delay: float) -> None:
+            handlers[signal.SIGTERM](signal.SIGTERM, None)
+        with patch("signal.signal", side_effect=handlers.__setitem__), \
+                patch("responses_controller.time.sleep", side_effect=interrupt), \
+                self.assertRaises(SystemExit) as stopped:
+            self.run_transport(open_request)
+        self.assertEqual(stopped.exception.code, 128 + signal.SIGTERM)
+        open_request.assert_called_once()
+        self.assertTrue(rate_limit.fp.closed)
+
     def test_refusal_disposition_is_independent_of_diagnostic(self) -> None:
         # Diagnostic words cannot turn a recoverable request into a session failure.
         for diagnostic in ("immutable", "inventory", "uncertified"):
@@ -495,6 +565,90 @@ class Contract(unittest.TestCase):
             response_loop(self.broker, "Invented", lambda _: dict(final, model="invalid\nbody"), self.lane / "transcript")
         self.assertNotIn("body", diagnostics.getvalue())
 
+
+
+class ResponseTransport(unittest.TestCase):
+    def setUp(self) -> None:
+        self.request = Request("https://fixture.invalid/responses", data=b"{}")
+        self.opener = unittest.mock.Mock()
+        self.now = 0.0
+
+    def rate_limit(self, retry_after: str | None = None) -> HTTPError:
+        headers = {} if retry_after is None else {"Retry-After": retry_after}
+        return HTTPError(self.request.full_url, 429, "fixture", headers, io.BytesIO(b"{}"))
+
+    def advance(self, seconds: float) -> None:
+        self.now += seconds
+
+    def send(self) -> Any:
+        with patch("responses_controller.time.monotonic", side_effect=lambda: self.now), \
+                patch("responses_controller.time.time", return_value=0), \
+                patch("responses_controller.time.sleep", side_effect=self.advance):
+            return open_response(self.opener, self.request)
+
+    def test_retry_after_and_fallback_exhaustion(self) -> None:
+        errors = [self.rate_limit("3"), self.rate_limit("Thu, 01 Jan 1970 00:00:06 GMT"),
+                  self.rate_limit("malformed"), self.rate_limit()]
+        self.opener.open.side_effect = errors
+        with self.assertRaises(HTTPError) as failed:
+            self.send()
+        self.assertIs(failed.exception, errors[-1])
+        self.assertEqual([call.kwargs["timeout"] for call in self.opener.open.call_args_list],
+                         [180, 177, 171, 167])
+        self.assertTrue(all(error.fp.closed for error in errors[:-1]))
+        self.assertFalse(failed.exception.fp.closed)
+
+    def test_retry_after_beyond_allowed_budget_fails_immediately(self) -> None:
+        error = self.rate_limit("31")
+        self.opener.open.side_effect = error
+        with self.assertRaises(HTTPError) as failed:
+            self.send()
+        self.assertIs(failed.exception, error)
+        self.opener.open.assert_called_once()
+        self.assertEqual(self.now, 0)
+
+    def test_attempt_time_counts_against_the_retry_deadline(self) -> None:
+        error = self.rate_limit("3")
+        def reject(*args: Any, **kwargs: Any) -> None:
+            self.advance(178)
+            raise error
+        self.opener.open.side_effect = reject
+        with self.assertRaises(HTTPError) as failed:
+            self.send()
+        self.assertIs(failed.exception, error)
+        self.opener.open.assert_called_once()
+        self.assertEqual(self.now, 178)
+
+    def test_oversleep_preserves_provider_error_without_another_attempt(self) -> None:
+        error = HTTPError(self.request.full_url, 429, "fixture", {"Retry-After": "3"},
+                          io.BytesIO(b'{"error":{"code":"fixture_rate_limit"}}'))
+        self.opener.open.side_effect = error
+        with patch.object(self, "advance", side_effect=lambda _delay: setattr(self, "now", 181)), \
+                self.assertRaises(HTTPError) as failed:
+            self.send()
+        self.assertIs(failed.exception, error)
+        self.opener.open.assert_called_once()
+        self.assertEqual(failed.exception.read(), b'{"error":{"code":"fixture_rate_limit"}}')
+
+    def test_other_open_failures_are_not_retried(self) -> None:
+        for failure in (HTTPError(self.request.full_url, 503, "fixture", {}, io.BytesIO(b"{}")),
+                        URLError("fixture")):
+            with self.subTest(failure=type(failure)), self.assertRaises(URLError) as failed:
+                self.opener.open.reset_mock()
+                self.opener.open.side_effect = failure
+                self.send()
+            self.assertIs(failed.exception, failure)
+            self.opener.open.assert_called_once()
+        self.assertEqual(self.now, 0)
+
+    def test_accepted_response_read_failure_is_not_retried(self) -> None:
+        error = self.rate_limit()
+        response = io.BytesIO(b"{}")
+        self.opener.open.return_value = response
+        with patch.object(response, "read", side_effect=error), self.assertRaises(HTTPError) as failed:
+            self.send()
+        self.assertIs(failed.exception, error)
+        self.opener.open.assert_called_once()
 
 class Streams(unittest.TestCase):
     def test_stderr_descendant_completion(self) -> None:
