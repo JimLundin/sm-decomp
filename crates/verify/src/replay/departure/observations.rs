@@ -162,6 +162,7 @@ pub(super) fn native(
                 "published",
                 canonical::to_bytes(&landing_site::registers(&previous.ppu)),
             ),
+            bytes("mirrors", landing_site::observed_mirrors(record)?),
             channels(record.ppu.dma.map(landing_site::channel)),
         ]);
     }
@@ -199,10 +200,7 @@ pub(in crate::replay) fn actual(
             (
                 phase,
                 s.finished,
-                match s.flow.destination() {
-                    zebes::LoadDestination::LandingSite => 0x22,
-                    zebes::LoadDestination::CeresStart => 0x1f,
-                },
+                crate::replay::zebes::destination_word(s.flow.destination()),
                 s.maximum,
                 s.subtitles_enabled(),
                 &s.health,
@@ -248,6 +246,10 @@ pub(in crate::replay) fn actual(
         plane(&video.committed),
         bytes("display", canonical::to_bytes(&video.committed)),
         bytes("published", canonical::to_bytes(&carry.publication)),
+        bytes(
+            "mirrors",
+            landing_site::display_mirrors(&video.batch, carry.landing.control),
+        ),
         channels(video.dma),
     ];
     Ok(result)

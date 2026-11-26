@@ -1895,3 +1895,13 @@ after = "let _ = placement;"
 case = "departure/interrupted-station-setup"
 cut = 283
 field = "departure.oam"
+
+[[fault]]
+name = "departure-loader-disables-pad-reads"
+responsibility = "landing-site"
+file = "crates/game/src/production/played/departure.rs"
+before = "self.carry.work_ready = false;"
+after = "self.carry.landing.control.auto_read = false; self.carry.work_ready = false;"
+case = "departure/flight-dispatches-loader"
+cut = 2124
+field = "departure.mirrors"

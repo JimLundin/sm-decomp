@@ -1484,6 +1484,7 @@ fn movement_witnessed_fields(
             &[O::ZebesStage, O::ZebesRequests]
         }
         "screens-zebes/PlanetHolds" => &[O::ZebesStage],
+        "game-random/AdvanceRandom" => &[O::LandingRandom],
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
@@ -1745,7 +1746,6 @@ fn cinematic_witnesses(rule: &str, provider: InputProvider) -> Option<&'static [
         };
     }
     Some(match rule {
-        "game-random/AdvanceRandom" => &[O::LandingRandom],
         "screens-zebes/GunshipAppears" | "screens-zebes/ShipApproachesPlanet" => {
             &[O::ZebesStage, O::ZebesPicture]
         }

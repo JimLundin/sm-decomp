@@ -14,7 +14,8 @@ use data::id::{DoorwayId, RoomId};
 use data::map::MapCells;
 use data::rom::Rom;
 use game::production::played::landing_site::{
-    Area, AreaMaps, Entrance, ExploredMap, Phase, Placement, Run, ShadowTilemaps, State, Work,
+    Area, AreaMaps, Entrance, ExploredMap, Phase, Placement, Run, ShadowTilemaps, State,
+    VideoControl, Work,
 };
 use game::production::played::zebes::{Flow, LoadDestination};
 use game::production::{
@@ -219,7 +220,7 @@ fn byte(record: &FrameRecord, address: usize) -> Result<u8, Outcome> {
         .ok_or_else(|| data_failure(Some(record.index), "landing WRAM byte"))
 }
 
-fn queued_colour(record: &FrameRecord) -> Result<[u8; 3], Outcome> {
+pub(super) fn queued_colour(record: &FrameRecord) -> Result<[u8; 3], Outcome> {
     let [red, green, blue] = COLOUR_QUEUE;
     Ok([
         byte(record, red)?,
@@ -429,6 +430,30 @@ fn setup_bytes(registers: &Registers) -> Vec<u8> {
     ]
 }
 
+pub(super) fn display_mirrors(batch: &NmiBatch, control: VideoControl) -> Vec<u8> {
+    setup_bytes(&batch.registers)
+        .into_iter()
+        .chain([
+            u8::from(control.auto_read),
+            u8::from(!control.interrupts_off),
+            u8::from(control.fast_rom),
+        ])
+        .chain(batch.sprites.0.to_le_bytes())
+        .chain(batch.fixed_colour.map(|write| write.0))
+        .collect()
+}
+
+pub(super) fn observed_mirrors(record: &FrameRecord) -> Result<Vec<u8>, Outcome> {
+    let mut mirrors = MIRRORS
+        .into_iter()
+        .map(|at| byte(record, at))
+        .collect::<Result<Vec<_>, _>>()?;
+    mirrors.extend_from_slice(bytes(record, 0x84, 3)?);
+    mirrors.extend(word(record, 0x0590)?.to_le_bytes());
+    mirrors.extend(queued_colour(record)?);
+    Ok(mirrors)
+}
+
 pub(in crate::replay) const fn io_bytes(channel: DmaChannel) -> [u8; 11] {
     let [s0, s1] = channel.source.to_le_bytes();
     let [c0, c1] = channel.count.to_le_bytes();
@@ -490,11 +515,6 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
         Phase::Sprites(t) => canonical::to_bytes(&t),
         Phase::Ready => vec![1],
     };
-    let controls = [
-        u8::from(loader.control.auto_read),
-        u8::from(!loader.control.interrupts_off),
-        u8::from(loader.control.fast_rom),
-    ];
     let physical = &video.memory.oam;
     let oam = physical
         .low
@@ -545,12 +565,7 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
         ),
         values(
             "landing.display.mirrors",
-            setup_bytes(&video.batch.registers)
-                .into_iter()
-                .chain(controls)
-                .chain(video.batch.sprites.0.to_le_bytes())
-                .chain(video.batch.fixed_colour.map(|write| write.0))
-                .collect(),
+            display_mirrors(&video.batch, loader.control),
         ),
         values(
             "landing.dma",
@@ -635,10 +650,6 @@ fn expected(
         }),
         selected: selected.then(|| graphics.sprite_source.advanced(accepted)),
     };
-    let mirrors = MIRRORS
-        .into_iter()
-        .map(|at| byte(arrival, at))
-        .collect::<Result<Vec<_>, _>>()?;
     let state = vec![
         Observation::quantity("landing.random", i64::from(word(arrival, 0x05e5)?)),
         packed(
@@ -677,15 +688,7 @@ fn expected(
                 "landing.display.published",
                 canonical::to_bytes(&run.publication),
             ),
-            values(
-                "landing.display.mirrors",
-                mirrors
-                    .into_iter()
-                    .chain(bytes(arrival, 0x84, 3)?.iter().copied())
-                    .chain(word(arrival, 0x0590)?.to_le_bytes())
-                    .chain(queued_colour(arrival)?)
-                    .collect(),
-            ),
+            values("landing.display.mirrors", observed_mirrors(arrival)?),
             values("landing.dma", dma.into_iter().flatten().collect()),
             packed(
                 "landing.tilemaps",

@@ -100,6 +100,8 @@ pub(in crate::replay) fn origin(
             committed: crate::replay::landing_site::registers(&record.ppu),
             dma: record.ppu.dma.map(crate::replay::landing_site::channel),
             batch: game::state::video::NmiBatch {
+                fixed_colour: crate::replay::landing_site::queued_colour(record)?
+                    .map(game::state::video::ColourWrite),
                 cgram: station.palette,
                 oam: station.oam,
                 registers: crate::replay::landing_site::registers(&record.ppu),
