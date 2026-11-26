@@ -80,6 +80,19 @@ use platform::{
 use std::path::Path;
 use world_doors::Doors;
 
+fn reference_rules() -> played::Rules {
+    played::Rules {
+        movement: samus_movement::Rules::default(),
+        appearance: samus_appearance::Rules::VANILLA,
+        camera: game::production::CameraRules::new(world_camera::Rules::REFERENCE),
+        doors: world_doors::Rules::default(),
+        health: samus_health::Rules::REFERENCE,
+        hud: interface_hud::Rules::default(),
+        ceres: boss_ceres_ridley::Rules::default(),
+        arrival: screens_arrival::Rules::REFERENCE,
+    }
+}
+
 /// Room facts taken from the seed and held, or held at a constant, because no selected owner
 /// produces them yet. Each one is a missing owner; the list shrinks as owners join the played
 /// loop.
@@ -513,16 +526,7 @@ impl<'a> Run<'a> {
                 warning,
                 tail_worth,
             },
-            rules: played::Rules {
-                movement: samus_movement::Rules::default(),
-                appearance: samus_appearance::Rules::VANILLA,
-                camera: game::production::CameraRules::new(world_camera::Rules::REFERENCE),
-                doors: world_doors::Rules::default(),
-                health: samus_health::Rules::REFERENCE,
-                hud: interface_hud::Rules::default(),
-                ceres: boss_ceres_ridley::Rules::default(),
-                arrival: screens_arrival::Rules::REFERENCE,
-            },
+            rules: reference_rules(),
             room,
             content,
             rom: path,
