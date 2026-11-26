@@ -392,6 +392,17 @@ struct Run<'a> {
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
     blackout: Option<game::production::blackout::LiveRoom>,
+    prepared_departure: Option<PreparedDeparture>,
+}
+
+/// Carried placement, maps and physical consumers available to the pending save.
+#[derive(Clone)]
+struct PreparedDeparture {
+    room: played::departure::Room,
+    landing: played::landing_site::State,
+    location: (types::Area, types::StationId),
+    platform: Option<game::production::blackout::Platform>,
+    assets: game::production::escape_departure::Content,
 }
 
 #[derive(Clone, Copy)]
@@ -519,6 +530,7 @@ impl<'a> Run<'a> {
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
             blackout: None,
+            prepared_departure: None,
         })
     }
 
@@ -647,20 +659,72 @@ impl<'a> Run<'a> {
                     .as_ref()
                     .is_some_and(game::production::blackout::LiveRoom::awaits_blank)
             {
-                return Ok((
-                    held,
-                    Stop::At(Outcome::Unsupported {
-                        cut: Some(cut.saturating_add(1)),
-                        dependency:
-                            "live shaft departure needs the retained room video and map owners"
-                                .into(),
-                    }),
-                ));
+                let next = cut.saturating_add(1);
+                match self.take_departure(controller, next) {
+                    Ok((shaft, assets)) => {
+                        let (more, stop) =
+                            explosion::through_shaft(shaft, assets, rows, current, next..=end)?;
+                        return Ok((held.saturating_add(more), stop));
+                    }
+                    Err(outcome) => return Ok((held, Stop::At(outcome))),
+                }
             }
             controller = controller.read(current.pad.0, polled(&current));
             previous = current;
         }
         Ok((held, Stop::End))
+    }
+
+    fn take_departure(
+        &mut self,
+        controller: Controller,
+        next: u64,
+    ) -> Result<
+        (
+            game::production::escape_departure::Shaft,
+            game::production::escape_departure::Content,
+        ),
+        Outcome,
+    > {
+        use game::production::escape_departure::Shaft;
+        let unsupported = |dependency| Outcome::Unsupported {
+            cut: Some(next),
+            dependency,
+        };
+        let mut prepared = self.prepared_departure.take().ok_or_else(|| {
+            unsupported("live shaft departure needs the retained room video and map owners".into())
+        })?;
+        let live = self.cartridge.take().ok_or_else(|| {
+            unsupported("live shaft departure needs the selected cartridge".into())
+        })?;
+        let scene = self.blackout.take().ok_or_else(|| {
+            data_failure(Some(next), "live shaft departure lost the pending blackout")
+        })?;
+        let (locked_hud, hud_content) = self
+            .state
+            .locked_hud(&self.played, &hud::frame(&self.room.hud, controller, None));
+        let video = std::mem::take(&mut self.state.room_video.video);
+        let blackout = scene
+            .into_blackout(
+                &self.state,
+                video,
+                live.cartridge,
+                prepared.location,
+                prepared.platform,
+                locked_hud,
+            )
+            .map_err(|fault| unsupported(format!("live shaft departure {fault:?}")))?;
+        prepared.assets.shaft.hud = Some(hud_content);
+        prepared.assets.shaft.format = live.format;
+        Ok((
+            Shaft {
+                blackout,
+                room: prepared.room,
+                landing: prepared.landing,
+                progress: (&self.state.progress).into(),
+            },
+            prepared.assets,
+        ))
     }
 
     fn passage_timing(&mut self, current: &FrameRecord) -> return_timing::CutTiming {
