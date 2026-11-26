@@ -84,11 +84,7 @@ impl super::State {
         crate::production::blackout::LockedHud::from_ordinary(
             &self.hud,
             self.frame.count.0,
-            (
-                content.hud.clone(),
-                content.map.clone(),
-                self.passage.map_room,
-            ),
+            (content.hud, content.map.clone(), self.passage.map_room),
             Pair {
                 x: centre.x.pixel().0,
                 y: centre.y.pixel().0,
