@@ -2,8 +2,10 @@
 
 use data::assets::shaft::{OVERLAY_BYTES, ROTATION_SAMPLES, RotationSample, Shaft};
 use data::rom::{AddressError, Lorom, RomAddress};
+use data::spritemap::Spritemap;
 
 const OVERLAY: RomAddress = RomAddress::new(0xb0, 0xc400);
+const FIGURE: RomAddress = RomAddress::new(0xa6, 0xf921);
 const PLATFORM: RomAddress = RomAddress::new(0xa6, 0xf918);
 const ROTATION: RomAddress = RomAddress::new(0x89, 0xad5f);
 
@@ -49,6 +51,14 @@ pub fn import(rom: Lorom<'_>) -> Result<Shaft, AddressError> {
         platform,
         rotation,
     })
+}
+
+/// Read the stationary figure shown during the overlay's rumble.
+///
+/// # Errors
+/// An incomplete spritemap returns an address error.
+pub fn overlay_figure(rom: Lorom<'_>) -> Result<Spritemap, AddressError> {
+    Spritemap::load(rom, FIGURE)
 }
 
 #[cfg(test)]
