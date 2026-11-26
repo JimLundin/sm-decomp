@@ -20,7 +20,10 @@ impl Content {
         let bytes = std::fs::read(path).map_err(|_| data_failure(None, "HUD ROM"))?;
         let pinned =
             data::rom::Rom::new(bytes).map_err(|_| data_failure(None, "HUD player ROM pin"))?;
-        let rom = pinned.lorom();
+        Self::from_rom(pinned.lorom())
+    }
+
+    pub(super) fn from_rom(rom: data::rom::Lorom<'_>) -> Result<Self, Outcome> {
         let p =
             data::hud::HudPictures::load(rom).map_err(|_| data_failure(None, "HUD pictures"))?;
         let maps =
@@ -593,6 +596,10 @@ pub(super) fn room_from_words([x, y]: [u16; 2], [width, height]: [u16; 2]) -> Ro
 }
 
 pub fn expected(wram: &[u8], _content: &Content) -> Result<Vec<Observation>, Outcome> {
+    native_fields(wram)
+}
+
+pub(super) fn native_fields(wram: &[u8]) -> Result<Vec<Observation>, Outcome> {
     let mut fields = vec![
         Observation {
             field: "hud.grid".to_owned(),
@@ -660,6 +667,10 @@ pub(super) fn explored_bitmap(state: &HudState) -> Vec<u8> {
 }
 
 pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>, Outcome> {
+    state_fields(state)
+}
+
+pub(super) fn state_fields(state: &HudState) -> Result<Vec<Observation>, Outcome> {
     let tiles = game::production::hud::tilemap(state)
         .map_err(|_| data_failure(None, "HUD complete tilemap"))?;
     let mut fields = vec![

@@ -89,10 +89,10 @@ pub(super) fn admit(
         }
         (
             ProductionSeed::Blackout(state),
-            ProductionContent::Blackout(_),
+            ProductionContent::Blackout(content),
             ProductionRules::Blackout,
         ) => {
-            state.validate().map_err(AdmissionFault::Blackout)?;
+            state.validate(content).map_err(AdmissionFault::Blackout)?;
             OwnedState::Blackout(state)
         }
         (seed, content, rules) => admit_standalone(seed, content, rules)?,

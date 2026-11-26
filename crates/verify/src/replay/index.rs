@@ -353,6 +353,18 @@ pub enum ObservationId {
     /// Defeat, doors, quake results and the clock picture through the first passage turns.
     #[serde(rename = "ridley.warning.handoff")]
     CeresWarningHandoff,
+    /// The wrapping HUD frame count.
+    #[serde(rename = "hud.frame-count")]
+    HudFrameCount,
+    /// The regular queue's descriptor and source words at an NMI cut.
+    #[serde(rename = "hud.pending-transfer")]
+    HudPendingTransfer,
+    /// The descriptor and source words the NMI services.
+    #[serde(rename = "hud.publication")]
+    HudPublication,
+    /// The full HUD window in physical VRAM.
+    #[serde(rename = "hud.published-grid")]
+    HudPublishedGrid,
     /// Complete carried flight tail, compared by segment and field.
     #[serde(rename = "ridley.tail.state")]
     CeresTailState,
@@ -1399,6 +1411,28 @@ macro_rules! appearance_observations {
     };
 }
 
+macro_rules! hud_observations {
+    () => {
+        ObservationId::GaugeRefresh
+            | ObservationId::GaugeWords
+            | ObservationId::EarlyMapWindow
+            | ObservationId::HudGrid
+            | ObservationId::HudExplored
+            | ObservationId::HudEnergy
+            | ObservationId::HudMissiles
+            | ObservationId::HudSupers
+            | ObservationId::HudBombs
+            | ObservationId::HudHighlighted
+            | ObservationId::HudSelected
+            | ObservationId::HudOneShot
+            | ObservationId::HudMapOff
+            | ObservationId::HudFrameCount
+            | ObservationId::HudPendingTransfer
+            | ObservationId::HudPublication
+            | ObservationId::HudPublishedGrid
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -1471,19 +1505,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CameraRememberedYFraction
         | O::CameraVerticalFraction
         | O::MapCarryCamera => Responsibility::Camera,
-        O::GaugeRefresh
-        | O::GaugeWords
-        | O::EarlyMapWindow
-        | O::HudGrid
-        | O::HudExplored
-        | O::HudEnergy
-        | O::HudMissiles
-        | O::HudSupers
-        | O::HudBombs
-        | O::HudHighlighted
-        | O::HudSelected
-        | O::HudOneShot
-        | O::HudMapOff => Responsibility::Hud,
+        hud_observations!() => Responsibility::Hud,
         weapons_observations!() => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
         appearance_observations!() => Responsibility::Appearance,

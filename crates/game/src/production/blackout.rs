@@ -1,16 +1,18 @@
 //! The Ceres elevator's scheduler, the interrupted room picture and its two-stage cartridge save.
 mod body;
+mod hud;
 mod picture;
 use super::save_files;
 use crate::exact::save_files::Format;
 use crate::samus_appearance_bridge::elevator::Art as StandingArt;
-use crate::state::video::{Colour, Oam, StandingStrips, Video};
+use crate::state::video::{Colour, Oam, StandingStrips, Video, VramTransfer};
 pub use body::StandingFrame;
 use canonical::{
     Canonical,
     model::{Model, Pinned},
 };
 use data::assets::countdown::Figures;
+pub use hud::{HudContent, LockedHud};
 use interface_hud::{Countdown, CountdownInputs, CountdownPicture, CountdownRuns, FinishedFrames};
 pub use picture::Platform;
 use screens_blackout::{Opportunity, Reach, RoomPass};
@@ -34,6 +36,8 @@ pub struct Content {
     pub format: Format,
     /// Imported body art when the selected scope includes Samus's standing picture.
     pub standing: Option<StandingArt>,
+    /// Art and held inputs for the locked HUD.
+    pub hud: Option<HudContent>,
 }
 
 /// Owners carried from the shaft. The HUD and save files retain their own complete state.
@@ -41,7 +45,7 @@ pub struct Content {
 pub struct Owners {
     /// Blackout rule state, including the queued picture identities.
     pub scene: BlackoutState,
-    /// Running HUD timer, retired when the cartridge completes.
+    /// Running timer in a scope that selects only the countdown.
     pub countdown: Countdown,
     /// Cartridge, active slot and pending write.
     pub files: save_files::State,
@@ -76,6 +80,8 @@ pub struct State {
     pub video: Box<Video>,
     /// A platform write to drain with the prepared room batch.
     pub platform: Option<Platform>,
+    /// The complete HUD selected for the locked room's regular transfer.
+    pub hud: Option<LockedHud>,
 }
 
 /// Which continuation the interrupted main strand reached.
@@ -133,6 +139,8 @@ pub struct Output {
     pub dispatch: Option<Box<Dispatch>>,
     /// Samus's tile sources that video serviced on this cut.
     pub standing_publication: StandingStrips,
+    /// The regular uploads serviced by the room's NMI.
+    pub regular_publication: Vec<VramTransfer>,
 }
 
 /// The selected scope cannot consume this continuation or asset.
@@ -142,6 +150,8 @@ pub enum Fault {
     State,
     /// Timer cannot advance or draw.
     Timer,
+    /// Missing HUD inputs, output cells or event consumers.
+    Hud,
     /// Unavailable room graphics.
     Picture,
     /// The draw opportunity and its pending resources disagree.
@@ -165,7 +175,7 @@ impl State {
             .map_err(|why| super::ProductionFault::Unsupported(super::Unsupported::Blackout(why)))
     }
 
-    pub(super) fn validate(&self) -> Result<(), Fault> {
+    pub(super) fn validate(&self, content: &Content) -> Result<(), Fault> {
         let o = &self.owners.0;
         let s = &o.scene;
         let prepared = matches!(s.pass, WorkPass::Prepared(_));
@@ -178,12 +188,21 @@ impl State {
             BlackoutPhase::Saving(_) | BlackoutPhase::AwaitBlank
         );
         let saving = matches!(s.phase, BlackoutPhase::Saving(_));
+        let countdown = self
+            .hud
+            .as_ref()
+            .map_or(o.countdown, |hud| hud.model.0.countdown);
+        if self.hud.is_some() != content.hud.is_some()
+            || self.hud.is_some() && o.countdown != Countdown::Dormant
+        {
+            return Err(Fault::Hud);
+        }
         if !prepared && (waiting || self.platform.is_some())
             || matches!(s.phase, BlackoutPhase::Dispatched(_)) && prepared
             || (waiting || retired) != (s.light == BlackoutLight::ForcedBlank)
             || retired != (s.timer.activity == TimerActivity::Retired)
             || retired != (s.shaft == ShaftStage::Cleared)
-            || retired != matches!(o.countdown, Countdown::Dormant)
+            || retired != matches!(countdown, Countdown::Dormant)
             || saving != matches!(o.files.cartridge.pending, PendingAction::Write { .. })
             || retired && !prepared && s.published.light != BlackoutLight::ForcedBlank
             || self.video.memory.vram.len() != crate::state::video::VRAM_WORDS
@@ -218,7 +237,8 @@ impl State {
                 BlackoutPhase::Shaft | BlackoutPhase::Hold(_) | BlackoutPhase::Fade
                     if matches!(o.scene.pass, WorkPass::Finished) =>
                 {
-                    let opportunity = room(o, &mut self.video, reached, content)?;
+                    let opportunity =
+                        room(o, &mut self.video, reached, self.hud.as_mut(), content)?;
                     if let Some((standing, art)) = cut.standing.zip(content.standing.as_ref()) {
                         body::prepare(&mut self.video.batch, standing, art)?;
                     }
@@ -265,7 +285,13 @@ impl State {
                     )
                     .map_err(Fault::Save)?;
                 }
-                Request::PrepareStationExplosion(_) => o.countdown = Countdown::Dormant,
+                Request::PrepareStationExplosion(_) => {
+                    if let Some(hud) = &mut self.hud {
+                        hud.model.0.countdown = Countdown::Dormant;
+                    } else {
+                        o.countdown = Countdown::Dormant;
+                    }
+                }
                 Request::DispatchExplosion(route) => {
                     dispatch = Some(Box::new(Dispatch {
                         route,
@@ -286,21 +312,30 @@ impl State {
             }
         }
         picture::light(&mut self.video.batch.registers, o.scene.light);
-        let standing_publication = self.publish(cut, content)?;
+        let (standing_publication, regular_publication) = self.publish(cut, content)?;
         Ok(Output {
             requests,
             dispatch,
             standing_publication,
+            regular_publication,
         })
     }
 
-    fn publish(&mut self, cut: Cut, content: &Content) -> Result<StandingStrips, Fault> {
+    fn publish(
+        &mut self,
+        cut: Cut,
+        content: &Content,
+    ) -> Result<(StandingStrips, Vec<VramTransfer>), Fault> {
         let mut serviced = StandingStrips::default();
+        let mut regular = Vec::new();
         let queued = self.video.batch.standing_strips;
         let scene = &mut self.owners.0.scene;
         if cut.publish && matches!(scene.pass, WorkPass::Prepared(_)) {
             screens_blackout::advance(scene, Opportunity::Publication);
             if matches!(scene.pass, WorkPass::Finished) {
+                if let Some(hud) = &mut self.hud {
+                    hud.finished = hud.finished.wrapping_add(1);
+                }
                 self.video.commit_registers();
                 self.video.upload_oam_and_cgram();
                 if queued != StandingStrips::default() {
@@ -311,13 +346,13 @@ impl State {
                         .ok_or(Fault::StandingPicture)?;
                     serviced = self.video.publish_standing_strips(&art.graphics);
                 }
-                self.video.process_vram_writes(&content.graphics);
+                regular = self.video.process_vram_writes(&content.graphics);
                 if let Some(platform) = self.platform.take() {
                     platform.publish(&mut self.video)?;
                 }
             }
         }
-        Ok(serviced)
+        Ok((serviced, regular))
     }
 }
 
@@ -325,6 +360,7 @@ fn room(
     o: &mut Owners,
     video: &mut Video,
     reached: bool,
+    hud: Option<&mut LockedHud>,
     content: &Content,
 ) -> Result<Opportunity, Fault> {
     let runs = if o.scene.phase == BlackoutPhase::Shaft {
@@ -332,15 +368,27 @@ fn room(
     } else {
         CountdownRuns::PresentationOnly
     };
-    let timer = o
-        .countdown
-        .play(CountdownInputs {
-            runs,
-            start: None,
-            finished: FinishedFrames(o.scene.finished.0),
-        })
-        .map_err(|_| Fault::Timer)?
-        .picture;
+    let countdown = CountdownInputs {
+        runs,
+        start: None,
+        finished: FinishedFrames(o.scene.finished.0),
+    };
+    let timer = match (hud, &content.hud) {
+        (Some(hud), Some(assets)) if !reached && o.scene.phase != BlackoutPhase::Shaft => hud
+            .prepare(
+                assets,
+                o.health.energy.whole.get(),
+                countdown,
+                &mut video.batch,
+            )?,
+        (None, None) => {
+            o.countdown
+                .play(countdown)
+                .map_err(|_| Fault::Timer)?
+                .picture
+        }
+        _ => return Err(Fault::Hud),
+    };
     let CountdownPicture::Shown { time, .. } = timer else {
         return Err(Fault::Timer);
     };

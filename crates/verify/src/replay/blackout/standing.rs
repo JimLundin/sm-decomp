@@ -101,10 +101,20 @@ impl LockedLook {
     }
 }
 
-pub(in crate::replay) fn pending(
+pub(in crate::replay) fn admit_art(
     record: &FrameRecord,
+    state: &mut game::production::blackout::State,
     rom: Lorom<'_>,
-) -> Result<StandingStrips, Outcome> {
+    pending_publication: bool,
+) -> Result<game::samus_appearance_bridge::elevator::Art, Outcome> {
+    if pending_publication {
+        state.video.batch.standing_strips = pending(record, rom)?;
+    }
+    game::samus_appearance_bridge::elevator::Art::load(rom)
+        .map_err(|_| data_failure(Some(record.index), "standing body art"))
+}
+
+fn pending(record: &FrameRecord, rom: Lorom<'_>) -> Result<StandingStrips, Outcome> {
     let ram = &record.wram;
     let half = |flag, pointer| {
         let bad = || data_failure(Some(record.index), "standing body tile descriptor");

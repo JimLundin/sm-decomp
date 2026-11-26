@@ -2213,3 +2213,32 @@ provider = "recorded NMI kind and interrupted work site"
 fields = ["end of vblank", "cartridge write completion", "requested commit"]
 phase = "suspended work and NMI return"
 claim = "the same room and NMI path continues its single admitted pending picture"
+
+[[case]]
+id = "hud/locked-shaft-publication"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 164 }
+end = { cut_inclusive = 241 }
+rules = ["interface-hud/HerBlink", "interface-hud/MiniMapWindow"]
+profile = "reference"
+responsibilities = ["hud"]
+content = "player-rom-import"
+inputs = "blackout"
+expectations = { provider = "pinned-record-cache", fields = ["hud.grid", "hud.explored", "hud.energy", "hud.missiles", "hud.supers", "hud.bombs", "hud.highlighted", "hud.selected", "hud.one-shot", "hud.map-off", "hud.frame-count"], outputs = ["hud.pending-transfer", "hud.publication", "hud.published-grid"] }
+checkpoints = true
+limits = ["One seed admits the locked room's HUD, position, stock and video. Only the HUD grid, regular queue and its VRAM range are compared. Shaft geometry, actors, affine and platform publication require B8."]
+
+[[case.borrowed]]
+dependency = "shaft.lock"
+provider = "post-reach pinned record"
+fields = ["movement-handler", "room placement and map", "stock and reserve"]
+phase = "sole origin"
+claim = "the locked room retains the post-motion position, stock and reserve"
+
+[[case.borrowed]]
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["fresh work", "end of vblank", "cartridge write completion", "requested commit"]
+phase = "suspended work and NMI return"
+claim = "T1 supplies opportunities to prepare, hold and publish the carried regular queue"

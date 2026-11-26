@@ -1,4 +1,5 @@
 //! The shaft handoff on one seed, plus a second seed inside the final unfinished room batch.
+pub(super) mod hud;
 pub(super) mod observe;
 pub(super) mod seed;
 pub(super) mod standing;
@@ -41,6 +42,10 @@ fn standing_body(case: &Case) -> bool {
     case.rules.iter().any(|rule| rule == standing::RULE)
 }
 
+fn shaft_hud(case: &Case) -> bool {
+    case.responsibilities == [Responsibility::Hud]
+}
+
 pub(super) fn valid(case: &Case) -> bool {
     if standing_body(case) {
         let (fields, outputs) = standing::partition();
@@ -54,6 +59,17 @@ pub(super) fn valid(case: &Case) -> bool {
             && case.responsibilities == [Responsibility::Appearance]
             && case.expectations.fields == fields
             && case.expectations.outputs == outputs;
+    }
+    if shaft_hud(case) {
+        return case.kind == CaseKind::Scoped
+            && case.row == ROW
+            && matches!(case.start, Start::CacheCut { frame: 164 })
+            && case.end.cut_inclusive == 241
+            && case.checkpoints
+            && case.content == ContentProvider::PlayerRomImport
+            && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+            && case.expectations.fields == hud::FIELDS
+            && case.expectations.outputs == hud::OUTPUTS;
     }
     let late = matches!(case.start, Start::CacheCut { frame: 239 });
     let mut outputs = vec![
@@ -124,27 +140,24 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let mut previous = record(&cache, frame)?;
     let mut state = seed::read(&previous, rom.lorom(), &format, late)?;
     let body = standing_body(case);
+    let hud = shaft_hud(case);
+    let hud_assets = hud
+        .then(|| hud::admit(&previous, rom.lorom(), &mut state))
+        .transpose()?;
     let locked_look = if body && !late {
         Some(standing::LockedLook::read(&previous, rom.lorom())?)
     } else {
         None
     };
-    let art = if body {
-        if late {
-            state.video.batch.standing_strips = standing::pending(&previous, rom.lorom())?;
-        }
-        Some(
-            game::samus_appearance_bridge::elevator::Art::load(rom.lorom())
-                .map_err(|_| data_failure(Some(frame), "standing body art"))?,
-        )
-    } else {
-        None
-    };
+    let art = body
+        .then(|| standing::admit_art(&previous, &mut state, rom.lorom(), late))
+        .transpose()?;
     let content = ProductionContent::Blackout(Box::new(blackout::Content {
         figures,
         format,
         graphics: data::pose::tiles::Graphics::default(),
         standing: art,
+        hud: hud_assets,
     }));
     let rules = ProductionRules::Blackout;
     let production = Production::admit(
@@ -161,7 +174,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         let mut input = work(
             &previous,
             &current,
-            !body && !late && cut == frame.saturating_add(1),
+            !body && !hud && !late && cut == frame.saturating_add(1),
         )?;
         if matches!(input.work, blackout::Work::Fresh { .. })
             && let Some(look) = &locked_look
@@ -171,6 +184,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         inputs.push(input);
         expected.push(if body {
             standing::expected(&current, rom.lorom())?
+        } else if hud {
+            hud::expected(&previous, &current)?
         } else {
             observe::expected(&previous, &current, late)?
         });
@@ -192,6 +207,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         }),
         actual: if body {
             ActualReader::StandingBody
+        } else if hud {
+            ActualReader::ShaftHud
         } else {
             ActualReader::Blackout(late)
         },

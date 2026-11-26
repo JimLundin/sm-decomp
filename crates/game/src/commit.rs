@@ -117,18 +117,19 @@ impl Video {
         registers.main_screen = playfield.main_screen;
     }
 
-    /// Bank `$80` log, process VRAM write table `$80:8C83`: each queued upload DMAs to VRAM
-    /// through channel 1 in queue order, and the queue empties. The channel keeps the last
-    /// upload's registers; an empty queue leaves it as it was.
-    pub fn process_vram_writes(&mut self, graphics: &Graphics) {
-        for transfer in std::mem::take(&mut self.batch.vram) {
-            let (from, bytes) = write_vram(&mut self.memory.vram, &transfer, graphics);
+    /// Process the VRAM write table (`$80:8C83`) through DMA channel 1 in queue order and return
+    /// the serviced entries. The channel retains the last upload's registers.
+    pub fn process_vram_writes(&mut self, graphics: &Graphics) -> Vec<VramTransfer> {
+        let serviced = std::mem::take(&mut self.batch.vram);
+        for transfer in &serviced {
+            let (from, bytes) = write_vram(&mut self.memory.vram, transfer, graphics);
             if let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) {
                 channel.control = DmaControl::TO_TWO_REGISTERS;
                 channel.destination = BBusRegister::VramData;
                 channel.transferred(from, bytes);
             }
         }
+        serviced
     }
 
     // The body's four strip rows are separate from the regular room upload queue.

@@ -15,8 +15,14 @@ use oracle_record::{Cut, FrameRecord, NmiKind};
 use std::path::Path;
 
 pub(in crate::replay) fn starts(record: &FrameRecord) -> Result<bool, Outcome> {
+    let flow = explosion::word(record, 0x998)?;
+    let locked = matches!(flow, 32 | 33)
+        && matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested);
+    Ok(explosion::word(record, 0x93f)? & 0x8000 != 0 && (locked || interrupted(record)?))
+}
+
+pub(super) fn interrupted(record: &FrameRecord) -> Result<bool, Outcome> {
     Ok(explosion::word(record, 0x998)? == 33
-        && explosion::word(record, 0x93f)? & 0x8000 != 0
         && matches!(record.cut,
             Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Overrun
                 && nmi.interrupted_pc == 0x0080_82ce))
@@ -31,10 +37,10 @@ pub(in crate::replay) fn admit(
     let rom = rom.lorom();
     let format = Format::load(rom).map_err(|_| data_failure(None, "cartridge format"))?;
     let figures = import::countdown::import(rom).map_err(|_| data_failure(None, "timer art"))?;
-    let mut blackout = blackout::seed::read(record, rom, &format, true)?;
-    blackout.video.batch.standing_strips = blackout::standing::pending(record, rom)?;
-    let standing = game::samus_appearance_bridge::elevator::Art::load(rom)
-        .map_err(|_| data_failure(Some(record.index), "standing body art"))?;
+    let late = interrupted(record)?;
+    let mut blackout = blackout::seed::read(record, rom, &format, late)?;
+    let hud = blackout::hud::admit(record, rom, &mut blackout)?;
+    let standing = blackout::standing::admit_art(record, &mut blackout, rom, late)?;
     blackout.video.dma = record.ppu.dma.map(crate::replay::landing_site::channel);
     blackout.video.batch.fixed_colour =
         crate::replay::landing_site::queued_colour(record)?.map(game::state::video::ColourWrite);
@@ -53,6 +59,7 @@ pub(in crate::replay) fn admit(
             format,
             graphics: data::pose::tiles::Graphics::default(),
             standing: Some(standing),
+            hud: Some(hud),
         },
         raster_opening,
         departure: load_content(rom)?,
@@ -106,6 +113,11 @@ pub(super) fn check(
         current.index,
         &blackout::observe::expected(previous, current, true)?.fields,
         &blackout::actual(production, output, true)?,
+    )?;
+    compared(
+        current.index,
+        &blackout::hud::expected(previous, current)?.fields,
+        &blackout::hud::actual(production, &output.regular_publication)?,
     )?;
     if output
         .requests

@@ -53,7 +53,13 @@ pub enum State {
 impl State {
     pub(super) fn validate(&self, content: &Content) -> Result<(), AdmissionFault> {
         match self {
-            Self::Shaft(s) => s.blackout.validate().map_err(AdmissionFault::Blackout),
+            Self::Shaft(s) if s.blackout.hud.is_none() => {
+                Err(AdmissionFault::Blackout(blackout::Fault::Hud))
+            }
+            Self::Shaft(s) => s
+                .blackout
+                .validate(&content.shaft)
+                .map_err(AdmissionFault::Blackout),
             Self::Cinematics(c) => c
                 .run
                 .validate(&content.departure)

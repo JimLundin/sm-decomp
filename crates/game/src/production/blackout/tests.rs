@@ -55,11 +55,13 @@ fn pending() -> (State, Content) {
             owners: Model(o),
             video: Box::default(),
             platform: None,
+            hud: None,
         },
         Content {
             format,
             graphics: data::pose::tiles::Graphics::default(),
             standing: None,
+            hud: None,
             figures: Figures {
                 frame: data::spritemap::Spritemap::default(),
                 digits: std::array::from_fn(|_| data::spritemap::Spritemap::default()),
@@ -93,7 +95,7 @@ fn a_restored_save_publishes_the_room_before_dispatching_once() {
     ] {
         let report = state.advance(cut, &content).unwrap();
         assert!(report.dispatch.is_none());
-        assert!(state.validate().is_ok());
+        assert!(state.validate(&content).is_ok());
         let bytes = canonical::to_bytes(&state);
         assert_eq!(canonical::from_bytes::<State>(&bytes).unwrap(), state);
     }
@@ -137,7 +139,7 @@ fn checkpoint_shape_covers_the_scene_and_the_carried_owners() {
         BlackoutPhase::Fade,
     ] {
         lit_room(&mut state, phase);
-        assert_eq!(state.validate(), Ok(()));
+        assert_eq!(state.validate(&content), Ok(()));
         wire.extend(canonical::to_bytes(&state.owners));
     }
     state.owners.0.scene = blank;
@@ -158,7 +160,7 @@ fn checkpoint_shape_covers_the_scene_and_the_carried_owners() {
                 &content,
             )
             .unwrap();
-        assert_eq!(state.validate(), Ok(()));
+        assert_eq!(state.validate(&content), Ok(()));
         wire.extend(canonical::to_bytes(&state.owners));
     }
     let digest = data::rom::sha256(&wire);
@@ -184,9 +186,9 @@ fn stored_shaft_and_fade_tags_restore_distinct_room_phases() {
 
 #[test]
 fn an_unpublished_departure_cannot_be_admitted_as_finished() {
-    let (mut state, _) = pending();
+    let (mut state, content) = pending();
     state.owners.0.scene.pass = WorkPass::Finished;
-    assert_eq!(state.validate(), Err(Fault::State));
+    assert_eq!(state.validate(&content), Err(Fault::State));
 }
 
 fn standing_art() -> crate::samus_appearance_bridge::elevator::Art {

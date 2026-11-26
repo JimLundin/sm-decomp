@@ -180,6 +180,9 @@ targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
   { role = "adapter", path = "crates/game/src/production/connected/early_map.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout/hud.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/blackout/hud.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
 ]
 
@@ -189,6 +192,9 @@ targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
   { role = "adapter", path = "crates/game/src/production/connected/early_map.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout/hud.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/blackout/hud.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
 ]
 

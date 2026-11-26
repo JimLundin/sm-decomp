@@ -68,6 +68,7 @@ pub(super) enum ActualReader {
     Explosion,
     Blackout(bool),
     StandingBody,
+    ShaftHud,
     Intro,
     IntroRooms,
     Flashback,
@@ -280,6 +281,9 @@ impl ActualReader {
             (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
                 super::discovery::actual(production, Some(&outputs))
             }
+            (Self::ShaftHud, InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
+                super::blackout::hud::actual(production, &out.regular_publication)
+            }
             (Self::StandingBody, InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
                 super::blackout::standing::actual(production, &out)
             }
@@ -363,6 +367,7 @@ impl ActualReader {
             Self::JumpHistory => super::jump_history::actual(production),
             Self::Discovery => super::discovery::actual(production, None),
             Self::Explosion => super::explosion::actual(production, None),
+            Self::ShaftHud => super::blackout::hud::actual(production, &[]),
             Self::StandingBody => super::blackout::standing::actual(
                 production,
                 &game::production::blackout::Output::default(),

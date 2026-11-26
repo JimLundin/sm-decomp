@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "3a286e6b05eccb6abdf2056381e16b7ac51555a539b0e25f6a95d2ed51ae3daa"
+index_sha256 = "f5f1e0ae0b9427858714301dfe69fc2fc5b4aeb9f6c18da4826e759b3920c5c7"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1602,5 +1602,23 @@ replies = 0
 null_cuts = 1
 null_fields = 4
 restorations = 2
+pending_boundaries = 1
+pending_restorations = 1
+
+[[case]]
+id = "hud/locked-shaft-publication"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "eaf86ae0411f0fed3b05732f1f7ed78b38124a47a4c305e756634a47ea178d47"
+
+[case.counts]
+cuts = 77
+fields = 847
+outputs = 231
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 728
+restorations = 77
 pending_boundaries = 1
 pending_restorations = 1

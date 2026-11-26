@@ -133,6 +133,7 @@ pub(in crate::replay) fn read(
         }),
         video,
         platform,
+        hud: None,
     })
 }
 

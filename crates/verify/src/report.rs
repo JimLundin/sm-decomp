@@ -210,7 +210,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "interface-hud",
         bridge: Some("interface_hud_bridge"),
-        adapters: &["production/hud.rs"],
+        adapters: &["production/hud.rs", "production/blackout/hud.rs"],
         providers: &["hud"],
         areas: &[
             (
