@@ -229,3 +229,55 @@ fn playback_shape() {
         Ok(())
     );
 }
+
+#[test]
+fn falling_pad_chart_cancels_the_dash_only_on_the_fallback() {
+    let (_, content, rules) = movement();
+    let mut seed = fixtures::samus();
+    seed.pose.aim = types::Aim::Down;
+    seed.run.dash = Wrapping(65536);
+    seed.run.dashing = samus_movement::Dashing::On;
+    let world = empty_world();
+
+    for (button, aim, dash, dashing) in [
+        (
+            types::Buttons::default(),
+            types::Aim::Down,
+            types::ZERO,
+            samus_movement::Dashing::Off,
+        ),
+        (
+            types::button::UP,
+            types::Aim::Up,
+            seed.run.dash,
+            samus_movement::Dashing::On,
+        ),
+    ] {
+        let mut production = Production::admit(
+            ProductionSeed::Movement(seed),
+            content.clone(),
+            rules.clone(),
+        )
+        .unwrap();
+        let outputs = production
+            .advance(AdvanceInput::Movement {
+                inputs: MovementInputs {
+                    pad: button,
+                    pressed: button,
+                    ..stimuli()
+                },
+                world: &world,
+            })
+            .unwrap();
+        let OwnedState::Movement(after) = production.state() else {
+            panic!("movement scope");
+        };
+        let ProductionOutputs::Movement(outputs) = outputs else {
+            panic!("movement outputs");
+        };
+        assert_eq!(after.0.pose, types::Pose { aim, ..seed.pose });
+        assert_eq!(after.0.run.dash, dash);
+        assert_eq!(after.0.run.dashing, dashing);
+        assert_eq!(outputs.dash_lost, dashing == samus_movement::Dashing::Off);
+    }
+}

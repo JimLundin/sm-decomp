@@ -1425,6 +1425,72 @@ phase = "work and presentation"
 claim = "Two drawing visits age exhaust on the authorized beat. A later NMI can publish the retained output."
 
 [[case]]
+id = "movement/falling-aim"
+kind = "scoped"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 904 }
+end = { cut_inclusive = 910 }
+rules = ["samus-movement/PadChart"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.pose"], outputs = [] }
+checkpoints = true
+limits = ["The fresh Down press and subsequent empty pad select and retain downward aim. A fresh Up press takes precedence, then releasing it returns the pose to forward.", "Only ordinary movement runs during the selected cuts."]
+
+[[case.borrowed]]
+dependency = "movement.falling-neighbours"
+provider = "preceding pinned record and imported pose content"
+fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
+phase = "before movement"
+claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
+
+[[case]]
+id = "movement/falling-drawn-forward"
+kind = "scoped"
+row = "item-charge-beam"
+start = { source = "cache-cut", frame = 40 }
+end = { cut_inclusive = 41 }
+rules = ["samus-movement/PadChart"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.pose"], outputs = [] }
+checkpoints = true
+limits = ["Releasing shoot retains the forward falling pose with the cannon drawn.", "Only ordinary movement runs during the selected cuts."]
+
+[[case.borrowed]]
+dependency = "movement.falling-neighbours"
+provider = "preceding pinned record and imported pose content"
+fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
+phase = "before movement"
+claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
+
+[[case]]
+id = "movement/falling-down-kraid"
+kind = "scoped"
+row = "boss-kraid-defeated"
+start = { source = "cache-cut", frame = 801 }
+end = { cut_inclusive = 802 }
+rules = ["samus-movement/PadChart"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.pose"], outputs = [] }
+checkpoints = true
+limits = ["Releasing Down retains the downward falling pose.", "Only ordinary movement runs during the selected cuts."]
+
+[[case.borrowed]]
+dependency = "movement.falling-neighbours"
+provider = "preceding pinned record and imported pose content"
+fields = ["held and fresh controller buttons", "room and actors", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
+phase = "before movement"
+claim = "Movement carries its own state from the seed and selects the pose. Expected poses only enter the comparison."
+
+[[case]]
 id = "movement/passage-jump-history"
 kind = "scoped"
 row = "chain-any-0009-DFD7"
@@ -1503,7 +1569,7 @@ content = "player-rom-import"
 inputs = "played-ceres-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
 checkpoints = false
-limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec.", "The alternate room run first differs in the unrelated falling aim at cut 906. This window includes the rising hit."]
+limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec.", "This window ends after the rising hit."]
 
 [[case.borrowed]]
 dependency = "played.platform"
@@ -1525,7 +1591,7 @@ content = "player-rom-import"
 inputs = "played-ceres-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
 checkpoints = false
-limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec.", "This separate airborne origin includes the swish and hovering hit. The alternate route is not continuous across the falling-aim difference."]
+limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec.", "This separate airborne origin includes the swish and hovering hit."]
 
 [[case.borrowed]]
 dependency = "played.platform"

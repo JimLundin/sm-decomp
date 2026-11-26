@@ -407,6 +407,9 @@ pub enum ObservationId {
     /// Semantic body and cannon pose selected on landing.
     #[serde(rename = "movement.landing.pose")]
     LandingPose,
+    /// The semantic body and cannon pose after ordinary movement.
+    #[serde(rename = "movement.pose")]
+    MovementPose,
     /// The horizontal base speed retained after landing.
     #[serde(rename = "movement.base-speed")]
     MovementBaseSpeed,
@@ -992,6 +995,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::MovementStateComplete
         | O::DrawnJumpHeld
         | O::LastDrawJump
+        | O::MovementPose
         | O::LandingPose
         | O::MovementBaseSpeed
         | O::LandingFloor
@@ -1078,17 +1082,12 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
     .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
 }
 
-fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
+fn movement_witnessed_fields(
+    rule: &str,
+    provider: InputProvider,
+) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
-        game::production::played::intro_rooms::RULE => {
-            &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
-        }
-        "save-files/ReadSlot"
-        | "save-files/BootFiles"
-        | "save-files/MenuFiles"
-        | "save-files/ChooseFile"
-        | "save-files/WriteFile" => &[O::Battery],
         "samus-movement/Jumping" if provider == InputProvider::PassageJumpDraws => {
             &[O::DrawnJumpHeld, O::LastDrawJump]
         }
@@ -1098,6 +1097,7 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
+        "samus-movement/PadChart" => &[O::MovementPose],
         "samus-movement/Dash" => &[O::MovementStateComplete],
         "samus-movement/AimingAndShooting"
         | "samus-movement/SlopesCarry"
@@ -1115,6 +1115,21 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
             &[O::CompleteReached, O::Inside]
         }
         "samus-movement/TouchedCells" => &[O::Reached],
+        _ => return None,
+    })
+}
+
+fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    Some(match rule {
+        game::production::played::intro_rooms::RULE => {
+            &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
+        }
+        "save-files/ReadSlot"
+        | "save-files/BootFiles"
+        | "save-files/MenuFiles"
+        | "save-files/ChooseFile"
+        | "save-files/WriteFile" => &[O::Battery],
         "audio-transport/OfferAcceptance" => &[O::SenderQueue],
         "audio-transport/MusicalProgress"
         | "audio-transport/WholeArrangement"
@@ -1169,7 +1184,8 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
         _ => {
-            return intro_fields(rule)
+            return movement_witnessed_fields(rule, provider)
+                .or_else(|| intro_fields(rule))
                 .or_else(|| flashback_fields(rule))
                 .or_else(|| playback_fields(rule))
                 .or_else(|| intro_missile_fields(rule))

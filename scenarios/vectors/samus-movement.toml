@@ -3667,6 +3667,108 @@ pressed = ["left", "shoot"]
 met = "nothing"
 after = { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Forward", gun = "Drawn" } }
 
+[[pose_step]]
+id = "P-fall-down-release"
+source = "samus-ceres-push:906"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Down", gun = "Stowed" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Down", gun = "Stowed" } }
+
+[[pose_step]]
+id = "P-fall-up-release"
+source = "samus-ceres-push:910"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Up", gun = "Stowed" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward", gun = "Stowed" } }
+
+[[pose_step]]
+id = "P-fall-down-kraid"
+source = "boss-kraid-defeated:802"
+entries = ["PadChart"]
+items = ["Bombs", "MorphBall", "XRayScope"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Down", gun = "Stowed" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Down", gun = "Stowed" } }
+
+[[pose_step]]
+id = "P-fall-forward-drawn-release"
+source = "item-charge-beam:41"
+entries = ["PadChart"]
+items = ["Bombs", "MorphBall"]
+pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Forward", gun = "Drawn" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Forward", gun = "Drawn" } }
+
+[[pose_step]]
+id = "C-fall-down-jump"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Down", gun = "Stowed" }
+pad = ["jump"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Down", gun = "Stowed" } }
+
+[[pose_step]]
+id = "C-fall-up-forward-release"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Left", aim = "UpForward", gun = "Stowed" }
+pad = []
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Forward", gun = "Stowed" } }
+
+[[pose_step]]
+id = "C-fall-down-forward-release"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "DownForward", gun = "Stowed" }
+pad = ["run"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Forward", gun = "Stowed" } }
+
+[[pose_step]]
+id = "C-fall-down-forward-held"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Down", gun = "Stowed" }
+pad = ["left"]
+jump_pressed = false
+pressed = []
+met = "nothing"
+after = { pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Forward", gun = "Stowed" } }
+
+[[pose_step]]
+id = "C-fall-down-press"
+source = "constructed"
+entries = ["PadChart"]
+items = ["MorphBall"]
+pose = { body = "Upright", action = "Falling", facing = "Right", aim = "Down", gun = "Stowed" }
+pad = ["down", "right"]
+jump_pressed = false
+pressed = ["down"]
+met = "nothing"
+after = { pose = { body = "Ball", action = "Morphing", facing = "Right", aim = "Forward", gun = "Stowed" } }
+
 # Holding forward and jump in a straight jump: forward wins, so her legs stride.
 
 [[pose_step]]
@@ -5493,6 +5595,17 @@ pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19
 pad = []
 jump_pressed = false
 after = { dash = "0000.0000", dashing = false, dashing_after_moves = true, dash_lost = true }
+
+[[vector]]
+id = "C-dash-fall-down-letgo"
+source = "constructed"
+entries = ["Dashing", "PadChart"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], dash = "0001.0000", speed_y = "+0001.0000", dashing = true }
+pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Down", radius = [5, 10] }
+pad = []
+jump_pressed = false
+after = { pose = { body = "Upright", action = "Falling", facing = "Left", aim = "Down", radius = [5, 10] }, dash = "0000.0000", dashing = false, dashing_after_moves = true, dash_lost = true }
 
 # C-dash-against-wall: against the wall, dashing, nothing held: her moves halt her and end it.
 

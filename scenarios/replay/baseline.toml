@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "6864ab065590b1ee6e404300b064c8848abfde3f29f35f4eddd83af3c962e404"
+index_sha256 = "3ac0b43a9acccf68b5c0e72785729f0ab1070ea28cf0843b76f108da8fd343b3"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -930,6 +930,60 @@ replies = 0
 null_cuts = 0
 null_fields = 906
 restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/falling-aim"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "b1b709a0cdd987c4dbf2674332cd070566a394ea42948570eeead5231db10d72"
+
+[case.counts]
+cuts = 6
+fields = 6
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 1
+restorations = 6
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/falling-drawn-forward"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "6148aef19947fb47accaf1db24de6e11bfeaece9e6f90c88e3dbceb1070cb5a6"
+
+[case.counts]
+cuts = 1
+fields = 1
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/falling-down-kraid"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "5acedca2be0fc0b19f7f5d2e8be7e1a74242b2a566f30b9c34dac5c78b649478"
+
+[case.counts]
+cuts = 1
+fields = 1
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 1
+restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
 

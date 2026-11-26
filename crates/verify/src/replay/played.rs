@@ -765,13 +765,14 @@ mod tests {
         ));
     }
 
-    /// The alternate controls exercise the first grounded leap and the rising tail hit.
+    /// The alternate controls carry both airborne hits from the room seed, through the fall's
+    /// Down and Up releases.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
-    fn alternate_room_start_plays_through_the_rising_tail_hit() {
-        let report = super::play(&sources(), "samus-ceres-push", 0, 905).unwrap();
-        assert_eq!(report.held, 905);
+    fn alternate_room_from_seed_plays_through_both_airborne_tail_hits() {
+        let report = super::play(&sources(), "samus-ceres-push", 0, 993).unwrap();
         assert_eq!(report.stop, super::Stop::End);
+        assert_eq!(report.held, 993);
     }
 
     /// A checkpoint record admits the whole tail, including a chain partway through a whip.

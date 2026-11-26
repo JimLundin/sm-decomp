@@ -4,6 +4,7 @@
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 rules = [
+    "samus-movement/PadChart",
     "boss-ceres-ridley/TailHits",
     "boss-ceres-ridley/TailSwishes",
     "boss-ceres-ridley/VentPlaced",
@@ -1263,3 +1264,19 @@ after = """        let mut report = report;
 case = "intro/discovery-through-examination"
 cut = 1299
 field = "intro.events"
+
+[[fault]]
+name = "falling-pad-release-stows-forward"
+responsibility = "movement"
+file = "crates/game/src/production/movement.rs"
+before = '''Ok(samus.react(moves, None))'''
+after = '''let outcome = samus.react(moves, None);
+    if admitted.pad.0 == 0 && samus.pose.action == types::Action::Falling {
+        samus.pose.aim = types::Aim::Forward;
+        samus.pose.gun = types::Gun::Stowed;
+    }
+    Ok(outcome)'''
+case = "movement/falling-aim"
+cut = 906
+field = "movement.pose"
+rule = "samus-movement/PadChart"

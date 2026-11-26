@@ -642,10 +642,14 @@ fn expected_field(
             return Ok(Observation::quantity(name, value));
         }
     }
-    if field == O::LandingPose {
+    if matches!(field, O::LandingPose | O::MovementPose) {
         let raw = PoseId(word(wram, source::SAMUS_POSE)?);
-        let pose = map::key_of(raw).ok_or_else(|| unsupported("landing pose observation"))?;
-        return Ok(landing_pose(pose));
+        let pose = map::key_of(raw).ok_or_else(|| unsupported("movement pose observation"))?;
+        return Ok(if field == O::LandingPose {
+            landing_pose(pose)
+        } else {
+            movement_pose(pose)
+        });
     }
     if field == O::MovementBaseSpeed {
         return Ok(Observation::quantity(
@@ -679,9 +683,17 @@ fn expected_field(
     Err(data_failure(None, "movement observation scope"))
 }
 
-pub(super) fn landing_pose(pose: types::Pose) -> Observation {
+pub(super) fn landing_pose(pose: Pose) -> Observation {
+    pose_observation("movement.landing.pose", pose)
+}
+
+pub(super) fn movement_pose(pose: Pose) -> Observation {
+    pose_observation("movement.pose", pose)
+}
+
+fn pose_observation(field: &str, pose: Pose) -> Observation {
     Observation {
-        field: "movement.landing.pose".into(),
+        field: field.into(),
         bytes: format!("{pose:?}").into_bytes(),
     }
 }

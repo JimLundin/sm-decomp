@@ -731,6 +731,16 @@ targets = [
 ]
 
 [[rule]]
+id = "samus-movement/PadChart"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/situation.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
 id = "samus-movement/Jumping"
 targets = [
   { role = "model", path = "crates/clean/samus_movement/src/jump_held.rs" },

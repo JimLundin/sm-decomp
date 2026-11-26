@@ -3062,3 +3062,43 @@ production compares jump history at every cut. The observer check borrows those
 opportunities and does not claim an integrated passage timing pass.
 
 [Bank 82](https://patrickjohnston.org/bank/82) · [Bank 90](https://patrickjohnston.org/bank/90) · [Bank 91](https://patrickjohnston.org/bank/91) · [Bank A0](https://patrickjohnston.org/bank/A0)
+
+## The aim of an upright fall with no matching pad row
+
+The frame ending at `samus-ceres-push:905` reads the new Down press at cut 904.
+Cuts 905 through 907 supply an empty pad, so cuts 906 through 908 keep the
+rightward falling Down pose. The Up press at 908 chooses Up at 909, and the
+empty pad at 909 returns it to Forward at 910. Both releases run with the
+ordinary input and movement handlers. The earlier tail hit has finished its
+recoil by the time either release is read. The same Down retention occurs in
+`boss-kraid-defeated:802`, and `item-charge-beam:41` keeps the leftward falling
+Forward pose with the gun drawn when shoot is released.
+
+**Sources.** Bank $91's ordinary pad lookup at `$91:81A9` uses `$91:82D9` on
+an empty pad or when no row matches a nonempty pad. The upright falling
+movement type uses `$91:8332`'s command 8 regardless of aim or base speed.
+`$91:82EC` reads each pose's no-input successor at `$91:B62B + pose * 8`.
+The two Forward pairs and the Down pair retain themselves. The Up pair and
+both diagonal pairs name the corresponding stowed Forward pose. Command 8
+at `$91:EC8E` cancels the boost and clears the dash even when the pose holds.
+The vertical reset helper at `$91:FB8E` leaves the vertical motion as it was
+when the old movement type was already falling. For the Down pair, the forward
+and fresh Down rows at `$91:AD94` and `$91:ADD2` still match before the fallback.
+
+**Comparison.** In each recorded pose step, read held and newly pressed at
+`008B` and `008F` from the preceding polled cut. Read the pose at `0A1C` on
+both cuts and translate by the pose map in these notes. The pose steps compare
+facing, action, aim and gun with no collision or animation handover. They
+read no room or pose content. The constructed whole frame starts with a dash
+and checks its disappearance after the move even though the pose stays Down.
+
+The private reference scanned cached consecutive polled cuts with ordinary
+movement and input handlers at both ends, no change in Health, an upright
+falling starting pose, no direction, aim or shoot held, and a clear recorded
+vertical collision result at the end. It compared the result's pose and
+checked dash zero. All 379 selected pairs agreed. Holding the starting pose
+matched 376 of those poses, including 47 of the 50 alternate Ceres pairs.
+The record set has no selected release from either diagonal pose. The
+constructed steps cover both diagonal defaults and a held button with no
+matching row. The dash effect with a nonzero starting dash is checked over
+an invented room.

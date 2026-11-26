@@ -476,6 +476,9 @@ pub enum RowId {
     /// A straight jump's "anything else, or nothing held", her horizontal speed at the frame's
     /// start 0, aimed `Up`, `UpForward` or `DownForward`.
     AnythingElseAtRestAimed,
+    /// An upright fall's "anything else, or nothing held", aimed `Up`, `UpForward` or
+    /// `DownForward`.
+    AnythingElseFallingAimed,
     /// A ball's "anything else, or nothing held: on the ground".
     AnythingElseOnTheGround,
     /// A ball's "in the air, without the spring ball".

@@ -1031,16 +1031,23 @@ static FALLING: Situation = Situation {
             }],
             ..NO_CHANGE
         },
-    ],
-    last: Row {
-        id: RowId::AnythingElse,
-        next: Next {
-            aim: FORWARD_AIM,
-            ..KEEP_POSE
+        // Spec: PadChart. With no button row fitting, upward and diagonal aims return to
+        // forward with the gun stowed. Forward and straight down keep their pose and gun.
+        Row {
+            id: RowId::AnythingElseFallingAimed,
+            needs: &[Test::Aimed(&[Aim::Up, Aim::UpForward, Aim::DownForward])],
+            next: TO_FALLING,
+            part_of_the_last: true,
+            ..FALLING_LET_GO
         },
-        effects: &[Effect::LoseDash],
-        ..NO_CHANGE
-    },
+    ],
+    last: FALLING_LET_GO,
+};
+
+/// Spec: `PadChart`. The upright fall's let-go always ends the dash, even when the pose is kept.
+const FALLING_LET_GO: Row = Row {
+    effects: &[Effect::LoseDash],
+    ..NO_CHANGE
 };
 
 /// Crouched.

@@ -1398,7 +1398,7 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | | forward held | `Falling`, `Forward`, gun as it was | none |
 | | up, down or an aim button held; beats shoot held and forward held | `Falling`, air aim | none |
 | | back held; beats shoot held, forward held, and up, down or an aim button held; aiming `Down` or with the gun drawn, up or down held beats it | `Turning` in a fall | `TurningRound` |
-| | anything else, or nothing held | kept, aim `Forward` | dash 0 |
+| | anything else, or nothing held | kept if aimed `Down` or `Forward`. Aim `Forward` with the gun stowed if aimed `Up`, `UpForward` or `DownForward` | dash 0 |
 | crouched | down pressed; beats jump pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | up pressed; beats every other row naming a pressed button | `StandingUp`, crouch aim | none |
 | | jump pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
@@ -1465,6 +1465,12 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   the pad again; as running; horizontal speed 0, dash 0, following the pad; dash 0; crouched
   turning aimed `Up`, `UpForward`, `DownForward` or `Down`:; facing `Left` whichever way she
   turns; she follows the pad again, and dashing ends.
+- Upright falling, with no other pad row fitting → a straight downward aim or a forward aim
+  stays as it is, gun included. An upward or diagonal aim returns to forward with the gun
+  stowed. Both outcomes end the dash. A held button with no row, such as run or jump alone,
+  gives the same outcome as an empty pad [P-fall-down-release, P-fall-down-kraid,
+  P-fall-up-release, P-fall-forward-drawn-release, C-fall-down-jump, C-fall-up-forward-release,
+  C-fall-down-forward-release, C-dash-fall-down-letgo].
 - An aimed crouched turn let go → crouched `Still` facing `Left`, aim `Forward`, even when she
   was turning to face right; her horizontal speed keeps its size, pointing left. Her
   animation ending that frame comes first: the turn's end hands over its pose (`AnimationEnds`)
@@ -1512,11 +1518,15 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   let-go into the screw attack's spin, keeping her speed; CE2, a turn from facing the screen;
   CE3, the moonwalk's turn holding the way she walks; CE4, a crouched turn's skid;
   P-crouch-turn-letgo, P-crouch-turn-letgo-up and P-crouch-turn-end, an aimed crouched turn let
-  go and ending); constructed
+  go and ending; P-fall-down-release, P-fall-down-kraid, P-fall-up-release and
+  P-fall-forward-drawn-release show the upright fall's last row); constructed
   (C-chart-a to C-chart-j; C-screen-skid, a skid ended facing the screen; C-screen-turn and
   C-screen-jump, a side held and jump pressed facing the screen; C-moonwalk-turn;
   C-crouch-turn-skid; C-crouch-turn-letgo-left; C-walljump-letgo-space and C-walljump-letgo-plain, the wall jump's let-go
-  with space jump and with neither item; C-jump-letgo-moving, a straight jump's let-go moving);
+  with space jump and with neither item; C-jump-letgo-moving, a straight jump's let-go moving;
+  C-fall-down-jump, C-fall-up-forward-release, C-fall-down-forward-release and
+  C-dash-fall-down-letgo, the upright fall's last row;
+  C-fall-down-forward-held and C-fall-down-press, explicit choices while aiming down);
   original only (the other rows with left and right
   both held).
 

@@ -159,6 +159,7 @@ fn movement_state_fields(state: &samus_movement::Samus) -> Vec<Observation> {
 
     vec![
         movement::landing_pose(state.pose),
+        movement::movement_pose(state.pose),
         super::jump_history::jump_part(state.jump_held),
         Observation::quantity("movement.base-speed", i64::from(state.run.speed.0)),
         Observation::quantity("movement.position.x", i64::from(state.position.x.0)),
