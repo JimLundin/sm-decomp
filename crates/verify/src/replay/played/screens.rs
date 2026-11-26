@@ -15,21 +15,18 @@ use super::word;
 use crate::replay::compare::Observation;
 use crate::replay::{data_failure, result::Outcome};
 use crate::source;
-use game::production::played::front_end::{
-    Answers, Button, FileStart, Pressed, Screen, Screens, Sound,
-};
+use game::production::played::front_end::{Button, Platform, Pressed, Screen, Screens, Sound};
 use oracle_record::FrameRecord;
 use screens_intro::{MusicRequest, TrackReply, Tune};
-use screens_options::ChosenFile;
+use types::RandomSequence;
 use types::file_select::{
     FileSelectStage, MenuItem, MenuPhase, MenuState, Slot, WayOut as FileSelectWayOut,
 };
 use types::options::{
-    DissolveCursor, FileBegins, Language, OptionsItem, OptionsStage, Settings, SpecialItem, WayOut,
+    DissolveCursor, Language, OptionsItem, OptionsStage, Settings, SpecialItem, WayOut,
 };
 use types::power_on::ScreenLight;
 use types::title::TitleStage;
-use types::{RandomSequence, Set};
 
 const GAME_STATE: source::WramWord = source::WramWord {
     name: "GAME_STATE",
@@ -42,10 +39,6 @@ const DEMO_COUNTDOWN: source::WramWord = source::WramWord {
 const FILE_SELECT_CURSOR: source::WramWord = source::WramWord {
     name: "FILE_SELECT_CURSOR",
     offset: 0x0952,
-};
-const SLOTS_HOLDING_FILES: source::WramWord = source::WramWord {
-    name: "FILE_SELECT_FILES",
-    offset: 0x0954,
 };
 const OPTIONS_CURSOR: source::WramWord = source::WramWord {
     name: "OPTIONS_CURSOR",
@@ -66,10 +59,6 @@ const WEAPON_RESET: source::WramWord = source::WramWord {
 /// The mosaic register's copy: the block size in the high nibble, on when the low bits are 3.
 const MOSAIC: usize = 0x0057;
 const MOSAIC_ON: u8 = 0x03;
-
-/// Save memory's record of the slot chosen last and its complement.
-const LAST_CHOSEN: usize = 0x1FEC;
-const LAST_CHOSEN_COMPLEMENT: usize = 0x1FEE;
 
 /// The game states of the title, file select and the options menu.
 const TITLE: u16 = 0x01;
@@ -146,43 +135,16 @@ pub(super) fn finished_frames(
     }
 }
 
-/// The answers of the owners outside the rungs, read from the record.
+/// The aural and random replies supplied by the platform seam.
 pub(super) struct Borrowed {
     settled_random: RandomSequence,
-    files: Set<Slot>,
-    last_chosen: Option<Slot>,
     track: TrackReply,
 }
 
 impl Borrowed {
-    /// The answers for the interval from `previous` to `current`, whose frame of work began
-    /// after `began`.
-    pub(super) fn read(
-        began: &FrameRecord,
-        previous: &FrameRecord,
-        current: &FrameRecord,
-    ) -> Result<Self, Outcome> {
-        let holding = word(&current.wram, SLOTS_HOLDING_FILES)?;
-        let sram = |at: usize| {
-            current
-                .sram
-                .get(at..at.wrapping_add(2))
-                .and_then(|bytes| bytes.try_into().ok())
-                .map(u16::from_le_bytes)
-                .ok_or_else(|| data_failure(None, "played save memory"))
-        };
-        let (last, complement) = (sram(LAST_CHOSEN)?, sram(LAST_CHOSEN_COMPLEMENT)?);
-        let last_chosen = (last & complement == 0)
-            .then(|| SLOTS.get(usize::from(last)).copied())
-            .flatten();
+    pub(super) fn read(began: &FrameRecord, previous: &FrameRecord) -> Result<Self, Outcome> {
         Ok(Self {
             settled_random: super::frame::random(&previous.wram)?,
-            files: SLOTS
-                .iter()
-                .enumerate()
-                .map(|(bit, &slot)| (slot, holding & (1 << bit) != 0))
-                .collect(),
-            last_chosen,
             track: if music_ready(&began.wram)? {
                 TrackReply::NoneWaits
             } else {
@@ -192,33 +154,13 @@ impl Borrowed {
     }
 }
 
-const SLOTS: [Slot; 3] = [Slot::First, Slot::Second, Slot::Third];
-
-impl screens_file_select::SaveMemory for Borrowed {
-    fn files(&self) -> Set<Slot> {
-        self.files
-    }
-
-    fn last_chosen(&self) -> Option<Slot> {
-        self.last_chosen
-    }
-}
-
-impl Answers for Borrowed {
+impl Platform for Borrowed {
     fn settled_random(&self) -> RandomSequence {
         self.settled_random
     }
 
     fn track(&self) -> TrackReply {
         self.track
-    }
-
-    /// Only an empty slot's new file: loading a file is save memory's owner's, not played here.
-    fn file(&self, slot: Slot) -> Option<FileStart> {
-        (!self.files[slot]).then_some(FileStart {
-            settings: Settings::default(),
-            begins: ChosenFile::Begins(FileBegins::Intro),
-        })
     }
 }
 

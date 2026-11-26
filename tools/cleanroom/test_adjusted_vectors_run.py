@@ -485,6 +485,19 @@ class AdjustedVectors(unittest.TestCase):
                 self.assertEqual(test_command("demo", root),
                                  ["bash", "tools/lane/run_tests.sh", "--suite", "lib", "demo"])
 
+    def test_nested_vectors_select_the_integration_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tests = root / "crates/clean/demo/tests/vectors"
+            tests.mkdir(parents=True)
+            (tests / "main.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
+            with patch("adjusted_vectors_run.os.name", "posix"):
+                self.assertEqual(test_command("demo", root),
+                                 ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
+            with patch("adjusted_vectors_run.os.name", "nt"):
+                self.assertEqual(test_command("demo", root),
+                                 ["bash", "tools/lane/run_tests.sh", "--suite", "test:vectors", "demo"])
+
     def test_owners_selects_the_check_and_its_domains(self) -> None:
         for arguments, owners, probed in ((["--owners"], ["alpha", "beta"], []),
                                           (["--owners", "beta"], ["beta"], []),

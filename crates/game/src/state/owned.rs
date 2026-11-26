@@ -69,6 +69,8 @@ pub enum OwnedState {
     IntroRooms(Box<crate::production::played::intro_rooms::Scoped>),
     /// The recorded pad and its current position in the scene.
     Playback(Model<PlaybackPin>),
+    /// The whole cartridge and its pending operation.
+    SaveFiles(Box<crate::production::save_files::State>),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Every actor, pending timer and background offset of the flashback encounter.

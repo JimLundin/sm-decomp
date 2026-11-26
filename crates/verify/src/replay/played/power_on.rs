@@ -21,11 +21,14 @@ use super::{Report, Stop, rows::Rows, word};
 use crate::replay::compare::{CompareFault, Observation, compare};
 use crate::replay::{data_failure, result::Outcome};
 use crate::source;
-use front_end::{Content, FrameEnd, Rules, Work};
+use data::rom::Rom;
+use front_end::{Cartridge, CartridgeFrame, Content, FrameEnd, Rules, Work};
+use game::exact::save_files::{Format, profile_bytes};
 use game::production::played::front_end;
 use oracle_record::{ApuAccess, ApuAccessKind, FrameRecord};
 use screens_boot::{DriverUpload, PowerOnStage, PowerOnState, ScreenLight};
 use std::path::Path;
+use types::save_files::BatteryImage;
 
 /// The logo's timer: the hold's frames left.
 const HOLD_LEFT: source::WramWord = source::WramWord {
@@ -56,7 +59,7 @@ pub(super) const BORROWED: &[&str] = &[
     "lag from the title on: how many frames of work finished in the interval, from the cut kind, and 2 where the game's own count steps by 2 at a requested NMI (an NMI inside the interval that the record's cut list doesn't show); any other disagreement is bad data",
     "the random number as the game settles (game-random's seeding of the boot), read from the record as the title begins",
     "audio from the intro on: whether a track waits in the queue of tracks as the frame of work begins",
-    "save memory (P2): which slots hold a file, from the game's own answer at the cut file select asks; the slot chosen last, valid when its record names slot A, B or C and that value AND its complement is 0; a chosen empty slot starts a new file, with the intro and every setting off",
+    "the initial platform battery and the cut at which the startup diagnostic and scan have finished",
 ];
 
 /// Play the power-on row `row` from power-on through `end`, the intro's scenes imported from
@@ -86,8 +89,17 @@ pub(super) fn play(
         return Ok(report(0, Stop::At(later)));
     }
     let scenes = Scenes::import(rom, Part::Opening)?;
+    let mut previous = rows.record(0)?;
+    let battery = BatteryImage::new(previous.sram.to_vec())
+        .ok_or_else(|| data_failure(Some(0), "power-on platform battery"))?;
+    let rom = Rom::new(std::fs::read(rom).map_err(|_| data_failure(None, "save format source"))?)
+        .map_err(|_| data_failure(None, "checked save format source"))?;
+    let format = Format::load(rom.lorom()).map_err(|_| data_failure(None, "save format assets"))?;
+    let cartridge = Cartridge::power_on(&format, &battery);
     let mut run = Run {
         state: front_end::State::AT_POWER_ON,
+        cartridge,
+        format,
         content: Content {
             intro: scenes.content.clone(),
         },
@@ -98,7 +110,6 @@ pub(super) fn play(
         sounds: Vec::new(),
     };
     let mut held = 0;
-    let mut previous = rows.record(0)?;
     let mut began = previous.clone();
     for cut in 1..=end {
         let current = rows.record(cut)?;
@@ -122,6 +133,8 @@ pub(super) fn play(
 /// it.
 struct Run {
     state: front_end::State,
+    cartridge: Cartridge,
+    format: Format,
     content: Content,
     scenes: Scenes,
     ended: Option<u64>,
@@ -175,15 +188,55 @@ impl Run {
                 DriverUpload::Continuing
             },
         };
-        let answers =
-            Borrowed::read(began, previous, record).map_err(|outcome| super::at(cut, outcome))?;
+        let answers = Borrowed::read(began, previous).map_err(|outcome| super::at(cut, outcome))?;
+        if cut == 271 {
+            let report =
+                self.cartridge
+                    .boot(&self.format)
+                    .map_err(|fault| Outcome::Unsupported {
+                        cut: Some(cut),
+                        dependency: format!("cartridge startup {fault:?}"),
+                    })?;
+            if record.wram.get(0x1f59).copied() != Some(report.demos.sets()) {
+                return Err(Outcome::Difference {
+                    cut,
+                    field: "save-files.demos".to_owned(),
+                });
+            }
+        }
+        let was_started = self.cartridge.started().is_some();
         let sounds = self
             .state
-            .step(frame, &RULES, &self.content, &answers)
+            .step_with_cartridge(
+                &mut self.cartridge,
+                &self.format,
+                &CartridgeFrame {
+                    end: frame,
+                    in_flight: pressed,
+                    rules: &RULES,
+                    content: &self.content,
+                    platform: &answers,
+                },
+            )
             .map_err(|fault| Outcome::Unsupported {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        if cut >= 271 && self.cartridge.image(&self.format).as_slice() != record.sram.as_ref() {
+            return Err(Outcome::Difference {
+                cut,
+                field: "save-files.battery".to_owned(),
+            });
+        }
+        if !was_started
+            && let Some(run) = self.cartridge.started()
+            && record.wram.get(0x09a2..0x0a02) != Some(&profile_bytes(&run.profile))
+        {
+            return Err(Outcome::Difference {
+                cut,
+                field: "save-files.working-profile".to_owned(),
+            });
+        }
         if ended {
             self.ended = Some(cut);
         }

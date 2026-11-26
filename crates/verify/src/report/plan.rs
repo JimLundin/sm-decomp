@@ -175,9 +175,9 @@ impl Area {
         }
     }
 
-    /// Whether `model` is named in this area: its first word is the area's.
+    /// Whether `model` belongs to this area. Save files hold the persistent run.
     fn names(self, model: &str) -> bool {
-        model.split('-').next() == Some(self.word())
+        model.split('-').next() == Some(self.word()) || (self == Self::Run && model == "save-files")
     }
 }
 

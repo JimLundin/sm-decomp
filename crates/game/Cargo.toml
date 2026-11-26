@@ -17,6 +17,7 @@ world_quake = { path = "../clean/world_quake" }
 interface_hud = { path = "../clean/interface_hud" }
 samus_health = { path = "../clean/samus_health" }
 run_progress = { path = "../clean/run_progress" }
+save_files = { path = "../clean/save_files" }
 samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
 enemy_interactions = { path = "../clean/enemy_interactions" }

@@ -15,6 +15,7 @@ pub mod options;
 pub mod playback;
 pub mod power_on;
 pub mod quake;
+pub mod save_files;
 
 /// The title sequence's State: its stage and the screen, from the power-on's hand-over until
 /// file select begins. The game carries it from one frame end to the next and may save and
@@ -1126,7 +1127,19 @@ where
 /// A region of the planet. The area of the room she is in is the frame's area.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping areas in sorted sets.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Enum)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Enum,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum Area {
     /// Brinstar.
     Brinstar,
@@ -1201,7 +1214,19 @@ pub enum Item {
 /// A beam she can take.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping beams in sorted sets.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Enum)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Enum,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum Beam {
     /// The charge beam.
     Charge,
@@ -1218,7 +1243,19 @@ pub enum Beam {
 /// Something that, once it happens, changes the world for the rest of the run.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping events in sorted sets.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Enum)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Enum,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum Event {
     /// The chozo statue deep in Norfair has let the acid out of its room.
     AcidReceded,
@@ -1263,7 +1300,19 @@ pub enum Event {
 /// boss in each area.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping kinds in sorted sets.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Enum)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Enum,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum BossKind {
     /// The area's main boss, such as Kraid in Brinstar or Ridley in Norfair.
     MainBoss,
@@ -1282,7 +1331,9 @@ pub struct LocationId(pub u16);
 pub struct DoorId(pub u16);
 
 /// A save station's id within its area.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub struct StationId(pub u16);
 
 /// The way she came into a room. Entrances are numbered in a space of their own: an entrance is

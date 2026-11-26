@@ -1,0 +1,240 @@
+# R cases refer to lsnes observations. C cases use an invented format.
+# A raw slot "words" list is already encoded and zero-padded to 814 words.
+# A typed "run" encodes all the fields below, with zero for omitted words.
+# Pairs are [sum, complement]. Each slot takes either words or a run.
+# Complete synthetic image: mark, selection, retained bytes, spare words,
+# then slots in menu order. Each slot is payload, primary pair, mirror pair.
+# Serialize all words little-endian. Fill all 3,260 retained bytes with
+# retained_fill. All four spare words hold spare_word. Both default to zero.
+# The three marks are 12 repetitions of 3 for Completed, 4 for Incomplete,
+# or 5 for Other. Default selection is [65535, 65535].
+#
+# This fixture puts these typed fields into consecutive words:
+# energy, capacity, destination, area, station, kept_profile,
+# placement_disabled, startup_word, event, boss, item_count, map, tail.
+# Route codes are Intro = 0, CeresArrival = 7, ZebesFlight = 8. Unknown
+# routes carry their raw code. Area codes are Crateria = 4 and Ceres = 9.
+# In the fixture, an omitted area defaults to Crateria, and an omitted
+# destination defaults to Intro. For an encoded zero payload area 0 remains
+# opaque. The fixture keeps only byte 43 of Crateria's remembered map in
+# its map word. Its working map replaces that area's remembered map when
+# Crateria is current. The Ceres working map never enters that word.
+# Typed flags occupy whole words. All unspecified encoded words are zero.
+# Snapshot checks include typed fields and tail. Image digests cover all
+# 8,192 encoded bytes. Preserve all bytes outside the expected changes.
+[[vector]]
+id = "R-boot"
+entries = ["BootFiles", "ReadSlot"]
+row = "any-power-on"
+frames = [262, 263, 264, 265, 266, 267, 268, 269, 270, 271]
+
+[[vector]]
+id = "R-menu"
+entries = ["MenuFiles", "ReadSlot"]
+row = "any-power-on"
+frames = [396, 400]
+want = { present = [false, false, false], cursor = "A" }
+
+[[vector]]
+id = "R-choice"
+entries = ["ChooseFile"]
+row = "any-power-on"
+frames = [431, 432, 433]
+want = { slot = "A", selection = [0, 65535], energy = 99, capacity = 99, destination = "Intro" }
+
+[[vector]]
+id = "R-arrival"
+entries = ["WriteFile"]
+row = "any-ceres-arrival"
+frames = [0, 1]
+
+[[vector]]
+id = "R-escape"
+entries = ["WriteFile"]
+row = "chain-any-0011-DF45"
+frames = [239, 240, 241, 2123]
+
+[[vector]]
+id = "C-primary"
+entries = ["ReadSlot"]
+action = "read"
+slot = "A"
+A = { words = [65520, 32], primary = [16, 65519], mirror = [6, 9] }
+want = { valid = true, unchanged = true }
+
+[[vector]]
+id = "C-mirror"
+entries = ["ReadSlot"]
+action = "read"
+slot = "B"
+B = { words = [1, 5], primary = [6, 0], mirror = [6, 65529] }
+want = { valid = true, unchanged = true }
+
+[[vector]]
+id = "C-split-check"
+entries = ["ReadSlot"]
+action = "read"
+slot = "C"
+C = { words = [2, 3], primary = [5, 0], mirror = [0, 65530] }
+want = { valid = false, cleared = ["C"], checks_preserved = true }
+
+[[vector]]
+id = "C-stale-check"
+entries = ["ReadSlot"]
+action = "read_twice"
+slot = "A"
+A = { words = [9], primary = [0, 65535], mirror = [7, 2] }
+want = { valid = false, cleared = ["A"], second_valid = true, checks_preserved = true }
+
+[[vector]]
+id = "C-boot-stops"
+entries = ["BootFiles"]
+action = "boot"
+mark = "Completed"
+A = { words = [7] }
+B = { words = [10, 20], primary = [30, 65505] }
+C = { words = [99] }
+want = { inspected = ["A", "B"], cleared = ["A"], mark = "Completed", demos = 4 }
+
+[[vector]]
+id = "C-boot-unmarked"
+entries = ["BootFiles"]
+action = "boot"
+mark = "Other"
+A = { words = [4], mirror = [4, 65531] }
+want = { inspected = ["A"], cleared = [], mark = "Other", demos = 3 }
+
+[[vector]]
+id = "C-boot-empty"
+entries = ["BootFiles"]
+action = "boot"
+mark = "Completed"
+A = { words = [20] }
+B = { words = [3] }
+C = { words = [42] }
+want = { inspected = ["A", "B", "C"], cleared = ["A", "B", "C"], mark = "Incomplete", demos = 3, image_digest = "5c8e391cc05bd2a759a12cc40fa68cd864d22556fccdc20a5fc9812033992f51" }
+
+[[vector]]
+id = "C-cursor-weak"
+entries = ["MenuFiles"]
+action = "menu"
+selection = [1, 0]
+B = { words = [6], primary = [6, 65529] }
+C = { words = [2] }
+want = { cursor = "B", present = [false, true, false], cleared = ["C"], checks_preserved = true }
+
+[[vector]]
+id = "C-cursor-overlap"
+entries = ["MenuFiles"]
+action = "menu"
+selection = [2, 2]
+want = { cursor = "A", present = [false, false, false] }
+
+[[vector]]
+id = "C-cursor-range"
+entries = ["MenuFiles"]
+action = "menu"
+selection = [3, 0]
+want = { cursor = "A", present = [false, false, false] }
+
+[[vector]]
+id = "C-select-mirror"
+entries = ["ChooseFile", "ReadSlot"]
+action = "choose"
+slot = "C"
+selection = [1, 65534]
+retained_fill = 84
+spare_word = 1500
+C = { run = { energy = 4, capacity = 9, destination = "ZebesFlight", area = "Crateria", station = 3, kept_profile = 6, placement_disabled = 1, startup_word = 1, event = 2, boss = 3, item_count = 5, map = 7, tail = 11 }, mirror = [64, 65471] }
+want = { slot = "C", valid = true, selection = [2, 65533], destination = "ZebesFlight", area = "Crateria", station = 3, energy = 4, capacity = 9, kept_profile = 6, saved_map = 7, tail = 11, primary = [0, 0], mirror = [64, 65471], image_digest = "53ed4d88a7d2d3561135a0de921252c59c8093373c9b0a471a47e25532e5cb6e" }
+
+[[vector]]
+id = "C-select-fresh"
+entries = ["ChooseFile"]
+action = "choose"
+slot = "B"
+selection = [2, 65533]
+want = { slot = "B", valid = false, selection = [1, 65534], destination = "Intro", energy = 99, capacity = 99, play_time = [0, 0, 0, 0], placement_disabled = 1, startup_word = 1, map_collected = false }
+
+[[vector]]
+id = "C-save-B"
+entries = ["WriteFile"]
+action = "save"
+slot = "B"
+selection = [2, 65533]
+retained_fill = 76
+spare_word = 1642
+A = { words = [5] }
+B = { words = [42], primary = [42, 65493], mirror = [42, 65493] }
+C = { words = [15] }
+run = { energy = 65535, capacity = 65535, destination = "CeresArrival", area = "Ceres", station = 0, kept_profile = 12, placement_disabled = 1, startup_word = 1, event = 4, boss = 5, item_count = 6, map = 7, tail = 13 }
+live_map = 55
+want = { slot = "B", destination = "CeresArrival", area = "Ceres", station = 0, selection = [2, 65533], saved_map = 7, tail = 13, pending_primary = [42, 65493], pending_mirror = [42, 65493], primary = [63, 65472], mirror = [63, 65472], pending_digest = "b8cdc468107959bb987994a77edd6c618c9f93a993c87b347bd407bd1272d5b3", image_digest = "1e89568d51f38be937ebdad931393b0da2965ebdd220b1c9ebd3f32cefa743df" }
+
+[[vector]]
+id = "C-save-C"
+entries = ["WriteFile"]
+action = "save"
+slot = "C"
+C = { words = [100], primary = [100, 65435], mirror = [200, 65335] }
+run = { energy = 8, capacity = 9, destination = "ZebesFlight", area = "Crateria", station = 2, kept_profile = 3, startup_word = 1, event = 12, boss = 13, item_count = 14, map = 2, tail = 15 }
+live_map = 21
+want = { slot = "C", destination = "ZebesFlight", area = "Crateria", station = 2, saved_map = 21, tail = 15, pending_primary = [100, 65435], pending_mirror = [200, 65335], primary = [110, 65425], mirror = [110, 65425], pending_digest = "244f8b7482fa7661c56b117b2f2dd7e96db54ae8bc9eed244f83c2211f46c3ad", image_digest = "a6373bc99576b7b335bd983410e6e168301305b313dbdb58dd0ca9709b5aea64" }
+
+[[vector]]
+id = "C-failed-copy"
+entries = ["ReadSlot"]
+action = "read"
+slot = "B"
+working = { kept_profile = 345, map = 39 }
+B = { run = { energy = 9, capacity = 17, destination = "ZebesFlight", area = "Ceres", station = 2, event = 42, boss = 43, item_count = 7, tail = 199 }, primary = [8, 3], mirror = [4, 7] }
+want = { valid = false, cleared = ["B"], checks_preserved = true, area = "Crateria", station = 0, copied_words = [9, 17, 8, 9, 2, 0, 0, 0, 42, 43, 7, 0, 199], working_profile = 345, working_map = 39 }
+
+[[vector]]
+id = "C-fresh-keeps-profile"
+entries = ["MenuFiles", "ChooseFile", "WriteFile"]
+action = "choose_then_save"
+slot = "B"
+selection = [2, 65533]
+retained_fill = 72
+spare_word = 375
+A = { run = { energy = 8, capacity = 9, area = "Crateria", kept_profile = 123, map = 17, tail = 44 }, primary = [205, 65330] }
+B = { run = { energy = 13, capacity = 25, destination = "ZebesFlight", area = "Ceres", station = 5, kept_profile = 19, event = 6, boss = 4, item_count = 3, map = 31, tail = 80 } }
+C = { words = [71] }
+want = { slot = "B", valid = false, selection = [1, 65534], destination = "Intro", energy = 99, capacity = 99, kept_profile = 123, placement_disabled = 1, startup_word = 1, map_collected = false, tail = 0, copied_words = [], present = [true, false, false], primary = [339, 65196], mirror = [339, 65196], choice_digest = "84729f89e9ab81927c843399b33bfad68fe5d9d5862a2aba622cd96c2a2198df", image_digest = "74553d08b9f10c8dfb85cbb784014ebe8211dc1ef230a9a70cc37d67a353d57f" }
+
+[[vector]]
+id = "C-select-resumes"
+entries = ["ChooseFile"]
+action = "resume_choice"
+slot = "C"
+selection = [1, 0]
+retained_fill = 73
+spare_word = 376
+A = { words = [7] }
+B = { words = [11] }
+C = { words = [13] }
+want = { choice_saved = true, run_ready_at_selection = false, same_as_continuous = true, slot = "C", valid = false, selection = [2, 65533], destination = "Intro", energy = 99, capacity = 99, pending_digest = "fa93ebf0d6e53b8ef2a123992c85cfa9394dfe7250c27ee6afdf17a2e387aec5", image_digest = "fa93ebf0d6e53b8ef2a123992c85cfa9394dfe7250c27ee6afdf17a2e387aec5" }
+
+[[vector]]
+id = "C-save-resumes"
+entries = ["WriteFile"]
+action = "resume_save"
+slot = "B"
+selection = [1, 65534]
+retained_fill = 74
+spare_word = 377
+B = { words = [91], primary = [91, 65444], mirror = [91, 65444] }
+run = { energy = 63, capacity = 99, destination = "CeresArrival", area = "Ceres", kept_profile = 12, tail = 37 }
+changed_after_checkpoint = { energy = 55, capacity = 55, destination = "ZebesFlight", area = "Crateria", station = 14, kept_profile = 1, tail = 201 }
+want = { slot = "B", destination = "CeresArrival", area = "Ceres", station = 0, same_as_continuous = true, pending_primary = [91, 65444], pending_mirror = [91, 65444], primary = [227, 65308], mirror = [227, 65308], pending_digest = "32e4b48e03c627f6261df46b7f2fa3e6e4d31249402c2374a9db357756be229c", image_digest = "ad9a8beae804570fe442f6236bfb5ec365fdac8e1ccd70b59ad573db8f8b1004" }
+
+[[vector]]
+id = "C-opaque-encoding"
+entries = ["ReadSlot"]
+action = "read"
+slot = "A"
+retained_fill = 75
+spare_word = 378
+A = { words = [7, 9, 600, 117, 3], primary = [736, 64799] }
+want = { valid = true, unchanged = true, destination = 600, area = 117, station = 3, round_trip = true, image_digest = "a3fc58dc1525d325dc9897ce9d873d89fbaecdb0f32ee1bdb096192130dd0971" }

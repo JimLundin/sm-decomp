@@ -131,6 +131,10 @@ rounds = 1
 name = "screens-options"
 rounds = 1
 
+[[model]]
+name = "save-files"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -445,6 +449,8 @@ wave = 3
 rounds = 3
 # Inferred: F3 for the continue.
 reads = ["H3", "P1", "F3"]
+model = "save-files"
+status = "in-progress"
 
 [[domain]]
 id = "U1"

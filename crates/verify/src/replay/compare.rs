@@ -48,7 +48,15 @@ pub fn compare(expected: &[Observation], actual: &[Observation]) -> Result<(), C
             None => return Err(CompareFault::MissingActual(observed.field.clone())),
             Some(actual) if actual.bytes == observed.bytes => {}
             Some(actual) => {
-                let suffix = if ["movement.reached.complete", "movement.inside"]
+                let suffix = if observed.field == "save-files.battery" {
+                    let offset = observed
+                        .bytes
+                        .iter()
+                        .zip(&actual.bytes)
+                        .position(|(expected, actual)| expected != actual)
+                        .unwrap_or_else(|| observed.bytes.len().min(actual.bytes.len()));
+                    format!(".byte-{offset:04x}")
+                } else if ["movement.reached.complete", "movement.inside"]
                     .contains(&observed.field.as_str())
                 {
                     super::touched_cells::difference(&observed.bytes, &actual.bytes)

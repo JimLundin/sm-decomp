@@ -26,6 +26,7 @@ pub mod playback;
 pub mod played;
 pub mod ridley;
 pub mod room_loading;
+pub mod save_files;
 pub mod sender;
 pub mod shaft;
 #[cfg(test)]
@@ -48,6 +49,8 @@ pub enum Scope {
     IntroRooms,
     /// Recorded intro pad and Samus update authority.
     Playback,
+    /// Cartridge persistence.
+    SaveFiles,
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
     /// The Zebes flashback encounter at its cinematic actor turn.
@@ -87,6 +90,8 @@ pub enum ProductionSeed {
     IntroRooms(Box<intro_rooms::Scoped>),
     /// Complete recorded pad phase.
     Playback(playback::ScenePhase),
+    /// Complete cartridge, working profile and pending work.
+    SaveFiles(Box<save_files::State>),
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
     /// Complete flashback encounter State, including any pending start.
@@ -127,6 +132,8 @@ pub enum AdvanceInput<'a> {
     Flashback(flashback::Cut<'a>),
     /// Scene start and/or the actual room actor opportunity at this cut.
     Playback(playback::Cut),
+    /// The current cartridge operation.
+    SaveFiles(save_files::Input<'a>),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -203,6 +210,8 @@ pub enum ProductionOutputs {
     Flashback(flashback::Publication),
     /// Recorded pad and immediate update authority publications.
     Playback(playback::CutReport),
+    /// The full battery image and operation receipt.
+    SaveFiles(Box<save_files::Output>),
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -273,6 +282,8 @@ pub enum Unsupported {
     Intro(played::intro::Fault),
     /// The intro room join requires a producer or content outside its scope.
     IntroRooms(intro_rooms::Fault),
+    /// The cartridge cannot accept this request in its current state.
+    SaveFiles(::save_files::Refusal),
     /// A weapon impact cue needs its qualified sender mapping.
     WeaponImpactSound,
     /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
@@ -363,6 +374,7 @@ impl Production {
         validate_pins(match &seed {
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Playback(_) => Scope::Playback,
+            ProductionSeed::SaveFiles(_) => Scope::SaveFiles,
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
             ProductionSeed::Flashback(_) => Scope::Flashback,
@@ -404,6 +416,11 @@ impl Production {
                 }
                 OwnedState::Playback(Model(phase))
             }
+            (
+                ProductionSeed::SaveFiles(state),
+                ProductionContent::SaveFiles(_),
+                ProductionRules::SaveFiles,
+            ) => OwnedState::SaveFiles(state),
             (
                 ProductionSeed::Connected(state),
                 ProductionContent::Connected(content),
@@ -450,6 +467,17 @@ impl Production {
         })
     }
 
+    /// The exact battery image held by a cartridge scope.
+    #[must_use]
+    pub fn battery(&self) -> Option<types::save_files::BatteryImage> {
+        match (&self.state, &self.context.content) {
+            (OwnedState::SaveFiles(state), ProductionContent::SaveFiles(format)) => {
+                Some(save_files::image(format, &state.cartridge))
+            }
+            _ => None,
+        }
+    }
+
     /// The complete held state, including any scheduled controller changes.
     #[must_use]
     pub const fn state(&self) -> &OwnedState {
@@ -462,6 +490,7 @@ impl Production {
         match self.state {
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Playback(_) => Scope::Playback,
+            OwnedState::SaveFiles(_) => Scope::SaveFiles,
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::IntroRooms(_) => Scope::IntroRooms,
             OwnedState::Flashback(_) => Scope::Flashback,
@@ -524,6 +553,14 @@ impl Production {
                 ProductionRules::Playback,
                 AdvanceInput::Playback(cut),
             ) => ProductionOutputs::Playback(playback::advance(&mut phase.0, content, cut)),
+            (
+                OwnedState::SaveFiles(state),
+                ProductionContent::SaveFiles(format),
+                ProductionRules::SaveFiles,
+                AdvanceInput::SaveFiles(input),
+            ) => ProductionOutputs::SaveFiles(Box::new(state.advance(format, input).map_err(
+                |refusal| ProductionFault::Unsupported(Unsupported::SaveFiles(refusal)),
+            )?)),
             (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
@@ -602,6 +639,7 @@ impl Production {
             | OwnedState::IntroRooms(_)
             | OwnedState::Flashback(_)
             | OwnedState::Playback(_)
+            | OwnedState::SaveFiles(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::WeaponsContact(_)
@@ -622,6 +660,9 @@ impl Production {
     pub fn save(&self) -> Result<SavedProduction, SaveFault> {
         let state = match &self.state {
             OwnedState::Playback(phase) => return Ok(self.encode_save(*phase)),
+            OwnedState::SaveFiles(state) => {
+                return Ok(self.encode_save(Model::<save_files::SaveFilesPin>(state.clone())));
+            }
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
@@ -669,7 +710,11 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if matches!(&content, ProductionContent::Flashback(_)) {
+        let seed = if matches!(&content, ProductionContent::SaveFiles(_)) {
+            let checkpoint: Checkpoint<Model<save_files::SaveFilesPin>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::SaveFiles(checkpoint.state.0)
+        } else if matches!(&content, ProductionContent::Flashback(_)) {
             let checkpoint: Checkpoint<Model<crate::state::owned::FlashbackPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::Flashback(checkpoint.state.0)
@@ -737,6 +782,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
         Scope::IntroRooms => intro_rooms::validate_pins(),
         Scope::Intro
+        | Scope::SaveFiles
         | Scope::Blocks
         | Scope::Progress
         | Scope::Hud

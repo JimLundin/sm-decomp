@@ -248,6 +248,15 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
     if case.inputs == InputProvider::ScopedIntroInputs {
         return Some(super::played::intro::indexed::valid_count_shape(counts));
     }
+    if case.inputs == InputProvider::SaveFileBoundaries {
+        return Some(
+            counts.fields == counts.cuts
+                && counts.outputs == 0
+                && counts.publications == 0
+                && counts.replies == 0
+                && counts.pending_boundaries == 2,
+        );
+    }
     if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
         return Some(
             super::early_map::field_count(case, counts.cuts) == Some(counts.fields)

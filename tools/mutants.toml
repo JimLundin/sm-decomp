@@ -1064,3 +1064,42 @@ after = '''pad: report.pad.map(|mut pad| {
 case = "screens-playback/intro-demos"
 cut = 1786
 field = "playback.current.fresh"
+
+[[fault]]
+name = "save-files-wrong-slot"
+responsibility = "save-files"
+file = "crates/game/src/production/save_files.rs"
+before = '''owner.write_file(cut, run, live_map, stage)?;'''
+after = '''owner.state.active = Some(Slot::Second);
+            owner.write_file(cut, run, live_map, stage)?;'''
+case = "save-files/power-on-through-ceres"
+cut = 19
+field = "save-files.battery.byte-0019"
+
+[[fault]]
+name = "save-files-missing-mirror"
+responsibility = "save-files"
+file = "crates/game/src/production/save_files.rs"
+before = '''owner.continue_write()?;'''
+after = '''let pending = owner.state.pending;
+            owner.continue_write()?;
+            if let types::save_files::PendingAction::Write { slot, .. } = pending {
+                owner.state.cartridge.slots[slot].mirror = state.cartridge.slots[slot].mirror;
+            }'''
+case = "save-files/power-on-through-ceres"
+cut = 20
+field = "save-files.battery.byte-1ff0"
+
+[[fault]]
+name = "save-files-omitted-route"
+responsibility = "save-files"
+file = "crates/game/src/production/save_files.rs"
+before = '''owner.write_file(cut, run, live_map, stage)?;'''
+after = '''owner.write_file(cut, run, live_map, stage)?;
+            if let Some(slot) = owner.state.active
+                && let Some(route) = owner.state.cartridge.slots[slot].payload.as_mut_slice().get_mut(170) {
+                *route = 0;
+            }'''
+case = "save-files/power-on-through-ceres"
+cut = 19
+field = "save-files.battery.byte-0164"

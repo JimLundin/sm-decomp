@@ -34,6 +34,8 @@ pub enum Responsibility {
     Flashback,
     /// The recorded intro pad and update authority.
     Playback,
+    /// Complete cartridge persistence.
+    SaveFiles,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -154,6 +156,8 @@ pub enum InputProvider {
     FlashbackInputs,
     /// Recorded scene setup and reached room actor opportunities.
     CinematicActorOpportunities,
+    /// Ordered startup and save boundaries from pinned preceding cuts.
+    SaveFileBoundaries,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -330,6 +334,9 @@ pub enum ObservationId {
     /// Work authorized on this room actor opportunity.
     #[serde(rename = "playback.authority")]
     PlaybackAuthority,
+    /// The complete cartridge image at the selected cut.
+    #[serde(rename = "save-files.battery")]
+    Battery,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -757,6 +764,9 @@ fn rule_exists(rule: &str) -> bool {
         || screens_playback::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("screens-playback/{id:?}"))
+        || save_files::CATALOGUE
+            .iter()
+            .any(|entry| rule == format!("save-files/{:?}", entry.id))
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -846,6 +856,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::PlaybackStart
         | O::PlaybackFinish
         | O::PlaybackAuthority => Responsibility::Playback,
+        O::Battery => Responsibility::SaveFiles,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
@@ -947,6 +958,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("interface-hud/", Responsibility::Hud),
         ("samus-appearance/", Responsibility::Appearance),
         ("run-progress/", Responsibility::Progress),
+        ("save-files/", Responsibility::SaveFiles),
         ("samus-health/", Responsibility::Health),
     ]
     .iter()
@@ -963,6 +975,11 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         game::production::played::intro_rooms::RULE => {
             &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
         }
+        "save-files/ReadSlot"
+        | "save-files/BootFiles"
+        | "save-files/MenuFiles"
+        | "save-files/ChooseFile"
+        | "save-files/WriteFile" => &[O::Battery],
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
@@ -1373,10 +1390,26 @@ fn playback_provider_valid(case: &Case, recorded: bool) -> bool {
         && case.checkpoints
 }
 
+fn save_files_provider_valid(case: &Case) -> bool {
+    case.kind == CaseKind::Scoped
+        && case.row == "any-power-on"
+        && matches!(case.start, Start::CacheCut { frame: 0 })
+        && case.end.cut_inclusive == super::save_files::END
+        && case.responsibilities == [Responsibility::SaveFiles]
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && case.expectations.fields == [ObservationId::Battery]
+        && case.expectations.outputs.is_empty()
+        && case.checkpoints
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::IntroRoomJoinInputs {
         return super::intro_rooms::valid(case);
+    }
+    if case.inputs == InputProvider::SaveFileBoundaries {
+        return save_files_provider_valid(case);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);

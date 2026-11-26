@@ -646,3 +646,46 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/playback.rs" },
   { role = "navigation", path = "crates/import/src/playback.rs" },
 ]
+
+[[rule]]
+id = "save-files/BootFiles"
+targets = [
+  { role = "model", path = "crates/clean/save_files/src/boot.rs" },
+  { role = "adapter", path = "crates/game/src/production/save_files.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/front_end/cartridge.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/save_files.rs" },
+]
+
+[[rule]]
+id = "save-files/ChooseFile"
+targets = [
+  { role = "model", path = "crates/clean/save_files/src/choice.rs" },
+  { role = "adapter", path = "crates/game/src/production/save_files.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/front_end/cartridge.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/save_files.rs" },
+]
+
+[[rule]]
+id = "save-files/MenuFiles"
+targets = [
+  { role = "model", path = "crates/clean/save_files/src/menu.rs" },
+  { role = "adapter", path = "crates/game/src/production/save_files.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/front_end/cartridge.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/save_files.rs" },
+]
+
+[[rule]]
+id = "save-files/ReadSlot"
+targets = [
+  { role = "model", path = "crates/clean/save_files/src/read.rs" },
+  { role = "adapter", path = "crates/game/src/production/save_files.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/save_files.rs" },
+]
+
+[[rule]]
+id = "save-files/WriteFile"
+targets = [
+  { role = "model", path = "crates/clean/save_files/src/write.rs" },
+  { role = "adapter", path = "crates/game/src/production/save_files.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/save_files.rs" },
+]

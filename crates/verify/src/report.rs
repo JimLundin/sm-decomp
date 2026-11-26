@@ -175,6 +175,24 @@ const DOMAINS: &[Domain] = &[
         ],
         apart: &[],
     },
+    Domain {
+        name: "save-files",
+        bridge: None,
+        adapters: &[
+            "exact/save_files.rs",
+            "exact/save_files/run.rs",
+            "production/save_files.rs",
+        ],
+        providers: &["save_files"],
+        areas: &[
+            (
+                "cartridge",
+                &["boot.rs", "menu.rs", "read.rs", "selection.rs"],
+            ),
+            ("run", &["choice.rs", "write.rs"]),
+        ],
+        apart: &[],
+    },
     // The status bar's pictures and layout are its own (§1.2, §1.4), the mini-map's two places
     // in the layout being constants. The frame's order, the grid, the inputs, the tiles, the
     // State, the flash's and blink's timing and the catalogue are the domain's shared code.
@@ -548,7 +566,10 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "screens-file-select",
         bridge: None,
-        adapters: &["production/played/front_end/file_select.rs"],
+        adapters: &[
+            "production/played/front_end/file_select.rs",
+            "production/played/front_end/cartridge.rs",
+        ],
         providers: &[],
         areas: &[(
             "menu",

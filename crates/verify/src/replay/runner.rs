@@ -150,6 +150,12 @@ pub(super) fn run(
             };
             record_cut(result, &mut digest, &expected, &null, *cut)?;
             if case.checkpoints {
+                if matches!(production.state(),
+                    game::state::owned::OwnedState::SaveFiles(state)
+                        if matches!(state.cartridge.pending, types::save_files::PendingAction::Write { .. }))
+                {
+                    count(&mut result.counts.pending_boundaries, 1)?;
+                }
                 // A one-opportunity touchdown resumes across the actual advance.
                 checkpoints.push(
                     origin
@@ -213,6 +219,9 @@ fn verify_checkpoints(
         let failed = Outcome::CheckpointFailure { cut: start };
         let mut restored = Production::restore(&saved, content.clone(), rules.clone())
             .map_err(|_| failed.clone())?;
+        let pending_save = matches!(restored.state(),
+            game::state::owned::OwnedState::SaveFiles(state)
+                if matches!(state.cartridge.pending, types::save_files::PendingAction::Write { .. }));
         let compared_suffix = schedule
             .iter()
             .filter(|cut| **cut > start)
@@ -238,6 +247,9 @@ fn verify_checkpoints(
             || !touchdown_outputs_hold(reader.inputs, &restored_actual, actual)
         {
             return Err(failed);
+        }
+        if pending_save {
+            count(&mut result.counts.pending_restorations, 1)?;
         }
         count(&mut result.counts.restorations, 1)?;
     }

@@ -32,7 +32,7 @@ deny = [
   { crate = "canonical_derive", wrappers = ["canonical"], reason = "canonical re-exports its derive" },
   # The clean room (MODEL §5): the models depend only on `types`, and only the engine's `game`,
   # `data` and the verifier take them.
-  { crate = "types", wrappers = ["data", "game", "verify", "samus_movement", "world_blocks", "world_camera", "interface_hud", "run_progress", "samus_appearance", "boss_ceres_ridley", "world_doors", "weapons_projectiles", "audio_transport", "game_time", "samus_health", "world_quake", "world_haze", "game_random", "screens_boot", "screens_arrival", "screens_flight", "screens_intro", "screens_flashback", "screens_playback", "screens_title", "screens_file_select", "screens_options"], reason = "MODEL §5: the clean room's shared types" },
+  { crate = "types", wrappers = ["data", "game", "verify", "samus_movement", "world_blocks", "world_camera", "interface_hud", "run_progress", "samus_appearance", "boss_ceres_ridley", "world_doors", "weapons_projectiles", "audio_transport", "game_time", "samus_health", "world_quake", "world_haze", "game_random", "screens_boot", "screens_arrival", "screens_flight", "screens_intro", "screens_flashback", "screens_playback", "screens_title", "screens_file_select", "screens_options", "save_files"], reason = "MODEL §5: the clean room's shared types" },
   { crate = "samus_movement", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
   { crate = "world_blocks", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
   { crate = "world_camera", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
@@ -58,6 +58,7 @@ deny = [
   { crate = "screens_title", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
   { crate = "screens_file_select", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
   { crate = "screens_options", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
+  { crate = "save_files", wrappers = ["game", "verify"], reason = "MODEL §5: a model depends on types only" },
 ]
 
 # Build scripts: only the listed crates may have one. No workspace crate does, the clean crates

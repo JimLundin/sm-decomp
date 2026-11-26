@@ -105,6 +105,7 @@ dependencies = [
  "samus_appearance",
  "samus_health",
  "samus_movement",
+ "save_files",
  "screens_arrival",
  "screens_boot",
  "screens_file_select",
@@ -244,6 +245,16 @@ dependencies = [
 
 [[package]]
 name = "samus_movement"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "save_files"
 version = "0.1.0"
 dependencies = [
  "enum-map",
@@ -481,6 +492,7 @@ dependencies = [
  "samus_appearance",
  "samus_health",
  "samus_movement",
+ "save_files",
  "screens_arrival",
  "screens_boot",
  "screens_file_select",

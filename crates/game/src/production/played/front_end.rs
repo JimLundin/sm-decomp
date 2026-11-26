@@ -9,6 +9,8 @@
 //! owners outside the rungs answer through [`Answers`]. The front end stops when the intro
 //! needs the Zebes room and encounter.
 
+mod cartridge;
+pub use cartridge::{Cartridge, CartridgeFrame, Platform};
 mod file_select;
 mod intro;
 mod options;
@@ -186,6 +188,10 @@ pub enum Sound {
 /// Why a frame end was not played. State is unchanged.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
+    /// The current cartridge operation is refused.
+    Cartridge(save_files::Refusal),
+    /// The cartridge did not report the expected result.
+    CartridgeReceipt,
     /// Two frames of work finished by one frame end where only the title states what follows.
     TwoFinished,
     /// The title went out to a later piece: the opening playing on, or the demos.

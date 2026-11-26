@@ -1358,3 +1358,32 @@ provider = "preceding pinned record"
 fields = ["samus.whole-x"]
 phase = "before motion on the next reached actor opportunity"
 claim = "The witness takes whole X from the movement owner for the approach cue."
+
+[[case]]
+id = "save-files/power-on-through-ceres"
+kind = "scoped"
+row = "any-power-on"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 27 }
+rules = ["save-files/ReadSlot", "save-files/BootFiles", "save-files/MenuFiles", "save-files/ChooseFile", "save-files/WriteFile"]
+profile = "reference"
+responsibilities = ["save-files"]
+content = "player-rom-import"
+inputs = "save-file-boundaries"
+expectations = { provider = "pinned-record-cache", fields = ["save-files.battery"], outputs = [] }
+checkpoints = true
+limits = ["logical cuts are the ordered startup, arrival, escape and landing boundaries", "cold battery from power-on cut zero only", "the menu confirms its initial cursor without moving it", "live screen, health, progress, HUD, map and clock inputs and their timing are externally admitted", "continues both saves after their payload is visible", "compares the full battery including unselected slots and opaque bytes"]
+
+[[case.borrowed]]
+dependency = "platform.boot"
+provider = "observed diagnostic and initial erase frontiers"
+fields = ["clear frontiers", "mirror test frontier", "restore frontier"]
+phase = "in-progress boot operations"
+claim = "scope produces the transient bytes from the admitted battery and sequence progress"
+
+[[case.borrowed]]
+dependency = "cartridge.capture"
+provider = "preceding locked cut's working profile, progress and maps"
+fields = ["options and profile", "persistent progress", "explored area maps", "live explored grid", "location", "save opportunities"]
+phase = "before selection and each save"
+claim = "save uses the prior live owners; the staged save image is only an expectation"

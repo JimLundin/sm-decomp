@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "cd94353a6f88c3c36eeb27c93e43e597d51395ebdef3d02f7248aba9016e1b40"
+index_sha256 = "6902f786022dd2128f2f2c48a53a3c8f8a691d7f25a95f940276af58c6cadc1d"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -986,3 +986,21 @@ null_fields = 4906
 restorations = 2234
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "save-files/power-on-through-ceres"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d9528ea5730e014d49fd79e96091954ae9a39a070d389f5a7324515eedb3306e"
+
+[case.counts]
+cuts = 27
+fields = 27
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 1
+restorations = 27
+pending_boundaries = 2
+pending_restorations = 2

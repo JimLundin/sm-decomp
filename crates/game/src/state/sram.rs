@@ -1,7 +1,6 @@
 //! The cartridge's battery-backed save RAM.
 //!
-//! It holds three save files, each vouched for by a checksum and its complement, kept twice
-//! (bank $81 log, `$81:8000` saves a file, `$81:8085` loads one, `$81:812B` places them).
+//! It holds three save files and two copies of their checksum pairs.
 //!
 //! The image is the battery file's byte layout read as little-endian words, in order: the
 //! checks, the three files, a stretch the save code never touches, and the checks' mirror.
@@ -38,14 +37,6 @@ impl Default for SaveFile {
     }
 }
 
-impl SaveFile {
-    /// The file's checksum: its words summed, wrapping (`$81:805A`).
-    #[must_use]
-    pub fn checksum(&self) -> u16 {
-        self.0.iter().fold(0, |sum, word| sum.wrapping_add(*word))
-    }
-}
-
 /// A file's check: its checksum and the checksum's complement.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Check {
@@ -53,25 +44,6 @@ pub struct Check {
     pub sum: u16,
     /// Its complement.
     pub complement: u16,
-}
-
-impl Check {
-    /// The check the save code writes for `file`.
-    #[must_use]
-    pub fn of(file: &SaveFile) -> Self {
-        let sum = file.checksum();
-        Self {
-            sum,
-            complement: !sum,
-        }
-    }
-
-    /// Whether this check vouches for `file`: the load accepts a file when either copy of its
-    /// check matches (`$81:80B9`, then the mirror at `$81:80CC`).
-    #[must_use]
-    pub fn vouches_for(self, file: &SaveFile) -> bool {
-        self == Self::of(file)
-    }
 }
 
 /// One copy of the checks.
@@ -177,7 +149,7 @@ impl SaveRam {
 
 #[cfg(test)]
 mod tests {
-    use super::{Check, SAVE_FILE_WORDS, SAVE_RAM_BYTES, SaveFile, SaveRam, UNUSED_WORDS};
+    use super::{Check, SAVE_FILE_WORDS, SAVE_RAM_BYTES, SaveRam, UNUSED_WORDS};
 
     fn image() -> [u8; SAVE_RAM_BYTES] {
         let mut bytes = [0; SAVE_RAM_BYTES];
@@ -217,24 +189,5 @@ mod tests {
         assert_eq!(ram.files[1].0[0], 4);
         assert_eq!(ram.mirror.files[0].sum, 5);
         assert_eq!(ram.mirror.spare.complement, 6);
-    }
-
-    #[test]
-    fn a_saved_files_check_vouches_for_it() {
-        let mut file = SaveFile::default();
-        file.0[0] = 0xfff0;
-        file.0[1] = 0x0020;
-        assert_eq!(file.checksum(), 0x0010);
-        let check = Check::of(&file);
-        assert_eq!(
-            check,
-            Check {
-                sum: 0x0010,
-                complement: 0xffef
-            }
-        );
-        assert!(check.vouches_for(&file));
-        // Erased RAM's zero complement doesn't vouch for a zero sum.
-        assert!(!Check::default().vouches_for(&SaveFile::default()));
     }
 }

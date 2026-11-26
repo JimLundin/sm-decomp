@@ -318,7 +318,8 @@ def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int
 
 
 def test_command(crate: str, root: Path) -> list[str]:
-    dedicated = (root / "crates/clean" / crate / "tests/vectors.rs").is_file()
+    tests = root / "crates/clean" / crate / "tests"
+    dedicated = (tests / "vectors.rs").is_file() or (tests / "vectors/main.rs").is_file()
     if os.name == "nt":
         target = "test:vectors" if dedicated else "lib"
         return ["bash", "tools/lane/run_tests.sh", "--suite", target, crate]

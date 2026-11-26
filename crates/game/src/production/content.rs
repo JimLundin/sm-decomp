@@ -82,6 +82,8 @@ pub enum ProductionContent {
     Flashback(Box<data::assets::flashback::Scene>),
     /// The imported recorded pad holds.
     Playback(super::playback::Content),
+    /// Checked battery format and packed map projection.
+    SaveFiles(Box<crate::exact::save_files::Format>),
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -122,6 +124,8 @@ pub enum ProductionRules {
     Flashback(super::played::flashback::Rules),
     /// The playback catalogue rules are fixed.
     Playback,
+    /// Cartridge rules are fixed.
+    SaveFiles,
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.
