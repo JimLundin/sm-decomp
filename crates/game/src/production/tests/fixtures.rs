@@ -36,6 +36,8 @@ pub(in crate::production) fn samus() -> samus_movement::Samus {
         seat: samus_movement::Seat::Unseated,
         jump_held: samus_movement::JumpHeld::NONE,
         knockback: samus_movement::Knockback::spent(types::Side::Right),
+        getaway: samus_movement::Getaway::Idle,
+        getaway_release_speed: None,
     }
 }
 

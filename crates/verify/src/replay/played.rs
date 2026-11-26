@@ -33,6 +33,7 @@ mod explosion;
 mod flight;
 pub(super) mod flyby_scope;
 mod frame;
+pub(super) mod getaway;
 mod health;
 mod hud;
 pub(super) mod indexed;
@@ -860,27 +861,27 @@ mod tests {
         }
     }
 
-    /// Native retreat and flyby checkpoints carry through the shove request.
+    /// Native retreat and flyby checkpoints carry through the room return.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn retreat_continues_from_observed_checkpoints() {
         use super::{Outcome, Stop};
         let sources = sources();
         for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
-            let continuous = super::play(&sources, row, 0, 1262).unwrap();
-            assert_eq!(continuous.held, 1261);
+            let continuous = super::play(&sources, row, 0, 1271).unwrap();
+            assert_eq!(continuous.held, 1270);
             assert!(
-                matches!(continuous.stop, Stop::At(Outcome::Unsupported { cut: Some(1262), dependency }) if dependency.ends_with("RidleyGetawayPush"))
+                matches!(continuous.stop, Stop::At(Outcome::Unsupported { cut: Some(1271), dependency }) if dependency.ends_with("RidleyWarning"))
             );
             for start in [926, 993, 1004, 1093, 1115, 1156, 1158, 1170, 1261] {
-                let report = super::play(&sources, row, start, 1262).unwrap();
+                let report = super::play(&sources, row, start, 1271).unwrap();
                 diagnostic(format_args!(
                     "RETREAT row={row} origin={start} held={} stop={:?}",
                     report.held, report.stop
                 ));
-                assert_eq!(report.held, 1261_u64.saturating_sub(start));
+                assert_eq!(report.held, 1270_u64.saturating_sub(start));
                 assert!(
-                    matches!(report.stop, Stop::At(Outcome::Unsupported { cut: Some(1262), dependency }) if dependency.ends_with("RidleyGetawayPush"))
+                    matches!(report.stop, Stop::At(Outcome::Unsupported { cut: Some(1271), dependency }) if dependency.ends_with("RidleyWarning"))
                 );
             }
             restore_stopped_station(&sources, row);
@@ -890,7 +891,7 @@ mod tests {
     /// Carry the separate room owners to the stop, then restore the entire station from its
     /// record. Appearance's native kept movement type can name multiple actions at this cut.
     fn restore_stopped_station(sources: &super::Sources, row: &str) {
-        use super::{Outcome, Run, Stop, appearance, ceres_doors, connected, movement, station};
+        use super::{Run, Stop, appearance, ceres_doors, connected, movement, station};
 
         let lock = super::read_lock(sources).unwrap();
         let mut rows = super::open_rows(sources, &lock, row).unwrap();
@@ -918,16 +919,11 @@ mod tests {
             (104, Stop::End)
         );
         let flying = rows.record(1261).unwrap();
-        let before = run.state.clone();
         let controller = super::seed_controller(&flying).unwrap();
         let (held, stop) = run
-            .through(&mut rows, flying, controller, 1262..=1262)
+            .through(&mut rows, flying, controller, 1262..=1270)
             .unwrap();
-        assert_eq!(held, 0);
-        assert!(
-            matches!(stop, Stop::At(Outcome::Unsupported { cut: Some(1262), dependency }) if dependency.ends_with("RidleyGetawayPush"))
-        );
-        assert_eq!(run.state, before);
+        assert_eq!((held, stop), (9, Stop::End));
         diagnostic(format_args!(
             "RETREAT row={row} restored station at 1157 through its handoff"
         ));

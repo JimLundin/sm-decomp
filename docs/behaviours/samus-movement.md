@@ -13,11 +13,11 @@ that changes her speeds, and her collision with blocks, slopes and solid enemies
 
 **Not in this spec yet** (each an input where it feeds us; §10): animation timing, liquids,
 bomb jumps, grapple, the shinespark (and what the speed booster starts there), pushes
-from the room (Ceres, conveyors, quicksand), and what a cell she reaches then does
+from conveyors and quicksand, and what a cell she reaches then does
 (`TouchedCells` says which she reaches; `OtherBlockKinds` how each kind meets her motion). The
 speed booster's part in her motion is in: her dash's cap (`Dash`) and the faster start of her jumps
 (`Jumping`). A hit's knockback and the backward leap are in (§12); the damage and the hit itself
-are samus-health's and the hitter's.
+are samus-health's and the hitter's. Ridley's flyby shove is §13.
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
@@ -1719,6 +1719,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   pose-fit pushes, take-off lifts and slope seating or alignment preserve these distances.
   They can alter her position independently (C-aim-short, C-aim-enemy, C-adj-aim-step,
   D-other-motion).
+- The flyby shove also opens an interval and reports travel (§13).
 - The four distances are caller-held memory, all serialisable and independently restorable
   as `TravelDistance` values. A normal movement step reports a fresh complete set; when a
   surrounding mode skips the new interval, the caller preserves the set. A caller may restore
@@ -2123,7 +2124,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   follow. How she looks while she builds speed and glows (her run's animation pace, the glow's
   palette) is how Samus looks. Neither changes her speeds or position. The booster switched on or
   off mid-run (by the pause screen) is an item switched mid-pose, out of scope here.
-- **Pushes:** room pushes, quicksand, bomb jumps, grapple, shinespark. A hit's knockback is §12.
+- **Pushes:** conveyors, quicksand, bomb jumps, grapple, shinespark. A hit's knockback is §12.
+  Ridley's flyby shove is §13.
 - **Her outputs under a push.** Where a push moves her in a frame, pose fit and the shrink still
   place her as `PoseFitAfterMoves` and `ShrinkingLowersHer` say, and the placement is
   still theirs, but from where the push left her, and the push decides what they meet: in
@@ -2171,8 +2173,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
    constructed. The slope
    landings in r01 and samus-walljump-22 need lead-ins through a spin's drift and a sloped floor's
    effect on a move's length (`SlopesSlowTheWalk`).
-4. The water rows, terrain-quicksand and samus-ceres-push gave no vectors: their liquid and push
-   rules are out of scope.
+4. The water rows and terrain-quicksand supply no vectors. Their liquid and quicksand rules
+   are out of scope. The flyby in samus-ceres-push supplies §13 witnesses.
 5. Answered again: landing on a solid enemy's top (item-morph-ball frame 797) clears the y
    subpixel because the landing pose's fit looks down and finds her touching the enemy
    (`SolidEnemies`, W13). The earlier reading (the gap less 1, so she touches a pixel early) was
@@ -2435,4 +2437,133 @@ push is over (its `LeadingHer`).
   her dash included, plus 1 px (the ground pull, `FollowingTheGround`); then she is
   `Falling`, her facing kept and aim `Forward`, her speed pointing her facing's way, or, where
   that move met a floor, she lands as from a straight jump (`Landing`) [PA1, PA2]
-- checked: oracle (0006: PA1; any-intro-2219: PA2).
+- On the first ordinary recoil cut after a getaway shove stops sideways → use the saved
+  release speed for that downward move's ground pull. Her cleared horizontal speed and dash
+  stay zero. Consume the saved release speed on this cut. A slope seat still gives the usual
+  1 px ground pull [Gm-release-drop].
+- checked: oracle (0006: PA1, getaway cut 1265; any-intro-2219: PA2; samus-ceres-push cut 1270); constructed (Gm-release-drop).
+
+## 13. Moved aside by Ridley
+
+Ridley's flyby supplies one out-of-the-way request after Samus has finished her ordinary
+movement. Movement owns the pending request and travel side. The camera supplies the
+left edge of its view, and the room supplies solids through the usual movement queries.
+Appearance owns the recoil clip and the escape clock owns its own tick. This movement
+uses the existing recoil pose and solid queries. It adds no damage, protection or hit recoil.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| Out-of-the-way motion | idle, pending, or travelling with a horizontal side | GetawayArms, GetawayStarts, GetawayTravels |
+| View left edge | whole room pixels | GetawayStarts |
+| Centre split | 128 whole pixels from view left | GetawayStarts |
+| Retained dash | movement state, a nonnegative P.S speed in px/frame | GetawayTravels |
+| Horizontal slowdown | caller-supplied count of halvings, 0 through 5, zero in Ceres | GetawayTravels |
+| Candidate pose | optional candidate from the existing pose chooser, with its command | GetawayTravels |
+| Recorded choice | optional resolved Pose for this turn, including a repeated pose | appearance and pose history |
+| Prior and older poses | two carried Poses, including facing and action | pose history and WallJump |
+| Release speed | saved nonnegative P.S speed in px/frame, from the last shove attempt | AfterThePush |
+| Horizontal carry | room-supplied signed P.S displacement in px this frame, positive right, zero in Ceres | GetawayTravels |
+| Recoil body | imported pose half-sizes in whole pixels | GetawayTravels |
+| Fit height | 21 whole pixels | GetawayStarts |
+| Downward speed | 5 px/frame | GetawayStarts, GetawayTravels |
+| Directional travel | four signed P.S distances (§8) | firing on the next cut, GetawayArms, GetawayStarts, GetawayTravels |
+
+### GetawayArms
+- kind: mechanic.
+- summary: the flyby queues the shove for the following cut.
+- params: none.
+- switch: none.
+- A flyby request after ordinary movement → mark motion pending. Keep that
+  cut's pose, coordinates, speeds, published travel, recorded choice and pose history
+  [Gm-arm, Gm-movie-arm, Gm-pose-history].
+- checked: oracle (Gm-arm, Gm-movie-arm).
+
+### GetawayStarts
+- kind: mechanic.
+- summary: Samus takes her recoil pose and chooses a side of the view.
+- params: the centre split and downward speed above.
+- switch: none.
+- Pending → select the recoil pose with the same facing and publish its pose change to
+  appearance. Subtract the fit height less the current half-height from her whole-pixel Y.
+  Keep the Y fraction.
+  Report the forced recoil selection as the recorded choice. Move the prior pose into older
+  and remember the recoil pose as prior [Gm-pose-history].
+  The start cut keeps the old collision height. The new pose's body applies on the next cut
+  [Gm-left-start, Gm-right-start].
+- A negative result when subtracting the view left and split from whole-pixel X, with signed
+  16-bit wrap → travel left [Gm-left-start].
+- A zero or positive result → travel right [Gm-right-start, Gm-centre].
+- X and horizontal speed stay the same on the start cut.
+- Start → set downward speed, clear the pending bomb jump and deferred pose choices and
+  commands. Preserve the current upward or downward heading and whether she was falling.
+  Ordinary movement from the pad waits [Gm-left-start, Gm-right-start, Gm-centre, Gm-pending-lift].
+- On the start cut after firing can read the prior distances → open a fresh interval with
+  all four directions zero. The body lift contributes no travel [Gm-left-start, Gm-centre].
+- checked: oracle (Gm-left-start, Gm-right-start); constructed (Gm-centre, Gm-pending-lift, Gm-pose-history).
+
+### GetawayTravels
+- kind: mechanic.
+- summary: sideways contact ends the shove, and a floor lets it continue.
+- params: none.
+- switch: none.
+- On each travelling cut after firing can read the prior distances → open a fresh movement
+  interval. Publish the accepted horizontal travel and any accepted downward travel in it,
+  using §8 even when the shove ends. A direction with no move stays zero
+  [Gm-right-floor, Gm-door, Gm-wall, Gm-open-drop].
+- Travelling → ordinary movement waits. Discard a pending backward-leap pose and its command.
+  Keep the other candidates the ordinary chooser supplies for this turn. The ordinary resolver
+  uses the remaining candidates after the shove move, whose floor result supplies no landing
+  candidate. Use the recoil pose's horizontal speed rules (in dry Ceres, gain 1.8000 px/frame per frame
+  up to 5.0000 px/frame from rest) [Gm-right-floor, Gm-right-cap, Gm-door,
+  Gm-wall, Gm-damage-choice].
+- For sideways travel → add the updated recoil speed magnitude and retained dash with P.S
+  wrapping, including the fraction's carry into the whole part. Divide the unsigned result
+  by 2 to the power of the slowdown count, capped at four halvings. Discard any remainder
+  smaller than 1/65,536 px/frame. Convert that magnitude to a one-frame displacement,
+  negative for the stored left side. Add the signed room carry with P.S wrapping. Limit the
+  signed whole part to −15 through 15 px, keeping the fraction. For example, −16.2500 px
+  has whole part −17 and fraction .C000, so the limit leaves −14.2500 px
+  [Gm-carry-reverses, Gm-left-carry-limit].
+- Use the resulting displacement's sign for the move and its published travel, even if the
+  carry reverses it. Keep the stored side. Apply §8 room contact using the stored side for
+  solid actors and the resulting move for blocks. Report a block stop to the shove only
+  when the move agrees with the stored side [Gm-carry-reverses, Gm-carry-opposite-block].
+- Travelling, including a sideways stop → report the resolved pose choice. Repeating the
+  current recoil pose is a choice and shifts history once. When no choice resolves, keep both
+  remembered poses. Restore both poses before continuing the shove. The first ordinary cut
+  uses the same recorded-choice rule [Gm-pose-history].
+- Sideways stop → keep the stopped X and skip the shove's downward move. Save the
+  reduced horizontal speed magnitude from before the side, carry, displacement limit and
+  contact. End the shove. Clear the travel side, horizontal and downward speeds, dash,
+  falling and vertical heading. Set horizontal acceleration to accelerating
+  [Gm-door, Gm-wall, Gm-release-drop].
+- On that stop, resolve retained candidates against the stopped state using the ordinary
+  pose-fit and command rules. For an ordinary candidate, apply its command after stop cleanup
+  if the candidate remains the selected pose after ordinary fit and pose entry. If fit substitutes
+  another pose, record that pose and leave the original command unapplied. Record the resulting
+  pose once. If no choice resolves, keep recoil and both remembered poses. After
+  release, including after a restore, begin the next cut in the resulting pose with those
+  effects and history. The saved release speed is available for this first ordinary cut
+  only. Use it for `AfterThePush` if the cut begins in recoil. Otherwise run the resolved
+  pose's ordinary move. Clear the saved release speed by the end of this cut in either case
+  [Gm-release-choice, Gm-release-falling-no-command, Gm-release-falling-repeat,
+  Gm-release-no-choice].
+- After a sideways stop, a selected upright Falling pose leaves the cleared vertical heading
+  and speed as they are. The accepted command to end dash sets heading down at zero speed
+  when she begins the cut outside upright Falling. The command can still end dash
+  when Falling repeats, but the cleared heading and speed stay as they are
+  [Gm-release-choice, Gm-release-falling-no-command, Gm-release-falling-repeat].
+- On the first ordinary cut with a saved release speed, a neutral upright Falling pose
+  with cleared heading and zero speed keeps that heading and makes no downward move in
+  open space. Without a saved handoff, the same ground-state start uses its existing
+  ordinary ground pull [Gm-release-falling-no-command, Gm-release-falling-repeat].
+- Sideways move without a stop → move downward at the shove's downward speed. A floor limits
+  Y and keeps the shove and its downward speed. Publish no floor response
+  [Gm-right-floor, Gm-open-drop].
+- checked: oracle (two traces in the source notes); constructed (Gm-right-floor, Gm-right-cap,
+  Gm-door, Gm-wall, Gm-damage-choice, Gm-open-drop,
+  Gm-carry-reverses, Gm-left-carry-limit, Gm-carry-opposite-block, Gm-release-choice,
+  Gm-release-falling-no-command, Gm-release-falling-repeat, Gm-release-no-choice).
+
+The witnessed travel is dry, with no concurrent bomb jump, damage hit or active clock. The
+collision body and speed content come from the existing pose and room inputs.

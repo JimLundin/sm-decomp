@@ -78,6 +78,30 @@
 //! append its own sound requests after movement's. None of these is State, and a frame with no
 //! touchdown reports none.
 //!
+//! # Flyby shove
+//!
+//! Spec: `GetawayArms`, `GetawayStarts`, `GetawayTravels`. Once the signal cut's ordinary
+//! reaction is complete, call `Samus::request_getaway`. Keep its outcome, including travel.
+//! On the next cut supply the camera's `Frame::view_left` and use the same `moves` and `react`
+//! calls (or `react_after_draw`). Firing still reads the previous interval before `moves`.
+//! Supply the room's sideways motion and slowdown on travel cuts. The dry room contributes
+//! neither. Her dash speed comes from `Samus::run`.
+//! Give appearance `Outcome::pose_change` and `Outcome::recorded_choice`; the latter reports a
+//! resolved choice even when she keeps the same pose. The recoil lift is a placement, not travel.
+//! Start and travel cuts publish fresh intervals, including accepted travel on release.
+//! `Samus::getaway` saves the shove and exposes its downward speed without overwriting the
+//! ordinary vertical heading. `Samus::getaway_release_speed` saves the reduced magnitude for
+//! the first ordinary cut. That cut uses it only when dropping from recoil, and clears it
+//! even when the resolved pose moves on its own. Save this handoff and the full poses in
+//! `Samus::choices` in the checkpoint. If the caller supplies a travel cut's candidate
+//! separately, use `HerMoves::supply_getaway_candidate` before reaction. On a stop, ordinary
+//! fit and pose entry run from the stopped state before the accepted candidate's command.
+//! Use `DeferredMotion::discard_blast_lift` on
+//! `Outcome::deferred_motion` for any caller-owned request for a lift from a blast, and
+//! `DeferredMotion::discard_pose` for deferred pose choices and commands. Neither erases the
+//! recorded `Samus::choices` history.
+//! The flyby scene, sound and escape clock are not advanced here.
+//!
 //! # Content boundary and numerical meanings
 //!
 //! The importer validates pose/action relations, coverage for every selectable body, and
@@ -106,6 +130,7 @@ mod change;
 mod chart;
 mod collide;
 mod fit;
+mod getaway;
 mod jump_held;
 mod knockback;
 mod moves;
@@ -129,13 +154,14 @@ pub use travel::{TravelKind, TravelledDistances};
 pub use types::{Direction, DirectionalTravels, FiringDirection, TravelDistance};
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
-pub use chart::Moment;
+pub use chart::{Choice, Decider, Moment};
+pub use getaway::{DeferredMotion, Getaway, Slowdown};
 pub use jump_held::{DrawnJumpHistory, FrameBefore, JumpButton, JumpHeld};
 pub use knockback::{Knockback, Push};
-pub use rows::Met;
+pub use rows::{Effect, Met};
 pub use rules::{Bounces, Rules, SpeedCap, WithItem};
 pub use run::{Carry, Dashing, Run};
-pub use samus::{Choices, Chosen, Outcome, Samus, Seat, StandingAnimation, WallTest};
+pub use samus::{Choices, Outcome, Samus, Seat, StandingAnimation, WallTest};
 pub use situation::UnknownPose;
 pub use step::HerMoves;
 pub use tick::Frame;

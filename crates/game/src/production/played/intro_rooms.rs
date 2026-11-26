@@ -180,8 +180,8 @@ impl Actor {
         self.carry.0.prior_pose = figure.pose;
         let body = &mut self.samus.movement.0;
         body.pose = figure.pose;
-        body.choices.before = body.choices.latest;
-        body.choices.latest = samus_movement::Chosen::Other;
+        body.choices.before = Some(body.choices.latest);
+        body.choices.latest = figure.pose;
         self.samus.figure = Model(figure);
         Ok(())
     }
@@ -430,6 +430,9 @@ impl State {
                     } else {
                         samus_appearance::ItemControls::Skipped
                     },
+                    view_left: core::num::Wrapping(0),
+                    getaway_slowdown: samus_movement::Slowdown::NONE,
+                    getaway_carry: types::ZERO,
                 },
                 &world,
                 TurnContent {
@@ -612,6 +615,7 @@ pub(crate) fn validate_pins() -> Result<(), canonical::model::Unpinned> {
         .and_then(|()| pin_holds::<AppearancePin>())
         .and_then(|()| pin_holds::<samus::FigurePin>())
         .and_then(|()| pin_holds::<samus::JumpButtonPin>())
+        .and_then(|()| pin_holds::<samus::TravelPin>())
 }
 
 impl Scoped {

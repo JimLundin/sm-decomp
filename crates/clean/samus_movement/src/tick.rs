@@ -1,12 +1,19 @@
 //! One frame's play: what the frame brings from the player and the world (§1.3), and the room,
 //! the rules and the cells reached that the frame's moves and looks share (`TouchedCells`).
 
+use crate::getaway::Slowdown;
 use crate::rules::Rules;
-use types::{Buttons, ClipEnd, Item, Parity, Pose, Radius, Set, Touch, World};
+use types::{Buttons, ClipEnd, Fixed, Item, Parity, Pose, Radius, Set, Touch, World};
 
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
 /// and feeds us (the header): the end her animation reaches, from its timing.
 pub struct Frame<'a> {
+    /// `GetawayStarts`: the camera view's left edge in whole room pixels.
+    pub view_left: types::Px,
+    /// `GetawayTravels`: this cut's horizontal slowdown, applied before room carry.
+    pub getaway_slowdown: Slowdown,
+    /// `GetawayTravels`: this cut's signed horizontal room carry, positive to the right.
+    pub getaway_carry: Fixed,
     /// Spec: `TouchdownRequests`. Actual figure selected before movement, supplied by
     /// appearance independently of current items or this frame's newly selected sprite.
     pub sprite_before_movement: types::Sprite,

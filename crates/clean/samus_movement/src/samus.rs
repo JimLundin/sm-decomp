@@ -2,6 +2,7 @@
 //! beyond her quantities: its outputs, for the caller to act on.
 
 use crate::collide::{Bounds, Moved, Probe, Stop};
+use crate::getaway::{DeferredMotion, Getaway};
 use crate::jump_held::JumpHeld;
 use crate::knockback::Knockback;
 use crate::run::Dashing;
@@ -11,34 +12,13 @@ use crate::vertical::Vertical;
 use types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
 use types::{Set, Sprite, Touch, ZERO, button::SHOOT};
 
-/// `WallJump` (§1.2 a spin carried on): what one choice of her pose recorded, as far as a spin
-/// carried on reads it.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
-pub enum Chosen {
-    /// A spin or a wall jump (`Action::spins`).
-    Spin,
-    /// Any other pose.
-    Other,
-}
-
-impl Chosen {
-    /// What a choice that leaves her in `pose` records.
-    pub(crate) const fn of(pose: Pose) -> Self {
-        if pose.action.spins() {
-            Self::Spin
-        } else {
-            Self::Other
-        }
-    }
-}
-
-/// `WallJump` (§1.2 a spin carried on): what her latest two choices of her pose recorded.
+/// `WallJump`, `GetawayTravels`: the full poses her latest two choices recorded.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Choices {
     /// What her latest choice recorded.
-    pub latest: Chosen,
-    /// What the choice before that recorded.
-    pub before: Chosen,
+    pub latest: Pose,
+    /// What the choice before that recorded, or none at a fresh start.
+    pub before: Option<Pose>,
 }
 
 impl Choices {
@@ -47,23 +27,24 @@ impl Choices {
     #[must_use]
     pub const fn starting_in(pose: Pose) -> Self {
         Self {
-            latest: Chosen::of(pose),
-            before: Chosen::Other,
+            latest: pose,
+            before: None,
         }
     }
 
-    /// The choices once a choice records `chosen`: it is her latest, and her latest before it.
-    pub(crate) const fn then(self, chosen: Chosen) -> Self {
-        Self {
-            latest: chosen,
-            before: self.latest,
+    /// Publish a resolved choice and remember it, even if it repeats the latest pose.
+    pub(crate) const fn record(&mut self, resolved: Option<Pose>) -> Option<Pose> {
+        if let Some(pose) = resolved {
+            self.before = Some(self.latest);
+            self.latest = pose;
         }
+        resolved
     }
 
     /// `WallJump`: in `pose`, she is in a spin carried on: a spin whose choice before her latest
     /// one was a spin or a wall jump, facing either way. It can ready a wall jump.
     pub(crate) fn carried_on(self, pose: Pose) -> bool {
-        pose.action == Action::Spinning && self.before == Chosen::Spin
+        pose.action == Action::Spinning && self.before.is_some_and(|older| older.action.spins())
     }
 }
 
@@ -152,6 +133,10 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
 )]
 pub struct Outcome {
+    /// The pose taken on this cut, if different, for appearance's pose change.
+    pub pose_change: Option<Pose>,
+    /// Which caller-owned deferred movement inputs the shove discards.
+    pub deferred_motion: DeferredMotion,
     /// Spec: `AcceptedFloorResponse`. The floor response accepted this frame, with her vertical
     /// speed just before it, if any.
     pub floor_response: Option<types::FloorResponse>,
@@ -172,7 +157,7 @@ pub struct Outcome {
     /// `WallJump`: what this frame's choice of her pose recorded in her `Choices`, or `None`
     /// where the frame chose nothing and her choices stayed as they were. A frame that chooses
     /// the pose she already has anew records it (`Some`), unlike one that chooses nothing.
-    pub recorded_choice: Option<Chosen>,
+    pub recorded_choice: Option<Pose>,
     /// `AimingAndShooting`: what the standing animation does.
     pub standing_animation: StandingAnimation,
     /// `HowSheIsDrawn`: which sprite shows her.
@@ -246,6 +231,11 @@ pub struct Samus {
     pub jump_held: JumpHeld,
     /// §12: the knockback's push time left, its side and the push under way.
     pub knockback: Knockback,
+    /// `GetawayArms`, `GetawayStarts`, `GetawayTravels`: the flyby's queued or active shove.
+    pub getaway: Getaway,
+    /// `GetawayTravels`, `AfterThePush`: the reduced speed magnitude saved by a sideways
+    /// stop, before direction, room carry, the displacement limit or contact.
+    pub getaway_release_speed: Option<Fixed>,
 }
 
 impl Samus {
@@ -266,7 +256,7 @@ impl Samus {
     /// `SlopesSlowTheWalk`: a horizontal move made with her vertical speed exactly 0 is a walk,
     /// which a sloped floor shortens; any other is a plain move.
     pub(crate) fn horizontal_probe(&self) -> Probe {
-        if self.vertical.speed == ZERO {
+        if self.getaway.downward_speed().unwrap_or(self.vertical.speed) == ZERO {
             Probe::Walk
         } else {
             Probe::Move

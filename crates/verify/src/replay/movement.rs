@@ -12,13 +12,10 @@ use data::rom::Rom;
 use game::production::world::{Boundary, MovementWorld};
 use game::production::{MovementContent, PoseContent};
 use samus_movement::{
-    Bounces, Carry, Choices, Chosen, Dashing, FrameBefore, JumpHeld, Knockback, Phase, Push,
-    PushFrames, Run, Samus, Seat, Vertical,
+    Bounces, Carry, Choices, Dashing, FrameBefore, JumpHeld, Knockback, Phase, Push, PushFrames,
+    Run, Samus, Seat, Vertical,
 };
 use types::{Action, Buttons, Fixed, Item, Parity, Pose, Position, Radius, Set, Side, Turn, ZERO};
-
-/// The movement types a spin carried on counts as spins: spin jumping (3) and wall jumping (14h).
-const SPIN_MOVEMENT_TYPES: [u8; 2] = [0x03, 0x14];
 
 fn word(wram: &[u8], source: WramWord) -> Result<u16, Outcome> {
     source
@@ -106,6 +103,14 @@ const fn heading(shot: Shot) -> Option<types::FiringDirection> {
 
 /// The only record-to-selected-state conversion. Subsequent cuts decode neighbours only.
 pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
+    if getaway(wram)? != samus_movement::Getaway::Idle {
+        return Err(unsupported("movement seed inside a getaway shove"));
+    }
+    observed_state(wram)
+}
+
+/// Decode movement fields for comparison, including a live shove cut.
+pub(super) fn observed_state(wram: &[u8]) -> Result<Samus, Outcome> {
     let pose = map::key_of(PoseId(word(wram, source::SAMUS_POSE)?))
         .ok_or_else(|| unsupported("movement seed pose"))?;
     let (carry, way) = match word(wram, source::SAMUS_X_ACCEL_MODE)? {
@@ -141,21 +146,18 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
         2 => Bounces::Twice,
         _ => return Err(data_failure(None, "movement bounce count")),
     };
-    // `$91:EBF8` shifts the pose history only when a choice is made: the old pose's movement
-    // type is what her latest choice recorded, the old-old one what the choice before it did.
-    let chosen = |source: source::WramByte| -> Result<Chosen, Outcome> {
-        let movement_type = source
-            .read(wram)
-            .map_err(|_| data_failure(None, source.name))?;
-        Ok(if SPIN_MOVEMENT_TYPES.contains(&movement_type) {
-            Chosen::Spin
-        } else {
-            Chosen::Other
-        })
+    let pose_at = |field| -> Result<Option<Pose>, Outcome> {
+        let id = word(wram, field)?;
+        if id == u16::MAX {
+            return Ok(None);
+        }
+        map::key_of(PoseId(id))
+            .map(Some)
+            .ok_or_else(|| unsupported("movement seed remembered pose"))
     };
     let choices = Choices {
-        latest: chosen(source::SAMUS_PREV_MOVEMENT_TYPE2)?,
-        before: chosen(source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE)?,
+        latest: pose_at(source::SAMUS_PREV_POSE)?.unwrap_or(pose),
+        before: pose_at(source::SAMUS_LAST_DIFFERENT_POSE)?,
     };
     let knockback = knockback(wram)?;
     Ok(Samus {
@@ -196,7 +198,25 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
         },
         jump_held: jump_held(wram)?,
         knockback,
+        getaway: getaway(wram)?,
+        getaway_release_speed: None,
     })
+}
+
+pub(super) fn getaway(wram: &[u8]) -> Result<samus_movement::Getaway, Outcome> {
+    use samus_movement::Getaway;
+    let field = |name, offset| word(wram, WramWord { name, offset });
+    let handler = field("Samus movement handler", 0x0a58)?;
+    let pose_turn = field("Samus pose turn handler", 0x0a5a)?;
+    match (handler, pose_turn) {
+        (0xe90e, 0xe12e) => Ok(Getaway::Pending),
+        (0xe90e, 0xe1c8) => match field("Samus shove side", 0x0a62)? {
+            1 => Ok(Getaway::Travelling(Side::Left)),
+            2 => Ok(Getaway::Travelling(Side::Right)),
+            _ => Err(data_failure(None, "recorded shove side")),
+        },
+        _ => Ok(Getaway::Idle),
+    }
 }
 
 pub(super) fn jump_held(wram: &[u8]) -> Result<JumpHeld, Outcome> {
@@ -691,7 +711,7 @@ pub(super) fn movement_pose(pose: Pose) -> Observation {
     pose_observation("movement.pose", pose)
 }
 
-fn pose_observation(field: &str, pose: Pose) -> Observation {
+pub(super) fn pose_observation(field: &str, pose: Pose) -> Observation {
     Observation {
         field: field.into(),
         bytes: format!("{pose:?}").into_bytes(),

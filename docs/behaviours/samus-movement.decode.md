@@ -2286,6 +2286,7 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
   AnimationEnds
 - Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
+- Area getaway (old 0): GetawayArms, GetawayStarts, GetawayTravels
 - Area recoil (old 0: no old code models the push): PushTime, PushStarts, PushMoves, BackwardLeap,
   PushEnds, AfterThePush, 12
 
@@ -2296,6 +2297,10 @@ with the seven timing entries: they held 27.0 units, and the rules moved out of 
 position after her moves add 4.0 (`MovesAsShePosed` 1.0 → 2.0, `SolidEnemies` 10.0 → 12.0,
 `SlopesSlowTheWalk` 2.7 → 3.7). #738's `DriftInTheAir` arm adds 1.0 (motion 111.0 → 112.0).
 Old-code baselines and k above are unchanged.
+
+Getaway uses the ordinary movement queries. Baseline `6fc602284` has no forced-movement
+implementation to replace, so the old area has zero tokens to measure. The official
+counter assigns 11.0 units and a getaway budget of 412 at the existing k.
 
 From the spec's §7 (the pose chart), moved with the header's:
 
@@ -3102,3 +3107,195 @@ The record set has no selected release from either diagonal pose. The
 constructed steps cover both diagonal defaults and a held button with no
 matching row. The dash effect with a nonzero starting dash is checked over
 an invented room.
+
+## Moved aside by Ridley
+
+| Entry | Original sources |
+| --- | --- |
+| GetawayArms | `$A6:AA54..AAAE` calls `$90:E119..E12D` after ordinary movement |
+| GetawayStarts | `$90:E12E..E1C7`, pose and animation `$91:F433`, `$91:FB08`; pose body `$91:B8C1`, `$91:B8C5` |
+| GetawayTravels | `$90:E1C8..E23A`, horizontal `$90:8F5F..8F85`, vertical `$90:8F86..8FB2`, contact cleanup `$90:DF6E..DF98` and `$90:EC7E..ECB5` |
+
+`$90:8F62` chooses the horizontal speed row from the pose's movement family and
+medium, then `$90:9A7E` applies the row with deceleration permitted. The dry recoil row's
+increase and limit words start at `$90:9FCD`. The ordinary lateral conversion
+`$90:E4E6..E5CD` adds dash with fractional carry and shifts the unsigned magnitude
+right by the count in `0A66`, saturated at four. Draygon's goop changes that count
+(`$86:8D99..8DC9` and `$86:8DEE..8DFB`). Neither Ceres route has it.
+`$90:E464..E4E5` applies the stored side and adds signed `0B58:0B56` before
+clipping only the signed whole word. The extra room displacement is zero in both rows.
+The source lists unused writers at `$A0:AFA2..AFC5`. Use a caller-supplied value for
+the constructed cases, with zero from the Ceres room. `$90:8F78..8F84` selects
+the move and travel lane by the resulting sign. `$A0:A906..A911` checks actors
+using the earlier stored side. `$90:939D..93A5` and `$90:93D8..93E0` clear the
+block contact when the resulting move points against that side. The reversed
+block case keeps its clipped X and still drops on that cut.
+`$90:E193..E19C` sets the vertical speed and clears the pending bomb direction.
+It leaves vertical heading and falling alone. Gm-pending-lift distinguishes both.
+`$90:8F86` adds gravity only when the downward speed's pixel word is less than 5,
+which cannot be reached by the witnessed shove. The vertical collision result is cleared
+even if the floor limits the move. The release aligns the bottom to the previous pose;
+the previous pose already names this recoil body, so this adds zero in both traces.
+
+`$90:E6C0..E6C3` gives firing its previous interval before `$90:EB02..EB1C`
+zeros it. The clear runs in the current-state turn, independent of the two
+getaway handlers in the new-state turn at `$90:E738`. The original clears on
+the start cut, then changes body height without a travel write. The arming
+signal runs after ordinary movement and leaves its interval intact.
+During travel the horizontal writers `$90:9350..93EB` and downward writers
+`$90:9440..946D` fill the fresh interval with accepted displacements.
+On a side stop no downward writer runs.
+
+| Comparison | RAM and meaning |
+| --- | --- |
+| Phase | `0A58/0A5A` = `E90E/E12E` pending, `E90E/E1C8` travelling, `A337/E0E6` ordinary |
+| Travel side | `0A62` = 0 idle or pending, 1 left, 2 right |
+| View left | `0911` whole pixel |
+| Directional travel | Left `0DAA:0DAC`, Right `0DAE:0DB0`, Up `0DB2:0DB4`, Down `0DB6:0DB8`, signed whole:fraction |
+| Centre | `0AF6:0AF8` X and `0AFA:0AFC` Y, whole:fraction |
+| Pose and body | `0A1C` recoil poses 53h facing right / 54h facing left, `0A1E` facing and move family, `0AFE/0B00` half-sizes. `0A20..0A26` pose history |
+| Horizontal base, dash | `0B46:0B48`, `0B42:0B44` magnitudes |
+| Vertical speed | `0B2E:0B2C` pixel:fraction, `0B36` direction and `0B22` falling |
+| Deferred requests | `0A56` pending bomb jump, `0A28..0A2C` pose choices and `0A2E..0A32` their commands |
+| Collision bookkeeping | `0DC6` vertical result, `0DD0` current move contact, `0B4A` acceleration mode |
+
+Use consecutive NMI records in `chain-any-0006-E0B5` and `samus-ceres-push`. Both
+arm on 1262, after ordinary movement. Feed the flyby signal to movement after that
+cut's ordinary move and compare the pending phase on that same cut. At 1263 select
+the recoil pose and move its centre vertically before comparing the start cut.
+The left witness's saved collision half-height is 19 there and 21 on 1264.
+The right witness starts at height 21. Test travel against the established solid
+room cells and solid actor boxes. The left witness hits the locked door on 1264 and
+keeps X's fraction. The right witness stays on the floor on 1264–1268, reaches the
+base speed limit on 1267, and stops sideways at 1269 with the block fraction.
+On movie 1262 ordinary travel reports Down 6.C800. Start clears it. On 1264
+the door stops the move and Left reports −1.0000. Alternate Right reports
+1.8000, 3.0000, 4.8000, 5.0000 and 5.0000 on 1264–1268, then zero at the
+wall on 1269. Down is zero in the entire alternate forced interval. Compare
+all four distances through the release and observe the ordinary successor
+on 1265/1270.
+Keep the escape clock in its own owner, and compare the recoil clip through appearance.
+No masks are needed for the movement fields above. Raw temporary collision scratch
+and unwitnessed overlapping damage and clock states are outside this slice.
+
+The side and pad-facing pose are independent in both records. The arming cut's
+ordinary movement is supplied as a completed premise in the standalone model.
+Run the behavioural reference from the prior flyby state at 1157 and deliver its
+predicted request. Then run the movement reference from the completed movement
+and scene solids. It compares centre, fractions, base speeds, recoil, body,
+phase and the four travel distances across 2/2 movie cuts and 7/7 alternate
+cuts. A cut-hold control agrees on 0/2 and 0/7 over that tuple. Coordinates alone hold on 0/2 and 2/7. Clearing the
+mode on floor contact first differs at alternate 1264 in base speed. Reversing
+the side split first differs at movie 1263 in travel side. Keeping the previous
+interval first differs at movie 1263 in Down.
+Omitting travel publication first differs at movie 1264 in Left and alternate
+1264 in Right. Reporting contact by net fractional position change fails the
+invented wall case. The ordinary successor is a phase boundary check. The
+vector file uses invented solid geometry for contact and open-space controls.
+
+### First ordinary recoil move
+
+The speed conversion at `$90:E4E6..E5CD` also publishes the reduced unsigned
+magnitude in `0DBC:0DBE` before side, carry, displacement limiting and contact.
+The contact cleanup at `$90:DF6E..DF98` leaves that magnitude available after
+clearing base and dash. Ordinary recoil `$90:A5FC..A606` uses the ground pull
+at `$90:923F..9287`. With zero extra vertical displacement and no slope seat,
+it adds 1 px to that last magnitude. The floor response uses the ordinary
+straight-jump landing.
+
+On the movie release at 1264, the attempted left displacement is −1.8000 and
+the accepted Left is −1.0000. The reduced magnitude remains 1.8000. At 1265 the
+drop attempts 2.8000, publishes Down 2.0000 and lands at Y 008B.FFFF, facing
+right in pose A4. Using cleared base and dash, or using accepted Left as the
+magnitude, misses this landing. On the alternate release at 1269 the magnitude
+is 5.0000 and accepted Right is zero. The next drop attempts 6.0000 and is
+already flush with the floor. It publishes zero Down and lands facing left in
+pose A5. A shorter drop lands there too.
+
+Gm-release-drop adds a signed carry to make the attempted left displacement
+2.0000 in magnitude. The accepted magnitude is 1.0000, and the saved reduced
+speed is 1.8000. It checks all three quantities separately and runs the real
+ordinary successor with a nearby floor.
+
+### Recorded pose choices across the shove
+
+The arm at 1262 follows a resolved ordinary choice in each row. Its write changes
+the handlers only (`$90:E119..E12D`), so the turn still reports the ordinary
+choice. The equal-valued history there does not show the write itself.
+The start at 1263 explicitly writes prior and older (`$90:E14F..E164`) and
+clears the ordinary candidates. Both rows directly show recoil becoming prior
+and the preceding pose moving to older.
+
+On 1264 the prior remains recoil, and older advances from the previous pose to
+recoil in both rows. The movie releases at that cut. On the alternate row,
+1265 through 1269 continue to have a valid ordinary candidate for recoil with
+no competing candidate. The ordinary resolver runs after the shove
+(`$90:E738..E745`) and takes the candidate through `$91:EBE7..EC0D`. This
+establishes a recorded choice and shift on those cuts, including the release
+at 1269, even though the equal pose words alone cannot show the shift. A cut
+with no candidate bypasses the history writes at `$91:EBD0`.
+
+The movie's first ordinary cut 1265 and alternate 1270 both select jump landing,
+with recoil moving to older. Current, prior and older carry the complete pose,
+including facing and movement family. Gm-pose-history distinguishes a
+same-pose choice from a pose carried without a choice by observing both the
+output and the older pose on the first travel. The established
+`RememberIntroPose` cases separately exercise ordinary same-pose and no-choice
+turns.
+
+### A different pose at the sideways stop
+
+The sideways branches at `$90:E1FD..E217` and `$90:E21C..E236` apply
+horizontal contact before restoring ordinary movement. Contact cancels boost
+and clears dash at `$90:E5CE..E5FC`, then `$90:DF6E..DF98` clears downward
+speed and heading. The pose resolver at `$90:E745` sees this stopped state.
+The clear of `0DC6` at `$90:E1E6` leaves the retained candidates available
+without a landing choice from the shove. The ordinary fit at `$91:F404..F432`
+can substitute a pose. The ordinary candidate's command runs only if the
+requested pose survived fit and initialization. `$91:EBF8..EC0D` remembers the
+final pose with its facing and movement family once.
+
+Both actual releases supply recoil, so neither isolates the interaction with
+a different pose. Gm-release-choice supplies the upright forward-aim falling
+pose and the ordinary effect at `$91:EC8E..EC9C`. Its body is shorter than
+recoil's and fits. The effect at `$91:FB8E..FBB8` sets heading down at zero
+speed when entering falling. This distinguishes applying the effect after
+cleanup from discarding it or clearing its heading afterward. Boost would
+give the same result in all three cases because contact cancels it first.
+The next neutral cut dispatches to falling at `$90:A337..A34A` and
+`$90:A58D..A5C9`. The fall moves by zero before gaining 0.1C00 downward
+speed at `$90:90E2..9166`. With no pad, `$91:82D9..8303` and the falling
+pose definition select falling again. Gm-release-no-choice bypasses the history writes
+at `$91:EBD0` and uses the known recoil successor. Compare the saved state
+and the next ordinary cut across a release restore in both cases.
+
+The saved release speed represents the one ordinary cut directly after the
+shove. The neutral falling successor uses `$90:9168..919E` and the vertical
+speed at `$90:90E2..9166`. It bypasses the ground-pull load at `$90:9251..925A`.
+That route can leave the shared last-horizontal-magnitude words intact. The
+model's release speed represents the shove handoff only. Any later ordinary
+use of horizontal magnitude follows that move's own rules.
+
+The Falling pose initializer at `$91:F60D..F623` adjusts horizontal acceleration
+only. Its jump transition at `$91:FBCF` selects `$91:FC07`, which returns
+without changing speed or direction. The no-command entry at `$91:EFC3` also
+returns directly. Gm-release-falling-no-command leaves heading cleared while
+recording the same pose and history as Gm-release-choice. On the neutral
+successor, the heading stays clear at `$90:90C4..90E1` and the zero-speed
+move remains zero. The update at `$90:90E2..9166` uses the non-downward
+arithmetic path. The airborne result for Falling has no pose effect
+(`$90:E65A` and `$91:E8F2..E8FD`). The case compares heading and travel
+on that cut. The candidate fits in both cases. A substituted pose follows the
+ordinary command suppression rule at `$91:EBEA..EBF8`.
+
+In Gm-release-falling-repeat, the prior and selected poses are both Falling.
+The command can run on a repeat (`$91:F40E..F42E` and `$91:EBEA..EBF8`). Its
+fall-start effect bypasses the vertical writes when the prior movement family
+is already Falling (`$91:FB94..FB9D`). The repeated choice still shifts history.
+
+The comparison without a saved handoff is a constructed preservation check of
+the ordinary model's existing ground-state pull. It restores the same Falling
+checkpoint with the shove-specific handoff absent and expects the ordinary
+one-pixel pull in open space. The original dispatches ordinary moves by pose
+family (`$90:A337..A34A`). This constructed ground-state comparison does
+not stand for a separate recorded original Falling cut.

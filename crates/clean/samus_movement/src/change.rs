@@ -6,11 +6,12 @@
 use crate::chart::{Choice, Moment};
 use crate::collide::{Probe, Stop};
 use crate::fit::{Fitted, crouched};
+use crate::getaway::Getaway;
 use crate::moves::MovesMade;
 use crate::rows::{Effect, Met, Situation};
 use crate::rules::Lowers;
 use crate::run::Dashing;
-use crate::samus::{Chosen, Samus};
+use crate::samus::Samus;
 use crate::situation::ENTERING;
 use crate::tick::{Frame, Tick};
 use crate::vertical::Contact;
@@ -24,6 +25,8 @@ use types::{
 /// a placement put her, the firing aim it publishes, the floor response accepted this frame, and
 /// what her moves' contact did, once pose fit took it.
 pub struct PoseChange {
+    /// The pose taken, if a change is published to appearance.
+    pub pose: Option<types::Pose>,
     /// `AnimationEnds`: her animation's end handed over the pose chosen.
     pub handed_over: bool,
     /// `PoseFitAfterMoves`, `ShrinkingLowersHer`: the y a placement put her at, if any.
@@ -36,7 +39,7 @@ pub struct PoseChange {
     pub contact: Option<Contact>,
     /// `WallJump`: what the frame's choice recorded in her choices, or `None` where it chose
     /// nothing.
-    pub recorded: Option<Chosen>,
+    pub recorded: Option<types::Pose>,
 }
 
 /// `PoseFollows`: the pose her frame's first step chooses, from the pad, her animation's end and
@@ -111,12 +114,9 @@ impl Samus {
         // chosen's to say; what the choice records is the pose she ends in, once the aim
         // change's step and pose fit have taken or refused it (a landing refused in a spin
         // records the spin).
-        let recorded = chosen
-            .chooses_anew(start.pose)
-            .then(|| Chosen::of(self.pose));
-        if let Some(record) = recorded {
-            self.choices = self.choices.then(record);
-        }
+        let recorded = self
+            .choices
+            .record(chosen.chooses_anew(start.pose).then_some(self.pose));
         let pending_aim = transition_firing_aim(start.pose, accepted.pose, t.frame);
         if let Some(lower) = accepted.lower {
             self.lower(lower, t);
@@ -124,8 +124,9 @@ impl Samus {
         let placed = (fitted.moved() || accepted.lower.is_some())
             .then(|| self.position.y.with_sub(start.position.y.sub()));
         let response = contact.and_then(|c| self.respond(c, start, t));
-        self.apply_effects(start, accepted, t);
+        self.apply_effects(start, &moves.left, accepted, t);
         PoseChange {
+            pose: (self.pose != start.pose).then_some(self.pose),
             handed_over: chosen.handed_over,
             placed,
             pending_aim,
@@ -242,8 +243,11 @@ impl Samus {
     /// `PoseFollows`, `Dashing`, `BackwardLeap`: the change's effects, in order: its row's, then
     /// those of the change of action itself, then the row's that follow them (the leap's let-go,
     /// `Effect::follows_the_change_of_action`). A let-go effect among them ends her dashing
-    /// first.
-    fn apply_effects(&mut self, start: &Self, accepted: Choice, t: &Tick) {
+    /// first. `GetawayTravels`: a release runs the surviving command after entry, using
+    /// the stopped motion rather than the speed at the start of the shove cut.
+    fn apply_effects(&mut self, start: &Self, moved: &Self, accepted: Choice, t: &Tick) {
+        let released =
+            matches!(start.getaway, Getaway::Travelling(_)) && moved.getaway == Getaway::Idle;
         if accepted.effects.iter().any(|e| e.lets_go()) {
             self.run.dashing = Dashing::Off;
         }
@@ -251,12 +255,37 @@ impl Samus {
             .iter()
             .filter(|e| e.on(start.pose.action, accepted.pose))
             .map(|e| e.effect);
-        let (after, before): (Vec<Effect>, Vec<Effect>) = accepted
-            .effects
-            .iter()
-            .partition(|e| e.follows_the_change_of_action());
-        for effect in before.into_iter().chain(entered).chain(after) {
+        let effects = accepted.effects.iter().copied();
+        if released {
+            for effect in entered {
+                self.apply(effect, moved, t);
+            }
+            for effect in effects {
+                self.apply_release_command(effect, moved, t);
+            }
+            return;
+        }
+        let before = effects
+            .clone()
+            .filter(|e| !e.follows_the_change_of_action());
+        let after = effects.filter(|e| e.follows_the_change_of_action());
+        for effect in before.chain(entered).chain(after) {
             self.apply(effect, start, t);
+        }
+    }
+
+    /// `GetawayTravels`: accepted `EndDash` sets the downward heading at zero speed only
+    /// on entry into upright Falling. Repeating upright Falling still applies `EndDash`.
+    fn apply_release_command(&mut self, effect: Effect, stopped: &Self, t: &Tick) {
+        self.apply(effect, stopped, t);
+        let was_falling =
+            stopped.pose.body == Body::Upright && stopped.pose.action == Action::Falling;
+        if effect == Effect::LoseDash
+            && self.pose.body == Body::Upright
+            && self.pose.action == Action::Falling
+            && !was_falling
+        {
+            self.vertical.fall_from_rest();
         }
     }
 }

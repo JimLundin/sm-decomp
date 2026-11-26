@@ -7861,3 +7861,251 @@ entries = ["Jumping"]
 before = { frames = 0, last_draw_held = false, landed_or_ended = false }
 input = { drawn = true, held = true, pressed = false }
 after = { frames = 0, last_draw_held = true, landed_or_ended = false }
+
+# Forced motion only. Coordinates and speeds are hexadecimal pixels.fractions.
+# radius and half_width are whole pixels. solid lists invented boxes as
+# left, top, right, bottom, kind. Omitted solid is open space.
+# The actor and wall witnesses use invented solids with matching contact distances.
+# Facing and travel side are independent. Recoil defaults false, choice defaults None.
+# The four travelled distances are left, right, up and down in signed pixels.fractions.
+# Omitted travel_before and travel_after each default to four zero distances.
+
+[[getaway]]
+id = "Gm-arm"
+source = "samus-ceres-push:1262"
+entries = ["GetawayArms"]
+request = true
+before = { x = "00D8.FFFF", y = "00BB.FFFF", speed = "0000.0000", down = "0000.0000", side = "Idle", facing = "Left", radius = 21 }
+after = { x = "00D8.FFFF", y = "00BB.FFFF", speed = "0000.0000", down = "0000.0000", side = "Pending", facing = "Left", radius = 21 }
+
+[[getaway]]
+id = "Gm-movie-arm"
+source = "chain-any-0006-E0B5:1262"
+entries = ["GetawayArms"]
+request = true
+travel_before = ["+0000.0000", "+0000.0000", "+0000.0000", "+0006.C800"]
+travel_after = ["+0000.0000", "+0000.0000", "+0000.0000", "+0006.C800"]
+before = { x = "001E.8FFF", y = "008B.9400", speed = "0000.0000", down = "FFF9.1C00", side = "Idle", facing = "Right", radius = 19 }
+after = { x = "001E.8FFF", y = "008B.9400", speed = "0000.0000", down = "FFF9.1C00", side = "Pending", facing = "Right", radius = 19 }
+
+[[getaway]]
+id = "Gm-left-start"
+source = "chain-any-0006-E0B5:1263"
+entries = ["GetawayStarts"]
+view_left = 0
+travel_before = ["+0000.0000", "+0000.0000", "+0000.0000", "+0006.C800"]
+before = { x = "001E.8FFF", y = "008B.9400", speed = "0000.0000", down = "FFF9.1C00", side = "Pending", facing = "Right", radius = 19 }
+after = { x = "001E.8FFF", y = "0089.9400", speed = "0000.0000", down = "0005.0000", side = "Left", facing = "Right", radius = 19, recoil = true }
+
+[[getaway]]
+id = "Gm-right-start"
+source = "samus-ceres-push:1263"
+entries = ["GetawayStarts"]
+view_left = 0
+before = { x = "00D8.FFFF", y = "00BB.FFFF", speed = "0000.0000", down = "0000.0000", side = "Pending", facing = "Left", radius = 21 }
+after = { x = "00D8.FFFF", y = "00BB.FFFF", speed = "0000.0000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-centre"
+source = "constructed"
+entries = ["GetawayStarts"]
+view_left = 64
+travel_before = ["-0001.2500", "+0002.1000", "-0003.8000", "+0004.0100"]
+before = { x = "00C0.8000", y = "0060.2500", speed = "0001.0000", down = "0000.0000", side = "Pending", facing = "Right", radius = 17, choice = "Other" }
+after = { x = "00C0.8000", y = "005C.2500", speed = "0001.0000", down = "0005.0000", side = "Right", facing = "Right", radius = 17, recoil = true }
+
+[[getaway]]
+id = "Gm-door"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+solid = [[8, 118, 24, 150, "Enemy"]]
+travel_after = ["-0001.0000", "+0000.0000", "+0000.0000", "+0000.0000"]
+before = { x = "001E.8FFF", y = "0089.9400", speed = "0000.0000", down = "0005.0000", side = "Left", facing = "Right", radius = 19, recoil = true }
+after = { x = "001D.8FFF", y = "0089.9400", speed = "0000.0000", down = "0000.0000", side = "Idle", facing = "Right", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-right-floor"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+solid = [[96, 112, 112, 128, "Block"]]
+travel_before = ["-0001.2500", "+0002.1000", "-0003.8000", "+0004.0100"]
+travel_after = ["+0000.0000", "+0001.8000", "+0000.0000", "+0000.0000"]
+before = { x = "0068.FFFF", y = "005B.FFFF", speed = "0000.0000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+after = { x = "006A.7FFF", y = "005B.FFFF", speed = "0001.8000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-right-cap"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+travel_after = ["+0000.0000", "+0005.0000", "+0000.0000", "+0005.0000"]
+before = { x = "0061.0000", y = "0050.8000", speed = "0004.8000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+after = { x = "0066.0000", y = "0055.8000", speed = "0005.0000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-wall"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+solid = [[112, 80, 128, 96, "Block"]]
+travel_before = ["+0000.0000", "+0005.0000", "+0000.0000", "+0000.0000"]
+travel_after = ["+0000.0000", "+0004.0000", "+0000.0000", "+0000.0000"]
+before = { x = "0067.4000", y = "005B.FFFF", speed = "0005.0000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+after = { x = "006B.FFFF", y = "005B.FFFF", speed = "0000.0000", down = "0000.0000", side = "Idle", facing = "Left", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-open-drop"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+travel_after = ["+0000.0000", "+0001.8000", "+0000.0000", "+0005.0000"]
+before = { x = "00C0.2500", y = "0060.2500", speed = "0000.0000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true, choice = "Other" }
+after = { x = "00C1.A500", y = "0065.2500", speed = "0001.8000", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true, choice = "Other" }
+
+[[getaway]]
+id = "Gm-damage-choice"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+travel_after = ["-0001.8000", "+0000.0000", "+0000.0000", "+0005.0000"]
+before = { x = "0060.8000", y = "0060.2500", speed = "0000.0000", down = "0005.0000", side = "Left", facing = "Right", radius = 21, recoil = true, choice = "BackwardLeap" }
+after = { x = "005F.0000", y = "0065.2500", speed = "0001.8000", down = "0005.0000", side = "Left", facing = "Right", radius = 21, recoil = true }
+
+# For constructed carry cases, slowdown counts halvings and carry is signed
+# P.S room displacement. Retained dash is a P.S speed magnitude in state.
+[[getaway]]
+id = "Gm-carry-reverses"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+slowdown = 1
+carry = "-0002.0002"
+travel_after = ["-0000.8001", "+0000.0000", "+0000.0000", "+0005.0000"]
+before = { x = "0060.2500", y = "0060.2500", speed = "0000.0000", dash = "0001.8003", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+after = { x = "005F.A4FF", y = "0065.2500", speed = "0001.8000", dash = "0001.8003", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-left-carry-limit"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+slowdown = 5
+carry = "-0010.0500"
+travel_after = ["-000E.2501", "+0000.0000", "+0000.0000", "+0005.0000"]
+before = { x = "0060.2500", y = "0060.2500", speed = "0000.0000", dash = "0000.8011", down = "0005.0000", side = "Left", facing = "Right", radius = 21, recoil = true }
+after = { x = "0051.FFFF", y = "0065.2500", speed = "0001.8000", dash = "0000.8011", down = "0005.0000", side = "Left", facing = "Right", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-carry-opposite-block"
+source = "constructed"
+entries = ["GetawayTravels"]
+view_left = 0
+slowdown = 1
+carry = "-0002.0002"
+solid = [[80, 80, 96, 96, "Block"]]
+travel_after = ["+0000.0000", "+0000.0000", "+0000.0000", "+0005.0000"]
+before = { x = "0065.4000", y = "005B.FFFF", speed = "0000.0000", dash = "0001.8003", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+after = { x = "0065.0000", y = "0060.FFFF", speed = "0001.8000", dash = "0001.8003", down = "0005.0000", side = "Right", facing = "Left", radius = 21, recoil = true }
+
+[[getaway]]
+id = "Gm-pending-lift"
+source = "constructed"
+entries = ["GetawayStarts"]
+view_left = 0
+travel_after = ["+0000.0000", "+0000.0000", "+0000.0000", "+0000.0000"]
+before = { x = "0080.8000", y = "0060.2500", speed = "0001.0000", down = "0001.2000", side = "Pending", facing = "Right", radius = 17, vertical_phase = "Falling", blast_lift = "Right" }
+after = { x = "0080.8000", y = "005C.2500", speed = "0001.0000", down = "0005.0000", side = "Right", facing = "Right", radius = 17, recoil = true, vertical_phase = "Falling" }
+
+[[getaway]]
+id = "Gm-release-drop"
+source = "constructed"
+entries = ["GetawayTravels", "AfterThePush"]
+view_left = 0
+slowdown = 1
+carry = "-0000.8000"
+attempted_x = "-0002.0000"
+solid = [[8, 118, 24, 150, "Enemy"], [16, 160, 32, 176, "Block"]]
+travel_after = ["-0001.0000", "+0000.0000", "+0000.0000", "+0000.0000"]
+before = { x = "001E.8FFF", y = "0089.9400", speed = "0000.0000", dash = "0001.8000", down = "0005.0000", side = "Left", facing = "Right", radius = 21, recoil = true }
+after = { x = "001D.8FFF", y = "0089.9400", speed = "0000.0000", down = "0000.0000", side = "Idle", facing = "Right", radius = 21, recoil = true, release_speed = "0001.8000" }
+# Run the next ordinary cut from the released state with the same solids and no pad.
+successor = { x = "001D.8FFF", y = "008B.FFFF", down_travel = "+0002.0000", action = "Landing", landed_from = "Jump", facing = "Right", release_speed = "0000.0000" }
+
+[[getaway_history]]
+id = "Gm-pose-history"
+source = "constructed"
+entries = ["GetawayArms", "GetawayStarts", "GetawayTravels", "AfterThePush"]
+# Pose labels below are upright, facing right. Carry prior/older across each
+# cut, then restore after Start and after Release and compare the next cut.
+prior = "Standing"
+older = "Crouching"
+# Arm follows a completed ordinary standing choice. Start selects recoil.
+# choice supplies the incoming ordinary candidate at the resolver seam. It is
+# independent of the recorded_choice output. An omitted candidate means none.
+# The first travel has no choice. The next travel and release resolve recoil again.
+# Release uses a sideways stop. Ordinary uses a floor and selects jump landing.
+turns = [
+    { turn = "Arm", recorded_choice = "Standing", prior = "Standing", older = "Standing" },
+    { turn = "Start", recorded_choice = "Recoiling", prior = "Recoiling", older = "Standing" },
+    { turn = "Travel", choice = "None", recorded_choice = "None", prior = "Recoiling", older = "Standing" },
+    { turn = "Travel", choice = "Recoiling", recorded_choice = "Recoiling", prior = "Recoiling", older = "Recoiling" },
+    { turn = "Release", choice = "Recoiling", recorded_choice = "Recoiling", prior = "Recoiling", older = "Recoiling" },
+    { turn = "Ordinary", recorded_choice = "JumpLanding", prior = "JumpLanding", older = "Recoiling" },
+]
+
+# Use Gm-release-drop's starting motion and solids. The pose and its
+# ordinary effect that ends dash are a constructed input to the ordinary resolver.
+# Entering Falling with that effect starts downward at zero speed.
+# Restore after Release and run the same neutral ordinary cut.
+[[getaway_history]]
+id = "Gm-release-choice"
+source = "constructed"
+entries = ["GetawayTravels"]
+prior = "Recoiling"
+older = "Crouching"
+turns = [
+    { turn = "Release", choice = "Falling", command = "EndDash", visible_pose = "Falling", recorded_choice = "Falling", prior = "Falling", older = "Recoiling", heading = "Down", down_speed = "0000.0000", down_travel = "+0000.0000" },
+    { turn = "Ordinary", visible_pose = "Falling", recorded_choice = "Falling", prior = "Falling", older = "Falling", heading = "Down", down_speed = "0000.1C00", down_travel = "+0000.0000", release_speed = "0000.0000" },
+]
+
+[[getaway_history]]
+id = "Gm-release-no-choice"
+source = "constructed"
+entries = ["GetawayTravels", "AfterThePush"]
+prior = "Recoiling"
+older = "Crouching"
+turns = [
+    { turn = "Release", choice = "None", visible_pose = "Recoiling", recorded_choice = "None", prior = "Recoiling", older = "Crouching", heading = "None", down_speed = "0000.0000", down_travel = "+0000.0000" },
+    { turn = "Ordinary", visible_pose = "JumpLanding", recorded_choice = "JumpLanding", prior = "JumpLanding", older = "Recoiling", down_travel = "+0002.0000", release_speed = "0000.0000" },
+]
+
+# Match Gm-release-choice with the same Falling candidate and no command.
+[[getaway_history]]
+id = "Gm-release-falling-no-command"
+source = "constructed"
+entries = ["GetawayTravels"]
+prior = "Recoiling"
+older = "Crouching"
+# Rebuild the release checkpoint with its saved handoff absent. Run the identical
+# neutral ordinary cut with the same solids and keep its ordinary ground pull.
+without_handoff = { visible_pose = "Falling", heading = "Down", down_speed = "0000.0000", down_travel = "+0001.0000", release_speed = "0000.0000" }
+turns = [
+    { turn = "Release", choice = "Falling", visible_pose = "Falling", recorded_choice = "Falling", prior = "Falling", older = "Recoiling", heading = "None", down_speed = "0000.0000", down_travel = "+0000.0000" },
+    { turn = "Ordinary", visible_pose = "Falling", recorded_choice = "Falling", prior = "Falling", older = "Falling", heading = "None", down_travel = "+0000.0000", release_speed = "0000.0000" },
+]
+
+# Use Gm-release-choice's stop and neutral successor. Start with upright Falling
+# already visible and remembered, as after a retained choice on a travelling cut.
+[[getaway_history]]
+id = "Gm-release-falling-repeat"
+source = "constructed"
+entries = ["GetawayTravels"]
+start_pose = "Falling"
+prior = "Falling"
+older = "Recoiling"
+turns = [
+    { turn = "Release", choice = "Falling", command = "EndDash", visible_pose = "Falling", recorded_choice = "Falling", prior = "Falling", older = "Falling", heading = "None", down_speed = "0000.0000", down_travel = "+0000.0000" },
+    { turn = "Ordinary", visible_pose = "Falling", recorded_choice = "Falling", prior = "Falling", older = "Falling", heading = "None", down_travel = "+0000.0000", release_speed = "0000.0000" },
+]

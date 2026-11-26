@@ -170,6 +170,8 @@ pub enum InputProvider {
     Blackout,
     /// One admitted room and finished opportunities for the flyby’s owned producers.
     ScopedCeresFlyby,
+    /// Carried Samus turn with a separately observed flyby pass and view edge.
+    ScopedGetawayInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
     ScopedIntroInputs,
     /// A causal intro start and the borrowed work-completion boundaries.
@@ -508,6 +510,21 @@ pub enum ObservationId {
     /// The horizontal base speed retained after landing.
     #[serde(rename = "movement.base-speed")]
     MovementBaseSpeed,
+    /// Getaway pending or active on a side, or the ordinary movement phase.
+    #[serde(rename = "movement.getaway-phase")]
+    GetawayPhase,
+    /// Latest resolved pose recorded by Movement.
+    #[serde(rename = "movement.getaway-latest-pose")]
+    GetawayLatestPose,
+    /// Pose recorded before the latest resolved choice.
+    #[serde(rename = "movement.getaway-older-pose")]
+    GetawayOlderPose,
+    /// Horizontal half-width used at the beginning of the shove opportunity.
+    #[serde(rename = "movement.getaway-body-x")]
+    GetawayBodyX,
+    /// Vertical half-height used at the beginning of the shove opportunity.
+    #[serde(rename = "movement.getaway-body-y")]
+    GetawayBodyY,
     /// The grounded upright floor response.
     #[serde(rename = "movement.landing.floor")]
     LandingFloor,
@@ -1287,6 +1304,11 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::LastDrawJump
         | O::MovementPose
         | O::LandingPose
+        | O::GetawayPhase
+        | O::GetawayLatestPose
+        | O::GetawayOlderPose
+        | O::GetawayBodyX
+        | O::GetawayBodyY
         | O::MovementBaseSpeed
         | O::LandingFloor
         | O::PositionX
@@ -1427,6 +1449,9 @@ fn movement_witnessed_fields(
             &[O::PositionX, O::PositionY]
         }
         "samus-movement/PadChart" => &[O::MovementPose],
+        "samus-movement/GetawayArms" => &[O::GetawayPhase],
+        "samus-movement/GetawayStarts" => &[O::GetawayPhase, O::MovementPose, O::PositionY],
+        "samus-movement/GetawayTravels" => &[O::GetawayPhase, O::PositionX, O::PositionY],
         "samus-movement/Dash" => &[O::MovementStateComplete],
         "samus-movement/AimingAndShooting"
         | "samus-movement/SlopesCarry"
@@ -2328,6 +2353,9 @@ fn scope_valid(case: &Case) -> bool {
         && (case.row != "item-morph-ball" || case.expectations.output_cut != Some(817))
     {
         return false;
+    }
+    if case.inputs == InputProvider::ScopedGetawayInputs {
+        return super::played::getaway::valid(case);
     }
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
 }

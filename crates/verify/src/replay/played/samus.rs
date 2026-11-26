@@ -25,6 +25,10 @@ pub(in crate::replay) fn seed(
     Ok(played::samus::State {
         movement: Model(movement::seed(wram)?),
         last_draw_jump: Model(last_draw(wram)?),
+        travelled: Model(samus_movement::TravelledDistances {
+            travels: crate::decode::directional_travel(wram)
+                .map_err(|_| crate::replay::data_failure(None, "seed travel observation"))?,
+        }),
         appearance: Model(appearance),
         figure: Model(figure),
     })
@@ -56,8 +60,10 @@ pub(super) fn expected(
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
-    let mut seeded = movement::seed(wram)?;
-    if seeded.vertical.speed == ZERO
+    let mut seeded = movement::observed_state(wram)?;
+    if seeded.getaway == samus_movement::Getaway::Idle
+        && movement::getaway(previous)? == samus_movement::Getaway::Idle
+        && seeded.vertical.speed == ZERO
         && matches!(
             (
                 seeded.pose.action,
@@ -68,7 +74,7 @@ pub(super) fn expected(
                 | (Action::Leaping, Some(Push::Down), Phase::Moonfall)
         )
     {
-        let before = movement::seed(previous)?;
+        let before = movement::observed_state(previous)?;
         let stopped = super::word(wram, SOLID_CONTACT)? != 0;
         seeded.vertical.phase = phase_after_push(&before, &seeded, stopped);
     }
@@ -107,19 +113,30 @@ pub(super) fn actual(
 
 /// Her movement State by part, so a difference names the part that differs; the encoding is
 /// only compared, never logged. Her choices of her pose are compared as `movement.choices`:
-/// `movement::seed` reads them from the record's old and old-old pose types, which the game
+/// `movement::seed` reads the record's old and old-old poses. This witness checks the wall-jump classes, which the game
 /// shifts only on a frame that chooses.
 fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
     let part = |field: &str, value: String| Observation {
         field: field.into(),
         bytes: value.into_bytes(),
     };
+    let mut vertical = samus.vertical;
+    if let Some(speed) = samus.getaway.downward_speed() {
+        vertical = samus_movement::Vertical {
+            speed,
+            phase: Phase::Falling,
+            bounces: vertical.bounces,
+        };
+    }
     vec![
         part("movement.pose", format!("{:?}", samus.pose)),
         part("movement.run", run(&samus.run)),
-        part("movement.vertical", format!("{:?}", samus.vertical)),
+        part("movement.vertical", format!("{vertical:?}")),
         part("movement.seat", format!("{:?}", samus.seat)),
-        part("movement.choices", format!("{:?}", samus.choices)),
+        part(
+            "movement.choices",
+            format!("{:?}", connected::Choices::from(samus.choices)),
+        ),
         part("movement.jump-held", format!("{:?}", samus.jump_held)),
         part("movement.knockback", knockback(samus.knockback)),
         part("movement.position", format!("{:?}", samus.position)),

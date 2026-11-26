@@ -5,6 +5,7 @@
 //! a push, its drop (`AfterThePush`).
 
 use crate::collide::{Moved, Probe, Stop, vertical_heading};
+use crate::getaway::{Getaway, displacement};
 use crate::knockback::Push;
 use crate::rows::{Doing, Footing, Met, Moves, Situation};
 use crate::run::{Dashing, Stride, running_with_run_held};
@@ -14,8 +15,8 @@ use crate::travel::TravelledDistances;
 use crate::vertical::Course;
 use types::button::{JUMP, LEFT, SIDES};
 use types::{
-    Action, DirectionalTravels, Facing, Fixed, FloorResponse, Heading, Side, TravelDistance, ZERO,
-    px,
+    Action, DirectionalTravels, Facing, Fixed, FloorResponse, Heading, Parts, Side, TravelDistance,
+    ZERO, px,
 };
 
 /// What her moves leave for the rest of the frame: what they met, the floor response a stop
@@ -37,7 +38,56 @@ pub struct MovesMade {
     pub left: Samus,
 }
 
+impl MovesMade {
+    pub(crate) fn still(her: Samus) -> Self {
+        Self {
+            met: None,
+            floor_stop: None,
+            wall_test: WallTest::Neither,
+            travelled: TravelledDistances::fresh().travels,
+            ran: false,
+            left: her,
+        }
+    }
+}
+
 impl Samus {
+    /// `GetawayTravels`: the recoil speed moves her sideways first. A sideways stop releases
+    /// her without a downward move; a floor limits travel but never triggers a landing.
+    pub(crate) fn getaway_moves(&mut self, side: Side, t: &mut Tick) -> MovesMade {
+        let mut made = MovesMade::still(*self);
+        self.run.pushed(t.rules);
+        self.run.way = side;
+        let reduced = t
+            .frame
+            .getaway_slowdown
+            .reduce(self.run.speed + self.run.dash);
+        let by = displacement(reduced, side, t.frame.getaway_carry, t.rules.move_limit);
+        let stored = side.heading();
+        let actual = if by == ZERO {
+            stored
+        } else if by.negative() {
+            Heading::Left
+        } else {
+            Heading::Right
+        };
+        let moved = t.shove_sideways(self.bounds(t.frame), stored, actual, by.size());
+        self.position = moved.to;
+        made.travelled[actual] = moved.accepted;
+        self.slope_checks(t);
+        if moved.stop == Some(Stop::Enemy) || moved.stop.is_some() && actual == stored {
+            self.getaway = Getaway::Idle;
+            self.getaway_release_speed = Some(reduced);
+            self.run.halt();
+            self.run.dashing = Dashing::Off;
+            self.vertical.stand();
+        } else if let Some(down) = self.getaway.downward_speed() {
+            self.vertical_step(down, &mut made.travelled, t);
+        }
+        made.left = *self;
+        made
+    }
+
     /// `MovesAsShePosed`: the frame's moves, as `motion` decides them. At the frame's start a
     /// rise ends where it does (`RisingAndFalling`). Facing the screen she makes
     /// no move of her own, but a moving elevator carries her down (`RidingTheElevator`).
@@ -46,14 +96,7 @@ impl Samus {
     pub(crate) fn make_moves(&mut self, situation: &Situation, t: &mut Tick) -> MovesMade {
         let moves = self.motion(situation);
         self.vertical.end_rise(situation.doing, t.frame.pad);
-        let mut made = MovesMade {
-            met: None,
-            floor_stop: None,
-            wall_test: WallTest::Neither,
-            travelled: TravelledDistances::fresh().travels,
-            ran: false,
-            left: *self,
-        };
+        let mut made = MovesMade::still(*self);
         let walled = if self.pose.facing == Facing::Screen {
             if self.rides_the_elevator(t.frame) {
                 self.ride_down(&mut made, t);
@@ -199,8 +242,9 @@ impl Samus {
     }
 
     /// `AfterThePush`: with no horizontal move, her speed now points her facing's way; she moves
-    /// down by the ground pull, her speed and dash (`amount`) and 1 px. Returns what it met: a
-    /// floor, which lands her as from a straight jump, or none, and she falls.
+    /// down by the ground pull, using the saved getaway speed once in place of her current
+    /// speed and dash. Returns what it met: a floor, which lands her as from a straight jump,
+    /// or none, and she falls.
     fn drop_after_the_push(
         &mut self,
         amount: Fixed,
@@ -208,7 +252,8 @@ impl Samus {
         t: &mut Tick,
     ) -> Met {
         self.run.way = Side::of(self.pose.facing);
-        let by = self.pull(amount, t);
+        let pull_speed = self.getaway_release_speed.unwrap_or(amount);
+        let by = self.pull(pull_speed, t);
         if self.vertical_step(by, travelled, t) {
             Met::Floor
         } else {
@@ -327,6 +372,17 @@ impl Samus {
         travelled: &mut DirectionalTravels,
         t: &mut Tick,
     ) -> (Option<Met>, Option<FloorResponse>) {
+        // `GetawayTravels`: on the first ordinary cut after release, upright Falling
+        // with cleared vertical motion makes no downward move. Without the handoff,
+        // the same state uses `FollowingTheGround` as usual.
+        if self.getaway_release_speed.is_some()
+            && self.pose.body == types::Body::Upright
+            && self.pose.action == Action::Falling
+            && self.vertical.on_ground()
+            && !self.vertical.has_motion()
+        {
+            return (None, None);
+        }
         let course = self.vertical.course(footing);
         let by = match course {
             Course::Pulled => self.pull(amount, t),

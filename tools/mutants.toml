@@ -4,6 +4,9 @@
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 rules = [
+    "samus-movement/GetawayArms",
+    "samus-movement/GetawayStarts",
+    "samus-movement/GetawayTravels",
     "boss-ceres-ridley/GetawayPass",
     "boss-ceres-ridley/GetawayPicture",
     "samus-movement/PadChart",
@@ -1823,3 +1826,51 @@ after = '''let mut state = checkpoint.state;
 case = "landing-site/receiving-prefix"
 cut = 2125
 field = "landing.vram"
+
+[[fault]]
+name = "getaway-pass-discarded"
+responsibility = "movement"
+file = "crates/game/src/production/played/samus.rs"
+before = "        movement.request_getaway();"
+after = "        let _ = movement;"
+case = "movement/getaway-shove-door"
+cut = 1262
+field = "movement.getaway-phase"
+rule = "samus-movement/GetawayArms"
+
+[[fault]]
+name = "getaway-view-edge-shifted"
+responsibility = "movement"
+file = "crates/game/src/production/played/samus.rs"
+before = "                view_left: getaway.view_left,"
+after = "                view_left: getaway.view_left - Wrapping(128),"
+case = "movement/getaway-shove-door"
+cut = 1263
+field = "movement.getaway-phase"
+rule = "samus-movement/GetawayStarts"
+
+[[fault]]
+name = "getaway-travel-replaced-with-ordinary-turn"
+responsibility = "movement"
+file = "crates/game/src/production/played/samus.rs"
+before = "        let mut samus = self.movement.0;"
+after = '''        let mut samus = self.movement.0;
+        if matches!(samus.getaway, samus_movement::Getaway::Travelling(_)) {
+            samus.getaway = samus_movement::Getaway::Idle;
+        }'''
+case = "movement/getaway-shove-floor-and-wall"
+cut = 1264
+field = "movement.getaway-phase"
+rule = "samus-movement/GetawayTravels"
+
+[[fault]]
+name = "getaway-locked-door-omitted"
+responsibility = "movement"
+file = "crates/game/src/production/played/samus.rs"
+before = "        let world = super::ceres_doors::WithDoors::new(&inputs.geometry, doors);"
+after = '''        let _ = doors;
+        let world = super::ceres_doors::WithDoors::new(&inputs.geometry, &[]);'''
+case = "movement/getaway-shove-door"
+cut = 1264
+field = "movement.getaway-phase"
+rule = "samus-movement/GetawayTravels"

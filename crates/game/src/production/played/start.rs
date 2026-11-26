@@ -94,9 +94,12 @@ pub(super) fn fresh_at((x, y): (u16, u16)) -> Result<samus::State, Fault> {
         jump_held: samus_movement::JumpHeld::NONE,
         // No push: the new game clears the side, which reads as left.
         knockback: samus_movement::Knockback::spent(types::Side::Left),
+        getaway: samus_movement::Getaway::Idle,
+        getaway_release_speed: None,
     };
     Ok(samus::State {
         last_draw_jump: Model(samus_movement::JumpButton::Up),
+        travelled: Model(samus_movement::TravelledDistances::default()),
         movement: Model(samus),
         appearance: Model(samus_appearance::AppearanceState::INITIAL),
         figure: Model(samus_appearance::Figure {

@@ -56,46 +56,10 @@ struct Checkpoint {
 fn complete_ordinary_call_and_publication_lifetimes() {
     let content = Content::imported();
     // Initialization is only for a fresh start. Mid-play restoration restores the entire value.
-    let mut initial = Checkpoint {
-        samus: Samus {
-            position: Pair {
-                x: Wrapping(0),
-                y: Wrapping(0),
-            },
-            pose: Pose {
-                body: types::Body::Upright,
-                action: types::Action::Still,
-                facing: types::Facing::Right,
-                aim: types::Aim::Forward,
-                gun: types::Gun::Stowed,
-                legs: types::Legs::Together,
-            },
-            run: samus_movement::Run {
-                speed: Wrapping(0),
-                way: types::Side::Right,
-                carry: samus_movement::Carry::FollowsPad,
-                dash: Wrapping(0),
-                dashing: samus_movement::Dashing::Off,
-            },
-            vertical: samus_movement::Vertical {
-                speed: Wrapping(0),
-                phase: samus_movement::Phase::Ground,
-                bounces: samus_movement::Bounces::None,
-            },
-            choices: samus_movement::Choices {
-                latest: samus_movement::Chosen::Other,
-                before: samus_movement::Chosen::Other,
-            },
-            seat: samus_movement::Seat::Unseated,
-            jump_held: samus_movement::JumpHeld::NONE,
-            knockback: samus_movement::Knockback::spent(types::Side::Right),
-        },
+    let initial = Checkpoint {
+        samus: standing(JumpHeld::NONE),
         travels: TravelledDistances::fresh(),
         pending_aim: Some(FiringDirection::UpFacingLeft),
-    };
-    initial.samus.position = Pair {
-        x: Wrapping(0x002B_4000),
-        y: Wrapping(0x00AB_FFFF),
     };
     let encoded = toml::to_string(&initial).unwrap();
     let mut caller: Checkpoint = toml::from_str(&encoded).unwrap();
@@ -108,6 +72,9 @@ fn complete_ordinary_call_and_publication_lifetimes() {
     let body = |pose| content.body(pose);
     let headings = |_| Some(FiringDirection::Right); // Importer-owned valid cannon content.
     let frame = Frame {
+        view_left: Wrapping(0),
+        getaway_slowdown: samus_movement::Slowdown::NONE,
+        getaway_carry: types::ZERO,
         sprite_before_movement: Sprite::Plain, // Appearance's previously selected figure.
         cinematic_active: false,               // Surrounding mode.
         pad: button::RIGHT,
@@ -165,19 +132,20 @@ fn complete_ordinary_call_and_publication_lifetimes() {
 
 /// Her standing still on the floor of `Content`, with jump held through as given.
 fn standing(jump_held: JumpHeld) -> Samus {
+    let pose = Pose {
+        body: types::Body::Upright,
+        action: types::Action::Still,
+        facing: types::Facing::Right,
+        aim: types::Aim::Forward,
+        gun: types::Gun::Stowed,
+        legs: types::Legs::Together,
+    };
     Samus {
         position: Pair {
             x: Wrapping(0x002B_4000),
             y: Wrapping(0x00AB_FFFF),
         },
-        pose: Pose {
-            body: types::Body::Upright,
-            action: types::Action::Still,
-            facing: types::Facing::Right,
-            aim: types::Aim::Forward,
-            gun: types::Gun::Stowed,
-            legs: types::Legs::Together,
-        },
+        pose,
         run: samus_movement::Run {
             speed: Wrapping(0),
             way: types::Side::Right,
@@ -190,14 +158,129 @@ fn standing(jump_held: JumpHeld) -> Samus {
             phase: samus_movement::Phase::Ground,
             bounces: samus_movement::Bounces::None,
         },
-        choices: samus_movement::Choices {
-            latest: samus_movement::Chosen::Other,
-            before: samus_movement::Chosen::Other,
-        },
+        choices: samus_movement::Choices::starting_in(pose),
         seat: samus_movement::Seat::Unseated,
         jump_held,
         knockback: samus_movement::Knockback::spent(types::Side::Right),
+        getaway: samus_movement::Getaway::Idle,
+        getaway_release_speed: None,
     }
+}
+
+/// A signal cut keeps ordinary travel. The wall releases the forced cut without landing;
+/// the first ordinary cut then takes the recoil pose's usual drop and landing.
+#[test]
+fn first_ordinary_cut_after_the_getaway_releases() {
+    use samus_movement::{Direction, Getaway, TravelDistance};
+    use types::{Action, Side};
+
+    let content = Content::imported();
+    let body = |pose| content.body(pose);
+    let frame = Frame {
+        view_left: Wrapping(0),
+        getaway_slowdown: samus_movement::Slowdown::NONE,
+        getaway_carry: types::ZERO,
+        sprite_before_movement: Sprite::Plain,
+        cinematic_active: false,
+        pad: button::RIGHT,
+        pressed: Buttons(0),
+        items: Set::default(),
+        spin_turned_far: false,
+        elevator_moving: false,
+        parity: Parity::Even,
+        animation_ends: None,
+        body: &body,
+        cannon_heading: &|_| None,
+    };
+    let rules = Rules::default();
+    let mut samus = standing(HELD_5);
+    samus.pose.action = Action::Running;
+    samus.position.x = Wrapping(0x0026_4000);
+    let moves = samus.moves(&frame, &content, &rules).unwrap();
+    let signal = samus.react(moves, None);
+    let ordinary = samus;
+    samus.request_getaway();
+    assert_eq!(
+        samus,
+        Samus {
+            getaway: Getaway::Pending,
+            ..ordinary
+        }
+    );
+    let prior = signal.travelled;
+    assert_eq!(prior[Direction::Right], TravelDistance(Wrapping(0x3000)));
+
+    let start = continue_after_restore(&mut samus, prior, &frame, &content, &rules);
+    assert_eq!(start.travelled, TravelledDistances::fresh().travels);
+    assert_eq!(samus.getaway, Getaway::Travelling(Side::Left));
+    assert_eq!(start.pose_change, Some(samus.pose));
+    assert_eq!(samus.pose.action, Action::Recoiling);
+    assert_eq!(samus.pose.facing, types::Facing::Right);
+
+    let wall = Content {
+        eligible: vec![Hitbox {
+            centre: Pair {
+                x: Wrapping(24),
+                y: Wrapping(171),
+            },
+            radius: Pair {
+                x: Wrapping(8),
+                y: Wrapping(20),
+            },
+        }],
+        ..content
+    };
+    let release = continue_after_restore(&mut samus, start.travelled, &frame, &wall, &rules);
+    assert_eq!(samus.getaway, Getaway::Idle);
+    assert_eq!(samus.run.speed, types::ZERO);
+    assert_eq!(samus.run.dash, types::ZERO);
+    assert_eq!(samus.run.carry, samus_movement::Carry::FollowsPad);
+    assert_eq!(samus.vertical.phase, samus_movement::Phase::Ground);
+    assert_eq!(samus.pose.action, Action::Recoiling);
+    assert_eq!(release.floor_response, None);
+    assert_eq!(
+        release.travelled[Direction::Left],
+        TravelDistance(Wrapping(0xFFFF_0000))
+    );
+    assert_eq!(release.travelled[Direction::Down], TravelDistance::ZERO);
+
+    let frame = Frame {
+        pad: button::JUMP,
+        ..frame
+    };
+    let moves = samus.moves(&frame, &wall, &rules).unwrap();
+    let ordinary = samus.react_after_draw(moves, None, JumpButton::Up);
+    assert_eq!(samus.pose.action, Action::Landing(types::LandedFrom::Jump));
+    assert_eq!(samus.jump_held.frames.0, 0);
+    assert_eq!(samus.jump_held.before, FrameBefore::LandedOrEnded);
+    assert_eq!(ordinary.pose_change, Some(samus.pose));
+    assert!(ordinary.floor_response.is_some());
+    assert_eq!(ordinary.travelled, TravelledDistances::fresh().travels);
+}
+
+/// Compare the next normal movement entry from a checkpoint with uninterrupted play.
+fn continue_after_restore(
+    samus: &mut Samus,
+    preceding: samus_movement::DirectionalTravels,
+    frame: &Frame,
+    room: &dyn World,
+    rules: &Rules,
+) -> samus_movement::Outcome {
+    let saved = Checkpoint {
+        samus: *samus,
+        travels: TravelledDistances { travels: preceding },
+        pending_aim: None,
+    };
+    let mut restored: Checkpoint = toml::from_str(&toml::to_string(&saved).unwrap()).unwrap();
+    // Firing can read this interval before entering movement on the restored cut.
+    assert_eq!(restored.travels.travels, preceding);
+    let moves = restored.samus.moves(frame, room, rules).unwrap();
+    let resumed = restored.samus.react(moves, None);
+    let moves = samus.moves(frame, room, rules).unwrap();
+    let uninterrupted = samus.react(moves, None);
+    assert_eq!(restored.samus, *samus);
+    assert_eq!(resumed, uninterrupted);
+    uninterrupted
 }
 
 /// An invented active frame after a passage's draws: what she starts with, the pad, and the
@@ -317,6 +400,9 @@ fn an_active_frame_after_a_passage_counts_against_the_last_draw() {
     let rules = Rules::default();
     for case in &AFTER_PASSAGE {
         let frame = Frame {
+            view_left: Wrapping(0),
+            getaway_slowdown: samus_movement::Slowdown::NONE,
+            getaway_carry: types::ZERO,
             sprite_before_movement: Sprite::Plain,
             cinematic_active: false,
             pad: case.pad,
@@ -362,6 +448,9 @@ fn a_passage_then_an_active_frame_keep_one_history() {
     assert_eq!(history.jump_held.frames.0, 0);
     let mut samus = standing(history.jump_held);
     let frame = Frame {
+        view_left: Wrapping(0),
+        getaway_slowdown: samus_movement::Slowdown::NONE,
+        getaway_carry: types::ZERO,
         sprite_before_movement: Sprite::Plain,
         cinematic_active: false,
         pad: button::JUMP,

@@ -4,7 +4,7 @@
 
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, Carry, Choices, Chosen, Dashing, Direction, DirectionalTravels, FrameBefore, JumpHeld,
+    Bounces, Carry, Choices, Dashing, Direction, DirectionalTravels, FrameBefore, JumpHeld,
     Knockback, Phase, Push, PushFrames, Run, Samus, Seat, TravelDistance, TravelKind,
     TravelledDistances, Vertical,
 };
@@ -20,6 +20,14 @@ struct SavedMovement {
 
 /// Every remembered field differs from an empty start; all four travels retain fractions.
 fn saved_movement() -> SavedMovement {
+    let prior = types::Pose {
+        body: Body::Upright,
+        action: Action::Still,
+        facing: Facing::Right,
+        aim: Aim::Forward,
+        gun: Gun::Stowed,
+        legs: Legs::Together,
+    };
     SavedMovement {
         samus: Samus {
             position: Position {
@@ -47,8 +55,12 @@ fn saved_movement() -> SavedMovement {
                 legs: Legs::Together,
             },
             choices: Choices {
-                latest: Chosen::Other,
-                before: Chosen::Spin,
+                latest: prior,
+                before: Some(types::Pose {
+                    action: Action::Spinning,
+                    facing: Facing::Left,
+                    ..prior
+                }),
             },
             seat: Seat::Seated,
             jump_held: JumpHeld {
@@ -60,6 +72,8 @@ fn saved_movement() -> SavedMovement {
                 side: Side::Left,
                 push: Some(Push::Down),
             },
+            getaway: samus_movement::Getaway::Idle,
+            getaway_release_speed: Some(Wrapping(0x0001_8000)),
         },
         distances: TravelledDistances {
             travels: DirectionalTravels::from_fn(|direction| {

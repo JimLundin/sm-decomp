@@ -316,7 +316,7 @@ impl State {
         let mut quake = enemies.quake;
         if let Some(effects) = enemies.ridley.and_then(|run| run.getaway) {
             if effects.push.is_some() {
-                return Err(Fault::RidleyGetawayPush);
+                samus::GetawayPass.arm(&mut samus);
             }
             ridley::apply_getaway(effects, &mut quake, &mut palette);
         }

@@ -30,6 +30,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     State {
         samus: samus::State {
             last_draw_jump: Model(samus_movement::JumpButton::Up),
+            travelled: Model(samus_movement::TravelledDistances::default()),
             movement: Model(fixtures::samus()),
             appearance: Model(samus_appearance::AppearanceState::INITIAL),
             figure: Model(figure()),

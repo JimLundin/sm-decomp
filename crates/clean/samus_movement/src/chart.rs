@@ -75,6 +75,8 @@ pub enum Decider {
     /// Her situation's last row, or a part of its cell the chart gives a row of its own
     /// (`PadChart`).
     LastRow,
+    /// `GetawayTravels`: an explicit candidate reached the shove's resolver.
+    GetawayCandidate,
     /// Nothing: the elevator's ride keeps the pose she has (`RidingTheElevator`).
     Nothing,
 }
@@ -89,7 +91,11 @@ impl Choice {
     /// ride.
     #[must_use]
     pub fn chooses_anew(&self, had: Pose) -> bool {
-        self.pose != had || matches!(self.decided_by, Decider::LastRow | Decider::MovesMet)
+        self.pose != had
+            || matches!(
+                self.decided_by,
+                Decider::LastRow | Decider::MovesMet | Decider::GetawayCandidate
+            )
     }
 
     /// `PoseFollows`, `PoseFitAfterMoves`, `AimingAndShooting`, `RidingTheElevator`: a pose that

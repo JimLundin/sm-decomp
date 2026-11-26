@@ -94,7 +94,7 @@ pub(super) struct WithDoors<'a> {
 }
 
 impl<'a> WithDoors<'a> {
-    fn new(geometry: &'a MovementWorld, doors: &[CeresDoor]) -> Self {
+    pub(super) fn new(geometry: &'a MovementWorld, doors: &[CeresDoor]) -> Self {
         let blocking = doors.iter().filter(|door| door.phase.solid());
         Self {
             geometry,

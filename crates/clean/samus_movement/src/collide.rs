@@ -441,19 +441,43 @@ impl Tick<'_> {
     /// and an enemy that stops it leaves no shortening and no cells); blocks stop her only on a
     /// path free of solid enemies, a sloped floor's line found from the unshortened target. A
     /// move of exactly 0 meets a solid enemy she touches as any move does, and nothing else.
-    pub fn go(&mut self, mut a: Axis) -> Moved {
-        a.terrain_target = Some(a.to());
+    pub fn go(&mut self, a: Axis) -> Moved {
         let enemy_stop = match a.probe {
             Probe::Blocks => None,
             Probe::Enemies | Probe::Walk | Probe::Move | Probe::NearWall => self.enemies(&a),
         };
-        let stopped = enemy_stop.or_else(|| {
-            if a.probe == Probe::Enemies {
-                None
-            } else {
-                self.blocks(&mut a)
-            }
-        });
+        enemy_stop.unwrap_or_else(|| self.terrain_move(a))
+    }
+
+    /// `GetawayTravels`: actors are checked along the stored side; terrain uses the signed
+    /// request's actual heading. The request is already limited in signed whole pixels.
+    pub(crate) fn shove_sideways(
+        &mut self,
+        b: Bounds,
+        stored: Heading,
+        actual: Heading,
+        magnitude: Fixed,
+    ) -> Moved {
+        let terrain = b.axis(actual, magnitude, Probe::Move);
+        if stored == actual {
+            return self.go(terrain);
+        }
+        let Some(enemy) = self.enemies(&b.axis(stored, magnitude, Probe::Move)) else {
+            return self.terrain_move(terrain);
+        };
+        // Use the gap and the contact's y write, but travel in the requested direction.
+        let mut moved = terrain.put(enemy.gone, b.at.x.sub(), enemy.stop);
+        moved.to.y = enemy.to.y;
+        moved
+    }
+
+    fn terrain_move(&mut self, mut a: Axis) -> Moved {
+        a.terrain_target = Some(a.to());
+        let stopped = if a.probe == Probe::Enemies {
+            None
+        } else {
+            self.blocks(&mut a)
+        };
         stopped.unwrap_or_else(|| {
             let mut moved = a.put(a.ahead(a.to().pixel()), a.to().sub(), None);
             // `TravelledDistances`: unstopped, the move travels its whole limited and shortened

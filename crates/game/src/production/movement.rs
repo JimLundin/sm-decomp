@@ -49,6 +49,9 @@ impl MovementInputs {
             elevator_moving: self.elevator_moving,
             parity: self.parity,
             animation_ends: self.animation_ends,
+            view_left: core::num::Wrapping(0),
+            getaway_slowdown: samus_movement::Slowdown::NONE,
+            getaway_carry: types::ZERO,
             body,
             cannon_heading,
         }

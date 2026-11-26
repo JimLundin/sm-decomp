@@ -132,8 +132,8 @@ impl Vertical {
         self.rise(t.rules.rise_speed(t.rules.jump, &t.frame.items, dash));
     }
 
-    /// `RisingAndFalling`, `WallsAndCeilings`: she falls from rest.
-    const fn fall_from_rest(&mut self) {
+    /// `RisingAndFalling`, `WallsAndCeilings`, `GetawayTravels`: she falls from rest.
+    pub(crate) const fn fall_from_rest(&mut self) {
         self.phase = Phase::Falling;
         self.speed = ZERO;
     }

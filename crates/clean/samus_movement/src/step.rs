@@ -5,7 +5,9 @@
 //! time, the push's start in place of that pose or the pose itself taken, the push's end, and
 //! what she remembers for the next frame.
 
-use crate::change::Selection;
+use crate::change::{PoseChange, Selection};
+use crate::chart::{Choice, Decider};
+use crate::getaway::{DeferredMotion, Getaway};
 use crate::jump_held::{FrameBefore, JumpButton};
 use crate::knockback::{Recoil, recoiling};
 use crate::moves::MovesMade;
@@ -17,7 +19,18 @@ use crate::situation::{UnknownPose, classify};
 use crate::tick::{Frame, Tick};
 use crate::touchdown::opportunities;
 use crate::vertical::Contact;
-use types::{Cell, Hit, Position, World};
+use core::num;
+use types::{Action, Cell, Hit, Parts, Pose, Position, Px, Side, World, px};
+
+const VIEW_CENTRE: Px = num::Wrapping(128);
+const FIT_HEIGHT: Px = num::Wrapping(21);
+
+/// `GetawayTravels`: discard a backward leap together with its command, not other candidates.
+fn getaway_choice(had: Pose, candidate: Option<Choice>) -> Choice {
+    candidate
+        .filter(|choice| choice.pose.action != Action::Leaping)
+        .unwrap_or_else(|| Choice::instead(had))
+}
 
 /// The first of a frame's two steps done: her moves made, and the pose they, the pad and her
 /// animation's end ask for chosen, not yet taken (`PoseFollows`).
@@ -41,6 +54,21 @@ pub struct HerMoves<'a> {
 }
 
 impl HerMoves<'_> {
+    /// `GetawayTravels`: supply the ordinary candidate and its effects at the resolver seam
+    /// on a travel cut. `None` clears the candidate; a repeated pose is still a choice.
+    /// A backward-leap candidate is discarded along with its effects. Other cuts ignore this.
+    pub fn supply_getaway_candidate(&mut self, candidate: Option<Choice>) {
+        if matches!(self.start.getaway, Getaway::Travelling(_)) {
+            self.selection.choice = getaway_choice(
+                self.start.pose,
+                candidate.map(|mut choice| {
+                    choice.decided_by = Decider::GetawayCandidate;
+                    choice
+                }),
+            );
+        }
+    }
+
     /// §1, `MovesAsShePosed`: her position after her moves, before the aim change's step and the
     /// pose change move her: what the hitter judges the frame's hit from.
     #[must_use]
@@ -66,12 +94,28 @@ impl Samus {
         world: &'a dyn World,
         rules: &'a Rules,
     ) -> Result<HerMoves<'a>, UnknownPose> {
-        let situation = classify(self.pose)?;
         let mut tick = Tick::new(frame, world, rules);
         let inside = tick.inside(self.bounds(frame));
         let mut her = *self;
-        let made = her.make_moves(situation, &mut tick);
-        let selection = her.choose_pose(self, situation, &made, &tick);
+        let (made, selection) = match self.getaway {
+            Getaway::Idle => {
+                let situation = classify(self.pose)?;
+                let made = her.make_moves(situation, &mut tick);
+                let selection = her.choose_pose(self, situation, &made, &tick);
+                (made, selection)
+            }
+            Getaway::Pending => (
+                MovesMade::still(her),
+                Selection::only(recoiling(self.pose.facing)),
+            ),
+            Getaway::Travelling(side) => {
+                let situation = classify(self.pose)?;
+                let made = her.getaway_moves(side, &mut tick);
+                let mut selection = her.choose_pose(self, situation, &made, &tick);
+                selection.choice = getaway_choice(self.pose, Some(selection.choice));
+                (made, selection)
+            }
+        };
         Ok(HerMoves {
             tick,
             start: *self,
@@ -121,9 +165,28 @@ impl Samus {
             inside,
         } = moves;
         let (frame, rules) = (tick.frame, tick.rules);
-        let (selection, push_started) = her.meet_the_hit(&start, hit, selection, frame);
-        let change = her.take_pose(&start, &made, selection, &mut tick);
-        her.after_the_change(&start, push_started, rules);
+        let (change, push_started, deferred_motion) = match start.getaway {
+            Getaway::Idle => {
+                let (selection, push_started) = her.meet_the_hit(&start, hit, selection, frame);
+                let change = her.take_pose(&start, &made, selection, &mut tick);
+                her.after_the_change(&start, push_started, rules);
+                // `GetawayTravels`, `AfterThePush`: only this first ordinary cut can use
+                // the saved speed, even if its pose moved without it.
+                her.getaway_release_speed = None;
+                (change, push_started, DeferredMotion::Keep)
+            }
+            Getaway::Pending => (
+                her.start_getaway(selection.choice.pose, frame),
+                false,
+                DeferredMotion::Clear,
+            ),
+            Getaway::Travelling(_) => {
+                // `GetawayTravels`: contact and any stop cleanup are already reflected in
+                // `her`. Resolve and record the retained choice once, from that position.
+                let change = her.take_pose(&start, &made, selection, &mut tick);
+                (change, false, DeferredMotion::DiscardBackwardLeap)
+            }
+        };
         let left = FrameBefore::left_behind(made.met, change.handed_over, start.pose, her.pose);
         her.jump_held = start.jump_held.then(rules, frame, last_draw, left);
         her.knockback.count_down();
@@ -133,6 +196,8 @@ impl Samus {
             opportunities(change.floor_response, kicked, start.pose.action, frame);
         let dashed = start.run.dashing == Dashing::On || made.ran;
         Outcome {
+            pose_change: change.pose,
+            deferred_motion,
             floor_response: change.floor_response,
             touchdown_requests,
             touchdown_graphics,
@@ -140,7 +205,11 @@ impl Samus {
             travelled: made.travelled,
             wall_test: made.wall_test,
             recorded_choice: change.recorded,
-            standing_animation: StandingAnimation::of(start.pose, frame.pad),
+            standing_animation: if start.getaway == Getaway::Idle {
+                StandingAnimation::of(start.pose, frame.pad)
+            } else {
+                StandingAnimation::PlaysOn
+            },
             sprite: sprite(self.pose, &frame.items),
             skidding: self.run.skids(self.pose.facing),
             reached: tick.reached,
@@ -153,8 +222,43 @@ impl Samus {
             dash_lost: dashed && self.run.dashing == Dashing::Off,
             handed_over: change.handed_over,
             heading_down: made.left.vertical.heading_down(),
-            vertical_speed_after_moves: made.left.vertical.speed,
+            vertical_speed_after_moves: made
+                .left
+                .getaway
+                .downward_speed()
+                .unwrap_or(made.left.vertical.speed),
             push_started,
+        }
+    }
+
+    /// `GetawayArms`: call after the ordinary cut's reaction. The request leaves that cut's
+    /// outputs, including its travel, untouched.
+    pub const fn request_getaway(&mut self) {
+        if matches!(self.getaway, Getaway::Idle) {
+            self.getaway = Getaway::Pending;
+        }
+    }
+
+    /// `GetawayStarts`: lift without a movement query, using the old body's height, then
+    /// publish the forced recoil selection and remember it.
+    fn start_getaway(&mut self, pose: Pose, frame: &Frame) -> PoseChange {
+        let relative = self.position.x.pixel() - frame.view_left - VIEW_CENTRE;
+        self.getaway = Getaway::Travelling(if relative.0.cast_signed() < 0 {
+            Side::Left
+        } else {
+            Side::Right
+        });
+        let lift = FIT_HEIGHT - (frame.body)(self.pose).y;
+        self.position.y -= px(lift);
+        self.pose = pose;
+        PoseChange {
+            pose: Some(pose),
+            handed_over: false,
+            placed: (lift.0 != 0).then_some(self.position.y),
+            pending_aim: None,
+            floor_response: None,
+            contact: None,
+            recorded: self.choices.record(Some(pose)),
         }
     }
 

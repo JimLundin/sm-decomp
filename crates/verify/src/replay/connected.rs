@@ -398,12 +398,78 @@ impl Inputs {
     }
 }
 
+// The ordinary witnesses compare the two pose classes read by the wall-jump rule.
+#[derive(Debug, Deserialize, serde::Serialize)]
+pub(super) enum Chosen {
+    Spin,
+    Other,
+}
+
+#[derive(Debug, Deserialize, serde::Serialize)]
+pub(super) struct Choices {
+    latest: Chosen,
+    before: Chosen,
+}
+
+impl From<samus_movement::Choices> for Choices {
+    fn from(choices: samus_movement::Choices) -> Self {
+        const fn class(pose: types::Pose) -> Chosen {
+            if pose.action.spins() {
+                Chosen::Spin
+            } else {
+                Chosen::Other
+            }
+        }
+        Self {
+            latest: class(choices.latest),
+            before: choices.before.map_or(Chosen::Other, class),
+        }
+    }
+}
+
+// This observation's wire tuple is independent of the complete checkpoint schema.
+// A non-idle shove uses the complete encoding and therefore cannot match an ordinary cut.
+#[derive(Deserialize, serde::Serialize)]
+struct OrdinaryMovement {
+    position: types::Position,
+    run: samus_movement::Run,
+    vertical: samus_movement::Vertical,
+    pose: types::Pose,
+    choices: Choices,
+    seat: samus_movement::Seat,
+    jump_held: samus_movement::JumpHeld,
+    knockback: samus_movement::Knockback,
+}
+
+struct OrdinaryMovementPin;
+
+impl canonical::model::Pinned for OrdinaryMovementPin {
+    type State = OrdinaryMovement;
+    const NAME: &'static str = "ordinary-movement-observation";
+    const SHAPE: u64 = 0xCB92_9AE7_D54A_32B2;
+}
+
 pub(super) fn state_observation(state: &samus_movement::Samus) -> Observation {
+    use canonical::{model::Model, to_bytes};
+    let bytes = if state.getaway == samus_movement::Getaway::Idle
+        && state.getaway_release_speed.is_none()
+    {
+        to_bytes(&Model::<OrdinaryMovementPin>(OrdinaryMovement {
+            position: state.position,
+            run: state.run,
+            vertical: state.vertical,
+            pose: state.pose,
+            choices: state.choices.into(),
+            seat: state.seat,
+            jump_held: state.jump_held,
+            knockback: state.knockback,
+        }))
+    } else {
+        to_bytes(&Model::<game::state::owned::MovementPin>(*state))
+    };
     Observation {
         field: "movement.state.complete".into(),
-        bytes: canonical::to_bytes(&canonical::model::Model::<game::state::owned::MovementPin>(
-            *state,
-        )),
+        bytes,
     }
 }
 

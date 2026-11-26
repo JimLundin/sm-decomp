@@ -211,7 +211,7 @@ impl Run {
 
     /// `PushMoves`: her speed's size builds by the push's gain to its top (`WordwiseTopSpeed`),
     /// or, where her motion carries on or skids, brakes by the push's brake, to no lower than 0.
-    fn pushed(&mut self, r: &Rules) {
+    pub(crate) fn pushed(&mut self, r: &Rules) {
         if self.carry == Carry::CarriesOn {
             self.speed -= self.speed.min(r.push_brake);
         } else {

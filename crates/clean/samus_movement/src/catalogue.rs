@@ -86,6 +86,12 @@ pub enum BehaviourId {
     PushEnds,
     /// The drop the frame after a push ends in `Recoiling` (§12).
     AfterThePush,
+    /// The flyby queues a shove without interrupting the current cut.
+    GetawayArms,
+    /// The next cut selects the recoil pose and a travel side.
+    GetawayStarts,
+    /// A floor allows the sideways shove to continue; a wall ends it.
+    GetawayTravels,
 }
 
 /// A catalogue entry.
@@ -105,7 +111,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 40] = [
+pub const CATALOGUE: [Behaviour; 43] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -382,6 +388,27 @@ pub const CATALOGUE: [Behaviour; 40] = [
     Behaviour {
         id: BehaviourId::AfterThePush,
         summary: "the frame after a push ends in `Recoiling`, she drops by her speed and falls or lands.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayArms,
+        summary: "The flyby queues a shove for the next cut.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayStarts,
+        summary: "She takes the recoil pose and chooses the side of the view.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayTravels,
+        summary: "A floor stops only downward travel; a sideways stop ends the shove.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

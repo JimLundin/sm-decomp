@@ -290,7 +290,8 @@ consumer. Later pictures hold the last tiles between writes. The room and altern
 routes compare the active matrix, pivot, scroll and overflow, the body colours in
 current palette and CGRAM, the baby and wing tile spans, and the first sound offer.
 The ordinary body, tail and baby State stay fixed. Both routes hold through cut
-1,261. The next cut needs the movement owner for `RidleyGetawayPush`.
+1,270 and reach the evacuation warning at cut 1,271. Power-on reaches
+the same boundary at cut 11,433.
 
 The scoped cases `ridley/flyby` and `ridley/alternate-flyby` admit cut 1,156
 and play the last retreat turn before comparing the flyby through room return
@@ -353,8 +354,9 @@ edges' subpixel (R36 to R40, at room 6's cuts 229, 615, 621 and 623 and room 3's
 compared by these played runs and are not wired as indexed cases. At cut 728 she lets the second
 leap go, holding forward without jump: she follows the pad and stops dashing, and the dash she
 keeps is gone the next frame (samus-movement's backward leap let go). He takes off at cut 867 and
-lands both airborne hits. Room 6 plays 1,261 cuts from its seed. At cut 1,262
-the flyby requests the shove after Samus moves.
+lands both airborne hits. Room 6 plays 1,270 cuts from its seed. At cut 1,262
+the flyby requests the shove after Samus moves. The locked door releases
+leftward movement on 1,264 and the first ordinary turn lands on 1,265.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 

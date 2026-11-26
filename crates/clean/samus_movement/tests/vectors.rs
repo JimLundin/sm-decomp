@@ -12,10 +12,10 @@
 use core::cell::RefCell;
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, CATALOGUE, Carry, Choices, Chosen, Dashing, Direction, DirectionalTravels,
-    DrawnJumpHistory, Frame, FrameBefore, Hit, JumpButton, JumpHeld, Knockback, Met, Moment,
-    Outcome, Phase, Push, PushFrames, Rules, Run, Samus, Seat, SpeedCap, TravelDistance,
-    TravelKind, TravelledDistances, Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, Choices, Dashing, Direction, DirectionalTravels, DrawnJumpHistory,
+    Frame, FrameBefore, Getaway, Hit, JumpButton, JumpHeld, Knockback, Met, Moment, Outcome, Phase,
+    Push, PushFrames, Rules, Run, Samus, Seat, SpeedCap, TravelDistance, TravelKind,
+    TravelledDistances, Vertical, WallTest,
 };
 use serde::Deserialize;
 use types::{
@@ -37,6 +37,9 @@ fn receipt(vector: &Vector) -> (Samus, Outcome) {
     let headings = |_| None;
     let world = room(&vector.world);
     let frame = Frame {
+        view_left: Wrapping(0),
+        getaway_slowdown: samus_movement::Slowdown::NONE,
+        getaway_carry: ZERO,
         sprite_before_movement: vector
             .sprite_before_movement
             .unwrap_or(types::Sprite::Plain),
@@ -158,6 +161,9 @@ struct VectorFile {
     jump_history: Vec<JumpHistory>,
     /// The pose steps.
     pose_step: Vec<PoseStep>,
+    /// Flyby requests, starts and travel cuts.
+    getaway: Vec<GetawayVector>,
+    getaway_history: Vec<GetawayHistory>,
 }
 
 /// A `[[jump_history]]`: jump held through across one cut of a passage, which may or may not
@@ -1806,12 +1812,7 @@ fn start(before: &Before, pose: Pose) -> Samus {
     );
     let dash = before.dash.map_or(ZERO, |d| d.0);
     let [x, y] = before.position;
-    let bounces = match before.bounces {
-        0 => Bounces::None,
-        1 => Bounces::Once,
-        2 => Bounces::Twice,
-        n => panic!("bounces {n}, past 2"),
-    };
+    let bounces = model_bounces(before.bounces);
     let facing = Side::of(pose.facing);
     let knockback = before
         .knockback
@@ -1901,6 +1902,17 @@ fn start(before: &Before, pose: Pose) -> Samus {
         seat: Seat::Unseated,
         jump_held,
         knockback,
+        getaway: Getaway::Idle,
+        getaway_release_speed: None,
+    }
+}
+
+fn model_bounces(count: u8) -> Bounces {
+    match count {
+        0 => Bounces::None,
+        1 => Bounces::Once,
+        2 => Bounces::Twice,
+        n => panic!("bounces {n}, past 2"),
     }
 }
 
@@ -2058,6 +2070,9 @@ fn run(vector: &Vector) -> Vec<String> {
             }
         };
         let frame = Frame {
+            view_left: Wrapping(0),
+            getaway_slowdown: samus_movement::Slowdown::NONE,
+            getaway_carry: ZERO,
             sprite_before_movement: vector
                 .sprite_before_movement
                 .unwrap_or(types::Sprite::Plain),
@@ -2103,16 +2118,20 @@ fn run(vector: &Vector) -> Vec<String> {
         }
     }
     let outcome = outcome.expect("a checked frame");
-    let differ = compared(&vector.after, &samus, &outcome)
+    misses.extend(mismatches(&name, &vector.after, &samus, &outcome));
+    misses
+}
+
+fn mismatches(name: &str, after: &After, samus: &Samus, outcome: &Outcome) -> Vec<String> {
+    compared(after, samus, outcome)
         .into_iter()
         .filter_map(|(field, expected, actual)| {
             let expected = expected.filter(|e| *e != actual)?;
             Some(format!(
                 "{name}: {field} expected {expected}, actual {actual}"
             ))
-        });
-    misses.extend(differ);
-    misses
+        })
+        .collect()
 }
 
 /// Runs one pose step through the chart (`Moment::next_pose`); returns its mismatch. The chart
@@ -2894,6 +2913,9 @@ fn ordinary_call_delivers_outputs_and_comparison_checks_transport_fields() {
     let world = room(&vector.world);
     let mut samus = start(&vector.before, step.pose);
     let frame = Frame {
+        view_left: Wrapping(0),
+        getaway_slowdown: samus_movement::Slowdown::NONE,
+        getaway_carry: ZERO,
         sprite_before_movement: types::Sprite::Plain,
         cinematic_active: false,
         pad: step.pad,
@@ -3035,13 +3057,13 @@ fn recorded_choice_tells_a_same_pose_choice_from_none() {
     assert_eq!(run(&same), Vec::<String>::new());
     let (samus, outcome) = receipt(&same);
     assert_eq!(samus.pose, same.pose.pose(), "the pose stays the same");
-    assert_eq!(outcome.recorded_choice, Some(Chosen::Other));
+    assert_eq!(outcome.recorded_choice, Some(same.pose.pose()));
     let started = Choices::starting_in(same.pose.pose());
     assert_eq!(
         samus.choices,
         Choices {
-            latest: Chosen::Other,
-            before: started.latest,
+            latest: started.latest,
+            before: Some(started.latest),
         }
     );
 
@@ -3051,6 +3073,921 @@ fn recorded_choice_tells_a_same_pose_choice_from_none() {
     assert_eq!(samus.pose, none.pose.pose(), "the pose stays the same");
     assert_eq!(outcome.recorded_choice, None);
     assert_eq!(samus.choices, Choices::starting_in(none.pose.pose()));
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GetawayVector {
+    id: String,
+    source: String,
+    entries: Vec<String>,
+    #[serde(default)]
+    request: bool,
+    #[serde(default)]
+    view_left: u16,
+    #[serde(default)]
+    slowdown: u8,
+    carry: Option<Signed>,
+    #[serde(default)]
+    solid: Vec<(u16, u16, u16, u16, GetawaySolid)>,
+    travel_before: Option<[Signed; 4]>,
+    travel_after: Option<[Signed; 4]>,
+    before: GetawayTable,
+    after: GetawayTable,
+    attempted_x: Option<Signed>,
+    successor: Option<GetawaySuccessor>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GetawaySuccessor {
+    x: Quantity,
+    y: Quantity,
+    down_travel: Signed,
+    action: ActionName,
+    landed_from: LandedFromName,
+    facing: FacingName,
+    release_speed: Quantity,
+}
+
+#[derive(Deserialize)]
+enum GetawaySolid {
+    Enemy,
+    Block,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GetawayTable {
+    x: Quantity,
+    y: Quantity,
+    speed: Quantity,
+    down: Quantity,
+    side: GetawaySide,
+    facing: FacingName,
+    radius: u16,
+    #[serde(default)]
+    recoil: bool,
+    choice: Option<DeferredChoice>,
+    dash: Option<Quantity>,
+    vertical_phase: Option<Phase>,
+    blast_lift: Option<Side>,
+    release_speed: Option<Quantity>,
+}
+
+#[derive(Deserialize)]
+enum GetawaySide {
+    Idle,
+    Pending,
+    Left,
+    Right,
+}
+
+impl GetawaySide {
+    const fn model(&self) -> Getaway {
+        match self {
+            Self::Idle => Getaway::Idle,
+            Self::Pending => Getaway::Pending,
+            Self::Left => Getaway::Travelling(Side::Left),
+            Self::Right => Getaway::Travelling(Side::Right),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Deserialize)]
+enum DeferredChoice {
+    None,
+    Other,
+    BackwardLeap,
+}
+
+impl GetawayTable {
+    fn pose(&self) -> Pose {
+        Pose {
+            body: Body::Upright,
+            action: if self.recoil {
+                Action::Recoiling
+            } else {
+                Action::Still
+            },
+            facing: self.facing.model(),
+            aim: Aim::Forward,
+            gun: Gun::Stowed,
+            legs: Legs::Together,
+        }
+    }
+
+    fn deferred(&self) -> Option<(Pose, ())> {
+        let action = match self.choice? {
+            DeferredChoice::None => return None,
+            DeferredChoice::Other => Action::StandingUp,
+            DeferredChoice::BackwardLeap => Action::Leaping,
+        };
+        Some((
+            Pose {
+                action,
+                ..self.pose()
+            },
+            (),
+        ))
+    }
+
+    fn position(&self) -> Position {
+        Pair {
+            x: self.x.0,
+            y: self.y.0,
+        }
+    }
+
+    fn samus(&self) -> Samus {
+        let pose = self.pose();
+        let getaway = self.side.model();
+        if let Some(down) = getaway.downward_speed() {
+            assert_eq!(down, self.down.0);
+        }
+        Samus {
+            position: self.position(),
+            run: Run {
+                speed: self.speed.0,
+                way: Side::of(pose.facing),
+                carry: Carry::FollowsPad,
+                dash: self.dash.map_or(ZERO, |dash| dash.0),
+                dashing: Dashing::Off,
+            },
+            vertical: Vertical {
+                speed: if self.recoil { ZERO } else { self.down.0 },
+                phase: self.vertical_phase.unwrap_or(Phase::Ground),
+                bounces: Bounces::None,
+            },
+            pose,
+            choices: Choices::starting_in(pose),
+            seat: Seat::Unseated,
+            jump_held: JumpHeld::NONE,
+            knockback: Knockback::spent(Side::of(pose.facing)),
+            getaway,
+            getaway_release_speed: self.release_speed.map(|speed| speed.0),
+        }
+    }
+}
+
+impl GetawayVector {
+    fn room(&self) -> Room {
+        let mut world = room(&toml::from_str("").unwrap());
+        for &(left, top, right, bottom, ref kind) in &self.solid {
+            match kind {
+                GetawaySolid::Block => {
+                    world.blocks.extend((top..bottom).step_by(16).flat_map(|y| {
+                        (left..right)
+                            .step_by(16)
+                            .map(move |x| (corner([x, y]), Block::Solid))
+                    }));
+                }
+                GetawaySolid::Enemy => {
+                    let rx = right.abs_diff(left) / 2;
+                    let ry = bottom.abs_diff(top) / 2;
+                    world.enemies.push(Hitbox {
+                        centre: px_pair([left.midpoint(right), top.midpoint(bottom)]),
+                        radius: px_pair([rx, ry]),
+                    });
+                }
+            }
+        }
+        world
+    }
+}
+
+fn getaway_travels(table: Option<[Signed; 4]>) -> DirectionalTravels {
+    let mut travels = TravelledDistances::fresh().travels;
+    if let Some(values) = table {
+        for (direction, value) in [
+            Direction::Left,
+            Direction::Right,
+            Direction::Up,
+            Direction::Down,
+        ]
+        .into_iter()
+        .zip(values)
+        {
+            travels[direction] = TravelDistance(value.value());
+        }
+    }
+    travels
+}
+
+fn getaway_frame(body: &dyn Fn(Pose) -> Radius) -> Frame<'_> {
+    Frame {
+        view_left: Wrapping(0),
+        getaway_slowdown: samus_movement::Slowdown::NONE,
+        getaway_carry: ZERO,
+        sprite_before_movement: types::Sprite::Plain,
+        cinematic_active: false,
+        pad: Buttons(0),
+        pressed: Buttons(0),
+        items: Set::default(),
+        spin_turned_far: false,
+        elevator_moving: false,
+        parity: Parity::Even,
+        animation_ends: None,
+        body,
+        cannon_heading: &|_| None,
+    }
+}
+
+fn restored_samus(samus: &Samus) -> Samus {
+    toml::from_str(&toml::to_string(samus).unwrap()).unwrap()
+}
+
+fn ordinary_cut(samus: &mut Samus, frame: &Frame<'_>, room: &Room) -> Outcome {
+    let rules = Rules::default();
+    let moves = samus.moves(frame, room, &rules).unwrap();
+    samus.react(moves, None)
+}
+
+fn check_getaway_successor(vector: &GetawayVector, after: &GetawaySuccessor, mut samus: Samus) {
+    let name = &vector.id;
+    let mut restored = restored_samus(&samus);
+    let body = |_| px_pair([5, 21]);
+    let frame = getaway_frame(&body);
+    let room = vector.room();
+    let outcome = ordinary_cut(&mut samus, &frame, &room);
+    let resumed = ordinary_cut(&mut restored, &frame, &room);
+    let pose = Pose {
+        action: after
+            .action
+            .model(Turn::Ground, Some(after.landed_from.model())),
+        facing: after.facing.model(),
+        ..vector.after.pose()
+    };
+    assert_eq!(samus.pose, pose, "{name}: successor pose");
+    assert_eq!(
+        outcome.pose_change,
+        Some(pose),
+        "{name}: successor pose change"
+    );
+    assert_eq!(
+        outcome.recorded_choice,
+        Some(pose),
+        "{name}: successor recorded choice"
+    );
+    assert_eq!(
+        samus.position,
+        Pair {
+            x: after.x.0,
+            y: after.y.0
+        },
+        "{name}: successor position"
+    );
+    let mut travel = TravelledDistances::fresh().travels;
+    travel[Direction::Down] = TravelDistance(after.down_travel.value());
+    assert_eq!(outcome.travelled, travel, "{name}: successor travel");
+    assert_eq!(
+        outcome.floor_response.map(|response| response.kind),
+        Some(samus_movement::FloorResponseKind::UprightTouchdown),
+        "{name}: ordinary landing response"
+    );
+    assert_eq!(samus.run.speed, ZERO, "{name}: successor speed");
+    assert_eq!(samus.run.dash, ZERO, "{name}: successor dash");
+    assert_eq!(
+        samus.getaway_release_speed.unwrap_or(ZERO),
+        after.release_speed.0,
+        "{name}: successor release speed"
+    );
+    assert_eq!(
+        samus.getaway_release_speed, None,
+        "{name}: saved speed consumed"
+    );
+    assert_eq!(
+        (restored, resumed),
+        (samus, outcome),
+        "{name}: continuation after restore"
+    );
+}
+
+fn check_getaway_request(vector: &GetawayVector, frame: &Frame<'_>) {
+    if let Some(attempt) = vector.attempted_x {
+        // Remove the clipping actor to observe the original horizontal request.
+        let mut room = vector.room();
+        room.enemies.clear();
+        let unclipped = ordinary_cut(&mut vector.before.samus(), frame, &room);
+        let direction = if attempt.value().negative() {
+            Direction::Left
+        } else {
+            Direction::Right
+        };
+        assert_eq!(
+            unclipped.travelled[direction],
+            TravelDistance(attempt.value()),
+            "{}: unclipped request",
+            vector.id
+        );
+    }
+}
+
+fn check_getaway(vector: &GetawayVector) {
+    let name = format!("{} ({})", vector.id, vector.source);
+    let mut samus = vector.before.samus();
+    let mut travelled = getaway_travels(vector.travel_before);
+    let mut deferred = vector.before.deferred();
+    let mut blast_lift = vector.before.blast_lift;
+    let start = samus.getaway;
+    let radius = if matches!(start, Getaway::Travelling(_)) {
+        21
+    } else {
+        vector.before.radius
+    };
+    if vector.request {
+        // These witnesses start after the ordinary cut's moves and publication.
+        samus.request_getaway();
+    } else {
+        let body = |pose| {
+            assert_eq!(
+                pose,
+                vector.before.pose(),
+                "{name}: only the start body applies"
+            );
+            px_pair([5, radius])
+        };
+        let frame = Frame {
+            view_left: Wrapping(vector.view_left),
+            getaway_slowdown: samus_movement::Slowdown::new(vector.slowdown).unwrap(),
+            getaway_carry: vector.carry.map_or(ZERO, Signed::value),
+            ..getaway_frame(&body)
+        };
+        let outcome = ordinary_cut(&mut samus, &frame, &vector.room());
+        check_getaway_request(vector, &frame);
+        assert_eq!(
+            outcome.pose_change,
+            (start == Getaway::Pending).then_some(samus.pose),
+            "{name}: pose change"
+        );
+        assert_eq!(outcome.floor_response, None, "{name}: floor response");
+        if start == Getaway::Pending {
+            assert_eq!(
+                outcome.position_after_moves,
+                vector.before.position(),
+                "{name}: lift is not travel"
+            );
+            assert_eq!(
+                samus.vertical.speed, vector.before.down.0,
+                "{name}: ordinary motion retained"
+            );
+        }
+        outcome.deferred_motion.discard_pose(&mut deferred);
+        outcome.deferred_motion.discard_blast_lift(&mut blast_lift);
+        travelled = outcome.travelled;
+    }
+    let after = &vector.after;
+    assert_eq!(samus.position, after.position(), "{name}: position");
+    assert_eq!(samus.pose, after.pose(), "{name}: pose");
+    assert_eq!(radius, after.radius, "{name}: collision height");
+    assert_eq!(samus.getaway, after.side.model(), "{name}: shove state");
+    assert_eq!(samus.run.speed, after.speed.0, "{name}: horizontal speed");
+    assert_eq!(
+        samus.run.dash,
+        after.dash.map_or(ZERO, |dash| dash.0),
+        "{name}: retained dash"
+    );
+    assert_eq!(
+        samus.vertical.phase,
+        after.vertical_phase.unwrap_or(Phase::Ground),
+        "{name}: vertical phase"
+    );
+    assert_eq!(blast_lift, after.blast_lift, "{name}: pending blast lift");
+    assert_eq!(
+        samus
+            .getaway
+            .downward_speed()
+            .unwrap_or(samus.vertical.speed),
+        after.down.0,
+        "{name}: downward speed"
+    );
+    assert_eq!(
+        travelled,
+        getaway_travels(vector.travel_after),
+        "{name}: accepted travel"
+    );
+    assert_eq!(
+        deferred,
+        after.deferred(),
+        "{name}: deferred pose and command"
+    );
+    if let Some(speed) = after.release_speed {
+        assert_eq!(
+            samus.getaway_release_speed,
+            Some(speed.0),
+            "{name}: saved release speed"
+        );
+    }
+    if let Some(successor) = &vector.successor {
+        check_getaway_successor(vector, successor, samus);
+    }
+}
+
+/// Spec: `GetawayTravels`, `AfterThePush`. A large carry reaches the displacement limit,
+/// then the actor clips it; neither changes the saved magnitude. A seated successor spends
+/// the handoff but uses the ordinary 1 px pull.
+#[test]
+fn getaway_release_keeps_the_reduced_speed_through_limit_and_respects_seating() {
+    let mut vector = file()
+        .getaway
+        .into_iter()
+        .find(|v| v.id == "Gm-release-drop")
+        .unwrap();
+    vector.carry = Some(Signed::try_from("-0010.8000".to_owned()).unwrap());
+    vector.attempted_x = Some(Signed::try_from("-000F.0000".to_owned()).unwrap());
+    check_getaway(&vector);
+
+    let mut seated = vector.after.samus();
+    seated.seat = Seat::Seated;
+    let body = |_| px_pair([5, 21]);
+    let frame = getaway_frame(&body);
+    let empty = room(&toml::from_str("").unwrap());
+    let outcome = ordinary_cut(&mut seated, &frame, &empty);
+    assert_eq!(
+        outcome.travelled[Direction::Down],
+        TravelDistance(Wrapping(0x0001_0000))
+    );
+    assert_eq!(seated.position.y, vector.after.y.0 + Wrapping(0x0001_0000));
+    assert_eq!(seated.pose.action, Action::Falling);
+    assert_eq!(seated.getaway_release_speed, None);
+}
+
+/// Spec: `GetawayTravels`. The chooser's leap is discarded, but a non-leap candidate
+/// and its command go through the ordinary resolver after the shove moves.
+#[test]
+fn getaway_retains_non_leap_candidates_and_their_commands() {
+    let vector = file()
+        .getaway
+        .into_iter()
+        .find(|v| v.id == "Gm-damage-choice")
+        .unwrap();
+    let mut samus = vector.before.samus();
+    let body = |_| px_pair([5, 21]);
+    let frame = Frame {
+        pad: Buttons(button::LEFT.0 | button::JUMP.0),
+        ..getaway_frame(&body)
+    };
+    let world = vector.room();
+    let before = samus.choices;
+    let no_choice = ordinary_cut(&mut samus, &frame, &world);
+    assert_eq!(no_choice.recorded_choice, None);
+    assert_eq!(samus.choices, before);
+    assert_eq!(samus.pose, before.latest);
+
+    let rules = Rules::default();
+    let mut moves = samus.moves(&frame, &world, &rules).unwrap();
+    let candidate = Pose {
+        action: Action::Falling,
+        ..samus.pose
+    };
+    moves.supply_getaway_candidate(Some(samus_movement::Choice {
+        effects: &[samus_movement::Effect::AlongHerFacing],
+        ..samus_movement::Choice::instead(candidate)
+    }));
+    let resolved = samus.react(moves, None);
+    assert_eq!(resolved.recorded_choice, Some(candidate));
+    assert_eq!(samus.pose, candidate);
+    assert_eq!(samus.run.way, Side::Right);
+    assert_eq!(samus.getaway, Getaway::Travelling(Side::Left));
+    assert_eq!(resolved.floor_response, None);
+}
+
+#[test]
+fn every_getaway_vector() {
+    let vectors = file().getaway;
+    for vector in &vectors {
+        check_getaway(vector);
+    }
+    assert!(!vectors.is_empty());
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GetawayHistory {
+    id: String,
+    source: String,
+    entries: Vec<String>,
+    start_pose: Option<HistoryPose>,
+    prior: HistoryPose,
+    older: HistoryPose,
+    without_handoff: Option<WithoutHandoff>,
+    turns: Vec<HistoryTurn>,
+}
+
+#[derive(Deserialize, Clone, Copy)]
+enum HistoryPose {
+    Crouching,
+    Falling,
+    JumpLanding,
+    None,
+    Recoiling,
+    Standing,
+}
+
+impl HistoryPose {
+    fn model(self) -> Option<Pose> {
+        Some(Pose {
+            body: Body::Upright,
+            action: match self {
+                Self::None => return None,
+                Self::Standing => Action::Still,
+                Self::Crouching => Action::Crouching,
+                Self::Recoiling => Action::Recoiling,
+                Self::Falling => Action::Falling,
+                Self::JumpLanding => Action::Landing(LandedFrom::Jump),
+            },
+            facing: Facing::Right,
+            aim: Aim::Forward,
+            gun: Gun::Stowed,
+            legs: Legs::Together,
+        })
+    }
+}
+
+#[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+enum GetawayTurn {
+    Arm,
+    Start,
+    Travel,
+    Release,
+    Ordinary,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct HistoryTurn {
+    turn: GetawayTurn,
+    choice: Option<HistoryPose>,
+    command: Option<HistoryCommand>,
+    visible_pose: Option<HistoryPose>,
+    recorded_choice: HistoryPose,
+    prior: HistoryPose,
+    older: HistoryPose,
+    heading: Option<ReleaseHeading>,
+    down_speed: Option<Quantity>,
+    down_travel: Option<Signed>,
+    release_speed: Option<Quantity>,
+}
+
+#[derive(Deserialize, Clone, Copy)]
+enum HistoryCommand {
+    EndDash,
+}
+
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+enum ReleaseHeading {
+    None,
+    Down,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WithoutHandoff {
+    visible_pose: HistoryPose,
+    heading: ReleaseHeading,
+    down_speed: Quantity,
+    down_travel: Signed,
+    release_speed: Quantity,
+}
+
+impl WithoutHandoff {
+    fn check(
+        &self,
+        mut start: Samus,
+        turn: &HistoryTurn,
+        frame: &Frame<'_>,
+        world: &Room,
+        name: &str,
+    ) {
+        assert_eq!(turn.turn, GetawayTurn::Ordinary, "{name}: comparison cut");
+        assert!(
+            start.getaway_release_speed.is_some(),
+            "{name}: release handoff"
+        );
+        start.getaway_release_speed = None;
+        let mut samus = start;
+        let out = turn.play(&mut samus, frame, world);
+        let mut travelled = TravelledDistances::fresh().travels;
+        travelled[Direction::Down] = TravelDistance(self.down_travel.value());
+        assert_eq!(out.travelled, travelled, "{name}: without handoff travel");
+        assert_eq!(
+            samus.position.x, start.position.x,
+            "{name}: without handoff X"
+        );
+        assert_eq!(
+            samus.position.y,
+            start.position.y + self.down_travel.value(),
+            "{name}: without handoff Y"
+        );
+        assert_eq!(
+            Some(samus.pose),
+            self.visible_pose.model(),
+            "{name}: without handoff pose"
+        );
+        assert_eq!(
+            samus.vertical.phase,
+            self.heading.phase(),
+            "{name}: without handoff heading"
+        );
+        assert_eq!(
+            samus.vertical.speed, self.down_speed.0,
+            "{name}: without handoff speed"
+        );
+        assert_eq!(
+            samus.getaway_release_speed,
+            saved_release(self.release_speed),
+            "{name}: without handoff saved speed"
+        );
+    }
+}
+
+fn saved_release(speed: Quantity) -> Option<Fixed> {
+    (speed.0 != ZERO).then_some(speed.0)
+}
+
+impl ReleaseHeading {
+    fn phase(&self) -> Phase {
+        match self {
+            Self::None => Phase::Ground,
+            Self::Down => Phase::Falling,
+        }
+    }
+}
+
+impl HistoryTurn {
+    fn candidate(&self) -> Option<samus_movement::Choice> {
+        let pose = self.choice?.model()?;
+        let effects = match self.command {
+            Some(HistoryCommand::EndDash) => &[samus_movement::Effect::LoseDash][..],
+            None => &[],
+        };
+        Some(samus_movement::Choice {
+            effects,
+            ..samus_movement::Choice::instead(pose)
+        })
+    }
+
+    fn room(&self, release: Option<&GetawayVector>) -> Room {
+        if let Some(release) = release {
+            return release.room();
+        }
+        let mut world = room(&toml::from_str("floor_top = 160").unwrap());
+        if self.turn == GetawayTurn::Release {
+            world.enemies.push(Hitbox {
+                centre: px_pair([78, 139]),
+                radius: px_pair([8, 8]),
+            });
+        }
+        world
+    }
+
+    fn check_motion(&self, samus: &Samus, out: &Outcome, name: &str) {
+        if let Some(pose) = self.visible_pose {
+            assert_eq!(Some(samus.pose), pose.model(), "{name}: visible pose");
+        }
+        if let Some(heading) = &self.heading {
+            assert_eq!(samus.vertical.phase, heading.phase(), "{name}: heading");
+        }
+        // With no heading, the neutral Falling continuation still has no vertical speed.
+        let speed = self.down_speed.map(|speed| speed.0).or_else(|| {
+            (matches!(self.heading, Some(ReleaseHeading::None))
+                || matches!(self.visible_pose, Some(HistoryPose::JumpLanding)))
+            .then_some(ZERO)
+        });
+        if let Some(speed) = speed {
+            assert_eq!(samus.vertical.speed, speed, "{name}: vertical speed");
+        }
+        if let Some(travel) = self.down_travel {
+            let down = TravelDistance(travel.value());
+            assert_eq!(out.travelled[Direction::Down], down, "{name}: down travel");
+            if self.turn == GetawayTurn::Ordinary {
+                let mut expected = TravelledDistances::fresh().travels;
+                expected[Direction::Down] = down;
+                assert_eq!(out.travelled, expected, "{name}: ordinary accepted travel");
+            }
+        }
+        if let Some(speed) = self.release_speed {
+            assert_eq!(
+                samus.getaway_release_speed,
+                saved_release(speed),
+                "{name}: saved speed"
+            );
+        }
+    }
+
+    fn play(&self, samus: &mut Samus, frame: &Frame<'_>, world: &Room) -> Outcome {
+        let rules = Rules::default();
+        let mut moves = samus.moves(frame, world, &rules).unwrap();
+        if matches!(self.turn, GetawayTurn::Travel | GetawayTurn::Release) {
+            moves.supply_getaway_candidate(self.candidate());
+        }
+        let out = samus.react(moves, None);
+        if self.turn == GetawayTurn::Arm {
+            let completed = *samus;
+            samus.request_getaway();
+            assert_eq!(
+                *samus,
+                Samus {
+                    getaway: Getaway::Pending,
+                    ..completed
+                }
+            );
+        }
+        out
+    }
+}
+
+fn check_release_motion(samus: &Samus, out: &Outcome, base: &GetawayVector, name: &str) {
+    assert_eq!(
+        samus.getaway,
+        base.after.side.model(),
+        "{name}: shove state"
+    );
+    assert_eq!(
+        out.position_after_moves,
+        base.after.position(),
+        "{name}: stopped position"
+    );
+    assert_eq!(
+        out.travelled,
+        getaway_travels(base.travel_after),
+        "{name}: shove travel"
+    );
+    assert_eq!(out.floor_response, None, "{name}: shove floor response");
+    assert_eq!(
+        samus.run.speed, base.after.speed.0,
+        "{name}: horizontal speed"
+    );
+    assert_eq!(samus.run.dash, ZERO, "{name}: dash cleared");
+    assert_eq!(samus.run.carry, Carry::FollowsPad, "{name}: acceleration");
+    assert_eq!(
+        samus.getaway_release_speed,
+        base.after.release_speed.map(|speed| speed.0),
+        "{name}: saved release speed"
+    );
+}
+
+fn check_getaway_history(vector: &GetawayHistory, release_drop: &GetawayVector) {
+    let name = format!("{} ({})", vector.id, vector.source);
+    let before: GetawayTable = toml::from_str(
+        r#"
+x = "0060.0000"
+y = "008B.FFFF"
+speed = "0000.0000"
+down = "0000.0000"
+side = "Idle"
+facing = "Right"
+radius = 21
+"#,
+    )
+    .unwrap();
+    // A history starting at Release uses the starting motion and solids of Gm-release-drop.
+    let release =
+        (vector.turns.first().unwrap().turn == GetawayTurn::Release).then_some(release_drop);
+    let mut samus = release.map_or_else(|| before.samus(), |base| base.before.samus());
+    if let Some(pose) = vector.start_pose {
+        samus.pose = pose.model().unwrap();
+    }
+    samus.choices = Choices {
+        latest: vector.prior.model().unwrap(),
+        before: vector.older.model(),
+    };
+    let body = |_| px_pair([5, 21]);
+    let mut checkpoint = None;
+    let mut comparison = vector.without_handoff.as_ref();
+    for turn in &vector.turns {
+        let world = turn.room(release);
+        let mut frame = getaway_frame(&body);
+        let label = turn.turn;
+        let stop = release.filter(|_| label == GetawayTurn::Release);
+        if let Some(base) = stop {
+            frame.getaway_slowdown = samus_movement::Slowdown::new(base.slowdown).unwrap();
+            frame.getaway_carry = base.carry.map_or(ZERO, Signed::value);
+        }
+        let out = turn.play(&mut samus, &frame, &world);
+        turn.check_motion(&samus, &out, &format!("{name}: {label:?}"));
+        if let Some(base) = stop {
+            check_release_motion(&samus, &out, base, &name);
+        }
+        assert_eq!(
+            out.recorded_choice,
+            turn.recorded_choice.model(),
+            "{name}: {label:?} recorded choice"
+        );
+        assert_eq!(
+            samus.choices.latest,
+            turn.prior.model().unwrap(),
+            "{name}: {label:?} prior pose"
+        );
+        assert_eq!(
+            samus.choices.before,
+            turn.older.model(),
+            "{name}: {label:?} older pose"
+        );
+        if let Some(mut restored) = checkpoint.take() {
+            if label == GetawayTurn::Ordinary
+                && let Some(expected) = comparison.take()
+            {
+                expected.check(restored, turn, &frame, &world, &name);
+            }
+            let resumed = turn.play(&mut restored, &frame, &world);
+            assert_eq!(
+                (restored, resumed),
+                (samus, out),
+                "{name}: replay of {label:?}"
+            );
+        }
+        if matches!(label, GetawayTurn::Start | GetawayTurn::Release) {
+            let restored = restored_samus(&samus);
+            assert_eq!(restored, samus, "{name}: {label:?} checkpoint");
+            checkpoint = Some(restored);
+        }
+    }
+    assert!(
+        checkpoint.is_none(),
+        "{name}: checkpoint has no continuation"
+    );
+    assert!(comparison.is_none(), "{name}: missing handoff comparison");
+}
+
+/// Spec: `GetawayTravels`. A Falling candidate that would carry the end-dash
+/// command does not set the downward heading if a low passage substitutes a crouch.
+#[test]
+fn getaway_release_drops_the_command_when_fit_substitutes_a_pose() {
+    let vectors = file();
+    let base = vectors
+        .getaway
+        .iter()
+        .find(|v| v.id == "Gm-release-drop")
+        .unwrap();
+    let release = &vectors
+        .getaway_history
+        .iter()
+        .find(|v| v.id == "Gm-release-choice")
+        .unwrap()
+        .turns[0];
+    let mut samus = base.before.samus();
+    let recoil = samus.pose;
+    let mut world = base.room();
+    // The recoil body fits between rows 112 and 160, but the taller Falling
+    // candidate reaches both solids in its fit probes from the stopped position.
+    world.ceiling_bottom = Some(112);
+    let body = |pose: Pose| match (pose.body, pose.action) {
+        (Body::Upright, Action::Falling) => px_pair([5, 27]),
+        (Body::Crouched, _) => px_pair([5, 16]),
+        _ => px_pair([5, 21]),
+    };
+    let frame = Frame {
+        getaway_slowdown: samus_movement::Slowdown::new(base.slowdown).unwrap(),
+        getaway_carry: base.carry.map_or(ZERO, Signed::value),
+        ..getaway_frame(&body)
+    };
+    let rules = Rules::default();
+    let mut moves = samus.moves(&frame, &world, &rules).unwrap();
+    moves.supply_getaway_candidate(Some(samus_movement::Choice {
+        // AlongHerFacing would change the stored way from left to right even
+        // after substitution, so it also checks that the command was discarded.
+        effects: &[
+            samus_movement::Effect::LoseDash,
+            samus_movement::Effect::AlongHerFacing,
+        ],
+        ..release.candidate().unwrap()
+    }));
+    let out = samus.react(moves, None);
+    check_release_motion(&samus, &out, base, "substituted release");
+    assert_eq!(samus.run.way, Side::Left);
+    let crouch = Pose {
+        body: Body::Crouched,
+        action: Action::Still,
+        ..recoil
+    };
+    assert_eq!(samus.pose, crouch);
+    assert_eq!(out.pose_change, Some(crouch));
+    assert_eq!(out.recorded_choice, Some(crouch));
+    assert_eq!(samus.choices.latest, crouch);
+    assert_eq!(samus.choices.before, Some(recoil));
+    assert_eq!(samus.vertical.phase, Phase::Ground);
+    assert_eq!(samus.vertical.speed, ZERO);
+
+    let mut restored = restored_samus(&samus);
+    let ordinary = ordinary_cut(&mut samus, &frame, &world);
+    let resumed = ordinary_cut(&mut restored, &frame, &world);
+    assert_eq!((restored, resumed), (samus, ordinary));
+    assert_eq!(samus.getaway_release_speed, None);
+}
+
+#[test]
+fn every_getaway_history_vector() {
+    let vectors = file();
+    let release_drop = vectors
+        .getaway
+        .iter()
+        .find(|v| v.id == "Gm-release-drop")
+        .unwrap();
+    assert!(!vectors.getaway_history.is_empty());
+    for vector in &vectors.getaway_history {
+        check_getaway_history(vector, release_drop);
+    }
 }
 
 #[test]
@@ -3067,6 +4004,8 @@ fn catalogue_matches_the_vectors() {
         .chain(file.pose_step.iter().flat_map(|s| &s.entries))
         .chain(file.distance_history.iter().flat_map(|h| &h.entries))
         .chain(file.jump_history.iter().flat_map(|h| &h.entries))
+        .chain(file.getaway.iter().flat_map(|g| &g.entries))
+        .chain(file.getaway_history.iter().flat_map(|g| &g.entries))
         .map(String::as_str)
         .collect();
     for entry in &exercised {

@@ -90,6 +90,8 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
                 index::InputProvider::PlayedCeresInputs | index::InputProvider::ScopedCeresFlyby
             ) {
                 played::indexed::run(case, sources, &mut result)
+            } else if case.inputs == index::InputProvider::ScopedGetawayInputs {
+                played::getaway::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {
                 played::intro::delivery::run(case, sources, &mut result)
             } else {

@@ -1925,3 +1925,61 @@ provider = "pinned shaft map storage and pinned flight departure OAM, placement,
 fields = ["stored Crateria map", "active map", "physical OAM", "room", "player placement", "live display", "tilemap tails"]
 phase = "before opening the receiving load"
 claim = "VRAM, random state, palette, energy, destination and finished work are carried by the preceding flight. The scope admits the other owners from their prior records."
+
+[[case]]
+id = "movement/getaway-shove-door"
+kind = "scoped"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 1261 }
+end = { cut_inclusive = 1265 }
+rules = ["samus-movement/GetawayArms", "samus-movement/GetawayStarts", "samus-movement/GetawayTravels", "samus-movement/TravelledDistances", "samus-appearance/ClipPlays"]
+profile = "reference"
+responsibilities = ["movement", "appearance"]
+content = "player-rom-import"
+inputs = "scoped-getaway-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.getaway-phase", "movement.pose", "movement.position.x", "movement.position.y", "movement.base-speed", "movement.vertical_speed", "movement.getaway-latest-pose", "movement.getaway-older-pose", "movement.getaway-body-x", "movement.getaway-body-y", "appearance.step", "appearance.time-left"], outputs = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"] }
+checkpoints = true
+limits = ["The locked Ceres room door stops leftward travel. This window covers the first ordinary turn after release.", "Movement and Appearance carry their complete State from the preceding cut. The proof selects their turns within the flyby. Boss timing, the quake, the escape clock, camera ownership, drawing and weapon inheritance lie outside this scope."]
+
+[[case.borrowed]]
+dependency = "ridley.getaway-pass"
+provider = "preceding pinned boss mode and flyby picture cursor"
+fields = ["side-free pass request"]
+phase = "after ordinary movement and pose reaction"
+claim = "The cue comes from the observed active boss picture count at the authored pass opportunity."
+
+[[case.borrowed]]
+dependency = "room.samus-neighbours"
+provider = "preceding pinned record and imported pose and terrain content"
+fields = ["solid blocks and actor boxes", "front layer view left", "horizontal slowdown and room carry", "held and fresh buttons", "equipment", "frame parity", "appearance neighbours"]
+phase = "before movement and appearance"
+claim = "The collision queries use prior room blocks, the interactive roster and the Ceres door slots. The camera supplies its left edge. Expected Samus fields enter comparison only."
+
+[[case]]
+id = "movement/getaway-shove-floor-and-wall"
+kind = "scoped"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 1261 }
+end = { cut_inclusive = 1270 }
+rules = ["samus-movement/GetawayArms", "samus-movement/GetawayStarts", "samus-movement/GetawayTravels", "samus-movement/TravelledDistances", "samus-appearance/ClipPlays"]
+profile = "reference"
+responsibilities = ["movement", "appearance"]
+content = "player-rom-import"
+inputs = "scoped-getaway-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.getaway-phase", "movement.pose", "movement.position.x", "movement.position.y", "movement.base-speed", "movement.vertical_speed", "movement.getaway-latest-pose", "movement.getaway-older-pose", "movement.getaway-body-x", "movement.getaway-body-y", "appearance.step", "appearance.time-left"], outputs = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"] }
+checkpoints = true
+limits = ["The floor limits the descent through several rightward turns before the solid blocks stop the shove.", "Movement and Appearance carry their complete State from the preceding cut. The proof selects their turns within the flyby. Boss timing, the quake, the escape clock, camera ownership, drawing and weapon inheritance lie outside this scope."]
+
+[[case.borrowed]]
+dependency = "ridley.getaway-pass"
+provider = "preceding pinned boss mode and flyby picture cursor"
+fields = ["side-free pass request"]
+phase = "after ordinary movement and pose reaction"
+claim = "The cue comes from the observed active boss picture count at the authored pass opportunity."
+
+[[case.borrowed]]
+dependency = "room.samus-neighbours"
+provider = "preceding pinned record and imported pose and terrain content"
+fields = ["solid blocks and actor boxes", "front layer view left", "horizontal slowdown and room carry", "held and fresh buttons", "equipment", "frame parity", "appearance neighbours"]
+phase = "before movement and appearance"
+claim = "The collision queries use prior room blocks, the interactive roster and the Ceres door slots. The camera supplies its left edge. Expected Samus fields enter comparison only."

@@ -8,7 +8,7 @@ pub struct MovementPin;
 impl Pinned for MovementPin {
     type State = samus_movement::Samus;
     const NAME: &'static str = "production-movement";
-    const SHAPE: u64 = 0xCB92_9AE7_D54A_32B2;
+    const SHAPE: u64 = 0x826F_F180_CE4E_27EF;
 }
 
 /// The complete transport state schema: senders, request lines, groups and song.

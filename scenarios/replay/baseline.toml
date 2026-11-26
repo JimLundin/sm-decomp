@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "7d237daa4ad11fe00a0b6f1b1f464ae52260dec90d8b89de469264279188329f"
+index_sha256 = "da11dd75dbd265976665da950677ba05c7ebdc08cc6fe3eb1486bd5a066e38b3"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1383,5 +1383,41 @@ replies = 0
 null_cuts = 0
 null_fields = 0
 restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/getaway-shove-door"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "9600e9672ad861da48e945531eeadc551bc02f5dd38f212cb2ca7f22d8341c8b"
+
+[case.counts]
+cuts = 4
+fields = 48
+outputs = 16
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 20
+restorations = 4
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/getaway-shove-floor-and-wall"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "ed75c64db3e7ec1743dcedd9fcc3f3d4d98ab463fc9ac37acdf8fa60cddd119e"
+
+[case.counts]
+cuts = 9
+fields = 108
+outputs = 36
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 43
+restorations = 9
 pending_boundaries = 0
 pending_restorations = 0

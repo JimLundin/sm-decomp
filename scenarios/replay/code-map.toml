@@ -1184,3 +1184,30 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/landing_site.rs" },
   { role = "navigation", path = "crates/verify/src/replay/landing_site.rs" },
 ]
+
+[[rule]]
+id = "samus-movement/GetawayArms"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/step.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/getaway.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/GetawayStarts"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/step.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/getaway.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/GetawayTravels"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/getaway.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]

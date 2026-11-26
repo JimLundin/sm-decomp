@@ -15,12 +15,13 @@ use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
 use samus_appearance::{
-    Ahead, Dash, Figure, GrappleActivity, HurtOpportunity, MissingClip, MoveEvent, Suit,
+    Ahead, Dash, Figure, FramePart, GrappleActivity, HurtOpportunity, MissingClip, MoveEvent,
+    Playhead, Step, Suit,
 };
 use samus_movement::{
     Dashing, DrawnJumpHistory, JumpButton, JumpHeld, StandingAnimation, WallTest,
 };
-use types::{Pose, Set};
+use types::{Parts, Pose, Px, Set};
 
 pub use crate::production::movement::FigurePin;
 
@@ -31,6 +32,15 @@ impl Pinned for JumpButtonPin {
     type State = JumpButton;
     const NAME: &'static str = "played-samus-jump-button";
     const SHAPE: u64 = 0x2A2A_0720_FF8D_F79B;
+}
+
+/// The complete accepted travel interval that the next firing opportunity reads.
+pub struct TravelPin;
+
+impl Pinned for TravelPin {
+    type State = samus_movement::TravelledDistances;
+    const NAME: &'static str = "played-samus-travelled-distances";
+    const SHAPE: u64 = 0x614F_299D_A431_20A0;
 }
 
 /// Her movement, her animation and the figure she shows, carried frame to frame.
@@ -44,6 +54,8 @@ pub struct State {
     pub figure: Model<FigurePin>,
     /// The jump button sampled on the last draw that wrote her jump history.
     pub last_draw_jump: Model<JumpButtonPin>,
+    /// Her latest completed movement interval, preserved on frames without movement.
+    pub travelled: Model<TravelPin>,
 }
 
 impl State {
@@ -70,8 +82,9 @@ impl State {
         self.movement = Model(samus);
         self.appearance = Model(her.appearance);
         self.figure = Model(her.figure);
-        if her.outcome.is_some() {
+        if let Some(outcome) = &her.outcome {
             self.last_draw_jump.0 = jump;
+            self.travelled.0.travels = outcome.travelled;
         }
     }
 }
@@ -98,6 +111,9 @@ pub(super) struct TurnInputs {
     pub activities: Set<samus_appearance::Activity>,
     pub charge: samus_appearance::Charge,
     pub item_controls: samus_appearance::ItemControls,
+    pub view_left: Px,
+    pub getaway_slowdown: samus_movement::Slowdown,
+    pub getaway_carry: types::Fixed,
 }
 
 impl From<&Inputs> for TurnInputs {
@@ -113,17 +129,49 @@ impl From<&Inputs> for TurnInputs {
             activities: inputs.activities,
             charge: inputs.charge,
             item_controls: samus_appearance::ItemControls::Skipped,
+            view_left: Wrapping(0),
+            // The played Ceres rooms have no external horizontal slowdown or carry.
+            getaway_slowdown: samus_movement::Slowdown::NONE,
+            getaway_carry: types::ZERO,
         }
     }
 }
 
 /// Imported content and tuning for the ordinary movement and appearance turn.
 #[derive(Clone, Copy)]
-pub(super) struct TurnContent<'a> {
+pub struct TurnContent<'a> {
+    /// Her selected pose bodies and cannon headings.
     pub movement: &'a super::MovementContent,
+    /// The selected playhead clips and visual content.
     pub appearance: &'a super::AppearanceContent,
+    /// Movement tuning.
     pub movement_rules: &'a samus_movement::Rules,
+    /// Appearance tuning.
     pub appearance_rules: &'a samus_appearance::Rules,
+}
+
+/// A side-free pass requested by the boss after Samus has completed her ordinary turn.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GetawayPass;
+
+impl GetawayPass {
+    /// Arm the next movement turn while keeping the completed turn's reports.
+    pub const fn arm(self, movement: &mut samus_movement::Samus) {
+        movement.request_getaway();
+    }
+}
+
+/// Neighbours for a scoped Samus getaway turn.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GetawayInputs {
+    /// Camera's left edge at the start of the turn.
+    pub view_left: Px,
+    /// One pass at the end of this turn, when supplied by the boss.
+    pub pass: Option<GetawayPass>,
+    /// Horizontal speed reduction supplied at the start of the turn.
+    pub slowdown: samus_movement::Slowdown,
+    /// The room's signed sideways carry for this turn.
+    pub carry: types::Fixed,
 }
 
 /// Update the count and previous-draw latch while active movement and pose choice are paused.
@@ -157,6 +205,7 @@ impl super::State {
         self.samus.turn(
             TurnInputs {
                 energy: self.health.0.energy.whole.get(),
+                view_left: self.camera.0.position().x.pixel(),
                 ..inputs.into()
             },
             &world,
@@ -172,6 +221,46 @@ impl super::State {
 }
 
 impl State {
+    /// Play her complete movement and appearance turn with a scoped boss and camera input.
+    /// Actor contact is outside this scope. A pass is applied after the ordinary turn.
+    ///
+    /// # Errors
+    /// Missing content or malformed geometry refuses the turn before State changes.
+    pub fn step_getaway(
+        &mut self,
+        inputs: &Inputs,
+        getaway: GetawayInputs,
+        doors: &[boss_ceres_ridley::CeresDoor],
+        content: TurnContent<'_>,
+    ) -> Result<samus_movement::Outcome, Fault> {
+        inputs.geometry.validate().map_err(|_| Fault::Geometry)?;
+        let world = super::ceres_doors::WithDoors::new(&inputs.geometry, doors);
+        let (her, ()) = self.turn(
+            TurnInputs {
+                view_left: getaway.view_left,
+                getaway_slowdown: getaway.slowdown,
+                getaway_carry: getaway.carry,
+                ..inputs.into()
+            },
+            &world,
+            content,
+            |_| {
+                Ok(Between {
+                    played: (),
+                    hit: None,
+                    energy: inputs.energy,
+                })
+            },
+        )?;
+        let mut moved = her.samus;
+        if let Some(pass) = getaway.pass {
+            pass.arm(&mut moved);
+        }
+        let outcome = her.outcome.clone().ok_or(Fault::Geometry)?;
+        self.played(moved, &her, jump_button(inputs.held));
+        Ok(outcome)
+    }
+
     pub(super) fn turn<T>(
         &self,
         inputs: TurnInputs,
@@ -197,6 +286,22 @@ impl State {
         };
         let mut frame = animation::frame_of_play(seen, hurt);
         frame.item_controls = inputs.item_controls;
+        if outcome.deferred_motion == samus_movement::DeferredMotion::Clear {
+            // The forced recoil pose is selected before this cut's clip visit. Preparation
+            // has already seen the old figure, which drawing still uses for the spin end.
+            let hold = content
+                .appearance
+                .get(after)
+                .and_then(|clip| clip.hold(Step::FIRST))
+                .ok_or(Fault::Clip(after))?;
+            appearance.kept_action = start.pose.action;
+            appearance.animation.playhead = Playhead {
+                step: Step::FIRST,
+                time_left: hold.frames().slowed(inputs.liquid.start_slowdown),
+            };
+            frame.parts[FramePart::Preparation] = false;
+            frame.inputs.figure = after;
+        }
         let shown = animation::play(
             &mut appearance,
             content.appearance,
@@ -257,6 +362,9 @@ impl State {
             elevator_moving: false,
             parity: inputs.parity,
             animation_ends: ahead.end,
+            view_left: inputs.view_left,
+            getaway_slowdown: inputs.getaway_slowdown,
+            getaway_carry: inputs.getaway_carry,
             body: &body,
             cannon_heading: &heading,
         };
@@ -266,6 +374,12 @@ impl State {
         let between = between(moves.position_after_moves())?;
         let outcome =
             samus.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0);
+        if let Some(pose) = outcome.pose_change
+            && samus.getaway != samus_movement::Getaway::Idle
+            && content.movement.radius(pose).is_none()
+        {
+            return Err(Fault::Body(pose));
+        }
         missing_body
             .get()
             .map_or(Ok((samus, outcome, between)), |pose| Err(Fault::Body(pose)))
@@ -457,3 +571,6 @@ mod tests {
         assert_eq!(dash(Dashing::Off, true, true), Dash::Stopped);
     }
 }
+
+#[cfg(test)]
+mod getaway_tests;
