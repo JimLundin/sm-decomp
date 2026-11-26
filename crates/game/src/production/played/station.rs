@@ -522,9 +522,21 @@ mod tests {
                 .all(|wall| wall.phase == Phase::Placed)
         );
         assert_eq!(room.station.stage, Stage::Calm);
-        let first = play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
-        assert_eq!(room.station.stage, Stage::Getaway);
+        let mut getaway = room.clone();
+        let first = play(&mut getaway, types::Buttons::default(), Stage::Calm).unwrap();
+        assert_eq!(getaway.station.stage, Stage::Getaway);
         assert!(first.ridley.unwrap().getaway.unwrap().sound.is_some());
+
+        room.station.retire_before(1);
+        assert!(room.station.ridley.is_none());
+        assert_eq!(
+            room.station.doors,
+            [backdrop.left_wall.door, backdrop.right_wall.door]
+        );
+        room.station.retire_before(3);
+        assert_eq!(room.station.doors, [backdrop.right_wall.door]);
+        room.station.retire_before(4);
+        assert!(room.station.doors.is_empty());
     }
 
     /// Meeting the room's left side fast, his shake reaches the room's quake: the back layers,
