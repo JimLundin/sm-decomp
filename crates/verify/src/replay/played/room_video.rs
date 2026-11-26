@@ -524,26 +524,45 @@ fn arrival_stages_enemies_and_initializes_idle_hdma() {
     let prior = rows.record(105).unwrap();
     let controller = seed_controller(&prior).unwrap();
     assert_eq!(
-        run.through(&mut rows, prior, controller, 106..=183)
+        run.through(&mut rows, prior, controller, 106..=106)
             .unwrap(),
-        (78, Stop::End)
+        (1, Stop::End)
     );
     assert!(run.state.room_video.idle_hdma().is_some());
+    assert!(run.state.room_video.staged_enemy_tiles().is_some());
+    let prior = rows.record(106).unwrap();
+    let controller = seed_controller(&prior).unwrap();
+    assert_eq!(
+        run.through(&mut rows, prior, controller, 107..=183)
+            .unwrap(),
+        (77, Stop::End)
+    );
     assert_eq!(
         run.state.room_video.uploaded_enemy_tiles().map(<[_]>::len),
         Some(0)
     );
     let prior = rows.record(183).unwrap();
     let controller = seed_controller(&prior).unwrap();
-    assert_eq!(
-        run.through(&mut rows, prior, controller, 184..=188)
-            .unwrap(),
-        (5, Stop::End)
-    );
-    assert_eq!(
-        run.state.room_video.uploaded_enemy_tiles().map(<[_]>::len),
-        Some(0x1400)
-    );
+    // The scoped continuation starts with occupied destinations so that
+    // equal-value writes in the ordinary run still have overwrite evidence.
+    let mut occupied = run.clone();
+    occupied.state.room_video.video.memory.vram[0x6c00..0x8000].fill(u16::MAX);
+    for candidate in [&mut run, &mut occupied] {
+        assert_eq!(
+            candidate
+                .through(&mut rows, prior.clone(), controller, 184..=188)
+                .unwrap(),
+            (5, Stop::End)
+        );
+        assert_eq!(
+            candidate
+                .state
+                .room_video
+                .uploaded_enemy_tiles()
+                .map(<[_]>::len),
+            Some(0x1400)
+        );
+    }
 }
 
 fn compare_shaft_picture(
