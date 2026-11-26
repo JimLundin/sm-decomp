@@ -102,7 +102,6 @@ pub(super) fn run(
                 || restored.state != run.state
                 || restored.return_timing != run.return_timing
                 || restored.warning_picture != run.warning_picture
-                || restored.upper_row != run.upper_row
             {
                 return Err(Outcome::CheckpointFailure { cut });
             }

@@ -76,7 +76,14 @@ pub(super) fn compare(
     )?;
     compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
-    compare_arrival(room, readiness, frame.previous, frame.current, expected, actual)
+    compare_arrival(
+        room,
+        readiness,
+        frame.previous,
+        frame.current,
+        expected,
+        actual,
+    )
 }
 
 fn compare_live_overlay(

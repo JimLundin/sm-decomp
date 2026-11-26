@@ -218,6 +218,20 @@ impl LiveCartridge {
     }
 }
 
+pub(super) fn compare_oam_dma(
+    channel: DmaChannel,
+    record: &FrameRecord,
+    cut: u64,
+) -> Result<(), Outcome> {
+    if channel != crate::replay::landing_site::channel(record.ppu.dma[0]) {
+        return Err(Outcome::Difference {
+            cut,
+            field: "video.dma[0]".into(),
+        });
+    }
+    Ok(())
+}
+
 fn compare_battery(
     cartridge: &Cartridge,
     format: &Format,
@@ -402,12 +416,7 @@ impl Run {
     }
 
     fn compare_carried_hardware(&self, record: &FrameRecord, cut: u64) -> Result<(), Outcome> {
-        if self.state.oam_dma() != crate::replay::landing_site::channel(record.ppu.dma[0]) {
-            return Err(Outcome::Difference {
-                cut,
-                field: "video.dma[0]".into(),
-            });
-        }
+        compare_oam_dma(self.state.oam_dma(), record, cut)?;
         compare_battery(&self.cartridge, &self.format, record, cut)
     }
 

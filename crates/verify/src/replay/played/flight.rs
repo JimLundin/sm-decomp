@@ -291,6 +291,7 @@ impl Continuation {
             carry,
             video,
         } = self;
+        let carried_video = video.is_some();
         let mut run = Run {
             journey,
             report: None,
@@ -334,7 +335,11 @@ impl Continuation {
                     }
                     cartridge.as_mut().map_or(Ok(()), |cartridge| {
                         cartridge.observe(&current, cut, entered)
-                    })
+                    })?;
+                    if carried_video {
+                        super::power_on::compare_oam_dma(run.video.dma[0], &current, cut)?;
+                    }
+                    Ok(())
                 });
             if let Err(outcome) = compared {
                 return Ok((held, Stop::At(super::at(cut, outcome))));

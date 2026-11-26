@@ -644,9 +644,14 @@ impl<'a> Run<'a> {
                     if let Err(outcome) = self
                         .compare_departure_room(&current, cut)
                         .and_then(|()| {
-                            self.cartridge
-                                .as_mut()
-                                .map_or(Ok(()), |cartridge| cartridge.observe(&current, cut, false))
+                            self.cartridge.as_mut().map_or(Ok(()), |cartridge| {
+                                cartridge.observe(&current, cut, false)?;
+                                power_on::compare_oam_dma(
+                                    self.state.room_video.video.dma[0],
+                                    &current,
+                                    cut,
+                                )
+                            })
                         })
                         .and_then(|()| observe(&current, cut))
                     {

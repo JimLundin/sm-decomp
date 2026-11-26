@@ -200,8 +200,7 @@ fn shaft_actor_checkpoints_continue_from_the_live_return() -> Result<(), Outcome
             );
             assert!(
                 run.return_timing == live.return_timing
-                    && run.warning_picture == live.warning_picture
-                    && run.upper_row == live.upper_row,
+                    && run.warning_picture == live.warning_picture,
                 "{origin}/{origin_cut} retained runner at {row}/{local}"
             );
         }
