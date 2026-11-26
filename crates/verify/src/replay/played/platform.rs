@@ -101,6 +101,7 @@ pub(super) fn actor_fetch(record: &FrameRecord) -> game::production::played::pas
 pub(super) fn door_enemy_tiles(previous: &FrameRecord, current: &FrameRecord) -> bool {
     let ready = |record: &FrameRecord| {
         matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.interrupted_pc, 0x0082_e02c..=0x0082_e02f))
+            && word(&record.wram, source::ROOM_PTR).is_ok_and(|room| room == 0xe0b5)
             && record.wram.get(0x5be..0x5c0) == Some(&0x6d00_u16.to_le_bytes())
             && record.wram.get(0x5c3..0x5c5) == Some(&0x0600_u16.to_le_bytes())
     };
