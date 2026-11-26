@@ -118,9 +118,17 @@ fn shaft_native_cuts_preserve_placement_and_reach() -> Result<(), Outcome> {
             "shaft video join {cut}"
         );
         let state = rotation(&current)?;
-        let [a, b, c, d, x, y] = current.ppu.m7;
-        assert_eq!([a, b, c, d], state.matrix, "shaft physical matrix {cut}");
-        assert_eq!((x, y), (128, 1008), "shaft physical pivot {cut}");
+        let [aa, bb, cc, dd, pivot_x, pivot_y] = current.ppu.m7;
+        assert_eq!(
+            [aa, bb, cc, dd],
+            state.matrix,
+            "shaft physical matrix {cut}"
+        );
+        assert_eq!(
+            (pivot_x, pivot_y),
+            (128, 1008),
+            "shaft physical pivot {cut}"
+        );
         if rotation(&previous)?.sample != state.sample {
             sample_reads = sample_reads.saturating_add(1);
         }
