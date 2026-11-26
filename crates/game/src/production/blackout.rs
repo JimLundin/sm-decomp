@@ -338,6 +338,9 @@ impl State {
                 if let Some(hud) = &mut self.hud {
                     hud.finished = hud.finished.wrapping_add(1);
                 }
+                if self.video.batch.sprites.0 != 0 {
+                    self.video.batch.finalise_oam();
+                }
                 self.video.commit_registers();
                 self.video.upload_oam_and_cgram();
                 if queued != StandingStrips::default() {

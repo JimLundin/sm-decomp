@@ -3,6 +3,8 @@
 use crate::replay::{data_failure, result::Outcome};
 use types::{PlayFrames, PlayHours, PlayMinutes, PlaySeconds, PlayTime};
 
+pub(super) const FIELD: &str = "game-time.elapsed";
+
 pub(super) fn read(wram: &[u8]) -> Result<PlayTime, Outcome> {
     let invalid = || data_failure(None, "elapsed play time");
     let component = |offset: usize| {
@@ -30,7 +32,7 @@ pub(super) fn read(wram: &[u8]) -> Result<PlayTime, Outcome> {
 
 pub(super) fn observation(time: PlayTime) -> crate::replay::compare::Observation {
     crate::replay::compare::Observation {
-        field: "game-time.elapsed".into(),
+        field: FIELD.into(),
         bytes: [
             time.hours.get(),
             time.minutes.get(),
