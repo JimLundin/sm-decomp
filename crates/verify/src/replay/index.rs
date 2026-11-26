@@ -1343,6 +1343,17 @@ macro_rules! shaft_observations {
     };
 }
 
+macro_rules! health_observations {
+    () => {
+        ObservationId::HealthTailState
+            | ObservationId::HealthTailWarning
+            | ObservationId::HealthTailDrawnProtection
+            | ObservationId::CeresTailHealth
+            | ObservationId::DepartureHealth
+            | ObservationId::ZebesHealth
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -1372,12 +1383,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         }
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         shaft_observations!() => Responsibility::RoomLoading,
-        O::HealthTailState
-        | O::HealthTailWarning
-        | O::HealthTailDrawnProtection
-        | O::CeresTailHealth
-        | O::DepartureHealth
-        | O::ZebesHealth => Responsibility::Health,
+        health_observations!() => Responsibility::Health,
         explosion_observations!() => Responsibility::StationExplosion,
         blackout_observations!() => Responsibility::Blackout,
         O::CeresTailKnockback
