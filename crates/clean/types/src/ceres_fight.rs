@@ -1,4 +1,4 @@
-//! The checked wing look used to select ordinary Ceres fight art.
+//! Looks used to select ordinary Ceres fight art.
 
 use serde::{Deserialize, Serialize};
 
@@ -39,4 +39,15 @@ impl From<WingBeat> for u8 {
     fn from(value: WingBeat) -> Self {
         value.get()
     }
+}
+
+/// Spec: `RibsBeat`. Selects the renderer's two imported strips for a ribs reveal.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RibLook {
+    /// Ribs fully closed.
+    Closed,
+    /// The same look while opening and closing.
+    PartlyOpen,
+    /// Ribs fully open.
+    Wide,
 }

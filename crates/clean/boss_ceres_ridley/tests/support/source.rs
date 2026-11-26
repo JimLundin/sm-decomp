@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub enum Source {
     Constructed,
     Recorded,
+    Oracle,
 }
 
 impl TryFrom<String> for Source {
@@ -14,6 +15,7 @@ impl TryFrom<String> for Source {
         match text.as_str() {
             "constructed" => Ok(Self::Constructed),
             "recorded" => Ok(Self::Recorded),
+            "oracle" => Ok(Self::Oracle),
             _ if text.split_once(':').is_some_and(|(route, cut)| {
                 (route.starts_with("chain-") || route == "rS1") && cut.parse::<u32>().is_ok()
             }) =>
@@ -28,7 +30,7 @@ impl TryFrom<String> for Source {
 impl Source {
     pub fn check<T>(&self, run: impl FnOnce() -> T) -> T {
         match self {
-            Self::Constructed | Self::Recorded => run(),
+            Self::Constructed | Self::Recorded | Self::Oracle => run(),
         }
     }
 }

@@ -67,6 +67,7 @@ pub mod play_time;
 pub mod quake;
 mod ridley;
 mod ridley_picture;
+mod ridley_ribs;
 mod room_bg1;
 mod room_palette;
 pub mod room_tiles;
@@ -155,6 +156,8 @@ pub struct Content {
     pub start_x: types::Px,
     /// Ceres Ridley's eye's steps and his body's colour sets.
     pub ridley: RidleyContent,
+    /// Imported object-strip pairs for Ridley's ordinary ribs looks.
+    pub ridley_ribs_art: Option<data::assets::ridley_ribs::Art>,
     /// The room warning artwork, when admitted for this file.
     pub warning: Option<warning::Content>,
     /// Ordinary sprite maps for Ridley, the baby, and the attached door.
@@ -227,6 +230,8 @@ pub struct State {
 /// What one frame published.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outputs {
+    /// Regular room VRAM transfers consumed by the requested display upload, in queue order.
+    pub serviced_vram: Vec<crate::state::video::VramTransfer>,
     /// Movement's complete outcome; none while a passage runs.
     pub movement: Option<samus_movement::Outcome>,
     /// OAM slots appended by the ordinary body, empty when it was hidden.
@@ -334,6 +339,8 @@ pub enum Fault {
     WallJumpDustArt,
     /// The ordinary fight requests a sprite map outside the imported looks.
     RidleyPicture,
+    /// A selected ordinary ribs look has no imported strip art.
+    RidleyRibs,
     /// The ordinary figure or animation step has no imported strip definition.
     SamusTiles(Figure),
 }
@@ -357,7 +364,7 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
-        let output = if self.arrival.preparing() {
+        let mut output = if self.arrival.preparing() {
             self.prepare(passing, content, rules)
         } else if matches!(self.passage.doors, Doors::Passing(_)) {
             self.pass(inputs, passing, content, rules)
@@ -387,7 +394,7 @@ impl State {
                 self.room_video.video.batch.samus_tiles =
                     crate::state::video::SamusTileUploads::default();
             }
-            self.room_video.publish(content.standing.as_ref())?;
+            output.serviced_vram = self.room_video.publish(content.standing.as_ref())?;
         }
         Ok(output)
     }
@@ -448,6 +455,7 @@ impl State {
             rules,
         );
 
+        self.queue_ridley_ribs(&enemies, content)?;
         let sprites = self.assemble_play_picture(
             &mut enemies,
             (&hud_state, &hud_outputs),
@@ -479,6 +487,7 @@ impl State {
         self.play_time = play_time::after_work(self.play_time, health.state, passing.work_begun);
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
+            serviced_vram: Vec::new(),
             movement: her.outcome,
             samus_body: sprites.samus,
             attached_ridley_door: sprites.door,
@@ -499,6 +508,18 @@ impl State {
             ridley_placed: None,
             quake: Some(shaken),
         })
+    }
+
+    fn queue_ridley_ribs(
+        &mut self,
+        enemies: &station::Enemies,
+        content: &Content,
+    ) -> Result<(), Fault> {
+        ridley_ribs::queue(
+            &mut self.room_video.video.batch,
+            enemies.ridley.as_ref(),
+            content.ridley_ribs_art.as_ref(),
+        )
     }
 
     fn prepare_play_tiles(
@@ -675,6 +696,7 @@ impl State {
             &mut palette,
             &mut random,
         )?;
+        self.queue_ridley_ribs(&enemies, content)?;
         self.prepare_passage_shaft_picture(&mut enemies, view, moved, inputs.parity, content)?;
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &exports.report, passing)?;
@@ -702,6 +724,7 @@ impl State {
         self.hud.0.out_of_play(&hud::out_of_play(&exports.report));
         self.finish_passage(&exports, loaded, passing);
         Ok(Outputs {
+            serviced_vram: Vec::new(),
             movement: None,
             samus_body: None,
             attached_ridley_door: None,

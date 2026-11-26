@@ -2325,3 +2325,48 @@ their own map's encoder rule. [FP-order-early, FP-order-late, FP-order-escape]
 - From the getaway onward → keep the late opportunity for the attached door
   while it is attached. The ordinary baby's picture has ended. [FP-order-escape, FP-door-released]
 - checked: oracle (fight row cuts 7, 576, 577, 682, 702, 1158, 1262 through 1264 and 1586).
+
+### 21.3 Ridley's ribs
+
+The ordinary fight shows three ribs looks. The ribs open, widen, then open
+again before closing. They keep their own beat while Ridley's wings respond
+to his movement. The room's drawing receives the selected ribs look and
+publishes its two imported object strips at the next requested display
+upload. The strips remain in the display memory after Ridley leaves
+in the room. The flyby's art belongs to §16.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| ribs beat | `RibBeat`, the next beat within the cycle of closed, opening, wide and closing | RibsBeat |
+| ribs wait | `RibWait`, 1 through 20 eligible runs until the next reveal | RibsBeat |
+| selected ribs look | `RibLook`, either closed, partly open or wide | output, room drawing |
+
+Opening and closing use the same partly open look. They are distinct
+beats because different looks follow them. Restore any beat with any
+wait in its range. A reveal emits one look once. The display owns any
+pending upload independently of the animation's current beat and wait.
+
+### RibsBeat
+
+- kind: mechanic.
+- summary: Ridley's ribs cycle in the ordinary fight, including while he retreats.
+- params: a new Ridley starts with the closed beat and one run left. Each
+  reveal starts a wait of 20 eligible runs until the next reveal.
+- switch: Fixed.
+- Placed → start with the closed beat and one run left. [RB-place]
+- Ordinary animation run with more than one run left → spend one run.
+  Keep the beat and emit no new look. [RB-hold-look, RB-resume]
+- Ordinary animation run with one run left → emit the current beat's look,
+  advance to the next beat and start the full wait. After closing, the next
+  beat is closed. [RB-first, RB-opening, RB-wide, RB-closing, RB-wrap, RB-walls]
+- No ordinary animation run → keep the beat and wait. Emit no new look.
+  [RB-before-motion, RB-after-walls, RB-paused]
+- checked: oracle (fight row, cuts 0 through 1614), constructed (pause,
+  resume and cycle wrap).
+
+The first body fade and the turn that places the getaway walls still give
+Ridley an ordinary animation run. The flyby's first turn gives no ordinary
+animation run. The renderer selects the two strips for each reveal and
+queues them in top-then-bottom order during Ridley's room work. A paused
+display keeps the previously published strips and its queued work. The
+next requested display upload publishes that work in queue order.

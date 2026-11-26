@@ -6313,3 +6313,126 @@ hurt = [5, 0]
 hits = 1
 refreshed = 14
 looks = { colours = "Normal" }
+
+# Ribs cases carry the next beat and the eligible runs left before its reveal.
+
+[[fight_ribs]]
+id = "RB-place"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 0
+turn = "Placed"
+after = ["Closed", 1]
+
+[[fight_ribs]]
+id = "RB-before-motion"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 576
+before = ["Closed", 1]
+turn = "Hold"
+after = ["Closed", 1]
+
+[[fight_ribs]]
+id = "RB-first"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 577
+before = ["Closed", 1]
+turn = "Animate"
+after = ["Opening", 20]
+reveal = "Closed"
+
+[[fight_ribs]]
+id = "RB-hold-look"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 578
+before = ["Opening", 20]
+turn = "Animate"
+after = ["Opening", 19]
+
+[[fight_ribs]]
+id = "RB-opening"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 597
+before = ["Opening", 1]
+turn = "Animate"
+after = ["Wide", 20]
+reveal = "PartlyOpen"
+
+[[fight_ribs]]
+id = "RB-wide"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 617
+before = ["Wide", 1]
+turn = "Animate"
+after = ["Closing", 20]
+reveal = "Wide"
+
+[[fight_ribs]]
+id = "RB-closing"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 637
+before = ["Closing", 1]
+turn = "Animate"
+after = ["Closed", 20]
+reveal = "PartlyOpen"
+
+[[fight_ribs]]
+id = "RB-wrap"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 657
+before = ["Closed", 1]
+turn = "Animate"
+after = ["Opening", 20]
+reveal = "Closed"
+
+[[fight_ribs]]
+id = "RB-walls"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 1157
+before = ["Opening", 1]
+turn = "Animate"
+after = ["Wide", 20]
+reveal = "PartlyOpen"
+
+[[fight_ribs]]
+id = "RB-after-walls"
+entries = ["RibsBeat"]
+source = "oracle"
+row = "chain-any-0006-E0B5"
+frame = 1158
+before = ["Wide", 20]
+turn = "Hold"
+after = ["Wide", 20]
+
+[[fight_ribs]]
+id = "RB-paused"
+entries = ["RibsBeat"]
+source = "constructed"
+before = ["Closing", 1]
+turn = "Hold"
+after = ["Closing", 1]
+
+[[fight_ribs]]
+id = "RB-resume"
+entries = ["RibsBeat"]
+source = "constructed"
+before = ["Wide", 2]
+turn = "Animate"
+after = ["Wide", 1]

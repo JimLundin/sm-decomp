@@ -2425,3 +2425,113 @@ provider = "recorded-work-and-publication"
 fields = ["scheduler.finished", "scheduler.begun", "scheduler.published"]
 phase = "per cut"
 claim = "The ordinary played runner observes scheduler opportunities. Movement, view, actor sprites, the dust clock and the two OAM lanes advance through production."
+
+[[case]]
+id = "ridley/ordinary-ribs"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 1614 }
+rules = ["boss-ceres-ridley/RibsBeat"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
+checkpoints = true
+limits = ["The opening cut admits a placed Ridley and the doorway strip words. The case includes the first fade, wall placement and the first flyby turn.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows. A fork of the carried first reveal withholds publication, then restores the complete ribs clock and pending room picture for the following cut."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "display upload", "audio readiness"]
+phase = "frame boundary"
+claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
+
+[[case]]
+id = "ridley/ribs-from-opening"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 596 }
+end = { cut_inclusive = 598 }
+rules = ["boss-ceres-ridley/RibsBeat"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
+checkpoints = false
+limits = ["The seed holds the opening beat with one eligible run remaining.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "display upload", "audio readiness"]
+phase = "frame boundary"
+claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
+
+[[case]]
+id = "ridley/ribs-from-wide"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 616 }
+end = { cut_inclusive = 618 }
+rules = ["boss-ceres-ridley/RibsBeat"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
+checkpoints = false
+limits = ["The seed holds the wide beat with one eligible run remaining.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "display upload", "audio readiness"]
+phase = "frame boundary"
+claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
+
+[[case]]
+id = "ridley/ribs-from-closing"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 636 }
+end = { cut_inclusive = 638 }
+rules = ["boss-ceres-ridley/RibsBeat"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
+checkpoints = false
+limits = ["The seed holds the closing beat with one eligible run remaining.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "display upload", "audio readiness"]
+phase = "frame boundary"
+claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
+
+[[case]]
+id = "ridley/ribs-from-closed"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 656 }
+end = { cut_inclusive = 658 }
+rules = ["boss-ceres-ridley/RibsBeat"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
+checkpoints = false
+limits = ["The seed holds the closed beat with one eligible run remaining after a full circuit.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "display upload", "audio readiness"]
+phase = "frame boundary"
+claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."

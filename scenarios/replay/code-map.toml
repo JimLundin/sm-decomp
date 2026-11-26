@@ -1449,3 +1449,13 @@ targets = [
   { role = "navigation", path = "crates/import/src/samus/dust.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/shaft_dust.rs" },
 ]
+
+[[rule]]
+id = "boss-ceres-ridley/RibsBeat"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/fight_ribs.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley_ribs.rs" },
+  { role = "adapter", path = "crates/game/src/exact/ridley_ribs.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/ridley_ribs.rs" },
+]

@@ -77,6 +77,8 @@
 //! **The ordinary fight picture.** Save [`FightWings`] with the fight. Supply facing, tail
 //! visibility and the actor framework's flash inputs on [`RidleyFrame`]. [`RidleyRun`] reports
 //! the pre-hop parts and any accepted-shot timer refresh; the actor framework spends the timer.
+//! Save [`FightRibs`] alongside the wings. Each ribs reveal hands the renderer a [`RibLook`];
+//! the renderer owns the art, queued uploads and published picture.
 //! Use [`CeresRidley::picture_order`] with the door owner's attachment state to schedule the
 //! existing baby and door pictures around the room layers. The flyby keeps a separate clock.
 //!
@@ -110,6 +112,7 @@ mod baby;
 mod catalogue;
 mod door;
 mod fight_picture;
+mod fight_ribs;
 mod fight_wings;
 mod figure;
 mod flight;
@@ -153,6 +156,7 @@ pub use fight_picture::{
     FightColours, FightFacing, FightFlash, FightParts, FightPictureInputs, FightPictureOrder,
     FightPictureStage, FlashHalf, RoomLayerOrder, TailIntent, TailTipLook, WingIntent,
 };
+pub use fight_ribs::{FightRibs, RibBeat, RibWait};
 pub use fight_wings::{FightWings, WingCount};
 pub use figure::{Figure, FigureLook};
 pub use flight::{Bound, Fight, HIS_POINT, HoverRuns, Speed};
@@ -196,7 +200,7 @@ pub use station::{
 pub use steam::{FirstPuffWait, MountedVent, Vent, VentPhase, run_vents};
 pub use tail::{TAIL_DAMAGE, TailCurl};
 pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
-pub use types::ceres_fight::WingBeat;
+pub use types::ceres_fight::{RibLook, WingBeat};
 pub use types::ceres_getaway::{
     FlybyBabyBeat, FlybyBeats, FlybyProgress, FlybyTurn, FlybyWingBeat, GetawayState, OutOfTheWay,
 };

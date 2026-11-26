@@ -52,6 +52,7 @@ mod ridley;
 mod ridley_body_picture;
 #[cfg(test)]
 mod ridley_door_picture;
+pub(super) mod ridley_ribs;
 #[cfg(test)]
 mod room_picture;
 mod room_video;
@@ -476,7 +477,6 @@ impl<'a> Run<'a> {
             Start::Room(seed) => Self::seeded(seed, content, &rooms)?,
         };
         let hud = super::hud::Content::load(path)?;
-        let opening_hud = Self::opening_hud(origin, image.lorom(), &start)?;
         let language = match origin {
             Start::Preparing(_, _, carried) => carried.language,
             Start::Room(seed) => seed::language(&seed.wram)?,
@@ -539,10 +539,11 @@ impl<'a> Run<'a> {
                 colour_groups: colours::groups(),
                 rooms,
                 hud: hud.pictures,
-                opening_hud,
+                opening_hud: Self::opening_hud(origin, image.lorom(), &start)?,
                 map: hud.map_of(room.map.1)?.clone(),
                 start_x: core::num::Wrapping(start.her.0),
                 ridley,
+                ridley_ribs_art: import::ridley_ribs::import(image.lorom()).ok(),
                 warning,
                 tail_worth,
             },
@@ -601,6 +602,10 @@ impl<'a> Run<'a> {
             seeded.geometry = geometry;
         }
         let mut room_video = played::room_video::RoomVideo::default();
+        let station = station::seed(&seed.wram, ceres_doors, room.ceres)?;
+        if station.ridley.is_some() {
+            ridley_ribs::admit(&mut room_video.video, seed)?;
+        }
         room_video.bg1_offset = seed::bg1_offset(&seed.wram)?;
         let state = played::State {
             room_video,
@@ -623,7 +628,7 @@ impl<'a> Run<'a> {
             health: Model(health_tail::decode(&seed.wram, None)?),
             hud: Model(super::hud::decode_state(&seed.wram)?),
             frame: frame::seed(&seed.wram)?,
-            station: station::seed(&seed.wram, ceres_doors, room.ceres)?,
+            station,
             quake: Model(quake::seed(&seed.wram)?),
             arrival: arrival::seed(&seed.wram)?,
         };
@@ -820,6 +825,41 @@ impl<'a> Run<'a> {
         )
     }
 
+    fn room_work(
+        &mut self,
+        previous: &FrameRecord,
+        current: &FrameRecord,
+        place: (&str, u64),
+        owns_vent_draws: bool,
+    ) -> Result<played::passage::Passing, Outcome> {
+        let doors = self.state.passage.doors;
+        let platform = self.passage_timing(current);
+        Ok(played::passage::Passing {
+            // The borrowed lag: the last NMI found the frame's work finished, so the next began.
+            work_begun: finished(previous)
+                && !shaft_native::fetch_retires(&self.state.station, doors),
+            work_done: platform.ready || fetching_contents(doors),
+            publishes: platform.publishes,
+            actor_fetch: platform::actor_fetch(current),
+            enemy_tiles: platform::door_enemy_tiles(previous, current),
+            shaft_background: platform::shaft_background(current, doors),
+            shaft_raster: platform::shaft_raster(previous, current)?,
+            room_hdma: platform::room_hdma(previous, current)?,
+            audio: played::passage::PassageAudio {
+                shaft_reply: shaft_sound::reply(place, finished(current)),
+                sounds_sent: sounds_sent(&previous.wram)?,
+                music_ready: music_ready(&previous.wram)?,
+            },
+            // Borrow random draws during passages outside the vent placement work frame.
+            random: (matches!(doors, Doors::Passing(_))
+                && !owns_vent_draws
+                && self.state.station.escape_shaft.is_none())
+            .then(|| frame::random(&previous.wram))
+            .transpose()?,
+            start: arrival::start(previous, current)?,
+        })
+    }
+
     /// Play the interval ending at `cut` and compare its owners with the record at `cut`.
     fn step(
         &mut self,
@@ -873,31 +913,7 @@ impl<'a> Run<'a> {
             && !fetching_contents(doors)
             && (!self.state.station.vents.is_empty() || self.state.station.escape_shaft.is_some())
             && !finished(previous);
-        let platform = self.passage_timing(current);
-        let passing = played::passage::Passing {
-            // The borrowed lag: the last NMI found the frame's work finished, so the next began.
-            work_begun: finished(previous)
-                && !shaft_native::fetch_retires(&self.state.station, doors),
-            work_done: platform.ready || fetching_contents(doors),
-            publishes: platform.publishes,
-            actor_fetch: platform::actor_fetch(current),
-            enemy_tiles: platform::door_enemy_tiles(previous, current),
-            shaft_background: platform::shaft_background(current, doors),
-            shaft_raster: platform::shaft_raster(previous, current)?,
-            room_hdma: platform::room_hdma(previous, current)?,
-            audio: played::passage::PassageAudio {
-                shaft_reply: shaft_sound::reply(place, finished(current)),
-                sounds_sent: sounds_sent(&previous.wram)?,
-                music_ready: music_ready(&previous.wram)?,
-            },
-            // Borrow random draws during passages outside the vent placement work frame.
-            random: (matches!(doors, Doors::Passing(_))
-                && !owns_vent_draws
-                && self.state.station.escape_shaft.is_none())
-            .then(|| frame::random(&previous.wram))
-            .transpose()?,
-            start: arrival::start(previous, current)?,
-        };
+        let passing = self.room_work(previous, current, place, owns_vent_draws)?;
         let start = if warning::selected(&self.state.station) {
             None
         } else {
@@ -918,7 +934,7 @@ impl<'a> Run<'a> {
             before,
             passing.work_begun,
             standing_view,
-            platform.publishes,
+            passing.publishes,
             cut,
         )?;
         let frame = Frame {
@@ -926,7 +942,7 @@ impl<'a> Run<'a> {
             current,
             cut,
             doors_before: doors,
-            publishes: platform.publishes,
+            publishes: passing.publishes,
             place,
         };
         let (mut expected, mut actual) = if self.state.arrival.preparing() {
@@ -993,6 +1009,12 @@ impl<'a> Run<'a> {
             )?;
         }
         shaft_dust::observations(self, frame, (expected, actual))?;
+        ridley_ribs::compare(
+            *frame,
+            &self.state,
+            &outputs.serviced_vram,
+            (expected, actual),
+        )?;
         expected.push(play_time::observation(play_time::read(&current.wram)?));
         actual.push(play_time::observation(self.state.play_time));
         compare(expected, actual).map_err(|fault| comparison_failure(cut, fault))?;

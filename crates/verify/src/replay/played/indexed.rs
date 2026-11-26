@@ -85,6 +85,9 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
             && case.expectations.output_cut.is_none()
             && case.checkpoints;
     }
+    if super::ridley_ribs::is_case(case) {
+        return super::ridley_ribs::valid(case);
+    }
     let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
         case.kind == CaseKind::Scoped
             && case.responsibilities == [Responsibility::Ceres]
@@ -141,7 +144,7 @@ fn selection(field: &str, retreat: bool) -> Option<bool> {
         || field.starts_with("health.")
         || field == "movement.pose"
         || field == "movement.knockback"
-        || (retreat && field.starts_with("ridley."))
+        || (retreat && field.starts_with("ridley.") && !field.starts_with("ridley.ribs."))
     {
         return Some(false);
     }
@@ -173,6 +176,9 @@ pub(in crate::replay) fn run(
     }
     if case.inputs == InputProvider::ScopedCeresWarning {
         return warning(&mut run, &mut rows, seed, controller, case, result);
+    }
+    if super::ridley_ribs::is_case(case) {
+        return super::ridley_ribs::run(&mut run, &mut rows, seed, controller, case, result);
     }
     if case.expectations.fields == FLYBY_STATE {
         return flyby(

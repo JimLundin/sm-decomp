@@ -14,6 +14,7 @@
 
 use core::num::Wrapping;
 
+use types::ceres_fight::RibLook;
 use types::ceres_getaway::GetawayState;
 use types::{GameFrames, Hit, Pair, Px};
 
@@ -21,6 +22,7 @@ use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
 use crate::fight_picture::{
     FightParts, FightPictureInputs, FightPictureOrder, FightPictureStage, TailIntent,
 };
+use crate::fight_ribs::FightRibs;
 use crate::fight_wings::FightWings;
 use crate::flight::{Bound, Fight, HoverRuns, Ruled, STILL, Speed, Steered, flown};
 use crate::flight_tail::{FlightTail, TAIL_SEGMENTS, TailSwish};
@@ -75,6 +77,8 @@ pub struct CeresRidley {
     pub flight_tail: Option<FlightTail>,
     /// `WingsBeat`: save and restore the ordinary clock alongside the fight.
     pub wings: FightWings,
+    /// `RibsBeat`: the saved next reveal and its remaining eligible runs.
+    pub ribs: FightRibs,
 }
 
 /// The boss a placing hands the HUD as encountered, whose mini-map rule is the HUD's own.
@@ -184,6 +188,9 @@ pub struct RidleyRun {
     pub getaway: Option<GetawayEffects>,
     /// `FightParts`: early draw intents at the pre-hop position, if ordinary animation ran.
     pub parts: Option<FightParts>,
+    /// `RibsBeat`: a new look for the room renderer, only on a reveal. The renderer queues
+    /// its top strip before its bottom strip and publishes them on the next display upload.
+    pub rib_reveal: Option<RibLook>,
     /// `FightParts`: accepted-shot timer write, before the actor framework spends the run.
     pub hurt_refresh: Option<u16>,
 }
@@ -207,17 +214,19 @@ impl RidleyRun {
             backdrop: None,
             getaway: None,
             parts: None,
+            rib_reveal: None,
             hurt_refresh: None,
         }
     }
 
-    /// `WingsBeat`, `FightParts`: sample the ordinary picture after motion and tail swing,
-    /// but before the take-off figure can change the body's position or speed.
+    /// `WingsBeat`, `FightParts`, `RibsBeat`: use the ordinary animation opportunity after
+    /// motion and tail swing, before the take-off figure can change the body's position or speed.
     fn ordinary_picture(mut self, picture: FightPictureInputs) -> Self {
         self.hurt_refresh = picture.flash.refresh();
         if self.ridley.phase.moving() {
             let ridley = &mut self.ridley;
             ridley.wings = ridley.wings.ran(ridley.speed);
+            self.rib_reveal = ridley.ribs.run();
             let tail = ridley
                 .tail()
                 .map(TailIntent::resting)
@@ -299,6 +308,7 @@ impl CeresRidley {
                 curl: TailCurl::PLACED,
                 flight_tail: None,
                 wings: FightWings::PLACED,
+                ribs: FightRibs::PLACED,
             },
             boss: Boss::CeresRidley,
             music: MusicStop,

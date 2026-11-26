@@ -1854,6 +1854,64 @@ connected runner earns the new comparison.
 
 [Bank 81](https://patrickjohnston.org/bank/81) · [Bank 90](https://patrickjohnston.org/bank/90) · [Bank A0](https://patrickjohnston.org/bank/A0) · [Bank A6](https://patrickjohnston.org/bank/A6)
 
+
+### Ribs strip animation
+
+The ordinary Ceres caller runs the ribs step after movement, tail and
+palette at `$A6:A2B1`. It qualifies the updated station stage and enabled
+motion at `$A6:A294..A29D`. `$A6:A3D7..A3DA` enables motion before the
+caller tests it on the first body fade turn. The backdrop still runs with
+the station calm. The first flyby picture advances the station stage and
+bypasses the ribs step.
+
+Placement calls `$A6:D9FD` from `$A6:A159`. Compare the next beat at
+`$7E:780A` and wait at `$7E:780C`. Next beat values are `DA71`, `DA77`,
+`DA7D` and `DA83` in cycle order. `DA89` also identifies the closed
+beat and appears after closing. `$A6:DA0C..DA70` queues two 64-byte writes
+with destination words `$7220` and `$7320` in that order. Import the source
+pairs and verify the hold durations at `$A6:DA71..DA8A`. The asset bank is
+`$B0`. The next requested NMI uses the regular VRAM queue. The initial
+closed strips are already present in the carried doorway object sheet.
+
+| Fight row cut | Next beat | Wait | Reveal |
+| --- | --- | --- | --- |
+| 576 | closed | 1 | none |
+| 577 | opening | 20 | closed |
+| 578 | opening | 19 | none |
+| 597 | wide | 20 | partly open |
+| 617 | closing | 20 | wide |
+| 637 | closed | 20 | partly open |
+| 657 | opening | 20 | closed |
+| 1117 | closed | 20 | partly open |
+| 1137 | opening | 20 | closed |
+| 1157 | wide | 20 | partly open |
+| 1158 | wide | 20 | none |
+
+The reference reads `chain-any-0006-E0B5` continuously from cut 0. It
+uses the observed motion qualification and stage, plus the origin's
+doorway strips before the first reveal. It advances the beat and wait
+through 1,615 cuts and derives both strips from the player's ROM on each
+of 30 reveals. All 1,615 clock and two-strip comparisons hold. A fixed
+origin picture matches 737 cuts and first differs at 597. The complete strips keep the final reveal
+on all 1,536 linked cuts through the shaft save handoff. The first
+reveal at 577 already matches the doorway image, so the clock distinguishes
+it from a missed first reveal. Test the queue receipt as well as the
+physical words when checking that release in production.
+
+At the powered-on shaft save boundary the two strips account for all 28
+residual VRAM words in the pinned diagnostic probe. The native provenance
+of the last changes includes the alternating ribs looks at fight cuts 1117,
+1137 and 1157. Compare both full strips without a mask, including all high
+bytes. Production must carry the strips from the room's VRAM through the
+shaft. A scoped fight seed can decode the next beat and remaining wait
+once from its native origin. A power-on run generates them through actor
+placement and ordinary room work. Use a seeded mid-cycle restoration to
+exercise each phase, and use continued powered-on play for the full VRAM
+witness. The reference's qualified inputs do not establish these
+production claims.
+
+[Bank A6](https://patrickjohnston.org/bank/A6)
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -1888,6 +1946,6 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 
 - Area ridley-getaway: GetawayPass, GetawayPicture
 - Area ridley-warning: WarningArt, WarningHeading, WarningTyping, WarningGlow, WarningEnds
-- Area ridley-fight-picture: WingsBeat, FightParts, FightPictureOrder
+- Area ridley-fight-picture: WingsBeat, FightParts, FightPictureOrder, RibsBeat
 
-Budget: 37.5 × 276.0 units = 10,347 (doors 1,062, station 237, shaft 462, lights 200, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, shaft overlay 350, shaft rotation 212, steam 1,375, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675, ridley-fight-picture 400)
+Budget: 37.5 × 280.0 units = 10,497 (doors 1,062, station 237, shaft 462, lights 200, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, shaft overlay 350, shaft rotation 212, steam 1,375, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675, ridley-fight-picture 550)

@@ -385,6 +385,21 @@ pub enum ObservationId {
     /// Overlay VRAM, first prepared and published OAM, and platform low bytes.
     #[serde(rename = "shaft-actors.picture")]
     CeresShaftPicture,
+    /// The next ordinary ribs beat.
+    #[serde(rename = "ridley.ribs.beat")]
+    CeresRibsBeat,
+    /// The eligible work runs left before the next reveal.
+    #[serde(rename = "ridley.ribs.wait")]
+    CeresRibsWait,
+    /// The ordered pair of regular VRAM transfers serviced for a reveal.
+    #[serde(rename = "ridley.ribs.uploads")]
+    CeresRibsUploads,
+    /// Every physical word of the upper ribs strip.
+    #[serde(rename = "ridley.ribs.vram.upper")]
+    CeresRibsUpper,
+    /// Every physical word of the lower ribs strip.
+    #[serde(rename = "ridley.ribs.vram.lower")]
+    CeresRibsLower,
     /// The actual slot at which the attached door is appended.
     #[serde(rename = "ridley.ordinary.door-cursor")]
     CeresFightDoorCursor,
@@ -1429,6 +1444,11 @@ macro_rules! ceres_observations {
             | ObservationId::CeresShaftEvents
             | ObservationId::CeresShaftPicture
             | ObservationId::ShaftSoundOffer
+            | ObservationId::CeresRibsBeat
+            | ObservationId::CeresRibsWait
+            | ObservationId::CeresRibsUploads
+            | ObservationId::CeresRibsUpper
+            | ObservationId::CeresRibsLower
             | ObservationId::CeresFightDoorCursor
             | ObservationId::CeresFightPreparedOam
             | ObservationId::CeresFightPhysicalOam
@@ -1837,6 +1857,13 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
             O::CeresWarningState,
             O::CeresWarningPicture,
             O::CeresWarningAudio,
+        ],
+        "boss-ceres-ridley/RibsBeat" => &[
+            O::CeresRibsBeat,
+            O::CeresRibsWait,
+            O::CeresRibsUploads,
+            O::CeresRibsUpper,
+            O::CeresRibsLower,
         ],
         "boss-ceres-ridley/FightParts" | "boss-ceres-ridley/FightPictureOrder" => &[
             O::CeresFightDoorCursor,

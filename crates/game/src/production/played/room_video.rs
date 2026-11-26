@@ -584,11 +584,11 @@ impl RoomVideo {
         Ok(())
     }
 
-    /// Commit the room's pending sprites and VRAM writes in NMI order.
+    /// Commit the room's pending sprites and return the regular transfers in NMI order.
     pub(super) fn publish(
         &mut self,
         standing: Option<&crate::samus_appearance_bridge::elevator::Art>,
-    ) -> Result<(), Fault> {
+    ) -> Result<Vec<VramTransfer>, Fault> {
         if self.shaft_bg2_offset.is_some() {
             let layer = self.video.batch.registers.scroll[1];
             self.video.committed.scroll[1] = layer.latched();
@@ -601,9 +601,9 @@ impl RoomVideo {
                 .publish(&mut self.video)
                 .map_err(|_| Fault::Escape)?;
         }
-        self.video.process_vram_writes(&Graphics::default());
+        let serviced = self.video.process_vram_writes(&Graphics::default());
         crate::exact::tilemap::commit_exposures(&mut self.video);
-        Ok(())
+        Ok(serviced)
     }
 
     /// Advance through ROM and, when available, the mapped low WRAM at the source wrap.

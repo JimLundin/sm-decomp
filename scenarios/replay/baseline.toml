@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "58234e58cf8340a6d4f2af5aa8540106aa9a8b78d8d83185124e92d7aca63eb0"
+index_sha256 = "d8221445000dc41d3a7919a53d29ed0fc58068fb5339e7867815868972ace3ba"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1764,5 +1764,95 @@ replies = 0
 null_cuts = 178
 null_fields = 178
 restorations = 6
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/ordinary-ribs"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "1685e2cda212a71fdb6497263fcae79a89a14c55b5c57615897b98bb3a4bb4b5"
+
+[case.counts]
+cuts = 1614
+fields = 3228
+outputs = 4842
+publications = 30
+replies = 0
+null_cuts = 576
+null_fields = 1321
+restorations = 1
+pending_boundaries = 1
+pending_restorations = 1
+
+[[case]]
+id = "ridley/ribs-from-opening"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "321ae78ac618ba2ecc6cf65c806b4256142479fb6d372ecaf02da9bb70b7d396"
+
+[case.counts]
+cuts = 2
+fields = 4
+outputs = 6
+publications = 1
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/ribs-from-wide"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "0f4888584843300a426725d147a71e130486c8714fdceadaa90ef15b1fc0f611"
+
+[case.counts]
+cuts = 2
+fields = 4
+outputs = 6
+publications = 1
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/ribs-from-closing"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "56aee647c074776fc26eb1ce9339a89e73150aff65969ef6fd7ccbb2d041210a"
+
+[case.counts]
+cuts = 2
+fields = 4
+outputs = 6
+publications = 1
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/ribs-from-closed"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "285da94aacc9ce9ac3f7d956b5517edd3c48fa385458adc6e484969d6e19824c"
+
+[case.counts]
+cuts = 2
+fields = 4
+outputs = 6
+publications = 1
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
 pending_boundaries = 0
 pending_restorations = 0

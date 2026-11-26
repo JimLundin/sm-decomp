@@ -15,6 +15,7 @@ pub mod playback;
 pub mod projectile;
 pub mod ridley_flyby;
 pub mod ridley_picture;
+pub mod ridley_ribs;
 pub mod ridley_warning;
 pub mod room_effects;
 pub mod samus;

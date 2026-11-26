@@ -214,6 +214,7 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
     };
     let ridley = CeresRidley {
         wings: fight_wings(wram)?,
+        ribs: super::played::ridley_ribs::decode_clock(wram)?,
         phase,
         look,
         position: Pair {
@@ -772,6 +773,8 @@ mod tests {
             (slot + 0x0E, 0x0400),
             (0x201E, 16),
             (0x7806, 0xBF31),
+            (0x780a, 0xda7d),
+            (0x780c, 7),
         ] {
             write(&mut wram, at, value);
         }
@@ -788,6 +791,8 @@ mod tests {
         write(&mut wram, 0x201A, u16::MAX);
         write(&mut wram, 0x201C, u16::MAX);
         let flying = seed(&wram).unwrap().unwrap();
+        assert_eq!(flying.ribs.beat, boss_ceres_ridley::RibBeat::Wide);
+        assert_eq!(flying.ribs.remaining.get(), 7);
         assert_eq!(flying.phase, RidleyPhase::InFlight(FlightPhase::TakingOff));
         assert_eq!(flying.look, Some(RidleyLook::TakeOff1));
         assert!(matches!(
@@ -825,6 +830,8 @@ mod tests {
             (slot + 0x3A, 7),
             (0x7806, 0xBF61 + 16),
             (0x7808, 3),
+            (0x780a, 0xda71),
+            (0x780c, 1),
             (0x8804, 0x00F0),
             (0x8808, 0x0096),
             (0x201E, 16),
@@ -832,6 +839,7 @@ mod tests {
             write(&mut wram, at, value);
         }
         let (ridley, seen) = observed(&wram).unwrap().unwrap();
+        assert_eq!(ridley.ribs, boss_ceres_ridley::FightRibs::PLACED);
         assert!(matches!(ridley.phase, RidleyPhase::Waiting { wait } if wait.runs() == 7));
         assert!(matches!(ridley.baby.routine, BabyRoutine::Showing(shown) if shown.runs() == 3));
         assert_eq!(seen, Shows::of(ridley.phase));

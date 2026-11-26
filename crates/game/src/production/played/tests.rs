@@ -240,6 +240,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         map: HerMap::default(),
         start_x: Wrapping(0x80),
         ridley: ridley_content(),
+        ridley_ribs_art: None,
         warning: None,
         // The worth the player's ROM gives his tail's hit.
         tail_worth: samus_health::WholeEnergy::new(15).unwrap(),

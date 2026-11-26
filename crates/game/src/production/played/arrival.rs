@@ -244,6 +244,7 @@ impl super::State {
             passing.random,
         );
         Ok(Outputs {
+            serviced_vram: Vec::new(),
             movement: None,
             samus_body: None,
             attached_ridley_door: None,

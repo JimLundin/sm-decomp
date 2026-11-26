@@ -44,6 +44,14 @@ impl Pinned for FightWingsPin {
     const SHAPE: u64 = 0x837B_0847_748A_7CC3;
 }
 
+/// The ordinary Ridley picture's carried ribs clock.
+pub struct FightRibsPin;
+impl Pinned for FightRibsPin {
+    type State = boss_ceres_ridley::FightRibs;
+    const NAME: &'static str = "ceres-fight-ribs";
+    const SHAPE: u64 = 0xCBBB_2605_6F83_E109;
+}
+
 /// Her complete appearance State, including her wall-jump dust.
 pub struct AppearancePin;
 impl Pinned for AppearancePin {

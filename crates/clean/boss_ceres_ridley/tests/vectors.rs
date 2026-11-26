@@ -31,6 +31,7 @@ mod vectors {
         FightColours, FightFacing, FightFlash, FightParts, FightPictureInputs, FightWings,
         FlashHalf, RoomLayerOrder, Speed, TailIntent, WingBeat, WingCount,
     };
+    use boss_ceres_ridley::{FightRibs, RibBeat, RibLook, RibWait};
     use boss_ceres_ridley::{
         FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
         TailLength, TailMark, TailSegment,
@@ -56,6 +57,7 @@ mod vectors {
         shaft_reach: Vec<ReachVector>,
         shaft_vent_projection: Vec<ProjectionVector>,
         fight_picture: Vec<FightPictureVector>,
+        fight_ribs: Vec<FightRibsVector>,
     }
 
     impl VectorFile {
@@ -104,6 +106,11 @@ mod vectors {
                 )
                 .chain(
                     self.fight_picture
+                        .iter()
+                        .map(|v| (v.id.as_str(), v.entries.as_slice())),
+                )
+                .chain(
+                    self.fight_ribs
                         .iter()
                         .map(|v| (v.id.as_str(), v.entries.as_slice())),
                 )
@@ -1677,6 +1684,7 @@ mod vectors {
             curl: curl(vector, row),
             flight_tail: vector.flight_tail.as_ref().map(FlightTailRow::shape),
             wings: FightWings::PLACED,
+            ribs: FightRibs::PLACED,
         }
     }
 
@@ -2575,7 +2583,9 @@ mod vectors {
             .iter()
             .find(|vector| vector.id == "RT-walls")
             .unwrap();
-        let stopped = ridley(coast).run(
+        let mut coasting = ridley(coast);
+        coasting.ribs = saved_ribs((RibBeat::Opening, 1));
+        let stopped = coasting.run(
             frame(7),
             coast.random(),
             None,
@@ -2586,11 +2596,15 @@ mod vectors {
         let ready = stopped.ridley;
         assert_eq!(ready.phase, RidleyPhase::GETAWAY_START);
         assert!(stopped.getaway.is_none());
+        assert_eq!(stopped.rib_reveal, Some(RibLook::PartlyOpen));
+        assert_eq!(ready.ribs, saved_ribs((RibBeat::Wide, 20)));
         let backdrop = stopped.backdrop.unwrap();
         let run = ready.run(frame(8), 0xffff, None, fight, &content, &rules);
         assert_eq!(run.ridley.baby, ready.baby);
         assert_eq!(run.ridley.flight_tail, ready.flight_tail);
         assert_eq!(run.ridley.wings, ready.wings);
+        assert_eq!(run.ridley.ribs, ready.ribs);
+        assert_eq!(run.rib_reveal, None);
         assert_eq!(run.parts, None);
         assert!(ready.picture_order(true).baby);
         assert!(!run.ridley.picture_order(true).baby);
@@ -3000,18 +3014,94 @@ mod vectors {
         )
     }
 
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct FightRibsVector {
+        id: String,
+        source: Source,
+        entries: Vec<String>,
+        row: Option<String>,
+        frame: Option<u16>,
+        turn: RibTurn,
+        before: Option<(RibBeat, u8)>,
+        after: (RibBeat, u8),
+        reveal: Option<RibLook>,
+    }
+
+    #[derive(Deserialize)]
+    enum RibTurn {
+        Placed,
+        Hold,
+        Animate,
+    }
+
+    fn saved_ribs((beat, remaining): (RibBeat, u8)) -> FightRibs {
+        FightRibs {
+            beat,
+            remaining: RibWait::new(remaining).unwrap(),
+        }
+    }
+
+    impl FightRibsVector {
+        fn check(&self) {
+            let oracle = matches!(self.source, Source::Oracle);
+            assert_eq!(self.row.is_some(), oracle, "{}: source row", self.id);
+            assert_eq!(self.frame.is_some(), oracle, "{}: source frame", self.id);
+            let mut ridley = CeresRidley::place(false).unwrap().ridley;
+            let (ribs, reveal) = match self.turn {
+                RibTurn::Placed => {
+                    assert!(
+                        self.before.is_none(),
+                        "{}: placement has no prior clock",
+                        self.id
+                    );
+                    (ridley.ribs, None)
+                }
+                RibTurn::Hold | RibTurn::Animate => {
+                    ridley.ribs = saved_ribs(self.before.unwrap());
+                    if matches!(self.turn, RibTurn::Animate) {
+                        ridley.phase = RidleyPhase::BodyFading { sets: 0, runs: 0 };
+                    }
+                    let run = picture_turn(ridley, FightPictureInputs::LEFT_UNHURT);
+                    (run.ridley.ribs, run.rib_reveal)
+                }
+            };
+            assert_eq!(ribs, saved_ribs(self.after), "{}: clock", self.id);
+            assert_eq!(reveal, self.reveal, "{}: reveal", self.id);
+        }
+    }
+
+    #[test]
+    fn ribs_clock_round_trips_and_checks_its_wait() {
+        let saved = saved_ribs((RibBeat::Closing, 1));
+        let serialized = toml::to_string(&saved).unwrap();
+        assert_eq!(toml::from_str::<FightRibs>(&serialized).unwrap(), saved);
+        for invalid in [
+            "beat = 'Closing'\nremaining = 0",
+            "beat = 'Closing'\nremaining = 21",
+            "beat = 'Closing'",
+            "remaining = 1",
+        ] {
+            assert!(toml::from_str::<FightRibs>(invalid).is_err(), "{invalid}");
+        }
+    }
+
     #[test]
     fn first_ordinary_picture_starts_with_body_fade() {
         let mut ridley = CeresRidley::place(false).unwrap().ridley;
         ridley.phase = RidleyPhase::Awake;
         let eye = picture_turn(ridley, FightPictureInputs::LEFT_UNHURT);
         assert!(eye.parts.is_none());
+        assert_eq!(eye.rib_reveal, None);
+        assert_eq!(eye.ridley.ribs, FightRibs::PLACED);
         assert_eq!(eye.ridley.wings, FightWings::PLACED);
         assert_eq!(
             eye.ridley.picture_order(true).opportunity,
             RoomLayerOrder::Before
         );
         let body = picture_turn(eye.ridley, FightPictureInputs::LEFT_UNHURT);
+        assert_eq!(body.rib_reveal, Some(RibLook::Closed));
+        assert_eq!(body.ridley.ribs, saved_ribs((RibBeat::Opening, 20)));
         assert_eq!(body.ridley.wings, FightWings::PLACED);
         let parts = body.parts.unwrap();
         assert_eq!(parts.wing.unwrap().anchor, ridley.position);
@@ -3094,6 +3184,10 @@ mod vectors {
         assert_eq!(file.fight_picture.len(), 24);
         for vector in &file.fight_picture {
             vector.source.check(|| vector.check(&file.vector));
+        }
+        assert_eq!(file.fight_ribs.len(), 12);
+        for vector in &file.fight_ribs {
+            vector.source.check(|| vector.check());
         }
         let vectors = file.vector;
         assert_eq!(vectors.len(), 384);

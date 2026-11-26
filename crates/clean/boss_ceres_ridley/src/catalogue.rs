@@ -149,6 +149,8 @@ pub enum BehaviourId {
     VentDrawFollowsShaft,
     /// Advance the ordinary wings' ten-beat clock using flight speed.
     WingsBeat,
+    /// The ribs cycle through closed, partly open and wide looks.
+    RibsBeat,
     /// Select the ordinary wing and tail looks and their hurt colours.
     FightParts,
     /// Place the ordinary baby and attached door around the room layers.
@@ -171,7 +173,7 @@ pub struct Behaviour {
 }
 
 /// The number of named behaviours.
-const ENTRIES: usize = 73;
+const ENTRIES: usize = 74;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -704,6 +706,13 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
     Behaviour {
         id: BehaviourId::WingsBeat,
         summary: "the ordinary wings beat in a ten-look cycle paced by flight speed",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RibsBeat,
+        summary: "Ridley's ribs cycle in the ordinary fight, including while he retreats",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
