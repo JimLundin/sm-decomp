@@ -939,13 +939,11 @@ lights = { count = 7863, fade_steps = 14 }
 lights_after = { platform = "Second" }
 
 [[vector]]
-# the escape: a later piece owns the shaft then, so no step and no look (calm, count 40 would
-# give step 5 and the first look)
 id = "B-escape"
 source = "constructed"
 entries = ["BeaconCycles", "PlatformTurns"]
 lights = { count = 40, stage = "Escape" }
-lights_after = {}
+lights_after = { step = 5, platform = "First" }
 
 [[vector]]
 # recorded case B3: the screen's brightness coming up at the arrival is no door's fade: step 0
@@ -5889,3 +5887,202 @@ ordinary = false
 finished = 10789
 warning_after = { phase = "Escape", glow = 2 }
 warning_effects = {}
+
+[[shaft_overlay]]
+id = "C-overlay-placed"
+source = "constructed"
+entries = ["OverlayAppears"]
+input = { place = true, anchor = [160, 224] }
+after = { phase = "Opening" }
+output = { upload = true, door_colours = "Escape" }
+
+[[shaft_overlay]]
+id = "C-overlay-first"
+source = "constructed"
+entries = ["OverlayRumbles"]
+before = { phase = "Opening" }
+input = { anchor = [160, 224], count = 2, fade_steps = 0 }
+after = { phase = "Rumbling", remaining = 48, wait = 0, point = 0 }
+output = { figure = true, beacon = 0, platform = "Second" }
+
+[[shaft_overlay]]
+id = "C-rumble-waits"
+source = "constructed"
+entries = ["OverlayRumbles"]
+before = { phase = "Rumbling", remaining = 47, wait = 4, point = 1 }
+input = { anchor = [160, 224], count = 3, fade_steps = 1 }
+after = { phase = "Rumbling", remaining = 46, wait = 3, point = 1 }
+output = { figure = true }
+
+[[shaft_overlay]]
+id = "C-rumble-smoke"
+source = "constructed"
+entries = ["OverlayRumbles"]
+before = { phase = "Rumbling", remaining = 48, wait = 0, point = 0 }
+input = { anchor = [160, 224], drawn_random = 16383 }
+after = { phase = "Rumbling", remaining = 47, wait = 4, point = 1 }
+output = { figure = true, particle = "Smoke", centre = [162, 236], sound_limit = 6 }
+
+[[shaft_overlay]]
+id = "C-rumble-burst"
+source = "constructed"
+entries = ["OverlayRumbles"]
+before = { phase = "Rumbling", remaining = 33, wait = 0, point = 3 }
+input = { anchor = [160, 224], drawn_random = 16384 }
+after = { phase = "Rumbling", remaining = 32, wait = 4, point = 0 }
+output = { figure = true, particle = "SmallExplosion", centre = [156, 216], sound_limit = 6 }
+
+[[shaft_overlay]]
+id = "C-rumble-finishes"
+source = "constructed"
+entries = ["OverlayRumbles"]
+before = { phase = "Rumbling", remaining = 0, wait = 2, point = 2 }
+input = { anchor = [160, 224], count = 16, fade_steps = 0 }
+after = { phase = "Hidden" }
+output = { start_rotation = true }
+
+[[shaft_overlay]]
+id = "C-hidden-lights"
+source = "constructed"
+entries = ["OverlayRumbles"]
+before = { phase = "Hidden" }
+input = { anchor = [160, 224], count = 20, fade_steps = 3 }
+after = { phase = "Hidden" }
+output = { platform = "First" }
+
+[[shaft_rotation]]
+id = "C-tilt-waits"
+source = "constructed"
+entries = ["ShaftTilts"]
+track = [{ hold = 6, cross = -5, diagonal = 243 }, { hold = 2, cross = 0, diagonal = 256 }, { hold = 8, cross = 5, diagonal = 243 }]
+before = { active = false, next = 1, forward = true, hold = 3, matrix = [256, 0, 0, 256] }
+after = { active = false, next = 1, forward = true, hold = 3, matrix = [256, 0, 0, 256] }
+
+[[shaft_rotation]]
+id = "C-tilt-starts"
+source = "constructed"
+entries = ["ShaftTilts"]
+track = [{ hold = 6, cross = -5, diagonal = 243 }, { hold = 2, cross = 0, diagonal = 256 }, { hold = 8, cross = 5, diagonal = 243 }]
+start = true
+before = { active = false, next = 1, forward = true, hold = 3, matrix = [256, 0, 0, 256] }
+after = { active = true, next = 1, forward = true, hold = 2, matrix = [256, 0, 0, 256] }
+
+[[shaft_rotation]]
+id = "C-tilt-holds"
+source = "constructed"
+entries = ["ShaftTilts"]
+track = [{ hold = 6, cross = -5, diagonal = 243 }, { hold = 2, cross = 0, diagonal = 256 }, { hold = 8, cross = 5, diagonal = 243 }]
+before = { active = true, next = 1, forward = true, hold = 1, matrix = [243, -5, 5, 243] }
+after = { active = true, next = 1, forward = true, hold = 0, matrix = [243, -5, 5, 243] }
+
+[[shaft_rotation]]
+id = "C-tilt-samples"
+source = "constructed"
+entries = ["ShaftTilts"]
+track = [{ hold = 6, cross = -5, diagonal = 243 }, { hold = 2, cross = 0, diagonal = 256 }, { hold = 8, cross = 5, diagonal = 243 }]
+before = { active = true, next = 0, forward = true, hold = 0, matrix = [256, 0, 0, 256] }
+after = { active = true, next = 1, forward = true, hold = 6, matrix = [243, -5, 5, 243] }
+
+[[shaft_rotation]]
+id = "C-tilt-upper"
+source = "constructed"
+entries = ["ShaftTilts"]
+track = [{ hold = 6, cross = -5, diagonal = 243 }, { hold = 2, cross = 0, diagonal = 256 }, { hold = 8, cross = 5, diagonal = 243 }]
+before = { active = true, next = 1, forward = true, hold = 0, matrix = [243, -5, 5, 243] }
+after = { active = true, next = 2, forward = false, hold = 2, matrix = [256, 0, 0, 256] }
+
+[[shaft_rotation]]
+id = "C-tilt-lower"
+source = "constructed"
+entries = ["ShaftTilts"]
+track = [{ hold = 6, cross = -5, diagonal = 243 }, { hold = 2, cross = 0, diagonal = 256 }, { hold = 8, cross = 5, diagonal = 243 }]
+before = { active = true, next = 1, forward = false, hold = 0, matrix = [243, 5, -5, 243] }
+after = { active = true, next = 0, forward = true, hold = 2, matrix = [256, 0, 0, 256] }
+
+[[shaft_reach]]
+id = "R-reaches-elevator"
+source = "rS1:164"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [144, 75], speed = 0, facing = "Left", earlier_pose = "Other" }
+arrival = { standing_pose = "StandingLeft", animation = "StartStanding", hold = 60, scene_fade = [0, 0] }
+
+[[shaft_reach]]
+id = "C-elevator-right"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [113, 127], speed = 0, facing = "Right", earlier_pose = "StandingLeft" }
+arrival = { standing_pose = "StandingRight", animation = "StartStanding", hold = 60, scene_fade = [0, 0] }
+
+[[shaft_reach]]
+id = "C-elevator-standing"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [144, 75], speed = 0, facing = "Left", earlier_pose = "StandingLeft" }
+arrival = { standing_pose = "StandingLeft", animation = "Preserve", hold = 60, scene_fade = [0, 0] }
+
+[[shaft_reach]]
+id = "C-elevator-centred"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [144, 75], speed = 0, facing = "Screen", earlier_pose = "StandingRight" }
+arrival = { standing_pose = "StandingRight", animation = "Preserve", hold = 60, scene_fade = [0, 0] }
+
+[[shaft_reach]]
+id = "C-elevator-outside"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [112, 90], speed = 0, facing = "Left", earlier_pose = "Other" }
+
+[[shaft_reach]]
+id = "C-elevator-high"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [135, 74], speed = 0, facing = "Left", earlier_pose = "Other" }
+
+[[shaft_reach]]
+id = "C-elevator-low"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [135, 128], speed = 0, facing = "Left", earlier_pose = "Other" }
+
+[[shaft_reach]]
+id = "C-elevator-moving"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = true, whole_centre = [135, 90], speed = 1, facing = "Left", earlier_pose = "Other" }
+
+[[shaft_reach]]
+id = "C-elevator-early"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = false, ordinary_play = true, whole_centre = [135, 90], speed = 0, facing = "Left", earlier_pose = "Other" }
+
+[[shaft_reach]]
+id = "C-elevator-already"
+source = "constructed"
+entries = ["ElevatorReached"]
+input = { active = true, ordinary_play = false, whole_centre = [135, 90], speed = 0, facing = "Left", earlier_pose = "Other" }
+
+[[shaft_vent_projection]]
+id = "C-vent-offset"
+source = "constructed"
+entries = ["VentDrawFollowsShaft"]
+before = [0, 0]
+input = { ran = true, anchor = [99, 99], pivot = [100, 100], diagonal = 250, cross = 13 }
+after = [0, 1]
+
+[[shaft_vent_projection]]
+id = "C-vent-identity"
+source = "constructed"
+entries = ["VentDrawFollowsShaft"]
+before = [-3, 4]
+input = { ran = true, anchor = [113, 69], pivot = [100, 100], diagonal = 256, cross = 0 }
+after = [0, 0]
+
+[[shaft_vent_projection]]
+id = "C-vent-keeps-offset"
+source = "constructed"
+entries = ["VentDrawFollowsShaft"]
+before = [4, -2]
+input = { ran = false, anchor = [99, 99], pivot = [100, 100], diagonal = 250, cross = 13 }
+after = [4, -2]

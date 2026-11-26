@@ -410,7 +410,47 @@ pub(super) struct Her {
     pub(super) sounds: Vec<samus_appearance::SoundOffer>,
 }
 
+pub(super) const fn standing_pose(side: types::Side) -> Pose {
+    Pose {
+        body: types::Body::Upright,
+        action: types::Action::Still,
+        facing: match side {
+            types::Side::Left => types::Facing::Left,
+            types::Side::Right => types::Facing::Right,
+        },
+        aim: types::Aim::Forward,
+        gun: types::Gun::Stowed,
+        legs: types::Legs::Together,
+    }
+}
+
 impl Her {
+    pub(super) fn stand_at_elevator(
+        &mut self,
+        samus: &mut samus_movement::Samus,
+        reach: boss_ceres_ridley::ElevatorLock,
+        appearance: &super::AppearanceContent,
+    ) -> Result<(), Fault> {
+        let pose = standing_pose(reach.standing);
+        let figure = Figure {
+            pose,
+            sprite: types::Sprite::Plain,
+        };
+        if reach.animation == boss_ceres_ridley::ElevatorAnimation::StartStanding {
+            let hold = appearance
+                .get(figure)
+                .and_then(|clip| clip.hold(Step::FIRST))
+                .ok_or(Fault::Clip(figure))?;
+            self.appearance.animation.playhead = Playhead {
+                step: Step::FIRST,
+                time_left: hold.frames(),
+            };
+        }
+        samus.pose = pose;
+        self.figure = figure;
+        Ok(())
+    }
+
     /// Where her moves leave her, which the mini-map reads.
     pub(super) fn after_moves(&self) -> types::Position {
         self.outcome

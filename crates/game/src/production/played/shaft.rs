@@ -6,8 +6,176 @@
 
 use super::{Content, Fault, Rules, station};
 use crate::production::shaft;
-use boss_ceres_ridley::{Lights, PadAndCover};
+use boss_ceres_ridley::{
+    EarlierShaftPose, ElevatorLock, Lights, MountedVent, OverlayPlacement, OverlayTurn,
+    PadAndCover, ShaftOverlay, ShaftPlacement, ShaftRotation, ShaftView, StartShaftRotation,
+    TiltSample, TiltTrack, place_shaft_overlay, turn_shaft, turn_shaft_overlay,
+};
+use core::num::Wrapping;
+use types::ceres_shaft::TiltDirection;
+use types::{Pair, Parts as _, RandomSequence, Side, VerticalSpeed};
 use world_doors::Palette;
+
+/// Complete B8 state for the escape room's overlay, rotation and mounted vents.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EscapeShaft {
+    /// The overlay and its current rumble.
+    pub overlay: ShaftOverlay,
+    /// The late view and the next sample.
+    pub rotation: ShaftRotation,
+    /// Mounted vents in population order.
+    pub vents: Vec<MountedVent>,
+    /// The elevator has taken ordinary control.
+    pub locked: bool,
+}
+
+/// Imported samples in playback order.
+pub type Track = [TiltSample; data::assets::shaft::ROTATION_SAMPLES];
+
+/// Convert the asset order to the clean rotation content.
+#[must_use]
+pub fn track(shaft: &data::assets::shaft::Shaft) -> Track {
+    shaft.rotation.map(|sample| TiltSample {
+        hold: sample.hold,
+        diagonal: sample.diagonal,
+        cross: sample.cross,
+    })
+}
+
+impl EscapeShaft {
+    const CENTRE_SAMPLE: usize = data::assets::shaft::ROTATION_SAMPLES / 2;
+
+    pub(super) fn place(
+        entry: &crate::production::shaft_entry::View,
+        stage: boss_ceres_ridley::Stage,
+        actors: &mut crate::production::room_loading::CeresActors,
+    ) -> Result<(Self, OverlayPlacement), Fault> {
+        let placement = actors
+            .shaft_overlay
+            .and_then(|anchor| place_shaft_overlay(stage, anchor))
+            .ok_or(Fault::Escape)?;
+        if actors.mounted_vents != actors.slots.vents {
+            return Err(Fault::Escape);
+        }
+        let [x, y] = entry.transform.centre;
+        let next = Self::CENTRE_SAMPLE
+            .checked_add_signed(isize::from(entry.rotation.sample))
+            .filter(|&index| index < data::assets::shaft::ROTATION_SAMPLES)
+            .ok_or(Fault::Escape)?;
+        Ok((
+            Self {
+                overlay: placement.overlay,
+                rotation: ShaftRotation {
+                    active: false,
+                    next,
+                    direction: if entry.rotation.reverse {
+                        TiltDirection::Backward
+                    } else {
+                        TiltDirection::Forward
+                    },
+                    hold: entry.rotation.hold,
+                    view: ShaftView {
+                        matrix: entry.transform.matrix,
+                        pivot: Pair {
+                            x: Wrapping(x.cast_unsigned()),
+                            y: Wrapping(y.cast_unsigned()),
+                        },
+                    },
+                },
+                vents: actors.vents.drain(..).map(MountedVent::new).collect(),
+                locked: false,
+            },
+            placement,
+        ))
+    }
+
+    pub(super) fn overlay_turn(
+        &mut self,
+        state: &super::State,
+        random: &mut RandomSequence,
+        content: &Content,
+        rules: &Rules,
+        palette: &mut Palette,
+    ) -> Result<OverlayTurn, Fault> {
+        let inputs = shaft::light_inputs(
+            state.frame.finished_frames,
+            state.passage.doors,
+            state.station.stage,
+        )
+        .map_err(Fault::Lights)?;
+        let turn = turn_shaft_overlay(
+            &mut self.overlay,
+            inputs,
+            || {
+                game_random::advance_random(random);
+                random.number.0
+            },
+            &rules.ceres,
+        );
+        if let Some(lights) = turn.lights {
+            shaft::show(lights, &content.rooms.actors.beacon, palette).map_err(Fault::Lights)?;
+        }
+        Ok(turn)
+    }
+
+    pub(super) fn run_vents(
+        &mut self,
+        camera: Pair<types::Px>,
+        her: Option<&boss_ceres_ridley::Her>,
+        rules: &Rules,
+    ) -> Option<types::Hit> {
+        let view = self.rotation.view;
+        self.vents.iter_mut().fold(None, |hit, vent| {
+            let touch = vent.run(camera, view, her.filter(|_| hit.is_none()), &rules.ceres);
+            hit.or(touch)
+        })
+    }
+
+    pub(super) fn late_turn(
+        &mut self,
+        start: Option<StartShaftRotation>,
+        track: &Track,
+        samus: &samus_movement::Samus,
+        earlier: types::Pose,
+    ) -> Result<Option<ElevatorLock>, Fault> {
+        let track = TiltTrack::new(track).ok_or(Fault::Escape)?;
+        let earlier_pose = if earlier == super::samus::standing_pose(Side::Left) {
+            EarlierShaftPose::Standing(Side::Left)
+        } else if earlier == super::samus::standing_pose(Side::Right) {
+            EarlierShaftPose::Standing(Side::Right)
+        } else {
+            EarlierShaftPose::Other
+        };
+        let placement = (!self.locked).then_some(ShaftPlacement {
+            centre: Pair {
+                x: samus.position.x.pixel(),
+                y: samus.position.y.pixel(),
+            },
+            vertical_speed: VerticalSpeed(samus.vertical.speed),
+            facing: samus.pose.facing,
+            earlier_pose,
+        });
+        let turn = turn_shaft(&mut self.rotation, start, track, placement);
+        self.locked |= turn.elevator.is_some();
+        Ok(turn.elevator)
+    }
+
+    pub(super) fn update_entry(
+        &self,
+        entry: &mut crate::production::shaft_entry::State,
+        publishes: bool,
+    ) {
+        entry.view.transform.matrix = self.rotation.view.matrix;
+        entry.view.rotation.sample = i16::try_from(self.rotation.next)
+            .unwrap_or_default()
+            .saturating_sub(i16::try_from(Self::CENTRE_SAMPLE).unwrap_or_default());
+        entry.view.rotation.reverse = self.rotation.direction == TiltDirection::Backward;
+        entry.view.rotation.hold = self.rotation.hold;
+        if publishes {
+            entry.displayed = entry.view.transform;
+        }
+    }
+}
 
 impl station::State {
     /// The pad's run, which sets `samus`'s height while it holds her.

@@ -17,7 +17,7 @@ pub struct Platform {
 }
 
 impl Platform {
-    pub(super) fn publish(self, video: &mut Video) -> Result<(), Fault> {
+    pub(in crate::production) fn publish(self, video: &mut Video) -> Result<(), Fault> {
         let words = video
             .memory
             .vram

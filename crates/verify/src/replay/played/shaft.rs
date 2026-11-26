@@ -6,8 +6,10 @@ use crate::replay::shaft;
 use game::production::played;
 
 /// The pad and cover as the record holds them, compared at every cut.
-pub(super) fn expected(wram: &[u8]) -> Result<[Observation; 2], Outcome> {
-    Ok(shaft::observations(&shaft::pad_and_cover(wram)?))
+pub(super) fn expected(wram: &[u8], elevator: bool) -> Result<[Observation; 2], Outcome> {
+    Ok(shaft::observations(&shaft::pad_cover_with_elevator(
+        wram, elevator,
+    )?))
 }
 
 /// The pad and cover as the played State holds them.

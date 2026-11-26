@@ -33,13 +33,18 @@ impl Video {
     /// Bank `$80` log, update OAM and CGRAM `$80:933A`: DMA 0 copies the OAM buffer to OAM
     /// and DMA 1 the whole palette buffer to CGRAM, both one register a byte.
     pub const fn upload_oam_and_cgram(&mut self) {
-        self.memory.oam = self.batch.oam;
+        self.upload_sprite_oam();
         self.memory.cgram = self.batch.cgram;
-        self.dma[OAM_CHANNEL].upload_oam();
         let palette = &mut self.dma[VRAM_CHANNEL];
         palette.control = DmaControl::TO_ONE_REGISTER;
         palette.destination = BBusRegister::ColourData;
         palette.transferred(PALETTE_BUFFER, CGRAM_COLOURS * 2);
+    }
+
+    /// Upload the sprite buffer through the OAM DMA channel.
+    pub(crate) const fn upload_sprite_oam(&mut self) {
+        self.memory.oam = self.batch.oam;
+        self.dma[OAM_CHANNEL].upload_oam();
     }
 
     /// Bank `$80` log, update IO registers `$80:91EE`: the register mirrors to the PPU.

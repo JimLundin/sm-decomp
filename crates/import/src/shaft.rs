@@ -48,6 +48,7 @@ pub fn import(rom: Lorom<'_>) -> Result<Shaft, AddressError> {
 
     Ok(Shaft {
         overlay,
+        figure: overlay_figure(rom)?,
         platform,
         rotation,
     })

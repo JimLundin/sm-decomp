@@ -33,6 +33,14 @@ pub struct HudFrame {
     pub countdown_starts: Option<StartTime>,
 }
 
+impl HudFrame {
+    pub(super) const fn during_elevator(mut self) -> Self {
+        self.countdown = CountdownRuns::PresentationOnly;
+        self.buttons = (SelectButton::NotPressed, CancelButton::NotPressed);
+        self
+    }
+}
+
 /// Whether an escape countdown has begun in `hud`: the doors read it to draw the countdown
 /// through a passage and keep its colours lit.
 pub(super) const fn countdown_begun(hud: &interface_hud::HudState) -> bool {

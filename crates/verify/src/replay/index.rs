@@ -181,6 +181,8 @@ pub enum InputProvider {
     ScopedCeresFlyby,
     /// One admitted warning-ready room and the usual played room/passage inputs.
     ScopedCeresWarning,
+    /// The carried Ceres return through placement and elevator reach.
+    CeresShaftActors,
     /// Carried Samus turn with a separately observed flyby pass and view edge.
     ScopedGetawayInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
@@ -353,6 +355,15 @@ pub enum ObservationId {
     /// Defeat, doors, quake results and the clock picture through the first passage turns.
     #[serde(rename = "ridley.warning.handoff")]
     CeresWarningHandoff,
+    /// Overlay phase, ordered mounted offsets, shaft rotation, shared RNG and lock.
+    #[serde(rename = "shaft-actors.state")]
+    CeresShaftState,
+    /// Placement, burst, sound limit, lighting and elevator reach requests.
+    #[serde(rename = "shaft-actors.events")]
+    CeresShaftEvents,
+    /// Overlay VRAM, first prepared and published OAM, and platform low bytes.
+    #[serde(rename = "shaft-actors.picture")]
+    CeresShaftPicture,
     /// The wrapping HUD frame count.
     #[serde(rename = "hud.frame-count")]
     HudFrameCount,
@@ -1345,6 +1356,9 @@ macro_rules! ceres_observations {
             | ObservationId::CeresWarningPicture
             | ObservationId::CeresWarningAudio
             | ObservationId::CeresWarningHandoff
+            | ObservationId::CeresShaftState
+            | ObservationId::CeresShaftEvents
+            | ObservationId::CeresShaftPicture
     };
 }
 
@@ -1702,6 +1716,17 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
             O::CeresWarningAudio,
         ],
         "boss-ceres-ridley/WarningEnds" => &[O::CeresWarningState, O::CeresWarningHandoff],
+        "boss-ceres-ridley/OverlayAppears" => &[
+            O::CeresShaftState,
+            O::CeresShaftEvents,
+            O::CeresShaftPicture,
+        ],
+        "boss-ceres-ridley/OverlayRumbles" | "boss-ceres-ridley/ElevatorReached" => {
+            &[O::CeresShaftState, O::CeresShaftEvents]
+        }
+        "boss-ceres-ridley/ShaftTilts" | "boss-ceres-ridley/VentDrawFollowsShaft" => {
+            &[O::CeresShaftState]
+        }
         "boss-ceres-ridley/FliesOutOfReach" => &[O::CeresRetreatBody, O::CeresRetreatBound],
         "boss-ceres-ridley/GetawayBackdrop" => &[
             O::CeresRetreatBody,
@@ -2388,6 +2413,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         InputProvider::PlayedCeresInputs
             | InputProvider::ScopedCeresFlyby
             | InputProvider::ScopedCeresWarning
+            | InputProvider::CeresShaftActors
     ) {
         return super::played::indexed::valid(case);
     }
@@ -2676,6 +2702,9 @@ impl Case {
         if matches!(self.inputs, InputProvider::IntroMissileInputs) {
             // Compare the admitted setup before the first actor turn.
             return Some(0);
+        }
+        if matches!(self.inputs, InputProvider::CeresShaftActors) {
+            return Some(super::played::indexed::shaft::FIRST_CUT);
         }
         match self.start {
             Start::CacheCut { frame } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {

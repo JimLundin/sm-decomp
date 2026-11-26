@@ -2,9 +2,9 @@
 //! beacon pulsing through its colour sets and the platform below turning. They remember
 //! nothing: each follows from the count of finished frames on the frame it is shown.
 //!
-//! The caller steps them ([`Lights::step`]) on each frame the shaft's overlay runs. On a frame
-//! it doesn't run, and in every other room, the caller doesn't step them, and the screen keeps
-//! what it shows.
+//! Outside the escape, the caller steps them ([`Lights::step`]) on each overlay turn. In the
+//! escape, the overlay grants light turns on its first turn and once hidden. Without a light
+//! turn the screen keeps what it shows.
 
 use crate::look::AlternatingLook;
 use crate::rules::Rules;
@@ -91,19 +91,13 @@ pub struct Lights {
 }
 
 impl Lights {
-    /// One step of the lights, on a frame the shaft's overlay runs. In the escape they show no
-    /// beacon step and no platform look: a later piece owns the shaft in the escape.
+    /// Spec: `BeaconCycles`, `PlatformTurns`. Step the lights on a turn granted by the
+    /// overlay, regardless of stage. In the escape the overlay pauses these turns while rumbling.
     #[must_use]
     pub fn step(inputs: LightsInputs, rules: &Rules) -> Self {
-        match inputs.stage {
-            Stage::Escape => Self {
-                beacon: None,
-                platform: None,
-            },
-            Stage::Calm | Stage::Getaway => Self {
-                beacon: beacon(inputs, rules),
-                platform: Some(platform(inputs.finished_frames)),
-            },
+        Self {
+            beacon: beacon(inputs, rules),
+            platform: Some(platform(inputs.finished_frames)),
         }
     }
 }

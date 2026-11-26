@@ -417,10 +417,9 @@ back: a vector's `before` builds it and its `after` reads it.
   still follows her (the HUD, H2).
 - **Drawing the pad and the cover (C1, AF3):** their figures at their positions, relative to the
   camera; which sprites each figure is (content).
-- **The shaft's overlay itself (C1, AF3):** placing it with the shaft's other enemies, from the
-  shaft's content (no other room has it); running it (§7); drawing its one figure, which never
-  changes, every frame at its place; it has no contact: nothing she does touches it. Which
-  sprites its figure is, and bringing them in with the shaft, are content.
+- **The shaft's overlay (C1, AF3):** the room places it among the shaft's actors and gives it
+  its turns. Its figure and tiles are content. The overlay's own turns and when its figure
+  shows in the escape are in §18. The figure has no contact.
 - **The beacon's colours and the platform's two looks (content):** the eight sets of six colours
   and the two pictures are the shaft's content; this domain names which one shows. Showing a
   colour set on the screen is the renderer's; putting the platform's look on the screen is
@@ -440,12 +439,7 @@ back: a vector's `before` builds it and its `after` reads it.
 3. Part 2: the pad's placing is recorded once (the arrival); her height there is 0. Heights below
    the floor at placing, and a pad placed in a room other than the shaft, are no row's: the arms
    that read them follow the original's arithmetic.
-4. Part 2: the shaft's rumble, a later piece, owns the beacon and the platform in the escape;
-   this piece shows no step and no look in the escape (`BeaconCycles`, `PlatformTurns`) and
-   states them for the stages `Calm` and `Getaway` only. Answered for that piece from the records:
-   when the shaft starts in the escape (she comes back to it), the overlay's first run steps the
-   beacon and the platform once, by the counts of `BeaconCycles` and `PlatformTurns`, and from its next run
-   the rumble takes over from them.
+4. The shaft's overlay now includes its turns in the escape (§18).
 5. Part 3: no row enters Ridley's room once Ridley is beaten, or in the getaway or the escape: the
    arms for the door placed then (`RidleyRoomStart`, `TheDoorsColours`) and for Ridley placed
    once beaten (`RidleyPlaced`) follow the original.
@@ -607,38 +601,33 @@ the last two.
 
 ### BeaconCycles
 - kind: mechanic and parameter.
-- summary: before the escape, the shaft's beacon steps through its cycle of eight colour sets,
-  one step every few frames, except once a door's fade has taken a step.
+- summary: each turn of the shaft's lights chooses the beacon's colour set before
+  a door's fade has taken a step.
 - params: the rhythm, `r` = 8 frames a step; a rule from 1 to 65,535 frames.
 - switch: **Parameter**, the rhythm (params).
-- A step with the stage `Escape` → no step: a later piece of the station owns the shaft in the
-  escape (open question 4) [B-escape]
-- A step with the stage `Calm` or `Getaway`, the fade's steps taken 0 → the beacon shows
+- A turn of the lights with the fade's steps taken 0 → the beacon shows
   step `(count / r) mod 8` of its cycle, with `count` the count of finished frames and `/`
   dropping the remainder [B-step, B-step-next, B-step-wrap, B-getaway, B-rhythm-adjusted,
-  B-arrival, B-count-not-hud]
+  B-arrival, B-count-not-hud, B-escape]
 - The same with the fade's steps taken 1 or more → no step: the beacon's colours are left as
   the fade makes them [B-fade, B-fade-last]
 - So the beacon moves on every `r` frames; where its content repeats a colour set, the screen
   shows no change at that step.
-- checked: oracle (every frame of the shaft before the escape in the cached rows); constructed
-  (the wrap, the fade, the adjusted rhythm, the escape).
+- checked: oracle (the recorded pre-escape turns and the first escape turn); constructed
+  (the wrap, the fade and the adjusted rhythm).
 
 ### PlatformTurns
 - kind: mechanic.
-- summary: before the escape, the platform below the shaft shows its two looks in turn, two
-  frames each.
+- summary: each turn of the lights chooses one of the platform's two alternating looks,
+  two frames each.
 - params: none.
 - switch: Fixed.
-- A step with the stage `Escape` → no look: a later piece of the station owns the shaft in the
-  escape (open question 4) [B-escape]
-- A step with the stage `Calm` or `Getaway`, `(count / 2) mod 2` 0 → the platform's look
-  `First` [P-first, B-fade]
+- On a turn of the lights, `(count / 2) mod 2` 0 → the platform's look
+  `First` [P-first, B-fade, B-escape]
 - The same with `(count / 2) mod 2` 1 → the platform's look `Second` [P-second, B-getaway,
   B-fade-last]
 - So the platform turns while a door's fade is under way too (B-fade, B-fade-last).
-- checked: oracle (every frame of the shaft before the escape in the cached rows); constructed
-  (the escape).
+- checked: oracle (the recorded pre-escape turns and the first escape turn); constructed.
 
 ---
 
@@ -1536,9 +1525,8 @@ hands that worth to samus-health with the hit.
 - switch: Fixed.
 - The room places a vent, its placing's random number `r` → `Placed(1 + (r mod 32))`
   [ST-placed-least, ST-placed-most, ST-placed-high]
-- checked: constructed; original only (no replay row reaches this entry: every row starts after
-  its room has placed its vents, and their waits, 1 to 32, agree with the rule). It stays so
-  until R2 places the enemies of rooms 3 and 2.
+- checked: oracle (the shaft's eleven waits at placement and the last shared draw),
+  constructed.
 
 ### VentInView
 - kind: mechanic.
@@ -2057,3 +2045,167 @@ checked content. The door and countdown handoff uses their existing qualified
 room and passage paths. Prior to a passage, a restored `Escape` also needs
 the actual countdown state, the incoming finished-frame count and the room
 actors' state. A passage restore additionally needs the passage owner's state.
+
+## 18. The overlay in the shaft
+
+The room places the overlay alongside the actor covered by `ShaftWall`. The overlay's figure has an anchor in the room, in whole pixels. Its tiles and
+single figure are content. The caller gives the overlay its turn when the room's actors take
+one, including during the passage while its colours come up.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| Overlay state | `Opening`, `Rumbling` with its counts and next point, or `Hidden` | OverlayRumbles |
+| Rumble turns | Whole overlay turns remaining, 0 through 48 | OverlayRumbles |
+| Time to next burst | Whole overlay turns, 0 through 4. Zero is due on this turn | OverlayRumbles |
+| Next burst point | One of four points near the anchor, in their order below | OverlayRumbles |
+| Light inputs | The frame count and whether the palette fade has taken a step | BeaconCycles, PlatformTurns |
+| Burst random number | One shared random draw, read when a burst is due | OverlayRumbles |
+| Burst intent | `Smoke` or `SmallExplosion`, with centre in whole room pixels | The dust and explosion player |
+| Start rotation | An event at the end of the rumble | The shaft's rotation |
+
+Cells: `Opening` is the unrun overlay. `Rumbling` holds the visible overlay and the three
+counts. `Hidden` still receives turns for the lights. The caller can restore its state
+and the anchor independently. The burst points in order, relative to the anchor, are
+`(2, 12)`, `(-2, 22)`, `(0, 4)`, and `(-4, -8)` px.
+
+### OverlayAppears
+
+- kind: mechanic.
+- summary: the shaft prepares the overlay as its actors arrive.
+- params: the overlay anchor, tiles and picture are content.
+- switch: Fixed.
+- The shaft places the overlay with stage `Escape` → `Opening`. Apply `TheDoorsColours`
+  and request the overlay's tile upload [C-overlay-placed].
+- checked: oracle (room 2, the shaft's actor placement), constructed.
+
+The overlay's figure appears on its first actor turn. Its tiles use the sprite plane.
+The platform's looks write only their low part of the affine room tilemap. Both are
+display intents. The renderer and platform own transfers and when the picture appears.
+
+### OverlayRumbles
+
+- kind: mechanic.
+- summary: the door rumbles, then the overlay disappears and the shaft can rotate.
+- params: 48 rumble turns, five turns between bursts, smoke for a draw below 16,384.
+- switch: Fixed.
+- The first turn in `Opening`, in the escape → show the overlay figure and take one turn
+  of `BeaconCycles` and `PlatformTurns`. Start `Rumbling` with 48 turns, next burst due
+  and the first point selected [C-overlay-first].
+- A turn in `Rumbling` with turns left and time left to the next burst → subtract one
+  from both counts [C-rumble-waits].
+- A turn in `Rumbling` with turns left and a burst due → subtract one from turns left.
+  Draw once from the shared random sequence and ask for smoke below 16,384 or a small
+  explosion otherwise, at the next point. Ask for the explosion sound with queue limit 6.
+  Wait 4 turns and move to the next point, wrapping after the fourth
+  [C-rumble-smoke, C-rumble-burst].
+- A turn in `Rumbling` with no turns left → `Hidden`. Hide the figure and ask the shaft
+  to start rotating [C-rumble-finishes].
+- A turn in `Hidden` → step the lights and keep the overlay hidden [C-hidden-lights].
+- checked: oracle (the shaft's entry and completed rumble), constructed.
+
+The lights pause through the rumble, including its final turn. A burst is a request to
+the effect player, which controls the slot, picture and lifetime. The sound sender
+controls whether the sound can enter its queue. A cut without an actor turn preserves
+the overlay. Holding the scene between cuts does not advance its counts.
+
+## 19. The shaft tilts and Samus reaches the elevator
+
+Room setup supplies the first affine matrix, the pivot and the first sample and hold.
+The [overlay](#18-the-overlay-in-the-shaft) gives the room the event that lets it
+start turning. The shaft takes its turn after Samus's movement and the room's
+actors. The display consumes the affine view. The elevator scene consumes the
+arrival once, and the shaft keeps taking turns while that scene runs its hold
+and fade.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| Shaft turning | A boolean, set by the end of the rumble | ShaftTilts, ElevatorReached |
+| Next sample | One position in the ordered tilt track and a direction along that track | ShaftTilts |
+| Hold | Whole shaft turns before the next sample can be used | ShaftTilts |
+| Tilt track | At least two samples. Each gives a hold in turns, a diagonal and a cross term in signed 8.8 | ShaftTilts |
+| Matrix | Four signed 8.8 entries in A, B, C, D order | The display and the mounted vents |
+| Samus's centre | Whole room pixels after her movement, x then y | ElevatorReached |
+| Vertical speed | Signed speed after her movement, fractional part included | ElevatorReached |
+| Her facing | Facing after her movement | ElevatorReached |
+| Earlier pose | The exact earlier pose used for appearance transitions. The reach distinguishes the two destination poses and treats every other pose as `Other`. | ElevatorReached |
+
+Cells: the low and high ends of the track are the first and last samples.
+The direction describes the next sample's turn along the track. The caller
+can restore the hold, the next sample and the current matrix independently.
+
+### ShaftTilts
+
+- kind: mechanic.
+- summary: the shaft follows the same tilt track back and forth.
+- params: the ordered track is content.
+- switch: Fixed.
+- A shaft turn before the rumble's end → hold the setup view [C-tilt-waits].
+- The first shaft turn after the overlay asks to turn → enable turning and use
+  the same count and sample decisions as later turns [C-tilt-starts].
+- A turning shaft with a hold above zero → decrement the hold [C-tilt-holds].
+- A turning shaft with a hold of zero → show the next sample's matrix
+  `[diagonal, cross, -cross, diagonal]` and take its hold. Advance one place
+  along the track. When the new next sample reaches an end, set its direction
+  toward the other end [C-tilt-samples, C-tilt-upper, C-tilt-lower].
+- checked: oracle (the shaft's turn and its last cut before blackout), constructed.
+
+The turn that enables rotation uses the hold seeded by room setup.
+The view keeps the same pivot. An interrupted cut can contain the shaft's
+completed turn before the scene has finished its work.
+
+### ElevatorReached
+
+- kind: mechanic.
+- summary: Samus reaches the elevator when she settles near its middle.
+- params: x range (112, 144], y range [75, 128), in whole room pixels.
+- switch: Fixed.
+- The shaft is turning during ordinary play, her centre is in both ranges and
+  her vertical speed is zero → request the elevator scene. Choose the standing
+  pose for her side, using the right pose for a centred facing. Cancel pending
+  pose changes and lock her. Give the scene a hold of 60 turns and start both
+  its fade values at zero [R-reaches-elevator, C-elevator-right].
+- If the earlier pose equals the selected standing pose, preserve the
+  current animation frame and remaining count [C-elevator-standing, C-elevator-centred].
+- If the earlier pose differs, ask Samus appearance to start the selected
+  standing clip [R-reaches-elevator, C-elevator-right].
+- checked: oracle (the shaft's elevator reach), constructed.
+
+The reach reads the position after motion. It leaves that position where it
+was. The shaft can publish a new matrix on the reach turn. The scene's
+hold and fade keep the shaft live and do not ask for another reach.
+
+
+## 20. Steam on the tilting shaft wall
+
+The shaft's mounted vents blow left or right. A leftward mounted vent uses
+the leftward vent's wait and puff. A rightward one uses the rightward wait and puff.
+The mount's position, the view test and the reach for contact all use the room
+grid. Drawing follows the tilt and applies the projected offset to the mount.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| Mount | Room anchor in whole pixels, and whether it turns with the shaft | VentDrawFollowsShaft, VentInView, PuffTouches |
+| Shaft view | Pivot in whole pixels, and diagonal and cross terms in signed 8.8 before the vent's turn | VentDrawFollowsShaft |
+| Offset | Signed whole pixels x and y, carried from the previous view turn | Drawing |
+
+Each mounted vent starts with zero offset. The puff stays anchored for contact
+even while the apparent origin moves. Drawing uses the offset with the regular
+puff figure, leaving the figure and its hold to the vent's regular turns.
+
+### VentDrawFollowsShaft
+
+- kind: mechanic.
+- summary: the graphic's anchor follows the room's picture when a mounted vent runs.
+- params: the affine view from the shaft's turn.
+- switch: Fixed.
+- A mounted vent runs with its anchor `(x, y)`, pivot `(p, q)`, diagonal `d` and
+  cross term `s` → put its drawing offset at
+  `(floor(d * u / 256) + floor(s * v / 256) - u, v - floor(-s * u / 256) - floor(d * v / 256))`,
+  with `u = x - p` and `v = q - y` [C-vent-offset, C-vent-identity].
+- A mounted vent waits out a turn → keep its drawing offset [C-vent-keeps-offset].
+- checked: oracle (all shaft vent opportunities to the last room turn), constructed.
+
+Each product rounds down before the additions and subtractions. The vent reads
+the view it starts with. On a turn where the shaft picks a new sample, that sample
+can be available to a vent on its next turn. The drawn offset is independent of
+the room coordinates used for movement contact.

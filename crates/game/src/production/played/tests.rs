@@ -96,6 +96,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
             vents: Vec::new(),
             pad_and_cover: crate::production::shaft::GONE,
             shaft_overlay: false,
+            escape_shaft: None,
             ridley: None,
             warning: None,
             stage: Stage::Calm,
@@ -165,6 +166,8 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
         clock_figures: None,
+        shaft_track: None,
+        shaft_overlay_art: None,
         arrival_bg3: None,
         movement: MovementContent::new(
             poses

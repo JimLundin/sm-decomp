@@ -26,6 +26,7 @@ pub(super) fn seed(
         vents: super::steam::decode(wram)?,
         pad_and_cover: shaft::pad_and_cover(wram)?,
         shaft_overlay: ceres::shaft_overlay(wram)?,
+        escape_shaft: None,
         ridley: ridley::seed(wram)?,
         warning: None,
         stage,

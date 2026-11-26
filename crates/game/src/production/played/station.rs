@@ -7,7 +7,7 @@
 //! replaces the station's actors.
 
 use super::passage::Passing;
-use super::{Content, Fault, Rules, ceres_doors, ridley, warning};
+use super::{Content, Fault, Rules, ceres_doors, ridley, shaft, warning};
 use crate::production::room_loading::{self, CeresActors};
 use boss_ceres_ridley::{CeresDoor, CeresRidley, Her, Lights, PadAndCover, RidleyRun, Stage, Vent};
 use types::ceres_warning::WarningState;
@@ -27,6 +27,8 @@ pub struct State {
     pub pad_and_cover: PadAndCover,
     /// The room places the Ceres shaft's overlay, which shows the lights.
     pub shaft_overlay: bool,
+    /// The escape overlay, mounted vents and turning view placed by the passage.
+    pub escape_shaft: Option<shaft::EscapeShaft>,
     /// Ceres Ridley and the baby, in his room.
     pub ridley: Option<CeresRidley>,
     /// The warning phase and glow while Ridley's room carries them.
@@ -77,6 +79,8 @@ pub(super) struct Enemies {
     pub(super) doors: Vec<boss_ceres_ridley::Run>,
     /// What the shaft's lights show; none without its overlay.
     pub(super) lights: Option<Lights>,
+    pub(super) shaft: Option<shaft::EscapeShaft>,
+    pub(super) shaft_actors: Option<boss_ceres_ridley::OverlayTurn>,
     /// The room's quake after the doors' starts.
     pub(super) quake: world_quake::State,
 }
@@ -99,6 +103,8 @@ impl Enemies {
             steam_hit: None,
             doors: Vec::new(),
             lights: None,
+            shaft: None,
+            shaft_actors: None,
             quake,
         }
     }
@@ -121,13 +127,18 @@ impl State {
             slots.drain(..count);
             actors.drain(..count);
         }
-        retire(&mut self.vents, &mut self.slots.vents, first_live);
+        if let Some(shaft) = &mut self.escape_shaft {
+            retire(&mut shaft.vents, &mut self.slots.vents, first_live);
+        } else {
+            retire(&mut self.vents, &mut self.slots.vents, first_live);
+        }
         retire(&mut self.doors, &mut self.slots.doors, first_live);
         // The Ceres room places Ridley first. The walls, door and other
         // actors have their own slot indices.
         if first_live > 0 {
             self.ridley = None;
             self.warning = None;
+            self.escape_shaft = None;
         }
     }
 
@@ -167,6 +178,9 @@ impl State {
             self.ridley = Some(run.ridley);
         }
         self.place_backdrop(enemies);
+        if let Some(shaft) = enemies.shaft.take() {
+            self.escape_shaft = Some(shaft);
+        }
         if let Some(vents) = enemies.vents.take() {
             self.vents = vents;
         }
@@ -174,7 +188,7 @@ impl State {
             self.slots = placed.slots;
             self.vents = placed.vents;
             self.doors = placed.doors;
-            self.shaft_overlay = placed.shaft_overlay;
+            self.shaft_overlay = placed.shaft_overlay.is_some();
             self.ridley = placed.ridley.map(|placing| placing.ridley);
             self.warning = None;
             if let Some(placing) = placed.ridley {
@@ -188,7 +202,10 @@ impl State {
 impl super::State {
     /// The shared contact input before movement or the health countdown changes it.
     pub(super) fn enemy_contact(&self, content: &Content) -> Result<Option<Her>, Fault> {
-        if self.station.ridley.is_none() && self.station.vents.is_empty() {
+        if self.station.ridley.is_none()
+            && self.station.vents.is_empty()
+            && self.station.escape_shaft.is_none()
+        {
             return Ok(None);
         }
         let samus = &self.samus.movement.0;
@@ -206,13 +223,21 @@ impl super::State {
         }))
     }
 
+    pub(super) fn vent_camera(&self) -> Pair<types::Px> {
+        let view = self.camera.0.position();
+        Pair {
+            x: view.x.pixel(),
+            y: view.y.pixel(),
+        }
+    }
+
     /// One run of the room's enemies, in its order: Ridley, then the Ceres doors, then the
     /// shaft's overlay and the vents. The baby's colours and the beacon's go to `palette`, and Ridley's shake
     /// and then the doors' to the room's quake as the frame began.
     pub(super) fn enemies(
         &self,
         running: Running<'_>,
-        random: types::RandomSequence,
+        random: &mut types::RandomSequence,
         passing: &Passing,
         content: &Content,
         rules: &Rules,
@@ -248,7 +273,7 @@ impl super::State {
                 ridley::run(
                     ridley,
                     running,
-                    (random, types::GameFrames(self.frame.finished_frames)),
+                    (*random, types::GameFrames(self.frame.finished_frames)),
                     her_energy,
                     content,
                     rules,
@@ -282,22 +307,30 @@ impl super::State {
             stage,
             &self.samus.movement.0,
             ridley_beaten,
-            random,
+            *random,
             &rules.ceres,
             &mut quake,
         )?;
-        let lights = self.lights(content, rules, palette)?;
-        let mut vents = station.vents.clone();
-        let view = self.camera.0.position();
-        let camera = Pair {
-            x: view.x.pixel(),
-            y: view.y.pixel(),
+        let mut shaft = station.escape_shaft.clone();
+        let shaft_actors = shaft
+            .as_mut()
+            .map(|shaft| shaft.overlay_turn(self, random, content, rules, palette))
+            .transpose()?;
+        let lights = if let Some(turn) = shaft_actors {
+            turn.lights
+        } else {
+            self.lights(content, rules, palette)?
         };
+        let mut vents = station.vents.clone();
+        let camera = self.vent_camera();
         let her = match running {
             Running::Play(her) => her,
             Running::Passage => None,
         };
-        let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres);
+        let steam_hit = shaft.as_mut().map_or_else(
+            || boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres),
+            |shaft| shaft.run_vents(camera, her, rules),
+        );
         Ok(Enemies {
             ridley,
             warning,
@@ -305,6 +338,8 @@ impl super::State {
             steam_hit,
             doors,
             lights,
+            shaft,
+            shaft_actors,
             quake,
         })
     }
@@ -338,11 +373,11 @@ impl super::State {
         {
             return Err(Fault::RidleyGetawayPush);
         }
-        let random = self.frame.drawn(passing);
+        let mut random = self.frame.drawn(passing);
         let mut palette = self.palette;
         let enemies = self.enemies(
             Running::Play(None),
-            random,
+            &mut random,
             passing,
             content,
             rules,

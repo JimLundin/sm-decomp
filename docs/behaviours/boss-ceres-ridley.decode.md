@@ -1582,6 +1582,155 @@ and oracle. Plant a production fault at the overlap, a displaced glow,
 an early or repeated escape start, and a countdown step during the passage.
 Report those as production evidence only once those checks run.
 
+## The shaft overlay during the escape
+
+### Sources and join
+
+| Entry | Source and mapping |
+| --- | --- |
+| OverlayAppears | The room's enemy load and initialization at `$82:E4D4..E4DB` creates the overlay in slot 0. `$A6:F6C5..F72A` seeds its figure and existing escape door target colours. `$F739..F764` queues a contiguous 1,024-byte overlay sprite strip at `$B0:C400` for `VRAM $7000` in word units. The record's region first equals the imported strip on interrupted room-2 cut 225. Target sprite palette 7 colours 1–15 also match at 225. |
+| OverlayRumbles | `$A6:F7BD..F7DB` requests lights on its first escape turn before it arms rumble. `$F7DC..F83F` holds the 48-turn rumble. It uses one shared draw for each due burst. `$F840` supplies the four offsets. The first turn after the count reaches zero hides the overlay, requests rotation through `$F67F`, and leaves the next turn to `$F850`. |
+| BeaconCycles and PlatformTurns | `$A6:F850` sees the fade numerator before the fade's own step. `$A6:F871` supplies the beacon's sets. `$F8F1` queues one of two four-byte looks from `$F918` and `$F91C` for the low byte of each word `VRAM $060E..0611`. The four high bytes carry through. Use the gameplay frame count, not the HUD counter. |
+| Figure and particles | The overlay becomes intangible and holds its one figure through `$A6:F610`. `$86:E509` receives the burst with its whole room position and smoke or small-explosion clip. It stays in place, uses the common effect sprites, and can retire on the same turn if outside the effect player's 256 × 256 px view. Its graphics and clip belong to the effect player. |
+
+Room-2 cut 239 interrupts its first brightening work after the actor turn. The
+overlay figure and the new rumble count are present. The beacon's six colours
+at `$7EC052..C05D` match the selected asset, with the fade numerator at zero.
+The platform chooses its second look on that turn. The display publishes its
+four low bytes on the completed cut 240. Its four high bytes agree across the
+transfer. The first particle at 241 is smoke at (234,643) px. The sender still
+suppresses effects, so the actor's sound request leaves the queue unchanged.
+The source calls the library 2 queue entrance with limit six at `$A6:F83B`.
+
+At shaft cut 34 the overlay hides and requests rotation. The shaft's hold
+decrements on that turn after it receives the request. The overlay's next turn
+is shaft cut 35 and again chooses lights. There is no retile request at the
+moment of hiding. The invisible wall is the existing shaft wall actor and has
+no role in the overlay's presentation. This piece leaves the rotation track,
+elevator trigger, effect player and turning-vent projection to their own rules.
+
+[Bank 82](https://patrickjohnston.org/bank/82) · [Bank A6](https://patrickjohnston.org/bank/A6) · [Bank 86](https://patrickjohnston.org/bank/86)
+
+### Placement and vent dependency
+
+The destination slots first become visible together on interrupted cut 225.
+They include the overlay, the invisible wall and eleven vents in population
+order. The turning variants initialize as ordinary rightward or leftward
+vents according to their mount. The waits match eleven successive ordinary
+draws beginning with the admitted random number at cut 224. The last draw is
+the carried random number at 225. Calling the old fixed-vent initializer is
+enough for that part of placement once the mount metadata is retained. Later
+projection belongs to drawing and reads the room matrix and pivot. It leaves a
+vent's unrotated anchor and collision reach in place. The earliest integrated
+actor check needs the overlay tile strip and target palette, both door states,
+the eleven waits and the outgoing random number.
+
+### Harness
+
+Read the overlay function and visibility from `$7E:0FA8` and `$7E:0F86`, and the
+rumble timer, burst timer and point from `$7E:0FAE`, `$7E:0FB0` and `$7E:0FB2`.
+The point counts backwards in the record. Normalize it to the spec's offset
+cycle. The actor stays in slot 0. Check particle slots independently of the
+overlay state, using the centre and the first position in the imported clip.
+The one spawn absent at shaft cut 31 is outside the effect player's view.
+Its RNG draw is still observable. The placement, first actor turn, first
+particle and disappearance have different observable cuts.
+
+The reference carries the overlay through 219 cuts from room-2 cut 225 to
+the shaft's cut 164, with its actor opportunities supplied by passage and
+platform timing. It agrees on the 180 actor turns and all retained cuts.
+Holding the initial overlay matches 14/219. Nine spawns agree in a live
+particle slot, and all ten agree on the resulting shared RNG. The platform and
+beacon check matches all 130 hidden-overlay turns after the rumble. The seven
+constructed vectors exercise the initial tile intent, first lights, waits,
+both sides of the smoke threshold, final turn and hidden lights. The frozen
+state first differs at 239. Advancing on an interrupted continuation rather
+than an actor opportunity first differs at 240.
+
+## Shaft rotation and elevator reach
+
+### Sources
+
+| Entry | Source and mapping |
+| --- | --- |
+| ShaftTilts | `$89:ACC3..AD5D` runs late in the shaft's ordinary room work. The overlay enables rotation through `$A6:F67F` on its last turn. The rotation timer and next sample come from the initial room setup. `$89:AD5F` has 69 triples in hold, cross term, diagonal order. Import the hold as whole turns and the two terms as signed 8.8. The first track update reads the centre sample, zero-based index 34. |
+| ElevatorReached | `$89:ACCD..AD17` reads Samus's post-motion whole coordinates and both vertical speed words. It calls `$90:F125..F14F` for the standing pose and hold, then resets the fade delay and counter. The lock at `$90:F109..F116` cancels pending pose changes. The timer and rotation phase already ran or can still run on this turn in their own order. |
+
+In ordinary play, the actors and projectiles run before the room's late update
+at `$82:8BA8`. A vent turn sees the matrix carried in from the previous cut.
+The room accepts the elevator reach and then still takes its rotation step.
+The scene's hold and blackout call the same ordinary room work at `$82:8373`
+and `$82:8394`. The final room work is already present on interrupted cut 239.
+No new room turn runs when the scene change appears at cut 240.
+
+[Bank 82](https://patrickjohnston.org/bank/82) · [Bank 89](https://patrickjohnston.org/bank/89) · [Bank 90](https://patrickjohnston.org/bank/90)
+
+### Record evidence and integration
+
+| Quantity | Observation |
+| --- | --- |
+| Enable, cursor, hold | Read `$7E:093F`, `$7E:07E1` and `$7E:07E3`. The rotation bit first appears at shaft cut 34 and that turn reduces the hold from 60 to 59. Cut 93 reaches zero. Cut 94 reads the identity sample and advances the cursor. Cut 96 first publishes a tilted sample. A cursor already at the high endpoint moves back after displaying it. The low endpoint displays once and the cursor moves forward. |
+| Affine output | Read the first matrix coefficient at `$7E:0078` and the next three words. Compare the physical PPU matrix and centre too. The view keeps the room setup's pivot (128,1008) px. |
+| Elevator trigger | The shaft row `chain-any-0011-DF45` is `rS1` in vectors. At cut 163 she is at x = 147 px, too far right. At 164 she reaches (144,75) px with zero vertical speed. It sets standing left, input lock, timer 60 and both fade fields zero. The reach checks the whole pixel coordinates at `$7E:0AF6` and `$7E:0AFA` after motion, vertical speed at `$7E:0B2C` and `$7E:0B2E`, and ordinary play at `$7E:0998`. |
+| Standing animation | The call to `$91:FB08` compares the destination pose at `$7E:0A1C` against the previous pose at `$7E:0A20`. Equality skips the writes to `$7E:0A96` and `$7E:0A94`. At witness cut 164 the previous pose is `0Ah` and the destination is `02h`. The call writes frame zero and count ten. |
+| Handoff | Movement takes the standing pose and lock. Appearance retains its clip frame and remaining count if the previous pose equals the destination. Appearance starts the destination clip when the poses differ. The elevator scene starts its hold at 60 with both fade fields zero. Play's timer work already took its regular turn. The scene draws the held timer. The room keeps its mode, matrix and rotation state through lock and blackout. |
+
+The reference takes the overlay's enable event and the post-motion centre and
+speed as inputs. It carries its model State from the already prepared shaft at the
+end of room 2. State and native PPU matrix and pivot agree at 240/240 shaft cuts
+through the final room turn, with 27 track reads. A held seed matches 34/240.
+The scoped elevator event matches at cut 164 and never repeats during blackout.
+The constructed tracks distinguish both endpoint reversals and the step from hold
+one to zero without changing the matrix. The reach cases cover both facing
+directions, the strict aperture edges, the fractional speed and both mode guards.
+
+The scope checks room rotation through blackout. It does not claim that the
+existing production branch accepts this passage or plays the following scene
+without its own handoff.
+
+## Drawing the shaft's mounted vents
+
+### Sources
+
+| Entry | Source and mapping |
+| --- | --- |
+| VentPlaced | `$A6:EFB1..EFF4` uses the same wait and clip setup for the fixed and mounted vents. Mount subtype 4 shares the left clip, subtype 5 the right clip. `CeresVentFacing::ShaftLeft` and `ShaftRight` map to `VentFacing::Left` and `Right`, with the mounted marker carried separately. The eleven first waits and their outgoing RNG agree when drawn once each from the pre-placement number, in slot order at room-2 cut 225. |
+| VentDrawFollowsShaft | `$A6:F019..F03E` takes the unrotated anchor and publishes the two signed differences from that anchor. `$8B:8B66..8BE8` uses the pivot and the two diagonal and signed cross coefficients. It takes each signed product's high part before summation. The matrix this shaft produces has equal diagonal terms and opposite cross terms. |
+| Drawing and contact | `$A0:9461` and `$A0:9472` add these differences for drawing. The ordinary puff hit test still uses the unrotated coordinates. The existing puff figures, holds, reach, eligibility and contact scale apply. |
+
+The vent runs at the enemy opportunity, before the shaft's late room turn.
+Use the carried matrix even if the shaft will publish a new one later in that
+same turn. Account for an interrupted first actor turn separately from later
+cuts inside the same work. A missed opportunity holds the last offset. Setup
+clears the offsets at placement.
+
+[Bank 82](https://patrickjohnston.org/bank/82) · [Bank 8B](https://patrickjohnston.org/bank/8B) · [Bank A0](https://patrickjohnston.org/bank/A0) · [Bank A6](https://patrickjohnston.org/bank/A6)
+
+### Harness and runtime join
+
+Check anchor from each enemy slot, and the two signed draw offsets at
+`$7E:7010` and `$7E:7012` plus the slot stride of 64 bytes. Use the slot clock
+`$7E:0FA4` to check the eligibility signal. The existing `VentInView` model and
+the platform's supplied actor opportunity select the same turns in the witness.
+Read the matrix and pivot before the actor turn. Store the projected offset for
+each mounted actor. Its draw intent uses the ordinary puff figure and the
+anchor plus the offset. The effect's movement contact continues from the typed
+unrotated vent. Figure tiles and palette encoding remain the display's inputs.
+
+The 11 slots agree at 3,234/3,234 cuts from placement in room 2 through the
+last shaft turn. This includes 1,077/1,077 turns with a new offset decision.
+Zero offset matches 2,394/3,234. Reading the shaft's new matrix on the current
+turn first differs at shaft cut 96, slot 4. Truncating each signed product
+toward zero first differs at 97, slot 4. Combining products before rounding
+fails `C-vent-offset`. The three constructed vectors also cover identity and
+a retained offset.
+
+The existing vent phase model matches 3,223/3,223 carried slot comparisons,
+versus 2,146 held. On 165 ordinary shaft turns it agrees that the vents give
+no hit. This shaft row reaches no positive contact. The source shares the
+ordinary hit path. The scoped check covers the offset, phase and no-contact
+observations and leaves native OAM comparisons to the sprite join.
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -1607,7 +1756,9 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 - Area ridley-wakes: EyeFadesIn, BodyFadesIn, ReadyToRoar, Roars
 - Area ridley-tail: TailAtRest, TailCurls, TailHits
 - Area ridley-flight: TakesOff, Rises, SlowsDown, Hovers, PulledToHisPoint, Flies
-- Area steam: VentPlaced, VentInView, VentWaits, VentPuffs, VentRests, PuffReach, PuffTouches
+- Area shaft overlay: OverlayAppears, OverlayRumbles, 18
+- Area shaft rotation: ShaftTilts, ElevatorReached, 19
+- Area steam: 20, VentDrawFollowsShaft, VentPlaced, VentInView, VentWaits, VentPuffs, VentRests, PuffReach, PuffTouches
 - Area ridley-tail-flight: TailComesLoose, TailFollows, TailSwings, TailWhips, TailRecovers, TailStretches, TailBends, TailSwishes
 
 - Area ridley-retreat: FliesOutOfReach, GetawayBackdrop
@@ -1615,4 +1766,4 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 - Area ridley-getaway: GetawayPass, GetawayPicture
 - Area ridley-warning: WarningArt, WarningHeading, WarningTyping, WarningGlow, WarningEnds
 
-Budget: 37.5 × 245.0 units = 9,185 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675)
+Budget: 37.5 × 265.3 units = 9,947 (doors 1,062, station 237, shaft 462, lights 200, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, shaft overlay 350, shaft rotation 212, steam 1,375, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675)

@@ -25,15 +25,15 @@ movie = "any"
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
 # The fight returns to page two. The recorded demo drives discovery before the delivery and examination.
 # The live intro hands the dark screen to the flight. The selected file carries into arrival.
-# The warning and return carry through to the shaft's destination actor placement.
+# The return hall places the shaft actors. The elevator locks Samus after she reaches it.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 13018
-held = 13017
-stop = { failed = "Load(TurningShaftVent)" }
+end = 13311
+held = 13310
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 0
-frames = [1, 13017]
+frames = [1, 13310]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -55,11 +55,11 @@ power_on = false
 [[run]]
 row = "any-fly-to-ceres"
 start = 0
-end = 5506
-held = 5505
-stop = { failed = "Load(TurningShaftVent)" }
+end = 5799
+held = 5798
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 7512
-frames = [7513, 13017]
+frames = [7513, 13310]
 power_on = false
 
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
@@ -81,11 +81,11 @@ power_on = false
 [[run]]
 row = "any-ceres-arrival"
 start = 0
-end = 4703
-held = 4702
-stop = { failed = "Load(TurningShaftVent)" }
+end = 4996
+held = 4995
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 8315
-frames = [8316, 13017]
+frames = [8316, 13310]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
@@ -97,11 +97,11 @@ power_on = false
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
-end = 4480
-held = 4479
-stop = { failed = "Load(TurningShaftVent)" }
+end = 4773
+held = 4772
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 8538
-frames = [8539, 13017]
+frames = [8539, 13310]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -133,11 +133,11 @@ power_on = false
 [[run]]
 row = "chain-any-0003-DFD7"
 start = 0
-end = 3786
-held = 3785
-stop = { failed = "Load(TurningShaftVent)" }
+end = 4079
+held = 4078
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 9232
-frames = [9233, 13017]
+frames = [9233, 13310]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -159,11 +159,11 @@ power_on = false
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 0
-end = 2856
-held = 2855
-stop = { failed = "Load(TurningShaftVent)" }
+end = 3149
+held = 3148
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 10162
-frames = [10163, 13017]
+frames = [10163, 13310]
 power_on = false
 
 # The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune
@@ -193,15 +193,15 @@ frames = [11853, 11943]
 power_on = false
 
 # Carry the native return fetch, the adjacent rooms and the next passage without
-# reseeding. The first turning-shaft vent placement needs the shaft actor owner.
+# reseeding. The shaft vents and the elevator lock follow in the same run.
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 1690
-end = 3000
-held = 1165
-stop = { failed = "Load(TurningShaftVent)" }
+end = 3149
+held = 1458
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 11852
-frames = [11853, 13017]
+frames = [11853, 13310]
 power_on = false
 
 # Start in the slide's wait after the destination content has loaded. The remaining
@@ -247,10 +247,10 @@ power_on = false
 row = "chain-any-0007-E06B"
 start = 0
 end = 3000
-held = 1078
-stop = { failed = "Load(TurningShaftVent)" }
+held = 1371
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 11939
-frames = [11940, 13017]
+frames = [11940, 13310]
 power_on = false
 
 # The escape's room 4 alone, from its own seed, shaking, and the passage out of it, the doors
@@ -282,11 +282,11 @@ power_on = false
 [[run]]
 row = "chain-any-0010-DF8D"
 start = 0
-end = 278
-held = 224
-stop = { failed = "Load(TurningShaftVent)" }
+end = 518
+held = 517
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 12793
-frames = [12794, 13017]
+frames = [12794, 13310]
 power_on = false
 
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being
@@ -308,11 +308,11 @@ power_on = false
 [[run]]
 row = "any-intro-6012"
 start = 1
-end = 7006
-held = 7004
-stop = { failed = "Load(TurningShaftVent)" }
+end = 7299
+held = 7297
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 6013
-frames = [6014, 13017]
+frames = [6014, 13310]
 power_on = false
 
 # The flight to Zebes from the station blackout through the frame that clears the
@@ -357,9 +357,9 @@ power_on = false
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 1270
-end = 3000
-held = 1585
-stop = { failed = "Load(TurningShaftVent)" }
+end = 3149
+held = 1878
+stop = { failed = "lag cut in play (T1)" }
 seed_frame = 11432
-frames = [11433, 13017]
+frames = [11433, 13310]
 power_on = false

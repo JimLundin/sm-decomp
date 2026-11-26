@@ -22,6 +22,8 @@ pub struct RotationSample {
 pub struct Shaft {
     /// Packed sprite tiles installed when the overlay is placed.
     pub overlay: [u8; OVERLAY_BYTES],
+    /// The ordered spritemap for the overlay during its rumble.
+    pub figure: crate::spritemap::Spritemap,
     /// The two platform looks in cycle order. Each replaces only the low tilemap bytes.
     pub platform: [[u8; 4]; 2],
     /// The samples from one end of the rotation arc to the other.

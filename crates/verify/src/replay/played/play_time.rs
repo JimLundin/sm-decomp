@@ -3,6 +3,8 @@
 use crate::replay::{data_failure, result::Outcome};
 use types::{PlayFrames, PlayHours, PlayMinutes, PlaySeconds, PlayTime};
 
+pub(super) const FIELD: &str = "game-time.elapsed";
+
 pub(super) fn read(wram: &[u8]) -> Result<PlayTime, Outcome> {
     let invalid = || data_failure(None, "elapsed play time");
     let component = |offset: usize| {
@@ -30,7 +32,7 @@ pub(super) fn read(wram: &[u8]) -> Result<PlayTime, Outcome> {
 
 pub(super) fn observation(time: PlayTime) -> crate::replay::compare::Observation {
     crate::replay::compare::Observation {
-        field: "game-time.elapsed".into(),
+        field: FIELD.into(),
         bytes: [
             time.hours.get(),
             time.minutes.get(),
@@ -80,7 +82,7 @@ mod continuous {
     }
 
     const BOOT: &str = "any-power-on";
-    const LAST_SUPPORTED: u64 = 13_017;
+    const LAST_SUPPORTED: u64 = 13_310;
 
     #[derive(Clone, Copy)]
     enum End {
@@ -88,7 +90,7 @@ mod continuous {
         FirstCarry,
     }
 
-    /// The required clock prefix uses the continuous clock fixture through the hall.
+    /// The required clock prefix uses the continuous clock fixture through the last finished shaft turn.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn ceres_clock_prefix() {
@@ -185,7 +187,7 @@ mod continuous {
                 LAST_SUPPORTED,
                 Stop::At(Outcome::Unsupported {
                     cut: Some(LAST_SUPPORTED + 1),
-                    dependency: "played frame Load(TurningShaftVent)".into(),
+                    dependency: "lag cut in play (T1)".into(),
                 }),
             ),
             End::FirstCarry => (carry_cut, Stop::End),
@@ -209,7 +211,7 @@ mod continuous {
         assert_eq!(report.held, last);
         assert!(compared.iter().copied().eq(first..=last));
         match end {
-            End::ShaftBoundary => assert_eq!(compared.len(), 4_703),
+            End::ShaftBoundary => assert_eq!(compared.len(), 4_996),
             End::FirstCarry => assert_eq!(compared.len(), 253),
         }
         for case in fixture.case {

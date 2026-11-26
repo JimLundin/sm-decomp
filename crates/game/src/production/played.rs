@@ -68,7 +68,7 @@ pub mod quake;
 mod ridley;
 pub mod room_video;
 pub mod samus;
-mod shaft;
+pub mod shaft;
 mod start;
 pub mod station;
 pub mod warning;
@@ -101,6 +101,10 @@ use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scen
 pub struct Content {
     /// Imported timer sprite figures for room drawing.
     pub clock_figures: Option<data::assets::countdown::Figures>,
+    /// Ordered tilt samples admitted with the escape shaft assets.
+    pub shaft_track: Option<shaft::Track>,
+    /// Sprite graphics written when the escape shaft places its overlay.
+    pub shaft_overlay_art: Option<data::assets::shaft::Shaft>,
     /// Standard background text graphics for the Ceres start.
     pub arrival_bg3: Option<Vec<u16>>,
     /// Pose bodies and cannon headings.
@@ -203,6 +207,12 @@ pub struct Outputs {
     pub ceres_doors: Vec<boss_ceres_ridley::Run>,
     /// What the shaft's lights show; none on a frame its overlay doesn't run.
     pub lights: Option<Lights>,
+    /// Overlay tiles requested on successful actor placement.
+    pub shaft_overlay_placement: Option<boss_ceres_ridley::OverlaySpriteUpload>,
+    /// The escape overlay's drawing, lights and burst requests from a fresh actor turn.
+    pub shaft_actors: Option<boss_ceres_ridley::OverlayTurn>,
+    /// The elevator scene and standing lock requested once, after ordinary motion.
+    pub elevator_reach: Option<boss_ceres_ridley::ElevatorLock>,
     /// Ridley's run, with the baby's cry; none on a frame he doesn't run.
     pub ridley: Option<RidleyRun>,
     /// The Ceres warning requests for drawing, audio and progress.
@@ -289,33 +299,27 @@ impl State {
         if matches!(self.passage.doors, Doors::Passing(_)) {
             return self.pass(inputs, passing, content, rules);
         }
+        self.play(inputs, passing, hud, content, rules)
+    }
+
+    fn play(
+        &mut self,
+        inputs: &Inputs,
+        passing: &Passing,
+        hud: &HudFrame,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<Outputs, Fault> {
         let room = self.ordinary_room(inputs)?;
-        let random = self.frame.drawn(passing);
+        let mut random = self.frame.drawn(passing);
         let mut palette = self.palette;
-        // Every hitter reads her position, body and protection as the frame starts, as the
-        // game's frame runs the enemies before her moves. Health reads their hit between
-        // her moves and her reaction.
-        let at_start = self.enemy_contact(content)?;
-        let enemies = self.enemies(
-            station::Running::Play(at_start.as_ref()),
-            random,
-            passing,
-            content,
-            rules,
-            &mut palette,
-        )?;
-        let hit = enemies.contact();
-        let between = samus::Between {
-            played: (enemies, self.health_frame(hit, content, rules)),
-            hit,
-            energy: self.energy_the_hit_leaves(hit, content, rules),
-        };
-        let (her, (enemies, health)) = if self.station.pad_and_cover.holds_her() {
-            // The pad holds her in the shaft, where no tail reaches her.
-            (self.samus.held(), between.played)
-        } else {
-            self.her_frame(inputs, content, rules, |_| Ok(between))?
-        };
+        let locked = self
+            .station
+            .escape_shaft
+            .as_ref()
+            .is_some_and(|shaft| shaft.locked);
+        let (mut her, (mut enemies, health)) =
+            self.play_actors_and_samus(inputs, passing, content, rules, &mut random, &mut palette)?;
         if let (Some(row), Some(colours)) =
             (room_loading::suit_row(&mut palette.screen), her.colours)
         {
@@ -326,6 +330,7 @@ impl State {
         let camera = self.followed(&room, &her, &samus, rules);
         let touched = self.passage.touched(&her)?;
         let hud = warning::countdown_input(hud, enemies.warning.as_ref())?;
+        let hud = if locked { hud.during_elevator() } else { hud };
         let (hud_state, hud_outputs) = self.hud_frame(
             &hud,
             &samus,
@@ -343,6 +348,7 @@ impl State {
             )
             .ok_or(Fault::Hud)?;
         let mut quake = ridley::finish_getaway(&enemies, &mut samus, &mut palette);
+        let elevator_reach = self.late_shaft_turn(&mut enemies, &mut her, &mut samus, content)?;
         let shaken = quake::update(&mut quake)?;
         let doors = self.passage.in_play(
             touched,
@@ -352,6 +358,13 @@ impl State {
             content,
             rules,
         );
+
+        self.room_video.shaft_picture(
+            enemies.shaft_actors,
+            self.vent_camera(),
+            passing.publishes,
+            content.shaft_overlay_art.as_ref(),
+        )?;
 
         // Her room and where it sits on her map stay as they are through a frame of play.
         self.samus
@@ -366,11 +379,20 @@ impl State {
         self.hud = Model(hud_state);
         self.clock_picture = clock_picture;
         self.station.ran(&enemies);
+        if let Some(shaft) = enemies.shaft {
+            shaft.update_entry(&mut self.passage.room.entry, passing.publishes);
+            self.station.escape_shaft = Some(shaft);
+        }
         if let Some(vents) = enemies.vents {
             self.station.vents = vents;
         }
         self.quake = Model(quake);
-        self.frame = self.frame.after(doors.report.finishing, random);
+        let finishing = if self.station.escape_shaft.is_some() && !passing.publishes {
+            world_doors::Finishing::Overrun
+        } else {
+            doors.report.finishing
+        };
+        self.frame = self.frame.after(finishing, random);
         self.play_time = play_time::after_work(self.play_time, health.state, passing.work_begun);
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
@@ -382,12 +404,75 @@ impl State {
             opening_hud: None,
             ceres_doors: enemies.doors,
             lights: enemies.lights,
+            shaft_overlay_placement: None,
+            shaft_actors: enemies.shaft_actors,
+            elevator_reach,
             ridley: enemies.ridley,
             warning: enemies.warning,
             steam_hit: enemies.steam_hit,
             ridley_placed: None,
             quake: Some(shaken),
         })
+    }
+
+    fn play_actors_and_samus(
+        &self,
+        inputs: &Inputs,
+        passing: &Passing,
+        content: &Content,
+        rules: &Rules,
+        random: &mut types::RandomSequence,
+        palette: &mut Palette,
+    ) -> Result<(samus::Her, (station::Enemies, samus_health::PlayedFrame)), Fault> {
+        let locked = self
+            .station
+            .escape_shaft
+            .as_ref()
+            .is_some_and(|shaft| shaft.locked);
+        // Contact reads the room as it stood before movement.
+        let at_start = if locked {
+            None
+        } else {
+            self.enemy_contact(content)?
+        };
+        let enemies = self.enemies(
+            station::Running::Play(at_start.as_ref()),
+            random,
+            passing,
+            content,
+            rules,
+            palette,
+        )?;
+        let hit = enemies.contact();
+        let between = samus::Between {
+            played: (enemies, self.health_frame(hit, content, rules)),
+            hit,
+            energy: self.energy_the_hit_leaves(hit, content, rules),
+        };
+        if locked || self.station.pad_and_cover.holds_her() {
+            Ok((self.samus.held(), between.played))
+        } else {
+            self.her_frame(inputs, content, rules, |_| Ok(between))
+        }
+    }
+
+    fn late_shaft_turn(
+        &self,
+        enemies: &mut station::Enemies,
+        her: &mut samus::Her,
+        samus: &mut samus_movement::Samus,
+        content: &Content,
+    ) -> Result<Option<boss_ceres_ridley::ElevatorLock>, Fault> {
+        let Some(shaft) = &mut enemies.shaft else {
+            return Ok(None);
+        };
+        let track = content.shaft_track.as_ref().ok_or(Fault::Escape)?;
+        let start = enemies.shaft_actors.and_then(|turn| turn.start_rotation);
+        let reach = shaft.late_turn(start, track, samus, self.samus.movement.0.choices.latest)?;
+        if let Some(reach) = reach {
+            her.stand_at_elevator(samus, reach, &content.appearance)?;
+        }
+        Ok(reach)
     }
 
     fn ordinary_room(&self, inputs: &Inputs) -> Result<world_camera::Room, Fault> {
@@ -415,29 +500,17 @@ impl State {
     ) -> Result<Outputs, Fault> {
         let mut random = self.frame.drawn(passing);
         let mut before = self.palette;
-        let early = if passage::brightening(self.passage.doors, passing) {
-            Some(self.enemies(
-                station::Running::Passage,
-                random,
-                passing,
-                content,
-                rules,
-                &mut before,
-            )?)
-        } else {
-            None
-        };
-        let exports = self.passage.doors.step(
-            passage::scene(&self.samus.movement.0, &self.camera.0, &before),
-            &passage::doors_inputs(
-                false,
-                hud::countdown_begun(&self.hud.0),
-                self.passage.doorway,
-                passing,
-                content,
-            ),
-            &rules.doors,
-        );
+        let shaft_brightening =
+            self.station.escape_shaft.is_some() && passage::is_brightening(self.passage.doors);
+        let early = self.brightening_actors(
+            shaft_brightening,
+            passing,
+            content,
+            rules,
+            &mut random,
+            &mut before,
+        )?;
+        let exports = self.passage_export(&before, passing, content, rules);
         let Scene {
             her,
             seen,
@@ -446,9 +519,9 @@ impl State {
         } = exports.scene;
         let mut enemies = match early {
             Some(enemies) => enemies,
-            None if exports.report.runs[Activity::Enemies] => self.enemies(
+            None if !shaft_brightening && exports.report.runs[Activity::Enemies] => self.enemies(
                 station::Running::Passage,
-                random,
+                &mut random,
                 passing,
                 content,
                 rules,
@@ -469,25 +542,31 @@ impl State {
                 passing,
             )
             .ok_or(Fault::Hud)?;
-        let mut loaded = self.load(
+        let mut loaded = self.load_with_overlay(
             exports.report.call,
             passing,
             content,
             &mut palette,
             &mut random,
         )?;
+        self.room_video.shaft_picture(
+            enemies.shaft_actors,
+            self.vent_camera(),
+            passing.publishes,
+            content.shaft_overlay_art.as_ref(),
+        )?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
-        let mut quake = enemies.quake;
-        // Room loading's effects set-up, inside the building, stops the shake.
-        if exports.report.call == Some(RoomCall::BuildRoom) {
-            quake::stop(&mut quake);
+        let shaft_overlay_placement = loaded.shaft_placement.map(|placement| placement.upload);
+        if loaded.actors.is_some() {
+            self.station.escape_shaft = loaded.shaft.take();
         }
-        if let Some(placing) = ridley_placed {
-            self.meet_the_boss(placing, content, rules);
-            // His placing asks for the shake's stop.
-            let boss_ceres_ridley::ShakeStop = placing.shake;
-            quake::stop(&mut quake);
-        }
+        let quake = self.passage_quake(
+            enemies.quake,
+            exports.report.call,
+            ridley_placed,
+            content,
+            rules,
+        );
         self.station
             .passed(&mut enemies, loaded.actors.take(), pad_and_cover);
         self.quake = Model(quake);
@@ -508,6 +587,9 @@ impl State {
             opening_hud: None,
             ceres_doors: enemies.doors,
             lights: enemies.lights,
+            shaft_overlay_placement,
+            shaft_actors: enemies.shaft_actors,
+            elevator_reach: None,
             ridley: enemies.ridley,
             warning: enemies.warning,
             steam_hit: enemies.steam_hit,
@@ -515,6 +597,72 @@ impl State {
             quake: None,
         })
     }
+    fn passage_export(
+        &self,
+        before: &Palette,
+        passing: &Passing,
+        content: &Content,
+        rules: &Rules,
+    ) -> world_doors::Exports {
+        self.passage.doors.step(
+            passage::scene(&self.samus.movement.0, &self.camera.0, before),
+            &passage::doors_inputs(
+                false,
+                hud::countdown_begun(&self.hud.0),
+                self.passage.doorway,
+                passing,
+                content,
+            ),
+            &rules.doors,
+        )
+    }
+
+    fn passage_quake(
+        &mut self,
+        mut quake: world_quake::State,
+        call: Option<RoomCall>,
+        ridley: Option<RidleyPlacing>,
+        content: &Content,
+        rules: &Rules,
+    ) -> world_quake::State {
+        if call == Some(RoomCall::BuildRoom) {
+            quake::stop(&mut quake);
+        }
+        if let Some(placing) = ridley {
+            self.meet_the_boss(placing, content, rules);
+            let boss_ceres_ridley::ShakeStop = placing.shake;
+            quake::stop(&mut quake);
+        }
+        quake
+    }
+
+    fn brightening_actors(
+        &self,
+        shaft_brightening: bool,
+        passing: &Passing,
+        content: &Content,
+        rules: &Rules,
+        random: &mut types::RandomSequence,
+        palette: &mut Palette,
+    ) -> Result<Option<station::Enemies>, Fault> {
+        let runs = if shaft_brightening {
+            passing.work_begun
+        } else {
+            passage::brightening(self.passage.doors, passing)
+        };
+        runs.then(|| {
+            self.enemies(
+                station::Running::Passage,
+                random,
+                passing,
+                content,
+                rules,
+                palette,
+            )
+        })
+        .transpose()
+    }
+
     fn passage_jump(
         &self,
         moved: &mut samus_movement::Samus,

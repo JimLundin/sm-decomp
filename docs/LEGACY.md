@@ -136,9 +136,11 @@ set in the row its species loads to instead. No other species' placement changes
 
 ## Ceres escape boundaries
 
-The escape's last passage stops when the destination population places vents attached to
-the turning shaft (`TurningShaftVent`). The overlay's graphics, the ensuing rotation,
-physical mode changes during scanout and the haze fade retain their own owners.
+The escape shaft publishes the overlay figure and platform tiles through the
+room's sprite buffer and low-byte tilemap transfer. After the first overlay
+publication, other sprites can precede the figure. The full sprite order
+depends on the particle, vent and Samus drawing owners. Physical mode changes
+during scanout and the haze fade have their own owners.
 
 ## The engine: planned differences from the original
 

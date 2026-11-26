@@ -372,6 +372,9 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         | Outcome::DataFailure { .. }
         | Outcome::CheckpointFailure { .. } => return false,
     }
+    if case.inputs == super::index::InputProvider::CeresShaftActors {
+        return super::played::indexed::shaft::valid_counts(counts);
+    }
     if let Some(valid) = expanded_counts(case, counts) {
         return valid;
     }

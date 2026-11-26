@@ -8,6 +8,8 @@ mod support;
 
 #[cfg(test)]
 mod vectors {
+    use super::support::shaft::{OverlayVector, ProjectionVector, ReachVector, RotationVector};
+    use super::support::source::Source;
     use super::support::warning::{
         self as warning_vectors, EnglishCellRow, WarningEffectsRow, WarningLanguage, WarningRow,
     };
@@ -45,6 +47,57 @@ mod vectors {
     #[serde(deny_unknown_fields)]
     struct VectorFile {
         vector: Vec<Vector>,
+        shaft_overlay: Vec<OverlayVector>,
+        shaft_rotation: Vec<RotationVector>,
+        shaft_reach: Vec<ReachVector>,
+        shaft_vent_projection: Vec<ProjectionVector>,
+    }
+
+    impl VectorFile {
+        fn check_tilting_room(&self) {
+            assert_eq!(self.shaft_overlay.len(), 7);
+            assert_eq!(self.shaft_rotation.len(), 6);
+            assert_eq!(self.shaft_reach.len(), 10);
+            assert_eq!(self.shaft_vent_projection.len(), 3);
+            for vector in &self.shaft_overlay {
+                vector.source.check(|| vector.check());
+            }
+            for vector in &self.shaft_rotation {
+                vector.source.check(|| vector.check());
+            }
+            for vector in &self.shaft_reach {
+                vector.source.check(|| vector.check());
+            }
+            for vector in &self.shaft_vent_projection {
+                vector.source.check(|| vector.check());
+            }
+        }
+
+        fn labelled_entries(&self) -> impl Iterator<Item = (&str, &[String])> {
+            self.vector
+                .iter()
+                .map(|v| (v.id.as_str(), v.entries.as_slice()))
+                .chain(
+                    self.shaft_overlay
+                        .iter()
+                        .map(|v| (v.id.as_str(), v.entries.as_slice())),
+                )
+                .chain(
+                    self.shaft_rotation
+                        .iter()
+                        .map(|v| (v.id.as_str(), v.entries.as_slice())),
+                )
+                .chain(
+                    self.shaft_reach
+                        .iter()
+                        .map(|v| (v.id.as_str(), v.entries.as_slice())),
+                )
+                .chain(
+                    self.shaft_vent_projection
+                        .iter()
+                        .map(|v| (v.id.as_str(), v.entries.as_slice())),
+                )
+        }
     }
 
     /// A vector of any part: the doors' fields (the door of Ridley's room and the getaway's walls
@@ -305,31 +358,6 @@ mod vectors {
         Second,
     }
 
-    #[derive(Deserialize)]
-    #[serde(try_from = "String")]
-    enum Source {
-        Constructed,
-        Recorded,
-    }
-
-    impl TryFrom<String> for Source {
-        type Error = &'static str;
-
-        fn try_from(text: String) -> Result<Self, Self::Error> {
-            match text.as_str() {
-                "constructed" => Ok(Self::Constructed),
-                "recorded" => Ok(Self::Recorded),
-                _ if text.split_once(':').is_some_and(|(route, cut)| {
-                    route.starts_with("chain-") && cut.parse::<u32>().is_ok()
-                }) =>
-                {
-                    Ok(Self::Recorded)
-                }
-                _ => Err("unknown vector source"),
-            }
-        }
-    }
-
     #[derive(Deserialize, Default)]
     #[serde(deny_unknown_fields)]
     struct RulesRow {
@@ -479,10 +507,13 @@ mod vectors {
         Escape,
     }
 
-    fn vectors() -> Vec<Vector> {
-        toml::from_str::<VectorFile>(VECTORS)
+    fn vector_file() -> VectorFile {
+        toml::from_str(VECTORS)
             .unwrap_or_else(|error| panic!("the vector file must read: {}", error.message()))
-            .vector
+    }
+
+    fn vectors() -> Vec<Vector> {
+        vector_file().vector
     }
 
     /// The vectors write positions and random numbers in hex.
@@ -2588,7 +2619,9 @@ mod vectors {
 
     #[test]
     fn every_vector_passes() {
-        let vectors = vectors();
+        let file = vector_file();
+        file.check_tilting_room();
+        let vectors = file.vector;
         assert_eq!(vectors.len(), 384);
         assert_eq!(
             vectors
@@ -2606,9 +2639,7 @@ mod vectors {
         );
         let failures: Vec<String> = vectors
             .iter()
-            .filter_map(|vector| match vector.source {
-                Source::Constructed | Source::Recorded => check(vector),
-            })
+            .filter_map(|vector| vector.source.check(|| check(vector)))
             .collect();
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
@@ -2620,16 +2651,12 @@ mod vectors {
 
     #[test]
     fn every_entry_checked_by_vectors_has_one() {
-        let vectors = vectors();
-        let exercised: Vec<_> = vectors
-            .iter()
-            .flat_map(|vector| {
-                assert!(
-                    !vector.entries.is_empty(),
-                    "{} names no behaviours",
-                    vector.id
-                );
-                vector.entries.iter().map(|name| entry(name))
+        let file = vector_file();
+        let exercised: Vec<_> = file
+            .labelled_entries()
+            .flat_map(|(id, entries)| {
+                assert!(!entries.is_empty(), "{id} names no behaviours");
+                entries.iter().map(|name| entry(name))
             })
             .collect();
         for (id, behaviour) in catalogue() {

@@ -97,6 +97,7 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
                 index::InputProvider::PlayedCeresInputs
                     | index::InputProvider::ScopedCeresFlyby
                     | index::InputProvider::ScopedCeresWarning
+                    | index::InputProvider::CeresShaftActors
             ) {
                 played::indexed::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedGetawayInputs {

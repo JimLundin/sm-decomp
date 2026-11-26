@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "f5f1e0ae0b9427858714301dfe69fc2fc5b4aeb9f6c18da4826e759b3920c5c7"
+index_sha256 = "b646f9b66cc142e28d4617e869ca8b8eb28712c945fc65c6dc755788d80e062a"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1620,5 +1620,23 @@ replies = 0
 null_cuts = 0
 null_fields = 728
 restorations = 77
+pending_boundaries = 1
+pending_restorations = 1
+
+[[case]]
+id = "ridley/shaft-actors"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "0461b4922b7b958a3bb8194f78d938457681c679d1c2bea519f973123f852605"
+
+[case.counts]
+cuts = 220
+fields = 1100
+outputs = 1308
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 220
 pending_boundaries = 1
 pending_restorations = 1

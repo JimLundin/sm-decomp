@@ -26,7 +26,7 @@ use data::level::{BlockKind, PlmChoice, ScrollArea};
 use data::plm::PlmKind;
 use data::room::Area;
 use run_progress::{EnteredRoom, Progress, RoomStates, Version};
-use types::{BossKind, Item, RandomSequence, Side};
+use types::{BossKind, Item, Pair, Px, RandomSequence, Side};
 use world_doors::{COLOURS, Palette, RoomCall};
 
 /// The rooms, tilesets and sprite colours a passage loads from.
@@ -153,8 +153,10 @@ pub struct CeresActors {
     pub vents: Vec<Vent>,
     /// Population slots for the vents and doors during retirement.
     pub slots: ActorSlots,
-    /// It places the shaft's overlay, which shows the shaft's lights.
-    pub shaft_overlay: bool,
+    /// Population slots of vents mounted to the shaft's affine view.
+    pub mounted_vents: Vec<usize>,
+    /// The placed overlay's anchor in room pixels.
+    pub shaft_overlay: Option<Pair<Px>>,
 }
 
 /// The active actors' original population indices.
@@ -173,7 +175,7 @@ struct Placed {
     doors: Vec<CeresDoor>,
     /// The doors' colours each door actor's start sets, the shaft's overlay's among them.
     door_colours: Vec<DoorColours>,
-    shaft_overlay: bool,
+    shaft_overlay: Option<Pair<Px>>,
 }
 
 /// The station's actors `version` places, as its contents are fetched (`RidleyPlaced`,
@@ -188,7 +190,7 @@ fn placed(version: &world::Version, run: Run<'_>) -> Placed {
         ridley,
         doors: Vec::new(),
         door_colours: Vec::new(),
-        shaft_overlay: false,
+        shaft_overlay: None,
     };
     // His placing sets the stage the doors after him read.
     let stage = ridley.map_or(run.ceres, |ridley| ridley.stage);
@@ -199,7 +201,7 @@ fn placed(version: &world::Version, run: Run<'_>) -> Placed {
             CeresDoorKind::RidleyDoor => (DoorKind::RidleyDoor, Side::Right),
             CeresDoorKind::ShaftDoor => (DoorKind::ShaftDoor, Side::Left),
             CeresDoorKind::ShaftOverlay => {
-                placed.shaft_overlay = true;
+                placed.shaft_overlay = Some(door.position);
                 (DoorKind::Door, Side::Left)
             }
         };
@@ -228,7 +230,24 @@ pub fn ceres_actors(
     random: &mut RandomSequence,
 ) -> Result<CeresActors, LoadFault> {
     let version = version(rooms, through, run.progress)?;
-    actors_of(version, run, random)
+    actors_of(version, run, false, random)
+}
+
+/// Prepare the escape shaft population from the built room's entry.
+///
+/// # Errors
+/// The mounted population requires the active escape view and overlay. An error leaves
+/// the random sequence unchanged.
+pub fn ceres_shaft_actors(
+    through: DoorwayId,
+    run: Run<'_>,
+    rooms: &Rooms,
+    view: &shaft_entry::View,
+    random: &mut RandomSequence,
+) -> Result<CeresActors, LoadFault> {
+    let version = version(rooms, through, run.progress)?;
+    let mounts = run.ceres == Stage::Escape && view.affine;
+    actors_of(version, run, mounts, random)
 }
 
 /// The entry selected independently by the incoming doorway and room version.
@@ -255,6 +274,7 @@ pub fn setup(
 fn actors_of(
     version: &world::Version,
     run: Run<'_>,
+    mount_vents: bool,
     random: &mut RandomSequence,
 ) -> Result<CeresActors, LoadFault> {
     let placed = placed(version, run);
@@ -266,22 +286,29 @@ fn actors_of(
     }
     let mut drawn = *random;
     let mut vents = Vec::with_capacity(version.ceres_vents.len());
+    let mut mounted_vents = Vec::new();
     for vent in &version.ceres_vents {
-        let facing = match vent.facing {
-            CeresVentFacing::Up => VentFacing::Up,
-            CeresVentFacing::Left => VentFacing::Left,
-            CeresVentFacing::Down => VentFacing::Down,
-            CeresVentFacing::Right => VentFacing::Right,
-            CeresVentFacing::ShaftLeft | CeresVentFacing::ShaftRight => {
+        let (facing, mounted) = match vent.facing {
+            CeresVentFacing::Up => (VentFacing::Up, false),
+            CeresVentFacing::Left => (VentFacing::Left, false),
+            CeresVentFacing::Down => (VentFacing::Down, false),
+            CeresVentFacing::Right => (VentFacing::Right, false),
+            CeresVentFacing::ShaftLeft => (VentFacing::Left, true),
+            CeresVentFacing::ShaftRight => (VentFacing::Right, true),
+        };
+        if mounted {
+            if !mount_vents || placed.shaft_overlay.is_none() {
                 return Err(LoadFault::TurningShaftVent);
             }
-        };
+            mounted_vents.push(vent.slot);
+        }
         game_random::advance_random(&mut drawn);
         vents.push(Vent::place(facing, vent.position, drawn.number.0));
     }
     *random = drawn;
     Ok(CeresActors {
         vents,
+        mounted_vents,
         slots: ActorSlots {
             vents: version.ceres_vents.iter().map(|vent| vent.slot).collect(),
             doors: version
@@ -592,7 +619,7 @@ pub fn start(
                 lead: Lead::Ahead,
             },
         )?,
-        actors: actors_of(version, run, random)?,
+        actors: actors_of(version, run, false, random)?,
         goal: palette.goal,
         map: (map_room(room), room.place.area),
     })
@@ -1220,9 +1247,10 @@ mod tests {
                 doors: vec![0],
             },
             vents: Vec::new(),
+            mounted_vents: Vec::new(),
             ridley: None,
             doors: vec![door(boss_ceres_ridley::DoorKind::Door, Side::Left)],
-            shaft_overlay: false,
+            shaft_overlay: None,
         }
     }
 
@@ -1310,7 +1338,10 @@ mod tests {
         ];
         let rooms = rooms_of(shaft, version(0));
         let actors = super::ceres_actors(CHOSEN, run, &rooms, &mut test_random()).unwrap();
-        assert!(actors.shaft_overlay);
+        assert_eq!(
+            actors.shaft_overlay,
+            Some(placed(CeresDoorKind::ShaftOverlay).position)
+        );
         assert_eq!(actors.doors.len(), 1);
         let mut overlay = version(1);
         overlay.ceres_doors = vec![placed(CeresDoorKind::ShaftOverlay)];

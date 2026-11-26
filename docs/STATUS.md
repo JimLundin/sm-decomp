@@ -347,13 +347,16 @@ of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds all 330 cuts. Its passag
 during the darkening draws and on the first cut of brightening work, including the interrupted
 draw at cut 291. Active play counts jump against the previous history-writing draw. Pose
 choice reads the controller's new press. Played replay compares the carried sample as
-`movement.last-draw-jump`. Room 2 (`chain-any-0010-DF8D`) lands the backward leap at cut 87 and holds
-through cut 224. At cut 222 the shaft installer closes four cells, publishes its affine
-transform and seeds rotation. The previous population clears across cuts 222–224. At
-cut 225, or 1,079 in the continuous escape, destination placement reports
-`Load(TurningShaftVent)`. The scoped installer continues through cut 278, including
-retirement of the closing placement at 234. Its 57 cuts compare all 768 cells and marks,
-the placement, haze program, display request, affine registers and rotation seed.
+`movement.last-draw-jump`. Room 2 (`chain-any-0010-DF8D`) lands the backward leap at cut 87.
+At cut 222 the shaft installer closes four cells and publishes the initial affine
+transform. The old population clears across cuts 222 through 224. At cut 225 the
+passage installs the shaft overlay and eleven mounted vents. The first overlay
+picture is prepared at hall cut 239 and published at cut 240. Each vent takes its
+drawing offset from the room transform before that turn's rotation.
+Samus reaches the elevator after movement on shaft cut 164, movie frame 13,236.
+The lock persists on the following turn. The power-on replay holds through shaft
+cut 238, movie frame 13,310. The interrupted final room turn is the next timing
+boundary.
 
 Steam State is compared at finished cuts, including the puff figure. Room 3's puff pushes
 left at cut 137 and room 2's pushes right at cut 66. Both give a five-frame push, leave
@@ -362,7 +365,7 @@ left at cut 137 and room 2's pushes right at cut 66. Both give a five-frame push
 Production matches all of those steps. Disabling steam contact fails at room 3 cut 137 in
 `steam.hit`. Reusing the placement seed fails at room 4 cut 219 in `steam.vents`. Room 2
 starts with all eleven vents restored from its seed. The continuous run reaches their
-placement in the passage into room 2. Vent sprite rendering and the turning shaft are outside this comparison.
+placement in the passage into room 2. This contact check covers the vent phases and hit responses. The shaft witness also compares the mounted vents' drawing offsets.
 
 Her frame is two steps, her moves and then her reaction to the frame's hit, with the station and Health
 between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,

@@ -53,8 +53,8 @@ pub(super) mod samus;
 mod screens;
 pub(super) mod seed;
 mod shaft;
-#[cfg(test)]
 mod shaft_native;
+mod shaft_restore;
 mod start;
 mod station;
 mod steam;
@@ -162,10 +162,11 @@ fn expected(
     let finished = finished(frame.current);
     let mut fields = samus::expected(&frame.previous.wram, wram, content, row, frame.cut)?;
     fields.extend(camera::expected(wram)?);
-    let passing = passage::passing(wram)?;
+    let shaft_elevator = shaft_native::in_elevator(frame)?;
+    let passing = !shaft_elevator && passage::passing(wram)?;
     fields.push(passage::observation(passing));
     // In play every draw is the loop's own, so a frame's draws are compared where it finished.
-    if finished && !passing {
+    if (finished && !passing) || shaft_native::compared(frame) {
         fields.push(frame::random_observation(frame::random(wram)?));
     }
     if finished {
@@ -174,16 +175,18 @@ fn expected(
         if !retiring_return {
             fields.extend(ridley::expected(wram)?);
         }
-        fields.push(steam::state(&steam::decode(wram)?));
+        fields.push(steam::state(steam::decode_shaft(wram)?.iter()));
     }
-    fields.extend(shaft::expected(wram)?);
+    fields.extend(shaft::expected(wram, shaft_elevator)?);
     fields.extend(health::parts(&health_tail::decode(wram, None)?));
     if hud_settled {
         fields.extend(hud::parts(super::hud::expected(wram, hud)?));
         fields.extend(hud::countdown(super::hud::countdown_origin(wram)?));
     }
     fields.extend(frame::expected(wram)?);
-    fields.extend(arrival::expected(wram, counted)?);
+    if !shaft_elevator {
+        fields.extend(arrival::expected(wram, counted)?);
+    }
     Ok(fields)
 }
 
@@ -209,7 +212,7 @@ fn actual(
         if !retiring_return {
             fields.extend(ridley::actual(&state.station));
         }
-        fields.push(steam::state(&state.station.vents));
+        fields.push(steam::station(&state.station));
     }
     fields.extend(shaft::actual(&state.station));
     fields.extend(health::parts(&state.health.0));
@@ -471,10 +474,13 @@ impl<'a> Run<'a> {
                 Start::Preparing(..) => None,
             },
         )?;
+        let shaft = import::shaft::import(image.lorom()).ok();
         Ok(Self {
             state,
             played: played::Content {
                 clock_figures: Some(timer),
+                shaft_track: shaft.as_ref().map(played::shaft::track),
+                shaft_overlay_art: shaft,
                 arrival_bg3: Some(
                     import::landing_site::import(image.lorom())
                         .map_err(|_| data_failure(None, "standard room background art"))?
@@ -614,7 +620,9 @@ impl<'a> Run<'a> {
             match self.step(controller, &previous, &current, cut, (&row, local)) {
                 Ok(fields) => {
                     #[cfg(test)]
-                    rows.clock_cuts.push(cut);
+                    if fields.iter().any(|field| field.field == play_time::FIELD) {
+                        rows.clock_cuts.push(cut);
+                    }
                     if let Err(outcome) = observe(&current, cut) {
                         return Ok((held, Stop::At(at(cut, outcome))));
                     }
@@ -646,6 +654,18 @@ impl<'a> Run<'a> {
         cut: u64,
         place: (&str, u64),
     ) -> Result<Vec<Observation>, Outcome> {
+        self.step_with_outputs(controller, previous, current, cut, place)
+            .map(|(fields, _)| fields)
+    }
+
+    fn step_with_outputs(
+        &mut self,
+        controller: Controller,
+        previous: &FrameRecord,
+        current: &FrameRecord,
+        cut: u64,
+        place: (&str, u64),
+    ) -> Result<(Vec<Observation>, played::Outputs), Outcome> {
         // While a new game's start is made ready no frame of play reads the pad, and the
         // preparation's own waits for the frame's end are its lag.
         let preparing = self.state.arrival.preparing();
@@ -671,12 +691,13 @@ impl<'a> Run<'a> {
         // The fetch can span lag cuts. Its vent draws are ours until that frame finishes.
         let owns_vent_draws = fetch_under_way(doors)
             && !fetching_contents(doors)
-            && !self.state.station.vents.is_empty()
+            && (!self.state.station.vents.is_empty() || self.state.station.escape_shaft.is_some())
             && !finished(previous);
         let platform = self.passage_timing(current);
         let passing = played::passage::Passing {
             // The borrowed lag: the last NMI found the frame's work finished, so the next began.
-            work_begun: finished(previous),
+            work_begun: finished(previous)
+                && !shaft_native::fetch_retires(&self.state.station, doors),
             work_done: platform.ready || fetching_contents(doors),
             publishes: platform.publishes,
             actor_fetch: platform::actor_fetch(current),
@@ -685,9 +706,11 @@ impl<'a> Run<'a> {
                 music_ready: music_ready(&previous.wram)?,
             },
             // Borrow random draws during passages outside the vent placement work frame.
-            random: (matches!(doors, Doors::Passing(_)) && !owns_vent_draws)
-                .then(|| frame::random(&previous.wram))
-                .transpose()?,
+            random: (matches!(doors, Doors::Passing(_))
+                && !owns_vent_draws
+                && self.state.station.escape_shaft.is_none())
+            .then(|| frame::random(&previous.wram))
+            .transpose()?,
             start: arrival::start(previous, current)?,
         };
         let borrowed_start = if warning::selected(&self.state.station) {
@@ -708,17 +731,17 @@ impl<'a> Run<'a> {
         if let Some(row) = outputs.opening_hud {
             self.upper_row = Some(row);
         }
+        let frame = Frame {
+            previous,
+            current,
+            cut,
+            doors_before: doors,
+            publishes: platform.publishes,
+            place,
+        };
         let (mut expected, mut actual) = if self.state.arrival.preparing() {
             self.preparing_fields(current, place)?
         } else {
-            let frame = Frame {
-                previous,
-                current,
-                cut,
-                doors_before: doors,
-                publishes: platform.publishes,
-                place,
-            };
             self.compared(&frame, hud_settled, owns_vent_draws, &outputs)?
         };
         if preparing && !self.state.arrival.preparing() {
@@ -739,16 +762,17 @@ impl<'a> Run<'a> {
                 &self.state.hud.0,
             )?);
         }
-        room_video::compare_background(
+        room_video::compare(
             &self.state.room_video,
-            current,
+            outputs.shaft_overlay_placement.is_some(),
+            &frame,
             &mut expected,
             &mut actual,
         )?;
         expected.push(play_time::observation(play_time::read(&current.wram)?));
         actual.push(play_time::observation(self.state.play_time));
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
-        Ok(expected)
+        Ok((expected, outputs))
     }
 
     fn preparing_fields(
@@ -816,12 +840,16 @@ impl<'a> Run<'a> {
             retiring_return,
         )?;
         self.population_fields(frame, retiring_return, &mut expected, &mut actual)?;
+        if shaft_native::compared(frame) {
+            expected.extend(shaft_native::expected(frame)?);
+            actual.extend(shaft_native::actual(&self.state, outputs));
+        }
         // A frame of play answers the escape's scene whether its time has run out.
         if let Some(hud) = &outputs.hud {
             expected.push(hud::expiry_expected(&current.wram)?);
             actual.push(hud::expiry_actual(hud.countdown.expiry));
             // These rooms have no other contact hitter.
-            if !self.state.station.vents.is_empty() {
+            if !self.state.station.vents.is_empty() || self.state.station.escape_shaft.is_some() {
                 expected.insert(0, steam::expected_hit(&previous.wram, &current.wram)?);
                 actual.push(steam::actual_hit(outputs.steam_hit));
             }
@@ -864,7 +892,8 @@ impl<'a> Run<'a> {
                 outputs.ridley.is_some_and(|run| run.getaway.is_some()),
             )?);
             actual.extend(quake::actual(&self.state, outputs.quake));
-            if owns_vent_draws && passage::passing(&current.wram)? {
+            if owns_vent_draws && !shaft_native::compared(frame) && passage::passing(&current.wram)?
+            {
                 expected.push(frame::random_observation(frame::random(&current.wram)?));
             }
         }
@@ -892,12 +921,23 @@ impl<'a> Run<'a> {
             expected.extend(super::shaft_entry::expected(current)?);
             actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
             if !finished(current) {
-                expected.extend(colours::observations(&colours::palette(&current.wram)?));
-                actual.extend(colours::observations(&self.state.palette));
+                let observed = colours::observations(&colours::palette(&current.wram)?);
+                let played = colours::observations(&self.state.palette);
+                if shaft_native::partial_palette(frame, self.rules.doors.fade_steps) {
+                    // The T1 cut crosses an in-progress interpolation of the screen row.
+                    // The unchanged target palette and all actor state can already be compared.
+                    let [_, observed_goal] = observed;
+                    let [_, played_goal] = played;
+                    expected.push(observed_goal);
+                    actual.push(played_goal);
+                } else {
+                    expected.extend(observed);
+                    actual.extend(played);
+                }
                 expected.extend(ceres_doors::expected(&current.wram)?);
                 actual.extend(ceres_doors::actual(&self.state.station));
-                expected.push(steam::state(&steam::decode(&current.wram)?));
-                actual.push(steam::state(&self.state.station.vents));
+                expected.push(steam::state(steam::decode_shaft(&current.wram)?.iter()));
+                actual.push(steam::station(&self.state.station));
             }
         }
         Ok(())

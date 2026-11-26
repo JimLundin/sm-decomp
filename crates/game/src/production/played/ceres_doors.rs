@@ -30,7 +30,7 @@ pub(super) fn run(
     rules: &boss_ceres_ridley::Rules,
     quake: &mut world_quake::State,
 ) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
-    if stage == Stage::Escape && station.shaft_overlay {
+    if stage == Stage::Escape && station.shaft_overlay && station.escape_shaft.is_none() {
         return Err(Fault::Escape);
     }
     let her = Pair {

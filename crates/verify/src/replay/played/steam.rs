@@ -27,6 +27,15 @@ pub(super) fn slots(wram: &[u8]) -> Result<Vec<u16>, Outcome> {
 
 /// Restore each vent from its facing, instruction, displayed figure and counters.
 pub(super) fn decode(wram: &[u8]) -> Result<Vec<Vent>, Outcome> {
+    decode_vents(wram, false)
+}
+
+/// Restore the mounted variants with their ordinary leftward or rightward phase.
+pub(super) fn decode_shaft(wram: &[u8]) -> Result<Vec<Vent>, Outcome> {
+    decode_vents(wram, true)
+}
+
+fn decode_vents(wram: &[u8], mounted: bool) -> Result<Vec<Vent>, Outcome> {
     let mut vents = Vec::new();
     let bad = || data_failure(None, "steam vent encoding");
     for slot in slots(wram)? {
@@ -41,6 +50,8 @@ pub(super) fn decode(wram: &[u8]) -> Result<Vec<Vent>, Outcome> {
             1 => (VentFacing::Left, 0xf081, 0xf188),
             2 => (VentFacing::Down, 0xf0b5, 0xf1ce),
             3 => (VentFacing::Right, 0xf0e9, 0xf214),
+            4 if mounted => (VentFacing::Left, 0xf081, 0xf188),
+            5 if mounted => (VentFacing::Right, 0xf0e9, 0xf214),
             4 | 5 => {
                 return Err(Outcome::Unsupported {
                     cut: None,
@@ -90,9 +101,19 @@ pub(super) fn decode(wram: &[u8]) -> Result<Vec<Vent>, Outcome> {
 }
 
 /// Compare complete vent State and the derived drawing figure at every finished cut.
-pub(super) fn state(vents: &[Vent]) -> Observation {
+pub(super) fn station(station: &game::production::played::station::State) -> Observation {
+    state(
+        station.vents.iter().chain(
+            station
+                .escape_shaft
+                .iter()
+                .flat_map(|shaft| shaft.vents.iter().map(|vent| &vent.vent)),
+        ),
+    )
+}
+
+pub(super) fn state<'a>(vents: impl Iterator<Item = &'a Vent>) -> Observation {
     let bytes = vents
-        .iter()
         .flat_map(|vent| {
             let facing = match vent.facing {
                 VentFacing::Up => 0,

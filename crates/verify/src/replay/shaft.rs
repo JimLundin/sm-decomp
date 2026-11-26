@@ -79,12 +79,16 @@ fn pad(wram: &[u8], slot: u16) -> Result<Pad, Outcome> {
 /// The pad and the cover as the record holds them. The game holds her exactly while the pad is
 /// present; a record where the two disagree is outside the shaft's model.
 pub(super) fn pad_and_cover(wram: &[u8]) -> Result<PadAndCover, Outcome> {
+    pad_cover_with_elevator(wram, false)
+}
+
+pub(super) fn pad_cover_with_elevator(wram: &[u8], elevator: bool) -> Result<PadAndCover, Outcome> {
     let pad = slot(wram, PAD)?.map(|slot| pad(wram, slot)).transpose()?;
     let cover = slot(wram, COVER)?
         .map(|slot| position(wram, slot).map(|position| Cover { position }))
         .transpose()?;
     let held = word(wram, SAMUS_NEW_STATE_HANDLER)? == HELD_HANDLER;
-    if held != pad.is_some() {
+    if held != (pad.is_some() || elevator) {
         return Err(unsupported(
             "her lock without the Ceres pad, or the pad without her lock",
         ));

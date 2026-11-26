@@ -25,9 +25,14 @@
 //! they run ([`PadAndCover::run`]). Each step answers with them as it leaves them, her height
 //! and what is drawn of them ([`PadAndCoverStep`]).
 //!
-//! The lights remember nothing: on each frame the shaft's overlay runs, [`Lights::step`] takes
-//! what it reads ([`LightsInputs`]) and answers with the beacon's step and the platform's look
-//! ([`Lights`]).
+//! The lights remember nothing: on each light turn, [`Lights::step`] answers with the beacon's
+//! step and the platform's look. Outside the escape, every overlay turn is a light turn.
+//!
+//! **The shaft during the escape.** Place the actor with [`place_shaft_overlay`] and give it
+//! turns with [`turn_shaft_overlay`]. The caller applies its art, light and burst requests,
+//! and passes the rotation start to [`turn_shaft`] after motion and the room actors. The shaft
+//! publishes its view and can lock Samus on reaching the elevator. [`MountedVent::run`] reads
+//! the incoming view and projects only the drawing origin, not the contact position.
 //!
 //! **Ridley's room as she enters.** Its door is a Ceres door of its own kind: it stands open
 //! behind her a moment, slams shut and stays locked, drawn by Ridley, until he is beaten; then
@@ -117,6 +122,8 @@ mod ridley_phase;
 mod ridley_wait;
 mod roar;
 mod rules;
+mod shaft_overlay;
+mod shaft_rotation;
 mod shown;
 mod station;
 mod steam;
@@ -163,15 +170,27 @@ pub use ridley_phase::{
 pub use ridley_wait::{RidleyWait, WakeWait};
 pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
+pub use shaft_overlay::{
+    OverlayPlacement, OverlaySpriteUpload, OverlayTurn, RumbleBurst, RumbleParticle,
+    StartShaftRotation, overlay_figure, place_shaft_overlay, turn_shaft_overlay,
+};
+pub use shaft_rotation::{
+    EarlierShaftPose, ElevatorAnimation, ElevatorLock, ShaftPlacement, ShaftTurn, TiltSample,
+    TiltTrack, elevator_reached, turn_shaft, turn_shaft_rotation,
+};
 pub use shown::{FigureLength, FigureSequence, NextFigure, ShownFigure};
 pub use station::{
     ColourSet, DoorColours, DoorPalette, Shake, ShakeLayers, ShakeMotion, ShakeStart, Stage,
 };
-pub use steam::{FirstPuffWait, Vent, VentPhase, run_vents};
+pub use steam::{FirstPuffWait, MountedVent, Vent, VentPhase, run_vents};
 pub use tail::{TAIL_DAMAGE, TailCurl};
 pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
 pub use types::ceres_getaway::{
     FlybyBabyBeat, FlybyBeats, FlybyProgress, FlybyTurn, FlybyWingBeat, GetawayState, OutOfTheWay,
+};
+pub use types::ceres_shaft::{
+    BurstPoint, BurstWait, RumbleTurns, ShaftOverlay, ShaftOverlayPhase, ShaftRotation, ShaftView,
+    TiltDirection, VentDrawOffset,
 };
 pub use types::ceres_warning::{
     HeadingHold, StrokeBeat, SubtitleHold, TypingWait, WARNING_GLOW_LOOKS, WarningArtProgress,

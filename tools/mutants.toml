@@ -498,14 +498,18 @@ field = "ceres.0.wait"
 name = "played-ceres-doors-read-her-after-moves"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"
-before = '''            self.her_frame(inputs, content, rules, |_| Ok(between))?'''
+before = '''            self.her_frame(inputs, content, rules, |_| Ok(between))'''
 after = '''            self.her_frame(inputs, content, rules, |after_moves| {
                 let mut moved = self.clone();
                 moved.samus.movement.0.position = after_moves;
                 let running = station::Running::Play(at_start.as_ref());
-                let enemies = moved.enemies(running, random, passing, content, rules, &mut palette)?;
-                Ok(samus::Between { played: (enemies, between.played.1), ..between })
-            })?'''
+                let mut random = self.frame.drawn(passing);
+                let mut palette = self.palette;
+                let mut between = between;
+                between.played.0.doors =
+                    moved.enemies(running, &mut random, passing, content, rules, &mut palette)?.doors;
+                Ok(between)
+            })'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 7
 field = "ceres.0.phase"
@@ -1166,8 +1170,8 @@ name = "played-steam-contact-disabled"
 rule = "boss-ceres-ridley/PuffTouches"
 responsibility = "played"
 file = "crates/game/src/production/played/station.rs"
-before = "let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres);"
-after = "let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her.filter(|_| false), &rules.ceres);"
+before = "|| boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres),"
+after = "|| boss_ceres_ridley::run_vents(&mut vents, camera, None, &rules.ceres),"
 case = "played chain-any-0009-DFD7 0 199"
 cut = 137
 field = "steam.hit"
@@ -2028,11 +2032,9 @@ responsibility = "played"
 file = "crates/game/src/production/played/station.rs"
 before = """        if first_live > 0 {
             self.ridley = None;
-            self.warning = None;
-        }"""
+            self.warning = None;"""
 after = """        if first_live > 0 {
-            self.warning = None;
-        }"""
+            self.warning = None;"""
 case = "played chain-any-0006-E0B5 1270 2855"
 cut = 1690
 field = "ridley.placed"

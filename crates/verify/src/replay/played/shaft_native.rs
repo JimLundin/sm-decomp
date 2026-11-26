@@ -1,7 +1,13 @@
 //! Native shaft actor placement, rotation and elevator observations.
 
+mod effects;
+
+use super::Frame;
+#[cfg(test)]
 use super::{Sources, open_rows, read_lock};
-use crate::replay::{data_failure, result::Outcome};
+use crate::replay::{compare::Observation, data_failure, result::Outcome};
+use boss_ceres_ridley::{BurstPoint, ShaftOverlayPhase};
+use game::production::played::{Outputs, State};
 use oracle_record::FrameRecord;
 
 const HALL: &str = "chain-any-0010-DF8D";
@@ -65,8 +71,246 @@ fn rotation(record: &FrameRecord) -> Result<Rotation, Outcome> {
     })
 }
 
-fn reached(before: &FrameRecord, after: &FrameRecord) -> Result<bool, Outcome> {
-    Ok(word(before, 0x0998)? == 8 && word(after, 0x0998)? == 32)
+fn reach(before: &FrameRecord, after: &FrameRecord) -> Result<Option<[u16; 3]>, Outcome> {
+    if word(before, 0x0998)? == 8 && word(after, 0x0998)? == 32 {
+        return Ok(Some([
+            word(after, 0x0aa0)?,
+            word(after, 0x0723)?,
+            word(after, 0x0725)?,
+        ]));
+    }
+    Ok(None)
+}
+
+// The completed slide requests NMI within the fetch, then returns on the first landing cut.
+pub(super) fn fetch_retires(
+    station: &game::production::played::station::State,
+    doors: world_doors::Doors,
+) -> bool {
+    use world_doors::{Doors, Passage, Phase, WorkFrames};
+    station.escape_shaft.is_some()
+        && matches!(
+            doors,
+            Doors::Passing(Passage { phase: Phase::Landing(frame), .. })
+                if frame == WorkFrames::FIRST
+        )
+}
+
+pub(super) fn in_elevator(frame: &Frame<'_>) -> Result<bool, Outcome> {
+    Ok(frame.place.0 == SHAFT && matches!(word(frame.current, 0x0998)?, 32 | 33))
+}
+
+pub(super) fn partial_palette(frame: &Frame<'_>, fade_steps: u8) -> bool {
+    use world_doors::{Doors, FadeTime, Passage, Phase};
+    matches!(
+        frame.doors_before,
+        Doors::Passing(Passage { phase: Phase::Brightening(FadeTime(step)), .. })
+            if (1..=u16::from(fade_steps).saturating_add(1)).contains(&step)
+    )
+}
+
+pub(super) fn compared(frame: &Frame<'_>) -> bool {
+    let (row, cut) = frame.place;
+    (row == HALL && (225..=278).contains(&cut)) || (row == SHAFT && cut <= 239)
+}
+
+fn fields(
+    overlay: Overlay,
+    rotation: Rotation,
+    mount_offsets: impl IntoIterator<Item = (u16, i32, i32)>,
+    placement: bool,
+    reach: Option<[u16; 3]>,
+    locked: bool,
+) -> Vec<Observation> {
+    let part = |name: &str, bytes: Vec<u8>| Observation {
+        field: format!("shaft-actors.{name}"),
+        bytes,
+    };
+    let mut rotation_bytes = vec![u8::from(rotation.turning), u8::from(rotation.forward)];
+    rotation_bytes.extend(rotation.sample.to_le_bytes());
+    rotation_bytes.extend(rotation.hold.to_le_bytes());
+    rotation_bytes.extend(rotation.matrix.into_iter().flat_map(i16::to_le_bytes));
+    let offsets = mount_offsets
+        .into_iter()
+        .flat_map(|(slot, x, y)| {
+            slot.to_le_bytes()
+                .into_iter()
+                .chain(x.to_le_bytes())
+                .chain(y.to_le_bytes())
+        })
+        .collect();
+    let mut reach_bytes = vec![u8::from(reach.is_some())];
+    reach_bytes.extend(reach.into_iter().flatten().flat_map(u16::to_le_bytes));
+    vec![
+        part("placed", vec![u8::from(placement)]),
+        part("overlay", format!("{overlay:?}").into_bytes()),
+        part("mounted-offsets", offsets),
+        part("rotation", rotation_bytes),
+        part("reach", reach_bytes),
+        part("locked", vec![u8::from(locked)]),
+    ]
+}
+
+pub(super) fn expected(frame: &Frame<'_>) -> Result<Vec<Observation>, Outcome> {
+    let current = frame.current;
+    let mut offsets = Vec::new();
+    for slot in super::steam::slots(&current.wram)? {
+        let at = 0x7010_usize.saturating_add(64_usize.saturating_mul(usize::from(slot)));
+        offsets.push((
+            slot,
+            i32::from(word(current, at)?.cast_signed()),
+            i32::from(word(current, at.saturating_add(2))?.cast_signed()),
+        ));
+    }
+    let after = overlay(current)?;
+    let placed = frame.place == (HALL, 225);
+    let mut observations = fields(
+        after,
+        rotation(current)?,
+        offsets,
+        placed,
+        reach(frame.previous, current)?,
+        in_elevator(frame)?,
+    );
+    observations.extend(effects::expected(frame, placed, after)?);
+    Ok(observations)
+}
+
+pub(super) fn actual(state: &State, outputs: &Outputs) -> Vec<Observation> {
+    let Some(shaft) = &state.station.escape_shaft else {
+        return Vec::new();
+    };
+    let overlay = match shaft.overlay.phase {
+        ShaftOverlayPhase::Opening => Overlay::Opening,
+        ShaftOverlayPhase::Hidden => Overlay::Hidden,
+        ShaftOverlayPhase::Rumbling {
+            remaining,
+            wait,
+            point,
+        } => Overlay::Rumble {
+            left: u16::from(remaining.get()),
+            wait: u16::from(wait.get()),
+            next: match point {
+                BurstPoint::First => 0,
+                BurstPoint::Second => 1,
+                BurstPoint::Third => 2,
+                BurstPoint::Fourth => 3,
+            },
+        },
+    };
+    let rotation = shaft.rotation;
+    let mut observations = fields(
+        overlay,
+        Rotation {
+            turning: rotation.active,
+            forward: rotation.direction == types::ceres_shaft::TiltDirection::Forward,
+            sample: u16::try_from(rotation.next).unwrap_or(u16::MAX),
+            hold: rotation.hold,
+            matrix: rotation.view.matrix,
+        },
+        state
+            .station
+            .slots
+            .vents
+            .iter()
+            .zip(&shaft.vents)
+            .map(|(&slot, vent)| {
+                (
+                    u16::try_from(slot).unwrap_or(u16::MAX),
+                    vent.offset.0.x,
+                    vent.offset.0.y,
+                )
+            }),
+        outputs.shaft_overlay_placement.is_some(),
+        outputs.elevator_reach.map(|arrival| {
+            let [fade_delay, fade_count] = arrival.scene_fade;
+            [
+                u16::from(arrival.hold),
+                u16::from(fade_delay),
+                u16::from(fade_count),
+            ]
+        }),
+        shaft.locked,
+    );
+    observations.extend(effects::actual(outputs.shaft_actors));
+    observations
+}
+
+#[cfg(test)]
+fn check_placement(
+    sources: &Sources,
+    before: &FrameRecord,
+    installed: &FrameRecord,
+) -> Result<(), Outcome> {
+    use boss_ceres_ridley::Stage;
+    use core::num::Wrapping;
+    use data::{assets::world::doorways::FALLING_TILE_TO_ELEVATOR, rom::Rom};
+    use game::production::room_loading;
+    use types::{Pair, RandomNumber, RandomSequence};
+
+    let native_slots = super::steam::slots(&installed.wram)?;
+    assert_eq!(native_slots, (2..13).collect::<Vec<_>>());
+    let vents = super::steam::decode_shaft(&installed.wram)?;
+    let mut random = RandomSequence {
+        number: RandomNumber(word(before, 0x05e5)?),
+    };
+    let mut placed_random = random;
+    let image = Rom::new(std::fs::read(&sources.rom).map_err(|_| data_failure(None, "shaft ROM"))?)
+        .map_err(|_| data_failure(None, "shaft ROM"))?;
+    let rooms = super::seed::rooms(&image)?;
+    let progress = crate::replay::progress::decode(&before.wram)?;
+    let view = crate::replay::shaft_entry::observed(before)?.view;
+    let actors = room_loading::ceres_shaft_actors(
+        FALLING_TILE_TO_ELEVATOR,
+        room_loading::Run {
+            progress: &progress,
+            ceres: Stage::Escape,
+        },
+        &rooms,
+        &view,
+        &mut placed_random,
+    )
+    .map_err(|_| data_failure(Some(installed.index), "shaft population contents"))?;
+    assert_eq!(actors.vents, vents);
+    assert_eq!(actors.mounted_vents, (2..13).collect::<Vec<_>>());
+    assert_eq!(actors.slots.vents, actors.mounted_vents);
+    for (&slot, vent) in native_slots.iter().zip(&actors.vents) {
+        use crate::source::{ENEMY_DATA, ENEMY_PARAMETER_1};
+        let tag = ENEMY_DATA
+            .word(ENEMY_PARAMETER_1, slot)
+            .and_then(|field| field.read(&installed.wram))
+            .map_err(|_| data_failure(Some(installed.index), "shaft mount tag"))?;
+        let expected = match vent.facing {
+            boss_ceres_ridley::VentFacing::Left => 4,
+            boss_ceres_ridley::VentFacing::Right => 5,
+            boss_ceres_ridley::VentFacing::Up | boss_ceres_ridley::VentFacing::Down => {
+                panic!("shaft vent slot {slot} has nonhorizontal facing")
+            }
+        };
+        assert_eq!(tag, expected, "shaft vent slot {slot} mounted tag");
+    }
+    assert_eq!(actors.slots.doors, [1]);
+    assert_eq!(
+        actors.shaft_overlay,
+        Some(Pair {
+            x: Wrapping(word(installed, 0x0f7a)?),
+            y: Wrapping(word(installed, 0x0f7e)?),
+        })
+    );
+    for (slot, vent) in (2..).zip(vents) {
+        game_random::advance_random(&mut random);
+        let boss_ceres_ridley::VentPhase::Placed(wait) = vent.phase else {
+            panic!("shaft vent slot {slot} has already run");
+        };
+        assert_eq!(
+            u16::from(wait.runs()),
+            1_u16.saturating_add(random.number.0 % 32),
+            "shaft vent slot {slot}"
+        );
+    }
+    assert_eq!(word(installed, 0x05e5)?, random.number.0);
+    assert_eq!(random, placed_random);
+    Ok(())
 }
 
 #[test]
@@ -74,7 +318,6 @@ fn reached(before: &FrameRecord, after: &FrameRecord) -> Result<bool, Outcome> {
 fn shaft_native_cuts_preserve_placement_and_reach() -> Result<(), Outcome> {
     use super::{platform::actor_fetch, tests};
     use game::production::played::passage::ActorFetch;
-    use types::{RandomNumber, RandomSequence};
 
     let sources: Sources = tests::sources();
     let lock = read_lock(&sources)?;
@@ -83,22 +326,17 @@ fn shaft_native_cuts_preserve_placement_and_reach() -> Result<(), Outcome> {
     let installed = hall.record(225)?;
     assert_eq!(actor_fetch(&installed), ActorFetch::Place);
     assert_eq!(overlay(&installed)?, Overlay::Opening);
-    let mut random = RandomSequence {
-        number: RandomNumber(word(&before, 0x05e5)?),
-    };
-    for slot in 2_usize..13 {
-        game_random::advance_random(&mut random);
-        let at = 0x0fae_usize.saturating_add(slot.saturating_mul(64));
-        assert_eq!(
-            word(&installed, at)?,
-            1_u16.saturating_add(random.number.0 % 32),
-            "shaft vent slot {slot}"
-        );
-    }
-    assert_eq!(word(&installed, 0x05e5)?, random.number.0);
-    assert_eq!(overlay(&hall.record(238)?)?, Overlay::Opening);
+    check_placement(&sources, &before, &installed)?;
+
+    let before_first = hall.record(238)?;
+    let first = hall.record(239)?;
+    let published = hall.record(240)?;
+    assert!(super::finished(&before_first));
+    assert!(!super::finished(&first));
+    assert!(super::finished(&published));
+    assert_eq!(overlay(&before_first)?, Overlay::Opening);
     assert_eq!(
-        overlay(&hall.record(239)?)?,
+        overlay(&first)?,
         Overlay::Rumble {
             left: 48,
             wait: 0,
@@ -106,9 +344,11 @@ fn shaft_native_cuts_preserve_placement_and_reach() -> Result<(), Outcome> {
         }
     );
 
+    assert_eq!(overlay(&first)?, overlay(&published)?);
+
     let mut previous = hall.record(278)?;
     let mut shaft = open_rows(&sources, &lock, SHAFT)?;
-    let mut reach = Vec::new();
+    let mut reached = Vec::new();
     let mut sample_reads = 0_usize;
     for cut in 0..=239 {
         let current = shaft.record(cut)?;
@@ -132,16 +372,35 @@ fn shaft_native_cuts_preserve_placement_and_reach() -> Result<(), Outcome> {
         if rotation(&previous)?.sample != state.sample {
             sample_reads = sample_reads.saturating_add(1);
         }
-        if reached(&previous, &current)? {
-            reach.push(cut);
+        if let Some(payload) = reach(&previous, &current)? {
+            reached.push(cut);
             assert!(state.turning);
-            assert_eq!(word(&current, 0x0aa0)?, 60);
-            assert_eq!(word(&current, 0x0723)?, 0);
-            assert_eq!(word(&current, 0x0725)?, 0);
+            assert_eq!(payload, [60, 0, 0]);
         }
         previous = current;
     }
     assert_eq!(sample_reads, 27);
-    assert_eq!(reach, [164]);
+    assert_eq!(reached, [164]);
+    Ok(())
+}
+
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn escape_shaft_from_boot_and_room_origin() -> Result<(), Outcome> {
+    let sources = super::tests::sources();
+    for (row, first, last) in [
+        ("any-power-on", 0_u64, 13237_u64),
+        ("chain-any-0010-DF8D", 0, 444),
+        ("chain-any-0006-E0B5", 1690, 3075),
+        ("chain-any-0006-E0B5", 1270, 3075),
+    ] {
+        let report = super::play(&sources, row, first, last)?;
+        assert_eq!(report.stop, super::Stop::End, "{row} from {first}");
+        assert_eq!(
+            report.held,
+            last.saturating_sub(first),
+            "{row} from {first}"
+        );
+    }
     Ok(())
 }

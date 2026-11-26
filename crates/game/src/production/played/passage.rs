@@ -189,6 +189,23 @@ impl super::State {
         }
     }
 
+    pub(super) fn load_with_overlay(
+        &mut self,
+        call: Option<RoomCall>,
+        passing: &Passing,
+        content: &Content,
+        palette: &mut Palette,
+        random: &mut types::RandomSequence,
+    ) -> Result<Loaded, Fault> {
+        let loaded = self.load(call, passing, content, palette, random)?;
+        if loaded.shaft_placement.is_some() {
+            let art = content.shaft_overlay_art.as_ref().ok_or(Fault::Escape)?;
+            super::room_video::ShaftOverlay::publish(&mut self.room_video.video, art)
+                .ok_or(Fault::Escape)?;
+        }
+        Ok(loaded)
+    }
+
     /// What the passage's call `call` loads of the next room, as its work is done: the colours
     /// it sets, the room it builds and the Ceres actors it places.
     pub(super) fn load(
@@ -202,6 +219,8 @@ impl super::State {
         let mut loaded = Loaded {
             room: None,
             actors: None,
+            shaft: None,
+            shaft_placement: None,
             awaiting_actors: self.passage.awaiting_actors,
         };
         let Some(doorway) = self.passage.doorway else {
@@ -282,11 +301,14 @@ impl super::State {
             .map_err(Fault::Load)?;
         }
         if loaded.awaiting_actors && passing.actor_fetch == ActorFetch::Place {
-            loaded.actors = Some(
-                room_loading::ceres_actors(doorway.through, run, &content.rooms, random)
-                    .map_err(Fault::Load)?,
-            );
-            loaded.awaiting_actors = false;
+            loaded.place_actors(
+                doorway.through,
+                run,
+                &self.passage.room,
+                content,
+                palette,
+                random,
+            )?;
         }
         Ok(loaded)
     }
@@ -315,19 +337,65 @@ pub(super) struct Loaded {
     pub(super) room: Option<Room>,
     /// The Ceres actors fetching its contents places, which replace the last room's.
     pub(super) actors: Option<CeresActors>,
+    pub(super) shaft: Option<super::shaft::EscapeShaft>,
+    pub(super) shaft_placement: Option<boss_ceres_ridley::OverlayPlacement>,
+}
+
+impl Loaded {
+    fn place_actors(
+        &mut self,
+        through: data::id::DoorwayId,
+        run: room_loading::Run<'_>,
+        room: &Room,
+        content: &Content,
+        palette: &mut Palette,
+        random: &mut types::RandomSequence,
+    ) -> Result<(), Fault> {
+        let view = &self.room.as_ref().unwrap_or(room).entry.view;
+        let setup =
+            room_loading::setup(&content.rooms, through, run.progress).map_err(Fault::Load)?;
+        let shaft_arrival = setup.door == data::assets::world::DoorRule::ToCeresElevatorShaft
+            && view.affine
+            && content.shaft_track.is_some()
+            && run.ceres == boss_ceres_ridley::Stage::Escape;
+        let mut actors = if shaft_arrival {
+            room_loading::ceres_shaft_actors(through, run, &content.rooms, view, random)
+        } else {
+            room_loading::ceres_actors(through, run, &content.rooms, random)
+        }
+        .map_err(Fault::Load)?;
+        if shaft_arrival {
+            let (shaft, placement) =
+                super::shaft::EscapeShaft::place(view, run.ceres, &mut actors)?;
+            room_loading::door_goal(
+                placement.door_colours,
+                &content.rooms.actors,
+                &mut palette.goal,
+            )
+            .map_err(Fault::Load)?;
+            self.shaft = Some(shaft);
+            self.shaft_placement = Some(placement);
+        }
+        self.actors = Some(actors);
+        self.awaiting_actors = false;
+        Ok(())
+    }
 }
 
 /// As the colours come up, the enemies run before the fade takes its step, so the beacon's
 /// colours go in first; that frame of work runs them whenever its work is done.
 pub(super) const fn brightening(doors: Doors, passing: &Passing) -> bool {
-    passing.work_done
-        && matches!(
-            doors,
-            Doors::Passing(Passage {
-                phase: Phase::Brightening(_),
-                ..
-            })
-        )
+    passing.work_done && is_brightening(doors)
+}
+
+pub(super) const fn is_brightening(doors: Doors) -> bool {
+    matches!(
+        doors,
+        Doors::Passing(Passage {
+            phase: Phase::Brightening(_),
+            ..
+        })
+    )
 }
 
 /// What the passage moves, as the frame before left it.

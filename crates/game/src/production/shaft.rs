@@ -53,12 +53,22 @@ pub fn lights(
     stage: Stage,
     rules: &boss_ceres_ridley::Rules,
 ) -> Result<Lights, LightsFault> {
-    let inputs = LightsInputs {
+    Ok(Lights::step(
+        light_inputs(finished_frames, doors, stage)?,
+        rules,
+    ))
+}
+
+pub(super) fn light_inputs(
+    finished_frames: u16,
+    doors: Doors,
+    stage: Stage,
+) -> Result<LightsInputs, LightsFault> {
+    Ok(LightsInputs {
         finished_frames,
         fade_steps_taken: fade_steps_taken(doors).ok_or(LightsFault::FadeSteps)?,
         stage,
-    };
-    Ok(Lights::step(inputs, rules))
+    })
 }
 
 /// The fade's steps taken when the enemies run: darkening, the passage takes its step before

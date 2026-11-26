@@ -9,6 +9,7 @@
 use core::num;
 use core::num::Wrapping;
 
+use types::ceres_shaft::{ShaftView, VentDrawOffset};
 use types::{Hit, Pair, PushFrames, Px, Side, part_below};
 
 use crate::her::Her;
@@ -197,10 +198,73 @@ impl Vent {
         if !self.in_view(camera) {
             return None;
         }
+        self.run_in_view(her, rules)
+    }
+
+    fn run_in_view(&mut self, her: Option<&Her>, rules: &Rules) -> Option<Hit> {
         let hit = her.and_then(|her| self.hit(her));
         self.phase = self.phase.stepped(rules.steam_rest);
         hit
     }
+}
+
+/// Spec: `VentDrawFollowsShaft`. The extra drawing state carried by a mounted vent.
+/// Save `offset` alongside the vent's ordinary phase. Contact still uses the room anchor.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MountedVent {
+    /// Ordinary vent state at the mount, independent of its projected drawing offset.
+    pub vent: Vent,
+    /// The last offset for drawing the regular puff at the mount.
+    pub offset: VentDrawOffset,
+}
+
+impl MountedVent {
+    /// Mount a newly placed vent with no displacement yet.
+    #[must_use]
+    pub const fn new(vent: Vent) -> Self {
+        Self {
+            vent,
+            offset: VentDrawOffset::ZERO,
+        }
+    }
+
+    /// Spec: `VentDrawFollowsShaft`, `VentInView`. Call on an actor turn with the view as
+    /// it stands before this vent runs. Outside the camera window neither the regular puff
+    /// nor its offset changes. As with ordinary vents, omit `her` after an earlier hit.
+    pub fn run(
+        &mut self,
+        camera: Pair<Px>,
+        view: ShaftView,
+        her: Option<&Her>,
+        rules: &Rules,
+    ) -> Option<Hit> {
+        if !self.vent.in_view(camera) {
+            return None;
+        }
+        self.offset = projected_vent_offset(self.vent.position, view);
+        self.vent.run_in_view(her, rules)
+    }
+}
+
+/// Spec: `VentDrawFollowsShaft`. Project the drawing origin around the incoming pivot.
+/// Round each product down separately, including negative products.
+fn projected_vent_offset(anchor: Pair<Px>, view: ShaftView) -> VentDrawOffset {
+    const AFFINE_UNIT: i32 = 256;
+    // Both pixel differences and every unrounded product fit in a signed 32-bit integer.
+    let right = i32::from(anchor.x.0).wrapping_sub(i32::from(view.pivot.x.0));
+    let up = i32::from(view.pivot.y.0).wrapping_sub(i32::from(anchor.y.0));
+    let [diagonal, cross, ..] = view.matrix.map(i32::from);
+    let scaled = |coefficient: i32, distance: i32| {
+        coefficient.wrapping_mul(distance).div_euclid(AFFINE_UNIT)
+    };
+    VentDrawOffset(Pair {
+        x: scaled(diagonal, right)
+            .wrapping_add(scaled(cross, up))
+            .wrapping_sub(right),
+        y: up
+            .wrapping_sub(scaled(cross.wrapping_neg(), right))
+            .wrapping_sub(scaled(diagonal, up)),
+    })
 }
 
 /// One run of the room's vents, on a frame the enemies run, each in the room's order.

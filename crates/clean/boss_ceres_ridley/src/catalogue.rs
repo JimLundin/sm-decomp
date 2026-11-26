@@ -137,6 +137,16 @@ pub enum BehaviourId {
     WarningGlow,
     /// Start the escape once the warning is finished.
     WarningEnds,
+    /// Prepare the shaft overlay as its actors arrive.
+    OverlayAppears,
+    /// Rumble, then hide the overlay and enable shaft rotation.
+    OverlayRumbles,
+    /// Follow the shaft's ordered tilt samples back and forth.
+    ShaftTilts,
+    /// Lock Samus and start the elevator scene when she settles near its middle.
+    ElevatorReached,
+    /// Project a mounted vent's drawing origin without moving its contact box.
+    VentDrawFollowsShaft,
 }
 
 /// A catalogue entry.
@@ -154,8 +164,8 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// Number of catalogue entries, including the flyby and the warning.
-const ENTRIES: usize = 65;
+/// The number of named behaviours.
+const ENTRIES: usize = 70;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -288,17 +298,15 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
     },
     Behaviour {
         id: BehaviourId::BeaconCycles,
-        summary: "before the escape, the shaft's beacon steps through its cycle of eight \
-                          colour sets, one step every few frames, except once a door's fade has \
-                          taken a step",
+        summary: "on a lights turn, the shaft's beacon selects a colour set by the game clock, \
+                  unless a door's fade has taken a step",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::PlatformTurns,
-        summary: "before the escape, the platform below the shaft shows its two looks in \
-                          turn, two frames each",
+        summary: "on a lights turn, the platform selects one of two looks, alternating every two frames",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -648,6 +656,41 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
     Behaviour {
         id: BehaviourId::WarningEnds,
         summary: "once the warning finishes, the escape begins on the next run",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::OverlayAppears,
+        summary: "prepare the shaft overlay as its actors arrive",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::OverlayRumbles,
+        summary: "the door rumbles, then the overlay disappears and the shaft can rotate",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ShaftTilts,
+        summary: "the shaft follows the same tilt track back and forth",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ElevatorReached,
+        summary: "Samus reaches the elevator when she settles near its middle",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::VentDrawFollowsShaft,
+        summary: "the graphic's anchor follows the room's picture when a mounted vent runs",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

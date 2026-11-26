@@ -2242,3 +2242,25 @@ provider = "recorded NMI kind and interrupted work site"
 fields = ["fresh work", "end of vblank", "cartridge write completion", "requested commit"]
 phase = "suspended work and NMI return"
 claim = "T1 supplies opportunities to prepare, hold and publish the carried regular queue"
+
+[[case]]
+id = "ridley/shaft-actors"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 1690 }
+end = { cut_inclusive = 3075 }
+rules = ["boss-ceres-ridley/OverlayAppears", "boss-ceres-ridley/OverlayRumbles", "boss-ceres-ridley/ShaftTilts", "boss-ceres-ridley/ElevatorReached", "boss-ceres-ridley/VentDrawFollowsShaft"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "ceres-shaft-actors"
+expectations = { provider = "pinned-record-cache", fields = ["shaft-actors.state"], outputs = ["shaft-actors.events", "shaft-actors.picture"] }
+checkpoints = true
+limits = ["One occupied return-room origin carries ordinary production through joined rooms and interrupted placement. Comparison starts at hall cut 225 and ends on the first held turn after shaft cut 164 reach.", "The rotation comparison covers the carried view. Display comparison covers the placement strip, the first prepared and published overlay, and the platform map low bytes through shaft cut 163. Reach compares the initial hold and fade from the native scene transition.", "Burst particle, centre and sound limit are compared at the producer. Native shaft cut 31 derives the culled offer from the actor cursor and RNG. Effect lifetime, audio queue delivery, later full OAM and the elevator scene are outside this scope.", "Continuation encodes shaft fields, the room entry and timer picture and retains the live surrounding room, ordinary vent phases and pending video. The no-advance control holds the uninstalled shaft origin."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "pinned room origin and locked movie and NMI records"
+fields = ["movie pad", "frame work and publication boundaries", "interrupted actor loading permission", "audio readiness", "passage RNG before shaft placement"]
+phase = "origin and each qualified scheduling opportunity"
+claim = "The return play carries its room. T1 and audio replies admit opportunities. The shaft owns its actor draws, state and outputs once installed."

@@ -1293,3 +1293,45 @@ targets = [
   { role = "adapter", path = "crates/game/src/commit.rs" },
   { role = "navigation", path = "crates/verify/src/replay/blackout/standing.rs" },
 ]
+
+[[rule]]
+id = "boss-ceres-ridley/OverlayAppears"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_overlay.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/room_video.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/OverlayRumbles"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_overlay.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/effects.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/ShaftTilts"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_rotation.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/ElevatorReached"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_rotation.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
+  { role = "adapter", path = "crates/game/src/production/played.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/VentDrawFollowsShaft"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/steam.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
+]

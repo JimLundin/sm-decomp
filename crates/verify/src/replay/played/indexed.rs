@@ -1,4 +1,6 @@
-//! Indexed flight-tail and retreat windows through the ordinary played room runner.
+//! Indexed Ceres windows through the ordinary played room runner.
+
+pub(in crate::replay) mod shaft;
 
 use super::{Run, Stop, actual, contact, open_rows, read_lock, ridley, seed_controller};
 use crate::replay::{
@@ -57,6 +59,9 @@ const WARNING_OUTPUTS: &[ObservationId] = &[
 ];
 
 pub(in crate::replay) fn valid(case: &Case) -> bool {
+    if case.inputs == InputProvider::CeresShaftActors {
+        return shaft::valid(case);
+    }
     let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
         case.kind == CaseKind::Scoped
             && case.responsibilities == [Responsibility::Ceres]
@@ -137,6 +142,9 @@ pub(in crate::replay) fn run(
         appearance: appearance::Content::load(&sources.rom)?,
     };
     let mut run = Run::admit(&seed, &content, &sources.rom, &case.row)?;
+    if case.inputs == InputProvider::CeresShaftActors {
+        return shaft::run(&mut run, &mut rows, seed, controller, case, result);
+    }
     if case.inputs == InputProvider::ScopedCeresWarning {
         return warning(&mut run, &mut rows, seed, controller, case, result);
     }
