@@ -82,8 +82,7 @@ pub fn import(rom: Lorom<'_>) -> Result<SamusAssets, ImportError> {
     let poses = Poses::load(rom).map_err(ImportError::Poses)?;
     let delays = AnimationDelays::load(rom, &poses).map_err(ImportError::Animation)?;
     let spritemaps = SamusSpritemaps::load(rom).map_err(ImportError::Spritemaps)?;
-    let tiles = SamusTiles::load(rom, &delays, &poses).map_err(ImportError::Address)?;
-    let graphics = Graphics::load(rom, GRAPHICS_BANKS).map_err(ImportError::Address)?;
+    let (tiles, graphics) = load_tile_uploads(rom, &poses, &delays)?;
     from_tables(Tables {
         poses: &poses,
         delays: &delays,
@@ -91,6 +90,26 @@ pub fn import(rom: Lorom<'_>) -> Result<SamusAssets, ImportError> {
         tiles: &tiles,
         graphics: &graphics,
     })
+}
+
+/// Import the animation frame definitions and the ROM sources read by the strip DMA.
+///
+/// # Errors
+/// [`ImportError`] if a pose, animation or source table is malformed.
+pub fn tile_uploads(rom: Lorom<'_>) -> Result<(SamusTiles, Graphics), ImportError> {
+    let poses = Poses::load(rom).map_err(ImportError::Poses)?;
+    let delays = AnimationDelays::load(rom, &poses).map_err(ImportError::Animation)?;
+    load_tile_uploads(rom, &poses, &delays)
+}
+
+fn load_tile_uploads(
+    rom: Lorom<'_>,
+    poses: &Poses,
+    delays: &AnimationDelays,
+) -> Result<(SamusTiles, Graphics), ImportError> {
+    let tiles = SamusTiles::load(rom, delays, poses).map_err(ImportError::Address)?;
+    let graphics = Graphics::load(rom, GRAPHICS_BANKS).map_err(ImportError::Address)?;
+    Ok((tiles, graphics))
 }
 
 /// Samus's pose assets, from the decoded tables.

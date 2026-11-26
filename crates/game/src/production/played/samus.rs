@@ -475,6 +475,13 @@ impl Her {
         .ok_or(Fault::SamusBody(self.figure))
     }
 
+    pub(super) fn tiles(
+        &self,
+        tiles: &data::pose::tiles::SamusTiles,
+    ) -> Result<crate::state::video::SamusTileUploads, Fault> {
+        super::samus_tiles::uploads(tiles, self.figure, self.appearance.animation.playhead.step)
+    }
+
     /// Where her moves leave her, which the mini-map reads.
     pub(super) fn after_moves(&self) -> types::Position {
         self.outcome

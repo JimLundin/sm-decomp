@@ -71,6 +71,7 @@ pub mod room_tiles;
 pub mod room_video;
 pub mod samus;
 mod samus_picture;
+mod samus_tiles;
 pub mod save_snapshot;
 pub mod shaft;
 pub mod shaft_sound;
@@ -124,6 +125,8 @@ pub struct Content {
     pub appearance: AppearanceContent,
     /// Imported body maps of the ordinary drawing.
     pub samus_body_art: Option<data::assets::samus::SamusAssets>,
+    /// The pose tiles and graphics read by the room NMI.
+    pub samus_tiles: Option<(data::pose::tiles::SamusTiles, data::pose::tiles::Graphics)>,
     /// Which group each of the screen's colours is in, for the passage's fades.
     pub colour_groups: [ColourGroup; COLOURS],
     /// The rooms, tilesets and sprite colours the passages load.
@@ -303,6 +306,8 @@ pub enum Fault {
     SuitColours,
     /// The ordinary body figure or step has no imported art.
     SamusBody(Figure),
+    /// The ordinary figure or animation step has no imported strip definition.
+    SamusTiles(Figure),
 }
 
 impl State {
@@ -333,6 +338,11 @@ impl State {
         }?;
         if passing.publishes {
             self.room_video.publish_ordinary_sprites();
+            if let Some((tiles, graphics)) = &content.samus_tiles {
+                self.room_video.video.transfer_samus_tiles(tiles, graphics);
+                self.room_video.video.batch.samus_tiles =
+                    crate::state::video::SamusTileUploads::default();
+            }
             self.room_video.publish(content.standing.as_ref());
         }
         Ok(output)
@@ -352,6 +362,12 @@ impl State {
         let locked = self.elevator_locked();
         let (mut her, (mut enemies, health)) =
             self.play_actors_and_samus(inputs, passing, content, rules, &mut random, &mut palette)?;
+        let uploads = content
+            .samus_tiles
+            .as_ref()
+            .filter(|_| her.outcome.is_some())
+            .map(|(tiles, _)| her.tiles(tiles))
+            .transpose()?;
         if let (Some(row), Some(colours)) =
             (room_loading::suit_row(&mut palette.screen), her.colours)
         {
@@ -397,6 +413,10 @@ impl State {
         self.prepare_room_picture(&hud_state, &hud_outputs, camera.position(), content)?;
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
+
+        if let Some(uploads) = uploads {
+            self.room_video.video.batch.samus_tiles = uploads;
+        }
 
         // Her room and where it sits on her map stay as they are through a frame of play.
         self.samus

@@ -501,6 +501,10 @@ impl<'a> Run<'a> {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 samus_body_art: Some(samus::body_art(image.lorom())?),
+                samus_tiles: Some(
+                    import::samus::tile_uploads(image.lorom())
+                        .map_err(|_| data_failure(None, "ordinary Samus tile uploads"))?,
+                ),
                 colour_groups: colours::groups(),
                 rooms,
                 hud: hud.pictures,
