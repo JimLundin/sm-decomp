@@ -327,7 +327,7 @@ before = "pressed: word(wram, source::JOYPAD1_NEWKEYS)?,"
 after = "pressed: word(wram, source::JOYPAD1_LASTKEYS)?,"
 case = "played chain-any-0003-DFD7 16 41"
 cut = 17
-field = "movement.jump-held"
+field = "controller.pressed"
 
 [[fault]]
 name = "played-camera-state-held"

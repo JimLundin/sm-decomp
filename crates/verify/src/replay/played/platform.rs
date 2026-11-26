@@ -26,6 +26,20 @@ impl Controller {
         })
     }
 
+    /// Check the held buttons and fresh edges carried into this turn against the last polling NMI.
+    pub(super) fn check_poll(self, wram: &[u8], cut: u64) -> Result<(), Outcome> {
+        if word(wram, source::JOYPAD1_LASTKEYS)? != self.held {
+            return Err(data_failure(None, "played pad alignment"));
+        }
+        if word(wram, source::JOYPAD1_NEWKEYS)? != self.pressed {
+            return Err(Outcome::Difference {
+                cut,
+                field: "controller.pressed".to_owned(),
+            });
+        }
+        Ok(())
+    }
+
     /// A polling NMI latches the new pad; a lag NMI leaves the previous read in place.
     pub(super) const fn read(self, pad: u16, polled: bool) -> Self {
         if polled {

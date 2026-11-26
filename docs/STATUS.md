@@ -322,7 +322,7 @@ Sixty-two planted faults in the fault matrix, those of the responsibility `playe
 that run, or the run of another Ceres row from its seed, at a recorded cut. For example, a pad one frame stale fails the runner's pad alignment
 check at cut 2, and a camera State held rather than carried differs at cut 1 in
 `camera.view.x.fraction`. Every button held at the seed taken as newly pressed differs at
-cut 17 in `movement.jump-held`, played from the M0 row's cut 16. A frame on which the doors
+cut 17 in `controller.pressed`, checked against the preceding polling NMI from the M0 row's cut 16. A frame on which the doors
 restart the frame count counted on instead differs at cut 238 in `frame-count`. The last room's
 geometry, doors and camera room kept after a passage builds the next differ, played back to back
 from the M0 row's seed, at cut 348 (the next row's cut 3) in `movement.position`. Of the Ceres doors' faults,

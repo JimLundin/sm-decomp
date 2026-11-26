@@ -490,13 +490,8 @@ impl<'a> Run<'a> {
         // While a new game's start is made ready no frame of play reads the pad, and the
         // preparation's own waits for the frame's end are its lag.
         let preparing = self.state.arrival.preparing();
-        // The movie's pad is the input; the game's own latch only checks its alignment, so a
-        // stale or early pad is a harness fault rather than a model difference.
-        if !preparing
-            && polled(previous)
-            && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held
-        {
-            return Err(data_failure(None, "played pad alignment"));
+        if !preparing && polled(previous) {
+            controller.check_poll(&previous.wram, cut)?;
         }
         let doors = self.state.passage.doors;
         // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
