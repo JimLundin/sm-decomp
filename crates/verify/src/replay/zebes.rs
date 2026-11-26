@@ -346,7 +346,7 @@ fn bytes(field: &str, bytes: Vec<u8>) -> Observation {
 fn state(production: &Production) -> Result<&State, Outcome> {
     if let OwnedState::Zebes(state) = production.state() {
         Ok(state)
-    } else if let OwnedState::Departure(run) = production.state()
+    } else if let Some(run) = production.departure()
         && let game::production::played::departure::Scene::Flight(state) = &run.scene
     {
         Ok(state)

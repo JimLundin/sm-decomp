@@ -76,6 +76,8 @@ impl MovementContent {
 pub enum ProductionContent {
     /// Checked flight scene and its page, palette and sprite content.
     Explosion(Box<data::assets::explosion::Station>),
+    /// The shaft artwork, cartridge and both departing cinematics.
+    Escape(Box<super::escape_departure::Content>),
     /// Ceres blackout with its room picture and cartridge.
     Blackout(Box<super::blackout::Content>),
     /// The imported intro scene.

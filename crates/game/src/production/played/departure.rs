@@ -69,6 +69,13 @@ impl Rules {
 /// A scheduler opportunity or a direct DMA receipt from the platform.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Input {
+    /// A shaft opportunity and the station's scheduler if the elevator dispatches this cut.
+    Shaft {
+        /// Shaft work and requested publication.
+        work: crate::production::blackout::Cut,
+        /// The receiving opportunity for the station.
+        station: explosion::Cut,
+    },
     /// Borrowed work completion and post-service music occupancy.
     Scene(explosion::Cut),
     /// Progress of an unfinished receiving loader.

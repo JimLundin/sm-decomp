@@ -2074,3 +2074,25 @@ provider = "recorded-work-and-source-bus-progress"
 fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
 phase = "per cut"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
+
+[[case]]
+id = "departure/shaft-save-to-landing"
+kind = "integrated"
+row = "chain-any-0011-DF45"
+start = { source = "played-continuation", seed = 239, frame = 2122 }
+end = { cut_inclusive = 2124 }
+rules = ["screens-zebes/LandingSiteLoadBegins", "game-random/AdvanceRandom"]
+profile = "reference"
+responsibilities = ["station-explosion", "zebes", "health", "zebes-scheduler", "zebes-drawing", "landing-site"]
+content = "player-rom-import"
+inputs = "departure"
+expectations = { provider = "pinned-record-cache", fields = ["departure.schedule", "departure.health", "departure.random", "departure.room"], outputs = ["departure.picture", "departure.loader"] }
+checkpoints = true
+limits = ["the sole seed admits the shaft and queued room publication at 239, before the save starts", "unfinished cinematic transfer bytes and flash scanline composition are outside the drawing comparison", "HDMA channels 2 and 3 retain E3 window state without a line-window producer"]
+
+[[case.borrowed]]
+dependency = "departure.platform"
+provider = "recorded-work-and-source-bus-progress"
+fields = ["scheduler.finished", "shaft.vblank-ended", "shaft.save-completed", "audio.queue-busy", "dma.accepted-and-selected"]
+phase = "per cut"
+claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"

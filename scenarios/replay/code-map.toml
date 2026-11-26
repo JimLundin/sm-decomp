@@ -1009,6 +1009,7 @@ id = "screens-blackout/DepartureHandoff"
 targets = [
   { role = "model", path = "crates/clean/screens_blackout/src/scene.rs" },
   { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "adapter", path = "crates/game/src/production/escape_departure.rs" },
   { role = "navigation", path = "crates/verify/src/replay/blackout.rs" },
 ]
 

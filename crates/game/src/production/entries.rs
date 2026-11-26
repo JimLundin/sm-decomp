@@ -80,6 +80,14 @@ pub(super) fn admit(
             OwnedState::Explosion(state)
         }
         (
+            ProductionSeed::Escape(state),
+            ProductionContent::Escape(content),
+            ProductionRules::Departure(_),
+        ) => {
+            state.validate(content)?;
+            OwnedState::Escape(state)
+        }
+        (
             ProductionSeed::Blackout(state),
             ProductionContent::Blackout(_),
             ProductionRules::Blackout,
@@ -181,6 +189,12 @@ pub(super) fn advance_intro(
         ) => ProductionOutputs::Explosion(Box::new(state.advance(content, *rules, cut).map_err(
             |fault| ProductionFault::Unsupported(super::Unsupported::Explosion(fault)),
         )?)),
+        (
+            OwnedState::Escape(state),
+            ProductionContent::Escape(content),
+            ProductionRules::Departure(rules),
+            AdvanceInput::Departure(input),
+        ) => state.advance(content, *rules, input)?,
         (
             OwnedState::IntroMissiles(state),
             ProductionContent::IntroMissiles(content),

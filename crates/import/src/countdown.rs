@@ -1,5 +1,5 @@
 //! The countdown word and its ten digit drawings from bank 80.
-use data::assets::countdown::Figures;
+use data::assets::countdown::{Figures, IndirectHdmaStart};
 use data::rom::{AddressError, Lorom, RomAddress};
 use data::spritemap::Spritemap;
 
@@ -25,4 +25,22 @@ pub fn platform_tiles(rom: Lorom<'_>, source: RomAddress) -> Result<[u8; 4], Add
     let mut tiles = [0; 4];
     tiles.copy_from_slice(rom.read(source, 4)?);
     Ok(tiles)
+}
+
+/// Read the first indirect HDMA entry for a shaft channel.
+///
+/// # Errors
+/// A source crossing the supplied player ROM bounds is rejected.
+pub fn indirect_hdma_start(
+    rom: Lorom<'_>,
+    source: RomAddress,
+) -> Result<IndirectHdmaStart, AddressError> {
+    let mut header = [0; 3];
+    header.copy_from_slice(rom.read(source, 3)?);
+    let [lines, low, high] = header;
+    Ok(IndirectHdmaStart {
+        source,
+        lines,
+        indirect_address: u16::from_le_bytes([low, high]),
+    })
 }

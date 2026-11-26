@@ -289,3 +289,16 @@ stop = { failed = "Landing Site sprite DMA needs the live source after the ROM b
 seed_frame = 13313
 frames = [13314, 15196]
 power_on = false
+
+# The shaft's last interrupted room pass opens the escape save. Its final NMI
+# publishes the picture before the station takes over. The same run then opens
+# the Landing Site loader and stops at the sprite source's ROM bank boundary.
+[[run]]
+row = "chain-any-0011-DF45"
+start = 239
+end = 2125
+held = 1885
+stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
+seed_frame = 13311
+frames = [13312, 15196]
+power_on = false

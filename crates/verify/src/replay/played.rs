@@ -276,6 +276,9 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     if super::zebes::starts(&seed).map_err(|outcome| at(start, outcome))? {
         return zebes::play(&mut rows, &sources.rom, seed, row, start, end);
     }
+    if explosion::shaft_starts(&seed)? {
+        return explosion::play(&mut rows, &sources.rom, seed, row, start, end);
+    }
     if let Some(before) = start.checked_sub(1)
         && super::explosion::pending(&seed)?
         && super::explosion::enters_from(&rows.record(before)?)?

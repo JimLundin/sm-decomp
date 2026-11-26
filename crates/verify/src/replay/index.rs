@@ -1437,6 +1437,9 @@ fn movement_witnessed_fields(
     {
         return cinematic_witnesses(rule, provider);
     }
+    if rule.starts_with("screens-blackout/") {
+        return super::blackout::witnessed_fields(rule);
+    }
     Some(match rule {
         "screens-blackout/ElevatorStopsSamus"
         | "screens-blackout/PlatformWait"

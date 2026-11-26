@@ -5,7 +5,7 @@ use game::production::{
     Production,
     blackout::{Output, Request, SoundChannel},
 };
-use game::state::{owned::OwnedState, video::Oam};
+use game::state::video::Oam;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 use types::ceres_blackout::{BlackoutLight, BlackoutPhase, ShaftStage, TimerActivity, WorkPass};
 
@@ -84,9 +84,9 @@ pub(in crate::replay) fn actual(
     out: &Output,
     late: bool,
 ) -> Result<Vec<Observation>, Outcome> {
-    let OwnedState::Blackout(state) = prod.state() else {
-        return Err(data_failure(None, "blackout projection"));
-    };
+    let state = prod
+        .blackout()
+        .ok_or_else(|| data_failure(None, "blackout projection"))?;
     let o = &state.owners.0;
     let scene = &o.scene;
     let (phase, wait) = match scene.phase {
@@ -203,7 +203,7 @@ fn requests(out: &Output) -> Vec<u8> {
     req
 }
 
-pub(super) fn expected(
+pub(in crate::replay) fn expected(
     prior: &FrameRecord,
     current: &FrameRecord,
     late: bool,

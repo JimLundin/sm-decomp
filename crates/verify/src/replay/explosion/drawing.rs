@@ -63,7 +63,7 @@ pub(in crate::replay) fn actual(
 ) -> Result<Vec<Observation>, Outcome> {
     let state = if let OwnedState::Explosion(state) = production.state() {
         state
-    } else if let OwnedState::Departure(run) = production.state()
+    } else if let Some(run) = production.departure()
         && let game::production::played::departure::Scene::Station(state) = &run.scene
     {
         state

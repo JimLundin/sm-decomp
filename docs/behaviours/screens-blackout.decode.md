@@ -123,6 +123,29 @@ the first new work opportunity eligible to dispatch it. Faults that clear queued
 timer sprites, dispatch before or during publication, or dispatch twice fail the
 corresponding constructed witnesses.
 
+## Joined departure
+
+The played run admits the interrupted picture at cut 239, movie 13,311. It
+carries room placement, Health, progress, physical video, the queued room
+transfers and the cartridge before the payload write. The scroll mirrors
+at $B1 through $BF supply the four queued scroll pairs. At the end of the
+vertical interval the active indirect HDMA channels reload their first
+ROM table entries before the shaft disables them. The reload sets the
+table address, indirect address and line counter. The replay compares
+every DMA channel on cut 240.
+
+Cut 241 publishes the final room picture and the completed save. The
+blackout dispatch on cut 242 opens the station's first work opportunity
+with the carried destination, Health, count and picture. The same run
+advances the flight and the Landing Site loader. It compares the cartridge
+on every cut, including cut 2124, movie 15,196. Cut 2125 requires the live
+sprite source beyond the ROM bank.
+
+The preceding room pass on cut 239 prepares the regular upload queue and the
+platform patch. A run starting before that pass still needs the locked-room
+drawing producer. The after-motion elevator reach on cut 164 remains B8's
+input to the separate blackout scope.
+
 ## Budget
 
 k = 37.5 weighted tokens per spec unit, per MODEL decision 7. At `d45f84b0d` the

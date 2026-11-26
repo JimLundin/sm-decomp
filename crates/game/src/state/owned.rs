@@ -72,6 +72,8 @@ impl Pinned for DiscoveryPin {
 pub enum OwnedState {
     /// Complete station explosion and its receiving owners.
     Explosion(Box<crate::production::played::explosion::State>),
+    /// The continuous shaft and its departing cinematics.
+    Escape(Box<crate::production::escape_departure::State>),
     /// Ceres shaft blackout, its live owners and suspended picture.
     Blackout(Box<crate::production::blackout::State>),
     /// Complete intro State and the displayed palette.

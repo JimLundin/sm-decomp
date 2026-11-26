@@ -36,7 +36,7 @@ fn oam(bytes: &[u8]) -> Option<Oam> {
     Some(oam)
 }
 
-pub(super) fn read(
+pub(in crate::replay) fn read(
     r: &FrameRecord,
     rom: Lorom<'_>,
     format: &Format,

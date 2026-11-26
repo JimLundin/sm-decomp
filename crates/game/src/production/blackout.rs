@@ -189,7 +189,7 @@ impl State {
         Ok(output)
     }
 
-    fn step(&mut self, cut: Cut, content: &Content) -> Result<Output, Fault> {
+    pub(super) fn step(&mut self, cut: Cut, content: &Content) -> Result<Output, Fault> {
         let o = &mut self.owners.0;
         let opportunity = match cut.work {
             Work::Fresh { reached } => match o.scene.phase {

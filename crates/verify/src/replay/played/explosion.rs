@@ -1,6 +1,7 @@
 //! Play both departing cinematics from the single elevator blackout.
 
 pub(in crate::replay) mod carry;
+mod shaft;
 
 use super::{Report, Stop, rows::Rows};
 use crate::replay::{compared, data_failure, explosion, result::Outcome, zebes};
@@ -10,7 +11,6 @@ use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionFault, ProductionOutputs,
     ProductionRules, ProductionSeed, Unsupported,
 };
-use game::state::owned::OwnedState;
 use oracle_record::FrameRecord;
 use std::path::Path;
 
@@ -22,8 +22,16 @@ pub(super) fn play(
     start: u64,
     end: u64,
 ) -> Result<Report, Outcome> {
-    let (mut production, content, _) = admit_seed(path, &previous)?;
-    let ProductionContent::Departure(assets) = content else {
+    let (mut production, content, _) = if shaft::starts(&previous)? {
+        shaft::admit(path, &previous)?
+    } else {
+        admit_seed(path, &previous)?
+    };
+    let (assets, seed_held) = if let ProductionContent::Departure(assets) = &content {
+        (assets.as_ref(), STATION_SEED)
+    } else if let ProductionContent::Escape(assets) = &content {
+        (&assets.departure, SHAFT_SEED)
+    } else {
         return Err(data_failure(Some(start), "departure assets"));
     };
     let mut observer = explosion::Observed::default();
@@ -32,9 +40,7 @@ pub(super) fn play(
         start,
         held,
         stop,
-        seed_held: &[
-            "elevator blackout, completed save, Health, destination, caption, shaft room, explored maps, RNG and video memory",
-        ],
+        seed_held,
         borrowed: &[
             "T1 work completion",
             "post-service music queue reply",
@@ -52,11 +58,15 @@ pub(super) fn play(
             return Err(data_failure(Some(cut), "departure row join"));
         }
         let timing = explosion::timing(&current)?;
-        let run = state(&production, cut)?;
-        let input = if run.loading() {
-            Input::Loader(landing_work(run, &current, &assets.landing)?)
-        } else {
-            Input::Scene(timing)
+        let input = match production.departure() {
+            Some(run) if run.loading() => {
+                Input::Loader(landing_work(run, &current, &assets.landing)?)
+            }
+            Some(_) => Input::Scene(timing),
+            None => Input::Shaft {
+                work: crate::replay::blackout::work(&previous, &current, false)?,
+                station: timing,
+            },
         };
         let output =
             match production.advance(AdvanceInput::Departure(input)) {
@@ -79,33 +89,21 @@ pub(super) fn play(
                     ));
                 }
             };
-        let scene_result = if let ProductionOutputs::Explosion(output) = &output {
-            compared(
-                cut,
-                &observer.read(&previous, &current)?.fields,
-                &explosion::actual(&production, Some(output))?,
-            )
-        } else if let ProductionOutputs::Zebes(output) = &output {
-            compared(
-                cut,
-                &zebes::expected(&previous, &current, true)?.fields,
-                &zebes::actual(&production, output, true)?,
-            )
-        } else if matches!(output, ProductionOutputs::LandingSite) {
-            crate::replay::departure::check_receiving(
-                &production,
-                &previous,
-                &current,
-                &assets.landing,
-                input,
-                cut,
-            )
-        } else {
-            return Err(data_failure(Some(cut), "departure output scope"));
-        };
-        if let Err(why) = scene_result
-            .and_then(|()| carry::check(state(&production, cut)?, &current, timing, cut))
-        {
+        if let Err(why) = check_outputs(
+            &production,
+            &output,
+            cut,
+            [&previous, &current],
+            &assets.landing,
+            input,
+            &mut observer,
+        )
+        .and_then(|()| {
+            if let Some(run) = production.departure() {
+                carry::check(run, &current, timing, cut)?;
+            }
+            shaft::check_cartridge(&production, &current, cut)
+        }) {
             return Ok(report(held, Stop::At(why)));
         }
         held = held.saturating_add(1);
@@ -113,6 +111,47 @@ pub(super) fn play(
     }
     Ok(report(held, Stop::End))
 }
+
+fn check_outputs(
+    production: &Production,
+    output: &ProductionOutputs,
+    cut: u64,
+    [previous, current]: [&FrameRecord; 2],
+    graphics: &data::assets::landing_site::Graphics,
+    input: Input,
+    observer: &mut explosion::Observed,
+) -> Result<(), Outcome> {
+    if let ProductionOutputs::Blackout(output) = output {
+        shaft::check(production, output, previous, current)
+    } else if let ProductionOutputs::Explosion(output) = output {
+        compared(
+            cut,
+            &observer.read(previous, current)?.fields,
+            &explosion::actual(production, Some(output))?,
+        )
+    } else if let ProductionOutputs::Zebes(output) = output {
+        compared(
+            cut,
+            &zebes::expected(previous, current, true)?.fields,
+            &zebes::actual(production, output, true)?,
+        )
+    } else if matches!(output, ProductionOutputs::LandingSite) {
+        crate::replay::departure::check_receiving(
+            production, previous, current, graphics, input, cut,
+        )
+    } else {
+        Err(data_failure(Some(cut), "departure output scope"))
+    }
+}
+
+const STATION_SEED: &[&str] = &[
+    "elevator blackout, completed save, Health, destination, caption, shaft room, explored maps, RNG and video memory",
+];
+const SHAFT_SEED: &[&str] = &[
+    "shaft awaiting vblank end, including the queued picture, cartridge before the write, room and live video",
+];
+
+pub(in crate::replay) use shaft::{admit as admit_shaft, starts as shaft_starts};
 
 // The external T1 receipt measures source-bus work. No destination memory or game
 // state from the receiving record is supplied to the simulation.
@@ -173,7 +212,7 @@ fn landing_work(
 }
 
 pub(in crate::replay) fn state(production: &Production, cut: u64) -> Result<&Run, Outcome> {
-    let OwnedState::Departure(run) = production.state() else {
+    let Some(run) = production.departure() else {
         return Err(data_failure(Some(cut), "departure state"));
     };
     Ok(run)
@@ -186,17 +225,7 @@ pub(in crate::replay) fn admit_seed(
     let image = std::fs::read(path).map_err(|_| data_failure(None, "departure ROM file"))?;
     let rom = data::rom::Rom::new(image).map_err(|_| data_failure(None, "departure ROM pin"))?;
     let rom = rom.lorom();
-    let station = import::explosion::import(rom)
-        .map_err(|_| data_failure(None, "departure station content"))?;
-    let flight =
-        import::zebes::import(rom).map_err(|_| data_failure(None, "departure flight content"))?;
-    let landing = import::landing_site::import(rom)
-        .map_err(|_| data_failure(None, "Landing Site standard graphics"))?;
-    let content = ProductionContent::Departure(Box::new(Content {
-        station,
-        flight,
-        landing,
-    }));
+    let content = ProductionContent::Departure(Box::new(load_content(rom)?));
     let rules = ProductionRules::Departure(Rules::REFERENCE);
     let station = explosion::seed_state(record)?;
     let carry = carry::origin(&station, record)?;
@@ -211,4 +240,18 @@ pub(in crate::replay) fn admit_seed(
     )
     .map_err(|why| data_failure(Some(record.index), &format!("departure intake {why:?}")))?;
     Ok((production, content, rules))
+}
+
+fn load_content(rom: data::rom::Lorom<'_>) -> Result<Content, Outcome> {
+    let station = import::explosion::import(rom)
+        .map_err(|_| data_failure(None, "departure station content"))?;
+    let flight =
+        import::zebes::import(rom).map_err(|_| data_failure(None, "departure flight content"))?;
+    let landing = import::landing_site::import(rom)
+        .map_err(|_| data_failure(None, "Landing Site standard graphics"))?;
+    Ok(Content {
+        station,
+        flight,
+        landing,
+    })
 }

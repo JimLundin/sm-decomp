@@ -1,6 +1,6 @@
 //! The shaft handoff on one seed, plus a second seed inside the final unfinished room batch.
-mod observe;
-mod seed;
+pub(super) mod observe;
+pub(super) mod seed;
 use super::index::{
     Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility, Start,
 };
@@ -20,6 +20,21 @@ use game::production::{
 pub(super) use observe::actual;
 use oracle_record::{Cut, NmiKind};
 const ROW: &str = "chain-any-0011-DF45";
+
+pub(super) fn witnessed_fields(rule: &str) -> Option<&'static [O]> {
+    match rule {
+        "screens-blackout/ElevatorStopsSamus"
+        | "screens-blackout/PlatformWait"
+        | "screens-blackout/DepartureHandoff" => Some(&[
+            O::BlackoutScene,
+            O::BlackoutRoom,
+            O::BlackoutRequests,
+            O::BlackoutBattery,
+            O::BlackoutTimerDrawing,
+        ]),
+        _ => None,
+    }
+}
 
 pub(super) fn valid(case: &Case) -> bool {
     let late = matches!(case.start, Start::CacheCut { frame: 239 });
@@ -107,29 +122,11 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let mut expected = Vec::new();
     for &cut in &schedule {
         let current = record(&cache, cut)?;
-        let Cut::NmiReturn(nmi) = current.cut else {
-            return Err(data_failure(Some(cut), "blackout NMI"));
-        };
-        let prior_pc = match previous.cut {
-            Cut::NmiReturn(nmi) => Some(nmi.interrupted_pc),
-            Cut::VblankWithoutNmi | Cut::NmiStillRunning { .. } => None,
-        };
-        inputs.push(blackout::Cut {
-            // The ordinary room closes on its elevator receipt. B8 supplies this same report in play.
-            work: match prior_pc {
-                Some(0x0080_82ce) => blackout::Work::VerticalEnded,
-                Some(0x0081_8066) if nmi.kind == NmiKind::Requested => {
-                    blackout::Work::SaveCompleted
-                }
-                _ if matches!(previous.cut,Cut::NmiReturn(nmi) if nmi.kind==NmiKind::Requested) => {
-                    blackout::Work::Fresh {
-                        reached: !late && cut == frame.saturating_add(1),
-                    }
-                }
-                _ => blackout::Work::Interrupted,
-            },
-            publish: nmi.kind == NmiKind::Requested,
-        });
+        inputs.push(work(
+            &previous,
+            &current,
+            !late && cut == frame.saturating_add(1),
+        )?);
         expected.push(observe::expected(&previous, &current, late)?);
         previous = current;
     }
@@ -148,6 +145,29 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             values: expected,
         }),
         actual: ActualReader::Blackout(late),
+    })
+}
+
+pub(super) fn work(
+    previous: &oracle_record::FrameRecord,
+    current: &oracle_record::FrameRecord,
+    reached: bool,
+) -> Result<blackout::Cut, Outcome> {
+    let Cut::NmiReturn(nmi) = current.cut else {
+        return Err(data_failure(Some(current.index), "blackout NMI"));
+    };
+    let work = match previous.cut {
+        Cut::NmiReturn(prior) => match prior.interrupted_pc {
+            0x0080_82ce => blackout::Work::VerticalEnded,
+            0x0081_8066 if nmi.kind == NmiKind::Requested => blackout::Work::SaveCompleted,
+            _ if prior.kind == NmiKind::Requested => blackout::Work::Fresh { reached },
+            _ => blackout::Work::Interrupted,
+        },
+        Cut::VblankWithoutNmi | Cut::NmiStillRunning { .. } => blackout::Work::Interrupted,
+    };
+    Ok(blackout::Cut {
+        work,
+        publish: nmi.kind == NmiKind::Requested,
     })
 }
 

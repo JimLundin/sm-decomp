@@ -8,8 +8,12 @@ use super::index::{
 use super::played::{explosion as joined, rows::Rows};
 use super::readers::{ActualReader, AdmittedCase, ExpectedReader, InputReader};
 use super::{Sources, data_failure, explosion, result::Outcome};
-use game::production::{AdvanceInput, ProductionContent, played::departure::Input};
+use game::production::{
+    AdvanceInput, Production, ProductionContent, ProductionRules, played::departure::Input,
+};
+use oracle_record::FrameRecord;
 use std::collections::BTreeMap;
+use std::path::Path;
 
 pub(super) struct Tape<T>(BTreeMap<u64, T>);
 impl<T> Tape<T> {
@@ -25,7 +29,7 @@ pub(super) fn valid(case: &Case) -> bool {
     use Responsibility as R;
     case.kind == CaseKind::Integrated
         && case.row == "chain-any-0011-DF45"
-        && matches!(case.start,Start::PlayedContinuation{seed:241,frame} if frame < 2124)
+        && matches!(case.start,Start::PlayedContinuation{seed:239 | 241,frame} if (242..2124).contains(&frame))
         && case.end.cut_inclusive <= 2124
         && case.responsibilities
             == [
@@ -67,18 +71,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         .ok_or_else(|| data_failure(None, "departure lock path"))?;
     let mut rows = Rows::open(&lock, root, &sources.cache, &case.row)?;
     let mut previous = rows.record(seed)?;
-    if !explosion::pending(&previous)?
-        || !explosion::enters_from(
-            &rows.record(
-                seed.checked_sub(1)
-                    .ok_or_else(|| data_failure(Some(seed), "departure predecessor"))?,
-            )?,
-        )?
-    {
-        return Err(data_failure(Some(seed), "departure elevator blackout"));
-    }
-    let (mut production, content, rules) = joined::admit_seed(&sources.rom, &previous)?;
-    let ProductionContent::Departure(assets) = &content else {
+    let (mut production, content, rules) = admit_origin(&mut rows, seed, &previous, &sources.rom)?;
+    let assets = if let ProductionContent::Departure(assets) = &content {
+        assets.as_ref()
+    } else if let ProductionContent::Escape(assets) = &content {
+        &assets.departure
+    } else {
         return Err(data_failure(None, "departure assets"));
     };
     let mut inputs = BTreeMap::new();
@@ -97,7 +95,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
                 >= assets.landing.sprite_source.offset
             && now.cpu.k == 0x82
             && now.cpu.pc == 0x8327;
-        let input = if receiving {
+        let input = if production.departure().is_none() {
+            Input::Shaft {
+                work: super::blackout::work(&previous, &now, false)?,
+                station: cadence,
+            }
+        } else if receiving {
             Input::Loader(joined::receiving_work(&now, &assets.landing)?)
         } else {
             Input::Scene(cadence)
@@ -124,6 +127,21 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         expected: ExpectedReader::Departure(Tape(expected)),
         actual: ActualReader::Departure,
     })
+}
+
+fn admit_origin(
+    rows: &mut Rows<'_>,
+    seed: u64,
+    record: &FrameRecord,
+    path: &Path,
+) -> Result<(Production, ProductionContent, ProductionRules), Outcome> {
+    match seed {
+        239 if joined::shaft_starts(record)? => joined::admit_shaft(path, record),
+        241 if explosion::pending(record)? && explosion::enters_from(&rows.record(240)?)? => {
+            joined::admit_seed(path, record)
+        }
+        _ => Err(data_failure(Some(seed), "departure elevator origin")),
+    }
 }
 
 pub(super) const fn valid_counts(counts: &super::result::Counts) -> bool {

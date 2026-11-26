@@ -21,6 +21,7 @@ mod camera_semantic;
 pub mod connected;
 mod content;
 mod entries;
+pub mod escape_departure;
 pub mod health_tail;
 pub mod hud;
 mod immutable;
@@ -52,6 +53,8 @@ use played::{departure, landing_site};
 pub enum Scope {
     /// Scheduled station explosion and its drawing and health outputs.
     Explosion,
+    /// The live shaft dispatch through the Landing Site loader.
+    Escape,
     /// The shaft blackout and its suspended departure.
     Blackout,
     /// The complete intro with a selected encounter input.
@@ -109,6 +112,8 @@ pub enum Scope {
 pub enum ProductionSeed {
     /// Complete cinematic, palette, sprite buffer and retained destination.
     Explosion(Box<explosion::State>),
+    /// The shaft or its continuing cinematics and saved cartridge.
+    Escape(Box<escape_departure::State>),
     /// The shaft blackout and its suspended departure.
     Blackout(Box<blackout::State>),
     /// The complete intro and its displayed palette.
@@ -459,6 +464,7 @@ impl Production {
         rules: ProductionRules,
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
+            ProductionSeed::Escape(_) => Scope::Escape,
             ProductionSeed::Blackout(_) => Scope::Blackout,
             ProductionSeed::Explosion(_) => Scope::Explosion,
             ProductionSeed::Intro(_) => Scope::Intro,
@@ -558,10 +564,41 @@ impl Production {
         })
     }
 
+    /// The active shaft blackout, before the running station receives dispatch.
+    #[must_use]
+    pub fn blackout(&self) -> Option<&blackout::State> {
+        if let OwnedState::Blackout(state) = &self.state {
+            Some(state)
+        } else if let OwnedState::Escape(state) = &self.state
+            && let escape_departure::State::Shaft(shaft) = state.as_ref()
+        {
+            Some(&shaft.blackout)
+        } else {
+            None
+        }
+    }
+
+    /// The active cinematic continuation, from a direct seed or its shaft dispatch.
+    #[must_use]
+    pub fn departure(&self) -> Option<&departure::Run> {
+        if let OwnedState::Departure(run) = &self.state {
+            Some(run)
+        } else if let OwnedState::Escape(state) = &self.state
+            && let escape_departure::State::Cinematics(c) = state.as_ref()
+        {
+            Some(&c.run)
+        } else {
+            None
+        }
+    }
+
     /// The exact battery image held by a cartridge scope.
     #[must_use]
     pub fn battery(&self) -> Option<types::save_files::BatteryImage> {
         match (&self.state, &self.context.content) {
+            (OwnedState::Escape(state), ProductionContent::Escape(content)) => Some(
+                save_files::image(&content.shaft.format, &state.files().cartridge),
+            ),
             (OwnedState::Blackout(state), ProductionContent::Blackout(content)) => Some(
                 save_files::image(&content.format, &state.owners.0.files.cartridge),
             ),
@@ -582,6 +619,7 @@ impl Production {
     #[must_use]
     pub const fn scope(&self) -> Scope {
         match self.state {
+            OwnedState::Escape(_) => Scope::Escape,
             OwnedState::Blackout(_) => Scope::Blackout,
             OwnedState::Explosion(_) => Scope::Explosion,
             OwnedState::Intro(_) => Scope::Intro,
@@ -745,6 +783,7 @@ impl Production {
             | OwnedState::Playback(_)
             | OwnedState::SaveFiles(_)
             | OwnedState::Discovery(_)
+            | OwnedState::Escape(_)
             | OwnedState::Blackout(_)
             | OwnedState::Explosion(_)
             | OwnedState::Zebes(_)
@@ -773,6 +812,7 @@ impl Production {
             OwnedState::SaveFiles(state) => {
                 return Ok(self.encode_save(Model::<save_files::SaveFilesPin>(state.clone())));
             }
+            OwnedState::Escape(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Blackout(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Explosion(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Departure(state) => return Ok(self.encode_save(state.clone())),
@@ -828,7 +868,11 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if matches!(&content, ProductionContent::Blackout(_)) {
+        let seed = if matches!(&content, ProductionContent::Escape(_)) {
+            let checkpoint: Checkpoint<Box<escape_departure::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Escape(checkpoint.state)
+        } else if matches!(&content, ProductionContent::Blackout(_)) {
             let checkpoint: Checkpoint<Box<blackout::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::Blackout(checkpoint.state)
@@ -907,7 +951,7 @@ impl Production {
 
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
-        Scope::Departure => {
+        Scope::Escape | Scope::Departure => {
             use canonical::model::pin_holds;
             pin_holds::<explosion::ScenePin>()
                 .and_then(|()| pin_holds::<zebes::ScenePin>())

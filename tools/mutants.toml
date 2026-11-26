@@ -1905,3 +1905,24 @@ after = "self.carry.landing.control.auto_read = false; self.carry.work_ready = f
 case = "departure/flight-dispatches-loader"
 cut = 2124
 field = "departure.mirrors"
+
+[[fault]]
+name = "played-shaft-loses-cinematic-work-count"
+responsibility = "played"
+file = "crates/game/src/production/escape_departure.rs"
+before = "            receipt.finished,"
+after = "            receipt.finished.wrapping_add(1),"
+case = "played chain-any-0011-DF45 239 2124"
+cut = 242
+field = "explosion.context"
+
+
+[[fault]]
+name = "played-shaft-loses-raster-opening"
+responsibility = "played"
+file = "crates/game/src/production/escape_departure.rs"
+before = "channel.line_counter = header.lines;"
+after = "channel.line_counter = 0;"
+case = "played chain-any-0011-DF45 239 2124"
+cut = 240
+field = "blackout.dma[2]"

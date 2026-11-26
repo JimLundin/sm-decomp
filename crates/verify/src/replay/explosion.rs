@@ -27,7 +27,7 @@ const FLOW: usize = 0x0998;
 const DESTINATION: usize = 0xd914;
 const PENDING: u16 = 0xc11b;
 
-fn byte(record: &FrameRecord, at: usize) -> Result<u8, Outcome> {
+pub(super) fn byte(record: &FrameRecord, at: usize) -> Result<u8, Outcome> {
     record
         .wram
         .get(at)
