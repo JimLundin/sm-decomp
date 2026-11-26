@@ -272,6 +272,8 @@ fn standing_frame() -> StandingFrame {
 
 #[test]
 fn standing_rows_and_oam_wait_for_publication_across_a_checkpoint() {
+    use crate::state::video::{OamEntry, SpriteCount};
+
     let (mut state, mut content) = pending();
     lit_room(
         &mut state,
@@ -279,6 +281,12 @@ fn standing_rows_and_oam_wait_for_publication_across_a_checkpoint() {
     );
     content.standing = Some(standing_art());
     state.video.memory.vram[0x6100] = 0x55;
+    state.video.batch.oam.low[2] = OamEntry {
+        x: 11,
+        y: 18,
+        tile: 29,
+        attributes: 33,
+    };
     let live = state.video.memory.clone();
     let prepared = state
         .advance(
@@ -293,10 +301,13 @@ fn standing_rows_and_oam_wait_for_publication_across_a_checkpoint() {
     assert_eq!(state.video.memory, live);
     assert_eq!(prepared.standing_publication, StandingStrips::default());
     let saved = canonical::to_bytes(&state);
-    let mut state: State = canonical::from_bytes(&saved).unwrap();
+    let restored: State = canonical::from_bytes(&saved).unwrap();
+    assert_eq!(restored, state);
+    let mut state = restored;
     let strips = state.video.batch.standing_strips;
     assert_eq!(strips.upper_second, None);
     let pending_oam = state.video.batch.oam;
+    assert_eq!(state.video.batch.sprites, SpriteCount(2));
     assert_ne!(pending_oam, live.oam);
 
     let suspended = Cut {
@@ -307,6 +318,7 @@ fn standing_rows_and_oam_wait_for_publication_across_a_checkpoint() {
     let held = state.advance(suspended, &content).unwrap();
     assert_eq!(state.video.memory, live);
     assert_eq!(state.video.batch.oam, pending_oam);
+    assert_eq!(state.video.batch.sprites, SpriteCount(2));
     assert_eq!(state.video.batch.standing_strips, strips);
     assert_eq!(held.standing_publication, StandingStrips::default());
 
@@ -319,7 +331,12 @@ fn standing_rows_and_oam_wait_for_publication_across_a_checkpoint() {
             &content,
         )
         .unwrap();
-    assert_eq!(state.video.memory.oam, pending_oam);
+    let mut expected_oam = pending_oam;
+    for unused in &mut expected_oam.low[2..] {
+        unused.y = 240;
+    }
+    assert_eq!(state.video.memory.oam, expected_oam);
+    assert_eq!(state.video.batch.sprites, SpriteCount(0));
     assert_eq!(published.standing_publication, strips);
     for (word, expected) in [(0x6000, 1), (0x6100, 0x55), (0x6080, 2), (0x6180, 3)] {
         assert_eq!(state.video.memory.vram[word], expected);
