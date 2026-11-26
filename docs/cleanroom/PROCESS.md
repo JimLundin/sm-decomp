@@ -343,29 +343,36 @@ the fraction of closed issues is not the fraction of the game reproduced. Sessio
 select work IDs, record owner/stage and intended outcomes, and link the final results. A
 missed outcome names its cause and next work item; it does not silently reset the same goal.
 
+### Cleanup at lane end
+
+The root assigns one GPT-6.2 Sol cleanup agent for the session. Every lane ends with a
+cleanup handoff, including lanes that hand work to a successor or stop without a PR.
+List the lane's local and remote branch names and tips, worktree paths and build output.
+Release each item as soon as its last user is done. For anything still needed, name the
+job, PR or successor that uses it. A successor takes responsibility for releasing what it inherits.
+
+The root forwards each handoff to the cleanup agent. The agent removes released worktrees
+and build outputs even when review still needs the published branch. Before deleting a
+branch, check open PRs, stacked work and the current tip on the remote. For a superseded
+or abandoned branch with unmerged commits, verify a recovery ref or archive first.
+Keep the default checkout and shared build seed. Leave local edits, untracked work and
+unexpected ignored files with their owner.
+
+Check the branch and tip of each released checkout, then use `tools/lane/worktree.sh remove`
+to retire it and its build output. Delete a released local ref with
+`git update-ref -d <ref> <expected-tip>` and its remote counterpart with
+`git push --force-with-lease=<ref>:<expected-tip> origin :<ref>`. Verify removal against
+`git worktree list`, local refs and `git ls-remote --heads origin`. Record removals and
+remaining consumers in the coordination log. Revisit retained items when their job or
+successor finishes. At session end, reconcile the live remote branch list with those receipts.
+
 ### Cleanup after landing
 
-The root assigns one GPT-6.2 Sol subagent to clean up after merges throughout the session.
-Each lane names the worktrees it releases in its handoff once its jobs have finished.
-After each successful landing, the root sends the cleanup agent the PR, the landed commit,
-the source and landing branch tips, and the released worktrees for that change. The root
-also hands off superseded work when its owner releases it. Other lanes can keep working
-while cleanup runs.
-
-The agent fetches the default branch and verifies that it contains the landed commit. For a
-squash or cherry-pick, use the reviewed tree or patch comparison to identify the source that
-landed. Check for open PRs or stacked work that still use a branch. Check the current worktree
-list and lane handoffs. Confirm the checkout still has the handed-off branch and tip, and
-check local edits and untracked or ignored files before removing it.
-Leave active or changed work with its owner. Keep the default checkout and shared build seed.
-
-Remove the released worktrees and their build outputs, then delete the matching local and
-remote branches. For a local ref use `git update-ref -d <ref> <expected-tip>`. For a remote
-ref use `git push --force-with-lease=<ref>:<expected-tip> origin :<ref>`. Record what went
-and what still has a consumer in the coordination log.
-Revisit retained work when its owner releases it and sweep again at session end. For superseded
-unmerged drafts, preserve a recovery reference or archive first. Held work retains its issue
-and branch link. The tracker, commits and review evidence retain the work's status and history.
+The root sends the cleanup agent the PR, landed commit, source and landing branch tips,
+and any remaining worktrees. Fetch the default branch and verify that it contains the
+landed commit. For a squash or cherry-pick, match the reviewed source tree or patch to
+what landed. Finish the [lane cleanup](#cleanup-at-lane-end) for every released item.
+Other lanes can keep working while cleanup runs.
 
 ## Feature architecture review
 
@@ -416,7 +423,7 @@ landing still apply. An explicit stop or pause from Jim takes precedence. A real
 is reported with the unfinished work and concrete next step in a handoff; the work stays pending
 and resumes when unblocked. Shift end alone is never a reason to leave work pending.
 At session end the cleanup agent reports the remaining branches and worktrees as described
-under [Cleanup after landing](#cleanup-after-landing).
+under [Cleanup at lane end](#cleanup-at-lane-end).
 
 Outside working hours new rounds wait for the nightly session. New work goes to the project's
 structure: tooling, movie captures, optimisations, and long computations that don't fit a session, within

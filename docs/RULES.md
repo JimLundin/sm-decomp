@@ -19,8 +19,8 @@ passed: one change, or a batch of independently reviewed changes, each kept as i
 sharing one CI run (Jim, 2026-11-25); no merge commits or force pushes. It alone uploads to ci-data and
 posts to issues; lanes publish only their own branch
 ([landing](../.agents/skills/root/SKILL.md#landing)). One
-[cleanup agent](cleanroom/PROCESS.md#cleanup-after-landing) retires finished branches and
-worktrees after each landing. Text is UTF-8/LF.
+[cleanup agent](cleanroom/PROCESS.md#cleanup-at-lane-end) removes released local and remote
+branches, worktrees and build outputs at the end of each lane and after each landing. Text is UTF-8/LF.
 
 Checks assert behaviour, not wording: never match on panic or error text. The verifier doesn't
 decide engine behaviour. Docs and comments describe the code as it is now: no history, lane names

@@ -9,6 +9,6 @@ Write the repository-side handoff for the next owner's task. Save it at `$TEMP/c
 - **Next** — Name the next owner and first concrete action. Carry forward user decisions that affect this assignment, including their scope. Give the root the tracker update it needs.
 - **How** — Point to the applicable skill or role, durable artifacts and any successful command the recipient needs to repeat.
 - **Traps** — Record a failure that changes the next attempt, including the reproduction and its boundary. Keep sensitive values and original game bytes out of reports.
-- **Cleanup** — Identify owned worktrees, their disk use and which can be retired safely. Preserve uncommitted work and stop owned background jobs at final handoff.
+- **Cleanup** — At final handoff, finish or stop your own jobs. List the local and remote branches with their tips, worktree paths and disk use, and build outputs. Mark each released item or name its continuing owner and use. Preserve uncommitted work. The root routes releases to [lane cleanup](../../../docs/cleanroom/PROCESS.md#cleanup-at-lane-end).
 
 On resume, compare the recorded worktree status, base and tip with the checkout and the current work issue. Reuse evidence for the revision it covers. If the checkout or outstanding edits differ from the recorded state, identify the changes and rerun affected proof. Continue at the recorded action or update it to reflect newer user direction.
