@@ -357,6 +357,8 @@ rounds = 2
 reads = ["W1", "C1"]
 model = "samus-movement"
 
+# The static shaft entry sets the affine view and temporarily closes the passage.
+# The Ceres actors own the mounted vents and rotation.
 [[platform]]
 id = "R2"
 name = "Room loading"
