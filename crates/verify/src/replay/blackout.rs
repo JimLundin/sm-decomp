@@ -379,8 +379,8 @@ mod owned_standing {
         position: types::Position,
     ) -> Result<blackout::HudContent, Outcome> {
         let ram = &prior.wram;
-        let owner = crate::replay::hud::Content::from_rom(rom)?;
-        let map = owner.map(ram)?.clone();
+        let assets = crate::replay::hud::Content::from_rom(rom)?;
+        let map = assets.map(ram)?.clone();
         let room = crate::replay::hud::room_from_words(
             [word(ram, 0x07a1)?, word(ram, 0x07a3)?],
             [word(ram, 0x07a5)?, word(ram, 0x07a7)?],
@@ -393,7 +393,7 @@ mod owned_standing {
         let (model, assets) = blackout::LockedHud::from_ordinary(
             &Model(crate::replay::hud::decode_state(ram)?),
             crate::replay::hud::frame_count(ram)?.0,
-            (owner.pictures, map, room),
+            (assets.pictures, map, room),
             types::Pair {
                 x: position.x.pixel().0,
                 y: position.y.pixel().0,
