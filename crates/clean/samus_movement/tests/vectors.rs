@@ -12,10 +12,10 @@
 use core::cell::RefCell;
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, CATALOGUE, Carry, Choices, Dashing, Direction, DirectionalTravels, DrawnJumpHistory,
-    Frame, FrameBefore, Hit, JumpButton, JumpHeld, Knockback, Met, Moment, Outcome, Phase, Push,
-    PushFrames, Rules, Run, Samus, Seat, SpeedCap, TravelDistance, TravelKind, TravelledDistances,
-    Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, Choices, Chosen, Dashing, Direction, DirectionalTravels,
+    DrawnJumpHistory, Frame, FrameBefore, Hit, JumpButton, JumpHeld, Knockback, Met, Moment,
+    Outcome, Phase, Push, PushFrames, Rules, Run, Samus, Seat, SpeedCap, TravelDistance,
+    TravelKind, TravelledDistances, Vertical, WallTest,
 };
 use serde::Deserialize;
 use types::{
@@ -2996,6 +2996,61 @@ fn new_output_tables_and_names_are_strict() {
     ] {
         assert!(toml::from_str::<Vector>(&format!("{known}{field}\n")).is_err());
     }
+}
+
+/// A standing frame on the floor with nothing held: her situation's last row chooses the pose
+/// she already has.
+const STANDS_ON: &str = r#"
+id = "choice-same-pose"
+source = "constructed"
+entries = ["WallJump"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] } }
+"#;
+
+/// A frame facing the screen on a moving elevator: the ride keeps her pose and chooses nothing.
+const RIDES_ON: &str = r#"
+id = "choice-none"
+source = "constructed"
+entries = ["WallJump"]
+world = { floor_top = 288, elevator_moving = true }
+before = { position = ["0100.0000", "010B.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] } }
+"#;
+
+/// Spec: `WallJump`. The frame reports what its choice recorded in her choices: a frame whose
+/// last row chooses the pose she already has records it anew, and her choices move on; the
+/// elevator's ride, which keeps the same pose, chooses nothing, reports none and leaves her
+/// choices as they were.
+#[test]
+fn recorded_choice_tells_a_same_pose_choice_from_none() {
+    let same: Vector = toml::from_str(STANDS_ON).expect("the standing frame reads");
+    assert_eq!(run(&same), Vec::<String>::new());
+    let (samus, outcome) = receipt(&same);
+    assert_eq!(samus.pose, same.pose.pose(), "the pose stays the same");
+    assert_eq!(outcome.recorded_choice, Some(Chosen::Other));
+    let started = Choices::starting_in(same.pose.pose());
+    assert_eq!(
+        samus.choices,
+        Choices {
+            latest: Chosen::Other,
+            before: started.latest,
+        }
+    );
+
+    let none: Vector = toml::from_str(RIDES_ON).expect("the ride reads");
+    assert_eq!(run(&none), Vec::<String>::new());
+    let (samus, outcome) = receipt(&none);
+    assert_eq!(samus.pose, none.pose.pose(), "the pose stays the same");
+    assert_eq!(outcome.recorded_choice, None);
+    assert_eq!(samus.choices, Choices::starting_in(none.pose.pose()));
 }
 
 #[test]

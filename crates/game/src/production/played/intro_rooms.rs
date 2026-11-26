@@ -435,8 +435,14 @@ impl State {
         if world.outside.get() {
             return Err(Fault::OutsideRoom);
         }
-        actor.carry.0.older_pose = actor.carry.0.prior_pose;
-        actor.carry.0.prior_pose = her.samus.pose;
+        if her
+            .outcome
+            .as_ref()
+            .is_some_and(|outcome| outcome.recorded_choice.is_some())
+        {
+            actor.carry.0.older_pose = actor.carry.0.prior_pose;
+            actor.carry.0.prior_pose = her.samus.pose;
+        }
         actor
             .samus
             .played(her.samus, &her, samus::jump_button(pad.held));

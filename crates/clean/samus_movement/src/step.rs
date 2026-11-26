@@ -139,6 +139,7 @@ impl Samus {
             pending_aim: change.pending_aim,
             travelled: made.travelled,
             wall_test: made.wall_test,
+            recorded_choice: change.recorded,
             standing_animation: StandingAnimation::of(start.pose, frame.pad),
             sprite: sprite(self.pose, &frame.items),
             skidding: self.run.skids(self.pose.facing),

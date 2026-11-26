@@ -27,11 +27,11 @@ movie = "any"
 [[run]]
 row = "any-power-on"
 start = 0
-end = 2475
-held = 2474
-stop = { failed = "intro-room.actor.older-pose" }
+end = 2517
+held = 2516
+stop = { failed = "front-end.sounds" }
 seed_frame = 0
-frames = [1, 2474]
+frames = [1, 2516]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it

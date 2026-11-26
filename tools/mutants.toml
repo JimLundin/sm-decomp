@@ -1552,3 +1552,21 @@ after = '''                    state.pending = Some(Pending::BeforeRoom { presse
 case = "played any-power-on 0 2474"
 cut = 2321
 field = "intro.dissolve"
+
+[[fault]]
+name = "played-intro-pose-history-shifts-without-choice"
+responsibility = "played"
+file = "crates/game/src/production/played/intro_rooms.rs"
+before = '''        if her
+            .outcome
+            .as_ref()
+            .is_some_and(|outcome| outcome.recorded_choice.is_some())
+        {
+            actor.carry.0.older_pose = actor.carry.0.prior_pose;
+            actor.carry.0.prior_pose = her.samus.pose;
+        }'''
+after = '''        actor.carry.0.older_pose = actor.carry.0.prior_pose;
+        actor.carry.0.prior_pose = her.samus.pose;'''
+case = "played any-power-on 0 2475"
+cut = 2475
+field = "intro-room.actor.older-pose"

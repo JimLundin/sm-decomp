@@ -23,7 +23,7 @@ pub enum Chosen {
 
 impl Chosen {
     /// What a choice that leaves her in `pose` records.
-    const fn of(pose: Pose) -> Self {
+    pub(crate) const fn of(pose: Pose) -> Self {
         if pose.action.spins() {
             Self::Spin
         } else {
@@ -52,11 +52,10 @@ impl Choices {
         }
     }
 
-    /// The choices once a choice leaves her in `pose`: it is her latest, and her latest before
-    /// it.
-    pub(crate) const fn then(self, pose: Pose) -> Self {
+    /// The choices once a choice records `chosen`: it is her latest, and her latest before it.
+    pub(crate) const fn then(self, chosen: Chosen) -> Self {
         Self {
-            latest: Chosen::of(pose),
+            latest: chosen,
             before: self.latest,
         }
     }
@@ -145,7 +144,8 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
 /// `vertical_speed_after_moves`, with her pose and vertical speed at the frame's end,
 /// `standing_animation`, `wall_test`, `floor_response` and `touchdown_graphics`; sound transport
 /// `touchdown_requests`; the world `inside` and `reached`; weapons `pending_aim` and `travelled`;
-/// samus-appearance `push_started` too (§12). Each is the frame's own, not State.
+/// samus-appearance `push_started` too (§12); a caller keeping her prior poses
+/// `recorded_choice`. Each is the frame's own, not State.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[expect(
     clippy::struct_excessive_bools,
@@ -169,6 +169,10 @@ pub struct Outcome {
     pub travelled: types::DirectionalTravels,
     /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
+    /// `WallJump`: what this frame's choice of her pose recorded in her `Choices`, or `None`
+    /// where the frame chose nothing and her choices stayed as they were. A frame that chooses
+    /// the pose she already has anew records it (`Some`), unlike one that chooses nothing.
+    pub recorded_choice: Option<Chosen>,
     /// `AimingAndShooting`: what the standing animation does.
     pub standing_animation: StandingAnimation,
     /// `HowSheIsDrawn`: which sprite shows her.

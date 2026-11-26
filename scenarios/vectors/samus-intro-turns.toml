@@ -1,0 +1,59 @@
+# Radii are whole pixels. Clip pairs are step and frames left.
+
+[[vector]]
+id = "R-recoil-to-fall"
+source = "recorded"
+entries = ["SampleIntroBody"]
+before = { pose = "RecoilLeft", radius = [5, 21], authority = "Controlled" }
+inputs = { entry_body = [5, 21], choice = "FallLeft" }
+after = { pose = "FallLeft", radius = [5, 21] }
+
+[[vector]]
+id = "R-fall-reselected"
+source = "recorded"
+entries = ["SampleIntroBody", "RememberIntroPose"]
+before = { pose = "FallLeft", radius = [5, 21], old = "FallLeft", older = "RecoilLeft", authority = "Controlled" }
+inputs = { entry_body = [5, 19], choice = "FallLeft" }
+after = { pose = "FallLeft", radius = [5, 19], old = "FallLeft", older = "FallLeft" }
+
+[[vector]]
+id = "R-run-carries"
+source = "recorded"
+entries = ["RememberIntroPose"]
+before = { pose = "LeftwardRun", radius = [5, 21], old = "LeftwardRun", older = "StandLeft", authority = "Controlled" }
+inputs = { entry_body = [5, 21] }
+after = { pose = "LeftwardRun", old = "LeftwardRun", older = "StandLeft" }
+
+[[vector]]
+id = "R-lock-handoff"
+source = "recorded"
+entries = ["RememberIntroPose", "FinishIntroControlTurn"]
+before = { pose = "StandLeft", radius = [5, 21], old = "StandLeft", older = "StandLeft", clip = [0, 15], authority = "Controlled" }
+inputs = { entry_body = [5, 21], place = "StandLeft", choice = "StandLeft" }
+after = { pose = "StandLeft", old = "StandLeft", older = "StandLeft", clip = [0, 14], authority = "Locked" }
+output = { item_controls = true, weapons = "CannonAndShots" }
+
+[[vector]]
+id = "R-locked-stands"
+source = "recorded"
+entries = ["SampleIntroBody", "FinishIntroControlTurn"]
+before = { pose = "StandLeft", radius = [5, 21], old = "StandLeft", older = "StandLeft", clip = [0, 14], authority = "Locked" }
+inputs = { choice = "StandLeft" }
+after = { pose = "StandLeft", radius = [5, 21], old = "StandLeft", older = "StandLeft", clip = [0, 13] }
+output = { item_controls = false, weapons = "ShotsOnly" }
+
+[[vector]]
+id = "C-locked-body"
+source = "constructed"
+entries = ["SampleIntroBody"]
+before = { pose = "FallLeft", radius = [5, 21], authority = "Locked" }
+inputs = { entry_body = [5, 19] }
+after = { radius = [5, 21] }
+
+[[vector]]
+id = "C-lock-from-recoil"
+source = "constructed"
+entries = ["RememberIntroPose"]
+before = { pose = "RecoilLeft", radius = [5, 21], old = "RecoilLeft", older = "FallLeft", clip = [1, 7], authority = "Controlled" }
+inputs = { entry_body = [5, 21], place = "StandLeft", choice = "StandLeft" }
+after = { pose = "StandLeft", old = "StandLeft", older = "StandLeft", clip = [0, 9], authority = "Locked" }

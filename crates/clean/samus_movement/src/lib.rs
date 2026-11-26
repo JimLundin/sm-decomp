@@ -20,6 +20,10 @@
 //! gives `UnknownPose` for a pose no situation names. The pose chart alone answers through
 //! `Moment::next_pose`.
 //!
+//! Spec: `WallJump`, her choices. `Outcome::recorded_choice` reports what the frame's choice of
+//! her pose recorded in `Samus::choices`: `Some` wherever the frame chose anew, the pose she
+//! already had included, and `None` where it chose nothing and her choices stayed as they were.
+//!
 //! Spec: `TravelledDistances`. `Outcome::travelled` directly reports a fresh complete
 //! `DirectionalTravels` map of signed `TravelDistance`s after collision. A caller retains
 //! these in `TravelledDistances::travels`, reads them for firing before refreshing the interval,

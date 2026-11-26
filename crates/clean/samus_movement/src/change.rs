@@ -10,7 +10,7 @@ use crate::moves::MovesMade;
 use crate::rows::{Effect, Met, Situation};
 use crate::rules::Lowers;
 use crate::run::Dashing;
-use crate::samus::Samus;
+use crate::samus::{Chosen, Samus};
 use crate::situation::ENTERING;
 use crate::tick::{Frame, Tick};
 use crate::vertical::Contact;
@@ -34,6 +34,9 @@ pub struct PoseChange {
     pub floor_response: Option<FloorResponse>,
     /// `Landing`, `WallJump`: the contact her moves made that she took, if any.
     pub contact: Option<Contact>,
+    /// `WallJump`: what the frame's choice recorded in her choices, or `None` where it chose
+    /// nothing.
+    pub recorded: Option<Chosen>,
 }
 
 /// `PoseFollows`: the pose her frame's first step chooses, from the pad, her animation's end and
@@ -108,8 +111,11 @@ impl Samus {
         // chosen's to say; what the choice records is the pose she ends in, once the aim
         // change's step and pose fit have taken or refused it (a landing refused in a spin
         // records the spin).
-        if chosen.chooses_anew(start.pose) {
-            self.choices = self.choices.then(self.pose);
+        let recorded = chosen
+            .chooses_anew(start.pose)
+            .then(|| Chosen::of(self.pose));
+        if let Some(record) = recorded {
+            self.choices = self.choices.then(record);
         }
         let pending_aim = transition_firing_aim(start.pose, accepted.pose, t.frame);
         if let Some(lower) = accepted.lower {
@@ -125,6 +131,7 @@ impl Samus {
             pending_aim,
             floor_response: response.or(moves.floor_stop),
             contact,
+            recorded,
         }
     }
 

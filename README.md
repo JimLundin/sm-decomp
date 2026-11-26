@@ -9,7 +9,7 @@
 The milestone is **Power-on through Ceres** in the any% movie. A frame passes when the engine, playing alone from a recorded seed on the movie's pads, matches every compared field at its cut.
 
 ```text
-███████░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▓▓░░░░░░  16.2% from power-on · 58.2% pass
+███████░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▓▓░░░░░░  16.5% from power-on · 58.5% pass
 ```
 
 `█` held continuously from power-on · `▓` passes from a later seed · `░` doesn't pass yet
