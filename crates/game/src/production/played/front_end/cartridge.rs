@@ -55,6 +55,35 @@ impl Cartridge {
         self.started.as_ref().map(|start| &start.run)
     }
 
+    /// Transfer the active cartridge and its live capture to the shaft save scheduler.
+    ///
+    /// # Errors
+    /// The active run must exist and the arrival write must be complete.
+    pub fn into_shaft_save(
+        self,
+        room: &crate::production::played::State,
+        location: (types::Area, types::StationId),
+    ) -> Result<
+        (
+            SaveFilesState,
+            crate::production::played::save_snapshot::Capture,
+        ),
+        Fault,
+    > {
+        let selected = self.started().ok_or(Fault::FileUnstarted)?;
+        if self.state.active.is_none() || self.state.pending != PendingAction::Idle {
+            return Err(Fault::CartridgeReceipt);
+        }
+        let capture = crate::production::played::save_snapshot::capture(
+            selected,
+            room,
+            room.play_time,
+            location,
+        )
+        .ok_or(Fault::CartridgeReceipt)?;
+        Ok((self.state, capture))
+    }
+
     /// Publish the Ceres arrival save at the cut reached by the frame owner.
     ///
     /// # Errors
