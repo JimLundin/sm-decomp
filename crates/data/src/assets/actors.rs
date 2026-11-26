@@ -106,6 +106,15 @@ pub struct EnemyTilePatch {
     pub bytes: Vec<u8>,
 }
 
+/// One complete object tile transfer during a doorway's enemy load.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DoorEnemyTiles {
+    /// The destination VRAM word.
+    pub to: usize,
+    /// Consecutive words from the imported species tile sheet.
+    pub words: Vec<u16>,
+}
+
 /// A species' colours.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Species {

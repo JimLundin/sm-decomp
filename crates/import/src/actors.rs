@@ -8,8 +8,9 @@
 
 use data::assets::actors::{
     Actors, BLUE_BRINSTAR_FACE_BLOCK, BeaconColours, CERES_DOOR, CERES_RIDLEY, CeresDoorColours,
-    CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, EnemyTilePatch, EyeShades, GEEGA,
-    Getaway, MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
+    CeresRidleyColours, DoorEnemyTiles, DoorShades, ELEVATOR, EnemyGraphics, EnemyTilePatch,
+    EyeShades, GEEGA, Getaway, MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species,
+    SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
 use data::assets::world::{
@@ -356,6 +357,46 @@ pub fn starting_enemy_tiles(
             bytes: rom.read(species.tiles, size)?.to_vec(),
         });
         next = next.wrapping_add(species.tile_bytes);
+        place = place
+            .advance(ENTRY_BYTES)
+            .ok_or(AddressError::PastEnd(place))?;
+    }
+}
+
+/// Import the ordered object sheet transfers from the doorway's enemy set.
+///
+/// # Errors
+/// The set and each species' even-sized sheet must be readable.
+pub(crate) fn door_enemy_tiles(
+    rom: Lorom<'_>,
+    at: RomAddress,
+) -> Result<Vec<DoorEnemyTiles>, ActorsError> {
+    let mut uploads = Vec::new();
+    let mut next = 0x7000_usize;
+    let mut place = at;
+    loop {
+        let key = word(rom, place, 0)?;
+        if key == END_OF_SET {
+            return Ok(uploads);
+        }
+        let species = data::enemy::species(rom, SpeciesKey(key)).map_err(ActorsError::Species)?;
+        let bytes = rom.read(species.tiles, usize::from(species.tile_bytes & 0x7fff))?;
+        let (pairs, rest) = bytes.as_chunks::<2>();
+        if !rest.is_empty() {
+            return Err(ActorsError::Address(AddressError::PastEnd(species.tiles)));
+        }
+        let to = if species.tile_bytes & 0x8000 == 0 {
+            let to = next;
+            next = next.saturating_add(pairs.len());
+            to
+        } else {
+            // Reserved uploads select their absolute VRAM slot from the palette word.
+            0x6000 | usize::from((word(rom, place, 2)? >> 4) & 0x0f00)
+        };
+        uploads.push(DoorEnemyTiles {
+            to,
+            words: pairs.iter().copied().map(u16::from_le_bytes).collect(),
+        });
         place = place
             .advance(ENTRY_BYTES)
             .ok_or(AddressError::PastEnd(place))?;

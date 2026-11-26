@@ -843,6 +843,7 @@ impl<'a> Run<'a> {
             work_done: platform.ready || fetching_contents(doors),
             publishes: platform.publishes,
             actor_fetch: platform::actor_fetch(current),
+            enemy_tiles_uploaded: platform::door_enemy_tiles(previous, current),
             shaft_background: platform::shaft_background(current, doors),
             shaft_raster: platform::shaft_raster(previous, current)?,
             audio: played::passage::PassageAudio {
@@ -917,7 +918,7 @@ impl<'a> Run<'a> {
         &self,
         outputs: &played::Outputs,
         frame: &Frame<'_>,
-        readiness: played::arrival::Readiness,
+        passing: &played::passage::Passing,
         (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
     ) -> Result<(), Outcome> {
         let Frame { current, place, .. } = *frame;
@@ -941,7 +942,7 @@ impl<'a> Run<'a> {
         room_video::compare(
             &self.state.room_video,
             outputs.shaft_overlay_placement.is_some(),
-            readiness,
+            passing,
             frame,
             expected,
             actual,

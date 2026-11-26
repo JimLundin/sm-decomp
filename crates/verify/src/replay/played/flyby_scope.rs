@@ -70,6 +70,7 @@ impl Run<'_> {
             work_done: true,
             publishes: true,
             actor_fetch: super::platform::actor_fetch(current),
+            enemy_tiles_uploaded: false,
             shaft_background: played::room_tiles::ShaftBackground::Pending,
             shaft_raster: played::passage::ShaftRaster::Pending,
             audio: played::passage::PassageAudio {

@@ -484,6 +484,12 @@ fn version(
         } else {
             Vec::new()
         },
+        door_enemy_tiles: if room == CERES_RIDLEY_ROOM {
+            crate::actors::door_enemy_tiles(image, state.enemy_set)
+                .map_err(|error| WorldError::Enemies { room, error })?
+        } else {
+            Vec::new()
+        },
         ceres_doors: crate::actors::ceres_doors(image, state.enemy_population)
             .map_err(ceres_actor)?,
         ceres_ridley: crate::actors::ceres_ridley(image, state.enemy_population)

@@ -14,7 +14,7 @@ use crate::state::video::{
     VramWord,
 };
 use boss_ceres_ridley::{AlternatingLook, OverlayTurn};
-use data::assets::actors::EnemyTilePatch;
+use data::assets::actors::{DoorEnemyTiles, EnemyTilePatch};
 use data::assets::art::TileSheet;
 use data::assets::landing_site::Graphics as StandardGraphics;
 use data::assets::shaft::{OVERLAY_BYTES, Shaft};
@@ -353,6 +353,25 @@ impl RoomVideo {
                     .collect(),
             },
         });
+    }
+
+    /// Apply the doorway's ordered object writes to carried physical VRAM.
+    pub(super) fn install_door_enemy_tiles(&mut self, tiles: &[DoorEnemyTiles]) -> Option<()> {
+        let vram = &mut self.video.memory.vram;
+        if tiles.is_empty()
+            || !tiles.iter().all(|tile| {
+                tile.to
+                    .checked_add(tile.words.len())
+                    .is_some_and(|end| end <= vram.len())
+            })
+        {
+            return None;
+        }
+        for tile in tiles {
+            let end = tile.to.checked_add(tile.words.len())?;
+            vram.get_mut(tile.to..end)?.copy_from_slice(&tile.words);
+        }
+        Some(())
     }
 
     /// Publish standard text tiles and advance the interrupted object upload.

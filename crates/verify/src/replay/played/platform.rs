@@ -96,6 +96,17 @@ pub(super) fn actor_fetch(record: &FrameRecord) -> game::production::played::pas
     }
 }
 
+// The last tile strip of Ridley's room is already visible while the IRQ upload call
+// returns to the main thread. The NMI that samples it has since reused DMA channel 1.
+pub(super) fn door_enemy_tiles(previous: &FrameRecord, current: &FrameRecord) -> bool {
+    let ready = |record: &FrameRecord| {
+        matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.interrupted_pc, 0x0082_e02c..=0x0082_e02f))
+            && record.wram.get(0x5be..0x5c0) == Some(&0x6d00_u16.to_le_bytes())
+            && record.wram.get(0x5c3..0x5c5) == Some(&0x0600_u16.to_le_bytes())
+    };
+    ready(current) && !ready(previous)
+}
+
 /// The borrowed lag of the contents' fetch: done on its first frame. The fetch's work waits on
 /// its own uploads, so every NMI through it is a lag NMI and none says when its colours were
 /// set; the record shows them set within the slide, and the visor lit as the slide ends, which

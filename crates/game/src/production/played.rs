@@ -284,6 +284,8 @@ pub enum Fault {
     ShaftRaster,
     /// The arrival graphics or its direct transfer could not be published.
     ArrivalGraphics,
+    /// The doorway’s selected enemy tile uploads could not be represented.
+    DoorEnemyGraphics,
     /// The fresh file's Samus could not be constructed.
     NewGame,
     /// The station's escape in the shaft: a later piece owns the shaft's overlay.

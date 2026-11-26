@@ -77,7 +77,7 @@ fn shaft_overlay_placement_publishes_its_complete_strip() {
 pub(super) fn compare(
     room: &RoomVideo,
     overlay_placed: bool,
-    readiness: Readiness,
+    passing: &game::production::played::passage::Passing,
     frame: &super::Frame<'_>,
     expected: &mut Vec<super::Observation>,
     actual: &mut Vec<super::Observation>,
@@ -99,9 +99,12 @@ pub(super) fn compare(
     )?;
     compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
+    if passing.enemy_tiles_uploaded {
+        compare_door_enemy_tiles(room, frame.current, expected, actual)?;
+    }
     compare_arrival(
         room,
-        readiness,
+        passing.start,
         frame.previous,
         frame.current,
         expected,
@@ -147,6 +150,32 @@ fn compare_live_overlay(
             (expected_fields, actual_fields),
         )?;
     }
+    Ok(())
+}
+
+pub(super) fn compare_door_enemy_tiles(
+    video: &RoomVideo,
+    record: &FrameRecord,
+    expected: &mut Vec<Observation>,
+    actual: &mut Vec<Observation>,
+) -> Result<(), Outcome> {
+    let native = record
+        .vram
+        .get(0x6d00..0x8000)
+        .ok_or_else(|| super::data_failure(None, "Ridley doorway object tiles"))?;
+    let field = |words: &[u16]| Observation {
+        field: "room-video.door-enemy-tiles".into(),
+        bytes: words.iter().copied().flat_map(u16::to_le_bytes).collect(),
+    };
+    expected.push(field(native));
+    actual.push(field(
+        video
+            .video
+            .memory
+            .vram
+            .get(0x6d00..0x8000)
+            .unwrap_or_default(),
+    ));
     Ok(())
 }
 
@@ -888,4 +917,56 @@ fn arrival_display_events_match_native_cuts() {
             "cut {cut}"
         );
     }
+}
+
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn ridley_doorway_publishes_the_selected_enemy_sheets() {
+    use super::{Run, Stop, appearance, connected, movement, seed_controller};
+
+    let sources = sources();
+    let lock = read_lock(&sources).unwrap();
+    let row = "chain-any-0005-E06B";
+    let mut rows = open_rows(&sources, &lock, row).unwrap();
+    let seed = rows.record(0).unwrap();
+    let content = connected::Content {
+        movement: movement::Content::load(&sources.rom).unwrap(),
+        appearance: appearance::Content::load(&sources.rom).unwrap(),
+    };
+    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let controller = seed_controller(&seed).unwrap();
+    assert_eq!(
+        run.through(&mut rows, seed, controller, 1..=177).unwrap(),
+        (177, Stop::End)
+    );
+    let before = run.state.room_video.video.memory.vram.clone();
+
+    let prior = rows.record(177).unwrap();
+    let current = rows.record(178).unwrap();
+    assert!(super::platform::door_enemy_tiles(&prior, &current));
+    let controller = seed_controller(&prior).unwrap();
+    assert_eq!(
+        run.through(&mut rows, prior, controller, 178..=178)
+            .unwrap(),
+        (1, Stop::End)
+    );
+    let published = &run.state.room_video.video;
+    let same = published.memory.vram[..0x6d00] == before[..0x6d00];
+    assert!(same, "the doorway preserves the preceding VRAM");
+    let same = published.memory.vram[0x6d00..] == current.vram[0x6d00..];
+    assert!(same, "the doorway publishes both sheets");
+
+    let restored: Box<Video> = canonical::from_bytes(&canonical::to_bytes(published)).unwrap();
+    let same = restored.as_ref() == published.as_ref();
+    assert!(same, "the physical video checkpoint preserves both sheets");
+    run.state.room_video.video = restored;
+    let controller = seed_controller(&current).unwrap();
+    assert_eq!(
+        run.through(&mut rows, current, controller, 179..=181)
+            .unwrap(),
+        (3, Stop::End)
+    );
+    let native = rows.record(181).unwrap();
+    let same = run.state.room_video.video.memory.vram[0x6d00..] == native.vram[0x6d00..];
+    assert!(same, "the sheets carry through actor placement");
 }

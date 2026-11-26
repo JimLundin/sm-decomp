@@ -312,6 +312,7 @@ pub(super) fn play_with(
 fn passing() -> Passing {
     Passing {
         actor_fetch: crate::production::played::passage::ActorFetch::Place,
+        enemy_tiles_uploaded: false,
         shaft_background: super::room_tiles::ShaftBackground::Pending,
         shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
         work_begun: true,

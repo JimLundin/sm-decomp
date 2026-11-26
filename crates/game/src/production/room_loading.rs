@@ -825,6 +825,15 @@ pub fn tileset_of(
         .map(|version| version.map(|version| version.tileset))
 }
 
+/// The transfers called for by the version at the destination of the live passage.
+pub(super) fn door_enemy_tiles<'a>(
+    rooms: &'a Rooms,
+    through: DoorwayId,
+    progress: &Progress,
+) -> Result<&'a [actors::DoorEnemyTiles], LoadFault> {
+    Ok(&version(rooms, through, progress)?.door_enemy_tiles)
+}
+
 /// The version of the room `through` leads to that loads: the first whose condition holds for
 /// `progress` as she comes in through it, or the default.
 fn version<'a>(
@@ -949,6 +958,7 @@ mod tests {
                 row: SpriteRow::new(2).unwrap(),
             }],
             starting_enemy_tiles: Vec::new(),
+            door_enemy_tiles: Vec::new(),
             ceres_doors: vec![placed(CeresDoorKind::Door(Side::Left))],
             ceres_ridley: false,
             ceres_vents: Vec::new(),

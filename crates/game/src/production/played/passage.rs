@@ -65,6 +65,8 @@ pub struct Passing {
     pub publishes: bool,
     /// Actor loading reached at the interrupted cut of an escape-shaft fetch.
     pub actor_fetch: ActorFetch,
+    /// The destination's complete set of interrupted object transfers has now reached VRAM.
+    pub enemy_tiles_uploaded: bool,
     /// Completed background work while the shaft contents are fetched.
     pub shaft_background: super::room_tiles::ShaftBackground,
     /// The beam's progress on the return room's visible HDMA tables.
@@ -234,6 +236,16 @@ impl super::State {
                 passing.shaft_background,
                 &content.shaft_effects,
             )?;
+        }
+        if passing.enemy_tiles_uploaded
+            && let Some(doorway) = self.passage.doorway
+        {
+            let tiles =
+                room_loading::door_enemy_tiles(&content.rooms, doorway.through, &self.progress)
+                    .map_err(Fault::Load)?;
+            self.room_video
+                .install_door_enemy_tiles(tiles)
+                .ok_or(Fault::DoorEnemyGraphics)?;
         }
         if let Some(raster) = raster {
             self.room_video.finish_shaft_hdma(raster);
