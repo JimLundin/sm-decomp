@@ -162,20 +162,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let clock = word(previous, source::NMI_FRAME_COUNTER_WORD)?;
     let bytes = std::fs::read(&sources.rom).map_err(|_| data_failure(None, "player ROM file"))?;
     let rom = Rom::new(bytes).map_err(|_| data_failure(None, "player ROM pin"))?;
-    let raw = import::intro::room_cells(rom.lorom())
-        .map_err(|_| data_failure(None, "intro room cell import"))?;
-    let slopes = data::level::slope::Slopes::load(rom.lorom())
-        .map_err(|_| data_failure(None, "slope content"))?;
-    let rooms = rooms::Content::new(raw, &slopes)
-        .map_err(|_| data_failure(None, "intro room collision content"))?;
-    let movement = movement::Content::load(&sources.rom)?;
-    let appearance = appearance::Content::load(&sources.rom)?;
+    let (content, appearance) = room_content(&sources.rom, &rom)?;
     let actor = actor(previous, &appearance)?;
-    let production_content = ProductionContent::IntroRooms(Box::new(rooms::ScopedContent {
-        rooms,
-        movement: movement.movement,
-        appearance: appearance.appearance,
-    }));
+    let production_content = ProductionContent::IntroRooms(Box::new(content));
     let rules = ProductionRules::IntroRooms(Box::new(rooms::ScopedRules {
         movement: samus_movement::Rules::default(),
         appearance: samus_appearance::Rules::VANILLA,
@@ -220,6 +209,29 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             first_record,
         })),
     })
+}
+
+/// The playable rectangles and shared movement/appearance tables from the cartridge.
+pub(super) fn room_content(
+    path: &std::path::Path,
+    rom: &Rom,
+) -> Result<(rooms::ScopedContent, appearance::Content), Outcome> {
+    let raw = import::intro::room_cells(rom.lorom())
+        .map_err(|_| data_failure(None, "intro room cell import"))?;
+    let slopes = data::level::slope::Slopes::load(rom.lorom())
+        .map_err(|_| data_failure(None, "slope content"))?;
+    let rooms = rooms::Content::new(raw, &slopes)
+        .map_err(|_| data_failure(None, "intro room collision content"))?;
+    let movement = movement::Content::load(path)?;
+    let appearance = appearance::Content::load(path)?;
+    Ok((
+        rooms::ScopedContent {
+            rooms,
+            movement: movement.movement,
+            appearance: appearance.appearance.clone(),
+        },
+        appearance,
+    ))
 }
 
 fn actor(wram: &[u8], content: &appearance::Content) -> Result<rooms::Actor, Outcome> {
@@ -438,7 +450,13 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
         .mirror
         .as_ref()
         .ok_or_else(|| data_failure(None, "intro room mirror scope"))?;
-    let actor = &state.rooms.actor;
+    let mut fields = grid(mirror);
+    fields.extend(actor_fields(&state.rooms.actor)?);
+    fields.push(clock(state.finished_frames));
+    Ok(fields)
+}
+
+fn actor_fields(actor: &rooms::Actor) -> Result<[Observation; ACTOR_FIELDS], Outcome> {
     let carry = &actor.carry.0;
     let playhead = actor.samus.appearance.0.animation.playhead;
     let selected = match carry.selection {
@@ -448,26 +466,171 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
             return Err(data_failure(None, "intro room played item selection"));
         }
     };
-    let mut fields = grid(mirror);
-    fields.extend(
-        ActorView {
-            centre: actor.samus.movement.0.position,
-            previous: carry.previous,
-            pose: pose_id(actor.samus.movement.0.pose)?,
-            prior_pose: pose_id(carry.prior_pose)?,
-            older_pose: pose_id(carry.older_pose)?,
-            radius: carry.radius,
-            step: u16::from(playhead.step.0),
-            hold: u16::from(playhead.time_left.0),
-            selected,
-            missiles: carry.missiles,
-            energy: actor.health.0.energy.whole.get(),
-            demo: carry.demo,
-            cooldown: actor.shots.0.cooldown.0,
-            shots: actor.shots.0.count.0,
-        }
-        .observations(),
-    );
-    fields.push(clock(state.finished_frames));
-    Ok(fields)
+    Ok(ActorView {
+        centre: actor.samus.movement.0.position,
+        previous: carry.previous,
+        pose: pose_id(actor.samus.movement.0.pose)?,
+        prior_pose: pose_id(carry.prior_pose)?,
+        older_pose: pose_id(carry.older_pose)?,
+        radius: carry.radius,
+        step: u16::from(playhead.step.0),
+        hold: u16::from(playhead.time_left.0),
+        selected,
+        missiles: carry.missiles,
+        energy: actor.health.0.energy.whole.get(),
+        demo: carry.demo,
+        cooldown: actor.shots.0.cooldown.0,
+        shots: actor.shots.0.count.0,
+    }
+    .observations())
+}
+
+/// Independent actor and loan observations from the power-on run.
+pub(super) fn opening_fields(
+    actors: &game::production::played::front_end::Actors,
+    wram: &[u8],
+) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
+    use types::save_files::Ammunition;
+
+    let raw = |address| raw_word(wram, address, "intro actor entry");
+    let quantity = Observation::quantity;
+    let started = raw(0x0a44)? != 0;
+    let mut expected = vec![quantity("intro-actor.started", i64::from(started))];
+    let mut actual = vec![quantity(
+        "intro-actor.started",
+        i64::from(actors.rooms.is_some()),
+    )];
+    if started {
+        expected.extend(ActorView::read(wram)?.observations());
+        expected.push(quantity(
+            "intro-actor.cannon-delay",
+            2_i64.saturating_sub(i64::from(raw(0x0aaa)?)),
+        ));
+        expected.push(recorded_controls(
+            wram,
+            "intro-actor.saved-buttons",
+            0x0d82,
+        )?);
+    }
+    if let Some(room) = &actors.rooms {
+        actual.extend(actor_fields(&room.actor)?);
+        actual.push(quantity(
+            "intro-actor.cannon-delay",
+            i64::from(room.actor.samus.appearance.0.cannon.remaining()),
+        ));
+        actual.push(played_controls(
+            "intro-actor.saved-buttons",
+            &actors.file.buttons,
+        ));
+    }
+    let health = actors.energy();
+    let missiles = actors.ammunition(Ammunition::Missiles);
+    let super_missiles = actors.ammunition(Ammunition::SuperMissiles);
+    let power_bombs = actors.ammunition(Ammunition::PowerBombs);
+    let reserves = actors.file.reserves;
+    let [owned_items, owned_beams] = game::exact::save_files::gear_words(&actors.file.owned);
+    let [equipped_items, equipped_beams] = game::exact::save_files::gear_words(&actors.file.gear);
+    for (field, address, value) in [
+        ("intro-actor.current-energy", 0x09c2, health.current),
+        ("intro-actor.energy-capacity", 0x09c4, health.maximum),
+        ("intro-actor.current-missiles", 0x09c6, missiles.current),
+        ("intro-actor.missile-capacity", 0x09c8, missiles.maximum),
+        ("intro-actor.super-missiles", 0x09ca, super_missiles.current),
+        (
+            "intro-actor.super-missile-capacity",
+            0x09cc,
+            super_missiles.maximum,
+        ),
+        ("intro-actor.power-bombs", 0x09ce, power_bombs.current),
+        (
+            "intro-actor.power-bomb-capacity",
+            0x09d0,
+            power_bombs.maximum,
+        ),
+        ("intro-actor.reserve-energy", 0x09d6, reserves.current),
+        ("intro-actor.reserve-capacity", 0x09d4, reserves.maximum),
+        ("intro-actor.owned-items", 0x09a4, owned_items),
+        ("intro-actor.equipped-items", 0x09a2, equipped_items),
+        ("intro-actor.owned-beams", 0x09a8, owned_beams),
+        ("intro-actor.equipped-beams", 0x09a6, equipped_beams),
+    ] {
+        expected.push(quantity(field, i64::from(raw(address)?)));
+        actual.push(quantity(field, i64::from(value)));
+    }
+    expected.push(quantity(
+        "intro-actor.moonwalk",
+        i64::from(raw(0x09e4)? != 0),
+    ));
+    actual.push(quantity(
+        "intro-actor.moonwalk",
+        i64::from(actors.settings.moonwalk),
+    ));
+    expected.push(recorded_controls(wram, "intro-actor.buttons", 0x09b2)?);
+    actual.push(played_controls("intro-actor.buttons", &actors.buttons));
+    Ok((expected, actual))
+}
+
+fn recorded_controls(wram: &[u8], name: &str, address: usize) -> Result<Observation, Outcome> {
+    let words = wram
+        .get(address..address.saturating_add(14))
+        .ok_or_else(|| data_failure(None, "intro actor control words"))?;
+    Ok(Observation {
+        field: name.to_owned(),
+        bytes: words.to_vec(),
+    })
+}
+
+fn played_controls(name: &str, controls: &types::save_files::ControlBindings) -> Observation {
+    Observation {
+        field: name.to_owned(),
+        bytes: game::exact::save_files::control_words(controls)
+            .into_iter()
+            .flat_map(u16::to_le_bytes)
+            .collect(),
+    }
+}
+
+/// Samus's published visibility during the opening and first fight turn.
+pub(super) fn fight_shown(wram: &[u8]) -> Result<bool, Outcome> {
+    Ok(raw_word(wram, 0x1a57, "intro fight visibility")? != 0)
+}
+
+/// Compare the first fight's installed rectangle, omitting its two inherited rows.
+pub(super) fn populated(
+    room: Option<rooms::Start>,
+    content: &rooms::Content,
+    wram: &[u8],
+    shown: bool,
+) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
+    let quantity = Observation::quantity;
+    let mut expected = vec![quantity("intro-actor.shown", i64::from(shown))];
+    let mut actual = vec![quantity("intro-actor.shown", i64::from(room.is_some()))];
+    if shown {
+        let width = word(wram, source::ROOM_WIDTH_IN_BLOCKS)?;
+        let height = word(wram, source::ROOM_HEIGHT_IN_BLOCKS)?;
+        let length = usize::from(width).saturating_mul(14).saturating_mul(2);
+        let bytes = wram
+            .get(0x10002..0x10002usize.saturating_add(length))
+            .ok_or_else(|| data_failure(None, "intro room installed rectangle"))?;
+        expected.push(quantity("intro-room.width", i64::from(width)));
+        expected.push(quantity("intro-room.height", i64::from(height)));
+        expected.push(Observation {
+            field: "intro-room.populated".to_owned(),
+            bytes: bytes.to_vec(),
+        });
+    }
+    if let Some(room) = room {
+        let [width, height] = content.dimensions(room);
+        actual.push(quantity("intro-room.width", i64::from(width)));
+        actual.push(quantity("intro-room.height", i64::from(height)));
+        actual.push(Observation {
+            field: "intro-room.populated".to_owned(),
+            bytes: content
+                .populated(room)
+                .iter()
+                .flat_map(|cell| cell.word().to_le_bytes())
+                .collect(),
+        });
+    }
+    Ok((expected, actual))
 }

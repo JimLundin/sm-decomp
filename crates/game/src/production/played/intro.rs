@@ -57,6 +57,14 @@ pub enum Fault {
     ZebesFightRoom,
     /// The discovery room and encounter are required.
     DiscoveryRoom,
+    /// The room and Samus refused the reached opportunity.
+    IntroRoom(super::intro_rooms::Fault),
+    /// The chosen file did not yet supply Samus.
+    ActorUnstarted,
+    /// Recorded controls could not supply the reached room turn.
+    IntroControls,
+    /// Ongoing playable room turns after the first.
+    IntroRoomTurn,
 }
 
 /// The intro's State and the colours the screen shows, which the intro sets when a frame takes

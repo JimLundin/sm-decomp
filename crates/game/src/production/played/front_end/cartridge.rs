@@ -147,6 +147,8 @@ impl Cartridge {
 
 /// Front-end replies that are independent of the cartridge.
 pub trait Platform {
+    /// The audio sender's count seen by a room actor.
+    fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting;
     /// The initial random word at title entry.
     fn settled_random(&self) -> RandomSequence;
     /// Whether an intro track waits to load.
@@ -156,6 +158,7 @@ pub trait Platform {
 struct LiveAnswers<'a, P> {
     cartridge: &'a Cartridge,
     platform: &'a P,
+    pressed: bool,
 }
 
 impl<P> screens_file_select::SaveMemory for LiveAnswers<'_, P> {
@@ -169,6 +172,12 @@ impl<P> screens_file_select::SaveMemory for LiveAnswers<'_, P> {
 }
 
 impl<P: Platform> Answers for LiveAnswers<'_, P> {
+    fn pending_press(&self) -> bool {
+        self.pressed
+    }
+    fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting {
+        self.platform.sounds_waiting()
+    }
     fn settled_random(&self) -> RandomSequence {
         self.platform.settled_random()
     }
@@ -190,6 +199,7 @@ impl<P: Platform> Answers for LiveAnswers<'_, P> {
         };
         Some(FileStart {
             settings: run.profile.settings,
+            actor: super::ActorFile::from(&run.profile),
             begins,
         })
     }
@@ -226,6 +236,7 @@ impl State {
         let answers = LiveAnswers {
             cartridge: &save,
             platform: frame.platform,
+            pressed: frame.in_flight.values().any(|&down| down),
         };
         let sounds = next.step(frame.end, frame.rules, frame.content, &answers)?;
         save.after(format, &next, frame.end.work)?;

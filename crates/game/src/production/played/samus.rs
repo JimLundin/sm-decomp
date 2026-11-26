@@ -97,6 +97,7 @@ pub(super) struct TurnInputs {
     pub sounds_waiting: samus_appearance::SoundsWaiting,
     pub activities: Set<samus_appearance::Activity>,
     pub charge: samus_appearance::Charge,
+    pub item_controls: samus_appearance::ItemControls,
 }
 
 impl From<&Inputs> for TurnInputs {
@@ -111,6 +112,7 @@ impl From<&Inputs> for TurnInputs {
             sounds_waiting: inputs.sounds_waiting,
             activities: inputs.activities,
             charge: inputs.charge,
+            item_controls: samus_appearance::ItemControls::Skipped,
         }
     }
 }
@@ -193,11 +195,13 @@ impl State {
             suit: Suit::Power,
             grapple: GrappleActivity::Dormant,
         };
+        let mut frame = animation::frame_of_play(seen, hurt);
+        frame.item_controls = inputs.item_controls;
         let shown = animation::play(
             &mut appearance,
             content.appearance,
             content.appearance_rules,
-            &animation::frame_of_play(seen, hurt),
+            &frame,
         )
         .map_err(|fault| match fault {
             animation::ClipFault::Missing(figure) | animation::ClipFault::Conflicting(figure) => {

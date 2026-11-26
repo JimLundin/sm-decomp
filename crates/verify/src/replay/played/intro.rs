@@ -228,6 +228,7 @@ pub(super) fn starts(wram: &[u8]) -> Result<Option<Part>, Outcome> {
 }
 
 /// What a run reads the intro from: the scenes' content and the record's reader.
+#[derive(Clone)]
 pub(super) struct Scenes {
     pub(super) content: IntroContent,
     reading: Reading,
@@ -266,6 +267,9 @@ impl Scenes {
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         if !finished(current) || state.intro.stage == IntroStage::Begins {
             return not_begun(current, state);
+        }
+        if word(&current.wram, source::CINEMATIC_ACTIVE)? == 0xb250 {
+            self.reading.part = Part::Flashback;
         }
         let recorded = self.reading.state(&current.wram)?;
         let expected = observations(&View {
@@ -579,6 +583,7 @@ fn caret_shown(state: &IntroState, content: &IntroContent) -> bool {
 
 /// The record's reader: where the lists stand, the baby's repeat, and the part the run plays
 /// and whether page 5 has begun, which tell the picture shown from the page typed.
+#[derive(Clone)]
 struct Reading {
     places: Places,
     repeat_times: Option<u16>,

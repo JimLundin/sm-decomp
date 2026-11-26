@@ -139,11 +139,13 @@ pub(super) fn finished_frames(
 pub(super) struct Borrowed {
     settled_random: RandomSequence,
     track: TrackReply,
+    waiting: samus_appearance::SoundsWaiting,
 }
 
 impl Borrowed {
     pub(super) fn read(began: &FrameRecord, previous: &FrameRecord) -> Result<Self, Outcome> {
         Ok(Self {
+            waiting: crate::replay::appearance::sounds_waiting(&began.wram)?,
             settled_random: super::frame::random(&previous.wram)?,
             track: if music_ready(&began.wram)? {
                 TrackReply::NoneWaits
@@ -155,6 +157,9 @@ impl Borrowed {
 }
 
 impl Platform for Borrowed {
+    fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting {
+        self.waiting
+    }
     fn settled_random(&self) -> RandomSequence {
         self.settled_random
     }
@@ -165,6 +170,7 @@ impl Platform for Borrowed {
 }
 
 /// The queues as one cut holds them, to find the entries added by the next.
+#[derive(Clone)]
 pub(super) struct Queues {
     music: [u16; MUSIC_ENTRIES],
     ends: [u8; 2],
@@ -391,7 +397,7 @@ fn screen(screen: &Screen) -> u8 {
         Screen::FileSelect(file_select) => file_select.menu.screen,
         Screen::Options(options) => options.menu.screen,
         Screen::Intro(intro) => {
-            let brightness = intro.intro.brightness;
+            let brightness = intro.scene.intro.brightness;
             let level = brightness.level.number();
             return match brightness.blanking {
                 types::intro::Blanking::Blanked => BLANK | level,

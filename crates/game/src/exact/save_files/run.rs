@@ -172,6 +172,33 @@ fn decode_profile(raw: &[u16]) -> PlayerProfile {
     }
 }
 
+/// Physical pad words of the seven configurable actions in native order.
+#[must_use]
+pub fn control_words(controls: &types::save_files::ControlBindings) -> [u16; 7] {
+    let mut values = [0; 7];
+    for (control, &button) in controls {
+        let value = if let PadButton::Unrecognized(value) = button {
+            word(value)
+        } else {
+            BUTTONS
+                .iter()
+                .find_map(|&(mask, key)| (key == button).then_some(mask))
+                .unwrap_or_default()
+        };
+        write(&mut values, binding(control).wrapping_sub(8), value);
+    }
+    values
+}
+
+/// Item and beam bits represented by the typed equipment.
+#[must_use]
+pub fn gear_words(gear: &Gear) -> [u16; 2] {
+    [
+        overlay(0, &ITEMS, &gear.items),
+        overlay(0, &BEAMS, &gear.beams),
+    ]
+}
+
 fn encode_profile(profile: &PlayerProfile, raw: &mut [u16]) {
     for (out, &value) in raw.iter_mut().zip(&profile.retained.0) {
         *out = value;
@@ -184,16 +211,8 @@ fn encode_profile(profile: &PlayerProfile, raw: &mut [u16]) {
             overlay(read(raw, offset.wrapping_add(2)), &BEAMS, &gear.beams),
         );
     }
-    for (control, &button) in &profile.controls {
-        let value = if let PadButton::Unrecognized(value) = button {
-            word(value)
-        } else {
-            BUTTONS
-                .iter()
-                .find_map(|&(mask, key)| (key == button).then_some(mask))
-                .unwrap_or_default()
-        };
-        write(raw, binding(control), value);
+    for (slot, value) in raw.iter_mut().skip(8).zip(control_words(&profile.controls)) {
+        *slot = value;
     }
     let mut supply = |current, maximum, values: Supply| {
         write(raw, current, values.current);

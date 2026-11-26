@@ -26,7 +26,11 @@ pub(super) fn step(options: Options, work: Work) -> Result<Stepped, Fault> {
             };
             let begun = intro::begins(language).map_err(|_| Fault::IntroLanguage)?;
             return Ok(Stepped {
-                screen: Screen::Intro(Box::new(begun)),
+                screen: Screen::Intro(Box::new(super::PlayingIntro::begin(
+                    begun,
+                    options.actor,
+                    menu.settings,
+                ))),
                 finished,
                 drawn: finished,
                 sounds: Vec::new(),

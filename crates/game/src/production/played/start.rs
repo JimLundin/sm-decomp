@@ -26,7 +26,7 @@ impl State {
         frame: frame::State,
         quake: world_quake::State,
     ) -> Result<Self, Fault> {
-        let samus = fresh(start)?;
+        let samus = fresh_at(start.her)?;
         let her = samus.movement.0.position;
         let (view_x, view_y) = start.view;
         Ok(Self {
@@ -70,9 +70,8 @@ impl State {
 
 /// Her State as a new game starts: standing at rest facing the screen, where the start puts her,
 /// with no speed and nothing chosen before.
-fn fresh(start: &NewGame) -> Result<samus::State, Fault> {
+pub(super) fn fresh_at((x, y): (u16, u16)) -> Result<samus::State, Fault> {
     let pose = map::key_of(FACING_THE_SCREEN).ok_or(Fault::NewGame)?;
-    let (x, y) = start.her;
     let her = Pair {
         x: fixed(Wrapping(x), 0),
         y: fixed(Wrapping(y), 0),
@@ -111,7 +110,7 @@ fn fresh(start: &NewGame) -> Result<samus::State, Fault> {
 
 /// Her health as a new file starts it: the file's energy, and no loss pending, no warning and no
 /// protection.
-fn new_file_health(energy: u16) -> Result<samus_health::State, Fault> {
+pub(super) fn new_file_health(energy: u16) -> Result<samus_health::State, Fault> {
     Ok(samus_health::State {
         energy: samus_health::EnergyAmount {
             whole: samus_health::WholeEnergy::new(energy).ok_or(Fault::NewGame)?,

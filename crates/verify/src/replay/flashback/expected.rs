@@ -204,7 +204,7 @@ fn pending(mut state: EncounterState, word: impl Fn(usize) -> u16) -> Option<Enc
     Some(state)
 }
 
-fn decode(record: &FrameRecord, starting: bool) -> Option<EncounterState> {
+pub(super) fn decode(record: &FrameRecord, starting: bool) -> Option<EncounterState> {
     let w = |address| word(record, address);
     let mut state = EncounterState {
         start: PendingStart::Clear,

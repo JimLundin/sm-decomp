@@ -148,6 +148,39 @@ pub struct Actor {
     pub carry: Model<CarryPin>,
 }
 
+impl Actor {
+    /// Her opening setup while hidden, with the chosen file's energy and the intro's loan.
+    ///
+    /// # Errors
+    /// The fresh pose or the file's health cannot enter play.
+    pub fn enter(energy: u16, equipment: screens_intro::Equipment) -> Result<Self, Fault> {
+        let samus = super::start::fresh_at((0, 0)).map_err(Fault::Samus)?;
+        let pose = samus.movement.0.pose;
+        let centre = samus.movement.0.position;
+        let fractions = enum_map::EnumMap::from_fn(|_| weapons_projectiles::Axes {
+            x: weapons_projectiles::PixelFraction(0),
+            y: weapons_projectiles::PixelFraction(0),
+        });
+        Ok(Self {
+            samus,
+            health: Model(super::start::new_file_health(energy).map_err(Fault::Samus)?),
+            shots: Model(Box::new(weapons_projectiles::State::reset(fractions))),
+            carry: Model(ActorCarry {
+                missiles: equipment.missiles,
+                selection: Selection::None,
+                previous: centre,
+                prior_pose: pose,
+                older_pose: pose,
+                radius: Pair {
+                    x: core::num::Wrapping(0),
+                    y: core::num::Wrapping(0),
+                },
+                demo: DemoPad::default(),
+            }),
+        })
+    }
+}
+
 /// The saved representation of the actor's platform carry.
 pub struct CarryPin;
 
@@ -336,6 +369,10 @@ impl State {
         let mut activities = types::Set::default();
         activities[samus_appearance::Activity::Cinematic] = true;
         let energy = actor.health.0.energy.whole.get();
+        let selected = match active {
+            Start::Fight => samus_appearance::SelectedItem::Missiles,
+            Start::Discovery => samus_appearance::SelectedItem::None,
+        };
         let (her, ()) = actor
             .samus
             .turn(
@@ -349,6 +386,13 @@ impl State {
                     liquid: samus_appearance::Liquid::NONE,
                     sounds_waiting: motion.sounds_waiting,
                     charge: motion.charge,
+                    item_controls: samus_appearance::ItemControls::Ran(
+                        samus_appearance::ItemControlAnswer {
+                            before: selected,
+                            after: selected,
+                            eligibility: samus_appearance::ControlEligibility::Eligible,
+                        },
+                    ),
                 },
                 &world,
                 TurnContent {

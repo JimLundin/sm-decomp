@@ -1280,3 +1280,46 @@ case = "movement/falling-aim"
 cut = 906
 field = "movement.pose"
 rule = "samus-movement/PadChart"
+
+[[fault]]
+name = "played-intro-opening-loan-skipped"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro.rs"
+before = '''self.equipment(&report)?;
+        self.pending = Some(Pending::Opening'''
+after = '''self.pending = Some(Pending::Opening'''
+case = "played any-power-on 0 569"
+cut = 569
+field = "intro-actor.started"
+
+[[fault]]
+name = "played-intro-cannon-controls-ineligible"
+responsibility = "played"
+file = "crates/game/src/production/played/intro_rooms.rs"
+before = "eligibility: samus_appearance::ControlEligibility::Eligible,"
+after = "eligibility: samus_appearance::ControlEligibility::Ineligible,"
+case = "played any-power-on 0 2220"
+cut = 2220
+field = "intro-actor.cannon-delay"
+
+[[fault]]
+name = "played-intro-fight-install-skipped"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro.rs"
+before = '''                self.actors
+                    .start(frame.state().height, actors_content(content)?)?;
+                self.pending = Some(Pending::Fight { pressed, track });'''
+after = '''                self.pending = Some(Pending::Fight { pressed, track });'''
+case = "played any-power-on 0 2219"
+cut = 2219
+field = "intro-actor.shown"
+
+[[fault]]
+name = "played-intro-fight-encounter-skipped"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = "self.battle = Some(Battle {"
+after = "self.battle = false.then_some(Battle {"
+case = "played any-power-on 0 2219"
+cut = 2219
+field = "intro-encounter.started"

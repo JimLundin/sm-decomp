@@ -327,16 +327,6 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
     ] {
         items[item] = (equipped & mask) != 0;
     }
-    let waiting = prior
-        .get(0x0648)
-        .copied()
-        .ok_or_else(|| data_failure(None, "appearance sound queue write index"))?
-        .wrapping_sub(
-            *prior
-                .get(0x0645)
-                .ok_or_else(|| data_failure(None, "appearance sound queue read index"))?,
-        )
-        & 0x0f;
     let inputs = Inputs {
         figure: imported.figure,
         figure_after: imported.figure,
@@ -354,8 +344,7 @@ pub fn input(prior: &[u8], content: &Content) -> Result<Frame, Outcome> {
         // The step slowdown is observed zero at both cuts; the start slowdown and
         // submerged are unread.
         liquid: Liquid::NONE,
-        sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
-            .ok_or_else(|| data_failure(None, "appearance sound queue count"))?,
+        sounds_waiting: sounds_waiting(prior)?,
         activities: activities(prior)?,
         shoot_held,
         charge: charge(prior)?,
@@ -426,6 +415,22 @@ pub fn initial(state: Animation, _content: &Content) -> Vec<Observation> {
     .into_iter()
     .map(|(field, value)| Observation::quantity(field, i64::from(value)))
     .collect()
+}
+
+/// Sound requests queued in library three at the start of the work frame.
+pub(super) fn sounds_waiting(prior: &[u8]) -> Result<samus_appearance::SoundsWaiting, Outcome> {
+    let waiting = prior
+        .get(0x0648)
+        .copied()
+        .ok_or_else(|| data_failure(None, "appearance sound queue write index"))?
+        .wrapping_sub(
+            *prior
+                .get(0x0645)
+                .ok_or_else(|| data_failure(None, "appearance sound queue read index"))?,
+        )
+        & 0x0f;
+    samus_appearance::SoundsWaiting::new(waiting)
+        .ok_or_else(|| data_failure(None, "appearance sound queue count"))
 }
 
 #[cfg(test)]

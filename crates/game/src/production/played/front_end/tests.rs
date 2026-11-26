@@ -23,7 +23,38 @@ impl screens_file_select::SaveMemory for NewGame {
     }
 }
 
+fn actor_file() -> super::ActorFile {
+    use types::save_files::{Gear, Supply};
+    let no_gear = Gear {
+        items: Set::default(),
+        beams: Set::default(),
+    };
+    super::ActorFile {
+        energy: Supply {
+            current: 99,
+            maximum: 99,
+        },
+        reserves: Supply {
+            current: 0,
+            maximum: 0,
+        },
+        owned: no_gear,
+        gear: no_gear,
+        buttons: super::intro_buttons(),
+        ammunition: enum_map::EnumMap::from_fn(|_| Supply {
+            current: 0,
+            maximum: 0,
+        }),
+    }
+}
+
 impl Answers for NewGame {
+    fn pending_press(&self) -> bool {
+        false
+    }
+    fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting {
+        samus_appearance::SoundsWaiting::new(0).unwrap()
+    }
     fn settled_random(&self) -> RandomSequence {
         RandomSequence {
             number: RandomNumber(0x61),
@@ -38,6 +69,7 @@ impl Answers for NewGame {
         Some(FileStart {
             settings: Settings::default(),
             begins: ChosenFile::Begins(FileBegins::Intro),
+            actor: actor_file(),
         })
     }
 }
@@ -56,6 +88,7 @@ fn finished() -> FrameEnd {
 /// The intro's content with no script, colour or set: the hand-on reads none.
 fn content() -> Content {
     Content {
+        actors: None,
         intro: IntroContent {
             pages: enum_map::EnumMap::default(),
             eyes: enum_map::EnumMap::default(),
@@ -151,6 +184,7 @@ fn the_options_hand_on_to_the_intro_which_begins_on_the_next_frame() {
         screen: Screen::Options(Options {
             menu,
             begins: ChosenFile::Begins(FileBegins::Intro),
+            actor: actor_file(),
         }),
         counts: Counts {
             finished_frames: 5,
@@ -161,7 +195,7 @@ fn the_options_hand_on_to_the_intro_which_begins_on_the_next_frame() {
         State::Screens(Screens {
             screen: Screen::Intro(intro),
             ..
-        }) => Some(intro.intro.stage),
+        }) => Some(intro.scene.intro.stage),
         State::PowerOn(_) | State::Screens(_) => None,
     };
     assert_eq!(step(&mut state, finished()), Ok(Vec::new()));
@@ -182,4 +216,61 @@ fn the_options_hand_on_to_the_intro_which_begins_on_the_next_frame() {
         panic!("the intro has not begun");
     };
     assert_eq!(screens.counts.finished_frames, 7);
+}
+
+#[test]
+fn intro_loan_preserves_energy_other_supplies_and_the_players_controls() {
+    use types::save_files::{Ammunition, Control, PadButton, Supply};
+    use types::{Beam, Item};
+    let mut file = actor_file();
+    file.energy = Supply {
+        current: 86,
+        maximum: 199,
+    };
+    file.ammunition = enum_map::enum_map! {
+        Ammunition::Missiles => Supply { current: 7, maximum: 15 },
+        Ammunition::SuperMissiles => Supply { current: 3, maximum: 5 },
+        Ammunition::PowerBombs => Supply { current: 1, maximum: 5 },
+    };
+    file.owned.items[Item::Bombs] = true;
+    file.owned.beams[Beam::Charge] = true;
+    file.gear.beams[Beam::Charge] = true;
+    file.buttons = enum_map::enum_map! {
+        Control::Shoot => PadButton::Y,
+        Control::Jump => PadButton::B,
+        Control::Run => PadButton::A,
+        Control::ItemCancel => PadButton::X,
+        Control::ItemSelect => PadButton::Select,
+        Control::AimDown => PadButton::R,
+        Control::AimUp => PadButton::L,
+    };
+    let mut actors = super::Actors::waiting(file, Settings::default());
+    assert_eq!(actors.energy(), file.energy);
+    assert_eq!(
+        actors.ammunition(Ammunition::Missiles),
+        file.ammunition[Ammunition::Missiles]
+    );
+    actors.equip(screens_intro::Equipment::LENT).unwrap();
+    assert_eq!(actors.buttons, super::intro_buttons());
+    assert_eq!(actors.energy(), file.energy);
+    assert_eq!(
+        actors.ammunition(Ammunition::Missiles),
+        Supply {
+            current: 900,
+            maximum: 900
+        }
+    );
+    assert_eq!(
+        actors.ammunition(Ammunition::SuperMissiles),
+        file.ammunition[Ammunition::SuperMissiles]
+    );
+    assert_eq!(
+        actors.ammunition(Ammunition::PowerBombs),
+        file.ammunition[Ammunition::PowerBombs]
+    );
+    assert_eq!(actors.file, file);
+    actors.equip(screens_intro::Equipment::RETURNED).unwrap();
+    assert_eq!(actors.buttons, file.buttons);
+    assert_eq!(actors.missile_capacity, 0);
+    assert_eq!(actors.rooms.unwrap().actor.carry.0.missiles, 0);
 }

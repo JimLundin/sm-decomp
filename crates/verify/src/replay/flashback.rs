@@ -127,3 +127,27 @@ fn word(record: &FrameRecord, address: usize) -> u16 {
         .and_then(|bytes| bytes.try_into().ok())
         .map_or(0, u16::from_le_bytes)
 }
+
+/// State the encounter publishes at a joined intro cut. A pending native start still has
+/// its first scripts installed without pictures.
+pub(super) fn played_state(
+    record: &FrameRecord,
+    shown: bool,
+    encounter: Option<&types::flashback::EncounterState>,
+) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
+    let script = word(record, 0x1b1d);
+    let started = shown && script != 0;
+    let field = "intro-encounter.started";
+    let mut expected = vec![Observation::quantity(field, i64::from(started))];
+    let mut actual = vec![Observation::quantity(field, i64::from(encounter.is_some()))];
+    if started {
+        let pending = script == 0xcb05 && word(record, 0x1a5d) == 0;
+        let observed = expected::decode(record, pending)
+            .ok_or_else(|| data_failure(None, "played intro encounter"))?;
+        expected.extend(expected::state(&observed));
+    }
+    if let Some(encounter) = encounter {
+        actual.extend(expected::state(encounter));
+    }
+    Ok((expected, actual))
+}

@@ -1,0 +1,69 @@
+# Every vector projects the quantities it names in after. Each continued vector takes
+# the whole previous result through restoration. Pixel fractions are integers in
+# 65536ths of a pixel. Control maps list Shoot, Jump, Run, Cancel, Select, Aim down
+# and Aim up. The four directions keep their ordinary map.
+
+[[vector]]
+id = "R-new-file"
+entries = ["SamusEntersTheIntro"]
+source = "recorded"
+row = "any-power-on"
+cut = 433
+event = "new_file"
+after = { energy = 99, energy_capacity = 99, missiles = 0, missile_capacity = 0, actor_started = false, bindings = ["X", "A", "B", "Y", "Select", "L", "R"] }
+
+[[vector]]
+id = "R-hand-on"
+entries = ["SamusEntersTheIntro"]
+source = "recorded"
+row = "any-intro-0568"
+cut = 0
+continues = "R-new-file"
+event = "hand_on"
+after = { energy = 99, missiles = 0, missile_capacity = 0, actor_started = false, moonwalk = true }
+
+[[vector]]
+id = "R-opening-setup"
+entries = ["SamusEntersTheIntro"]
+source = "recorded"
+row = "any-intro-0568"
+cut = 1
+continues = "R-hand-on"
+event = "opening_setup"
+after = { actor_started = true, shown = false, energy = 99, previous_energy = 99, missiles = 900, missile_capacity = 900, selection = "None", centre = [0, 0, 0, 0], previous = [0, 0, 0, 0], poses = ["Front", "Front", "Front"], radius = [0, 0], clip = [0, 0], cannon_delay = 2, protection = 0, knockback = 0, cooldown = 0, shots = 0, saved_bindings = ["X", "A", "B", "Y", "Select", "L", "R"] }
+
+[[vector]]
+id = "R-opening-finished"
+entries = ["SamusEntersTheIntro"]
+source = "recorded"
+row = "any-intro-0568"
+cut = 54
+continues = "R-opening-setup"
+event = "hold"
+after = { actor_started = true, shown = false, missiles = 900, missile_capacity = 900, clip = [0, 0], cannon_delay = 2 }
+
+[[vector]]
+id = "R-page-one-wait"
+entries = ["SamusEntersTheIntro"]
+source = "recorded"
+row = "any-intro-0568"
+cut = 1650
+continues = "R-opening-finished"
+event = "hold"
+after = { actor_started = true, shown = false, centre = [0, 0, 0, 0], previous = [0, 0, 0, 0], poses = ["Front", "Front", "Front"], missiles = 900, missile_capacity = 900, clip = [0, 0], cannon_delay = 2, moonwalk = true }
+
+[[vector]]
+id = "C-opening-loan"
+entries = ["SamusEntersTheIntro"]
+source = "constructed"
+event = "opening_setup"
+before = { actor_started = false, energy = 86, energy_capacity = 199, missiles = 7, missile_capacity = 15, other_supplies = [3, 5, 1, 5, 0, 0], bindings = ["Y", "B", "A", "X", "Select", "R", "L"], moonwalk = false }
+after = { actor_started = true, shown = false, energy = 86, energy_capacity = 199, previous_energy = 86, missiles = 900, missile_capacity = 900, other_supplies = [3, 5, 1, 5, 0, 0], bindings = ["X", "A", "B", "Y", "Select", "L", "R"], saved_bindings = ["Y", "B", "A", "X", "Select", "R", "L"], moonwalk = false }
+
+[[vector]]
+id = "C-hidden-actor"
+entries = ["SamusEntersTheIntro"]
+source = "constructed"
+event = "hold"
+before = { actor_started = true, shown = false, missiles = 899, missile_capacity = 900, centre = [3, 7, 11, 19], previous = [2, 13, 5, 17], poses = ["Left", "Left", "Front"], clip = [2, 5], cannon_delay = 1, cooldown = 1, shots = 1 }
+after = { actor_started = true, shown = false, missiles = 899, missile_capacity = 900, centre = [3, 7, 11, 19], previous = [2, 13, 5, 17], poses = ["Left", "Left", "Front"], clip = [2, 5], cannon_delay = 1, cooldown = 1, shots = 1 }

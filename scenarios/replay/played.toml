@@ -23,15 +23,15 @@ movie = "any"
 # file select with a new file chosen in slot A, the options menu with the moonwalk setting
 # turned on, and start game fading out; the options hand on to the intro, played on through
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
-# Completing that work frame requires the fight room, demo controls and encounter.
+# It installs the fight room and its actors across the interrupt and completes the first turn.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 2220
-held = 2219
-stop = { failed = "Intro(ZebesFightRoom)" }
+end = 2221
+held = 2220
+stop = { failed = "Intro(IntroRoomTurn)" }
 seed_frame = 0
-frames = [1, 2219]
+frames = [1, 2220]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it

@@ -6,19 +6,22 @@
 //! menu (`options`), then the intro (`intro`). The intro asks for the Zebes encounter at the
 //! press after page 1. From the title on,
 //! the frame owner's [`Counts`] carry the count of finished frames and the random number, and
-//! owners outside the rungs answer through [`Answers`]. The front end stops when the intro
-//! needs the Zebes room and encounter.
+//! owners outside the rungs answer through [`Answers`]. The intro installs the Zebes room during the interrupted press
+//! frame and completes the recorded pad, Samus and encounter turns when that frame finishes.
 
 mod cartridge;
 pub use cartridge::{Cartridge, CartridgeFrame, Platform};
 mod file_select;
 mod intro;
+mod intro_actor;
+
+pub use intro::PlayingIntro;
+pub use intro_actor::{ActorFile, Actors, Battle, intro_buttons};
 mod options;
 mod power_on;
 mod title;
 
 use super::frame::Counts;
-use super::intro::State as Intro;
 use screens_boot::{DriverUpload, PowerOnState};
 use screens_file_select::{FrameOfWork, SaveMemory};
 use screens_intro::{IntroContent, MusicRequest, TrackReply};
@@ -60,7 +63,7 @@ pub enum Screen {
     /// The options menu, until it hands on.
     Options(Options),
     /// The intro, from the frame end the options hand on to it at.
-    Intro(Box<Intro>),
+    Intro(Box<PlayingIntro>),
 }
 
 /// File select, with what it reported that its State doesn't keep.
@@ -82,6 +85,8 @@ pub struct Options {
     pub menu: OptionsState,
     /// How the chosen file begins, which start game reads.
     pub begins: ChosenFile,
+    /// The chosen file's supplies, gear and controls for intro entry.
+    pub actor: ActorFile,
 }
 
 /// What a frame end brings in.
@@ -144,6 +149,19 @@ impl Rules {
 pub struct Content {
     /// The intro's scripts, colours and the caret's home.
     pub intro: IntroContent,
+    /// Cartridge content for the playable scenes, if selected.
+    pub actors: Option<ActorsContent>,
+}
+
+/// Cartridge content and rules for the playable intro room.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ActorsContent {
+    /// Imported collision, Samus poses and her animation clips.
+    pub room: super::intro_rooms::ScopedContent,
+    /// Movement and appearance parameters.
+    pub rules: super::intro_rooms::ScopedRules,
+    /// Recorded intro controls.
+    pub pad: data::assets::playback::ScenePad,
 }
 
 /// The answers of owners outside the rungs.
@@ -152,6 +170,10 @@ pub struct Content {
 /// random number's seeding as the game settles, and audio's whether a tune asked for still
 /// waits to load.
 pub trait Answers: SaveMemory {
+    /// Buttons latched before unfinished work.
+    fn pending_press(&self) -> bool;
+    /// Audio's queue count read by a playable room actor.
+    fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting;
     /// The random number as the game settles.
     fn settled_random(&self) -> RandomSequence;
     /// Audio's reply as the frame of work begins: whether a tune asked for still waits.
@@ -168,6 +190,8 @@ pub struct FileStart {
     pub settings: Settings,
     /// With the intro, the escape, or straight on in play.
     pub begins: ChosenFile,
+    /// The chosen file's supplies, gear and controls for intro entry.
+    pub actor: ActorFile,
 }
 
 /// A sound a screen asks the audio side for.
@@ -270,7 +294,14 @@ impl Screens {
                 file_select::step(state, work, rules.file_select, answers)?
             }
             Screen::Options(state) => options::step(state, work)?,
-            Screen::Intro(state) => intro::step(*state, work, rules.intro, content, answers)?,
+            Screen::Intro(state) => intro::step(
+                *state,
+                work,
+                self.counts.finished_frames,
+                rules.intro,
+                content,
+                answers,
+            )?,
         };
         let screens = Self {
             screen: stepped.screen,
@@ -307,6 +338,7 @@ impl Screen {
                 Self::Options(Options {
                     menu: OptionsState::begin(file.settings),
                     begins: file.begins,
+                    actor: file.actor,
                 })
             }
             unchanged @ (Self::Title(_)

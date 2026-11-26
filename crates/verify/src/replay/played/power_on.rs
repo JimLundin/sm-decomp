@@ -58,7 +58,7 @@ pub(super) const BORROWED: &[&str] = &[
     "the boot's driver upload ended in the frame (CPU and audio timing until T1), from the interval's APU port writes: looked for at every cut, and an end outside the sound's load is bad data",
     "lag from the title on: how many frames of work finished in the interval, from the cut kind, and 2 where the game's own count steps by 2 at a requested NMI (an NMI inside the interval that the record's cut list doesn't show); any other disagreement is bad data",
     "the random number as the game settles (game-random's seeding of the boot), read from the record as the title begins",
-    "audio from the intro on: whether a track waits in the queue of tracks as the frame of work begins",
+    "audio from the intro on: whether a track waits and the sound count read by Samus at the start of her playable turn",
     "the initial platform battery and the cut at which the startup diagnostic and scan have finished",
 ];
 
@@ -79,7 +79,10 @@ pub(super) fn play(
         stop,
         seed_held: &[],
         borrowed: BORROWED,
-        masked: super::intro::OPENING_MASKED,
+        masked: &[
+            "the displayed room tiles, sprite pixels and layer mirrors (E1, E2, E3 and E4)",
+            "the unproduced retained tail of room memory and the opening palette transfers (T1)",
+        ],
     };
     if start != 0 {
         let later = Outcome::Unsupported {
@@ -88,27 +91,8 @@ pub(super) fn play(
         };
         return Ok(report(0, Stop::At(later)));
     }
-    let scenes = Scenes::import(rom, Part::Opening)?;
     let mut previous = rows.record(0)?;
-    let battery = BatteryImage::new(previous.sram.to_vec())
-        .ok_or_else(|| data_failure(Some(0), "power-on platform battery"))?;
-    let rom = Rom::new(std::fs::read(rom).map_err(|_| data_failure(None, "save format source"))?)
-        .map_err(|_| data_failure(None, "checked save format source"))?;
-    let format = Format::load(rom.lorom()).map_err(|_| data_failure(None, "save format assets"))?;
-    let cartridge = Cartridge::power_on(&format, &battery);
-    let mut run = Run {
-        state: front_end::State::AT_POWER_ON,
-        cartridge,
-        format,
-        content: Content {
-            intro: scenes.content.clone(),
-        },
-        scenes,
-        ended: None,
-        controller: Controller::default(),
-        queues: None,
-        sounds: Vec::new(),
-    };
+    let mut run = Run::begin(rom, &previous)?;
     let mut held = 0;
     let mut began = previous.clone();
     for cut in 1..=end {
@@ -131,6 +115,7 @@ pub(super) fn play(
 /// The front end's State and content, the intro's reader, the cut the upload ended at, and from
 /// the title on the controller, the queues at the last finished cut and the sounds played since
 /// it.
+#[derive(Clone)]
 struct Run {
     state: front_end::State,
     cartridge: Cartridge,
@@ -144,6 +129,41 @@ struct Run {
 }
 
 impl Run {
+    fn begin(rom: &Path, power_on: &FrameRecord) -> Result<Self, Outcome> {
+        let scenes = Scenes::import(rom, Part::Opening)?;
+        let battery = BatteryImage::new(power_on.sram.to_vec())
+            .ok_or_else(|| data_failure(Some(0), "power-on platform battery"))?;
+        let path = rom;
+        let rom =
+            Rom::new(std::fs::read(rom).map_err(|_| data_failure(None, "save format source"))?)
+                .map_err(|_| data_failure(None, "checked save format source"))?;
+        let format =
+            Format::load(rom.lorom()).map_err(|_| data_failure(None, "save format assets"))?;
+        let cartridge = Cartridge::power_on(&format, &battery);
+        Ok(Self {
+            state: front_end::State::AT_POWER_ON,
+            cartridge,
+            format,
+            content: Content {
+                intro: scenes.content.clone(),
+                actors: Some(front_end::ActorsContent {
+                    room: crate::replay::intro_rooms::room_content(path, &rom)?.0,
+                    rules: game::production::played::intro_rooms::ScopedRules {
+                        movement: samus_movement::Rules::default(),
+                        appearance: samus_appearance::Rules::VANILLA,
+                    },
+                    pad: import::playback::import(rom.lorom())
+                        .map_err(|_| data_failure(None, "intro recorded controls"))?,
+                }),
+            },
+            scenes,
+            ended: None,
+            controller: Controller::default(),
+            queues: None,
+            sounds: Vec::new(),
+        })
+    }
+
     /// Play the interval from `previous` to `record`, at `cut`, whose frame of work began after
     /// `began`, and compare the part that runs with the record.
     ///
@@ -311,8 +331,36 @@ impl Run {
         if let front_end::Screen::Intro(intro) = &after.screen {
             let (expected, actual) = self
                 .scenes
-                .compared(record, intro)
+                .compared(record, &intro.scene)
                 .map_err(|outcome| super::at(cut, outcome))?;
+            pairs.expected.extend(expected);
+            pairs.actual.extend(actual);
+            let room = intro
+                .actors
+                .rooms
+                .as_ref()
+                .and_then(game::production::played::intro_rooms::State::active);
+            let content = self
+                .content
+                .actors
+                .as_ref()
+                .ok_or_else(|| data_failure(Some(cut), "power-on intro room content"))?;
+            let shown = crate::replay::intro_rooms::fight_shown(&record.wram)?;
+            let (expected, actual) = crate::replay::intro_rooms::populated(
+                room,
+                &content.room.rooms,
+                &record.wram,
+                shown,
+            )?;
+            pairs.expected.extend(expected);
+            pairs.actual.extend(actual);
+            let encounter = intro.actors.battle.as_ref().map(|battle| &battle.encounter);
+            let (expected, actual) =
+                crate::replay::flashback::played_state(record, shown, encounter)?;
+            pairs.expected.extend(expected);
+            pairs.actual.extend(actual);
+            let (expected, actual) =
+                crate::replay::intro_rooms::opening_fields(&intro.actors, &record.wram)?;
             pairs.expected.extend(expected);
             pairs.actual.extend(actual);
         }
@@ -466,6 +514,39 @@ mod tests {
     use screens_boot::{
         FinishedFrames, HoldFrames, Level, PowerOnStage, PowerOnState, ScreenLight,
     };
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn power_on_resumes_after_opening_and_battle_setup() {
+        let sources = crate::replay::played::tests::sources();
+        let lock = super::super::read_lock(&sources).unwrap();
+        let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
+        let mut previous = rows.record(0).unwrap();
+        let mut began = previous.clone();
+        let mut uninterrupted = super::Run::begin(&sources.rom, &previous).unwrap();
+        let mut resumed = Vec::<super::Run>::new();
+        for cut in 1..=2220 {
+            let frame = rows.record(cut).unwrap();
+            uninterrupted.step(&began, &previous, &frame, cut).unwrap();
+            for fork in &mut resumed {
+                fork.step(&began, &previous, &frame, cut).unwrap();
+                assert_eq!(fork.state, uninterrupted.state, "front end at {cut}");
+                assert_eq!(
+                    fork.cartridge, uninterrupted.cartridge,
+                    "cartridge at {cut}"
+                );
+            }
+            if matches!(cut, 569 | 2219) {
+                assert!(!super::super::finished(&frame));
+                resumed.push(uninterrupted.clone());
+            }
+            if super::super::finished(&frame) {
+                began = frame.clone();
+            }
+            previous = frame;
+        }
+        assert_eq!(resumed.len(), 2);
+    }
 
     fn write(port: u8, value: u8) -> ApuAccess {
         ApuAccess {

@@ -209,7 +209,7 @@ impl SaveFormat for Format {
 }
 
 pub(crate) use run::fresh_words;
-pub use run::{profile_bytes, profile_from_bytes, progress_from_bytes};
+pub use run::{control_words, gear_words, profile_bytes, profile_from_bytes, progress_from_bytes};
 
 /// The platform's progress through the SRAM diagnostic before startup finishes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

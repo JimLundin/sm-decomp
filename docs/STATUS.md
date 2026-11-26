@@ -392,12 +392,11 @@ their writers: VRAM (E2), CGRAM, the intro's palettes as its setup loads them (c
 T1), OAM (E1), the PPU mirrors (E3, E4), and what the intro's first frame sets outside it (her
 State and drawing, the bindings, the area, the room's size, the door, layer 1's place, the line
 program and the colour effects): their owners', none in the loop before the battle on Zebes.
-Limits: the equipment the model lends is reported but compared by neither run, and applying it
-has no owner in the loop; the tunes' start delays (8 and 14 frames) are checked by neither run,
+The power-on run compares the loan and its application separately. The tunes' start delays (8 and 14 frames) are checked by neither run,
 because this run counts the music's requests, the power-on run's queue code is the same for
 every tune played, and whether a track waits is read from the record, so a wrong delay never
-feeds back. The press while page 1 waits starts the battle. A finished frame with that
-press needs the Zebes room and returns `Intro(ZebesFightRoom)` in integrated play.
+feeds back. The press while page 1 waits starts the battle. The intro-only adapter refuses the
+requested room when no room owner is selected.
 
 Planted faults: the adapter ignoring audio's reply (none waits) differs
 at cut 55 in `intro.stage` (from power-on, cut 623); page 1's end imported as page 5's wait
@@ -528,11 +527,16 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 2,219 cuts, through `any-intro-2219`'s cut 0, and
-stops at cut 2,220 with `Intro(ZebesFightRoom)`. The press after page 1 makes the
-intro request the fight. The Zebes room, demo controls and encounter must run on that
-work frame. From cut 568 the run compares the intro State alongside the front end's
-fields. The front end compares clicks and queued music entries. Music stops use empty
+intro in the State `Begins`. The run holds 2,220 cuts, through the first finished fight turn. It stops
+at 2,221 with `Intro(IntroRoomTurn)`. At 569 the intro creates the hidden actor with
+the chosen file's energy, lends her missiles and switches to the intro controls.
+The next 1,650 cuts carry those owners through the opening and page 1. The press latched at
+2,218 installs the populated room, recorded controls and Mother Brain before interrupted
+cut 2,219. At 2,220 the recorded pad drives Samus and the encounter takes its first turn.
+The run compares her pose, centres, history, clip, radius, missile supply, controls and
+cannon delay, the installed cell words and the encounter state. It leaves the inherited
+room memory tail to the platform. From cut 568 it also compares the intro and the front end.
+The front end compares clicks and queued music entries. Music stops use empty
 entries, and only the scoped intro runs compare them and the caret's picture.
 
 The scoped case `intro/flashback-from-page-one` admits the last finished cut of page 1
