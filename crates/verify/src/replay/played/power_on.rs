@@ -610,7 +610,7 @@ mod tests {
         };
         const SHOOT: u16 = 0x0040;
         const FIRST_MISSILE: u64 = 2310;
-        const LAST_HELD_CUT: u64 = 2614;
+        const LAST_HELD_CUT: u64 = 2866;
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
@@ -638,7 +638,7 @@ mod tests {
                 assert!(!super::super::finished(&frame));
                 resumed.push(uninterrupted.clone());
             }
-            if cut == 2474 {
+            if [2474, 2614, 2615].contains(&cut) {
                 resumed.push(uninterrupted.clone());
             }
             if super::super::finished(&frame) {
@@ -646,7 +646,7 @@ mod tests {
             }
             previous = frame;
         }
-        assert_eq!(resumed.len(), checkpoints.len() + 1);
+        assert_eq!(resumed.len(), checkpoints.len() + 3);
     }
 
     fn write(port: u8, value: u8) -> ApuAccess {

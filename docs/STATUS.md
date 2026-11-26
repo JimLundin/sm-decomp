@@ -536,10 +536,11 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 2,614 cuts, including the sound
-Samus requests when she leaves her spin at 2,517. The controlled room turn
-refuses the standing handoff at 2,615. Her cached body radius comes from the
-pose at the start of movement.
+intro in the State `Begins`. The run holds 2,866 cuts, including the sound
+Samus requests when she leaves her spin at 2,517. The standing handoff at 2,615
+runs before the final pad. The locked fight keeps its body sample while her
+clip and existing shots advance. The first difference at 2,867 is
+`intro-actor.shown`.
 At 569 the intro creates the hidden actor with the chosen file's energy, lends her missiles and switches to the intro controls.
 The next 1,650 cuts carry those owners through the opening and page 1. The press latched at
 2,218 installs the populated room, recorded controls and Mother Brain before interrupted

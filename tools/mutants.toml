@@ -1569,3 +1569,29 @@ after = '''                .map(|mut offer| {
 case = "played any-power-on 0 2614"
 cut = 2517
 field = "front-end.sounds"
+
+[[fault]]
+name = "played-intro-standing-handoff-restarts-matching-clip"
+responsibility = "played"
+file = "crates/game/src/production/played/intro_rooms.rs"
+before = '''        if self.carry.0.prior_pose != STANDING_LEFT {
+            let Some(Instruction::Show(hold)) ='''
+after = '''        {
+            let Some(Instruction::Show(hold)) ='''
+case = "played any-power-on 0 2866"
+cut = 2615
+field = "intro-room.actor.clip-hold"
+
+[[fault]]
+name = "played-intro-locked-actor-not-carried"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = '''        let motion = room
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)'''
+after = '''        let mut discarded_actor = room.clone();
+        let target = if controlled { &mut *room } else { &mut discarded_actor };
+        let motion = target
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)'''
+case = "played any-power-on 0 2866"
+cut = 2616
+field = "intro-room.actor.clip-hold"
