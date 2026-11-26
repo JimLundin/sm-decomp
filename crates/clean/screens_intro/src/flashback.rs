@@ -1,24 +1,16 @@
 //! The flashback to Zebes (`BattleBegins`, `PageTwoBegins`): the press after page 1 asks for the
 //! encounter and starts the text dissolving into the fight; once the encounter signals its
-//! return, page 2 begins and the fight starts dissolving back to the text. The dissolves
-//! themselves are `dissolve`'s (`BattleDissolves`); page 2's end is a page's signal
-//! (`PageTwoEnds`).
+//! return, page 2 begins and the fight starts dissolving back to the text. The passages are
+//! `passage`'s, the dissolves themselves `dissolve`'s (`BattleDissolves`); page 2's end is a
+//! page's signal (`PageTwoEnds`), and the press after it begins the discovery (`discovery`).
 
-use core::num::Wrapping;
+use types::intro::{FightHide, FightVisibility, IntroStage, IntroState, PageScript};
 
-use types::intro::{FightVisibility, IntroStage, IntroState, PageScript};
-use types::{Pair, Px};
-
-use crate::content::{Dissolve, IntroContent};
-use crate::dissolve::dissolve_begins;
-use crate::pages::begin_page;
-use crate::report::{FlashbackRequest, IntroEvent, PictureLayout, Report, TextTiles};
-
-/// `BattleBegins`: the caret's battle position, px.
-const BATTLE_CARET_PLACE: Pair<Px> = Pair {
-    x: Wrapping(8),
-    y: Wrapping(248),
-};
+use crate::content::IntroContent;
+use crate::dissolve::Crossing;
+use crate::passage::{text_gives_way, text_returns};
+use crate::report::{FlashbackRequest, IntroEvent, Report};
+use crate::scene::return_cued;
 
 /// The encounter's signal: whether the fight is ready to dissolve back to the text, its
 /// explosions around Mother Brain having held for their closing interval.
@@ -35,27 +27,22 @@ pub enum FightReply {
 /// script and asks for the split blend; the dissolve into the fight begins, the colours that brighten
 /// for it black.
 pub fn battle_begins(state: &mut IntroState, content: &IntroContent, report: &mut Report) {
-    state.stage = IntroStage::IntoFight;
     report
         .events
         .push(IntroEvent::Flashback(FlashbackRequest::StartZebesFight));
     state.fight = FightVisibility::InFront;
-    if let Some(caret) = &mut state.caret {
-        caret.place = BATTLE_CARET_PLACE;
-    }
-    report
-        .events
-        .push(IntroEvent::Layout(PictureLayout::SplitBlend));
-    let black = &content.sets[Dissolve::IntoFight].brightens;
-    dissolve_begins(state, content, black, report);
+    text_gives_way(state, Crossing::IntoFight, content, report);
 }
 
-/// `BattleDissolves`: a hide of Samus and her shots asked for in this frame's stage step takes
-/// effect after room play, so they take their last room step still shown.
-pub fn hide_takes_effect(state: &mut IntroState, report: &Report) {
+/// `BattleDissolves`: whether a stage step's report asks for Samus and her shots to be hidden,
+/// the hide waiting for room play to have run (`FightHide::takes_effect`).
+#[must_use]
+pub fn hide_asked_in(stage_step: &Report) -> FightHide {
     let hide = IntroEvent::Flashback(FlashbackRequest::HideFightSamusAndShots);
-    if report.events.contains(&hide) {
-        state.fight = FightVisibility::Hidden;
+    if stage_step.events.contains(&hide) {
+        FightHide::Asked
+    } else {
+        FightHide::NotAsked
     }
 }
 
@@ -63,11 +50,8 @@ pub fn hide_takes_effect(state: &mut IntroState, report: &Report) {
 /// shows, its return makes the stage `PageTwoPending` on this same frame and pauses the text's
 /// tiles; without it the fight holds and the scripts run. In any other stage it is not read.
 pub fn fight_signals(state: &mut IntroState, reply: FightReply, report: &mut Report) {
-    if state.stage == IntroStage::Fight && reply == FightReply::ReadyToReturn {
-        state.stage = IntroStage::PageTwoPending;
-        report
-            .events
-            .push(IntroEvent::TextUpdates(TextTiles::Paused));
+    if reply == FightReply::ReadyToReturn {
+        return_cued(state, IntroStage::Fight, IntroStage::PageTwoPending, report);
     }
 }
 
@@ -76,12 +60,11 @@ pub fn fight_signals(state: &mut IntroState, reply: FightReply, report: &mut Rep
 /// text's tiles resume; the dissolve back to the text begins, the colours that brighten for it
 /// black.
 pub fn page_two_begins(state: &mut IntroState, content: &IntroContent, report: &mut Report) {
-    state.stage = IntroStage::OutOfFight;
-    begin_page(state, PageScript::Two, content);
-    report.events.extend([
-        IntroEvent::Layout(PictureLayout::SplitBlend),
-        IntroEvent::TextUpdates(TextTiles::Resumed),
-    ]);
-    let black = &content.sets[Dissolve::OutOfFight].brightens;
-    dissolve_begins(state, content, black, report);
+    text_returns(
+        state,
+        Crossing::OutOfFight,
+        PageScript::Two,
+        content,
+        report,
+    );
 }

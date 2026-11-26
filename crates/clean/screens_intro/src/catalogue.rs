@@ -11,7 +11,8 @@ pub enum BehaviourId {
     ScriptSteps,
     /// The colours dim and brighten every fourth frame.
     PicturesDissolve,
-    /// A dissolve ends: the text cleared, or the caret's colours shown.
+    /// A dissolve ends on its plain picture: the text cleared into a scene; back to the text, the
+    /// last step's colours, with the caret's colours over them from the delivery or examination.
     DissolveEnds,
     /// The baby rises as the picture settles.
     BabyRises,
@@ -51,6 +52,20 @@ pub enum BehaviourId {
     PageTwoBegins,
     /// Page 2 ends with a blinking caret and a wait for a press.
     PageTwoEnds,
+    /// The press after page 2 brings up the room where Samus finds the baby.
+    DiscoveryBegins,
+    /// The egg's cue brings page 3 back as the discovery fades.
+    DiscoveryReturns,
+    /// The press after page 3 brings up the delivery and the baby.
+    DeliveryBegins,
+    /// The delivery's picture pans as the baby is carried across.
+    BabyCrossesThePicture,
+    /// The delivery baby's signal brings page 4 back as the delivery fades.
+    PageFourBegins,
+    /// Pages 3 and 4 end with a blinking caret and a wait for a press.
+    DiscoveryAndDeliveryPagesEnd,
+    /// The press after page 4 starts the examination.
+    ExaminationBegins,
 }
 
 /// A catalogue entry.
@@ -69,7 +84,7 @@ pub struct Behaviour {
 }
 
 /// The number of the spec's entries.
-const ENTRIES: usize = 22;
+const ENTRIES: usize = 29;
 
 /// The catalogue's rows, one per spec entry, in the spec's order.
 const ROWS: [Behaviour; ENTRIES] = [
@@ -93,8 +108,11 @@ const ROWS: [Behaviour; ENTRIES] = [
     },
     Behaviour {
         id: BehaviourId::DissolveEnds,
-        summary: "when a dissolve's count runs past 0 it ends: to the scene, the text is cleared; \
-                  to the text, the caret takes its colours",
+        summary: "when a dissolve's count runs past 0 it ends and its plain picture appears: into \
+                  the discovery, the delivery or the examination, the text is cleared; back to \
+                  the text from any of them, the last step's colours are shown, and returning \
+                  from the delivery or the examination also shows the caret's colours over them, \
+                  while the discovery's return keeps its faded colours",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -249,6 +267,57 @@ const ROWS: [Behaviour; ENTRIES] = [
         id: BehaviourId::PageTwoEnds,
         summary: "page 2 ends with a blinking caret and a wait for the press that starts the \
                   baby's discovery",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::DiscoveryBegins,
+        summary: "a press after page 2 brings up the room where Samus finds the baby",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::DiscoveryReturns,
+        summary: "the egg's cue begins the return to text, with page 3 typing while discovery \
+                  fades",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::DeliveryBegins,
+        summary: "a press after page 3 brings up the delivery picture and the baby's animation",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::BabyCrossesThePicture,
+        summary: "the delivery's horizontal offset drops by a pixel and the baby moves right a \
+                  pixel, 32 times while the picture comes up",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PageFourBegins,
+        summary: "the delivery baby's signal brings the text back as page 4 types",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::DiscoveryAndDeliveryPagesEnd,
+        summary: "pages 3 and 4 end with a blinking caret and wait for a press",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ExaminationBegins,
+        summary: "a press after page 4 starts the examination",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

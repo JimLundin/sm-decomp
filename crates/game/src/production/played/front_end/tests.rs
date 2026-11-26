@@ -59,7 +59,7 @@ fn content() -> Content {
         intro: IntroContent {
             pages: enum_map::EnumMap::default(),
             eyes: enum_map::EnumMap::default(),
-            baby: Vec::new(),
+            baby: enum_map::EnumMap::default(),
             caret: enum_map::EnumMap::default(),
             full: types::Palette([types::Colour::BLACK; types::PALETTE_SLOTS]),
             sets: enum_map::enum_map! {

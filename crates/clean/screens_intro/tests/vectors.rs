@@ -1,7 +1,10 @@
 //! Every vector of `scenarios/vectors/screens-intro.toml`, run through the model as one frame,
 //! both by `step` and by `begin_frame` then `finish`, which must agree, and the catalogue
-//! checked against them. The file's header gives its format; a key the format
-//! doesn't name fails the read.
+//! checked against them. A setup vector stops at the cut after the stage's step
+//! (`FrameAwaitingReply::interrupt`) and is saved as text, its state with the room's turn's
+//! `RoomTurnCheckpoint`; the vector that continues it restores the turn from that text and
+//! resumes it, once, and must reach the state one whole frame reaches. The file's
+//! header gives its format; a key the format doesn't name fails the read.
 
 #[cfg(test)]
 mod vectors {
@@ -11,16 +14,17 @@ mod vectors {
 
     use enum_map::EnumMap;
     use screens_intro::{
-        Dissolve, DissolveSets, Equipment, FightReply, FlashbackRequest, FrameInputs,
-        IndexedColour, IntroContent, IntroEvent, Letter, MusicRequest, PictureLayout, PictureName,
-        Report, Rules, Shows, Signal, Step, TextTiles, TrackReply, Tune, begin_frame, catalogue,
-        step,
+        DiscoveryReply, DiscoveryRequest, Dissolve, DissolveSets, Equipment, FightReply,
+        FlashbackRequest, FrameInputs, IndexedColour, IntroContent, IntroEvent, Letter,
+        MusicRequest, PictureLayout, PictureName, Report, RoomTurnAwaited, Rules, ScenePicture,
+        Shows, Signal, Step, TextTiles, TrackReply, Tune, begin_frame, catalogue, step,
     };
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
     use types::intro::{
-        Baby, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn, ColourSet,
-        EyesScript, FadeFrames, FadingColours, FightVisibility, Glow, Glows, IntroStage,
-        IntroState, PageScript, Progress, ScriptPlace, StageWait, StepAt, TextPlace,
+        Baby, BabyScript, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn,
+        ColourSet, EyesScript, FadeFrames, FadingColours, FightVisibility, Glow, Glows, IntroStage,
+        IntroState, PageScript, Pan, Progress, RoomTurnCheckpoint, ScriptPlace, StageWait, StepAt,
+        TextPlace,
     };
     use types::{Checked, Colour, PALETTE_SLOTS, Pair, Palette};
 
@@ -29,6 +33,8 @@ mod vectors {
     const HEX: u32 = 16;
     /// No colour at all: the full colours a vector leaves out.
     const ALL_BLACK: Palette = Palette([Colour::BLACK; PALETTE_SLOTS]);
+    /// The baby's x a vector leaves out.
+    const BABY_X: u16 = 112;
 
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
@@ -47,10 +53,13 @@ mod vectors {
         source: Source,
         entries: Vec<String>,
         rules: Option<RulesPart>,
-        before: Part,
+        phase: Option<Phase>,
+        continues: Option<String>,
+        before: Option<Part>,
         inputs: Option<Inputs>,
         after: Part,
         output: Option<Output>,
+        absent_output: Option<Vec<OutputField>>,
         gone: Option<Vec<Gone>>,
     }
 
@@ -59,6 +68,22 @@ mod vectors {
     enum Source {
         Recorded,
         Constructed,
+    }
+
+    /// A vector that stops at the cut after its stage's step.
+    #[derive(Deserialize, Clone, Copy, PartialEq, Eq)]
+    #[serde(rename_all = "lowercase")]
+    enum Phase {
+        Setup,
+    }
+
+    /// An output a vector expects absent.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(rename_all = "snake_case")]
+    enum OutputField {
+        Discovery,
+        SceneSelected,
+        Picture,
     }
 
     #[derive(Deserialize)]
@@ -74,6 +99,7 @@ mod vectors {
         dissolve: Option<u16>,
         wait: Option<u16>,
         colours: Option<BTreeMap<String, [[u16; 3]; 2]>>,
+        pan: Option<u16>,
         height: Option<i16>,
         fight_visible: Option<bool>,
         baby: Option<Placed>,
@@ -106,6 +132,7 @@ mod vectors {
         press: Option<bool>,
         track_waits: Option<bool>,
         return_to_text: Option<bool>,
+        discovery_ready: Option<bool>,
         scene: Option<Scene>,
     }
 
@@ -166,6 +193,8 @@ mod vectors {
         picture: Option<Picture>,
         fight_lights: Option<bool>,
         text_updates: Option<bool>,
+        discovery: Option<DiscoveryAsked>,
+        scene_selected: Option<Selected>,
     }
 
     /// The flashback request a vector expects.
@@ -176,12 +205,30 @@ mod vectors {
         End,
     }
 
+    /// The discovery request a vector expects.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(rename_all = "lowercase")]
+    enum DiscoveryAsked {
+        Start,
+        Finish,
+    }
+
+    /// The scene picture a vector expects selected.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(rename_all = "lowercase")]
+    enum Selected {
+        Discovery,
+        Delivery,
+        Examination,
+    }
+
     /// The picture layout a vector expects.
     #[derive(Deserialize, Clone, Copy)]
     #[serde(rename_all = "lowercase")]
     enum Picture {
         Blend,
         Fight,
+        Scene,
         Text,
     }
 
@@ -206,7 +253,7 @@ mod vectors {
     enum Named {
         Page(PageScript),
         Eyes(EyesScript),
-        Baby,
+        Baby(BabyScript),
         Caret(CaretScript),
     }
 
@@ -214,11 +261,14 @@ mod vectors {
         match name {
             "page1" => Named::Page(PageScript::One),
             "page2" => Named::Page(PageScript::Two),
+            "page3" => Named::Page(PageScript::Three),
+            "page4" => Named::Page(PageScript::Four),
             "page5" => Named::Page(PageScript::Five),
             "page6" => Named::Page(PageScript::Six),
             "eyes" => Named::Eyes(EyesScript::Blinking),
             "eyes_six" => Named::Eyes(EyesScript::Staring),
-            "baby" => Named::Baby,
+            "baby" => Named::Baby(BabyScript::Examination),
+            "delivery" => Named::Baby(BabyScript::Delivery),
             "caret_steady" => Named::Caret(CaretScript::Steady),
             "caret_blink" => Named::Caret(CaretScript::Blinking),
             other => panic!("unknown script {other}"),
@@ -228,21 +278,28 @@ mod vectors {
     fn page_script(name: Option<&String>) -> PageScript {
         match named(name.expect("a page names its script")) {
             Named::Page(page) => page,
-            Named::Eyes(_) | Named::Baby | Named::Caret(_) => panic!("not a page's script"),
+            Named::Eyes(_) | Named::Baby(_) | Named::Caret(_) => panic!("not a page's script"),
         }
     }
 
     fn eyes_script(name: Option<&String>) -> EyesScript {
         match named(name.expect("the eyes name their script")) {
             Named::Eyes(eyes) => eyes,
-            Named::Page(_) | Named::Baby | Named::Caret(_) => panic!("not the eyes' script"),
+            Named::Page(_) | Named::Baby(_) | Named::Caret(_) => panic!("not the eyes' script"),
+        }
+    }
+
+    fn baby_script(name: Option<&String>) -> BabyScript {
+        match named(name.expect("the baby names its script")) {
+            Named::Baby(baby) => baby,
+            Named::Page(_) | Named::Eyes(_) | Named::Caret(_) => panic!("not the baby's script"),
         }
     }
 
     fn caret_script(name: Option<&String>) -> CaretScript {
         match named(name.expect("the caret names its script")) {
             Named::Caret(caret) => caret,
-            Named::Page(_) | Named::Baby | Named::Eyes(_) => panic!("not the caret's script"),
+            Named::Page(_) | Named::Baby(_) | Named::Eyes(_) => panic!("not the caret's script"),
         }
     }
 
@@ -303,11 +360,18 @@ mod vectors {
             wait: StageWait::new(part.wait.unwrap_or(0)).unwrap(),
             colours: colours(part),
             dissolve: part.dissolve.unwrap_or(0),
+            pan: Pan::new(part.pan.unwrap_or(0)).unwrap(),
             height: part.height.unwrap_or(0),
             fight: fight(part.fight_visible.unwrap_or(false)),
             baby: part.baby.as_ref().map(|baby| Baby {
-                y: Wrapping(baby.y.expect("the baby's y")),
-                progress: progress(baby),
+                place: Pair {
+                    x: Wrapping(baby.x.unwrap_or(BABY_X)),
+                    y: Wrapping(baby.y.expect("the baby's y")),
+                },
+                script: ScriptPlace {
+                    script: baby_script(baby.script.as_ref()),
+                    progress: progress(baby),
+                },
             }),
             page: part.page.as_ref().map(|page| ScriptPlace {
                 script: page_script(page.script.as_ref()),
@@ -342,9 +406,12 @@ mod vectors {
     fn signal(name: &str) -> Signal {
         match name {
             "page5" => Signal::PageFive,
+            "page4" => Signal::PageFour,
             "wait" => Signal::WaitForPress,
             "fight" => Signal::WaitForPressThenFight,
             "wait_discovery" => Signal::WaitForDiscovery,
+            "wait_delivery" => Signal::WaitForDelivery,
+            "wait_examination" => Signal::WaitForExamination,
             "blink" => Signal::CaretBlinks,
             "finish" => Signal::Finish,
             other => panic!("unknown signal {other}"),
@@ -405,7 +472,7 @@ mod vectors {
         match named(name) {
             Named::Page(page) => content.pages[page] = script,
             Named::Eyes(eyes) => content.eyes[eyes] = script,
-            Named::Baby => content.baby = script,
+            Named::Baby(baby) => content.baby[baby] = script,
             Named::Caret(caret) => content.caret[caret] = script,
         }
     }
@@ -427,7 +494,7 @@ mod vectors {
         let mut content = IntroContent {
             pages: EnumMap::default(),
             eyes: EnumMap::default(),
-            baby: Vec::new(),
+            baby: EnumMap::default(),
             caret: EnumMap::default(),
             full: ALL_BLACK,
             sets: EnumMap::from_fn(|_| no_sets()),
@@ -514,8 +581,11 @@ mod vectors {
         if let Some(expected) = &after.baby {
             match state.baby {
                 Some(baby) => {
-                    failures.check("baby y", expected.y.map(Wrapping), baby.y);
-                    failures.script("baby", expected, baby.progress);
+                    failures.check("baby x", expected.x.map(Wrapping), baby.place.x);
+                    failures.check("baby y", expected.y.map(Wrapping), baby.place.y);
+                    let script = expected.script.as_ref().map(|name| baby_script(Some(name)));
+                    failures.check("baby script", script, baby.script.script);
+                    failures.script("baby", expected, baby.script.progress);
                 }
                 None => failures.missing("baby"),
             }
@@ -575,6 +645,7 @@ mod vectors {
     fn check_after(failures: &mut Failures, after: &Part, state: &IntroState) {
         failures.check("stage", after.stage, state.stage);
         failures.check("dissolve", after.dissolve, state.dissolve);
+        failures.check("pan", after.pan, state.pan.px());
         failures.check("wait", after.wait, state.wait.frames());
         failures.check("height", after.height, state.height);
         failures.check("fight visible", after.fight_visible.map(fight), state.fight);
@@ -690,10 +761,26 @@ mod vectors {
             vec![match picture {
                 Picture::Blend => PictureLayout::SplitBlend,
                 Picture::Fight => PictureLayout::PlainFight,
+                Picture::Scene => PictureLayout::PlainScene,
                 Picture::Text => PictureLayout::PlainText,
             }]
         });
         failures.check("picture", expected.as_ref(), &layouts);
+        let expected = output.discovery.map(|asked| {
+            vec![match asked {
+                DiscoveryAsked::Start => DiscoveryRequest::StartDiscovery,
+                DiscoveryAsked::Finish => DiscoveryRequest::FinishDiscovery,
+            }]
+        });
+        failures.check("discovery", expected.as_ref(), &discovery_requests(report));
+        let expected = output.scene_selected.map(|selected| {
+            vec![match selected {
+                Selected::Discovery => ScenePicture::Discovery,
+                Selected::Delivery => ScenePicture::Delivery,
+                Selected::Examination => ScenePicture::Examination,
+            }]
+        });
+        failures.check("scene selected", expected.as_ref(), &selections(report));
         let lights = happened(report, IntroEvent::FlashingLightsBegin);
         failures.check("fight lights", output.fight_lights, lights);
         let tiles = report.events.iter().find_map(|event| {
@@ -704,6 +791,52 @@ mod vectors {
             }
         });
         failures.check("text updates", output.text_updates.map(Some), tiles);
+    }
+
+    fn discovery_requests(report: &Report) -> Vec<DiscoveryRequest> {
+        report
+            .events
+            .iter()
+            .filter_map(|event| {
+                if let IntroEvent::Discovery(request) = event {
+                    Some(*request)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    fn selections(report: &Report) -> Vec<ScenePicture> {
+        report
+            .events
+            .iter()
+            .filter_map(|event| {
+                if let IntroEvent::PictureSelected(picture) = event {
+                    Some(*picture)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    /// The outputs a vector expects absent are not reported.
+    fn check_absent(failures: &mut Failures, absent: &[OutputField], report: &Report) {
+        for field in absent {
+            let (name, there) = match field {
+                OutputField::Discovery => ("discovery", !discovery_requests(report).is_empty()),
+                OutputField::SceneSelected => ("scene selected", !selections(report).is_empty()),
+                OutputField::Picture => (
+                    "picture",
+                    report
+                        .events
+                        .iter()
+                        .any(|event| matches!(event, IntroEvent::Layout(_))),
+                ),
+            };
+            failures.check(&format!("{name} absent"), Some(false), there);
+        }
     }
 
     /// A music request as the vectors write it.
@@ -726,56 +859,135 @@ mod vectors {
             })
     }
 
-    /// One vector run as one frame: its failures.
-    fn run(vector: &Vector) -> Vec<String> {
-        let mut state = build(&vector.before);
-        let inputs = vector.inputs.as_ref();
-        let pressed = inputs.and_then(|inputs| inputs.press).unwrap_or(false);
-        let waits = inputs
-            .and_then(|inputs| inputs.track_waits)
-            .unwrap_or(false);
-        let returns = inputs
-            .and_then(|inputs| inputs.return_to_text)
-            .unwrap_or(false);
-        let frame = FrameInputs {
-            pressed,
-            track: if waits {
+    /// The frame's inputs a vector gives; what it leaves out is no press, no track waiting and
+    /// no cue.
+    fn frame_inputs(inputs: Option<&Inputs>) -> FrameInputs {
+        let given = |read: fn(&Inputs) -> Option<bool>| inputs.and_then(read).unwrap_or(false);
+        FrameInputs {
+            pressed: given(|inputs| inputs.press),
+            track: if given(|inputs| inputs.track_waits) {
                 TrackReply::TrackWaits
             } else {
                 TrackReply::NoneWaits
             },
-            fight: if returns {
+            fight: if given(|inputs| inputs.return_to_text) {
                 FightReply::ReadyToReturn
             } else {
                 FightReply::Fighting
             },
+            discovery: if given(|inputs| inputs.discovery_ready) {
+                DiscoveryReply::ReadyForPageThree
+            } else {
+                DiscoveryReply::Playing
+            },
+        }
+    }
+
+    /// What a caller saves at a cut: the intro's state and the room's turn it awaits.
+    #[derive(Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct SavedCut {
+        state: IntroState,
+        turn: RoomTurnCheckpoint,
+    }
+
+    /// The cut saved as text, as a caller stores it.
+    fn save(state: IntroState, turn: &RoomTurnAwaited) -> String {
+        let saved = SavedCut {
+            state,
+            turn: turn.checkpoint(),
         };
-        let scene = content(inputs.and_then(|inputs| inputs.scene.as_ref()));
-        let mut split_state = state.clone();
-        let report = step(&mut state, frame, &scene, rules(vector));
-        let split_report = begin_frame(
-            &mut split_state,
-            frame.pressed,
-            frame.track,
-            &scene,
-            rules(vector),
-        )
-        .finish(frame.fight);
+        toml::to_string(&saved).expect("the cut saves")
+    }
+
+    /// The cut read back from its saved text: the state and the turn restored from it.
+    fn load(saved: &str) -> (IntroState, RoomTurnAwaited) {
+        let saved: SavedCut = toml::from_str(saved).expect("the saved cut reads");
+        (saved.state, RoomTurnAwaited::restore(saved.turn))
+    }
+
+    /// A setup vector's saved cut: the saved state and room's turn, the content, rules and
+    /// replies it continues with, and the state one whole frame reaches.
+    struct Checkpoint {
+        saved: String,
+        scene: IntroContent,
+        rules: Rules,
+        frame: FrameInputs,
+        whole: IntroState,
+    }
+
+    /// A vector's checks of the state and report it reached.
+    fn check_vector(failures: &mut Failures, vector: &Vector, state: &IntroState, report: &Report) {
+        check_after(failures, &vector.after, state);
+        check_gone(failures, vector.gone.as_deref().unwrap_or_default(), state);
+        if let Some(output) = &vector.output {
+            check_output(failures, output, report);
+        }
+        check_absent(
+            failures,
+            vector.absent_output.as_deref().unwrap_or_default(),
+            report,
+        );
+    }
+
+    /// One vector run as one frame: its failures. A setup vector leaves its checkpoint, which
+    /// the vector continuing it takes.
+    fn run(vector: &Vector, checkpoints: &mut BTreeMap<String, Checkpoint>) -> Vec<String> {
         let mut failures = Failures {
             id: &vector.id,
             found: Vec::new(),
         };
+        if let Some(setup) = &vector.continues {
+            let Some(cut) = checkpoints.remove(setup) else {
+                failures.missing("the checkpoint it continues");
+                return failures.found;
+            };
+            let (mut state, turn) = load(&cut.saved);
+            let report = turn.resume(
+                &mut state,
+                &cut.scene,
+                cut.rules,
+                cut.frame.fight,
+                cut.frame.discovery,
+            );
+            failures.check("resumed frame's state", Some(&cut.whole), &state);
+            check_vector(&mut failures, vector, &state, &report);
+            return failures.found;
+        }
+        let before = vector.before.as_ref().expect("a vector builds its state");
+        let mut state = build(before);
+        let frame = frame_inputs(vector.inputs.as_ref());
+        let scene = content(
+            vector
+                .inputs
+                .as_ref()
+                .and_then(|inputs| inputs.scene.as_ref()),
+        );
+        let rules = rules(vector);
+        let mut split_state = state.clone();
+        let report = step(&mut state, frame, &scene, rules);
+        let split = begin_frame(&mut split_state, frame.pressed, frame.track, &scene, rules);
+        if vector.phase == Some(Phase::Setup) {
+            let (report, turn) = split.interrupt();
+            check_vector(&mut failures, vector, &split_state, &report);
+            let saved = save(split_state.clone(), &turn);
+            let restored = load(&saved);
+            failures.check("restored state", Some(&split_state), &restored.0);
+            failures.check("restored turn", Some(&turn), &restored.1);
+            let cut = Checkpoint {
+                saved,
+                scene,
+                rules,
+                frame,
+                whole: state,
+            };
+            checkpoints.insert(vector.id.clone(), cut);
+            return failures.found;
+        }
+        let split_report = split.finish(frame.fight, frame.discovery);
         failures.check("two-part frame's state", Some(&state), &split_state);
         failures.check("two-part frame's report", Some(&report), &split_report);
-        check_after(&mut failures, &vector.after, &state);
-        check_gone(
-            &mut failures,
-            vector.gone.as_deref().unwrap_or_default(),
-            &state,
-        );
-        if let Some(output) = &vector.output {
-            check_output(&mut failures, output, &report);
-        }
+        check_vector(&mut failures, vector, &state, &report);
         failures.found
     }
 
@@ -789,7 +1001,16 @@ mod vectors {
     fn every_vector_passes() {
         let vectors = vectors();
         assert!(!vectors.is_empty());
-        let failures: Vec<String> = vectors.iter().flat_map(run).collect();
+        let mut checkpoints = BTreeMap::new();
+        let failures: Vec<String> = vectors
+            .iter()
+            .flat_map(|vector| run(vector, &mut checkpoints))
+            .collect();
+        let unresumed: Vec<&String> = checkpoints.keys().collect();
+        assert!(
+            unresumed.is_empty(),
+            "setups never continued: {unresumed:?}"
+        );
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
 

@@ -164,6 +164,8 @@ pub enum InputProvider {
     IntroMissileInputs,
     /// Independent passage phase and sampled button at each draw opportunity.
     PassageJumpDraws,
+    /// Scoped discovery and delivery inputs, including the interrupted start.
+    ScopedIntroDeliveryInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -1079,10 +1081,6 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
 fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
-        "screens-intro/BattleBegins"
-        | "screens-intro/BattleDissolves"
-        | "screens-intro/PageTwoBegins"
-        | "screens-intro/PageTwoEnds" => &[O::IntroState, O::IntroPublications],
         game::production::played::intro_rooms::RULE => {
             &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
         }
@@ -1171,7 +1169,8 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
         _ => {
-            return flashback_fields(rule)
+            return intro_fields(rule)
+                .or_else(|| flashback_fields(rule))
                 .or_else(|| playback_fields(rule))
                 .or_else(|| intro_missile_fields(rule))
                 .or_else(|| ceres_tail_fields(rule));
@@ -1196,6 +1195,24 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
             O::CeresTailKnockback,
             O::CeresTailHealth,
         ],
+        _ => return None,
+    })
+}
+
+fn intro_fields(rule: &str) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    Some(match rule {
+        "screens-intro/DiscoveryBegins"
+        | "screens-intro/DiscoveryReturns"
+        | "screens-intro/DeliveryBegins"
+        | "screens-intro/BabyCrossesThePicture"
+        | "screens-intro/PageFourBegins"
+        | "screens-intro/DiscoveryAndDeliveryPagesEnd"
+        | "screens-intro/ExaminationBegins"
+        | "screens-intro/BattleBegins"
+        | "screens-intro/BattleDissolves"
+        | "screens-intro/PageTwoBegins"
+        | "screens-intro/PageTwoEnds" => &[O::IntroState, O::IntroPublications],
         _ => return None,
     })
 }
@@ -1497,10 +1514,14 @@ fn early_map_provider_valid(case: &Case) -> bool {
 fn intro_provider_valid(case: &Case, recorded: bool) -> bool {
     recorded
         && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::ScopedIntroInputs
-        && matches!(case.start, Start::CacheCut { frame: 1650 })
-        && case.row == "any-intro-0568"
-        && case.end.cut_inclusive == 2948
+        && ((case.inputs == InputProvider::ScopedIntroInputs
+            && case.row == "any-intro-0568"
+            && matches!(case.start, Start::CacheCut { frame: 1650 })
+            && case.end.cut_inclusive == 2948)
+            || (case.inputs == InputProvider::ScopedIntroDeliveryInputs
+                && case.row == "any-intro-2219"
+                && matches!(case.start, Start::CacheCut { frame: 1297 })
+                && case.end.cut_inclusive == 3794))
         && case.expectations.fields == [ObservationId::IntroState]
         && case.expectations.outputs == [ObservationId::IntroPublications]
         && case.expectations.output_cut.is_none()

@@ -10,6 +10,7 @@
 //! flashback's encounter, layout, text and palette publications. An interrupted cut compares
 //! brightness without advancing the intro. The last-pages scope also compares equipment restoration.
 
+pub(in crate::replay) mod delivery;
 pub(in crate::replay) mod indexed;
 
 use super::platform::{Controller, finished, polled};
@@ -29,9 +30,9 @@ use screens_intro::{
 };
 use std::path::Path;
 use types::intro::{
-    Baby, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn, ColourSet,
-    EyesScript, FadeFrames, FadingColour, FadingColours, FightVisibility, Glow, Glows, IntroStage,
-    IntroState, PageScript, Progress, ScriptPlace, StageWait, StepAt, TextPlace,
+    Baby, BabyScript, Blanking, Brightness, BrightnessLevel, Caret, CaretScript, ClickTurn,
+    ColourSet, EyesScript, FadeFrames, FadingColour, FadingColours, FightVisibility, Glow, Glows,
+    IntroStage, IntroState, PageScript, Pan, Progress, ScriptPlace, StageWait, StepAt, TextPlace,
 };
 use types::{Colour, Pair, Palette};
 
@@ -151,6 +152,7 @@ const FIGHT_VISIBILITY: WramWord = wram("INTRO_FIGHT_VISIBILITY", 0x1a57);
 /// The picture's height in the last pages.
 const HEIGHT: WramWord = wram("CINEMATIC_BG1_Y", 0x1997);
 /// The baby, the sprite object in slot 14: its y, list, timer and loop count.
+const BABY_X: WramWord = wram("CINEMATIC_SPRITE_X", 0x1a99);
 const BABY_Y: WramWord = wram("CINEMATIC_SPRITE_Y", 0x1ab9);
 const BABY_LIST: WramWord = wram("CINEMATIC_SPRITE_LIST", 0x1b39);
 const BABY_TIMER: WramWord = wram("CINEMATIC_SPRITE_TIMER", 0x1b79);
@@ -207,6 +209,7 @@ const fn wram(name: &'static str, offset: u16) -> WramWord {
 pub(super) enum Part {
     Opening,
     Flashback,
+    Delivery,
     LastPages,
 }
 
@@ -329,7 +332,7 @@ pub(super) fn play(
         },
         masked: match part {
             Part::Opening => OPENING_MASKED,
-            Part::Flashback => FLASHBACK_MASKED,
+            Part::Flashback | Part::Delivery => FLASHBACK_MASKED,
             Part::LastPages => MASKED,
         },
     };
@@ -344,7 +347,7 @@ pub(super) fn play(
         };
         match part {
             Part::Opening => intro::begins(language).map_err(japanese),
-            Part::Flashback | Part::LastPages => {
+            Part::Flashback | Part::Delivery | Part::LastPages => {
                 let state = reading.state(&seed.wram)?;
                 intro::admit(language, state, shown(&seed.wram)?).map_err(japanese)
             }
@@ -511,6 +514,12 @@ fn event_observation(events: &[IntroEvent]) -> Observation {
                     IntroEvent::TextUpdates(TextTiles::Resumed) => 7,
                     IntroEvent::Flashback(HideFightSamusAndShots) => 8,
                     IntroEvent::Layout(PlainText) => 9,
+                    IntroEvent::Discovery(screens_intro::DiscoveryRequest::StartDiscovery) => 10,
+                    IntroEvent::Discovery(screens_intro::DiscoveryRequest::FinishDiscovery) => 11,
+                    IntroEvent::PictureSelected(screens_intro::ScenePicture::Discovery) => 12,
+                    IntroEvent::PictureSelected(screens_intro::ScenePicture::Delivery) => 13,
+                    IntroEvent::PictureSelected(screens_intro::ScenePicture::Examination) => 14,
+                    IntroEvent::Layout(PictureLayout::PlainScene) => 15,
                     IntroEvent::Click | IntroEvent::EquipmentSet(_) => return None,
                 })
             })
@@ -544,10 +553,12 @@ fn count(report: &Frame, event: IntroEvent) -> i64 {
 
 /// The baby's repeat: the times its stretch plays in all, which the game's count starts at.
 fn repeat_times(content: &IntroContent) -> Option<u16> {
-    content.baby.iter().find_map(|step| match step {
-        Step::Repeat { times, .. } => Some(*times),
-        Step::Show { .. } | Step::Back(_) | Step::Hand(_) | Step::End => None,
-    })
+    content.baby[BabyScript::Examination]
+        .iter()
+        .find_map(|step| match step {
+            Step::Repeat { times, .. } => Some(*times),
+            Step::Show { .. } | Step::Back(_) | Step::Hand(_) | Step::End => None,
+        })
 }
 
 /// Whether the caret's script's current step shows its picture, as the content has it.
@@ -624,6 +635,15 @@ impl Reading {
 
     /// The intro's State as the record's work RAM holds it.
     fn state(&mut self, wram: &[u8]) -> Result<IntroState, Outcome> {
+        let stage = if self.part == Part::Delivery {
+            delivery::stage(wram)?
+        } else {
+            self.stage(wram)?
+        };
+        self.state_at(wram, stage)
+    }
+
+    fn stage(&self, wram: &[u8]) -> Result<IntroStage, Outcome> {
         let function = word(wram, source::CINEMATIC_ACTIVE)?;
         let stage = if function == SHOWN {
             if self.part == Part::Flashback && !self.fight_returned {
@@ -640,6 +660,10 @@ impl Reading {
                 .map(|&(_, stage)| stage)
                 .ok_or_else(|| data_failure(None, "played intro stage"))?
         };
+        Ok(stage)
+    }
+
+    fn state_at(&mut self, wram: &[u8], stage: IntroStage) -> Result<IntroState, Outcome> {
         if matches!(stage, IntroStage::ToPageFive | IntroStage::ToText) {
             self.page_five_begun = true;
         }
@@ -649,17 +673,19 @@ impl Reading {
         );
         let dissolve = word(
             wram,
-            if matches!(
-                stage,
-                IntroStage::ToText | IntroStage::OutOfFight | IntroStage::PageTwoWaits
-            ) || stage == IntroStage::Text && self.fight_returned
+            if (self.part == Part::Delivery && delivery::return_count(stage))
+                || matches!(
+                    stage,
+                    IntroStage::ToText | IntroStage::OutOfFight | IntroStage::PageTwoWaits
+                )
+                || stage == IntroStage::Text && self.fight_returned
             {
                 TO_TEXT_COUNT
             } else {
                 TO_SCENE_COUNT
             },
         )?;
-        if self.part == Part::Flashback {
+        if matches!(self.part, Part::Flashback | Part::Delivery) {
             self.previous_flashback = Some((stage, dissolve));
         }
         // The stage's wait is the dissolve's count's word, read only while the opening holds.
@@ -682,6 +708,11 @@ impl Reading {
             wait,
             colours: colours(wram)?,
             dissolve,
+            pan: if self.part == Part::Delivery {
+                delivery::pan(wram)?
+            } else {
+                Pan::AT_REST
+            },
             height: if self.part == Part::Flashback {
                 0
             } else {
@@ -692,10 +723,10 @@ impl Reading {
             } else {
                 FightVisibility::Hidden
             },
-            baby: if self.part == Part::Flashback {
-                None
-            } else {
-                self.baby(wram)?
+            baby: match self.part {
+                Part::Flashback => None,
+                Part::Delivery => delivery::baby(self, wram, stage)?,
+                Part::Opening | Part::LastPages => self.baby(wram)?,
             },
             page: script(
                 wram,
@@ -704,6 +735,8 @@ impl Reading {
                 [
                     PageScript::One,
                     PageScript::Two,
+                    PageScript::Three,
+                    PageScript::Four,
                     PageScript::Five,
                     PageScript::Six,
                 ],
@@ -735,11 +768,17 @@ impl Reading {
         }
         let count = word(wram, BABY_COUNT)?;
         Ok(Some(Baby {
-            y: Wrapping(word(wram, BABY_Y)?),
-            progress: Progress {
-                step: step_at(&self.places.baby, list)?,
-                hold: word(wram, BABY_TIMER)?,
-                repeat_left: (count != 0 && Some(count) != self.repeat_times).then_some(count),
+            place: Pair {
+                x: Wrapping(word(wram, BABY_X)?),
+                y: Wrapping(word(wram, BABY_Y)?),
+            },
+            script: ScriptPlace {
+                script: BabyScript::Examination,
+                progress: Progress {
+                    step: step_at(&self.places.baby, list)?,
+                    hold: word(wram, BABY_TIMER)?,
+                    repeat_left: (count != 0 && Some(count) != self.repeat_times).then_some(count),
+                },
             },
         }))
     }
@@ -1033,7 +1072,17 @@ const fn dissolve_compared(part: Part, stage: IntroStage) -> bool {
         | IntroStage::Fight
         | IntroStage::PageTwoPending
         | IntroStage::OutOfFight
-        | IntroStage::PageTwoWaits => true,
+        | IntroStage::PageTwoWaits
+        | IntroStage::IntoDiscovery
+        | IntroStage::Discovery
+        | IntroStage::PageThreePending
+        | IntroStage::OutOfDiscovery
+        | IntroStage::PageThreeWaits
+        | IntroStage::IntoDelivery
+        | IntroStage::Delivery
+        | IntroStage::PageFourPending
+        | IntroStage::OutOfDelivery
+        | IntroStage::PageFourWaits => true,
         IntroStage::Text => !matches!(part, Part::LastPages),
         IntroStage::Begins
         | IntroStage::OpeningLoads
@@ -1118,6 +1167,16 @@ const fn stage_code(stage: IntroStage) -> i64 {
         IntroStage::PageTwoPending => 24,
         IntroStage::OutOfFight => 25,
         IntroStage::PageTwoWaits => 26,
+        IntroStage::IntoDiscovery => 27,
+        IntroStage::Discovery => 28,
+        IntroStage::PageThreePending => 29,
+        IntroStage::OutOfDiscovery => 30,
+        IntroStage::PageThreeWaits => 31,
+        IntroStage::IntoDelivery => 32,
+        IntroStage::Delivery => 33,
+        IntroStage::PageFourPending => 34,
+        IntroStage::OutOfDelivery => 35,
+        IntroStage::PageFourWaits => 36,
     }
 }
 
@@ -1125,13 +1184,23 @@ const fn stage_code(stage: IntroStage) -> i64 {
 /// compared as a number, a label for the comparison alone.
 fn scripts(state: &IntroState) -> Vec<Observation> {
     let mut fields = Vec::new();
-    fields.extend(place("baby", state.baby.map(|baby| (0, baby.progress))));
+    fields.extend(place(
+        "baby",
+        state.baby.map(|baby| {
+            (
+                i64::from(baby.script.script == BabyScript::Delivery),
+                baby.script.progress,
+            )
+        }),
+    ));
     fields.extend(place(
         "page",
         state.page.map(|page| {
             let which = match page.script {
                 PageScript::One => 1,
                 PageScript::Two => 2,
+                PageScript::Three => 3,
+                PageScript::Four => 4,
                 PageScript::Five => 5,
                 PageScript::Six => 6,
             };
@@ -1244,8 +1313,17 @@ fn observations(view: &View<'_>) -> Vec<Observation> {
     }
     fields.push(quantity(
         "intro.baby.y",
-        state.baby.map_or(-1, |baby| i64::from(baby.y.0)),
+        state.baby.map_or(-1, |baby| i64::from(baby.place.y.0)),
     ));
+    if view.part == Part::Delivery {
+        fields.extend([
+            quantity("intro.pan", i64::from(u16::from(state.pan))),
+            quantity(
+                "intro.baby.x",
+                state.baby.map_or(-1, |baby| i64::from(baby.place.x.0)),
+            ),
+        ]);
+    }
     fields.extend(scripts(state));
     let caret_at = state.caret.map(|caret| caret.place);
     fields.extend([

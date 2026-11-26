@@ -22,6 +22,12 @@ pub enum Picture {
     EyesStaring,
     /// The baby, its first frame.
     BabyFirst,
+    /// Delivery baby, first picture.
+    DeliveryFirst,
+    /// Delivery baby, second picture.
+    DeliverySecond,
+    /// Delivery baby, third picture.
+    DeliveryThird,
     /// The baby, its second frame.
     BabySecond,
     /// The baby, its third frame.
@@ -51,6 +57,12 @@ pub enum Shows {
 pub enum Cue {
     /// The baby's: page 5 begins.
     PageFive,
+    /// The delivery baby signals page 4.
+    PageFour,
+    /// Page 3 waits for the delivery.
+    WaitForDelivery,
+    /// Page 4 waits for the examination.
+    WaitForExamination,
     /// Page 5's end: the game waits for a press.
     WaitForPress,
     /// Page 1's end: the game waits for the press that starts the battle on Zebes.
@@ -104,6 +116,10 @@ pub struct Scene {
     pub page_one: Vec<Step>,
     /// Page 2's letters, places, holds and cue.
     pub page_two: Vec<Step>,
+    /// Page 3.
+    pub page_three: Vec<Step>,
+    /// Page 4.
+    pub page_four: Vec<Step>,
     /// Page 5's letters, places and holds, and its cues.
     pub page_five: Vec<Step>,
     /// Page 6's.
@@ -114,6 +130,8 @@ pub struct Scene {
     pub eyes_staring: Vec<Step>,
     /// The baby being examined.
     pub baby: Vec<Step>,
+    /// The delivery baby.
+    pub delivery: Vec<Step>,
     /// The caret while a page is typed.
     pub caret_steady: Vec<Step>,
     /// The caret while a page waits.
@@ -130,7 +148,7 @@ pub struct Scene {
     pub to_text: DissolveSets,
     /// The text's colours, which start black as page 5 begins.
     pub text: Vec<u8>,
-    /// The colours the caret takes once the text is back, by index.
+    /// The caret colours restored when delivery or examination returns to text, by index.
     pub caret_colours: Vec<(u8, Colour)>,
     /// The caret's place as a page begins, px: x and y.
     pub caret_home: [u16; 2],

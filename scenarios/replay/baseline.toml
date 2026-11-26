@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "7631cae6a9946aba5d02a6281a6951d34c91ff9d3257ec2462a73c8b08911a93"
+index_sha256 = "6864ab065590b1ee6e404300b064c8848abfde3f29f35f4eddd83af3c962e404"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1112,3 +1112,21 @@ null_fields = 1545
 restorations = 0
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "intro/discovery-through-examination"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "6d00f2e043b09852dd87fd4497d679a02599bbc11f9fded218fc55f90a8a99cf"
+
+[case.counts]
+cuts = 2497
+fields = 77233
+outputs = 6532
+publications = 0
+replies = 0
+null_cuts = 6
+null_fields = 48870
+restorations = 0
+pending_boundaries = 1
+pending_restorations = 1

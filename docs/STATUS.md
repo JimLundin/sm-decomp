@@ -405,6 +405,22 @@ differs at cut 1,650 in `intro.stage` (2,218); the pages' tune coded `FF37h` in 
 runner differs from power-on at cut 1,290 in `front-end.sounds` (the intro row's own run counts
 the requests, so it holds): the first two fail on both runs, the third from power-on alone.
 
+### Discovery and delivery
+
+`intro/discovery-through-examination` carries the intro from the last finished page 2
+cut at movie 3,516 through the first finished examination cut at 6,013. It compares
+2,490 finished cuts, six interrupted cuts where it compares brightness, and the
+discovery start interrupted at 3,517. The start publishes the scene, palette, split and
+encounter request on that cut. At 3,518 the saved intro State, palette and pending room
+turn restore. The restored turn matches the uninterrupted ownership transfer, including
+the complete report, and does not repeat the start. Holding the initial State matches the
+six brightness-only cuts.
+
+The replay borrows the egg's return cue from its instruction and last hold. It compares
+the introduced page scripts, the delivery baby's position and animation, the pan and
+height, palettes, the ordered scene events and text clicks. Production still needs the
+room, encounter and demo owners for an integrated run.
+
 ### The intro's last pages
 
 `any-intro-6012`, the intro's last pages, plays alone from cut 1, inside page 4's turn: the

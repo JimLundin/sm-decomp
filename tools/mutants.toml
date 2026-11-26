@@ -1014,10 +1014,10 @@ field = "hud.map-window"
 name = "intro-drops-zebes-start"
 responsibility = "intro"
 file = "crates/game/src/production/played/intro.rs"
-before = "    Ok(report)"
+before = "    state.intro = next;"
 after = '''    let mut report = report;
     report.events.retain(|event| *event != screens_intro::IntroEvent::Flashback(FlashbackRequest::StartZebesFight));
-    Ok(report)'''
+    state.intro = next;'''
 case = "intro/flashback-from-page-one"
 cut = 1652
 field = "intro.events"
@@ -1026,10 +1026,10 @@ field = "intro.events"
 name = "intro-finishes-without-encounter-reply"
 responsibility = "intro"
 file = "crates/game/src/production/played/intro.rs"
-before = """    let reply = room_play(&room)?;
-    let report = room.finish(reply);"""
-after = """    let _reply = room_play(&room)?;
-    let report = room.finish(FightReply::Fighting);"""
+before = """    let replies = room_play(&room)?;
+    let report = room.finish(replies.fight, replies.discovery);"""
+after = """    let replies = room_play(&room)?;
+    let report = room.finish(FightReply::Fighting, replies.discovery);"""
 case = "intro/flashback-from-page-one"
 cut = 2170
 field = "intro.stage"
@@ -1226,3 +1226,40 @@ after = """
 case = "ridley/flight-tail"
 cut = 931
 field = "ridley.tail.swish-request"
+
+[[fault]]
+name = "intro-delivery-starts-one-pixel-left"
+responsibility = "intro"
+file = "crates/game/src/production/played/intro.rs"
+before = "    state.intro = next;"
+after = """    if report.events.contains(&screens_intro::IntroEvent::PictureSelected(screens_intro::ScenePicture::Delivery)) {
+        next.pan = types::intro::Pan::new(31).unwrap();
+    }
+    state.intro = next;"""
+case = "intro/discovery-through-examination"
+cut = 2723
+field = "intro.pan"
+
+[[fault]]
+name = "intro-discovery-start-missing-at-interrupt"
+responsibility = "intro"
+file = "crates/game/src/production/played/intro.rs"
+before = "    Ok((PendingRoom { state, turn }, report))"
+after = """    let mut report = report;
+    report.events.retain(|event| *event != screens_intro::IntroEvent::Discovery(DiscoveryRequest::StartDiscovery));
+    Ok((PendingRoom { state, turn }, report))"""
+case = "intro/discovery-through-examination"
+cut = 1298
+field = "intro.events"
+
+[[fault]]
+name = "intro-resume-republishes-discovery-start"
+responsibility = "intro"
+file = "crates/game/src/production/played/intro.rs"
+before = "        (state, report)"
+after = """        let mut report = report;
+        report.events.push(screens_intro::IntroEvent::Discovery(DiscoveryRequest::StartDiscovery));
+        (state, report)"""
+case = "intro/discovery-through-examination"
+cut = 1299
+field = "intro.events"

@@ -2,21 +2,24 @@
 //! the caret's colours and its home. The importer checks its shape; the model reads it as given.
 
 use enum_map::{Enum, EnumMap};
-use types::intro::{CaretScript, EyesScript, PageScript};
+use types::intro::{BabyScript, CaretScript, EyesScript, PageScript};
 use types::{Colour, Pair, Palette, Px};
 
 use crate::script::Script;
 
-/// One of the intro's dissolves, each with its own colour sets.
+/// One of the intro's sets of dissolve colours. The discovery shares the battle's sets
+/// (`DiscoveryBegins`), the delivery the examination's (`DeliveryBegins`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
 pub enum Dissolve {
-    /// Page 1's text dissolving into the battle on Zebes (`BattleDissolves`).
+    /// The text dissolving into the battle on Zebes (`BattleDissolves`) or the discovery room.
     IntoFight,
-    /// The battle dissolving back to the text for page 2 (`BattleDissolves`).
+    /// The battle or the discovery dissolving back to the text, for page 2 or 3
+    /// (`BattleDissolves`, `DiscoveryReturns`).
     OutOfFight,
-    /// Page 4's text dissolving into the picture of the baby (`PicturesDissolve`).
+    /// The text dissolving into the delivery or the examination (`PicturesDissolve`).
     ToScene,
-    /// The picture dissolving back to the text for page 5 (`PicturesDissolve`).
+    /// The delivery or the examination dissolving back to the text, for page 4 or 5
+    /// (`PicturesDissolve`).
     ToText,
 }
 
@@ -45,21 +48,24 @@ pub struct IntroContent {
     pub pages: EnumMap<PageScript, Script>,
     /// Samus's eyes' scripts.
     pub eyes: EnumMap<EyesScript, Script>,
-    /// The baby's script.
-    pub baby: Script,
+    /// The baby's scripts, in the delivery and in the examination.
+    pub baby: EnumMap<BabyScript, Script>,
     /// The caret's scripts.
     pub caret: EnumMap<CaretScript, Script>,
     /// The scene's 256 colours at their full, as the dissolves head for them (`PageFiveBegins`,
-    /// `BattleBegins`, `PageTwoBegins`).
+    /// `BattleBegins`, `PageTwoBegins`, `DiscoveryBegins`, `DiscoveryReturns`, `DeliveryBegins`,
+    /// `PageFourBegins`, `ExaminationBegins`).
     pub full: Palette,
-    /// Each dissolve's colours (`PicturesDissolve`, `BattleDissolves`); the battle's
-    /// brightening sets also start black (`BattleBegins`, `PageTwoBegins`).
+    /// Each dissolve's colours (`PicturesDissolve`, `BattleDissolves`); a dissolve's brightening
+    /// set also starts black as it begins, but for page 5's (`PageFiveBegins`).
     pub sets: EnumMap<Dissolve, DissolveSets>,
     /// The text's colours, which start black as page 5 begins (`PageFiveBegins`).
     pub text: Vec<u8>,
-    /// The colours the caret takes once the text is back (`DissolveEnds`).
+    /// The colours the caret takes as the dissolve back to the text from the delivery or the
+    /// examination ends, shown over the last step's colours (`DissolveEnds`). The return from
+    /// the discovery, like the battle's, leaves them out and keeps its faded colours.
     pub caret_colours: Vec<IndexedColour>,
     /// The caret's place as a page begins, px (`PageOneIsMadeReady`, `PageTwoBegins`,
-    /// `PageFiveBegins`, `PressTurnsThePage`).
+    /// `DiscoveryReturns`, `PageFourBegins`, `PageFiveBegins`, `PressTurnsThePage`).
     pub caret_home: Pair<Px>,
 }

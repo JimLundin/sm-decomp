@@ -33,8 +33,16 @@ pub enum Shows {
 /// A signal a script hands the scene.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Signal {
-    /// The baby's: page 5 begins (`PageFiveBegins`).
+    /// The examination baby's: page 5 begins (`PageFiveBegins`).
     PageFive,
+    /// The delivery baby's: page 4 begins (`PageFourBegins`).
+    PageFour,
+    /// Page 3's end: the game waits for the press that brings up the delivery, the caret
+    /// blinking (`DiscoveryAndDeliveryPagesEnd`, `CaretBlinks`).
+    WaitForDelivery,
+    /// Page 4's end: the game waits for the press that starts the examination, the caret
+    /// blinking (`DiscoveryAndDeliveryPagesEnd`, `CaretBlinks`).
+    WaitForExamination,
     /// Page 5's end: the game waits for a press, the caret blinking (`PageEnds`, `CaretBlinks`).
     WaitForPress,
     /// Page 1's end: the game waits for the press that starts the battle on Zebes, the caret

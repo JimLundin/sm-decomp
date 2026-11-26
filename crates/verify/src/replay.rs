@@ -82,6 +82,8 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         .and_then(|()| {
             if case.inputs == index::InputProvider::PlayedCeresInputs {
                 played::indexed::run(case, sources, &mut result)
+            } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {
+                played::intro::delivery::run(case, sources, &mut result)
             } else {
                 let admitted = admission::admit(case, sources)?;
                 runner::run(case, admitted, &mut result)

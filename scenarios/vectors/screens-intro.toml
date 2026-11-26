@@ -4,7 +4,11 @@
 # - Each [[vector]] is one frame of the intro, from its state as the frame begins to its state as
 #   the frame ends: id; source ("recorded" or "constructed"); entries (the spec's behaviours it
 #   exercises); rules (optional); before; inputs (optional); after; output (optional); gone
-#   (optional).
+#   (optional). A vector with phase = "setup" stops where its room start has been applied
+#   and the room and scripts still await their turn. A vector with continues names that setup
+#   vector and completes the same turn from its saved result and content, consuming one
+#   checkpoint. It supplies no new before State or inputs. absent_output lists unexpected
+#   output fields.
 # - rules (optional): the reference rules this vector overrides: rhythm, frames (PictureDarkens's
 #   d). A vector without rules runs the reference one: rhythm 1.
 # - before and after hold only the parts the vector needs; a part absent from before is not
@@ -14,7 +18,8 @@
 #   "ToPageFive", "ToText", "Text", "WaitingForPress", "FadingOut", "Done"); dissolve, the
 #   dissolve's count; wait, the stage's wait, frames; colours, a table by colour index of [[red, green, blue] levels,
 #   [red, green, blue] steps], in 256ths; height, the picture's height, px, signed;
-#   baby = { y, script, step, hold, count }; page and eyes = { script, step, hold, count };
+#   pan, the horizontal offset in px, 0 to 32 (default 0);
+#   baby = { x, y, script, step, hold, count } (x defaults to 112); page and eyes = { script, step, hold, count };
 #   caret = { x, y, script, step, hold, count }; step is the index of the script's current step
 #   (-1 when placed and not yet run) and count the count left of a repeat (absent for none);
 #   glows, a list of [column, row, the set it takes next, frames left]; click, the click turn;
@@ -45,6 +50,12 @@
 #   8 frames); encounter, "start" for StartZebesFight or "end" for HideFightSamusAndShots;
 #   picture, "blend", "fight" or "text"; fight_lights and text_updates, boolean events.
 #   gone (optional): the parts no longer there.
+# - Discovery and delivery stages include "IntoDiscovery", "Discovery", "PageThreePending",
+#   "OutOfDiscovery", "PageThreeWaits", "IntoDelivery", "Delivery", "PageFourPending",
+#   "OutOfDelivery" and "PageFourWaits". discovery_ready is the encounter's page 3 cue, bool,
+#   default false. New scripts are "page3", "page4" and "delivery", with signals "wait_delivery",
+#   "wait_examination" and "page4". The new output fields are discovery ("start" or "finish")
+#   and scene_selected ("discovery", "delivery" or "examination"). A layout can be "scene".
 # - Content is invented: no script, picture, letter, colour index, set, full colour or place of
 #   the scene is the game's. The recorded cases (named by row and cut elsewhere) keep the State
 #   as recorded, each colour's levels and steps under an invented index, and give the scene
@@ -406,7 +417,7 @@ source = "recorded"
 entries = ["PictureDarkens", "IntroEnds"]
 before = { stage = "FadingOut", height = 8, level = 1, screen = "Shown", count = 0, eyes = { script = "eyes_six", step = 2, hold = 15 }, caret = { x = 8, y = 56, script = "caret_blink", step = 1, hold = 4 }, click = true }
 inputs = { scene = { scripts = { eyes_six = [{ picture = "s", hold = 64 }, { picture = "h", hold = 8 }, { picture = "t", hold = 16 }, { back = 2 }], caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
-after = { stage = "Done", dissolve = 0, height = 0, level = 0, screen = "Blanked", count = 0, click = false }
+after = { stage = "Done", dissolve = 0, pan = 0, height = 0, level = 0, screen = "Blanked", count = 0, click = false }
 output = { equipment_returned = true }
 gone = ["eyes", "page", "baby", "caret"]
 
@@ -425,9 +436,9 @@ gone = ["page", "eyes", "caret", "baby"]
 id = "C-begins-clears"
 source = "constructed"
 entries = ["IntroBegins"]
-before = { stage = "Begins", dissolve = 40, height = 3, level = 9, screen = "Shown", click = true, eyes = { script = "eyes", step = 0, hold = 7 }, glows = [[2, 3, 1, 4]] }
+before = { stage = "Begins", dissolve = 40, pan = 14, height = 3, level = 9, screen = "Shown", click = true, eyes = { script = "eyes", step = 0, hold = 7 }, glows = [[2, 3, 1, 4]] }
 inputs = { scene = { scripts = { eyes = [{ picture = "a", hold = 9 }] } } }
-after = { stage = "OpeningLoads", dissolve = 0, height = 0, level = 0, screen = "Blanked", click = false, glows = [] }
+after = { stage = "OpeningLoads", dissolve = 0, pan = 0, height = 0, level = 0, screen = "Blanked", click = false, glows = [] }
 output = { equipment_lent = true }
 gone = ["eyes"]
 
@@ -789,3 +800,317 @@ before = { stage = "PageTwoWaits", dissolve = 65535, caret = { x = 8, y = 120, s
 inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
 after = { stage = "PageTwoWaits", dissolve = 65535, caret = { step = 1, hold = 5 } }
 output = { caret_shown = false }
+
+# Discovery, delivery and examination join.
+
+[[vector]]
+id = "R-discovery-start"
+source = "recorded"
+entries = ["DiscoveryBegins"]
+before = { stage = "PageTwoWaits", dissolve = 65535, height = 8, click = true, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 120 } }
+inputs = { press = true, scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "IntoDiscovery", dissolve = 127, height = 8, pan = 0, click = true, caret = { script = "caret_blink", step = 0, hold = 5, x = 8, y = 248 } }
+output = { discovery = "start", scene_selected = "discovery", picture = "blend" }
+
+[[vector]]
+id = "R-discovery-pending"
+source = "recorded"
+entries = ["DiscoveryBegins"]
+phase = "setup"
+before = { stage = "PageTwoWaits", dissolve = 65535, height = 8, click = true, eyes = { script = "eyes", step = 0, hold = 38 }, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 120 }, glows = [[23, 14, 3, 5], [24, 14, 2, 5]] }
+inputs = { press = true, scene = { scripts = { eyes = [{ picture = "eyes", hold = 40 }], caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "IntoDiscovery", dissolve = 127, height = 8, pan = 0, click = true, eyes = { step = 0, hold = 38 }, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 248 }, glows = [[23, 14, 3, 5], [24, 14, 2, 5]] }
+output = { discovery = "start", scene_selected = "discovery", picture = "blend" }
+
+[[vector]]
+id = "R-discovery-resumes"
+source = "recorded"
+entries = ["DiscoveryBegins", "ScriptSteps", "LetterGlows"]
+continues = "R-discovery-pending"
+after = { stage = "IntoDiscovery", dissolve = 127, height = 8, pan = 0, click = true, eyes = { step = 0, hold = 37 }, caret = { script = "caret_blink", step = 0, hold = 5, x = 8, y = 248 }, glows = [[23, 14, 3, 4], [24, 14, 2, 4]] }
+absent_output = ["discovery", "scene_selected", "picture"]
+output = { shown = {}, clicks = 0 }
+
+[[vector]]
+id = "R-discovery-settles"
+source = "recorded"
+entries = ["DissolveEnds"]
+before = { stage = "IntoDiscovery", dissolve = 0 }
+after = { stage = "Discovery", dissolve = 65535 }
+output = { cleared = true, picture = "scene" }
+
+[[vector]]
+id = "C-discovery-holds"
+source = "constructed"
+entries = ["DiscoveryReturns", "ScriptSteps"]
+before = { stage = "Discovery", dissolve = 65535, caret = { script = "caret_blink", step = 0, hold = 2, x = 8, y = 248 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "Discovery", dissolve = 65535, caret = { script = "caret_blink", step = 0, hold = 1, x = 8, y = 248 } }
+
+[[vector]]
+id = "R-discovery-cue"
+source = "recorded"
+entries = ["DiscoveryReturns"]
+before = { stage = "Discovery", dissolve = 65535 }
+inputs = { discovery_ready = true }
+after = { stage = "PageThreePending", dissolve = 65535 }
+output = { text_updates = false }
+
+[[vector]]
+id = "R-page3-start"
+source = "recorded"
+entries = ["DiscoveryReturns", "ScriptSteps"]
+before = { stage = "PageThreePending", click = true }
+inputs = { scene = { caret_home = [8, 24], scripts = { page3 = [{ hold = 1 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "OutOfDiscovery", dissolve = 127, click = false, page = { script = "page3", step = 0, hold = 1 }, caret = { script = "caret_steady", step = 0, hold = 5, x = 8, y = 24 } }
+output = { picture = "blend", text_updates = true, clicks = 0 }
+
+[[vector]]
+id = "R-discovery-hide"
+source = "recorded"
+entries = ["DiscoveryReturns", "PicturesDissolve"]
+before = { stage = "OutOfDiscovery", dissolve = 1 }
+after = { stage = "OutOfDiscovery", dissolve = 0 }
+output = { discovery = "finish" }
+
+[[vector]]
+id = "R-discovery-text"
+source = "recorded"
+entries = ["DissolveEnds"]
+before = { stage = "OutOfDiscovery", dissolve = 0 }
+inputs = { scene = { caret_colours = { 71 = "1234" } } }
+after = { stage = "Text", dissolve = 65535 }
+output = { picture = "text", shown = { 71 = "0000" } }
+
+[[vector]]
+id = "R-delivery-start"
+source = "recorded"
+entries = ["DeliveryBegins", "ScriptSteps"]
+before = { stage = "PageThreeWaits", height = 8, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 104 }, click = true }
+inputs = { press = true, scene = { scripts = { delivery = [{ picture = "q", hold = 10 }, { picture = "r", hold = 10 }, { picture = "t", hold = 10 }, { picture = "r", hold = 10 }, { repeat = 0, times = 10 }, { signal = "page4" }, { picture = "q", hold = 10 }, { picture = "r", hold = 10 }, { picture = "t", hold = 10 }, { picture = "r", hold = 10 }, { back = 6 }], caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "IntoDelivery", dissolve = 127, pan = 32, height = 8, baby = { script = "delivery", step = 0, hold = 10, x = 84, y = 139 }, caret = { script = "caret_blink", step = 0, hold = 5, x = 8, y = 248 }, click = true }
+output = { scene_selected = "delivery", picture = "blend" }
+
+[[vector]]
+id = "R-delivery-pan"
+source = "recorded"
+entries = ["BabyCrossesThePicture"]
+before = { stage = "IntoDelivery", dissolve = 125, pan = 32, height = 8, baby = { script = "delivery", step = 0, hold = 8, x = 84, y = 139 } }
+after = { stage = "IntoDelivery", dissolve = 124, pan = 31, height = 8, baby = { script = "delivery", step = 0, hold = 7, x = 85, y = 139 } }
+
+[[vector]]
+id = "R-delivery-pan-holds"
+source = "recorded"
+entries = ["BabyCrossesThePicture"]
+before = { stage = "IntoDelivery", dissolve = 124, pan = 31, height = 8, baby = { script = "delivery", step = 0, hold = 7, x = 85, y = 139 } }
+after = { stage = "IntoDelivery", dissolve = 123, pan = 31, height = 8, baby = { script = "delivery", step = 0, hold = 6, x = 85, y = 139 } }
+
+[[vector]]
+id = "C-delivery-pan-stops"
+source = "constructed"
+entries = ["BabyCrossesThePicture"]
+before = { stage = "IntoDelivery", dissolve = 121, pan = 0, baby = { script = "delivery", step = 0, hold = 4, x = 116, y = 139 } }
+after = { stage = "IntoDelivery", dissolve = 120, pan = 0, baby = { script = "delivery", step = 0, hold = 3, x = 116, y = 139 } }
+
+[[vector]]
+id = "R-delivery-settles"
+source = "recorded"
+entries = ["DissolveEnds"]
+before = { stage = "IntoDelivery", dissolve = 0, pan = 0, baby = { script = "delivery", step = 0, hold = 3, x = 116, y = 139, count = 7 } }
+after = { stage = "Delivery", dissolve = 65535, pan = 0, baby = { script = "delivery", step = 0, hold = 2, x = 116, y = 139, count = 7 } }
+output = { picture = "scene", cleared = true }
+
+[[vector]]
+id = "R-delivery-cue"
+source = "recorded"
+entries = ["PageFourBegins", "ScriptSteps"]
+before = { stage = "Delivery", dissolve = 65535, baby = { script = "delivery", step = 3, hold = 1, x = 116, y = 139, count = 1 } }
+inputs = { scene = { scripts = { delivery = [{ picture = "q", hold = 10 }, { picture = "r", hold = 10 }, { picture = "t", hold = 10 }, { picture = "r", hold = 10 }, { repeat = 0, times = 10 }, { signal = "page4" }, { picture = "q", hold = 10 }, { picture = "r", hold = 10 }, { picture = "t", hold = 10 }, { picture = "r", hold = 10 }, { back = 6 }] } } }
+after = { stage = "PageFourPending", dissolve = 65535, baby = { script = "delivery", step = 6, hold = 10, x = 116, y = 139 } }
+output = { text_updates = false }
+
+[[vector]]
+id = "R-page4-start"
+source = "recorded"
+entries = ["PageFourBegins", "ScriptSteps"]
+before = { stage = "PageFourPending", click = true, baby = { script = "delivery", step = 6, hold = 10, x = 116, y = 139 } }
+inputs = { scene = { caret_home = [8, 24], scripts = { page4 = [{ hold = 1 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "OutOfDelivery", dissolve = 127, click = false, page = { script = "page4", step = 0, hold = 1 }, baby = { script = "delivery", step = 6, hold = 9, x = 116, y = 139 }, caret = { script = "caret_steady", step = 0, hold = 5, x = 8, y = 24 } }
+output = { picture = "blend", text_updates = true, clicks = 0 }
+
+[[vector]]
+id = "R-delivery-baby-leaves"
+source = "recorded"
+entries = ["BabyLeaves"]
+before = { stage = "OutOfDelivery", dissolve = 1, baby = { script = "delivery", step = 6, hold = 3, x = 116, y = 139 } }
+after = { stage = "OutOfDelivery", dissolve = 0 }
+gone = ["baby"]
+
+[[vector]]
+id = "R-delivery-text"
+source = "recorded"
+entries = ["DissolveEnds"]
+before = { stage = "OutOfDelivery", dissolve = 0 }
+inputs = { scene = { caret_colours = { 71 = "1234" } } }
+after = { stage = "Text", dissolve = 65535 }
+output = { picture = "text", shown = { 71 = "1234" } }
+
+[[vector]]
+id = "R-page3-letter"
+source = "recorded"
+entries = ["LetterIsTyped", "LetterGlows"]
+before = { stage = "OutOfDiscovery", dissolve = 127, page = { script = "page3", step = 0, hold = 1 }, caret = { script = "caret_steady", step = 0, hold = 5, x = 8, y = 24 } }
+inputs = { scene = { scripts = { page3 = [{ hold = 1 }, { letter = "Z", column = 1, row = 4, hold = 5 }, { letter = "Q", column = 2, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "OutOfDiscovery", dissolve = 126, page = { script = "page3", step = 1, hold = 5 }, caret = { script = "caret_steady", step = 0, hold = 4, x = 16, y = 24 }, glows = [[1, 4, 1, 5]], click = true }
+output = { clicks = 1, typed = [{ letter = "Z", column = 1, row = 4 }] }
+
+[[vector]]
+id = "R-page3-end"
+source = "recorded"
+entries = ["DiscoveryAndDeliveryPagesEnd", "CaretBlinks"]
+before = { stage = "Text", dissolve = 65535, page = { script = "page3", step = 0, hold = 1 }, click = true, caret = { script = "caret_steady", step = 0, hold = 5, x = 8, y = 104 } }
+inputs = { scene = { scripts = { page3 = [{ hold = 1 }, { signal = "wait_delivery" }, { end = true }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageThreeWaits", dissolve = 65535, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 104 }, click = true }
+gone = ["page"]
+
+[[vector]]
+id = "C-page3-wait"
+source = "constructed"
+entries = ["DiscoveryAndDeliveryPagesEnd", "ScriptSteps"]
+before = { stage = "PageThreeWaits", dissolve = 65535, caret = { script = "caret_blink", step = 0, hold = 2, x = 8, y = 104 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageThreeWaits", dissolve = 65535, caret = { script = "caret_blink", step = 0, hold = 1, x = 8, y = 104 } }
+
+[[vector]]
+id = "R-page4-letter"
+source = "recorded"
+entries = ["LetterIsTyped", "LetterGlows"]
+before = { stage = "OutOfDelivery", dissolve = 127, page = { script = "page4", step = 0, hold = 1 }, caret = { script = "caret_steady", step = 0, hold = 5, x = 8, y = 24 } }
+inputs = { scene = { scripts = { page4 = [{ hold = 1 }, { letter = "Z", column = 1, row = 4, hold = 5 }, { letter = "Q", column = 2, row = 4, hold = 5 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "OutOfDelivery", dissolve = 126, page = { script = "page4", step = 1, hold = 5 }, caret = { script = "caret_steady", step = 0, hold = 4, x = 16, y = 24 }, glows = [[1, 4, 1, 5]], click = true }
+output = { clicks = 1, typed = [{ letter = "Z", column = 1, row = 4 }] }
+
+[[vector]]
+id = "R-page4-end"
+source = "recorded"
+entries = ["DiscoveryAndDeliveryPagesEnd", "CaretBlinks"]
+before = { stage = "Text", dissolve = 65535, page = { script = "page4", step = 0, hold = 1 }, click = true, caret = { script = "caret_steady", step = 0, hold = 5, x = 8, y = 104 } }
+inputs = { scene = { scripts = { page4 = [{ hold = 1 }, { signal = "wait_examination" }, { end = true }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageFourWaits", dissolve = 65535, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 104 }, click = true }
+gone = ["page"]
+
+[[vector]]
+id = "C-page4-wait"
+source = "constructed"
+entries = ["DiscoveryAndDeliveryPagesEnd", "ScriptSteps"]
+before = { stage = "PageFourWaits", dissolve = 65535, caret = { script = "caret_blink", step = 0, hold = 2, x = 8, y = 104 } }
+inputs = { scene = { scripts = { caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "PageFourWaits", dissolve = 65535, caret = { script = "caret_blink", step = 0, hold = 1, x = 8, y = 104 } }
+
+[[vector]]
+id = "R-examination-start"
+source = "recorded"
+entries = ["ExaminationBegins", "ScriptSteps", "LetterGlows"]
+before = { stage = "PageFourWaits", height = 8, glows = [[28, 12, 3, 5], [29, 12, 2, 5]], click = true, caret = { script = "caret_blink", step = -1, hold = 1, x = 8, y = 104 } }
+inputs = { press = true, scene = { scripts = { baby = [{ picture = "l", hold = 10 }, { picture = "m", hold = 10 }, { picture = "n", hold = 10 }, { picture = "l", hold = 10 }], caret_blink = [{ picture = "caret", hold = 5 }, { hold = 5 }, { back = 0 }] } } }
+after = { stage = "ToScene", dissolve = 127, pan = 0, height = -24, glows = [[28, 12, 3, 4], [29, 12, 2, 4]], click = true, baby = { script = "baby", step = 0, hold = 10, x = 112, y = 111 }, caret = { script = "caret_blink", step = 0, hold = 5, x = 8, y = 248 } }
+output = { scene_selected = "examination", picture = "blend" }
+
+[[vector]]
+id = "C-discovery-prepare"
+source = "constructed"
+entries = ["DiscoveryBegins"]
+before = { stage = "PageTwoWaits", colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+inputs = { press = true, scene = { full = { 70 = [3, 0, 0], 71 = [0, 4, 0] }, sets = { into_fight = { dims = [70], brightens = [71] } }, scripts = {} } }
+after = { stage = "IntoDiscovery", dissolve = 127, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0003", 71 = "0000" } }
+
+[[vector]]
+id = "C-delivery-prepare"
+source = "constructed"
+entries = ["DeliveryBegins"]
+before = { stage = "PageThreeWaits", colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+inputs = { press = true, scene = { full = { 70 = [3, 0, 0], 71 = [0, 4, 0] }, sets = { to_scene = { dims = [70], brightens = [71] } }, scripts = { delivery = [{ picture = "q", hold = 10 }, { picture = "r", hold = 10 }, { picture = "t", hold = 10 }, { picture = "r", hold = 10 }, { repeat = 0, times = 10 }, { signal = "page4" }, { picture = "q", hold = 10 }, { picture = "r", hold = 10 }, { picture = "t", hold = 10 }, { picture = "r", hold = 10 }, { back = 6 }] } } }
+after = { stage = "IntoDelivery", dissolve = 127, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0003", 71 = "0000" } }
+
+[[vector]]
+id = "C-examination-prepare"
+source = "constructed"
+entries = ["ExaminationBegins"]
+before = { stage = "PageFourWaits", colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+inputs = { press = true, scene = { full = { 70 = [3, 0, 0], 71 = [0, 4, 0] }, sets = { to_scene = { dims = [70], brightens = [71] } }, scripts = { baby = [{ picture = "l", hold = 10 }, { picture = "m", hold = 10 }, { picture = "n", hold = 10 }, { picture = "l", hold = 10 }] } } }
+after = { stage = "ToScene", dissolve = 127, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0003", 71 = "0000" } }
+
+[[vector]]
+id = "C-page3-prepare"
+source = "constructed"
+entries = ["DiscoveryReturns"]
+before = { stage = "PageThreePending", colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+inputs = { press = false, scene = { full = { 70 = [3, 0, 0], 71 = [0, 4, 0] }, sets = { out_of_fight = { dims = [70], brightens = [71] } }, scripts = { page3 = [{ hold = 1 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "OutOfDiscovery", dissolve = 127, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0003", 71 = "0000" } }
+
+[[vector]]
+id = "C-page4-prepare"
+source = "constructed"
+entries = ["PageFourBegins"]
+before = { stage = "PageFourPending", colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+inputs = { press = false, scene = { full = { 70 = [3, 0, 0], 71 = [0, 4, 0] }, sets = { to_text = { dims = [70], brightens = [71] } }, scripts = { page4 = [{ hold = 1 }], caret_steady = [{ picture = "caret", hold = 5 }, { back = 0 }] } } }
+after = { stage = "OutOfDelivery", dissolve = 127, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0003", 71 = "0000" } }
+
+[[vector]]
+id = "C-delivery-colours"
+source = "constructed"
+entries = ["PicturesDissolve"]
+before = { stage = "IntoDelivery", dissolve = 124, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+inputs = { scene = { sets = { to_scene = { dims = [70], brightens = [71] } } } }
+after = { stage = "IntoDelivery", dissolve = 123, colours = { 70 = [[744, 0, 0], [24, 0, 0]], 71 = [[0, 32, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0002", 71 = "0000" } }
+
+[[vector]]
+id = "C-discovery-colours"
+source = "constructed"
+entries = ["PicturesDissolve"]
+before = { stage = "IntoDiscovery", dissolve = 124, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+inputs = { scene = { sets = { into_fight = { dims = [70], brightens = [71] } } } }
+after = { stage = "IntoDiscovery", dissolve = 123, colours = { 70 = [[744, 0, 0], [24, 0, 0]], 71 = [[0, 32, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0002", 71 = "0000" } }
+
+[[vector]]
+id = "C-delivery-out-colours"
+source = "constructed"
+entries = ["PicturesDissolve"]
+before = { stage = "OutOfDelivery", dissolve = 124, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+inputs = { scene = { sets = { to_text = { dims = [70], brightens = [71] } } } }
+after = { stage = "OutOfDelivery", dissolve = 123, colours = { 70 = [[744, 0, 0], [24, 0, 0]], 71 = [[0, 32, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0002", 71 = "0000" } }
+
+[[vector]]
+id = "C-discovery-out-colours"
+source = "constructed"
+entries = ["PicturesDissolve"]
+before = { stage = "OutOfDiscovery", dissolve = 124, colours = { 70 = [[768, 0, 0], [24, 0, 0]], 71 = [[0, 0, 0], [0, 32, 0]] } }
+inputs = { scene = { sets = { out_of_fight = { dims = [70], brightens = [71] } } } }
+after = { stage = "OutOfDiscovery", dissolve = 123, colours = { 70 = [[744, 0, 0], [24, 0, 0]], 71 = [[0, 32, 0], [0, 32, 0]] } }
+output = { shown = { 70 = "0002", 71 = "0000" } }
+
+[[vector]]
+id = "C-discovery-out-last-colours"
+source = "constructed"
+entries = ["PicturesDissolve", "DissolveEnds"]
+before = { stage = "OutOfDiscovery", dissolve = 0, colours = { 70 = [[264, 0, 0], [8, 0, 0]], 71 = [[0, 248, 0], [0, 8, 0]] } }
+inputs = { scene = { sets = { out_of_fight = { dims = [70], brightens = [71] } }, caret_colours = { 71 = "1234" } } }
+after = { stage = "Text", dissolve = 65535, colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+output = { picture = "text", shown = { 70 = "0001", 71 = "0020" } }
+
+[[vector]]
+id = "C-delivery-out-last-colours"
+source = "constructed"
+entries = ["PicturesDissolve", "DissolveEnds"]
+before = { stage = "OutOfDelivery", dissolve = 0, colours = { 70 = [[264, 0, 0], [8, 0, 0]], 71 = [[0, 248, 0], [0, 8, 0]] } }
+inputs = { scene = { sets = { to_text = { dims = [70], brightens = [71] } }, caret_colours = { 71 = "1234" } } }
+after = { stage = "Text", dissolve = 65535, colours = { 70 = [[256, 0, 0], [8, 0, 0]], 71 = [[0, 256, 0], [0, 8, 0]] } }
+output = { picture = "text", shown = { 70 = "0001", 71 = "1234" } }

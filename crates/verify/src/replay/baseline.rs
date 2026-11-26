@@ -245,6 +245,16 @@ impl Baseline {
 }
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
+    if case.inputs == InputProvider::ScopedIntroDeliveryInputs {
+        return Some(
+            counts.cuts == 2497
+                && counts.fields == 77233
+                && counts.outputs == 6532
+                && counts.publications == 0
+                && counts.replies == 0
+                && counts.pending_boundaries == 1,
+        );
+    }
     if case.inputs == InputProvider::ScopedIntroInputs {
         return Some(super::played::intro::indexed::valid_count_shape(counts));
     }

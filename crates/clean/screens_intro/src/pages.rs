@@ -1,5 +1,6 @@
 //! The pages (`PageFiveBegins`, `LetterIsTyped`, `LetterGlows`, `CaretBlinks`, `PageEnds`,
-//! `PageTwoEnds`, `PressTurnsThePage`): each page is typed letter by letter, each letter glowing
+//! `PageTwoEnds`, `DiscoveryAndDeliveryPagesEnd`, `PressTurnsThePage`): each page is typed
+//! letter by letter, each letter glowing
 //! as it appears,
 //! every other letter clicking and the caret running ahead; at its end the page waits for a
 //! press, or holds while the picture fades out.
@@ -17,6 +18,7 @@ use crate::dissolve::dissolve_begins;
 use crate::music::MusicRequest;
 use crate::report::{IntroEvent, Recoloured, Report};
 use crate::rules::Rules;
+use crate::scene::return_cued;
 use crate::script::{Letter, Shows, Signal, Step};
 
 /// A column or a row of the text layer, px.
@@ -65,35 +67,43 @@ pub const fn caret_at_home(state: &mut IntroState, content: &IntroContent) {
     });
 }
 
-/// A signal a script hands the scene. `PageFiveBegins`: the baby's page 5, taken while the scene
-/// shows. `PageEnds`: wait for a press (page 5's, or page 1's before the fight), or finish and
-/// start the fade from the rhythm `d`. `PageTwoEnds`: wait for the press before the baby's
-/// discovery. `CaretBlinks`: the caret blinks while the page waits.
-pub const fn take_signal(state: &mut IntroState, signal: Signal, rules: Rules) {
+/// A signal a script hands the scene. `PageFiveBegins`: the examination baby's page 5, taken
+/// while the scene shows. `PageFourBegins`: the delivery baby's page 4, taken while the delivery
+/// shows, which pauses the text's tiles on this frame. `PageEnds`: wait for a press (page 5's,
+/// or page 1's before the fight), or finish and start the fade from the rhythm `d`.
+/// `PageTwoEnds`, `DiscoveryAndDeliveryPagesEnd`: wait for the press before the discovery, the
+/// delivery or the examination. `CaretBlinks`: the caret blinks while the page waits.
+pub fn take_signal(state: &mut IntroState, signal: Signal, rules: Rules, report: &mut Report) {
     match signal {
         Signal::PageFive => {
             if matches!(state.stage, IntroStage::Scene) {
                 state.stage = IntroStage::ToPageFive;
             }
         }
-        Signal::WaitForPress => {
-            state.stage = IntroStage::WaitingForPress;
-            caret_blinks(state);
-        }
-        Signal::WaitForPressThenFight => {
-            state.stage = IntroStage::PageOneWaits;
-            caret_blinks(state);
-        }
-        Signal::WaitForDiscovery => {
-            state.stage = IntroStage::PageTwoWaits;
-            caret_blinks(state);
-        }
+        Signal::PageFour => return_cued(
+            state,
+            IntroStage::Delivery,
+            IntroStage::PageFourPending,
+            report,
+        ),
+        Signal::WaitForPress => page_waits(state, IntroStage::WaitingForPress),
+        Signal::WaitForPressThenFight => page_waits(state, IntroStage::PageOneWaits),
+        Signal::WaitForDiscovery => page_waits(state, IntroStage::PageTwoWaits),
+        Signal::WaitForDelivery => page_waits(state, IntroStage::PageThreeWaits),
+        Signal::WaitForExamination => page_waits(state, IntroStage::PageFourWaits),
         Signal::CaretBlinks => caret_blinks(state),
         Signal::Finish => {
             state.stage = IntroStage::FadingOut;
             state.fade = rules.rhythm;
         }
     }
+}
+
+/// `PageEnds`, `PageTwoEnds`, `DiscoveryAndDeliveryPagesEnd`: the page's wait signal makes the
+/// stage its wait, the caret blinking.
+const fn page_waits(state: &mut IntroState, wait: IntroStage) {
+    state.stage = wait;
+    caret_blinks(state);
 }
 
 /// `CaretBlinks`: the caret's blinking script placed at its start, its place kept.

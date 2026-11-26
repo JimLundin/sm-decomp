@@ -1533,3 +1533,23 @@ provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness"]
 phase = "frame boundary"
 claim = "The played room draws its own random number and calculates actor runs and hit delivery. The pad comes from the movie."
+
+[[case]]
+id = "intro/discovery-through-examination"
+kind = "scoped"
+row = "any-intro-2219"
+start = { source = "cache-cut", frame = 1297 }
+end = { cut_inclusive = 3794 }
+rules = ["screens-intro/DiscoveryBegins", "screens-intro/DiscoveryReturns", "screens-intro/DeliveryBegins", "screens-intro/BabyCrossesThePicture", "screens-intro/PageFourBegins", "screens-intro/DiscoveryAndDeliveryPagesEnd", "screens-intro/ExaminationBegins"]
+profile = "reference"
+responsibilities = ["intro"]
+content = "player-rom-import"
+inputs = "scoped-intro-delivery-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["intro.state"], outputs = ["intro.publications"] }
+checkpoints = false
+limits = ["The sole seed is the last finished cut of page 2. The start publishes on movie cut 3517. Restore the staged state and pending room token and compare the resumed report against both the observed cut and the moved continuation at 3518.", "The other interrupted cuts compare only brightness. The encounter, room, movement, graphics and audio service have separate owners."]
+borrowed = [
+  { dependency = "platform", provider = "pinned NMI completion and the independently qualified discovery start interruption", fields = ["work phase"], phase = "cut", claim = "Intro state advances only through admitted work boundaries" },
+  { dependency = "audio", provider = "pinned preceding music queue", fields = ["track waits"], phase = "beginning of work", claim = "The intro runs with the queue reply while audio service stays outside the scope" },
+  { dependency = "discovery encounter", provider = "pinned egg instruction and hold", fields = ["ready for page 3"], phase = "after room play", claim = "Only the intro consumes the externally observed cue" },
+]

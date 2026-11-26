@@ -48,11 +48,40 @@ pub enum IntroStage {
     PageTwoPending,
     /// The battle dissolving back to the text while page 2 types (`BattleDissolves`).
     OutOfFight,
-    /// Page 2 typed, the caret blinking, the game waiting for the press that starts the baby's
-    /// discovery, a later part not yet specced (`PageTwoEnds`): until then the stage holds and
-    /// the scripts run.
+    /// Page 2 typed, the caret blinking, the game waiting. A new press brings up the room where
+    /// Samus finds the baby (`DiscoveryBegins`); without one the stage holds and the scripts run
+    /// (`PageTwoEnds`).
     PageTwoWaits,
-    /// Page 4's text dissolving into the picture of the baby.
+    /// The text dissolving into the discovery room (`PicturesDissolve`).
+    IntoDiscovery,
+    /// The discovery room shown. It holds until the discovery's return cue, received after room
+    /// play: on that same frame the stage becomes `PageThreePending` (`DiscoveryReturns`).
+    Discovery,
+    /// The discovery has cued its return; page 3 begins in the next frame's stage step
+    /// (`DiscoveryReturns`).
+    PageThreePending,
+    /// The discovery dissolving back to the text while page 3 types (`PicturesDissolve`).
+    OutOfDiscovery,
+    /// Page 3 typed, the caret blinking, the game waiting. A new press brings up the delivery
+    /// (`DeliveryBegins`); without one the stage holds and the scripts run
+    /// (`DiscoveryAndDeliveryPagesEnd`).
+    PageThreeWaits,
+    /// The text dissolving into the delivery while the picture pans (`PicturesDissolve`,
+    /// `BabyCrossesThePicture`).
+    IntoDelivery,
+    /// The delivery shown, the baby on its script. The baby's signal for page 4 makes the stage
+    /// `PageFourPending` as its script runs (`PageFourBegins`).
+    Delivery,
+    /// The baby has signalled page 4; the page begins in the next frame's stage step
+    /// (`PageFourBegins`).
+    PageFourPending,
+    /// The delivery dissolving back to the text while page 4 types (`PicturesDissolve`).
+    OutOfDelivery,
+    /// Page 4 typed, the caret blinking, the game waiting. A new press starts the examination
+    /// (`ExaminationBegins`); without one the stage holds and the scripts run
+    /// (`DiscoveryAndDeliveryPagesEnd`).
+    PageFourWaits,
+    /// The text dissolving into the picture of the baby being examined.
     ToScene,
     /// The picture shown, the baby on its script. The baby's signal for page 5 makes the stage
     /// `ToPageFive` as its script runs.
@@ -186,6 +215,10 @@ pub enum PageScript {
     One,
     /// Page 2, placed as the text returns after the fight.
     Two,
+    /// Page 3, placed as the text returns after the discovery.
+    Three,
+    /// Page 4, placed as the text returns after the delivery.
+    Four,
     /// Page 5, placed as the picture starts back toward the text.
     Five,
     /// Page 6, placed by the press ("CERES STATION WAS UNDER ATTACK!!").
@@ -210,13 +243,77 @@ pub enum CaretScript {
     Blinking,
 }
 
-/// The baby, on the scene's picture: x 112, its y and its script.
+/// The baby's scripts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, enum_map::Enum, Serialize, Deserialize)]
+pub enum BabyScript {
+    /// Carried in the delivery: it signals page 4 (`DeliveryBegins`, `PageFourBegins`).
+    Delivery,
+    /// Rising into view in the examination: it signals page 5 (`ExaminationBegins`,
+    /// `PageFiveBegins`).
+    Examination,
+}
+
+/// The baby, during the delivery or the examination: its place on the screen and its script.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Baby {
-    /// Its y on the screen, px.
-    pub y: Px,
-    /// Where its script has got to.
-    pub progress: Progress,
+    /// Its place on the screen, px.
+    pub place: Pair<Px>,
+    /// Its script's place.
+    pub script: ScriptPlace<BabyScript>,
+}
+
+/// The widest pan of the picture, px.
+const WIDEST_PAN: u16 = 32;
+
+/// The picture's sideways offset in pixels: 0 to 32 (`DeliveryBegins`, `BabyCrossesThePicture`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "u16", into = "u16")]
+pub struct Pan(u16);
+
+impl Pan {
+    /// No pan: the picture's scroll at rest, and where the delivery's pan stops.
+    pub const AT_REST: Self = Self(0);
+    /// The widest pan, 32 px: where the delivery's picture starts (`DeliveryBegins`).
+    pub const WIDEST: Self = Self(WIDEST_PAN);
+
+    /// The pan of these pixels, if it is 0 to 32.
+    #[must_use]
+    pub const fn new(px: u16) -> Option<Self> {
+        if px <= WIDEST_PAN {
+            Some(Self(px))
+        } else {
+            None
+        }
+    }
+
+    /// Its pixels.
+    #[must_use]
+    pub const fn px(self) -> u16 {
+        self.0
+    }
+
+    /// A pixel less; none at rest.
+    #[must_use]
+    pub const fn narrower(self) -> Option<Self> {
+        match self.0.checked_sub(1) {
+            Some(px) => Some(Self(px)),
+            None => None,
+        }
+    }
+}
+
+impl TryFrom<u16> for Pan {
+    type Error = &'static str;
+
+    fn try_from(px: u16) -> Result<Self, Self::Error> {
+        Self::new(px).ok_or("the picture's pan is 0 to 32 px")
+    }
+}
+
+impl From<Pan> for u16 {
+    fn from(pan: Pan) -> Self {
+        pan.px()
+    }
 }
 
 /// The caret: where the next letter goes, and its script.
@@ -617,6 +714,37 @@ pub enum FightVisibility {
     InFront,
 }
 
+/// `BattleDissolves`: whether a frame's stage step asked for Samus and her shots to be hidden, a
+/// hide that waits for room play to have run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FightHide {
+    /// No hide was asked for.
+    NotAsked,
+    /// The hide was asked for: it takes effect once room play has run.
+    Asked,
+}
+
+impl FightHide {
+    /// `BattleDissolves`: a hide asked for takes effect after room play, so Samus and her shots
+    /// take their last room step still shown.
+    pub const fn takes_effect(self, state: &mut IntroState) {
+        if matches!(self, Self::Asked) {
+            state.fight = FightVisibility::Hidden;
+        }
+    }
+}
+
+/// A frame cut before its room's turn, as saved with the intro's state (`DiscoveryBegins`).
+///
+/// It holds everything the room's turn and the scripts' still need beyond that state. The stage
+/// step's effects and requests are already in the state and the report the cut handed back, so
+/// nothing of them is kept here to be done again.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RoomTurnCheckpoint {
+    /// Whether the stage's step asked for Samus and her shots to be hidden after room play.
+    pub hide: FightHide,
+}
+
 /// The intro's state: everything it remembers from one frame to the next (screens-intro).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IntroState {
@@ -628,6 +756,8 @@ pub struct IntroState {
     pub colours: FadingColours,
     /// The dissolve's count, frames: when the dissolve steps and ends. It wraps at 16 bits.
     pub dissolve: u16,
+    /// The picture's sideways offset in pixels.
+    pub pan: Pan,
     /// The picture's height, px: where the scene's picture stands.
     pub height: i16,
     /// Whether Samus and her shots appear in front of the fight's sprites.

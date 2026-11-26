@@ -42,10 +42,13 @@ const TEXT: u8 = 0x8c;
 /// The objects whose headers name their lists, `LIST_AT` bytes in.
 const PAGE_ONE: u16 = 0xcf3f;
 const PAGE_TWO: u16 = 0xcf45;
+const PAGE_THREE: u16 = 0xcf4b;
+const PAGE_FOUR: u16 = 0xcf51;
 const PAGE_FIVE: u16 = 0xcf57;
 const PAGE_SIX: u16 = 0xcf5d;
 const EYES: u16 = 0xcf63;
 const BABY: u16 = 0xce67;
+const DELIVERY: u16 = 0xce61;
 const CARET: u16 = 0xce6d;
 const LIST_AT: usize = 4;
 /// The lists the scene switches to: the eyes' from page 6, the caret's while a page waits.
@@ -78,6 +81,10 @@ const PAGE_ONE_BEGINS: u16 = 0xae43;
 const PAGE_ONE_ENDS: u16 = 0xae5b;
 const PAGE_TWO_BEGINS: u16 = 0xae79;
 const PAGE_TWO_ENDS: u16 = 0xae91;
+const PAGE_THREE_BEGINS: u16 = 0xb074;
+const PAGE_THREE_ENDS: u16 = 0xb08c;
+const PAGE_FOUR_BEGINS: u16 = 0xb0b3;
+const PAGE_FOUR_ENDS: u16 = 0xb0cb;
 const JAPANESE_PAGE_FIVE: u16 = 0xb19b;
 const JAPANESE_PAGE_SIX: u16 = 0xb228;
 const CARET_TO_BLINK: u16 = 0xadd4;
@@ -99,11 +106,15 @@ const EYES_DRAWINGS: [(u16, Picture); 4] = [
 /// The sprite objects' instructions.
 const SET_COUNT: u16 = 0x94d6;
 const COUNT_DOWN_AND_GO_TO: u16 = 0x94c3;
+const START_PAGE_FOUR: u16 = 0xb346;
 const START_PAGE_FIVE: u16 = 0xb34e;
 const SPRITE_GO_TO: u16 = 0x94bc;
 /// A sprite step's pictures; a step drawing none shows nothing.
 const NO_SPRITE: u16 = 0;
-const SPRITE_PICTURES: [(u16, Picture); 4] = [
+const SPRITE_PICTURES: [(u16, Picture); 7] = [
+    (0x8cf3, Picture::DeliveryFirst),
+    (0x8d13, Picture::DeliverySecond),
+    (0x8d33, Picture::DeliveryThird),
     (0x8d53, Picture::BabyFirst),
     (0x8d5a, Picture::BabySecond),
     (0x8d61, Picture::BabyThird),
@@ -141,29 +152,34 @@ impl ListPlaces {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Places {
     /// The scripts for pages 1, 2, 5 and 6.
-    pub pages: [ListPlaces; 4],
+    pub pages: [ListPlaces; 6],
     /// The eyes' blinking and staring.
     pub eyes: [ListPlaces; 2],
     /// The baby's.
     pub baby: ListPlaces,
+    /// The delivery baby.
+    pub delivery: ListPlaces,
     /// The caret's steady and blinking.
     pub caret: [ListPlaces; 2],
 }
 
 /// The scene's scripts in import order: pages 1, 2, 5 and 6, blinking and staring eyes,
 /// the baby, and the steady and blinking caret.
-fn lists(rom: Lorom<'_>) -> Result<[(Vec<Step>, ListPlaces); 9], ImportError> {
+fn lists(rom: Lorom<'_>) -> Result<[(Vec<Step>, ListPlaces); 12], ImportError> {
     let header = |bank, object| -> Result<RomAddress, ImportError> {
         Ok(at(bank, word(rom, at(SPRITES, object), LIST_AT)?))
     };
     Ok([
         script(rom, header(TEXT, PAGE_ONE)?, List::Text)?,
         script(rom, header(TEXT, PAGE_TWO)?, List::Text)?,
+        script(rom, header(TEXT, PAGE_THREE)?, List::Text)?,
+        script(rom, header(TEXT, PAGE_FOUR)?, List::Text)?,
         script(rom, header(TEXT, PAGE_FIVE)?, List::Text)?,
         script(rom, header(TEXT, PAGE_SIX)?, List::Text)?,
         script(rom, header(TEXT, EYES)?, List::Text)?,
         script(rom, at(TEXT, EYES_STARING), List::Text)?,
         script(rom, header(SPRITES, BABY)?, List::Sprite)?,
+        script(rom, header(SPRITES, DELIVERY)?, List::Sprite)?,
         script(rom, header(SPRITES, CARET)?, List::Sprite)?,
         script(rom, at(SPRITES, CARET_BLINKING), List::Sprite)?,
     ])
@@ -178,18 +194,24 @@ pub fn list_places(rom: Lorom<'_>) -> Result<Places, ImportError> {
     let [
         page_one,
         page_two,
+        page_three,
+        page_four,
         page_five,
         page_six,
         blinking,
         staring,
         baby,
+        delivery,
         steady,
         caret_blinking,
     ] = lists(rom)?.map(|(_, places)| places);
     Ok(Places {
-        pages: [page_one, page_two, page_five, page_six],
+        pages: [
+            page_one, page_two, page_three, page_four, page_five, page_six,
+        ],
         eyes: [blinking, staring],
         baby,
+        delivery,
         caret: [steady, caret_blinking],
     })
 }
@@ -203,11 +225,14 @@ pub fn import(rom: Lorom<'_>) -> Result<Scene, ImportError> {
     let [
         page_one,
         page_two,
+        page_three,
+        page_four,
         page_five,
         page_six,
         eyes_blinking,
         eyes_staring,
         baby,
+        delivery,
         caret_steady,
         caret_blinking,
     ] = lists(rom)?.map(|(steps, _)| steps);
@@ -229,11 +254,14 @@ pub fn import(rom: Lorom<'_>) -> Result<Scene, ImportError> {
     let scene = Scene {
         page_one,
         page_two,
+        page_three,
+        page_four,
         page_five,
         page_six,
         eyes_blinking,
         eyes_staring,
         baby,
+        delivery,
         caret_steady,
         caret_blinking,
         full,
@@ -324,8 +352,11 @@ fn script(
                 // Page 1's first instruction turns the click off, which placing a page does.
                 (
                     List::Text,
-                    PAGE_ONE_BEGINS | PAGE_TWO_BEGINS | JAPANESE_PAGE_FIVE | JAPANESE_PAGE_SIX,
+                    PAGE_ONE_BEGINS | PAGE_TWO_BEGINS | PAGE_THREE_BEGINS | PAGE_FOUR_BEGINS
+                    | JAPANESE_PAGE_FIVE | JAPANESE_PAGE_SIX,
                 ) => (None, 2),
+                (List::Text, PAGE_THREE_ENDS) => (Some(Step::Cue(Cue::WaitForDelivery)), 2),
+                (List::Text, PAGE_FOUR_ENDS) => (Some(Step::Cue(Cue::WaitForExamination)), 2),
                 (List::Text, PAGE_TWO_ENDS) => (Some(Step::Cue(Cue::WaitForDiscovery)), 2),
                 (List::Text, PAGE_ONE_ENDS) => (Some(Step::Cue(Cue::WaitForPressThenFight)), 2),
                 (List::Text, CARET_TO_BLINK) => (Some(Step::Cue(Cue::CaretBlinks)), 2),
@@ -350,6 +381,7 @@ fn script(
                     let from = index_of(&addresses, target)?;
                     (Some(Step::Repeat { from, times }), 4)
                 }
+                (List::Sprite, START_PAGE_FOUR) => (Some(Step::Cue(Cue::PageFour)), 2),
                 (List::Sprite, START_PAGE_FIVE) => (Some(Step::Cue(Cue::PageFive)), 2),
                 _ => return Err(ImportError::Instruction(here)),
             }
@@ -489,6 +521,9 @@ mod tests {
         for (header, list) in [
             (0xcf43, 0x9200),
             (0xcf49, 0x9250),
+            (0xcf4f, 0x9100),
+            (0xcf55, 0x9100),
+            (0xce65, 0x9000),
             (0xcf5b, 0x9000),
             (0xcf61, 0x9100),
             (0xcf67, 0x9100),
@@ -576,7 +611,7 @@ mod tests {
                 Step::End,
             ]
         );
-        let [page_one, _, page_five, _] = &places.pages;
+        let [page_one, _, _, _, page_five, _] = &places.pages;
         assert_eq!(page_one.step_at(0x9208), Some(StepAt::Step(0)));
         assert_eq!(page_five.step_at(0x9000), Some(StepAt::Start));
         assert_eq!(page_five.step_at(0x9008), Some(StepAt::Step(0)));

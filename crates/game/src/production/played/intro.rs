@@ -1,20 +1,21 @@
-//! The intro from the opening through page 2, and from page 4's dissolve to the fade out.
+//! The intro from the opening through the final fade.
 //!
-//! A completed work frame advances the stage and scripts and publishes their outputs. The
-//! opening and page 1 leave the setup's palette to its loader. The Zebes flashback publishes
-//! encounter, layout and text requests. Its scoped entry reads the boss's return cue; integrated
-//! play requires the room as soon as the intro asks to start it.
+//! The intro starts each flashback room and resumes its scripts after the room's turn.
+//! The discovery return publishes the final fade palette. Delivery and examination
+//! also restore the caret colours. The opening loader supplies the first page's palette.
 
 use data::assets::intro::{self as asset, Cue, Picture, Scene, Shows, Step};
 use enum_map::enum_map;
 use screens_intro::{
-    Dissolve, DissolveSets, FightReply, FlashbackRequest, FrameAwaitingReply, IndexedColour,
-    IntroContent, Language, Letter, PictureName, Report, Rules, Signal, TrackReply, Unsupported,
-    begin_frame, plays,
+    DiscoveryReply, DiscoveryRequest, Dissolve, DissolveSets, FightReply, FlashbackRequest,
+    FrameAwaitingReply, IndexedColour, IntroContent, Language, Letter, PictureName, Report,
+    RoomTurnAwaited, Rules, Signal, TrackReply, Unsupported, begin_frame, plays,
 };
+use serde::{Deserialize, Serialize};
+use types::intro::RoomTurnCheckpoint;
 use types::intro::{
-    Brightness, ClickTurn, FadeFrames, FadingColours, FightVisibility, Glows, IntroStage,
-    IntroState, StageWait,
+    BabyScript, Brightness, ClickTurn, FadeFrames, FadingColours, FightVisibility, Glows,
+    IntroStage, IntroState, Pan, StageWait,
 };
 use types::{Colour, Pair, Palette};
 
@@ -43,6 +44,8 @@ pub enum FightInput {
     Integrated,
     /// An independent encounter reply for a scoped intro frame.
     Scoped(FightReply),
+    /// Independently observed encounter replies for this scope.
+    ScopedScene(EncounterReplies),
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -52,13 +55,14 @@ pub enum Fault {
     FlightBegins,
     /// A finished frame that requires the Zebes fight room, demo and encounter.
     ZebesFightRoom,
-    /// The press after page 2 starts the discovery.
-    DiscoveryBegins,
+    /// The discovery room and encounter are required.
+    DiscoveryRoom,
 }
 
 /// The intro's State and the colours the screen shows, which the intro sets when a frame takes
 /// them.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct State {
     /// The model's State.
     pub intro: IntroState,
@@ -81,6 +85,7 @@ pub fn begins(language: Language) -> Result<State, Unsupported> {
         colours: FadingColours::still_black(),
         dissolve: 0,
         height: 0,
+        pan: Pan::AT_REST,
         fight: FightVisibility::Hidden,
         baby: None,
         page: None,
@@ -116,7 +121,7 @@ pub fn admit(
 /// # Errors
 /// [`Fault::FlightBegins`] on a finished frame once the intro is done, and
 /// [`Fault::ZebesFightRoom`] when the frame needs the Zebes fight room, and
-/// [`Fault::DiscoveryBegins`] on a press while page 2 waits. State is unchanged.
+/// [`Fault::DiscoveryRoom`] when the discovery needs its room. State is unchanged.
 pub fn played(
     state: &mut State,
     frame: FrameEnd,
@@ -132,21 +137,64 @@ pub fn played(
         return Ok(None);
     };
     let before = state.intro.stage;
-    play_work_frame(state, pressed, track, content, rules, |room| match fight {
-        FightInput::Integrated => without_fight_room(before, room),
-        FightInput::Scoped(reply) => Ok(reply),
+    play_scene_frame(state, pressed, track, content, rules, |room| match fight {
+        FightInput::Integrated => without_room(before, room),
+        FightInput::Scoped(fight) => Ok(EncounterReplies {
+            fight,
+            ..EncounterReplies::QUIET
+        }),
+        FightInput::ScopedScene(replies) => Ok(replies),
     })
     .map(Some)
 }
 
-/// Advance a completed intro work frame with its room-play phase.
-///
-/// The callback applies a start request before it steps the room and applies a hide request
-/// after room play, before drawing. It returns the encounter's cue to the intro before the
-/// scripts run. The caller commits its room candidate together with the successful intro.
+/// The encounter cues delivered after room play.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EncounterReplies {
+    /// The Zebes fight cue.
+    pub fight: FightReply,
+    /// The discovery cue.
+    pub discovery: DiscoveryReply,
+}
+
+impl EncounterReplies {
+    /// Neither encounter cues a page turn.
+    pub const QUIET: Self = Self {
+        fight: FightReply::Fighting,
+        discovery: DiscoveryReply::Playing,
+    };
+}
+
+/// Advance a finished intro work frame around the selected room-play callback.
 ///
 /// # Errors
-/// A missing downstream owner or a refusal by room play leaves the intro unchanged.
+/// A room refusal or a required flight handoff leaves the intro unchanged.
+pub fn play_scene_frame(
+    state: &mut State,
+    pressed: bool,
+    track: TrackReply,
+    content: &IntroContent,
+    rules: Rules,
+    room_play: impl FnOnce(&FrameAwaitingReply<'_>) -> Result<EncounterReplies, Fault>,
+) -> Result<Report, Fault> {
+    if state.intro.stage == IntroStage::Done {
+        return Err(Fault::FlightBegins);
+    }
+    let mut next = state.intro.clone();
+    let room = begin_frame(&mut next, pressed, track, content, rules);
+    let replies = room_play(&room)?;
+    let report = room.finish(replies.fight, replies.discovery);
+    state.intro = next;
+    if let Some(colours) = &report.colours {
+        state.colours = colours.clone();
+    }
+    Ok(report)
+}
+
+/// Advance a finished frame around the Zebes fight callback.
+///
+/// # Errors
+/// A refusal leaves the intro unchanged.
 pub fn play_work_frame(
     state: &mut State,
     pressed: bool,
@@ -155,27 +203,103 @@ pub fn play_work_frame(
     rules: Rules,
     room_play: impl FnOnce(&FrameAwaitingReply<'_>) -> Result<FightReply, Fault>,
 ) -> Result<Report, Fault> {
+    play_scene_frame(state, pressed, track, content, rules, |room| {
+        room_play(room).map(|fight| EncounterReplies {
+            fight,
+            ..EncounterReplies::QUIET
+        })
+    })
+}
+
+/// A staged intro frame and its room turn. The stage's outputs have already been published.
+#[derive(Debug, PartialEq, Eq)]
+pub struct PendingRoom {
+    state: State,
+    turn: RoomTurnAwaited,
+}
+
+/// Complete saved intro work after the stage report was published.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PendingRoomCheckpoint {
+    state: State,
+    turn: RoomTurnCheckpoint,
+}
+
+impl PendingRoom {
+    /// The stage result, which the room reads before it advances.
+    #[must_use]
+    pub const fn state(&self) -> &State {
+        &self.state
+    }
+
+    /// Save the staged state and the remaining turn together.
+    #[must_use]
+    pub fn checkpoint(&self) -> PendingRoomCheckpoint {
+        PendingRoomCheckpoint {
+            state: self.state.clone(),
+            turn: self.turn.checkpoint(),
+        }
+    }
+
+    /// Restore the remaining turn from its saved staged state.
+    #[must_use]
+    pub fn restore(saved: PendingRoomCheckpoint) -> Self {
+        let PendingRoomCheckpoint { state, turn } = saved;
+        Self {
+            state,
+            turn: RoomTurnAwaited::restore(turn),
+        }
+    }
+
+    /// Continue the same work frame after room play.
+    #[must_use]
+    pub fn resume(
+        self,
+        content: &IntroContent,
+        rules: Rules,
+        replies: EncounterReplies,
+    ) -> (State, Report) {
+        let Self { mut state, turn } = self;
+        let report = turn.resume(
+            &mut state.intro,
+            content,
+            rules,
+            replies.fight,
+            replies.discovery,
+        );
+        if let Some(colours) = &report.colours {
+            state.colours = colours.clone();
+        }
+        (state, report)
+    }
+}
+
+/// Stage an intro frame at a cut before its room turn.
+///
+/// # Errors
+/// Returns the required flight handoff after the intro ends.
+pub fn interrupt_work_frame(
+    mut state: State,
+    pressed: bool,
+    track: TrackReply,
+    content: &IntroContent,
+    rules: Rules,
+) -> Result<(PendingRoom, Report), Fault> {
     if state.intro.stage == IntroStage::Done {
         return Err(Fault::FlightBegins);
     }
-    if pressed && state.intro.stage == IntroStage::PageTwoWaits {
-        return Err(Fault::DiscoveryBegins);
-    }
-    let mut next = state.intro.clone();
-    let room = begin_frame(&mut next, pressed, track, content, rules);
-    let reply = room_play(&room)?;
-    let report = room.finish(reply);
-    state.intro = next;
+    let (report, turn) = begin_frame(&mut state.intro, pressed, track, content, rules).interrupt();
     if let Some(colours) = &report.colours {
         state.colours = colours.clone();
     }
-    Ok(report)
+    Ok((PendingRoom { state, turn }, report))
 }
 
-fn without_fight_room(
+fn without_room(
     stage: IntroStage,
     room: &FrameAwaitingReply<'_>,
-) -> Result<FightReply, Fault> {
+) -> Result<EncounterReplies, Fault> {
     if matches!(
         stage,
         IntroStage::IntoFight
@@ -189,7 +313,19 @@ fn without_fight_room(
     {
         return Err(Fault::ZebesFightRoom);
     }
-    Ok(FightReply::Fighting)
+    if matches!(
+        stage,
+        IntroStage::IntoDiscovery
+            | IntroStage::Discovery
+            | IntroStage::PageThreePending
+            | IntroStage::OutOfDiscovery
+    ) || room
+        .discovery_requests()
+        .any(|request| request == DiscoveryRequest::StartDiscovery)
+    {
+        return Err(Fault::DiscoveryRoom);
+    }
+    Ok(EncounterReplies::QUIET)
 }
 
 /// The model's content from the imported scene.
@@ -204,6 +340,8 @@ pub fn content(scene: &Scene) -> IntroContent {
         pages: enum_map! {
             types::intro::PageScript::One => script(&scene.page_one),
             types::intro::PageScript::Two => script(&scene.page_two),
+            types::intro::PageScript::Three => script(&scene.page_three),
+            types::intro::PageScript::Four => script(&scene.page_four),
             types::intro::PageScript::Five => script(&scene.page_five),
             types::intro::PageScript::Six => script(&scene.page_six),
         },
@@ -211,7 +349,7 @@ pub fn content(scene: &Scene) -> IntroContent {
             types::intro::EyesScript::Blinking => script(&scene.eyes_blinking),
             types::intro::EyesScript::Staring => script(&scene.eyes_staring),
         },
-        baby: script(&scene.baby),
+        baby: enum_map! { BabyScript::Examination => script(&scene.baby), BabyScript::Delivery => script(&scene.delivery) },
         caret: enum_map! {
             types::intro::CaretScript::Steady => script(&scene.caret_steady),
             types::intro::CaretScript::Blinking => script(&scene.caret_blinking),
@@ -252,6 +390,9 @@ fn script(steps: &[Step]) -> screens_intro::Script {
             Step::Back(to) => screens_intro::Step::Back(to),
             Step::Repeat { from, times } => screens_intro::Step::Repeat { from, times },
             Step::Cue(cue) => screens_intro::Step::Hand(match cue {
+                Cue::PageFour => Signal::PageFour,
+                Cue::WaitForDelivery => Signal::WaitForDelivery,
+                Cue::WaitForExamination => Signal::WaitForExamination,
                 Cue::PageFive => Signal::PageFive,
                 Cue::WaitForPress => Signal::WaitForPress,
                 Cue::WaitForPressThenFight => Signal::WaitForPressThenFight,
@@ -299,11 +440,14 @@ mod tests {
         Scene {
             page_one: wait.clone(),
             page_two: wait.clone(),
+            page_three: wait.clone(),
+            page_four: wait.clone(),
             page_five: wait.clone(),
             page_six: wait.clone(),
             eyes_blinking: wait.clone(),
             eyes_staring: wait.clone(),
             baby: wait.clone(),
+            delivery: wait.clone(),
             caret_steady: wait.clone(),
             caret_blinking: wait,
             full: Palette([Colour::BLACK; 256]),
@@ -324,6 +468,7 @@ mod tests {
             colours: FadingColours::still_black(),
             dissolve: 0,
             height: 0,
+            pan: types::intro::Pan::AT_REST,
             fight: FightVisibility::Hidden,
             baby: None,
             page: None,

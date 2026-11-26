@@ -847,3 +847,59 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
 ]
+
+[[rule]]
+id = "screens-intro/DiscoveryBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/discovery.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]
+
+[[rule]]
+id = "screens-intro/DiscoveryReturns"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/discovery.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]
+
+[[rule]]
+id = "screens-intro/DeliveryBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/delivery.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]
+
+[[rule]]
+id = "screens-intro/BabyCrossesThePicture"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/baby.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]
+
+[[rule]]
+id = "screens-intro/PageFourBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/delivery.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]
+
+[[rule]]
+id = "screens-intro/DiscoveryAndDeliveryPagesEnd"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/pages.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]
+
+[[rule]]
+id = "screens-intro/ExaminationBegins"
+targets = [
+  { role = "model", path = "crates/clean/screens_intro/src/delivery.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/intro.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/intro/delivery.rs" },
+]

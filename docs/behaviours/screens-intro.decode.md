@@ -169,6 +169,124 @@ shake offset and final CGRAM to their owners.
 - A one-frame-short outbound dissolve fails at cut 1 in the dissolve count and at cut 4 in
   the colour levels. These are the first disagreements for their comparisons.
 
+## Discovery, delivery and the examination join
+
+The model starts from the finished `any-intro-2219` cut 1,297 (movie 3,516), with page 2
+waiting and the next press latched. Cuts 1,298 and 1,427 of that row, cuts 0, 618, 747 and
+1,021 of `any-intro-4323`, and cut 0 of `any-intro-6012` show work in progress.
+The record after each of these cuts finishes its work frame. Carry the work already done
+and the latched new pad press at each join. Advances of `05B6` count finished frames.
+
+| Case | Row and cut | Witness |
+| --- | --- | --- |
+| D0 | `any-intro-2219` 1,297 → 1,298 | `R-discovery-pending`. The page 2 press has installed the discovery room and encounter at movie 3,517. The split and next scene are selected, and the caret is offscreen. The script holds and completed-frame count still match cut 1,297. |
+| D1 | D0 → `any-intro-2219` 1,299 | `R-discovery-resumes`. Restore the work saved at D0. At movie 3,518 Samus and the actors have taken their first step, and the caret, eyes and glows have advanced once. The dissolve count holds at 127 and the start's outputs are already applied. |
+| D2 | `any-intro-2219` 1,426 → 1,428 | The outbound dissolve finishes, the room is drawn without the split and the intro clears the text. |
+| D3 | `any-intro-2219` 2,102 → 2,103 | The hatched egg's shell hold ends. The cue is visible at movie 4,322 with text updates paused. |
+| D4 | D3 → `any-intro-4323` 1 | Page 3's first blank step and the return dissolve setup finish at movie 4,324. |
+| D5 | `any-intro-4323` 1 → 2 | Page 3's first letter, glow and click. The dissolve starts counting down. |
+| D6 | `any-intro-4323` 127 → 128 | The return count reaches 0. Samus takes her last room step, then she and the discovery actors are gone from the picture. |
+| D7 | `any-intro-4323` 128 → 129 | The last colour step and plain text picture. Page 3 continues typing. |
+| D8 | `any-intro-4323` 616 → 617 | Page 3 ends, the caret starts blinking and the next press is latched. |
+| L1 | `any-intro-4323` 617 → 619 | The delivery setup finishes at movie 4,942 with horizontal offset 32, baby x = 84 and its first picture. |
+| L2 | `any-intro-4323` 621 → 622 | The first pan step at post-step count 124. |
+| L3 | `any-intro-4323` 622 → 623 | The positions hold between pan steps. |
+| L4 | `any-intro-4323` 746 → 748 | At count 0 the pan has ended with horizontal offset 0 and baby x = 116. The final colour step finishes on 748. |
+| L5 | `any-intro-4323` 1,019 → 1,020 | The delivery baby's final repeat ends and signals page 4. It continues its animation and text updates pause. |
+| L6 | `any-intro-4323` 1,020 → 1,022 → 1,023 | Page 4's blank step and return preparation, then the first letter, glow and click. |
+| L7 | `any-intro-4323` 1,148 → 1,149 | The return count reaches 0 and the delivery baby is gone. |
+| L8 | `any-intro-4323` 1,149 → 1,150 | The return finishes and restores the caret's colours. Page 4 continues typing. |
+| L9 | `any-intro-4323` 1,687 → 1,688 | Page 4 waits, its caret blinks, and two of its glows are still running. Movie 6,011 records the new press. |
+| L10 | L9 → `any-intro-6012` 1 | The existing examination row starts from the carried page 4 State at movie 6,013. The baby is at (112, 111), the scroll at (0, −24), the count at 127, and the eyes and glows continue. |
+
+**Sources and mapping**
+
+| Entry | Sources and mapping |
+| --- | --- |
+| DiscoveryBegins | `$8B:AF6C` reads the prior cut's `008F` and chooses the discovery tilemap at `5400h`. It prepares the 32 × 16 block room with `$8C:C083` and Samus's pose, current and previous center, item selection and demo object `$91:877E`. `$8B:B018` sets the split blend, moves the caret and prepares the outbound colours. The discovery uses the same ranges as the fight. |
+| DiscoveryReturns | In `$8B:CB3B`, the egg's closing hold precedes the cue `$B33E`. `$B354` pauses text writes (`19F3` bit 15). `$B370` places page 3 (`$8C:CB45`), and `$B3A1` prepares the return palette, caret and split and resumes text writes. `$B3F4` runs the return and selects plain text on its last step. The discovery owner's `$A903` and `$BB24` remove the egg and baby and clear visibility when the post-step return count is 0. |
+| DeliveryBegins and BabyCrossesThePicture | `$8B:B0F2` chooses delivery tilemap `5800h`, sets scroll `1993`/`1997`, and places the delivery baby via `$AD55`. `$B151` prepares the split, caret and colours. `$B2D2` advances the dissolve. `$AD68` subtracts 1 from `1993` and adds 1 to the baby's X, with the outbound count sampled after the dissolve. Its position and script use the same sprite slot 14 as the examination baby. The delivery palette's incoming set is BG palette 2 and sprite palette 6 colours 0–8. |
+| PageFourBegins | `$8B:CB9F` is the delivery baby's picture animation. Its ten completed repeats reach `$B346` and share `$B354` with other return cues. `$B381` places page 4 (`$8C:CE33`), and `$B3A1` prepares the return. `$B458` dims the delivery picture colours, brightens the same text set as the discovery return and restores sprite palette 6 colours 0–6 at the end. `$AD68` removes the baby when the post-step return count becomes 0. |
+| DiscoveryAndDeliveryPagesEnd | `$8C:CB45` and `$8C:CE33` supply the page content. Each starts with a one-frame blank and ends with its caret/wait signal and deletion. `$8B:B08C` and `$B0CB` select the waits. Import page steps, glyph pictures and holds through the existing text format. The page's BG slot, caret and glow decoders are shared with the other pages. |
+| ExaminationBegins | `$8B:B123` chooses examination tilemap `5C00h`, sets `1993`/`1997`, and places the examination baby via `$AD93`. `$B151` performs the same outbound preparation as delivery. `$8B:CBCD` supplies the examination animation. The play path now reaches the same State as the scoped last-pages admission. |
+| Stages and count | `1F51`: `$B250` IntoDiscovery after page 2, `$A391` Discovery before the cue, `$B370` PageThreePending, `$B3F4` OutOfDiscovery, `$B0F2` PageThreeWaits, `$B2D2` IntoDelivery after page 3, `$A391` Delivery before its cue, `$B381` PageFourPending, `$B458` OutOfDelivery, `$B123` PageFourWaits and `$B2D2` ToScene after page 4. `$A391` is Text after either return. `1A49` is the outbound count and `1A4B` the return count. The press sets the future return count to 127. Return setup arms `1A49` for the next outbound dissolve. The active count alone represents intro gameplay. |
+| Scroll and delivery animation | Signed offsets `1993` and `1997`. Sprite slot 14 has X/Y at `1A99`/`1AB9`, list/timer at `1B39`/`1B79`, repeat at `1B99`. The raw repeat is 10 before the first loop back, represented as no repeat count until a repeat reads it. |
+
+**Production and replay**
+
+- Production applies `StartDiscovery` before the first room step. World blocks owns the
+  collision geometry, Samus's owners apply her starting pose and center in room pixels, the
+  equipment owner clears the selection, and the demo owner starts the discovery input
+  program. The room step uses the demo's held and new buttons. The discovery encounter
+  reads Samus's whole center after the room step, starts hatching when x is under 169 and
+  emits the page 3 cue from the egg's final hold. Hatching starts at cut 1,471. The cue is
+  632 finished frames later, the sum of the egg's picture holds. Production receives the
+  cue from the encounter.
+- The demo reads Samus's whole x before room motion and the intro's count after the
+  dissolve step. On D6, its release applies within Samus's last room turn. Deliver
+  `FinishDiscovery` after that turn. The discovery encounter owns the egg, baby,
+  fragments, drops, sound requests and draw order. After the encounter's cleanup,
+  E1 uses the new visibility. Compare the actor lifecycle in discovery replay and the
+  intro's start and finish requests in intro replay. A scoped intro run can supply the
+  cue at D3. In an integrated run derive it from room play and the egg's script, and carry
+  the demo, movement, room and encounter State through the row boundary.
+- At D0, the existing stage-before-room ordering determines the setup and the first room
+  turn. The published room, scene, split palette, caret placement and pending encounter
+  must survive the interrupt. At D1, advance the room and intro scripts once. The existing
+  completed-frame path returns without applying any setup on lagged cuts. An integrated
+  witness that compares D0 needs observable setup on that cut and a continuation that
+  completes the same frame without applying the start twice. The scoped intro's whole
+  finished-frame comparison can still run at D1.
+- The other interrupted records have different publication points. At `any-intro-2219:1427`
+  (3,646), the final outbound colours and plain layout are already published before Samus
+  and the scripts step. At `any-intro-4323:0` and cut 1,021 (4,323 and 5,344), a page is
+  placed and the palette and blend have changed while the caret remains offscreen and
+  text updates are still paused. At cuts 618 and 747 (4,941 and 5,070), the delivery picture
+  is selected before its baby's first script step, and later its outbound endpoint and
+  scripts are already visible before completion, respectively. At `any-intro-6012:0`
+  (6,012), the examination picture and baby placement are visible before the script's
+  first picture. The finished-cut reference compares these turns on completion.
+- For delivery and examination the intro supplies the baby's picture and position. E1
+  writes sprites, E2 publishes the letter and glow tiles and loads the scene tilemaps,
+  E3 writes the split blend's line program, and E4 writes layer and scroll mirrors. The
+  intro plays both scenes through cinematic scripts. The cue for page 4 comes from
+  the delivery baby's script. The page 4 press starts examination with the carried eyes,
+  caret script, click turn and glows. Resume the existing last-pages comparisons at
+  `any-intro-6012` cut 2 after checking the join at cut 1.
+- Use the finished cuts for the intro's stage, brightness, active count, palettes, horizontal
+  offset and height, delivery baby's script and position, page and eyes scripts, caret,
+  glows and click turn. E1–E4 own final OAM, VRAM, line tables and register writes. The
+  compared palette mirror is `7EC000`. Compare click requests at the audio boundary.
+  Discovery's sound and motion belong to the encounter and room owners.
+
+**Reference check.** Observer-local `$TEMP/collab/intro-cd-obs-notes/run_rows.py` carries the
+page 2 wait through L10. It uses the prior cut's new press, exact page and delivery content,
+and Samus's recorded post-step center to derive the egg's cue. It checks 2,490 of 2,490
+finished cuts for State and for levels and steps for all 256 colours. The held-State baseline matches 0 of 2,490. The palette mirror matches all 133
+publication cuts. The layer, text update and scene selection mirrors agree on all 9, 4
+and 3 event cuts respectively. The discovery start and finish requests agree with the
+room and actor observations on both request cuts. The 116 intro clicks match across 1,284 finished page-typing and wait cuts.
+One pixel subtracted from the delivery's starting horizontal offset first differs at movie
+4,942 in that offset. The reference agrees on all 122
+vectors, including 36 discovery, delivery and examination cases. The endpoint colour
+cases check publication of the last colour step in both returns and the caret colour
+replacement in the delivery return. At D7 (movie 4,452), the original composes
+the final palette at $8B:B43B before selecting plain text. CGRAM changes in 35
+entries. Entry 71 holds its carried value and agrees with the palette shadow.
+Discovery has no caret-colour replacement. The delivery return does that at
+$8B:B4A6–B4B3. R-discovery-text uses an empty invented fading palette and
+supplies a nonzero invented caret colour. The final publication therefore
+includes zero at 71. The invented zero is separate from the observed colour.
+
+The paired check saves the D0 result after applying its start request. It compares that
+result's palette and pending intro projection alongside the room's start observations.
+D1 restores the saved pending work and takes the rest of the same turn. The dissolve
+count stays at 127, the scripts advance once and no start, scene selection or layout
+event repeats. Both cuts match. Delaying setup fails at D0 in the stage and advancing
+scripts early fails there in the eyes' hold. Replaying the press on D1 reproduces the
+final State but emits a second start. Stepping the stage again instead leaves count 126.
+Both faults first fail at D1.
+
 ## Sources
 
 | Entry | Sources |
@@ -176,9 +294,9 @@ shake offset and final CGRAM to their owners.
 | ScriptSteps | cinematic BG objects `$8B:9659` (pre-instruction, timer − 1, instructions with bit 15 set run at once, else timer and indirect instruction); cinematic sprite objects the same in `$8B:93..94` (`$94BC` go to, `$94C3` decrement timer and go to if non-zero, `$94D6` timer =); BG object `$9698` delete, `$971E` go to |
 | PicturesDissolve | `$8B:B2D2` (to the scene, timer `1A49`) and `$8B:B458` (to the text, timer `1A4B`): when the timer % 4 = 0, `$8C83` fade out (level −= delta) and `$8CB2` fade in ((level + delta) & 1FFFh) by palette range, then `$8CEA` compose (bits 8-12 of each channel to `7E2000` and `7EC000`); the timer − 1; below 0 ends. Deltas from `$8C09` (channel × 100h / 20h) |
 | the sets | to the scene: out BG 0, BG 1 colours 0-3 (`X` 0, `Y` 14h), BG 3, sprite 6 colours 9-Eh; in BG 2, sprite 6 colours 0-8. To the text: in BG 0, BG 3, sprite 6 colours 9-Eh; out BG 2, sprite 6 colours 0-8 |
-| DissolveEnds | `$B30F`..`$B332` (layers BG1/BG3/sprites, the English text region `7E3100..35FF` = 2Fh, Japanese tiles blanked); `$B495`..`$B4B8` (layers BG2/BG3/sprites, colour math off, sprite palette 6 colours 0-6 = `$8C:E5A9`) |
+| DissolveEnds | `$8B:B29F` and `$8B:B30F` select BG1/BG3/sprites and clear the text. `$8B:B443` and `$8B:B495` select BG2/BG3/sprites and disable colour math. The latter restores sprite palette 6 colours 0–6 from `$8C:E5A9`. |
 | BabyRises | `$8B:ADA6` (pre-instruction of `$CE67`): if `1A4B` = 0 delete; else if `1A49` % 4 = 0 and `1997` < 8: `1997` + 1, Y − 1. `1A49` is the to-scene dissolve's count; in the dissolve to the text it holds 127 (`$B3E6`), never a multiple of 4, so the spec's one count and `ToScene` guard give the same frames |
-| BabyLeaves | `$8B:ADA6`, the delete branch: `1A4B`, the to-text dissolve's count, at 0 |
+| BabyLeaves | `$8B:AD68` and `$8B:ADA6`, the removal branches when the return count `1A4B` becomes 0. |
 | the baby's script | `$8B:CBCD`: timer = Ah; four frames 10 each; decrement and repeat; `$B34E` (start page 5); then the four frames forever |
 | PageFiveBegins | `$8B:B392` (spawn `$CF57`, page 5, at VRAM 4C00h; function `$B458`) and `$8B:B3A1` (layers, decompose `$8C:E3E9`, clear BG 0, BG 3, sprite 6 colours 9-Eh, compose, `1A49` = 7Fh, tilemap updates on, `$ADEE` caret reset to (8, 18h) with `$CBFB`) |
 | LetterIsTyped | `$8B:884D` (indirect function: toggle `1BA1`; spawn a text glow object `$97F7`; caret (sprite object Fh) to the next instruction's (column × 8, (row − 1) × 8), or (8, (row + 2) × 8 − 8) when the next is an instruction; sound Dh, library 3, if `1BA1` and not `$D67D` (space)); `$B19B`/`$B228` clear `1BA1` |
@@ -246,12 +364,10 @@ The row is `any-intro-0568` (seed at movie frame 568, 1,651 cuts, cuts 0-1,650 a
    (`09C6`/`09C8`, the bindings): their owners', none in the loop in this part.
 6. **The joins.** At the start, cut 568 of `any-power-on` hands on `IntroBegins`: the chain
    builds the intro's `Begins` State there, with the fade's count 0. At the
-   end, the run stops at cut 1,650 (`PageOneWaits`); the press that follows is part (b)'s, so
-   the next row (`any-intro-2219`, its cut 0 the fight's first cross-fade frame) needs (b) and
-   (c), and `any-intro-4323` needs (d). The landed run `any-intro-6012` (movie 6,013-7,511)
-   joins once (d) reaches movie 6,011: its State at 6,012 is the admission its harness builds
-   from cut 1 (page 4's turn, `ToScene`), and a chain from 568 replaces that admission with the
-   State (d) leaves.
+   end, the opening run stops at cut 1,650 (`PageOneWaits`). The flashback harness
+   continues that State into `any-intro-2219`. The discovery and delivery harness
+   carries the page 2 wait through `any-intro-4323` and the examination join. Continuous
+   play uses that carried State at `any-intro-6012` cut 1 in place of the scoped admission.
 
 ## Harness: the last pages (for the integrator)
 
@@ -263,7 +379,7 @@ The row is `any-intro-6012` (seed at movie frame 6,012, 1,500 cuts). What it nee
    levels and steps, the picture's height, the baby (its script's step from its list pointer,
    its repeat count none while the game's counter reads 10), the eyes, the caret (off-screen at
    (8, 248), blinking), two glows still running from page 4, the click turn and the brightness.
-   Compare from cut 2. The language: English only; a Japanese setting is Unsupported here.
+   Compare from cut 2. In continuous play compare the carried State at cut 1 against L10. The language: English only; a Japanese setting is Unsupported here.
 2. **The owner in the loop**, stepped once per finished frame; lag (T1) borrowed; the pad's
    new presses from the movie.
 3. **Compare** from cut 2, but at the lag cuts 129 and 403 (records inside a long frame: mask
@@ -350,6 +466,9 @@ crates/clean/screens_intro/src`.
 - Area opening: IntroBegins, SlowFade, OpeningUnfolds
 - Area page one: PageOneIsMadeReady, PageOneBegins
 - Area flashback: BattleBegins, BattleDissolves, PageTwoBegins, PageTwoEnds
+- Area discovery: DiscoveryBegins, DiscoveryReturns
+- Area delivery: DeliveryBegins, BabyCrossesThePicture, PageFourBegins
+- Area joins: DiscoveryAndDeliveryPagesEnd, ExaminationBegins
 
-The spec-units counter reports 22 entries, 67 arms, no cells and 17 operators.
-Budget: 37.5 × 72.7 units = 2,723 (scripts 287, dissolve 287, baby 87, pages 687, fade 250, opening 600, page one 150, flashback 375)
+The spec-units counter reports 29 entries, 80 arms, no cells and 18 operators.
+Budget: 37.5 × 86.0 units = 3,222 (scripts 287, dissolve 325, baby 87, pages 687, fade 250, opening 600, page one 150, flashback 375, discovery 187, delivery 162, joins 112)
