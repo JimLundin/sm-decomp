@@ -518,6 +518,12 @@ mod tests {
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn power_on_resumes_after_opening_and_battle_setup() {
+        const DEMO_NEW_KEYS: crate::source::WramWord = crate::source::WramWord {
+            name: "DEMO_NEW_KEYS",
+            offset: 0x0a86,
+        };
+        const SHOOT: u16 = 0x0040;
+        const FIRST_MISSILE: u64 = 2310;
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
@@ -525,7 +531,7 @@ mod tests {
         let mut began = previous.clone();
         let mut uninterrupted = super::Run::begin(&sources.rom, &previous).unwrap();
         let mut resumed = Vec::<super::Run>::new();
-        for cut in 1..=2220 {
+        for cut in 1..FIRST_MISSILE {
             let frame = rows.record(cut).unwrap();
             uninterrupted.step(&began, &previous, &frame, cut).unwrap();
             for fork in &mut resumed {
@@ -546,6 +552,21 @@ mod tests {
             previous = frame;
         }
         assert_eq!(resumed.len(), 2);
+        let first_missile = rows.record(FIRST_MISSILE).unwrap();
+        assert!(super::super::finished(&first_missile));
+        assert_ne!(
+            super::word(&first_missile.wram, DEMO_NEW_KEYS).unwrap() & SHOOT,
+            0
+        );
+        for run in std::iter::once(&mut uninterrupted).chain(&mut resumed) {
+            assert!(matches!(
+                run.step(&began, &previous, &first_missile, FIRST_MISSILE),
+                Err(super::Outcome::Unsupported {
+                    cut: Some(FIRST_MISSILE),
+                    ..
+                })
+            ));
+        }
     }
 
     fn write(port: u8, value: u8) -> ApuAccess {

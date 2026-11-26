@@ -527,12 +527,13 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 2,220 cuts, through the first finished fight turn. It stops
-at 2,221 with `Intro(IntroRoomTurn)`. At 569 the intro creates the hidden actor with
+intro in the State `Begins`. The run holds 2,309 cuts. At 2,310 the recorded demo presses Fire, and
+weapons must take the first missile turn. At 569 the intro creates the hidden actor with
 the chosen file's energy, lends her missiles and switches to the intro controls.
 The next 1,650 cuts carry those owners through the opening and page 1. The press latched at
 2,218 installs the populated room, recorded controls and Mother Brain before interrupted
 cut 2,219. At 2,220 the recorded pad drives Samus and the encounter takes its first turn.
+Both take their ordinary turns until the first shot.
 The run compares her pose, centres, history, clip, radius, missile supply, controls and
 cannon delay, the installed cell words and the encounter state. It leaves the inherited
 room memory tail to the platform. From cut 568 it also compares the intro and the front end.

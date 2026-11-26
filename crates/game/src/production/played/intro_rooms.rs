@@ -346,9 +346,24 @@ impl State {
         content: &Content,
         motion: &Motion<'_>,
     ) -> Result<FirstTurn, Fault> {
-        let Some(Phase::Pending(active)) = self.phase else {
+        if !self.pending() {
             return Err(Fault::Order);
-        };
+        }
+        self.quiet_turn(pad, parity, content, motion)
+    }
+
+    /// Advance a neutral actor in the installed room before weapons or encounter contact.
+    ///
+    /// # Errors
+    /// The room is absent, the turn has a control or weapons dependency, or motion fails.
+    pub(super) fn quiet_turn(
+        &mut self,
+        pad: DemoPad,
+        parity: Parity,
+        content: &Content,
+        motion: &Motion<'_>,
+    ) -> Result<FirstTurn, Fault> {
+        let active = self.active().ok_or(Fault::Order)?;
         let actor = &mut self.actor;
         if pad != DemoPad::default()
             || actor.shots.0.count.0 != 0

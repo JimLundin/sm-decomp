@@ -1323,3 +1323,33 @@ after = "self.battle = false.then_some(Battle {"
 case = "played any-power-on 0 2219"
 cut = 2219
 field = "intro-encounter.started"
+
+[[fault]]
+name = "played-intro-quiet-actor-not-carried"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = "        room.quiet_turn(pad, parity, &content.room.rooms, &motion)"
+after = '''        let mut discarded_actor = room.clone();
+        let target = if room.pending() { &mut *room } else { &mut discarded_actor };
+        target.quiet_turn(pad, parity, &content.room.rooms, &motion)'''
+case = "played any-power-on 0 2309"
+cut = 2221
+field = "intro-room.actor.clip-hold"
+
+[[fault]]
+name = "played-intro-quiet-encounter-not-carried"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = '''        let effects = flashback::turn(
+            &mut battle.encounter,'''
+after = '''        let mut discarded_encounter = battle.encounter.clone();
+        let target = if battle.encounter.start == types::flashback::PendingStart::Pending {
+            &mut battle.encounter
+        } else {
+            &mut discarded_encounter
+        };
+        let effects = flashback::turn(
+            target,'''
+case = "played any-power-on 0 2309"
+cut = 2221
+field = "flashback.brain"

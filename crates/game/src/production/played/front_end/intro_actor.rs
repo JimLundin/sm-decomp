@@ -176,9 +176,6 @@ impl Actors {
             return Ok(FightReply::Fighting);
         };
         let room = self.rooms.as_mut().ok_or(Fault::ActorUnstarted)?;
-        if !room.pending() {
-            return Err(Fault::IntroRoomTurn);
-        }
         let x = room.actor.samus.movement.0.position.x.pixel();
         let turn = battle.playback.turn(
             playback::WholeX(x.0),
@@ -201,20 +198,26 @@ impl Actors {
             sounds_waiting: waiting,
             charge: samus_appearance::Charge::new(0).ok_or(Fault::IntroControls)?,
         };
-        room.first_turn(pad, parity, &content.room.rooms, &motion)
+        room.quiet_turn(pad, parity, &content.room.rooms, &motion)
             .map_err(Fault::IntroRoom)?;
         let play = flashback::RoomPlay {
             samus_x: room.actor.samus.movement.0.position.x.pixel(),
-            // A quiet first turn requires all shot slots to be empty.
+            // The admitted quiet turn checked every shot slot.
             shots: Vec::new(),
         };
         let effects = flashback::turn(
             &mut battle.encounter,
             flashback::Rules::REFERENCE,
-            parity,
+            match parity {
+                Parity::Even => Parity::Odd,
+                Parity::Odd => Parity::Even,
+            },
             flashback::ReturnDissolve::Continuing,
             &play,
         );
+        if effects.ring_knockback.is_some() || effects.palette.is_some() {
+            return Err(Fault::IntroRoomTurn);
+        }
         Ok(
             if effects.intro == Some(flashback::IntroRequest::CuePageTwo) {
                 FightReply::ReadyToReturn
