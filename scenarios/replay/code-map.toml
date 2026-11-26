@@ -1349,6 +1349,7 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/samus_picture.rs" },
   { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/samus_picture.rs" },
+]
 
 [[rule]]
 id = "boss-ceres-ridley/FightParts"
