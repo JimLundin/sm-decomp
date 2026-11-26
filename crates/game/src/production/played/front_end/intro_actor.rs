@@ -115,23 +115,39 @@ impl Battle {
         let turn = self
             .playback
             .turn(playback::WholeX(x.0), playback::CrossfadeCount(dissolve));
-        let pad = turn
-            .pad
-            .filter(|_| turn.authority == playback::Authority::Controlled && turn.handoff.is_none())
-            .ok_or(Fault::IntroControls)?;
-        let pad = rooms::DemoPad {
-            held: playback::buttons(pad.current.held),
-            pressed: playback::buttons(pad.current.pressed),
+        let controlled = turn.authority == playback::Authority::Controlled;
+        if controlled {
+            room.actor
+                .sample_body(motion.movement)
+                .map_err(Fault::IntroRoom)?;
+        }
+        if let Some(handoff) = turn.handoff {
+            if handoff != playback::Handoff::StandLeft {
+                return Err(Fault::IntroControls);
+            }
+            room.actor
+                .stand_left(&content.room.appearance)
+                .map_err(Fault::IntroRoom)?;
+        }
+        let (pad, mode) = match (turn.authority, turn.pad) {
+            (playback::Authority::Controlled, Some(pad)) => (
+                rooms::DemoPad {
+                    held: playback::buttons(pad.current.held),
+                    pressed: playback::buttons(pad.current.pressed),
+                },
+                weapons_projectiles::UpdateMode::CannonAndShots,
+            ),
+            (playback::Authority::BattleLocked, None) => (
+                rooms::DemoPad::default(),
+                weapons_projectiles::UpdateMode::ShotsOnly,
+            ),
+            _ => return Err(Fault::IntroControls),
         };
-        let (input, eligible) = self.cannon.inputs(
-            &room.actor,
-            pad,
-            shoot,
-            weapons_projectiles::UpdateMode::CannonAndShots,
-            &content.missiles,
-        )?;
+        let (input, eligible) =
+            self.cannon
+                .inputs(&room.actor, pad, shoot, mode, &content.missiles)?;
         let motion = room
-            .actor_turn(pad, parity, &content.room.rooms, motion)
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)
             .map_err(Fault::IntroRoom)?;
         let candidates =
             self.cannon

@@ -1331,11 +1331,11 @@ name = "played-intro-quiet-actor-not-carried"
 responsibility = "played"
 file = "crates/game/src/production/played/front_end/intro_actor.rs"
 before = '''        let motion = room
-            .actor_turn(pad, parity, &content.room.rooms, motion)'''
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)'''
 after = '''        let mut discarded_actor = room.clone();
         let target = if room.pending() { &mut *room } else { &mut discarded_actor };
         let motion = target
-            .actor_turn(pad, parity, &content.room.rooms, motion)'''
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)'''
 case = "played any-power-on 0 2309"
 cut = 2221
 field = "intro-room.actor.clip-hold"
@@ -1444,98 +1444,74 @@ field = "weapons.intro-slots"
 [[fault]]
 name = "played-intro-room-body-sampled-after-motion"
 responsibility = "played"
-file = "crates/game/src/production/played/intro_rooms.rs"
-before = '''        let pose = actor.samus.movement.0.pose;
-        actor.carry.0.radius = motion
-            .movement
-            .radius(pose)
-            .ok_or(Fault::Samus(super::Fault::Body(pose)))?;
-        let (her, ()) = actor
-            .samus
-            .turn(
-                TurnInputs {
-                    held: pad.held,
-                    pressed: pad.pressed,
-                    parity,
-                    activities,
-                    items: motion.items,
-                    energy,
-                    liquid: samus_appearance::Liquid::NONE,
-                    sounds_waiting: motion.sounds_waiting,
-                    charge: motion.charge,
-                    item_controls: samus_appearance::ItemControls::Ran(
-                        samus_appearance::ItemControlAnswer {
-                            before: selected,
-                            after: selected,
-                            eligibility: samus_appearance::ControlEligibility::Eligible,
-                        },
-                    ),
-                },
-                &world,
-                TurnContent {
-                    movement: motion.movement,
-                    appearance: motion.appearance,
-                    movement_rules: motion.movement_rules,
-                    appearance_rules: motion.appearance_rules,
-                },
-                |_| {
-                    Ok(Between {
-                        played: (),
-                        hit: None,
-                        energy,
-                    })
-                },
-            )
-            .map_err(Fault::Samus)?;
-        if world.outside.get() {
-            return Err(Fault::OutsideRoom);
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = '''        if controlled {
+            room.actor
+                .sample_body(motion.movement)
+                .map_err(Fault::IntroRoom)?;
         }
+        if let Some(handoff) = turn.handoff {
+            if handoff != playback::Handoff::StandLeft {
+                return Err(Fault::IntroControls);
+            }
+            room.actor
+                .stand_left(&content.room.appearance)
+                .map_err(Fault::IntroRoom)?;
+        }
+        let (pad, mode) = match (turn.authority, turn.pad) {
+            (playback::Authority::Controlled, Some(pad)) => (
+                rooms::DemoPad {
+                    held: playback::buttons(pad.current.held),
+                    pressed: playback::buttons(pad.current.pressed),
+                },
+                weapons_projectiles::UpdateMode::CannonAndShots,
+            ),
+            (playback::Authority::BattleLocked, None) => (
+                rooms::DemoPad::default(),
+                weapons_projectiles::UpdateMode::ShotsOnly,
+            ),
+            _ => return Err(Fault::IntroControls),
+        };
+        let (input, eligible) =
+            self.cannon
+                .inputs(&room.actor, pad, shoot, mode, &content.missiles)?;
+        let motion = room
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)
+            .map_err(Fault::IntroRoom)?;
 '''
-after = '''        let (her, ()) = actor
-            .samus
-            .turn(
-                TurnInputs {
-                    held: pad.held,
-                    pressed: pad.pressed,
-                    parity,
-                    activities,
-                    items: motion.items,
-                    energy,
-                    liquid: samus_appearance::Liquid::NONE,
-                    sounds_waiting: motion.sounds_waiting,
-                    charge: motion.charge,
-                    item_controls: samus_appearance::ItemControls::Ran(
-                        samus_appearance::ItemControlAnswer {
-                            before: selected,
-                            after: selected,
-                            eligibility: samus_appearance::ControlEligibility::Eligible,
-                        },
-                    ),
-                },
-                &world,
-                TurnContent {
-                    movement: motion.movement,
-                    appearance: motion.appearance,
-                    movement_rules: motion.movement_rules,
-                    appearance_rules: motion.appearance_rules,
-                },
-                |_| {
-                    Ok(Between {
-                        played: (),
-                        hit: None,
-                        energy,
-                    })
-                },
-            )
-            .map_err(Fault::Samus)?;
-        if world.outside.get() {
-            return Err(Fault::OutsideRoom);
+after = '''        if let Some(handoff) = turn.handoff {
+            if handoff != playback::Handoff::StandLeft {
+                return Err(Fault::IntroControls);
+            }
+            room.actor
+                .stand_left(&content.room.appearance)
+                .map_err(Fault::IntroRoom)?;
         }
-        let pose = her.samus.pose;
-        actor.carry.0.radius = motion
-            .movement
-            .radius(pose)
-            .ok_or(Fault::Samus(super::Fault::Body(pose)))?;
+        let (pad, mode) = match (turn.authority, turn.pad) {
+            (playback::Authority::Controlled, Some(pad)) => (
+                rooms::DemoPad {
+                    held: playback::buttons(pad.current.held),
+                    pressed: playback::buttons(pad.current.pressed),
+                },
+                weapons_projectiles::UpdateMode::CannonAndShots,
+            ),
+            (playback::Authority::BattleLocked, None) => (
+                rooms::DemoPad::default(),
+                weapons_projectiles::UpdateMode::ShotsOnly,
+            ),
+            _ => return Err(Fault::IntroControls),
+        };
+        let (input, eligible) =
+            self.cannon
+                .inputs(&room.actor, pad, shoot, mode, &content.missiles)?;
+        let motion = room
+            .actor_turn(pad, parity, &content.room.rooms, motion, controlled)
+            .map_err(Fault::IntroRoom)?;
+        if controlled {
+            room.actor
+                .sample_body(motion.movement)
+                .map_err(Fault::IntroRoom)?;
+        }
 '''
 case = "played any-power-on 0 2474"
 cut = 2400

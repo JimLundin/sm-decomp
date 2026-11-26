@@ -149,6 +149,43 @@ pub struct Actor {
 }
 
 impl Actor {
+    pub(super) fn sample_body(&mut self, content: &super::MovementContent) -> Result<(), Fault> {
+        let pose = self.samus.movement.0.pose;
+        self.carry.0.radius = content
+            .radius(pose)
+            .ok_or(Fault::Samus(super::Fault::Body(pose)))?;
+        Ok(())
+    }
+
+    pub(super) fn stand_left(
+        &mut self,
+        appearance: &super::AppearanceContent,
+    ) -> Result<(), Fault> {
+        let figure = Figure {
+            pose: STANDING_LEFT,
+            sprite: types::Sprite::Plain,
+        };
+        if self.carry.0.prior_pose != STANDING_LEFT {
+            let Some(Instruction::Show(hold)) =
+                appearance.get(figure).and_then(|clip| clip.at(Step::FIRST))
+            else {
+                return Err(Fault::Samus(super::Fault::Clip(figure)));
+            };
+            self.samus.appearance.0.animation.playhead = Playhead {
+                step: Step::FIRST,
+                time_left: hold.frames(),
+            };
+        }
+        self.carry.0.older_pose = self.carry.0.prior_pose;
+        self.carry.0.prior_pose = figure.pose;
+        let body = &mut self.samus.movement.0;
+        body.pose = figure.pose;
+        body.choices.before = body.choices.latest;
+        body.choices.latest = samus_movement::Chosen::Other;
+        self.samus.figure = Model(figure);
+        Ok(())
+    }
+
     /// Her opening setup while hidden, with the chosen file's energy and the intro's loan.
     ///
     /// # Errors
@@ -290,31 +327,10 @@ impl State {
         }
 
         let actor = &mut self.actor;
-        let figure = Figure {
-            pose: STANDING_LEFT,
-            sprite: types::Sprite::Plain,
-        };
-        if actor.carry.0.prior_pose != STANDING_LEFT {
-            let Some(Instruction::Show(hold)) =
-                appearance.get(figure).and_then(|clip| clip.at(Step::FIRST))
-            else {
-                return Err(Fault::Samus(super::Fault::Clip(figure)));
-            };
-            actor.samus.appearance.0.animation.playhead = Playhead {
-                step: Step::FIRST,
-                time_left: hold.frames(),
-            };
-        }
+        actor.stand_left(appearance)?;
         let (_, _, [x, y]) = start.layout();
         write_centre(&mut actor.samus.movement.0.position, x, y);
         write_centre(&mut actor.carry.0.previous, x, y);
-        actor.carry.0.older_pose = actor.carry.0.prior_pose;
-        actor.carry.0.prior_pose = figure.pose;
-        let body = &mut actor.samus.movement.0;
-        body.pose = figure.pose;
-        body.choices.before = body.choices.latest;
-        body.choices.latest = samus_movement::Chosen::Other;
-        actor.samus.figure = Model(figure);
         actor.carry.0.demo = DemoPad::default();
         actor.carry.0.selection = match start {
             Start::Fight => {
@@ -362,7 +378,8 @@ impl State {
         {
             return Err(Fault::ActiveEncounter);
         }
-        self.actor_turn(pad, parity, content, motion)
+        self.actor.sample_body(motion.movement)?;
+        self.actor_turn(pad, parity, content, motion, true)
     }
 
     /// Step motion and appearance after the demo has issued its controls.
@@ -375,6 +392,7 @@ impl State {
         parity: Parity,
         content: &Content,
         motion: &Motion<'_>,
+        controlled: bool,
     ) -> Result<FirstTurn, Fault> {
         let active = self.active().ok_or(Fault::Order)?;
         let actor = &mut self.actor;
@@ -390,11 +408,6 @@ impl State {
             None => samus_appearance::SelectedItem::None,
             Some(_) => return Err(Fault::ActiveEncounter),
         };
-        let pose = actor.samus.movement.0.pose;
-        actor.carry.0.radius = motion
-            .movement
-            .radius(pose)
-            .ok_or(Fault::Samus(super::Fault::Body(pose)))?;
         let (her, ()) = actor
             .samus
             .turn(
@@ -408,13 +421,15 @@ impl State {
                     liquid: samus_appearance::Liquid::NONE,
                     sounds_waiting: motion.sounds_waiting,
                     charge: motion.charge,
-                    item_controls: samus_appearance::ItemControls::Ran(
-                        samus_appearance::ItemControlAnswer {
+                    item_controls: if controlled {
+                        samus_appearance::ItemControls::Ran(samus_appearance::ItemControlAnswer {
                             before: selected,
                             after: selected,
                             eligibility: samus_appearance::ControlEligibility::Eligible,
-                        },
-                    ),
+                        })
+                    } else {
+                        samus_appearance::ItemControls::Skipped
+                    },
                 },
                 &world,
                 TurnContent {
