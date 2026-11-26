@@ -344,7 +344,6 @@ impl Step<'_> {
             && restored.state == live.state
             && restored.return_timing == live.return_timing
             && restored.warning_picture == live.warning_picture
-            && restored.upper_row == live.upper_row
         {
             Ok(())
         } else {
