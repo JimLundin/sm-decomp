@@ -264,6 +264,20 @@ pub struct Registers {
     pub settings: DisplaySettings,
 }
 
+impl Registers {
+    /// Set the sprite and background tile layout when gameplay graphics are loaded.
+    pub(crate) const fn set_gameplay_tile_layout(&mut self) {
+        self.objects = ObjectSelect(3);
+        self.tilemaps = [
+            TilemapBase(0x51),
+            TilemapBase(0x49),
+            TilemapBase(0x5a),
+            TilemapBase(0),
+        ];
+        self.tile_bases = [TileBases(0), TileBases(4)];
+    }
+}
+
 /// The backgrounds the PPU has.
 pub const BACKGROUNDS: usize = 4;
 

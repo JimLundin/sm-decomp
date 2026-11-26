@@ -417,6 +417,8 @@ impl RoomVideo {
             .copy_from_slice(background);
         transfer.project_channel(self.video.dma.get_mut(VRAM_CHANNEL)?);
         self.standard_objects = Some(transfer);
+        self.video.committed.set_gameplay_tile_layout();
+        self.video.batch.registers.set_gameplay_tile_layout();
         Some(())
     }
 

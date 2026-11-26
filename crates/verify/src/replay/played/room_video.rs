@@ -99,6 +99,7 @@ pub(super) fn compare(
     )?;
     compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
     compare_ridley_hdma(room, frame.current, frame.place, frame.cut)?;
+    compare_gameplay_tile_layout(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
     if passing.enemy_tiles == game::production::played::passage::EnemyTileTransfer::Published {
         compare_door_enemy_tiles(room, frame.current, expected, actual)?;
@@ -202,6 +203,68 @@ pub(super) fn compare_ridley_hdma(
             cut,
             field: scope.into(),
         });
+    }
+    Ok(())
+}
+
+/// Compare the standard tile layout when it is first installed and just before departure.
+pub(super) fn compare_gameplay_tile_layout(
+    room: &RoomVideo,
+    record: &FrameRecord,
+    place: (&str, u64),
+    cut: u64,
+) -> Result<(), Outcome> {
+    if place != ("any-ceres-arrival", 2)
+        && !(place == ("chain-any-0011-DF45", 239) && room.standard_bg3().is_some())
+    {
+        return Ok(());
+    }
+    let project = |registers: &game::state::video::Registers| {
+        let [bg1, bg2, bg3, bg4] = registers.tilemaps;
+        let [tiles12, tiles34] = registers.tile_bases;
+        [
+            registers.objects.0,
+            bg1.0,
+            bg2.0,
+            bg3.0,
+            bg4.0,
+            tiles12.0,
+            tiles34.0,
+        ]
+    };
+    let [bg1, bg2, bg3, bg4] = record.ppu.bg_sc;
+    let expected = [
+        record.ppu.obsel,
+        bg1,
+        bg2,
+        bg3,
+        bg4,
+        record.ppu.bg12nba,
+        record.ppu.bg34nba,
+    ];
+    let wram = record
+        .wram
+        .get(..0x5f)
+        .ok_or_else(|| super::data_failure(Some(cut), "gameplay tile mirrors"))?;
+    let mirrors = [0x52, 0x58, 0x59, 0x5a, 0x5c, 0x5d, 0x5e].map(|offset| wram[offset]);
+    for (actual, expected, field) in [
+        (
+            project(&room.video.committed),
+            expected,
+            "room-video.gameplay-tile-layout",
+        ),
+        (
+            project(&room.video.batch.registers),
+            mirrors,
+            "room-video.gameplay-tile-mirrors",
+        ),
+    ] {
+        if actual != expected {
+            return Err(Outcome::Difference {
+                cut,
+                field: field.into(),
+            });
+        }
     }
     Ok(())
 }

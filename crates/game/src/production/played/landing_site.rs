@@ -10,8 +10,8 @@ use super::zebes::{Flow, LoadDestination};
 use crate::commit::{VRAM_CHANNEL, write_words};
 use crate::exact::direct_dma::{self, Transfer};
 use crate::state::video::{
-    BgMode, Brightness, ColourMath, DisplaySettings, FixedColour, Layer, Layers, Mosaic,
-    ObjectSelect, Registers, SpriteCount, TileBases, TilemapBase, Video, VramWord, Windows,
+    BgMode, Brightness, ColourMath, DisplaySettings, FixedColour, Layer, Layers, Mosaic, Registers,
+    SpriteCount, Video, VramWord, Windows,
 };
 
 /// Cells and map-station availability remembered for one area.
@@ -245,16 +245,8 @@ fn setup_display(registers: &mut Registers) {
     *registers = Registers {
         forced_blank: true,
         brightness: Brightness(0),
-        objects: ObjectSelect(3),
         mode: BgMode(9),
         mosaic: Mosaic(0),
-        tilemaps: [
-            TilemapBase(0x51),
-            TilemapBase(0x49),
-            TilemapBase(0x5a),
-            TilemapBase(0),
-        ],
-        tile_bases: [TileBases(0), TileBases(4)],
         windows: Windows::default(),
         main_screen: layers,
         sub_screen: Layers::default(),
@@ -267,6 +259,7 @@ fn setup_display(registers: &mut Registers) {
         settings: DisplaySettings(0),
         ..*registers
     };
+    registers.set_gameplay_tile_layout();
 }
 
 fn project(video: &mut Video, transfer: &Transfer) {
