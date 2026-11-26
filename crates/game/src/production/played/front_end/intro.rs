@@ -131,12 +131,12 @@ impl PlayingIntro {
         content: &Content,
         rules: Rules,
         waiting: samus_appearance::SoundsWaiting,
-    ) -> Result<Report, intro::Fault> {
+    ) -> Result<(Report, Vec<Sound>), intro::Fault> {
         let (pressed, track, installed) = match self.pending.take() {
             Some(Pending::Opening(completed)) => {
                 let (scene, report) = *completed;
                 self.scene = scene;
-                return Ok(report);
+                return Ok((report, Vec::new()));
             }
             Some(Pending::Fight { pressed, track }) => (pressed, track, true),
             Some(Pending::BeforeRoom { pressed, track }) => (pressed, track, false),
@@ -145,6 +145,7 @@ impl PlayingIntro {
         };
         let actors = &mut self.actors;
         let mut flash = None;
+        let mut sounds = Vec::new();
         let report = intro::play_work_frame(
             &mut self.scene,
             pressed.values().any(|&down| down),
@@ -167,17 +168,18 @@ impl PlayingIntro {
                 } else {
                     Parity::Odd
                 };
-                let (reply, colours) =
+                let battle =
                     actors.turn(frame, parity, pressed, waiting, actors_content(content)?)?;
-                flash = colours;
-                Ok(reply)
+                flash = battle.flash;
+                sounds = battle.sounds;
+                Ok(battle.reply)
             },
         )?;
         if let Some(flash) = flash {
             super::super::flashback::publish_flash(&mut self.scene.colours, flash);
         }
         self.equipment(&report)?;
-        Ok(report)
+        Ok((report, sounds))
     }
 }
 
@@ -260,7 +262,7 @@ pub(super) fn step(
         }
         Work::FinishedTwice(_) => return Err(Fault::TwoFinished),
     };
-    let sounds = report.map_or_else(Vec::new, |report| {
+    let sounds = report.map_or_else(Vec::new, |(report, room_sounds)| {
         let clicks = report
             .events
             .iter()
@@ -270,6 +272,7 @@ pub(super) fn step(
             .music
             .iter()
             .map(|&request| Sound::IntroMusic(request))
+            .chain(room_sounds)
             .chain(clicks)
             .collect()
     });

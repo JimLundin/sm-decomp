@@ -214,6 +214,8 @@ pub enum Sound {
     IntroMusic(MusicRequest),
     /// A letter of an intro page clicks.
     IntroClick,
+    /// Samus's appearance offers a sound during room play.
+    Appearance(samus_appearance::SoundOffer),
 }
 
 /// Why a frame end was not played. State is unchanged.

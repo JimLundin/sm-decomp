@@ -89,6 +89,12 @@ pub struct Battle {
     pub encounter: flashback::EncounterState,
 }
 
+pub(super) struct FightTurn {
+    pub(super) reply: FightReply,
+    pub(super) flash: Option<RowColours>,
+    pub(super) sounds: Vec<super::Sound>,
+}
+
 impl Battle {
     fn actor_turn(
         &mut self,
@@ -98,7 +104,13 @@ impl Battle {
         shoot: PadButton,
         motion: &rooms::Motion<'_>,
         content: &ActorsContent,
-    ) -> Result<Vec<weapons_projectiles::MissileCandidate>, Fault> {
+    ) -> Result<
+        (
+            Vec<weapons_projectiles::MissileCandidate>,
+            Vec<super::Sound>,
+        ),
+        Fault,
+    > {
         let x = room.actor.samus.movement.0.position.x.pixel();
         let turn = self
             .playback
@@ -127,7 +139,14 @@ impl Battle {
         if let Some(outcome) = &motion.movement {
             self.cannon.moved(outcome);
         }
-        Ok(candidates)
+        Ok((
+            candidates,
+            motion
+                .sounds
+                .into_iter()
+                .map(super::Sound::Appearance)
+                .collect(),
+        ))
     }
 
     fn encounter_turn(
@@ -267,13 +286,17 @@ impl Actors {
         movie: Pressed,
         waiting: samus_appearance::SoundsWaiting,
         content: &ActorsContent,
-    ) -> Result<(FightReply, Option<RowColours>), Fault> {
+    ) -> Result<FightTurn, Fault> {
         let Some(battle) = &mut self.battle else {
-            return Ok((FightReply::Fighting, None));
+            return Ok(FightTurn {
+                reply: FightReply::Fighting,
+                flash: None,
+                sounds: Vec::new(),
+            });
         };
         let room = self.rooms.as_mut().ok_or(Fault::ActorUnstarted)?;
         let visible = frame.state().fight == types::intro::FightVisibility::InFront;
-        let candidates = if visible {
+        let (candidates, sounds) = if visible {
             let motion = rooms::Motion {
                 movement: &content.room.movement,
                 appearance: &content.room.appearance,
@@ -292,7 +315,7 @@ impl Actors {
                 content,
             )?
         } else {
-            Vec::new()
+            (Vec::new(), Vec::new())
         };
         let effects = battle.encounter_turn(frame, parity, room, candidates);
         if let Some(hit) = effects.missile_impact {
@@ -338,15 +361,16 @@ impl Actors {
                 y: core::num::Wrapping(VIEW.0.y),
             },
         );
-        Ok((
-            if effects.intro == Some(flashback::IntroRequest::CuePageTwo) {
+        Ok(FightTurn {
+            reply: if effects.intro == Some(flashback::IntroRequest::CuePageTwo) {
                 FightReply::ReadyToReturn
             } else {
                 FightReply::Fighting
             },
-            effects
+            sounds,
+            flash: effects
                 .palette
                 .map(|flash| flashback::flash_colours(&content.encounter, flash)),
-        ))
+        })
     }
 }

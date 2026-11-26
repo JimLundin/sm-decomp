@@ -536,7 +536,10 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 2,516 cuts. At 2,517 the sound requests differ when Samus leaves her spin. Her cached body radius comes from the pose at the start of movement.
+intro in the State `Begins`. The run holds 2,614 cuts, including the sound
+Samus requests when she leaves her spin at 2,517. The controlled room turn
+refuses the standing handoff at 2,615. Her cached body radius comes from the
+pose at the start of movement.
 At 569 the intro creates the hidden actor with the chosen file's energy, lends her missiles and switches to the intro controls.
 The next 1,650 cuts carry those owners through the opening and page 1. The press latched at
 2,218 installs the populated room, recorded controls and Mother Brain before interrupted
@@ -549,7 +552,8 @@ from a pending room turn. The partial palette and text buffers remain outside th
 The run compares her pose, centres, history, clip, radius, missile supply, controls and
 cannon delay, the installed cell words and the encounter state. It leaves the inherited
 room memory tail to the platform. From cut 568 it also compares the intro and the front end.
-The front end compares clicks and queued music entries. Music stops use empty
+The front end compares clicks, queued music entries and the fight room's appearance sounds.
+Music stops use empty
 entries, and only the scoped intro runs compare them and the caret's picture.
 
 The scoped case `intro/flashback-from-page-one` admits the last finished cut of page 1

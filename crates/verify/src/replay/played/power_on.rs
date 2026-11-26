@@ -610,7 +610,7 @@ mod tests {
         };
         const SHOOT: u16 = 0x0040;
         const FIRST_MISSILE: u64 = 2310;
-        const LAST_HELD_CUT: u64 = 2516;
+        const LAST_HELD_CUT: u64 = 2614;
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();

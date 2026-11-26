@@ -1570,3 +1570,26 @@ after = '''        actor.carry.0.older_pose = actor.carry.0.prior_pose;
 case = "played any-power-on 0 2475"
 cut = 2475
 field = "intro-room.actor.older-pose"
+
+[[fault]]
+name = "played-intro-room-sounds-dropped"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro.rs"
+before = '            .chain(room_sounds)'
+after = '            .chain(room_sounds.into_iter().take(0))'
+case = "played any-power-on 0 2614"
+cut = 2517
+field = "front-end.sounds"
+
+[[fault]]
+name = "played-intro-room-sound-sent-to-wrong-queue"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = '                .map(super::Sound::Appearance)'
+after = '''                .map(|mut offer| {
+                    offer.queue = samus_appearance::SoundQueue::Footsteps;
+                    super::Sound::Appearance(offer)
+                })'''
+case = "played any-power-on 0 2614"
+cut = 2517
+field = "front-end.sounds"

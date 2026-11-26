@@ -260,6 +260,24 @@ pub(super) const fn sound_code(sound: Sound) -> Option<[u8; 3]> {
         | Sound::Options(OptionsSound::CursorMoved) => code(LIBRARY_ONE.tag, 0x37),
         Sound::FileSelect(FileSelectSound::ChoiceMade) => code(LIBRARY_ONE.tag, 0x2A),
         Sound::Options(OptionsSound::Selected) => code(LIBRARY_ONE.tag, 0x38),
+        Sound::Appearance(offer) => {
+            use samus_appearance::{Sound as Cue, SoundQueue};
+            let queue = match offer.queue {
+                SoundQueue::Footsteps => LIBRARY_THREE.tag,
+                SoundQueue::Samus => LIBRARY_ONE.tag,
+            };
+            let number = match offer.sound {
+                Cue::Footstep => 0x06,
+                Cue::Boosting => 0x03,
+                Cue::PlainSpin => 0x31,
+                Cue::SpaceJump => 0x3e,
+                Cue::ScrewAttack => 0x33,
+                Cue::SpinEnded => 0x32,
+                Cue::SamusSilence => 0x02,
+                Cue::Hurt => 0x35,
+            };
+            code(queue, number)
+        }
         Sound::IntroMusic(MusicRequest::Stop) => return None,
         Sound::IntroMusic(MusicRequest::Load(Tune::OpeningFirst)) => code(MUSIC, 0xFF3F),
         Sound::IntroMusic(MusicRequest::Load(Tune::OpeningSecond)) => code(MUSIC, 0xFF42),
