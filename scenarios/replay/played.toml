@@ -192,16 +192,16 @@ seed_frame = 11939
 frames = [11940, 12197]
 power_on = false
 
-# The escape from room 5 through rooms 4 and 3 with no new seed. The room 3 passage stops
-# when drawing starts counting the held jump.
+# The escape from room 5 through room 2 with no new seed. The shaft entrance
+# needs the room loading rule for its rotating view.
 [[run]]
 row = "chain-any-0007-E06B"
 start = 0
 end = 3000
-held = 722
-stop = { failed = "PassageJumpHistory" }
+held = 1075
+stop = { failed = "Load(DoorRule(ToCeresElevatorShaft))" }
 seed_frame = 11939
-frames = [11940, 12661]
+frames = [11940, 13014]
 power_on = false
 
 # The escape's room 4 alone, from its own seed, shaking, and the passage out of it, the doors
@@ -222,10 +222,10 @@ power_on = false
 row = "chain-any-0009-DFD7"
 start = 0
 end = 330
-held = 199
-stop = { failed = "PassageJumpHistory" }
+held = 330
+stop = "end"
 seed_frame = 12462
-frames = [12463, 12661]
+frames = [12463, 12792]
 power_on = false
 
 # Room 2 from its seed. Steam pushes her right at cut 66. Her backward leap reaches the
@@ -234,10 +234,10 @@ power_on = false
 row = "chain-any-0010-DF8D"
 start = 0
 end = 278
-held = 86
-stop = { failed = "BackwardLeapLanding" }
+held = 221
+stop = { failed = "Load(DoorRule(ToCeresElevatorShaft))" }
 seed_frame = 12793
-frames = [12794, 12879]
+frames = [12794, 13014]
 power_on = false
 
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being

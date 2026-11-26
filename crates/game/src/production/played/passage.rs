@@ -208,23 +208,27 @@ impl super::State {
     }
 }
 
-/// Drawing Samus during a passage can change her jump counter while her movement is paused.
-pub(super) fn check_jump_history(
+/// Darkening draws report with completed work. Brightening reaches its history-writing draw
+/// when work begins, which can precede the cut that advances the fade.
+pub(super) fn draws_jump(
+    doors: Doors,
+    passing: &Passing<'_>,
     report: &world_doors::Report,
-    jump: samus_movement::JumpHeld,
-    inputs: &crate::production::connected::inputs::Inputs,
-) -> Result<(), Fault> {
-    use types::button::JUMP;
-    use world_doors::Activity;
-
-    let held_through = inputs.held.any(JUMP) && !inputs.pressed.any(JUMP);
-    if report.runs[Activity::Drawn] && (held_through || jump.frames.0 != 0) {
-        return Err(Fault::PassageJumpHistory);
+) -> bool {
+    if matches!(
+        doors,
+        Doors::Passing(Passage {
+            phase: Phase::Brightening(_),
+            ..
+        })
+    ) {
+        passing.work_begun
+    } else {
+        report.runs[world_doors::Activity::Drawn]
     }
-    Ok(())
 }
 
-/// What a passage's call loaded of the next room.
+/// What the passage loaded from the next room.
 pub(super) struct Loaded {
     /// The room building it gives, which replaces hers.
     pub(super) room: Option<Room>,

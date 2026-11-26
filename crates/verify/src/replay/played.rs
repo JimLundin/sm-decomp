@@ -39,7 +39,7 @@ mod power_on;
 mod quake;
 mod ridley;
 pub(super) mod rows;
-mod samus;
+pub(super) mod samus;
 mod screens;
 mod seed;
 mod shaft;

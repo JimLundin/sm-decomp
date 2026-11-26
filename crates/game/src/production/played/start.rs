@@ -99,6 +99,7 @@ fn fresh(start: &NewGame) -> Result<samus::State, Fault> {
         knockback: samus_movement::Knockback::spent(types::Side::Left),
     };
     Ok(samus::State {
+        last_draw_jump: Model(samus_movement::JumpButton::Up),
         movement: Model(samus),
         appearance: Model(samus_appearance::AppearanceState::INITIAL),
         figure: Model(samus_appearance::Figure {

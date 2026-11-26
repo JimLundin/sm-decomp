@@ -8,16 +8,35 @@ use canonical::model::Model;
 use game::production::played;
 
 /// Her State as the seed holds it.
-pub(super) fn seed(
+pub(in crate::replay) fn seed(
     wram: &[u8],
     content: &appearance::Content,
 ) -> Result<played::samus::State, Outcome> {
     let (appearance, figure) = appearance::owner(wram, content)?;
     Ok(played::samus::State {
         movement: Model(movement::seed(wram)?),
+        last_draw_jump: Model(last_draw(wram)?),
         appearance: Model(appearance),
         figure: Model(figure),
     })
+}
+
+pub(in crate::replay) fn last_draw(wram: &[u8]) -> Result<samus_movement::JumpButton, Outcome> {
+    let field = |name, offset| super::word(wram, crate::source::WramWord { name, offset });
+    let buttons = field("Samus previous draw pad", 0x0dfe)?;
+    let bound = field("jump binding", 0x09b4)?;
+    Ok(if buttons & bound == 0 {
+        samus_movement::JumpButton::Up
+    } else {
+        samus_movement::JumpButton::Held
+    })
+}
+
+pub(in crate::replay) fn last_draw_observation(jump: samus_movement::JumpButton) -> Observation {
+    Observation::quantity(
+        "movement.last-draw-jump",
+        i64::from(jump == samus_movement::JumpButton::Held),
+    )
 }
 
 /// Her fields as the record at `cut` of `row` holds them.
@@ -29,6 +48,7 @@ pub(super) fn expected(
 ) -> Result<Vec<Observation>, Outcome> {
     let seeded = movement::seed(wram)?;
     let mut fields = parts(&seeded);
+    fields.push(last_draw_observation(last_draw(wram)?));
     fields.extend(movement::expected(
         wram,
         &[ObservationId::PositionX, ObservationId::PositionY],
@@ -49,6 +69,7 @@ pub(super) fn actual(
 ) -> Vec<Observation> {
     let samus = &state.movement.0;
     let mut fields = parts(samus);
+    fields.push(last_draw_observation(state.last_draw_jump.0));
     fields.extend([
         Observation::quantity("movement.position.x", i64::from(samus.position.x.0)),
         Observation::quantity("movement.position.y", i64::from(samus.position.y.0)),

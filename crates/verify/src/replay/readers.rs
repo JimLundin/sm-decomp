@@ -17,6 +17,7 @@ pub(super) enum InputReader {
     Playback(Vec<game::production::playback::Cut>),
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
+    JumpHistory(Vec<Option<samus_movement::JumpButton>>),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -37,6 +38,7 @@ pub(super) enum ExpectedReader {
     Playback(Vec<ExpectedCut>),
     SaveFiles(super::save_files::Expected),
     IntroMissiles(super::intro_missiles::Expected),
+    JumpHistory(Vec<ExpectedCut>),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
     SenderOffer(Vec<Observation>),
@@ -55,6 +57,7 @@ pub(super) enum ActualReader {
     Playback,
     SaveFiles,
     IntroMissiles,
+    JumpHistory,
     EarlyMap,
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
@@ -107,6 +110,7 @@ impl InputReader {
             Self::Playback(inputs) => super::playback::advance(production, inputs, cut),
             Self::SaveFiles(inputs) => inputs.advance(production, cut),
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
+            Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
@@ -154,6 +158,9 @@ fn movement_state_fields(state: &samus_movement::Samus) -> Vec<Observation> {
     use types::Parts;
 
     vec![
+        movement::landing_pose(state.pose),
+        super::jump_history::jump_part(state.jump_held),
+        Observation::quantity("movement.base-speed", i64::from(state.run.speed.0)),
         Observation::quantity("movement.position.x", i64::from(state.position.x.0)),
         Observation::quantity("movement.position.y", i64::from(state.position.y.0)),
         Observation::quantity(
@@ -192,6 +199,9 @@ impl ActualReader {
                 InputReader::IntroMissiles(_),
                 ProductionOutputs::IntroMissiles(output),
             ) => super::intro_missiles::actual(production, Some(&output)),
+            (Self::JumpHistory, InputReader::JumpHistory(_), ProductionOutputs::JumpHistory) => {
+                super::jump_history::actual(production)
+            }
             (
                 Self::HealthTail,
                 InputReader::HealthTail(_),
@@ -249,6 +259,12 @@ impl ActualReader {
                 };
                 actual.push(Observation::quantity("movement.wall_test", wall));
                 actual.push(movement::reached(&outputs));
+                actual.push(Observation::quantity(
+                    "movement.landing.floor",
+                    i64::from(outputs.floor_response.is_some_and(|floor| {
+                        floor.kind == types::FloorResponseKind::UprightTouchdown
+                    })),
+                ));
                 Ok(actual)
             }
             _ => Err(data_failure(Some(cut), "actual projection scope")),
@@ -270,6 +286,7 @@ impl ActualReader {
                 .map(|battery| vec![battery])
                 .ok_or_else(|| data_failure(None, "battery null scope")),
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
+            Self::JumpHistory => super::jump_history::actual(production),
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
@@ -290,6 +307,7 @@ impl ActualReader {
                             Observation::quantity(format!("movement.travel.{direction}"), 0)
                         }),
                 );
+                null.push(Observation::quantity("movement.landing.floor", 0));
                 null.push(Observation::quantity("movement.wall_test", 0));
                 null.push(Observation {
                     field: "movement.reached".to_owned(),
@@ -321,6 +339,7 @@ impl ExpectedReader {
             Self::Playback(expected) => super::playback::at(expected, cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
             Self::IntroMissiles(expected) => expected.at(cut),
+            Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),

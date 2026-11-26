@@ -12,9 +12,10 @@
 use core::cell::RefCell;
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, CATALOGUE, Carry, Choices, Dashing, Direction, DirectionalTravels, Frame, FrameBefore,
-    Hit, JumpHeld, Knockback, Met, Moment, Outcome, Phase, Push, PushFrames, Rules, Run, Samus,
-    Seat, SpeedCap, TravelDistance, TravelKind, TravelledDistances, Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, Choices, Dashing, Direction, DirectionalTravels, DrawnJumpHistory,
+    Frame, FrameBefore, Hit, JumpButton, JumpHeld, Knockback, Met, Moment, Outcome, Phase, Push,
+    PushFrames, Rules, Run, Samus, Seat, SpeedCap, TravelDistance, TravelKind, TravelledDistances,
+    Vertical, WallTest,
 };
 use serde::Deserialize;
 use types::{
@@ -153,8 +154,81 @@ struct VectorFile {
     vector: Vec<Vector>,
     /// Isolated observations of caller-held `TravelledDistances`.
     distance_history: Vec<DistanceHistory>,
+    /// Jump history through a draw that may update it, her motion paused.
+    jump_history: Vec<JumpHistory>,
     /// The pose steps.
     pose_step: Vec<PoseStep>,
+}
+
+/// A `[[jump_history]]`: jump held through across one cut of a passage, which may or may not
+/// hold a draw that updates jump history.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JumpHistory {
+    /// Its id.
+    id: String,
+    /// The record it comes from, or "constructed".
+    source: String,
+    /// The spec's behaviours it exercises.
+    entries: Vec<String>,
+    /// The history at the cut's start.
+    before: HistoryTable,
+    /// What the cut brings.
+    input: DrawInput,
+    /// The history at the cut's end.
+    after: HistoryTable,
+}
+
+/// Jump history as a passage holds it: the count in draws, the previous draw's jump, and the
+/// frame before.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct HistoryTable {
+    /// The count, in draws.
+    frames: u16,
+    /// Jump held on the previous draw that updated jump history.
+    last_draw_held: bool,
+    /// Landed or ended the frame before.
+    landed_or_ended: bool,
+}
+
+impl HistoryTable {
+    /// The model's history.
+    const fn model(&self) -> DrawnJumpHistory {
+        DrawnJumpHistory {
+            jump_held: JumpHeld {
+                frames: Wrapping(self.frames),
+                before: if self.landed_or_ended {
+                    FrameBefore::LandedOrEnded
+                } else {
+                    FrameBefore::Other
+                },
+            },
+            last_draw: jump_button(self.last_draw_held),
+        }
+    }
+}
+
+/// Jump held or up.
+const fn jump_button(held: bool) -> JumpButton {
+    if held {
+        JumpButton::Held
+    } else {
+        JumpButton::Up
+    }
+}
+
+/// A cut's input: whether it holds a draw that updates jump history, jump held, and the
+/// controller's own press, which the draw doesn't read.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DrawInput {
+    /// The cut holds a draw that updates jump history.
+    drawn: bool,
+    /// Jump held at that draw.
+    held: bool,
+    /// The controller's poll saw jump just pressed.
+    pressed: Option<bool>,
 }
 
 /// A `[[vector]]`: a short run of frames, the lead-in's and then the one it checks.
@@ -2381,6 +2455,36 @@ fn every_distance_history() {
     );
 }
 
+/// Spec: `Jumping`. Each cut of a passage through the draw-only operation alone: a cut with a
+/// draw counts jump against the previous draw's, whatever the controller's poll pressed, and a
+/// cut without one leaves the history as it is.
+#[test]
+fn every_jump_history() {
+    let histories = file().jump_history;
+    assert!(!histories.is_empty(), "no jump histories");
+    let mut misses = Vec::new();
+    for history in &histories {
+        let mut memory = history.before.model();
+        if history.input.drawn {
+            memory.draw(jump_button(history.input.held));
+        }
+        let expected = history.after.model();
+        if memory != expected {
+            misses.push(format!(
+                "{} ({}, pressed {:?}): expected {expected:?}, actual {memory:?}",
+                history.id, history.source, history.input.pressed
+            ));
+        }
+    }
+    assert!(
+        misses.is_empty(),
+        "{} of {} jump histories fail:\n{}",
+        misses.len(),
+        histories.len(),
+        misses.join("\n")
+    );
+}
+
 /// The vector file, read into its shape: a key or a name the shape doesn't know fails here.
 fn file() -> VectorFile {
     toml::from_str(VECTORS)
@@ -2579,7 +2683,7 @@ fn an_unknown_key_or_name_is_refused() {
     );
     assert!(
         toml::from_str::<VectorFile>(
-            "vector = []\npose_step = []\ndistance_history = []\nbogus = 1\n"
+            "vector = []\npose_step = []\ndistance_history = []\njump_history = []\nbogus = 1\n"
         )
         .is_err(),
         "the file's key"
@@ -2907,6 +3011,7 @@ fn catalogue_matches_the_vectors() {
         .flat_map(|v| &v.entries)
         .chain(file.pose_step.iter().flat_map(|s| &s.entries))
         .chain(file.distance_history.iter().flat_map(|h| &h.entries))
+        .chain(file.jump_history.iter().flat_map(|h| &h.entries))
         .map(String::as_str)
         .collect();
     for entry in &exercised {

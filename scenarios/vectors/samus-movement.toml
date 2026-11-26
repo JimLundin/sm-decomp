@@ -7658,3 +7658,93 @@ pad = ["left", "right", "jump"]
 jump_pressed = false
 next_pose = { body = "Upright", action = "Jumping", facing = "Left", legs = "Striding", radius = [5, 19] }
 after = { position = ["0102.C000", "007E.0000"], speed_x = "-0002.C000", speed_y = "-0001.E400" }
+
+[[pose_step]]
+id = "R-escape-leap-lands"
+source = "chain-any-0010-DF8D:87"
+entries = ["BackwardLeap", "WhatHerMovesMet"]
+pose = { body = "Upright", action = "Leaping", facing = "Right" }
+pad = ["run", "left"]
+jump_pressed = false
+met = "floor"
+after = { pose = { body = "Upright", action = "Landing", facing = "Left", landed_from = "Jump" } }
+
+[[pose_step]]
+id = "R-leap-lands-mirrored"
+source = "boss-kraid-defeated:1073"
+entries = ["BackwardLeap", "WhatHerMovesMet"]
+pose = { body = "Upright", action = "Leaping", facing = "Left" }
+pad = ["run", "right"]
+jump_pressed = false
+met = "floor"
+after = { pose = { body = "Upright", action = "Landing", facing = "Right", landed_from = "Jump" } }
+
+[[pose_step]]
+id = "C-leap-lands-shoot"
+source = "constructed"
+entries = ["BackwardLeap", "WhatHerMovesMet"]
+pose = { body = "Upright", action = "Leaping", facing = "Left" }
+pad = ["right", "jump", "shoot"]
+jump_pressed = false
+met = "floor"
+after = { pose = { body = "Upright", action = "Landing", facing = "Right", landed_from = "Jump" } }
+
+[[vector]]
+id = "C-leap-lands-held"
+source = "constructed"
+entries = ["BackwardLeap", "Landing", "Jumping"]
+world = { floor_top = 160 }
+before = { position = ["0080.0000", "008B.8000"], speed_x = "-0005.0000", speed_y = "+0003.0000", jump_held = 4 }
+pose = { body = "Upright", action = "Leaping", facing = "Right", radius = [5, 19] }
+pad = ["left", "jump"]
+jump_pressed = false
+next_pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Jump" }
+after = { position = ["007A.4000", "008B.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000", jump_held = 5, landed_or_ended = true }
+
+[[jump_history]]
+id = "R-passage-jump-draw"
+source = "rP3:200"
+entries = ["Jumping"]
+before = { frames = 0, last_draw_held = true, landed_or_ended = false }
+input = { drawn = true, held = true }
+after = { frames = 1, last_draw_held = true, landed_or_ended = false }
+
+[[jump_history]]
+id = "R-passage-jump-without-draw"
+source = "rP3:211"
+entries = ["Jumping"]
+before = { frames = 5, last_draw_held = true, landed_or_ended = false }
+input = { drawn = false, held = true }
+after = { frames = 5, last_draw_held = true, landed_or_ended = false }
+
+[[jump_history]]
+id = "R-passage-jump-interrupted-draw"
+source = "rP3:291"
+entries = ["Jumping"]
+before = { frames = 5, last_draw_held = true, landed_or_ended = false }
+input = { drawn = true, held = true }
+after = { frames = 6, last_draw_held = true, landed_or_ended = false }
+
+[[jump_history]]
+id = "R-passage-jump-release"
+source = "rP3:311"
+entries = ["Jumping"]
+before = { frames = 12, last_draw_held = true, landed_or_ended = false }
+input = { drawn = true, held = false }
+after = { frames = 0, last_draw_held = false, landed_or_ended = false }
+
+[[jump_history]]
+id = "C-passage-jump-resampled"
+source = "constructed"
+entries = ["Jumping"]
+before = { frames = 7, last_draw_held = true, landed_or_ended = true }
+input = { drawn = true, held = true, pressed = true }
+after = { frames = 8, last_draw_held = true, landed_or_ended = true }
+
+[[jump_history]]
+id = "C-passage-jump-held-through-latch"
+source = "constructed"
+entries = ["Jumping"]
+before = { frames = 0, last_draw_held = false, landed_or_ended = false }
+input = { drawn = true, held = true, pressed = false }
+after = { frames = 0, last_draw_held = true, landed_or_ended = false }

@@ -6,7 +6,7 @@
 //! what she remembers for the next frame.
 
 use crate::change::Selection;
-use crate::jump_held::FrameBefore;
+use crate::jump_held::{FrameBefore, JumpButton};
 use crate::knockback::{Recoil, recoiling};
 use crate::moves::MovesMade;
 use crate::rows::{FORWARD, seen};
@@ -91,7 +91,27 @@ impl Samus {
     /// (`PoseFollows`); then jump held through counts on (`Jumping`), the push time counts down,
     /// and the touchdown's requests follow from the floor response she took
     /// (`TouchdownRequests`).
+    ///
+    /// For a frame that follows the previous history-writing draw directly: the frame's pad
+    /// tells that draw's jump (`Jumping`). After a passage's draws, `react_after_draw`.
     pub fn react(&mut self, moves: HerMoves<'_>, hit: Option<Hit>) -> Outcome {
+        let previous = JumpButton::previous_draw(moves.tick.frame);
+        self.react_after_draw(moves, hit, previous)
+    }
+
+    /// The frame's second step as `react` plays it, with jump held through (`Jumping`) counted
+    /// on against `last_draw`, the jump of the preceding draw that updated jump history, as a
+    /// passage's `DrawnJumpHistory` keeps it: jump held now and then counts one more, jump up
+    /// on either puts the count at 0, whatever the controller reported just pressed. The frame's
+    /// own buttons, the pressed ones included, still decide her controls and her pose, and a
+    /// landing or an animation's end the frame before still makes jump held a press and puts
+    /// the count back to 0 first.
+    pub fn react_after_draw(
+        &mut self,
+        moves: HerMoves<'_>,
+        hit: Option<Hit>,
+        last_draw: JumpButton,
+    ) -> Outcome {
         let HerMoves {
             mut tick,
             start,
@@ -105,7 +125,7 @@ impl Samus {
         let change = her.take_pose(&start, &made, selection, &mut tick);
         her.after_the_change(&start, push_started, rules);
         let left = FrameBefore::left_behind(made.met, change.handed_over, start.pose, her.pose);
-        her.jump_held = start.jump_held.then(rules, frame, left);
+        her.jump_held = start.jump_held.then(rules, frame, last_draw, left);
         her.knockback.count_down();
         *self = her;
         let kicked = change.contact == Some(Contact::WallKick);

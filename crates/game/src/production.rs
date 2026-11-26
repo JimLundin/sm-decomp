@@ -21,6 +21,7 @@ pub mod health_tail;
 pub mod hud;
 mod immutable;
 pub mod intro_missile_scope;
+pub mod jump_history;
 mod movement;
 pub mod movement_touchdown;
 pub mod playback;
@@ -60,6 +61,8 @@ pub enum Scope {
     HealthTail,
     /// Movement and semantic pose.
     Movement,
+    /// Jump history on draws while movement is paused.
+    JumpHistory,
     /// Ordinary Movement carried through Contact and touchdown graphics.
     MovementTouchdown,
     /// Audio transport, one frame at a time.
@@ -103,6 +106,8 @@ pub enum ProductionSeed {
     HealthTail(Box<health_tail::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
+    /// The carried jump count, pending check and last draw sample.
+    JumpHistory(samus_movement::DrawnJumpHistory),
     /// Movement, preceding Figure and the current audio transport.
     MovementTouchdown(Box<movement_touchdown::State>),
     /// Complete audio transport State; restoration never initializes it.
@@ -141,6 +146,8 @@ pub enum AdvanceInput<'a> {
     SaveFiles(save_files::Input<'a>),
     /// Cinematic weapon work, encounter and presentation opportunities.
     IntroMissiles(intro_missile_scope::Input<'a>),
+    /// A history-writing draw button sample or an interval without a draw.
+    JumpHistory(Option<samus_movement::JumpButton>),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
     HealthTail(&'a health_tail::Frame),
     /// Independently admitted unselected stimuli for one connected ordinary frame.
@@ -221,6 +228,8 @@ pub enum ProductionOutputs {
     SaveFiles(Box<save_files::Output>),
     /// Complete scoped cinematic weapon requests and publication.
     IntroMissiles(Box<intro_missile_scope::Output>),
+    /// No external request accompanies the carried jump history.
+    JumpHistory,
     /// One scoped Health frame's requests and gauge redraw.
     HealthTail(health_tail::Output),
     /// Complete new selected outputs and actual semantic progress.
@@ -389,6 +398,7 @@ impl Production {
             ProductionSeed::Flashback(_) => Scope::Flashback,
             ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Movement(_) => Scope::Movement,
+            ProductionSeed::JumpHistory(_) => Scope::JumpHistory,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
@@ -511,6 +521,7 @@ impl Production {
             OwnedState::Flashback(_) => Scope::Flashback,
             OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Movement(_) => Scope::Movement,
+            OwnedState::JumpHistory(_) => Scope::JumpHistory,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
@@ -658,6 +669,7 @@ impl Production {
             | OwnedState::SaveFiles(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
+            | OwnedState::JumpHistory(_)
             | OwnedState::WeaponsContact(_)
             | OwnedState::IntroMissiles(_)
             | OwnedState::Blocks(_)
@@ -685,6 +697,7 @@ impl Production {
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
+            OwnedState::JumpHistory(state) => return Ok(self.encode_save(*state)),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
@@ -744,6 +757,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<intro_missile_scope::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::IntroMissiles(checkpoint.state)
+        } else if matches!(&content, ProductionContent::JumpHistory) {
+            let checkpoint: Checkpoint<Model<jump_history::Pin>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::JumpHistory(checkpoint.state.0)
         } else if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -792,6 +809,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         }
         Scope::HealthTail => canonical::model::pin_holds::<health_tail::HealthPin>()
             .and_then(|()| canonical::model::pin_holds::<hud::HudPin>()),
+        Scope::JumpHistory => canonical::model::pin_holds::<jump_history::Pin>(),
         Scope::Movement => canonical::model::pin_holds::<crate::state::owned::MovementPin>(),
         Scope::MovementTouchdown => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()

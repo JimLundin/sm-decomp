@@ -194,15 +194,19 @@ pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
             1 => Seat::Seated,
             _ => return Err(data_failure(None, "movement slope seat")),
         },
-        jump_held: JumpHeld {
-            frames: Wrapping(word(wram, source::SAMUS_JUMP_HELD_FRAMES)?),
-            before: if word(wram, source::SAMUS_POSE_INPUT_HANDLER)? == 0xE926 {
-                FrameBefore::LandedOrEnded
-            } else {
-                FrameBefore::Other
-            },
-        },
+        jump_held: jump_held(wram)?,
         knockback,
+    })
+}
+
+pub(super) fn jump_held(wram: &[u8]) -> Result<JumpHeld, Outcome> {
+    Ok(JumpHeld {
+        frames: Wrapping(word(wram, source::SAMUS_JUMP_HELD_FRAMES)?),
+        before: if word(wram, source::SAMUS_POSE_INPUT_HANDLER)? == 0xE926 {
+            FrameBefore::LandedOrEnded
+        } else {
+            FrameBefore::Other
+        },
     })
 }
 
@@ -638,10 +642,48 @@ fn expected_field(
             return Ok(Observation::quantity(name, value));
         }
     }
+    if field == O::LandingPose {
+        let raw = PoseId(word(wram, source::SAMUS_POSE)?);
+        let pose = map::key_of(raw).ok_or_else(|| unsupported("landing pose observation"))?;
+        return Ok(landing_pose(pose));
+    }
+    if field == O::MovementBaseSpeed {
+        return Ok(Observation::quantity(
+            "movement.base-speed",
+            i64::from(
+                fixed(
+                    wram,
+                    source::SAMUS_X_BASE_SPEED,
+                    source::SAMUS_X_BASE_SUBSPEED,
+                )?
+                .0,
+            ),
+        ));
+    }
+    if field == O::DrawnJumpHeld {
+        return Ok(super::jump_history::jump_part(jump_held(wram)?));
+    }
+    if field == O::LandingFloor {
+        let response = crate::source::WramWord {
+            name: "landing floor result",
+            offset: 0x0a2e,
+        };
+        return Ok(Observation::quantity(
+            "movement.landing.floor",
+            i64::from(word(wram, response)? == 5),
+        ));
+    }
     if matches!(field, O::WallTest | O::Reached) {
         return reached_observation(field, row, cut);
     }
     Err(data_failure(None, "movement observation scope"))
+}
+
+pub(super) fn landing_pose(pose: types::Pose) -> Observation {
+    Observation {
+        field: "movement.landing.pose".into(),
+        bytes: format!("{pose:?}").into_bytes(),
+    }
 }
 
 fn reached_observation(field: ObservationId, row: &str, cut: u64) -> Result<Observation, Outcome> {

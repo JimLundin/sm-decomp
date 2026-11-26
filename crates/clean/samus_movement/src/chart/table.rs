@@ -2,8 +2,8 @@
 //! fits. A next pose has its gun stowed and its legs together unless its cell says otherwise.
 
 use crate::rows::{
-    DOWN_TO_FORWARD, Doing, Effect, Met, NO_CHANGE, Next, Row, RowId, TO_FALLING, TO_JUMPING,
-    TO_SPINNING, TO_STILL, Test, UP_AIM,
+    DOWN_TO_FORWARD, Doing, Effect, Met, NO_CHANGE, Next, NextFacing, Row, RowId, TO_FALLING,
+    TO_JUMPING, TO_SPINNING, TO_STILL, Test, UP_AIM,
 };
 use types::button::SHOOT;
 use types::{Action, Aim, Body, Gun, Item, LandedFrom, Legs, Turn};
@@ -16,8 +16,9 @@ const SPRING_BALL: Test = Test::With(&[Item::SpringBall]);
 /// A floor met while turning or while her body changes shape has no row: the turn's own rows
 /// apply, and a changing body's pad has no say. The aim change's step comes after the pose is
 /// chosen, so its row's outcome is `STEP_BLOCKED`, apart. `AfterThePush`: the drop the frame
-/// after a push lands her as from a straight jump, so `Recoiling` shares the jump's floor rows,
-/// and the leap is a straight jump (`BackwardLeap`).
+/// after a push lands her as from a straight jump, so `Recoiling` shares the jump's floor rows.
+/// `BackwardLeap`: the leap lands as a straight jump does, but in a row of its own, first:
+/// facing the way she travelled backward, aim `Forward`, her gun stowed whatever she holds.
 pub const MOVES_MET: &[Row] = &[
     Row {
         id: RowId::WallStopAimedUp,
@@ -47,6 +48,16 @@ pub const MOVES_MET: &[Row] = &[
         needs: &[Test::Met(Met::WallKick), Test::Doing(&[Doing::Spinning])],
         next: Next {
             action: Some(Action::WallJumping),
+            ..TO_STILL
+        },
+        ..NO_CHANGE
+    },
+    Row {
+        id: RowId::FloorFromALeap,
+        needs: &[Test::Met(Met::Floor), Test::Action(&[Action::Leaping])],
+        next: Next {
+            action: Some(Action::Landing(LandedFrom::Jump)),
+            facing: NextFacing::Back,
             ..TO_STILL
         },
         ..NO_CHANGE

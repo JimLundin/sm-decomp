@@ -82,6 +82,11 @@ pub(super) fn admit(
             super::audio::validate(&state, content)?;
             OwnedState::Audio(Model(state))
         }
+        (
+            ProductionSeed::JumpHistory(state),
+            ProductionContent::JumpHistory,
+            ProductionRules::JumpHistory,
+        ) => OwnedState::JumpHistory(Model(state)),
         (ProductionSeed::Blocks(state), ProductionContent::Blocks, ProductionRules::Blocks(_)) => {
             OwnedState::Blocks(state)
         }
@@ -147,6 +152,15 @@ fn advance(
     input: AdvanceInput<'_>,
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
+        (
+            OwnedState::JumpHistory(state),
+            ProductionContent::JumpHistory,
+            ProductionRules::JumpHistory,
+            AdvanceInput::JumpHistory(sample),
+        ) => {
+            super::jump_history::advance(&mut state.0, sample);
+            ProductionOutputs::JumpHistory
+        }
         (
             OwnedState::HealthTail(state),
             ProductionContent::HealthTail(content),

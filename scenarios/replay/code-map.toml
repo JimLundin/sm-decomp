@@ -729,3 +729,31 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/intro_missile_scope.rs" },
   { role = "navigation", path = "crates/verify/src/replay/intro_missiles.rs" },
 ]
+
+[[rule]]
+id = "samus-movement/Jumping"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/jump_held.rs" },
+  { role = "adapter", path = "crates/game/src/production/jump_history.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/jump_history.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/BackwardLeap"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/chart/table.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/WhatHerMovesMet"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/chart/table.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]

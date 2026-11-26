@@ -375,7 +375,9 @@ impl State {
             .ok_or(Fault::Samus(super::Fault::Body(her.samus.pose)))?;
         actor.carry.0.older_pose = actor.carry.0.prior_pose;
         actor.carry.0.prior_pose = her.samus.pose;
-        actor.samus.played(her.samus, &her);
+        actor
+            .samus
+            .played(her.samus, &her, samus::jump_button(pad.held));
         actor.carry.0.demo = pad;
         self.phase = Some(Phase::Played(active));
         Ok(FirstTurn {
@@ -526,6 +528,7 @@ pub(crate) fn validate_pins() -> Result<(), canonical::model::Unpinned> {
         .and_then(|()| pin_holds::<MovementPin>())
         .and_then(|()| pin_holds::<AppearancePin>())
         .and_then(|()| pin_holds::<samus::FigurePin>())
+        .and_then(|()| pin_holds::<samus::JumpButtonPin>())
 }
 
 impl Scoped {

@@ -282,12 +282,15 @@ lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` a
 seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,520 cuts, through
 rooms 2 to 5 and on to cut 896 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,826;
 from her arrival (`any-ceres-arrival`, below) they hold 2,743, to movie frame 11,058. In the
-escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 722 through room 3
+escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 1,075 through room 2
 without a new seed. Room 4 (`chain-any-0008-E021`) holds all 263 cuts, including the placement
-of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds 199 cuts and stops at cut 200,
-when passage drawing starts updating jump history (`PassageJumpHistory`). The same
-boundary stops the continuous run at cut 723. Room 2 (`chain-any-0010-DF8D`) holds 86 cuts.
-At cut 87 she releases jump as her backward leap lands (`BackwardLeapLanding`).
+of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds all 330 cuts. Its passage counts jump
+during the darkening draws and on the first cut of brightening work, including the interrupted
+draw at cut 291. Active play counts jump against the previous history-writing draw. Pose
+choice reads the controller's new press. Played replay compares the carried sample as
+`movement.last-draw-jump`. Room 2 (`chain-any-0010-DF8D`) lands the backward leap at cut 87 and holds
+until cut 221. The shaft entrance's room loading reports `Load(DoorRule(ToCeresElevatorShaft))`
+at room 2 cut 222, or cut 1,076 in the continuous escape.
 
 Steam State is compared at finished cuts, including the puff figure. Room 3's puff pushes
 left at cut 137 and room 2's pushes right at cut 66. Both give a five-frame push, leave
@@ -295,8 +298,8 @@ left at cut 137 and room 2's pushes right at cut 66. Both give a five-frame push
 341 of 840 vent steps through room 3 cut 168 and 348 of 946 through room 2 cut 86.
 Production matches all of those steps. Disabling steam contact fails at room 3 cut 137 in
 `steam.hit`. Reusing the placement seed fails at room 4 cut 219 in `steam.vents`. Room 2
-starts with all eleven vents restored from its seed. A played run does not yet reach their
-placement. Vent sprite rendering and the turning shaft are outside this comparison.
+starts with all eleven vents restored from its seed. The continuous run reaches their
+placement in the passage into room 2. Vent sprite rendering and the turning shaft are outside this comparison.
 
 Her frame is two steps, her moves and then her reaction to the frame's hit, with the station and Health
 between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "cead40deb449a28406f902df525a718a97d0243e4d306d03eafe8db5d0d2f981"
+index_sha256 = "70a4dd420bb7e4845c99373ce624b54bfd6136f704b7ac37569d4a5ebaeb8cd5"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -934,6 +934,24 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
+id = "movement/passage-jump-history"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "3fe5394e5c92af0959e8d0e85e8b747dabe3c709205593c821a50fcaeb6ad80c"
+
+[case.counts]
+cuts = 160
+fields = 320
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 46
+null_fields = 95
+restorations = 160
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
 id = "intro-rooms/discovery-first-turn"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1020,5 +1038,23 @@ replies = 0
 null_cuts = 91
 null_fields = 1258
 restorations = 650
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/escape-leap-landing"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "311cb0b6061c53bb3da653473d34bb4daf3dd401a880b67774fc3341e227c896"
+
+[case.counts]
+cuts = 1
+fields = 6
+outputs = 1
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
 pending_boundaries = 0
 pending_restorations = 0

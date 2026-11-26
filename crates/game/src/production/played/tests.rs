@@ -29,6 +29,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     let her = fixtures::samus().position;
     State {
         samus: samus::State {
+            last_draw_jump: Model(samus_movement::JumpButton::Up),
             movement: Model(fixtures::samus()),
             appearance: Model(samus_appearance::AppearanceState::INITIAL),
             figure: Model(figure()),
@@ -248,17 +249,160 @@ pub(super) fn play_with(
     ceres: Stage,
 ) -> Result<Outputs, Fault> {
     let progress = run_progress::Progress::default();
-    let passing = Passing {
+    state.station.stage = ceres;
+    state.step(
+        &inputs(held),
+        &passing(&progress),
+        &hud_frame(),
+        content,
+        &rules(),
+    )
+}
+
+fn passing(progress: &run_progress::Progress) -> Passing<'_> {
+    Passing {
         work_begun: true,
         work_done: true,
         audio: passage::PassageAudio {
             sounds_sent: true,
             music_ready: true,
         },
-        progress: &progress,
+        progress,
         random: None,
         start: arrival::Readiness::NotYet,
+    }
+}
+
+#[test]
+fn first_active_draw_reads_the_last_draw_after_a_poll_gap() {
+    use samus_movement::JumpButton;
+    use types::{Buttons, button::JUMP};
+
+    let mut state = state(Vec::new());
+    state.passage.doors = Doors::Passing(world_doors::Passage {
+        phase: world_doors::Phase::Brightening(world_doors::FadeTime(14)),
+        arrival: None,
+        slide_frames: 0,
+    });
+    let content = content();
+    let rules = rules();
+    let progress = run_progress::Progress::default();
+    let mut passing = passing(&progress);
+
+    passing.work_done = false;
+    state
+        .step(
+            &inputs(Buttons::default()),
+            &passing,
+            &hud_frame(),
+            &content,
+            &rules,
+        )
+        .unwrap();
+    assert!(matches!(state.passage.doors, Doors::Passing(_)));
+    assert_eq!(state.samus.last_draw_jump.0, JumpButton::Up);
+
+    passing.work_done = true;
+    passing.work_begun = false;
+    state
+        .step(&inputs(JUMP), &passing, &hud_frame(), &content, &rules)
+        .unwrap();
+    assert_eq!(state.passage.doors, Doors::Play);
+    assert_eq!(state.samus.last_draw_jump.0, JumpButton::Up);
+    assert_eq!(state.samus.movement.0.jump_held.frames.0, 0);
+
+    passing.work_begun = true;
+    let mut input = inputs(JUMP);
+    input.pressed = Buttons::default();
+    state
+        .step(&input, &passing, &hud_frame(), &content, &rules)
+        .unwrap();
+    assert_eq!(state.samus.last_draw_jump.0, JumpButton::Held);
+    assert_eq!(state.samus.movement.0.jump_held.frames.0, 0);
+}
+
+fn grounded() -> State {
+    use samus_movement::{Choices, JumpButton, Phase};
+    use types::{Action, Block};
+
+    let mut state = state(Vec::new());
+    let samus = &mut state.samus.movement.0;
+    samus.pose.action = Action::Still;
+    samus.vertical.phase = Phase::Ground;
+    samus.position.y = Wrapping(108 * 65536 - 1);
+    samus.choices = Choices::starting_in(samus.pose);
+    state.samus.figure.0.pose = samus.pose;
+    state.samus.last_draw_jump.0 = JumpButton::Held;
+    let room = &mut state.passage.room;
+    let cells = (0..16 * 16)
+        .map(|index| {
+            if index < 16 * 8 {
+                Block::Air
+            } else {
+                Block::Solid
+            }
+        })
+        .collect();
+    room.geometry = crate::production::world::MovementWorld::new(
+        16,
+        cells,
+        vec![false; 16 * 16],
+        Vec::new(),
+        crate::production::world::Boundary::Air,
+    )
+    .unwrap();
+
+    state
+}
+
+#[test]
+fn fresh_jump_still_selects_takeoff_when_the_last_draw_held_jump() {
+    use types::{Action, button::JUMP};
+
+    let mut state = grounded();
+    state
+        .step(
+            &inputs(JUMP),
+            &passing(&run_progress::Progress::default()),
+            &hud_frame(),
+            &content(),
+            &rules(),
+        )
+        .unwrap();
+    let samus = &state.samus.movement.0;
+    assert_eq!(samus.pose.action, Action::TakingOff);
+    assert_eq!(samus.jump_held.frames.0, 1);
+}
+
+#[test]
+fn armed_jump_is_spent_before_the_active_draw_counts() {
+    use samus_movement::{FrameBefore, JumpHeld};
+    use types::{Action, Buttons, button::JUMP};
+
+    let mut state = grounded();
+    state.samus.movement.0.jump_held = JumpHeld {
+        frames: Wrapping(5),
+        before: FrameBefore::LandedOrEnded,
     };
-    state.station.stage = ceres;
-    state.step(&inputs(held), &passing, &hud_frame(), content, &rules())
+    let mut input = inputs(JUMP);
+    input.pressed = Buttons::default();
+    state
+        .step(
+            &input,
+            &passing(&run_progress::Progress::default()),
+            &hud_frame(),
+            &content(),
+            &rules(),
+        )
+        .unwrap();
+
+    let samus = &state.samus.movement.0;
+    assert_eq!(samus.pose.action, Action::TakingOff);
+    assert_eq!(
+        samus.jump_held,
+        JumpHeld {
+            frames: Wrapping(1),
+            before: FrameBefore::Other,
+        }
+    );
 }

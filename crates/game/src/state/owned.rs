@@ -79,6 +79,8 @@ pub enum OwnedState {
     HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
+    /// Jump history and previous draw sample.
+    JumpHistory(Model<crate::production::jump_history::Pin>),
     /// Current Movement, Figure and audio transport at an ordinary opportunity.
     MovementTouchdown(Box<crate::production::movement_touchdown::State>),
     /// The complete audio transport between frames.

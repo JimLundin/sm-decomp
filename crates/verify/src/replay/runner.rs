@@ -156,7 +156,7 @@ pub(super) fn run(
                 {
                     count(&mut result.counts.pending_boundaries, 1)?;
                 }
-                // A one-opportunity touchdown resumes across the actual advance.
+                // A one-opportunity floor witness resumes across the actual advance.
                 checkpoints.push(
                     origin
                         .take()
@@ -276,11 +276,16 @@ fn origin_checkpoint(
     if !case.checkpoints {
         return Ok(None);
     }
-    let (InputReader::MovementTouchdown(_), Start::CacheCut { frame }) = (inputs, &case.start)
-    else {
+    let Start::CacheCut { frame } = &case.start else {
         return Ok(None);
     };
-    capture_checkpoint(production, actual, *frame).map(Some)
+    if matches!(inputs, InputReader::MovementTouchdown(_))
+        || case.id.0 == super::jump_history::LEAP_CASE
+    {
+        capture_checkpoint(production, actual, *frame).map(Some)
+    } else {
+        Ok(None)
+    }
 }
 
 fn touchdown_outputs_hold(

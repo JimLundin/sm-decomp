@@ -80,8 +80,8 @@ frames (the vectors' format), never by a value in its start, with three exceptio
   halt takes it, for as long as she is dashing; a dash she has while not dashing is lost the next
   frame she moves (`Dash`).
 - **The moonfall** (`Moonfall`).
-- **How long jump has stayed held** since it was pressed: a count of frames, 0 to 65,535, which a
-  landing or a turn's end can make a press. Read by `Jumping` (jump held through).
+- **How long jump has stayed held** across draws that update jump history: a count from 0
+  to 65,535, which a landing or a turn's end can make a press. Read by `Jumping` (jump held through).
 - **Landed or ended the frame before**: `bool`, whether, the frame before, she landed or a turn's
   or a landing's animation ended and handed over its pose; it lasts one frame. Read by `Jumping`
   (jump held through), whose press comes the frame after.
@@ -584,14 +584,24 @@ axis. These are named choices, not angles rounded to a movement direction.
   at the new speed that same frame [SJ1]
 - So without space jump the same press does nothing: she falls on, and the pad chart's row for
   the spin keeps her spinning (C-space-jump-no-item).
-- **Jump held through** (§1.2): a count of the frames jump has stayed held since its press.
-- At a frame's end, jump held and not just pressed → the count goes up by 1 [JH1, JH2, JH3, JH4]
-- At a frame's end, jump just pressed, or not held → the count is 0 [JH1, JH2, JH3, JH4]
+- **Jump held through** (§1.2): a count of successive draws with jump held after its press.
+- On a draw that updates jump history, jump held now and on the previous such draw → the count
+  goes up by 1 [JH1, JH2, JH3, JH4]
+- On that draw, jump up now or on the previous such draw → the count is 0
+  [JH1, JH2, JH3, JH4]
+- The caller carries the previous draw's jump button and replaces it with the current one
+  after the update. During a door passage these draws can continue while motion and pose
+  choice are paused. Each draw updates the count and preserves the landing or animation-end
+  memory. The passage holds history between these draws. The `jump_history` vectors give
+  the count in draws (`frames`), `last_draw_held` and `landed_or_ended` in the initial and
+  expected history. The inputs `drawn` and `held` say whether the cut includes a
+  history-writing draw and whether jump is held. Constructed cases also give the
+  controller's `pressed` signal so the fixture can distinguish the poll from the draw.
 - The count goes from 65,535 to 0, and a count of 32,777 to 65,535 (jump held about 9 minutes or
   more) acts as one of 1 to 8 does below; 32,776 doesn't [C-held-wrap, C-held-long, C-held-edge,
   C-held-long-edge]
-- The frame after one on which she landed from a straight jump, a fall, a spin or a wall jump
-  (`WhatHerMovesMet`'s rows into `Landing`, where pose fit takes the change, pushing her or not),
+- The frame after one on which she landed from a straight jump, a backward leap, a fall, a spin or a
+  wall jump (`WhatHerMovesMet`'s rows into `Landing`, where pose fit takes the change, pushing her or not),
   or on which the animation of a turn or of a landing ended and handed over its pose
   (`AnimationEnds`), with the count at 1 to 8 → jump counts as just pressed for the pad chart that
   frame (`PadChart`), and the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4,
@@ -2113,7 +2123,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   centre, or she walks off. So her y and the placement are the push's on those
   frames, with the push.
 - **A knockback's end** is §12 (`PushEnds`). Out of scope there: a push taken as the ball, a
-  floor met in the backward leap, a push longer than 45 frames, an `Up` push a ceiling stops
+  push longer than 45 frames, an `Up` push a ceiling stops
   (the Ceres run never meets a ceiling in a push), a push whose pose fit would refuse
   `Recoiling`, and her animation's end on a push's last frame. A hit in a liquid starts a slower rise; liquids
   are out of scope. A push ending in `Recoiling` while a shot is fully powered up brings back that
@@ -2380,9 +2390,15 @@ push is over (its `LeadingHer`).
   still on her, and the next frame, holding forward, she drifts at the straight jump's top
   speed alone (PL5: 1.A000 of dash gone, 5.C000 cut to 1.4000); holding nothing she stops
   drifting there (C-leap-letgo-dash).
-- Meeting a floor in the leap is out of scope (§10).
-- checked: oracle (0006: PL1-PL3, PL5, PE1; r05: PL4); constructed (C-leap-top, C-leap-gain,
-  C-leap-stride, C-leap-both-right, C-leap-both-left, C-leap-jump-held, C-leap-letgo-dash).
+- The floor chooses the pose in a backward leap → she takes the landing pose from a straight jump,
+  stows her gun and faces the way she was travelling backward. This takes precedence over
+  the pad's choice to keep or let go of the leap. Pose fit, the stop on an accepted landing and
+  the next frame's jump history are the ordinary landing's [R-escape-leap-lands,
+  R-leap-lands-mirrored, C-leap-lands-shoot, C-leap-lands-held].
+- checked: oracle (0006: PL1-PL3, PL5, PE1; r05: PL4; R-escape-leap-lands,
+  R-leap-lands-mirrored); constructed (C-leap-top, C-leap-gain,
+  C-leap-stride, C-leap-both-right, C-leap-both-left, C-leap-jump-held, C-leap-letgo-dash,
+  C-leap-lands-shoot, C-leap-lands-held).
 
 ### PushEnds
 - kind: mechanic.

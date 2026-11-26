@@ -210,10 +210,6 @@ pub enum Fault {
     Suit,
     /// The door she touched leads into another area.
     NewArea,
-    /// Drawing during a passage can advance her jump history.
-    PassageJumpHistory,
-    /// Releasing jump as a backward leap lands needs its landing pose selection.
-    BackwardLeapLanding,
     /// The HUD refused the frame: the escape countdown starts on a frame whose scene only shows
     /// it.
     Hud,
@@ -321,7 +317,8 @@ impl State {
         );
 
         // Her room and where it sits on her map stay as they are through a frame of play.
-        self.samus.played(samus, &her);
+        self.samus
+            .played(samus, &her, samus::jump_button(inputs.held));
         self.station.pad_and_cover = pad_and_cover;
         self.camera = Model(camera);
         self.passage.doors = doors.doors;
@@ -388,7 +385,6 @@ impl State {
             ),
             &rules.doors,
         );
-        passage::check_jump_history(&exports.report, self.samus.movement.0.jump_held, inputs)?;
         let Scene {
             her,
             seen,
@@ -409,6 +405,14 @@ impl State {
         };
         let mut moved = self.samus.movement.0;
         moved.position = her;
+        let mut last_draw_jump = self.samus.last_draw_jump.0;
+        if passage::draws_jump(self.passage.doors, passing, &exports.report) {
+            samus::passage_jump_draw(
+                &mut moved.jump_held,
+                &mut last_draw_jump,
+                samus::jump_button(inputs.held),
+            );
+        }
         let pad_and_cover = if exports.report.runs[Activity::Projectiles] {
             self.station.pad(&mut moved, rules)
         } else {
@@ -437,6 +441,7 @@ impl State {
             .passed(&mut enemies, loaded.actors, pad_and_cover);
         self.quake = Model(quake);
         self.samus.movement.0 = moved;
+        self.samus.last_draw_jump.0 = last_draw_jump;
         self.camera.0 = camera::passed(self.camera.0, view, seen);
         self.palette = palette;
         self.frame = self.frame.after(exports.report.finishing, random);

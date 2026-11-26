@@ -33,6 +33,19 @@
 //! caller's earlier pending aim. `FiringDirection` saves and restores with serde, every
 //! direction included. Forced handovers such as the shinespark's belong to their own domain.
 //!
+//! Spec: `Jumping`, jump history during a passage. While her motion and pose choice are
+//! paused, draws that update jump history go on without her frame: the caller holds a
+//! `DrawnJumpHistory` (her `JumpHeld` and the jump button of the previous such draw, on an
+//! active frame the jump the frame's pad holds) and calls `DrawnJumpHistory::draw` with each
+//! history-writing draw's jump, and nothing between them. The count goes on against the
+//! previous draw, whatever the controller's poll pressed; the frame before stays as the last
+//! active frame left it, so on the next active frame the caller puts `jump_held` back on her
+//! and ends that frame with `Samus::react_after_draw`, giving it the history's `last_draw`:
+//! its count goes on against that draw's jump, while her controls and pose read the frame's
+//! own pad. Jump held now after a draw with jump up puts the count at 0, even with no press
+//! reported this frame. `Samus::react` is the same reaction for a frame with no passage
+//! before it, where the frame's own pad tells the previous draw's jump.
+//!
 //! # An ordinary call
 //!
 //! Restore the caller's complete serde `Samus` (position, pose, `Run`, `Vertical` with its
@@ -113,7 +126,7 @@ pub use types::{Direction, DirectionalTravels, FiringDirection, TravelDistance};
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use chart::Moment;
-pub use jump_held::{FrameBefore, JumpHeld};
+pub use jump_held::{DrawnJumpHistory, FrameBefore, JumpButton, JumpHeld};
 pub use knockback::{Knockback, Push};
 pub use rows::Met;
 pub use rules::{Bounces, Rules, SpeedCap, WithItem};

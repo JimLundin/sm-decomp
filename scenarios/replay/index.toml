@@ -1423,3 +1423,47 @@ provider = "pinned lean record"
 fields = ["view origin", "room grid and width in screens", "drawing gate", "NMI completion"]
 phase = "work and presentation"
 claim = "Two drawing visits age exhaust on the authorized beat. A later NMI can publish the retained output."
+
+[[case]]
+id = "movement/passage-jump-history"
+kind = "scoped"
+row = "chain-any-0009-DFD7"
+start = { source = "cache-cut", frame = 170 }
+end = { cut_inclusive = 330 }
+rules = ["samus-movement/Jumping"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "passage-jump"
+inputs = "passage-jump-draws"
+expectations = { provider = "pinned-record-cache", fields = ["movement.drawn-jump-held", "movement.last-draw-jump"], outputs = [] }
+checkpoints = true
+limits = ["The comparison covers the carried count, pending movement check and draw sample during the passage.", "The played run separately exercises passage scheduling. This scope borrows draw opportunities."]
+
+[[case.borrowed]]
+dependency = "passage.history-writing-draw"
+provider = "pinned passage phase and platform cuts"
+fields = ["history-writing draw", "held jump sampled from the preceding cut"]
+phase = "draw within passage work"
+claim = "Advance a single admitted jump history from cut 170. The expected count and previous draw sample never supply live input."
+
+[[case]]
+id = "movement/escape-leap-landing"
+kind = "scoped"
+row = "chain-any-0010-DF8D"
+start = { source = "cache-cut", frame = 86 }
+end = { cut_inclusive = 87 }
+rules = ["samus-movement/BackwardLeap", "samus-movement/WhatHerMovesMet"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.landing.pose", "movement.position.x", "movement.position.y", "movement.base-speed", "movement.vertical_speed", "movement.drawn-jump-held"], outputs = ["movement.landing.floor"] }
+checkpoints = true
+limits = ["One grounded leap opportunity through the production floor and pose-fit path.", "The compared state covers the chosen pose, centre, base speeds and next active jump check."]
+
+[[case.borrowed]]
+dependency = "movement.landing-neighbours"
+provider = "preceding pinned record and imported pose content"
+fields = ["room and actors", "controller", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
+phase = "before movement"
+claim = "Movement computes the floor and accepts the landing pose against the independently supplied geometry."

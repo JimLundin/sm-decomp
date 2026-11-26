@@ -2824,8 +2824,8 @@ speeds, dash, `0A52`, `0A54`, `18AA`, `18A8`, energy, handlers) and `vals.py`.
   `$91:8332` entry is 2 itself, so the base-speed test for 1 doesn't apply; the let-go and its
   dashing end are in "The backward leap let go" below). After the change the speed's magnitude
   `0B46` is kept and `0A1E` turns to the jump's facing, so the decoded signed speed flips (0006
-  727 → 728: −5.0000 → +5.C000; 729: snapped to 1.4000). A floor in the leap: out of scope; the
-  records that land in one are listed below.
+  727 → 728: −5.0000 → +5.C000; 729: snapped to 1.4000). A floor in the leap chooses the landing described in
+  [Landing from a backward leap](#landing-from-a-backward-leap).
 - **The moonfall after a floor stop.** With `0B36` = 0 the leap's and the jump's `$90:8FB3` skip
   the let-go test and `$90:90E2` subtracts 0.1C00 from the magnitude each frame, moving her by the
   old one: r05 394-399, FFFF.E400 → FFFF.5800, no limit; she sinks 2 px as her body shrinks 15h →
@@ -2991,3 +2991,74 @@ C-leap-stride, C-leap-both-right, C-leap-both-left, C-leap-jump-held, C-leap-let
 868, Unsupported on `Fault::RidleyFlying` (boss-ceres-ridley part 4c). Since part 4c-1a he takes
 off and flies in production: they hold 2,743, 2,520, 1,826 and 896, each stopping at room 6's
 cut 897 in `movement.pose`, where his tail hits her in flight (part 4c-1b).
+
+
+## Landing from a backward leap
+
+`chain-any-0010-DF8D:86` starts the witness with a right-facing backward leap and a
+leftward horizontal speed of 5 px per frame. The held buttons for the next turn are run
+and left. Jump has been released. The move carries Samus left by 5.C000 px and meets a
+floor. At cut 87 the floor pose is a stowed jump landing facing left. Her centre is
+`0049.C000,009D.F3FF` px, both speeds are zero, and the landing arms the next frame's
+jump-history check. Jump is released, so its count is zero. The frozen played run holds
+86 cuts and stops at `BackwardLeapLanding`. With the guard bypassed in the diagnostic run,
+the first differing field is `movement.pose` at 87.
+
+The grounded landing result for leap type 19h is in `$90:E676`. The landing selection
+at `$91:E931..E950` replaces the pad's pose choice. The no-aim path at
+`$91:E95D..E9D7` selects `A4h` or `A5h` from the travel direction in `$7E:0A1E`.
+The two leap poses have no firing direction in `$91:B8A1..B8B0`. The shoot-dependent
+landing is reached through a horizontal firing direction. The leap therefore takes
+the stowed landing even with shoot held. The grounded response uses
+`$91:F010..F039` and `$91:F1EC..F1FB` to stop the horizontal and vertical motion and
+arm the next pad-choice check after pose fit accepts the landing. The airborne let-go
+row still applies where the floor does not choose a pose.
+
+The selection check matches all seven known leap landings. Holding the leap pose
+matches zero. The room-2 witness and `boss-kraid-defeated:1073` cover both directions.
+Jump remains held at `samus-ceres-push:621,716` and `chain-any-0006-E0B5:1030`.
+`event-zebes-awake:36,135` has it released. The recorded pose vectors provide the floor
+contact as an input. The constructed floor case exercises motion, pose fit, the accepted
+stop and jump history on an invented flat floor. The shoot case catches the wrong gun
+pose even if the landing's direction has been corrected.
+
+## Jump history during a door passage
+
+On every history-writing draw, `$90:EB42` calls `$90:EAB3..EAD4`. The update uses jump
+in `$7E:008B` and in the previous draw's `$7E:0DFE`, against the binding in `$7E:09B4`.
+It advances `$7E:0AF4` if both hold jump, otherwise clears it, then publishes the
+current pad as the previous draw's. It neither runs the pad's new-pose choice nor
+consumes the pending auto-jump handler in `$7E:0A60`. The passage's corresponding
+draw paths are `$82:E2A7`, `$82:E2E8`, and `$82:E747` through `$A0:8871`.
+A draw of the inanimate sprite alone does not write jump history.
+
+| Cut in `chain-any-0009-DFD7` | Observation |
+| --- | --- |
+| 195–197 | The held press is sampled at the end of the first draw after the press. The history count stays zero. |
+| 198–200 | Two interrupted cuts keep the count zero. The darkening draw completes at 200 and advances it to one. This is cut 723 in the chained run from room 5. Holding the movement State produces the first difference at `movement.jump-held`. |
+| 203, 206, 209, 210 | Each draw adds one. The move and pose stay held. |
+| 211–290 | The passage keeps the history at five through the blank and the end of placement. The final darkening work frame has no history-writing draw. |
+| 291 | The first brightening draw raises the count to six on an interrupted cut. The work finishes at 292 without a second update. |
+| 310–311 | Jump is released for the next draw. The interrupted draw at 311 publishes zero and the released button. |
+
+The passage vectors name this row `rP3`. A scoped reference carries the count,
+previous draw's button and pending landing or
+animation-end memory for cuts 171 through 330. It reads the previous cut's sampled pad.
+It admits the passage phase and cut timing to choose the 30 draw opportunities and compares
+all 160 cuts. A model that holds seed
+history matches 46 of 160 cuts. A model that updates only on work completion first
+differs at 291. The `jump_history` vectors include four recorded and two constructed observations. The constructed cases vary
+the prior controller poll independently of the previous draw. Substituting the
+prior poll fails both. Clearing the pending landing memory fails the resampled case.
+
+The production movement caller can share the count update with a history-writing draw
+while preserving the landing memory. Carry the previous draw's held jump from the
+admitted seed's `$7E:0DFE` across subsequent draws and dark intervals. The poll's new
+press is not enough across a draw gap. The phase scheduling belongs to
+[the passage](world-doors.md#whatruns) and the platform. The current passage adapter
+publishes `Activity::Drawn` with completed work, which suffices for cut 200's draw.
+The earlier brightening publication needs a separate scheduled opportunity if
+production compares jump history at every cut. The observer check borrows those
+opportunities and does not claim an integrated passage timing pass.
+
+[Bank 82](https://patrickjohnston.org/bank/82) · [Bank 90](https://patrickjohnston.org/bank/90) · [Bank 91](https://patrickjohnston.org/bank/91) · [Bank A0](https://patrickjohnston.org/bank/A0)

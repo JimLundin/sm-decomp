@@ -491,6 +491,8 @@ pub enum RowId {
     WallStop,
     /// `WhatHerMovesMet`: a wall near her as she presses jump, spinning.
     WallKick,
+    /// `WhatHerMovesMet`, `BackwardLeap`: a floor, in the backward leap.
+    FloorFromALeap,
     /// `WhatHerMovesMet`: a floor, upright in a straight jump or falling, aimed `Forward` with
     /// shoot held: she lands firing.
     FloorFiring,

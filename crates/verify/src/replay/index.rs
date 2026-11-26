@@ -160,6 +160,8 @@ pub enum InputProvider {
     SaveFileBoundaries,
     /// Authored demo controls and borrowed cinematic weapon opportunities.
     IntroMissileInputs,
+    /// Independent passage phase and sampled button at each draw opportunity.
+    PassageJumpDraws,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -200,6 +202,8 @@ pub enum InputProvider {
 #[serde(rename_all = "kebab-case")]
 /// Source of immutable admitted content.
 pub enum ContentProvider {
+    /// The draw count uses fixed rules and no imported content.
+    PassageJump,
     /// Checked content imported from the player ROM.
     PlayerRomImport,
     /// Silent audio content: no clips or song, for frames that only queue offers.
@@ -372,6 +376,21 @@ pub enum ObservationId {
     /// Ordered missile and exhaust OAM bytes.
     #[serde(rename = "weapons.intro-oam")]
     IntroMissileOam,
+    /// Jump count and pending landing or end check.
+    #[serde(rename = "movement.drawn-jump-held")]
+    DrawnJumpHeld,
+    /// The input sampled on the last history-writing draw.
+    #[serde(rename = "movement.last-draw-jump")]
+    LastDrawJump,
+    /// Semantic body and cannon pose selected on landing.
+    #[serde(rename = "movement.landing.pose")]
+    LandingPose,
+    /// The horizontal base speed retained after landing.
+    #[serde(rename = "movement.base-speed")]
+    MovementBaseSpeed,
+    /// The grounded upright floor response.
+    #[serde(rename = "movement.landing.floor")]
+    LandingFloor,
 
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
@@ -923,6 +942,11 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CompleteReached
         | O::Inside
         | O::MovementStateComplete
+        | O::DrawnJumpHeld
+        | O::LastDrawJump
+        | O::LandingPose
+        | O::MovementBaseSpeed
+        | O::LandingFloor
         | O::PositionX
         | O::PositionY
         | O::VerticalSpeed
@@ -1033,6 +1057,12 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         | "save-files/MenuFiles"
         | "save-files/ChooseFile"
         | "save-files/WriteFile" => &[O::Battery],
+        "samus-movement/Jumping" if provider == InputProvider::PassageJumpDraws => {
+            &[O::DrawnJumpHeld, O::LastDrawJump]
+        }
+        "samus-movement/BackwardLeap" | "samus-movement/WhatHerMovesMet" => {
+            &[O::LandingPose, O::LandingFloor]
+        }
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
         }
@@ -1236,6 +1266,22 @@ fn movement_provider_valid(
     observations: &BTreeSet<ObservationId>,
     recorded: bool,
 ) -> bool {
+    use ObservationId as O;
+    if case.inputs == InputProvider::PassageJumpDraws {
+        return recorded
+            && case.start
+                == Start::CacheCut {
+                    frame: super::jump_history::START,
+                }
+            && case.row == super::jump_history::ROW
+            && case.end.cut_inclusive == super::jump_history::END
+            && case.content == ContentProvider::PassageJump
+            && case.expectations.fields == [O::DrawnJumpHeld, O::LastDrawJump]
+            && case.expectations.outputs.is_empty()
+            && case.checkpoints
+            && !case.borrowed.is_empty()
+            && !case.limits.is_empty();
+    }
     if case.inputs == InputProvider::NativeSearchInputs {
         return native_search_provider_valid(case, observations);
     }

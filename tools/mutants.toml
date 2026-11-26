@@ -584,8 +584,12 @@ field = "movement.choices"
 name = "played-reaction-state-dropped"
 responsibility = "played"
 file = "crates/game/src/production/played/samus.rs"
-before = "let outcome = samus.react(moves, between.hit.map(Contact::push));"
-after = "let outcome = { let mut dropped = samus; dropped.react(moves, between.hit.map(Contact::push)) };"
+before = '''let outcome =
+            samus.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0);'''
+after = '''let outcome = {
+            let mut dropped = samus;
+            dropped.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0)
+        };'''
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
 field = "movement.pose"
@@ -1145,3 +1149,48 @@ after = '''let second = SpriteDraw::default();'''
 case = "weapons/intro-ordinary-missiles"
 cut = 91
 field = "weapons.intro-oam"
+
+[[fault]]
+name = "played-brightening-jump-draw-at-completion"
+responsibility = "played"
+file = "crates/game/src/production/played/passage.rs"
+before = '''        passing.work_begun'''
+after = '''        passing.work_done'''
+case = "played chain-any-0009-DFD7 0 330"
+cut = 291
+field = "movement.jump-held"
+
+[[fault]]
+name = "passage-jump-count-held"
+responsibility = "movement"
+file = "crates/game/src/production/played/samus.rs"
+before = '''    history.draw(jump);'''
+after = '''    history.last_draw = jump;'''
+case = "movement/passage-jump-history"
+cut = 200
+field = "movement.drawn-jump-held"
+
+[[fault]]
+name = "escape-leap-landing-retains-facing"
+responsibility = "movement"
+file = "crates/game/src/production/movement.rs"
+before = '''    Ok(samus.react(moves, None))'''
+after = '''    let leap = samus.pose;
+    let result = samus.react(moves, None);
+    if leap.action == types::Action::Leaping && result.floor_response.is_some() {
+        samus.pose.facing = leap.facing;
+    }
+    Ok(result)'''
+case = "movement/escape-leap-landing"
+cut = 87
+field = "movement.landing.pose"
+
+[[fault]]
+name = "played-active-jump-latch-omitted"
+responsibility = "played"
+file = "crates/game/src/production/played/samus.rs"
+before = '''            self.last_draw_jump.0 = jump;'''
+after = '''            let _ = jump;'''
+case = "played chain-any-0010-DF8D 0 86"
+cut = 23
+field = "movement.last-draw-jump"

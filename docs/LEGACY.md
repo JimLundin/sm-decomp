@@ -127,10 +127,9 @@ set in the row its species loads to instead. No other species' placement changes
 
 ## Ceres escape boundaries
 
-Drawing during a lit door passage can update Samus's jump counter while movement is paused.
-The played loop stops at this dependency with `PassageJumpHistory`. Releasing jump as a
-backward leap meets the floor needs the landing pose selection (`BackwardLeapLanding`).
-Vents attached to the turning shaft need the shaft's motion (`TurningShaftVent`).
+The escape's last passage needs the shaft entrance's room loading rule
+(`Load(DoorRule(ToCeresElevatorShaft))`). Vents attached to the turning shaft
+need the shaft's motion (`TurningShaftVent`).
 
 ## The engine: planned differences from the original
 

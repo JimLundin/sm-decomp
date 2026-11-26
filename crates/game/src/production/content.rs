@@ -86,6 +86,8 @@ pub enum ProductionContent {
     SaveFiles(Box<crate::exact::save_files::Format>),
     /// Checked cinematic missile and power weapon assets.
     IntroMissiles(Box<super::played::intro_missiles::Content>),
+    /// Jump history requires only the observed draw button sample.
+    JumpHistory,
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
     /// Checked current gauge content.
@@ -130,6 +132,8 @@ pub enum ProductionRules {
     SaveFiles,
     /// Complete weapon rule parameters in the cinematic.
     IntroMissiles(weapons_projectiles::Rules),
+    /// Fixed jump history on paused draws.
+    JumpHistory,
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
     /// Scoped current Health rules.

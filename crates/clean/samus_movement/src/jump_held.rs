@@ -1,6 +1,8 @@
 //! `Jumping`, jump held through (§1.2): jump held through a landing, or through the end of a
 //! turn or of a landing, counts as a press for the pad chart the next frame, so she takes off
-//! again without pressing it.
+//! again without pressing it. Every draw that updates jump history counts it on against the
+//! previous such draw's jump: one while her motion is paused does so by itself
+//! (`DrawnJumpHistory`), and an active frame with the rest of her frame.
 
 use crate::rows::Met;
 use crate::rules::Rules;
@@ -56,23 +58,88 @@ impl JumpHeld {
         }
     }
 
-    /// `Jumping`: what she remembers at the end of frame `f`, with what it left behind for the
-    /// next (`before`). A
-    /// press the count made this frame puts it back to 0 first; then jump held and not just
-    /// pressed counts one frame more, and jump just pressed or not held puts it at 0. The press
-    /// this reads is the pad's own.
-    pub(crate) fn then(self, r: &Rules, f: &Frame, before: FrameBefore) -> Self {
+    /// `Jumping`: what she remembers at the end of frame `f`, whose draw updates jump history,
+    /// with what it left behind for the next (`before`). A press the count made this frame puts
+    /// it back to 0 first; then the draw counts on from the `previous` history-writing draw's
+    /// jump, as `counted_on` says. Only the count reads `previous`: the pad chart and her
+    /// controls read the frame's own buttons.
+    pub(crate) fn then(
+        self,
+        r: &Rules,
+        f: &Frame,
+        previous: JumpButton,
+        before: FrameBefore,
+    ) -> Self {
         let held = if self.presses(r) {
             Wrapping(0)
         } else {
             self.frames
         };
-        let frames = if f.pad.any(JUMP) && !f.pressed.any(JUMP) {
-            held + Wrapping(1)
+        Self {
+            frames: counted_on(held, previous, JumpButton::of(f.pad)),
+            before,
+        }
+    }
+}
+
+/// `Jumping`: a draw that updates jump history counts on from `frames`: one more where jump is
+/// held `now` and was on the `previous` such draw (65,535 goes to 0), else 0.
+fn counted_on(frames: Wrapping<u16>, previous: JumpButton, now: JumpButton) -> Wrapping<u16> {
+    if previous == JumpButton::Held && now == JumpButton::Held {
+        frames + Wrapping(1)
+    } else {
+        Wrapping(0)
+    }
+}
+
+/// `Jumping`: jump as a draw that updates jump history samples it.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub enum JumpButton {
+    /// Jump is held.
+    Held,
+    /// Jump is up.
+    Up,
+}
+
+impl JumpButton {
+    /// Jump as `pad` holds it.
+    const fn of(pad: Buttons) -> Self {
+        if pad.any(JUMP) { Self::Held } else { Self::Up }
+    }
+
+    /// `Jumping`: the previous history-writing draw's jump, as a frame `f` that follows it with
+    /// no passage between tells it: held where jump is held and not just pressed, so it was held
+    /// the frame before. Up otherwise: jump up now puts the count at 0 whatever came before.
+    pub(crate) const fn previous_draw(f: &Frame) -> Self {
+        if f.pressed.any(JUMP) {
+            Self::Up
         } else {
-            Wrapping(0)
-        };
-        Self { frames, before }
+            Self::of(f.pad)
+        }
+    }
+}
+
+/// `Jumping`: jump held through, with the jump of the previous draw that updated it.
+///
+/// A caller keeps it across such draws while her motion and pose choice are paused (a door
+/// passage). State a caller gives and reads back. Between draws it holds as it is; the frame before
+/// stays for the next frame she is active.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct DrawnJumpHistory {
+    /// The count and what the last active frame left.
+    pub jump_held: JumpHeld,
+    /// Jump as the previous draw that updated jump history sampled it.
+    pub last_draw: JumpButton,
+}
+
+impl DrawnJumpHistory {
+    /// `Jumping`: a draw that updates jump history, sampling `jump`, without the rest of her
+    /// frame. Jump held now and on the previous such draw counts one more; jump up on either
+    /// puts the count at 0. The controller's own press plays no part, and the frame before is
+    /// kept as it is. Then this draw's jump becomes the previous draw's.
+    pub fn draw(&mut self, jump: JumpButton) {
+        self.jump_held.frames = counted_on(self.jump_held.frames, self.last_draw, jump);
+        self.last_draw = jump;
     }
 }
 

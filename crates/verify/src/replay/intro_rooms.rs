@@ -23,8 +23,7 @@ use data::pose::PoseId;
 use data::rom::Rom;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
-    ProductionSeed,
-    played::{intro_rooms as rooms, samus},
+    ProductionSeed, played::intro_rooms as rooms,
 };
 use game::state::owned::OwnedState;
 use interface_hud::{Ammo, SelectableItem, Selection};
@@ -225,12 +224,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
 
 fn actor(wram: &[u8], content: &appearance::Content) -> Result<rooms::Actor, Outcome> {
     let observed = ActorView::read(wram)?;
-    let (appearance, figure) = appearance::owner(wram, content)?;
-    let samus = samus::State {
-        movement: Model(movement::seed(wram)?),
-        appearance: Model(appearance),
-        figure: Model(figure),
-    };
+    let samus = super::played::samus::seed(wram, content)?;
     let mut shots = beam::State::reset(enum_map::EnumMap::from_fn(|_| beam::Axes {
         x: beam::PixelFraction(0),
         y: beam::PixelFraction(0),

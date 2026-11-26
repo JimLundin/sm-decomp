@@ -108,7 +108,7 @@ const DOMAINS: &[Domain] = &[
         name: "samus-movement",
         bridge: Some("samus_movement_bridge"),
         adapters: &[],
-        providers: &["movement"],
+        providers: &["movement", "jump_history"],
         areas: &[
             (
                 "motion",

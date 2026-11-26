@@ -11,16 +11,27 @@ use crate::production::animation;
 use crate::production::connected::inputs::Inputs;
 use crate::state::owned::{AppearancePin, MovementPin};
 use canonical::Canonical;
-use canonical::model::Model;
+use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
 use samus_appearance::{
     Ahead, Dash, Figure, GrappleActivity, HurtOpportunity, MissingClip, MoveEvent, Suit,
 };
-use samus_movement::{Dashing, StandingAnimation, WallTest};
+use samus_movement::{
+    Dashing, DrawnJumpHistory, JumpButton, JumpHeld, StandingAnimation, WallTest,
+};
 use types::{Pose, Set};
 
 pub use crate::production::movement::FigurePin;
+
+/// The previous draw button stored in a checkpoint.
+pub struct JumpButtonPin;
+
+impl Pinned for JumpButtonPin {
+    type State = JumpButton;
+    const NAME: &'static str = "played-samus-jump-button";
+    const SHAPE: u64 = 0x2A2A_0720_FF8D_F79B;
+}
 
 /// Her movement, her animation and the figure she shows, carried frame to frame.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
@@ -31,6 +42,8 @@ pub struct State {
     pub appearance: Model<AppearancePin>,
     /// The figure she is drawn in.
     pub figure: Model<FigurePin>,
+    /// The jump button sampled on the last draw that wrote her jump history.
+    pub last_draw_jump: Model<JumpButtonPin>,
 }
 
 impl State {
@@ -48,10 +61,27 @@ impl State {
 
     /// Her State after a frame of play: `samus` as the frame leaves her, and what `her` frame
     /// shows.
-    pub(super) const fn played(&mut self, samus: samus_movement::Samus, her: &Her) {
+    pub(super) const fn played(
+        &mut self,
+        samus: samus_movement::Samus,
+        her: &Her,
+        jump: JumpButton,
+    ) {
         self.movement = Model(samus);
         self.appearance = Model(her.appearance);
         self.figure = Model(her.figure);
+        if her.outcome.is_some() {
+            self.last_draw_jump.0 = jump;
+        }
+    }
+}
+
+/// The jump button sampled on a history-writing draw.
+pub(super) const fn jump_button(held: types::Buttons) -> JumpButton {
+    if held.any(types::button::JUMP) {
+        JumpButton::Held
+    } else {
+        JumpButton::Up
     }
 }
 
@@ -92,6 +122,21 @@ pub(super) struct TurnContent<'a> {
     pub appearance: &'a super::AppearanceContent,
     pub movement_rules: &'a samus_movement::Rules,
     pub appearance_rules: &'a samus_appearance::Rules,
+}
+
+/// Update the count and previous-draw latch while active movement and pose choice are paused.
+pub(in crate::production) fn passage_jump_draw(
+    held: &mut JumpHeld,
+    last_draw: &mut JumpButton,
+    jump: JumpButton,
+) {
+    let mut history = DrawnJumpHistory {
+        jump_held: *held,
+        last_draw: *last_draw,
+    };
+    history.draw(jump);
+    *held = history.jump_held;
+    *last_draw = history.last_draw;
 }
 
 impl super::State {
@@ -215,13 +260,8 @@ impl State {
             .moves(&frame, world, content.movement_rules)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
         let between = between(moves.position_after_moves())?;
-        let outcome = samus.react(moves, between.hit.map(Contact::push));
-        if start.pose.action == types::Action::Leaping
-            && !inputs.held.any(types::button::JUMP)
-            && outcome.floor_response.is_some()
-        {
-            return Err(Fault::BackwardLeapLanding);
-        }
+        let outcome =
+            samus.react_after_draw(moves, between.hit.map(Contact::push), self.last_draw_jump.0);
         missing_body
             .get()
             .map_or(Ok((samus, outcome, between)), |pose| Err(Fault::Body(pose)))
@@ -367,7 +407,9 @@ mod tests {
         assert_eq!(her.appearance.hurt_count.frames(), 2);
         assert_eq!(her.colours, Some(hurt));
 
-        state.samus.played(her.samus, &her);
+        state
+            .samus
+            .played(her.samus, &her, samus_movement::JumpButton::Up);
         let (next, ()) = state
             .her_frame(&frame_inputs, &content, &rules(), |_| {
                 Ok(Between {
