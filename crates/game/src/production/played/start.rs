@@ -20,13 +20,17 @@ impl State {
     /// The new game's pose or fresh energy cannot enter play.
     pub fn new_game(
         start: &NewGame,
-        started: crate::production::room_loading::Started,
+        mut started: crate::production::room_loading::Started,
         health: samus_health::State,
         arrival: arrival::State,
         frame: frame::State,
         quake: world_quake::State,
     ) -> Result<Self, Fault> {
         let samus = fresh_at(start.her)?;
+        // The gameplay display uses small tiles and keeps the HUD above the room.
+        let tiled = crate::state::video::BgMode(9);
+        started.room.entry.view.hud = tiled;
+        started.room.entry.view.room = tiled;
         let her = samus.movement.0.position;
         let (view_x, view_y) = start.view;
         Ok(Self {
