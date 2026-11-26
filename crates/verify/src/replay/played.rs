@@ -990,13 +990,13 @@ fn comparison_failure(cut: u64, fault: CompareFault) -> Outcome {
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     pub(super) fn diagnostic(args: std::fmt::Arguments<'_>) {
         use std::io::Write as _;
         writeln!(std::io::stdout().lock(), "{args}").unwrap();
     }
 
-    pub(super) fn sources() -> super::Sources {
+    pub(in crate::replay) fn sources() -> super::Sources {
         let path = |name| std::env::var_os(name).unwrap().into();
         super::Sources {
             cache: path("SM_CACHE"),

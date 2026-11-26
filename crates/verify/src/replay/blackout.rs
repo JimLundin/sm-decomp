@@ -267,3 +267,93 @@ fn digits(r: &[u8]) -> Result<u32, Outcome> {
         .saturating_add(decimal(0x946)?.saturating_mul(100))
         .saturating_add(decimal(0x945)?))
 }
+
+#[cfg(test)]
+mod owned_standing {
+    use super::*;
+    use crate::replay::{appearance, camera, compared, played};
+    use game::production::blackout::StandingFrame;
+    use game::state::video::Mode7;
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn first_locked_turn_reads_the_carried_look() -> Result<(), Outcome> {
+        let sources = played::tests::sources();
+        let lock = Lock::parse(&std::fs::read_to_string(&sources.lock).unwrap()).unwrap();
+        let row = lock.row(&RowId("chain-any-0011-DF45".to_owned())).unwrap();
+        let cache = Cache::open(&sources.cache, row).unwrap();
+        let prior = record(&cache, 164)?;
+        let current = record(&cache, 165)?;
+        let image = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
+        let rom = image.lorom();
+        let format = game::exact::save_files::Format::load(rom).unwrap();
+        let (state, content) = first_owners(&prior, rom, format)?;
+        let mut production = Production::admit(
+            ProductionSeed::Blackout(Box::new(state)),
+            ProductionContent::Blackout(Box::new(content)),
+            ProductionRules::Blackout,
+        )
+        .unwrap();
+        let samus = played::samus::seed(&prior.wram, &appearance::Content::load(&sources.rom)?)?;
+        let camera = camera::seed(&prior.wram, &camera::Content)?;
+        let view = Mode7 {
+            centre: [
+                word(&prior.wram, 0x80)?.cast_signed(),
+                word(&prior.wram, 0x82)?.cast_signed(),
+            ],
+            matrix: [
+                word(&prior.wram, 0x78)?.cast_signed(),
+                word(&prior.wram, 0x7a)?.cast_signed(),
+                0,
+                0,
+            ],
+            ..Mode7::default()
+        };
+        let standing = StandingFrame::from_locked(&samus, camera.position(), view);
+        assert_eq!(
+            standing,
+            standing::LockedLook::read(&prior, rom)?.drawing(&prior)?
+        );
+        let cut = blackout::Cut {
+            standing: Some(standing),
+            ..work(&prior, &current, false)?
+        };
+        let ProductionOutputs::Blackout(output) =
+            production
+                .advance(AdvanceInput::Blackout(cut))
+                .map_err(|fault| crate::replay::production_failure(165, fault))?
+        else {
+            return Err(data_failure(Some(165), "locked body output"));
+        };
+        compared(
+            165,
+            &standing::expected(&current, rom)?.fields,
+            &standing::actual(&production, &output)?,
+        )?;
+        compared(
+            165,
+            &hud::expected(&prior, &current)?.fields,
+            &hud::actual(&production, &output.regular_publication)?,
+        )
+    }
+
+    fn first_owners(
+        prior: &oracle_record::FrameRecord,
+        rom: data::rom::Lorom<'_>,
+        format: game::exact::save_files::Format,
+    ) -> Result<(blackout::State, blackout::Content), Outcome> {
+        let mut state = seed::read(prior, rom, &format, false)?;
+        let hud = hud::admit(prior, rom, &mut state)?;
+        let standing = standing::admit_art(prior, &mut state, rom, false)?;
+        Ok((
+            state,
+            blackout::Content {
+                figures: import::countdown::import(rom).unwrap(),
+                graphics: data::pose::tiles::Graphics::default(),
+                format,
+                standing: Some(standing),
+                hud: Some(hud),
+            },
+        ))
+    }
+}

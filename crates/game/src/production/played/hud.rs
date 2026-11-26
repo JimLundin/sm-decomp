@@ -70,6 +70,45 @@ impl super::State {
         Ok((hud_state, outputs))
     }
 
+    /// Retain the ordinary room HUD and its completed-frame count when the elevator locks her.
+    #[must_use]
+    pub fn locked_hud(
+        &self,
+        content: &Content,
+        frame: &HudFrame,
+    ) -> (
+        crate::production::blackout::LockedHud,
+        crate::production::blackout::HudContent,
+    ) {
+        use crate::production::blackout::{HudContent, LockedHud};
+        let centre = self.samus.movement.0.position;
+        (
+            LockedHud {
+                model: self.hud.clone(),
+                finished: self.frame.count.0,
+            },
+            HudContent {
+                pictures: content.hud.clone(),
+                map: content.map.clone(),
+                room: self.passage.map_room,
+                centre: Pair {
+                    x: centre.x.pixel().0,
+                    y: centre.y.pixel().0,
+                },
+                map_collected: frame.map_collected,
+                stock: frame.stock_at_start,
+                status: Status {
+                    energy: Energy {
+                        now: self.health.0.energy.whole.get(),
+                        capacity: frame.capacity,
+                    },
+                    reserve: frame.reserve,
+                    ammunition: frame.ammunition,
+                },
+            },
+        )
+    }
+
     /// The HUD meets the boss as his placing hands it on, outside a frame of play, in the room
     /// the door she touched leads to.
     pub(super) fn meet_the_boss(

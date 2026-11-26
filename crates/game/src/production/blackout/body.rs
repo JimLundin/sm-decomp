@@ -2,14 +2,14 @@
 
 use data::spritemap::{SpriteAttributes, SpriteSize};
 use samus_appearance::{
-    BodyRow, ElevatorDrawing, ElevatorPictureError, ElevatorProjection, ObjectSize, Step,
-    elevator_standing_picture,
+    BodyRow, ElevatorDrawing, ElevatorPictureError, ElevatorProjection, ObjectSize, ShaftView,
+    Step, elevator_standing_picture,
 };
-use types::{Pair, Pose};
+use types::{Pair, Parts as _, Pose, Position};
 
 use crate::intent::{Placing, SpriteDraw, SpritePiece};
 use crate::samus_appearance_bridge::elevator::Art;
-use crate::state::video::{NmiBatch, OAM_SPRITES, StandingStrips};
+use crate::state::video::{Mode7, NmiBatch, OAM_SPRITES, StandingStrips};
 
 use super::Fault;
 
@@ -22,6 +22,37 @@ pub struct StandingFrame {
     pub step: Step,
     /// Geometry at drawing, with the shaft view before its late rotation.
     pub projection: ElevatorProjection,
+}
+
+impl StandingFrame {
+    /// Take the picture inputs from the locked actor and the current shaft view.
+    /// The displayed clip step is carried through the lock without advancing it.
+    #[must_use]
+    pub fn from_locked(
+        samus: &crate::production::played::samus::State,
+        camera: Position,
+        view: Mode7,
+    ) -> Self {
+        let point = |at: Position| Pair {
+            x: i32::from(at.x.pixel().0),
+            y: i32::from(at.y.pixel().0),
+        };
+        let [diagonal, cross, ..] = view.matrix;
+        let [pivot_x, pivot_y] = view.centre;
+        Self {
+            pose: samus.movement.0.pose,
+            step: samus.appearance.0.animation.playhead.step,
+            projection: ElevatorProjection {
+                centre: point(samus.movement.0.position),
+                pivot: Pair {
+                    x: i32::from(pivot_x),
+                    y: i32::from(pivot_y),
+                },
+                camera_origin: point(camera),
+                carried_view: ShaftView { diagonal, cross },
+            },
+        }
+    }
 }
 
 pub(super) fn prepare(batch: &mut NmiBatch, frame: StandingFrame, art: &Art) -> Result<(), Fault> {
