@@ -51,6 +51,8 @@ pub(super) mod samus;
 mod screens;
 pub(super) mod seed;
 mod shaft;
+#[cfg(test)]
+mod shaft_native;
 mod start;
 mod station;
 mod steam;
