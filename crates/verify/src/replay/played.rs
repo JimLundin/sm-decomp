@@ -449,15 +449,8 @@ impl<'a> Run<'a> {
             Start::Room(seed) => Self::seeded(seed, content, &rooms)?,
         };
         let hud = super::hud::Content::load(path)?;
-        let opening_hud = if matches!(origin, Start::Preparing(..)) {
-            match import::start::hud(image.lorom(), &start) {
-                Ok(asset) => Some(hud::opening(&asset)?),
-                Err(import::start::HudError::Room) => None,
-                Err(_) => return Err(data_failure(None, "played opening HUD import")),
-            }
-        } else {
-            None
-        };
+        let (_, area) = room.map;
+        let opening_hud = Self::opening_hud(origin, image.lorom(), &start)?;
         let language = match origin {
             Start::Preparing(_, _, carried) => carried.language,
             Start::Room(seed) => seed::language(&seed.wram)?,
@@ -540,6 +533,21 @@ impl<'a> Run<'a> {
             cartridge: None,
             blackout: None,
         })
+    }
+
+    fn opening_hud(
+        origin: Start<'_>,
+        rom: data::rom::Lorom<'_>,
+        start: &data::assets::start::NewGame,
+    ) -> Result<Option<(interface_hud::OpeningFrame, interface_hud::OpeningPreview)>, Outcome> {
+        if !matches!(origin, Start::Preparing(..)) {
+            return Ok(None);
+        }
+        match import::start::hud(rom, start) {
+            Ok(asset) => hud::opening(&asset).map(Some),
+            Err(import::start::HudError::Room) => Ok(None),
+            Err(_) => Err(data_failure(None, "played opening HUD import")),
+        }
     }
 
     /// The held facts and State as a seed in play holds them.

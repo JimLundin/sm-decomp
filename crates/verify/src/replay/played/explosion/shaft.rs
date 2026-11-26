@@ -159,19 +159,18 @@ pub(super) fn check(
         &blackout::hud::expected(previous, current)?.fields,
         &blackout::hud::actual(production, &output.regular_publication)?,
     )?;
-    if let Some(shaft) = shaft {
-        if let Some(i) = shaft
+    if let Some(shaft) = shaft
+        && let Some(i) = shaft
             .video
             .dma
             .iter()
             .zip(current.ppu.dma.map(crate::replay::landing_site::channel))
             .position(|(actual, expected)| *actual != expected)
-        {
-            return Err(Outcome::Difference {
-                cut,
-                field: format!("blackout.dma[{i}]"),
-            });
-        }
+    {
+        return Err(Outcome::Difference {
+            cut,
+            field: format!("blackout.dma[{i}]"),
+        });
     }
     Ok(())
 }
