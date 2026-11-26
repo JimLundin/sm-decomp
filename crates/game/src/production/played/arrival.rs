@@ -240,7 +240,6 @@ impl super::State {
             passing.random,
         );
         Ok(Outputs {
-            elevator_reach: None,
             movement: None,
             sounds: Vec::new(),
             doors,
