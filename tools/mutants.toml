@@ -1504,12 +1504,13 @@ after = '''        if let Some(handoff) = turn.handoff {
         let (input, eligible) =
             self.cannon
                 .inputs(&room.actor, pad, shoot, mode, &content.missiles)?;
+        let movement_content = motion.movement;
         let motion = room
             .actor_turn(pad, parity, &content.room.rooms, motion, controlled)
             .map_err(Fault::IntroRoom)?;
         if controlled {
             room.actor
-                .sample_body(motion.movement)
+                .sample_body(movement_content)
                 .map_err(Fault::IntroRoom)?;
         }
 '''
