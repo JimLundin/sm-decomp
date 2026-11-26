@@ -46,6 +46,8 @@ mod quake;
 mod return_fade;
 mod return_timing;
 mod ridley;
+#[cfg(test)]
+mod room_video;
 pub(super) mod rows;
 pub(super) mod samus;
 mod screens;

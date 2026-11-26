@@ -65,6 +65,7 @@ pub mod landing_site;
 pub mod passage;
 pub mod quake;
 mod ridley;
+pub mod room_video;
 pub mod samus;
 mod shaft;
 mod start;
