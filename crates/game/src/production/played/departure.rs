@@ -22,6 +22,14 @@ pub struct Room {
 }
 
 impl super::State {
+    /// Carry persistent progress with the whole energy reached by gameplay Health.
+    #[must_use]
+    pub fn departure_progress(&self) -> Remembered {
+        let mut progress = Remembered::from(&self.progress);
+        progress.restore_energy(self.health.0.energy.whole.get());
+        progress
+    }
+
     /// Capture the current room and exploration still needed by the next scene.
     #[must_use]
     pub fn departure_room(

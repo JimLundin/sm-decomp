@@ -780,7 +780,7 @@ impl<'a> Run<'a> {
                 blackout,
                 room,
                 landing,
-                progress: (&self.state.progress).into(),
+                progress: self.state.departure_progress(),
             },
             assets,
         ))
