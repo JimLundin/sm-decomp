@@ -4,6 +4,8 @@
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 rules = [
+    "boss-ceres-ridley/TailHits",
+    "boss-ceres-ridley/TailSwishes",
     "boss-ceres-ridley/VentPlaced",
     "boss-ceres-ridley/VentInView",
     "boss-ceres-ridley/VentWaits",
@@ -1194,3 +1196,33 @@ after = '''            let _ = jump;'''
 case = "played chain-any-0010-DF8D 0 86"
 cut = 23
 field = "movement.last-draw-jump"
+
+[[fault]]
+name = "airborne-tail-hit-withheld"
+rule = "boss-ceres-ridley/TailHits"
+responsibility = "ceres"
+file = "crates/game/src/production/played/ridley.rs"
+before = "    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"
+after = """
+    let mut run = run;
+    if run.ridley.flight_tail.is_some() {
+        run.hit = None;
+    }
+    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"""
+case = "ridley/flight-tail"
+cut = 897
+field = "movement.pose"
+
+[[fault]]
+name = "airborne-tail-swish-withheld"
+rule = "boss-ceres-ridley/TailSwishes"
+responsibility = "ceres"
+file = "crates/game/src/production/played/ridley.rs"
+before = "    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"
+after = """
+    let mut run = run;
+    run.swish = None;
+    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {"""
+case = "ridley/flight-tail"
+cut = 931
+field = "ridley.tail.swish-request"

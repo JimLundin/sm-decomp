@@ -92,6 +92,15 @@ The following limits belong to retained clean models or content readers:
   treats the grapple by its declared kind. The original can reuse the last projectile's
   weapon value and start one of these reactions. That stale-value behaviour is not modeled.
 
+## Samus's aim after an isolated down press in a fall
+
+On `samus-ceres-push`, the polling cut at 904 newly presses Down. The following game
+frame ends in the downward-aimed falling pose at 905, which polls the release.
+With Down released, the original keeps that pose at 906. The movement chart chooses
+forward aim on the frame with no button held. The alternate played route first differs
+at 906 in `movement.pose`. Its second tail hit is compared from a separate observed
+origin at cut 926.
+
 ## The engine: memory a model keeps that the engine can't hold yet
 
 Production holds the selected clean State itself. Some clean States lack complete serialization; their live entry remains usable while save or

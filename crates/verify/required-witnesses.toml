@@ -41,4 +41,8 @@ health_tail = [
 ]
 
 # Every reviewed run of scenarios/replay/played.toml holds its `held` and `stop`.
-played = ["replay::played::tests::reviewed_runs_hold"]
+played = [
+    "replay::played::tests::reviewed_runs_hold",
+    "replay::played::tests::airborne_tail_continues_from_observed_checkpoints",
+    "replay::played::tests::alternate_room_start_plays_through_the_rising_tail_hit",
+]

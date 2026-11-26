@@ -85,7 +85,7 @@ fn at_cut(outcome: Outcome, current: u64) -> Outcome {
     }
 }
 
-fn record_cut(
+pub(super) fn record_cut(
     result: &mut CaseResult,
     digest: &mut Vec<u8>,
     expected: &ExpectedCut,

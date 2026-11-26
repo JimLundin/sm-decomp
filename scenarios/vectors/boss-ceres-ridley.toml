@@ -1505,7 +1505,7 @@ ridley_after = { phase = "Waiting", wait = 304, look = "Rest", position = [186, 
 # - ridley.phase and ridley_after.phase also "Awake" (part 3's: no step shown), "EyeFading"
 #   (steps: the eye's steps shown), "BodyFading" (sets: the body's sets shown; runs: the runs
 #   since its last set), "ReadyToRoar" (wait), "Roaring" (wait; figure, 1 to 5; figure_runs, its
-#   runs shown, absent for figure 5) and, in ridley_after only, "Flying" (no look: part 4c's).
+#   runs shown, absent for figure 5) and, in ridley_after only, "TakingOff" (no look: part 4c's).
 # - look also "Open" or "Wide".
 # - ridley_after also holds: tangible, moving, roaring, music (the fight's music asked for) and
 #   roar (the roar's sound asked for, queue limit 6), bools; eye_colours, the number of the eye's
@@ -1810,7 +1810,7 @@ content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
 ridley = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [186, 169] }
 baby = { routine = "Fidget", step = 3, runs = 8 }
 random = "4DB7"
-ridley_after = { phase = "Flying", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 9, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+ridley_after = { phase = "TakingOff", position = [186, 169], baby = { routine = "Fidget", step = 3, runs = 9, look = "Second", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
 
 [[vector]]
 # wait 0 with his jaws still wide (no row): he takes off all the same
@@ -1820,7 +1820,7 @@ entries = ["Roars"]
 content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
 ridley = { phase = "Roaring", wait = 0, figure = 3, figure_runs = 10, look = "Wide", position = [186, 169] }
 baby = { routine = "Fidget", step = 2, runs = 2 }
-ridley_after = { phase = "Flying", position = [186, 169], baby = { routine = "Fidget", step = 2, runs = 3, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
+ridley_after = { phase = "TakingOff", position = [186, 169], baby = { routine = "Fidget", step = 2, runs = 3, look = "Third", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = true, moving = true, roaring = false, music = false, roar = false }
 
 [[vector]]
 # recorded case F20: the baby cries and glows as he sits after his roar
@@ -2119,6 +2119,1839 @@ her = { position = [218, 185], body = [5, 16], protection = 0 }
 ridley_after = { phase = "EyeFading", steps = 3, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 1, curl = 16 }
 
 
+# ================================================================ part 4c-1b: his tail in flight
+#
+# Format of part 4c-1b (§17), ids FT-. The ridley, random, energy and hits_taken fields
+# use the L- form. Her is the same table as in the T- vectors, as the frame starts.
+# Optional rules.tail_reach overrides TailHits' reach, in px.
+# flight_tail is absent for take-off, which supplies its own starting shape. The
+# flight_tail and flight_tail_after tables hold pace, an optional mark, swish (runs),
+# and seven segments, ordered from base to tip. Angles count 256ths of a turn, lengths
+# count 1/256 px, places are unsigned whole px and offsets are signed whole px.
+# lag is a count or "Passed". Directions are "Ahead" and "Back".
+# ridley_after.whip is the swish request, and ridley_after.hit is the shared tail hit.
+# W1-W21 identify recorded cases. The others are constructed.
+
+[[vector]]
+# recorded case W1: he takes off: his tail comes loose in its resting shape, every segment swinging ahead; each passes the swing on and moves 1 ahead
+id = "FT-takeoff"
+source = "constructed"
+entries = ["TailBends", "TailComesLoose", "TailFollows"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [186, 169], curl = 16 }
+energy = 54
+hits_taken = 11
+random = "4DB7"
+her = { position = [223, 173], body = [5, 12], protection = 30 }
+ridley_after = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191], whip = false }
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16383, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [217, 186] },
+  { angle = 16399, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [2, 7], place = [219, 193] },
+  { angle = 16415, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [226, 196] },
+  { angle = 16431, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -3], place = [233, 193] },
+  { angle = 16447, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [236, 185] },
+  { angle = 16463, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, -8], place = [233, 177] },
+  { angle = 16479, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-5, -3], place = [228, 174] },
+]
+
+[[vector]]
+# recorded case W2: taking off: every segment 1 further ahead; their offsets unchanged at these lengths
+id = "FT-swing-ahead"
+source = "constructed"
+entries = ["TailBends", "TailFollows", "TailSwings"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "85A4"
+her = { position = [226, 169], body = [5, 12], protection = 29 }
+ridley_after = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 2, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16383, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [217, 186] },
+  { angle = 16399, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [2, 7], place = [219, 193] },
+  { angle = 16415, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [226, 196] },
+  { angle = 16431, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -3], place = [233, 193] },
+  { angle = 16447, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [236, 185] },
+  { angle = 16463, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, -8], place = [233, 177] },
+  { angle = 16479, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-5, -3], place = [228, 174] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16382, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [217, 186] },
+  { angle = 16398, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [2, 7], place = [219, 193] },
+  { angle = 16414, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [226, 196] },
+  { angle = 16430, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -3], place = [233, 193] },
+  { angle = 16446, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [236, 185] },
+  { angle = 16462, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, -8], place = [233, 177] },
+  { angle = 16478, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-5, -3], place = [228, 174] },
+]
+
+[[vector]]
+# recorded case W3: his first hop: the tail follows his place before the hop
+id = "FT-hop"
+source = "constructed"
+entries = ["TailBends"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "136A"
+her = { position = [226, 160], body = [5, 12], protection = 27 }
+ridley_after = { phase = "TakingOff", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16381, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [217, 186] },
+  { angle = 16397, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [1, 7], place = [218, 193] },
+  { angle = 16413, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 4], place = [224, 197] },
+  { angle = 16429, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -2], place = [231, 195] },
+  { angle = 16445, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [4, -7], place = [235, 188] },
+  { angle = 16461, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-2, -8], place = [233, 180] },
+  { angle = 16477, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-5, -3], place = [228, 177] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16380, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [217, 186] },
+  { angle = 16396, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [1, 7], place = [218, 193] },
+  { angle = 16412, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 4], place = [224, 197] },
+  { angle = 16428, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -2], place = [231, 195] },
+  { angle = 16444, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [4, -7], place = [235, 188] },
+  { angle = 16460, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-2, -8], place = [233, 180] },
+  { angle = 16476, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-5, -3], place = [228, 177] },
+]
+
+[[vector]]
+# recorded case W4: the base 1 short of its forward limit, 16,368: it stops there and turns back
+id = "FT-turn-ahead"
+source = "constructed"
+entries = ["TailFollows", "TailSwings"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 3, look = "TakeOff1", position = [183, 146], fraction = [0, 16], speed = [0, -384], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "D85E"
+her = { position = [223, 138], body = [5, 12], protection = 15 }
+ridley_after = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 4, look = "TakeOff1", position = [183, 144], fraction = [0, 128], speed = [0, -400], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 166], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16369, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 163] },
+  { angle = 16385, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [211, 170] },
+  { angle = 16401, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [214, 177] },
+  { angle = 16417, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [221, 179] },
+  { angle = 16433, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [228, 175] },
+  { angle = 16449, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [2, -8], place = [230, 167] },
+  { angle = 16465, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-3, -5], place = [227, 162] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 161] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 168] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [213, 175] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [220, 178] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [227, 174] },
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [230, 166] },
+  { angle = 16464, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-2, -5], place = [228, 161] },
+]
+
+[[vector]]
+# recorded case W5: rising: the 1-in-16 chance comes (random low byte 245) but he only whips once he hovers: no mark
+id = "FT-chance-rising"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 6, look = "TakeOff1", position = [183, 141], fraction = [0, 48], speed = [0, -432], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "C6F5"
+her = { position = [223, 140], body = [5, 12], protection = 12 }
+ridley_after = { phase = "Rising", takeoff_figure = 4, takeoff_runs = 7, look = "TakeOff1", position = [183, 139], fraction = [0, 112], speed = [0, -448], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 161], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16370, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 158] },
+  { angle = 16382, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 165] },
+  { angle = 16398, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [2, 7], place = [212, 172] },
+  { angle = 16414, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [219, 175] },
+  { angle = 16430, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -3], place = [226, 172] },
+  { angle = 16446, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [229, 164] },
+  { angle = 16462, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-2, -5], place = [227, 159] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 156] },
+  { angle = 16381, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 163] },
+  { angle = 16397, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [1, 7], place = [211, 170] },
+  { angle = 16413, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 4], place = [217, 174] },
+  { angle = 16429, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -2], place = [224, 172] },
+  { angle = 16445, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [4, -7], place = [228, 165] },
+  { angle = 16461, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [-2, -5], place = [226, 160] },
+]
+
+[[vector]]
+# recorded case W6: rising, she is within 128 px of him but he doesn't whip yet; his tip (225, 144) reaches her at (223, 159): the hit, pushing her left
+id = "FT-hit-rising"
+source = "constructed"
+entries = ["TailBends", "TailHits", "TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 116], fraction = [0, 16], speed = [0, -624], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "0059"
+her = { position = [223, 159], body = [5, 19], protection = 0 }
+ridley_after = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 113], fraction = [0, 144], speed = [0, -640], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 135], hit = { side = "Left", push = 5 }, whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 133] },
+  { angle = 16370, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 140] },
+  { angle = 16386, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 147] },
+  { angle = 16402, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 154] },
+  { angle = 16418, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 156] },
+  { angle = 16434, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 152] },
+  { angle = 16450, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 147] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16383, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 130] },
+  { angle = 16369, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 137] },
+  { angle = 16385, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 144] },
+  { angle = 16401, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 151] },
+  { angle = 16417, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 153] },
+  { angle = 16433, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 149] },
+  { angle = 16449, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 144] },
+]
+
+[[vector]]
+# recorded case W7: her protection 95: no hit though the tip is in reach
+id = "FT-protected"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 113], fraction = [0, 144], speed = [0, -640], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "2BCE"
+her = { position = [224, 161], body = [5, 19], protection = 95 }
+ridley_after = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 111], fraction = [0, 0], speed = [0, -656], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 133], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16383, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 130] },
+  { angle = 16369, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 137] },
+  { angle = 16385, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 144] },
+  { angle = 16401, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 151] },
+  { angle = 16417, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 153] },
+  { angle = 16433, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 149] },
+  { angle = 16449, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 144] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 2], place = [215, 129] },
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [211, 136] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [207, 143] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 150] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [217, 153] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 149] },
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 144] },
+]
+
+[[vector]]
+# recorded case W8: his first hover: every segment swinging and she is within 128 px: he aims at 24 px below her, 3 ahead of straight down: the mark 16,381, the pace 8; the fourth segment meets the mark with the one before it still swinging: it jumps to the forward limit and turns back
+id = "FT-aim"
+source = "constructed"
+entries = ["TailSwings", "TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Slowing", takeoff_figure = 5, look = "Rest", position = [183, 79], fraction = [0, 160], speed = [0, -352], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "3147"
+her = { position = [203, 192], body = [5, 16], protection = 78 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 100], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 1], place = [215, 96] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [218, 103] },
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [214, 110] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 117] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [213, 124] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [220, 127] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [4, -2], place = [224, 125] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16381
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [216, 95] },
+  { angle = 16392, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [221, 100] },
+  { angle = 16376, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [221, 108] },
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [216, 114] },
+  { angle = 16392, way = "Ahead", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [214, 121] },
+  { angle = 16408, way = "Ahead", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [219, 126] },
+  { angle = 16424, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [224, 126] },
+]
+
+[[vector]]
+# recorded case W9: the whip: the segments swinging ahead toward the mark stretch 240/256 px a run; the swish count 1
+id = "FT-whip-stretch"
+source = "constructed"
+entries = ["TailStretches", "TailSwings", "TailSwishes"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "F774"
+her = { position = [203, 192], body = [5, 16], protection = 77 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 8
+mark = 16381
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [216, 95] },
+  { angle = 16392, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [221, 100] },
+  { angle = 16376, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [221, 108] },
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [216, 114] },
+  { angle = 16392, way = "Ahead", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [214, 121] },
+  { angle = 16408, way = "Ahead", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [219, 126] },
+  { angle = 16424, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [224, 126] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16381
+swish = 1
+segments = [
+  { angle = 16416, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [216, 94] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [223, 97] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [226, 104] },
+  { angle = 16376, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [-2, 7], place = [224, 111] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [-2, 7], place = [222, 118] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [3, 7], place = [225, 125] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [229, 126] },
+]
+
+[[vector]]
+# recorded case W10: the fourth to sixth segments past 12 px: they stop stretching, though they still grow this run
+id = "FT-stretch-past"
+source = "constructed"
+entries = ["TailStretches"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 73], fraction = [10, 66], speed = [4, -320], hover_runs = 4, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "C890"
+her = { position = [203, 187], body = [5, 21], protection = 73 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 72], fraction = [15, 5], speed = [5, -317], hover_runs = 5, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 94], whip = false }
+[vector.flight_tail]
+pace = 8
+mark = 16381
+swish = 4
+segments = [
+  { angle = 16440, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 0], place = [216, 89] },
+  { angle = 16424, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, -6], place = [221, 83] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [8, 0], place = [229, 83] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 3248, stretching = true, offset = [9, 6], place = [238, 89] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 3248, stretching = true, offset = [4, 10], place = [242, 99] },
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 3248, stretching = true, offset = [-5, 10], place = [237, 109] },
+  { angle = 16392, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [-1, 4], place = [236, 113] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16381
+swish = 5
+segments = [
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [2, 0], place = [217, 88] },
+  { angle = 16432, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [220, 80] },
+  { angle = 16416, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [227, 76] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [11, 2], place = [238, 78] },
+  { angle = 16392, way = "Back", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [8, 8], place = [246, 86] },
+  { angle = 16376, way = "Back", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [0, 12], place = [246, 98] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [-1, 4], place = [245, 102] },
+]
+
+[[vector]]
+# recorded case W11: no longer stretching, over 8 px: they shrink 128/256 px a run
+id = "FT-shrink"
+source = "constructed"
+entries = ["TailStretches"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 72], fraction = [15, 5], speed = [5, -317], hover_runs = 5, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "EBE1"
+her = { position = [203, 192], body = [5, 16], protection = 72 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 70], fraction = [21, 203], speed = [6, -314], hover_runs = 6, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 92], whip = false }
+[vector.flight_tail]
+pace = 8
+mark = 16381
+swish = 5
+segments = [
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [2, 0], place = [217, 88] },
+  { angle = 16432, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [220, 80] },
+  { angle = 16416, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [227, 76] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [11, 2], place = [238, 78] },
+  { angle = 16392, way = "Back", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [8, 8], place = [246, 86] },
+  { angle = 16376, way = "Back", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [0, 12], place = [246, 98] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [-1, 4], place = [245, 102] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16381
+swish = 6
+segments = [
+  { angle = 16440, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [1, 0], place = [216, 86] },
+  { angle = 16440, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, -8], place = [219, 78] },
+  { angle = 16424, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, -6], place = [224, 72] },
+  { angle = 16416, way = "Back", swinging = true, lag = "Passed", length = 3360, stretching = false, offset = [12, -3], place = [236, 69] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 3360, stretching = false, offset = [11, 4], place = [247, 73] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 3360, stretching = false, offset = [4, 11], place = [251, 84] },
+  { angle = 16368, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [-2, 4], place = [249, 88] },
+]
+
+[[vector]]
+# recorded case W12: mid-whip, every segment swinging and she within 128 px: he aims again, the mark one further back, 16,382
+id = "FT-reaim"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 64], fraction = [66, 232], speed = [11, -290], hover_runs = 11, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "2D4B"
+her = { position = [203, 187], body = [5, 21], protection = 66 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 63], fraction = [78, 204], speed = [12, -284], hover_runs = 12, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 85], whip = false }
+[vector.flight_tail]
+pace = 8
+mark = 16381
+swish = 11
+segments = [
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 1], place = [215, 81] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 3008, stretching = true, offset = [9, 3], place = [224, 84] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, -4], place = [231, 80] },
+  { angle = 16440, way = "Ahead", swinging = true, lag = "Passed", length = 3088, stretching = true, offset = [6, -10], place = [237, 70] },
+  { angle = 16440, way = "Back", swinging = true, lag = "Passed", length = 2720, stretching = false, offset = [4, -11], place = [241, 59] },
+  { angle = 16424, way = "Back", swinging = true, lag = "Passed", length = 2720, stretching = false, offset = [7, -8], place = [248, 51] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [253, 51] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16382
+swish = 12
+segments = [
+  { angle = 16392, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 1], place = [215, 80] },
+  { angle = 16408, way = "Ahead", swinging = true, lag = "Passed", length = 3248, stretching = true, offset = [7, 7], place = [222, 87] },
+  { angle = 16424, way = "Ahead", swinging = true, lag = "Passed", length = 2768, stretching = true, offset = [9, 0], place = [231, 87] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 3328, stretching = false, offset = [9, -7], place = [240, 80] },
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 2592, stretching = false, offset = [3, -10], place = [243, 70] },
+  { angle = 16432, way = "Back", swinging = true, lag = "Passed", length = 2592, stretching = false, offset = [3, -10], place = [246, 60] },
+  { angle = 16416, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, -2], place = [250, 58] },
+]
+
+[[vector]]
+# recorded case W13: the base reaches the mark: it settles there, held, its lag 0, turned back; its offset as it was
+id = "FT-whip-settles"
+source = "constructed"
+entries = ["TailBends", "TailSwings"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 62], fraction = [91, 182], speed = [13, -278], hover_runs = 13, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "72B9"
+her = { position = [204, 187], body = [5, 21], protection = 64 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 61], fraction = [105, 166], speed = [14, -272], hover_runs = 14, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 83], whip = false }
+[vector.flight_tail]
+pace = 8
+mark = 16382
+swish = 13
+segments = [
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 2], place = [215, 80] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [4, 11], place = [219, 91] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 3008, stretching = true, offset = [9, 3], place = [228, 94] },
+  { angle = 16424, way = "Ahead", swinging = true, lag = "Passed", length = 3568, stretching = false, offset = [12, -3], place = [240, 91] },
+  { angle = 16440, way = "Ahead", swinging = true, lag = "Passed", length = 2832, stretching = true, offset = [7, -8], place = [247, 83] },
+  { angle = 16440, way = "Back", swinging = true, lag = "Passed", length = 2464, stretching = false, offset = [3, -10], place = [250, 73] },
+  { angle = 16424, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [3, -4], place = [253, 69] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16382
+swish = 14
+segments = [
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 512, stretching = true, offset = [0, 2], place = [215, 79] },
+  { angle = 16392, way = "Ahead", swinging = true, lag = "Passed", length = 3728, stretching = false, offset = [1, 12], place = [216, 91] },
+  { angle = 16408, way = "Ahead", swinging = true, lag = "Passed", length = 3248, stretching = true, offset = [7, 7], place = [223, 98] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 3808, stretching = false, offset = [12, 2], place = [235, 100] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 3072, stretching = true, offset = [10, -5], place = [245, 95] },
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 2336, stretching = false, offset = [3, -9], place = [248, 86] },
+  { angle = 16432, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [1, -5], place = [249, 81] },
+]
+
+[[vector]]
+# recorded case W14: the 16th run at pace 8: the whip's sound, the swish count back to 0; the second segment reaches the mark with the base held: it settles too
+id = "FT-swish"
+source = "constructed"
+entries = ["TailSwings", "TailSwishes"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 60], fraction = [120, 156], speed = [15, -266], hover_runs = 15, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "3A77"
+her = { position = [205, 187], body = [5, 21], protection = 62 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 59], fraction = [136, 152], speed = [16, -260], hover_runs = 16, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 81], whip = true }
+[vector.flight_tail]
+pace = 8
+mark = 16382
+swish = 15
+segments = [
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 512, stretching = true, offset = [-1, 1], place = [214, 77] },
+  { angle = 16384, way = "Ahead", swinging = true, lag = "Passed", length = 3968, stretching = false, offset = [-1, 13], place = [213, 90] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 3488, stretching = false, offset = [4, 11], place = [217, 101] },
+  { angle = 16408, way = "Ahead", swinging = true, lag = "Passed", length = 4048, stretching = false, offset = [11, 7], place = [228, 108] },
+  { angle = 16424, way = "Ahead", swinging = true, lag = "Passed", length = 3312, stretching = true, offset = [12, 0], place = [240, 108] },
+  { angle = 16440, way = "Ahead", swinging = true, lag = "Passed", length = 2576, stretching = true, offset = [6, -7], place = [246, 101] },
+  { angle = 16440, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [1, -5], place = [247, 96] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16382
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 512, stretching = true, offset = [-1, 1], place = [214, 76] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4208, stretching = false, offset = [-1, 13], place = [213, 89] },
+  { angle = 16392, way = "Ahead", swinging = true, lag = "Passed", length = 3728, stretching = false, offset = [1, 12], place = [214, 101] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = "Passed", length = 4288, stretching = false, offset = [8, 12], place = [222, 113] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = "Passed", length = 3552, stretching = false, offset = [11, 4], place = [233, 117] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = "Passed", length = 2816, stretching = true, offset = [9, -4], place = [242, 113] },
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [1, -5], place = [243, 108] },
+]
+
+[[vector]]
+# recorded case W15: no segment swinging: the base swings again, the mark gone, the pace 2 (her x 218, 112 or more); the swish count still counts this run
+id = "FT-restart"
+source = "constructed"
+entries = ["TailRecovers", "TailSwishes", "TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [184, 51], fraction = [69, 133], speed = [25, -203], hover_runs = 25, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "D65D"
+her = { position = [218, 187], body = [5, 21], protection = 52 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [184, 50], fraction = [95, 195], speed = [26, -194], hover_runs = 26, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [168, 72], whip = false }
+[vector.flight_tail]
+pace = 8
+mark = 16382
+swish = 9
+segments = [
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 512, stretching = true, offset = [-1, 1], place = [215, 68] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3056, stretching = false, offset = [-2, 11], place = [213, 79] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3312, stretching = false, offset = [-2, 12], place = [211, 91] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4240, stretching = false, offset = [-2, 16], place = [209, 107] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4240, stretching = false, offset = [-2, 16], place = [207, 123] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4240, stretching = false, offset = [-2, 16], place = [205, 139] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [204, 143] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 10
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = 2, length = 512, stretching = true, offset = [-1, 1], place = [215, 67] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2928, stretching = false, offset = [-2, 10], place = [213, 77] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3184, stretching = false, offset = [-2, 11], place = [211, 88] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4112, stretching = false, offset = [-2, 15], place = [209, 103] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4112, stretching = false, offset = [-2, 15], place = [207, 118] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4112, stretching = false, offset = [-2, 15], place = [205, 133] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [204, 137] },
+]
+
+[[vector]]
+# recorded case W16: the base waits its lag, 2 to 4: it doesn't move and its offset stays; the pace under 8: the swish count 0
+id = "FT-lag-counts"
+source = "constructed"
+entries = ["TailBends", "TailFollows", "TailSwishes", "TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [184, 50], fraction = [95, 195], speed = [26, -194], hover_runs = 26, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "30E2"
+her = { position = [218, 187], body = [5, 21], protection = 51 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [184, 50], fraction = [122, 10], speed = [27, -185], hover_runs = 27, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [168, 72], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 10
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = 2, length = 512, stretching = true, offset = [-1, 1], place = [215, 67] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2928, stretching = false, offset = [-2, 10], place = [213, 77] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3184, stretching = false, offset = [-2, 11], place = [211, 88] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4112, stretching = false, offset = [-2, 15], place = [209, 103] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4112, stretching = false, offset = [-2, 15], place = [207, 118] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 4112, stretching = false, offset = [-2, 15], place = [205, 133] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [204, 137] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = 4, length = 512, stretching = true, offset = [-1, 1], place = [215, 67] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2800, stretching = false, offset = [-2, 10], place = [213, 77] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3056, stretching = false, offset = [-2, 11], place = [211, 88] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3984, stretching = false, offset = [-2, 15], place = [209, 103] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3984, stretching = false, offset = [-2, 15], place = [207, 118] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3984, stretching = false, offset = [-2, 15], place = [205, 133] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [204, 137] },
+]
+
+[[vector]]
+# recorded case W17: in flight the curl changes at random too (65,385: 17), before the tail moves
+id = "FT-curl-flight"
+source = "constructed"
+entries = ["TailCurls"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [184, 48], fraction = [179, 179], speed = [29, -167], hover_runs = 29, curl = 16 }
+energy = 39
+hits_taken = 11
+random = "FF69"
+her = { position = [219, 183], body = [5, 12], protection = 48 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [184, 48], fraction = [209, 21], speed = [30, -158], hover_runs = 30, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [168, 70], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = 8, length = 512, stretching = true, offset = [-1, 1], place = [215, 65] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2544, stretching = false, offset = [-1, 9], place = [214, 74] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2800, stretching = false, offset = [-2, 10], place = [212, 84] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3728, stretching = false, offset = [-2, 14], place = [210, 98] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3728, stretching = false, offset = [-2, 14], place = [208, 112] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3728, stretching = false, offset = [-2, 14], place = [206, 126] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [205, 130] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = 10, length = 512, stretching = true, offset = [-1, 1], place = [215, 65] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2416, stretching = false, offset = [-1, 8], place = [214, 73] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2672, stretching = false, offset = [-1, 9], place = [213, 82] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3600, stretching = false, offset = [-2, 13], place = [211, 95] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3600, stretching = false, offset = [-2, 13], place = [209, 108] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3600, stretching = false, offset = [-2, 13], place = [207, 121] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [206, 125] },
+]
+
+[[vector]]
+# recorded case W18: the base's lag 18, at least its curl of 17: it passes the swing on: the second segment swings back and counts its lag this run
+id = "FT-passes-on"
+source = "constructed"
+entries = ["TailFollows"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [185, 45], fraction = [83, 247], speed = [34, -122], hover_runs = 34, curl = 17 }
+energy = 39
+hits_taken = 11
+random = "0D9A"
+her = { position = [226, 160], body = [5, 12], protection = 43 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [185, 45], fraction = [118, 134], speed = [35, -113], hover_runs = 35, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [169, 67], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = 18, length = 512, stretching = true, offset = [-1, 1], place = [216, 62] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2032, stretching = false, offset = [-1, 6], place = [215, 68] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2160, stretching = false, offset = [-1, 7], place = [214, 75] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3088, stretching = false, offset = [-2, 11], place = [212, 86] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3088, stretching = false, offset = [-2, 11], place = [210, 97] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 3088, stretching = false, offset = [-2, 11], place = [208, 108] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [207, 112] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 2], place = [217, 63] },
+  { angle = 16382, way = "Back", swinging = true, lag = 2, length = 2032, stretching = false, offset = [-1, 6], place = [216, 69] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2032, stretching = false, offset = [-1, 7], place = [215, 76] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2960, stretching = false, offset = [-2, 11], place = [213, 87] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2960, stretching = false, offset = [-2, 11], place = [211, 98] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2960, stretching = false, offset = [-2, 11], place = [209, 109] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [208, 113] },
+]
+
+[[vector]]
+# recorded case W19: held segments at 1,936/256 px, under 8 px: they shrink no more
+id = "FT-shrink-stops"
+source = "constructed"
+entries = ["TailStretches"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [186, 43], fraction = [178, 66], speed = [43, -41], hover_runs = 43, curl = 17 }
+energy = 39
+hits_taken = 11
+random = "B1AB"
+her = { position = [235, 126], body = [5, 12], protection = 34 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [186, 43], fraction = [222, 34], speed = [44, -32], hover_runs = 44, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 65], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 1], place = [218, 60] },
+  { angle = 16382, way = "Back", swinging = true, lag = 18, length = 2032, stretching = false, offset = [-1, 6], place = [217, 66] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 2032, stretching = false, offset = [-1, 6], place = [216, 72] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 7], place = [215, 79] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 7], place = [214, 86] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 7], place = [213, 93] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [212, 97] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 1], place = [218, 60] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [2, 6], place = [220, 66] },
+  { angle = 16382, way = "Back", swinging = true, lag = 2, length = 2032, stretching = false, offset = [-1, 6], place = [219, 72] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 6], place = [218, 78] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 6], place = [217, 84] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 6], place = [216, 90] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [215, 94] },
+]
+
+[[vector]]
+# recorded case W20: the base 2 short of its back limit, 16,448: it stops there and turns ahead
+id = "FT-turn-back"
+source = "constructed"
+entries = ["TailSwings"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [191, 45], fraction = [163, 88], speed = [66, 59], hover_runs = 66, curl = 17 }
+energy = 39
+hits_taken = 11
+random = "7A7A"
+her = { position = [235, 79], body = [5, 12], protection = 11 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [191, 45], fraction = [230, 150], speed = [67, 62], hover_runs = 67, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [175, 67], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16446, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [1, 0], place = [224, 61] },
+  { angle = 16428, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [3, -6], place = [227, 55] },
+  { angle = 16410, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [6, -2], place = [233, 53] },
+  { angle = 16392, way = "Back", swinging = true, lag = "Passed", length = 1936, stretching = false, offset = [5, 4], place = [238, 57] },
+  { angle = 16382, way = "Back", swinging = true, lag = 10, length = 1936, stretching = false, offset = [-1, 6], place = [237, 63] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 6], place = [236, 69] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [235, 73] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16448, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [2, 0], place = [225, 61] },
+  { angle = 16430, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [2, -7], place = [227, 54] },
+  { angle = 16412, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [6, -2], place = [233, 52] },
+  { angle = 16394, way = "Back", swinging = true, lag = "Passed", length = 1936, stretching = false, offset = [5, 4], place = [238, 56] },
+  { angle = 16382, way = "Back", swinging = true, lag = 12, length = 1936, stretching = false, offset = [-1, 6], place = [237, 62] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1936, stretching = false, offset = [-1, 6], place = [236, 68] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [235, 72] },
+]
+
+[[vector]]
+# recorded case W21: hovering: the tip (243, 62) reaches her at (235, 77): the hit, pushing her left
+id = "FT-hit-hovering"
+source = "constructed"
+entries = ["TailBends", "TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 48], fraction = [97, 167], speed = [53, 92], hover_runs = 77, curl = 17 }
+energy = 39
+hits_taken = 11
+random = "9D79"
+her = { position = [235, 77], body = [5, 12], protection = 0 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [194, 49], fraction = [147, 6], speed = [50, 95], hover_runs = 78, curl = 17, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [178, 71], hit = { side = "Left", push = 5 }, whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16428, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [1, 0], place = [227, 64] },
+  { angle = 16446, way = "Ahead", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [3, -6], place = [230, 58] },
+  { angle = 16432, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [2, -7], place = [232, 51] },
+  { angle = 16414, way = "Back", swinging = true, lag = "Passed", length = 1936, stretching = false, offset = [6, -3], place = [238, 48] },
+  { angle = 16396, way = "Back", swinging = true, lag = "Passed", length = 1936, stretching = false, offset = [5, 3], place = [243, 51] },
+  { angle = 16382, way = "Back", swinging = true, lag = 14, length = 1936, stretching = false, offset = [-1, 6], place = [242, 57] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [241, 61] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16426, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [1, 1], place = [227, 66] },
+  { angle = 16444, way = "Ahead", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [4, -6], place = [231, 60] },
+  { angle = 16434, way = "Back", swinging = true, lag = "Passed", length = 2032, stretching = false, offset = [2, -7], place = [233, 53] },
+  { angle = 16416, way = "Back", swinging = true, lag = "Passed", length = 1936, stretching = false, offset = [6, -3], place = [239, 50] },
+  { angle = 16398, way = "Back", swinging = true, lag = "Passed", length = 1936, stretching = false, offset = [6, 2], place = [245, 52] },
+  { angle = 16382, way = "Back", swinging = true, lag = 16, length = 1936, stretching = false, offset = [-1, 6], place = [244, 58] },
+  { angle = 16382, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [-1, 4], place = [243, 62] },
+]
+
+[[vector]]
+# the curl is 20, so every segment waits at take-off
+id = "FT-takeoff-tight"
+source = "constructed"
+entries = ["TailComesLoose", "TailFollows"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [186, 169], curl = 20 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 20, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191], whip = false }
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16384, way = "Ahead", swinging = true, lag = 18, length = 512, stretching = false, offset = [0, 0], place = [218, 185] },
+  { angle = 16400, way = "Ahead", swinging = true, lag = 18, length = 2048, stretching = false, offset = [0, 0], place = [218, 185] },
+  { angle = 16416, way = "Ahead", swinging = true, lag = 18, length = 2048, stretching = false, offset = [0, 0], place = [218, 185] },
+  { angle = 16432, way = "Ahead", swinging = true, lag = 18, length = 2048, stretching = false, offset = [0, 0], place = [218, 185] },
+  { angle = 16448, way = "Ahead", swinging = true, lag = 18, length = 2048, stretching = false, offset = [0, 0], place = [218, 185] },
+  { angle = 16464, way = "Ahead", swinging = true, lag = 18, length = 2048, stretching = false, offset = [0, 0], place = [218, 185] },
+  { angle = 16480, way = "Ahead", swinging = true, lag = 18, length = 1280, stretching = false, offset = [0, 0], place = [218, 185] },
+]
+
+[[vector]]
+# 15 waits and grows to 17, 16 passes the swing back, and the next segment starts counting
+id = "FT-lag-edge"
+source = "constructed"
+entries = ["TailFollows"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = 15, length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = 16, length = 2048, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Ahead", swinging = false, lag = 0, length = 2048, stretching = false, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = 17, length = 512, stretching = false, offset = [1, 1], place = [216, 94] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [221, 99] },
+  { angle = 16400, way = "Back", swinging = true, lag = 2, length = 2048, stretching = false, offset = [0, 8], place = [221, 107] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [5, 5], place = [226, 112] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [232, 117] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [238, 122] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [3, 3], place = [241, 125] },
+]
+
+[[vector]]
+# pace 2 moves angle 16,400 to 16,402, inside the back limit
+id = "FT-swing-back"
+source = "constructed"
+entries = ["TailSwings"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 1], place = [215, 94] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 5], place = [221, 99] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 5], place = [227, 104] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [233, 109] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [239, 114] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [245, 119] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [3, 3], place = [248, 122] },
+]
+
+[[vector]]
+# 16,371 minus pace 2 leaves one unit before the forward limit
+id = "FT-ahead-exact"
+source = "constructed"
+entries = ["TailSwings"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16371, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [150, 80] },
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16371, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16369, way = "Ahead", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 94] },
+  { angle = 16373, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-5, 6], place = [209, 100] },
+  { angle = 16373, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-5, 6], place = [204, 106] },
+  { angle = 16373, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [-5, 6], place = [199, 112] },
+  { angle = 16373, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [-5, 6], place = [194, 118] },
+  { angle = 16373, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [-5, 6], place = [189, 124] },
+  { angle = 16373, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [-3, 4], place = [186, 128] },
+]
+
+[[vector]]
+# 127 px away, directly below the former base, so mark 16,128 is tried
+id = "FT-aim-near"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "00EF"
+her = { position = [73, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [73, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [73, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [73, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [73, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [73, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [73, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [73, 80] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16128
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# 128 px away, so the proximity condition does not hold
+id = "FT-aim-far"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "00EF"
+her = { position = [72, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [72, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 1], place = [232, 57] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 5], place = [238, 62] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 5], place = [244, 67] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [250, 72] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [256, 77] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [6, 5], place = [262, 82] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [3, 3], place = [265, 85] },
+]
+
+[[vector]]
+# the random draw of 240 tries 16,384 even at 128 px away
+id = "FT-aim-chance"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "00F0"
+her = { position = [72, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [72, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [72, 80] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16384
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# a chance mark equal to the base angle leaves the old mark and pace
+id = "FT-aim-rejected"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "00F0"
+her = { position = [72, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [72, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [72, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [72, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [72, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [72, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [72, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [72, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 1], place = [232, 57] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 7], place = [232, 64] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 7], place = [232, 71] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [0, 7], place = [232, 78] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [0, 7], place = [232, 85] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [0, 7], place = [232, 92] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [0, 4], place = [232, 96] },
+]
+
+[[vector]]
+# aim deltas (258, 3), reduced quotient 48, bearing 16
+id = "FT-bearing-0"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [65478, 121] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [65478, 121] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [65478, 121] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [65478, 121] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [65478, 121] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [65478, 121] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [65478, 121] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (258, -253), reduced quotient 4048, bearing 16
+id = "FT-bearing-1"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [65478, 377] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [65478, 377] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [65478, 377] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [65478, 377] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [65478, 377] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [65478, 377] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [65478, 377] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (-258, 5), reduced quotient 80, bearing 16
+id = "FT-bearing-2"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [458, 119] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [458, 119] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [458, 119] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [458, 119] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [458, 119] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [458, 119] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [458, 119] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (-258, -251), reduced quotient 4016, bearing 16
+id = "FT-bearing-3"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [458, 375] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [458, 375] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [458, 375] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [458, 375] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [458, 375] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [458, 375] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [458, 375] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (1, 2), reduced quotient 16, bearing 16
+id = "FT-bearing-4"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [199, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [199, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [199, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [199, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [199, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [199, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [199, 122] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (7, -258), reduced quotient 112, bearing 16
+id = "FT-bearing-5"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [193, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [193, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [193, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [193, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [193, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [193, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [193, 382] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (-1, 2), reduced quotient 16, bearing 240
+id = "FT-bearing-6"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [201, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [201, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [201, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [201, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [201, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [201, 122] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [201, 122] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16368
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (-249, -258), reduced quotient 3984, bearing 16
+id = "FT-bearing-7"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [449, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [449, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [449, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [449, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [449, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [449, 382] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [449, 382] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16144
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# aim deltas (-256, 256), zero divisor gives reduced quotient 8191, bearing 1
+id = "FT-bearing-zero"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [456, 65404] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [456, 65404] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [456, 65404] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [456, 65404] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [456, 65404] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [456, 65404] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [456, 65404] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16129
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# bearing 23 is the last ahead of the redirect interval
+id = "FT-clamp-23"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [177, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [177, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [177, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [177, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [177, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [177, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [177, 92] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16151
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# Bearing 24 is the first bearing redirected to 232
+id = "FT-clamp-24"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 40], fraction = [124, 3], speed = [-4, 3], hover_runs = 2, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 62], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [176, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [176, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [176, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [176, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [176, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [176, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [176, 92] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16360
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 57] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 60] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 63] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 66] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 69] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 72] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 73] },
+]
+
+[[vector]]
+# the hover selects an attack at his point, and the tail can still aim
+id = "FT-aim-attack"
+source = "constructed"
+entries = ["TailWhips"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [200, 100], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [200, 100], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Fireballs", takeoff_figure = 5, look = "Rest", position = [200, 100], fraction = [124, 0], speed = [-4, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 122], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [200, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [200, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [200, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [200, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [200, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [200, 92] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [200, 92] },
+]
+[vector.flight_tail_after]
+pace = 8
+mark = 16128
+swish = 0
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [233, 117] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [240, 120] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [247, 123] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [254, 126] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [261, 129] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [268, 132] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [272, 133] },
+]
+
+[[vector]]
+# her x is 111, so the only swinging segment counts one unit
+id = "FT-restart-slow"
+source = "constructed"
+entries = ["TailRecovers"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [111, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+mark = 16380
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2048, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2048, stretching = false, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2288, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2288, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2288, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = 1, length = 512, stretching = false, offset = [1, 1], place = [216, 94] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2048, stretching = false, offset = [5, 5], place = [221, 99] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2048, stretching = false, offset = [5, 5], place = [226, 104] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2528, stretching = true, offset = [5, 5], place = [231, 109] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2528, stretching = true, offset = [5, 5], place = [236, 114] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 2528, stretching = true, offset = [5, 5], place = [241, 119] },
+  { angle = 16400, way = "Back", swinging = false, lag = 0, length = 1280, stretching = true, offset = [3, 3], place = [244, 122] },
+]
+
+[[vector]]
+# one unit below each cap, the growth stops at the cap
+id = "FT-stretch-caps"
+source = "constructed"
+entries = ["TailStretches"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 6143, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 6143, stretching = true, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 5631, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 5631, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 4607, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1279, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = true, offset = [0, 1], place = [215, 94] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 6144, stretching = false, offset = [17, 14], place = [232, 108] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 6144, stretching = false, offset = [17, 14], place = [249, 122] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 5632, stretching = false, offset = [16, 13], place = [265, 135] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 5632, stretching = false, offset = [16, 13], place = [281, 148] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 4608, stretching = false, offset = [13, 10], place = [294, 158] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [3, 2], place = [297, 160] },
+]
+
+[[vector]]
+# at 12 px the stretch continues, one unit higher it clears after growth
+id = "FT-stretch-edge"
+source = "constructed"
+entries = ["TailStretches"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 3072, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 3073, stretching = true, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2049, stretching = false, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2047, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 1], place = [215, 94] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 3312, stretching = true, offset = [9, 7], place = [224, 101] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 3313, stretching = false, offset = [9, 7], place = [233, 108] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 5], place = [239, 113] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1921, stretching = false, offset = [6, 5], place = [245, 118] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2047, stretching = false, offset = [5, 4], place = [250, 122] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [3, 3], place = [253, 125] },
+]
+
+[[vector]]
+# one unit above 8 px shrinks to 1,921 units, 8 px or lower stays
+id = "FT-shrink-edge"
+source = "constructed"
+entries = ["TailStretches"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 3072, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 3073, stretching = true, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2049, stretching = false, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2047, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [0, 1], place = [215, 94] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 3312, stretching = true, offset = [9, 7], place = [224, 101] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 3313, stretching = false, offset = [9, 7], place = [233, 108] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [6, 5], place = [239, 113] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1921, stretching = false, offset = [6, 5], place = [245, 118] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 2047, stretching = false, offset = [5, 4], place = [250, 122] },
+  { angle = 16402, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [3, 3], place = [253, 125] },
+]
+
+[[vector]]
+# the base's place wraps below zero and the next segment wraps above 65,535
+id = "FT-place-wrap"
+source = "constructed"
+entries = ["TailBends"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [200, 65520], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 2, look = "Rest", position = [200, 65520], fraction = [128, 0], speed = [0, 0], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [184, 6], whip = false }
+[vector.flight_tail]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16384, way = "Back", swinging = true, lag = 0, length = 512, stretching = false, offset = [-233, -1], place = [150, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = 0, length = 2048, stretching = false, offset = [2, 3], place = [150, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [150, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16384, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 2
+swish = 0
+segments = [
+  { angle = 16384, way = "Back", swinging = true, lag = 2, length = 512, stretching = false, offset = [-233, -1], place = [65535, 65535] },
+  { angle = 16384, way = "Back", swinging = true, lag = 2, length = 2048, stretching = false, offset = [2, 3], place = [1, 2] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 7], place = [1, 9] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [0, 7], place = [1, 16] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [0, 7], place = [1, 23] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [0, 7], place = [1, 30] },
+  { angle = 16386, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [0, 4], place = [1, 34] },
+]
+
+[[vector]]
+# the fifteenth fast run counts without requesting a sound
+id = "FT-swish-next"
+source = "constructed"
+entries = ["TailSwishes"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 78], fraction = [0, 84], speed = [0, -332], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 0
+random = "0000"
+her = { position = [50, 90], body = [5, 12], protection = 30 }
+ridley_after = { phase = "Hovering", takeoff_figure = 5, look = "Rest", position = [183, 77], fraction = [1, 11], speed = [1, -329], hover_runs = 1, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 99], whip = false }
+[vector.flight_tail]
+pace = 8
+swish = 14
+segments = [
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [0, 8], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-5, 6], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [-2, 7], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 2288, stretching = true, offset = [5, 5], place = [150, 80] },
+  { angle = 16400, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [5, 0], place = [150, 80] },
+]
+[vector.flight_tail_after]
+pace = 8
+swish = 15
+segments = [
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [1, 1], place = [216, 94] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [223, 97] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 3], place = [230, 100] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [237, 103] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [244, 106] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 2528, stretching = true, offset = [7, 3], place = [251, 109] },
+  { angle = 16408, way = "Back", swinging = true, lag = "Passed", length = 1280, stretching = true, offset = [4, 1], place = [255, 110] },
+]
+
+[[vector]]
+# placed 22 px below the tip, she is hit left at the reference reach
+id = "FT-reach-reference"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+ridley = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 116], fraction = [0, 16], speed = [0, -624], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "0059"
+her = { position = [223, 166], body = [5, 19], protection = 0 }
+ridley_after = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 113], fraction = [0, 144], speed = [0, -640], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 135], hit = { side = "Left", push = 5 }, whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 133] },
+  { angle = 16370, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 140] },
+  { angle = 16386, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 147] },
+  { angle = 16402, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 154] },
+  { angle = 16418, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 156] },
+  { angle = 16434, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 152] },
+  { angle = 16450, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 147] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16383, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 130] },
+  { angle = 16369, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 137] },
+  { angle = 16385, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 144] },
+  { angle = 16401, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 151] },
+  { angle = 16417, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 153] },
+  { angle = 16433, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 149] },
+  { angle = 16449, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 144] },
+]
+
+[[vector]]
+# place her 22 px below the tip for the first miss at reach 3 px
+id = "FT-reach-adjusted"
+source = "constructed"
+entries = ["TailHits"]
+content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
+rules = { tail_reach = 3 }
+ridley = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 116], fraction = [0, 16], speed = [0, -624], hover_runs = 0, curl = 16 }
+energy = 54
+hits_taken = 11
+random = "0059"
+her = { position = [223, 166], body = [5, 19], protection = 0 }
+ridley_after = { phase = "Rising", takeoff_figure = 5, look = "Rest", position = [183, 113], fraction = [0, 144], speed = [0, -640], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [167, 135], whip = false }
+[vector.flight_tail]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16382, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 133] },
+  { angle = 16370, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 140] },
+  { angle = 16386, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 147] },
+  { angle = 16402, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 154] },
+  { angle = 16418, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 156] },
+  { angle = 16434, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 152] },
+  { angle = 16450, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 147] },
+]
+[vector.flight_tail_after]
+pace = 1
+swish = 0
+segments = [
+  { angle = 16383, way = "Back", swinging = true, lag = "Passed", length = 512, stretching = false, offset = [-1, 1], place = [214, 130] },
+  { angle = 16369, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-4, 7], place = [210, 137] },
+  { angle = 16385, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [-3, 7], place = [207, 144] },
+  { angle = 16401, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [3, 7], place = [210, 151] },
+  { angle = 16417, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, 2], place = [217, 153] },
+  { angle = 16433, way = "Ahead", swinging = true, lag = "Passed", length = 2048, stretching = false, offset = [7, -4], place = [224, 149] },
+  { angle = 16449, way = "Ahead", swinging = true, lag = "Passed", length = 1280, stretching = false, offset = [1, -5], place = [225, 144] },
+]
+
+
 # ================================================================ part 4c-1a: his take-off and flight
 #
 # Format of the part-4c-1a vectors (spec §15), ids L-: one run of him in the part-4a form
@@ -2148,7 +3981,7 @@ ridley = { phase = "Roaring", wait = 0, figure = 5, look = "Rest", position = [1
 energy = 54
 hits_taken = 11
 random = "4DB7"
-ridley_after = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
+ridley_after = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
 
 [[vector]]
 # recorded case L1: taking off, his figure one run on; his speed held at 0
@@ -2156,11 +3989,11 @@ id = "L-figure-counts"
 source = "constructed"
 entries = ["TakesOff"]
 content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
-ridley = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+ridley = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 1, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
 energy = 54
 hits_taken = 11
 random = "85A4"
-ridley_after = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 2, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
+ridley_after = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 2, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
 
 [[vector]]
 # recorded case L2: figure 1 shown its 3 runs: figure 2, and his first hop, (+1, -12); the baby held where his move left him, before the hop
@@ -2168,11 +4001,11 @@ id = "L-hop-first"
 source = "constructed"
 entries = ["TakesOff", "BabyHeld"]
 content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
-ridley = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+ridley = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 169], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
 energy = 54
 hits_taken = 11
 random = "136A"
-ridley_after = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
+ridley_after = { phase = "TakingOff", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 191] }
 
 [[vector]]
 # recorded case L3: figure 2 shown its 4 runs: figure 3, and his second hop, (-4, -8)
@@ -2180,11 +4013,11 @@ id = "L-hop-second"
 source = "constructed"
 entries = ["TakesOff", "BabyHeld"]
 content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
-ridley = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 4, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+ridley = { phase = "TakingOff", takeoff_figure = 2, takeoff_runs = 4, look = "TakeOff1", position = [187, 157], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
 energy = 54
 hits_taken = 11
 random = "0C26"
-ridley_after = { phase = "Flying", takeoff_figure = 3, takeoff_runs = 1, look = "TakeOff2", position = [183, 149], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [171, 179] }
+ridley_after = { phase = "TakingOff", takeoff_figure = 3, takeoff_runs = 1, look = "TakeOff2", position = [183, 149], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [171, 179] }
 
 [[vector]]
 # recorded case L4: figure 3 shown its 5 runs: figure 4, and the lift-off: Rising at 352 up; he hasn't moved yet
@@ -2192,7 +4025,7 @@ id = "L-lift-off"
 source = "constructed"
 entries = ["TakesOff"]
 content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
-ridley = { phase = "Flying", takeoff_figure = 3, takeoff_runs = 5, look = "TakeOff2", position = [183, 149], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+ridley = { phase = "TakingOff", takeoff_figure = 3, takeoff_runs = 5, look = "TakeOff2", position = [183, 149], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
 energy = 54
 hits_taken = 11
 random = "8CBB"
@@ -2708,11 +4541,11 @@ id = "L-hop-wrap"
 source = "constructed"
 entries = ["TakesOff"]
 content = { eye_steps = [3, 2, 1, 1, 0], body_sets = 4 }
-ridley = { phase = "Flying", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 65508], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
+ridley = { phase = "TakingOff", takeoff_figure = 1, takeoff_runs = 3, look = "Rest", position = [186, 65508], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16 }
 energy = 54
 hits_taken = 11
 random = "1234"
-ridley_after = { phase = "Flying", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 65496], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 65530] }
+ridley_after = { phase = "TakingOff", takeoff_figure = 2, takeoff_runs = 1, look = "TakeOff1", position = [187, 65496], fraction = [0, 0], speed = [0, 0], hover_runs = 0, curl = 16, tangible = true, moving = true, roaring = false, music = false, roar = false, held = [170, 65530] }
 
 # ================================================================ part 5: the escape's steam
 #

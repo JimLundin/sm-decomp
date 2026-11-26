@@ -19,6 +19,10 @@ mod vectors {
         Stage, TailCurl, TimedRoarFigure, TimedTakeOffFigure, Vent, VentFacing, VentPhase, Wait,
         WakeWait, catalogue, run_vents,
     };
+    use boss_ceres_ridley::{
+        FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
+        TailLength, TailMark, TailSegment,
+    };
     use enum_map::Enum;
     use serde::Deserialize;
     use types::{Checked, Colour, Hit, Pair, Px, Side};
@@ -33,9 +37,8 @@ mod vectors {
 
     /// A vector of any part: the doors' fields (the door of Ridley's room and the getaway's walls
     /// among them), the shaft's (the pad and the cover, or the lights), Ridley's, or the
-    /// steam's. Which part it is follows from the result it names; Ridley's part-4b vectors, his
-    /// tail's, are the ones whose ids start `T-`, and his part-4c-1a vectors, his flight's, those
-    /// starting `L-`.
+    /// steam's. The fields select what to run and compare; `entries` names the rules checked.
+    /// The id is only a label for reporting.
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Vector {
@@ -66,6 +69,8 @@ mod vectors {
         energy: Option<u16>,
         hits_taken: Option<u16>,
         ridley_after: Option<RidleyAfter>,
+        flight_tail: Option<FlightTailRow>,
+        flight_tail_after: Option<FlightTailRow>,
         // The pad and the cover.
         arrival: Option<[u16; 2]>,
         pad: Option<PadRow>,
@@ -130,6 +135,8 @@ mod vectors {
                 || self.energy.is_some()
                 || self.hits_taken.is_some()
                 || self.ridley_after.is_some()
+                || self.flight_tail.is_some()
+                || self.flight_tail_after.is_some()
         }
 
         /// Whether the vector names any of the steam's own fields.
@@ -142,14 +149,16 @@ mod vectors {
                 || self.hit.is_some()
         }
 
-        /// Whether it is one of his tail's vectors, in the part-4b form.
+        /// The curl output distinguishes the resting-tail form from the waking form.
         fn names_tail(&self) -> bool {
-            self.id.starts_with("T-")
+            self.ridley_after
+                .as_ref()
+                .is_some_and(|after| after.curl.is_some())
         }
 
-        /// Whether it is one of his flight's vectors, in the part-4c-1a form.
-        fn names_flight(&self) -> bool {
-            self.id.starts_with("L-")
+        /// Flight reads both energy and hits taken.
+        const fn names_flight(&self) -> bool {
+            self.energy.is_some() || self.hits_taken.is_some()
         }
 
         /// How the fight stands, as a flight vector names it; the other forms name none, and
@@ -1000,6 +1009,7 @@ mod vectors {
         speed: Option<[i16; 2]>,
         hover_runs: Option<u8>,
         held: Option<[u16; 2]>,
+        whip: Option<bool>,
         bound: Option<BoundName>,
         shake: Option<FlightShakeRow>,
     }
@@ -1043,7 +1053,7 @@ mod vectors {
         }
     }
 
-    /// The frame's hit of his tail: the side it pushes her and the push's frames.
+    /// The frame's `Hit`, named `hit` in the vectors: its side and push time.
     #[derive(Deserialize, Debug, PartialEq, Eq)]
     #[serde(deny_unknown_fields)]
     struct HitRow {
@@ -1065,7 +1075,7 @@ mod vectors {
         EyeFading,
         FakeRetreat,
         Fireballs,
-        Flying,
+        TakingOff,
         Holding,
         Hovering,
         Lunge,
@@ -1190,7 +1200,7 @@ mod vectors {
             },
             RidleyPhaseName::FakeRetreat => RidleyPhase::GivingUp(GiveUp::FakeRetreat),
             RidleyPhaseName::Fireballs => RidleyPhase::Attacking(Attack::Fireballs),
-            RidleyPhaseName::Flying => RidleyPhase::InFlight(FlightPhase::Flying),
+            RidleyPhaseName::TakingOff => RidleyPhase::InFlight(FlightPhase::TakingOff),
             RidleyPhaseName::Holding => RidleyPhase::Holding,
             RidleyPhaseName::Hovering => RidleyPhase::InFlight(FlightPhase::Hovering),
             RidleyPhaseName::Lunge => RidleyPhase::Attacking(Attack::Lunge),
@@ -1248,7 +1258,7 @@ mod vectors {
             RidleyPhase::Attacking(Attack::Fireballs) => (RidleyPhaseName::Fireballs, none),
             RidleyPhase::Attacking(Attack::Lunge) => (RidleyPhaseName::Lunge, none),
             RidleyPhase::Attacking(Attack::Swoop) => (RidleyPhaseName::Swoop, none),
-            RidleyPhase::InFlight(FlightPhase::Flying) => (RidleyPhaseName::Flying, none),
+            RidleyPhase::InFlight(FlightPhase::TakingOff) => (RidleyPhaseName::TakingOff, none),
             RidleyPhase::InFlight(FlightPhase::Hovering) => (RidleyPhaseName::Hovering, none),
             RidleyPhase::InFlight(FlightPhase::Rising) => (RidleyPhaseName::Rising, none),
             RidleyPhase::InFlight(FlightPhase::Slowing) => (RidleyPhaseName::Slowing, none),
@@ -1519,12 +1529,13 @@ mod vectors {
                 .expect("his hover's runs are 0 to 123"),
             baby: baby(vector),
             curl: curl(vector, row),
+            flight_tail: vector.flight_tail.as_ref().map(FlightTailRow::shape),
         }
     }
 
     /// His flight's run as a part-4c-1a vector's `ridley_after` reads it; a run on which he
     /// gives up is the next part's, and holds his phase alone.
-    fn flight_after(run: &RidleyRun) -> RidleyAfter {
+    fn flight_after(run: &RidleyRun, checks_tail: bool) -> RidleyAfter {
         let ridley = run.ridley;
         let (phase, cells) = ridley_phase_row(ridley.phase);
         if matches!(ridley.phase, RidleyPhase::GivingUp(_)) {
@@ -1557,6 +1568,8 @@ mod vectors {
             held: ridley.baby.position.map(point_row),
             bound: run.bound.map(bound_name),
             shake: run.shake.map(flight_shake_row),
+            whip: checks_tail.then_some(run.swish.is_some()),
+            hit: run.hit.map(hit_row),
             ..RidleyAfter::default()
         }
     }
@@ -1579,11 +1592,10 @@ mod vectors {
             &rules(&vector.rules),
         );
         if vector.names_flight() {
-            assert!(
-                vector.hitter_her().is_none(),
-                "the tail in flight is part 4c-1b's"
-            );
-            return flight_after(&run);
+            if let Some(expected) = &vector.flight_tail_after {
+                check_tail_run(vector, &run, expected);
+            }
+            return flight_after(&run, vector.flight_tail_after.is_some());
         }
         let part_3 = RidleyAfter {
             cry: Some(run.cry.is_some()),
@@ -1636,6 +1648,110 @@ mod vectors {
         };
         (actual != *expected)
             .then(|| format!("{}: expected {expected:?}, got {actual:?}", vector.id))
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct FlightTailRow {
+        pace: u8,
+        mark: Option<u16>,
+        swish: u8,
+        segments: [TailSegmentRow; TAIL_SEGMENTS],
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct TailSegmentRow {
+        angle: u16,
+        way: WayRow,
+        swinging: bool,
+        lag: LagRow,
+        length: u16,
+        stretching: bool,
+        offset: [i16; 2],
+        place: [u16; 2],
+    }
+
+    #[derive(Clone, Copy, Deserialize)]
+    enum WayRow {
+        Ahead,
+        Back,
+    }
+
+    #[derive(Clone, Copy, Deserialize)]
+    enum PassedRow {
+        Passed,
+    }
+
+    #[derive(Clone, Copy, Deserialize)]
+    #[serde(untagged)]
+    enum LagRow {
+        Counting(u8),
+        Passed(PassedRow),
+    }
+
+    impl FlightTailRow {
+        fn shape(&self) -> FlightTail {
+            FlightTail {
+                pace: match self.pace {
+                    1 => SwingPace::Slow,
+                    2 => SwingPace::Quick,
+                    8 => SwingPace::Whip,
+                    pace => panic!("unknown swing pace {pace}"),
+                },
+                mark: self
+                    .mark
+                    .map(|mark| TailMark::new(TailAngle(mark)).expect("mark in aim arc")),
+                swish: SwishRuns::new(self.swish).expect("swish runs 0 to 15"),
+                segments: self.segments.each_ref().map(TailSegmentRow::segment),
+            }
+        }
+    }
+
+    impl TailSegmentRow {
+        fn segment(&self) -> TailSegment {
+            let [x, y] = self.offset;
+            TailSegment {
+                angle: TailAngle(self.angle),
+                way: match self.way {
+                    WayRow::Ahead => SwingWay::Ahead,
+                    WayRow::Back => SwingWay::Back,
+                },
+                swinging: self.swinging,
+                lag: match self.lag {
+                    LagRow::Counting(n) => {
+                        SwingLag::Counting(LagCount::new(n).expect("lag 0 to 30"))
+                    }
+                    LagRow::Passed(PassedRow::Passed) => SwingLag::Passed,
+                },
+                length: TailLength::new(self.length).expect("length at most 24 px"),
+                stretching: self.stretching,
+                offset: Pair { x, y },
+                place: point(self.place),
+            }
+        }
+    }
+
+    fn check_tail_run(vector: &Vector, run: &RidleyRun, expected: &FlightTailRow) {
+        let expected = expected.shape();
+        let actual = run.ridley.flight_tail.expect("flight carries its tail");
+        assert_eq!(actual.pace, expected.pace, "{} pace", vector.id);
+        assert_eq!(actual.mark, expected.mark, "{} mark", vector.id);
+        assert_eq!(actual.swish, expected.swish, "{} swish count", vector.id);
+        for (index, (actual, expected)) in actual
+            .segments
+            .into_iter()
+            .zip(expected.segments)
+            .enumerate()
+        {
+            assert_eq!(actual, expected, "{} segment {index}", vector.id);
+        }
+        assert_eq!(
+            run.tail_places,
+            Some(expected.places()),
+            "{} drawing places",
+            vector.id
+        );
     }
 
     // ------------------------------------------------------------ the steam
@@ -1857,6 +1973,44 @@ mod vectors {
         }
     }
 
+    /// Take-off can hit on the same run the tail comes loose. This position is just inside
+    /// the swung tip's reach, and outside the reach of the old resting tip.
+    #[test]
+    fn takeoff_hit_reads_the_new_tip() {
+        let mut ridley = CeresRidley::place(false)
+            .expect("unbeaten Ridley is placed")
+            .ridley;
+        ridley.phase = RidleyPhase::Roaring {
+            wait: RoarWait::new(0).expect("the roar is over"),
+            figure: FigureSequence::Fifth,
+        };
+        ridley.curl = TailCurl::new(23).expect("tight curl");
+        let her = Her {
+            position: point([246, 174]),
+            body: point([5, 12]),
+            protection: 0,
+        };
+        let rules = Rules::default();
+        let content = ridley_content(&stand_in_content());
+        let fight = Fight {
+            her_energy: 54,
+            hits_taken: 11,
+        };
+        let run = ridley.run(false, 0xFF00, Some(&her), fight, &content, &rules);
+        assert_eq!(run.ridley.curl.get(), 8);
+        assert_eq!(
+            run.tail_places.expect("take-off reports places")[TAIL_SEGMENTS - 1],
+            point([228, 174])
+        );
+        assert_eq!(
+            run.hit.map(hit_row),
+            Some(HitRow {
+                side: side_name(Side::Right),
+                push: 5
+            })
+        );
+    }
+
     fn entry(name: &str) -> BehaviourId {
         catalogue()
             .into_iter()
@@ -1873,9 +2027,6 @@ mod vectors {
             .iter()
             .filter_map(|vector| {
                 let Source::Constructed = vector.source;
-                vector.entries.iter().for_each(|name| {
-                    entry(name);
-                });
                 check(vector)
             })
             .collect();
@@ -1885,11 +2036,20 @@ mod vectors {
     #[test]
     fn every_entry_checked_by_vectors_has_one() {
         let vectors = vectors();
+        let exercised: Vec<_> = vectors
+            .iter()
+            .flat_map(|vector| {
+                assert!(
+                    !vector.entries.is_empty(),
+                    "{} names no behaviours",
+                    vector.id
+                );
+                vector.entries.iter().map(|name| entry(name))
+            })
+            .collect();
         for (id, behaviour) in catalogue() {
             assert_eq!(behaviour.id, id);
-            let exercised = vectors
-                .iter()
-                .any(|vector| vector.entries.iter().any(|name| entry(name) == id));
+            let exercised = exercised.contains(&id);
             let by_vectors = behaviour.checked == Checked::ByVectors;
             assert_eq!(exercised, by_vectors, "{id:?}");
         }

@@ -1,6 +1,6 @@
-//! His tail from the moment he starts moving until he takes off: it hangs at rest behind him,
-//! its curl changes now and then at random, and once he is tangible its tip hits her when her
-//! body comes within reach.
+//! The tail's resting place and the rules its resting and swinging forms share. Its curl
+//! changes now and then at random, and once he is tangible its tip hits her when her body
+//! comes within reach.
 
 use core::num::Wrapping;
 
@@ -22,6 +22,9 @@ const CURL_MOST: u8 = 23;
 const CURL_CHANGES_FROM: u16 = 65_280;
 /// `TailCurls`: the new curl is 8 + the random number mod 16.
 const CURL_SPREAD: u16 = 16;
+/// `TailHits`: the tail hit's worth as a samus-health `Impact`, in whole energy.
+pub const TAIL_DAMAGE: u16 = 15;
+
 /// `TailHits`: the push time of a hit, in frames.
 const PUSH_FRAMES: u8 = 5;
 /// `TailHits`: the push time of a hit, 5 frames, within the longest push the shared type allows
@@ -55,7 +58,7 @@ impl TailCurl {
         self.0
     }
 
-    /// `TailCurls`: a run with his tail at rest, reading the random number `n` the baby reads:
+    /// `TailCurls`: a run with his tail at rest or in flight, reading the random number `n` the baby reads:
     /// at 65,280 or more the curl turns `8 + (n mod 16)`; under it, the curl stays.
     pub(crate) fn curled(self, random: u16) -> Self {
         if random < CURL_CHANGES_FROM {
@@ -72,13 +75,14 @@ impl TailCurl {
 /// `t`: her protection run out, and on each axis the gap from the tip to her, read signed, under
 /// her half-size plus `t`. Each push carries her for 5 frames; she goes `Right` when her x is at
 /// the tip's or right of it, else `Left`.
-pub fn tip_hit(her: &Her, tip: Pair<Px>, reach: u8) -> Option<Hit> {
+pub fn tail_hit(tangible: bool, her: Option<&Her>, tip: Pair<Px>, reach: u8) -> Option<Hit> {
+    let her = her.filter(|her| tangible && her.unprotected())?;
     let gap = Pair {
         x: (her.position.x - tip.x).0.cast_signed(),
         y: (her.position.y - tip.y).0.cast_signed(),
     };
     let in_reach = within(gap.x, her.body.x, reach) && within(gap.y, her.body.y, reach);
-    (her.unprotected() && in_reach).then_some(Hit {
+    in_reach.then_some(Hit {
         side: if gap.x >= 0 { Side::Right } else { Side::Left },
         push: PUSH,
     })

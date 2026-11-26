@@ -2,7 +2,7 @@
 
 use boss_ceres_ridley::{FirstPuffWait, Puff, PuffFigure, Vent, VentFacing, VentPhase};
 use core::num::{NonZeroU8, Wrapping};
-use types::{Hit, Pair, Side};
+use types::{Hit, Pair};
 
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField};
@@ -108,34 +108,11 @@ pub(super) fn state(vents: &[Vent]) -> Observation {
 /// A steam hit during ordinary play starts protection and spends one of the push's frames
 /// before the cut. This reads the observed grant and push without using the vent model.
 pub(super) fn expected_hit(previous: &[u8], current: &[u8]) -> Result<Observation, Outcome> {
-    let protection = source::SAMUS_HIT_PROTECTION;
-    let before = super::word(previous, protection)?;
-    let after = super::word(current, protection)?;
-    let receipt = if before == 0 && after == 95 {
-        let side = super::word(current, source::SAMUS_KNOCKBACK_X_DIRECTION)?;
-        let push_left = super::word(current, source::SAMUS_KNOCKBACK_TIMER)?;
-        [1, i64::from(side), i64::from(push_left).saturating_add(1)]
-    } else {
-        [0; 3]
-    };
-    Ok(impact(receipt))
+    super::contact::expected("steam.hit", previous, current)
 }
 
 /// The emitted side and push. The health observations separately compare the energy and
 /// protection the impact actually leaves.
 pub(super) fn actual_hit(hit: Option<Hit>) -> Observation {
-    impact(hit.map_or([0; 3], |hit| {
-        [
-            1,
-            i64::from(hit.side == Side::Right),
-            i64::from(hit.push.frames()),
-        ]
-    }))
-}
-
-fn impact(receipt: [i64; 3]) -> Observation {
-    Observation {
-        field: "steam.hit".into(),
-        bytes: receipt.into_iter().flat_map(i64::to_le_bytes).collect(),
-    }
+    super::contact::actual("steam.hit", hit)
 }

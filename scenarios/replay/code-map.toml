@@ -757,3 +757,93 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/movement.rs" },
   { role = "navigation", path = "docs/behaviours/samus-movement.md" },
 ]
+
+[[rule]]
+id = "boss-ceres-ridley/TailBends"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailComesLoose"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailFollows"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailHits"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailRecovers"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailStretches"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailSwings"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailSwishes"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/TailWhips"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/tail_aim.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
+]

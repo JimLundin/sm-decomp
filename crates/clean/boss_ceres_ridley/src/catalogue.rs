@@ -103,6 +103,22 @@ pub enum BehaviourId {
     PuffReach,
     /// A puff that touches her once her protection is spent pushes her away from the vent.
     PuffTouches,
+    /// The whole tail starts swinging as he takes off.
+    TailComesLoose,
+    /// Each link waits for the swing, then for its curl, before moving.
+    TailFollows,
+    /// Links swing between limits or settle at a whip mark.
+    TailSwings,
+    /// He can aim the tail below her when hovering or starting an attack.
+    TailWhips,
+    /// After all links settle, the base starts a new swing.
+    TailRecovers,
+    /// A whip stretches the links, which then draw in.
+    TailStretches,
+    /// Linked offsets determine the tail's curve.
+    TailBends,
+    /// Fast swings make a swish every sixteen runs.
+    TailSwishes,
 }
 
 /// A catalogue entry.
@@ -121,8 +137,8 @@ pub struct Behaviour {
 }
 
 /// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
-/// his waking's four, his tail's three, his flight's six and the escape's steam's seven.
-const ENTRIES: usize = 48;
+/// his waking's four, his tail's three, his flight's six, the flight tail's eight and the escape's steam's seven.
+const ENTRIES: usize = 56;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -496,6 +512,62 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
         id: BehaviourId::PuffTouches,
         summary: "a puff that touches her once her protection is spent hits her: she is pushed \
                   away from the vent and loses no energy; the frame has at most one hit",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailComesLoose,
+        summary: "the whole tail starts swinging as he takes off",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailFollows,
+        summary: "each link waits for the swing, then for its curl, before moving",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailSwings,
+        summary: "links swing between limits or settle at a whip mark",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailWhips,
+        summary: "he can aim the tail below her when hovering or starting an attack",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailRecovers,
+        summary: "after all links settle, the base starts a new swing",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailStretches,
+        summary: "a whip stretches the links, which then draw in",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailBends,
+        summary: "linked offsets determine the tail's curve",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TailSwishes,
+        summary: "fast swings make a swish every sixteen runs",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

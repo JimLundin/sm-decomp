@@ -14,14 +14,14 @@ use crate::waking::{BodyColours, EyeColours, ReadyWait, RidleyContent, RoarWait}
 /// nothing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FlightPhase {
-    /// His take-off: he crouches and hops (`TakesOff`).
-    Flying,
     /// He hovers, drifting to his point (`Hovers`).
     Hovering,
     /// He rises, faster and faster (`Rises`).
     Rising,
     /// Rising, he slows (`SlowsDown`).
     Slowing,
+    /// His take-off: he crouches and hops (`TakesOff`).
+    TakingOff,
 }
 
 /// The attack he turns to from his hover; from the next run on a later part runs him. Listed

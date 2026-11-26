@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "70a4dd420bb7e4845c99373ce624b54bfd6136f704b7ac37569d4a5ebaeb8cd5"
+index_sha256 = "7631cae6a9946aba5d02a6281a6951d34c91ff9d3257ec2462a73c8b08911a93"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1056,5 +1056,59 @@ replies = 0
 null_cuts = 0
 null_fields = 0
 restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/flight-tail"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "8d3c07763cd90240db0f318cfcd6e948c433c6d28346d90062f0c840f429f63c"
+
+[case.counts]
+cuts = 127
+fields = 9525
+outputs = 1143
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 809
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/alternate-rise-hit"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "8cfe040085e029e8eb8807d553bad909581e86ad0053086054becb8ae379c492"
+
+[case.counts]
+cuts = 39
+fields = 2925
+outputs = 351
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 282
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/alternate-hover-hit"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "fe16a23bd9953bbb390a7a8c8e8ad7fc8c93a1de1c8a2ae27a512604c495c1b8"
+
+[case.counts]
+cuts = 67
+fields = 5025
+outputs = 603
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1545
+restorations = 0
 pending_boundaries = 0
 pending_restorations = 0

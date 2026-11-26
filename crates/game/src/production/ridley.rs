@@ -5,8 +5,8 @@
 //! after him. Fetching his room's contents places him.
 
 use boss_ceres_ridley::{
-    BabyColours, BodyColours, Boss, CeresDoor, CeresRidley, EyeColours, FadeSets, RidleyContent,
-    RidleyDrawing,
+    BabyColours, BodyColours, Boss, CeresDoor, CeresRidley, EyeColours, FadeSets, FlightTail,
+    RidleyContent, RidleyDrawing, TAIL_SEGMENTS,
 };
 use data::assets::actors::{BabyShades, CeresRidleyColours, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
@@ -115,6 +115,8 @@ pub fn show_body(colours: BodyColours, palette: &mut Palette) {
 pub struct Drawing {
     /// His look and the baby's, each at its position.
     pub ridley: RidleyDrawing,
+    /// The seven in-flight tail places, from base to tip.
+    pub flight_tail: Option<[types::Pair<types::Px>; TAIL_SEGMENTS]>,
     /// The doors he draws, closed.
     pub doors: Vec<CeresDoor>,
 }
@@ -124,6 +126,7 @@ pub struct Drawing {
 pub fn drawing(ridley: &CeresRidley, doors: &[CeresDoor]) -> Drawing {
     Drawing {
         ridley: ridley.drawing(),
+        flight_tail: ridley.flight_tail.as_ref().map(FlightTail::places),
         doors: doors
             .iter()
             .filter(|door| door.phase.drawn_with_ridley())

@@ -2,7 +2,11 @@
 
 use crate::shown::{FigureLength, FigureSequence, NextFigure};
 
-/// The figure he is drawn with, facing left. Which sprites each is belongs to his content.
+/// The figure he is drawn with, facing left.
+///
+/// These are labels, not an order: `RoarFigure` orders the looks of his roar, and
+/// `TakeOffFigure` orders the looks of his take-off.
+/// Which sprites make up a look belongs to his content.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RidleyLook {
     /// At rest.

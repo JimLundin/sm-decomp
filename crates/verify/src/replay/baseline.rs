@@ -351,21 +351,34 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
 
 fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
     use super::index::ObservationId;
-    let semantic_count = case
-        .expectations
-        .fields
-        .iter()
-        .map(|field| {
-            if *field == ObservationId::IntroRoomGrid {
-                super::intro_rooms::GRID_FIELDS
-            } else if *field == ObservationId::IntroRoomActor {
-                super::intro_rooms::ACTOR_FIELDS
-            } else {
-                1
-            }
-        })
-        .sum::<usize>()
-        .checked_mul(counts.cuts);
+    const WIDTHS: &[(ObservationId, usize)] = &[
+        (
+            ObservationId::IntroRoomGrid,
+            super::intro_rooms::GRID_FIELDS,
+        ),
+        (
+            ObservationId::IntroRoomActor,
+            super::intro_rooms::ACTOR_FIELDS,
+        ),
+        (
+            ObservationId::CeresTailState,
+            4 + 9 * boss_ceres_ridley::TAIL_SEGMENTS,
+        ),
+        (
+            ObservationId::CeresTailPlaces,
+            boss_ceres_ridley::TAIL_SEGMENTS,
+        ),
+        (ObservationId::CeresTailKnockback, 2),
+        (ObservationId::CeresTailHealth, 6),
+    ];
+    let width = |field: &ObservationId| {
+        WIDTHS
+            .iter()
+            .find_map(|(id, width)| (*id == *field).then_some(*width))
+            .unwrap_or(1)
+    };
+    let fields = case.expectations.fields.iter().map(width).sum::<usize>();
+    let outputs = case.expectations.outputs.iter().map(width).sum::<usize>();
     let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {
         usize::from(
             at.checked_sub(first)
@@ -373,8 +386,8 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
                 .is_some_and(|offset| offset < counts.cuts),
         )
     });
-    semantic_count == Some(counts.fields)
-        && case.expectations.outputs.len().checked_mul(output_cuts) == Some(counts.outputs)
+    fields.checked_mul(counts.cuts) == Some(counts.fields)
+        && outputs.checked_mul(output_cuts) == Some(counts.outputs)
         && counts.publications == 0
         && counts.replies == 0
         && counts.pending_boundaries == 0

@@ -97,8 +97,9 @@ pub struct Rules {
     /// `BodyFadesIn`: the pace, the runs his body shows each of its colour sets for as it fades
     /// in; a rule from 1 to 255 runs.
     pub pace: num::NonZeroU8,
-    /// `TailHits`: the tail's reach, how much closer than her half-size on each axis she can
-    /// come to his tail's tip before it hits her; a rule from 0 to 255 px.
+    /// `TailHits`: the tail's reach, a margin of 0 to 255 px added to her half-size on each
+    /// axis. For contact, the gap from her centre to the tip must be strictly less than the
+    /// resulting sum on both axes.
     pub tail_reach: u8,
     /// `VentRests`: the rest, the runs a vent rests unseen between its puffs; a rule from 1 to
     /// 255 runs.

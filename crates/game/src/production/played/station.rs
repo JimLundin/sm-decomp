@@ -217,11 +217,11 @@ impl super::State {
 
 #[cfg(test)]
 mod tests {
-    use crate::production::played::State;
     use crate::production::played::tests::{play, state};
+    use crate::production::played::{Fault, State};
     use crate::production::tests::fixtures;
     use boss_ceres_ridley::{
-        CeresDoor, CeresRidley, DoorKind, FlightPhase, GiveUp, Phase, RidleyPhase, Stage, Wait,
+        CeresDoor, CeresRidley, DoorKind, FlightPhase, Phase, RidleyPhase, Stage, Wait,
     };
     use core::num::Wrapping;
     use types::{Pair, Parts as _, Side};
@@ -279,7 +279,7 @@ mod tests {
     }
 
     /// Hovering far from his point, he reads her energy as the frame starts it: at 29 he gives
-    /// up and retreats, at 30 he hovers on.
+    /// up and starts the unsupported retreat, at 30 he hovers on.
     #[test]
     fn her_energy_as_the_frame_starts_reaches_his_hover() {
         let hovering = flying(
@@ -287,14 +287,19 @@ mod tests {
             Pair { x: 100, y: 40 },
             Pair { x: 0, y: 0 },
         );
-        for (energy, phase) in [
-            (29, RidleyPhase::GivingUp(GiveUp::Retreating)),
-            (30, RidleyPhase::InFlight(FlightPhase::Hovering)),
-        ] {
-            let mut room = his_room(hovering, energy, Vec::new());
-            play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
-            assert_eq!(room.station.ridley.map(|ridley| ridley.phase), Some(phase));
-        }
+        let mut room = his_room(hovering, 29, Vec::new());
+        assert_eq!(
+            play(&mut room, types::Buttons::default(), Stage::Calm),
+            Err(Fault::RidleyGivesUp)
+        );
+        assert_eq!(room.station.ridley, Some(hovering));
+
+        let mut room = his_room(hovering, 30, Vec::new());
+        play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
+        assert_eq!(
+            room.station.ridley.map(|ridley| ridley.phase),
+            Some(hovering.phase)
+        );
     }
 
     /// Meeting the room's left side fast, his shake reaches the room's quake: the back layers,

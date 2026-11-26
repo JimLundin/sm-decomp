@@ -1467,3 +1467,69 @@ provider = "preceding pinned record and imported pose content"
 fields = ["room and actors", "controller", "appearance read-ahead", "equipment", "cinematic and elevator flags", "frame parity"]
 phase = "before movement"
 claim = "Movement computes the floor and accepts the landing pose against the independently supplied geometry."
+
+[[case]]
+id = "ridley/flight-tail"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 866 }
+end = { cut_inclusive = 993 }
+rules = ["boss-ceres-ridley/TailComesLoose", "boss-ceres-ridley/TailFollows", "boss-ceres-ridley/TailSwings", "boss-ceres-ridley/TailWhips", "boss-ceres-ridley/TailRecovers", "boss-ceres-ridley/TailStretches", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailSwishes", "boss-ceres-ridley/TailHits"]
+profile = "reference"
+responsibilities = ["ceres", "movement", "health"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
+checkpoints = false
+limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness"]
+phase = "frame boundary"
+claim = "The played room draws its own random number and calculates actor runs and hit delivery. The pad comes from the movie."
+
+[[case]]
+id = "ridley/alternate-rise-hit"
+kind = "integrated"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 866 }
+end = { cut_inclusive = 905 }
+rules = ["boss-ceres-ridley/TailComesLoose", "boss-ceres-ridley/TailFollows", "boss-ceres-ridley/TailSwings", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailHits"]
+profile = "reference"
+responsibilities = ["ceres", "movement", "health"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
+checkpoints = false
+limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec.", "The alternate room run first differs in the unrelated falling aim at cut 906. This window includes the rising hit."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness"]
+phase = "frame boundary"
+claim = "The played room draws its own random number and calculates actor runs and hit delivery. The pad comes from the movie."
+
+[[case]]
+id = "ridley/alternate-hover-hit"
+kind = "integrated"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 926 }
+end = { cut_inclusive = 993 }
+rules = ["boss-ceres-ridley/TailFollows", "boss-ceres-ridley/TailSwings", "boss-ceres-ridley/TailStretches", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailSwishes", "boss-ceres-ridley/TailHits"]
+profile = "reference"
+responsibilities = ["ceres", "movement", "health"]
+content = "player-rom-import"
+inputs = "played-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
+checkpoints = false
+limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec.", "This separate airborne origin includes the swish and hovering hit. The alternate route is not continuous across the falling-aim difference."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness"]
+phase = "frame boundary"
+claim = "The played room draws its own random number and calculates actor runs and hit delivery. The pad comes from the movie."

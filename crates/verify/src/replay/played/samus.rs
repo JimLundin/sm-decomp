@@ -4,8 +4,17 @@ use crate::replay::compare::Observation;
 use crate::replay::index::ObservationId;
 use crate::replay::result::Outcome;
 use crate::replay::{appearance, connected, movement};
+use crate::source::WramWord;
 use canonical::model::Model;
 use game::production::played;
+use samus_movement::{Phase, Push, Samus};
+use types::{Action, PushFrames, ZERO};
+
+/// Solid contact retained by the push's vertical move.
+const SOLID_CONTACT: WramWord = WramWord {
+    name: "SAMUS_SOLID_CONTACT",
+    offset: 0x0DD0,
+};
 
 /// Her State as the seed holds it.
 pub(in crate::replay) fn seed(
@@ -41,12 +50,28 @@ pub(in crate::replay) fn last_draw_observation(jump: samus_movement::JumpButton)
 
 /// Her fields as the record at `cut` of `row` holds them.
 pub(super) fn expected(
+    previous: &[u8],
     wram: &[u8],
     content: &appearance::Content,
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
-    let seeded = movement::seed(wram)?;
+    let mut seeded = movement::seed(wram)?;
+    if seeded.vertical.speed == ZERO
+        && matches!(
+            (
+                seeded.pose.action,
+                seeded.knockback.push,
+                seeded.vertical.phase
+            ),
+            (Action::Recoiling, None, Phase::GroundFalling)
+                | (Action::Leaping, Some(Push::Down), Phase::Moonfall)
+        )
+    {
+        let before = movement::seed(previous)?;
+        let stopped = super::word(wram, SOLID_CONTACT)? != 0;
+        seeded.vertical.phase = phase_after_push(&before, &seeded, stopped);
+    }
     let mut fields = parts(&seeded);
     fields.push(last_draw_observation(last_draw(wram)?));
     fields.extend(movement::expected(
@@ -101,6 +126,37 @@ fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
     ]
 }
 
+/// The recorded vertical direction leaves footing implicit at two push transitions.
+fn phase_after_push(before: &Samus, after: &Samus, stopped: bool) -> Phase {
+    let phase = after.vertical.phase;
+    if before.pose.action != Action::Recoiling || after.vertical.speed != ZERO {
+        return phase;
+    }
+
+    match (after.pose.action, after.knockback.push, phase) {
+        (Action::Recoiling, None, Phase::GroundFalling)
+            if before.knockback.time_left == PushFrames::NONE
+                && before.vertical.phase == Phase::Rising
+                && (before.knockback.push == Some(Push::Up)
+                    || before.knockback.push == Some(Push::Down) && !stopped) =>
+        {
+            // A spent push clears speed and sets the falling direction in either footing.
+            // The preceding rise and the final push's solid contact distinguish them.
+            Phase::Falling
+        }
+        (Action::Leaping, Some(Push::Down), Phase::Moonfall)
+            if before.knockback.push == Some(Push::Down)
+                && ((before.vertical.phase == Phase::Ground && before.vertical.speed == ZERO)
+                    || (stopped && after.run.speed == ZERO)) =>
+        {
+            // A stopped Down push can touch the floor on the cut that chooses the leap.
+            // The leap's first move begins the moonfall on the next cut.
+            Phase::Ground
+        }
+        (_, _, phase) => phase,
+    }
+}
+
 /// Her knockback as the record states it. The side a hit pushes her to is the hitter's last,
 /// kept while no push is under way, so it is compared only while one is.
 fn knockback(knockback: samus_movement::Knockback) -> String {
@@ -130,6 +186,49 @@ fn run(run: &samus_movement::Run) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn push_exit_in_air_requires_the_preceding_rise_and_no_floor_stop() {
+        use super::{Action, Phase, Push, phase_after_push};
+
+        let mut before = super::movement::seed(&vec![0; 0x10000]).unwrap();
+        before.pose.action = Action::Recoiling;
+        before.knockback.push = Some(Push::Down);
+        before.vertical.phase = Phase::Rising;
+        let mut after = before;
+        after.knockback.push = None;
+        after.vertical.phase = Phase::GroundFalling;
+
+        assert_eq!(phase_after_push(&before, &after, false), Phase::Falling);
+        assert_eq!(
+            phase_after_push(&before, &after, true),
+            Phase::GroundFalling
+        );
+        before.vertical.phase = Phase::Ground;
+        assert_eq!(
+            phase_after_push(&before, &after, false),
+            Phase::GroundFalling
+        );
+    }
+
+    #[test]
+    fn grounded_leap_keeps_its_footing_until_the_first_leap_move() {
+        use super::{Action, Phase, Push, phase_after_push};
+
+        let mut before = super::movement::seed(&vec![0; 0x10000]).unwrap();
+        before.pose.action = Action::Recoiling;
+        before.knockback.push = Some(Push::Down);
+        let mut after = before;
+        after.pose.action = Action::Leaping;
+        after.vertical.phase = Phase::Moonfall;
+
+        assert_eq!(phase_after_push(&before, &after, false), Phase::Ground);
+        before.vertical.phase = Phase::Rising;
+        assert_eq!(phase_after_push(&before, &after, false), Phase::Moonfall);
+        assert_eq!(phase_after_push(&before, &after, true), Phase::Ground);
+        before.pose.action = Action::Leaping;
+        assert_eq!(phase_after_push(&before, &after, false), Phase::Moonfall);
+    }
+
     #[test]
     fn her_way_is_compared_only_while_she_carries_on() {
         use samus_movement::{Carry, Dashing, Run};

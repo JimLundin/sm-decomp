@@ -863,7 +863,7 @@ the frames he runs.
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
-| his phase | `RidleyPhase`, part 3's and, listed alphabetically: `BodyFading`, `EyeFading`, `Flying` (his roar over: part 4c runs him), `ReadyToRoar`, `Roaring`. Part 3's `Awake` is his eye's fade with no step shown | which colours change, when he is tangible, when he roars | every entry of this part |
+| his phase | `RidleyPhase`, part 3's and, listed alphabetically: `BodyFading`, `EyeFading`, `ReadyToRoar`, `Roaring`, `TakingOff` (his roar over: part 4c runs him). Part 3's `Awake` is his eye's fade with no step shown | which colours change, when he is tangible, when he roars | every entry of this part |
 | the eye's steps shown | count, 1 to the eye's steps' count, while `EyeFading` | how bright his eye is | `EyeFadesIn` |
 | the body's sets shown | count, 0 to the body's sets' count less 1, while `BodyFading` | how far his body has faded in | `BodyFadesIn` |
 | the body's runs | runs since his body last took a set, or since its fade began, 0 to `p` − 1, while `BodyFading` | when it takes its next set | `BodyFadesIn` |
@@ -894,12 +894,12 @@ read it back.
 | --- | --- | --- |
 | the eye's colours | none, or one of the eye's colour sets: the screen shows it at once on colours 12 to 14 of the palette he is drawn in (the doors', §12.4) | the screen's colours (the renderer) |
 | the body's colours | none, or one of the body's colour sets: the screen shows it at once on colours 1 to 11 of the palette he is drawn in and of his second palette, which none of his figures in this part uses | the screen's colours (the renderer) |
-| tangible | `bool`: phase `ReadyToRoar`, `Roaring` or `Flying`; before, she, her touch and her shots go through him (§12) | the enemy framework (C1): her touch and her shots; his tail's hit (part 4b) |
+| tangible | `bool`: phase `ReadyToRoar`, `Roaring` or `TakingOff`; before, she, her touch and her shots go through him (§12) | the enemy framework (C1): her touch and her shots; his tail's hit (part 4b) |
 | moving | `bool`: any phase from `BodyFading` on: his tail and wings move, and the baby is drawn with them | his tail and wings (part 4b); drawing (C1) |
 | roaring | `bool`: phase `Roaring` with the roar's figure 2, 3 or 4 | his tail's whip sound and his fireballs (parts 4b and 4c) |
 | the fight's music | a request, on the run he turns tangible | audio (U1) |
 | the roar | a sound, with a queue limit of 6, on the run the roar's second figure starts | audio (U1) |
-| taking off | phase `Flying`: from that run on part 4c runs him | part 4c |
+| taking off | phase `TakingOff`: from that run on part 4c runs him | part 4c |
 | his drawing | his look at his position, and the baby as in §12.4 | drawing (C1) |
 
 ### EyeFadesIn
@@ -965,7 +965,7 @@ read it back.
   F-roar-shuts]
 - The same, figure 4 shown its 8 runs → figure 5 [F-roar-rests]
 - The same, figure 5 → figure 5 [F-roar-held]
-- A run, `Roaring`, wait 0 → `Flying`, whatever the figure; his figure and all he does on this
+- A run, `Roaring`, wait 0 → `TakingOff`, whatever the figure; his figure and all he does on this
   run and after are part 4c's [F-roar-flies, F-roar-flies-early]
 - Every run, `Roaring` → his look, the figure's [F-roar-counts, F-roar-opens, F-roar-wide,
   F-roar-shuts, F-roar-rests, F-roar-held]
@@ -989,13 +989,11 @@ time her protection runs out, so she is hit three times before he takes off.
 **What this part reads and leaves.** It reads his phase and position (§13), her position, her body
 and her protection as the frame starts (samus-movement, samus-health) and the random number
 (§12.3). It hands the frame's hit to her energy (samus-health) and to her motion (samus-movement),
-and the tail's place to drawing. Left to others: the energy a hit takes and the protection it gives
-(samus-health's `TailHit`); the push itself, its leap and its poses (samus-movement's push); her
-hurt colours (samus-appearance); the tail's motion, its whip and its sound once he takes off, and
-the hits his moving tail gives (part 4c, with this part's `TailHits` on its tip); his wings, drawn
-only (C1); drawing the tail's segments (C1). In this part he holds nothing. Once he carries the
-baby off in his fake retreat, after her 100th hit on him (a later part), his tail hits her no more:
-that part states it, and part 4c's use of `TailHits` must carry it.
+and the tail's place to drawing. Ridley reports the hit's worth. Samus-health applies it with
+the reduction for her suit and gives her protection. Samus-movement supplies the push, its
+leap and its poses. Samus-appearance supplies her hurt colours. Part 4c-1b (§17) supplies the
+moving tip for `TailHits` and the whip's sound. The enemy framework (C1) draws the wings and
+tail segments. His fake retreat, after her 100th hit on him, ends the tail's hits.
 
 **Running.** As in §13: on each run that ends in `BodyFading`, `ReadyToRoar` or `Roaring`, this
 part's entries run after §13's, so the run he turns tangible can hit. A run that ends before
@@ -1057,8 +1055,9 @@ movement's reaction in the same frame starts the push.
 - params: the change, at a random number of 65,280 or more, to 8 + (the random number mod 16).
 - switch: Fixed.
 - He is placed → curl 16 [T-placed]
-- A run that ends in `BodyFading`, `ReadyToRoar` or `Roaring`, the random number `n` 65,280 or
-  more → curl `8 + (n mod 16)` [T-curl-least, T-curl-most, T-curl-recorded]
+- A run that ends in `BodyFading`, `ReadyToRoar`, `Roaring` or runs the tail in flight (§17),
+  the random number `n` 65,280 or more → curl `8 + (n mod 16)` [T-curl-least, T-curl-most,
+  T-curl-recorded, FT-curl-flight]
 - Otherwise the curl stays: a random number under 65,280, or a run that ends before he moves
   [T-curl-below, T-rest-first, T-curl-still].
 - checked: oracle (recorded cases T1 and T8; every run of the cached rows from his placing to
@@ -1077,15 +1076,16 @@ movement's reaction in the same frame starts the push.
 - A run, tangible, her protection 0 as the frame starts, `|dx| < w + t` and `|dy| < h + t` →
   the frame's hit, worth 15, push time 5; side `Right` when `dx` ≥ 0, else `Left` [T-hit-left,
   T-hit-right, T-hit-jumping, T-hit-ready, T-reach-x-inside, T-reach-y-inside, T-side-left,
-  T-wrap, T-wrap-across, T-wrap-y, T-reach-adjusted]
+  T-wrap, T-wrap-across, T-wrap-y, T-reach-adjusted, FT-hit-rising, FT-hit-hovering, FT-reach-reference]
 - Otherwise there is no hit: she out of reach on either axis [T-reach-x-edge, T-reach-y-edge,
-  T-reach-adjusted-edge, T-curl-least], her protection over 0 as the frame starts
-  [T-protected], or he not tangible [T-rest-first, T-rest-intangible, T-curl-still].
+  T-reach-adjusted-edge, T-curl-least, FT-reach-adjusted], her protection over 0 as the frame starts
+  [T-protected, FT-protected], or he not tangible [T-rest-first, T-rest-intangible, T-curl-still].
 - So her side is judged on where the last frame left her: at the tip's x or right of it she is
   pushed right. With her protection of 96 frames she is hit every 96 frames while she
   stays in reach.
-- checked: oracle (recorded cases T2 to T7: every run 577-866 of the cached rows, three hits);
-  constructed (each edge of the reach, the wraps on both axes, the adjusted reach).
+- checked: oracle (recorded cases T2 to T7: every run 577-866 of the cached rows, three hits; W6, W7, W21 in flight);
+  constructed (reach edges and adjusted reach at rest, the flight y edge with and without
+  adjusted reach, and wraps on both axes).
 
 ## 15. Part 4c-1a, his take-off and flight
 
@@ -1100,7 +1100,7 @@ his take-off's figures and hops, his rise, his slowing, his hover and the pull t
 his move by his speed within the room's bounds, and where the flight hands over. The second,
 4c-1b, is his tail in flight: its motion, its whips and their sound, and the place of its tip,
 on which part 4b's `TailHits` judges the two hits the movie shows in his flight (cuts 897 and
-993, both pushing her left). Until 4c-1b, nothing of his tail is specced from his take-off on.
+993, both pushing her left). The tail in flight is §17.
 
 **What this part reads and leaves.** It reads his phase and position (§13), her energy
 (samus-health), the hits he has taken from her shots (a later part counts them) and the random
@@ -1124,7 +1124,7 @@ with its hops and the lift-off (`TakesOff`). So a hop shows in the baby's place 
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
-| his phase | `RidleyPhase`, part 4a's and, listed alphabetically: `FakeRetreat`, `Fireballs`, `Lunge`, `Swoop` (later parts run him), `Hovering`, `Retreating` (part 4c-2 runs him), `Rising`, `Slowing`; `Flying` is his take-off | how he moves | every entry of this part |
+| his phase | `RidleyPhase`, part 4a's and, listed alphabetically: `FakeRetreat`, `Fireballs`, `Lunge`, `Swoop` (later parts run him), `Hovering`, `Retreating` (part 4c-2 runs him), `Rising`, `Slowing`; `TakingOff` is his take-off | how he moves | every entry of this part |
 | his position | x, y: px, 16-bit, each with a fraction, 0 to 255 in 1/256 px | where he is drawn and the baby held | `Flies`, `Rises`, `SlowsDown`, `Hovers`, `PulledToHisPoint`; output |
 | his speed | x, y: 1/256 px per run, each a signed 16-bit number, −32,768 to 32,767; x rightward, y downward | how fast he moves | `Flies`, `Rises`, `SlowsDown`, `PulledToHisPoint` |
 | the take-off's figure | `TakeOffFigure`, 1 to 5 (`TakesOff`), with its runs, 1 to its length; the fifth has no length and no runs | his look, his hops, his lift-off | `TakesOff` |
@@ -1152,7 +1152,7 @@ any state this part allows and read it back.
 | Output | Type | Read by |
 | --- | --- | --- |
 | his drawing | his look at his position (whole px), and the baby as in §12.4 | drawing (C1) |
-| tangible | `bool`: true on every run of this part, in every phase from `Flying` through `Hovering` and on the run he turns to an attack (§13.4's `tangible`, which this part extends to `Rising`, `Slowing`, `Hovering` and the attacks' first run) | as in §13.4: her touch and her shots (C1); his tail's hits (part 4b's `TailHits`, on 4c-1b's tip) |
+| tangible | `bool`: true on every run of this part, in every phase from `TakingOff` through `Hovering` and on the run he turns to an attack (§13.4's `tangible`, which this part extends to `Rising`, `Slowing`, `Hovering` and the attacks' first run) | as in §13.4: her touch and her shots (C1); his tail's hits (part 4b's `TailHits`, on 4c-1b's tip) |
 | moving | `bool`: true on every run of this part, as in §13.4 | as in §13.4 |
 | roaring | `bool`: false on every run of this part; nor does any run of it ask for the fight's music or the roar | as in §13.4 |
 | the bound he met | as in §15.1 | his attacks (later parts) |
@@ -1167,9 +1167,9 @@ any state this part allows and read it back.
   4, 3 `TakeOff2` 5, 4 `TakeOff1` 17, 5 `Rest`, held from then on. The hops, at the start of
   figure 2 (+1, −12) px and of figure 3 (−4, −8) px. The lift-off speed, (0, −352).
 - switch: Fixed.
-- The run he takes off (§13, `Roars`: `Roaring`, wait 0) → `Flying`; the take-off's figure 1,
+- The run he takes off (§13, `Roars`: `Roaring`, wait 0) → `TakingOff`; the take-off's figure 1,
   its first run; his speed (0, 0) [L-takeoff]
-- A run, `Flying` → his speed (0, 0) before he moves (`Flies`) [L-figure-counts, L-hop-first]
+- A run, `TakingOff` → his speed (0, 0) before he moves (`Flies`) [L-figure-counts, L-hop-first]
 - At the end of every run after the one he takes off: the figure shown fewer runs than its
   length → one run more [L-figure-counts, L-rise-counts]
 - The same, figure 1 shown its 3 runs → figure 2, its first run; he hops (+1, −12) [L-hop-first]
@@ -1494,3 +1494,214 @@ hands that worth to samus-health with the hit.
 - checked: oracle (recorded cases ST9 to ST13: the two hits, room 3 at the left and room 2 at
   the right, and every other in-view run of the rows with no hit); constructed (each edge, the
   order of two vents, the wrap).
+## 17. Part 4c-1b, his tail in flight
+
+As Ridley takes off his tail swings loose. The swing travels from its base to its tip.
+Once he hovers he can whip the tail toward Samus. Its segments stretch in turn, then
+draw in as they settle. The tip hits her twice in the movie, once as he rises and once
+as he hovers.
+
+**What this part reads and leaves.** It reads the phase and position his flight supplies (§15),
+her position, body and protection as the frame starts (§14.3) and the random number (§12.3).
+Aiming assumes the ordinary Ceres loadout, with no missiles. Aiming when missiles
+are available belongs to the round that covers that equipment.
+It supplies the seven segment positions to drawing (C1), a swish request for audio (U1), and
+the hit from the tip to her health and movement (§14.4). Production runs these rules
+from take-off through the last hover. C1 owns the segment sprites. The retreat and
+the fake retreat own their changes to the tail and to his ability to hit. The tail
+reports no hit while he holds her or carries the baby off in his fake retreat.
+
+### 17.1 What a caller can hold
+
+A caller can set and read back the tail state in the supported phases. Before take-off,
+§14.2 holds its curl. From take-off through hovering, the state also holds the following
+quantities in a chain of seven segments, ordered from base to tip.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| pace | `SwingPace`, 1, 2 or 8 angle units per run | `TailFollows`, `TailSwings`, `TailSwishes` |
+| mark | optional `TailAngle`, the angle the segments aim for ahead | `TailSwings` |
+| swish count | `SwishRuns`, 0 to 15 runs | `TailSwishes` |
+| swinging | bool per segment, whether the swing is active | `TailFollows`, `TailWhips`, `TailRecovers`, `TailSwings` |
+| lag | per segment, `Counting` with a nonnegative count of angle units, or `Passed` once it has passed the swing along | `TailFollows` |
+| way | per segment, `Ahead` or `Back`, the swing's direction | `TailFollows`, `TailSwings` |
+| angle | `TailAngle` per segment, a 16-bit count of 256ths of a turn, increasing toward the back around the resting angle of 16,384 | `TailWhips`, `TailSwings`, `TailBends` |
+| length | `TailLength` per segment, in 1/256 px, 2 px at the base, elsewhere from 0 to its cap in `TailStretches` | `TailBends`, `TailStretches` |
+| stretching | bool per segment, whether it extends toward the length threshold | `TailStretches` |
+| offset | per segment, x and y in signed 16-bit whole px | `TailBends` |
+| place | per segment, x and y in unsigned 16-bit whole px | base only, `TailWhips`; all, output (drawing) |
+
+A present mark is `16,128 + d` or `16,384 + d`, with `d` in 0 through 23 or
+232 through 255 as in `TailWhips`. A caller supplies a mark in that range or supplies
+no mark. The lag count reaches at most 30 before passing the swing. A segment can be held or
+swinging while counting. A segment that passed the swing stays swinging until it settles
+and starts counting again. Her position uses the same whole-pixel units as his and the
+tail's places. The tail uses his position from `Flies`, before any hop. The run that selects a retreat stays
+tangible and moving. Part 4c-2 owns that run, including its tail. This part uses his
+phase after the phase rule, including any attack selected on that run.
+
+### 17.2 Outputs
+
+The seven places go to drawing in base-to-tip order. The swish is an audio request.
+The hit is the shared event from §14.4. Her health applies the energy loss and
+protection, and her movement applies the push.
+
+### 17.3 Order that matters
+
+On the take-off run `TailComesLoose` supplies the initial shape. The curl and swish count
+use this run's random number (§12.3) and the pace before any change in pace, respectively.
+A whip aims from the last run's base place. A new mark or recovery pace applies to the
+same run. Segments pass the swing along and bend in base-to-tip order. Their places use
+the lengths as the run starts. Their new lengths affect places on the next run. `TailHits`
+uses the resulting tip and her position, body and protection as the frame starts. Its
+worth is 15 whole energy and its push lasts 5 frames, as at rest.
+
+### TailComesLoose
+
+- kind: mechanic.
+- summary: his tail starts swinging along its entire length as he takes off.
+- params: starting pace 1, no mark, swish count 0. Base to tip, the initial lengths are
+  2, 8, 8, 8, 8, 8 and 5 px. Angle `16,384 + 16i` for segment `i` numbered from the base at 0.
+- switch: Fixed.
+- He takes off → all seven segments swing `Ahead`, each counting lag from 17. Each starts
+  at the resting place (§14) with offset (0, 0) and stretching false [FT-takeoff, FT-takeoff-tight]
+- checked: oracle (W1); constructed (take-off with a tighter curl).
+
+### TailFollows
+
+- kind: mechanic.
+- summary: each segment waits for the swing to reach it, then waits for its curl before moving.
+- params: the curl from `TailCurls` and this run's swing pace.
+- switch: Fixed.
+- Swinging and counting below the curl → add the pace to its lag and keep its angle and
+  offset this run [FT-lag-counts, FT-lag-edge, FT-takeoff-tight]
+- Swinging and counting at or above the curl → its lag becomes `Passed` and it can
+  move this run. If there is a following segment, it starts swinging this run in the
+  passing segment's way [FT-takeoff, FT-passes-on, FT-lag-edge]
+- Swinging and already `Passed` → it can move on this run without passing the swing again
+  [FT-swing-ahead, FT-turn-ahead]
+- checked: oracle (W1, W2, W16 to W18); constructed (curl and lag edges).
+
+### TailSwings
+
+- kind: mechanic.
+- summary: each segment swings between its limits. A whip can pull a segment to a mark
+  ahead, where it settles once the segment before it has settled.
+- params: forward limit 16,368, back limit 16,448. Let `a` be the segment's angle and `p`
+  the pace. Compare the angle differences below as signed 16-bit values after wrapping.
+- switch: Fixed.
+- Ready to move `Back`, `a + p - 16,448` negative → increase angle by `p`, wrapping
+  at 16 bits [FT-swing-back]
+- Ready to move `Back`, `a + p - 16,448` zero or positive → stop at 16,448 and turn
+  `Ahead` [FT-turn-back]
+- Ready to move `Ahead` → use the mark as the forward limit if there is one, else
+  16,368. With a mark it starts stretching
+  [FT-whip-stretch]
+- Ready to move `Ahead`, `a - p - 1 - limit` zero or positive → decrease angle by `p`,
+  wrapping at 16 bits [FT-swing-ahead, FT-ahead-exact]
+- Ready to move `Ahead`, `a - p - 1 - limit` negative, with no mark or the preceding
+  segment still swinging → set angle to 16,368 and turn `Back` [FT-turn-ahead, FT-aim]
+- Ready to move `Ahead`, `a - p - 1 - limit` negative, with a mark and the segment is the
+  base or the preceding segment has settled → set angle to the mark, stop swinging,
+  turn `Back`, set lag to `Counting(0)` and keep the previous offset this run
+  [FT-whip-settles, FT-swish]
+- checked: oracle (W2, W4, W8, W9, W13, W14, W20); constructed (exact forward step and back swing).
+
+### TailWhips
+
+- kind: mechanic.
+- summary: hovering or on an attack, he can whip his swinging tail at a spot below
+  her. A chance to whip can occur even if she is far away.
+- params: 128 px of horizontal reach from him, 24 px below her for his aim, and a chance
+  on 16 out of 256 random values.
+- switch: Fixed.
+- All seven segments swinging, and he is `Hovering`, `Fireballs`, `Lunge` or `Swoop`:
+  - `n mod 256` at least 240 → try mark `16,384 + d` [FT-aim-chance, FT-aim-rejected]
+  - `n mod 256` below 240 and `abs(signed16(her x - his x)) < 128` → try mark
+    `16,128 + d` [FT-aim, FT-reaim, FT-aim-near, FT-aim-attack]
+- A mark tried and strictly below the base's angle as an unsigned number → set the
+  mark to that angle and set pace 8 [FT-aim, FT-aim-chance, FT-aim-attack]
+- A mark tried at or above the base's angle → keep mark and pace [FT-aim-rejected]
+- No mark tried → the mark and pace stay as they were unless `TailRecovers` changes
+  them [FT-chance-rising, FT-hit-rising, FT-aim-far, FT-restart, FT-lag-counts]
+
+To obtain `d`, measure `dx` right and `dy` down from the base's last place to the point
+24 px below where she began the frame. Take each as a wrapping signed 16-bit difference.
+Let `u` be the integer quotient of 256 times the low eight bits of the lesser magnitude
+divided by the low eight bits of the greater magnitude, then divided by 8 again, discarding
+the remainder at both divisions. With zero divisor, the first quotient is 65,535.
+Compute the bearing below mod 256. Directly down has bearing 0, directly right 64.
+
+Cells: `x` and `y` denote `dx` and `dy`; `u` is the quotient above.
+
+| Magnitudes | x ≥ 0, y ≥ 0 | x ≥ 0, y < 0 | x < 0, y ≥ 0 | x < 0, y < 0 |
+| --- | --- | --- | --- | --- |
+| `abs(y) >= abs(x)` | `u` | `128 - u` | `-u` | `128 + u` |
+| `abs(y) < abs(x)` | `64 - u` | `64 + u` | `192 + u` | `192 - u` |
+
+- Bearing 24 through 231 inclusive → use `d = 232` [FT-clamp-24]
+- Otherwise → use the bearing as `d` [FT-bearing-0, FT-bearing-1, FT-bearing-2, FT-bearing-3, FT-bearing-4,
+  FT-bearing-5, FT-bearing-6, FT-bearing-7, FT-bearing-zero, FT-clamp-23]
+- checked: oracle (W5, W6, W8, W9, W12); constructed (chance, aim edges, bearing rows and
+  zero divisor, attack hand-over).
+
+### TailRecovers
+
+- kind: mechanic.
+- summary: when all segments settle, a new swing starts from the base.
+- params: her x threshold, 112 px.
+- switch: Fixed.
+- Every segment held as the run starts → the base swings in its current way, clear the mark,
+  and set pace to 1 if her unsigned x is below 112, otherwise 2 [FT-restart, FT-restart-slow]
+- checked: oracle (W15); constructed (the lower side of the threshold).
+
+### TailStretches
+
+- kind: mechanic.
+- summary: a whip stretches the tail, then the segments draw in again until they reach
+  their resting lengths.
+- params: growth 240 and shrinkage 128, in 1/256 px. The stretch threshold is 12 px. Base
+  length is fixed. The remaining segments' caps are 24, 24, 22, 22, 18 and 5 px. Their
+  resting thresholds are 8, 8, 8, 8, 8 and 5 px.
+- switch: Fixed.
+- A segment after the base, stretching after its swing → add 240 to length in 1/256 px, stopping at
+  the segment's cap [FT-whip-stretch, FT-stretch-caps]
+- A segment after the base, stretching after its swing and already longer than 12 px → clear stretching
+  for future runs, with this run's growth still applied [FT-stretch-past, FT-stretch-edge]
+- A segment after the base, without stretching and above its resting threshold
+  → subtract 128, even when that takes it below the threshold [FT-shrink, FT-shrink-edge]
+- A segment after the base, without stretching and at or below its resting threshold →
+  keep length [FT-shrink-stops, FT-shrink-edge]
+- The base's length update → keep both its length and the stretching state left by its
+  swing [FT-whip-stretch, FT-stretch-caps]
+- checked: oracle (W9 to W11, W19); constructed (caps, threshold and undershoot).
+
+### TailBends
+
+- kind: mechanic.
+- summary: the curve of the tail comes from linking the offsets of its seven segments.
+- params: the tail's anchor is 32 px right and 16 px down from his position before a hop.
+- switch: Fixed.
+- A segment outside the lag wait and not settling this run → replace its offset with
+  `(floor(S(b) * l / 256), floor(S(b + 64) * l / 256))`. Here `l` is the whole part
+  of the length in px, `b` is its new angle plus the preceding segment's new angle
+  (base uses its own angle only), and `S(k) = trunc(256 * sin(2π * (k mod 256) / 256))`,
+  truncated toward zero [FT-takeoff, FT-swing-ahead, FT-hop, FT-hit-rising]
+- A run → put the base at the anchor plus its offset, and each following segment at
+  the preceding segment's place plus its own offset. Both coordinates wrap mod 2^16
+  [FT-hop, FT-whip-settles, FT-lag-counts, FT-hit-hovering, FT-place-wrap]
+- checked: oracle (W1 to W3, W6, W13, W16, W21); constructed (coordinate wrapping).
+
+### TailSwishes
+
+- kind: mechanic.
+- summary: while the tail swings fast, it makes a swish every sixteen runs.
+- params: pace threshold 8, period 16 runs. Audio handles the swish request in
+  its third effects channel with a queue limit of six.
+- switch: Fixed.
+- Pace below 8 as the run starts → set count 0 [FT-lag-counts]
+- Pace at least 8 as the run starts and count below 15 → add 1 [FT-whip-stretch,
+  FT-restart, FT-swish-next]
+- Pace at least 8 as the run starts and count 15 → request the whip's swish and set
+  count 0 [FT-swish]
+- checked: oracle (W9, W14 to W16); constructed (the run before the swish).

@@ -225,7 +225,7 @@ impl FlightPhase {
         random: u16,
     ) -> Ruled {
         match self {
-            Self::Flying => Ruled::FliesOn(Steered::flying(Self::Flying, STILL, hover_runs)),
+            Self::TakingOff => Ruled::FliesOn(Steered::flying(Self::TakingOff, STILL, hover_runs)),
             Self::Rising => {
                 let speed = Pair {
                     y: speed.y - RISE_PULL,

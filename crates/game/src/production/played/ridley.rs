@@ -4,8 +4,8 @@
 //! his room after him. Fetching his room's contents places him: the HUD meets a boss, the
 //! stage is calm and his room's colours are the fade's goal. The baby's colours go to the
 //! screen as it glows, and his own as his eye and his body fade in. From his body's fade on his
-//! tail rests behind him, and once he is tangible it hits her within its reach: his run reports
-//! the frame's hit, which her energy and her motion read.
+//! tail rests behind him. At take-off it swings loose and can whip toward her. Once he is
+//! tangible, the moved tip can hit her. Her energy and motion read the same hit.
 
 use super::{Content, Fault, Rules, station};
 use crate::production::ridley;
@@ -25,10 +25,10 @@ impl station::State {
 
 /// One run of Ridley, the baby in his hold, his tail reading her in a frame of play:
 /// the colour sets the run names go to the screen at once. His fight's music and his roar are
-/// produced, for audio, the frame's hit for her energy and her motion, and the shake he starts
-/// for the room's quake. In flight he reads her energy as the frame starts it (samus-health)
-/// and his hits taken held at 0: her shots against him have no producer yet. A run that starts
-/// in an attack or as he gives up is a later part's.
+/// produced for audio along with his tail swish, the frame's hit for her energy and her motion,
+/// and the shake he starts for the room's quake. In flight he reads her energy as the frame
+/// starts it (samus-health) and his hits taken held at 0. A run that starts
+/// in an attack is a later part's. Giving up starts his retreat on the same run.
 pub(super) fn run(
     ridley: CeresRidley,
     running: station::Running<'_>,
@@ -65,6 +65,9 @@ pub(super) fn run(
         &content.ridley,
         &rules.ceres,
     );
+    if matches!(run.ridley.phase, RidleyPhase::GivingUp(_)) {
+        return Err(Fault::RidleyGivesUp);
+    }
     if let Some(colours) = run.colours {
         ridley::show_baby(colours, &content.rooms.actors.ceres_ridley, palette)
             .map_err(|ridley::ColourFault| Fault::BabyColours)?;

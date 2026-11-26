@@ -28,10 +28,12 @@
 mod arrival;
 mod ceres_doors;
 mod colours;
+mod contact;
 mod flight;
 mod frame;
 mod health;
 mod hud;
+pub(super) mod indexed;
 pub(super) mod intro;
 mod passage;
 pub(super) mod platform;
@@ -133,17 +135,16 @@ fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
 
 /// The owners' fields as the record at `cut` holds them, in the order they are compared.
 fn expected(
-    record: &FrameRecord,
+    frame: &Frame<'_>,
     content: &appearance::Content,
     hud: &super::hud::Content,
     hud_settled: bool,
     counted: bool,
     row: &str,
-    cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
-    let wram = &record.wram;
-    let finished = finished(record);
-    let mut fields = samus::expected(wram, content, row, cut)?;
+    let wram = &frame.current.wram;
+    let finished = finished(frame.current);
+    let mut fields = samus::expected(&frame.previous.wram, wram, content, row, frame.cut)?;
     fields.extend(camera::expected(wram)?);
     let passing = passage::passing(wram)?;
     fields.push(passage::observation(passing));
@@ -287,17 +288,21 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Ok(run) => run,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
-    let controller = match Controller::seeded(&seed.wram) {
+    let controller = match seed_controller(&seed) {
         Ok(controller) => controller,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
-    // A seed that read the pad read the movie's: a stale or early pad is a harness fault.
-    if polled(&seed) && seed.pad.0 != controller.held {
-        let misaligned = data_failure(None, "played pad alignment");
-        return Ok(report(0, Stop::At(at(start, misaligned))));
-    }
     let (held, stop) = run.through(&mut rows, seed, controller, start.saturating_add(1)..=end)?;
     Ok(report(held, stop))
+}
+
+/// A seed that read the pad read the movie's.
+fn seed_controller(seed: &FrameRecord) -> Result<Controller, Outcome> {
+    let controller = Controller::seeded(&seed.wram)?;
+    if polled(seed) && seed.pad.0 != controller.held {
+        return Err(data_failure(None, "played pad alignment"));
+    }
+    Ok(controller)
 }
 
 // Comparison starts at the first published cut and includes the first ordinary updates.
@@ -457,9 +462,20 @@ impl<'a> Run<'a> {
     fn through(
         &mut self,
         rows: &mut rows::Rows<'_>,
+        previous: FrameRecord,
+        controller: Controller,
+        cuts: core::ops::RangeInclusive<u64>,
+    ) -> Result<(u64, Stop), Outcome> {
+        self.witness_through(rows, previous, controller, cuts, |_, _| Ok(()))
+    }
+
+    fn witness_through(
+        &mut self,
+        rows: &mut rows::Rows<'_>,
         mut previous: FrameRecord,
         mut controller: Controller,
         cuts: core::ops::RangeInclusive<u64>,
+        mut matched: impl FnMut(u64, Vec<Observation>) -> Result<(), Outcome>,
     ) -> Result<(u64, Stop), Outcome> {
         let mut held: u64 = 0;
         for cut in cuts {
@@ -468,8 +484,9 @@ impl<'a> Run<'a> {
                 return Err(data_failure(Some(cut), "played rows join"));
             }
             let (row, local) = rows.place(cut)?;
-            if let Err(outcome) = self.step(controller, &previous, &current, cut, (&row, local)) {
-                return Ok((held, Stop::At(at(cut, outcome))));
+            match self.step(controller, &previous, &current, cut, (&row, local)) {
+                Ok(fields) => matched(cut, fields)?,
+                Err(outcome) => return Ok((held, Stop::At(at(cut, outcome)))),
             }
             held = held.saturating_add(1);
             controller = controller.read(current.pad.0, polled(&current));
@@ -486,7 +503,7 @@ impl<'a> Run<'a> {
         current: &FrameRecord,
         cut: u64,
         place: (&str, u64),
-    ) -> Result<(), Outcome> {
+    ) -> Result<Vec<Observation>, Outcome> {
         // While a new game's start is made ready no frame of play reads the pad, and the
         // preparation's own waits for the frame's end are its lag.
         let preparing = self.state.arrival.preparing();
@@ -593,7 +610,8 @@ impl<'a> Run<'a> {
             CompareFault::EmptyExpected
             | CompareFault::DuplicateField(_)
             | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
-        })
+        })?;
+        Ok(expected)
     }
 
     /// Every owner's fields at the frame's cut, as the record and as the played State hold
@@ -609,16 +627,15 @@ impl<'a> Run<'a> {
             previous,
             current,
             place,
-            cut,
+            ..
         } = *frame;
         let mut expected = expected(
-            current,
+            frame,
             &self.content.appearance,
             &self.hud,
             hud_settled,
             arrival::counted(self.state.arrival),
             self.row,
-            cut,
         )?;
         let mut actual = actual(
             &self.state,
@@ -638,6 +655,24 @@ impl<'a> Run<'a> {
             }
         }
         if finished(current) {
+            if expected
+                .iter()
+                .any(|field| field.field == "ridley.tail.pace")
+            {
+                expected.push(contact::expected(
+                    "ridley.tail.hit",
+                    &previous.wram,
+                    &current.wram,
+                )?);
+                expected.push(ridley::expected_swish(previous, current)?);
+            }
+            if let Some(run) = outputs.ridley {
+                actual.push(contact::actual("ridley.tail.hit", run.hit));
+                actual.push(ridley::swish(run.swish.is_some()));
+                if let Some(places) = &run.tail_places {
+                    actual.extend(ridley::places(places));
+                }
+            }
             expected.extend(quake::expected(previous, current, place)?);
             actual.extend(quake::actual(&self.state, outputs.quake));
             if owns_vent_draws && passage::passing(&current.wram)? {
@@ -728,6 +763,29 @@ mod tests {
             "PLAYED_ALONE row={} start={} held={} stop={:?}",
             report.row, report.start, report.held, report.stop
         ));
+    }
+
+    /// The alternate controls exercise the first grounded leap and the rising tail hit.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn alternate_room_start_plays_through_the_rising_tail_hit() {
+        let report = super::play(&sources(), "samus-ceres-push", 0, 905).unwrap();
+        assert_eq!(report.held, 905);
+        assert_eq!(report.stop, super::Stop::End);
+    }
+
+    /// A checkpoint record admits the whole tail, including a chain partway through a whip.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn airborne_tail_continues_from_observed_checkpoints() {
+        let sources = sources();
+        for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
+            for start in [930, 940, 992] {
+                let report = super::play(&sources, row, start, 993).unwrap();
+                assert_eq!(report.held, 993_u64.saturating_sub(start));
+                assert_eq!(report.stop, super::Stop::End);
+            }
+        }
     }
 
     /// Every reviewed run of `scenarios/replay/played.toml`, or those `SM_PLAYED` names, played

@@ -516,7 +516,7 @@ The reference model, `$TEMP/collab/fight-753/scratch/model4a.py` (it borrows par
 `$TEMP/collab/ceres-748/scratch/model3.py`), decodes him at cut N and steps him once to N+1 with
 the game's content (read from the bank log into a local scratch module, never committed):
 - `chain-any-0006-E0B5` 513-867: 355 runs; the phase with its count, runs, wait, figure and the
-  figure's runs agree on 355 (at 867 only the phase `Flying`, the rest being part 4c's);
+  figure's runs agree on 355 (at 867 only the phase `TakingOff`, the rest being part 4c's);
   do-nothing 0. Tangible (`0F86` bit `0400h` clear), moving (`7E7804` = 1), roaring (`7E781E`
   non-zero), his look (`0F8E`, but at 867) and his position: 355 of 355.
 - His colours, 355 of 355 runs: on a run the model names an eye set, sprite palette 7 colours
@@ -537,7 +537,7 @@ the game's content (read from the bank log into a local scratch module, never co
 | `ReadyToRoar`, wait | `0FA8` `$A455`, `0FB2` | `DEC`/`BPL`: roars at −1 |
 | `Roaring`, wait | `0FA8` `$A478`, `0FB2` = `FCh` at the start | Ceres only: the Norfair branch (`079F` = 2) fades the room's background instead and is not this domain's |
 | the roar's figure and runs | `0F92` = `$E698`, `$E69E`, `$E6A2`, `$E6A6`, `$E6AC` for figures 1 to 5; runs = length − `0F94` + 1 | list `$E690`, facing left (`7E7820` = 0, `$E517` falls through); figure 5 is `0001,E983` then sleep (`$812F`) at `$E6AC` |
-| `Flying` | `0FA8` `$A354` | set with list `$E91D`, wings `7E7810`/`7E7812` = 8, tail neutral (`$D3D9`, `7E2000` = 1), `0FB0` = 0: part 4c's |
+| `TakingOff` | `0FA8` `$A354` | set with list `$E91D`, wings `7E7810`/`7E7812` = 8, tail neutral (`$D3D9`, `7E2000` = 1), `0FB0` = 0: part 4c's |
 | `Rest`, `Open`, `Wide` | `0F8E` `$E983`, `$E9C7`, `$E9E9` | the facing-right figures (`$E9A5`, `$EA0B`, `$EA2D`, list `$E6AE`) are Norfair's |
 | tangible | `0F86` bit `0400h` clear (`3C00h` to `3800h` at 609) | |
 | moving | `7E7804` = 1 (`$A3D7`) | from then the main AI no longer draws the baby itself; the graphics hook does |
@@ -591,7 +591,7 @@ Sprite palette 1 is drawn by none of his sprites in 0006 (OAM at 620 and 700 use
 
 ### The harness (for the integrator)
 
-- **Rows:** `chain-any-0006-E0B5` 512-866 for this part (867 for the phase `Flying` only).
+- **Rows:** `chain-any-0006-E0B5` 512-866 for this part (867 for the phase `TakingOff` only).
 - **Compared per run:** `0FA8` through the phases above, `0FB0` and `0FB2` as the phase's count,
   runs or wait, `0F92`/`0F94` as the roar's figure and runs while `Roaring`, `0F8E` through the
   looks, `0F86` bit `0400h`, `7E7804`, `7E781E` non-zero; the baby as part 3; the screen's sprite
@@ -604,14 +604,14 @@ Sprite palette 1 is drawn by none of his sprites in 0006 (OAM at 620 and 700 use
 **How the played frame runs it:**
 1. Production (`crates/game/src/production/played/ridley.rs`, `run`) steps him through this
    part's phases. From the run that makes him tangible his tail can hit her (part 4b,
-   below). Part 4a refused a run that started `Flying`; since part 4c-1a he takes off and
+   below). Part 4a refused a run that started `TakingOff`; since part 4c-1a he takes off and
    flies through production, and a run that starts in an attack or as he gives up is refused
    (`Fault::RidleyAttacks`, `Fault::RidleyGivesUp`, later parts).
 2. His colours go to the screen as the baby's do (`production/ridley.rs`, `show_eye` and
    `show_body`): the eye's set to sprite palette 7 colours 12-14, the body's set to sprite
    palettes 1 and 7 colours 1-11, at once.
 3. The verify reader (`crates/verify/src/replay/ridley.rs`) decodes `$A389` with `0FB0`, `$A3DF`,
-   `$A455`, `$A478` with the figure from `0F92`/`0F94`, and `$A354` as `Flying`.
+   `$A455`, `$A478` with the figure from `0F92`/`0F94`, and `$A354` as `TakingOff`.
 4. The importer brings in the eye's step table (`$E269`, to its `FFh` before the eye's sets),
    the eye's 16 colour sets (`$E2AA`) and the body's 16 colour sets (`$E30A`) as content of
    Ceres Ridley; no ROM bytes in the vectors or the crate.
@@ -789,7 +789,7 @@ is a run. The bank log A6 (`$A288..A2BC`, `$A354`, `$A6AF..A781`, `$D62F..D711`,
 The reference model, `$TEMP/collab/ridley-4c/scratch/model4c1.py`, decodes him at cut N and
 steps him once to N+1, with her energy and his hits at N and the random number at N+1:
 
-| Compared, 0006 867-994 (127 runs from `Flying` on, 994 the hand-over) | Model | Do-nothing (last run's value) |
+| Compared, 0006 867-994 (127 runs from `TakingOff` on, 994 the hand-over) | Model | Do-nothing (last run's value) |
 | --- | --- | --- |
 | the phase (`0FA8`) | 127 | 123 |
 | his whole x, y (`0F7A`, `0F7E`) | 127, 127 | 113, 48 |
@@ -805,14 +805,14 @@ The run 866-867 (part 4a's `Roars` hand-over) gives figure 1, its first run, spe
 `TakesOff` says. The baby's place (`BabyHeld`) agrees on 126 of the 128 runs 867-994 at his
 place as the record leaves it; the other two, 870 and 874, are the hops' runs, where it is at
 his place before the hop: 128 of 128 with the hop rule. Tangible and moving (`0F86` bit 400h
-clear, `7E7804` = 1) on all 127 records from `Flying` through `Hovering` (867-993). `vecrun.py`
+clear, `7E7804` = 1) on all 127 records from `TakingOff` through `Hovering` (867-993). `vecrun.py`
 runs the 48 L- vectors: 48 of 48 agree.
 
 ### State (the RAM mapping)
 
 | Spec | RAM | Notes |
 | --- | --- | --- |
-| `Flying` (his take-off) | `0FA8` = `$A354` | zeroes `0FAA`/`0FAC` each run |
+| `TakingOff` (his take-off) | `0FA8` = `$A354` | zeroes `0FAA`/`0FAC` each run |
 | `Rising`, `Slowing`, `Hovering` | `0FA8` = `$A6AF`, `$A6C8`, `$A6E8` | `$A6AF` falls through into `$A6C8` on the run it switches (`L-rise-slows`) |
 | `Retreating`, `FakeRetreat` | `0FA8` = `$A971`, `$BD9A`, entered by `JMP` on the same run | 4c-2 and the fake retreat |
 | `Fireballs`, `Lunge`, `Swoop` | `0FA8` = `$A782`, `$A83C`, `$A88D` (table `$A743`, random & Fh) | later parts; set, then the run goes on to his move |
@@ -903,7 +903,7 @@ runs the 48 L- vectors: 48 of 48 agree.
   `7E7802` (follows from the phase).
 
 **What the integrator needs:**
-1. Production (`crates/game/src/production/played/ridley.rs`): run him from `Flying` through
+1. Production (`crates/game/src/production/played/ridley.rs`): run him from `TakingOff` through
    `Hovering`; refuse a run that starts `Retreating` or `FakeRetreat`, and one that starts in an
    attack, each as its part's fault; hand R3 the shake; report him tangible and moving, not
    roaring. Her energy comes in from samus-health as it stands when he runs. His hits taken
@@ -1083,6 +1083,187 @@ plays through its cut 66 hit, stopping at 87 when Samus releases jump as her bac
 
 Each case's frame is the record the run ends at; the vector's `vents` and `her` are the record
 before it, moved 1,000 px right and 600 px down with the camera.
+## Part 4c-1b, his tail in flight
+
+### How it was made
+
+The lean tier rows `chain-any-0006-E0B5` and `samus-ceres-push` show a moving chain
+from cut 867, a whip from 915 and contact at 897 and 993. Both rows use the same 127-run
+window, cuts 867 through 993 inclusive. Cut 866 seeds the transition from rest. The
+bank log sources below resolve what the records alone leave open, including short lags,
+turning at a mark, long deltas in the bearing calculation and the sound queue.
+
+The reference check in `$TEMP/collab/ridley-4c1b/scratch/reference_proof.py` advances
+`tail.py` continuously from take-off. It uses the model's previous tail state and
+computes the curl from the run's random number. It reads his position after his move
+and before the take-off hop, recovered from the baby's place, and reads her position,
+body and protection from the previous cut. It reads the run's phase eligibility and
+tangibility from the current cut. Its do-nothing comparison retains the previous cut's
+tail state and predicts no hit.
+
+| Row | State and tip | Hit and side | Do-nothing state | Do-nothing tip | Do-nothing hit |
+| --- | --- | --- | --- | --- | --- |
+| `chain-any-0006-E0B5` | 127/127 | 127/127 | 0/127 | 19/127 | 125/127 |
+| `samus-ceres-push` | 127/127 | 127/127 | 0/127 | 19/127 | 125/127 |
+
+On each row the hit at 897 and the hit at 993 push left and each costs 15 energy.
+`genw.py` checks the 21 recorded cases against their cuts and checks the constructed
+boundaries with explicit expected values. `vecrun.py` reads the repository TOML and
+recomputes all 49 FT cases, 21 recorded and 28 constructed.
+
+### State (the RAM mapping)
+
+All addresses here refer to WRAM. Segment words start at `7E:2020 + 14h * i` for
+`i = 0..6`, base first. The two-byte coordinates in each pair are x then y.
+
+| Spec | Address | Interpretation |
+| --- | --- | --- |
+| curl | `7E:201E` | §14's count |
+| pace | `7E:2014` | angle units per run |
+| forward mark | `7E:201A` | negative word means absent |
+| swish count | `7E:781C` | runs at fast pace, modulo the swish period |
+| swinging | segment + `00h` | sign bit, set or clear |
+| lag | segment + `02h` | count, with `FFFFh` meaning passed |
+| way | segment + `04h` | sign bit set for ahead, clear for back |
+| length | segment + `06h` | 1/256 px |
+| stretching | segment + `08h` | zero or the stretch threshold |
+| angle | segment + `0Ah` | count of 256ths of a turn |
+| place | segment + `0Ch`, `0Eh` | whole unsigned px |
+| offset | segment + `10h`, `12h` | whole signed px |
+
+A present forward mark must be one of the angles made by the Ceres aim. The sign
+test at `$D128..D12B` treats high-bit values as absent. Aiming can prefer a missile
+at `$D1AF/$D242`. Ordinary Ceres equipment has zero missile capacity, as described
+in the [intro decode](screens-intro.decode.md), so this branch is outside the scope.
+
+The backward mark at `7E:201C` stays absent on both rows. Ceres take-off and recovery
+clear both marks. The Ceres branches of the aim source write only the forward mark.
+A backward mark's effect on the opposite swing is outside this round's state.
+The base's stretching state can be set, like the other segments', and kept. Its length
+is never updated by the stretch rule.
+
+### Inputs and order
+
+- `$A6:A288` runs `$D86B` for his movement, then curl `$A2BD`, then his tail
+  `$CAF5`. His take-off instruction hop follows the tail and the baby. `7E:8804`
+  plus 16 and `7E:8808` less 22 reconstruct his position at the tail's run, including
+  the two hops.
+- The tail starts with the swish counter from the pace at entry. The whip aims
+  with the base coordinates `7E:202C/202E` left by the preceding run. The Ceres flag
+  that enables whip aiming is `7E:7802`, set by his first hover and kept through his
+  attacks. At 915 the phase changes before the tail runs, so he can aim on that run.
+- Her position, body and protection are read as in parts 4b and 4c-1a. His random
+  number is the same `05E5` the baby and curl use. `$DFD9` tests contact after the
+  chain's coordinates are made. Her protection `18A8` changes from zero to 95 at
+  each hit, and `0A54` records the side. The tail's worth is `7E:7838`.
+- The air-tail run begins at 867. On the run at 994 he is still moving and tangible,
+  but `$A6:A971` has already made the first retreat move. That run is part 4c-2,
+  including its own tail inputs. The attack selection can leave the attack as his
+  phase before the tail sees it. Its first run still uses this tail, with later
+  runs of the attack left to that part.
+
+### Sources per entry
+
+Bank A6 uses the [Ridley bank log](https://patrickjohnston.org/bank/A6.html).
+The bearing and offset math use the
+[enemy math bank log](https://patrickjohnston.org/bank/A0.html) and the
+[projection bank log](https://patrickjohnston.org/bank/A9.html).
+
+| Entry | Sources |
+| --- | --- |
+| TailComesLoose | `$A6:A4C5`, `$D2D6..D452` |
+| TailFollows | `$A6:CC39..CC7C`, `$D09F..D19C` |
+| TailSwings | `$A6:D09F..D19C`, `$D19D` |
+| TailWhips | `$A6:CC39`, `$CC7D..CEB9`, `$D19D`, `$A0:C0AE` |
+| TailRecovers | `$A6:CC39..CC7C`, `$D09F` |
+| TailStretches | `$A6:CF5A..D09E`, `$D09F..D19C` |
+| TailBends | `$A6:CEBA..CF59`, `$D09F..D19C`, `$A9:C46C` |
+| TailSwishes | `$A6:CAF5`, `$D2AA..D2D5`, `$80:914D` |
+| TailCurls, TailHits in flight | `$A6:A2BD..A2D2`, `$CAF5..CB20`, `$DFD9` |
+
+### Findings behind the spec's choices
+
+- The bearing divides the low bytes of the magnitudes after choosing the larger
+  whole magnitude as divisor. It therefore retains the angle approximation's far
+  deltas, including a divisor with low byte zero. The projection's negative
+  products truncate downward after multiplying by the whole length.
+- The forward test uses the signed subtraction after an extra unit, so meeting
+  the limit exactly can turn or settle a segment. Both waiting and settling keep
+  the last offset for this run, even though the chain can move with his body.
+- The closing directions differ by segment, and a length can finish below its
+  resting threshold after a shrink. On the run a segment stops stretching at the
+  12 px threshold it still gains its stretch increment, subject to its cap.
+- The swish source requests sound `21h` on queue 3 with a limit of 6. His roaring
+  flag can suppress it in the original and is clear in the flight window. The
+  lean comparison covers the swish counter, which resets at cut 931. Library 3's
+  write index advances over the swish cue at that cut in both routes. The played
+  comparison checks when the tail returns its swish request. The source identifies
+  the channel and queue limit. The FT-swish vector checks the request itself.
+
+### The harness (for the integrator)
+
+- Compare the fields in the state table in the order of the chain for cuts 867
+  through 993. Admit flight checkpoints by decoding each field. Compare the
+  drawing positions here as outputs, independent of the drawing implementation.
+  The prior `tail_segments` reader covers the same positions at rest. Compare the
+  swish request against the newly appended cue in the library's ring, using the
+  write indices at the two cuts.
+- At cut 902 the spent push keeps Samus recoiling, and its recorded vertical
+  direction and zero speed leave footing implicit. The previous cut holds a rise
+  and a spent push counter. The final push has no solid contact (`7E:0DD0`), so the
+  expected Movement phase is Falling. A grounded push retains GroundFalling.
+  In the alternate row the grounded push first chooses the leap pose at 612
+  and 706. At 612 the preceding Down push was already grounded. At 706 the
+  last Down move hits the floor, sets the solid-contact flag and clears her
+  horizontal speed before the leap is chosen. Either way, the unset direction
+  on the first cut is Ground, and the next cut's first leap move begins Moonfall.
+- Compare the hit's same-frame energy and movement reaction in the played row.
+  Use the shared hit and the hitter's worth 15. Keep his hit eligibility and
+  pre-move body read identical to the at-rest test. The model's vector adapter
+  uses the new FT form. At-rest vectors and L scenarios without a tail assertion
+  keep their existing assertions.
+- Skip the routine selector `7E:2000` and constants `7E:2002/2004/2012/2016/2018`
+  and `7E:7820`; these are the Ceres mode, activation, facing and parameters
+  supplied by placement and flight scope. Skip the unused backward mark after
+  validating it is absent. Mask the swinging and way words to their sign
+  bits, written by `$A6:D2D6`, the take-off routine `$A4C5` and the swing/recovery
+  updates `$CC39..CC7C`, `$D09F..D19C`. Decode the forward mark's sign as absent
+  (writers `$D2D6`, `$CC39..CC7C`, `$CC7D..CEB9`). The phase owns all other
+  eligibility. Retain part 4c-1a's drawing and unsupported-input skips.
+- Stop the played row at 994 with the retreat fault. Checking only the resulting
+  phase is sufficient for the scoped flight hand-over. Comparing a partial
+  retreat as a full frame would report a difference in his position. All of
+  the effects from that first retreat run belong to 4c-2.
+
+### Recorded cases
+
+All 21 cases cite `chain-any-0006-E0B5`. Equivalent low-byte draws are used for the
+FT-hit-rising and the paired FT-reach-reference and FT-reach-adjusted examples. The
+substitution preserves the curl and the rising tail's branch.
+
+| Case | Cut | Vector |
+| --- | --- | --- |
+| W1 | 867 | FT-takeoff |
+| W2 | 868 | FT-swing-ahead |
+| W3 | 870 | FT-hop |
+| W4 | 882 | FT-turn-ahead |
+| W5 | 885 | FT-chance-rising |
+| W6 | 897 | FT-hit-rising |
+| W7 | 898 | FT-protected |
+| W8 | 915 | FT-aim |
+| W9 | 916 | FT-whip-stretch |
+| W10 | 920 | FT-stretch-past |
+| W11 | 921 | FT-shrink |
+| W12 | 927 | FT-reaim |
+| W13 | 929 | FT-whip-settles |
+| W14 | 931 | FT-swish |
+| W15 | 941 | FT-restart |
+| W16 | 942 | FT-lag-counts |
+| W17 | 945 | FT-curl-flight |
+| W18 | 950 | FT-passes-on |
+| W19 | 959 | FT-shrink-stops |
+| W20 | 982 | FT-turn-back |
+| W21 | 993 | FT-hit-hovering |
 
 ## Budget
 
@@ -1097,6 +1278,7 @@ the cover, the beacon or the platform, nor for the door of Ridley's room, the wa
 compare (MODEL §1 decision 19). Part 4a has none either: no other code runs his waking. Part 4b has none:
 the engine has no tail. Part 4c-1a has none: the engine refuses his flight.
 Part 5 has no old model.
+Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implementation.
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours
@@ -1108,5 +1290,6 @@ Part 5 has no old model.
 - Area ridley-tail: TailAtRest, TailCurls, TailHits
 - Area ridley-flight: TakesOff, Rises, SlowsDown, Hovers, PulledToHisPoint, Flies
 - Area steam: VentPlaced, VentInView, VentWaits, VentPuffs, VentRests, PuffReach, PuffTouches
+- Area ridley-tail-flight: TailComesLoose, TailFollows, TailSwings, TailWhips, TailRecovers, TailStretches, TailBends, TailSwishes
 
-Budget: 37.5 × 172.0 units = 6,448 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100)
+Budget: 37.5 × 208.0 units = 7,798 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350)

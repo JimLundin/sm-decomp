@@ -148,6 +148,8 @@ pub struct End {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
+    /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
+    PlayedCeresInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
     ScopedIntroInputs,
     /// A causal intro start and the borrowed work-completion boundaries.
@@ -243,6 +245,24 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Complete carried flight tail, compared by segment and field.
+    #[serde(rename = "ridley.tail.state")]
+    CeresTailState,
+    /// Seven tail places as produced for drawing.
+    #[serde(rename = "ridley.tail.places")]
+    CeresTailPlaces,
+    /// The hit's side and initial push time.
+    #[serde(rename = "ridley.tail.hit")]
+    CeresTailHit,
+    /// The tail's swish request.
+    #[serde(rename = "ridley.tail.swish-request")]
+    CeresTailSwish,
+    /// The movement pose and push reaction at the cut.
+    #[serde(rename = "movement.tail-reaction")]
+    CeresTailKnockback,
+    /// Energy, protection, pending loss and warning at the cut.
+    #[serde(rename = "health.tail-reaction")]
+    CeresTailHealth,
     /// Intro stage, scripts, dissolves, visibility and brightness.
     #[serde(rename = "intro.state")]
     IntroState,
@@ -914,6 +934,30 @@ macro_rules! weapons_observations {
     };
 }
 
+macro_rules! progress_observations {
+    () => {
+        ObservationId::ProgressPlanetAwake
+            | ObservationId::ProgressMotherBrainTankBroken
+            | ObservationId::ProgressPhantoonStatueGrey
+            | ObservationId::ProgressRidleyStatueGrey
+            | ObservationId::ProgressDraygonStatueGrey
+            | ObservationId::ProgressKraidStatueGrey
+            | ObservationId::ProgressTourianOpen
+            | ObservationId::ProgressGlassTunnelBroken
+            | ObservationId::ProgressAcidReceded
+            | ObservationId::ProgressShaktoolPath
+            | ObservationId::ProgressTimeBombSet
+            | ObservationId::ProgressAnimalsFreed
+            | ObservationId::ProgressMetroidRoom1Empty
+            | ObservationId::ProgressMetroidRoom2Empty
+            | ObservationId::ProgressMetroidRoom3Empty
+            | ObservationId::ProgressMetroidRoom4Empty
+            | ObservationId::ProgressTourianRoomsUnset
+            | ObservationId::ProgressLavaQuakeOutrun
+            | ObservationId::ProgressZebetites
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -933,10 +977,12 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::PlaybackAuthority => Responsibility::Playback,
         O::Battery => Responsibility::SaveFiles,
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
-        O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
-            Responsibility::Health
-        }
-        O::TouchdownClip
+        O::HealthTailState
+        | O::HealthTailWarning
+        | O::HealthTailDrawnProtection
+        | O::CeresTailHealth => Responsibility::Health,
+        O::CeresTailKnockback
+        | O::TouchdownClip
         | O::TouchdownFit
         | O::TouchdownResponse
         | O::CompleteReached
@@ -958,9 +1004,15 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::Reached
         | O::MapCarryMovement => Responsibility::Movement,
         O::AudioSemantic | O::AudioReplies | O::AudioRequestLines => Responsibility::Audio,
-        O::CeresPhase | O::CeresWait | O::CeresFigure | O::CeresShown | O::CeresSolid => {
-            Responsibility::Ceres
-        }
+        O::CeresPhase
+        | O::CeresWait
+        | O::CeresFigure
+        | O::CeresShown
+        | O::CeresSolid
+        | O::CeresTailState
+        | O::CeresTailPlaces
+        | O::CeresTailHit
+        | O::CeresTailSwish => Responsibility::Ceres,
         O::CameraViewXPixel
         | O::CameraViewXFraction
         | O::CameraViewYPixel
@@ -994,25 +1046,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::AppearanceBoostStage
         | O::AppearanceLapsLeft
         | O::MapCarryAppearance => Responsibility::Appearance,
-        O::ProgressPlanetAwake
-        | O::ProgressMotherBrainTankBroken
-        | O::ProgressPhantoonStatueGrey
-        | O::ProgressRidleyStatueGrey
-        | O::ProgressDraygonStatueGrey
-        | O::ProgressKraidStatueGrey
-        | O::ProgressTourianOpen
-        | O::ProgressGlassTunnelBroken
-        | O::ProgressAcidReceded
-        | O::ProgressShaktoolPath
-        | O::ProgressTimeBombSet
-        | O::ProgressAnimalsFreed
-        | O::ProgressMetroidRoom1Empty
-        | O::ProgressMetroidRoom2Empty
-        | O::ProgressMetroidRoom3Empty
-        | O::ProgressMetroidRoom4Empty
-        | O::ProgressTourianRoomsUnset
-        | O::ProgressLavaQuakeOutrun
-        | O::ProgressZebetites => Responsibility::Progress,
+        progress_observations!() => Responsibility::Progress,
     }
 }
 
@@ -1139,8 +1173,30 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         _ => {
             return flashback_fields(rule)
                 .or_else(|| playback_fields(rule))
-                .or_else(|| intro_missile_fields(rule));
+                .or_else(|| intro_missile_fields(rule))
+                .or_else(|| ceres_tail_fields(rule));
         }
+    })
+}
+
+fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
+    use ObservationId as O;
+    Some(match rule {
+        "boss-ceres-ridley/TailComesLoose"
+        | "boss-ceres-ridley/TailFollows"
+        | "boss-ceres-ridley/TailSwings"
+        | "boss-ceres-ridley/TailWhips"
+        | "boss-ceres-ridley/TailRecovers"
+        | "boss-ceres-ridley/TailStretches" => &[O::CeresTailState],
+        "boss-ceres-ridley/TailBends" => &[O::CeresTailState, O::CeresTailPlaces],
+        "boss-ceres-ridley/TailSwishes" => &[O::CeresTailState, O::CeresTailSwish],
+        "boss-ceres-ridley/TailHits" => &[
+            O::CeresTailPlaces,
+            O::CeresTailHit,
+            O::CeresTailKnockback,
+            O::CeresTailHealth,
+        ],
+        _ => return None,
     })
 }
 
@@ -1582,6 +1638,9 @@ fn unavailable_provider_valid(case: &Case, observations: &BTreeSet<ObservationId
 
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
+    if case.inputs == InputProvider::PlayedCeresInputs {
+        return super::played::indexed::valid(case);
+    }
     if case.inputs == InputProvider::IntroRoomJoinInputs {
         return super::intro_rooms::valid(case);
     }

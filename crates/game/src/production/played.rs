@@ -226,7 +226,7 @@ pub enum Fault {
     Lights(LightsFault),
     /// Ridley starts a run in an attack: a later part's.
     RidleyAttacks,
-    /// Ridley starts a run giving up his hover, his retreat or his fake one: a later part's.
+    /// Ridley begins or continues a retreat, including the fake retreat.
     RidleyGivesUp,
     /// A colour of the baby's content has more than 15 bits.
     BabyColours,

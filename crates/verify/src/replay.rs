@@ -79,8 +79,14 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
     let outcome = case
         .validate()
         .map_err(|_| data_failure(None, "case execution recipe"))
-        .and_then(|()| admission::admit(case, sources))
-        .and_then(|admitted| runner::run(case, admitted, &mut result));
+        .and_then(|()| {
+            if case.inputs == index::InputProvider::PlayedCeresInputs {
+                played::indexed::run(case, sources, &mut result)
+            } else {
+                let admitted = admission::admit(case, sources)?;
+                runner::run(case, admitted, &mut result)
+            }
+        });
     if let Err(outcome) = outcome {
         result.outcome = outcome;
     }

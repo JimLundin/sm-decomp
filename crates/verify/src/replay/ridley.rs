@@ -7,9 +7,10 @@ use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField, WramWord};
 use boss_ceres_ridley::{
     Attack, Baby, BabyFigure, BabyRoutine, CeresRidley, FidgetFigure, FigureLength as _,
-    FlightPhase, GiveUp, GlowFigure, HoverRuns, ReadyWait, RidleyLook, RidleyPhase, RidleyWait,
-    RoarFigure, RoarWait, ShownFigure, TailCurl, TakeOffFigure, TimedRoarFigure,
-    TimedTakeOffFigure,
+    FlightPhase, FlightTail, GiveUp, GlowFigure, HoverRuns, LagCount, ReadyWait, RidleyLook,
+    RidleyPhase, RidleyWait, RoarFigure, RoarWait, ShownFigure, SwingLag, SwingPace, SwingWay,
+    SwishRuns, TailAngle, TailCurl, TailLength, TailMark, TailSegment, TakeOffFigure,
+    TimedRoarFigure, TimedTakeOffFigure,
 };
 use core::num::{NonZeroU16, Wrapping};
 use enum_map::Enum as _;
@@ -58,6 +59,8 @@ const TAIL_CURL: WramWord = WramWord {
 const TAIL_SEGMENT_X: u16 = 0x202C;
 const TAIL_SEGMENT_STRIDE: u16 = 0x14;
 const TAIL_SEGMENTS: u16 = 7;
+/// Maximum segment lengths, in subpixels, in observation order.
+const FLIGHT_LENGTH_CAPS: [u16; 7] = [512, 6144, 6144, 5632, 5632, 4608, 1280];
 
 /// The properties bit that keeps her touch and her shots from meeting him.
 const INTANGIBLE: u16 = 0x0400;
@@ -215,6 +218,7 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
             .and_then(HoverRuns::new)
             .ok_or_else(|| unsupported("Ceres Ridley hover observation"))?,
         baby: baby(wram)?,
+        flight_tail: flown.then(|| flight_tail(wram)).transpose()?,
         curl: u8::try_from(read(wram, TAIL_CURL)?)
             .ok()
             .and_then(TailCurl::new)
@@ -223,13 +227,11 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
     Ok(Some((ridley, seen)))
 }
 
-/// Where his tail's seven segments are, tip last, as the record holds them while his tail
-/// rests, or each as the model holds the place of the whole tail; none before he moves and from
-/// his take-off on, when the model has no resting tail.
+/// Where his seven tail segments are, tip last, as the record holds them once he moves.
 pub(super) fn tail_segments(wram: &[u8], phase: RidleyPhase) -> Result<Vec<Tail>, Outcome> {
     (0..TAIL_SEGMENTS)
         .map(|segment| {
-            if !phase.tail_at_rest() {
+            if !phase.tail_at_rest() && !phase.moving() {
                 return Ok(None);
             }
             let x = TAIL_SEGMENT_X.wrapping_add(segment.wrapping_mul(TAIL_SEGMENT_STRIDE));
@@ -250,12 +252,101 @@ pub(super) fn tail_segments(wram: &[u8], phase: RidleyPhase) -> Result<Vec<Tail>
         .collect()
 }
 
-/// A segment of his tail: its place while the tail rests, or none.
+/// The observed place of a tail segment once he moves.
 pub(super) type Tail = Option<Pair<Px>>;
 
-/// His resting tail's seven segments as the model holds them: all at the tail's place.
+/// The places each link carries in flight, or their common resting place.
 pub(super) fn modelled_tail_segments(ridley: &CeresRidley) -> Vec<Tail> {
+    if let Some(tail) = ridley.flight_tail {
+        return tail.places().map(Some).into();
+    }
     (0..TAIL_SEGMENTS).map(|_| ridley.tail()).collect()
+}
+
+/// Decode the carried shape independently of the engine's flight step.
+fn flight_tail(wram: &[u8]) -> Result<FlightTail, Outcome> {
+    let bad = || unsupported("Ceres Ridley flight tail observation");
+    let word = |offset| {
+        read(
+            wram,
+            WramWord {
+                name: "CERES_RIDLEY_FLIGHT_TAIL",
+                offset,
+            },
+        )
+    };
+    let pace = match word(0x2014)? {
+        1 => SwingPace::Slow,
+        2 => SwingPace::Quick,
+        8 => SwingPace::Whip,
+        _ => return Err(bad()),
+    };
+    let mark = word(0x201A)?;
+    let mark = if mark.cast_signed() < 0 {
+        None
+    } else {
+        Some(TailMark::new(TailAngle(mark)).ok_or_else(bad)?)
+    };
+    if word(0x201C)?.cast_signed() >= 0 {
+        return Err(bad());
+    }
+    let swish = u8::try_from(word(0x781C)?)
+        .ok()
+        .and_then(SwishRuns::new)
+        .ok_or_else(bad)?;
+    let segments = (0..TAIL_SEGMENTS)
+        .zip(FLIGHT_LENGTH_CAPS)
+        .map(|(index, cap)| {
+            let base = 0x2020_u16.wrapping_add(index.wrapping_mul(TAIL_SEGMENT_STRIDE));
+            let get = |offset| word(base.wrapping_add(offset));
+            let lag = match get(2)? {
+                u16::MAX => SwingLag::Passed,
+                count => SwingLag::Counting(
+                    u8::try_from(count)
+                        .ok()
+                        .and_then(LagCount::new)
+                        .ok_or_else(bad)?,
+                ),
+            };
+            let length = get(6)?;
+            if length > cap {
+                return Err(bad());
+            }
+            let stretching = match get(8)? {
+                0 => false,
+                3072 => true,
+                _ => return Err(bad()),
+            };
+            Ok(TailSegment {
+                swinging: get(0)?.cast_signed() < 0,
+                lag,
+                way: if get(4)?.cast_signed() < 0 {
+                    SwingWay::Ahead
+                } else {
+                    SwingWay::Back
+                },
+                length: TailLength::new(length).ok_or_else(bad)?,
+                stretching,
+                angle: TailAngle(get(10)?),
+                place: Pair {
+                    x: Wrapping(get(12)?),
+                    y: Wrapping(get(14)?),
+                },
+                offset: Pair {
+                    x: get(16)?.cast_signed(),
+                    y: get(18)?.cast_signed(),
+                },
+            })
+        })
+        .collect::<Result<Vec<_>, Outcome>>()?
+        .try_into()
+        .map_err(|_| bad())?;
+    Ok(FlightTail {
+        pace,
+        mark,
+        swish,
+        segments,
+    })
 }
 
 /// His phase from his slot's function, with its count and wait words and, roaring, his list.
@@ -286,7 +377,7 @@ fn phase(wram: &[u8], slot: u16) -> Result<RidleyPhase, Outcome> {
             wait: RoarWait::new(runs(wait)?).ok_or_else(wait_unsupported)?,
             figure: roar_figure(wram, slot)?,
         },
-        0xA354 => RidleyPhase::InFlight(FlightPhase::Flying),
+        0xA354 => RidleyPhase::InFlight(FlightPhase::TakingOff),
         0xA6AF => RidleyPhase::InFlight(FlightPhase::Rising),
         0xA6C8 => RidleyPhase::InFlight(FlightPhase::Slowing),
         0xA6E8 => RidleyPhase::InFlight(FlightPhase::Hovering),
@@ -394,7 +485,7 @@ fn phase_code(phase: RidleyPhase) -> (i64, u16, u8, u16) {
         RidleyPhase::BodyFading { sets, runs } => (4, sets, runs, 0),
         RidleyPhase::ReadyToRoar { wait } => (5, 0, 0, u16::from(wait.runs())),
         RidleyPhase::Roaring { wait, .. } => (6, 0, 0, u16::from(wait.runs())),
-        RidleyPhase::InFlight(FlightPhase::Flying) => (7, 0, 0, 0),
+        RidleyPhase::InFlight(FlightPhase::TakingOff) => (7, 0, 0, 0),
         RidleyPhase::InFlight(FlightPhase::Rising) => (8, 0, 0, 0),
         RidleyPhase::InFlight(FlightPhase::Slowing) => (9, 0, 0, 0),
         RidleyPhase::InFlight(FlightPhase::Hovering) => (10, 0, 0, 0),
@@ -520,7 +611,47 @@ pub(super) fn observations(ridley: Option<(&CeresRidley, Shows, &[Tail])>) -> Ve
             Observation::quantity(format!("ridley.tail.{segment}"), place(at))
         }),
     );
+    if let Some(tail) = &ridley.flight_tail {
+        observe_flight_tail(&mut fields, tail);
+    }
     fields
+}
+
+fn observe_flight_tail(fields: &mut Vec<Observation>, tail: &FlightTail) {
+    let swing_pace = match tail.pace {
+        SwingPace::Slow => 1,
+        SwingPace::Quick => 2,
+        SwingPace::Whip => 8,
+    };
+    fields.extend([
+        Observation::quantity("ridley.tail.pace", swing_pace),
+        Observation::quantity(
+            "ridley.tail.mark",
+            tail.mark.map_or(-1, |mark| i64::from(mark.angle().0)),
+        ),
+        Observation::quantity("ridley.tail.swish", i64::from(tail.swish.get())),
+    ]);
+    for (index, segment) in tail.segments.iter().enumerate() {
+        let lag = match segment.lag {
+            SwingLag::Passed => -1,
+            SwingLag::Counting(count) => i64::from(count.get()),
+        };
+        fields.extend(
+            [
+                ("swinging", i64::from(segment.swinging)),
+                ("lag", lag),
+                ("ahead", i64::from(segment.way == SwingWay::Ahead)),
+                ("length", i64::from(segment.length.subpixels())),
+                ("stretching", i64::from(segment.stretching)),
+                ("angle", i64::from(segment.angle.0)),
+                ("offset.x", i64::from(segment.offset.x)),
+                ("offset.y", i64::from(segment.offset.y)),
+            ]
+            .map(|(field, value)| {
+                Observation::quantity(format!("ridley.tail.{index}.{field}"), value)
+            }),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -558,8 +689,11 @@ mod tests {
         write(&mut wram, slot + 0x04, 0x4000);
         write(&mut wram, slot + 0x34, 0xFEA0);
         write(&mut wram, 0x7800, 5);
+        write(&mut wram, 0x2014, 1);
+        write(&mut wram, 0x201A, u16::MAX);
+        write(&mut wram, 0x201C, u16::MAX);
         let flying = seed(&wram).unwrap().unwrap();
-        assert_eq!(flying.phase, RidleyPhase::InFlight(FlightPhase::Flying));
+        assert_eq!(flying.phase, RidleyPhase::InFlight(FlightPhase::TakingOff));
         assert_eq!(flying.look, Some(RidleyLook::TakeOff1));
         assert!(matches!(
             flying.takeoff,

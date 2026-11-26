@@ -246,19 +246,37 @@ the body of the pose she started the frame in and her protection, all as the fra
 reports the hit, which Health takes (worth 15 energy, his tail's worth imported from
 the player's ROM as his content, and 96 frames of protection) and her movement's reaction takes
 in the same frame (her push, `Recoiling`, then her backward leap).
-The hit itself is compared where it lands: `health.*`, `movement.knockback` and her hurt colours
-in `doors.colours.screen`. His wait, his roar, moving and roaring, and the refusal of a run
-that starts in an attack or as he gives up (`Fault::RidleyAttacks`, `Fault::RidleyGivesUp`, later
-parts') are reached by no played cut: they hold by the vectors and the production tests only.
-His take-off and flight (part 4c-1a) play from cut 867, and the played cuts, which stop at 896,
-reach only his take-off and his rise: he lifts off at cut 879 and rises to 896. His slowing (from
-cut 899), his hover and his pull to his point (from 916) are reached by no played cut, nor are
-his reading of her energy as the frame starts it, his hits taken held at 0 (an input no owner
-produces yet; the game has 11, under the 50 and 100 his rules read) and the shake he starts at
-the room's left side, which goes to the room's quake before the doors run: they hold by the
-vectors and the production tests only. The bound he meets on a run (`7E783E` in the harness
-note) is a run output and isn't compared. The fight's music and the roar are produced and not
-compared. Her going backwards, which the camera reads, is her skid, her moonwalk, or exactly
+The resting hit is compared where it lands in `health.*`, `movement.knockback`
+and her hurt colours in `doors.colours.screen`. His fight music and roar
+are produced. His take-off and flight play from cut 867. He lifts off at 879, slows
+from 899, enters hover at 915 and moves toward his point. His hits taken are held
+at 0 because her shots against him do not have a producer in this loop. The count
+of 11 in the record is below both flight thresholds. The room quake reads any
+shake he starts before the doors run. The left-side shake holds by vectors and a
+production test. The bound he meets (the harness note's `7E783E`) is outside the
+comparison.
+
+The in-flight tail (part 4c-1b) carries its seven links, curl, pace, whip aim
+and swish count. At each finished cut, the replay compares all those fields
+and the seven places the run publishes to drawing. At cut 931 the tail
+returns one swish request, and the native Library 3 queue records the matching
+append. The comparison checks the returned request's occurrence. Production
+queue routing, limits and transport are outside its scope. At 897 and 993 his moved tip hits her leftward for 15
+energy per hit. The health comparison sees 95 protection frames left and the
+movement comparison sees four push frames left at each hit cut. The hit's side
+and starting push time compare separately as `ridley.tail.hit`.
+
+The indexed cases `ridley/flight-tail`, `ridley/alternate-rise-hit` and
+`ridley/alternate-hover-hit` exercise the same played room. The first compares
+all 127 cuts from take-off through the last hover, 9,525 state fields and 1,143
+outputs. Freezing the seed matches 809 state fields and no complete cut. The
+other two play the alternative row `samus-ceres-push` from 866 through 905 and from 926 through 993. Its
+continuous run first differs at 906 in [falling aim](LEGACY.md#samuss-aim-after-an-isolated-down-press-in-a-fall).
+Each row also continues from observed checkpoints at 930, 940 and 992 through
+993, admitting all tail fields at each origin. Serialised room snapshots still
+require a production codec.
+
+Her going backwards, which the camera reads, is her skid, her moonwalk, or exactly
 one of a hit's push and her backward leap (world-camera's `LeadingHer`). Room 6's moonwalk at its
 left edge is the first played frame that tells the moonwalk apart, at cut 352; her leap once the
 push is over, at cut 621, tells the push and the leap apart. No played cut has the push and the
@@ -279,9 +297,9 @@ into is built from the imported world, with its map room and its Ceres doors. Pl
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
 281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 896 from its
-seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,520 cuts, through
-rooms 2 to 5 and on to cut 896 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,826;
-from her arrival (`any-ceres-arrival`, below) they hold 2,743, to movie frame 11,058. In the
+seed. Played back to back, the Ceres rows from `chain-any-0001-DF45` hold 2,617 cuts, through
+rooms 2 to 5 and on to cut 993 of `chain-any-0006-E0B5`, and from `chain-any-0003-DFD7` 1,923.
+From her arrival (`any-ceres-arrival`, below) they hold 2,840, to movie frame 11,155. In the
 escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 1,075 through room 2
 without a new seed. Room 4 (`chain-any-0008-E021`) holds all 263 cuts, including the placement
 of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds all 330 cuts. Its passage counts jump
@@ -303,8 +321,7 @@ placement in the passage into room 2. Vent sprite rendering and the turning shaf
 
 Her frame is two steps, her moves and then her reaction to the frame's hit, with the station and Health
 between; her knockback (samus-movement §12) and her hurt colours (samus-appearance) run in it,
-and her crouched turn, begun at room 6's cut 535, ends at the record's frame. Both hits of his
-tail that the runs reach play. At room 6's cut 609 she loses 15 energy, takes `Recoiling` with her
+and her crouched turn, begun at room 6's cut 535, ends at the record's frame. At room 6's cut 609 she loses 15 energy, takes `Recoiling` with her
 hurt colours, is pushed left and leaps backward, and the push ends at cut 614; at cut 705 she
 loses 15 more, the push ends at cut 710, and she leaps again. The camera reads her as going
 backwards in exactly one of the push and the leap (world-camera §1.3), so in the leap it leads
@@ -313,8 +330,8 @@ edges' subpixel (R36 to R40, at room 6's cuts 229, 615, 621 and 623 and room 3's
 compared by these played runs and are not wired as indexed cases. At cut 728 she lets the second
 leap go, holding forward without jump: she follows the pad and stops dashing, and the dash she
 keeps is gone the next frame (samus-movement's backward leap let go). He takes off at cut 867 and
-flies; each run stops at room 6's cut 897 in `movement.pose`, where his tail hits her in flight
-(boss-ceres-ridley part 4c-1b), which isn't played yet.
+lands both airborne hits. Room 6 plays 993 cuts from its seed. At 994 the first retreat move
+requires part 4c-2, so the run stops at `RidleyGivesUp`.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
@@ -432,15 +449,15 @@ lag cut. Production carries both frame counts, brightness and the random sequenc
 preparation. The run compares both counts at every cut and the random number at finished
 flight cuts and every preparation cut. The first room and its actors come from room loading
 and fresh-file Progress. The same run plays through the fade, the first room and the following
-rooms up to movie frame 11,058. It holds 3,546 cuts from the flight seed and first differs
-at 3,547 in `movement.pose`, when Ridley's tail hits Samus in flight. The cartridge save
-is outside the comparison. Delaying the flight handoff until the work finishes first differs
+rooms up to movie frame 11,155. It holds 3,643 cuts from the flight seed and stops at
+3,644 with `RidleyGivesUp`, the first retreat move. The cartridge save is outside the
+comparison. Delaying the flight handoff until the work finishes first differs
 at cut 803 in `flight.active`.
 
 ### Her arrival at Ceres
 
 The standalone `any-ceres-arrival` run holds all 222 arrival cuts, then plays on through
-movie frame 11,058 without a second seed. The start loads the shaft, its Ceres doors,
+movie frame 11,155 without a second seed. The start loads the shaft, its Ceres doors,
 its overlay and the colours the fade heads for, with the start's own palette row for Samus.
 Fresh-file Progress supplies the room version and Samus's energy and items. The preparation
 carries the frame clock and random number. It borrows the loading path's entry into the

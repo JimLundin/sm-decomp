@@ -3,7 +3,7 @@
 //! waking: his eye lights up, his body fades in, and tangible he roars, his tail at rest behind
 //! him from his body's fade on and hitting her when she comes within its reach. Then he takes
 //! off, rises, slows and hovers, drawn to his point, until he gives up or turns to an attack,
-//! which later parts run. His tail in flight is a later piece's.
+//! which later parts run. In flight his tail swings loose and can whip toward her.
 //!
 //! The caller holds a [`CeresRidley`] between frames and steps it on the frame the room places
 //! him ([`CeresRidley::place`]) and on each frame he runs ([`CeresRidley::run`]): whether a
@@ -17,12 +17,14 @@ use types::{Hit, Pair, Px};
 
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
 use crate::flight::{Bound, Fight, HoverRuns, Ruled, STILL, Speed, Steered, flown};
+use crate::flight_tail::{FlightTail, TAIL_SEGMENTS, TailSwish};
 use crate::her::Her;
 use crate::ridley_phase::{FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyPhase, RoarSound};
 use crate::roar::RidleyLook;
 use crate::rules::Rules;
 use crate::station::{ShakeStart, Stage};
-use crate::tail::{TailCurl, place_at_rest, tip_hit};
+use crate::tail::{TailCurl, place_at_rest, tail_hit};
+use crate::tail_aim::CeresAim;
 use crate::takeoff::{LIFT_OFF, TakeOffFigure, TakeOffStart, hopped};
 use crate::waking::{BodyColours, EyeColours, RidleyContent};
 
@@ -60,6 +62,9 @@ pub struct CeresRidley {
     pub baby: Baby,
     /// How tightly his tail curls once it moves (`TailCurls`).
     pub curl: TailCurl,
+    /// The shape carried between flight runs. Take-off seeds it; callers starting mid-flight
+    /// supply their saved shape here. If omitted in flight, the tail starts from its loose shape.
+    pub flight_tail: Option<FlightTail>,
 }
 
 /// The boss a placing hands the HUD as encountered, whose mini-map rule is the HUD's own.
@@ -140,9 +145,12 @@ pub struct RidleyRun {
     pub music: Option<FightMusic>,
     /// The roar's sound, for audio, on the run it is heard (`Roars`).
     pub roar: Option<RoarSound>,
-    /// The frame's hit of his tail on her, its side and its push time, the one hit her motion
-    /// reacts to and her energy reads, as it stands (`TailHits`).
+    /// The contact from `TailHits` on this run.
     pub hit: Option<Hit>,
+    /// The tail's seven places from base to tip on a flight run.
+    pub tail_places: Option<[Pair<Px>; TAIL_SEGMENTS]>,
+    /// The whip sound, if requested (`TailSwishes`).
+    pub swish: Option<TailSwish>,
     /// The side of the room that stopped his move this run, for his attacks (`Flies`).
     pub bound: Option<Bound>,
     /// The shake he starts as he meets the room's left side fast, for the screen's shaking
@@ -167,6 +175,8 @@ impl RidleyRun {
             music: None,
             roar: None,
             hit: None,
+            tail_places: None,
+            swish: None,
             bound: None,
             shake: None,
         }
@@ -224,6 +234,7 @@ impl CeresRidley {
                 hover_runs: HoverRuns::NONE,
                 baby: Baby::NEW,
                 curl: TailCurl::PLACED,
+                flight_tail: None,
             },
             boss: Boss::CeresRidley,
             music: MusicStop,
@@ -253,8 +264,8 @@ impl CeresRidley {
     ) -> RidleyRun {
         match self.phase.run(passage_under_way, content, rules) {
             PhaseStep::Waking(phase) => self.waking(&phase, random, her, rules),
-            PhaseStep::TakesOff => self.took_off(random),
-            PhaseStep::Flies(phase) => self.flying(phase, fight, random),
+            PhaseStep::TakesOff => self.took_off(random, her, rules),
+            PhaseStep::Flies(phase) => self.flying(phase, fight, random, her, rules),
             PhaseStep::HandedOver => RidleyRun::holding_the_baby(self, random),
         }
     }
@@ -289,30 +300,39 @@ impl CeresRidley {
         }
     }
 
-    /// `TakesOff`: the run he takes off, his roar's wait over: `Flying`, the take-off's first
-    /// figure at its first run and its look, his speed 0; then he moves (`Flies`) and the baby
-    /// is held. His figure first steps on at the end of his next run.
-    fn took_off(self, random: u16) -> RidleyRun {
+    /// `TakesOff`, `TailComesLoose`: start the first figure at zero speed and seed the tail.
+    /// This frame moves and swings just like a later flight frame, but doesn't step the figure.
+    fn took_off(self, random: u16, her: Option<&Her>, rules: &Rules) -> RidleyRun {
         Self {
             look: Some(TakeOffFigure::START.look()),
             takeoff: Some(TakeOffFigure::START),
+            flight_tail: Some(FlightTail::comes_loose(self.position)),
             ..self
         }
         .moved(
             &Steered {
-                phase: RidleyPhase::InFlight(FlightPhase::Flying),
+                phase: RidleyPhase::InFlight(FlightPhase::TakingOff),
                 speed: STILL,
                 hover_runs: self.hover_runs,
             },
             random,
+            her,
+            rules,
         )
     }
 
     /// A run of his flight, in this order: his phase's rule (`TakesOff`, `Rises`, `SlowsDown`,
-    /// `Hovers`); his move by his speed (`Flies`); the baby, held at his position as his move
+    /// `Hovers`); his move by his speed (`Flies`); his tail; the baby, held at his position as his move
     /// leaves it (`BabyHeld`); then his take-off's figure steps on (`TakesOff`). A run on which
     /// he gives up is a later part's: only his phase changes, and the baby runs.
-    fn flying(self, phase: FlightPhase, fight: Fight, random: u16) -> RidleyRun {
+    fn flying(
+        self,
+        phase: FlightPhase,
+        fight: Fight,
+        random: u16,
+        her: Option<&Her>,
+        rules: &Rules,
+    ) -> RidleyRun {
         match phase.rule(self.position, self.speed, self.hover_runs, fight, random) {
             Ruled::GivesUp(give_up) => RidleyRun::holding_the_baby(
                 Self {
@@ -322,7 +342,7 @@ impl CeresRidley {
                 random,
             ),
             Ruled::FliesOn(steered) => {
-                let run = self.moved(&steered, random);
+                let run = self.moved(&steered, random, her, rules);
                 RidleyRun {
                     ridley: run.ridley.figure_stepped(),
                     ..run
@@ -331,11 +351,33 @@ impl CeresRidley {
         }
     }
 
-    /// `Flies`, `BabyHeld`: he takes what his phase's rule leaves and moves by his speed, within
-    /// the room's bounds; the baby is held at his position as the move leaves it.
-    fn moved(self, steered: &Steered, random: u16) -> RidleyRun {
+    /// `Flies`, `TailCurls`, `TailBends`, `TailHits`, `BabyHeld`: move in bounds, swing the tail,
+    /// test the new tip against her starting body, and hold the baby, all before any hop.
+    fn moved(self, steered: &Steered, random: u16, her: Option<&Her>, rules: &Rules) -> RidleyRun {
         let moved = flown(self.position, self.fraction, steered.speed);
+        let curl = self.curl.curled(random);
+        let mut tail = self
+            .flight_tail
+            .unwrap_or_else(|| FlightTail::comes_loose(self.position));
+        let swish = tail.run(
+            moved.position,
+            curl,
+            CeresAim {
+                phase: steered.phase,
+                random,
+            },
+            her,
+        );
+        let tail_places = tail.places();
+        let hit = tail_hit(
+            steered.phase.tangible(),
+            her,
+            tail_places[TAIL_SEGMENTS - 1],
+            rules.tail_reach,
+        );
         let ridley = Self {
+            curl,
+            flight_tail: Some(tail),
             phase: steered.phase,
             hover_runs: steered.hover_runs,
             position: moved.position,
@@ -346,6 +388,9 @@ impl CeresRidley {
         RidleyRun {
             bound: moved.bound,
             shake: moved.shake,
+            hit,
+            tail_places: Some(tail_places),
+            swish,
             ..RidleyRun::holding_the_baby(ridley, random)
         }
     }
@@ -388,8 +433,7 @@ impl CeresRidley {
     /// `TailHits`: the frame's hit, as his run leaves him: his tail at rest and he tangible,
     /// her there and within its tip's reach.
     fn tail_hit(&self, her: Option<&Her>, rules: &Rules) -> Option<Hit> {
-        let tip = self.tail().filter(|_| self.phase.tangible())?;
-        tip_hit(her?, tip, rules.tail_reach)
+        tail_hit(self.phase.tangible(), her, self.tail()?, rules.tail_reach)
     }
 
     /// His drawing: his look at his position, the baby's look at its position and his tail's
