@@ -80,8 +80,11 @@ under the commit rules above.
 
 ## Guardrails and traps
 
-- Never push to `main` or `land/*`, never run `git stash`, never change the shared git config.
-- Kill only processes you started, by PID. Delete only your own build outputs.
+- The root alone updates `main` and publishes `land/*` branches. The designated
+  [cleanup agent](../../../docs/cleanroom/PROCESS.md#cleanup-after-landing) can delete a
+  finished branch handed off by the root. Never run `git stash` or change the shared git config.
+- Kill only processes you started, by PID. Delete your own build outputs. Releasing a worktree
+  in your handoff also authorizes the cleanup agent to remove its build outputs.
 - The root alone uploads to ci-data and posts to issues.
 - Python on Windows writes CRLF unless you pass `newline="\n"`; some tools write Latin-1. Check
   new text files with `file`.

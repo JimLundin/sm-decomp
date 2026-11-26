@@ -343,12 +343,29 @@ the fraction of closed issues is not the fraction of the game reproduced. Sessio
 select work IDs, record owner/stage and intended outcomes, and link the final results. A
 missed outcome names its cause and next work item; it does not silently reset the same goal.
 
-After landing or supersession, retire unused local and remote branches. Preserve a recovery
-reference or archive before retiring unmerged drafts, and preserve uncommitted files before
-removing their worktree. Held work retains an explicit issue and branch link. Branches are
-working copies; the tracker, commits and review evidence retain the work's status and history.
-These tracking rules change neither the lowest-rung scope limit nor the clean-room roles and
-mandatory gates.
+### Cleanup after landing
+
+The root assigns one GPT-6.2 Sol subagent to clean up after merges throughout the session.
+Each lane names the worktrees it releases in its handoff once its jobs have finished.
+After each successful landing, the root sends the cleanup agent the PR, the landed commit,
+the source and landing branch tips, and the released worktrees for that change. The root
+also hands off superseded work when its owner releases it. Other lanes can keep working
+while cleanup runs.
+
+The agent fetches the default branch and verifies that it contains the landed commit. For a
+squash or cherry-pick, use the reviewed tree or patch comparison to identify the source that
+landed. Check for open PRs or stacked work that still use a branch. Check the current worktree
+list and lane handoffs. Confirm the checkout still has the handed-off branch and tip, and
+check local edits and untracked or ignored files before removing it.
+Leave active or changed work with its owner. Keep the default checkout and shared build seed.
+
+Remove the released worktrees and their build outputs, then delete the matching local and
+remote branches. For a local ref use `git update-ref -d <ref> <expected-tip>`. For a remote
+ref use `git push --force-with-lease=<ref>:<expected-tip> origin :<ref>`. Record what went
+and what still has a consumer in the coordination log.
+Revisit retained work when its owner releases it and sweep again at session end. For superseded
+unmerged drafts, preserve a recovery reference or archive first. Held work retains its issue
+and branch link. The tracker, commits and review evidence retain the work's status and history.
 
 ## Feature architecture review
 
@@ -398,9 +415,8 @@ next permitted start. The existing lane limits, clean-room roles, mandatory proo
 landing still apply. An explicit stop or pause from Jim takes precedence. A real external blocker
 is reported with the unfinished work and concrete next step in a handoff; the work stays pending
 and resumes when unblocked. Shift end alone is never a reason to leave work pending.
-A session ends clean (Jim, 2026-11-24): landed and superseded branches are deleted on the remote
-and locally, with their worktrees, as the root skill's landing steps say, so the remote holds `main`
-and the branches of work still in flight.
+At session end the cleanup agent reports the remaining branches and worktrees as described
+under [Cleanup after landing](#cleanup-after-landing).
 
 Outside working hours new rounds wait for the nightly session. New work goes to the project's
 structure: tooling, movie captures, optimisations, and long computations that don't fit a session, within
