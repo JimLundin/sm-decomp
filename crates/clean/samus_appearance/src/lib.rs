@@ -1,12 +1,12 @@
 //! Her appearance State ([`AppearanceState`]) holds all she remembers from one frame to the
 //! next: her step and the time left on it, the boost stage and the laps left, her kept action,
 //! the cannon selection delay, the visor delay, visor sequence position and charge-glow
-//! position, the hurt count and the wall-jump puff. [`AppearanceState::INITIAL`] is the State she has as Samus is
+//! position, and the hurt count. [`AppearanceState::INITIAL`] is the State she has as Samus is
 //! initialized: a caller starts from it, or plays a frame with her initialization from any
 //! State, alike.
 //!
 //! The caller keeps that State from one frame to the next, saving and restoring it as it is,
-//! and gives it back to the next frame as [`update`] and drawing left it. The
+//! and gives it back to the next frame as [`update`] left it; nothing else carries over. The
 //! current and target palettes live with their shared owner, beside it, which writes the
 //! colours a frame gives her row. Before a frame, the caller may ask the read-ahead,
 //! [`Ahead::of`], of that State and the figure she starts the frame in.
@@ -17,15 +17,12 @@
 //!
 //! On an ordinary room drawing, [`OrdinaryBodyDraw::body_drawn`] decides whether to submit
 //! body placements, independently of the art and tile requests.
-//! After scrolling, [`AppearanceState::draw_wall_jump_dust`] advances the puff and returns the
-//! work to submit ahead of Samus in the prepared picture. Video owns publication.
 
 mod ahead;
 mod cannon;
 mod catalogue;
 mod clip;
 mod colours;
-mod dust;
 mod elevator;
 mod flicker;
 mod hurt;
@@ -50,7 +47,6 @@ pub use colours::{
     LiquidLevel, PaletteObservations, PaletteOpportunity, RoomColours, Unrecognized, VisorDelay,
     VisorStep,
 };
-pub use dust::{Dust, DustArrival, DustClip, DustDrawing, DustLook, DustPlacement, RoomPoint};
 pub use elevator::{
     ArtDisplacement, BodyHalf, BodyObject, BodyPiece, BodyPlacement, BodyRow, ElevatorArt,
     ElevatorBody, ElevatorDrawing, ElevatorPictureError, ElevatorProjection, ObjectSize,

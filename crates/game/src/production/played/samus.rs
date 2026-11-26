@@ -434,13 +434,6 @@ pub(super) const fn standing_pose(side: types::Side) -> Pose {
 }
 
 impl Her {
-    pub(super) fn draw_wall_jump_dust(
-        &mut self,
-        drawing: samus_appearance::DustDrawing,
-    ) -> samus_appearance::DustPlacement {
-        self.appearance.draw_wall_jump_dust(drawing)
-    }
-
     pub(super) fn stand_at_elevator(
         &mut self,
         samus: &mut samus_movement::Samus,

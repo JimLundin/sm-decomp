@@ -115,8 +115,6 @@ pub struct Content {
     pub shaft_track: Option<shaft::Track>,
     /// Sprite graphics written when the escape shaft places its overlay.
     pub shaft_overlay_art: Option<data::assets::shaft::Shaft>,
-    /// The imported timing and lone-sprite attributes for wall-jump dust.
-    pub wall_jump_dust_art: Option<data::assets::samus::WallJumpDustArt>,
     /// Imported puff maps for the shaft's mounted vents.
     pub shaft_vent_art: Option<data::assets::shaft::VentPictures>,
     /// Stationary smoke and explosion content for the shaft pool.
@@ -330,8 +328,6 @@ pub enum Fault {
     SuitColours,
     /// The ordinary body figure or step has no imported art.
     SamusBody(Figure),
-    /// The shaft's ordinary picture needs its checked dust clip.
-    WallJumpDustArt,
     /// The ordinary fight requests a sprite map outside the imported looks.
     RidleyPicture,
     /// The ordinary figure or animation step has no imported strip definition.
@@ -452,13 +448,15 @@ impl State {
             &mut enemies,
             (&hud_state, &hud_outputs),
             (camera.position(), body),
-            passing.work_begun.then_some(&mut her),
             (draw_shake, shaken.actors_asked),
             content,
         )?;
         let shaft_sound_offer = self.shaft_outputs(enemies.shaft_actors, &doors.report, passing)?;
 
-        self.prepare_play_tiles(uploads, content, camera.position());
+        if let Some(uploads) = uploads {
+            self.room_video.video.batch.samus_tiles = uploads;
+        }
+        self.prepare_bg1(content, camera.position());
 
         // Her room and where it sits on her map stay as they are through a frame of play.
         self.samus
@@ -499,18 +497,6 @@ impl State {
             ridley_placed: None,
             quake: Some(shaken),
         })
-    }
-
-    fn prepare_play_tiles(
-        &mut self,
-        uploads: Option<crate::state::video::SamusTileUploads>,
-        content: &Content,
-        view: types::Position,
-    ) {
-        if let Some(uploads) = uploads {
-            self.room_video.video.batch.samus_tiles = uploads;
-        }
-        self.prepare_bg1(content, view);
     }
 
     fn finish_room_actors(&mut self, enemies: &mut station::Enemies, publishes: bool) {

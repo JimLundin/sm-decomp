@@ -7,21 +7,19 @@ use crate::production::played::{
     Content, Fault, State,
     ridley_picture::{self, Spans},
     room_video::ShaftSprites,
-    samus::Her,
     station::Enemies,
 };
 use enemy_interactions::picture::{DrawView, PreScrollView};
 use interface_hud::CountdownPicture;
 use types::{Pair, Parity, Parts, Position};
 
-pub(in crate::production::played) struct PictureFrame<'a> {
+pub(in crate::production::played) struct PictureFrame {
     pub(in crate::production::played) view: Position,
     pub(in crate::production::played) shake: world_quake::Offset,
     pub(in crate::production::played) refresh: bool,
     pub(in crate::production::played) timer: CountdownPicture,
     pub(in crate::production::played) body: Option<SpriteDraw>,
     pub(in crate::production::played) held_body: Option<SpriteDraw>,
-    pub(in crate::production::played) samus_turn: Option<&'a mut Her>,
 }
 
 impl State {
@@ -30,28 +28,24 @@ impl State {
         enemies: &mut Enemies,
         hud: (&interface_hud::HudState, &interface_hud::FrameOutputs),
         body: (Position, Option<SpriteDraw>),
-        samus_turn: Option<&mut Her>,
         quake: (world_quake::Offset, bool),
         content: &Content,
     ) -> Result<Spans, Fault> {
         let (view, body) = body;
         let (shake, refresh) = quake;
         let ordinary = if enemies.shaft.is_some() {
-            if samus_turn.is_some() {
-                self.prepare_shaft_picture(
-                    enemies,
-                    PictureFrame {
-                        view,
-                        shake,
-                        refresh,
-                        timer: hud.1.countdown.picture,
-                        body,
-                        held_body: None,
-                        samus_turn,
-                    },
-                    content,
-                )?;
-            }
+            self.prepare_shaft_picture(
+                enemies,
+                PictureFrame {
+                    view,
+                    shake,
+                    refresh,
+                    timer: hud.1.countdown.picture,
+                    body,
+                    held_body: None,
+                },
+                content,
+            )?;
             Spans {
                 samus: None,
                 door: None,
@@ -86,7 +80,6 @@ impl State {
                 timer: CountdownPicture::Absent,
                 body,
                 held_body,
-                samus_turn: None,
             },
             content,
         )
@@ -95,7 +88,7 @@ impl State {
     pub(in crate::production::played) fn prepare_shaft_picture(
         &mut self,
         enemies: &mut Enemies,
-        frame: PictureFrame<'_>,
+        frame: PictureFrame,
         content: &Content,
     ) -> Result<(), Fault> {
         let (Some(shaft), Some(turn)) = (&mut enemies.shaft, enemies.shaft_actors) else {
@@ -122,7 +115,6 @@ impl State {
             ),
             frame.refresh,
         );
-        let dust = super::dust::advance(frame.samus_turn, view, content)?;
         let standing = self.elevator_locked().then(|| {
             StandingFrame::from_locked(
                 &self.samus,
@@ -136,7 +128,6 @@ impl State {
                 effects: shaft.effect_pictures(effects, view, frame.shake)?,
                 actors: pictures,
                 standing,
-                dust,
                 body: frame.body,
                 held_body: frame.held_body,
                 timer: frame.timer,

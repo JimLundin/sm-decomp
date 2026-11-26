@@ -12,8 +12,7 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 **Scope.** Her animation's timing, its sound opportunities (§9), when her cannon may follow
 the selected item (§10), the ordinary dry palette opportunity (§11), her hurt colours and the
 push's poses (§12), her standing picture during the elevator hold and fade (§13), and her
-body's protection flicker during ordinary play in Ceres (§14), and her wall-jump dust in
-the return shaft (§15).
+body's protection flicker during ordinary play in Ceres (§14).
 Her sprite and colours belong to the same domain because the player sees one figure.
 The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -36,7 +35,7 @@ supply their own palette changes, and video owns delivery of the current palette
 
 **What it leaves to others**: which pose follows a clip's end (samus-movement, `AnimationEnds`);
 delivery of her picture and tiles (video); body placement and art selection outside §13,
-splashes and other dust (remaining part 2, §7); the poses other domains drive (§7); whether a
+splashes and dust (remaining part 2, §7); the poses other domains drive (§7); whether a
 sound it asks for is heard (the sound domain).
 
 **Notation.** A clip's steps are numbered from 0. "The clip moves on" means it goes to the step
@@ -1060,85 +1059,3 @@ The room's other sprites have their own drawing rules.
 before the frame spends one of each. One frame left can still affect the current picture.
 Parity comes from the count as the frame's gameplay work starts. Push time is separate from
 her pose. The hurt colour pulse has its own timing (§12). The decision adds no State.
-
-## 15. Dust from a wall jump in the return shaft
-
-When Samus takes a new wall-jumping pose in the dry Ceres shaft, she raises a small
-puff against the wall. The puff rises in room space while its look changes.
-Movement supplies her accepted pose, pose dimensions and room centre at the change.
-It also supplies the dry touchdown graphics opportunity (§6 of [Movement](samus-movement.md)).
-The room supplies each fresh drawing opportunity and its scrolled view. Video
-encodes and publishes the placements.
-
-| Quantity | Domain type and units | Read by |
-| --- | --- | --- |
-| Dust arrival | `DustArrival`, none, dry touchdown, or a new accepted wall-jumping pose with its facing, centre and pose's vertical half-size in room pixels | `WallJumpDust` |
-| Dust | `Option<Dust>`, dust room centre in pixels, current look and positive number of drawing visits left | `WallJumpDust`, `WallJumpDustPicture` |
-| Dust clip | `DustClip`, four ordered looks with positive visit counts | `WallJumpDust`, `WallJumpDustPicture` |
-| Drawing opportunity | `bool`, whether there is new ordinary room drawing work | `WallJumpDust`, `WallJumpDustPicture` |
-| View origin | `RoomPoint`, left and top in room pixels after scrolling | `WallJumpDustPicture` |
-| Dust placement | `DustPlacement`, none, left edge only, or one small sprite's top-left in pixels and look | output (room picture) |
-
-Dust starts absent. The caller can carry, save and restore the whole optional dust.
-A restored puff keeps its room centre, current look and visits left.
-
-### WallJumpDust
-
-- kind: state and timing.
-- summary: A new wall-jumping pose raises a puff that rises for four looks or
-  disappears at a dry touchdown.
-- params: none. The clip supplies its four look lengths.
-- switch: Fixed.
-- New ordinary drawing with a newly accepted wall-jumping pose → start the first
-  look for its full length at the new pose centre's X plus 6 pixels if facing left
-  or minus 6 if facing right. Its initial Y is the new pose centre's Y plus the
-  new pose's vertical half-size minus 1 pixel. Raise the puff by 1 pixel on this
-  visit. A new puff replaces any carried puff [C-dust-right, C-dust-left, C-dust-spawn-wrap, R-dust-first-right, R-dust-first-left].
-- New ordinary drawing with a dry touchdown graphics opportunity or with no new wall-jumping pose and
-  only one visit left on the last look → discard the puff before putting it into the
-  picture [C-dust-clear, C-dust-end, R-dust-dry-clear, R-dust-expiry].
-- New ordinary drawing without an arrival or expiration, with dust present →
-  spend one visit. If that exhausts the current look, change to the next look
-  with its full length. Raise the puff by 1 pixel even when clipped
-  [C-dust-aging, C-dust-adjusted, C-dust-left-only, C-dust-wrap, R-dust-second,
-  R-dust-third, R-dust-fourth].
-- A cut without new ordinary drawing, including one that only publishes prepared
-  work, or an ordinary drawing of a dust-free scene with no new wall-jumping pose →
-  keep the dust as it was [C-dust-held, C-dust-idle, R-dust-held, R-dust-publish].
-- checked: oracle (ordinary return shaft at cuts 10–155 and suspended cuts
-  239–241), constructed.
-
-The four looks in the reference game last 2, 3, 4 and 5 drawing visits respectively.
-The visit that starts or changes a look counts as its first visible visit. Pose fit can
-leave a different collision half-size after the pose change. Use the newly accepted
-pose's supplied dimensions for the puff. Read a new pose change rather than the
-continuing pose on each frame.
-
-### WallJumpDustPicture
-
-- kind: output.
-- summary: The puff draws ahead of Samus in screen space.
-- params: none.
-- switch: Fixed.
-- No new ordinary drawing, no dust after the visit, or projected left outside
-  `0..=255` → submit no placement [C-dust-clear, C-dust-held, C-dust-idle,
-  C-dust-x-outside, C-dust-x-right-outside, R-dust-dry-clear, R-dust-expiry, R-dust-held, R-dust-publish].
-- New ordinary drawing, dust present, projected left inside `0..=255`, and
-  projected top outside `0..=255` → submit the left edge only at the next
-  empty position in the prepared picture. Its vertical byte is zero until another
-  placement uses that position or the picture hides its empty entries.
-  This does not consume a sprite or set its size or look
-  [C-dust-left-only, C-dust-bottom-outside].
-- New ordinary drawing, dust present, and both projected coordinates inside
-  `0..=255` → append one small sprite with the current dust look
-  [C-dust-edges, C-dust-bottom-edge, C-dust-wrap, C-dust-right, C-dust-left, C-dust-aging, C-dust-adjusted,
-  R-dust-first-right, R-dust-first-left, R-dust-second, R-dust-third, R-dust-fourth].
-- checked: oracle (ordinary return shaft dust draws at cuts 10–154), constructed.
-
-**Order that matters.** Apply the pose change or touchdown, then advance the dust
-and draw using the raised centre. Subtract the scrolled view and 4 pixels on
-each axis for the sprite's top-left. Room pixel additions and subtractions wrap at
-65,536. The shaft's tilt does not transform dust.
-The dust follows the timer, room effects and overlay, and precedes Samus and the
-mounted vents. The dust drawing opportunity still runs on a turn where protection
-hides Samus's body. An intervening publication has no fresh placement or aging.

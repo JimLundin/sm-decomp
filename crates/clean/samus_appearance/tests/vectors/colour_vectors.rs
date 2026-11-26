@@ -284,7 +284,6 @@ fn start(vectors: &ColourVectors, history: &History, hurt: HurtCount) -> Kept {
             cannon: CannonDelay::INITIAL,
             colours: history.before.into(),
             hurt_count: hurt,
-            dust: None,
         },
         palettes: Palettes {
             current: vectors.palette(current),

@@ -73,9 +73,8 @@ mod catalogue {
     }
 
     /// The kind line's kinds: one, or two joined by "and" ("timing and output"), of which a
-    /// behaviour holds the first. State is carried by the model, not a catalogue kind.
+    /// behaviour holds the first.
     fn first_kind(written: &str) -> Kind {
-        let written = written.strip_prefix("state and ").unwrap_or(written);
         let first = written.split(" and ").next().unwrap_or(written);
         for more in written.split(" and ").skip(1) {
             kind(more);

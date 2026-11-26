@@ -9,7 +9,6 @@ pub mod palettes;
 
 use crate::pose::PoseId;
 use crate::spritemap::{SpriteAttributes, Spritemap};
-use core::num::NonZeroU16;
 use key::{Dress, Pose, Worn, shown_as};
 
 /// A sprite list in [`SamusAssets`]'s pool.
@@ -103,15 +102,6 @@ pub struct Chest {
     pub up: u16,
     /// Its tile and attributes.
     pub attributes: SpriteAttributes,
-}
-
-/// The four wall-jump dust looks and their display durations.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct WallJumpDustArt {
-    /// The sprite attributes in playback order.
-    pub looks: [SpriteAttributes; 4],
-    /// Drawing visits spent on each look.
-    pub visits: [NonZeroU16; 4],
 }
 
 /// Her sprite sheet: every sprite list and every graphics upload, once, for the clips to

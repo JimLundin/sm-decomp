@@ -2403,25 +2403,3 @@ provider = "preceding pinned controller pad and locked NMI boundaries"
 fields = ["movie pad", "work finished", "NMI publication", "platform and bus opportunities"]
 phase = "per cut"
 claim = "The sole hall origin admits the room and controller. Later records supply pad and platform timing. The played path owns actor participation, drawing and publication."
-
-[[case]]
-id = "appearance/shaft-wall-jump-dust"
-kind = "integrated"
-row = "chain-any-0010-DF8D"
-start = { source = "played-continuation", seed = 0, frame = 278 }
-end = { cut_inclusive = 518 }
-rules = ["samus-appearance/WallJumpDust", "samus-appearance/WallJumpDustPicture"]
-profile = "reference"
-responsibilities = ["appearance", "movement", "camera", "ceres"]
-content = "player-rom-import"
-inputs = "played-shaft-dust"
-expectations = { provider = "pinned-record-cache", fields = ["shaft-dust.state"], outputs = ["shaft-dust.prepared", "shaft-dust.published", "shaft-dust.following-vent"] }
-checkpoints = true
-limits = ["The return hall supplies the sole seed. Dust comparison begins with the shaft row and includes its six native puffs.", "The OAM observations compare each visible dust entry and the last shifted vent entry on shaft cut 17 in both buffers. The indexed window ends with the last live room work before the save scheduler takes over.", "Constructed checks cover clipping because the native puff stays inside the view.", "Continuations canonically restore the complete Appearance owner and the pending and physical room picture within the carried room."]
-
-[[case.borrowed]]
-dependency = "shaft.platform"
-provider = "recorded-work-and-publication"
-fields = ["scheduler.finished", "scheduler.begun", "scheduler.published"]
-phase = "per cut"
-claim = "The ordinary played runner observes scheduler opportunities. Movement, view, actor sprites, the dust clock and the two OAM lanes advance through production."

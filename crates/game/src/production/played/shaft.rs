@@ -22,7 +22,6 @@ use world_doors::Palette;
 
 mod burst;
 mod composition;
-pub(super) mod dust;
 
 pub use burst::{BurstArt, ShaftEffects};
 

@@ -15,7 +15,7 @@ use oracle_record::FrameRecord;
 const HALL: &str = "chain-any-0010-DF8D";
 const SHAFT: &str = "chain-any-0011-DF45";
 
-pub(super) fn word(record: &FrameRecord, at: usize) -> Result<u16, Outcome> {
+fn word(record: &FrameRecord, at: usize) -> Result<u16, Outcome> {
     record
         .wram
         .get(at..at.saturating_add(2))

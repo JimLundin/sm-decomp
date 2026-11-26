@@ -152,9 +152,9 @@ set in the row its species loads to instead. No other species' placement changes
 
 The escape shaft publishes the overlay, stationary effects and mounted vents
 through the room's sprite buffer. The indexed shaft picture compares their
-selected OAM spans with the live timer and Samus. From the return hall seed,
-whole OAM at shaft cut 239 differs in 191 bytes in each buffer, first at
-the X byte of slot 64. Physical mode changes during scanout
+selected OAM spans with the live timer and Samus. Whole OAM at shaft cut 239
+still differs in retained slots from earlier ordinary drawing. The first
+difference is the X byte of slot 30. Physical mode changes during scanout
 and the haze fade have their own owners.
 
 ## The engine: planned differences from the original

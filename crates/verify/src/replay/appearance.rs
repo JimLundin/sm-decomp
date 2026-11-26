@@ -226,7 +226,6 @@ fn whole(wram: &[u8], content: &Content, imported: &Imported) -> Result<Appearan
         cannon,
         colours,
         hurt_count: hurt_count(wram)?,
-        dust: None,
     })
 }
 

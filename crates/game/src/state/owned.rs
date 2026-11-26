@@ -44,12 +44,12 @@ impl Pinned for FightWingsPin {
     const SHAPE: u64 = 0x837B_0847_748A_7CC3;
 }
 
-/// Her complete appearance State, including her wall-jump dust.
+/// Her complete appearance State: her animation, kept action, cannon delay and colour sequences.
 pub struct AppearancePin;
 impl Pinned for AppearancePin {
     type State = samus_appearance::AppearanceState;
     const NAME: &'static str = "samus-appearance";
-    const SHAPE: u64 = 0xD9B6_62BE_98E9_DCD1;
+    const SHAPE: u64 = 0xB2DA_FEFF_DE5F_DB9F;
 }
 
 /// Complete Zebes flashback encounter State.

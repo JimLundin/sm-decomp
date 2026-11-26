@@ -184,26 +184,6 @@ fn a_lone_sprite_keeps_the_low_table_only_and_is_lost_once_the_table_is_full() {
 }
 
 #[test]
-fn clipping_a_puff_leaves_the_sprite_slot_available() {
-    let mut written = batch(3);
-    written.write_clipped_puff_x(29);
-    assert_eq!(
-        written.oam.low[3],
-        OamEntry {
-            x: 29,
-            y: 0,
-            tile: 3,
-            attributes: 3,
-        }
-    );
-    assert_eq!(written.oam.high, [0xff; _]);
-    assert_eq!(written.sprites, SpriteCount(3));
-
-    written.finalise_oam();
-    assert_eq!((written.oam.low[3].x, written.oam.low[3].y), (29, HIDDEN_Y));
-}
-
-#[test]
 fn a_full_table_hides_nothing() {
     let full = u16::try_from(OAM_SPRITES).unwrap();
     for count in [full, full + 1] {

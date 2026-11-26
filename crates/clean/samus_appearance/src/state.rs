@@ -1,7 +1,9 @@
 //! What her appearance remembers from one frame to the next: her animation's four quantities
 //! (her step, the time left on it, the boost stage and the laps left), her kept action, the
-//! cannon selection delay, her colour sequences, the hurt count and the wall-jump puff.
-//! A caller may build each at any value its range allows, read it back, and save and restore it.
+//! cannon selection delay, her colour sequences and the hurt count. A caller may build each at
+//! any value its
+//! range allows, read it back, save and restore it, and gives it back to the next frame as
+//! `update` left it.
 
 use core::num::NonZeroU8;
 
@@ -11,7 +13,6 @@ use types::{Action, BoostStage};
 use crate::cannon::CannonDelay;
 use crate::clip::{Clip, Frames, Hold, Instruction, Slowdown, Step};
 use crate::colours::{ColourSequences, HurtCount, ORDINARY_READY};
-use crate::dust::{Dust, DustDrawing, DustPlacement};
 
 /// Spec: `ClipPlays`, `BoostStages`. How the time left and the laps left run out: the count less
 /// 1, while that is above 0; at 0 or below the count is over. So 1 left and none left are over
@@ -141,9 +142,10 @@ impl Animation {
 
 /// Her appearance State: all her appearance remembers from one frame to the next.
 ///
-/// Spec: `SpinEnds`, `CannonItemDelay`, `OrdinaryDryColours`, `HurtColours`, `WallJumpDust`.
-/// Her kept action, cannon delay, colour sequences, hurt count and dust each have their own
-/// memory apart from animation. The current and target palettes live with their shared owner.
+/// Spec: `SpinEnds`, `CannonItemDelay`, `OrdinaryDryColours`, `HurtColours`. Her kept action,
+/// the cannon selection delay, the colour sequences and the hurt count are memories of their
+/// own, each kept apart from her animation, her pose, the selected item and the palettes. The current and target palettes
+/// live with their shared owner, beside this State.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct AppearanceState {
     /// Her animation's four quantities.
@@ -157,8 +159,6 @@ pub struct AppearanceState {
     pub colours: ColourSequences,
     /// The hurt count: how far her hurt pulse has gone (`HurtColours`).
     pub hurt_count: HurtCount,
-    /// The wall-jump puff, if still present (`WallJumpDust`).
-    pub dust: Option<Dust>,
 }
 
 impl AppearanceState {
@@ -166,8 +166,8 @@ impl AppearanceState {
     /// loading), whatever came before: step 0 with no time left, stage 0 with no laps left
     /// whatever her items, her kept action `Still` (no spin, so drawing ends none until a
     /// preparation keeps one), the cannon waiting 2 frames (`CannonReadinessReset`), the colour
-    /// sequences as the ordinary reset leaves them (`OrdinaryDryColours`), with no hurt pulse
-    /// or wall-jump puff under way. A frame with her initialization sets every quantity to this first, and plays
+    /// sequences as the ordinary reset leaves them (`OrdinaryDryColours`), and no hurt pulse
+    /// under way. A frame with her initialization sets every quantity to this first, and plays
     /// on from it.
     pub const INITIAL: Self = Self {
         animation: Animation {
@@ -182,16 +182,5 @@ impl AppearanceState {
         cannon: CannonDelay::INITIAL,
         colours: ORDINARY_READY,
         hurt_count: HurtCount::NONE,
-        dust: None,
     };
-
-    /// Spec: `WallJumpDust`, `WallJumpDustPicture`. At ordinary room drawing, update the
-    /// caller's puff and return the placement for the prepared picture. A cut without new
-    /// drawing leaves the puff untouched and submits nothing. No other State changes.
-    #[must_use]
-    pub fn draw_wall_jump_dust(&mut self, drawing: DustDrawing) -> DustPlacement {
-        let (dust, placement) = drawing.prepare(self.dust);
-        self.dust = dust;
-        placement
-    }
 }

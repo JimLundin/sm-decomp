@@ -5,8 +5,6 @@
 
 rules = [
     "samus-appearance/ProtectionFlicker",
-    "samus-appearance/WallJumpDust",
-    "samus-appearance/WallJumpDustPicture",
     "boss-ceres-ridley/WarningArt",
     "boss-ceres-ridley/WarningGlow",
     "boss-ceres-ridley/WarningEnds",
@@ -2250,26 +2248,3 @@ after = "if std::mem::take(&mut self.sprite_pending) && self.pending_platform.is
 case = "enemy-interactions/shaft-actor-picture"
 cut = 240
 field = "room-video.shaft-overlay-published"
-
-
-[[fault]]
-name = "shaft-wall-jump-dust-omits-picture"
-responsibility = "appearance"
-rule = "samus-appearance/WallJumpDustPicture"
-file = "crates/game/src/production/played/room_video.rs"
-before = "            sprites.dust,"
-after = "            super::shaft::dust::Placement::None,"
-case = "appearance/shaft-wall-jump-dust"
-cut = 289
-field = "shaft-dust.prepared"
-
-[[fault]]
-name = "shaft-wall-jump-dust-ignores-dry-touchdown"
-responsibility = "appearance"
-rule = "samus-appearance/WallJumpDust"
-file = "crates/game/src/production/played/shaft/dust.rs"
-before = "            DustArrival::DryTouchdown"
-after = "            DustArrival::None"
-case = "appearance/shaft-wall-jump-dust"
-cut = 324
-field = "shaft-dust.state"

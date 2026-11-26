@@ -71,7 +71,6 @@ pub(super) struct ShaftSprites {
     pub(super) actors: super::shaft::actor_picture::ActorPictures,
     pub(super) effects: Vec<enemy_interactions::picture::FigureRequest>,
     pub(super) standing: Option<blackout::StandingFrame>,
-    pub(super) dust: super::shaft::dust::Placement,
     pub(super) body: Option<SpriteDraw>,
     pub(super) held_body: Option<SpriteDraw>,
     pub(super) timer: CountdownPicture,
@@ -258,11 +257,6 @@ impl RoomVideo {
         if let Some(overlay) = sprites.actors.overlay {
             ShaftOverlay::draw(&mut batch, art, point(overlay.origin));
         }
-        super::shaft::dust::append(
-            &mut batch,
-            sprites.dust,
-            content.wall_jump_dust_art.as_ref(),
-        )?;
         if let Some(standing) = sprites.standing {
             let body = content
                 .standing

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "58234e58cf8340a6d4f2af5aa8540106aa9a8b78d8d83185124e92d7aca63eb0"
+index_sha256 = "a01981460f98e71b7c3aa05c9af7d2b231c3eea740cfbe557c9228e470e6723d"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1748,21 +1748,3 @@ null_fields = 5062
 restorations = 294
 pending_boundaries = 1
 pending_restorations = 1
-
-[[case]]
-id = "appearance/shaft-wall-jump-dust"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "f03af4e3d6c870b5f32530607a6b6621c24e0fa03620216bd3514d31b233c994"
-
-[case.counts]
-cuts = 240
-fields = 240
-outputs = 481
-publications = 62
-replies = 0
-null_cuts = 178
-null_fields = 178
-restorations = 6
-pending_boundaries = 0
-pending_restorations = 0
