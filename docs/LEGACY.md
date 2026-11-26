@@ -16,6 +16,11 @@ An effect turn under way at a cut is completed in the next frame, so the replies
 published at that cut are not reproduced there. Required whole-engine producers remain
 unsupported. See [audio-transport gaps](behaviours/audio-transport.gaps.md).
 
+The played Ceres shaft produces its burst's CPU sound offers and carries the Ambient
+sender through delivery and release. The room supplies sound permission. The
+service opportunity and the reply it reads come from the replay platform inputs.
+The shaft's resident SPC state, producer replies and effect playback are unproved.
+
 ## Comparison representation limits
 
 Pending aim represented as `Option<FiringDirection>` preserves presence and direction but not

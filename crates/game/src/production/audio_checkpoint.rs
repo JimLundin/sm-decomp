@@ -12,10 +12,10 @@ impl PortableAudio {
 }
 
 impl Canonical for PortableAudio {
-    // This schema identifies the portable envelope and its precise Audio payload. A payload
-    // change needs its own format decision, independently of the live checkpoint codecs.
+    // The portable cue roster extends by appending tags. Existing payloads keep their
+    // exact envelope and bytes. The live shape pin guards the full payload definition.
     const SCHEMA: u64 = {
-        assert!(AudioPin::SHAPE == 0xF5B0_435C_9274_A3C7);
+        assert!(AudioPin::SHAPE == 0x8388_ABDA_7254_3060);
         0x029A_5174_21B2_EEB2
     };
 

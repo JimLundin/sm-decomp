@@ -69,6 +69,7 @@ mod ridley;
 pub mod room_video;
 pub mod samus;
 pub mod shaft;
+pub mod shaft_sound;
 mod start;
 pub mod station;
 pub mod warning;
@@ -176,6 +177,8 @@ pub struct State {
     pub progress: run_progress::Progress,
     /// Her room, play or a passage under way, and the door she touched.
     pub passage: passage::State,
+    /// The shaft burst's CPU sender and passage sound permission.
+    pub shaft_sound: shaft_sound::State,
     /// The screen's colours and the colours they head for.
     pub palette: Palette,
     /// The Ceres station's doors, pad and cover, lights, Ridley and steam vents.
@@ -211,6 +214,8 @@ pub struct Outputs {
     pub shaft_overlay_placement: Option<boss_ceres_ridley::OverlaySpriteUpload>,
     /// The escape overlay's drawing, lights and burst requests from a fresh actor turn.
     pub shaft_actors: Option<boss_ceres_ridley::OverlayTurn>,
+    /// The offer carried from a fresh shaft burst to its CPU queue.
+    pub shaft_sound_offer: Option<audio_transport::Offer>,
     /// The elevator scene and standing lock requested once, after ordinary motion.
     pub elevator_reach: Option<boss_ceres_ridley::ElevatorLock>,
     /// Ridley's run, with the baby's cry; none on a frame he doesn't run.
@@ -255,6 +260,8 @@ pub enum Fault {
     NewGame,
     /// The station's escape in the shaft: a later piece owns the shaft's overlay.
     Escape,
+    /// The shaft burst requested an unsupported sound queue limit.
+    ShaftSoundAllowance,
     /// The room's quake can't take the frame: a door's shake of a strength it has no size for,
     /// or an update it refuses.
     Quake,
@@ -359,12 +366,8 @@ impl State {
             rules,
         );
 
-        self.room_video.shaft_picture(
-            enemies.shaft_actors,
-            self.vent_camera(),
-            passing.publishes,
-            content.shaft_overlay_art.as_ref(),
-        )?;
+        let shaft_sound_offer =
+            self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
 
         // Her room and where it sits on her map stay as they are through a frame of play.
         self.samus
@@ -406,6 +409,7 @@ impl State {
             lights: enemies.lights,
             shaft_overlay_placement: None,
             shaft_actors: enemies.shaft_actors,
+            shaft_sound_offer,
             elevator_reach,
             ridley: enemies.ridley,
             warning: enemies.warning,
@@ -549,12 +553,8 @@ impl State {
             &mut palette,
             &mut random,
         )?;
-        self.room_video.shaft_picture(
-            enemies.shaft_actors,
-            self.vent_camera(),
-            passing.publishes,
-            content.shaft_overlay_art.as_ref(),
-        )?;
+        let shaft_sound_offer =
+            self.shaft_outputs(enemies.shaft_actors, &exports.report, passing, content)?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         let shaft_overlay_placement = loaded.shaft_placement.map(|placement| placement.upload);
         if loaded.actors.is_some() {
@@ -589,6 +589,7 @@ impl State {
             lights: enemies.lights,
             shaft_overlay_placement,
             shaft_actors: enemies.shaft_actors,
+            shaft_sound_offer,
             elevator_reach: None,
             ridley: enemies.ridley,
             warning: enemies.warning,
@@ -597,6 +598,26 @@ impl State {
             quake: None,
         })
     }
+    fn shaft_outputs(
+        &mut self,
+        turn: Option<boss_ceres_ridley::OverlayTurn>,
+        doors: &world_doors::Report,
+        passing: &Passing,
+        content: &Content,
+    ) -> Result<Option<audio_transport::Offer>, Fault> {
+        let (sound, offer) = self
+            .shaft_sound
+            .next(turn, doors, passing.audio.shaft_reply)?;
+        self.room_video.shaft_picture(
+            turn,
+            self.vent_camera(),
+            passing.publishes,
+            content.shaft_overlay_art.as_ref(),
+        )?;
+        self.shaft_sound = sound;
+        Ok(offer)
+    }
+
     fn passage_export(
         &self,
         before: &Palette,

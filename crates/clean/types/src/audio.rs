@@ -95,6 +95,8 @@ pub enum CueId {
     BackgroundSilence,
     /// Protected door.
     Door,
+    /// Shaft door's explosion: an ordinary Ambient cue with one finite effect part.
+    ShaftExplosion,
 }
 impl CueId {
     /// Spec: OfferAcceptance. The group a cue belongs to, whose queue it joins.
@@ -102,7 +104,7 @@ impl CueId {
     pub const fn group(self) -> SoundGroup {
         match self {
             Self::Spin | Self::EndSpin | Self::Beam | Self::SamusSilence => SoundGroup::Action,
-            Self::BackgroundSilence => SoundGroup::Ambient,
+            Self::BackgroundSilence | Self::ShaftExplosion => SoundGroup::Ambient,
             Self::Footstep | Self::Land | Self::Door => SoundGroup::Contact,
         }
     }
@@ -540,7 +542,7 @@ pub struct State {
 /// Spec: EffectResources and WholeArrangement. Caller owns validated resident content.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Content {
-    /// Admitted effect clips.
+    /// Admitted effect clips. The shaft explosion clip has one finite part.
     pub effects: BTreeMap<CueId, EffectClip>,
     /// Two tracks in order.
     pub tracks: Vec<TrackContent>,

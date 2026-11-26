@@ -2264,3 +2264,32 @@ provider = "pinned room origin and locked movie and NMI records"
 fields = ["movie pad", "frame work and publication boundaries", "interrupted actor loading permission", "audio readiness", "passage RNG before shaft placement"]
 phase = "origin and each qualified scheduling opportunity"
 claim = "The return play carries its room. T1 and audio replies admit opportunities. The shaft owns its actor draws, state and outputs once installed."
+
+[[case]]
+id = "audio-sender/shaft-bursts"
+kind = "integrated"
+row = "chain-any-0006-E0B5"
+start = { source = "played-continuation", seed = 1690, frame = 2869 }
+end = { cut_inclusive = 2953 }
+rules = ["boss-ceres-ridley/OverlayRumbles", "audio-transport/OfferAcceptance", "audio-transport/RequestDelivery", "audio-transport/RequestRelease"]
+profile = "reference"
+responsibilities = ["ceres", "audio-sender"]
+content = "player-rom-import"
+inputs = "played-shaft-sound"
+expectations = { provider = "pinned-record-cache", fields = ["sender.permission", "sender.queue", "sender.progress"], outputs = ["shaft-sound.offer", "sender.request"] }
+checkpoints = true
+limits = ["The carried run reaches the hall and shaft from one return-room origin. It compares the seven shaft offers and three suppressed hall offers, the Ambient FIFO and CPU's delivery and release.", "The record captures CPU progress. Audio reply reads are borrowed; SPC publication, cadence, playback and other cues are outside this witness."]
+
+[[case.borrowed]]
+dependency = "shaft-sound.reply"
+provider = "pinned CPU cue and clear acknowledgement edges"
+fields = ["Ambient reply read", "finished work opportunity"]
+phase = "CPU sound service after actor turns"
+claim = "Reply values are reconstructed from independent native acceptance edges. They supply no actor offer, FIFO mutation or request line."
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "locked movie pad and played work boundaries"
+fields = ["controller", "actor fetch", "lag and publication", "sound queue and music readiness", "passage random draws outside owned turns"]
+phase = "played frame and suspended room work"
+claim = "The carried passage drives sound permission and the shaft actor drives offers. The existing platform inputs supply readiness and work opportunities."

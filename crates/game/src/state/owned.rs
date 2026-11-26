@@ -16,7 +16,7 @@ pub struct AudioPin;
 impl Pinned for AudioPin {
     type State = Box<audio_transport::State>;
     const NAME: &'static str = "production-audio";
-    const SHAPE: u64 = 0xF5B0_435C_9274_A3C7;
+    const SHAPE: u64 = 0x8388_ABDA_7254_3060;
     const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] = &[("MusicalPitch", 19)];
 }
 

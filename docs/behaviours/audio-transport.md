@@ -14,6 +14,19 @@ sound-group requests change. The resident arrangement supplies an independently 
 `ResidentMusicReply` identity, whose original reply byte is preserved at the boundary. The
 current engine has no sound queue or modeled reply transport to replace.
 
+The shaft door's rumble supplies an Ambient explosion cue with a six-cue allowance.
+The passage supplies the sound permission at each offer. This cue uses the existing sender
+rules independently of the burst's particle choice and visibility. The shaft cue's CPU
+sender can be observed at service boundaries while the resident song and effect cadence
+remain outside the observation window.
+
+The caller can submit an offer to the selected group's carried FIFO and run a service on the
+carried sender and request line. An offer supplies the cue, allowance and permission. A service
+supplies the typed reply at that service. It updates the FIFO, sender progress and request line
+according to `RequestDelivery` and `RequestRelease`. When the caller has no service, the
+offer still goes through `OfferAcceptance`. This interface uses the existing rules and can
+resume with the same saved sender and line at the next cut.
+
 **What it leaves to others.** Whether a frame runs the game's sender service at all: a frame
 that runs out of time before its end runs none, and the frame's caller supplies that. When
 within a frame each audio turn falls: the audio side keeps its own clock, and until that clock
@@ -88,15 +101,15 @@ encountered in a captured row.
 - summary: admit a sound offer only while its producer permits sound and its queue allowance has space.
 - params: none.
 - switch: Fixed.
-- checked: oracle (constructed/source-expected Q-accept, Q-full, Q-disabled, Q-demo, Q-explosion).
+- checked: oracle (constructed/source-expected Q-accept, Q-full, Q-disabled, Q-demo, Q-explosion, Q-shaft-accept, Q-shaft-full, Q-shaft-disabled).
 
 **Rule.**
 
 The caller supplies a typed queue allowance: one, three, six, nine or fifteen cues. The saved queue holds at most fifteen cues; an offer with a smaller allowance than its current length never removes already accepted cues. Existing requests retain their order.
 
-- Sound enabled, outside demo playback and explosion suppression, with queue length below the offered allowance → append the cue to the queue [Q-accept, F-offer].
+- Sound enabled, outside demo playback and explosion suppression, with queue length below the offered allowance → append the cue to the queue [Q-accept, F-offer, Q-shaft-accept].
 
-- Sound disabled, demo playback, explosion suppression or queue length at least the offered allowance → leave the queue unchanged [Q-full, Q-disabled, Q-demo, Q-explosion].
+- Sound disabled, demo playback, explosion suppression or queue length at least the offered allowance → leave the queue unchanged [Q-full, Q-disabled, Q-demo, Q-explosion, Q-shaft-full, Q-shaft-disabled].
 
 ## Request delivery
 
@@ -112,14 +125,14 @@ cue's presentation share one service.
 - summary: deliver the oldest queued cue and wait for its acknowledgement.
 - params: none.
 - switch: Fixed.
-- checked: oracle (constructed/source-expected S-empty, S-send, S-retry, S-ack).
+- checked: oracle (constructed/source-expected S-empty, S-send, S-retry, S-ack, S-shaft-ack).
 
 **Rule.**
 
 - Ready with an empty queue → retain Ready and present nothing [S-empty].
 - Ready with queued cues → remove and present the oldest cue, retaining AwaitCue for that cue [S-send, F-two-frames].
 - AwaitCue reads a different reply → retain AwaitCue and present the same cue again [S-retry, F-two-frames].
-- AwaitCue reads the matching reply → retain ClearDelay with two turns remaining; consume none of the new delay in this service [S-ack, F-two-frames].
+- AwaitCue reads the matching reply → retain ClearDelay with two turns remaining; consume none of the new delay in this service [S-ack, F-two-frames, S-shaft-ack].
 
 ### RequestRelease
 
@@ -128,7 +141,7 @@ cue's presentation share one service.
 - summary: clear a handled cue before sending the next one.
 - params: none.
 - switch: Fixed.
-- checked: oracle (constructed/source-expected S-delay, S-clear, S-clear-retry, S-clear-empty, S-clear-send, S-reset-wait, S-reset-expire).
+- checked: oracle (constructed/source-expected S-delay, S-clear, S-clear-retry, S-clear-empty, S-clear-send, S-reset-wait, S-reset-expire, S-shaft-next).
 
 **Rule.**
 
@@ -136,7 +149,7 @@ cue's presentation share one service.
 - ClearDelay has one turn → present absence and retain AwaitClear [S-clear, F-two-frames].
 - AwaitClear reads a nonempty reply → present absence again and retain AwaitClear [S-clear-retry, F-two-frames].
 - AwaitClear reads absence with an empty queue → become Ready in this service [S-clear-empty, F-two-frames].
-- AwaitClear reads absence with queued cues → become Ready and deliver the oldest cue in this service [S-clear-send].
+- AwaitClear reads absence with queued cues → become Ready and deliver the oldest cue in this service [S-clear-send, S-shaft-next].
 - ResetDelay has more than one turn → consume one turn and present nothing [S-reset-wait].
 - ResetDelay has one turn → become Ready and leave queued cues for the next service [S-reset-expire].
 
@@ -206,7 +219,7 @@ absence [R-resident-alpha, R-resident-beta].
 
 **Rule.**
 
-A group retains the last handled request separately from the staged request. Absence releases the request line; silence is an admitted sound cue with its own voice lifetime. The admitted cues are footsteps, spinning, ending a spin, landing or wall jumping, firing the power beam, silencing Samus, silencing background sound and opening Ceres's door. Imported voice maxima are one, one and two for the three request groups. Door playback is protected against another ordinary cue in its group until it finishes.
+A group retains the last handled request separately from the staged request. Absence releases the request line; silence is an admitted sound cue with its own voice lifetime. The admitted cues are footsteps, spinning, ending a spin, landing or wall jumping, firing the power beam, silencing Samus, silencing background sound, opening Ceres's door and the shaft door's explosion. Imported voice maxima are one, one and two for the three request groups. Door playback is protected against another ordinary cue in its group until it finishes.
 
 - A changed present request is admitted by an unprotected group → release the group's previous voice ownership, replace its playback with a prepared cue for a later turn and mark the request handled [D-new, D-after-absence].
 
@@ -291,8 +304,8 @@ in a finished ramp's target and increment continue identically [M-inactive-confi
 
 The three `SoundGroup` choices are `Action`, `Ambient` and `Contact`, with one, one and two
 active parts respectively. Action admits spinning, ending a spin, the power beam and Samus
-silence. Ambient admits background silence. Contact admits footsteps, landing or wall jumping
-and the door. A typed cue belongs to its group, so a caller cannot offer it to another group.
+silence. Ambient admits background silence and the shaft door's explosion. Contact admits footsteps, landing or wall jumping
+and the door. The shaft door's explosion has one finite part with ordinary spans. The caller selects the matching queue by the cue's group.
 
 An imported `EffectClip` has ordered parts. Each part plays a finite sequence of spans once,
 or an introduction followed by a nonempty repeated span sequence. Every span carries a positive

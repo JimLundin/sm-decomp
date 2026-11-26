@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "b646f9b66cc142e28d4617e869ca8b8eb28712c945fc65c6dc755788d80e062a"
+index_sha256 = "fb54103f4ff0adc86189da4220dc8d79dcc09588fc64c343e3f97342dac2f81c"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1638,5 +1638,23 @@ replies = 0
 null_cuts = 0
 null_fields = 0
 restorations = 220
+pending_boundaries = 1
+pending_restorations = 1
+
+[[case]]
+id = "audio-sender/shaft-bursts"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "14e5c1fe4a9cc8f925bc399b56226e4e81ae5dc72d80ba3987335351008cf3f6"
+
+[case.counts]
+cuts = 84
+fields = 252
+outputs = 168
+publications = 0
+replies = 0
+null_cuts = 36
+null_fields = 141
+restorations = 84
 pending_boundaries = 1
 pending_restorations = 1

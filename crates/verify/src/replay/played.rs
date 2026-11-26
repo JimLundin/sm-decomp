@@ -55,6 +55,7 @@ pub(super) mod seed;
 mod shaft;
 mod shaft_native;
 mod shaft_restore;
+pub(super) mod shaft_sound;
 mod start;
 mod station;
 mod steam;
@@ -545,6 +546,7 @@ impl<'a> Run<'a> {
         }
         let state = played::State {
             room_video: played::room_video::RoomVideo::default(),
+            shaft_sound: shaft_sound::seed(&seed.wram)?,
             play_time: play_time::read(&seed.wram)?,
             clock_picture: played::clock_picture::ClockPicture::default(),
             samus: samus::seed(&seed.wram, &content.appearance)?,
@@ -702,6 +704,7 @@ impl<'a> Run<'a> {
             publishes: platform.publishes,
             actor_fetch: platform::actor_fetch(current),
             audio: played::passage::PassageAudio {
+                shaft_reply: shaft_sound::reply(place, finished(current)),
                 sounds_sent: sounds_sent(&previous.wram)?,
                 music_ready: music_ready(&previous.wram)?,
             },

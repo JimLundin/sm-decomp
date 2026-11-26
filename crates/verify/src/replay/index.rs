@@ -183,6 +183,8 @@ pub enum InputProvider {
     ScopedCeresWarning,
     /// The carried Ceres return through placement and elevator reach.
     CeresShaftActors,
+    /// Played shaft actors with native CPU-side Ambient reply reads.
+    PlayedShaftSound,
     /// Carried Samus turn with a separately observed flyby pass and view edge.
     ScopedGetawayInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
@@ -766,6 +768,15 @@ pub enum ObservationId {
     /// Complete pending sound queue, oldest first.
     #[serde(rename = "sender.queue")]
     SenderQueue,
+    /// Room sound enable carried through passage.
+    #[serde(rename = "sender.permission")]
+    SenderPermission,
+    /// The CPU's current request to the Ambient sound group.
+    #[serde(rename = "sender.request")]
+    SenderRequest,
+    /// The shaft overlay's sound offer and its queue limit.
+    #[serde(rename = "shaft-sound.offer")]
+    ShaftSoundOffer,
     /// Complete committed sender progress.
     #[serde(rename = "sender.progress")]
     SenderProgress,
@@ -1359,6 +1370,7 @@ macro_rules! ceres_observations {
             | ObservationId::CeresShaftState
             | ObservationId::CeresShaftEvents
             | ObservationId::CeresShaftPicture
+            | ObservationId::ShaftSoundOffer
     };
 }
 
@@ -1474,7 +1486,11 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         O::DeparturePicture | O::ZebesPages | O::ZebesOam | O::ZebesPalette => {
             Responsibility::ZebesDrawing
         }
-        O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
+        O::SenderQueue
+        | O::SenderProgress
+        | O::SenderPermission
+        | O::SenderRequest
+        | O::TouchdownOffer => Responsibility::AudioSender,
         shaft_observations!() => Responsibility::RoomLoading,
         health_observations!() => Responsibility::Health,
         explosion_observations!() => Responsibility::StationExplosion,
@@ -1527,9 +1543,17 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
     }
 }
 
-fn rule_owner(rule: &str) -> Option<Responsibility> {
+fn rule_owner(rule: &str, provider: InputProvider) -> Option<Responsibility> {
     if rule == "game-random/AdvanceRandom" {
         return Some(Responsibility::LandingSite);
+    }
+    if provider == InputProvider::PlayedShaftSound
+        && matches!(
+            rule,
+            "audio-transport/RequestDelivery" | "audio-transport/RequestRelease"
+        )
+    {
+        return Some(Responsibility::AudioSender);
     }
     if rule == "audio-transport/OfferAcceptance" {
         return Some(Responsibility::AudioSender);
@@ -1640,6 +1664,14 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "audio-transport/FrameCadence"
         | "audio-transport/PublishedReplies"
         | "audio-transport/StagedRequests" => &[O::AudioReplies],
+        "boss-ceres-ridley/OverlayRumbles" if provider == InputProvider::PlayedShaftSound => {
+            &[O::ShaftSoundOffer]
+        }
+        "audio-transport/RequestDelivery" | "audio-transport/RequestRelease"
+            if provider == InputProvider::PlayedShaftSound =>
+        {
+            &[O::SenderProgress, O::SenderRequest]
+        }
         "audio-transport/RequestDelivery" | "audio-transport/RequestRelease" => {
             &[O::AudioRequestLines]
         }
@@ -2408,6 +2440,9 @@ fn landing_provider_valid(case: &Case) -> bool {
 }
 
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    if case.inputs == InputProvider::PlayedShaftSound {
+        return super::played::shaft_sound::valid(case);
+    }
     if matches!(
         case.inputs,
         InputProvider::PlayedCeresInputs
@@ -2577,7 +2612,7 @@ fn scope_valid(case: &Case) -> bool {
         return false;
     }
     for rule in &case.rules {
-        if rule_owner(rule).is_none_or(|owner| !owners.contains(&owner)) {
+        if rule_owner(rule, case.inputs).is_none_or(|owner| !owners.contains(&owner)) {
             return false;
         }
         if witnessed_fields(rule, case.inputs)
@@ -2625,7 +2660,10 @@ fn start_valid(case: &Case) -> bool {
         Start::PlayedContinuation { seed, frame } => {
             *seed < *frame
                 && *frame < case.end.cut_inclusive
-                && case.inputs == InputProvider::Departure
+                && matches!(
+                    case.inputs,
+                    InputProvider::Departure | InputProvider::PlayedShaftSound
+                )
         }
         Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
         Start::NativeRecord {

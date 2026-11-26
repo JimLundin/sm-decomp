@@ -8,7 +8,8 @@
 # Each family runs one turn unless its `turns` or `music_turns` asks for successive turns.
 # TimbreId aliases 0 and 1 name resolved invented non-noise instruments; they
 # are identities, not source instrument bytes. Echo delay is fixed at 2.
-# Sender CueId aliases 7 and 9 carry identity only; they are not game command bytes.
+# Sender and offer aliases 7, 8 and 9 carry identity only. Alias 8 names the shaft door's
+# explosion. A sender or offer with a group names the expected group for that vector.
 # A -1 presentation means the service presents nothing; value 0 means Absent.
 # Effect fixtures prepare one span per part: declared pitch/duration, zero auxiliary
 # scalar fields, release array in physical part order; occupied lists physical slots.
@@ -132,6 +133,30 @@ after_state = "AwaitCue"
 after_value = 9
 after_queue = []
 present = 9
+
+[[sender]]
+id = "S-shaft-next"
+group = "Ambient"
+state = "AwaitClear"
+value = 0
+queue = [8, 8]
+reply = 0
+after_state = "AwaitCue"
+after_value = 8
+after_queue = [8]
+present = 8
+
+[[sender]]
+id = "S-shaft-ack"
+group = "Ambient"
+state = "AwaitCue"
+value = 8
+queue = [8]
+reply = 8
+after_state = "ClearDelay"
+after_value = 2
+after_queue = [8]
+present = -1
 
 [[sender]]
 id = "S-reset-wait"
@@ -293,6 +318,39 @@ allowance = 3
 enabled = true
 demo = false
 exploding = true
+after_queue = []
+
+[[offer]]
+id = "Q-shaft-accept"
+group = "Ambient"
+queue = [8, 8, 8, 8, 8]
+cue = 8
+allowance = 6
+enabled = true
+demo = false
+exploding = false
+after_queue = [8, 8, 8, 8, 8, 8]
+
+[[offer]]
+id = "Q-shaft-full"
+group = "Ambient"
+queue = [8, 8, 8, 8, 8, 8]
+cue = 8
+allowance = 6
+enabled = true
+demo = false
+exploding = false
+after_queue = [8, 8, 8, 8, 8, 8]
+
+[[offer]]
+id = "Q-shaft-disabled"
+group = "Ambient"
+queue = []
+cue = 8
+allowance = 6
+enabled = false
+demo = false
+exploding = false
 after_queue = []
 
 [[progress]]

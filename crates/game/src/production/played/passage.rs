@@ -82,6 +82,8 @@ pub enum ActorFetch {
 /// What audio answers the passage.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PassageAudio {
+    /// The Ambient reply at the CPU service opportunity, if it runs in this cut.
+    pub shaft_reply: Option<types::audio::Request>,
     /// Every sound request so far has been sent.
     pub sounds_sent: bool,
     /// No track waits in the queue of tracks.

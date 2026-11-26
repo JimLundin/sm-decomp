@@ -37,6 +37,7 @@ impl State {
             room_video: super::room_video::RoomVideo::default(),
             play_time: crate::production::played::play_time::ZERO,
             clock_picture: super::clock_picture::ClockPicture::default(),
+            shaft_sound: super::shaft_sound::State::default(),
             samus,
             camera: Model(Camera::restore(
                 ViewPosition(Pair {

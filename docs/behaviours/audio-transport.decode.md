@@ -193,6 +193,67 @@ J-two-subset-reserved and J-nonmember-allocation use invented content and test e
 reservations, release and explicit reselection. The mapping does not establish a DSP update
 instant: `engine.asm` lines 80-93 separately publish DSP cache fields.
 
+## Ceres shaft explosion sender
+
+The shaft overlay's rumble reports a sound offer every time it requests a particle, including
+the last particle that the effect player culls. Bank A6 at F838/F83B passes cue 25h to
+the six-cue Library 2 entry in bank 80 at 90CB. That entry checks the queue count at 90D6–90E2
+and the sound-disable word at 90E7–90EA. The scene and power-bomb checks follow. The queue
+count stays below six on this path. The fade-out starts sound suppression at 82:E279.
+The final fade-in at 82:E73F runs the actors before the transition enables sounds at 82:E757.
+The hall record first sees permission restored at cut 278. [Bank A6](https://patrickjohnston.org/bank/A6)
+· [Bank 80](https://patrickjohnston.org/bank/80) · [Bank 82](https://patrickjohnston.org/bank/82)
+
+| Locked row and offer cut | FIFO admits | CPU first presents | CPU accepts cue reply |
+| --- | --- | --- | --- |
+| chain-any-0010-DF8D, 241 / 256 / 271 | None, sound disabled | | |
+| chain-any-0011-DF45, 1 | Yes | 1 | 3 |
+| chain-any-0011-DF45, 6 | Yes | 7 | 9 |
+| chain-any-0011-DF45, 11 | Yes | 13 | 16 |
+| chain-any-0011-DF45, 16 | Yes | 20 | 22 |
+| chain-any-0011-DF45, 21 | Yes | 26 | 28 |
+| chain-any-0011-DF45, 26 | Yes | 32 | 34 |
+| chain-any-0011-DF45, 31 | Yes | 38 | 39 |
+
+The Ambient tail advances on each accepted offer, even when the sender drains that cue in
+the same frame. The head advances on each first presentation. At cut 31 the FIFO holds two
+accepted cues. The sender then drains through cut 38 and accepts the final clear at cut 43.
+The other clear replies are accepted at cuts 7, 13, 20, 26, 32 and 38. The matching reply inferred
+from the sender's progress certifies what the CPU accepted at its service. The lean cache
+retains WRAM and supplies neither raw port events nor independent SPC state. It cannot date
+the SPC's publication, allocation, or first audible note. For example, Library 2 can echo a
+request even when prior protected playback takes precedence. Ambient downtime is zero across
+these windows.
+
+The observer checks FIFO, sender progress and semantic request line on 83 cuts, with the
+existing sender's reply reads borrowed from native progress edges. The reference matches
+249 of 249 fields and the fixed sender seed matches 155. Removing the last, visually culled
+offer first fails on the FIFO at shaft cut 31. Ignoring disable first fails on sender
+progress at hall cut 241. This source-backed reference is a sender witness. A producer replay
+must generate its own requests from live actor turns and its permission from live passage
+state. It must not feed native tail changes in as offers or replace the carried FIFO per cut.
+
+### Exact clip source
+
+The pinned cartridge's common upload pointer at 8F:E7E1 selects the library containing the
+effect. Ambient directory entry 39FB points to the one-part list at 3E20 with first span at
+3E22 and finite terminator at 3E40. The SHA-256 of the two directory bytes followed by the
+part list and clip through the terminator is
+`ef1fb06993cda60fc18f0ea92d4291e9baac66f27cf19dda0b5a5c0d95d63746`.
+The six spans satisfy existing pitch and positive duration checks. The two instrument and
+sample references resolve in both the opening asset selection and the actual resident boss
+selection. Neither area's upload overlaps the Ambient library. The shared native instruction
+list also has a separate cue alias outside this scope. The stock configuration gives the
+shaft explosion one voice with priority zero. Use the existing finite ordinary span importer.
+[Library 2, configuration and instruction list](https://patrickjohnston.org/ASM/ROM%20data/Super%20Metroid/SM-SPC/vanilla/sound%20library%202.asm)
+· [Upload directory in bank 8F](https://patrickjohnston.org/bank/8F)
+
+The shaft's resident CPU data/track selection is 24h/07h on both rows. The opening bank
+import admits a different arrangement. For a sender-only witness, retain the existing
+service and queue semantics, and obtain the read reply at the CPU boundary. A witness of
+independently computed SPC replies or playback needs the matching resident state and
+effect cadence. The shaft cue's identity and clip do not require a new playback rule.
+
 ## Harness note
 
 **Compared at each cut:** in the 63-row analysis, per group, the sender's progress, delay, cue

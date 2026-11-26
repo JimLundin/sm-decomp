@@ -100,6 +100,8 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
                     | index::InputProvider::CeresShaftActors
             ) {
                 played::indexed::run(case, sources, &mut result)
+            } else if case.inputs == index::InputProvider::PlayedShaftSound {
+                played::shaft_sound::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedGetawayInputs {
                 played::getaway::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {

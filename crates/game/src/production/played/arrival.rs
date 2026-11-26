@@ -237,6 +237,7 @@ impl super::State {
             lights: None,
             shaft_overlay_placement: None,
             shaft_actors: None,
+            shaft_sound_offer: None,
             elevator_reach: None,
             ridley: None,
             warning: None,
@@ -306,6 +307,7 @@ mod tests {
             work_done,
             publishes: work_done,
             audio: PassageAudio {
+                shaft_reply: None,
                 sounds_sent: true,
                 music_ready: true,
             },
@@ -354,6 +356,7 @@ mod tests {
             work_done: true,
             publishes: true,
             audio: PassageAudio {
+                shaft_reply: None,
                 sounds_sent: true,
                 music_ready: true,
             },
@@ -433,6 +436,7 @@ mod tests {
             work_done: true,
             publishes: true,
             audio: PassageAudio {
+                shaft_reply: None,
                 sounds_sent: true,
                 music_ready: true,
             },

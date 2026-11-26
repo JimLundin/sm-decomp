@@ -1,5 +1,5 @@
-//! Every vector of the audio-transport vector file, run through `frame::play`, with the State
-//! saved and restored before every frame; and the catalogue checked against the spec.
+//! Every audio-transport vector, run by sender operation or by frame, with carried state saved
+//! and restored before services and frames; and the catalogue checked against the spec.
 #![expect(
     clippy::expect_used,
     reason = "Malformed invented vectors must fail loudly"
@@ -124,13 +124,15 @@ fn request_named(name: &str) -> Request {
         Request::Cue(named(name))
     }
 }
-/// Sender and offer aliases 7 and 9: two invented cues of the Action group.
+/// Sender and offer aliases carry cue identity only.
 fn alias_cue(value: i64) -> CueId {
-    if value == 7 {
-        CueId::Spin
-    } else {
-        assert_eq!(value, 9, "cue alias");
-        CueId::EndSpin
+    match value {
+        7 => CueId::Spin,
+        8 => CueId::ShaftExplosion,
+        other => {
+            assert_eq!(other, 9, "cue alias");
+            CueId::EndSpin
+        }
     }
 }
 /// Alias 0 is absence.
@@ -430,7 +432,7 @@ fn fresh_state(song: SongState) -> State {
 const fn content(effects: BTreeMap<CueId, EffectClip>, tracks: Vec<TrackContent>) -> Content {
     Content { effects, tracks }
 }
-fn roundtrip(state: &State) -> State {
+fn roundtrip<T: serde::Serialize + serde::de::DeserializeOwned>(state: &T) -> T {
     let saved = Value::try_from(state).expect("State serialization");
     saved.try_into().expect("State restoration")
 }
@@ -456,54 +458,68 @@ fn sender_progress(kind: &str, value: i64) -> SenderProgress {
         }
     }
 }
-/// One sender service of the Action group, reading its last published reply.
-fn sender_vector(row: &Table, mix: &Value) {
-    // A line value no sender vector presents, so "presents nothing" leaves it in place.
-    const UNPRESENTED: Request = Request::Cue(CueId::SamusSilence);
+fn expected_group(row: &Table) -> SoundGroup {
+    row.get("group").map_or(SoundGroup::Action, |value| {
+        named(value.as_str().expect("group"))
+    })
+}
+/// One service of a carried sender and request line, with a caller-supplied reply.
+fn sender_vector(row: &Table) {
     keys(
         row,
-        "id state value queue reply after_state after_value after_queue present",
+        "id group state value queue reply after_state after_value after_queue present",
     );
-    let group = SoundGroup::Action;
-    let mut state = fresh_state(silent_song(mix));
-    state.senders[group] = SenderState {
+    let id = text(row, "id");
+    let group = expected_group(row);
+    let mut sender = SenderState {
         queue: queue_of(ints(row, "queue").into_iter().map(alias_cue)),
         progress: sender_progress(text(row, "state"), integer(row, "value")),
     };
-    state.groups[group].reply = alias_request(integer(row, "reply"));
-    state.request_lines[group] = UNPRESENTED;
-    play(
-        &mut state,
-        &content(BTreeMap::new(), Vec::new()),
-        &[],
-        SERVICE_ONLY,
-    );
-    let id = text(row, "id");
+    for cue in sender.queue.cues() {
+        assert_eq!(cue.group(), group, "{id}: queued cue group");
+    }
+    let reply = alias_request(integer(row, "reply"));
+    if let Request::Cue(cue) = reply {
+        assert_eq!(cue.group(), group, "{id}: reply group");
+    }
+    // Seed the line with a value no vector presents, to detect writes on a no-presentation cut.
+    let carried_line = Request::Cue(match group {
+        SoundGroup::Action => CueId::SamusSilence,
+        SoundGroup::Ambient => CueId::BackgroundSilence,
+        SoundGroup::Contact => CueId::Footstep,
+    });
+    let mut line = carried_line;
+    let (mut restored_sender, mut restored_line) = roundtrip(&(sender.clone(), line));
+    assert_eq!((&restored_sender, restored_line), (&sender, line), "{id}");
+    serve(&mut sender, &mut line, reply);
+    serve(&mut restored_sender, &mut restored_line, reply);
+    assert_eq!((&restored_sender, restored_line), (&sender, line), "{id}");
     assert_eq!(
-        state.senders[group].progress,
+        sender.progress,
         sender_progress(text(row, "after_state"), integer(row, "after_value")),
         "{id}"
     );
     assert_eq!(
-        state.senders[group].queue,
+        sender.queue,
         queue_of(ints(row, "after_queue").into_iter().map(alias_cue)),
         "{id}"
     );
     let presented = match integer(row, "present") {
-        -1 => UNPRESENTED,
+        -1 => carried_line,
         value => alias_request(value),
     };
-    assert_eq!(state.request_lines[group], presented, "{id}");
+    assert_eq!(line, presented, "{id}");
 }
-/// One offer, in a frame that runs no sender service.
-fn offer_vector(row: &Table, mix: &Value) {
+/// Apply one offer to the carried queue, without running a sender service.
+fn offer_vector(row: &Table) {
     keys(
         row,
-        "id queue cue allowance enabled demo exploding after_queue",
+        "id group queue cue allowance enabled demo exploding after_queue",
     );
+    let id = text(row, "id");
     let cue = alias_cue(integer(row, "cue"));
-    let mut state = fresh_state(silent_song(mix));
-    state.senders[cue.group()].queue = queue_of(ints(row, "queue").into_iter().map(alias_cue));
+    assert_eq!(cue.group(), expected_group(row), "{id}: offered cue group");
+    let mut queue = queue_of(ints(row, "queue").into_iter().map(alias_cue));
     let permission = if !flag(row, "enabled") {
         OfferPermission::Disabled
     } else if flag(row, "demo") {
@@ -523,22 +539,18 @@ fn offer_vector(row: &Table, mix: &Value) {
             QueueAllowance::Fifteen
         }
     };
-    let offer = Offer {
-        cue,
-        allowance,
-        permission,
-    };
-    play(
-        &mut state,
-        &content(BTreeMap::new(), Vec::new()),
-        &[offer],
-        NO_TURN,
+    offer(
+        &mut queue,
+        Offer {
+            cue,
+            allowance,
+            permission,
+        },
     );
     assert_eq!(
-        state.senders[cue.group()].queue,
+        queue,
         queue_of(ints(row, "after_queue").into_iter().map(alias_cue)),
-        "{}",
-        text(row, "id")
+        "{id}"
     );
 }
 fn musical_keys(family: &str) -> &'static str {
@@ -869,8 +881,8 @@ fn admission_vector(row: &Table) {
 fn run(family: &str, row: &Table, root: &Table) {
     let mix = &root["fixture_mix"];
     match family {
-        "sender" => sender_vector(row, mix),
-        "offer" => offer_vector(row, mix),
+        "sender" => sender_vector(row),
+        "offer" => offer_vector(row),
         "staged" => support::staged_vector(row, mix),
         "effect" => support::effect_vector(row, mix),
         "inactive_ramp" => inactive_vector(row, mix),
@@ -898,7 +910,7 @@ fn every_vector_runs_through_the_model() {
             run(family, row, &root);
         }
     }
-    assert_eq!(seen.len(), 77);
+    assert_eq!(seen.len(), 82);
 }
 /// Each spec entry's id and kind, and the vectors its `checked:` line cites.
 fn spec_entries() -> Vec<(String, String, Vec<String>)> {

@@ -33,7 +33,7 @@
 
 [[model]]
 name = "audio-transport"
-rounds = 2
+rounds = 3
 
 [[model]]
 name = "samus-movement"

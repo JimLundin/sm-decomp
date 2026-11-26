@@ -187,6 +187,7 @@ mod tests {
             work_done: true,
             publishes: true,
             audio: passage::PassageAudio {
+                shaft_reply: None,
                 sounds_sent: true,
                 music_ready: true,
             },

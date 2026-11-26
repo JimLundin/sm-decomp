@@ -247,6 +247,15 @@ impl Baseline {
 }
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
+    if case.inputs == InputProvider::PlayedShaftSound {
+        return Some(
+            counts.cuts.checked_mul(case.expectations.fields.len()) == Some(counts.fields)
+                && counts.cuts.checked_mul(case.expectations.outputs.len()) == Some(counts.outputs)
+                && counts.pending_boundaries == 1
+                && counts.publications == 0
+                && counts.replies == 0,
+        );
+    }
     if case.inputs == InputProvider::ScopedIntroDeliveryInputs {
         return Some(
             counts.cuts == 2497

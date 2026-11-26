@@ -33,6 +33,8 @@ id = "audio-transport/OfferAcceptance"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft_sound.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_sound.rs" },
   { role = "adapter", path = "crates/game/src/production/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
   { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },
@@ -53,6 +55,8 @@ id = "audio-transport/RequestDelivery"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft_sound.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_sound.rs" },
   { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]
@@ -62,6 +66,8 @@ id = "audio-transport/RequestRelease"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/audio.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft_sound.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_sound.rs" },
   { role = "navigation", path = "crates/verify/src/replay/audio.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]

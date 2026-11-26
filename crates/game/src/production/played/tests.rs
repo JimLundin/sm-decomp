@@ -29,6 +29,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     let her = fixtures::samus().position;
     State {
         room_video: super::room_video::RoomVideo::default(),
+        shaft_sound: super::shaft_sound::State::default(),
         play_time: crate::production::played::play_time::ZERO,
         clock_picture: super::clock_picture::ClockPicture::default(),
         samus: samus::State {
@@ -298,6 +299,7 @@ fn passing() -> Passing {
         work_done: true,
         publishes: true,
         audio: passage::PassageAudio {
+            shaft_reply: None,
             sounds_sent: true,
             music_ready: true,
         },

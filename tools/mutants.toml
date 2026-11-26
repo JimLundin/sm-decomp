@@ -2114,3 +2114,58 @@ after = '''                if matches!(cut.work, Work::SaveCompleted) {
 case = "hud/locked-shaft-publication"
 cut = 241
 field = "hud.publication"
+
+[[fault]]
+name = "shaft-sound-ignore-room-hold"
+responsibility = "audio-sender"
+file = "crates/game/src/production/played/shaft_sound.rs"
+before = "Sounds::Disabled => OfferPermission::Disabled,"
+after = "Sounds::Disabled => OfferPermission::Enabled,"
+case = "audio-sender/shaft-bursts"
+cut = 2872
+field = "sender.queue"
+
+[[fault]]
+name = "shaft-sound-service-before-offer"
+responsibility = "audio-sender"
+file = "crates/game/src/production/played/shaft_sound.rs"
+before = '''        let offer = next.offer(turn)?;
+        // Brightening can run the actor on the same cut that releases the hold.
+        if doors.room_sounds[RoomSound::LetThrough] {
+            next.permission = Sounds::Enabled;
+        }
+        if let Some(reply) = reply {
+            audio_transport::serve(&mut next.sender, &mut next.request, reply);
+        }
+'''
+after = '''        if let Some(reply) = reply {
+            audio_transport::serve(&mut next.sender, &mut next.request, reply);
+        }
+        let offer = next.offer(turn)?;
+        if doors.room_sounds[RoomSound::LetThrough] {
+            next.permission = Sounds::Enabled;
+        }
+'''
+case = "audio-sender/shaft-bursts"
+cut = 2911
+field = "sender.queue"
+
+[[fault]]
+name = "shaft-sound-cull-before-offer"
+responsibility = "audio-sender"
+file = "crates/game/src/production/played.rs"
+before = '''        let (sound, offer) = self
+            .shaft_sound
+            .next(turn, doors, passing.audio.shaft_reply)?;'''
+after = '''        let view = self.vent_camera();
+        let sound_turn = turn.map(|mut turn| {
+            turn.burst = turn.burst.filter(|burst| {
+                burst.centre.x.0.wrapping_sub(view.x.0) < 256
+                    && burst.centre.y.0.wrapping_sub(view.y.0) < 256
+            });
+            turn
+        });
+        let (sound, offer) = self.shaft_sound.next(sound_turn, doors, passing.audio.shaft_reply)?;'''
+case = "audio-sender/shaft-bursts"
+cut = 2941
+field = "sender.queue"

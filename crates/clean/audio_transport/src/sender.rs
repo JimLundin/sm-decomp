@@ -19,6 +19,8 @@ pub struct Offer {
 }
 /// Spec: OfferAcceptance. Admit an offer only while sound is permitted and the queue is shorter
 /// than the offer's allowance. An offer never removes or reorders accepted cues.
+///
+/// The caller selects the carried queue using the offered cue's group.
 pub fn offer(queue: &mut CueQueue, offer: Offer) {
     let allowed = match offer.allowance {
         QueueAllowance::One => 1,
@@ -33,6 +35,9 @@ pub fn offer(queue: &mut CueQueue, offer: Offer) {
 }
 /// Spec: RequestDelivery and RequestRelease. Serve one group's queue once: read the group's last
 /// published reply and, where the rule presents a value, put it on the group's request line.
+///
+/// Pass the sender, line and reply for the same group. Keep the updated sender and line to resume
+/// at the next service; this operation does not advance effects or music.
 pub fn serve(sender: &mut SenderState, line: &mut Request, reply: Request) {
     match sender.progress {
         SenderProgress::Ready => deliver(sender, line),

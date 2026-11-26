@@ -557,6 +557,7 @@ pub(super) const fn cue_tag(cue: CueId) -> u8 {
         CueId::SamusSilence => 5,
         CueId::BackgroundSilence => 6,
         CueId::Door => 7,
+        CueId::ShaftExplosion => 8,
     }
 }
 

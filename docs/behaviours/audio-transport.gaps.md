@@ -5,7 +5,7 @@ waits for the inputs below.
 
 | Model input | Engine owner or missing prerequisite |
 | --- | --- |
-| Cue offers, allowance and suppression | The indexed sender owns FIFO admission. Bounded live callers deliver soft touchdown, the ordinary power beam and Ceres opening, and the first normal passage's silence pair. Footstep reaches the sender only in the scoped sender-offer cases, which offer their cues directly; production drops the appearance model's Footstep opportunity. Spin start/end, weapon impact, other actor cues and remaining timed caller joins still need producers. |
+| Cue offers, allowance and suppression | The indexed sender owns FIFO admission. Live callers deliver soft touchdown, the ordinary power beam, Ceres opening, and the first normal passage's silence pair. Each burst in the escape shaft offers its explosion cue to the Ambient queue. Footstep reaches the sender only in the scoped sender-offer cases, which offer their cues directly; production drops the appearance model's Footstep opportunity. Spin start/end, weapon impact, other actor cues and remaining timed caller joins still need producers. |
 | Whether a frame runs a sender service | Borrowed per frame, like a lag cut, until T1 owns the CPU's frame timing. Sender downtime and queue reset are not modeled. |
 | Audio cadence per frame (effect turns before and after the service, music turns) | Borrowed per frame until T1 models the audio processor's clock. A record supplies it only when its APU port log carries the SPC's writes; the lean cache rows carry only the CPU side. |
 | Typed resident music and effects | A3 must import checked Forever roots, phrases and saved event positions, resolved dense non-noise timbres, sample-neutral instruments and fixed echo delay. No production importer supplies these assets. |
@@ -13,9 +13,10 @@ waits for the inputs below.
 | Controlled repeat expiry | The expiry arm is compared only through cut 64, before the external repeat-count intervention: its post-intervention seed carries no CPU sender State, which the frame form needs. FinitePhrases' return arm (a repeat count's expiry) has no indexed witness until that seed is re-cut from the capture's CPU memory; its repeat arm is compared by the control case at cuts 57 and 149. Production has no such externally owned edit. |
 
 The model emits, per frame, each line's reply and its sender, staged, handled and song State.
-U1 must encode original cue bytes at the port boundary and retain replies; a later mixer
-consumes musical/effect results separately. No production consumer currently holds these
-outputs. No existing audio implementation is replaced.
+During the escape shaft, the room carries the Ambient queue, CPU sender and outgoing line
+through each service. The indexed case supplies the replies the CPU reads. U1 still needs
+to encode the port writes and carry the replies through playback. A later mixer consumes
+the music and effects.
 
 Fresh construction validates the two-track state/content relation, saved phrase positions,
 complete ordered effect histories, pitch domains and resolved timbres. A restored State resumes

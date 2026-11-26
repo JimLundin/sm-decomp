@@ -200,6 +200,51 @@ pub fn effect_vector(row: &Table, mix: &Value) {
         );
     }
 }
+#[test]
+fn shaft_explosion_plays_one_finite_ambient_part() {
+    let root: Table = toml::from_str(VECTORS).expect("fixture mix");
+    let mut state = fresh_state(silent_song(&root["fixture_mix"]));
+    let cue = CueId::ShaftExplosion;
+    let clip = EffectClip {
+        parts: vec![EffectPartContent {
+            spans: vec![EffectSpan {
+                duration: EffectTurns(nz(1)),
+                pitch: ep(24),
+                timbre: TimbreId(0),
+                motion: None,
+            }],
+            loop_start: None,
+        }],
+    };
+    let content = content(BTreeMap::from([(cue, clip)]), Vec::new());
+    let offer = Offer {
+        cue,
+        allowance: QueueAllowance::Six,
+        permission: OfferPermission::Enabled,
+    };
+    let group = SoundGroup::Ambient;
+    play(&mut state, &content, &[offer], ONE_EFFECT_TURN);
+    play(&mut state, &content, &[], ONE_EFFECT_TURN);
+    assert_eq!(state.groups[group].reply, Request::Cue(cue));
+    assert_eq!(state.groups[group].playback, Playback::Prepared { cue });
+
+    play(&mut state, &content, &[], ONE_EFFECT_TURN);
+    assert_eq!(
+        state.groups[group].playback.owned_voices(),
+        BTreeSet::from([EffectVoiceId::V7])
+    );
+    // The next three turns start the span, enter ordinary release, then finish the clip.
+    for _ in 0..3 {
+        play(&mut state, &content, &[], ONE_EFFECT_TURN);
+    }
+    assert_eq!(
+        state.groups[group].playback,
+        Playback::Active {
+            cue,
+            parts: vec![PartState::Finished],
+        }
+    );
+}
 /// One Contact effect turn: it handles the staged request, publishes the request it handled, and
 /// stages the request line.
 pub fn staged_vector(row: &Table, mix: &Value) {

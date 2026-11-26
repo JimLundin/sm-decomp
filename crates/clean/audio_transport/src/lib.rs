@@ -1,4 +1,4 @@
-//! Audio transport, one frame at a time.
+//! Audio transport, by frame or by sender service.
 //!
 //! The game offers sound cues to three sound queues; its sender service presents each group's
 //! oldest cue on the group's request line and waits for the audio side to reply with it. The
@@ -8,6 +8,9 @@
 //!
 //! The whole `State` is the caller's to build, save and restore between frames; the model keeps
 //! no clock of its own. Echo membership is a semantic selection of voices, not a sound output.
+//! For sender-only updates, use [`offer`] on a group's queue and [`serve`] on its sender and
+//! request line. The caller can save the [`SenderState`] and line ([`Request`]) independently
+//! of effect and music progress.
 #![expect(
     clippy::doc_markdown,
     reason = "Spec entry identifiers are plain catalogue labels throughout the model"
@@ -21,4 +24,4 @@ pub mod frame;
 mod music;
 mod sender;
 pub use music::ramp_from;
-pub use sender::Offer;
+pub use sender::{Offer, offer, serve};
