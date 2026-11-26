@@ -219,6 +219,16 @@ pub struct Scroll {
     pub y: u16,
 }
 
+impl Scroll {
+    /// The ten scroll bits held by the display.
+    pub(crate) const fn latched(self) -> Self {
+        Self {
+            x: self.x & SCROLL_BITS,
+            y: self.y & SCROLL_BITS,
+        }
+    }
+}
+
 /// The screen's brightness, from black up to full.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Brightness(pub u8);

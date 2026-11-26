@@ -7,8 +7,8 @@ use data::video::OAM_BYTES;
 
 use crate::state::video::{
     BBusRegister, BusAddress, CGRAM_COLOURS, ColourMathLayers, ColourMathSelect, DmaChannel,
-    DmaControl, Layer, Layers, Mode7, SCROLL_BITS, Scroll, StandingStrips, TilemapBase, VRAM_WORDS,
-    Video, VramSource, VramTransfer, VramWord,
+    DmaControl, Layer, Layers, Mode7, Scroll, StandingStrips, TilemapBase, VRAM_WORDS, Video,
+    VramSource, VramTransfer, VramWord,
 };
 
 /// VRAM's word address is 15 bits; the PPU ignores the top bit.
@@ -78,10 +78,7 @@ impl Video {
             }
         };
         let mut committed = mirrors;
-        committed.scroll = mirrors.scroll.map(|Scroll { x, y }| Scroll {
-            x: x & SCROLL_BITS,
-            y: y & SCROLL_BITS,
-        });
+        committed.scroll = mirrors.scroll.map(Scroll::latched);
         committed.colour_math.fixed = fixed;
         committed.mode7 = mode7;
         self.committed = committed;

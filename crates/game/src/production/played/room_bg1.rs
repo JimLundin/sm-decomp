@@ -54,6 +54,14 @@ impl super::State {
             x: view.x - step.x,
             y: view.y - step.y,
         };
+        if step.x.negative()
+            && self.station.stage == boss_ceres_ridley::Stage::Escape
+            && self.passage.doorway.is_some_and(|doorway| {
+                doorway.through == data::assets::world::doorways::FALLING_TILE_TO_ELEVATOR
+            })
+        {
+            self.room_video.start_shaft_bg2_scroll(starting);
+        }
         let offset = &mut self.room_video.bg1_offset;
         offset.x = offset
             .x

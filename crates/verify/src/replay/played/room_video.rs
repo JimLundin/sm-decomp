@@ -101,6 +101,11 @@ pub(super) fn compare(
     compare_ridley_hdma(room, frame.current, frame.place, frame.cut)?;
     compare_gameplay_tile_layout(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_affine(room, frame.current, frame.place, frame.cut)?;
+    if matches!(frame.place, ("chain-any-0011-DF45", 0..=239))
+        && room.standard_bg3().is_some()
+    {
+        compare_shaft_bg2_scroll(&room.video, frame.current, frame.cut)?;
+    }
     compare_shaft_raster(room, frame.current, expected, actual);
     if passing.enemy_tiles == game::production::played::passage::EnemyTileTransfer::Published {
         compare_door_enemy_tiles(room, frame.current, expected, actual)?;
@@ -247,7 +252,8 @@ pub(super) fn compare_gameplay_tile_layout(
         .wram
         .get(..0x5f)
         .ok_or_else(|| super::data_failure(Some(cut), "gameplay tile mirrors"))?;
-    let mirrors = [0x52, 0x58, 0x59, 0x5a, 0x5c, 0x5d, 0x5e].map(|offset| wram[offset]);
+    let mirrors = [0x52, 0x58, 0x59, 0x5a, 0x5c, 0x5d, 0x5e]
+        .map(|offset| wram.get(offset).copied().unwrap_or_default());
     for (actual, expected, field) in [
         (
             project(&room.video.committed),
@@ -303,6 +309,38 @@ pub(super) fn compare_shaft_affine(
         return Err(Outcome::Difference {
             cut,
             field: "room-video.shaft-affine-mirrors".into(),
+        });
+    }
+    Ok(())
+}
+
+pub(super) fn compare_shaft_bg2_scroll(
+    video: &Video,
+    record: &FrameRecord,
+    cut: u64,
+) -> Result<(), Outcome> {
+    let [_, [x, y], ..] = record.ppu.bg_scroll;
+    let live = video.committed.scroll[1];
+    if [live.x, live.y] != [x, y] {
+        return Err(Outcome::Difference {
+            cut,
+            field: "room-video.shaft-bg2-scroll".into(),
+        });
+    }
+    let [x, y] = [0xb5, 0xb7].map(|offset| {
+        super::word(
+            &record.wram,
+            crate::source::WramWord {
+                name: "shaft BG2 scroll",
+                offset,
+            },
+        )
+    });
+    let pending = video.batch.registers.scroll[1];
+    if [pending.x, pending.y] != [x?, y?] {
+        return Err(Outcome::Difference {
+            cut,
+            field: "room-video.shaft-bg2-scroll-mirrors".into(),
         });
     }
     Ok(())

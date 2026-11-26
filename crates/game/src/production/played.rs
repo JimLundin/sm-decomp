@@ -358,6 +358,10 @@ impl State {
             video.batch.registers.mode7.centre = entry.view.transform.centre;
             video.committed.mode7.matrix = entry.displayed.matrix;
             video.committed.mode7.centre = entry.displayed.centre;
+            if let Some(quake) = output.quake {
+                self.room_video
+                    .prepare_shaft_bg2_scroll(self.camera.0.position(), quake.back);
+            }
         }
         if passing.publishes {
             self.room_video.publish_ordinary_sprites();

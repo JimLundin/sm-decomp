@@ -21,7 +21,7 @@ use data::assets::shaft::{OVERLAY_BYTES, Shaft};
 use data::dma::BusAddress;
 use data::pose::tiles::Graphics;
 use interface_hud::{CountdownPicture, HudState};
-use types::{Pair, Px};
+use types::{Pair, Parts, Position, Px};
 
 const SHADOW_WORDS: usize = 1024;
 const SHAFT_BG2_STAGING: core::ops::Range<usize> = 0x0800..0x0c00;
@@ -145,6 +145,7 @@ pub struct RoomVideo {
     shaft_picture: Option<ShaftPicture>,
     /// The background's pixel displacement from the room camera across a passage.
     pub bg1_offset: crate::state::video::Scroll,
+    shaft_bg2_offset: Option<crate::state::video::Scroll>,
     shaft_raster_finished: bool,
     shaft_bg2: Option<Box<[u16]>>,
     enemy_uploads: Option<EnemyUploads>,
@@ -160,6 +161,7 @@ impl Default for RoomVideo {
         Self {
             video,
             bg1_offset: crate::state::video::Scroll::default(),
+            shaft_bg2_offset: None,
             standard_objects: None,
             shaft_picture: None,
             shaft_raster_finished: false,
@@ -172,6 +174,34 @@ impl Default for RoomVideo {
 }
 
 impl RoomVideo {
+    pub(super) fn start_shaft_bg2_scroll(&mut self, aligned_view: Position) {
+        // The passage clears BG2 scroll before placing the incoming camera.
+        self.shaft_bg2_offset = Some(crate::state::video::Scroll {
+            x: aligned_view.x.pixel().0.wrapping_neg(),
+            y: aligned_view.y.pixel().0.wrapping_neg(),
+        });
+    }
+
+    pub(super) fn prepare_shaft_bg2_scroll(&mut self, view: Position, shake: world_quake::Offset) {
+        if let Some(offset) = self.shaft_bg2_offset {
+            // The shaft's back layer follows the camera on both axes.
+            self.video.batch.registers.scroll[1] = crate::state::video::Scroll {
+                x: view
+                    .x
+                    .pixel()
+                    .0
+                    .wrapping_add(offset.x)
+                    .wrapping_add_signed(shake.x),
+                y: view
+                    .y
+                    .pixel()
+                    .0
+                    .wrapping_add(offset.y)
+                    .wrapping_add_signed(shake.y),
+            };
+        }
+    }
+
     pub(super) fn reset_ridley_main_screen(&mut self) {
         self.video.dma[4].clear_room_effect();
     }
@@ -547,6 +577,10 @@ impl RoomVideo {
         &mut self,
         standing: Option<&crate::samus_appearance_bridge::elevator::Art>,
     ) {
+        if self.shaft_bg2_offset.is_some() {
+            let layer = self.video.batch.registers.scroll[1];
+            self.video.committed.scroll[1] = layer.latched();
+        }
         if let Some(art) = standing.filter(|art| art.accepts(self.video.batch.standing_strips)) {
             self.video.batch.finalise_oam();
             self.video.upload_oam();

@@ -125,6 +125,12 @@ pub(super) fn check(
     current: &FrameRecord,
     cut: u64,
 ) -> Result<(), Outcome> {
+    if matches!(current.video_frame, 13_313 | 13_314) {
+        let shaft = production
+            .blackout()
+            .ok_or_else(|| data_failure(Some(cut), "shaft publication"))?;
+        super::super::room_video::compare_shaft_bg2_scroll(&shaft.video, current, cut)?;
+    }
     let disable_interrupts = output
         .requests
         .contains(&owner::Request::DisableShaftInterrupts);

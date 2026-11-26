@@ -377,6 +377,50 @@ pub(super) fn live_content(
 mod tests {
     #[test]
     #[ignore = "pinned record cache and player ROM"]
+    fn shaft_bg2_scroll_reaches_the_station_and_flight() {
+        use super::super::{
+            Run, Stop, appearance, connected, movement, open_rows, read_lock, seed_controller,
+        };
+
+        let sources = super::super::tests::sources();
+        let lock = read_lock(&sources).unwrap();
+        let row = "chain-any-0010-DF8D";
+        let mut rows = open_rows(&sources, &lock, row).unwrap();
+        let start = rows.record(0).unwrap();
+        let content = connected::Content {
+            movement: movement::Content::load(&sources.rom).unwrap(),
+            appearance: appearance::Content::load(&sources.rom).unwrap(),
+        };
+        let mut room = Run::admit(&start, &content, &sources.rom, row).unwrap();
+        let controller = seed_controller(&start).unwrap();
+        assert_eq!(
+            room.through(&mut rows, start, controller, 1..=518).unwrap(),
+            (518, Stop::End)
+        );
+        assert_eq!(
+            rows.place(518).unwrap(),
+            ("chain-any-0011-DF45".into(), 239)
+        );
+        let prepared = rows.record(518).unwrap();
+        let video = &room.state.room_video.video;
+        super::super::room_video::compare_shaft_bg2_scroll(video, &prepared, 13_311).unwrap();
+
+        // Admit the other late-shaft owners at the handoff. Both BG2 scroll values
+        // come from the running room and continue through the actual NMI and scenes.
+        let (mut shaft, assets) = super::shaft::seed(&sources.rom, &prepared).unwrap();
+        shaft.blackout.video.committed.scroll[1] = video.committed.scroll[1];
+        shaft.blackout.video.batch.registers.scroll[1] = video.batch.registers.scroll[1];
+        let mut movie = open_rows(&sources, &lock, "any-power-on").unwrap();
+        assert_eq!(
+            super::through_shaft(shaft, assets, &mut movie, prepared, 13_312..=15_196).unwrap(),
+            (1885, Stop::End)
+        );
+        let prefix = super::super::play(&sources, "any-power-on", 0, 13_311).unwrap();
+        assert_eq!((prefix.held, prefix.stop), (13_311, Stop::End));
+    }
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
     fn owned_shaft_uses_the_existing_movie_coordinates() {
         let sources = super::super::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
