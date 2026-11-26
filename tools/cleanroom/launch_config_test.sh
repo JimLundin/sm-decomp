@@ -19,16 +19,20 @@ case "$(uname -s)" in
 esac
 . "$here/lib.sh"
 # Outside the home, where host tools would open and fetch the repositories this makes.
-tmp=$(mktemp -d "$(outside_home_temp)/launch-config-XXXXXX") || exit 1
+fixture=launch-config
+[ "$windows" = 1 ] || fixture=launch-config-under-a-long-temporary-directory
+tmp=$(mktemp -d "$(outside_home_temp)/$fixture-XXXXXX") || exit 1
 tmp=$(cd "$tmp" && pwd -P) || exit 1
 sibling=
-trap 'rm -rf "$tmp" ${sibling:+"$sibling"}' EXIT
+record_dir=
+trap 'rm -rf "$tmp" ${sibling:+"$sibling"} ${record_dir:+"$record_dir"}' EXIT
 bad=0
 fail() { echo "FAIL $*"; bad=1; }
 python=${CLEANROOM_PY:-${SM_PY:-$py_default}}
 
 # Off Windows the session's home and temporary folder are the test's, so the rules name them.
 if [ "$windows" = 0 ]; then
+  record_dir=$(mktemp -d /tmp/launch-record-XXXXXX) || exit 1
   export CARGO_HOME=${CARGO_HOME:-$HOME/.cargo} RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
   export HOME="$tmp/home" TEMP="$tmp/scratch"
   # The exports' root is outside the home, as launch.sh demands, with another export in it.
@@ -47,7 +51,7 @@ if [ "$windows" = 0 ]; then
 else
   root="$tmp/cleanroom"
 fi
-export CLEANROOM_PRIVATE="$tmp/home/.cleanroom" CLEANROOM_DRY_RUN=1
+export CLEANROOM_PRIVATE="${record_dir:-$tmp/home/.cleanroom}" CLEANROOM_DRY_RUN=1
 mkdir -p "$CLEANROOM_PRIVATE" "$tmp/bin"
 printf '#!/bin/sh\nexit 3\n' >"$tmp/bin/claude" && chmod 755 "$tmp/bin/claude"
 export CLAUDE_BIN="$tmp/bin/claude"
