@@ -16,7 +16,10 @@ use types::{Area, StationId};
 
 /// Blackout phase and publication while the shaft still supplies ordinary room work.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LiveRoom(BlackoutState);
+pub struct LiveRoom {
+    scene: BlackoutState,
+    standing: Option<super::StandingFrame>,
+}
 
 impl LiveRoom {
     /// Consume the elevator reach after the ordinary room has already worked.
@@ -62,33 +65,43 @@ impl LiveRoom {
             return Err(Fault::State);
         }
         publish(&mut scene, room, publishes)?;
-        Ok(Self(scene))
+        Ok(Self {
+            scene,
+            standing: None,
+        })
     }
 
     /// Whether the final prepared room pass is waiting for the end of vblank.
     #[must_use]
     pub const fn awaits_blank(&self) -> bool {
-        matches!(self.0.phase, BlackoutPhase::AwaitBlank)
+        matches!(self.scene.phase, BlackoutPhase::AwaitBlank)
     }
 
     /// Whether the next fresh locked room work will prepare forced blank.
     #[must_use]
     pub fn needs_final_room_work(&self) -> bool {
-        self.0.phase == BlackoutPhase::Fade
-            && matches!(self.0.light, BlackoutLight::Lit(level) if level.lower().is_none())
+        self.scene.phase == BlackoutPhase::Fade
+            && matches!(self.scene.light, BlackoutLight::Lit(level) if level.lower().is_none())
     }
 
     /// Advance the blackout from one already-worked fresh locked pass.
     ///
     /// # Errors
     /// The phase must accept new room work and publication must agree with the carried count.
-    pub fn worked(&mut self, room: &mut played::State, publishes: bool) -> Result<(), Fault> {
-        if !matches!(self.0.phase, BlackoutPhase::Hold(_) | BlackoutPhase::Fade)
-            || !matches!(self.0.pass, WorkPass::Finished)
+    pub fn worked(
+        &mut self,
+        room: &mut played::State,
+        standing: super::StandingFrame,
+        publishes: bool,
+    ) -> Result<(), Fault> {
+        if !matches!(
+            self.scene.phase,
+            BlackoutPhase::Hold(_) | BlackoutPhase::Fade
+        ) || !matches!(self.scene.pass, WorkPass::Finished)
         {
             return Err(Fault::State);
         }
-        let mut scene = self.0.clone();
+        let mut scene = self.scene.clone();
         let requests = screens_blackout::advance(
             &mut scene,
             Opportunity::RoomWork(RoomPass {
@@ -105,7 +118,8 @@ impl LiveRoom {
         if publishes {
             picture::light(&mut video.committed, scene.published.light);
         }
-        self.0 = scene;
+        self.scene = scene;
+        self.standing = Some(standing);
         Ok(())
     }
 
@@ -122,7 +136,7 @@ impl LiveRoom {
         platform: Option<Platform>,
         hud: LockedHud,
     ) -> Result<State, TransferFault> {
-        if !self.awaits_blank() {
+        if !self.awaits_blank() || self.standing.is_none() {
             return Err(TransferFault::Phase);
         }
         let (files, capture) = cartridge
@@ -130,7 +144,7 @@ impl LiveRoom {
             .map_err(TransferFault::Cartridge)?;
         Ok(State {
             owners: Model(Owners {
-                scene: self.0,
+                scene: self.scene,
                 countdown: Countdown::Dormant,
                 files: save_files::State::new(files),
                 run: capture.run,

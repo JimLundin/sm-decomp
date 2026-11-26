@@ -816,6 +816,7 @@ impl<'a> Run<'a> {
         };
         let start = borrowed_start;
         let hud_frame = hud::frame(&self.room.hud, controller, start);
+        let standing_view = self.state.passage.room.entry.view.transform;
         let before = types::ceres_blackout::FinishedPasses(self.state.frame.finished_frames);
         let outputs = self
             .state
@@ -828,6 +829,7 @@ impl<'a> Run<'a> {
             outputs.elevator_reach,
             before,
             passing.work_begun,
+            standing_view,
             platform.publishes,
             cut,
         )?;
@@ -880,6 +882,7 @@ impl<'a> Run<'a> {
         reach: Option<boss_ceres_ridley::ElevatorLock>,
         before: types::ceres_blackout::FinishedPasses,
         worked: bool,
+        view: game::state::video::Mode7,
         publishes: bool,
         cut: u64,
     ) -> Result<(), Outcome> {
