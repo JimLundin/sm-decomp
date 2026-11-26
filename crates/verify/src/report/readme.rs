@@ -1,7 +1,7 @@
 //! The README: the project's thesis and its progress over the milestone's movie, counted in
 //! frames from the reviewed played runs of [`PLAYED`] and shown as bars and percentages: over the
-//! whole movie and by the stretches being worked. It states no frame numbers or counts, and its
-//! shape is the same whatever the runs hold: a place in the movie is an interval drawn over it.
+//! whole movie and by the stretches being worked. Each stretch shows its frame count from power-on and its place in the
+//! movie.
 //!
 //! A lock row's cut c is movie frame f + c, f its seed's movie frame, or 0 for a row from
 //! power-on, so a row's cut 0 is the frame after the previous row's last cut. A run seeded at
@@ -262,21 +262,11 @@ fn filled(count: u64, total: u64, cells: u64) -> u64 {
     }
 }
 
-/// `held` frames of `total` as a bar of `cells` in the headline's marks, filled ones first: `█`
-/// for the `started` of them held continuously from power-on, `▓` for the rest, `░` for the frames
-/// not held.
-fn bar(started: u64, held: u64, total: u64, cells: u64) -> String {
-    let (started, held) = (filled(started, total, cells), filled(held, total, cells));
+/// The share of a stretch held continuously from power-on, on its own scale.
+fn power_on_bar(started: u64, total: u64, cells: u64) -> String {
+    let started = filled(started, total, cells);
     (0..cells)
-        .map(|cell| {
-            if cell < started {
-                '█'
-            } else if cell < held {
-                '▓'
-            } else {
-                '░'
-            }
-        })
+        .map(|cell| if cell < started { '█' } else { '░' })
         .collect()
 }
 
@@ -370,8 +360,9 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
         percent(passing(&runs, 0, total), total),
     );
     out.push_str(
-        "### By stretch\n\nThe stretches being worked, in the order the movie plays them; the \
-         first not yet whole is in bold.\n\n",
+        "### By stretch\n\nA ✓ marks a stretch completed in a single run from power-on. The first \
+         stretch still in progress from power-on is in bold. The All runs column includes coverage from \
+         later seeds.\n\n",
     );
     out.push_str(&stretches::table(&stretches, &runs, started));
     out.push_str(
@@ -384,7 +375,8 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        MOVIE, PLAYED, Run, bar, cell_frames, from_start, headline, listed, passing, percent,
+        MOVIE, PLAYED, Run, cell_frames, from_start, headline, listed, passing, percent,
+        power_on_bar,
     };
 
     /// A run seeded at movie frame `seed` that held `held` frames.
@@ -533,23 +525,17 @@ mod tests {
 
     #[test]
     fn a_bar_fills_its_share_of_the_total() {
-        let held = |bar: &str| bar.chars().filter(|&cell| cell != '░').count();
-        let empty = bar(0, 0, 15_196, 40);
-        assert_eq!((held(&empty), empty.chars().count()), (0, 40));
+        let filled = |bar: &str| bar.chars().filter(|&cell| cell == '█').count();
+        let empty = power_on_bar(0, 15_196, 40);
+        assert_eq!((filled(&empty), empty.chars().count()), (0, 40));
         // 2,136 of 15,196 is 5.6 cells, rounded down.
-        assert_eq!(held(&bar(0, 2_136, 15_196, 40)), 5);
-        assert!(bar(0, 2_136, 15_196, 40).starts_with("▓▓▓▓▓░"));
-        // One frame shows; one frame short of the whole doesn't fill the bar.
-        assert_eq!(held(&bar(0, 1, 15_196, 40)), 1);
-        assert_eq!(held(&bar(0, 15_195, 15_196, 40)), 39);
-        assert_eq!(bar(15_196, 15_196, 15_196, 40), "█".repeat(40));
-        assert_eq!(held(&bar(0, 0, 0, 40)), 0);
-        // Those held from power-on come first, each share rounded down the same way.
-        assert_eq!(
-            bar(1_000, 2_136, 15_196, 40),
-            format!("██▓▓▓{}", "░".repeat(35))
-        );
-        assert_eq!(bar(1, 2, 15_196, 40), format!("█{}", "░".repeat(39)));
+        assert_eq!(filled(&power_on_bar(2_136, 15_196, 40)), 5);
+        assert!(power_on_bar(2_136, 15_196, 40).starts_with("█████░"));
+        // One frame shows a cell, and one frame short leaves a cell empty.
+        assert_eq!(filled(&power_on_bar(1, 15_196, 40)), 1);
+        assert_eq!(filled(&power_on_bar(15_195, 15_196, 40)), 39);
+        assert_eq!(power_on_bar(15_196, 15_196, 40), "█".repeat(40));
+        assert_eq!(filled(&power_on_bar(0, 0, 40)), 0);
     }
 
     #[test]

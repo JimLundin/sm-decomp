@@ -205,15 +205,15 @@ The README is generated from the tree:
 cargo run -p tools --bin tools -- report --write
 ```
 
-writes the whole `README.md`. It states the project's thesis and its progress over the
-milestone's movie as bars and percentages, without frame numbers or counts: the frames the
-reviewed played runs of [`scenarios/replay/played.toml`](../scenarios/replay/played.toml) hold,
-over the milestone of [`docs/architecture/domains.toml`](architecture/domains.toml), as one bar
-across the movie that marks the frames continuous from power-on, those that pass from later
-seeds and those that don't pass yet. The stretches being worked, from
-[`scenarios/replay/stretches.toml`](../scenarios/replay/stretches.toml), each show where they lie
-in the movie on the same scale, drawn `━` on `·`, and a bar of their frames that pass in the
-headline's marks, or a tick when all do; the first not yet whole is in bold. Its tests hold each
+writes the whole `README.md`. It states the project's thesis and reports progress from the
+reviewed runs in [`scenarios/replay/played.toml`](../scenarios/replay/played.toml). The headline
+bar covers the milestone in [`docs/architecture/domains.toml`](architecture/domains.toml) and
+shows which frames pass from power-on or later seeds and which still need work. Each stretch in
+[`scenarios/replay/stretches.toml`](../scenarios/replay/stretches.toml) shows its place on the
+same movie scale, drawn `━` on `·`. Its power-on bar shows the frame count and percentage
+reached in a single run from power-on. A tick marks completion, and the first stretch still
+in progress from power-on is in bold. The All runs percentage counts frames that pass from
+any seed, counting each frame once. The tests hold each
 listed run to the lock and the stretches to the milestone's frames. When an integrator's work
 moves a played run, its own commits change the run there and regenerate the README, and the root
 reviews the figures at landing (Jim, 2026-11-25); full CI's replay witnesses hold every run to

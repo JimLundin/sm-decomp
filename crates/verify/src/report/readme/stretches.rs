@@ -1,12 +1,12 @@
 //! The milestone's movie in the stretches being worked, from [`STRETCHES`]: each drawn where it
-//! lies in the whole movie, with a bar of its frames that pass in the headline's marks or a tick
-//! once all of them do, and the first that doesn't in bold.
+//! lies in the whole movie, with a bar of its frames held from power-on, a tick when those frames
+//! cover the whole stretch, and coverage across all runs.
 
 use std::fmt::{self, Display, Write as _};
 
 use serde::Deserialize;
 
-use super::{MOVIE, Run, bar, cell_frames, passing};
+use super::{MOVIE, Run, cell_frames, passing, percent, power_on_bar};
 
 /// The stretches, from the repository root.
 pub(super) const STRETCHES: &str = "scenarios/replay/stretches.toml";
@@ -14,7 +14,7 @@ pub(super) const STRETCHES: &str = "scenarios/replay/stretches.toml";
 /// Where the README links a work issue.
 const ISSUES: &str = "https://github.com/JimLundin/sm-decomp/issues";
 
-/// The cells of a stretch's bar of frames that pass, half the movie's, so the table stays narrow.
+/// The cells of a stretch's power-on bar, half the movie's, so the table stays narrow.
 const CELLS: u64 = 20;
 
 /// The stretches file.
@@ -128,26 +128,28 @@ impl Stretch {
 pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String {
     let total = stretches.last().map_or(0, |stretch| stretch.frames[1]);
     let mut out = String::from(
-        "| Stretch | In the movie | Frames that pass | Work |\n| --- | --- | --- | --- |\n",
+        "| Stretch | In the movie | From power-on | All runs | Work |\n\
+         | --- | --- | --- | ---: | --- |\n",
     );
     let mut bolded = false;
     for stretch in stretches {
-        let (held, of) = (stretch.passing(runs), stretch.len());
-        let (name, passes) = if held == of {
-            (stretch.name.clone(), String::from("✓"))
+        let from_power_on = stretch.started(started);
+        let frames = stretch.len();
+        let complete = from_power_on == frames;
+        let name = if complete || bolded {
+            stretch.name.clone()
         } else {
-            let passes = format!("`{}`", bar(stretch.started(started), held, of, CELLS));
-            if bolded {
-                (stretch.name.clone(), passes)
-            } else {
-                bolded = true;
-                (format!("**{}**", stretch.name), passes)
-            }
+            bolded = true;
+            format!("**{}**", stretch.name)
         };
+        let mark = if complete { " ✓" } else { "" };
         let _ = writeln!(
             out,
-            "| {name} | `{}` | {passes} | {} |",
+            "| {name} | `{}` | `{}` {from_power_on}/{frames} ({}){mark} | {} | {} |",
             stretch.place(total),
+            power_on_bar(from_power_on, frames, CELLS),
+            percent(from_power_on, frames),
+            percent(stretch.passing(runs), frames),
             stretch.issue
         );
     }
@@ -158,7 +160,7 @@ pub(super) fn table(stretches: &[Stretch], runs: &[Run], started: u64) -> String
 mod tests {
     use super::{Issue, STRETCHES, Stretch, stretches, table};
     use crate::report::plan::{PLAN, Plan, seed};
-    use crate::report::readme::{PLAYED, Run, listed, passing};
+    use crate::report::readme::{PLAYED, Run, from_start, listed, passing};
     use crate::report::seeds::seed_frame;
 
     /// The repository root, from this crate's manifest.
@@ -362,47 +364,39 @@ mod tests {
     }
 
     #[test]
-    fn a_finished_stretch_shows_a_tick_and_the_first_unfinished_is_bold() {
+    fn only_continuous_power_on_completion_earns_a_tick() {
         let three = three();
-        // Boot plays whole from power-on and the title in part; a later seed holds a little of the
-        // intro.
-        let page = table(&three, &[run(0, 103), run(200, 30)], 103);
-        let rows: Vec<&str> = page.lines().skip(2).collect();
-        let link = |issue: u32| {
-            format!("[#{issue}](https://github.com/JimLundin/sm-decomp/issues/{issue})")
+        let boot = Run {
+            power_on: true,
+            ..run(0, 103)
         };
-        let place = |stretch: usize| three.get(stretch).map(|stretch| stretch.place(400));
-        assert_eq!(
-            rows,
-            [
-                format!(
-                    "| Boot | `{}` | ✓ | {} |",
-                    place(0).unwrap_or_default(),
-                    link(1)
-                ),
-                format!(
-                    "| **Title** | `{}` | `████████████░░░░░░░░` | {} |",
-                    place(1).unwrap_or_default(),
-                    link(2)
-                ),
-                format!(
-                    "| Intro | `{}` | `▓▓░░░░░░░░░░░░░░░░░░` | {} |",
-                    place(2).unwrap_or_default(),
-                    link(3)
-                ),
-            ]
-        );
-        // One frame short of whole is a bar, not a tick.
+        // Later seeds cover the remaining title frames and the whole intro.
+        let runs = [boot, run(103, 2), run(105, 295)];
+        let page = table(&three, &runs, from_start(&runs, 400));
+        let expected = [
+            ("| Boot |", "`████████████████████` 100/100 (100.0%) ✓"),
+            ("| **Title** |", "`████████████░░░░░░░░` 3/5 (60.0%)"),
+            ("| Intro |", "`░░░░░░░░░░░░░░░░░░░░` 0/295 (0.0%)"),
+        ];
+        assert_eq!(page.lines().skip(2).count(), expected.len());
+        for (row, (name, progress)) in page.lines().skip(2).zip(expected) {
+            assert!(row.starts_with(name), "{row}");
+            assert!(row.contains(&format!("| {progress} | 100.0% |")), "{row}");
+        }
+        let one_short = table(&three, &[run(0, 99), run(99, 301)], 99);
         assert!(
-            table(&three, &[run(0, 99)], 99)
+            one_short
                 .lines()
                 .nth(2)
                 .is_some_and(|boot| boot.starts_with("| **Boot** |")
-                    && boot.contains("`███████████████████░`")
+                    && boot.contains("`███████████████████░` 99/100 (99.0%) | 100.0% |")
                     && !boot.contains('✓'))
         );
-        // With none whole, the first is bold; with all whole, none is.
-        assert!(table(&three, &[], 0).contains("| **Boot** |"));
-        assert!(!table(&three, &[run(0, 400)], 400).contains("**"));
+        let none = table(&three, &[], 0);
+        assert!(none.contains("| **Boot** |"));
+        assert!(!none.contains('✓'));
+        let all = table(&three, &[run(0, 400)], 400);
+        assert!(!all.contains("**"));
+        assert_eq!(all.matches('✓').count(), 3);
     }
 }

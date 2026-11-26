@@ -16,18 +16,18 @@ The milestone is **Power-on through Ceres** in the any% movie. A frame passes wh
 
 ### By stretch
 
-The stretches being worked, in the order the movie plays them; the first not yet whole is in bold.
+A ✓ marks a stretch completed in a single run from power-on. The first stretch still in progress from power-on is in bold. The All runs column includes coverage from later seeds.
 
-| Stretch | In the movie | Frames that pass | Work |
-| --- | --- | --- | --- |
-| Boot | `━·······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| The title and menus | `━━······································` | ✓ | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
-| The intro | `·━━━━━━━━━━━━━━━━━━━····················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| The flight to Ceres | `···················━━━··················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Her arrival | `·····················━━·················` | ✓ | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
-| Rooms 1 to 5 | `······················━━━━━·············` | ✓ | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
-| Ridley's room | `··························━━━━━·········` | ✓ | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
-| The escape | `······························━━━━━·····` | ✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
-| The explosion and the flight to Zebes | `··································━━━━━━` | ✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| Stretch | In the movie | From power-on | All runs | Work |
+| --- | --- | --- | ---: | --- |
+| Boot | `━·······································` | `████████████████████` 270/270 (100.0%) ✓ | 100.0% | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| The title and menus | `━━······································` | `████████████████████` 298/298 (100.0%) ✓ | 100.0% | [#752](https://github.com/JimLundin/sm-decomp/issues/752) |
+| The intro | `·━━━━━━━━━━━━━━━━━━━····················` | `████████████████████` 6944/6944 (100.0%) ✓ | 100.0% | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| The flight to Ceres | `···················━━━··················` | `████████████████████` 803/803 (100.0%) ✓ | 100.0% | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Her arrival | `·····················━━·················` | `████████████████████` 223/223 (100.0%) ✓ | 100.0% | [#756](https://github.com/JimLundin/sm-decomp/issues/756) |
+| Rooms 1 to 5 | `······················━━━━━·············` | `████████████████████` 1624/1624 (100.0%) ✓ | 100.0% | [#748](https://github.com/JimLundin/sm-decomp/issues/748) |
+| Ridley's room | `··························━━━━━·········` | `████████████████████` 1610/1610 (100.0%) ✓ | 100.0% | [#753](https://github.com/JimLundin/sm-decomp/issues/753) |
+| The escape | `······························━━━━━·····` | `████████████████████` 1464/1464 (100.0%) ✓ | 100.0% | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
+| **The explosion and the flight to Zebes** | `··································━━━━━━` | `█░░░░░░░░░░░░░░░░░░░` 75/1960 (3.8%) | 100.0% | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 
 Building and checking it, and the command that prints the models' sizes and the indexed replay evidence, are in [BUILDING](docs/BUILDING.md).
