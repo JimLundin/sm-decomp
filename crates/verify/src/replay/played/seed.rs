@@ -188,7 +188,7 @@ fn doorways(seed: &[u8], world: &world::World, room: &world::Room) -> Result<Doo
     let bad = || data_failure(None, "played room doors");
     let doorways =
         room_loading::doorways(world, room, movement::door_cells(seed)?).map_err(|_| bad())?;
-    Ok((doorways, room))
+    Ok((doorways, (room_loading::map_room(room), room.place.area)))
 }
 
 /// The rooms the engine loads, their tilesets, the sprites' colours and the slopes, imported

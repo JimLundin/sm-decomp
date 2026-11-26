@@ -914,12 +914,7 @@ impl<'a> Run<'a> {
             expected.push(same(true));
             actual.push(same(fresh == self.state.progress));
         }
-        self.room_publication_fields(
-            &outputs,
-            &frame,
-            passing.start,
-            (&mut expected, &mut actual),
-        )?;
+        self.room_publication_fields(&outputs, &frame, &passing, (&mut expected, &mut actual))?;
         expected.push(play_time::observation(play_time::read(&current.wram)?));
         actual.push(play_time::observation(self.state.play_time));
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
