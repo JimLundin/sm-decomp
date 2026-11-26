@@ -142,3 +142,73 @@ pub(super) fn rooms(image: &Rom) -> Result<room_loading::Rooms, Outcome> {
         slopes: data::level::slope::Slopes::load(image.lorom()).map_err(|_| bad())?,
     })
 }
+
+/// A Ceres return after the destination population has finished loading.
+pub(super) fn completed_fetch(
+    record: &oracle_record::FrameRecord,
+    world: &world::World,
+) -> Result<Option<(world_doors::Passage, played::passage::Doorway)>, Outcome> {
+    use data::assets::world::{doorways::RIDLEY_TO_ESCAPE_58, rooms::CERES_RIDLEY_ROOM};
+    use data::rom::RomAddress;
+    use world_doors::{Fetching, Passage, Phase, WorkFrames};
+
+    let wram = &record.wram;
+    let read = |offset| {
+        word(
+            wram,
+            source::WramWord {
+                name: "return passage",
+                offset,
+            },
+        )
+    };
+    if read(0x0998)? != 11 || read(0x099c)? != 0xe4a9 {
+        return Ok(None);
+    }
+    let pointer = import::world::doorway(RomAddress::new(0x83, read(0x078d)?));
+    if pointer != Some(RIDLEY_TO_ESCAPE_58) {
+        return Ok(None);
+    }
+    let slide_frames = read(0x0925)?;
+    let ended = read(0x0931)? & 0x8000 != 0;
+    let phase = if ended && super::finished(record) {
+        Phase::Landing(WorkFrames::FIRST)
+    } else if !ended
+        && matches!(
+            record.nmi(),
+            Some(nmi) if nmi.interrupted_pc == 0x0082_e529
+        )
+    {
+        Phase::Arriving {
+            placed: true,
+            fetching: Fetching::Done,
+        }
+    } else {
+        return Ok(None);
+    };
+    let bad = || data_failure(Some(record.index), "played return passage seed");
+    let from = world.room(CERES_RIDLEY_ROOM).ok_or_else(bad)?;
+    let through = world.doorway(RIDLEY_TO_ESCAPE_58).ok_or_else(bad)?;
+    let here = import::world::id(RoomKey::from_room_pointer(read(0x079b)?));
+    if here != Some(through.room) || read(0x093f)? != 2 {
+        return Err(bad());
+    }
+    // The collision cell is used only to detect a touch in play. The pending passage
+    // instead reads the same imported arrival and lighting as a real touch.
+    let door = from
+        .doors
+        .iter()
+        .position(|door| *door == world::Door::To(RIDLEY_TO_ESCAPE_58))
+        .ok_or_else(bad)?;
+    let neutral = types::Cell { x: 0, y: 0 };
+    let [doorway] = room_loading::doorways(world, from, [(neutral, door)])
+        .map_err(|_| bad())?
+        .try_into()
+        .map_err(|_| bad())?;
+    let passage = Passage {
+        phase,
+        arrival: Some(doorway.arrival),
+        slide_frames,
+    };
+    Ok(Some((passage, doorway)))
+}

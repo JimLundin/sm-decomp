@@ -14,6 +14,7 @@ use types::Hitbox;
 pub(super) fn seed(
     seed: &[u8],
     native_boxes: &[Hitbox],
+    supported_passage: bool,
 ) -> Result<(Vec<boss_ceres_ridley::CeresDoor>, bool), Outcome> {
     let slots = ceres::doors(seed)?;
     let roster = movement::roster_slots(seed)?;
@@ -24,7 +25,7 @@ pub(super) fn seed(
     let owns_roster = slots.iter().any(|slot| roster.contains(&slot.index()));
     let first_door = slots.iter().map(|slot| slot.index()).min();
     if owns_roster {
-        if super::passage::passing(seed)?
+        if (!supported_passage && super::passage::passing(seed)?)
             || roster
                 .iter()
                 .any(|&index| !slots.iter().any(|slot| slot.index() == index))
@@ -43,7 +44,10 @@ pub(super) fn seed(
         .into_iter()
         .map(|slot| ceres::seed(seed, slot))
         .collect::<Result<Vec<_>, _>>()?;
+    // A passage has no Samus movement query. Its interactive roster can still describe
+    // the departing frame while the room's new door owners have already been placed.
     if owns_roster
+        && !supported_passage
         && !doors
             .iter()
             .filter(|door| door.phase.solid())

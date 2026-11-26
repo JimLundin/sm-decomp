@@ -972,6 +972,16 @@ cut = 2
 field = "hud.countdown.time"
 
 [[fault]]
+name = "played-return-passage-drops-carried-position"
+responsibility = "played"
+file = "crates/game/src/production/played.rs"
+before = "        moved.position = her;"
+after = "        let _ = her;"
+case = "played chain-any-0006-E0B5 1698 1781"
+cut = 1699
+field = "movement.position"
+
+[[fault]]
 name = "played-return-countdown-finished-frames-behind"
 responsibility = "played"
 file = "crates/game/src/production/played/hud.rs"

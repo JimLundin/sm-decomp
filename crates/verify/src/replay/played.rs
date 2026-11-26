@@ -504,8 +504,12 @@ impl<'a> Run<'a> {
     ) -> Result<(seed::Room, played::State), Outcome> {
         let (mut room, mut seeded, progress) = seed::room(&seed.wram, content, &rooms.world)?;
         let (map_room, _) = room.map;
-        let (ceres_doors, owns_roster) =
-            ceres_doors::seed(&seed.wram, types::World::solid_enemies(&seeded.geometry))?;
+        let pending = seed::completed_fetch(seed, &rooms.world)?;
+        let (ceres_doors, owns_roster) = ceres_doors::seed(
+            &seed.wram,
+            types::World::solid_enemies(&seeded.geometry),
+            pending.is_some(),
+        )?;
         if owns_roster {
             let geometry = movement::level_world(&seed.wram, &content.movement, Vec::new())?;
             room.inputs.geometry = geometry.clone();
@@ -517,8 +521,8 @@ impl<'a> Run<'a> {
             camera: Model(camera::seed(&seed.wram, &camera::Content)?),
             progress,
             passage: played::passage::State {
-                doors: Doors::Play,
-                doorway: None,
+                doors: pending.map_or(Doors::Play, |(passing, _)| Doors::Passing(passing)),
+                doorway: pending.map(|(_, doorway)| doorway),
                 room: seeded,
                 map_room,
             },

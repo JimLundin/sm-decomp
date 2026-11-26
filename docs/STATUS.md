@@ -114,6 +114,14 @@ cut 72, the passage and room 4; there a count of finished frames one ahead diffe
 `chain-any-0003-DFD7` cut 183 in `doors.colours.goal`, a start borrowed on every frame at cut 1
 in `hud.countdown.begun`, and the expiry answer inverted at cut 1 in `hud.countdown.expiry`.
 
+The return passage can resume at the native slide wait after the destination
+room's contents have loaded. In room 6, cut 1698 is the first such cut. The
+doorway, slide count and pending phase are read once at admission. The
+destination actor owners replace the stale collision roster during the
+passage, whose frames do not query Samus's collision world. The run carries
+59.87 through the remaining slide, landing and fade and reaches the first five
+ordinary turns of room 5. The outgoing actor clears before this seed.
+
 The room 6 row's last cut, 1776, has returned to ordinary play. Its sole interactive box
 belongs to the Ceres door. Admission checks the native box order and geometry against the
 doors before it gives those boxes to the live door owner. The played run from this origin

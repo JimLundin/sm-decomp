@@ -180,6 +180,18 @@ seed_frame = 568
 frames = [569, 2218]
 power_on = false
 
+# Start in the slide's wait after the destination content has loaded. The remaining
+# slide, landing, music and brightening carry a held countdown into room 5.
+[[run]]
+row = "chain-any-0006-E0B5"
+start = 1698
+end = 1781
+held = 83
+stop = "end"
+seed_frame = 11860
+frames = [11861, 11943]
+power_on = false
+
 # The completed return passage leaves a seed on the last cut of Ridley's room row.
 # The next cut is room 5's first ordinary turn. Its countdown resumes at 59.86.
 [[run]]
