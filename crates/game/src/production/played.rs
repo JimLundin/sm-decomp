@@ -68,6 +68,7 @@ pub mod quake;
 mod ridley;
 pub mod room_video;
 pub mod samus;
+pub mod save_snapshot;
 pub mod shaft;
 pub mod shaft_sound;
 mod start;
