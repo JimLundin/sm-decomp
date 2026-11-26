@@ -538,6 +538,7 @@ impl<'a> Run<'a> {
     }
 
     /// Continue room play from the active owners at the cut before this range.
+    #[cfg(test)]
     fn through(
         &mut self,
         rows: &mut rows::Rows<'_>,
