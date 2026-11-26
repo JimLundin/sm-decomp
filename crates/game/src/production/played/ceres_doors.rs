@@ -19,8 +19,8 @@ impl station::State {
 /// One run of each of the room's Ceres doors in `station`, in its order of its enemies,
 /// reading where `her` was at the end of the last frame, with the room's quake as `quake` holds
 /// it. Door by door: each reads the shake's frames left as the doors before it left them, and
-/// the shake it starts, if any, starts in `quake` before the next door runs. In the escape a
-/// later piece owns the shaft's overlay.
+/// the shake it starts, if any, starts in `quake` before the next door runs. The shaft actor
+/// turn advances the overlay before it calls these doors.
 pub(super) fn run(
     station: &station::State,
     stage: Stage,

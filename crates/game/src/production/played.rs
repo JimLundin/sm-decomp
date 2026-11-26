@@ -292,7 +292,7 @@ pub enum Fault {
     DoorEnemyGraphics,
     /// The fresh file's Samus could not be constructed.
     NewGame,
-    /// The station's escape in the shaft: a later piece owns the shaft's overlay.
+    /// The escape shaft lacks its installed actors or rotation track.
     Escape,
     /// The shaft burst requested an unsupported sound queue limit.
     ShaftSoundAllowance,
