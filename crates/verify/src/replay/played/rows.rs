@@ -61,6 +61,8 @@ pub(in crate::replay) struct Rows<'a> {
     cache: &'a Path,
     /// The caches of the rows reached, in the chain's order.
     opened: Vec<Cache>,
+    #[cfg(test)]
+    pub(super) clock_cuts: Vec<u64>,
 }
 
 impl<'a> Rows<'a> {
@@ -76,6 +78,8 @@ impl<'a> Rows<'a> {
             chain: Chain::new(lock, root, row)?,
             cache,
             opened: Vec::new(),
+            #[cfg(test)]
+            clock_cuts: Vec::new(),
         })
     }
 

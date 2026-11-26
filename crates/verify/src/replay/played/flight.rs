@@ -310,11 +310,19 @@ impl Continuation {
                     )
                 })
                 .and_then(|()| {
-                    observe(
-                        &current,
-                        cut,
-                        in_flight && matches!(run.journey.stage, flight::Stage::Arrival(_)),
-                    )
+                    let entered =
+                        in_flight && matches!(run.journey.stage, flight::Stage::Arrival(_));
+                    if entered {
+                        use super::play_time::{observation, read};
+                        crate::replay::compared(
+                            cut,
+                            &[observation(read(&current.wram)?)],
+                            &[observation(carry.play_time)],
+                        )?;
+                        #[cfg(test)]
+                        rows.clock_cuts.push(cut);
+                    }
+                    observe(&current, cut, entered)
                 });
             if let Err(outcome) = compared {
                 return Ok((held, Stop::At(super::at(cut, outcome))));

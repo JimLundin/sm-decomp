@@ -613,6 +613,8 @@ impl<'a> Run<'a> {
             let (row, local) = rows.place(cut)?;
             match self.step(controller, &previous, &current, cut, (&row, local)) {
                 Ok(fields) => {
+                    #[cfg(test)]
+                    rows.clock_cuts.push(cut);
                     if let Err(outcome) = observe(&current, cut) {
                         return Ok((held, Stop::At(at(cut, outcome))));
                     }

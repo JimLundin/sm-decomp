@@ -72,7 +72,10 @@ pub(super) fn row_movie(row: &Row) -> Option<&str> {
 }
 
 /// The movie frame of `row`'s cut 0: frame 0 from power-on, else its seed's.
-pub(super) fn first_frame(root: &Path, row: &Row) -> Result<u64, String> {
+///
+/// # Errors
+/// The seed's frame is absent or its table cannot be read.
+pub fn first_frame(root: &Path, row: &Row) -> Result<u64, String> {
     match &row.start {
         Start::PowerOn => Ok(0),
         Start::Seed { capture, index } => seed_frame(root, capture, *index),
