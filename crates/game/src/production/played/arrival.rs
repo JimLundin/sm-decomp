@@ -387,7 +387,7 @@ mod tests {
     ) {
         let passing = Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
-            enemy_tiles_uploaded: false,
+            enemy_tiles: super::passage::EnemyTileTransfer::Waiting,
             shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
             shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun,
@@ -439,7 +439,7 @@ mod tests {
         let rules = rules();
         let mut passing = Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
-            enemy_tiles_uploaded: false,
+            enemy_tiles: super::passage::EnemyTileTransfer::Waiting,
             shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
             shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun: true,
@@ -522,7 +522,7 @@ mod tests {
         arriving.arrival.setup = super::Setup::Published;
         let passing = Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
-            enemy_tiles_uploaded: false,
+            enemy_tiles: super::passage::EnemyTileTransfer::Waiting,
             shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
             shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun: true,

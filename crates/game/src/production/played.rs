@@ -370,7 +370,6 @@ impl State {
         let room = self.ordinary_room(inputs)?;
         let mut random = self.frame.drawn(passing);
         let mut palette = self.palette;
-        let locked = self.elevator_locked();
         let (mut her, (mut enemies, health)) =
             self.play_actors_and_samus(inputs, passing, content, rules, &mut random, &mut palette)?;
         let uploads = content
@@ -391,7 +390,11 @@ impl State {
         let draw_at = passing.work_begun.then_some(inputs.parity);
         let body = self.ordinary_fight_body(&her, health, camera.position(), draw_at, content)?;
         let hud = warning::countdown_input(hud, enemies.warning.as_ref())?;
-        let hud = if locked { hud.during_elevator() } else { hud };
+        let hud = if self.elevator_locked() {
+            hud.during_elevator()
+        } else {
+            hud
+        };
         let (hud_state, hud_outputs) = self.hud_frame(
             &hud,
             &samus,

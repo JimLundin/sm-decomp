@@ -99,7 +99,7 @@ pub(super) fn compare(
     )?;
     compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
-    if passing.enemy_tiles_uploaded {
+    if passing.enemy_tiles == game::production::played::passage::EnemyTileTransfer::Published {
         compare_door_enemy_tiles(room, frame.current, expected, actual)?;
     }
     compare_arrival(
@@ -943,7 +943,10 @@ fn ridley_doorway_publishes_the_selected_enemy_sheets() {
 
     let prior = rows.record(177).unwrap();
     let current = rows.record(178).unwrap();
-    assert!(super::platform::door_enemy_tiles(&prior, &current));
+    assert_eq!(
+        super::platform::door_enemy_tiles(&prior, &current),
+        game::production::played::passage::EnemyTileTransfer::Published
+    );
     let controller = seed_controller(&prior).unwrap();
     assert_eq!(
         run.through(&mut rows, prior, controller, 178..=178)

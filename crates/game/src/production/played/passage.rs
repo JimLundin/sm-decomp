@@ -66,7 +66,7 @@ pub struct Passing {
     /// Actor loading reached at the interrupted cut of an escape-shaft fetch.
     pub actor_fetch: ActorFetch,
     /// The destination's complete set of interrupted object transfers has now reached VRAM.
-    pub enemy_tiles_uploaded: bool,
+    pub enemy_tiles: EnemyTileTransfer,
     /// Completed background work while the shaft contents are fetched.
     pub shaft_background: super::room_tiles::ShaftBackground,
     /// The beam's progress on the return room's visible HDMA tables.
@@ -80,6 +80,15 @@ pub struct Passing {
     /// The start's loading's, with the platform's lag: whether a new game's start is made ready
     /// this frame.
     pub start: super::arrival::Readiness,
+}
+
+/// Progress of the doorway's direct transfers of enemy graphics.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EnemyTileTransfer {
+    /// The cut has not reached the complete transfer.
+    Waiting,
+    /// The cut follows the last transferred word.
+    Published,
 }
 
 /// Whether the first visible pass has completed the return shaft's HDMA tables.
@@ -237,7 +246,7 @@ impl super::State {
                 &content.shaft_effects,
             )?;
         }
-        if passing.enemy_tiles_uploaded
+        if passing.enemy_tiles == EnemyTileTransfer::Published
             && let Some(doorway) = self.passage.doorway
         {
             let tiles =

@@ -855,7 +855,7 @@ impl<'a> Run<'a> {
             work_done: platform.ready || fetching_contents(doors),
             publishes: platform.publishes,
             actor_fetch: platform::actor_fetch(current),
-            enemy_tiles_uploaded: platform::door_enemy_tiles(previous, current),
+            enemy_tiles: platform::door_enemy_tiles(previous, current),
             shaft_background: platform::shaft_background(current, doors),
             shaft_raster: platform::shaft_raster(previous, current)?,
             audio: played::passage::PassageAudio {
