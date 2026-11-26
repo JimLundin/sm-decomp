@@ -14,6 +14,7 @@ mod animation;
 pub mod appearance;
 pub mod audio;
 mod audio_checkpoint;
+pub mod blackout;
 mod camera_semantic;
 pub mod connected;
 mod content;
@@ -46,6 +47,8 @@ pub use movement::MovementInputs;
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scope {
+    /// The shaft blackout and its suspended departure.
+    Blackout,
     /// The complete intro with a selected encounter input.
     Intro,
     /// The intro room start and its ordinary first turn.
@@ -93,6 +96,8 @@ pub enum Scope {
 /// Complete initial state, admitted once rather than reconstructed each cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionSeed {
+    /// The shaft blackout and its suspended departure.
+    Blackout(Box<blackout::State>),
     /// The complete intro and its displayed palette.
     Intro(Box<played::intro::State>),
     /// The intro room join from one complete origin.
@@ -139,6 +144,8 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
+    /// The shaft blackout and its suspended departure.
+    Blackout(blackout::Cut),
     /// An intro work-frame boundary.
     Intro(played::intro::FrameEnd),
     /// A causal intro room opportunity.
@@ -223,6 +230,8 @@ pub enum AdvanceInput<'a> {
 /// Fresh complete outputs from the selected entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionOutputs {
+    /// The shaft blackout and its suspended departure.
+    Blackout(Box<blackout::Output>),
     /// The intro's completed frame publications, if work finished.
     Intro(Option<Box<screens_intro::Report>>),
     /// The first turn when it completed.
@@ -272,6 +281,8 @@ pub enum ProductionOutputs {
 /// Why a selected start or checkpoint cannot be admitted.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AdmissionFault {
+    /// The shaft blackout and its suspended departure.
+    Blackout(blackout::Fault),
     /// The saved playback progress or pad is outside its content.
     Playback,
     /// Complete connected owner/content relation is invalid.
@@ -305,6 +316,8 @@ pub enum AdmissionFault {
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
+    /// The shaft blackout and its suspended departure.
+    Blackout(blackout::Fault),
     /// A required continuation beyond the intro scene provided here.
     Intro(played::intro::Fault),
     /// The intro room join requires a producer or content outside its scope.
@@ -399,6 +412,7 @@ impl Production {
         rules: ProductionRules,
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
+            ProductionSeed::Blackout(_) => Scope::Blackout,
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Playback(_) => Scope::Playback,
             ProductionSeed::SaveFiles(_) => Scope::SaveFiles,
@@ -497,6 +511,9 @@ impl Production {
     #[must_use]
     pub fn battery(&self) -> Option<types::save_files::BatteryImage> {
         match (&self.state, &self.context.content) {
+            (OwnedState::Blackout(state), ProductionContent::Blackout(content)) => Some(
+                save_files::image(&content.format, &state.owners.0.files.cartridge),
+            ),
             (OwnedState::SaveFiles(state), ProductionContent::SaveFiles(format)) => {
                 Some(save_files::image(format, &state.cartridge))
             }
@@ -514,6 +531,7 @@ impl Production {
     #[must_use]
     pub const fn scope(&self) -> Scope {
         match self.state {
+            OwnedState::Blackout(_) => Scope::Blackout,
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Playback(_) => Scope::Playback,
             OwnedState::SaveFiles(_) => Scope::SaveFiles,
@@ -670,6 +688,7 @@ impl Production {
             | OwnedState::Playback(_)
             | OwnedState::SaveFiles(_)
             | OwnedState::Discovery(_)
+            | OwnedState::Blackout(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::JumpHistory(_)
@@ -695,6 +714,7 @@ impl Production {
             OwnedState::SaveFiles(state) => {
                 return Ok(self.encode_save(Model::<save_files::SaveFilesPin>(state.clone())));
             }
+            OwnedState::Blackout(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
@@ -745,7 +765,11 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if matches!(&content, ProductionContent::SaveFiles(_)) {
+        let seed = if matches!(&content, ProductionContent::Blackout(_)) {
+            let checkpoint: Checkpoint<Box<blackout::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Blackout(checkpoint.state)
+        } else if matches!(&content, ProductionContent::SaveFiles(_)) {
             let checkpoint: Checkpoint<Model<save_files::SaveFilesPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::SaveFiles(checkpoint.state.0)
@@ -833,6 +857,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
         Scope::IntroRooms => intro_rooms::validate_pins(),
         Scope::Intro
+        | Scope::Blackout
         | Scope::SaveFiles
         | Scope::Blocks
         | Scope::Progress

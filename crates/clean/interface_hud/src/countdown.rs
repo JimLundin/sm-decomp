@@ -464,10 +464,7 @@ impl Countdown {
     ///
     /// `UnsupportedFrame::StartWhileOnlyShown` for a start on a frame that only shows the
     /// countdown; nothing is changed.
-    pub(crate) fn play(
-        &mut self,
-        inputs: CountdownInputs,
-    ) -> Result<CountdownAnswer, UnsupportedFrame> {
+    pub fn play(&mut self, inputs: CountdownInputs) -> Result<CountdownAnswer, UnsupportedFrame> {
         let expiry = match (inputs.runs, inputs.start) {
             (CountdownRuns::PresentationOnly, Some(_)) => {
                 return Err(UnsupportedFrame::StartWhileOnlyShown);

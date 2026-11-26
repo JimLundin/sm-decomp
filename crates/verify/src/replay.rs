@@ -5,6 +5,7 @@ mod appearance;
 mod audio;
 mod audio_projection;
 pub mod baseline;
+mod blackout;
 mod camera;
 mod ceres;
 mod compare;

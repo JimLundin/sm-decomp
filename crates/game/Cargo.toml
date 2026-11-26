@@ -8,6 +8,8 @@ description = "Production clean model ownership and exact output encoding"
 
 [dependencies]
 canonical = { path = "../canonical" }
+screens_blackout = { path = "../clean/screens_blackout" }
+game_time = { path = "../clean/game_time" }
 audio_transport = { path = "../clean/audio_transport" }
 boss_ceres_ridley = { path = "../clean/boss_ceres_ridley" }
 world_blocks = { path = "../clean/world_blocks" }

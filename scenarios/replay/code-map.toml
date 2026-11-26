@@ -987,3 +987,27 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/discovery.rs" },
   { role = "navigation", path = "crates/verify/src/replay/discovery.rs" },
 ]
+
+[[rule]]
+id = "screens-blackout/ElevatorStopsSamus"
+targets = [
+  { role = "model", path = "crates/clean/screens_blackout/src/scene.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/blackout.rs" },
+]
+
+[[rule]]
+id = "screens-blackout/PlatformWait"
+targets = [
+  { role = "model", path = "crates/clean/screens_blackout/src/scene.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/blackout.rs" },
+]
+
+[[rule]]
+id = "screens-blackout/DepartureHandoff"
+targets = [
+  { role = "model", path = "crates/clean/screens_blackout/src/scene.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/blackout.rs" },
+]

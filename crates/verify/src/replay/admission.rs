@@ -9,6 +9,9 @@ use crate::lock::{Lock, RowId};
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    if case.inputs == InputProvider::Blackout {
+        return super::blackout::admit(case, sources);
+    }
     if case.inputs == InputProvider::ScopedIntroInputs {
         return super::played::intro::indexed::admit(case, sources);
     }

@@ -1678,3 +1678,45 @@ after = "types::intro::Blanking::Blanked => types::flight::Visibility::Shown,"
 case = "played any-power-on 0 7513"
 cut = 7513
 field = "flight.brightness.blanked"
+
+[[fault]]
+name = "blackout-counts-during-wait"
+responsibility = "blackout"
+file = "crates/game/src/production/blackout.rs"
+before = '''CountdownRuns::PresentationOnly'''
+after = '''CountdownRuns::MaintainCountdown'''
+case = "blackout/elevator-through-dispatch"
+cut = 165
+field = "blackout.timer-drawing"
+
+[[fault]]
+name = "blackout-early-live-blank"
+responsibility = "blackout"
+file = "crates/game/src/production/blackout.rs"
+before = '''if cut.publish && matches!(o.scene.pass, WorkPass::Prepared(_)) {'''
+after = '''if o.scene.light == BlackoutLight::ForcedBlank { self.video.commit_registers(); }
+        if cut.publish && matches!(o.scene.pass, WorkPass::Prepared(_)) {'''
+case = "blackout/elevator-through-dispatch"
+cut = 239
+field = "blackout.scene"
+
+[[fault]]
+name = "blackout-loses-final-platform"
+responsibility = "blackout"
+file = "crates/game/src/production/blackout/picture.rs"
+before = '''*word = (*word & 0xff00) | u16::from(tile);'''
+after = '''let _ = (word, tile);'''
+case = "blackout/pending-room-publication"
+cut = 241
+field = "blackout.memory"
+
+[[fault]]
+name = "blackout-drops-dispatch"
+responsibility = "blackout"
+file = "crates/game/src/production/blackout.rs"
+before = '''Ok(Output { requests, dispatch })'''
+after = '''drop(dispatch);
+        Ok(Output { requests, dispatch: None })'''
+case = "blackout/elevator-through-dispatch"
+cut = 242
+field = "blackout.requests"

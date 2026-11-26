@@ -1699,3 +1699,54 @@ provider = "locked lean records"
 fields = ["whole Samus centre", "camera scroll"]
 phase = "after the room and before discovery's turn"
 claim = "The room runs when the incoming discovery order permits it, including the return's final hide. Recorded geometry, controls and movement are outside this scope."
+
+[[case]]
+id = "blackout/elevator-through-dispatch"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 163 }
+end = { cut_inclusive = 242 }
+rules = ["screens-blackout/ElevatorStopsSamus", "screens-blackout/PlatformWait", "screens-blackout/DepartureHandoff"]
+profile = "reference"
+responsibilities = ["blackout"]
+content = "player-rom-import"
+inputs = "blackout"
+expectations = { provider = "pinned-record-cache", fields = ["blackout.scene", "blackout.room"], outputs = ["blackout.timer-drawing", "blackout.battery", "blackout.requests"] }
+checkpoints = true
+limits = ["The first room turn receives B8's elevator arrival. The following locked room turns run the HUD timer, play time and RNG. B8 geometry and rotation, movement and appearance, actor drawing, other room uploads and audio service are outside this scope.", "The station receives its carried scene on the final opportunity. Comparison ends at that dispatch, before its own work."]
+
+[[case.borrowed]]
+dependency = "shaft.elevator"
+provider = "reach at the scoped intake"
+fields = ["after-motion elevator reached"]
+phase = "end of the ordinary room turn"
+claim = "the blackout consumes the shaft report once"
+
+[[case.borrowed]]
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["end of vblank", "cartridge write completion", "requested commit"]
+phase = "suspended work and NMI return"
+claim = "timing chooses when production resumes the carried room batch and save"
+
+[[case]]
+id = "blackout/pending-room-publication"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 239 }
+end = { cut_inclusive = 242 }
+rules = ["screens-blackout/DepartureHandoff"]
+profile = "reference"
+responsibilities = ["blackout"]
+content = "player-rom-import"
+inputs = "blackout"
+expectations = { provider = "pinned-record-cache", fields = ["blackout.scene", "blackout.room"], outputs = ["blackout.timer-drawing", "blackout.battery", "blackout.requests", "blackout.memory"] }
+checkpoints = true
+limits = ["One seed inside the unfinished room pass admits its queued OAM, palette and platform transfer and the earlier live memories. Complete live memory is compared through the boundary where the station takes the scene.", "Per-line raster effects and the receiving station's own work are outside this scope."]
+
+[[case.borrowed]]
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["end of vblank", "cartridge write completion", "requested commit"]
+phase = "suspended work and NMI return"
+claim = "the cartridge and queued graphics finish from the one suspended seed"

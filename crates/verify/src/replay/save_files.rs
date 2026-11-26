@@ -93,17 +93,17 @@ const AREAS: [Area; 7] = [
     Area::Ceres,
 ];
 
-struct Capture {
-    profile: PlayerProfile,
-    progress: Progress,
-    maps: RememberedMaps,
-    live_map: ExploredCells,
-    area: Area,
-    station: StationId,
+pub(super) struct Capture {
+    pub(super) profile: PlayerProfile,
+    pub(super) progress: Progress,
+    pub(super) maps: RememberedMaps,
+    pub(super) live_map: ExploredCells,
+    pub(super) area: Area,
+    pub(super) station: StationId,
 }
 
 impl Capture {
-    fn from_record(record: &oracle_record::FrameRecord) -> Option<Self> {
+    pub(super) fn from_record(record: &oracle_record::FrameRecord) -> Option<Self> {
         let read = |at: usize| {
             record
                 .wram

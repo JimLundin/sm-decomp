@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "138da4ed4b7edef40bd50b725f6f285b100aa57ceb797e7ad937060cd50f59c7"
+index_sha256 = "a19fd0b623ad075e0805a417a0b48d37fcb689cf3005b746ab127fdcb69e1949"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1238,3 +1238,39 @@ null_fields = 1752
 restorations = 936
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "blackout/elevator-through-dispatch"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "926303315d83f1738685d60008e34211431cba280479abf6a6acffb76bb2b9b5"
+
+[case.counts]
+cuts = 79
+fields = 158
+outputs = 237
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 79
+pending_boundaries = 1
+pending_restorations = 1
+
+[[case]]
+id = "blackout/pending-room-publication"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "5e0a3f5d1cdc5553683d1c66e489c67b95cde912ba305898fc2a0658d0d02465"
+
+[case.counts]
+cuts = 3
+fields = 6
+outputs = 12
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 3
+restorations = 3
+pending_boundaries = 1
+pending_restorations = 1

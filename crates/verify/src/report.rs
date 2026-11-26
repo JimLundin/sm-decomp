@@ -179,6 +179,14 @@ const DOMAINS: &[Domain] = &[
         apart: &[],
     },
     Domain {
+        name: "screens-blackout",
+        bridge: None,
+        adapters: &["production/blackout.rs", "production/blackout/picture.rs"],
+        providers: &["blackout"],
+        areas: &[("blackout", &["scene.rs"])],
+        apart: &[],
+    },
+    Domain {
         name: "save-files",
         bridge: None,
         adapters: &[

@@ -258,6 +258,15 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
     if case.inputs == InputProvider::ScopedIntroInputs {
         return Some(super::played::intro::indexed::valid_count_shape(counts));
     }
+    if case.inputs == InputProvider::Blackout {
+        return Some(
+            counts.cuts.checked_mul(case.expectations.fields.len()) == Some(counts.fields)
+                && counts.cuts.checked_mul(case.expectations.outputs.len()) == Some(counts.outputs)
+                && counts.pending_boundaries == 1
+                && counts.publications == 0
+                && counts.replies == 0,
+        );
+    }
     if case.inputs == InputProvider::SaveFileBoundaries {
         return Some(
             counts.fields == counts.cuts

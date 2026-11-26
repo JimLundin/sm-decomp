@@ -26,6 +26,8 @@ pub enum CaseKind {
 #[serde(rename_all = "kebab-case")]
 /// An existing selected production owner.
 pub enum Responsibility {
+    /// The shaft blackout.
+    Blackout,
     /// The intro stage, scripts and their frame publications.
     Intro,
     /// Intro room installation, actor handoff and the first playable turn.
@@ -152,6 +154,8 @@ pub struct End {
 pub enum InputProvider {
     /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
     PlayedCeresInputs,
+    /// One elevator arrival and T1 scheduling.
+    Blackout,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
     ScopedIntroInputs,
     /// A causal intro start and the borrowed work-completion boundaries.
@@ -281,6 +285,24 @@ pub enum ObservationId {
     /// Energy, protection, pending loss and warning at the cut.
     #[serde(rename = "health.tail-reaction")]
     CeresTailHealth,
+    #[doc = "Blackout scene observation."]
+    #[serde(rename = "blackout.scene")]
+    BlackoutScene,
+    #[doc = "Blackout room observation."]
+    #[serde(rename = "blackout.room")]
+    BlackoutRoom,
+    #[doc = "Blackout battery observation."]
+    #[serde(rename = "blackout.battery")]
+    BlackoutBattery,
+    #[doc = "Blackout timer-drawing observation."]
+    #[serde(rename = "blackout.timer-drawing")]
+    BlackoutTimerDrawing,
+    #[doc = "Blackout requests observation."]
+    #[serde(rename = "blackout.requests")]
+    BlackoutRequests,
+    #[doc = "Blackout memory observation."]
+    #[serde(rename = "blackout.memory")]
+    BlackoutMemory,
     /// Intro stage, scripts, dissolves, visibility and brightness.
     #[serde(rename = "intro.state")]
     IntroState,
@@ -893,6 +915,9 @@ fn rule_exists(rule: &str) -> bool {
         || save_files::CATALOGUE
             .iter()
             .any(|entry| rule == format!("save-files/{:?}", entry.id))
+        || screens_blackout::catalogue::BehaviourId::ALL
+            .iter()
+            .any(|id| rule == format!("screens-blackout/{id:?}"))
         || screens_discovery::catalogue::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("screens-discovery/{id:?}"))
@@ -965,6 +990,17 @@ macro_rules! flashback_observations {
             | ObservationId::FlashbackCgram
             | ObservationId::FlashbackOam
             | ObservationId::FlashbackBg1Y
+    };
+}
+
+macro_rules! blackout_observations {
+    () => {
+        O::BlackoutScene
+            | O::BlackoutRoom
+            | O::BlackoutBattery
+            | O::BlackoutRequests
+            | O::BlackoutMemory
+            | O::BlackoutTimerDrawing
     };
 }
 
@@ -1051,6 +1087,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::HealthTailWarning
         | O::HealthTailDrawnProtection
         | O::CeresTailHealth => Responsibility::Health,
+        blackout_observations!() => Responsibility::Blackout,
         O::CeresTailKnockback
         | O::TouchdownClip
         | O::TouchdownFit
@@ -1135,6 +1172,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("screens-flashback/", Responsibility::Flashback),
         ("screens-discovery/", Responsibility::Discovery),
         ("samus-movement/", Responsibility::Movement),
+        ("screens-blackout/", Responsibility::Blackout),
         ("screens-playback/", Responsibility::Playback),
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
@@ -1158,6 +1196,15 @@ fn movement_witnessed_fields(
 ) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "screens-blackout/ElevatorStopsSamus"
+        | "screens-blackout/PlatformWait"
+        | "screens-blackout/DepartureHandoff" => &[
+            O::BlackoutScene,
+            O::BlackoutRoom,
+            O::BlackoutRequests,
+            O::BlackoutBattery,
+            O::BlackoutTimerDrawing,
+        ],
         "samus-movement/Jumping" if provider == InputProvider::PassageJumpDraws => {
             &[O::DrawnJumpHeld, O::LastDrawJump]
         }
@@ -1801,6 +1848,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::PlayedCeresInputs {
         return super::played::indexed::valid(case);
+    }
+    if case.inputs == InputProvider::Blackout {
+        return super::blackout::valid(case);
     }
     if case.inputs == InputProvider::IntroRoomJoinInputs {
         return super::intro_rooms::valid(case);

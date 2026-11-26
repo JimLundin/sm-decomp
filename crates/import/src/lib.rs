@@ -5,6 +5,7 @@
 pub mod actors;
 pub mod audio;
 pub mod cache;
+pub mod countdown;
 pub mod discovery;
 pub mod flashback;
 pub mod flight;

@@ -1,0 +1,113 @@
+# The state starts in Shaft at full brightness. All unstated fixture values
+# are invented. Room represents one new pass, Interrupt an unfinished cut,
+# VblankEnded the safe display interval for the handoff and SaveFinished the
+# cartridge completion. Publish is the finishing display opportunity. NewWork offers
+# a fresh dispatch. The timer picture uses invented sprite identities.
+# Only listed fields are asserted. After snapshots use phase names from the
+# receiving contract. Timer content here is represented by centiseconds.
+
+[[vector]]
+id = "B-reach"
+source = "constructed"
+entries = ["ElevatorStopsSamus"]
+before = { timer = 888, light = 12 }
+takes = ["Room"]
+input = { reached = true, drawn_timer = 886 }
+after = { phase = "Hold", hold = 60, timer = 886, light = 12, events = ["StandAndLock"] }
+
+[[vector]]
+id = "B-no-reach"
+source = "constructed"
+entries = ["ElevatorStopsSamus"]
+before = { timer = 888, light = 12 }
+takes = ["Room"]
+after = { phase = "Shaft", hold = 0, timer = 888, light = 12, events = [] }
+
+[[vector]]
+id = "B-duplicate"
+source = "constructed"
+entries = ["ElevatorStopsSamus", "PlatformWait"]
+before = { phase = "Hold", hold = 3, timer = 886 }
+takes = ["Room"]
+input = { reached = true, drawn_timer = 885 }
+after = { phase = "Hold", hold = 2, timer = 886, events = ["ContinueRoom"] }
+
+[[vector]]
+id = "B-wait"
+source = "constructed"
+entries = ["PlatformWait"]
+before = { phase = "Hold", hold = 23, timer = 887, finished = 5 }
+takes = ["Room", "Publish"]
+after = { phase = "Hold", hold = 22, timer = 887, light = 15, finished = 6, room_work = 1, events = ["ContinueRoom"] }
+
+[[vector]]
+id = "B-enter-fade"
+source = "constructed"
+entries = ["PlatformWait"]
+before = { phase = "Hold", hold = 1, timer = 140 }
+takes = ["Room", "Publish"]
+after = { phase = "Fade", hold = 0, light = 15, published_light = 15, room_work = 1, events = ["ContinueRoom"] }
+
+[[vector]]
+id = "B-dim"
+source = "constructed"
+entries = ["PlatformWait"]
+before = { phase = "Fade", light = 8, published_light = 8, timer = 725 }
+takes = ["Room", "Publish"]
+after = { phase = "Fade", light = 7, published_light = 7, timer = 725, room_work = 1, events = ["ContinueRoom"] }
+
+[[vector]]
+id = "B-blank"
+source = "constructed"
+entries = ["PlatformWait"]
+before = { phase = "Fade", light = 1, published_light = 1, finished = 40 }
+takes = ["Room", "Interrupt"]
+after = { phase = "AwaitBlank", light = 0, published_light = 1, room_work = 1, finished = 40, events = ["ContinueRoom"] }
+
+[[vector]]
+id = "B-no-repeat"
+source = "constructed"
+entries = ["PlatformWait"]
+before = { phase = "AwaitBlank", light = 0, published_light = 1, finished = 40 }
+takes = ["Interrupt", "Interrupt"]
+after = { phase = "AwaitBlank", light = 0, published_light = 1, room_work = 0, finished = 40, events = [] }
+
+[[vector]]
+id = "B-save-start"
+source = "constructed"
+entries = ["DepartureHandoff"]
+before = { phase = "AwaitBlank", light = 0, published_light = 1, timer = 725, finished = 40 }
+takes = ["VblankEnded", "Interrupt"]
+after = { phase = "Saving", target = "ZebesFlight", timer = 725, timer_visible = true, shaft_rotates = true, published_light = 1, room_work = 0, finished = 40, events = ["DisableShaftInterrupts", "PrepareSpriteOnly", "CaptureEscapeSave"] }
+
+[[vector]]
+id = "B-save-finish"
+source = "constructed"
+entries = ["DepartureHandoff"]
+before = { phase = "Saving", target = "ZebesFlight", light = 0, published_light = 1, timer = 725, finished = 40 }
+takes = ["SaveFinished", "NewWork"]
+after = { phase = "Explosion", final_room_published = false, target = "ZebesFlight", timer = 725, timer_visible = false, shaft_rotates = false, published_light = 1, finished = 40, events = ["StopMusic", "SilenceOne", "SilenceTwo", "SilenceThree", "PrepareStationExplosion"] }
+
+[[vector]]
+id = "B-publish"
+source = "constructed"
+entries = ["DepartureHandoff"]
+before = { phase = "Explosion", target = "ZebesFlight", light = 0, published_light = 1, timer_visible = false, shaft_rotates = false, finished = 40 }
+takes = ["Publish"]
+after = { phase = "Explosion", final_room_published = true, published_light = 0, room_work = 0, finished = 41, events = [] }
+
+[[vector]]
+id = "B-save-restore"
+source = "constructed"
+entries = ["DepartureHandoff"]
+before = { phase = "AwaitBlank", light = 0, published_light = 1, timer = 725, finished = 40, pending_timer_pieces = [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47] }
+takes = ["VblankEnded", "Interrupt", "Restore", "SaveFinished", "Publish"]
+after = { phase = "Explosion", final_room_published = true, pending_timer_pieces = [], displayed_timer_pieces = [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47], target = "ZebesFlight", timer = 725, timer_visible = false, shaft_rotates = false, light = 0, published_light = 0, room_work = 0, finished = 41, events = ["DisableShaftInterrupts", "PrepareSpriteOnly", "CaptureEscapeSave", "StopMusic", "SilenceOne", "SilenceTwo", "SilenceThree", "PrepareStationExplosion"] }
+
+[[vector]]
+id = "B-dispatch-once"
+source = "constructed"
+entries = ["DepartureHandoff"]
+before = { phase = "Explosion", target = "ZebesFlight", light = 0, published_light = 0, timer_visible = false, shaft_rotates = false, finished = 41, final_room_published = true }
+takes = ["NewWork", "NewWork"]
+after = { phase = "Dispatched", finished = 41, room_work = 0, events = ["DispatchExplosion"] }

@@ -74,6 +74,8 @@ impl MovementContent {
 /// Content selected by the finite production recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionContent {
+    /// Ceres blackout with its room picture and cartridge.
+    Blackout(Box<super::blackout::Content>),
     /// The imported intro scene.
     Intro(Box<screens_intro::IntroContent>),
     /// The intro's room collision and Samus's ordinary body and appearance.
@@ -122,6 +124,8 @@ pub enum ProductionContent {
 /// Rules selected by the same recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionRules {
+    /// Ceres blackout with its room picture and cartridge.
+    Blackout,
     /// Rules of the intro scene.
     Intro(screens_intro::Rules),
     /// The ordinary room turn's movement and appearance rules.

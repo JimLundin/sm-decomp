@@ -150,10 +150,7 @@ pub(super) fn run(
             };
             record_cut(result, &mut digest, &expected, &null, *cut)?;
             if case.checkpoints {
-                if matches!(production.state(),
-                    game::state::owned::OwnedState::SaveFiles(state)
-                        if matches!(state.cartridge.pending, types::save_files::PendingAction::Write { .. }))
-                {
+                if pending_write(&production) {
                     count(&mut result.counts.pending_boundaries, 1)?;
                 }
                 // A one-opportunity floor witness resumes across the actual advance.
@@ -219,9 +216,7 @@ fn verify_checkpoints(
         let failed = Outcome::CheckpointFailure { cut: start };
         let mut restored = Production::restore(&saved, content.clone(), rules.clone())
             .map_err(|_| failed.clone())?;
-        let pending_save = matches!(restored.state(),
-            game::state::owned::OwnedState::SaveFiles(state)
-                if matches!(state.cartridge.pending, types::save_files::PendingAction::Write { .. }));
+        let pending_save = pending_write(&restored);
         let compared_suffix = schedule
             .iter()
             .filter(|cut| **cut > start)
@@ -254,6 +249,21 @@ fn verify_checkpoints(
         count(&mut result.counts.restorations, 1)?;
     }
     Ok(())
+}
+
+fn pending_write(production: &Production) -> bool {
+    use game::state::owned::OwnedState;
+    let cartridge = if let OwnedState::SaveFiles(state) = production.state() {
+        &state.cartridge
+    } else if let OwnedState::Blackout(state) = production.state() {
+        &state.owners.0.files.cartridge
+    } else {
+        return false;
+    };
+    matches!(
+        cartridge.pending,
+        types::save_files::PendingAction::Write { .. }
+    )
 }
 
 type CutCheckpoint = (u64, SavedProduction, ActualReader);

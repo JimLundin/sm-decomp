@@ -64,6 +64,10 @@ name = "boss-ceres-ridley"
 rounds = 8
 
 [[model]]
+name = "screens-blackout"
+rounds = 1
+
+[[model]]
 name = "world-doors"
 rounds = 2
 
@@ -402,9 +406,9 @@ name = "Cinematics and credits"
 area = "screens"
 wave = 3
 rounds = 5
-# Inferred: B8 for the escape's end, Ceres's explosion.
-reads = ["B8"]
-model = ["screens-arrival", "screens-flight"]
+# The elevator receives the shaft reach and carries the timer, Health, room clocks and cartridge.
+reads = ["B8", "G1", "G2", "H1", "H2", "P2"]
+model = ["screens-arrival", "screens-flight", "screens-blackout"]
 status = "in-progress"
 
 [[domain]]

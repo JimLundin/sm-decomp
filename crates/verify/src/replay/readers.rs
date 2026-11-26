@@ -11,6 +11,7 @@ use game::production::{
 use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
+    Blackout(super::blackout::Tape<game::production::blackout::Cut>),
     Intro(super::played::intro::indexed::Inputs),
     IntroRooms(super::intro_rooms::Inputs),
     Flashback(super::flashback::Inputs),
@@ -33,6 +34,7 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
+    Blackout(super::blackout::Tape<ExpectedCut>),
     Intro(super::played::intro::indexed::Expected),
     IntroRooms(Box<super::intro_rooms::Expected>),
     Flashback(super::flashback::Expectations),
@@ -53,6 +55,7 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone)]
 pub(super) enum ActualReader {
+    Blackout(bool),
     Intro,
     IntroRooms,
     Flashback,
@@ -108,6 +111,7 @@ impl InputReader {
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::Blackout(tape) => tape.advance(production, cut),
             Self::Intro(inputs) => inputs.advance(production, cut),
             Self::Flashback(inputs) => inputs.advance(production, cut),
             Self::Playback(inputs) => super::playback::advance(production, inputs, cut),
@@ -210,6 +214,9 @@ impl ActualReader {
             (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
                 super::discovery::actual(production, Some(&outputs))
             }
+            (Self::Blackout(late), InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
+                super::blackout::actual(production, &out, *late)
+            }
             (
                 Self::HealthTail,
                 InputReader::HealthTail(_),
@@ -296,6 +303,11 @@ impl ActualReader {
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
             Self::JumpHistory => super::jump_history::actual(production),
             Self::Discovery => super::discovery::actual(production, None),
+            Self::Blackout(late) => super::blackout::actual(
+                production,
+                &game::production::blackout::Output::default(),
+                *late,
+            ),
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::IntroRooms => super::intro_rooms::actual(production),
             Self::HealthTail => super::health_tail::initial(production),
@@ -344,6 +356,7 @@ impl ExpectedReader {
         match self {
             Self::Intro(expected) => expected.read(cut),
             Self::IntroRooms(expected) => expected.read(cut),
+            Self::Blackout(tape) => tape.at(cut).cloned(),
             Self::Flashback(expected) => expected.at(cut),
             Self::Playback(expected) => super::playback::at(expected, cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),

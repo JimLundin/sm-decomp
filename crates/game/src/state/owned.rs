@@ -70,6 +70,8 @@ impl Pinned for DiscoveryPin {
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
+    /// Ceres shaft blackout, its live owners and suspended picture.
+    Blackout(Box<crate::production::blackout::State>),
     /// Complete intro State and the displayed palette.
     Intro(Box<crate::production::played::intro::State>),
     /// The intro room join and its first-turn actors.

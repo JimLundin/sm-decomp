@@ -23,6 +23,10 @@
 //! - `HudState::boss_blanks_the_map`: a boss met on entering its room, which blanks the
 //!   mini-map and turns it off.
 //!
+//! A caller that owns the escape countdown on its own steps it with `Countdown::play`, the same
+//! turn `HudState::frame_of_play` gives it: from the frame's `CountdownInputs` it returns the
+//! countdown's answer, its expiry and its picture, apart from the rest of the HUD.
+//!
 //! The HUD's cells, her map's pictures and the sets of her map's cells are each a `Grid`, read
 //! and written at a `Place`, column first; a place outside a grid has no cell. A picture with
 //! its flips is the shared `Look`; a HUD cell, a `Tile`, is a look in one of its colour sets.

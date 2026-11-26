@@ -63,6 +63,14 @@ pub(super) fn admit(
     rules: &ProductionRules,
 ) -> Result<OwnedState, AdmissionFault> {
     Ok(match (seed, content, rules) {
+        (
+            ProductionSeed::Blackout(state),
+            ProductionContent::Blackout(_),
+            ProductionRules::Blackout,
+        ) => {
+            state.validate().map_err(AdmissionFault::Blackout)?;
+            OwnedState::Blackout(state)
+        }
         (ProductionSeed::Intro(state), ProductionContent::Intro(_), ProductionRules::Intro(_)) => {
             OwnedState::Intro(state)
         }
@@ -180,6 +188,12 @@ fn advance(
             super::jump_history::advance(&mut state.0, sample);
             ProductionOutputs::JumpHistory
         }
+        (
+            OwnedState::Blackout(state),
+            ProductionContent::Blackout(content),
+            ProductionRules::Blackout,
+            AdvanceInput::Blackout(cut),
+        ) => state.output(content, cut)?,
         (
             OwnedState::HealthTail(state),
             ProductionContent::HealthTail(content),

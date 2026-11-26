@@ -25,6 +25,7 @@ world_haze = { path = "../clean/world_haze" }
 screens_arrival = { path = "../clean/screens_arrival" }
 samus_health = { path = "../clean/samus_health" }
 run_progress = { path = "../clean/run_progress" }
+screens_blackout = { path = "../clean/screens_blackout" }
 save_files = { path = "../clean/save_files" }
 samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
