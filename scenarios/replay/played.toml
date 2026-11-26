@@ -23,15 +23,15 @@ movie = "any"
 # file select with a new file chosen in slot A, the options menu with the moonwalk setting
 # turned on, and start game fading out; the options hand on to the intro, played on through
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
-# It installs the fight room across the interrupt and plays Samus and Mother Brain until the first missile press.
+# It installs the room and plays the recorded fight through two missile hits and the first ring knockback.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 2310
-held = 2309
-stop = { failed = "Intro(IntroRoom(ActiveEncounter))" }
+end = 2400
+held = 2399
+stop = { failed = "intro-room.actor.radius.y" }
 seed_frame = 0
-frames = [1, 2309]
+frames = [1, 2399]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it

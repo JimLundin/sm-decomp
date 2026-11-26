@@ -14,8 +14,9 @@ pub use cartridge::{Cartridge, CartridgeFrame, Platform};
 mod file_select;
 mod intro;
 mod intro_actor;
+mod intro_cannon;
 
-pub use intro::PlayingIntro;
+pub use intro::{IntroTiming, PlayingIntro};
 pub use intro_actor::{ActorFile, Actors, Battle, intro_buttons};
 mod options;
 mod power_on;
@@ -160,6 +161,10 @@ pub struct ActorsContent {
     pub room: super::intro_rooms::ScopedContent,
     /// Movement and appearance parameters.
     pub rules: super::intro_rooms::ScopedRules,
+    /// Mother Brain’s flash palette and encounter pictures.
+    pub encounter: data::assets::flashback::Scene,
+    /// Missile flight, impact, exhaust and pose descriptors.
+    pub missiles: super::intro_missiles::Content,
     /// Recorded intro controls.
     pub pad: data::assets::playback::ScenePad,
 }
@@ -170,8 +175,10 @@ pub struct ActorsContent {
 /// random number's seeding as the game settles, and audio's whether a tune asked for still
 /// waits to load.
 pub trait Answers: SaveMemory {
+    /// The platform timing phase when playable intro work overruns the cut.
+    fn intro_timing(&self) -> IntroTiming;
     /// Buttons latched before unfinished work.
-    fn pending_press(&self) -> bool;
+    fn pending_buttons(&self) -> Pressed;
     /// Audio's queue count read by a playable room actor.
     fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting;
     /// The random number as the game settles.

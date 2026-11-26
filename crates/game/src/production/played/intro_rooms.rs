@@ -349,26 +349,11 @@ impl State {
         if !self.pending() {
             return Err(Fault::Order);
         }
-        self.quiet_turn(pad, parity, content, motion)
-    }
-
-    /// Advance a neutral actor in the installed room before weapons or encounter contact.
-    ///
-    /// # Errors
-    /// The room is absent, the turn has a control or weapons dependency, or motion fails.
-    pub(super) fn quiet_turn(
-        &mut self,
-        pad: DemoPad,
-        parity: Parity,
-        content: &Content,
-        motion: &Motion<'_>,
-    ) -> Result<FirstTurn, Fault> {
-        let active = self.active().ok_or(Fault::Order)?;
-        let actor = &mut self.actor;
         if pad != DemoPad::default()
-            || actor.shots.0.count.0 != 0
-            || actor.shots.0.cooldown.0 != 0
-            || actor
+            || self.actor.shots.0.count.0 != 0
+            || self.actor.shots.0.cooldown.0 != 0
+            || self
+                .actor
                 .shots
                 .0
                 .slots
@@ -377,6 +362,22 @@ impl State {
         {
             return Err(Fault::ActiveEncounter);
         }
+        self.actor_turn(pad, parity, content, motion)
+    }
+
+    /// Step motion and appearance after the demo has issued its controls.
+    ///
+    /// # Errors
+    /// The room is absent, the selection is unsupported, or motion fails.
+    pub(super) fn actor_turn(
+        &mut self,
+        pad: DemoPad,
+        parity: Parity,
+        content: &Content,
+        motion: &Motion<'_>,
+    ) -> Result<FirstTurn, Fault> {
+        let active = self.active().ok_or(Fault::Order)?;
+        let actor = &mut self.actor;
         let world = Populated {
             world: &content.room(active).world,
             outside: Flag::new(false),
@@ -384,9 +385,10 @@ impl State {
         let mut activities = types::Set::default();
         activities[samus_appearance::Activity::Cinematic] = true;
         let energy = actor.health.0.energy.whole.get();
-        let selected = match active {
-            Start::Fight => samus_appearance::SelectedItem::Missiles,
-            Start::Discovery => samus_appearance::SelectedItem::None,
+        let selected = match actor.carry.0.selection.item() {
+            Some(SelectableItem::Ammo(Ammo::Missiles)) => samus_appearance::SelectedItem::Missiles,
+            None => samus_appearance::SelectedItem::None,
+            Some(_) => return Err(Fault::ActiveEncounter),
         };
         let (her, ()) = actor
             .samus

@@ -59,6 +59,7 @@ pub(super) const BORROWED: &[&str] = &[
     "lag from the title on: how many frames of work finished in the interval, from the cut kind, and 2 where the game's own count steps by 2 at a requested NMI (an NMI inside the interval that the record's cut list doesn't show); any other disagreement is bad data",
     "the random number as the game settles (game-random's seeding of the boot), read from the record as the title begins",
     "audio from the intro on: whether a track waits and the sound count read by Samus at the start of her playable turn",
+    "T1 timing of an interrupted fight frame, from its CPU program counter and calling stack",
     "the initial platform battery and the cut at which the startup diagnostic and scan have finished",
 ];
 
@@ -80,7 +81,8 @@ pub(super) fn play(
         seed_held: &[],
         borrowed: BORROWED,
         masked: &[
-            "the displayed room tiles, sprite pixels and layer mirrors (E1, E2, E3 and E4)",
+            "room tiles, sprite pixels, non-weapon sprite attributes and layer mirrors (E1, E2, E3 and E4)",
+            "partly written palette, text and sprite shadow buffers inside an interrupted stage or drawing pass (T1)",
             "the unproduced retained tail of room memory and the opening palette transfers (T1)",
         ],
     };
@@ -122,6 +124,7 @@ struct Run {
     format: Format,
     content: Content,
     scenes: Scenes,
+    missile_observations: crate::replay::intro_missiles::Expected,
     ended: Option<u64>,
     controller: Controller,
     queues: Option<Queues>,
@@ -152,11 +155,20 @@ impl Run {
                         movement: samus_movement::Rules::default(),
                         appearance: samus_appearance::Rules::VANILLA,
                     },
+                    encounter: import::flashback::load(rom.lorom())
+                        .map_err(|_| data_failure(None, "intro encounter art"))?,
+                    missiles: game::production::played::intro_missiles::Content::new(
+                        import::projectile::import_intro_missile(rom.lorom())
+                            .map_err(|_| data_failure(None, "intro missile assets"))?,
+                        crate::replay::weapons::Content::load(path)?.weapons,
+                    )
+                    .map_err(|_| data_failure(None, "intro missile content"))?,
                     pad: import::playback::import(rom.lorom())
                         .map_err(|_| data_failure(None, "intro recorded controls"))?,
                 }),
             },
             scenes,
+            missile_observations: crate::replay::intro_missiles::Expected::load(rom.lorom())?,
             ended: None,
             controller: Controller::default(),
             queues: None,
@@ -208,7 +220,8 @@ impl Run {
                 DriverUpload::Continuing
             },
         };
-        let answers = Borrowed::read(began, previous).map_err(|outcome| super::at(cut, outcome))?;
+        let answers =
+            Borrowed::read(began, previous, record).map_err(|outcome| super::at(cut, outcome))?;
         if cut == 271 {
             let report =
                 self.cartridge
@@ -363,9 +376,72 @@ impl Run {
                 crate::replay::intro_rooms::opening_fields(&intro.actors, &record.wram)?;
             pairs.expected.extend(expected);
             pairs.actual.extend(actual);
+            if let Some(battle) = &intro.actors.battle {
+                let room = intro
+                    .actors
+                    .rooms
+                    .as_ref()
+                    .ok_or_else(|| data_failure(Some(cut), "played battle room"))?;
+                let (expected, actual) = self.missile_observations.played(
+                    record,
+                    &room.actor.shots.0,
+                    battle.supplies(&room.actor),
+                    finished.then_some(&battle.weapon_draws),
+                )?;
+                pairs.expected.extend(expected);
+                pairs.actual.extend(actual);
+            }
         }
         differs(&pairs.expected, &pairs.actual, cut)
     }
+}
+
+/// The interrupted call and its saved return sites identify how far work ran without
+/// reading any scene, actor, weapon or encounter quantities.
+pub(super) fn intro_timing(record: &FrameRecord) -> Result<front_end::IntroTiming, Outcome> {
+    use front_end::IntroTiming;
+    use oracle_record::{Cut, Nmi, NmiKind};
+    let Cut::NmiReturn(Nmi {
+        kind: NmiKind::Overrun,
+        interrupted_pc,
+        ..
+    }) = record.cut
+    else {
+        return Ok(IntroTiming::Unspecified);
+    };
+    let stack = usize::from(record.cpu.s);
+    let at = |offset: usize| {
+        stack
+            .checked_add(offset)
+            .and_then(|index| record.wram.get(index..))
+    };
+    let near = |offset| {
+        at(offset)
+            .and_then(|src| src.first_chunk::<2>())
+            .map(|word| u16::from_le_bytes(*word))
+    };
+    let far = |offset| {
+        at(offset)
+            .and_then(|src| src.first_chunk::<3>())
+            .map(|&[a, b, c]| u32::from_le_bytes([a, b, c, 0]))
+    };
+    let stage = |inner: usize, caller| {
+        near(inner) == Some(caller)
+            && near(inner.saturating_add(2)) == Some(0xa366)
+            && far(inner.saturating_add(6)) == Some(0x0082_8b11)
+            && near(inner.saturating_add(9)) == Some(0x896d)
+    };
+    let timing = match interrupted_pc {
+        0x0080_8a37 | 0x0080_8985 if far(2) == Some(0x0082_8975) => IntroTiming::FinalisingSprites,
+        0x008b_8d09 if stage(2, 0xb072) => IntroTiming::SettingUpFight,
+        0x008b_a876 if stage(6, 0xb2be) => IntroTiming::ClearingText,
+        0x008b_8d1e if stage(2, 0xb3e5) => IntroTiming::PreparingReturn,
+        _ => return Ok(IntroTiming::Unspecified),
+    };
+    if interrupted_pc != u32::from(record.cpu.k) << 16 | u32::from(record.cpu.pc) {
+        return Err(data_failure(None, "intro interrupted instruction"));
+    }
+    Ok(timing)
 }
 
 /// The first difference between the record's fields and the played ones.
@@ -524,6 +600,7 @@ mod tests {
         };
         const SHOOT: u16 = 0x0040;
         const FIRST_MISSILE: u64 = 2310;
+        const LAST_HELD_CUT: u64 = 2399;
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
@@ -531,8 +608,12 @@ mod tests {
         let mut began = previous.clone();
         let mut uninterrupted = super::Run::begin(&sources.rom, &previous).unwrap();
         let mut resumed = Vec::<super::Run>::new();
-        for cut in 1..FIRST_MISSILE {
+        for cut in 1..=LAST_HELD_CUT {
             let frame = rows.record(cut).unwrap();
+            if cut == FIRST_MISSILE {
+                assert!(super::super::finished(&frame));
+                assert_ne!(super::word(&frame.wram, DEMO_NEW_KEYS).unwrap() & SHOOT, 0);
+            }
             uninterrupted.step(&began, &previous, &frame, cut).unwrap();
             for fork in &mut resumed {
                 fork.step(&began, &previous, &frame, cut).unwrap();
@@ -542,7 +623,7 @@ mod tests {
                     "cartridge at {cut}"
                 );
             }
-            if matches!(cut, 569 | 2219) {
+            if matches!(cut, 569 | 2219 | 2320 | 2325) {
                 assert!(!super::super::finished(&frame));
                 resumed.push(uninterrupted.clone());
             }
@@ -551,22 +632,7 @@ mod tests {
             }
             previous = frame;
         }
-        assert_eq!(resumed.len(), 2);
-        let first_missile = rows.record(FIRST_MISSILE).unwrap();
-        assert!(super::super::finished(&first_missile));
-        assert_ne!(
-            super::word(&first_missile.wram, DEMO_NEW_KEYS).unwrap() & SHOOT,
-            0
-        );
-        for run in std::iter::once(&mut uninterrupted).chain(&mut resumed) {
-            assert!(matches!(
-                run.step(&began, &previous, &first_missile, FIRST_MISSILE),
-                Err(super::Outcome::Unsupported {
-                    cut: Some(FIRST_MISSILE),
-                    ..
-                })
-            ));
-        }
+        assert_eq!(resumed.len(), 4);
     }
 
     fn write(port: u8, value: u8) -> ApuAccess {

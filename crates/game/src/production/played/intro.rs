@@ -63,7 +63,13 @@ pub enum Fault {
     ActorUnstarted,
     /// Recorded controls could not supply the reached room turn.
     IntroControls,
-    /// Ongoing playable room turns after the first.
+    /// An interrupted room frame lacks a certified phase.
+    IntroTiming,
+    /// An unsupported weapon or content relation.
+    IntroWeapon(crate::weapons_projectiles_bridge::Fault),
+    /// Missile travel needs a terrain contact outside the flashback's admitted room extent.
+    IntroShotContact,
+    /// The encounter requested an effect whose recipient cannot yet play it.
     IntroRoomTurn,
 }
 

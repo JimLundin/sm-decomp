@@ -15,6 +15,7 @@ const IMPACT: u16 = 0xa039;
 const EXHAUST_START: u16 = 0xb5a1;
 const SPRITES: u8 = 0x93;
 
+#[derive(Clone)]
 pub(in crate::replay) struct Expected {
     shot_pictures: Vec<u16>,
     shot_maps: Vec<Spritemap>,
@@ -24,7 +25,7 @@ pub(in crate::replay) struct Expected {
 }
 
 impl Expected {
-    pub(super) fn load(rom: Lorom<'_>) -> Result<Self, Outcome> {
+    pub(in crate::replay) fn load(rom: Lorom<'_>) -> Result<Self, Outcome> {
         let flight = rom_word(rom, SPRITES, FLIGHT.wrapping_add(2))?;
         let mut shot_pictures = vec![flight];
         for number in 0..6_u16 {
@@ -68,6 +69,37 @@ impl Expected {
             missile_oam_attributes,
             cuts: Vec::new(),
         })
+    }
+
+    /// Compare live room weapons at each cut and both ordered draws on publication.
+    pub(in crate::replay) fn played(
+        &self,
+        frame: &FrameRecord,
+        shots: &weapons_projectiles::State,
+        supplies: game::production::played::intro_missiles::Supplies,
+        draws: Option<&[game::intent::SpriteDraw; 2]>,
+    ) -> Result<
+        (
+            Vec<crate::replay::compare::Observation>,
+            Vec<crate::replay::compare::Observation>,
+        ),
+        Outcome,
+    > {
+        let mut expected = self.state(frame)?;
+        let mut actual = super::observe::weapon_state(shots, supplies);
+        if let Some(draws) = draws {
+            let mut batch = game::state::video::NmiBatch::default();
+            for visit in draws {
+                batch.draw_sprites(visit);
+            }
+            batch.finalise_oam();
+            actual.push(field(
+                OAM,
+                super::observe::actual_oam(&batch.oam).into_iter().flatten(),
+            ));
+            expected.push(field(OAM, self.oam(frame)?.into_iter().flatten()));
+        }
+        Ok((expected, actual))
     }
 
     pub(super) fn read(

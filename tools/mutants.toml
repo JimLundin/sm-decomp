@@ -1330,10 +1330,12 @@ field = "intro-encounter.started"
 name = "played-intro-quiet-actor-not-carried"
 responsibility = "played"
 file = "crates/game/src/production/played/front_end/intro_actor.rs"
-before = "        room.quiet_turn(pad, parity, &content.room.rooms, &motion)"
+before = '''        let motion = room
+            .actor_turn(pad, parity, &content.room.rooms, &motion)'''
 after = '''        let mut discarded_actor = room.clone();
         let target = if room.pending() { &mut *room } else { &mut discarded_actor };
-        target.quiet_turn(pad, parity, &content.room.rooms, &motion)'''
+        let motion = target
+            .actor_turn(pad, parity, &content.room.rooms, &motion)'''
 case = "played any-power-on 0 2309"
 cut = 2221
 field = "intro-room.actor.clip-hold"
@@ -1342,15 +1344,15 @@ field = "intro-room.actor.clip-hold"
 name = "played-intro-quiet-encounter-not-carried"
 responsibility = "played"
 file = "crates/game/src/production/played/front_end/intro_actor.rs"
-before = '''        let effects = flashback::turn(
-            &mut battle.encounter,'''
-after = '''        let mut discarded_encounter = battle.encounter.clone();
-        let target = if battle.encounter.start == types::flashback::PendingStart::Pending {
-            &mut battle.encounter
+before = '''        flashback::turn(
+            &mut self.encounter,'''
+after = '''        let mut discarded_encounter = self.encounter.clone();
+        let target = if self.encounter.start == types::flashback::PendingStart::Pending {
+            &mut self.encounter
         } else {
             &mut discarded_encounter
         };
-        let effects = flashback::turn(
+        flashback::turn(
             target,'''
 case = "played any-power-on 0 2309"
 cut = 2221
@@ -1384,3 +1386,57 @@ after = "            let _ = backdrop;"
 case = "ridley/offscreen-retreat"
 cut = 1157
 field = "ceres.doors"
+
+[[fault]]
+name = "played-intro-missile-release-skipped"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_cannon.rs"
+before = "new_press: pad.pressed.any(button::SHOOT),"
+after = "new_press: false,"
+case = "played any-power-on 0 2310"
+cut = 2310
+field = "intro-room.actor.missiles"
+
+[[fault]]
+name = "played-intro-missile-flight-state-discarded"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_cannon.rs"
+before = '''        let mut world = Contacts::default();
+        let result = missiles::update(
+            &mut actor.shots.0,
+            input,
+            &mut supplies,
+            eligible,
+            content,
+            w1::Rules::REFERENCE,
+            &mut world,
+        )
+        .map_err(Fault::IntroWeapon)?;'''
+after = '''        let carried_slots = (actor.shots.0.count.0 != 0).then(|| actor.shots.0.slots.clone());
+        let mut world = Contacts::default();
+        let result = missiles::update(
+            &mut actor.shots.0,
+            input,
+            &mut supplies,
+            eligible,
+            content,
+            w1::Rules::REFERENCE,
+            &mut world,
+        )
+        .map_err(Fault::IntroWeapon)?;
+        if let Some(slots) = carried_slots {
+            actor.shots.0.slots = slots;
+        }'''
+case = "played any-power-on 0 2311"
+cut = 2311
+field = "weapons.intro-slots"
+
+[[fault]]
+name = "played-intro-missile-impact-state-discarded"
+responsibility = "played"
+file = "crates/game/src/production/played/front_end/intro_actor.rs"
+before = "missiles::hit(&mut room.actor.shots.0, slot, &content.missiles)"
+after = "missiles::hit(&mut room.actor.shots.0.clone(), slot, &content.missiles)"
+case = "played any-power-on 0 2329"
+cut = 2329
+field = "weapons.intro-slots"

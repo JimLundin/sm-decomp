@@ -49,8 +49,11 @@ fn actor_file() -> super::ActorFile {
 }
 
 impl Answers for NewGame {
-    fn pending_press(&self) -> bool {
-        false
+    fn intro_timing(&self) -> super::IntroTiming {
+        super::IntroTiming::Unspecified
+    }
+    fn pending_buttons(&self) -> Pressed {
+        Pressed::default()
     }
     fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting {
         samus_appearance::SoundsWaiting::new(0).unwrap()

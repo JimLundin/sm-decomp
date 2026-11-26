@@ -147,6 +147,8 @@ impl Cartridge {
 
 /// Front-end replies that are independent of the cartridge.
 pub trait Platform {
+    /// The platform timing phase at an unfinished intro cut.
+    fn intro_timing(&self) -> super::IntroTiming;
     /// The audio sender's count seen by a room actor.
     fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting;
     /// The initial random word at title entry.
@@ -158,7 +160,7 @@ pub trait Platform {
 struct LiveAnswers<'a, P> {
     cartridge: &'a Cartridge,
     platform: &'a P,
-    pressed: bool,
+    pressed: Pressed,
 }
 
 impl<P> screens_file_select::SaveMemory for LiveAnswers<'_, P> {
@@ -172,7 +174,10 @@ impl<P> screens_file_select::SaveMemory for LiveAnswers<'_, P> {
 }
 
 impl<P: Platform> Answers for LiveAnswers<'_, P> {
-    fn pending_press(&self) -> bool {
+    fn intro_timing(&self) -> super::IntroTiming {
+        self.platform.intro_timing()
+    }
+    fn pending_buttons(&self) -> Pressed {
         self.pressed
     }
     fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting {
@@ -236,7 +241,7 @@ impl State {
         let answers = LiveAnswers {
             cartridge: &save,
             platform: frame.platform,
-            pressed: frame.in_flight.values().any(|&down| down),
+            pressed: frame.in_flight,
         };
         let sounds = next.step(frame.end, frame.rules, frame.content, &answers)?;
         save.after(format, &next, frame.end.work)?;

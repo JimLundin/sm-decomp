@@ -501,6 +501,8 @@ pub(super) fn opening_fields(
         i64::from(actors.rooms.is_some()),
     )];
     if started {
+        expected.push(quantity("intro-actor.protection", i64::from(raw(0x18a8)?)));
+        expected.push(quantity("intro-actor.push-hold", i64::from(raw(0x18aa)?)));
         expected.extend(ActorView::read(wram)?.observations());
         expected.push(quantity(
             "intro-actor.cannon-delay",
@@ -513,6 +515,14 @@ pub(super) fn opening_fields(
         )?);
     }
     if let Some(room) = &actors.rooms {
+        actual.push(quantity(
+            "intro-actor.protection",
+            i64::from(room.actor.health.0.protection.get()),
+        ));
+        actual.push(quantity(
+            "intro-actor.push-hold",
+            i64::from(room.actor.samus.movement.0.knockback.time_left.frames()),
+        ));
         actual.extend(actor_fields(&room.actor)?);
         actual.push(quantity(
             "intro-actor.cannon-delay",

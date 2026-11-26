@@ -39,14 +39,20 @@ fn id(picture: Option<&w1::PictureId>) -> u16 {
 }
 
 pub(super) fn actual_state(state: &State) -> Vec<Observation> {
+    weapon_state(&state.weapons.0, state.supplies)
+}
+
+pub(super) fn weapon_state(
+    weapons: &w1::State,
+    supplies: game::production::played::intro_missiles::Supplies,
+) -> Vec<Observation> {
     use w1::ShotState::{Flying, Free, Impact};
     let w1::State {
         count,
         cooldown,
         slots,
         exhaust,
-    } = &*state.weapons.0;
-    let supplies = state.supplies;
+    } = weapons;
     let slots = slots.values().flat_map(|shot| match shot {
         Free {
             trail,
@@ -195,7 +201,7 @@ pub(super) fn pieces(low: impl IntoIterator<Item = [u8; 4]>, high: &[u8]) -> Vec
         .collect()
 }
 
-fn actual_oam(oam: &Oam) -> Vec<[u16; 4]> {
+pub(super) fn actual_oam(oam: &Oam) -> Vec<[u16; 4]> {
     pieces(
         oam.low
             .iter()

@@ -140,11 +140,17 @@ pub(super) struct Borrowed {
     settled_random: RandomSequence,
     track: TrackReply,
     waiting: samus_appearance::SoundsWaiting,
+    timing: game::production::played::front_end::IntroTiming,
 }
 
 impl Borrowed {
-    pub(super) fn read(began: &FrameRecord, previous: &FrameRecord) -> Result<Self, Outcome> {
+    pub(super) fn read(
+        began: &FrameRecord,
+        previous: &FrameRecord,
+        current: &FrameRecord,
+    ) -> Result<Self, Outcome> {
         Ok(Self {
+            timing: super::power_on::intro_timing(current)?,
             waiting: crate::replay::appearance::sounds_waiting(&began.wram)?,
             settled_random: super::frame::random(&previous.wram)?,
             track: if music_ready(&began.wram)? {
@@ -157,6 +163,9 @@ impl Borrowed {
 }
 
 impl Platform for Borrowed {
+    fn intro_timing(&self) -> game::production::played::front_end::IntroTiming {
+        self.timing
+    }
     fn sounds_waiting(&self) -> samus_appearance::SoundsWaiting {
         self.waiting
     }

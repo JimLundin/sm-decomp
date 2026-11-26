@@ -1,13 +1,30 @@
 //! The intro's work frame and the playable room it schedules between its stage and scripts.
 
 use super::{
-    ActorFile, Actors, ActorsContent, Answers, Content, Fault, Screen, Sound, Stepped, Work,
+    ActorFile, Actors, ActorsContent, Answers, Content, Fault, Pressed, Screen, Sound, Stepped,
+    Work,
 };
 use crate::production::played::intro::{self, State};
 use screens_intro::{FightReply, FlashbackRequest, IntroEvent, Report, Rules, TrackReply};
 use types::Parity;
 use types::intro::IntroStage;
 use types::options::Settings;
+
+/// Progress of an interrupted intro frame, supplied by the platform timing owner.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum IntroTiming {
+    /// No certified playable-room phase.
+    #[default]
+    Unspecified,
+    /// The stage is setting up the room and its first palette, ahead of actor work.
+    SettingUpFight,
+    /// The last outbound dissolve is clearing text, ahead of actor work.
+    ClearingText,
+    /// The return stage is preparing its first palette, ahead of actor work.
+    PreparingReturn,
+    /// The engine is finalising sprite attributes after scene work and both weapon draws.
+    FinalisingSprites,
+}
 
 /// The scene, live actor and work already begun at an interrupted cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -24,7 +41,11 @@ enum Pending {
     /// The opening installed the actor; the stage and sound publications complete after the load.
     Opening(Box<(State, Report)>),
     /// Room installation is visible, but its actor turn and the scene scripts have yet to finish.
-    Fight { pressed: bool, track: TrackReply },
+    Fight { pressed: Pressed, track: TrackReply },
+    /// Room and scene work is complete. The platform still owes this frame its commit.
+    SpriteCommit,
+    /// The frame was interrupted inside its stage, before any room turn.
+    BeforeRoom { pressed: Pressed, track: TrackReply },
 }
 
 impl PlayingIntro {
@@ -38,16 +59,20 @@ impl PlayingIntro {
 
     fn begin_opening(
         &mut self,
-        pressed: bool,
+        pressed: Pressed,
         track: TrackReply,
         content: &Content,
         rules: Rules,
     ) -> Result<(), intro::Fault> {
         let mut scene = self.scene.clone();
-        let report =
-            intro::play_work_frame(&mut scene, pressed, track, &content.intro, rules, |_| {
-                Ok(FightReply::Fighting)
-            })?;
+        let report = intro::play_work_frame(
+            &mut scene,
+            pressed.values().any(|&down| down),
+            track,
+            &content.intro,
+            rules,
+            |_| Ok(FightReply::Fighting),
+        )?;
         self.equipment(&report)?;
         self.pending = Some(Pending::Opening(Box::new((scene, report))));
         Ok(())
@@ -64,7 +89,7 @@ impl PlayingIntro {
 
     fn interrupt(
         &mut self,
-        pressed: bool,
+        pressed: Pressed,
         track: TrackReply,
         content: &Content,
         rules: Rules,
@@ -75,12 +100,13 @@ impl PlayingIntro {
         if self.scene.intro.stage == IntroStage::Begins {
             return self.begin_opening(pressed, track, content, rules);
         }
-        if self.scene.intro.stage == IntroStage::PageOneWaits && pressed {
+        if self.scene.intro.stage == IntroStage::PageOneWaits && pressed.values().any(|&down| down)
+        {
             // Apply the room install before the NMI. Retain the frame inputs for the
             // scripts and the room turn when the same frame finishes.
             let mut preview = self.scene.intro.clone();
             let frame =
-                screens_intro::begin_frame(&mut preview, pressed, track, &content.intro, rules);
+                screens_intro::begin_frame(&mut preview, true, track, &content.intro, rules);
             if frame
                 .requests()
                 .any(|request| request == FlashbackRequest::StartZebesFight)
@@ -95,7 +121,7 @@ impl PlayingIntro {
 
     fn finish(
         &mut self,
-        pressed: bool,
+        pressed: Pressed,
         track: TrackReply,
         count: u16,
         content: &Content,
@@ -109,12 +135,15 @@ impl PlayingIntro {
                 return Ok(report);
             }
             Some(Pending::Fight { pressed, track }) => (pressed, track, true),
+            Some(Pending::BeforeRoom { pressed, track }) => (pressed, track, false),
+            Some(Pending::SpriteCommit) => return Err(intro::Fault::IntroTiming),
             None => (pressed, track, false),
         };
         let actors = &mut self.actors;
+        let mut flash = None;
         let report = intro::play_work_frame(
             &mut self.scene,
-            pressed,
+            pressed.values().any(|&down| down),
             track,
             &content.intro,
             rules,
@@ -134,9 +163,15 @@ impl PlayingIntro {
                 } else {
                     Parity::Odd
                 };
-                actors.turn(frame, parity, waiting, actors_content(content)?)
+                let (reply, colours) =
+                    actors.turn(frame, parity, pressed, waiting, actors_content(content)?)?;
+                flash = colours;
+                Ok(reply)
             },
         )?;
+        if let Some(flash) = flash {
+            super::super::flashback::publish_flash(&mut self.scene.colours, flash);
+        }
         self.equipment(&report)?;
         Ok(report)
     }
@@ -154,25 +189,65 @@ pub(super) fn step(
     content: &Content,
     answers: &impl Answers,
 ) -> Result<Stepped, Fault> {
+    let mut drawn = work.finished();
     let report = match work {
+        Work::Unfinished if state.pending.is_some() => None,
+        Work::Unfinished if state.actors.battle.is_some() => {
+            let pressed = answers.pending_buttons();
+            let track = answers.track();
+            match answers.intro_timing() {
+                IntroTiming::FinalisingSprites => {
+                    let report = state
+                        .finish(
+                            pressed,
+                            track,
+                            count,
+                            content,
+                            rules,
+                            answers.sounds_waiting(),
+                        )
+                        .map_err(Fault::Intro)?;
+                    state.pending = Some(Pending::SpriteCommit);
+                    drawn = 1;
+                    Some(report)
+                }
+                IntroTiming::ClearingText | IntroTiming::PreparingReturn => {
+                    state.pending = Some(Pending::BeforeRoom { pressed, track });
+                    drawn = 1;
+                    None
+                }
+                IntroTiming::SettingUpFight | IntroTiming::Unspecified => {
+                    return Err(Fault::Intro(intro::Fault::IntroTiming));
+                }
+            }
+        }
         Work::Unfinished => {
             state
-                .interrupt(answers.pending_press(), answers.track(), content, rules)
+                .interrupt(answers.pending_buttons(), answers.track(), content, rules)
                 .map_err(Fault::Intro)?;
+            drawn = u16::from(state.pending.is_some());
             None
         }
-        Work::Finished(pressed) => Some(
-            state
-                .finish(
-                    pressed.values().any(|&down| down),
-                    answers.track(),
-                    count,
-                    content,
-                    rules,
-                    answers.sounds_waiting(),
-                )
-                .map_err(Fault::Intro)?,
-        ),
+        Work::Finished(_) if state.pending == Some(Pending::SpriteCommit) => {
+            state.pending = None;
+            drawn = 0;
+            None
+        }
+        Work::Finished(pressed) => {
+            drawn = u16::from(state.pending.is_none());
+            Some(
+                state
+                    .finish(
+                        pressed,
+                        answers.track(),
+                        count,
+                        content,
+                        rules,
+                        answers.sounds_waiting(),
+                    )
+                    .map_err(Fault::Intro)?,
+            )
+        }
         Work::FinishedTwice(_) => return Err(Fault::TwoFinished),
     };
     let sounds = report.map_or_else(Vec::new, |report| {
@@ -192,7 +267,7 @@ pub(super) fn step(
     Ok(Stepped {
         screen: Screen::Intro(Box::new(state)),
         finished,
-        drawn: finished,
+        drawn,
         sounds,
     })
 }

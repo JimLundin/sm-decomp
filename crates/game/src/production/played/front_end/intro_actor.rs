@@ -1,8 +1,10 @@
 //! The chosen file's actor and controls across the opening and the playable intro room.
 
 use super::super::intro::Fault;
-use super::super::{flashback, intro_rooms as rooms};
-use super::ActorsContent;
+use super::super::{flashback, intro_missiles as missiles, intro_rooms as rooms};
+use super::intro_cannon::{Cannon, VIEW};
+use super::{ActorsContent, Pressed};
+use crate::intent::SpriteDraw;
 use crate::production::playback::{self, Playback};
 use enum_map::EnumMap;
 use screens_intro::{ButtonSetting, Equipment, FightReply, FrameAwaitingReply};
@@ -10,7 +12,7 @@ use types::options::Settings;
 use types::save_files::{
     Ammunition, Control, ControlBindings, Gear, PadButton, PlayerProfile, Supply,
 };
-use types::{Parity, Parts};
+use types::{Parity, Parts, RowColours};
 
 /// The starting quantities handed to the intro by the file selection and options.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -78,8 +80,58 @@ pub struct Actors {
 pub struct Battle {
     /// The recorded controls.
     pub playback: Playback,
+    cannon: Cannon,
+    /// The encounter pictures after the two missile visits.
+    pub encounter_draw: SpriteDraw,
+    /// Both prepared missile and exhaust draws in their production order.
+    pub weapon_draws: [SpriteDraw; 2],
     /// The encounter situated in the room's background.
     pub encounter: flashback::EncounterState,
+}
+
+impl Battle {
+    fn encounter_turn(
+        &mut self,
+        frame: &FrameAwaitingReply<'_>,
+        parity: Parity,
+        room: &rooms::State,
+        candidates: Vec<weapons_projectiles::MissileCandidate>,
+    ) -> flashback::Effects {
+        let play = flashback::RoomPlay {
+            samus_x: room.actor.samus.movement.0.position.x.pixel(),
+            shots: candidates
+                .into_iter()
+                .map(|candidate| flashback::ShotCandidate {
+                    id: flashback::ShotId(missiles::slot_id(candidate.slot)),
+                    kind: flashback::ShotKind::Missile,
+                    x: core::num::Wrapping(candidate.whole_x),
+                })
+                .collect(),
+        };
+        flashback::turn(
+            &mut self.encounter,
+            flashback::Rules::REFERENCE,
+            match parity {
+                Parity::Even => Parity::Odd,
+                Parity::Odd => Parity::Even,
+            },
+            if frame
+                .requests()
+                .any(|request| request == screens_intro::FlashbackRequest::HideFightSamusAndShots)
+            {
+                flashback::ReturnDissolve::ReachesZero
+            } else {
+                flashback::ReturnDissolve::Continuing
+            },
+            &play,
+        )
+    }
+
+    /// The live ammunition, selected item and incoming-shot protection after room work.
+    #[must_use]
+    pub fn supplies(&self, actor: &rooms::Actor) -> missiles::Supplies {
+        self.cannon.supplies(actor)
+    }
 }
 
 impl Actors {
@@ -160,6 +212,9 @@ impl Actors {
         }
         self.battle = Some(Battle {
             playback,
+            cannon: Cannon::default(),
+            encounter_draw: SpriteDraw::default(),
+            weapon_draws: Default::default(),
             encounter,
         });
         Ok(())
@@ -169,11 +224,12 @@ impl Actors {
         &mut self,
         frame: &FrameAwaitingReply<'_>,
         parity: Parity,
+        movie: Pressed,
         waiting: samus_appearance::SoundsWaiting,
         content: &ActorsContent,
-    ) -> Result<FightReply, Fault> {
+    ) -> Result<(FightReply, Option<RowColours>), Fault> {
         let Some(battle) = &mut self.battle else {
-            return Ok(FightReply::Fighting);
+            return Ok((FightReply::Fighting, None));
         };
         let room = self.rooms.as_mut().ok_or(Fault::ActorUnstarted)?;
         let x = room.actor.samus.movement.0.position.x.pixel();
@@ -198,32 +254,73 @@ impl Actors {
             sounds_waiting: waiting,
             charge: samus_appearance::Charge::new(0).ok_or(Fault::IntroControls)?,
         };
-        room.quiet_turn(pad, parity, &content.room.rooms, &motion)
-            .map_err(Fault::IntroRoom)?;
-        let play = flashback::RoomPlay {
-            samus_x: room.actor.samus.movement.0.position.x.pixel(),
-            // The admitted quiet turn checked every shot slot.
-            shots: Vec::new(),
-        };
-        let effects = flashback::turn(
-            &mut battle.encounter,
-            flashback::Rules::REFERENCE,
-            match parity {
-                Parity::Even => Parity::Odd,
-                Parity::Odd => Parity::Even,
-            },
-            flashback::ReturnDissolve::Continuing,
-            &play,
-        );
-        if effects.ring_knockback.is_some() || effects.palette.is_some() {
-            return Err(Fault::IntroRoomTurn);
+        if turn.handoff.is_some() {
+            return Err(Fault::IntroControls);
         }
-        Ok(
+        let (input, eligible) = battle.cannon.inputs(
+            &room.actor,
+            pad,
+            self.buttons[Control::Shoot],
+            weapons_projectiles::UpdateMode::CannonAndShots,
+            &content.missiles,
+        )?;
+        let motion = room
+            .actor_turn(pad, parity, &content.room.rooms, &motion)
+            .map_err(Fault::IntroRoom)?;
+        let candidates =
+            battle
+                .cannon
+                .update(&mut room.actor, &input, eligible, &content.missiles)?;
+        if let Some(outcome) = &motion.movement {
+            battle.cannon.moved(outcome);
+        }
+        let effects = battle.encounter_turn(frame, parity, room, candidates);
+        if let Some(hit) = effects.missile_impact {
+            let slot = missiles::slot_from_id(hit.0).ok_or(Fault::IntroRoomTurn)?;
+            if !missiles::hit(&mut room.actor.shots.0, slot, &content.missiles) {
+                return Err(Fault::IntroRoomTurn);
+            }
+        }
+        room.actor.health.0.protection = room
+            .actor
+            .health
+            .0
+            .play_frame(
+                samus_health::Impact::Absent,
+                &samus_health::Rules::REFERENCE,
+            )
+            .state
+            .protection;
+        if let Some(ring) = effects.ring_knockback {
+            room.actor.health.0.protection =
+                samus_health::ProtectionFrames::new(ring.invincible_beats)
+                    .ok_or(Fault::IntroRoomTurn)?;
+            let push = &mut room.actor.samus.movement.0.knockback;
+            push.side = ring.direction;
+            push.time_left =
+                types::PushFrames::new(ring.knockback_beats).ok_or(Fault::IntroRoomTurn)?;
+        }
+        battle.weapon_draws =
+            missiles::draw_twice(&mut room.actor.shots.0, VIEW, &content.missiles)
+                .map_err(Fault::IntroWeapon)?;
+        battle.encounter_draw = flashback::draw(
+            &battle.encounter,
+            &content.encounter,
+            types::Pair {
+                x: core::num::Wrapping(VIEW.0.x),
+                y: core::num::Wrapping(VIEW.0.y),
+            },
+        );
+        battle.cannon.drawn(movie);
+        Ok((
             if effects.intro == Some(flashback::IntroRequest::CuePageTwo) {
                 FightReply::ReadyToReturn
             } else {
                 FightReply::Fighting
             },
-        )
+            effects
+                .palette
+                .map(|flash| flashback::flash_colours(&content.encounter, flash)),
+        ))
     }
 }
