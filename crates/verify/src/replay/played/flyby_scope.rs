@@ -147,18 +147,45 @@ mod tests {
                 resumed
                     .flyby_scope(&mut rows, record, cut, 1270, |_, _| Ok(()))
                     .unwrap();
-                assert_eq!(resumed.state, settled);
-                assert_eq!(resumed.drawing.retained().unwrap(), settled_drawing);
-                let passed = rows.record(1270).unwrap();
-                let warning = rows.record(1271).unwrap();
-                assert!(matches!(
-                    resumed.flyby_scoped_turn(&passed, &warning, 1271),
-                    Err(Outcome::Unsupported { cut: Some(1271), dependency })
-                        if dependency.ends_with("RidleyWarning")
-                ));
-                assert_eq!(resumed.state, settled);
-                assert_eq!(resumed.drawing.retained().unwrap(), settled_drawing);
+                assert!(
+                    resumed.state == settled,
+                    "{row} restored flyby state at {cut}"
+                );
+                assert!(
+                    resumed.drawing.retained().unwrap() == settled_drawing,
+                    "{row} restored flyby drawing at {cut}"
+                );
             }
+
+            // Carry Samus and the rest of the room in ordinary play before crossing
+            // the handoff. The scoped flyby deliberately holds Samus in place.
+            let seed = rows.record(1156).unwrap();
+            let mut live = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+            let controller = seed_controller(&seed).unwrap();
+            assert_eq!(
+                live.through(&mut rows, seed, controller, 1157..=1270)
+                    .unwrap(),
+                (114, Stop::End),
+                "{row} live flyby"
+            );
+            let passed = rows.record(1270).unwrap();
+            let mut restored = live.clone();
+            restored.restore_flyby(&passed).unwrap();
+            let controller = seed_controller(&passed).unwrap();
+            for candidate in [&mut live, &mut restored] {
+                assert_eq!(
+                    candidate
+                        .through(&mut rows, passed.clone(), controller, 1271..=1271)
+                        .unwrap(),
+                    (1, Stop::End),
+                    "{row} first warning turn"
+                );
+            }
+            assert!(restored.state == live.state, "{row} restored warning state");
+            assert!(
+                restored.warning_picture == live.warning_picture,
+                "{row} restored warning picture"
+            );
         }
     }
 
