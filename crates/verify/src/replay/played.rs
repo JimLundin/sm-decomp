@@ -995,7 +995,7 @@ mod tests {
         );
         let carried = run.state.clone();
         let boxes = movement::enemy_roster(&stopped.wram).unwrap();
-        let (doors, _) = ceres_doors::seed(&stopped.wram, &boxes).unwrap();
+        let (doors, _) = ceres_doors::seed(&stopped.wram, &boxes, false).unwrap();
         run.state.station = station::seed(&stopped.wram, doors, carried.station.stage).unwrap();
         assert_eq!(run.state.station, carried.station);
         let controller = super::seed_controller(&stopped).unwrap();
