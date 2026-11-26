@@ -229,8 +229,10 @@ pub enum Fault {
     RidleyAttacks,
     /// Ridley begins or continues the fake retreat.
     RidleyGivesUp,
-    /// Ridley has set up the backdrop and would start the getaway.
-    RidleyGetaway,
+    /// The getaway pass needs Samus’s shove.
+    RidleyGetawayPush,
+    /// The next run belongs to the evacuation warning.
+    RidleyWarning,
     /// A colour of the baby's content has more than 15 bits.
     BabyColours,
     /// Her suit's content is not sixteen colours of 15 bits.
@@ -309,6 +311,12 @@ impl State {
         let (hud_state, hud_outputs) =
             self.hud_frame(hud, &samus, her.after_moves(), health.state, content, rules)?;
         let mut quake = enemies.quake;
+        if let Some(effects) = enemies.ridley.and_then(|run| run.getaway) {
+            if effects.push.is_some() {
+                return Err(Fault::RidleyGetawayPush);
+            }
+            ridley::apply_getaway(effects, &mut quake, &mut palette);
+        }
         let shaken = quake::update(&mut quake)?;
         let doors = self.passage.in_play(
             touched,

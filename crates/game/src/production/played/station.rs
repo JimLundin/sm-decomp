@@ -110,6 +110,13 @@ impl State {
     pub(super) fn ran(&mut self, enemies: &Enemies) {
         self.doors = enemies.doors.iter().map(|run| run.door).collect();
         self.ridley = enemies.ridley.map(|run| run.ridley);
+        if let Some(stage) = enemies
+            .ridley
+            .and_then(|run| run.getaway)
+            .and_then(|getaway| getaway.stage)
+        {
+            self.stage = stage;
+        }
         self.place_backdrop(enemies);
     }
 
@@ -181,8 +188,22 @@ impl super::State {
         let her_energy = self.health.0.energy.whole.get();
         let ridley = station
             .ridley
-            .map(|ridley| ridley::run(ridley, running, random, her_energy, content, rules, palette))
+            .map(|ridley| {
+                ridley::run(
+                    ridley,
+                    running,
+                    (random, types::GameFrames(self.frame.finished_frames)),
+                    her_energy,
+                    content,
+                    rules,
+                    palette,
+                )
+            })
             .transpose()?;
+        let stage = ridley
+            .and_then(|run| run.getaway)
+            .and_then(|getaway| getaway.stage)
+            .unwrap_or(station.stage);
         let ridley_beaten = room_loading::Run {
             progress: passing.progress,
             ceres: station.stage,
@@ -196,6 +217,7 @@ impl super::State {
         }
         let doors = ceres_doors::run(
             station,
+            stage,
             &self.samus.movement.0,
             ridley_beaten,
             random,
@@ -221,6 +243,62 @@ impl super::State {
             doors,
             lights,
             quake,
+        })
+    }
+}
+
+/// What the flyby and its room owners publish when Samus's movement is outside the scope.
+pub struct FlybyOutput {
+    /// The flyby's complete effects, including its unserved request to movement.
+    pub picture: boss_ceres_ridley::GetawayEffects,
+    /// The room quake's offsets after the request.
+    pub quake: world_quake::Effects,
+}
+
+impl super::State {
+    /// Advance the same room actors and late flyby effects without stepping Samus.
+    ///
+    /// The caller provides one complete turn in Ridley's room. The carried Samus position
+    /// remains available to the doors. This entry returns the side-free request to movement.
+    ///
+    /// # Errors
+    /// Returns a typed fault for a missing flyby, warning handoff or invalid room turn.
+    pub fn step_flyby(
+        &mut self,
+        passing: &Passing<'_>,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<FlybyOutput, Fault> {
+        if !passing.work_begun
+            || !passing.work_done
+            || self.passage.doors != world_doors::Doors::Play
+        {
+            return Err(Fault::RidleyGetawayPush);
+        }
+        let random = self.frame.drawn(passing);
+        let mut palette = self.palette;
+        let enemies = self.enemies(
+            Running::Play(None),
+            random,
+            passing,
+            content,
+            rules,
+            &mut palette,
+        )?;
+        let picture = enemies
+            .ridley
+            .and_then(|run| run.getaway)
+            .ok_or(Fault::RidleyGetawayPush)?;
+        let mut quake = enemies.quake;
+        ridley::apply_getaway(picture, &mut quake, &mut palette);
+        let offsets = super::quake::update(&mut quake)?;
+        self.station.ran(&enemies);
+        self.palette = palette;
+        self.quake = canonical::model::Model(quake);
+        self.frame = self.frame.after(world_doors::Finishing::Finished, random);
+        Ok(FlybyOutput {
+            picture,
+            quake: offsets,
         })
     }
 }
@@ -313,7 +391,6 @@ mod tests {
 
     #[test]
     fn a_restored_stop_places_the_walls_and_the_tip_still_hits() {
-        use crate::production::played::Fault;
         use boss_ceres_ridley::{CoastRuns, FlightTail};
         use types::{Hit, PushFrames};
 
@@ -335,7 +412,7 @@ mod tests {
         let mut room = his_room(ridley, 24, Vec::new());
         let outputs = play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
         let run = outputs.ridley.unwrap();
-        assert_eq!(run.ridley.phase, RidleyPhase::GetawayReady);
+        assert_eq!(run.ridley.phase, RidleyPhase::GETAWAY_START);
         assert_eq!(
             run.hit,
             Some(Hit {
@@ -358,12 +435,9 @@ mod tests {
                 .all(|wall| wall.phase == Phase::Placed)
         );
         assert_eq!(room.station.stage, Stage::Calm);
-        let stopped = room.clone();
-        assert_eq!(
-            play(&mut room, types::Buttons::default(), Stage::Calm),
-            Err(Fault::RidleyGetaway)
-        );
-        assert_eq!(room, stopped);
+        let first = play(&mut room, types::Buttons::default(), Stage::Calm).unwrap();
+        assert_eq!(room.station.stage, Stage::Getaway);
+        assert!(first.ridley.unwrap().getaway.unwrap().sound.is_some());
     }
 
     /// Meeting the room's left side fast, his shake reaches the room's quake: the back layers,

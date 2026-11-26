@@ -331,7 +331,7 @@ impl Steered {
     pub(crate) fn coasts(runs: CoastRuns, speed: Pair<Speed>, hover_runs: HoverRuns) -> Self {
         runs.counted_down().map_or(
             Self {
-                phase: RidleyPhase::GetawayReady,
+                phase: RidleyPhase::GETAWAY_START,
                 speed: STILL,
                 hover_runs,
             },
@@ -510,7 +510,7 @@ pub fn flown(position: Pair<Px>, fraction: Pair<u8>, steered: &Steered) -> Moved
     let speed = steered.speed;
     let ceiling = if matches!(
         steered.phase,
-        RidleyPhase::Retreating | RidleyPhase::CoastingAbove(_) | RidleyPhase::GetawayReady
+        RidleyPhase::Retreating | RidleyPhase::CoastingAbove(_) | RidleyPhase::GETAWAY_START
     ) {
         RETREAT_CEILING
     } else {

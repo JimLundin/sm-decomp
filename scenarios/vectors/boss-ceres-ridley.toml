@@ -2119,6 +2119,131 @@ her = { position = [218, 185], body = [5, 16], protection = 0 }
 ridley_after = { phase = "EyeFading", steps = 3, look = "Rest", position = [186, 169], baby = { routine = "Fidget", step = 0, runs = 2, look = "First", position = [170, 191] }, shown = true, solid = false, cry = false, tangible = false, moving = false, roaring = false, music = false, roar = false, eye_colours = 1, curl = 16 }
 
 
+# Part 4c-3. Each G case is one run. The room supplies the path as content.
+# picture replaces the next picture in an invented path of 112 pictures, unless length names a shorter path.
+# The other pictures can have zero shift and a zoom of 256. At its end there is
+# no picture. The effects table names every request and selection in this run.
+
+[[vector]]
+id = "G-first"
+source = "constructed"
+entries = ["GetawayPass", "GetawayPicture"]
+getaway = { phase = "GetawayReady", baby = 0, wings = 0 }
+finished = 0
+picture = { shift = [3, -2], zoom = 2048 }
+getaway_after = { phase = "FlyingPast", shown = 1, position = [-125, 30], turn = 49, baby = 1, wings = 1 }
+effects = { stage = "Getaway", sound = "Getaway", baby_look = "Middle", wing_look = "Second", plane = "Flyby", scroll = [-125, 30], origin = [64, 64], matrix = [2048, 0, 0, 2048], zoom = 2048, shade = 8 }
+
+[[vector]]
+id = "G-first-between-beats"
+source = "constructed"
+entries = ["GetawayPass", "GetawayPicture"]
+getaway = { phase = "GetawayReady", baby = 2, wings = 1 }
+finished = 5
+picture = { shift = [-1, 4], zoom = 256 }
+getaway_after = { phase = "FlyingPast", shown = 1, position = [-129, 36], turn = 49, baby = 2, wings = 1 }
+effects = { stage = "Getaway", sound = "Getaway", plane = "Flyby", scroll = [-129, 36], origin = [64, 64], matrix = [256, 0, 0, 256], zoom = 256, shade = 1 }
+
+[[vector]]
+id = "G-baby-alone"
+source = "constructed"
+entries = ["GetawayPicture"]
+getaway = { phase = "FlyingPast", shown = 14, position = [-7, 25], turn = 0, baby = 2, wings = 0 }
+finished = 12
+picture = { shift = [2, 3], zoom = 256 }
+getaway_after = { phase = "FlyingPast", shown = 15, position = [-5, 28], turn = 48, baby = 3, wings = 0 }
+effects = { baby_look = "Middle", plane = "Flyby", scroll = [-5, 28], origin = [64, 64], matrix = [256, 0, 0, 256], zoom = 256, shade = 1 }
+
+[[vector]]
+id = "G-before-pass"
+source = "constructed"
+entries = ["GetawayPass"]
+getaway = { phase = "FlyingPast", shown = 103, position = [3, -7], turn = 0, baby = 0, wings = 1 }
+finished = 11
+picture = { shift = [1, 0], zoom = 640 }
+getaway_after = { phase = "FlyingPast", shown = 104, position = [4, -7], turn = 48, baby = 0, wings = 1 }
+effects = { plane = "Flyby", scroll = [4, -7], origin = [64, 64], matrix = [640, 0, 0, 640], zoom = 640, shade = 2 }
+
+[[vector]]
+id = "G-pass"
+source = "constructed"
+entries = ["GetawayPass", "GetawayPicture"]
+getaway = { phase = "FlyingPast", shown = 104, position = [20, 40], turn = 16336, baby = 1, wings = 0 }
+finished = 16
+picture = { shift = [-5, 11], zoom = 640 }
+getaway_after = { phase = "FlyingPast", shown = 105, position = [15, 51], turn = 16384, baby = 2, wings = 1 }
+effects = { push = "OutOfTheWay", quake = { reach = "Back", direction = "Diagonal", pixels = 3, frames = 64 }, baby_look = "Third", wing_look = "Second", plane = "Flyby", scroll = [15, 51], origin = [64, 64], matrix = [0, 640, -640, 0], zoom = 640, shade = 2 }
+
+[[vector]]
+id = "G-after-pass"
+source = "constructed"
+entries = ["GetawayPass"]
+getaway = { phase = "FlyingPast", shown = 105, position = [15, 51], turn = 16384, baby = 2, wings = 1 }
+finished = 17
+picture = { shift = [-5, 11], zoom = 640 }
+getaway_after = { phase = "FlyingPast", shown = 106, position = [10, 62], turn = 16432, baby = 2, wings = 1 }
+effects = { plane = "Flyby", scroll = [10, 62], origin = [64, 64], matrix = [0, 640, -640, 0], zoom = 640, shade = 2 }
+
+[[vector]]
+id = "G-negative-turn"
+source = "constructed"
+entries = ["GetawayPicture"]
+getaway = { phase = "FlyingPast", shown = 42, position = [5, 9], turn = 42192, baby = 2, wings = 1 }
+finished = 8
+picture = { shift = [-2, 5], zoom = 333 }
+getaway_after = { phase = "FlyingPast", shown = 43, position = [3, 14], turn = 42240, baby = 3, wings = 0 }
+effects = { baby_look = "Middle", wing_look = "First", plane = "Flyby", scroll = [3, 14], origin = [64, 64], matrix = [-204, -261, 261, -204], zoom = 333, shade = 1 }
+
+[[vector]]
+id = "G-wrap"
+source = "constructed"
+entries = ["GetawayPass", "GetawayPicture"]
+getaway = { phase = "FlyingPast", shown = 34, position = [32766, -32767], turn = 65520, baby = 3, wings = 1 }
+finished = 20
+picture = { shift = [4, -3], zoom = 385 }
+getaway_after = { phase = "FlyingPast", shown = 35, position = [-32766, 32766], turn = 32, baby = 0, wings = 1 }
+effects = { baby_look = "First", plane = "Flyby", scroll = [-32766, 32766], origin = [64, 64], matrix = [385, 0, 0, 385], zoom = 385, shade = 1 }
+
+[[vector]]
+id = "G-last"
+source = "constructed"
+entries = ["GetawayPass"]
+getaway = { phase = "FlyingPast", shown = 111, position = [18, -8], turn = 0, baby = 3, wings = 1 }
+finished = 7
+picture = { shift = [4, 6], zoom = 128 }
+getaway_after = { phase = "FlyingPast", shown = 112, position = [22, -2], turn = 48, baby = 3, wings = 1 }
+effects = { plane = "Flyby", scroll = [22, -2], origin = [64, 64], matrix = [128, 0, 0, 128], zoom = 128, shade = 0 }
+
+[[vector]]
+id = "G-short-room"
+source = "constructed"
+entries = ["GetawayPass"]
+getaway = { phase = "FlyingPast", shown = 2, position = [4, 6], turn = 193, baby = 0, wings = 0 }
+finished = 1
+length = 2
+getaway_after = { phase = "WarningReady" }
+effects = { plane = "Room", scroll = [0, 0], origin = [0, 0], matrix = [0, 0, 0, 0] }
+
+[[vector]]
+id = "G-pass-on-return"
+source = "constructed"
+entries = ["GetawayPass"]
+getaway = { phase = "FlyingPast", shown = 104, position = [15, 28], turn = 2001, baby = 2, wings = 1 }
+finished = 3
+length = 104
+getaway_after = { phase = "WarningReady" }
+effects = { push = "OutOfTheWay", quake = { reach = "Back", direction = "Diagonal", pixels = 3, frames = 64 }, plane = "Room", scroll = [0, 0], origin = [0, 0], matrix = [0, 0, 0, 0] }
+
+[[vector]]
+id = "G-room"
+source = "recorded"
+entries = ["GetawayPass"]
+getaway = { phase = "FlyingPast", shown = 112, position = [-268, 1019], turn = 5377, baby = 0, wings = 0 }
+finished = 10448
+getaway_after = { phase = "WarningReady" }
+effects = { plane = "Room", scroll = [0, 0], origin = [0, 0], matrix = [0, 0, 0, 0] }
+
+
 # Part 4c-2. Ridley's retreat above the room.
 # RT- uses the body and flight-tail fields of FT-. A CoastingAbove body carries
 # coast_runs. The walls and colours fields in ridley_after name this run's requests.

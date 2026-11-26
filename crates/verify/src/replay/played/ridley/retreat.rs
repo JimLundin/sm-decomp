@@ -34,7 +34,9 @@ fn word(wram: &[u8], at: usize) -> Result<u16, Outcome> {
 const fn retreat_phase(phase: RidleyPhase) -> bool {
     matches!(
         phase,
-        RidleyPhase::Retreating | RidleyPhase::CoastingAbove(_) | RidleyPhase::GetawayReady
+        RidleyPhase::Retreating
+            | RidleyPhase::CoastingAbove(_)
+            | RidleyPhase::Getaway(types::ceres_getaway::GetawayState::GetawayReady(_))
     )
 }
 

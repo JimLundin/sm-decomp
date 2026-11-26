@@ -5,10 +5,22 @@
 
 use core::num;
 
+use types::GameFrames;
+use types::ceres_getaway::{FlybyBeats, GetawayState};
+
 use crate::ridley_wait::RidleyWait;
 use crate::roar::{RidleyLook, RoarFigure};
 use crate::rules::Rules;
 use crate::waking::{BodyColours, EyeColours, ReadyWait, RemainingTurns, RidleyContent, RoarWait};
+
+/// Frame timing as Ridley reads it: the current passage and the game clock, not his own run count.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RidleyFrame {
+    /// Whether the door's passage is still under way (`RidleyWaits`).
+    pub passage_under_way: bool,
+    /// The game clock at the start of this frame (`GetawayPicture`).
+    pub finished: GameFrames,
+}
 
 /// His flight's phases, from his take-off to his hover. Listed alphabetically; the order means
 /// nothing.
@@ -65,9 +77,8 @@ pub enum RidleyPhase {
     Retreating,
     /// `FliesOutOfReach`: he coasts without pulling until the remaining runs are spent.
     CoastingAbove(CoastRuns),
-    /// `GetawayBackdrop`: stopped after the walls and current colours have been offered.
-    /// The next run belongs to the getaway.
-    GetawayReady,
+    /// `GetawayPass`: from the prepared backdrop through the return to the room.
+    Getaway(GetawayState),
     /// Her 100th hit ended his hover. A later part owns the fake retreat.
     FakeRetreat,
     /// Placed, the door's passage into his room still under way.
@@ -151,11 +162,16 @@ pub enum PhaseStep {
     PullsAway,
     /// Carry his momentum, or stop if the count is already zero.
     Coasts(CoastRuns),
-    /// An attack, the fake retreat, or the getaway takes over.
+    /// The flyby takes over from the airborne body.
+    Flyby(GetawayState),
+    /// An attack, the fake retreat, or the warning takes over.
     HandedOver,
 }
 
 impl RidleyPhase {
+    /// `GetawayBackdrop`: the ordinary handoff starts both flyby beats at zero.
+    pub const GETAWAY_START: Self = Self::Getaway(GetawayState::GetawayReady(FlybyBeats::START));
+
     /// Whether her touch and her shots meet him. They go through him before he takes his body's
     /// last colour set. He stays tangible through his flight, on the run he turns to an attack,
     /// and throughout the real retreat, including the last coast run when he stops.
@@ -169,7 +185,7 @@ impl RidleyPhase {
                 | Self::Attacking(_)
                 | Self::Retreating
                 | Self::CoastingAbove(_)
-                | Self::GetawayReady
+                | Self::Getaway(GetawayState::GetawayReady(_))
         )
     }
 
@@ -185,7 +201,7 @@ impl RidleyPhase {
                 | Self::Attacking(_)
                 | Self::Retreating
                 | Self::CoastingAbove(_)
-                | Self::GetawayReady
+                | Self::Getaway(GetawayState::GetawayReady(_))
                 | Self::FakeRetreat
         )
     }
@@ -215,12 +231,12 @@ impl RidleyPhase {
     /// and on the run he finds it at 0 starts his roar, its first figure, with the roar's wait.
     pub(crate) fn run(
         self,
-        passage_under_way: bool,
+        frame: RidleyFrame,
         content: &RidleyContent,
         rules: &Rules,
     ) -> PhaseStep {
         let waking = match self {
-            Self::Holding if passage_under_way => PhaseRun::at_rest(Self::Holding),
+            Self::Holding if frame.passage_under_way => PhaseRun::at_rest(Self::Holding),
             Self::Holding => PhaseRun::at_rest(Self::Waiting {
                 wait: rules.wake.first_count(),
             }),
@@ -242,9 +258,8 @@ impl RidleyPhase {
             Self::InFlight(flight) => return PhaseStep::Flies(flight),
             Self::Retreating => return PhaseStep::PullsAway,
             Self::CoastingAbove(runs) => return PhaseStep::Coasts(runs),
-            Self::Attacking(_) | Self::FakeRetreat | Self::GetawayReady => {
-                return PhaseStep::HandedOver;
-            }
+            Self::Getaway(state) => return PhaseStep::Flyby(state),
+            Self::Attacking(_) | Self::FakeRetreat => return PhaseStep::HandedOver,
         };
         PhaseStep::Waking(waking)
     }

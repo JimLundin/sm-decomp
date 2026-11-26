@@ -93,6 +93,10 @@ pub enum BehaviourId {
     FliesOutOfReach,
     /// When he stops, he places both walls and selects the getaway colours.
     GetawayBackdrop,
+    /// He flies past, shaking the scenery and asking movement to move her aside.
+    GetawayPass,
+    /// His flyby picture turns and grows; the baby and wings follow the game clock.
+    GetawayPicture,
     /// Placed with the room, each vent waits a random 1 to 32 runs before its first puff.
     VentPlaced,
     /// A vent runs only while it is in view, or nearly.
@@ -142,7 +146,7 @@ pub struct Behaviour {
 
 /// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
 /// his waking's four, his tail's three, his flight's six, his retreat's two, the flight tail's eight and the escape's steam's seven.
-const ENTRIES: usize = 58;
+const ENTRIES: usize = 60;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -478,6 +482,20 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
         id: BehaviourId::GetawayBackdrop,
         summary: "when he stops, he places both walls and selects the getaway colours",
         kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayPass,
+        summary: "he flies past, shakes the scenery and asks movement to move her aside",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::GetawayPicture,
+        summary: "his picture turns and grows while the baby and wings follow the game clock",
+        kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

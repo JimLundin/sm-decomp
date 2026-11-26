@@ -25,15 +25,15 @@ movie = "any"
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
 # The fight returns to page two. The recorded demo drives discovery before the delivery and examination.
 # The live intro hands the dark screen to the flight. The selected file carries into arrival.
-# Room play continues until Ridley retreats and places the getaway walls.
+# Room play continues through Ridley's retreat and the flyby up to the shove request.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 11320
-held = 11319
-stop = { failed = "RidleyGetaway" }
+end = 11424
+held = 11423
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 0
-frames = [1, 11319]
+frames = [1, 11423]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -51,15 +51,15 @@ power_on = false
 
 # From the flight's seed through the dark preparation, the opening HUD and the fade.
 # The run carries the room's owners through Ceres and both hits of Ridley's tail in flight.
-# Ridley retreats above the room, stops and places the getaway walls.
+# Ridley retreats above the room and starts the flyby after placing the walls.
 [[run]]
 row = "any-fly-to-ceres"
 start = 0
 end = 4026
-held = 3807
-stop = { failed = "RidleyGetaway" }
+held = 3911
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 7512
-frames = [7513, 11319]
+frames = [7513, 11423]
 power_on = false
 
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
@@ -77,15 +77,15 @@ power_on = false
 # The arrival, played on into Ceres's first room and through the second to fifth into Ridley's
 # with no new seed, through Ridley's waking and his tail's two hits, her pushes and her backward
 # leaps, the camera leading the way she travels, and her second leap let go, and Ridley's take-off
-# and flight, including both airborne tail hits. He retreats and places the walls before the getaway starts.
+# and flight, including both airborne tail hits. His retreat places the walls and leads into the flyby.
 [[run]]
 row = "any-ceres-arrival"
 start = 0
 end = 3223
-held = 3004
-stop = { failed = "RidleyGetaway" }
+held = 3108
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 8315
-frames = [8316, 11319]
+frames = [8316, 11423]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
@@ -93,15 +93,15 @@ power_on = false
 # fourth and fifth rooms and into Ridley's with no new seed, the door slamming shut behind her,
 # through Ridley's waking and his tail's two hits, her pushes and her backward leaps, the camera
 # leading the way she travels, and her second leap let go, and Ridley's take-off and flight,
-# including both airborne tail hits. He retreats and places the walls before the getaway starts.
+# including both airborne tail hits. His retreat places the walls and leads into the flyby.
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
 end = 3000
-held = 2781
-stop = { failed = "RidleyGetaway" }
+held = 2885
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 8538
-frames = [8539, 11319]
+frames = [8539, 11423]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -129,15 +129,15 @@ power_on = false
 # Ceres's third room, played on through the fourth and fifth and into Ridley's with no new seed,
 # through Ridley's waking and his tail's two hits, her pushes and her backward leaps, the camera
 # leading the way she travels, and her second leap let go, and Ridley's take-off and flight,
-# including both airborne tail hits. He retreats and places the walls before the getaway starts.
+# including both airborne tail hits. His retreat places the walls and leads into the flyby.
 [[run]]
 row = "chain-any-0003-DFD7"
 start = 0
 end = 3000
-held = 2087
-stop = { failed = "RidleyGetaway" }
+held = 2191
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 9232
-frames = [9233, 11319]
+frames = [9233, 11423]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -155,15 +155,15 @@ power_on = false
 # glows once, then wakes, his eye lighting and his body fading in; tangible, his tail hits her
 # twice, at cuts 609 and 705, and each push and backward leap plays, the camera leading the way
 # she travels, and her second leap let go. His tail hits in flight at cuts 897 and 993. He
-# retreats through the run that places the getaway walls.
+# retreats, places the getaway walls and flies past Samus up to the shove request.
 [[run]]
 row = "chain-any-0006-E0B5"
 start = 0
 end = 1785
-held = 1157
-stop = { failed = "RidleyGetaway" }
+held = 1261
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 10162
-frames = [10163, 11319]
+frames = [10163, 11423]
 power_on = false
 
 # The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune
@@ -261,9 +261,9 @@ power_on = false
 [[run]]
 row = "any-intro-6012"
 start = 1
-end = 5308
-held = 5306
-stop = { failed = "RidleyGetaway" }
+end = 5412
+held = 5410
+stop = { failed = "RidleyGetawayPush" }
 seed_frame = 6013
-frames = [6014, 11319]
+frames = [6014, 11423]
 power_on = false

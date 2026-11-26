@@ -14,14 +14,18 @@
 
 use core::num::Wrapping;
 
+use types::ceres_getaway::GetawayState;
 use types::{Hit, Pair, Px};
 
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
 use crate::flight::{Bound, Fight, HoverRuns, Ruled, STILL, Speed, Steered, flown};
 use crate::flight_tail::{FlightTail, TAIL_SEGMENTS, TailSwish};
+use crate::flyby::{self, GetawayEffects};
 use crate::getaway::GetawayBackdrop;
 use crate::her::Her;
-use crate::ridley_phase::{FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyPhase, RoarSound};
+use crate::ridley_phase::{
+    FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyFrame, RidleyPhase, RoarSound,
+};
 use crate::roar::RidleyLook;
 use crate::rules::Rules;
 use crate::station::{ShakeStart, Stage};
@@ -161,6 +165,8 @@ pub struct RidleyRun {
     pub shake: Option<ShakeStart>,
     /// The wall placements and current palettes, only on the stopped run (`GetawayBackdrop`).
     pub backdrop: Option<GetawayBackdrop>,
+    /// Stage, audio, movement, quake and drawing requests during the flyby and its return.
+    pub getaway: Option<GetawayEffects>,
 }
 
 impl RidleyRun {
@@ -180,6 +186,7 @@ impl RidleyRun {
             bound: None,
             shake: None,
             backdrop: None,
+            getaway: None,
         }
     }
 
@@ -264,19 +271,21 @@ impl CeresRidley {
     /// runs in his hold on each run this part owns (`BabyHeld`, `BabyFidgets`, `BabyCries`).
     ///
     /// `FliesOutOfReach` starts on the run `Hovers` selects the real retreat.
-    /// `GetawayBackdrop` ends it; the next run belongs to the getaway. The fake retreat
-    /// is a separate handoff and does not run these rules.
+    /// `GetawayBackdrop` ends it; `GetawayPass` starts the flyby on the next run, reading the
+    /// caller's finished game frames for `GetawayPicture`. Publish its stage before the walls
+    /// run, its pass after Samus moves, and its quake request before the room updates the quake.
+    /// The fake retreat and the warning are separate handoffs.
     #[must_use]
     pub fn run(
         self,
-        passage_under_way: bool,
+        frame: RidleyFrame,
         random: u16,
         her: Option<&Her>,
         fight: Fight,
         content: &RidleyContent,
         rules: &Rules,
     ) -> RidleyRun {
-        match self.phase.run(passage_under_way, content, rules) {
+        match self.phase.run(frame, content, rules) {
             PhaseStep::Waking(phase) => self.waking(&phase, random, her, rules),
             PhaseStep::TakesOff => self.took_off(random, her, rules),
             PhaseStep::Flies(phase) => self.flying(phase, fight, random, her, rules),
@@ -284,11 +293,22 @@ impl CeresRidley {
             PhaseStep::Coasts(runs) => {
                 let steered = Steered::coasts(runs, self.speed, self.hover_runs);
                 RidleyRun {
-                    backdrop: (steered.phase == RidleyPhase::GetawayReady)
+                    backdrop: (steered.phase == RidleyPhase::GETAWAY_START)
                         .then(|| content.getaway.prepare()),
                     ..self.moved(&steered, random, her, rules)
                 }
             }
+            PhaseStep::Flyby(state) => flyby::step(state, frame.finished, &content.flyby)
+                .map_or_else(
+                    || RidleyRun::handoff(self),
+                    |(state, effects)| RidleyRun {
+                        getaway: Some(effects),
+                        ..RidleyRun::handoff(Self {
+                            phase: RidleyPhase::Getaway(state),
+                            ..self
+                        })
+                    },
+                ),
             PhaseStep::HandedOver => RidleyRun::handoff(self),
         }
     }
@@ -468,6 +488,16 @@ impl CeresRidley {
     /// place while it rests.
     #[must_use]
     pub fn drawing(&self) -> RidleyDrawing {
+        if matches!(
+            self.phase,
+            RidleyPhase::Getaway(GetawayState::FlyingPast(_) | GetawayState::WarningReady)
+        ) {
+            return RidleyDrawing {
+                ridley: None,
+                baby: None,
+                tail: None,
+            };
+        }
         RidleyDrawing {
             ridley: self.look.map(|look| Drawn {
                 look,

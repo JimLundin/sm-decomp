@@ -1011,3 +1011,21 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/blackout.rs" },
   { role = "navigation", path = "crates/verify/src/replay/blackout.rs" },
 ]
+
+[[rule]]
+id = "boss-ceres-ridley/GetawayPass"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flyby.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/exact/ridley_flyby.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/ridley/flyby.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/GetawayPicture"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flyby.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/exact/ridley_flyby.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/ridley/flyby.rs" },
+]

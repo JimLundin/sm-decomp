@@ -4,5 +4,6 @@
 pub mod art;
 pub mod oam;
 pub mod ppu;
+pub mod ridley_flyby;
 pub mod save_files;
 pub mod tilemap;

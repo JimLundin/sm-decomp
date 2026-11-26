@@ -30,6 +30,7 @@ mod ceres_doors;
 mod colours;
 mod contact;
 mod flight;
+pub(super) mod flyby_scope;
 mod frame;
 mod health;
 mod hud;
@@ -321,7 +322,6 @@ fn opening_witness((row, cut): (&str, u64)) -> bool {
 struct Frame<'a> {
     previous: &'a FrameRecord,
     current: &'a FrameRecord,
-    place: (&'a str, u64),
     cut: u64,
 }
 
@@ -334,6 +334,7 @@ struct Run<'a> {
     content: &'a connected::Content,
     hud: super::hud::Content,
     row: &'a str,
+    drawing: ridley::flyby::Drawing,
     upper_row: Option<interface_hud::UpperRow>,
     return_timing: return_timing::ReturnTiming,
 }
@@ -375,7 +376,9 @@ impl<'a> Run<'a> {
         let start = import::start::import(image.lorom())
             .map_err(|_| data_failure(None, "played new game's start"))?;
         let rooms = seed::rooms(&image)?;
-        let ridley = ridley::content(&rooms.actors.ceres_ridley)?;
+        let flyby = import::ridley_flyby::import(image.lorom())
+            .map_err(|_| data_failure(None, "Ridley flyby assets"))?;
+        let ridley = ridley::content(&rooms.actors.ceres_ridley, &flyby)?;
         let tail_worth = samus_health::WholeEnergy::new(rooms.actors.ceres_tail_worth)
             .ok_or_else(|| data_failure(None, "Ceres Ridley's tail's worth"))?;
         // A seed in a new game's preparation holds the intro's RAM: State comes from the start.
@@ -395,6 +398,10 @@ impl<'a> Run<'a> {
             }
         } else {
             None
+        };
+        let drawing = match origin {
+            Start::Preparing(..) => ridley::flyby::Drawing::unpublished(flyby),
+            Start::Room(seed) => ridley::flyby::Drawing::new(flyby, seed),
         };
         Ok(Self {
             state,
@@ -424,6 +431,7 @@ impl<'a> Run<'a> {
             content,
             hud,
             row,
+            drawing,
             upper_row: None,
             return_timing: return_timing::ReturnTiming::default(),
         })
@@ -620,7 +628,6 @@ impl<'a> Run<'a> {
             let frame = Frame {
                 previous,
                 current,
-                place,
                 cut,
             };
             self.compared(&frame, hud_settled, owns_vent_draws, &outputs)?
@@ -643,29 +650,21 @@ impl<'a> Run<'a> {
                 &self.state.hud.0,
             )?);
         }
-        compare(&expected, &actual).map_err(|fault| match fault {
-            CompareFault::Difference(field) => Outcome::Difference { cut, field },
-            CompareFault::EmptyExpected
-            | CompareFault::DuplicateField(_)
-            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
-        })?;
+        compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
         Ok(expected)
     }
 
     /// Every owner's fields at the frame's cut, as the record and as the played State hold
     /// them, with the room quake's `update`, if the frame had one.
     fn compared(
-        &self,
+        &mut self,
         frame: &Frame<'_>,
         hud_settled: bool,
         owns_vent_draws: bool,
         outputs: &played::Outputs,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let Frame {
-            previous,
-            current,
-            place,
-            ..
+            previous, current, ..
         } = *frame;
         let mut expected = expected(
             frame,
@@ -705,21 +704,42 @@ impl<'a> Run<'a> {
                 expected.push(ridley::expected_swish(previous, current)?);
             }
             expected.extend(ridley::retreat::expected(current)?);
+            expected.extend(ridley::flyby::expected(previous, current)?);
             if let Some(run) = outputs.ridley {
                 actual.extend(ridley::retreat::actual(&self.state, Some(&run)));
+                if let Some(effects) = run.getaway {
+                    actual.extend(self.drawing.actual(&self.state, effects)?);
+                }
                 actual.push(contact::actual("ridley.tail.hit", run.hit));
                 actual.push(ridley::swish(run.swish.is_some()));
                 if let Some(places) = &run.tail_places {
                     actual.extend(ridley::places(places));
                 }
             }
-            expected.extend(quake::expected(previous, current, place)?);
+            expected.extend(quake::expected(
+                previous,
+                current,
+                outputs.ridley.is_some_and(|run| run.getaway.is_some()),
+            )?);
             actual.extend(quake::actual(&self.state, outputs.quake));
             if owns_vent_draws && passage::passing(&current.wram)? {
                 expected.push(frame::random_observation(frame::random(&current.wram)?));
             }
         }
         Ok((expected, actual))
+    }
+}
+
+fn comparison_failure(cut: u64, fault: CompareFault) -> Outcome {
+    match fault {
+        CompareFault::Difference(field) => Outcome::Difference { cut, field },
+        CompareFault::EmptyExpected => data_failure(Some(cut), "played comparison schema"),
+        CompareFault::DuplicateField(field) => {
+            data_failure(Some(cut), &format!("duplicate played field {field}"))
+        }
+        CompareFault::MissingActual(field) => {
+            data_failure(Some(cut), &format!("missing played field {field}"))
+        }
     }
 }
 
@@ -829,27 +849,27 @@ mod tests {
         }
     }
 
-    /// Native pull and coast origins continue through the stopped backdrop.
+    /// Native retreat and flyby checkpoints carry through the shove request.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn retreat_continues_from_observed_checkpoints() {
         use super::{Outcome, Stop};
         let sources = sources();
         for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
-            let continuous = super::play(&sources, row, 0, 1158).unwrap();
-            assert_eq!(continuous.held, 1157);
+            let continuous = super::play(&sources, row, 0, 1262).unwrap();
+            assert_eq!(continuous.held, 1261);
             assert!(
-                matches!(continuous.stop, Stop::At(Outcome::Unsupported { cut: Some(1158), dependency }) if dependency.ends_with("RidleyGetaway"))
+                matches!(continuous.stop, Stop::At(Outcome::Unsupported { cut: Some(1262), dependency }) if dependency.ends_with("RidleyGetawayPush"))
             );
-            for start in [926, 993, 1004, 1093, 1115, 1156] {
-                let report = super::play(&sources, row, start, 1158).unwrap();
+            for start in [926, 993, 1004, 1093, 1115, 1156, 1158, 1170, 1261] {
+                let report = super::play(&sources, row, start, 1262).unwrap();
                 diagnostic(format_args!(
                     "RETREAT row={row} origin={start} held={} stop={:?}",
                     report.held, report.stop
                 ));
-                assert_eq!(report.held, 1157_u64.saturating_sub(start));
+                assert_eq!(report.held, 1261_u64.saturating_sub(start));
                 assert!(
-                    matches!(report.stop, Stop::At(Outcome::Unsupported { cut: Some(1158), dependency }) if dependency.ends_with("RidleyGetaway"))
+                    matches!(report.stop, Stop::At(Outcome::Unsupported { cut: Some(1262), dependency }) if dependency.ends_with("RidleyGetawayPush"))
                 );
             }
             restore_stopped_station(&sources, row);
@@ -881,14 +901,22 @@ mod tests {
         run.state.station = station::seed(&stopped.wram, doors, carried.station.stage).unwrap();
         assert_eq!(run.state.station, carried.station);
         let controller = super::seed_controller(&stopped).unwrap();
+        assert_eq!(
+            run.through(&mut rows, stopped, controller, 1158..=1261)
+                .unwrap(),
+            (104, Stop::End)
+        );
+        let flying = rows.record(1261).unwrap();
+        let before = run.state.clone();
+        let controller = super::seed_controller(&flying).unwrap();
         let (held, stop) = run
-            .through(&mut rows, stopped, controller, 1158..=1158)
+            .through(&mut rows, flying, controller, 1262..=1262)
             .unwrap();
         assert_eq!(held, 0);
         assert!(
-            matches!(stop, Stop::At(Outcome::Unsupported { cut: Some(1158), dependency }) if dependency.ends_with("RidleyGetaway"))
+            matches!(stop, Stop::At(Outcome::Unsupported { cut: Some(1262), dependency }) if dependency.ends_with("RidleyGetawayPush"))
         );
-        assert_eq!(run.state, carried);
+        assert_eq!(run.state, before);
         diagnostic(format_args!(
             "RETREAT row={row} restored station at 1157 through its handoff"
         ));

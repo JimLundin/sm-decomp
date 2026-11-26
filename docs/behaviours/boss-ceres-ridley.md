@@ -1365,6 +1365,92 @@ keep their incoming values through these runs.
 - checked: oracle (body stops, walls placed, colours reach the screen). Constructed with a
   fast, stretching tail and her within reach of the last tip.
 
+## Part 4c-3, Ridley flies past with the baby
+
+When his offscreen retreat leaves him `GetawayReady`, Ridley appears against the
+room as a turning picture. The baby moves in his grasp and his wings beat. As he
+flies past, the scenery shakes and Samus is pushed aside. When the
+picture has gone the room is ready to show its warning.
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| his getaway | `GetawayReady` from part 4c-2, `FlyingPast` with the number of pictures already shown, or `WarningReady` | `GetawayPass`, the self-destruct warning |
+| where the picture is and how far it has turned | a pair of signed whole pixels and a turn in 65,536ths, carried in `FlyingPast` | `GetawayPass`, `GetawayPicture` |
+| the baby's beat and the wings' beat | a place in the baby's four-beat cycle and one in the wings' two-beat cycle | `GetawayPicture` |
+| Ridley's path and art | room content. Each picture supplies a signed scroll change in whole pixels and a zoom in 256ths, 0 through 2,048. The room supplies nine sets of body colours, the baby's three looks and the wings' two looks | `GetawayPass`, `GetawayPicture` |
+| finished frames | the game clock's count at the start of this frame | `GetawayPicture` |
+| the station's stage, his sound, the push and the quake | a change to `Getaway`, the getaway sound, a request to move her aside, a diagonal shake of the back layer and the actors | the walls, sound transport, her movement and the room quake |
+| the picture | the room view or the flyby plane, its scroll and pivot in whole pixels, its four drawing coefficients in 256ths, the selected body colours and any changes of look | drawing |
+
+The caller can set, read and restore his getaway. A path has at least one
+picture. In `FlyingPast` the count runs from one through the length of that
+path. `GetawayReady` includes the first picture on the run that starts it. The animation beats count from zero. The room
+starts them at zero and a restored getaway carries both. His airborne body, tail and held-baby motion end when the flyby begins. The path in Ceres has
+112 pictures. Its motion is independent of her controls, position and health.
+The quake owns its remaining time and displacements. Her movement owns the
+direction, pose, travel and release of the push. His pass deals no damage.
+
+### GetawayPass
+
+- kind: mechanic.
+- summary: Ridley flies across the room and turns as he passes her. His pass
+  shakes the scenery and pushes her aside.
+- params: the path is content. Positive scroll changes move the view right
+  and down on the picture.
+- switch: Fixed.
+- `GetawayReady` on his next run → set the stage to `Getaway` and request
+  the getaway sound once, on the second effects channel with a six-sound limit. Start the path at scroll (−128, 32) px with a turn of 1,
+  keeping both animation beats. Show its first picture this run
+  [G-first, G-first-between-beats]
+- A picture remains → add its scroll change to the incoming scroll, wrapping
+  each signed coordinate at 16 bits. Add 48 to the turn modulo 65,536.
+  Show this picture by `GetawayPicture` at its own zoom. Count it as shown,
+  including the last picture [G-before-pass, G-pass, G-last, G-wrap]
+- On the 105th run of his pass, counting the first picture as one → ask her movement to move her aside.
+  Start a diagonal 3 px shake of the back layer and the actors for 64 frames.
+  On the surrounding pictures he makes neither request. If a shorter path has just
+  shown 104 pictures, the same push and shake accompany its return to the room
+  [G-before-pass, G-pass, G-after-pass, G-pass-on-return]
+- `FlyingPast` with the whole path already shown → return to the room view
+  with zero scroll, pivot and drawing coefficients. Hand off `WarningReady`.
+  The stage stays `Getaway`. Only the room is shown on this run
+  [G-room, G-short-room, G-pass-on-return]
+- checked: oracle (both paths through his room, including their different pushes).
+  Constructed for a restored turn, colour and scroll.
+
+### GetawayPicture
+
+- kind: output.
+- summary: his picture turns and grows. The baby's look and his wings change
+  to the beat of the game clock.
+- params: the flyby pivots about (64, 64) px. Beyond its picture the plane is
+  transparent. Drawing uses the whole 256th of a turn, `a = floor(turn / 256)`.
+  For angle `a`, let `s(a) = trunc(256 × sin(2πa / 256))`, with exact
+  quarter turns. Truncation is toward zero.
+- switch: Fixed.
+- A picture at zoom `z` → show it at the new scroll about the flyby pivot.
+  Its drawing coefficients are `(c, s, −s, c)`, where
+  `c = trunc(s(a + 64) × z / 256)` and `s = trunc(s(a) × z / 256)`.
+  Select the body's set `floor(z / 256)`, counted from zero, for the 15
+  colours after transparency in `BackgroundBody`
+  [G-first, G-negative-turn, G-pass]
+- A picture on a count of finished frames divisible by four → advance the baby
+  one beat, wrapping after the fourth. Show the look of the new beat in the
+  cycle `First, Middle, Third, Middle`. Otherwise keep her beat and picture
+  [G-first, G-baby-alone, G-first-between-beats, G-wrap]
+- A picture on a count divisible by eight → advance the wings one beat,
+  alternating `First` and `Second`, and show the new look. Otherwise keep
+  their beat and picture [G-first, G-baby-alone, G-first-between-beats, G-negative-turn]
+- checked: oracle (the turn, zoom, body colours, baby and wing pictures).
+  Constructed for a negative drawing coefficient and wrapping scroll.
+
+**Order that matters.** The walls see the new stage on their first run. The
+first sound and picture occur that same frame. The pass comes after her moves
+and before the quake's update. Her movement can show her new pose on the
+following frame. The quake spends its first frame on the pass itself.
+The run after the last picture restores the room. The warning takes its first
+step on the following run.
+
 ## 16. Part 5, the escape's steam
 
 As she runs through the third and second rooms on her way out, steam vents in the station's

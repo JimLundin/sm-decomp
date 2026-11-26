@@ -71,10 +71,12 @@
 //!
 //! **His real retreat.** `Hovers` starts the pull away on the same run that selects it.
 //! The caller can restore [`RidleyPhase::Retreating`], [`RidleyPhase::CoastingAbove`]
-//! with its remaining [`CoastRuns`], or [`RidleyPhase::GetawayReady`] with the same body,
-//! baby and tail state. The stopped run reports [`GetawayBackdrop`] for the wall actors
-//! and drawing without changing the station's stage. The getaway and the fake retreat
-//! are separate handoffs.
+//! with its remaining [`CoastRuns`], or [`GetawayState::GetawayReady`] with its flyby beats.
+//! The stopped run reports [`GetawayBackdrop`] for the wall actors and drawing without
+//! changing the station's stage. On the next run [`CeresRidley::run`] starts the flyby using
+//! the room's [`FlybyContent`] and the caller's game clock. [`GetawayEffects`] reports the
+//! stage for the walls, the picture, and any sound, movement and quake requests. The fake
+//! retreat and the warning are separate handoffs.
 //!
 //! **The escape's steam.** On her way out, steam vents in the station's floors, walls and
 //! ceilings blow puffs. A caller holds one [`Vent`] for each vent the room holds and places each
@@ -92,6 +94,7 @@ mod door;
 mod figure;
 mod flight;
 mod flight_tail;
+mod flyby;
 mod getaway;
 mod her;
 mod inputs;
@@ -113,6 +116,7 @@ mod steam;
 mod tail;
 mod tail_aim;
 mod takeoff;
+mod turn;
 mod waking;
 
 pub use baby::{
@@ -127,6 +131,10 @@ pub use flight_tail::{
     FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
     TailLength, TailMark, TailSegment, TailSwish,
 };
+pub use flyby::{
+    FlybyBabyLook, FlybyContent, FlybyFrame, FlybyPath, FlybyTransform, FlybyZoom, GetawayEffects,
+    GetawaySound, GetawayView,
+};
 pub use getaway::{GetawayBackdrop, GetawayColours, GetawayContent};
 pub use her::Her;
 pub use inputs::Inputs;
@@ -140,7 +148,9 @@ pub use ridley::{
     Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyPlacing, RidleyRun,
     RoomColours, ShakeStop,
 };
-pub use ridley_phase::{Attack, CoastRuns, FightMusic, FlightPhase, RidleyPhase, RoarSound};
+pub use ridley_phase::{
+    Attack, CoastRuns, FightMusic, FlightPhase, RidleyFrame, RidleyPhase, RoarSound,
+};
 pub use ridley_wait::{RidleyWait, WakeWait};
 pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
@@ -151,6 +161,9 @@ pub use station::{
 pub use steam::{FirstPuffWait, Vent, VentPhase, run_vents};
 pub use tail::{TAIL_DAMAGE, TailCurl};
 pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
+pub use types::ceres_getaway::{
+    FlybyBabyBeat, FlybyBeats, FlybyProgress, FlybyTurn, FlybyWingBeat, GetawayState, OutOfTheWay,
+};
 pub use waking::{
     BodyColours, EyeColours, FadeSets, ReadyWait, RemainingTurns as RunsLeft, RidleyContent,
     RoarWait,

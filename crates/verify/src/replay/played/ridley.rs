@@ -1,5 +1,6 @@
 //! Ceres Ridley and the baby: his content and their compared fields.
 
+pub(super) mod flyby;
 pub(super) mod retreat;
 use crate::replay::compare::Observation;
 use crate::replay::result::Outcome;
@@ -11,8 +12,11 @@ use oracle_record::FrameRecord;
 use types::{Pair, Px};
 
 /// His content as the model reads it, from the imported colours.
-pub(super) fn content(colours: &CeresRidleyColours) -> Result<RidleyContent, Outcome> {
-    production::content(colours)
+pub(super) fn content(
+    colours: &CeresRidleyColours,
+    art: &data::assets::ridley_flyby::Flyby,
+) -> Result<RidleyContent, Outcome> {
+    production::content(colours, art)
         .map_err(|production::ColourFault| data_failure(None, "Ceres Ridley content"))
 }
 
@@ -23,7 +27,9 @@ pub(super) fn expected(wram: &[u8]) -> Result<Vec<Observation>, Outcome> {
     };
     let tail = ridley::tail_segments(wram, ridley.phase)?;
     let mut fields = ridley::observations(Some((&ridley, seen, &tail)));
-    if let Some(flight) = ridley.flight_tail {
+    if (ridley.phase.tail_at_rest() || ridley.phase.moving())
+        && let Some(flight) = ridley.flight_tail
+    {
         fields.extend(places(&flight.places()));
     }
     Ok(fields)

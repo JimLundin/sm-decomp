@@ -23,9 +23,15 @@ mod vectors {
         FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
         TailLength, TailMark, TailSegment,
     };
-    use enum_map::Enum;
+    use boss_ceres_ridley::{
+        FlybyBabyBeat, FlybyBabyLook, FlybyBeats, FlybyContent, FlybyFrame, FlybyPath,
+        FlybyProgress, FlybyTurn, FlybyWingBeat, FlybyZoom, GetawaySound, GetawayState,
+        GetawayView, OutOfTheWay,
+    };
+    use enum_map::{Enum, enum_map};
     use serde::Deserialize;
-    use types::{Checked, Colour, Hit, Pair, Px, Side};
+    use types::quake::{QuakeDirection, QuakeDuration, QuakeKind, QuakeReach, QuakeRequest};
+    use types::{Checked, Colour, GameFrames, Hit, Pair, Picture, Px, Side};
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/boss-ceres-ridley.toml");
 
@@ -71,6 +77,13 @@ mod vectors {
         ridley_after: Option<RidleyAfter>,
         flight_tail: Option<FlightTailRow>,
         flight_tail_after: Option<FlightTailRow>,
+        // The flyby.
+        getaway: Option<GetawayRow>,
+        finished: Option<u16>,
+        picture: Option<PictureRow>,
+        length: Option<usize>,
+        getaway_after: Option<GetawayRow>,
+        effects: Option<GetawayEffectsRow>,
         // The pad and the cover.
         arrival: Option<[u16; 2]>,
         pad: Option<PadRow>,
@@ -418,7 +431,7 @@ mod vectors {
         Side,
     }
 
-    #[derive(Deserialize, Default, Clone, Copy)]
+    #[derive(Deserialize, Default, Clone, Copy, Debug, PartialEq, Eq)]
     enum StageName {
         #[default]
         Calm,
@@ -1223,7 +1236,7 @@ mod vectors {
                     .expect("an eye's fade names its steps, 1 up"),
             },
             RidleyPhaseName::FakeRetreat => RidleyPhase::FakeRetreat,
-            RidleyPhaseName::GetawayReady => RidleyPhase::GetawayReady,
+            RidleyPhaseName::GetawayReady => RidleyPhase::GETAWAY_START,
             RidleyPhaseName::CoastingAbove => RidleyPhase::CoastingAbove(
                 cells
                     .coast_runs
@@ -1286,7 +1299,10 @@ mod vectors {
             ),
             RidleyPhase::FakeRetreat => (RidleyPhaseName::FakeRetreat, none),
             RidleyPhase::Retreating => (RidleyPhaseName::Retreating, none),
-            RidleyPhase::GetawayReady => (RidleyPhaseName::GetawayReady, none),
+            RidleyPhase::Getaway(GetawayState::GetawayReady(_)) => {
+                (RidleyPhaseName::GetawayReady, none)
+            }
+            RidleyPhase::Getaway(_) => panic!("the flyby has its own result row"),
             RidleyPhase::CoastingAbove(runs) => (
                 RidleyPhaseName::CoastingAbove,
                 PhaseCells {
@@ -1361,7 +1377,7 @@ mod vectors {
                 | RidleyPhase::FakeRetreat
                 | RidleyPhase::Retreating
                 | RidleyPhase::CoastingAbove(_)
-                | RidleyPhase::GetawayReady
+                | RidleyPhase::GETAWAY_START
         )
     }
 
@@ -1387,6 +1403,7 @@ mod vectors {
         RidleyContent {
             eye_steps: FadeSets::new(eye_steps).expect("the eye has at least one step"),
             body_sets: FadeSets::new(body_sets).expect("the body has at least one set"),
+            flyby: flyby_content(1),
             getaway: GetawayContent {
                 left_wall: point([12, 34]),
                 right_wall: point([210, 56]),
@@ -1594,7 +1611,9 @@ mod vectors {
         let retreat = vector.flight_tail_after.is_some()
             && matches!(
                 ridley.phase,
-                RidleyPhase::Retreating | RidleyPhase::CoastingAbove(_) | RidleyPhase::GetawayReady
+                RidleyPhase::Retreating
+                    | RidleyPhase::CoastingAbove(_)
+                    | RidleyPhase::GETAWAY_START
             );
         if !retreat
             && matches!(
@@ -1685,7 +1704,10 @@ mod vectors {
         );
         let content = ridley_content(&vector.content.clone().unwrap_or_else(stand_in_content));
         let run = ridley(vector).run(
-            vector.passing.unwrap_or(false),
+            boss_ceres_ridley::RidleyFrame {
+                passage_under_way: vector.passing.unwrap_or(false),
+                finished: GameFrames(0),
+            },
             vector.random(),
             vector.hitter_her().as_ref(),
             vector.fight(),
@@ -2061,6 +2083,304 @@ mod vectors {
         })
     }
 
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum GetawayPhaseRow {
+        GetawayReady,
+        FlyingPast,
+        WarningReady,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct GetawayRow {
+        phase: GetawayPhaseRow,
+        shown: Option<usize>,
+        position: Option<[i16; 2]>,
+        turn: Option<u16>,
+        baby: Option<usize>,
+        wings: Option<usize>,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct PictureRow {
+        shift: [i16; 2],
+        zoom: u16,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum PlaneRow {
+        Flyby,
+        Room,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum BabyLookRow {
+        First,
+        Middle,
+        Third,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum GetawaySoundRow {
+        Getaway,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum PushRow {
+        OutOfTheWay,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct QuakeRow {
+        reach: QuakeReach,
+        direction: QuakeDirection,
+        pixels: u8,
+        frames: u16,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct GetawayEffectsRow {
+        stage: Option<StageName>,
+        sound: Option<GetawaySoundRow>,
+        push: Option<PushRow>,
+        quake: Option<QuakeRow>,
+        baby_look: Option<BabyLookRow>,
+        wing_look: Option<FlybyWingBeat>,
+        plane: PlaneRow,
+        scroll: [i16; 2],
+        origin: [i16; 2],
+        matrix: [i32; 4],
+        zoom: Option<u16>,
+        shade: Option<u16>,
+    }
+
+    const BABY_BEATS: [FlybyBabyBeat; 4] = [
+        FlybyBabyBeat::First,
+        FlybyBabyBeat::ToThird,
+        FlybyBabyBeat::Third,
+        FlybyBabyBeat::ToFirst,
+    ];
+
+    const fn frame(finished: u16) -> boss_ceres_ridley::RidleyFrame {
+        boss_ceres_ridley::RidleyFrame {
+            passage_under_way: false,
+            finished: GameFrames(finished),
+        }
+    }
+
+    fn signed_pair([x, y]: [i16; 2]) -> Pair<i16> {
+        Pair { x, y }
+    }
+
+    fn flyby_state(row: &GetawayRow) -> GetawayState {
+        match row.phase {
+            GetawayPhaseRow::GetawayReady => GetawayState::GetawayReady(flyby_beats(row)),
+            GetawayPhaseRow::FlyingPast => GetawayState::FlyingPast(FlybyProgress {
+                shown: num::NonZeroUsize::new(row.shown.unwrap()).unwrap(),
+                scroll: signed_pair(row.position.unwrap()),
+                turn: FlybyTurn(row.turn.unwrap()),
+                beats: flyby_beats(row),
+            }),
+            GetawayPhaseRow::WarningReady => GetawayState::WarningReady,
+        }
+    }
+
+    fn flyby_beats(row: &GetawayRow) -> FlybyBeats {
+        FlybyBeats {
+            baby: BABY_BEATS[row.baby.unwrap()],
+            wings: FlybyWingBeat::from_usize(row.wings.unwrap()),
+        }
+    }
+
+    fn getaway_row(state: GetawayState) -> GetawayRow {
+        let (phase, progress, beats) = match state {
+            GetawayState::GetawayReady(beats) => (GetawayPhaseRow::GetawayReady, None, Some(beats)),
+            GetawayState::FlyingPast(progress) => (
+                GetawayPhaseRow::FlyingPast,
+                Some(progress),
+                Some(progress.beats),
+            ),
+            GetawayState::WarningReady => (GetawayPhaseRow::WarningReady, None, None),
+        };
+        GetawayRow {
+            phase,
+            shown: progress.map(|p| p.shown.get()),
+            position: progress.map(|p| [p.scroll.x, p.scroll.y]),
+            turn: progress.map(|p| p.turn.0),
+            baby: beats.and_then(|b| BABY_BEATS.iter().position(|&beat| beat == b.baby)),
+            wings: beats.map(|b| b.wings.into_usize()),
+        }
+    }
+
+    fn flyby_content(length: usize) -> FlybyContent {
+        assert!(length >= 1);
+        let first = FlybyFrame {
+            shift: signed_pair([0, 0]),
+            zoom: FlybyZoom::new(256).unwrap(),
+        };
+        FlybyContent {
+            path: FlybyPath {
+                first,
+                rest: vec![first; length.saturating_sub(1)],
+            },
+            body_shades: core::array::from_fn(|shade| {
+                [numbered_colour(u16::try_from(shade).unwrap()); 15]
+            }),
+            baby_looks: enum_map! {
+                FlybyBabyLook::First => Picture::new(11).unwrap(),
+                FlybyBabyLook::Middle => Picture::new(12).unwrap(),
+                FlybyBabyLook::Third => Picture::new(13).unwrap(),
+            },
+            wing_looks: enum_map! {
+                FlybyWingBeat::First => Picture::new(21).unwrap(),
+                FlybyWingBeat::Second => Picture::new(22).unwrap(),
+            },
+        }
+    }
+
+    fn effects_row(
+        effects: boss_ceres_ridley::GetawayEffects,
+        content: &FlybyContent,
+    ) -> GetawayEffectsRow {
+        let transform = effects.view.transform();
+        let mut row = GetawayEffectsRow {
+            stage: effects.stage.map(|stage| match stage {
+                Stage::Calm => StageName::Calm,
+                Stage::Escape => StageName::Escape,
+                Stage::Getaway => StageName::Getaway,
+            }),
+            sound: effects.sound.map(|GetawaySound| {
+                assert_eq!(
+                    (GetawaySound::EFFECTS_CHANNEL, GetawaySound::QUEUE_LIMIT),
+                    (2, 6)
+                );
+                GetawaySoundRow::Getaway
+            }),
+            push: effects.push.map(|OutOfTheWay| PushRow::OutOfTheWay),
+            quake: effects.quake.map(
+                |QuakeRequest {
+                     kind:
+                         QuakeKind {
+                             reach,
+                             direction,
+                             size,
+                         },
+                     duration: QuakeDuration(frames),
+                 }| QuakeRow {
+                    reach,
+                    direction,
+                    pixels: size.pixels(),
+                    frames,
+                },
+            ),
+            plane: PlaneRow::Room,
+            scroll: [transform.scroll.x, transform.scroll.y],
+            origin: [transform.pivot.x, transform.pivot.y],
+            matrix: transform.matrix,
+            zoom: None,
+            shade: None,
+            baby_look: None,
+            wing_look: None,
+        };
+        if let GetawayView::Flyby {
+            zoom,
+            body_colours,
+            baby_look,
+            wing_look,
+            ..
+        } = effects.view
+        {
+            row.plane = PlaneRow::Flyby;
+            row.zoom = Some(zoom.units());
+            row.shade = Some(
+                u16::try_from(
+                    content
+                        .body_shades
+                        .iter()
+                        .position(|colours| *colours == body_colours)
+                        .unwrap(),
+                )
+                .unwrap(),
+            );
+            row.baby_look = baby_look.map(|art| {
+                let (look, _) = content
+                    .baby_looks
+                    .iter()
+                    .find(|(_, picture)| **picture == art)
+                    .unwrap();
+                match look {
+                    FlybyBabyLook::First => BabyLookRow::First,
+                    FlybyBabyLook::Middle => BabyLookRow::Middle,
+                    FlybyBabyLook::Third => BabyLookRow::Third,
+                }
+            });
+            row.wing_look = wing_look.map(|art| {
+                content
+                    .wing_looks
+                    .iter()
+                    .find(|(_, picture)| **picture == art)
+                    .unwrap()
+                    .0
+            });
+        }
+        row
+    }
+
+    fn check_getaway(vector: &Vector, expected: &GetawayRow) -> Option<String> {
+        let input = vector.getaway.as_ref().unwrap();
+        let state = flyby_state(input);
+        assert_eq!(&getaway_row(state), input, "{}: flyby input", vector.id);
+        let saved = toml::to_string(&state).unwrap();
+        let restored = toml::from_str::<GetawayState>(&saved).unwrap();
+        assert_eq!(restored, state, "{}: restored flyby", vector.id);
+        let mut content = ridley_content(&stand_in_content());
+        content.flyby = flyby_content(vector.length.unwrap_or(112));
+        let shown = input.shown.unwrap_or(0);
+        if let Some(picture) = &vector.picture {
+            let frame = FlybyFrame {
+                shift: signed_pair(picture.shift),
+                zoom: FlybyZoom::new(picture.zoom).unwrap(),
+            };
+            if shown == 0 {
+                content.flyby.path.first = frame;
+            } else {
+                content.flyby.path.rest[shown.saturating_sub(1)] = frame;
+            }
+        }
+        let mut ridley = CeresRidley::place(false).unwrap().ridley;
+        ridley.phase = RidleyPhase::Getaway(restored);
+        let run = ridley.run(
+            frame(vector.finished.unwrap()),
+            0,
+            None,
+            vector.fight(),
+            &content,
+            &Rules::default(),
+        );
+        let RidleyPhase::Getaway(state) = run.ridley.phase else {
+            panic!("{}: lost the flyby state", vector.id)
+        };
+        assert_eq!((run.hit, run.shake, run.cry), (None, None, None));
+        assert!(!run.ridley.phase.tangible());
+        let drawing = run.ridley.drawing();
+        assert_eq!(
+            (drawing.ridley, drawing.baby, drawing.tail),
+            (None, None, None)
+        );
+        let actual = getaway_row(state);
+        let effects = effects_row(run.getaway.unwrap(), &content.flyby);
+        let expected_effects = vector.effects.as_ref().unwrap();
+        (&actual != expected || &effects != expected_effects).then(|| {
+            format!(
+                "{}: expected {expected:?}, {expected_effects:?}; got {actual:?}, {effects:?}",
+                vector.id
+            )
+        })
+    }
+
     /// The vector's check, by the result it names; exactly one.
     fn check(vector: &Vector) -> Option<String> {
         match (
@@ -2069,12 +2389,14 @@ mod vectors {
             &vector.lights_after,
             &vector.ridley_after,
             &vector.vents_after,
+            &vector.getaway_after,
         ) {
-            (Some(after), None, None, None, None) => check_door(vector, after),
-            (None, Some(after), None, None, None) => check_pad(vector, after),
-            (None, None, Some(after), None, None) => check_lights(vector, after),
-            (None, None, None, Some(after), None) => check_ridley(vector, after),
-            (None, None, None, None, Some(after)) => check_steam(vector, after),
+            (Some(after), None, None, None, None, None) => check_door(vector, after),
+            (None, Some(after), None, None, None, None) => check_pad(vector, after),
+            (None, None, Some(after), None, None, None) => check_lights(vector, after),
+            (None, None, None, Some(after), None, None) => check_ridley(vector, after),
+            (None, None, None, None, Some(after), None) => check_steam(vector, after),
+            (None, None, None, None, None, Some(after)) => check_getaway(vector, after),
             _ => panic!("{}: a vector names exactly one result", vector.id),
         }
     }
@@ -2102,7 +2424,7 @@ mod vectors {
             her_energy: 54,
             hits_taken: 11,
         };
-        let run = ridley.run(false, 0xFF00, Some(&her), fight, &content, &rules);
+        let run = ridley.run(frame(0), 0xFF00, Some(&her), fight, &content, &rules);
         assert_eq!(run.ridley.curl.get(), 8);
         assert_eq!(
             run.tail_places.expect("take-off reports places")[TAIL_SEGMENTS - 1],
@@ -2119,7 +2441,7 @@ mod vectors {
     }
 
     #[test]
-    fn retreat_handoffs_do_not_step_the_saved_body_baby_or_tail() {
+    fn retreat_hands_off_to_the_flyby_on_the_next_run() {
         let vectors = vectors();
         let seed = vectors
             .iter()
@@ -2132,7 +2454,7 @@ mod vectors {
             hits_taken: 100,
         };
         let rules = Rules::default();
-        let fake = saved.run(false, 0xffff, None, fight, &content, &rules);
+        let fake = saved.run(frame(0), 0xffff, None, fight, &content, &rules);
         assert_eq!(
             fake.ridley,
             CeresRidley {
@@ -2149,15 +2471,50 @@ mod vectors {
             .iter()
             .find(|vector| vector.id == "RT-walls")
             .unwrap();
-        let ready = ridley(coast)
-            .run(false, coast.random(), None, coast.fight(), &content, &rules)
-            .ridley;
-        assert_eq!(ready.phase, RidleyPhase::GetawayReady);
-        let run = ready.run(false, 0xffff, None, fight, &content, &rules);
-        assert_eq!(run.ridley, ready);
+        let stopped = ridley(coast).run(
+            frame(7),
+            coast.random(),
+            None,
+            coast.fight(),
+            &content,
+            &rules,
+        );
+        let ready = stopped.ridley;
+        assert_eq!(ready.phase, RidleyPhase::GETAWAY_START);
+        assert!(stopped.getaway.is_none());
+        let backdrop = stopped.backdrop.unwrap();
+        let run = ready.run(frame(8), 0xffff, None, fight, &content, &rules);
+        assert_eq!(run.ridley.baby, ready.baby);
+        assert_eq!(run.ridley.flight_tail, ready.flight_tail);
         assert_eq!(
             (run.hit, run.swish, run.tail_places, run.backdrop),
             (None, None, None, None)
+        );
+        let effects = run.getaway.unwrap();
+        assert_eq!(effects.sound, Some(GetawaySound));
+        assert!(matches!(effects.view, GetawayView::Flyby { .. }));
+        let inputs = Inputs {
+            stage: effects.stage.unwrap(),
+            her: point([0, 0]),
+            random: 0,
+            shake_frames_left: 0,
+            ridley_beaten: false,
+        };
+        for placement in [backdrop.left_wall, backdrop.right_wall] {
+            assert!(placement.door.run(&inputs, &rules).door.phase.shown());
+        }
+        let returned = run.ridley.run(frame(12), 0, None, fight, &content, &rules);
+        assert_eq!(
+            returned.ridley.phase,
+            RidleyPhase::Getaway(GetawayState::WarningReady)
+        );
+        assert_eq!(returned.getaway.unwrap().view, GetawayView::Room);
+        assert!(
+            returned
+                .ridley
+                .run(frame(13), 0, None, fight, &content, &rules)
+                .getaway
+                .is_none()
         );
     }
 
@@ -2173,6 +2530,13 @@ mod vectors {
     fn every_vector_passes() {
         let vectors = vectors();
         assert!(!vectors.is_empty());
+        assert_eq!(
+            vectors
+                .iter()
+                .filter(|vector| vector.getaway_after.is_some())
+                .count(),
+            12
+        );
         let failures: Vec<String> = vectors
             .iter()
             .filter_map(|vector| match vector.source {

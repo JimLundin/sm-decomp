@@ -7,6 +7,7 @@ use enum_map::{Enum, EnumMap};
 pub mod arrival;
 pub mod brightness;
 pub mod ceres_blackout;
+pub mod ceres_getaway;
 pub mod discovery;
 pub mod file_select;
 pub mod flashback;
@@ -16,6 +17,11 @@ pub mod intro;
 pub mod options;
 pub mod playback;
 pub mod power_on;
+
+/// The game clock's wrapping count of finished gameplay frames, read at the start of a frame.
+/// It does not reset on room transitions and does not count lag frames.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct GameFrames(pub u16);
 pub mod quake;
 pub mod save_files;
 

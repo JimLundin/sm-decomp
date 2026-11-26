@@ -23,13 +23,13 @@ impl station::State {
 /// later piece owns the shaft's overlay.
 pub(super) fn run(
     station: &station::State,
+    stage: Stage,
     her: &samus_movement::Samus,
     ridley_beaten: bool,
     random: types::RandomSequence,
     rules: &boss_ceres_ridley::Rules,
     quake: &mut world_quake::State,
 ) -> Result<Vec<boss_ceres_ridley::Run>, Fault> {
-    let stage = station.stage;
     if stage == Stage::Escape && station.shaft_overlay {
         return Err(Fault::Escape);
     }

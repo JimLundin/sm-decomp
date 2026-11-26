@@ -1171,24 +1171,106 @@ masking one palette behind the other. The next original cut after the proposed s
 ### From the getaway to the running timer
 
 `$TEMP/collab/ridley-retreat-evidence/timeline.py` checks these joins against each row.
-Movie frame is 10,163 plus the cut for the any% row. This table identifies the next
-owners' outputs. It supplies no elapsed-time trigger to the retreat model.
+For the any% row, cut 0 is the seed at movie frame 10,162 and cut 1 is its first
+successor at 10,163. Add the local cut to the seed frame for the movie labels below.
+This table identifies the next owners' outputs. It supplies no elapsed-time trigger to the retreat model.
 
 | Cut (movie frame for any%) | Source and effect |
 | --- | --- |
-| 1158 (11,321) | A6:`AA11..AA1F` sets `093F` to Getaway and enters the plane setup. The wall actors run in Getaway for the first time. Room work runs A6:`AABD` on the same frame. Its first picture requests the getaway sound in effects channel 2, cap six. The channel's write cursor advances and its entry records the sound. |
-| 1262 (11,425) | A6:`AAD4..AAE8` requests the directional push and starts the diagonal 3 px Back shake for 64 frames. R3 leaves 63 at the cut. Her health stays 24 and her protection stays zero. Movement's push setup (`90:E119`) begins at 1262, her knockback pose at 1263. The left push in the movie releases at 1264. The other row pushes her right until 1269. |
-| 1270 (11,433) | The getaway path ends (`A6:AB2E..AB5E`), restores the room presentation and selects self-destruct. The station stays Getaway. The text colours load at 1271. The sprite tile batches finish at 1277 and the background batches at 1284. |
-| 1284 (11,447) | Finishing the background tiles draws EMERGENCY, arms its 128-run hold and queues the escape track (`A6:C09F..C0BA`). The music queue's write cursor `0639` advances, its new track is 7 with delay 8. `07F5`, the current track, changes on **1293** (11,456). These are two different audio observations. |
-| 1412 (11,575) to 1585 (11,748) | The hold ends, arming the English typewriter (`A6:C0BB..C0F4`). Its completion selects the escape start on 1585 (`C104..C116`), while the station and countdown still read Getaway and dormant. |
-| 1586 (11,749) | A6:`C117..C135` emits the Ceres countdown start, changes `093F` to Escape and sets the area boss bit in `7ED82E`. H2 consumes the start on this same maintained frame. Its end-of-frame status `0943` is `8003` with 1:00.00 in `0945..0947`. The door clears its lock and starts its shake. Both walls hide in the new stage. |
-| 1602–1611 (11,765–11,774) | H2 finishes the initial hold at 1602. The first changed digits are 59.98 on 1603. The movie triggers the door on 1610, still ticking to 59.87. Its passage holds that time from 1611. The other player stays in the room and continues ticking. |
+| 1158 (11,320) | A6:`AA11..AA1F` sets `093F` to Getaway and enters the plane setup. The wall actors run in Getaway for the first time. Room work runs A6:`AABD` on the same frame. Its first picture requests the getaway sound in effects channel 2, cap six. The channel's write cursor advances and its entry records the sound. |
+| 1262 (11,424) | A6:`AAD4..AAE8` requests the directional push and starts the diagonal 3 px Back shake for 64 frames. R3 leaves 63 at the cut. Her health stays 24 and her protection stays zero. Movement's push setup (`90:E119`) begins at 1262, her knockback pose at 1263. The left push in the movie releases at 1264. The other row pushes her right until 1269. |
+| 1270 (11,432) | The getaway path ends (`A6:AB2E..AB5E`), restores the room presentation and selects self-destruct. The station stays Getaway. The text colours load at 1271. The sprite tile batches finish at 1277 and the background batches at 1284. |
+| 1284 (11,446) | Finishing the background tiles draws EMERGENCY, arms its 128-run hold and queues the escape track (`A6:C09F..C0BA`). The music queue's write cursor `0639` advances, its new track is 7 with delay 8. `07F5`, the current track, changes on **1293** (11,455). These are two different audio observations. |
+| 1412 (11,574) to 1585 (11,747) | The hold ends, arming the English typewriter (`A6:C0BB..C0F4`). Its completion selects the escape start on 1585 (`C104..C116`), while the station and countdown still read Getaway and dormant. |
+| 1586 (11,748) | A6:`C117..C135` emits the Ceres countdown start, changes `093F` to Escape and sets the area boss bit in `7ED82E`. H2 consumes the start on this same maintained frame. Its end-of-frame status `0943` is `8003` with 1:00.00 in `0945..0947`. The door clears its lock and starts its shake. Both walls hide in the new stage. |
+| 1602–1611 (11,764–11,773) | H2 finishes the initial hold at 1602. The first changed digits are 59.98 on 1603. The movie triggers the door on 1610, still ticking to 59.87. Its passage holds that time from 1611. The other player stays in the room and continues ticking. |
 
 The last health hit in both rows is 993. Neither the offscreen flight nor the getaway
 push starts another protection interval. Use the boss's placement event to create walls,
 the getaway's push to drive movement, the self-destruct completion to drive progress,
 and its one-minute start as the input to H2. Reading the recorded wall slots, stage,
 boss bit or timer status as new inputs each frame would hide a missing producer.
+
+## Part 4c-3, Ridley's flyby and its push
+
+Both `chain-any-0006-E0B5` and `samus-ceres-push` start here at the cut after
+the two walls have been placed. Cut 1157 has the getaway colours but still has
+a calm station. The first change at 1158 is Ridley's advance to Getaway. His
+ordinary body, tail and carried-baby animation stop running. The door and
+both walls see the new stage before the room plays the first flyby picture.
+The effective scroll is already (−127, 26), around (64, 64), at zoom 2,048 and
+turn 49. The flyby sound is already in effects queue 2. Neither the setup
+scroll nor an empty staging frame survives to the cut.
+
+| Entry | Sources |
+| --- | --- |
+| GetawayPass | `$A6:A288..A2BC`, `$A6:AA11..AA1F`, `$A6:AA54..AAAE`, `$8F:E571..E57B`, `$A6:AAAF..AB5E`, `$A6:AE4D..B0EE`, `$90:E119..E12D` |
+| GetawayPicture | `$A6:AA54..AAAE`, `$A6:AAE9..AB5E`, `$A6:AB5F..ACBB`, `$A0:B443`, `$A6:ACBC..AE4C`, `$A6:B0EF..B226`, `$80:8B4F`, `$A9:D2E4` |
+
+| Quantity | How to decode it and what to compare |
+| --- | --- |
+| Boss, stage, appearance | `0FA8` goes from `AA11` to `AA4F` to `C04E`. `093F` goes from 0 to 1 at 1158 and stays there after the flyby. Compare the actual walls' lists at `1012/1052`, figures at `100E/104E` and visibility at `1006/1046`; the room door's lock is `0FEA`. The escape bit is `7ED82E` bit 0 and the countdown status is `0943`. |
+| Restorable picture state | During the flyby, `7E8026 / 2` counts pictures shown. `7E8028/802A` hold signed scroll. `7E7814` holds the full wrapping turn. `7E802C/802E` hold baby and wing beats. The first picture starts with both beats at 0 in these rows. Decode only these two beats while Ready. The incoming path cursor, turn and position are inactive then. Poisoning them at 1157 preserves the first picture. The inactive room does not read the spent path cursor or its position. |
+| Content for the data importer | Pair the scale at `A6:AE4D` with signed changes in scroll. Use the negative of the horizontal value at `A6:B00F` and the vertical value at `A6:AF2F`. The scale terminator ends the path after 112 pictures. The pass is fixed at the 105th room run, including the first picture. Its test precedes the path end, so it also occurs on the return for an invented 104-picture path. It is independent of the value of its scale and of Samus's place. |
+| Effective picture | Compare WRAM shadows `56` (7 flyby, 9 room), `5F` (outside transparent during the flyby, zero at the return), `78/7A/7C/7E` (matrix), `80/82` (pivot), `B1/B3` (scroll) and `7E8020` (zoom while flying). The room's `0783` remains set on the return. Its ordinary camera writes the following frame. The renderer reads the actual selected plane. Architectural BGMODE at the NMI cuts is 9 even on the flyby. The active physical matrix and pivot match the requested picture. On the return at 1270 the inactive physical matrix still reads (27,15,−15,27) and the pivot (64,64), though their effective shadows are zero. The overflow selection and ten-bit scroll clear. The physical display-memory checks cover the art; the composed picture is outside this proof. |
+| Rotation | The same sine content at `A0:B443` as the cinematic plane. Here `A6:AB5F..AC0D` multiplies magnitudes and restores each sign after division. In a restored negative quadrant a nonintegral product truncates toward zero. The cinematic plane's signed floor would give (−205,−262) in place of (−204,−261) for G-negative-turn. Quantizing only after multiplication gives (−204,−262). Both agree throughout the recorded arc. |
+| Body, baby and wings | Compare each active body set against both current colours `7EC0A2..C0BF` and CGRAM `A2..BF`. Its source is `A6:B107 + 32 × (zoom / 256)`. `A6:ACDA` maps the four baby beats to three art sets. `A6:AD45` maps the two wing beats. NMI puts these changes into the low bytes of the plane's tilemap in VRAM. In word coordinates the two baby spans start at `0504/0584`; the six wing spans at `000B/0080/0100/0181/0201/0280`. Compare their full extents through the room return. |
+| Sound | On picture one the queue with byte cursors `0647/064A` accepts effect `4E` with cap six. Check the write cursor and the newly written entry in `0666`. The later escape track is a distinct music request. |
+| Push and quake | The room calls `90:E119` on pass. At this cut `0A58/0A5A` show the push armed, before its pose is selected. The earthquake request is type `23` for 64 frames at `183E/1840`. The ordinary quake update spends one immediately. The pass ignores protection, health and existing shake. Its push has no side until movement compares Samus with the view centre. |
+
+### Observable order and row differences
+
+* **1158.** The first enemies' run sets the stage, both walls run, Samus makes her
+  ordinary move, then room work plays the first picture and offers its sound.
+  The animation clock uses `05B6` at the incoming cut, so both looks change.
+* **1262.** The two scenes still agree on every flyby and quake output. Samus
+  has already moved this frame. Her position is (30,139) on the movie and
+  (216,187) on the other row. Each has 24 energy and zero protection.
+  The quake has 63 frames left.
+* **1263.** Movement at `90:E12E..E1C7` fits the recoil pose, sets downward
+  speed to 5 px per move, and chooses left when her x relative to the front
+  layer is below 128 px, right at or above 128. With `0911` zero, she takes
+  the left push at (30,137) on the movie, the right push at (216,187) on the
+  other row. Facing determines her pose independently of that push direction.
+* **1264 through 1269.** `90:E1C8..E23A` sweeps horizontally first. Solid
+  horizontal contact releases the push and clears its speed before a vertical
+  move. Otherwise the downward move also runs, and contact with the floor
+  alone leaves the push active. The movie releases at (29,137) on 1264.
+  On the other row she stays at y 187 and reaches x 218, 221, 225, 230 and
+  235 on 1264 through 1268. The next move releases her at (235,187) on 1269. The movie meets the still-locked room door at x 16, half-width 8. The other row meets the solid room blocks at x 240. Neither of the getaway walls obstructs her.
+  A fixed duration for her push cannot reproduce both rows.
+* **1269 and 1270.** Picture 112 is still on screen at 1269. Its scroll is
+  (−268,1019), its zoom 32 and its turn 5,377. On the following run the
+  depleted path selects the ordinary room view with zero scroll, pivot and
+  matrix. Glowing text, escape music, the boss bit and the countdown all have
+  later producers. The movie's ordinary motion has resumed before that return.
+
+### Reference and acceptance
+
+The observer reference in `$TEMP/collab/ridley-getaway-motion-evidence/flyby.py`
+starts with cut 1157's owned state and incoming clock. It consumes the path
+and art from the player's ROM, carries the complete flyby forward and
+compares every requested NMI cut from 1158 through 1270 for both rows.
+Her move, quake, door, transport and H2 are consumer checks. None supplies the
+flyby with its phase, path position, first sound, pass cue, next stage or end.
+
+| Each row, separately | Reference | Previous cut or no request |
+| --- | --- | --- |
+| Complete flyby state and effective geometry | 113/113 each | 0/113 each |
+| Live and physical body colours while the picture runs | 112/112 | 103/112, physical colours |
+| Physical baby and wing tiles | 113/113 | 85/113 |
+| Getaway stage, its sound and the pass | 113/113 each | 112/113 each |
+
+Delaying the pass by one picture fails at 1262 on the armed push in each row.
+Freezing the turn fails at 1158 on the full turn. A wrong quake fails on its reach, direction, strength or starting duration at 1262 and on G-pass. Production can exercise the
+same faults through its played runner. For resume, restore its actual phase,
+completed pictures, scroll, full turn and both beats plus the owning clock.
+Use the same checked room content after resume. Do not re-read the expected
+record, the displayed coefficients or the actors' responses as inputs.
+G-room uses the observed state at 1269 on either row and the result at
+1270. The remaining G cases use invented path samples and restored states.
+The clean flyby scope ends on the return to the room. Its first unmet successor
+is the warning's selection of text colours on 1271.
 
 ## Part 4c-1b, his tail in flight
 
@@ -1402,4 +1484,6 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 
 - Area ridley-retreat: FliesOutOfReach, GetawayBackdrop
 
-Budget: 37.5 × 217.3 units = 8,148 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350, ridley-retreat 350)
+- Area ridley-getaway: GetawayPass, GetawayPicture
+
+Budget: 37.5 × 227.0 units = 8,510 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362)

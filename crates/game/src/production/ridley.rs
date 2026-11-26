@@ -38,8 +38,12 @@ pub const fn encountered(boss: Boss) -> interface_hud::Boss {
 ///
 /// # Errors
 /// [`ColourFault`] for a colour past 15 bits, or a fade with no set.
-pub fn content(colours: &CeresRidleyColours) -> Result<RidleyContent, ColourFault> {
+pub fn content(
+    colours: &CeresRidleyColours,
+    art: &data::assets::ridley_flyby::Flyby,
+) -> Result<RidleyContent, ColourFault> {
     Ok(RidleyContent {
+        flyby: flyby_content(art)?,
         eye_steps: fade(&colours.eye_steps, EyeColours)?,
         body_sets: fade(&colours.body_sets, BodyColours)?,
         getaway: GetawayContent {
@@ -49,6 +53,46 @@ pub fn content(colours: &CeresRidleyColours) -> Result<RidleyContent, ColourFaul
             wall_colours: checked(&colours.getaway.wall_colours)?,
         },
     })
+}
+
+fn flyby_content(
+    art: &data::assets::ridley_flyby::Flyby,
+) -> Result<boss_ceres_ridley::FlybyContent, ColourFault> {
+    use boss_ceres_ridley::{FlybyContent, FlybyFrame, FlybyPath, FlybyZoom};
+    let frame = |picture: &data::assets::ridley_flyby::PathPicture| {
+        Ok(FlybyFrame {
+            shift: picture.shift,
+            zoom: FlybyZoom::new(picture.zoom).ok_or(ColourFault)?,
+        })
+    };
+    let (first, rest) = art.path.split_first().ok_or(ColourFault)?;
+    let mut body_shades = [[types::Colour::BLACK; 15]; 9];
+    for (palette, source) in body_shades.iter_mut().zip(&art.body) {
+        *palette = checked(source)?;
+    }
+    let second = types::Picture::new(1).ok_or(ColourFault)?;
+    let third = types::Picture::new(2).ok_or(ColourFault)?;
+    Ok(FlybyContent {
+        path: FlybyPath {
+            first: frame(first)?,
+            rest: rest.iter().map(frame).collect::<Result<_, _>>()?,
+        },
+        body_shades,
+        baby_looks: enum_map::enum_map! {
+            boss_ceres_ridley::FlybyBabyLook::First => types::Picture::default(),
+            boss_ceres_ridley::FlybyBabyLook::Middle => second,
+            boss_ceres_ridley::FlybyBabyLook::Third => third,
+        },
+        wing_looks: enum_map::enum_map! {
+            types::ceres_getaway::FlybyWingBeat::First => types::Picture::default(),
+            types::ceres_getaway::FlybyWingBeat::Second => second,
+        },
+    })
+}
+
+/// Publish the body colours selected by an active flyby picture.
+pub(super) fn show_flyby(body: &[types::Colour; 15], palette: &mut Palette) {
+    show_row(palette, 5, FIRST_SHOWN, body);
 }
 
 /// A fade's sets, each colour checked, in the model's terms.

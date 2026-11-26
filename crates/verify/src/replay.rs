@@ -82,7 +82,10 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         .validate()
         .map_err(|_| data_failure(None, "case execution recipe"))
         .and_then(|()| {
-            if case.inputs == index::InputProvider::PlayedCeresInputs {
+            if matches!(
+                case.inputs,
+                index::InputProvider::PlayedCeresInputs | index::InputProvider::ScopedCeresFlyby
+            ) {
                 played::indexed::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {
                 played::intro::delivery::run(case, sources, &mut result)

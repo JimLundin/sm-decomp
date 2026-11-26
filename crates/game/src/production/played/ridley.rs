@@ -32,7 +32,7 @@ impl station::State {
 pub(super) fn run(
     ridley: CeresRidley,
     running: station::Running<'_>,
-    random: types::RandomSequence,
+    (random, finished): (types::RandomSequence, types::GameFrames),
     her_energy: u16,
     content: &Content,
     rules: &Rules,
@@ -41,8 +41,11 @@ pub(super) fn run(
     match ridley.phase {
         RidleyPhase::Attacking(_) => return Err(Fault::RidleyAttacks),
         RidleyPhase::FakeRetreat => return Err(Fault::RidleyGivesUp),
-        RidleyPhase::GetawayReady => return Err(Fault::RidleyGetaway),
-        RidleyPhase::Awake
+        RidleyPhase::Getaway(types::ceres_getaway::GetawayState::WarningReady) => {
+            return Err(Fault::RidleyWarning);
+        }
+        RidleyPhase::Getaway(_)
+        | RidleyPhase::Awake
         | RidleyPhase::BodyFading { .. }
         | RidleyPhase::EyeFading { .. }
         | RidleyPhase::Holding
@@ -58,7 +61,10 @@ pub(super) fn run(
         station::Running::Passage => (true, None),
     };
     let run = ridley.run(
-        passage_under_way,
+        boss_ceres_ridley::RidleyFrame {
+            passage_under_way,
+            finished,
+        },
         random.number.0,
         her,
         Fight {
@@ -89,6 +95,26 @@ pub(super) fn run(
         ridley::show_getaway(backdrop.colours, palette);
     }
     Ok(run)
+}
+
+/// The room work after Samus moves publishes the selected flyby picture and starts its shake.
+pub(super) fn apply_getaway(
+    effects: boss_ceres_ridley::GetawayEffects,
+    quake: &mut world_quake::State,
+    palette: &mut Palette,
+) {
+    if let Some(request) = effects.quake {
+        world_quake::start_or_stop(
+            quake,
+            world_quake::ShakeOrder::Start {
+                kind: request.kind,
+                frames: request.duration,
+            },
+        );
+    }
+    if let boss_ceres_ridley::GetawayView::Flyby { body_colours, .. } = effects.view {
+        ridley::show_flyby(&body_colours, palette);
+    }
 }
 
 #[cfg(test)]
@@ -123,6 +149,7 @@ mod tests {
             .unwrap(),
             body_sets: FadeSets::new(vec![body(0x300), body(0x400)]).unwrap(),
             getaway: content().ridley.getaway,
+            flyby: content().ridley.flyby,
         }
     }
 
@@ -173,7 +200,7 @@ mod tests {
         run(
             ridley(phase),
             Running::Play(Some(her)),
-            random,
+            (random, types::GameFrames(0)),
             99,
             &content,
             &rules(),
@@ -261,8 +288,11 @@ mod tests {
             Err(Fault::RidleyGivesUp)
         );
         assert_eq!(
-            ran(RidleyPhase::GetawayReady, &mut palette),
-            Err(Fault::RidleyGetaway)
+            ran(
+                RidleyPhase::Getaway(types::ceres_getaway::GetawayState::WarningReady),
+                &mut palette
+            ),
+            Err(Fault::RidleyWarning)
         );
         assert_eq!(palette, unlit());
     }

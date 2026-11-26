@@ -47,6 +47,9 @@ const LARGEST_SIZE: u8 = 3;
 pub struct QuakeSize(u8);
 
 impl QuakeSize {
+    /// A three-pixel shake, the largest supported size.
+    pub const LARGE: Self = Self(LARGEST_SIZE);
+
     /// The size of this many pixels, if it is one (1 to 3).
     #[must_use]
     pub const fn new(pixels: u8) -> Option<Self> {
@@ -99,6 +102,16 @@ pub struct QuakeKind {
     pub size: QuakeSize,
     /// Which way.
     pub direction: QuakeDirection,
+}
+
+/// Spec: `ShakeStarts`. A producer's request to start a shake. The room owns the countdown
+/// and displacement, including the update on the frame the request arrives.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QuakeRequest {
+    /// What to shake and how.
+    pub kind: QuakeKind,
+    /// The duration to start, before the room spends the first frame.
+    pub duration: QuakeDuration,
 }
 
 /// Spec: `ShakeStarts`, `ShakeCountsDown`. A shake under way: its kind and the frames it has

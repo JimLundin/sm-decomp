@@ -1750,3 +1750,47 @@ provider = "recorded NMI kind and interrupted work site"
 fields = ["end of vblank", "cartridge write completion", "requested commit"]
 phase = "suspended work and NMI return"
 claim = "the cartridge and queued graphics finish from the one suspended seed"
+
+[[case]]
+id = "ridley/flyby"
+kind = "scoped"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 1156 }
+end = { cut_inclusive = 1270 }
+rules = ["boss-ceres-ridley/GetawayPass", "boss-ceres-ridley/GetawayPicture"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "scoped-ceres-flyby"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
+checkpoints = false
+limits = ["The stopped retreat is reached inside ordinary play. The scope holds the carried Samus position from the backdrop and compares the boss, doors, clock and quake. At cut 1262 it checks the unserved shove request.", "The display comparison covers the dedicated exact publication consumer and sampled physical PPU, CGRAM and VRAM. Live renderer scheduling and pixel composition are outside this scope.", "The sound evidence compares the second queue append. Downstream audio service and queue limits are outside this run."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness", "initial flyby display memory"]
+phase = "frame boundary"
+claim = "Only the seed supplies initial display memory. Production supplies the picture, tile and sound effects thereafter."
+
+[[case]]
+id = "ridley/alternate-flyby"
+kind = "scoped"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 1156 }
+end = { cut_inclusive = 1270 }
+rules = ["boss-ceres-ridley/GetawayPass", "boss-ceres-ridley/GetawayPicture"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "scoped-ceres-flyby"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
+checkpoints = false
+limits = ["The stopped retreat is reached inside ordinary play. The scope holds the carried Samus position from the backdrop and compares the boss, doors, clock and quake. At cut 1262 it checks the unserved shove request.", "The display comparison covers the dedicated exact publication consumer and sampled physical PPU, CGRAM and VRAM. Live renderer scheduling and pixel composition are outside this scope.", "The sound evidence compares the second queue append. Downstream audio service and queue limits are outside this run."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness", "initial flyby display memory"]
+phase = "frame boundary"
+claim = "Only the seed supplies initial display memory. Production supplies the picture, tile and sound effects thereafter."

@@ -156,6 +156,8 @@ pub enum InputProvider {
     PlayedCeresInputs,
     /// One elevator arrival and T1 scheduling.
     Blackout,
+    /// One admitted room and finished opportunities for the flyby’s owned producers.
+    ScopedCeresFlyby,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
     ScopedIntroInputs,
     /// A causal intro start and the borrowed work-completion boundaries.
@@ -267,6 +269,27 @@ pub enum ObservationId {
     /// Three independent current and native physical palette spans at publication.
     #[serde(rename = "ridley.backdrop.colours")]
     CeresBackdropColours,
+    /// Phase, position, turn, picture counter and both beats.
+    #[serde(rename = "ridley.flyby.state")]
+    CeresFlybyState,
+    /// Effective plane and physical transform, scroll, mode, and zoom.
+    #[serde(rename = "ridley.flyby.plane")]
+    CeresFlybyPlane,
+    /// Current body shades and their published CGRAM span.
+    #[serde(rename = "ridley.flyby.colours")]
+    CeresFlybyColours,
+    /// The low-byte tilemap updates for the baby and the wings.
+    #[serde(rename = "ridley.flyby.tiles")]
+    CeresFlybyTiles,
+    /// The flyby sound offer on the second effects channel.
+    #[serde(rename = "ridley.flyby.sound")]
+    CeresFlybySound,
+    /// The side-free request from Ridley to movement.
+    #[serde(rename = "ridley.flyby.push")]
+    CeresFlybyPush,
+    /// The room’s door state, clock and quake at each flyby cut.
+    #[serde(rename = "ridley.flyby.room")]
+    CeresFlybyRoom,
     /// Complete carried flight tail, compared by segment and field.
     #[serde(rename = "ridley.tail.state")]
     CeresTailState,
@@ -1063,6 +1086,31 @@ macro_rules! discovery_observations {
     };
 }
 
+macro_rules! ceres_observations {
+    () => {
+        ObservationId::CeresPhase
+            | ObservationId::CeresWait
+            | ObservationId::CeresFigure
+            | ObservationId::CeresShown
+            | ObservationId::CeresSolid
+            | ObservationId::CeresRetreatBody
+            | ObservationId::CeresRetreatBound
+            | ObservationId::CeresBackdropWalls
+            | ObservationId::CeresBackdropColours
+            | ObservationId::CeresTailState
+            | ObservationId::CeresTailPlaces
+            | ObservationId::CeresTailHit
+            | ObservationId::CeresTailSwish
+            | ObservationId::CeresFlybyState
+            | ObservationId::CeresFlybyPlane
+            | ObservationId::CeresFlybyColours
+            | ObservationId::CeresFlybyTiles
+            | ObservationId::CeresFlybySound
+            | ObservationId::CeresFlybyPush
+            | ObservationId::CeresFlybyRoom
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -1112,19 +1160,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::Reached
         | O::MapCarryMovement => Responsibility::Movement,
         O::AudioSemantic | O::AudioReplies | O::AudioRequestLines => Responsibility::Audio,
-        O::CeresPhase
-        | O::CeresWait
-        | O::CeresFigure
-        | O::CeresShown
-        | O::CeresSolid
-        | O::CeresRetreatBody
-        | O::CeresRetreatBound
-        | O::CeresBackdropWalls
-        | O::CeresBackdropColours
-        | O::CeresTailState
-        | O::CeresTailPlaces
-        | O::CeresTailHit
-        | O::CeresTailSwish => Responsibility::Ceres,
+        ceres_observations!() => Responsibility::Ceres,
         O::CameraViewXPixel
         | O::CameraViewXFraction
         | O::CameraViewYPixel
@@ -1314,6 +1350,12 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
 fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "boss-ceres-ridley/GetawayPass" => {
+            &[O::CeresFlybyState, O::CeresFlybySound, O::CeresFlybyPush]
+        }
+        "boss-ceres-ridley/GetawayPicture" => {
+            &[O::CeresFlybyPlane, O::CeresFlybyColours, O::CeresFlybyTiles]
+        }
         "boss-ceres-ridley/FliesOutOfReach" => &[O::CeresRetreatBody, O::CeresRetreatBound],
         "boss-ceres-ridley/GetawayBackdrop" => &[
             O::CeresRetreatBody,
@@ -1846,7 +1888,10 @@ fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
 
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
-    if case.inputs == InputProvider::PlayedCeresInputs {
+    if matches!(
+        case.inputs,
+        InputProvider::PlayedCeresInputs | InputProvider::ScopedCeresFlyby
+    ) {
         return super::played::indexed::valid(case);
     }
     if case.inputs == InputProvider::Blackout {
@@ -2110,6 +2155,9 @@ impl Case {
             return Some(0);
         }
         match self.start {
+            Start::CacheCut { frame } if matches!(self.inputs, InputProvider::ScopedCeresFlyby) => {
+                super::played::flyby_scope::first_cut(frame)
+            }
             Start::CacheCut { frame } | Start::NativeRecord { frame, .. } => frame.checked_add(1),
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
             Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {

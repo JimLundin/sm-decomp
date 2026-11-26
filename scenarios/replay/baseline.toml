@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "a19fd0b623ad075e0805a417a0b48d37fcb689cf3005b746ab127fdcb69e1949"
+index_sha256 = "ca5619106baa92d1b451d15fbeabb4edbb0fa374c5aee60c2cbf9cc43ec10797"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1274,3 +1274,39 @@ null_fields = 3
 restorations = 3
 pending_boundaries = 1
 pending_restorations = 1
+
+[[case]]
+id = "ridley/flyby"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "53097bd7fbc8b27c9ad54e97ed3fbf06ba76464e2634bcb9b90e5c28e2461953"
+
+[case.counts]
+cuts = 113
+fields = 678
+outputs = 4987
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 89
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/alternate-flyby"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "53097bd7fbc8b27c9ad54e97ed3fbf06ba76464e2634bcb9b90e5c28e2461953"
+
+[case.counts]
+cuts = 113
+fields = 678
+outputs = 4987
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 89
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0

@@ -8,11 +8,11 @@ use crate::her::Her;
 use crate::ridley_phase::RidleyPhase;
 use crate::tail::{TailCurl, place_at_rest};
 use crate::tail_aim::CeresAim;
+use crate::turn::{QUARTER_TURN, sine};
 
 /// Number of linked segments, including the base and tip.
 pub const TAIL_SEGMENTS: usize = 7;
 const PIXEL: u16 = 256;
-const QUARTER_TURN: u16 = 64;
 const REST_ANGLE: u16 = 16_384;
 const INITIAL_ANGLE_STEP: u16 = 16;
 const INITIAL_LAG: u8 = 17;
@@ -257,7 +257,7 @@ impl FlightTail {
     ) -> Option<TailSwish> {
         let swish = self.swish.tick(self.pace);
         // `GetawayBackdrop`: keep the stopped tail's swing state, but still relink and resize.
-        let swings = aim.phase != RidleyPhase::GetawayReady;
+        let swings = aim.phase != RidleyPhase::GETAWAY_START;
         if swings {
             self.aim_or_recover(position, aim, her);
         }
@@ -389,27 +389,9 @@ impl TailSegment {
     }
 }
 
-/// `TailBends`: the first quarter wave of trunc(256 × sin(2πk / 256)), endpoints included.
-/// Reflect and negate it for the other quadrants, keeping the projection integer-only.
-const QUARTER_WAVE: [i16; 65] = [
-    0, 6, 12, 18, 25, 31, 37, 43, 49, 56, 62, 68, 74, 80, 86, 92, 97, 103, 109, 115, 120, 126, 131,
-    136, 142, 147, 152, 157, 162, 167, 171, 176, 181, 185, 189, 193, 197, 201, 205, 209, 212, 216,
-    219, 222, 225, 228, 231, 234, 236, 238, 241, 243, 244, 246, 248, 249, 251, 252, 253, 254, 254,
-    255, 255, 255, 256,
-];
-const HALF_TURN: u16 = 128;
-
 /// `TailBends`: truncate the sine first, then round the scaled offset down (also for negatives).
 fn projected(angle: u16, length: u16) -> i16 {
-    let half = angle % HALF_TURN;
-    let index = half.min(HALF_TURN.saturating_sub(half));
-    let magnitude = i32::from(QUARTER_WAVE.get(usize::from(index)).copied().unwrap_or(0));
-    let sine = if angle % PIXEL < HALF_TURN {
-        magnitude
-    } else {
-        magnitude.saturating_neg()
-    };
-    let offset = sine
+    let offset = sine(angle)
         .saturating_mul(i32::from(length))
         .div_euclid(i32::from(PIXEL));
     i16::try_from(offset).unwrap_or(0)

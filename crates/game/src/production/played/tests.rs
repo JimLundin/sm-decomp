@@ -207,6 +207,18 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         map: HerMap::default(),
         start_x: Wrapping(0x80),
         ridley: boss_ceres_ridley::RidleyContent {
+            flyby: boss_ceres_ridley::FlybyContent {
+                path: boss_ceres_ridley::FlybyPath {
+                    first: boss_ceres_ridley::FlybyFrame {
+                        shift: types::Pair { x: 0, y: 0 },
+                        zoom: boss_ceres_ridley::FlybyZoom::new(0).unwrap(),
+                    },
+                    rest: Vec::new(),
+                },
+                body_shades: [[types::Colour::BLACK; 15]; 9],
+                baby_looks: enum_map::EnumMap::default(),
+                wing_looks: enum_map::EnumMap::default(),
+            },
             getaway: boss_ceres_ridley::GetawayContent {
                 left_wall: types::Pair {
                     x: Wrapping(8),

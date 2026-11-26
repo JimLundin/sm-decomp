@@ -53,10 +53,6 @@ const PLAY: u16 = 8;
 /// An enemy's shake timer as the update's request leaves it.
 const ASKED: u16 = 2;
 
-/// The row and cuts where the getaway draws its picture on the front layer's scroll.
-const GETAWAY_ROW: &str = "chain-any-0006-E0B5";
-const GETAWAY_PICTURE: core::ops::RangeInclusive<u64> = 1158..=1270;
-
 /// The scroll rate at which the room holds its back layer still on an axis.
 const HELD: u8 = 1;
 
@@ -132,7 +128,7 @@ fn updated(previous: &FrameRecord, current: &FrameRecord) -> Result<bool, Outcom
 pub(super) fn expected(
     previous: &FrameRecord,
     current: &FrameRecord,
-    place: (&str, u64),
+    flyby_controls_front: bool,
 ) -> Result<Vec<Observation>, Outcome> {
     let wram = &current.wram;
     let remaining = word(wram, REMAINING)?;
@@ -146,8 +142,7 @@ pub(super) fn expected(
     if !updated(previous, current)? {
         return Ok(fields);
     }
-    let (row, cut) = place;
-    if !(row == GETAWAY_ROW && GETAWAY_PICTURE.contains(&cut)) {
+    if !flyby_controls_front {
         fields.push(offset_observation("quake.front", Some(front(wram)?)));
     }
     fields.push(offset_observation(

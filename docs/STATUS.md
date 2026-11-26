@@ -283,7 +283,21 @@ ceiling at 1,115 and places the two walls at 1,157. The station is still calm.
 The terminal comparison checks each of the three live palette spans against
 both the native current mirror and CGRAM. Neither route takes another hit during
 the retreat. The cut-1,157 witness restores the station's actors into the carried
-room state. The next turn stops at the getaway boundary on 1,158.
+room state. On 1,158 the flyby uses the carried frame clock, publishes the Getaway
+stage before the walls update, and puts the first picture on the plane. Both tile
+writers publish on this cut, so the live run begins with an unpublished display
+consumer. Later pictures hold the last tiles between writes. The room and alternate
+routes compare the active matrix, pivot, scroll and overflow, the body colours in
+current palette and CGRAM, the baby and wing tile spans, and the first sound offer.
+The ordinary body, tail and baby State stay fixed. Both routes hold through cut
+1,261. The next cut needs the movement owner for `RidleyGetawayPush`.
+
+The scoped cases `ridley/flyby` and `ridley/alternate-flyby` admit cut 1,156
+and play the last retreat turn before comparing the flyby through room return
+at 1,270. Each compares 113 cuts, 678 State fields and 4,987 outputs. The scopes
+hold Samus's position from the backdrop, compare the unserved shove request at
+1,262, and carry the quake and drawing through the return. On return the room
+view clears scroll and overflow while the physical matrix and pivot stay held.
 
 Her going backwards, which the camera reads, is her skid, her moonwalk, or exactly
 one of a hit's push and her backward leap (world-camera's `LeadingHer`). Room 6's moonwalk at its
@@ -305,10 +319,10 @@ geometry, door cells and camera room are held from the seed; each room a passage
 into is built from the imported world, with its map room and its Ceres doors. Played alone,
 `chain-any-0001-DF45` holds all 411 cuts from her arrival: the pad lowers her from cut 29 and
 lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` alone holds all
-281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 1,157 from
-its seed. The Ceres rows from `chain-any-0001-DF45` hold 2,781 cuts through room 6's cut 1,157.
-Starting at `chain-any-0003-DFD7` holds 2,087 cuts. From her arrival
-(`any-ceres-arrival`, below) they hold 3,004, to movie frame 11,319. In the
+281 cuts, `chain-any-0004-E021` all 263, and `chain-any-0006-E0B5`, Ridley's room, 1,261 from
+its seed. The Ceres rows from `chain-any-0001-DF45` hold 2,885 cuts through room 6's cut 1,261.
+Starting at `chain-any-0003-DFD7` holds 2,191 cuts. From her arrival
+(`any-ceres-arrival`, below) they hold 3,108, to movie frame 11,423. In the
 escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 1,075 through room 2
 without a new seed. Room 4 (`chain-any-0008-E021`) holds all 263 cuts, including the placement
 of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds all 330 cuts. Its passage counts jump
@@ -339,8 +353,8 @@ edges' subpixel (R36 to R40, at room 6's cuts 229, 615, 621 and 623 and room 3's
 compared by these played runs and are not wired as indexed cases. At cut 728 she lets the second
 leap go, holding forward without jump: she follows the pad and stops dashing, and the dash she
 keeps is gone the next frame (samus-movement's backward leap let go). He takes off at cut 867 and
-lands both airborne hits. Room 6 plays 1,157 cuts from its seed. Cut 1,158 starts the
-getaway and returns `RidleyGetaway`.
+lands both airborne hits. Room 6 plays 1,261 cuts from its seed. At cut 1,262
+the flyby requests the shove after Samus moves.
 CI runs it for the M0 row from its seed (cut 0) and from cut 6 when dispatched with the target
 `played`. It is a diagnostic, not yet an indexed obligation.
 
@@ -446,7 +460,7 @@ the equipment returned; at the 2 lag cuts, 129 and 403, which are borrowed, the 
 alone. VRAM (E2), OAM (E1), the colour blend's bands (E3) and the PPU mirrors (E3) are masked.
 The scoped run from movie frame 6,013 continues across the last page at 7,512. The flight
 restores the entry checkpoint and carries the same clock, controller and actor through movie
-frame 11,319. The next cut requires `RidleyGetaway`.
+frame 11,423. The next cut requires `RidleyGetawayPush`.
 A model that never moves differs at
 cut 2 in `intro.dissolve`; a press dropped by the runner differs at cut 1186 in `intro.stage`.
 
@@ -474,15 +488,15 @@ lag cut. Production carries both frame counts, brightness and the random sequenc
 preparation. The run compares both counts at every cut and the random number at finished
 flight cuts and every preparation cut. The first room and its actors come from room loading
 and fresh-file Progress. The same run plays through the fade, the first room and the following
-rooms up to movie frame 11,319. It holds 3,807 cuts from the flight seed and stops at
-3,808 with `RidleyGetaway`. The cartridge save is outside the
+rooms up to movie frame 11,423. It holds 3,911 cuts from the flight seed and stops at
+3,912 with `RidleyGetawayPush`. The cartridge save is outside the
 comparison. Delaying the flight handoff until the work finishes first differs
 at cut 803 in `flight.active`.
 
 ### Her arrival at Ceres
 
 The standalone `any-ceres-arrival` run holds all 222 arrival cuts, then plays on through
-movie frame 11,319 without a second seed. The start loads the shaft, its Ceres doors,
+movie frame 11,423 without a second seed. The start loads the shaft, its Ceres doors,
 its overlay and the colours the fade heads for, with the start's own palette row for Samus.
 Fresh-file Progress supplies the room version and Samus's energy and items. The preparation
 carries the frame clock and random number. It borrows the loading path's entry into the
@@ -547,15 +561,16 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 11,319 cuts. It carries the fight through
+intro in the State `Begins`. The run holds 11,423 cuts. It carries the fight through
 the locked actor turns and return, then plays discovery, delivery and examination.
 The last page ends at 7,512. Flight owns the active scene and forced blank at 7,513.
 The flight takes the intro's frame counts, random sequence, pad latch, health and item bindings.
 At 8,315 it hands its State to arrival during an unfinished work interval. The selected
 file's save publishes its payload on that cut and both checks at 8,316. The continuation
 restores the arrival and pending save checkpoints at 8,315. It checks the active slot
-and the original selected file as well as every battery byte through room play. The movie starts a new file, so arrival initializes fresh-file Progress.
-The next cut at 11,320 requires `RidleyGetaway`.
+and the original selected file as well as every battery byte through room play. The movie starts a new file, so
+arrival initializes fresh-file Progress. At 11,320 the carried room begins the flyby.
+The next cut at 11,424 requires `RidleyGetawayPush`.
 
 The sound Samus requests when she leaves her spin reaches the front end at 2,517. The standing
 handoff at 2,615 runs before the final pad. The locked fight keeps its body sample

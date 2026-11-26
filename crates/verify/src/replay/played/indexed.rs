@@ -38,25 +38,55 @@ const RETREAT_OUTPUTS: &[ObservationId] = &[
     ObservationId::CeresTailSwish,
 ];
 
+const FLYBY_STATE: &[ObservationId] = &[ObservationId::CeresFlybyState];
+const FLYBY_OUTPUTS: &[ObservationId] = &[
+    ObservationId::CeresFlybyPlane,
+    ObservationId::CeresFlybyColours,
+    ObservationId::CeresFlybyTiles,
+    ObservationId::CeresFlybySound,
+    ObservationId::CeresFlybyPush,
+    ObservationId::CeresFlybyRoom,
+];
+
 pub(in crate::replay) fn valid(case: &Case) -> bool {
-    case.kind == CaseKind::Integrated
+    let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
+        case.kind == CaseKind::Scoped
+            && case.responsibilities == [Responsibility::Ceres]
+            && case.expectations.fields == FLYBY_STATE
+            && case.expectations.outputs == FLYBY_OUTPUTS
+    } else {
+        case.kind == CaseKind::Integrated
+            && case.responsibilities
+                == [
+                    Responsibility::Ceres,
+                    Responsibility::Movement,
+                    Responsibility::Health,
+                ]
+            && (case.expectations.fields == STATE && case.expectations.outputs == OUTPUTS
+                || case.expectations.fields == RETREAT_STATE
+                    && case.expectations.outputs == RETREAT_OUTPUTS)
+    };
+    scope
         && matches!(case.start, Start::CacheCut { .. })
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && (case.expectations.fields == STATE && case.expectations.outputs == OUTPUTS
-            || case.expectations.fields == RETREAT_STATE
-                && case.expectations.outputs == RETREAT_OUTPUTS)
         && case.expectations.output_cut.is_none()
-        && case.responsibilities
-            == [
-                Responsibility::Ceres,
-                Responsibility::Movement,
-                Responsibility::Health,
-            ]
         && !case.checkpoints
 }
 
 /// Comparison fields for the indexed claim. Other played fields still gate every turn.
+fn flyby_selection(field: &str) -> Option<bool> {
+    if field.starts_with("ceres.") || field.starts_with("quake.") || field == "finished-frames" {
+        return Some(true);
+    }
+    field.strip_prefix("ridley.flyby.").map(|suffix| {
+        !matches!(
+            suffix,
+            "phase" | "shown" | "position" | "turn" | "baby" | "wings"
+        )
+    })
+}
+
 fn selection(field: &str, retreat: bool) -> Option<bool> {
     if retreat && (field == "ridley.retreat.bound" || field.starts_with("ridley.backdrop.")) {
         return Some(true);
@@ -94,6 +124,16 @@ pub(in crate::replay) fn run(
         appearance: appearance::Content::load(&sources.rom)?,
     };
     let mut run = Run::admit(&seed, &content, &sources.rom, &case.row)?;
+    if case.expectations.fields == FLYBY_STATE {
+        return flyby(
+            &mut run,
+            &mut rows,
+            seed,
+            start,
+            case.end.cut_inclusive,
+            result,
+        );
+    }
     let mut frozen = actual(&run.state, &content.appearance, &run.hud, true, false)?;
     frozen.push(contact::actual("ridley.tail.hit", None));
     frozen.push(ridley::swish(false));
@@ -145,4 +185,34 @@ pub(in crate::replay) fn run(
         Stop::End => Ok(()),
         Stop::At(outcome) => Err(outcome),
     }
+}
+
+fn flyby(
+    run: &mut Run<'_>,
+    rows: &mut super::rows::Rows<'_>,
+    seed: oracle_record::FrameRecord,
+    start: u64,
+    end: u64,
+    result: &mut CaseResult,
+) -> Result<(), Outcome> {
+    let mut digest = Vec::new();
+    let frozen = ridley::flyby::frozen();
+    run.flyby_scope(rows, seed, start, end, |cut, mut fields| {
+        fields.retain(|field| flyby_selection(&field.field).is_some());
+        let semantics: Vec<_> = fields
+            .iter()
+            .filter(|field| flyby_selection(&field.field) == Some(false))
+            .cloned()
+            .collect();
+        let observed = ExpectedCut {
+            semantic_count: semantics.len(),
+            output_count: fields.len().saturating_sub(semantics.len()),
+            semantics,
+            fields,
+            replies: 0,
+        };
+        runner::record_cut(result, &mut digest, &observed, &frozen, cut)
+    })?;
+    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+    Ok(())
 }

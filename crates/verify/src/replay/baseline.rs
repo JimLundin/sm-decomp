@@ -393,6 +393,16 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
         (ObservationId::CeresBackdropColours, 6),
         (ObservationId::CeresTailHealth, 6),
     ];
+    if case.inputs == super::index::InputProvider::ScopedCeresFlyby {
+        // The first successor finishes the retreat. The last restores the room and has
+        // no active zoom or two body palette observations.
+        return counts.cuts == 113
+            && counts.fields == 678
+            && counts.outputs == 4987
+            && counts.publications == 0
+            && counts.replies == 0
+            && counts.pending_boundaries == 0;
+    }
     let width = |field: &ObservationId| {
         WIDTHS
             .iter()

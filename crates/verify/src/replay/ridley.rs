@@ -143,11 +143,22 @@ impl Shows {
     /// What the model's phase shows.
     pub(super) const fn of(phase: RidleyPhase) -> Self {
         Self {
-            tangible: phase.tangible(),
-            moving: phase.moving(),
+            tangible: phase.tangible() || flyby_holds_body(phase),
+            moving: phase.moving() || flyby_holds_body(phase),
             roaring: phase.roaring(),
         }
     }
+}
+
+/// The flyby takes over drawing without clearing the dormant slot flags.
+const fn flyby_holds_body(phase: RidleyPhase) -> bool {
+    matches!(
+        phase,
+        RidleyPhase::Getaway(
+            types::ceres_getaway::GetawayState::FlyingPast(_)
+                | types::ceres_getaway::GetawayState::WarningReady
+        )
+    )
 }
 
 /// Ceres Ridley as the record holds him, or none outside his room.
@@ -231,7 +242,7 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
 pub(super) fn tail_segments(wram: &[u8], phase: RidleyPhase) -> Result<Vec<Tail>, Outcome> {
     (0..TAIL_SEGMENTS)
         .map(|segment| {
-            if !phase.tail_at_rest() && !phase.moving() {
+            if !phase.tail_at_rest() && !phase.moving() && !flyby_holds_body(phase) {
                 return Ok(None);
             }
             let x = TAIL_SEGMENT_X.wrapping_add(segment.wrapping_mul(TAIL_SEGMENT_STRIDE));
@@ -388,10 +399,60 @@ fn phase(wram: &[u8], slot: u16) -> Result<RidleyPhase, Outcome> {
         0xA9A0 => {
             RidleyPhase::CoastingAbove(CoastRuns::new(runs(wait)?).ok_or_else(wait_unsupported)?)
         }
-        0xAA11 => RidleyPhase::GetawayReady,
+        code @ (0xAA11 | 0xAA4F | 0xC04E) => return getaway(wram, code),
         0xBD9A => RidleyPhase::FakeRetreat,
         _ => return Err(unsupported("Ceres Ridley phase observation")),
     })
+}
+
+fn getaway(wram: &[u8], code: u16) -> Result<RidleyPhase, Outcome> {
+    use types::ceres_getaway::{
+        FlybyBabyBeat, FlybyBeats, FlybyProgress, FlybyTurn, FlybyWingBeat, GetawayState,
+    };
+    let get = |offset| {
+        read(
+            wram,
+            WramWord {
+                name: "Ceres Ridley flyby state",
+                offset,
+            },
+        )
+    };
+    let bad = || unsupported("Ceres Ridley flyby observation");
+    if code == 0xc04e {
+        return Ok(RidleyPhase::Getaway(GetawayState::WarningReady));
+    }
+    let baby = match get(0x802c)? {
+        0 => FlybyBabyBeat::First,
+        1 => FlybyBabyBeat::ToThird,
+        2 => FlybyBabyBeat::Third,
+        3 => FlybyBabyBeat::ToFirst,
+        _ => return Err(bad()),
+    };
+    let wings = match get(0x802e)? {
+        0 => FlybyWingBeat::First,
+        1 => FlybyWingBeat::Second,
+        _ => return Err(bad()),
+    };
+    let beats = FlybyBeats { baby, wings };
+    let state = if code == 0xaa11 {
+        GetawayState::GetawayReady(beats)
+    } else {
+        let count = get(0x8026)?;
+        if !count.is_multiple_of(2) {
+            return Err(bad());
+        }
+        GetawayState::FlyingPast(FlybyProgress {
+            shown: core::num::NonZeroUsize::new(usize::from(count / 2)).ok_or_else(bad)?,
+            scroll: Pair {
+                x: get(0x8028)?.cast_signed(),
+                y: get(0x802a)?.cast_signed(),
+            },
+            turn: FlybyTurn(get(0x7814)?),
+            beats,
+        })
+    };
+    Ok(RidleyPhase::Getaway(state))
 }
 
 /// A wait or a count of runs that is not one he holds.
@@ -499,7 +560,9 @@ fn phase_code(phase: RidleyPhase) -> (i64, u16, u8, u16) {
         RidleyPhase::Retreating => (14, 0, 0, 0),
         RidleyPhase::FakeRetreat => (15, 0, 0, 0),
         RidleyPhase::CoastingAbove(runs) => (16, 0, runs.runs(), 0),
-        RidleyPhase::GetawayReady => (17, 0, 0, 0),
+        RidleyPhase::Getaway(types::ceres_getaway::GetawayState::GetawayReady(_)) => (17, 0, 0, 0),
+        RidleyPhase::Getaway(types::ceres_getaway::GetawayState::FlyingPast(_)) => (18, 0, 0, 0),
+        RidleyPhase::Getaway(types::ceres_getaway::GetawayState::WarningReady) => (19, 0, 0, 0),
     }
 }
 
@@ -549,7 +612,7 @@ const fn roar_figure_code(phase: RidleyPhase) -> (i64, u8) {
         | RidleyPhase::Attacking(_)
         | RidleyPhase::Retreating
         | RidleyPhase::CoastingAbove(_)
-        | RidleyPhase::GetawayReady
+        | RidleyPhase::Getaway(_)
         | RidleyPhase::FakeRetreat => (0, 0),
     }
 }

@@ -3,6 +3,7 @@
 
 use types::Colour;
 
+use crate::flyby::FlybyContent;
 use crate::getaway::GetawayContent;
 
 /// How many colours of his palette his eye's colour sets cover: colours 12 to 14.
@@ -75,8 +76,10 @@ pub struct RidleyContent {
     pub eye_steps: FadeSets<EyeColours>,
     /// `BodyFadesIn`: the body's colour sets, one shown every `p` runs.
     pub body_sets: FadeSets<BodyColours>,
-    /// `GetawayBackdrop`: the two walls and the picture's colour sets.
+    /// `GetawayBackdrop`: the left and right walls and the shades shown behind them.
     pub getaway: GetawayContent,
+    /// `GetawayPass`, `GetawayPicture`: the room's flyby path and art.
+    pub flyby: FlybyContent,
 }
 
 /// A count of runs left, 0 to `LONGEST`: a wait he counts down a run at a time.
