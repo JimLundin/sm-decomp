@@ -692,7 +692,7 @@ fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
     Ok(())
 }
 
-/// Continue the return hall’s live passage across its final two column uploads.
+/// Continue the return hall’s live passage across the scrolling column uploads.
 #[test]
 #[ignore = "pinned record cache and player ROM"]
 fn return_hall_scrolls_live_bg1() {
@@ -710,16 +710,16 @@ fn return_hall_scrolls_live_bg1() {
     let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
-        run.through(&mut rows, seed, controller, 1..=214).unwrap(),
-        (214, Stop::End)
+        run.through(&mut rows, seed, controller, 1..=170).unwrap(),
+        (170, Stop::End)
     );
 
     let page = 0x5000..0x5800;
-    let mut previous = rows.record(214).unwrap();
+    let mut previous = rows.record(170).unwrap();
     // Earlier room fills are outside this scope. Admit the two physical pages once.
     run.state.room_video.video.memory.vram[page.clone()]
         .copy_from_slice(&previous.vram[page.clone()]);
-    for cut in 215..=224 {
+    for cut in 171..=224 {
         let current = rows.record(cut).unwrap();
         let controller = seed_controller(&previous).unwrap();
         assert_eq!(
