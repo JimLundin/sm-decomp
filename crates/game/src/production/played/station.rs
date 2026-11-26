@@ -423,7 +423,7 @@ mod tests {
         assert_eq!(room.station.doors, vec![door]);
         assert_eq!(room.station.stage, Stage::Escape);
         room.station.retire_before(2);
-        assert!(room.station.doors.is_empty());
+        assert_eq!(room.station.doors, Vec::new());
     }
 
     /// Slowing at x 41 with 1,000/256 px a run leftward: his move meets the room's left side
