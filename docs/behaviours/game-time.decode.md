@@ -106,8 +106,30 @@ door touch, all passage holds, and each adjacent row boundary. The recorded
 schedule tables are integration witnesses. The Ceres case file keeps the recorded first carry beside the schedule. The
 existing clock model tests cover the same second carry arithmetic with
 C-second-carry. Production must compare the
-entire carried clock against native readback, including after restoration
-of an in-flight shaft turn and before P2 captures the escape save.
+entire carried clock against native readback, including after restoration of an in-flight shaft turn and before P2 captures
+the escape save.
+
+The source mapping in `game-time-ceres.sources.toml` pins each fixture ID and the
+complete native row sequence. The production verifier must register an indexed
+`game-time/ceres-continuous-clock` case and a `played::play_time` consumer for
+all four components at every actual cut across that sequence, including held
+cuts and row changes. Start with the selected file's actual clock. Use the
+native clock as readback only. Require 3,115 scheduler advances, with one per
+qualified work opportunity and none during preparation, unready work, resumed
+save or publication. At 239 the incoming locked work is fresh and the native
+overrun has reached the completed room work's vblank wait. This combines a
+prior work boundary and the authenticated interrupted site. NMI kind alone
+does not establish that work ran.
+
+Restore the actual production checkpoint at cut 238 before work, at cut 239
+before the save payload, and at cut 240 before save completion. Compare the
+complete clock and next output on each continuation. Plant skip and duplicate
+controls on the ordinary carry and final ready room turn. Plant a second
+advance on resumed cut 240 and on publication cut 241, including after
+restoring cuts 239 and 240. Keep the first differing clock field and prove the
+healthy continuation again. The observer audit checks native inputs and
+arithmetic. These production controls and checkpoint receipts remain required
+integration evidence.
 
 ## Budget
 

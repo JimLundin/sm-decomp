@@ -7,8 +7,8 @@ entries = ["PlayTimeAdvance"]
 before = { hours = 0, minutes = 0, seconds = 0, frames = 59 }
 after = { hours = 0, minutes = 0, seconds = 1, frames = 0 }
 
-# These recorded timelines qualify the caller's work. The clock arithmetic
-# reader exercises the vectors above independently.
+# These timelines qualify the caller's work. The existing game-time.toml
+# reader exercises only its separate arithmetic cases.
 [[schedule]]
 id = "R-ceres-arrival-work"
 source = "recorded"

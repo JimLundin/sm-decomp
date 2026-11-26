@@ -1,0 +1,111 @@
+# Native verifier source metadata. Cuts are row-local and inclusive.
+indexed_case = "game-time/ceres-continuous-clock"
+consumer = "played::play_time"
+opportunities = 3115
+fields = ["hours", "minutes", "seconds", "frames"]
+
+[[row]]
+id = "any-ceres-arrival"
+seed_record = "f7f09b237aed84c3816debd903244aab8086a197667a831e174849c5f30a99ba"
+pads = "f72200cc99fd20659e41b2d06a91b2f9fc4decd0dd598996dbeee7b36b709e92"
+cuts = [0, 222]
+
+[[row]]
+id = "chain-any-0001-DF45"
+seed_record = "b522325ca2a6e7c4be92c14ecdbb8f705aecc99e2a4d5c6059b135ce9ab87e68"
+pads = "c21759bde9c6249c077a413a0b0d44d6cc22ee0bf97f9ce4537698078099ed3e"
+cuts = [0, 411]
+
+[[row]]
+id = "chain-any-0002-DF8D"
+seed_record = "81b762b3e8cf404e85d9551fd92a9add64f969ccf1fc1c5d0a3f85baa6ec82a6"
+pads = "5e8fdcbf6fa7aa1137a6abe40df6a0a37529b75497f2ea40fa0b6963a2400c06"
+cuts = [0, 281]
+
+[[row]]
+id = "chain-any-0003-DFD7"
+seed_record = "90b25979a68dae59584027e2f704ace73ffde9074b4fc0c2968b26a782968046"
+pads = "ad91a7921f59b738bc7a18226490893d4e5497aa6b4888b7b9a1216101517276"
+cuts = [0, 344]
+
+[[row]]
+id = "chain-any-0004-E021"
+seed_record = "48c7b12c5a965d96dfec780ccab7a4e146c91c27e38fda7e0af029bdf08f4790"
+pads = "2c7d14714eb0cc481fdc2061137e629a3585de8ed6eb6f7aa634df48a0027494"
+cuts = [0, 263]
+
+[[row]]
+id = "chain-any-0005-E06B"
+seed_record = "5132889218b84fe43a5d87207bc1bbf2962c2bea2af3dc9f71ef41541f228a36"
+pads = "4970a76224d5eeff25bc39279b2edd23bb247b07f63613b72acfe406ccbff464"
+cuts = [0, 320]
+
+[[row]]
+id = "chain-any-0006-E0B5"
+seed_record = "01ae450292bb11d8a845f1b3e7636e51157f273a8b0bd79269b44f51dd33885d"
+pads = "9b6c20a26cbeade12181b7bec33c817ac0a5f668877bf7e376d9d494f42dd1b1"
+cuts = [0, 1776]
+
+[[row]]
+id = "chain-any-0007-E06B"
+seed_record = "db39d9861c85a2f1b0e4793dc9a33fcd4e6be77a05f00968a17a60f4d56d5536"
+pads = "84f0add8238234ccb1e02e05dd8d1434a0b4e09202e61fe52450fdc9f3ad334a"
+cuts = [0, 258]
+
+[[row]]
+id = "chain-any-0008-E021"
+seed_record = "9c7ace6fc2a1dbc22e2aa6cdf313bebffa505adacf934628d60b759e7a7024b4"
+pads = "5fd3b187c58684d4df05599e9541106a81a945223782c86445a2e808712dffcd"
+cuts = [0, 263]
+
+[[row]]
+id = "chain-any-0009-DFD7"
+seed_record = "10613b03267bb7cd101307de7f822927d7219a6e14e083a623256b1ebe21633c"
+pads = "9a27c2c71e5041db9613694282d548375a19d2d04e3284202c8222293522dcd0"
+cuts = [0, 330]
+
+[[row]]
+id = "chain-any-0010-DF8D"
+seed_record = "14be587583c5bdd2001d88083d5499234f3551066c95f7c956ff46b1f34227ad"
+pads = "45e11731ff052f0bcf2a3f6556564dd997d4a7007618aea8bd2d94a3e44a51ef"
+cuts = [0, 278]
+
+[[row]]
+id = "chain-any-0011-DF45"
+seed_record = "e7543f6624f5051f0049470600e2f7926c81732fdd42b9cf65e7cdcae3b4cbfd"
+pads = "790ece114a15f6adfa8964d3af8e6f961ff4e25238df8a90399e1dbb74f1a43c"
+cuts = [0, 242]
+
+[[case]]
+id = "R-ceres-first-carry"
+spans = [
+    { row = "chain-any-0001-DF45", cuts = [28, 29] },
+]
+
+[[case]]
+id = "R-ceres-arrival-work"
+spans = [
+    { row = "any-ceres-arrival", cuts = [0, 222] },
+    { row = "chain-any-0001-DF45", cuts = [0, 0] },
+]
+
+[[case]]
+id = "R-ceres-return-clock"
+spans = [
+    { row = "chain-any-0006-E0B5", cuts = [1609, 1776] },
+    { row = "chain-any-0007-E06B", cuts = [0, 0] },
+]
+
+[[case]]
+id = "R-ceres-shaft-resume"
+spans = [
+    { row = "chain-any-0010-DF8D", cuts = [221, 278] },
+    { row = "chain-any-0011-DF45", cuts = [0, 0] },
+    { row = "chain-any-0011-DF45", cuts = [163, 165] },
+]
+
+[[case]]
+id = "R-ceres-last-room-work"
+spans = [
+    { row = "chain-any-0011-DF45", cuts = [237, 242] },
+]
