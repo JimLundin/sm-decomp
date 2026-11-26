@@ -34,6 +34,8 @@ pub struct State {
 pub enum Readiness {
     /// Not on this frame.
     NotYet,
+    /// The platform reaches the sprite DMA after the standard background upload.
+    StandardBackground,
     /// The platform ends the first wait of the prepared room's final music service.
     FinalMusicWait,
     /// It is ready this frame.
@@ -183,6 +185,12 @@ impl super::State {
         };
         if passing.start == Readiness::Ready && self.arrival.setup != Setup::Published {
             return Err(Fault::HudStartup);
+        }
+        if passing.start == Readiness::StandardBackground {
+            let background = content.arrival_bg3.as_deref().ok_or(Fault::HudStartup)?;
+            self.room_video
+                .standard_background(background)
+                .ok_or(Fault::HudStartup)?;
         }
         self.arrival.setup = setup;
         let upper_row = opening.map(|opening| {

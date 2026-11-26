@@ -26,3 +26,21 @@ impl ShaftOverlay {
         Some(())
     }
 }
+
+/// The parts of physical room graphics produced by the room's loaders.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RoomVideo {
+    /// The first 2,048 words of standard background tiles from Ceres setup.
+    pub standard_bg3: Option<Vec<u16>>,
+}
+
+impl RoomVideo {
+    /// Publish the standard text tile prefix when the room's direct upload has completed.
+    ///
+    /// Returns `None` when the required source prefix is unavailable.
+    #[must_use]
+    pub fn standard_background(&mut self, background: &[u16]) -> Option<()> {
+        self.standard_bg3 = Some(background.get(..2048)?.to_vec());
+        Some(())
+    }
+}

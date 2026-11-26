@@ -91,6 +91,9 @@ pub(super) fn start(
     if word(&previous.wram, source::GAME_STATE)? != PREPARING {
         return Ok(Readiness::NotYet);
     }
+    if standard_background_done(current) && !standard_background_done(previous) {
+        return Ok(Readiness::StandardBackground);
+    }
     if word(&current.wram, source::GAME_STATE)? == FADING_IN {
         return Ok(Readiness::Ready);
     }
@@ -101,6 +104,20 @@ pub(super) fn start(
             Readiness::NotYet
         },
     )
+}
+
+// Ceres preparation reaches the sprite DMA after the fixed background transfer.
+fn standard_background_done(record: &FrameRecord) -> bool {
+    let Some([_, bus, from_lo, from_hi, bank, left_lo, left_hi, ..]) = record.ppu.dma.get(1) else {
+        return false;
+    };
+    matches!(record.cut, Cut::VblankWithoutNmi)
+        && record.cpu.k == 0x82
+        && record.cpu.pc == 0x8327
+        && *bus == 0x18
+        && *bank == 0x9a
+        && u16::from_le_bytes([*from_lo, *from_hi]) >= 0xd200
+        && u16::from_le_bytes([*left_lo, *left_hi]) != 0
 }
 
 /// The borrowed loading beat preceding the HUD by twenty waits. The other calls to

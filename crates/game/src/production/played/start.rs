@@ -34,6 +34,7 @@ impl State {
         let her = samus.movement.0.position;
         let (view_x, view_y) = start.view;
         Ok(Self {
+            room_video: super::room_video::RoomVideo::default(),
             clock_picture: super::clock_picture::ClockPicture::default(),
             samus,
             camera: Model(Camera::restore(

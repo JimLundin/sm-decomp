@@ -28,6 +28,7 @@ pub(super) fn figure() -> Figure {
 pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     let her = fixtures::samus().position;
     State {
+        room_video: super::room_video::RoomVideo::default(),
         clock_picture: super::clock_picture::ClockPicture::default(),
         samus: samus::State {
             last_draw_jump: Model(samus_movement::JumpButton::Up),
@@ -163,6 +164,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
         clock_figures: None,
+        arrival_bg3: None,
         movement: MovementContent::new(
             poses
                 .clone()

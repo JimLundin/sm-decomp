@@ -46,7 +46,6 @@ mod quake;
 mod return_fade;
 mod return_timing;
 mod ridley;
-#[cfg(test)]
 mod room_video;
 pub(super) mod rows;
 pub(super) mod samus;
@@ -475,6 +474,11 @@ impl<'a> Run<'a> {
             state,
             played: played::Content {
                 clock_figures: Some(timer),
+                arrival_bg3: Some(
+                    import::landing_site::import(image.lorom())
+                        .map_err(|_| data_failure(None, "standard room background art"))?
+                        .background,
+                ),
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 colour_groups: colours::groups(),
@@ -533,6 +537,7 @@ impl<'a> Run<'a> {
             seeded.geometry = geometry;
         }
         let state = played::State {
+            room_video: played::room_video::RoomVideo::default(),
             clock_picture: played::clock_picture::ClockPicture::default(),
             samus: samus::seed(&seed.wram, &content.appearance)?,
             camera: Model(camera::seed(&seed.wram, &camera::Content)?),
@@ -730,6 +735,12 @@ impl<'a> Run<'a> {
                 &self.state.hud.0,
             )?);
         }
+        room_video::compare_background(
+            &self.state.room_video,
+            current,
+            &mut expected,
+            &mut actual,
+        )?;
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
         Ok(expected)
     }

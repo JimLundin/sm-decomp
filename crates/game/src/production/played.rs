@@ -100,6 +100,8 @@ use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scen
 pub struct Content {
     /// Imported timer sprite figures for room drawing.
     pub clock_figures: Option<data::assets::countdown::Figures>,
+    /// Standard background text graphics for the Ceres start.
+    pub arrival_bg3: Option<Vec<u16>>,
     /// Pose bodies and cannon headings.
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.
@@ -151,6 +153,8 @@ pub struct Rules {
 /// yet, so this State is carried but not checkpointed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct State {
+    /// Physical room graphics with a qualified writer.
+    pub room_video: room_video::RoomVideo,
     /// The timer sprites held in the prepared and published pictures.
     pub clock_picture: clock_picture::ClockPicture,
     /// Her movement, her appearance and the figure she is drawn in.
