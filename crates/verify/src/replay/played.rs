@@ -388,6 +388,7 @@ struct Run<'a> {
     rules: played::Rules,
     room: seed::Room,
     content: &'a connected::Content,
+    rom: &'a Path,
     hud: super::hud::Content,
     row: &'a str,
     drawing: ridley::flyby::Drawing,
@@ -395,16 +396,6 @@ struct Run<'a> {
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
     blackout: Option<game::production::blackout::LiveRoom>,
-    prepared_departure: Option<PreparedDeparture>,
-}
-
-/// Carried placement, maps and physical consumers available to the pending save.
-#[derive(Clone)]
-struct PreparedDeparture {
-    room: played::departure::Room,
-    landing: played::landing_site::State,
-    location: (types::Area, types::StationId),
-    assets: game::production::escape_departure::Content,
 }
 
 #[derive(Clone, Copy)]
@@ -417,7 +408,7 @@ impl<'a> Run<'a> {
     fn admit(
         seed: &FrameRecord,
         content: &'a connected::Content,
-        path: &Path,
+        path: &'a Path,
         row: &'a str,
     ) -> Result<Self, Outcome> {
         let arrival = arrival::seed(&seed.wram)?;
@@ -436,7 +427,7 @@ impl<'a> Run<'a> {
     fn load(
         origin: Start<'_>,
         content: &'a connected::Content,
-        path: &Path,
+        path: &'a Path,
         row: &'a str,
     ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played ROM image");
@@ -531,6 +522,7 @@ impl<'a> Run<'a> {
             },
             room,
             content,
+            rom: path,
             hud,
             row,
             drawing,
@@ -538,7 +530,6 @@ impl<'a> Run<'a> {
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
             blackout: None,
-            prepared_departure: None,
         })
     }
 
@@ -713,23 +704,41 @@ impl<'a> Run<'a> {
         ),
         Outcome,
     > {
-        use game::production::escape_departure::Shaft;
+        use game::production::escape_departure::{Content, Shaft};
         let unsupported = |dependency| Outcome::Unsupported {
             cut: Some(next),
             dependency,
         };
-        let mut prepared = self.prepared_departure.take().ok_or_else(|| {
-            unsupported("live shaft departure needs the retained room video and map owners".into())
-        })?;
-        let live = self.cartridge.take().ok_or_else(|| {
+        let live = self.cartridge.as_ref().ok_or_else(|| {
             unsupported("live shaft departure needs the selected cartridge".into())
         })?;
-        let scene = self.blackout.take().ok_or_else(|| {
-            data_failure(Some(next), "live shaft departure lost the pending blackout")
+        let (room, area, maps) = live
+            .cartridge
+            .started()
+            .and_then(|selected| self.state.departure_room(selected))
+            .filter(|(_, area, _)| *area == played::landing_site::Area::Ceres)
+            .ok_or_else(|| {
+                unsupported("live shaft departure needs Ceres placement and maps".into())
+            })?;
+        let shadows = self.state.departure_shadows().ok_or_else(|| {
+            unsupported("live shaft departure needs the retained BG1 and BG2 shadows".into())
         })?;
+        let landing = played::landing_site::State::new(area, maps, shadows);
+        let location = (types::Area::Ceres, self.state.passage.station);
         let (locked_hud, hud_content) = self
             .state
             .locked_hud(&self.played, &hud::frame(&self.room.hud, controller, None));
+        let assets =
+            explosion::live_content(self.rom, &self.played, live.format.clone(), hud_content)?;
+        let scene = self.blackout.take().ok_or_else(|| {
+            data_failure(Some(next), "live shaft departure lost the pending blackout")
+        })?;
+        let live = self.cartridge.take().ok_or_else(|| {
+            data_failure(
+                Some(next),
+                "live shaft departure lost the selected cartridge",
+            )
+        })?;
         let platform = self.state.room_video.pending_platform();
         let video = std::mem::take(&mut self.state.room_video.video);
         let blackout = scene
@@ -737,21 +746,19 @@ impl<'a> Run<'a> {
                 &self.state,
                 video,
                 live.cartridge,
-                prepared.location,
+                location,
                 platform,
                 locked_hud,
             )
             .map_err(|fault| unsupported(format!("live shaft departure {fault:?}")))?;
-        prepared.assets.shaft.hud = Some(hud_content);
-        prepared.assets.shaft.format = live.format;
         Ok((
             Shaft {
                 blackout,
-                room: prepared.room,
-                landing: prepared.landing,
+                room,
+                landing,
                 progress: (&self.state.progress).into(),
             },
-            prepared.assets,
+            assets,
         ))
     }
 

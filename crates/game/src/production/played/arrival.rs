@@ -299,7 +299,7 @@ impl super::State {
                 self.room_video
                     .queue_enemy_tiles()
                     .ok_or(Fault::ArrivalGraphics)?;
-                self.room_video.publish();
+                self.room_video.publish(None);
             }
             Readiness::EnemyGraphics => return Err(Fault::ArrivalGraphics),
             Readiness::NotYet | Readiness::FinalMusicWait | Readiness::Ready => {}

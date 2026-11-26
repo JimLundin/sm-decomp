@@ -2,8 +2,8 @@
 
 use super::{Content, Fault};
 use crate::commit::VRAM_CHANNEL;
-use crate::exact::countdown;
 use crate::exact::art::planar_4bpp;
+use crate::exact::countdown;
 use crate::exact::direct_dma::Transfer;
 use crate::exact::tilemap::{TileQueue, View};
 use crate::intent::{OverlayRows, SpriteDraw, TileWrite, on_screen};
@@ -20,8 +20,8 @@ use data::assets::landing_site::Graphics as StandardGraphics;
 use data::assets::shaft::{OVERLAY_BYTES, Shaft};
 use data::dma::BusAddress;
 use data::pose::tiles::Graphics;
-use types::{Pair, Px};
 use interface_hud::{CountdownPicture, HudState};
+use types::{Pair, Px};
 
 const SHADOW_WORDS: usize = 1024;
 const SHAFT_BG2_STAGING: core::ops::Range<usize> = 0x0800..0x0c00;
