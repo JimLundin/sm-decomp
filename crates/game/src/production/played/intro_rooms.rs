@@ -390,6 +390,11 @@ impl State {
             None => samus_appearance::SelectedItem::None,
             Some(_) => return Err(Fault::ActiveEncounter),
         };
+        let pose = actor.samus.movement.0.pose;
+        actor.carry.0.radius = motion
+            .movement
+            .radius(pose)
+            .ok_or(Fault::Samus(super::Fault::Body(pose)))?;
         let (her, ()) = actor
             .samus
             .turn(
@@ -430,10 +435,6 @@ impl State {
         if world.outside.get() {
             return Err(Fault::OutsideRoom);
         }
-        actor.carry.0.radius = motion
-            .movement
-            .radius(her.samus.pose)
-            .ok_or(Fault::Samus(super::Fault::Body(her.samus.pose)))?;
         actor.carry.0.older_pose = actor.carry.0.prior_pose;
         actor.carry.0.prior_pose = her.samus.pose;
         actor

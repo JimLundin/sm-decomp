@@ -90,6 +90,46 @@ pub struct Battle {
 }
 
 impl Battle {
+    fn actor_turn(
+        &mut self,
+        room: &mut rooms::State,
+        dissolve: u16,
+        parity: Parity,
+        shoot: PadButton,
+        motion: &rooms::Motion<'_>,
+        content: &ActorsContent,
+    ) -> Result<Vec<weapons_projectiles::MissileCandidate>, Fault> {
+        let x = room.actor.samus.movement.0.position.x.pixel();
+        let turn = self
+            .playback
+            .turn(playback::WholeX(x.0), playback::CrossfadeCount(dissolve));
+        let pad = turn
+            .pad
+            .filter(|_| turn.authority == playback::Authority::Controlled && turn.handoff.is_none())
+            .ok_or(Fault::IntroControls)?;
+        let pad = rooms::DemoPad {
+            held: playback::buttons(pad.current.held),
+            pressed: playback::buttons(pad.current.pressed),
+        };
+        let (input, eligible) = self.cannon.inputs(
+            &room.actor,
+            pad,
+            shoot,
+            weapons_projectiles::UpdateMode::CannonAndShots,
+            &content.missiles,
+        )?;
+        let motion = room
+            .actor_turn(pad, parity, &content.room.rooms, motion)
+            .map_err(Fault::IntroRoom)?;
+        let candidates =
+            self.cannon
+                .update(&mut room.actor, &input, eligible, &content.missiles)?;
+        if let Some(outcome) = &motion.movement {
+            self.cannon.moved(outcome);
+        }
+        Ok(candidates)
+    }
+
     fn encounter_turn(
         &mut self,
         frame: &FrameAwaitingReply<'_>,
@@ -232,48 +272,28 @@ impl Actors {
             return Ok((FightReply::Fighting, None));
         };
         let room = self.rooms.as_mut().ok_or(Fault::ActorUnstarted)?;
-        let x = room.actor.samus.movement.0.position.x.pixel();
-        let turn = battle.playback.turn(
-            playback::WholeX(x.0),
-            playback::CrossfadeCount(frame.state().dissolve),
-        );
-        let pad = turn
-            .pad
-            .filter(|_| turn.authority == playback::Authority::Controlled)
-            .ok_or(Fault::IntroControls)?;
-        let pad = rooms::DemoPad {
-            held: playback::buttons(pad.current.held),
-            pressed: playback::buttons(pad.current.pressed),
+        let visible = frame.state().fight == types::intro::FightVisibility::InFront;
+        let candidates = if visible {
+            let motion = rooms::Motion {
+                movement: &content.room.movement,
+                appearance: &content.room.appearance,
+                movement_rules: &content.rules.movement,
+                appearance_rules: &content.rules.appearance,
+                items: self.file.gear.items,
+                sounds_waiting: waiting,
+                charge: samus_appearance::Charge::new(0).ok_or(Fault::IntroControls)?,
+            };
+            battle.actor_turn(
+                room,
+                frame.state().dissolve,
+                parity,
+                self.buttons[Control::Shoot],
+                &motion,
+                content,
+            )?
+        } else {
+            Vec::new()
         };
-        let motion = rooms::Motion {
-            movement: &content.room.movement,
-            appearance: &content.room.appearance,
-            movement_rules: &content.rules.movement,
-            appearance_rules: &content.rules.appearance,
-            items: self.file.gear.items,
-            sounds_waiting: waiting,
-            charge: samus_appearance::Charge::new(0).ok_or(Fault::IntroControls)?,
-        };
-        if turn.handoff.is_some() {
-            return Err(Fault::IntroControls);
-        }
-        let (input, eligible) = battle.cannon.inputs(
-            &room.actor,
-            pad,
-            self.buttons[Control::Shoot],
-            weapons_projectiles::UpdateMode::CannonAndShots,
-            &content.missiles,
-        )?;
-        let motion = room
-            .actor_turn(pad, parity, &content.room.rooms, &motion)
-            .map_err(Fault::IntroRoom)?;
-        let candidates =
-            battle
-                .cannon
-                .update(&mut room.actor, &input, eligible, &content.missiles)?;
-        if let Some(outcome) = &motion.movement {
-            battle.cannon.moved(outcome);
-        }
         let effects = battle.encounter_turn(frame, parity, room, candidates);
         if let Some(hit) = effects.missile_impact {
             let slot = missiles::slot_from_id(hit.0).ok_or(Fault::IntroRoomTurn)?;
@@ -281,16 +301,18 @@ impl Actors {
                 return Err(Fault::IntroRoomTurn);
             }
         }
-        room.actor.health.0.protection = room
-            .actor
-            .health
-            .0
-            .play_frame(
-                samus_health::Impact::Absent,
-                &samus_health::Rules::REFERENCE,
-            )
-            .state
-            .protection;
+        if visible {
+            room.actor.health.0.protection = room
+                .actor
+                .health
+                .0
+                .play_frame(
+                    samus_health::Impact::Absent,
+                    &samus_health::Rules::REFERENCE,
+                )
+                .state
+                .protection;
+        }
         if let Some(ring) = effects.ring_knockback {
             room.actor.health.0.protection =
                 samus_health::ProtectionFrames::new(ring.invincible_beats)
@@ -300,9 +322,14 @@ impl Actors {
             push.time_left =
                 types::PushFrames::new(ring.knockback_beats).ok_or(Fault::IntroRoomTurn)?;
         }
-        battle.weapon_draws =
+        let hiding = effects.intro == Some(flashback::IntroRequest::HideSamus);
+        battle.weapon_draws = if visible && !hiding {
+            battle.cannon.drawn(movie);
             missiles::draw_twice(&mut room.actor.shots.0, VIEW, &content.missiles)
-                .map_err(Fault::IntroWeapon)?;
+                .map_err(Fault::IntroWeapon)?
+        } else {
+            Default::default()
+        };
         battle.encounter_draw = flashback::draw(
             &battle.encounter,
             &content.encounter,
@@ -311,7 +338,6 @@ impl Actors {
                 y: core::num::Wrapping(VIEW.0.y),
             },
         );
-        battle.cannon.drawn(movie);
         Ok((
             if effects.intro == Some(flashback::IntroRequest::CuePageTwo) {
                 FightReply::ReadyToReturn

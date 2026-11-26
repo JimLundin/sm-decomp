@@ -93,6 +93,7 @@ impl PlayingIntro {
         track: TrackReply,
         content: &Content,
         rules: Rules,
+        timing: IntroTiming,
     ) -> Result<(), intro::Fault> {
         if self.pending.is_some() {
             return Ok(());
@@ -111,6 +112,9 @@ impl PlayingIntro {
                 .requests()
                 .any(|request| request == FlashbackRequest::StartZebesFight)
             {
+                if timing != IntroTiming::SettingUpFight {
+                    return Err(intro::Fault::IntroTiming);
+                }
                 self.actors
                     .start(frame.state().height, actors_content(content)?)?;
                 self.pending = Some(Pending::Fight { pressed, track });
@@ -223,7 +227,13 @@ pub(super) fn step(
         }
         Work::Unfinished => {
             state
-                .interrupt(answers.pending_buttons(), answers.track(), content, rules)
+                .interrupt(
+                    answers.pending_buttons(),
+                    answers.track(),
+                    content,
+                    rules,
+                    answers.intro_timing(),
+                )
                 .map_err(Fault::Intro)?;
             drawn = u16::from(state.pending.is_some());
             None

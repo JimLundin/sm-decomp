@@ -377,6 +377,16 @@ impl Run {
             pairs.expected.extend(expected);
             pairs.actual.extend(actual);
             if let Some(battle) = &intro.actors.battle {
+                if !finished && intro_timing(record)? != front_end::IntroTiming::Unspecified {
+                    pairs.expected.push(Observation::quantity(
+                        "front-end.random",
+                        i64::from(word(&record.wram, source::RANDOM_NUMBER)?),
+                    ));
+                    pairs.actual.push(Observation::quantity(
+                        "front-end.random",
+                        i64::from(after.counts.random.number.0),
+                    ));
+                }
                 let room = intro
                     .actors
                     .rooms
@@ -600,7 +610,7 @@ mod tests {
         };
         const SHOOT: u16 = 0x0040;
         const FIRST_MISSILE: u64 = 2310;
-        const LAST_HELD_CUT: u64 = 2399;
+        const LAST_HELD_CUT: u64 = 2474;
         let sources = crate::replay::played::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();
         let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
@@ -608,6 +618,7 @@ mod tests {
         let mut began = previous.clone();
         let mut uninterrupted = super::Run::begin(&sources.rom, &previous).unwrap();
         let mut resumed = Vec::<super::Run>::new();
+        let checkpoints = [569, 2219, 2320, 2325, 2350];
         for cut in 1..=LAST_HELD_CUT {
             let frame = rows.record(cut).unwrap();
             if cut == FIRST_MISSILE {
@@ -623,7 +634,7 @@ mod tests {
                     "cartridge at {cut}"
                 );
             }
-            if matches!(cut, 569 | 2219 | 2320 | 2325) {
+            if checkpoints.contains(&cut) {
                 assert!(!super::super::finished(&frame));
                 resumed.push(uninterrupted.clone());
             }
@@ -632,7 +643,7 @@ mod tests {
             }
             previous = frame;
         }
-        assert_eq!(resumed.len(), 4);
+        assert_eq!(resumed.len(), checkpoints.len());
     }
 
     fn write(port: u8, value: u8) -> ApuAccess {

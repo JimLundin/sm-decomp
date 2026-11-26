@@ -536,9 +536,9 @@ lands. Limits:
 the intro's opening and page 1 (screens-intro, through the intro's adapter) with no new seed.
 Cut 568 is the first cut of the next row, `any-intro-0568`, which the run reaches as the row that
 follows a power-on row: the frame end the options hand on at, where the front end begins the
-intro in the State `Begins`. The run holds 2,399 cuts. At 2,400 her cached vertical radius differs
-as she comes out of recoil. At 569 the intro creates the hidden actor with
-the chosen file's energy, lends her missiles and switches to the intro controls.
+intro in the State `Begins`. The run holds 2,474 cuts. At 2,475 the older pose mirror differs on the
+second left-running turn. Her cached body radius comes from the pose at the start of movement.
+At 569 the intro creates the hidden actor with the chosen file's energy, lends her missiles and switches to the intro controls.
 The next 1,650 cuts carry those owners through the opening and page 1. The press latched at
 2,218 installs the populated room, recorded controls and Mother Brain before interrupted
 cut 2,219. At 2,220 the recorded pad drives Samus and the encounter takes its first turn.
