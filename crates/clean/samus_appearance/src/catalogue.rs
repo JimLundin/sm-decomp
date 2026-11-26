@@ -54,6 +54,8 @@ pub enum BehaviourId {
     OrdinaryDryColours,
     /// A fall in energy or a push's start pulses her colours and asks for the hurt sound.
     HurtColours,
+    /// The standing body keeps its current picture as the elevator shaft tilts.
+    ElevatorStandingPicture,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -78,7 +80,7 @@ pub fn catalogue() -> EnumMap<BehaviourId, Behaviour> {
 }
 
 /// The catalogue's rows, each naming its behaviour, in any order.
-const ROWS: [Behaviour; 24] = [
+const ROWS: [Behaviour; 25] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -263,6 +265,13 @@ const ROWS: [Behaviour; 24] = [
         summary: "a fall in energy or a push's start pulses her colours three times and asks for \
                   the hurt sound",
         kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ElevatorStandingPicture,
+        summary: "Samus keeps the standing picture for her current pose and clip step as the shaft tilts behind her",
+        kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

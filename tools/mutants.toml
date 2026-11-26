@@ -1731,9 +1731,9 @@ field = "blackout.timer-drawing"
 name = "blackout-early-live-blank"
 responsibility = "blackout"
 file = "crates/game/src/production/blackout.rs"
-before = '''if cut.publish && matches!(o.scene.pass, WorkPass::Prepared(_)) {'''
-after = '''if o.scene.light == BlackoutLight::ForcedBlank { self.video.commit_registers(); }
-        if cut.publish && matches!(o.scene.pass, WorkPass::Prepared(_)) {'''
+before = '''if cut.publish && matches!(scene.pass, WorkPass::Prepared(_)) {'''
+after = '''if scene.light == BlackoutLight::ForcedBlank { self.video.commit_registers(); }
+        if cut.publish && matches!(scene.pass, WorkPass::Prepared(_)) {'''
 case = "blackout/elevator-through-dispatch"
 cut = 239
 field = "blackout.scene"
@@ -1752,9 +1752,10 @@ field = "blackout.memory"
 name = "blackout-drops-dispatch"
 responsibility = "blackout"
 file = "crates/game/src/production/blackout.rs"
-before = '''Ok(Output { requests, dispatch })'''
-after = '''drop(dispatch);
-        Ok(Output { requests, dispatch: None })'''
+before = '''            dispatch,
+            standing_publication,'''
+after = '''            dispatch: dispatch.filter(|_| false),
+            standing_publication,'''
 case = "blackout/elevator-through-dispatch"
 cut = 242
 field = "blackout.requests"
@@ -2045,3 +2046,41 @@ after = "        started.room.entry.view.hud = crate::state::video::BgMode::defa
 case = "played any-power-on 0 13017"
 cut = 13015
 field = "shaft-entry.view"
+
+[[fault]]
+name = "appearance-elevator-body-publishes-before-nmi"
+responsibility = "appearance"
+file = "crates/game/src/production/blackout.rs"
+before = '''        let queued = self.video.batch.standing_strips;'''
+after = '''        let queued = self.video.batch.standing_strips;
+        if !cut.publish && let Some(art) = &content.standing {
+            serviced = self.video.publish_standing_strips(&art.graphics);
+        }'''
+case = "appearance/elevator-standing-picture"
+cut = 239
+field = "standing-body.publication"
+
+[[fault]]
+name = "appearance-elevator-body-drops-resumed-publication"
+responsibility = "appearance"
+file = "crates/game/src/production/blackout.rs"
+before = '''                    serviced = self.video.publish_standing_strips(&art.graphics);'''
+after = '''                    if !matches!(cut.work, Work::SaveCompleted) {
+                        serviced = self.video.publish_standing_strips(&art.graphics);
+                    }'''
+case = "appearance/elevator-standing-suspended"
+cut = 241
+field = "standing-body.publication"
+
+[[fault]]
+name = "appearance-elevator-body-loses-lower-second-row"
+responsibility = "appearance"
+file = "crates/game/src/production/blackout.rs"
+before = '''                    serviced = self.video.publish_standing_strips(&art.graphics);'''
+after = '''                    self.video.batch.standing_strips.lower_second = None;
+                    self.video.publish_standing_strips(&art.graphics);
+                    self.video.batch.standing_strips = queued;
+                    serviced = queued;'''
+case = "appearance/elevator-standing-picture"
+cut = 165
+field = "standing-body.lower-second"

@@ -24,7 +24,7 @@ fn light(value: BlackoutLight) -> u16 {
         BlackoutLight::Lit(l) => u16::from(l.get()),
     }
 }
-fn oam_bytes(o: &Oam) -> Vec<u8> {
+pub(super) fn oam_bytes(o: &Oam) -> Vec<u8> {
     o.low
         .iter()
         .flat_map(|e| [e.x, e.y, e.tile, e.attributes])

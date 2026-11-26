@@ -305,9 +305,10 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "samus-appearance",
         bridge: Some("samus_appearance_bridge"),
-        adapters: &[],
-        providers: &["appearance"],
+        adapters: &["production/blackout/body.rs"],
+        providers: &["appearance", "blackout/standing"],
         areas: &[
+            ("elevator body", &["elevator.rs"]),
             ("clip", &["clip.rs", "ahead.rs", "play.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
             ("run", &["run.rs"]),

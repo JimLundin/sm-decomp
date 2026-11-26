@@ -2162,3 +2162,54 @@ provider = "pinned passage phase and NMI completion"
 fields = ["incoming doorway", "progress", "fetch opportunity", "slide wait completion"]
 phase = "early contents and first block-script turn"
 claim = "The scoped entry borrows passage timing and begins with its built grid. The played passage selects and builds its own destination."
+
+[[case]]
+id = "appearance/elevator-standing-picture"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 164 }
+end = { cut_inclusive = 241 }
+rules = ["samus-appearance/ElevatorStandingPicture"]
+profile = "reference"
+responsibilities = ["appearance"]
+content = "player-rom-import"
+inputs = "blackout"
+expectations = { provider = "pinned-record-cache", fields = ["standing-body.pending-oam", "standing-body.pending-strips"], outputs = ["standing-body.published-oam", "standing-body.publication", "standing-body.upper-first", "standing-body.upper-second", "standing-body.lower-first", "standing-body.lower-second"] }
+checkpoints = true
+limits = ["Samus's picture uses the existing blackout room turn and NMI. Compare her slots in both OAM lanes, the pending tile sources, and each entire physical body strip row.", "The HUD grid, shaft actors and their other graphics, affine publication and played-alone continuity remain outside scope."]
+
+[[case.borrowed]]
+dependency = "shaft.standing-drawing"
+provider = "locked room owners at the reach cut and early view from the preceding cut"
+fields = ["movement.pose", "appearance.clip-step", "movement.room-centre", "shaft.pivot", "shaft.carried-view", "camera.layer-origin"]
+phase = "pose, clip and room positions at reach, view before each late shaft turn"
+claim = "the lock retains the pose, step, room centre, pivot and layer origin. Each fresh drawing reads the carried signed shaft view."
+
+[[case.borrowed]]
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["end of vblank", "cartridge write completion", "requested commit"]
+phase = "room preparation, suspended work and NMI return"
+claim = "timing selects when the prepared body publishes; expected pictures and strip sources never advance production"
+
+[[case]]
+id = "appearance/elevator-standing-suspended"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 239 }
+end = { cut_inclusive = 241 }
+rules = ["samus-appearance/ElevatorStandingPicture"]
+profile = "reference"
+responsibilities = ["appearance"]
+content = "player-rom-import"
+inputs = "blackout"
+expectations = { provider = "pinned-record-cache", fields = ["standing-body.pending-oam", "standing-body.pending-strips"], outputs = ["standing-body.published-oam", "standing-body.publication", "standing-body.upper-first", "standing-body.upper-second", "standing-body.lower-first", "standing-body.lower-second"] }
+checkpoints = true
+limits = ["Admit one prepared body and its earlier live picture at the already suspended room cut. Verify the pending sources hold through 240 and the next requested NMI services them on 241.", "The native body's final pending and live bytes coincide. The selected publication observes the strips that video services, independently of the byte equality."]
+
+[[case.borrowed]]
+dependency = "platform.work"
+provider = "recorded NMI kind and interrupted work site"
+fields = ["end of vblank", "cartridge write completion", "requested commit"]
+phase = "suspended work and NMI return"
+claim = "the same room and NMI path continues its single admitted pending picture"

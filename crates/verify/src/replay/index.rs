@@ -389,6 +389,30 @@ pub enum ObservationId {
     #[doc = "Blackout memory observation."]
     #[serde(rename = "blackout.memory")]
     BlackoutMemory,
+    /// Standing body's pending OAM slots.
+    #[serde(rename = "standing-body.pending-oam")]
+    StandingOamPending,
+    /// Standing body's pending named strip transfers.
+    #[serde(rename = "standing-body.pending-strips")]
+    StandingStripsPending,
+    /// Standing body's physical OAM slots.
+    #[serde(rename = "standing-body.published-oam")]
+    StandingOamPublished,
+    /// Standing body's strip transfers serviced by video.
+    #[serde(rename = "standing-body.publication")]
+    StandingPublication,
+    /// Physical first upper-body strip row.
+    #[serde(rename = "standing-body.upper-first")]
+    StandingUpperFirst,
+    /// Physical second upper-body strip row.
+    #[serde(rename = "standing-body.upper-second")]
+    StandingUpperSecond,
+    /// Physical first lower-body strip row.
+    #[serde(rename = "standing-body.lower-first")]
+    StandingLowerFirst,
+    /// Physical second lower-body strip row.
+    #[serde(rename = "standing-body.lower-second")]
+    StandingLowerSecond,
     /// Intro stage, scripts, dissolves, visibility and brightness.
     #[serde(rename = "intro.state")]
     IntroState,
@@ -1354,6 +1378,27 @@ macro_rules! health_observations {
     };
 }
 
+macro_rules! appearance_observations {
+    () => {
+        O::StandingOamPending
+            | O::StandingStripsPending
+            | O::StandingOamPublished
+            | O::StandingPublication
+            | O::StandingUpperFirst
+            | O::StandingUpperSecond
+            | O::StandingLowerFirst
+            | O::StandingLowerSecond
+            | O::DrawingEnergy
+            | O::TouchdownGraphics
+            | O::AppearancePlaying
+            | O::AppearanceStep
+            | O::AppearanceTimeLeft
+            | O::AppearanceBoostStage
+            | O::AppearanceLapsLeft
+            | O::MapCarryAppearance
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -1441,14 +1486,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::HudMapOff => Responsibility::Hud,
         weapons_observations!() => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
-        O::DrawingEnergy
-        | O::TouchdownGraphics
-        | O::AppearancePlaying
-        | O::AppearanceStep
-        | O::AppearanceTimeLeft
-        | O::AppearanceBoostStage
-        | O::AppearanceLapsLeft
-        | O::MapCarryAppearance => Responsibility::Appearance,
+        appearance_observations!() => Responsibility::Appearance,
         progress_observations!() => Responsibility::Progress,
     }
 }
@@ -1610,6 +1648,7 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         }
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
         "interface-hud/Exploring" => &[O::HudExplored],
+        super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
         _ => {

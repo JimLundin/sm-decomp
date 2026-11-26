@@ -59,6 +59,7 @@ fn pending() -> (State, Content) {
         Content {
             format,
             graphics: data::pose::tiles::Graphics::default(),
+            standing: None,
             figures: Figures {
                 frame: data::spritemap::Spritemap::default(),
                 digits: std::array::from_fn(|_| data::spritemap::Spritemap::default()),
@@ -73,6 +74,7 @@ fn a_restored_save_publishes_the_room_before_dispatching_once() {
     let new = Cut {
         work: Work::Fresh { reached: false },
         publish: false,
+        standing: None,
     };
     for cut in [
         Cut {
@@ -104,7 +106,8 @@ fn a_restored_save_publishes_the_room_before_dispatching_once() {
             .advance(
                 Cut {
                     work: Work::Interrupted,
-                    publish: true
+                    publish: true,
+                    standing: None,
                 },
                 &content
             )
@@ -145,7 +148,16 @@ fn checkpoint_shape_covers_the_scene_and_the_carried_owners() {
         (Work::Interrupted, true),
         (Work::Fresh { reached: false }, false),
     ] {
-        state.advance(Cut { work, publish }, &content).unwrap();
+        state
+            .advance(
+                Cut {
+                    work,
+                    publish,
+                    standing: None,
+                },
+                &content,
+            )
+            .unwrap();
         assert_eq!(state.validate(), Ok(()));
         wire.extend(canonical::to_bytes(&state.owners));
     }
@@ -175,4 +187,180 @@ fn an_unpublished_departure_cannot_be_admitted_as_finished() {
     let (mut state, _) = pending();
     state.owners.0.scene.pass = WorkPass::Finished;
     assert_eq!(state.validate(), Err(Fault::State));
+}
+
+fn standing_art() -> crate::samus_appearance_bridge::elevator::Art {
+    use data::pose::tiles::{Graphics, GraphicsRef};
+    use samus_appearance::{
+        ArtDisplacement, BodyHalf, BodyPiece, ElevatorArt, ObjectSize, ObjectStyle,
+        StandingPoseArt, StandingStepArt, Step,
+    };
+    use types::Pair;
+
+    use crate::samus_appearance_bridge::elevator::Art;
+    use crate::state::video::RomWords;
+
+    let source = |offset| RomWords {
+        from: GraphicsRef { bank: 0xa0, offset },
+        words: 1,
+    };
+    let piece = BodyPiece {
+        position: Pair { x: -3, y: -4 },
+        style: ObjectStyle {
+            tile: 7,
+            palette: 3,
+            size: ObjectSize::Large,
+            priority: 2,
+            flips: Pair { x: true, y: false },
+        },
+    };
+    let standing = StandingPoseArt {
+        displacement: ArtDisplacement(-2),
+        steps: [(
+            Step(0),
+            StandingStepArt {
+                upper: BodyHalf {
+                    pieces: vec![piece],
+                    first_strip: source(0x8000),
+                    second_strip: None,
+                },
+                lower: BodyHalf {
+                    pieces: vec![piece],
+                    first_strip: source(0x8002),
+                    second_strip: Some(source(0x8004)),
+                },
+            },
+        )]
+        .into(),
+    };
+    Art {
+        pictures: ElevatorArt {
+            left: standing.clone(),
+            right: standing,
+        },
+        graphics: Graphics::new(vec![(0xa0, vec![1, 0, 2, 0, 3, 0])]),
+    }
+}
+
+fn standing_frame() -> StandingFrame {
+    use samus_appearance::{ElevatorProjection, ShaftView, Step};
+    use types::{Action, Aim, Body, Facing, Gun, Legs, Pair, Pose};
+
+    StandingFrame {
+        pose: Pose {
+            body: Body::Upright,
+            action: Action::Still,
+            facing: Facing::Right,
+            aim: Aim::Forward,
+            gun: Gun::Stowed,
+            legs: Legs::Together,
+        },
+        step: Step(0),
+        projection: ElevatorProjection {
+            centre: Pair { x: 2, y: 28 },
+            pivot: Pair { x: 0, y: 0 },
+            camera_origin: Pair { x: 0, y: 0 },
+            carried_view: ShaftView {
+                diagonal: 256,
+                cross: 0,
+            },
+        },
+    }
+}
+
+#[test]
+fn standing_rows_and_oam_wait_for_publication_across_a_checkpoint() {
+    let (mut state, mut content) = pending();
+    lit_room(
+        &mut state,
+        BlackoutPhase::Hold(WaitPasses::new(37).unwrap()),
+    );
+    content.standing = Some(standing_art());
+    state.video.memory.vram[0x6100] = 0x55;
+    let live = state.video.memory.clone();
+    let prepared = state
+        .advance(
+            Cut {
+                work: Work::Fresh { reached: false },
+                publish: false,
+                standing: Some(standing_frame()),
+            },
+            &content,
+        )
+        .unwrap();
+    assert_eq!(state.video.memory, live);
+    assert_eq!(prepared.standing_publication, StandingStrips::default());
+    let saved = canonical::to_bytes(&state);
+    let mut state: State = canonical::from_bytes(&saved).unwrap();
+    let strips = state.video.batch.standing_strips;
+    assert_eq!(strips.upper_second, None);
+    let pending_oam = state.video.batch.oam;
+    assert_ne!(pending_oam, live.oam);
+
+    let suspended = Cut {
+        work: Work::Interrupted,
+        publish: false,
+        standing: None,
+    };
+    let held = state.advance(suspended, &content).unwrap();
+    assert_eq!(state.video.memory, live);
+    assert_eq!(state.video.batch.oam, pending_oam);
+    assert_eq!(state.video.batch.standing_strips, strips);
+    assert_eq!(held.standing_publication, StandingStrips::default());
+
+    let published = state
+        .advance(
+            Cut {
+                publish: true,
+                ..suspended
+            },
+            &content,
+        )
+        .unwrap();
+    assert_eq!(state.video.memory.oam, pending_oam);
+    assert_eq!(published.standing_publication, strips);
+    for (word, expected) in [(0x6000, 1), (0x6100, 0x55), (0x6080, 2), (0x6180, 3)] {
+        assert_eq!(state.video.memory.vram[word], expected);
+    }
+}
+
+#[test]
+fn unsupported_standing_looks_leave_the_room_unchanged() {
+    use samus_appearance::Step;
+    use types::{Aim, Pose};
+
+    let (mut state, mut content) = pending();
+    lit_room(
+        &mut state,
+        BlackoutPhase::Hold(WaitPasses::new(37).unwrap()),
+    );
+    content.standing = Some(standing_art());
+    let before = state.clone();
+    let frame = standing_frame();
+    let wrong_aim = StandingFrame {
+        pose: Pose {
+            aim: Aim::Up,
+            ..frame.pose
+        },
+        ..frame
+    };
+    let missing_step = StandingFrame {
+        step: Step(1),
+        ..frame
+    };
+    for (standing, expected) in [
+        (wrong_aim, Fault::StandingPose),
+        (missing_step, Fault::StandingArt),
+    ] {
+        let result = state.advance(
+            Cut {
+                work: Work::Fresh { reached: false },
+                publish: true,
+                standing: Some(standing),
+            },
+            &content,
+        );
+        assert_eq!(result, Err(expected));
+        assert_eq!(state, before);
+    }
 }

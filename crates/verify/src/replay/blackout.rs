@@ -1,6 +1,7 @@
 //! The shaft handoff on one seed, plus a second seed inside the final unfinished room batch.
 pub(super) mod observe;
 pub(super) mod seed;
+pub(super) mod standing;
 use super::index::{
     Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility, Start,
 };
@@ -36,7 +37,24 @@ pub(super) fn witnessed_fields(rule: &str) -> Option<&'static [O]> {
     }
 }
 
+fn standing_body(case: &Case) -> bool {
+    case.rules.iter().any(|rule| rule == standing::RULE)
+}
+
 pub(super) fn valid(case: &Case) -> bool {
+    if standing_body(case) {
+        let (fields, outputs) = standing::partition();
+        return case.kind == CaseKind::Scoped
+            && case.row == ROW
+            && matches!(case.start, Start::CacheCut { frame: 164 | 239 })
+            && case.end.cut_inclusive == 241
+            && case.checkpoints
+            && case.content == ContentProvider::PlayerRomImport
+            && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+            && case.responsibilities == [Responsibility::Appearance]
+            && case.expectations.fields == fields
+            && case.expectations.outputs == outputs;
+    }
     let late = matches!(case.start, Start::CacheCut { frame: 239 });
     let mut outputs = vec![
         O::BlackoutTimerDrawing,
@@ -104,11 +122,29 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let figures =
         import::countdown::import(rom.lorom()).map_err(|_| data_failure(None, "timer art"))?;
     let mut previous = record(&cache, frame)?;
-    let state = seed::read(&previous, rom.lorom(), &format, late)?;
+    let mut state = seed::read(&previous, rom.lorom(), &format, late)?;
+    let body = standing_body(case);
+    let locked_look = if body && !late {
+        Some(standing::LockedLook::read(&previous, rom.lorom())?)
+    } else {
+        None
+    };
+    let art = if body {
+        if late {
+            state.video.batch.standing_strips = standing::pending(&previous, rom.lorom())?;
+        }
+        Some(
+            game::samus_appearance_bridge::elevator::Art::load(rom.lorom())
+                .map_err(|_| data_failure(Some(frame), "standing body art"))?,
+        )
+    } else {
+        None
+    };
     let content = ProductionContent::Blackout(Box::new(blackout::Content {
         figures,
         format,
         graphics: data::pose::tiles::Graphics::default(),
+        standing: art,
     }));
     let rules = ProductionRules::Blackout;
     let production = Production::admit(
@@ -122,12 +158,22 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let mut expected = Vec::new();
     for &cut in &schedule {
         let current = record(&cache, cut)?;
-        inputs.push(work(
+        let mut input = work(
             &previous,
             &current,
-            !late && cut == frame.saturating_add(1),
-        )?);
-        expected.push(observe::expected(&previous, &current, late)?);
+            !body && !late && cut == frame.saturating_add(1),
+        )?;
+        if matches!(input.work, blackout::Work::Fresh { .. })
+            && let Some(look) = &locked_look
+        {
+            input.standing = Some(look.drawing(&previous)?);
+        }
+        inputs.push(input);
+        expected.push(if body {
+            standing::expected(&current, rom.lorom())?
+        } else {
+            observe::expected(&previous, &current, late)?
+        });
         previous = current;
     }
     let first = frame.saturating_add(1);
@@ -144,7 +190,11 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             first,
             values: expected,
         }),
-        actual: ActualReader::Blackout(late),
+        actual: if body {
+            ActualReader::StandingBody
+        } else {
+            ActualReader::Blackout(late)
+        },
     })
 }
 
@@ -168,6 +218,7 @@ pub(super) fn work(
     Ok(blackout::Cut {
         work,
         publish: nmi.kind == NmiKind::Requested,
+        standing: None,
     })
 }
 

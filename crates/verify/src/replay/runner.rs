@@ -136,6 +136,10 @@ pub(super) fn run(
     let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
+    if matches!(actual, ActualReader::StandingBody) {
+        // Restore the admitted picture, then every nonterminal continuation.
+        checkpoints.extend(origin.take());
+    }
     let mut digest = Vec::new();
     let mut stop = None;
     let mut compare_cuts = || -> Result<(), Outcome> {
@@ -153,12 +157,14 @@ pub(super) fn run(
                 if pending_write(&production) {
                     count(&mut result.counts.pending_boundaries, 1)?;
                 }
-                // A one-opportunity floor witness resumes across the actual advance.
-                checkpoints.push(
-                    origin
-                        .take()
-                        .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
-                );
+                if checkpoints.len() < schedule.len() {
+                    // A one-opportunity floor witness resumes across the actual advance.
+                    checkpoints.push(
+                        origin
+                            .take()
+                            .map_or_else(|| capture_checkpoint(&production, &actual, *cut), Ok)?,
+                    );
+                }
             }
         }
         Ok(())
@@ -294,13 +300,15 @@ fn origin_checkpoint(
     let Start::CacheCut { frame } = &case.start else {
         return Ok(None);
     };
-    if matches!(
-        inputs,
-        InputReader::MovementTouchdown(_)
-            | InputReader::Explosion(_)
-            | InputReader::Zebes(_)
-            | InputReader::ShaftEntry(_)
-    ) || case.id.0 == super::jump_history::LEAP_CASE
+    if matches!(actual, ActualReader::StandingBody)
+        || matches!(
+            inputs,
+            InputReader::MovementTouchdown(_)
+                | InputReader::ShaftEntry(_)
+                | InputReader::Zebes(_)
+                | InputReader::Explosion(_)
+        )
+        || case.id.0 == super::jump_history::LEAP_CASE
     {
         capture_checkpoint(production, actual, *frame).map(Some)
     } else {

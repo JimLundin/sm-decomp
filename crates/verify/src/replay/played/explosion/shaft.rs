@@ -32,6 +32,9 @@ pub(in crate::replay) fn admit(
     let format = Format::load(rom).map_err(|_| data_failure(None, "cartridge format"))?;
     let figures = import::countdown::import(rom).map_err(|_| data_failure(None, "timer art"))?;
     let mut blackout = blackout::seed::read(record, rom, &format, true)?;
+    blackout.video.batch.standing_strips = blackout::standing::pending(record, rom)?;
+    let standing = game::samus_appearance_bridge::elevator::Art::load(rom)
+        .map_err(|_| data_failure(Some(record.index), "standing body art"))?;
     blackout.video.dma = record.ppu.dma.map(crate::replay::landing_site::channel);
     blackout.video.batch.fixed_colour =
         crate::replay::landing_site::queued_colour(record)?.map(game::state::video::ColourWrite);
@@ -49,6 +52,7 @@ pub(in crate::replay) fn admit(
             figures,
             format,
             graphics: data::pose::tiles::Graphics::default(),
+            standing: Some(standing),
         },
         raster_opening,
         departure: load_content(rom)?,

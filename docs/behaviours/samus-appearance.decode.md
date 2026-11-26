@@ -413,8 +413,8 @@ stop alone, whose frame hands her `AgainstWall`, so the clip the frame ends on s
 
 ## Part 2, left for the next round
 
-Her sprite from the step (`$90:85E2`..`$90:8A4B`: the halves, the chest sprite, the origin's
-offsets, the tiles uploads `$92:8000`), the flicker (`$90:85E2`'s invincibility test), the
+Her sprite from the step outside the elevator contract (`$90:85E2`..`$90:8A4B`, including the
+chest sprite, and the tiles uploads at `$92:8000`), the flicker (`$90:85E2`'s invincibility test), the
 palettes (`$91:D6F7`: the suits, the visor `$91:D83F`, the charge, the screw attack's and the
 speed booster's palettes `$91:D9B2`/`$91:DA5C`, the hurt flash `$91:D8A5`), the atmospheric
 graphics (splashes, dust, `$90:80E6`, `$90:A413`), and the echoes' pictures. Old code:
@@ -473,6 +473,7 @@ together, not split by area.
 - Area cannon: CannonItemDelay, CannonReadinessReset
 - Area palette (old 183): OrdinaryDryColours
 - Area hurt (old 0: no old code models the pulse): HurtColours, 12
+- Area elevator body (old 0): ElevatorStandingPicture
 
 
 ## Stride, spin and passage sound opportunities
@@ -1085,3 +1086,86 @@ and the push's start from `0A52`. 449 frames: model 449, do-nothing 154 (the cou
 frames). `Hurt` is asked at 610, 706, 802, 898 and 994, the frame after each hit. No count reaches
 40 while she spins or charges in 0006, so the spin's sound again is constructed only
 (C-hurt-spin-again).
+
+## The standing picture at the elevator
+
+### Sources and inputs
+
+| Entry | Source and mapping |
+| --- | --- |
+| ElevatorStandingPicture | [Bank 90](https://patrickjohnston.org/bank/90/) `$90:85E2..864D` selects the pose and step's maps. For side-facing standing `$90:868D..8696` includes the lower map. During rotation `$90:8C1F..8C4E` uses the projection at [bank 8B](https://patrickjohnston.org/bank/8B/) `$8B:8A52..8AD8`. Then `$90:8C94..8CC2` subtracts the signed pose Y offset and layer origin. `$92:8000..808C` selects art transfers separately from the room's regular queue. [Bank 80](https://patrickjohnston.org/bank/80/) `$80:9376..9415` transfers their strips during requested publication. |
+| Position and scope | Room centre `$0AF6/$0AFA`, camera `$0911/$0915`, pivot `$0080/$0082`, earlier room matrix `$0078..007F`. The signed byte at `$91:B62D + 8 × pose` is the upward art offset. The existing importer negates it for the downward displacement `Frame::origin_y`. Compare calculated sprite origin with `$0B04/$0B06`. `$0A1C/$0A96` select the pose and step. The lock leaves the animation count at 10 in `$0A94` for this witness. No invincibility, knockback or special palette timer is active at `$18A8/$18AA/$0A68`. The gun remains closed. |
+| Picture content | [Bank 92](https://patrickjohnston.org/bank/92/) `$92:9263` and `$92:945D` locate the upper and lower starting map indices for each pose. Add the displayed animation frame to each index. `$92:808D` maps these indices to ordinary spritemaps. The existing `import::samus` already imports both halves and frame tiles with the pose and displayed step as the key. |
+| Tile content | `$92:D94E` points to each pose's four-byte frame descriptors. Each half selects a group and entry. The group pointers are at `$92:D91E` and `$92:D938` for upper and lower respectively. A seven-byte entry gives the 24-bit source and two 16-bit strip sizes. Split the contiguous source at the first size. A zero second size leaves its reserved region unchanged. The upper destinations are VRAM words `$6000/$6100` and the lower destinations are `$6080/$6180`. The existing `Video::transfer_samus_tiles` resolves the queued definition IDs through `SamusTiles` and graphics content. |
+| Prepared and published drawings | `$7E:0370..058F` holds the pending OAM and its high table. The recorded timer occupies slots 0–16 and the body occupies 17–23 on cuts 165–241. These are witnessed positions in the shared draw order. The picture producer supplies pieces to the existing object writer. Compare the physical OAM lanes only once publication completes, retaining both lanes as expected when interrupted. `$071D/$071E` mark pending tile transfers and `$071F/$0721` hold the corresponding definitions. |
+
+### Standing look admission
+
+The pose definitions at [bank 91](https://patrickjohnston.org/bank/91/) `$91:B629`
+and the [Movement pose mapping](samus-movement.decode.md) identify the standing poses.
+For `Forward`, `Up`, `UpForward` and `DownForward` the right-facing poses are
+`01h/03h/05h/07h` and the left-facing poses are `02h/04h/06h/08h`, respectively.
+The Movement PadChart can supply all four aims with the gun stowed and the legs
+together. Its striding variants `51h/52h` are straight jumps. There is no striding
+standing pose and no standing `Down` pose. The screen-facing Power-suit pose has
+a separate chest draw at `$90:8697`. All eight side-facing standing poses use
+both halves through the carry-set return at `$90:8695`.
+
+For both sides the delay pointers at `$91:B010` lead to four displayed steps for
+`Forward`, two for `Up` and one each for `UpForward` and `DownForward`.
+The art probe reads the pose's displacement, both ordered maps and tile strips.
+At step zero the three aimed poses each differ from `Forward` in both maps and
+in the tile strips. `Up` and `UpForward` share their step-zero art on each side.
+The next `Up` step changes the upper map and tile strips. The corresponding `UpForward` step is absent. These aimed
+clips fall outside the elevator reach's standing picture.
+
+The reach at `$89:ACCD..AD17` calls `$90:F125..F14F`, which selects the
+unaimed standing pose by facing. `$91:FB08` preserves the clip when that pose
+matches the previous pose and initializes it when they differ. The movie takes
+the left-facing `Forward` pose on cut 164 and holds step zero. At cut 165, with
+the recorded centre, camera, view and step fixed, substituting left-facing
+`Up` changes both maps and the tile strips. This is a comparison with original
+art for another pose, outside the locked-reach witness. The constructed pose
+cases check that the standing boundary refuses each aimed pose and striding
+legs on both sides. The missing-step case requests a step present on the other
+side and absent at the requested facing in the invented art.
+
+### Witness and limitations
+
+Use the `chain-any-0011-DF45` records from the elevator reach at 164 through
+publication at 241. Samus reaches as the final ordinary room work runs. The standing
+picture and tile regions first appear at 165. The final locked drawing is already
+prepared at 239 and is retained through 240, while the prior body remains in live
+OAM. Cut 241 publishes the final room picture. Compare the whole object pieces,
+including the high bits, and all four imported tile strips. Other OAM contributions
+belong to the room and timer owners.
+
+The reference uses imported sprite content and the recorded locked pose and centre.
+It matches 75 prepared drawings, 75 requested publications and 77 tile-window cuts.
+A held body drawing first differs at 165. Keeping the reach cut's art changes 286
+sprite VRAM words at 165. Reversing the sprite halves or rounding affine products
+toward zero also fails at 165. Using the late shaft matrix fails at 166. The forward
+constructed drawings check both facings, a nonzero step and sprite attributes.
+The three-cut constructed video case starts with different live
+and prepared pictures and strip identities. It catches early publication at
+prepare, dropped publication at publish and packing the lower strips into an
+absent second upper strip. The reference run leaves room and video scope distinct.
+
+The station's setup replaces the entire sprite graphics window
+(`$8B:C1ED` writes VRAM `$6000..7FFF`) before cinematic cut 283 begins the
+settled-picture comparison. The scoped witness above supplies the claim for the
+earlier room picture. The HUD grid at `$5820..587F` has its own producer and
+survives this cinematic setup.
+
+The previous scope has no production body picture or reserved body tile producer.
+The separate object and video encoders remain available to consume those outputs.
+
+### Budget
+
+At `1ef154efc` the current production drawing has no owner for this picture.
+For historical context, `tools size` gives 2,679 weighted tokens to
+`sm_game/src/scene/samus_body.rs` and 2,511 to
+`sm_game/src/scene/samus_position_tiles.rs` at `18cc7f8b0`. Those files include
+general body, echoes and positions outside this standing scope.
+
+The four elevator body arms add 4.0 spec units and 150 weighted tokens at k = 37.5.

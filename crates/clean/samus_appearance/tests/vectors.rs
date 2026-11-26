@@ -6,6 +6,7 @@
 mod vectors {
     mod cannon_vectors;
     mod colour_vectors;
+    mod elevator_vectors;
     mod hurt_vectors;
 
     use core::num::Wrapping;
@@ -44,6 +45,7 @@ mod vectors {
         cannon_readiness: Vec<cannon_vectors::CannonHistory>,
         ordinary_dry_colours: colour_vectors::ColourVectors,
         hurt_colours: Vec<hurt_vectors::HurtVector>,
+        elevator_body: Vec<elevator_vectors::ElevatorVector>,
     }
 
     /// Her appearance State as initialization leaves it, quantity by quantity.
@@ -1128,6 +1130,7 @@ mod vectors {
                     .flat_map(|history| &history.entries),
             )
             .chain(file.hurt_colours.iter().flat_map(|frame| &frame.entries))
+            .chain(file.elevator_body.iter().flat_map(|body| &body.entries))
             .map(|entry| behaviour(entry))
             .chain(file.ordinary_dry_colours.entries().map(behaviour))
             .collect();

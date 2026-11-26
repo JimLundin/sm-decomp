@@ -111,3 +111,12 @@ and 124 use those requests to offer Land to Contact, independently of Appearance
 graphics. The timed Frame still needs the native floor and body-fit handoff at that opportunity.
 CeresDoorOpening at cut 157 comes separately from the slot-one B8 run. The shared carried shot
 path offers it after the actual W1 fire opportunity.
+
+## Standing body during the shaft hold and fade
+
+Part 2's bounded elevator contract specifies the body picture and reserved tile strips
+in [§13](samus-appearance.md#13-her-standing-picture-on-the-elevator).
+The blackout scheduler must keep this pending drawing through interruptions and publish
+it with the final room work. The timer and mounted vent drawings remain their owners'
+contributions to the room's object buffer. General movement pictures and special drawing
+effects remain open.

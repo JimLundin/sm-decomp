@@ -1276,3 +1276,14 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
   { role = "navigation", path = "crates/verify/src/replay/shaft_entry.rs" },
 ]
+
+[[rule]]
+id = "samus-appearance/ElevatorStandingPicture"
+targets = [
+  { role = "model", path = "crates/clean/samus_appearance/src/elevator.rs" },
+  { role = "adapter", path = "crates/game/src/samus_appearance_bridge/elevator.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout/body.rs" },
+  { role = "adapter", path = "crates/game/src/production/blackout.rs" },
+  { role = "adapter", path = "crates/game/src/commit.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/blackout/standing.rs" },
+]

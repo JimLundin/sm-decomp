@@ -1,8 +1,11 @@
 //! The Ceres elevator's scheduler, the interrupted room picture and its two-stage cartridge save.
+mod body;
 mod picture;
 use super::save_files;
 use crate::exact::save_files::Format;
-use crate::state::video::{Colour, Oam, Video};
+use crate::samus_appearance_bridge::elevator::Art as StandingArt;
+use crate::state::video::{Colour, Oam, StandingStrips, Video};
+pub use body::StandingFrame;
 use canonical::{
     Canonical,
     model::{Model, Pinned},
@@ -29,6 +32,8 @@ pub struct Content {
     pub graphics: data::pose::tiles::Graphics,
     /// The selected cartridge format.
     pub format: Format,
+    /// Imported body art when the selected scope includes Samus's standing picture.
+    pub standing: Option<StandingArt>,
 }
 
 /// Owners carried from the shaft. The HUD and save files retain their own complete state.
@@ -96,6 +101,8 @@ pub struct Cut {
     pub work: Work,
     /// The display services the requested NMI.
     pub publish: bool,
+    /// Drawing inputs supplied by Movement, her clip, the shaft and the camera.
+    pub standing: Option<StandingFrame>,
 }
 
 /// First new opportunity after publication. The caller transfers these live owners to the station.
@@ -124,6 +131,8 @@ pub struct Output {
     pub requests: Vec<Request>,
     /// Consumed only on a fresh work opportunity.
     pub dispatch: Option<Box<Dispatch>>,
+    /// Samus's tile sources that video serviced on this cut.
+    pub standing_publication: StandingStrips,
 }
 
 /// The selected scope cannot consume this continuation or asset.
@@ -135,6 +144,12 @@ pub enum Fault {
     Timer,
     /// Unavailable room graphics.
     Picture,
+    /// The draw opportunity and its pending resources disagree.
+    StandingPicture,
+    /// The current pose is outside the standing drawing.
+    StandingPose,
+    /// The admitted facing and clip step have no imported body art.
+    StandingArt,
     /// Cartridge refused the request.
     Save(::save_files::Refusal),
 }
@@ -191,12 +206,23 @@ impl State {
 
     pub(super) fn step(&mut self, cut: Cut, content: &Content) -> Result<Output, Fault> {
         let o = &mut self.owners.0;
+        let fresh_locked = matches!(cut.work, Work::Fresh { reached: false })
+            && matches!(o.scene.phase, BlackoutPhase::Hold(_) | BlackoutPhase::Fade)
+            && matches!(o.scene.pass, WorkPass::Finished);
+        let draw_body = fresh_locked && content.standing.is_some();
+        if draw_body != cut.standing.is_some() {
+            return Err(Fault::StandingPicture);
+        }
         let opportunity = match cut.work {
             Work::Fresh { reached } => match o.scene.phase {
                 BlackoutPhase::Shaft | BlackoutPhase::Hold(_) | BlackoutPhase::Fade
                     if matches!(o.scene.pass, WorkPass::Finished) =>
                 {
-                    room(o, &mut self.video, reached, content)?
+                    let opportunity = room(o, &mut self.video, reached, content)?;
+                    if let Some((standing, art)) = cut.standing.zip(content.standing.as_ref()) {
+                        body::prepare(&mut self.video.batch, standing, art)?;
+                    }
+                    opportunity
                 }
                 BlackoutPhase::Explosion(_) | BlackoutPhase::Dispatched(_) => Opportunity::NewWork,
                 BlackoutPhase::Shaft
@@ -260,18 +286,38 @@ impl State {
             }
         }
         picture::light(&mut self.video.batch.registers, o.scene.light);
-        if cut.publish && matches!(o.scene.pass, WorkPass::Prepared(_)) {
-            screens_blackout::advance(&mut o.scene, Opportunity::Publication);
-            if matches!(o.scene.pass, WorkPass::Finished) {
+        let standing_publication = self.publish(cut, content)?;
+        Ok(Output {
+            requests,
+            dispatch,
+            standing_publication,
+        })
+    }
+
+    fn publish(&mut self, cut: Cut, content: &Content) -> Result<StandingStrips, Fault> {
+        let mut serviced = StandingStrips::default();
+        let queued = self.video.batch.standing_strips;
+        let scene = &mut self.owners.0.scene;
+        if cut.publish && matches!(scene.pass, WorkPass::Prepared(_)) {
+            screens_blackout::advance(scene, Opportunity::Publication);
+            if matches!(scene.pass, WorkPass::Finished) {
                 self.video.commit_registers();
                 self.video.upload_oam_and_cgram();
+                if queued != StandingStrips::default() {
+                    let art = content
+                        .standing
+                        .as_ref()
+                        .filter(|art| art.accepts(queued))
+                        .ok_or(Fault::StandingPicture)?;
+                    serviced = self.video.publish_standing_strips(&art.graphics);
+                }
                 self.video.process_vram_writes(&content.graphics);
                 if let Some(platform) = self.platform.take() {
                     platform.publish(&mut self.video)?;
                 }
             }
         }
-        Ok(Output { requests, dispatch })
+        Ok(serviced)
     }
 }
 

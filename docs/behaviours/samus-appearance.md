@@ -1,4 +1,4 @@
-# How Samus looks, part 1, animation timing and ordinary palette preparation: behaviour spec
+# How Samus looks: behaviour spec
 
 What the player sees of Samus's animation from one frame to the next: which step of her pose's
 clip shows and for how long, how a clip loops, branches and ends, where the clip of the pose she
@@ -9,9 +9,9 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 
 ## Header
 
-**Scope.** Part 1 of the domain "how Samus looks": her animation's timing, its sound opportunities (§9),
-when her cannon may follow the selected item (§10), the ordinary dry palette opportunity (§11),
-and her hurt colours and the push's poses (§12).
+**Scope.** Her animation's timing, its sound opportunities (§9), when her cannon may follow
+the selected item (§10), the ordinary dry palette opportunity (§11), her hurt colours and the
+push's poses (§12), and her standing picture during the elevator hold and fade (§13).
 Her sprite and colours belong to the same domain because the player sees one figure.
 The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -33,8 +33,8 @@ room effects, Environment, Grapple and the charge and effect owners supply curre
 supply their own palette changes, and video owns delivery of the current palette.
 
 **What it leaves to others**: which pose follows a clip's end (samus-movement, `AnimationEnds`);
-which picture each step shows, where it is drawn and in which colours, the flicker while she is
-invincible, the splashes and dust (part 2, §7); the poses other domains drive (§7); whether a
+delivery of her elevator picture and tiles (video, §13); drawing outside the elevator
+picture's scope, invincibility flicker, splashes and dust (remaining part 2, §7); the poses other domains drive (§7); whether a
 sound it asks for is heard (the sound domain).
 
 **Notation.** A clip's steps are numbered from 0. "The clip moves on" means it goes to the step
@@ -963,3 +963,63 @@ while the count is above 0.
   C-hurt-cinematic, C-hurt-spin-again, C-hurt-pushed-again, C-hurt-idle, C-hurt-fall-mid-pulse).
 
 The sound `Hurt` joins §9.1's table: Samus sounds, allowance 6.
+
+
+## 13. Her standing picture on the elevator
+
+The elevator scene supplies each locked room drawing opportunity. Movement supplies her
+standing pose and whole room centre. Her clip supplies its current displayed step.
+The shaft supplies the view carried into the room turn. The camera supplies the layer origin
+at drawing. Imported content provides a picture and tiles for each supported standing look.
+This section covers the ordinary Power suit with no active damage flicker. The timer and room
+actors supply their own sprites. Video owns the pending and published pictures, their tile transfers and the
+object buffer. The station's drawing replaces the room picture as its own setup finishes.
+
+| Quantity | Domain type and units | Read by |
+| --- | --- | --- |
+| Standing pose | `Pose` from [samus-movement §2](samus-movement.md) | ElevatorStandingPicture |
+| Standing look | Side (`Left` or `Right`) and displayed clip step counted from zero | ElevatorStandingPicture |
+| Room centre, pivot and camera origin | Pairs of whole pixels in the room | ElevatorStandingPicture |
+| Carried shaft view | Signed 8.8 diagonal and cross terms for the rotating floor | ElevatorStandingPicture |
+| Vertical art displacement | Signed whole pixels from pose content, positive when the art origin is below her centre | ElevatorStandingPicture |
+| Body pieces | Two ordered lists of sprite offsets in whole pixels, with tile, palette, size, priority and flips | ElevatorStandingPicture |
+| Body tiles | Imported tile strips for the upper and lower body rows. Each half has a first strip and an optional second strip. | ElevatorStandingPicture |
+| Body placements and graphics | Ordered object placements in screen pixels and graphics for the object's reserved tiles | output (video) |
+
+### ElevatorStandingPicture
+
+- kind: mechanic.
+- summary: Samus keeps the standing picture for her current pose and clip step as the shaft tilts behind her.
+- params: none.
+- switch: Fixed.
+- A locked drawing opportunity with an upright `Still` pose facing left or right, aim
+  `Forward`, legs `Together` and cannon `Stowed` → use that facing and displayed step to
+  select the art displacement, upper and lower pieces and body tiles from content. Write the
+  upper pieces first and then the lower pieces, each at its own offset from the same projected
+  origin. Carry each piece's tile, palette, size, priority and flips into its placement. Request
+  the tile strips for their respective reserved object tiles [C-elevator-body-left,
+  C-elevator-body-right, R-elevator-body].
+- Any other pose at a new locked drawing opportunity → report an unsupported pose at the
+  drawing boundary [C-elevator-body-outside-pose].
+- An admitted look with no art at its exact facing and step → report missing art at the drawing
+  boundary [C-elevator-body-missing-step].
+- A cut that resumes suspended work without a new room drawing opportunity → submit no new
+  body placements or tile strips [C-elevator-body-suspended, R-elevator-body-suspended].
+- checked: oracle (shaft cut 165 and subsequent locked turns through final publication at cut 241), constructed.
+
+With room centre `(x, y)`, shaft pivot `(p, q)`, diagonal `d` and cross term `s`, let
+`u = x - p`, `v = q - y`. The projected room point is
+`(p + floor(d*u/256) + floor(s*v/256), q - floor(-s*u/256) - floor(d*v/256))`.
+Subtract the camera origin, then add the signed vertical art displacement to the vertical position.
+The projection changes the drawing alone. The room centre still governs movement and the mini-map.
+
+**Order that matters.** The body follows the frozen countdown and precedes room actors
+in the drawn picture. It reads the view before the shaft takes its late tilt step.
+An elevator reach during ordinary play supplies the pose for the next drawing opportunity.
+Drawing reads that pose and the displayed clip step without advancing its hold.
+
+Video keeps the live picture and tiles while room work is pending. Its next requested
+publication installs the prepared pieces and present tile strips. A strip's destination is
+reserved for its own row of its own half. An absent strip leaves that row unchanged, and
+the other strips still write to their reserved rows. The constructed suspended case follows
+the prepared and live values across those video opportunities.

@@ -87,7 +87,17 @@ pub(in crate::replay) fn read(
         phase: if late {
             BlackoutPhase::AwaitBlank
         } else {
-            BlackoutPhase::Shaft
+            match word(ram, 0x998)? {
+                8 => BlackoutPhase::Shaft,
+                32 => BlackoutPhase::Hold(
+                    types::ceres_blackout::WaitPasses::new(
+                        u8::try_from(word(ram, 0xaa0)?).map_err(|_| bad())?,
+                    )
+                    .ok_or_else(bad)?,
+                ),
+                33 => BlackoutPhase::Fade,
+                _ => return Err(bad()),
+            }
         },
         light: light(super::byte(ram, 0x51)? & 15),
         published: PublishedPicture {

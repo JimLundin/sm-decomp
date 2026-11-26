@@ -7,8 +7,8 @@ use data::video::OAM_BYTES;
 
 use crate::state::video::{
     BBusRegister, BusAddress, CGRAM_COLOURS, ColourMathLayers, ColourMathSelect, DmaChannel,
-    DmaControl, Layer, Layers, Mode7, SCROLL_BITS, Scroll, TilemapBase, VRAM_WORDS, Video,
-    VramSource, VramTransfer, VramWord,
+    DmaControl, Layer, Layers, Mode7, SCROLL_BITS, Scroll, StandingStrips, TilemapBase, VRAM_WORDS,
+    Video, VramSource, VramTransfer, VramWord,
 };
 
 /// VRAM's word address is 15 bits; the PPU ignores the top bit.
@@ -129,6 +129,37 @@ impl Video {
                 channel.transferred(from, bytes);
             }
         }
+    }
+
+    // The body's four strip rows are separate from the regular room upload queue.
+    pub(crate) fn publish_standing_strips(&mut self, graphics: &Graphics) -> StandingStrips {
+        let strips = self.batch.standing_strips;
+        let transfers = [
+            (SAMUS_TOP_TILES, [strips.upper_first, strips.upper_second]),
+            (
+                SAMUS_BOTTOM_TILES,
+                [strips.lower_first, strips.lower_second],
+            ),
+        ];
+        let Some(channel) = self.dma.get_mut(VRAM_CHANNEL) else {
+            return StandingStrips::default();
+        };
+        for (destinations, strips) in transfers {
+            for (to, strip) in destinations.into_iter().zip(strips) {
+                if let Some(strip) = strip {
+                    channel.control = DmaControl::TO_TWO_REGISTERS;
+                    channel.destination = BBusRegister::VramData;
+                    dma_to_vram(
+                        &mut self.memory.vram,
+                        channel,
+                        graphics,
+                        (strip.from, usize::from(strip.words).wrapping_mul(2)),
+                        to,
+                    );
+                }
+            }
+        }
+        strips
     }
 
     /// Bank `$80` log, transfer Samus tiles to VRAM `$80:9376`: for each half her drawing

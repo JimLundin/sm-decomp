@@ -2296,3 +2296,128 @@ before = { count = 20 }
 energy_fell = true
 push_started = false
 after = { count = 21, row = "before", sounds = [] }
+
+# Elevator body, with invented standing content in the constructed cases.
+# A look is [facing, displayed step] for an upright still pose with the aim
+# Forward, cannon stowed and legs together. Both constructed drawings share one art set.
+# The admission case lists pose parts as [body, action, facing, aim, gun, legs]
+# with a displayed step of zero. Missing looks use the same art set.
+# Each piece is [x, y, tile, palette, size, priority, flip_x, flip_y]. The
+# drawing adds the projected origin and keeps each piece's other properties.
+# The simulated publisher reserves four rows: UpperFirst, UpperSecond,
+# LowerFirst and LowerSecond. The constructed sequence checks preparation,
+# retention and publication at three distinct cuts. Labels stand for
+# invented tile strips. The native cases identify observations by cut.
+
+[[elevator_body]]
+id = "C-elevator-body-left"
+source = "constructed"
+entries = ["ElevatorStandingPicture"]
+look = ["Left", 0]
+centre = [123, 62]
+pivot = [130, 94]
+camera = [9, 21]
+view = [250, -13]
+vertical_displacement = -2
+upper = [[-2, -7, 15, 5, "Large", 1, true, false], [1, -6, 62, 1, "Small", 2, false, true]]
+lower = [[-4, 10, 29, 6, "Small", 3, true, true]]
+upper_rows = ["LeftTop", "LeftTopNext"]
+lower_rows = ["LeftBottom", "LeftBottomNext"]
+origin = [112, 41]
+picture = [[110, 34, 15, 5, "Large", 1, true, false], [113, 35, 62, 1, "Small", 2, false, true], [108, 51, 29, 6, "Small", 3, true, true]]
+rows = ["LeftTop", "LeftTopNext", "LeftBottom", "LeftBottomNext"]
+
+[[elevator_body]]
+id = "C-elevator-body-right"
+source = "constructed"
+entries = ["ElevatorStandingPicture"]
+look = ["Right", 3]
+centre = [48, 20]
+pivot = [80, 64]
+camera = [21, 0]
+view = [256, 0]
+vertical_displacement = 3
+upper = [[1, -5, 83, 0, "Small", 3, false, true]]
+lower = [[-2, 7, 102, 7, "Large", 0, true, false], [-3, 8, 106, 4, "Small", 1, false, false]]
+upper_rows = ["RightTop", "RightTopNext"]
+lower_rows = ["RightBottom"]
+origin = [27, 23]
+picture = [[28, 18, 83, 0, "Small", 3, false, true], [25, 30, 102, 7, "Large", 0, true, false], [24, 31, 106, 4, "Small", 1, false, false]]
+rows = ["RightTop", "RightTopNext", "RightBottom"]
+
+[[elevator_body]]
+id = "C-elevator-body-outside-pose"
+source = "constructed"
+entries = ["ElevatorStandingPicture"]
+declined_poses = [
+    ["Upright", "Still", "Left", "Forward", "Stowed", "Striding"],
+    ["Upright", "Still", "Right", "Forward", "Stowed", "Striding"],
+    ["Upright", "Still", "Left", "Up", "Stowed", "Together"],
+    ["Upright", "Still", "Right", "Up", "Stowed", "Together"],
+    ["Upright", "Still", "Left", "UpForward", "Stowed", "Together"],
+    ["Upright", "Still", "Right", "UpForward", "Stowed", "Together"],
+    ["Upright", "Still", "Left", "DownForward", "Stowed", "Together"],
+    ["Upright", "Still", "Right", "DownForward", "Stowed", "Together"],
+    ["Upright", "Still", "Left", "Down", "Stowed", "Together"],
+    ["Upright", "Still", "Right", "Down", "Stowed", "Together"],
+    ["Upright", "Still", "Screen", "Forward", "Stowed", "Together"],
+    ["Upright", "Still", "Right", "Forward", "Drawn", "Together"],
+    ["Upright", "Jumping", "Left", "Forward", "Stowed", "Striding"],
+    ["Upright", "Running", "Right", "Forward", "Stowed", "Together"],
+    ["Crouched", "Still", "Left", "UpForward", "Stowed", "Together"],
+]
+
+[[elevator_body]]
+id = "C-elevator-body-missing-step"
+source = "constructed"
+entries = ["ElevatorStandingPicture"]
+missing_looks = [["Left", 3], ["Right", 0]]
+
+[[elevator_body]]
+id = "C-elevator-body-suspended"
+source = "constructed"
+entries = ["ElevatorStandingPicture"]
+live_picture = [[22, 14, 3, 2, "Small", 1, false, true]]
+live_rows = { UpperFirst = "OldTop", UpperSecond = "OldTopNext", LowerFirst = "OldBottom", LowerSecond = "OldBottomNext" }
+drawing = [[31, 46, 45, 5, "Large", 3, true, false], [39, 52, 60, 0, "Small", 2, false, true]]
+strips = { UpperFirst = "NewTop", LowerFirst = "NewBottom", LowerSecond = "NewBottomNext" }
+
+[[elevator_body.cut]]
+opportunity = "Prepare"
+submitted = true
+pending = true
+live_picture = [[22, 14, 3, 2, "Small", 1, false, true]]
+live_rows = { UpperFirst = "OldTop", UpperSecond = "OldTopNext", LowerFirst = "OldBottom", LowerSecond = "OldBottomNext" }
+
+[[elevator_body.cut]]
+opportunity = "Suspend"
+submitted = false
+pending = true
+live_picture = [[22, 14, 3, 2, "Small", 1, false, true]]
+live_rows = { UpperFirst = "OldTop", UpperSecond = "OldTopNext", LowerFirst = "OldBottom", LowerSecond = "OldBottomNext" }
+
+[[elevator_body.cut]]
+opportunity = "Publish"
+submitted = false
+pending = false
+live_picture = [[31, 46, 45, 5, "Large", 3, true, false], [39, 52, 60, 0, "Small", 2, false, true]]
+live_rows = { UpperFirst = "NewTop", UpperSecond = "OldTopNext", LowerFirst = "NewBottom", LowerSecond = "NewBottomNext" }
+
+[[elevator_body]]
+id = "R-elevator-body"
+source = "chain-any-0011-DF45:165"
+entries = ["ElevatorStandingPicture"]
+look = ["Left", 0]
+centre = [144, 75]
+origin = [208, 75]
+piece_counts = [4, 3]
+
+[[elevator_body]]
+id = "R-elevator-body-suspended"
+source = "chain-any-0011-DF45:240"
+entries = ["ElevatorStandingPicture"]
+suspended = true
+look = ["Left", 0]
+centre = [144, 75]
+origin = [237, 75]
+piece_counts = [4, 3]

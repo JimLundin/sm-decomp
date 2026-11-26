@@ -85,7 +85,7 @@ mod catalogue {
     /// The switch line's first word: `none`, `toggle` or `parameter`, then what it names.
     fn switch(written: &str) -> Switch {
         match written.split_whitespace().next() {
-            Some("none") => Switch::Fixed,
+            Some("none" | "Fixed") => Switch::Fixed,
             Some("toggle") => Switch::Toggle,
             Some("parameter") => Switch::Parameter,
             other => panic!("expected a switch the spec writes, found {other:?}"),

@@ -692,6 +692,19 @@ pub struct RomWords {
     pub words: u16,
 }
 
+/// Samus's reserved tile transfers, latched until the next room turn prepares a picture.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct StandingStrips {
+    /// First upper-body row.
+    pub upper_first: Option<RomWords>,
+    /// Second upper-body row.
+    pub upper_second: Option<RomWords>,
+    /// First lower-body row.
+    pub lower_first: Option<RomWords>,
+    /// Second lower-body row.
+    pub lower_second: Option<RomWords>,
+}
+
 /// Samus's tile uploads the next requested NMI makes: the tiles definition of each half her
 /// drawing queued this frame (bank `$92` log, `$92:8000`; bank `$80` log, `$80:9376`).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -870,6 +883,8 @@ pub struct NmiBatch {
     pub vram: Vec<VramTransfer>,
     /// Samus's tile uploads.
     pub samus_tiles: SamusTileUploads,
+    /// Samus's strip transfers for the locked elevator room.
+    pub standing_strips: StandingStrips,
     /// The level tilemap uploads scrolling builds.
     pub level: LevelUploads,
     /// The playfield's colour math the commit hands the HUD interrupt (`$80:9277`).
@@ -886,6 +901,7 @@ impl Default for NmiBatch {
             cgram: [Colour::default(); CGRAM_COLOURS],
             vram: Vec::new(),
             samus_tiles: SamusTileUploads::default(),
+            standing_strips: StandingStrips::default(),
             level: LevelUploads::default(),
             playfield_colour_math: PlayfieldColourMath::default(),
         }

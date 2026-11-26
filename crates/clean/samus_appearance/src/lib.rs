@@ -10,12 +10,17 @@
 //! current and target palettes live with their shared owner, beside it, which writes the
 //! colours a frame gives her row. Before a frame, the caller may ask the read-ahead,
 //! [`Ahead::of`], of that State and the figure she starts the frame in.
+//!
+//! On a locked elevator room drawing, [`elevator_standing_picture`] reads the current pose's
+//! facing and displayed step after admitting the pose, without advancing the frame. Video
+//! receives body work to publish separately from any drawing errors.
 
 mod ahead;
 mod cannon;
 mod catalogue;
 mod clip;
 mod colours;
+mod elevator;
 mod hurt;
 mod inputs;
 mod moves;
@@ -37,6 +42,12 @@ pub use colours::{
     ChargeGlowPosition, ColourEffect, ColourSequences, DryColourOutcome, DryColourReset, HurtCount,
     LiquidLevel, PaletteObservations, PaletteOpportunity, RoomColours, Unrecognized, VisorDelay,
     VisorStep,
+};
+pub use elevator::{
+    ArtDisplacement, BodyHalf, BodyObject, BodyPiece, BodyPlacement, BodyRow, ElevatorArt,
+    ElevatorBody, ElevatorDrawing, ElevatorPictureError, ElevatorProjection, ObjectSize,
+    ObjectStyle, ScreenPoint, ShaftView, StandingLook, StandingPoseArt, StandingStepArt,
+    elevator_standing_picture,
 };
 pub use hurt::HurtOpportunity;
 pub use inputs::{
