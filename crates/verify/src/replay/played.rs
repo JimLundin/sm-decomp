@@ -314,22 +314,22 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Ok(controller) => controller,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
-    let mut battery = if run.state.arrival.preparing() {
-        None
-    } else {
-        match seed::Battery::load(&seed, &sources.rom) {
-            Ok(battery) => Some(battery),
-            Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
-        }
+    let mut battery = match (!run.state.arrival.preparing())
+        .then(|| seed::Battery::load(&seed, &sources.rom))
+        .transpose()
+    {
+        Ok(battery) => battery,
+        Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
     let (held, stop) = run.through_observing(
         &mut rows,
         seed,
         controller,
         start.saturating_add(1)..=end,
-        |record, cut| match &mut battery {
-            Some(battery) => battery.held(record, cut),
-            None => Ok(()),
+        |record, cut| {
+            battery
+                .as_mut()
+                .map_or(Ok(()), |battery| battery.held(record, cut))
         },
     )?;
     Ok(report(held, stop))

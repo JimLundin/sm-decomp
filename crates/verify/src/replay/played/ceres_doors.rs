@@ -28,7 +28,7 @@ pub(super) fn seed(
             || roster
                 .iter()
                 .any(|&index| !slots.iter().any(|slot| slot.index() == index))
-            || roster.windows(2).any(|pair| pair[0] >= pair[1])
+            || roster.array_windows().any(|[first, next]| first >= next)
         {
             return Err(refuse(
                 "played seed holds a Ceres door among the held actor boxes",
