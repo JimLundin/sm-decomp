@@ -58,6 +58,17 @@ pub(super) fn language(wram: &[u8]) -> Result<types::options::Language, Outcome>
     })
 }
 
+pub(super) fn station_selector(wram: &[u8]) -> Result<types::StationId, Outcome> {
+    word(
+        wram,
+        source::WramWord {
+            name: "station selector",
+            offset: 0x078b,
+        },
+    )
+    .map(types::StationId)
+}
+
 /// Seed-held room facts.
 #[derive(Clone)]
 pub(super) struct Room {
@@ -95,8 +106,20 @@ pub(super) fn room(
         movement::borrowed(seed, seed, &content.movement)?.world
     };
     let inputs = connected::seed_inputs(seed, items, geometry)?;
-    let (doorways, map) = doorways(seed, world)?;
+    let (doorways, room) = doorways(seed, world)?;
     let played = played::passage::Room {
+        id: room.id,
+        area: room.place.area,
+        entered_through: import::world::doorway(data::rom::RomAddress::new(
+            0x83,
+            word(
+                seed,
+                source::WramWord {
+                    name: "current doorway",
+                    offset: 0x078d,
+                },
+            )?,
+        )),
         entry: crate::replay::shaft_entry::observed(record)?,
         geometry: inputs.geometry.clone(),
         doorways,
@@ -104,7 +127,7 @@ pub(super) fn room(
     };
     let held = Room {
         inputs,
-        map,
+        map: (room_loading::map_room(room), room.place.area),
         hud: super::hud::held(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
             0 => boss_ceres_ridley::Stage::Calm,
@@ -123,21 +146,18 @@ pub(super) fn room(
     Ok((held, played, progress::decode(seed)?))
 }
 
-type Doorways = (
-    Vec<played::passage::Doorway>,
-    (interface_hud::Room, data::room::Area),
-);
+type Doorways<'a> = (Vec<played::passage::Doorway>, &'a world::Room);
 
 /// The seed room's doors to other rooms, by the seed's door cells, and where the room sits on
 /// her map, from the imported world.
-fn doorways(seed: &[u8], world: &world::World) -> Result<Doorways, Outcome> {
+fn doorways<'a>(seed: &[u8], world: &'a world::World) -> Result<Doorways<'a>, Outcome> {
     let bad = || data_failure(None, "played room doors");
     let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
         .ok_or_else(bad)?;
     let room = world.room(id).ok_or_else(bad)?;
     let doorways =
         room_loading::doorways(world, room, movement::door_cells(seed)?).map_err(|_| bad())?;
-    Ok((doorways, (room_loading::map_room(room), room.place.area)))
+    Ok((doorways, room))
 }
 
 /// The rooms the engine loads, their tilesets, the sprites' colours and the slopes, imported

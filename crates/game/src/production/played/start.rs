@@ -55,6 +55,7 @@ impl State {
                 doorway: None,
                 awaiting_actors: false,
                 room: started.room,
+                station: types::StationId(0),
                 map_room: started.map.0,
             },
             palette: Palette {

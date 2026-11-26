@@ -346,13 +346,14 @@ pub fn room(
 ) -> Result<Room, LoadFault> {
     let version = version(rooms, through, run.progress)?;
     let room = entered(rooms, through)?;
-    built(room, version, rooms, before)
+    built(room, Some(through), version, rooms, before)
 }
 
 /// What play reads of `room` built in `version`, with the scroll areas past its screens kept
 /// from `before`.
 fn built(
     room: &world::Room,
+    entered_through: Option<DoorwayId>,
     version: &world::Version,
     rooms: &Rooms,
     before: &CameraInputs,
@@ -385,6 +386,9 @@ fn built(
     let leads = |place| matches!(room.doors.get(place), Some(Door::To(_)));
     let (cells, lets_through) = blocks(&kinds, width, &rooms.slopes, leads)?;
     Ok(Room {
+        id: room.id,
+        area: room.place.area,
+        entered_through,
         entry: shaft_entry::State {
             width,
             cells: level,
@@ -610,6 +614,7 @@ pub fn start(
     Ok(Started {
         room: built(
             room,
+            None,
             version,
             rooms,
             &CameraInputs {
@@ -843,7 +848,7 @@ const fn condition(condition: world::Condition) -> run_progress::Condition {
 }
 
 /// A map area in progress's terms; the debug rooms' area has none.
-const fn area(area: Area) -> Result<types::Area, LoadFault> {
+pub(super) const fn area(area: Area) -> Result<types::Area, LoadFault> {
     Ok(match area {
         Area::Crateria => types::Area::Crateria,
         Area::Brinstar => types::Area::Brinstar,

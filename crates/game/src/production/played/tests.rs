@@ -52,7 +52,11 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
             doors: Doors::Play,
             doorway: None,
             awaiting_actors: false,
+            station: types::StationId(0),
             room: passage::Room {
+                id: data::assets::world::rooms::CERES_ELEVATOR_ROOM,
+                area: data::room::Area::Ceres,
+                entered_through: None,
                 entry: crate::production::shaft_entry::State::default(),
                 geometry: empty_world(),
                 doorways: Vec::new(),

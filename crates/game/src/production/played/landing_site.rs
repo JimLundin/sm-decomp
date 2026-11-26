@@ -309,7 +309,7 @@ pub struct Placement {
     /// Room whose state still supplies this placement.
     pub room: data::id::RoomId,
     /// Current doorway.
-    pub door: data::id::DoorwayId,
+    pub door: Option<data::id::DoorwayId>,
     /// Camera whole coordinates.
     pub camera: [u16; 2],
     /// Samus's whole coordinates.

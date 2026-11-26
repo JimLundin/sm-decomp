@@ -1,6 +1,7 @@
 //! Capture the running Ceres file from its current gameplay owners.
 
-use interface_hud::{Ammo, SelectableItem};
+use data::map::MapCells;
+use interface_hud::{Ammo, HudState, SelectableItem};
 use run_progress::Supply as Stock;
 use types::save_files::{Ammunition, ExploredCells, Gear, RunSnapshot, SelectedWeapon, Supply};
 use types::{Area, Pair, StationId};
@@ -68,21 +69,19 @@ pub fn capture(
     run.progress.doors.0 = progress.opened.0.iter().map(|door| door.0).collect();
     run.progress.maps_collected = enum_map::EnumMap::from_fn(|area| progress.maps[area].is_known());
 
-    let live_map = (0_i32..256)
-        .map(|index| {
-            (0_i32..8).fold(0_u8, |byte, bit| {
-                let x = (index / 128)
-                    .saturating_mul(32)
-                    .saturating_add((index % 4).saturating_mul(8))
-                    .saturating_add(bit);
-                let y = (index % 128) / 4;
-                (byte << 1) | u8::from(room.hud.0.explored.contains(Pair { x, y }))
-            })
-        })
-        .collect();
+    let live_map = explored(&room.hud.0).to_bitmap().to_vec();
     Some(Capture {
         run,
         live_map: ExploredCells::new(live_map)?,
         location,
     })
+}
+
+pub(super) fn explored(hud: &HudState) -> MapCells {
+    MapCells(core::array::from_fn(|y| {
+        let y = i32::try_from(y).unwrap_or_default();
+        (0..64).rev().fold(0, |row, x| {
+            (row << 1) | u64::from(hud.explored.contains(Pair { x, y }))
+        })
+    }))
 }

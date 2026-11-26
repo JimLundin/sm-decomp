@@ -37,15 +37,19 @@ fn room(
     maps: &AreaMaps,
     shadow: &ShadowTilemaps,
     entrance: Entrance,
-) -> Observation {
+) -> Result<Observation, Outcome> {
     if entrance == Entrance::LandingSite {
         room.station = 0x12;
     }
-    let mut data = canonical::to_bytes(&room);
+    let mut data: Vec<_> = landing_site::placement_words(room.placement)?
+        .into_iter()
+        .chain([room.station])
+        .flat_map(u16::to_le_bytes)
+        .collect();
     data.push(u8::from(area));
     data.extend(canonical::to_bytes(maps));
     data.extend(canonical::to_bytes(shadow));
-    bytes("room", data)
+    Ok(bytes("room", data))
 }
 fn plane(r: &Registers) -> Observation {
     words(
@@ -116,7 +120,7 @@ pub(super) fn native(
         bytes("health", canonical::to_bytes(&health)),
         words("random", [w(0x05e5)?]),
         bytes("progress", canonical::to_bytes(&remembered)),
-        room(placement, area, &maps, &shadow, Entrance::Carried),
+        room(placement, area, &maps, &shadow, Entrance::Carried)?,
     ];
     let mut outputs = Vec::new();
     let transfer = if let Input::Loader(Work::Open { accepted, selected }) = input {
@@ -222,7 +226,7 @@ pub(in crate::replay) fn actual(
             &carry.landing.maps,
             &carry.landing.shadow,
             carry.landing.entrance,
-        ),
+        )?,
         bytes(
             "pipeline",
             canonical::to_bytes(&match carry.landing.phase {

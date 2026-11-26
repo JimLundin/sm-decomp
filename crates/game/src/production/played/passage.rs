@@ -36,6 +36,12 @@ pub struct Doorway {
 /// the camera's room. A passage's building of the next room replaces it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Room {
+    /// The room selected by the loader.
+    pub id: data::id::RoomId,
+    /// The area of the built room.
+    pub area: data::room::Area,
+    /// The entrance that built this room, if it was entered through a doorway.
+    pub entered_through: Option<data::id::DoorwayId>,
     /// The built level and the room setup carried through the passage.
     pub entry: shaft_entry::State,
     /// The room's blocks and the boxes of its solid actors other than the Ceres doors.
@@ -101,6 +107,8 @@ pub struct State {
     pub awaiting_actors: bool,
     /// What play reads of her room.
     pub room: Room,
+    /// The station selector carried across ordinary passages.
+    pub station: types::StationId,
     /// Where her room sits on her map.
     pub map_room: interface_hud::Room,
 }

@@ -207,6 +207,14 @@ pub fn doorway(at: RomAddress) -> Option<DoorwayId> {
     })
 }
 
+/// The native pointer that identifies an imported doorway in observations.
+#[must_use]
+pub fn doorway_pointer(door: DoorwayId) -> Option<u16> {
+    DOORWAYS
+        .iter()
+        .find_map(|&(id, pointer)| (id == door).then_some(pointer))
+}
+
 /// Where the original keeps what a version of a room loads that the work RAM names by its
 /// place.
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -16,22 +16,9 @@ use oracle_record::FrameRecord;
 pub(in crate::replay) fn room(
     record: &FrameRecord,
 ) -> Result<(Room, Area, AreaMaps, ShadowTilemaps), Outcome> {
-    let w = |at| word(record, at);
-    let bytes = |at: usize, count| {
-        record
-            .wram
-            .get(at..at.saturating_add(count))
-            .ok_or_else(|| data_failure(Some(record.index), "departure RAM extent"))
-    };
-    let cells = |at| {
-        Ok(MapCells::from_bitmap(
-            bytes(at, MAP_BIT_BYTES)?
-                .try_into()
-                .map_err(|_| data_failure(Some(record.index), "departure map extent"))?,
-        ))
-    };
+    let (room, area, maps) = placement_and_maps(record)?;
     let shadow = |at| {
-        Ok(bytes(at, 0x800)?
+        Ok(ram(record, at, 0x800)?
             .as_chunks::<2>()
             .0
             .iter()
@@ -39,18 +26,35 @@ pub(in crate::replay) fn room(
             .map(u16::from_le_bytes)
             .collect())
     };
+    Ok((
+        room,
+        area,
+        maps,
+        ShadowTilemaps {
+            bg1: shadow(0x4000)?,
+            bg2: shadow(0x3000)?,
+        },
+    ))
+}
+
+pub(in crate::replay) fn placement_and_maps(
+    record: &FrameRecord,
+) -> Result<(Room, Area, AreaMaps), Outcome> {
+    let w = |at| word(record, at);
+    let cells = |at| {
+        Ok(MapCells::from_bitmap(
+            ram(record, at, MAP_BIT_BYTES)?
+                .try_into()
+                .map_err(|_| data_failure(Some(record.index), "departure map extent"))?,
+        ))
+    };
     let area = u8::try_from(w(0x079f)?)
         .ok()
         .and_then(|id| Area::try_from(id).ok())
         .ok_or_else(|| data_failure(Some(record.index), "departure area"))?;
     Ok((
         Room {
-            placement: landing_site::Placement {
-                room: data::id::RoomId(w(0x079b)?),
-                door: data::id::DoorwayId(w(0x078d)?),
-                camera: [w(0x0911)?, w(0x0915)?],
-                samus: [w(0x0af6)?, w(0x0afa)?],
-            },
+            placement: crate::replay::landing_site::placement(record)?,
             station: w(0x078b)?,
         },
         area,
@@ -69,11 +73,51 @@ pub(in crate::replay) fn room(
                     != 0,
             },
         },
-        ShadowTilemaps {
-            bg1: shadow(0x4000)?,
-            bg2: shadow(0x3000)?,
-        },
     ))
+}
+
+fn ram(record: &FrameRecord, at: usize, count: usize) -> Result<&[u8], Outcome> {
+    record
+        .wram
+        .get(at..at.saturating_add(count))
+        .ok_or_else(|| data_failure(Some(record.index), "departure RAM extent"))
+}
+
+pub(in crate::replay) fn check_placement_and_maps(
+    state: &game::production::played::State,
+    selected: &types::save_files::RunSnapshot,
+    record: &FrameRecord,
+    cut: u64,
+) -> Result<(), Outcome> {
+    let (room, area, maps) =
+        state
+            .departure_room(selected)
+            .ok_or_else(|| Outcome::Unsupported {
+                cut: Some(cut),
+                dependency: "live departure room and exploration".into(),
+            })?;
+    let (native_room, native_area, native_maps) = placement_and_maps(record)?;
+    for (equal, field) in [
+        (room.placement.room == native_room.placement.room, "room"),
+        (room.placement.door == native_room.placement.door, "door"),
+        (
+            room.placement.camera == native_room.placement.camera,
+            "camera",
+        ),
+        (room.placement.samus == native_room.placement.samus, "samus"),
+        (room.station == native_room.station, "station"),
+        (area == native_area, "area"),
+        (maps.active == native_maps.active, "active-map"),
+        (maps.crateria == native_maps.crateria, "crateria-map"),
+    ] {
+        if !equal {
+            return Err(Outcome::Difference {
+                cut,
+                field: format!("departure.{field}"),
+            });
+        }
+    }
+    Ok(())
 }
 
 pub(in crate::replay) fn origin(

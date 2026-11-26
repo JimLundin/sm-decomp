@@ -571,6 +571,7 @@ impl<'a> Run<'a> {
                 doorway: pending.map(|seed| seed.doorway),
                 awaiting_actors,
                 room: seeded,
+                station: seed::station_selector(&seed.wram)?,
                 map_room,
             },
             palette: colours::palette(&seed.wram)?,
@@ -641,9 +642,12 @@ impl<'a> Run<'a> {
                         rows.clock_cuts.push(cut);
                     }
                     if let Err(outcome) = self
-                        .cartridge
-                        .as_mut()
-                        .map_or(Ok(()), |cartridge| cartridge.observe(&current, cut, false))
+                        .compare_departure_room(&current, cut)
+                        .and_then(|()| {
+                            self.cartridge
+                                .as_mut()
+                                .map_or(Ok(()), |cartridge| cartridge.observe(&current, cut, false))
+                        })
                         .and_then(|()| observe(&current, cut))
                     {
                         return Ok((held, Stop::At(at(cut, outcome))));
@@ -673,6 +677,20 @@ impl<'a> Run<'a> {
             previous = current;
         }
         Ok((held, Stop::End))
+    }
+
+    fn compare_departure_room(&self, record: &FrameRecord, cut: u64) -> Result<(), Outcome> {
+        let Some(started) = self
+            .cartridge
+            .as_ref()
+            .and_then(|live| live.cartridge.started())
+        else {
+            return Ok(());
+        };
+        if self.blackout.is_none() {
+            return Ok(());
+        }
+        explosion::carry::check_placement_and_maps(&self.state, started, record, cut)
     }
 
     fn take_departure(

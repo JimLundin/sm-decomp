@@ -8,6 +8,8 @@ use super::{explosion, landing_site, zebes};
 use crate::production::ProductionOutputs;
 use crate::state::video::{VRAM_WORDS, Video};
 use canonical::Canonical;
+use types::Parts;
+use types::save_files::RunSnapshot;
 use types::zebes::SubtitleChoice;
 
 /// The shaft placement and map owners retained during the cinematics.
@@ -17,6 +19,46 @@ pub struct Room {
     pub placement: landing_site::Placement,
     /// Station selected at the elevator origin, before the loader opens its destination.
     pub station: u16,
+}
+
+impl super::State {
+    /// Capture the current room and exploration still needed by the next scene.
+    #[must_use]
+    pub fn departure_room(
+        &self,
+        selected: &RunSnapshot,
+    ) -> Option<(Room, landing_site::Area, landing_site::AreaMaps)> {
+        let room = &self.passage.room;
+        let area = crate::production::room_loading::area(room.area).ok()?;
+        let camera = self.camera.0.position();
+        let samus = self.samus.movement.0.position;
+        let stored = selected.maps[types::Area::Crateria]
+            .as_slice()
+            .try_into()
+            .ok()?;
+        Some((
+            Room {
+                placement: landing_site::Placement {
+                    room: room.id,
+                    door: room.entered_through,
+                    camera: [camera.x.pixel().0, camera.y.pixel().0],
+                    samus: [samus.x.pixel().0, samus.y.pixel().0],
+                },
+                station: self.passage.station.0,
+            },
+            room.area,
+            landing_site::AreaMaps {
+                active: landing_site::ExploredMap {
+                    cells: super::save_snapshot::explored(&self.hud.0),
+                    available: self.progress.maps[area].is_known(),
+                },
+                crateria: landing_site::ExploredMap {
+                    cells: data::map::MapCells::from_bitmap(stored),
+                    available: selected.progress.maps_collected[types::Area::Crateria],
+                },
+            },
+        ))
+    }
 }
 
 /// The continuing game owners outside the selected cinematic.
@@ -193,7 +235,7 @@ impl Run {
                     self.carry.draw();
                 }
                 if station.flow == explosion::Flow::Installing {
-                    self.carry.room.placement.door = data::id::DoorwayId(0);
+                    self.carry.room.placement.door = None;
                     display::opening(
                         &mut self.carry.video,
                         types::zebes::FlightView::ShipAndSprites,

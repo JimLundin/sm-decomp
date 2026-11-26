@@ -10,7 +10,6 @@ use super::{Sources, data_failure, production_failure};
 use crate::cache::Cache;
 use crate::lock::{Lock, RowId};
 use data::assets::landing_site::Graphics;
-use data::id::{DoorwayId, RoomId};
 use data::map::MapCells;
 use data::rom::Rom;
 use game::production::played::landing_site::{
@@ -35,6 +34,38 @@ pub(super) const ROW: &str = "chain-any-0011-DF45";
 pub(super) const DEPARTURE: u64 = 2123;
 pub(super) const RECEIVING: u64 = 2124;
 pub(super) const RESUMED: u64 = 2125;
+pub(super) fn placement(record: &FrameRecord) -> Result<Placement, Outcome> {
+    let [room, door, camera_x, camera_y, samus_x, samus_y] = words(record, ROOM)?;
+    let bad = || data_failure(Some(record.index), "departure room placement");
+    let room = import::world::id(data::room::RoomKey::from_room_pointer(room)).ok_or_else(bad)?;
+    let door = match door {
+        0 => None,
+        pointer => Some(
+            import::world::doorway(data::rom::RomAddress::new(0x83, pointer)).ok_or_else(bad)?,
+        ),
+    };
+    Ok(Placement {
+        room,
+        door,
+        camera: [camera_x, camera_y],
+        samus: [samus_x, samus_y],
+    })
+}
+
+pub(super) fn placement_words(place: Placement) -> Result<[u16; 6], Outcome> {
+    let bad = || data_failure(None, "departure room ID");
+    let room = import::world::key(place.room)
+        .and_then(data::room::RoomKey::room_pointer)
+        .ok_or_else(bad)?;
+    let door = match place.door {
+        None => 0,
+        Some(door) => import::world::doorway_pointer(door).ok_or_else(bad)?,
+    };
+    let [camera_x, camera_y] = place.camera;
+    let [samus_x, samus_y] = place.samus;
+    Ok([room, door, camera_x, camera_y, samus_x, samus_y])
+}
+
 const SHAFT_SEED: u64 = 0;
 const FLIGHT_SEED: u64 = 1004;
 const SHADOW_WORDS: usize = 1024;
@@ -157,7 +188,6 @@ fn carry_flight(sources: &Sources, flight: &Cache, early: &FrameRecord) -> Resul
     if state.flow != Flow::Loading(LoadDestination::LandingSite) {
         return Err(data_failure(Some(DEPARTURE), "landing pending departure"));
     }
-    let [room, door, camera_x, camera_y, samus_x, samus_y] = words(&last, ROOM)?;
     let current_area = Area::try_from(byte(&last, 0x079f)?)
         .map_err(|_| data_failure(Some(DEPARTURE), "landing departure area"))?;
     let publication = registers(&last.ppu);
@@ -168,12 +198,7 @@ fn carry_flight(sources: &Sources, flight: &Cache, early: &FrameRecord) -> Resul
         energy: [state.health.0.energy.whole.get(), state.maximum],
         affine: words(&last, AFFINE)?,
         previous_entrance: word(&last, 0x078b)?,
-        placement: Placement {
-            room: RoomId(room),
-            door: DoorwayId(door),
-            camera: [camera_x, camera_y],
-            samus: [samus_x, samus_y],
-        },
+        placement: placement(&last)?,
         loader: State::new(
             current_area,
             AreaMaps {
@@ -536,12 +561,9 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
                 maximum,
                 u16::from(u8::from(loader.area)),
                 entrance,
-                place.room.0,
-                place.door.0,
             ]
             .into_iter()
-            .chain(place.camera)
-            .chain(place.samus)
+            .chain(placement_words(place)?)
             .chain(run.affine),
         ),
         values(
