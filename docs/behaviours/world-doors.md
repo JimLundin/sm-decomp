@@ -34,11 +34,10 @@ left it. The passage then sets it (§1.4); the camera doesn't run during the pas
 **What it reads from audio (U1).** Whether the sound requests it waits on have all been sent
 (`Quieting`), and whether the new room's music is ready (`Landing`).
 
-**What it reads from the platform (T1).** Whether the work of the frame of work in progress is
-done by this frame's end (`PassageTime`): the lag cut, a borrowed input until T1 models the
-platform; the lock's recorded timing gives it, as it does for every domain the free run plays.
-The passage owns the rest of its timing: the counted frames of work, the waits, the slide's wait
-and the finished frames (`PassageTime`, `FinishedFrames`).
+**What it reads from the platform (T1).** Whether the passage turn is ready to
+advance and whether the frame publishes the prepared picture and counts. The recorded
+timing supplies both until T1 owns them. The passage owns the counted turns, the waits,
+the slide's wait and the forced finished frames (`PassageTime`, `FinishedFrames`).
 
 **What the other domains must carry unchanged across the passage.** Samus's State in
 samus-movement, but for her position, which the passage moves (§1.4): her pose, facing, speeds,
@@ -57,7 +56,7 @@ last use, cleared on leaving (P2).
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex,
 as in samus-movement: `0.C800` is 0.78125 px. x grows rightward, y grows downward. A room is a
 grid of screens, each 256 px square. A **frame** is a video frame; a **frame of work** is one
-pass of the game's work, which ends on a frame (`PassageTime`). A **finished frame** is one whose
+pass of the game's work. Its passage turn may be ready before publication (`PassageTime`). A **finished frame** is one whose
 picture, sprites and colours are sent to the screen, whose pad is read and whose frame counts
 step; a frame the work overruns is not one (`FinishedFrames`). A colour is 15 bits, three
 channels of 5 bits: red in bits 0 to 4, green 5 to 9, blue 10 to 14.
@@ -110,7 +109,8 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | the escape's timer running | `bool` (B8) | `TheFades`, `WhatRuns` |
 | the sounds sent | `bool`: every sound request so far has been sent (U1) | `Quieting` |
 | the music ready | `bool`: no track waits in the queue of tracks, as this frame of work finds it (U1) | `Landing` |
-| the work done | `bool`: the work of the frame of work in progress is done by this frame's end (the lag cut: the lock's recorded timing, borrowed until T1) | `PassageTime` |
+| the passage turn ready | `bool`: this frame reaches the passage turn's completed changes, once per turn (borrowed timing until T1) | `PassageTime` |
+| frame publication | `bool`: this frame publishes the prepared picture, reads the pad and counts outside the slide's forced frames (borrowed timing until T1) | `FinishedFrames` |
 
 ### 1.4 What it reports (Outputs)
 
@@ -125,7 +125,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | the camera | x, y: the pixel parts, set by `Squaring`, `SettingOff` and `Sliding`; the subpixel parts are kept | the camera; output |
 | where the camera last saw her | x, y: the pixel parts, set to hers at each placement and slide step; the subpixel parts are kept | the camera (`Remembering`) |
 | layer 2 | moved by the slide's steps with the view (`Sliding`) | the backgrounds; output |
-| the screen's colours | 256 colours, each frame of the fade, and her visor's (`Arriving`) | the palettes; output |
+| the prepared colours | 256 colours from a ready fade turn, or her visor's (`Arriving`), carried until frame publication | the palettes and display |
 | the colours it heads for | 256: the dark colours, set on the first frame of work | the palettes; output |
 | the room's calls | `RoomCall` (§1.5), each on its frame of work | R2, and each family it loads |
 | the room's sound requests | the silence on the first frame of work; sounds held off from then until play goes on, and let through when it does | U1 |
@@ -166,16 +166,22 @@ R2 owns what each does and in what order; the passage owns when.
 
 ### PassageTime
 - kind: timing.
-- summary: the passage takes a counted number of frames of work in each phase, a frame of work
-  ends on the frame its work is done, and the slide runs one step every frame whatever the work.
-- params: none (when the work is done is an input).
+- summary: advance each passage turn once when its changes are ready. The slide runs
+  every frame while a turn or its picture is pending.
+- params: none.
 - switch: Fixed.
-- A frame whose work isn't done → the phase and its data stay, and nothing but the placing and
-  the slide moves [work-pending, place-pending, work-pending-slide]
-- A frame whose work is done → the phase's entry below acts, in that frame [silence-sent,
-  dark-step, prepare, building, settle]
-- `Arriving`, fetching `Done` → the work done isn't read: the frame of work ends on the frame the
-  slide ends (`Arriving`) [slide-left, slide-end]
+- A frame without a ready passage turn → hold the phase, its data and prepared colours.
+  Only the placing and slide can advance [work-pending, dark-interrupted-pending,
+  dark-interrupted-publish, place-pending, work-pending-slide]
+- A ready passage turn → run its current phase's entry once. Keep its phase and complete
+  prepared colours for following frames, including when publication is still pending
+  [silence-sent, dark-step, dark-interrupted-ready, prepare, building, settle]
+- `Arriving`, fetching `Done` → finish the turn when the slide ends (`Arriving`)
+  [slide-left, slide-end]
+- The Ceres return fade reaches a ready turn on some interrupted frames. For phases
+  without a separate timing observation, readiness follows frame publication. The caller
+  carries the pending publication across cuts and supplies readiness once per turn.
+  The slide wait still uses its own condition.
 - The course, in frames of work:
 
 Cells: phase, frames of work, next phase
@@ -197,7 +203,7 @@ Cells: phase, frames of work, next phase
 - The work is slow on record: in the cached rows each fade takes 37 to 45 frames, the room's
   building 7 to 18, the tiles' fetch 21 to 51, and the whole passage 161 to 226 frames, of which
   the slide is 64. The contents' fetch always ended before the slide did.
-- checked: oracle (every frame of 18 passages in the cached rows); constructed.
+- checked: oracle (18 cached passages and the interrupted Ceres return fade); constructed.
 
 ### FinishedFrames
 - kind: timing.
@@ -205,17 +211,19 @@ Cells: phase, frames of work, next phase
   frame, whatever the work, and the HUD's frame count starts again at each.
 - params: none.
 - switch: Fixed.
-- A frame of `Arriving` once she is placed, of `Landing` or of `Music` → a finished frame, its
-  work done or not; the HUD's frame count is 0 before the frame counts it, so 1 after; below the
+- A frame of `Arriving` once she is placed, of `Landing` or of `Music` → a finished frame, whether
+  the passage turn is ready or pending. The HUD's count is 1 after the frame. Below the
   HUD the screen shows the front layer and the sprites, or only the sprites when either room
   keeps the items dark [slide-right, work-pending-slide, forced-wait, clear-right, slide-dark-items]
-- Any other frame of the passage → a finished frame only when its work is done [place-pending,
-  work-pending, bright-pending, dark-step]
+- Any other frame of the passage → a finished frame only on frame publication. Publication
+  can follow a turn whose phase and prepared colours already advanced. The count stays
+  on a ready turn with publication pending [place-pending, work-pending, bright-pending,
+  dark-step, dark-interrupted-ready, dark-interrupted-publish]
 - So the first such frame is the one after she is placed (the slide's first step that the view
   takes on its own), and the last the one she steps clear in; the next, the fade in's first,
   counts on from 1.
 - checked: oracle (the finished frames and the HUD's frame count at every frame of the 18 cached
-  passages); constructed.
+  passages and the interrupted Ceres return fade); constructed.
 
 ### Quieting
 - kind: mechanic.
@@ -243,9 +251,10 @@ Cells: phase, frames of work, next phase
   theirs too, and so do the escape timer's four while it runs [leaving, dark-timer]
 - `Quieting { asked: false }`, either room keeps the items dark → the icon colours and the
   timer's darken as well [dark-items, dark-timer-dark]
-- `Darkening(t)` → every colour steps toward its dark colour by `Fading`'s step `t`;
-  `Darkening(t + 1)`, or `Squaring` after `t` = `d + 2` [dark-step, dark-first, dark-last,
-  dark-end]
+- A ready `Darkening(t)` turn → prepare every colour by `Fading`'s step `t`.
+  Advance to `Darkening(t + 1)`, or `Squaring` after `t` = `d + 2`. The prepared
+  colours reach the display when the frame publishes [dark-step, dark-first, dark-last,
+  dark-end, dark-interrupted-ready, dark-interrupted-publish]
 - `Brightening(t)` → every colour steps toward the new room's colours by `Fading`'s step `t`;
   `Brightening(t + 1)` [bright-step, bright-first]
 - `Brightening(t)`, `t` = `d + 2` → play goes on: passing ends, sounds are let through again,
@@ -375,11 +384,11 @@ Cells: phase, frames of work, next phase
   contents are fetched; she lands on the frame the slide ends.
 - params: none.
 - switch: Fixed.
-- The first frame of `Arriving`, its work done or not → she is placed (`WhereSheLands`);
+- The first frame of `Arriving`, its turn ready or pending → she is placed (`WhereSheLands`);
   `placed` [place-right, place-pending]
-- `Arriving`, fetching `Tiles`, its work done → the tileset is fetched (`FetchTiles`); fetching
+- `Arriving`, fetching `Tiles`, its turn ready → the tileset is fetched (`FetchTiles`); fetching
   `Contents` [place-right]
-- `Arriving`, fetching `Contents`, its work done → the room's contents are fetched
+- `Arriving`, fetching `Contents`, its turn ready → the room's contents are fetched
   (`FetchContents`); fetching `Done` [loading-waits]
 - `Arriving`, fetching `Done`, the slide not yet ended → it stays [slide-left]
 - `Arriving`, fetching `Done`, the slide ended this frame → the blocks' run runs once
@@ -456,10 +465,10 @@ Cells: phase, frames of work, next phase
 - The frame of work `Arriving` ends in → the blocks' run runs once (world-blocks'
   `TheScriptsRun`), before the colours come up [loading-done]
 - Every frame of work but the first and the contents' → the escape's timer is drawn, as it
-  stands, while it runs [timer-drawn, land-right, loading-done]
+  stands, while it runs [timer-drawn, land-right, loading-done, dark-interrupted-ready]
 - The first frame of work → the timer is drawn while it runs and neither room keeps the items
   dark [dark-timer, dark-timer-dark]
-- Any other frame of the passage → none of them runs [square-done, dark-end]
+- Any other frame of the passage → none of them runs [square-done, dark-end, dark-interrupted-pending, dark-interrupted-publish]
 - checked: oracle (the enemies' frame counts at every frame of work of the 18 cached passages);
   constructed (the tiles, the projectiles, the timer and what is drawn).
 
@@ -480,8 +489,9 @@ Cells: phase, frames of work, next phase
 - **The room's loading (R2):** what each of the room's calls (§1.5) loads, and in what order, and
   the new room's colours; the colours it and the enemies write straight to the screen while it
   is dark; the HUD's `a boss encountered` (interface-hud), on entering the room of a boss.
-- **The platform (T1):** whether each frame of work's work is done by its frame's end
-  (`PassageTime`); until it is modelled, the lock's recorded timing, a borrowed input.
+- **The platform (T1):** both passage turn readiness and frame publication. The platform
+  owns work still in progress inside a turn and publishes the complete prepared picture.
+  Recorded timing supplies the two cut facts until T1 models them.
 - **The backgrounds:** layer 2's place over the arrival view, by the room's rates; the passage
   only moves it with the slide.
 - **The video encoder (E2):** the tile layers drawn as the view slides, and their scroll

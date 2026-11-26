@@ -39,6 +39,9 @@ mod passage;
 pub(super) mod platform;
 mod power_on;
 mod quake;
+#[cfg(test)]
+mod return_fade;
+mod return_timing;
 mod ridley;
 pub(super) mod rows;
 pub(super) mod samus;
@@ -91,6 +94,7 @@ pub const SEED_HELD: &[&str] = &[
 /// (decision 35). The list shrinks as the platform's costs are modelled.
 pub const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
+    "lag: the return doorway darkening turn's completed-work interrupt site before frame publication",
     "lag: the contents' fetch done on its first frame, within the slide",
     "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
     "the random number through a passage, except the draws held from placing the room's vents to the end of that frame",
@@ -331,6 +335,7 @@ struct Run<'a> {
     hud: super::hud::Content,
     row: &'a str,
     upper_row: Option<interface_hud::UpperRow>,
+    return_timing: return_timing::ReturnTiming,
 }
 
 #[derive(Clone, Copy)]
@@ -420,6 +425,7 @@ impl<'a> Run<'a> {
             hud,
             row,
             upper_row: None,
+            return_timing: return_timing::ReturnTiming::default(),
         })
     }
 
@@ -517,6 +523,14 @@ impl<'a> Run<'a> {
         Ok((held, Stop::End))
     }
 
+    fn passage_timing(&mut self, current: &FrameRecord) -> return_timing::CutTiming {
+        self.return_timing.cut(
+            self.state.passage.doorway.map(|door| door.through),
+            self.state.passage.doors,
+            current,
+        )
+    }
+
     /// Play the interval ending at `cut` and compare its owners with the record at `cut`.
     fn step(
         &mut self,
@@ -553,10 +567,12 @@ impl<'a> Run<'a> {
             && !fetching_contents(doors)
             && !self.state.station.vents.is_empty()
             && !finished(previous);
+        let platform = self.passage_timing(current);
         let passing = played::passage::Passing {
             // The borrowed lag: the last NMI found the frame's work finished, so the next began.
             work_begun: finished(previous),
-            work_done: finished(current) || fetching_contents(doors),
+            work_done: platform.ready || fetching_contents(doors),
+            publishes: platform.publishes,
             audio: played::passage::PassageAudio {
                 sounds_sent: sounds_sent(&previous.wram)?,
                 music_ready: music_ready(&previous.wram)?,
@@ -709,7 +725,7 @@ impl<'a> Run<'a> {
 
 #[cfg(test)]
 mod tests {
-    fn diagnostic(args: std::fmt::Arguments<'_>) {
+    pub(super) fn diagnostic(args: std::fmt::Arguments<'_>) {
         use std::io::Write as _;
         writeln!(std::io::stdout().lock(), "{args}").unwrap();
     }

@@ -162,6 +162,8 @@ mod vectors {
     struct InputsRecord {
         touched: Option<bool>,
         done: Option<bool>,
+        turn_ready: Option<bool>,
+        publishes: Option<bool>,
         sounds_sent: Option<bool>,
         music_ready: Option<bool>,
         timer: Option<bool>,
@@ -477,26 +479,30 @@ mod vectors {
         }
     }
 
-    /// The vector's colours, first of the 256; the rest black and headed for black, in no group.
-    fn palette_and_groups(colours: &[ColourRecord]) -> (Palette, [ColourGroup; COLOURS]) {
+    /// The vector's colours, first of the 256; the rest black and headed for black.
+    fn palette(colours: &[ColourRecord]) -> Palette {
         assert!(colours.len() <= COLOURS, "more colours than the screen has");
         let mut palette = Palette {
             screen: [Colour::BLACK; COLOURS],
             goal: [Colour::BLACK; COLOURS],
         };
-        let mut groups = [ColourGroup::Other; COLOURS];
         for (i, record) in colours.iter().enumerate() {
             palette.screen[i] = colour(&record.now);
             palette.goal[i] = colour(&record.goal);
-            groups[i] = group(record.group);
         }
-        (palette, groups)
+        palette
     }
 
     fn inputs(record: &InputsRecord, groups: [ColourGroup; COLOURS]) -> Inputs {
+        let (turn_ready, publishes) = match (record.done, record.turn_ready, record.publishes) {
+            (done, None, None) => (done.unwrap_or(true), done.unwrap_or(true)),
+            (None, Some(ready), Some(publishes)) => (ready, publishes),
+            _ => panic!("give either done or both turn_ready and publishes"),
+        };
         Inputs {
             touched: record.touched.unwrap_or(false),
-            work_done: record.done.unwrap_or(true),
+            turn_ready,
+            publishes,
             sounds_sent: record.sounds_sent.unwrap_or(true),
             music_ready: record.music_ready.unwrap_or(true),
             timer_running: record.timer.unwrap_or(false),
@@ -571,27 +577,34 @@ mod vectors {
         }
     }
 
-    /// The vector's frame through the model: the doors it starts from and what it answers.
-    fn frame(vector: &Vector) -> (Doors, Exports) {
-        let doors_before = doors(&vector.before);
-        let (palette, groups) = palette_and_groups(&vector.colours);
-        let scene = Scene {
-            her: position(&vector.her),
-            seen: pixels(&vector.seen),
-            camera: position(&vector.camera),
-            palette,
-        };
-        let exports = doors_before.step(
-            scene,
-            &inputs(&vector.inputs, groups),
-            &rules(vector.rules.as_ref()),
-        );
-        (doors_before, exports)
+    impl Vector {
+        fn start(&self) -> (Doors, Scene) {
+            (
+                doors(&self.before),
+                Scene {
+                    her: position(&self.her),
+                    seen: pixels(&self.seen),
+                    camera: position(&self.camera),
+                    palette: palette(&self.colours),
+                },
+            )
+        }
+
+        fn frame_inputs(&self) -> Inputs {
+            let mut groups = [ColourGroup::Other; COLOURS];
+            for (entry, record) in groups.iter_mut().zip(&self.colours) {
+                *entry = group(record.group);
+            }
+            inputs(&self.inputs, groups)
+        }
+
+        fn step(&self, (doors, scene): (Doors, Scene)) -> Exports {
+            doors.step(scene, &self.frame_inputs(), &rules(self.rules.as_ref()))
+        }
     }
 
     /// Each way the frame's answer differs from the vector's `after`.
-    fn differences(vector: &Vector) -> Vec<String> {
-        let (doors_before, exports) = frame(vector);
+    fn differences(vector: &Vector, doors_before: Doors, exports: &Exports) -> Vec<String> {
         let after = &vector.after;
         let expected_doors = doors(&after.phase_record());
         let mut found = Vec::new();
@@ -712,7 +725,8 @@ mod vectors {
                     vector.id
                 );
             }
-            for difference in differences(vector) {
+            let start = vector.start();
+            for difference in differences(vector, start.0, &vector.step(start)) {
                 failures.push(format!("{}: {difference}", vector.id));
             }
         }
@@ -723,6 +737,56 @@ mod vectors {
             vectors.len(),
             failures.join("\n")
         );
+    }
+
+    fn named_vector<'a>(vectors: &'a [Vector], id: &str) -> &'a Vector {
+        vectors
+            .iter()
+            .find(|vector| vector.id == id)
+            .unwrap_or_else(|| panic!("missing vector {id}"))
+    }
+
+    #[test]
+    fn interrupted_darkening_carries_phase_and_colours_to_publication() {
+        let vectors = vectors();
+        let cuts = [
+            "dark-interrupted-pending",
+            "dark-interrupted-ready",
+            "dark-interrupted-publish",
+        ]
+        .map(|id| named_vector(&vectors, id));
+        let mut start = cuts[0].start();
+        for cut in cuts {
+            assert_eq!(start, cut.start(), "{}: carried state at start", cut.id);
+            let result = cut.step(start);
+            let failures = differences(cut, start.0, &result);
+            assert!(failures.is_empty(), "{}: {failures:?}", cut.id);
+            start = (result.doors, result.scene);
+        }
+    }
+
+    #[test]
+    fn independent_signals_preserve_the_slide_wait_and_restarts() {
+        let vectors = vectors();
+        for (id, signals) in [
+            ("slide-left", [(true, false), (false, true)]),
+            ("loading-done", [(true, false), (false, true)]),
+            ("forced-wait", [(false, false), (false, true)]),
+        ] {
+            let vector = named_vector(&vectors, id);
+            let (doors, scene) = vector.start();
+            let expected = vector.step((doors, scene));
+            let mut input = vector.frame_inputs();
+            for (ready, publishes) in signals {
+                input.turn_ready = ready;
+                input.publishes = publishes;
+                let result = doors.step(scene, &input, &rules(vector.rules.as_ref()));
+                assert_eq!(
+                    result, expected,
+                    "{id}: ready={ready}, publishes={publishes}"
+                );
+            }
+        }
     }
 
     #[test]

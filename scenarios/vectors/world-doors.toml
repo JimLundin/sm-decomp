@@ -28,8 +28,9 @@
 #   TheFades: the HUD's icon, always-lit and escape timer colours, her visor's, any other) },
 #   each a 15-bit colour in hex.
 # - inputs (optional; spec §1.3): touched (default false, she touched a door to a room this
-#   frame); done (default true: the work of the frame of work in progress is done by this
-#   frame's end, the lag cut borrowed until T1); sounds_sent (default true); music_ready
+#   frame); done (default true, sets both turn readiness and frame publication);
+#   turn_ready and publishes (an explicit pair in place of done, see PassageTime
+#   and FinishedFrames); sounds_sent (default true); music_ready
 #   (default true); timer, items_dark (default false); doorway (for "Squaring" before the
 #   arrival is taken: the arrival the doorway gives, as arrival above).
 # - after, compared at the frame's end: the phase and its data, arrival and slide, as in before;
@@ -867,3 +868,44 @@ her = ["0170.0000", "00E4.8000"]
 seen = ["0170", "00E4"]
 camera = ["0000.8000", "0000.2400"]
 after = { phase = "Brightening", t = 0, arrival = { way = "Up", view = ["0100", "0000"] }, slide = 57, her = ["0170.0000", "00E4.8000"], seen = ["0170", "00E4"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+# Compose the next three cases in order by carrying the phase and colours from
+# each result. The before values also allow testing each cut independently.
+[[vector]]
+# The fade is still in progress. Its complete prepared colours and phase hold.
+id = "dark-interrupted-pending"
+source = "constructed"
+entries = ["PassageTime", "FinishedFrames", "TheFades", "WhatRuns"]
+before = { phase = "Darkening", t = 1 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+inputs = { turn_ready = false, publishes = false, timer = true }
+after = { phase = "Darkening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], finished = false, restart = false }
+
+[[vector]]
+# The fade turn is ready during an overrun. Prepare the colours and run its activities once.
+id = "dark-interrupted-ready"
+source = "constructed"
+entries = ["PassageTime", "FinishedFrames", "TheFades", "WhatRuns"]
+before = { phase = "Darkening", t = 1 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+inputs = { turn_ready = true, publishes = false, timer = true }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "0380", goal = "0000" }, { now = "0C63", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "timer"], calls = [], sounds = [], her_sounds = [], finished = false, restart = false }
+
+[[vector]]
+# The next frame publishes the carried picture and counts. The fade does not run again.
+id = "dark-interrupted-publish"
+source = "constructed"
+entries = ["PassageTime", "FinishedFrames", "TheFades", "WhatRuns"]
+before = { phase = "Darkening", t = 2 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "739C", goal = "0000", group = "Other" }, { now = "0380", goal = "0000", group = "Other" }, { now = "0C63", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+inputs = { turn_ready = false, publishes = true, timer = true }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "0380", goal = "0000" }, { now = "0C63", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = false }

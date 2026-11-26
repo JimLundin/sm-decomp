@@ -293,6 +293,7 @@ mod tests {
         let passing = Passing {
             work_begun,
             work_done,
+            publishes: work_done,
             audio: PassageAudio {
                 sounds_sent: true,
                 music_ready: true,
@@ -341,6 +342,7 @@ mod tests {
         let mut passing = Passing {
             work_begun: true,
             work_done: true,
+            publishes: true,
             audio: PassageAudio {
                 sounds_sent: true,
                 music_ready: true,
@@ -420,6 +422,7 @@ mod tests {
         let passing = Passing {
             work_begun: true,
             work_done: true,
+            publishes: true,
             audio: PassageAudio {
                 sounds_sent: true,
                 music_ready: true,

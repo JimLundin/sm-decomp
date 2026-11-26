@@ -67,18 +67,16 @@ pub const CATALOGUE: <BehaviourId as Enum>::Array<Behaviour> = [
     },
     Behaviour {
         id: BehaviourId::PassageTime,
-        summary: "the passage takes a counted number of frames of work in each phase, a frame of \
-                  work ends on the frame its work is done, and the slide runs one step every \
-                  frame whatever the work",
+        summary: "each passage turn advances once when ready, while the slide runs every frame \
+                  even if the turn or publication is pending",
         kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::FinishedFrames,
-        summary: "from the slide's own first step until she steps clear, every frame is a \
-                  finished frame, whatever the work, and the HUD's frame count starts again at \
-                  each",
+        summary: "from the slide's own first step until she steps clear, every frame counts \
+                  and restarts the HUD's frame count; otherwise only publication counts",
         kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

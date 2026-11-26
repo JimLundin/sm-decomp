@@ -177,6 +177,7 @@ mod tests {
         let passing = passage::Passing {
             work_begun: true,
             work_done: true,
+            publishes: true,
             audio: passage::PassageAudio {
                 sounds_sent: true,
                 music_ready: true,

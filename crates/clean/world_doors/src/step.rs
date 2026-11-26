@@ -38,16 +38,13 @@ impl Doors {
 }
 
 impl Passage {
-    /// One frame of the passage. Two clocks run in it (`PassageTime`):
-    /// - every frame, whatever the work, at the frame's start: she is placed as `Arriving`
-    ///   begins, and on each frame after the slide takes a frame (`Arriving`, `Sliding`);
-    /// - then the frame of work in progress, which ends this frame when its work is done, or,
-    ///   for the wait on the slide, when the slide has ended; only when it ends does the phase's
-    ///   entry act and the phase move on. Until then nothing else moves.
+    /// `PassageTime`: place her or step the slide first, then run the phase's turn only when
+    /// ready. The slide wait becomes ready at the slide's end.
+    /// `FinishedFrames`: count on publication, independently of readiness. Forced restarts
+    /// depend on the phase at the frame's start, before placing or advancing the turn.
     fn step(mut self, mut scene: Scene, inputs: &Inputs, rules: &Rules) -> Exports {
-        let finishes_anyway = self.phase.finishes_anyway();
-        let waits_for_slide = self.phase.waits_for_slide();
         let mut report = Report::of_passage();
+        report.finishing = self.phase.finishing(inputs);
 
         // Every frame, whatever the work: the placing, then the slide.
         if let Phase::Arriving { placed, fetching } = self.phase {
@@ -63,21 +60,13 @@ impl Passage {
             }
         }
 
-        // Each frame of work: done when its work is done, or, waiting for the slide, as it ends.
-        let work_ends = if waits_for_slide {
+        let turn_ready = if self.phase.waits_for_slide() {
             self.slide_ended(rules)
         } else {
-            inputs.work_done
+            inputs.turn_ready
         };
-        report.finishing = if finishes_anyway {
-            Finishing::Restarts(SlideScreen::below_the_hud(inputs.items_dark))
-        } else if work_ends {
-            Finishing::Finished
-        } else {
-            Finishing::Overrun
-        };
-        let doors = if work_ends {
-            self.work(&mut scene, &mut report, inputs, rules)
+        let doors = if turn_ready {
+            self.take_turn(&mut scene, &mut report, inputs, rules)
                 .map_or(Doors::Play, |phase| Doors::Passing(Self { phase, ..self }))
         } else {
             Doors::Passing(self)
@@ -89,9 +78,9 @@ impl Passage {
         }
     }
 
-    /// The end of a frame of work: what runs, and the phase's entry, which answers the next
-    /// phase, or none when play goes on.
-    fn work(
+    /// A ready turn reports what runs and applies the phase's entry, preparing any colours and
+    /// returning the next phase, or none when play goes on (`PassageTime`).
+    fn take_turn(
         &mut self,
         scene: &mut Scene,
         report: &mut Report,
@@ -324,19 +313,23 @@ fn brighten(t: FadeTime, palette: &mut Palette, report: &mut Report, steps: u8) 
 }
 
 impl Phase {
-    /// `FinishedFrames`: from the slide's own first step until she steps clear (`Arriving` once
-    /// she is placed, `Landing`, `Music`), every frame is a finished frame, whatever the work,
-    /// and restarts the HUD's frame count.
-    const fn finishes_anyway(self) -> bool {
-        matches!(
+    /// `FinishedFrames`: after placing through stepping clear, count and restart every frame.
+    /// Outside those phases, count only on publication, even if no turn ran this frame.
+    const fn finishing(self, inputs: &Inputs) -> Finishing {
+        if matches!(
             self,
             Self::Arriving { placed: true, .. } | Self::Landing(_) | Self::Music { .. }
-        )
+        ) {
+            Finishing::Restarts(SlideScreen::below_the_hud(inputs.items_dark))
+        } else if inputs.publishes {
+            Finishing::Finished
+        } else {
+            Finishing::Overrun
+        }
     }
 
-    /// `PassageTime`: whether this phase's frame of work waits on its own for the slide's end
-    /// (`Arriving`, fetching `Done`): the work done isn't read, and it ends on the frame the slide
-    /// does.
+    /// `PassageTime`: `Arriving` with fetching `Done` waits for the slide's end rather than
+    /// taking its readiness from the platform.
     const fn waits_for_slide(self) -> bool {
         matches!(
             self,

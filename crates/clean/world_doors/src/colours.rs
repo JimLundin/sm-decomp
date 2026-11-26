@@ -29,7 +29,8 @@ pub enum ColourGroup {
 /// passage reads and sets them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Palette {
-    /// The colours as they stand.
+    /// The prepared screen colours. A fade turn updates these before publication; the caller
+    /// carries them forward and presents them when the frame publishes (`TheFades`).
     pub screen: [Colour; COLOURS],
     /// The colours a fade heads for: the dark colours the passage sets as it leaves, then the new
     /// room's, which the room's loading sets.

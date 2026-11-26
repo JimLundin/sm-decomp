@@ -50,6 +50,8 @@ pub struct Passing<'a> {
     pub work_begun: bool,
     /// The platform's: the passage's work in progress is done by this frame's end.
     pub work_done: bool,
+    /// The platform publishes the current prepared picture and counts its frame.
+    pub publishes: bool,
     /// Audio's answers.
     pub audio: PassageAudio,
     /// Her progress, which chooses the next room's version, her suit and her beams, and says
@@ -277,7 +279,8 @@ pub(super) fn doors_inputs(
 ) -> world_doors::Inputs {
     world_doors::Inputs {
         touched,
-        work_done: passing.work_done,
+        turn_ready: passing.work_done,
+        publishes: passing.publishes,
         sounds_sent: passing.audio.sounds_sent,
         music_ready: passing.audio.music_ready,
         timer_running: countdown_begun,

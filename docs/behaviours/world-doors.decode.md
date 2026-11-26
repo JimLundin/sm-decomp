@@ -174,10 +174,12 @@ frames: `05B6` steps, `05B5` the HUD's count; the slide's screen: `$212C` = 11h 
 | the music ready | the music queue at the record before the frame of work, after one step of `$80:8F0C` (run by the HDMA object handler `$88:84B9` at the main loop's start, `$82:894B`): if the music timer `063F` is 1, the entry at the start index `063B` leaves; ready when every timer `0629`..`0637` is then 0 (`$80:8EF4`) | 41 of 41 waiting frames of work |
 | either room keeps the items dark | `(07B3 | 07B1) & 1` after `$82:DDF1` (the destination's CRE bitset and the previous) | read by `$82:E221`, `$80:9773`, `$80:97DC` |
 | the timer | `0943` ≠ 0 | |
-| the work done | the record's cut is `Requested` | the borrowed lag cut; see below |
+| the passage turn ready | the completed darkening turn can precede the requested cut | T1 timing; see Ceres return below |
+| frame publication | the record's cut is `Requested` outside the forced slide interval | the borrowed lag cut |
 
-**The work done, borrowed (MODEL §1 decision 35).** The harness decodes "the work done" as
-the cut being `Requested`, on every frame of work but `Arriving`'s own wait. The slide's wait
+**Borrowed timing (MODEL §1 decision 35).** The older witnesses use `Requested`
+for both facts outside `Arriving`'s own wait. The Ceres return evidence below
+distinguishes their timing. The slide's wait
 (`$82:E526`) is the passage's, so the contents' fetch (`$E4A9` up to `$82:E524`) has no cut of its
 own: every NMI through it is a lag NMI, and the records bound it by the slide's end only (the
 played run takes it done on its first frame). The forced finished frames (`FinishedFrames`) are
@@ -187,6 +189,50 @@ building `$E36E` (the room and state headers `$82:DE6F`, `$82:DEF2`, the effects
 level, scrolls and CRE `$82:EA73`), the tiles' fetch `$E3C0` after the placing (the tileset's
 decompression and VRAM uploads), and every other function, one frame on record. The spec names
 none of these as a report: no reader of the passage reads one before T1.
+
+### Ceres return, ready fade work before a finished frame
+
+On `chain-any-0006-E0B5`, cut 1610 (movie 11,772) touches the return door.
+Seed the quieting state there and carry the turn inputs through the fade.
+The requested cut at 1614 reaches `Darkening(1)` and counts the frame.
+Five later darkening turns advance `7EC400` while the NMI is an overrun.
+
+| Fade turn ready (overrun) | Numerator after work | Frame publication (requested) |
+| --- | --- | --- |
+| 1617 | 2 | 1618 |
+| 1621 | 3 | 1622 |
+| 1625 | 4 | 1626 |
+| 1629 | 5 | 1630 |
+| 1633 | 6 | 1634 |
+
+On the five early-ready cuts both the global counter `05B6` and HUD counter
+`05B5` hold. The next requested cut counts once and leaves the numerator
+unchanged. The outgoing door, room, Samus and countdown fields hold on this
+interval. Darkening reads the carried palette and the fixed goal. The complete
+fade palette is ready on each early-ready cut. Physical CGRAM retains the last
+published palette until the following requested cut.
+
+In bank 82, `$E2DB` calls the palette fade before the actor work starting at
+`$E2E0`. The palette interpolation can be interrupted inside bank 82's fade
+helper. On the early-ready overruns the interrupted code has left that helper
+and entered downstream actor, drawing or audio work. The actor turn counter
+`0FA4` has advanced on those cuts and holds at the following request.
+The scoped readiness source reads the interrupted program site and carries whether
+it has already received readiness for the work awaiting publication. A requested
+cut completes the turn only when no earlier cut reached its ready boundary. Keep
+the timing classification tied to checked sites in the selected interval. Do not
+classify a general overrun by its bank alone. The cut kind supplies publication.
+Phase, actor count, palette and both counters stay on the comparison side.
+
+The 24-cut witness from 1610 to 1634 compares the phase and counters with one
+origin. Delaying phase to publication first differs at 1617 on `doors.phase`.
+Counting when the phase advances first differs at 1617 on `finished-frames`.
+The three constructed cases use invented colours for pending, ready-only and
+publish-only cuts. Run them in sequence too. The publish-only cut must read the
+phase and prepared colours carried from the ready-only cut. Intermediate writes to the palette buffer while the
+interpolation runs belong to T1. Compare the complete prepared buffer on ready
+cuts and physical CGRAM on every cut. B8 owns the return-side glow actor
+independently of D1.
 
 **The HUD's colour groups** (`TheFades`; the importer's, by palette index; `7EC000 + 2 ×
 index`): always lit 9, 10 (BG3 palette 2 colours 1, 2), 13, 14 (palette 3 colours 1, 2), 17 to 19

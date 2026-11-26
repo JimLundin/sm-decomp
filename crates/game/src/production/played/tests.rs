@@ -275,6 +275,7 @@ fn passing(progress: &run_progress::Progress) -> Passing<'_> {
     Passing {
         work_begun: true,
         work_done: true,
+        publishes: true,
         audio: passage::PassageAudio {
             sounds_sent: true,
             music_ready: true,
@@ -302,6 +303,7 @@ fn first_active_draw_reads_the_last_draw_after_a_poll_gap() {
     let mut passing = passing(&progress);
 
     passing.work_done = false;
+    passing.publishes = false;
     state
         .step(
             &inputs(Buttons::default()),
@@ -315,6 +317,7 @@ fn first_active_draw_reads_the_last_draw_after_a_poll_gap() {
     assert_eq!(state.samus.last_draw_jump.0, JumpButton::Up);
 
     passing.work_done = true;
+    passing.publishes = true;
     passing.work_begun = false;
     state
         .step(&inputs(JUMP), &passing, &hud_frame(), &content, &rules)

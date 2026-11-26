@@ -496,6 +496,16 @@ HUD, the room's actor roster and palette, and fresh-file Progress. The arrival s
 readiness from the room's loading. The first ordinary update at 193 explores the first cell
 and replaces the preview. The fade advances after each frame of play until cut 222.
 
+### The return doorway at Ceres
+
+The required return-fade witness starts at room 6 cut 1,610, just after the door touch,
+and advances the same passage through cut 1,657. Five darkening turns prepare colours
+before NMI publishes them. The witness compares the passage phase, Samus’s position,
+the countdown, both frame counters, prepared colours and the published palette. At each
+early turn it restores the passage, scene and pending publication and checks the following
+cut. It borrows the native interrupt timing and audio readiness. The live door touch
+still needs Ridley’s post-warning actor. [Return fade observations](behaviours/world-doors.decode.md)
+
 ### From power-on
 
 From the console's power-on, `any-power-on` plays the front end alone

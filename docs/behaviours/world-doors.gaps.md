@@ -44,14 +44,13 @@ U1 owns the queue's step. No indexed case witnesses the first-entry Quieting req
 played run carries the sound queue; until then the played run borrows the sounds sent and the
 music ready at each cut.
 
-### G5. When each frame of work's work is done (T1)
+### G5. Passage turn readiness and frame publication (T1)
 
-Whether the work of a frame of work is done by its frame's end is the lag cut, a borrowed input
-until T1 models the platform (MODEL §1 decision 35); the passage reports no cost of its own. The
-passage is the largest stretch of lag on every Ceres rung (25 of the 40 frames of each fade, and
-60 to 70 frames of the loading, are overruns). The contents' fetch has no cut of its own: its
-frame of work then waits for the slide, which the passage owns, and in every cached passage it
-ended with the slide.
+The lock supplies both cut facts until T1 models them (MODEL §1 decision 35).
+During the Ceres return fade five turns prepare their changes before a later
+finished frame publishes them. T1 owns partial writes in a turn. The contents'
+fetch has no cut of its own and waits for the slide, which the passage owns.
+In the previously recorded passages it ended with the slide.
 
 ### G6. Her sounds at the door and at the end (samus-appearance)
 

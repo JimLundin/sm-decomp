@@ -191,7 +191,8 @@ fn passage_carries_the_complete_scene_without_inventing_work_completion() {
     .unwrap();
     let mut inputs = world_doors::Inputs {
         touched: true,
-        work_done: false,
+        turn_ready: false,
+        publishes: false,
         sounds_sent: false,
         music_ready: false,
         timer_running: false,

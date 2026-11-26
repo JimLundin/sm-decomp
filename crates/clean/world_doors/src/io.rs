@@ -21,7 +21,8 @@ pub struct Scene {
     pub seen: Pair<Px>,
     /// The camera's position; the passage sets its pixel parts and keeps its subpixel parts.
     pub camera: Position,
-    /// The screen's colours and the colours they head for (the palettes').
+    /// The prepared colours and the colours they head for (the palettes'). Carry these across
+    /// cuts even if the frame has not published (`TheFades`, `FinishedFrames`).
     pub palette: Palette,
 }
 
@@ -34,9 +35,13 @@ pub struct Scene {
 pub struct Inputs {
     /// She touched a door to a room this frame (samus-movement), read in play only (`TheTouch`).
     pub touched: bool,
-    /// The work of the frame of work in progress is done by this frame's end (the platform's lag
-    /// cut, `PassageTime`).
-    pub work_done: bool,
+    /// The platform's once-only event that the current passage turn is ready (`PassageTime`).
+    /// The slide wait uses the slide's end instead.
+    pub turn_ready: bool,
+    /// The platform publishes the prepared picture, reads the pad and counts this frame
+    /// (`FinishedFrames`). The caller carries pending publication across cuts and does not
+    /// signal readiness again merely to publish a turn that already ran.
+    pub publishes: bool,
     /// Every sound request so far has been sent (audio, `Quieting`).
     pub sounds_sent: bool,
     /// No track waits in the queue of tracks, as this frame of work finds it (audio, `Landing`).
@@ -123,7 +128,7 @@ pub enum SlideScreen {
 /// pad read and its frame counts stepped (`FinishedFrames`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Finishing {
-    /// Not a finished frame: the work overran it.
+    /// Not a finished frame: the prepared picture did not publish.
     Overrun,
     /// A finished frame.
     Finished,

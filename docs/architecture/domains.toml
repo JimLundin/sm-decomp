@@ -65,7 +65,7 @@ rounds = 8
 
 [[model]]
 name = "world-doors"
-rounds = 1
+rounds = 2
 
 [[model]]
 name = "weapons-projectiles"
