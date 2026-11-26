@@ -97,6 +97,9 @@ pub(super) fn start(
     if standard_objects_started(previous).is_some() && standard_objects_finished(current) {
         return Ok(Readiness::StandardObjectsFinished);
     }
+    if startup_beam_published(previous, current) {
+        return Ok(Readiness::BeamGraphics);
+    }
     if room_effects_initialized(current) && !room_effects_initialized(previous) {
         return Ok(Readiness::RoomEffects);
     }
@@ -139,6 +142,14 @@ fn standard_objects_finished(record: &FrameRecord) -> bool {
             .dma
             .get(1)
             .is_some_and(|channel| matches!(channel, [1, 0x18, 0, 0x48, 0x7e, 0, 0, ..]))
+}
+
+// The startup beam write is the sole entry in the normal VRAM queue while loading.
+fn startup_beam_published(previous: &FrameRecord, current: &FrameRecord) -> bool {
+    super::finished(current)
+        && previous.wram.get(0x330..0x332) == Some(&7_u16.to_le_bytes())
+        && previous.wram.get(0xd0..0xd2) == Some(&0x100_u16.to_le_bytes())
+        && previous.wram.get(0xd5..0xd7) == Some(&0x6300_u16.to_le_bytes())
 }
 
 // T1: enabling NMI for the second music service follows the room effects reset.

@@ -148,6 +148,29 @@ fn compare_arrival(
         expected.push(field(native));
         actual.push(field(video.staged_enemy_tiles().unwrap_or_default()));
     }
+    if readiness == Readiness::BeamGraphics {
+        let field = |words: &[u16]| Observation {
+            field: "room-video.beam-tiles".into(),
+            bytes: words.iter().copied().flat_map(u16::to_le_bytes).collect(),
+        };
+        let range = 0x6300..0x6380;
+        let native = current
+            .vram
+            .get(range.clone())
+            .ok_or_else(|| super::data_failure(None, "startup beam tile area"))?;
+        expected.push(field(native));
+        actual.push(field(
+            video.video.memory.vram.get(range).unwrap_or_default(),
+        ));
+        let dma = |channel: [u8; 11]| Observation {
+            field: "room-video.beam-tile-dma".into(),
+            bytes: channel[..7].to_vec(),
+        };
+        expected.push(dma(current.ppu.dma[1]));
+        actual.push(dma(crate::replay::landing_site::io_bytes(
+            video.video.dma[1],
+        )));
+    }
     compare_background(video, current, expected, actual)?;
     if let Some(words) = super::arrival::enemy_tiles_written(previous, current)? {
         compare_enemy_tiles(video, current, words, expected, actual)?;

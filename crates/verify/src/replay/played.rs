@@ -490,6 +490,10 @@ impl<'a> Run<'a> {
                 shaft_overlay_art: shaft,
                 shaft_effects: import::countdown::shaft_effects(image.lorom())
                     .map_err(|_| data_failure(None, "shaft effects tilemap"))?,
+                arrival_beam_tiles: Some(
+                    import::start::beam_tiles(image.lorom())
+                        .map_err(|_| data_failure(None, "startup beam tiles"))?,
+                ),
                 arrival_graphics: Some(
                     import::landing_site::import(image.lorom())
                         .map_err(|_| data_failure(None, "standard room graphics"))?,

@@ -41,6 +41,8 @@ pub enum Readiness {
     },
     /// The platform has finished the standard object upload and subsequent tilemap writes.
     StandardObjectsFinished,
+    /// A requested NMI publishes the new file's beam tile strip.
+    BeamGraphics,
     /// Room work has initialized the effect channels and staged the enemy tiles.
     RoomEffects,
     /// A requested NMI publishes the next prepared enemy tile chunk.
@@ -289,6 +291,15 @@ impl super::State {
                     .finish_standard_objects(graphics, None)
                     .ok_or(Fault::ArrivalGraphics)?;
             }
+            Readiness::BeamGraphics if work_done => {
+                let (from, words) = content
+                    .arrival_beam_tiles
+                    .as_ref()
+                    .ok_or(Fault::ArrivalGraphics)?;
+                self.room_video.queue_beam_tiles(*from, words);
+                self.room_video.publish();
+            }
+            Readiness::BeamGraphics => return Err(Fault::ArrivalGraphics),
             Readiness::RoomEffects => {
                 self.room_video
                     .prepare_enemy_tiles()

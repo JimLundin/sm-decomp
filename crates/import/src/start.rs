@@ -42,6 +42,29 @@ pub fn import(rom: Lorom<'_>) -> Result<NewGame, AddressError> {
     })
 }
 
+/// The basic beam tiles installed by a new file's equipment update.
+///
+/// # Errors
+/// The source pointer and the full tile strip must be readable.
+pub fn beam_tiles(rom: Lorom<'_>) -> Result<(data::dma::BusAddress, Vec<u16>), AddressError> {
+    let source = RomAddress::new(0x9a, word(rom, RomAddress::new(0x90, 0xc3b1), 0)?);
+    let words = rom
+        .read(source, 0x100)?
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .copied()
+        .map(u16::from_le_bytes)
+        .collect();
+    Ok((
+        data::dma::BusAddress {
+            bank: source.bank,
+            offset: source.offset,
+        },
+        words,
+    ))
+}
+
 /// The colours a new game starts with in her row, in order.
 fn her_row(rom: Lorom<'_>) -> Result<[Colour; ROW_COLOURS], AddressError> {
     let mut colours = [Colour(0); ROW_COLOURS];

@@ -120,6 +120,8 @@ pub struct Content {
     pub shaft_raster: Option<[data::assets::countdown::IndirectHdmaProgram; 3]>,
     /// Standard background and object graphics for the Ceres start.
     pub arrival_graphics: Option<data::assets::landing_site::Graphics>,
+    /// The starting beam tiles and their cartridge source.
+    pub arrival_beam_tiles: Option<(data::dma::BusAddress, Vec<u16>)>,
     /// Pose bodies and cannon headings.
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.

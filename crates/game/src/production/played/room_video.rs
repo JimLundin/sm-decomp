@@ -322,6 +322,18 @@ impl RoomVideo {
         self.video.memory.vram.get(ENEMY_SHEET_DESTINATION..end)
     }
 
+    /// Queue the new file's beam tile strip for the requested NMI.
+    pub(super) fn queue_beam_tiles(&mut self, from: BusAddress, words: &[u16]) {
+        self.video.batch.vram.push(VramTransfer {
+            to: VramWord(0x6300),
+            step: VramStep::Row,
+            source: VramSource::Words {
+                from,
+                words: words.to_vec(),
+            },
+        });
+    }
+
     /// Publish standard text tiles and advance the interrupted object upload.
     ///
     /// Returns `None` for incomplete graphics or inconsistent transfer progress.
