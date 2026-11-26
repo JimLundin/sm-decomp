@@ -11,6 +11,7 @@ import subprocess
 import tomllib
 import time
 import unittest
+import uuid
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -516,6 +517,68 @@ class Streams(unittest.TestCase):
             self.assertEqual(status, 124)
 
 
+class LinuxExecution(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "linux", "Linux launcher")
+    def test_wrapper_prepares_and_forwards_role(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            base = Path(raw)
+            here = Path(__file__).resolve().parent
+            shutil.copyfile(here / "launch_responses.sh", base / "launch_responses.sh")
+            (base / "responses_controller.py").write_text(
+                "import sys\n"
+                "assert sys.argv[1:] == ['--mode', 'followup', '--prepare', 'export', 'lane', 'brief', 'transcript']\n"
+                "print('invented-controller.toml')\n", encoding="utf-8")
+            result = subprocess.run(["bash", str(base / "launch_responses.sh"),
+                                     "--prepare-only", "--mode", "followup", "export", "brief", "transcript", "lane"],
+                                    cwd=base, env={"PATH": "/usr/bin:/bin", "CLEANROOM_PY": sys.executable},
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), "invented-controller.toml")
+
+    @unittest.skipUnless(sys.platform == "linux" and os.environ.get("CLEANROOM_DOCKER_TEST") == "1",
+                         "local Linux Docker integration")
+    def test_box_boundary_and_timeout(self) -> None:
+        from responses_box import CommandBox, RUNNER_FILES
+
+        with tempfile.TemporaryDirectory() as raw:
+            base = Path(raw)
+            export, lane, outside = base / "export", base / "lane", base / "outside"
+            export.mkdir()
+            lane.mkdir()
+            outside.write_text("outside marker", encoding="utf-8")
+            for part in ("home", "cargo", "hooks"):
+                (lane / part).mkdir()
+            for part in RUNNER_FILES:
+                (lane / part).touch()
+            (export / "protected").write_text("protected marker", encoding="utf-8")
+            environment = {"PATH": "/usr/bin:/bin", "HOME": str(lane / "home"),
+                           "RUSTUP_HOME": str(base / "unused-rustup")}
+            config = {"commands": {"check": ["/usr/bin/true"]}, "command_seconds": 5}
+            box = CommandBox(export, lane, config, environment)
+            out, err = lane / "out", lane / "err"
+            script = "\n".join((
+                "import os, pathlib, sys",
+                "assert os.listdir('/sys/class/net') == ['lo']",
+                "assert not pathlib.Path(sys.argv[1]).exists()",
+                "assert not pathlib.Path('/var/run/docker.sock').exists()",
+                "assert 'INVENTED_SECRET' not in os.environ",
+                "assert pathlib.Path('protected').read_text() == 'protected marker'",
+                "assert not os.access('protected', os.W_OK)",
+                "pathlib.Path('target/proof').write_text('executed')",
+            ))
+            with patch.dict(os.environ, {"INVENTED_SECRET": "invented"}):
+                self.assertEqual(box.run("test", [sys.executable, "-I", "-c", script, str(outside)], out, err),
+                                 0, err.read_text())
+            self.assertEqual((export / "target/proof").read_text(), "executed")
+            config["command_seconds"] = 0.25
+            identifier = uuid.uuid4()
+            with patch("responses_box.uuid.uuid4", return_value=identifier):
+                self.assertEqual(box.run("test", ["/usr/bin/sleep", "30"], out, err), 124)
+            present = subprocess.check_output(box.docker + [
+                "ps", "-aq", "--filter", f"name=^/cleanroom-responses-{identifier.hex}$"], env=box.docker_env)
+            self.assertEqual(present, b"")
+
+
 class Preparation(unittest.TestCase):
     @unittest.skipUnless(os.name == "nt", "Windows launcher")
     def test_wrapper_prepares_only_and_forwards_role(self) -> None:
@@ -576,6 +639,8 @@ class Preparation(unittest.TestCase):
                 def prepared(mode: str, label: str) -> Broker:
                     path = prepare(export, base / label, brief, base / (label + ".transcript"), mode=mode)
                     config = tomllib.loads(path.read_text(encoding="utf-8"))
+                    if sys.platform == "linux":
+                        self.assertEqual(config["execution"], "docker")
                     return Broker(export, base / label, config)
                 broker = prepared("implementer", "initial")
                 # The runner's awk is pinned by absolute path, and a changed pin or scan script is

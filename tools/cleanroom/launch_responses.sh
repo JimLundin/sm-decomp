@@ -3,7 +3,7 @@
 # Fresh closed-tool Responses session. The provider's credential stays in the controller;
 # model-written tests run only after code_check and the capability clippy pass; the import and
 # canary barriers follow.
-# Windows launcher. --prepare-only writes the trusted record without inference.
+# --prepare-only writes the trusted record without inference.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 probe=()
@@ -17,11 +17,17 @@ while [[ "${1:-}" = --* ]]; do
   esac
 done
 [ $# -eq 4 ] || { echo 'usage: launch_responses.sh EXPORT BRIEF TRANSCRIPT PRIVATE_LANE' >&2; exit 1; }
-python=${CLEANROOM_PY:-${LOCALAPPDATA:-$USERPROFILE/AppData/Local}/sm-decomp-tools/python-3.13.7/python.exe}
-export CLEANROOM_BASH=$(cygpath -m "${CLEANROOM_BASH:-$(command -v bash)}")
-export CLEANROOM_GIT=$(cygpath -m "${CLEANROOM_GIT:-$(command -v git)}")
-export CLEANROOM_CARGO=$(cygpath -m "${CLEANROOM_CARGO:-$(command -v cargo)}")
-export CLEANROOM_AWK=$(cygpath -m "${CLEANROOM_AWK:-$(command -v awk)}")
+case $(uname -s) in
+  Linux) python=${CLEANROOM_PY:-$(command -v python3.13 || command -v python3)} ;;
+  MINGW*|MSYS*|CYGWIN*)
+    python=${CLEANROOM_PY:-${LOCALAPPDATA:-$USERPROFILE/AppData/Local}/sm-decomp-tools/python-3.13.7/python.exe}
+    for tool in BASH GIT CARGO AWK; do
+      name=CLEANROOM_$tool
+      export "$name=$(cygpath -m "${!name:-$(command -v "${tool,,}")}")"
+    done ;;
+  *) echo 'unsupported Responses launcher platform' >&2; exit 1 ;;
+esac
+umask 077
 config=$("$python" -I "$here/responses_controller.py" "${probe[@]}" --prepare "$1" "$4" "$2" "$3")
 if [ "$prepare_only" = 1 ]; then printf '%s\n' "$config"; exit 0; fi
 status=0

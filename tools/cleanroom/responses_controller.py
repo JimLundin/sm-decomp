@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -173,7 +174,7 @@ class Broker:
                                     for p in self.writable):
             raise Refused("invalid import paths")
         self.env = dict(config["environment"])
-        allowed = {"PATH", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP",
+        allowed = {"PATH", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "TMPDIR",
                    "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "CARGO_HOME", "RUSTUP_HOME",
                    "CARGO_TARGET_DIR", "RUSTC", "RUSTDOC", "MSYS", "SM_PY", "CLEANROOM_PY", "SM_SCAN_DLL_DIR", "SM_RUST_BIN"}
         if set(self.env) - allowed or any(not isinstance(v, str) for v in self.env.values()):
@@ -181,6 +182,10 @@ class Broker:
         self.env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
                          "GIT_AUTHOR_NAME": "implementer", "GIT_AUTHOR_EMAIL": "implementer@cleanroom.invalid",
                          "GIT_COMMITTER_NAME": "implementer", "GIT_COMMITTER_EMAIL": "implementer@cleanroom.invalid"})
+        self.box = None
+        if sys.platform == "linux" and config.get("execution") == "docker":
+            from responses_box import CommandBox
+            self.box = CommandBox(self.root, self.lane, config, self.env)
         self.frozen: dict[Path, str] = {}
         self.inventory: set[str] = set()
         self.command_count = 0
@@ -279,9 +284,13 @@ class Broker:
         # capture waits for inherited stdout EOF after the direct child exits. Any timeout
         # makes this session uncertified; it is never reported as a successful tool result.
         from launch_stream import capture
-        status = capture(command + (suffix or []), str(self.root), str(out), str(errors),
-                         float(self.config.get("completion_seconds", 60)), validate_result=False,
-                         environment=self.env, runtime_timeout=float(self.config.get("command_seconds", 300)))
+        argv = command + (suffix or [])
+        if self.box is not None:
+            status = self.box.run(name, argv, out, errors)
+        else:
+            status = capture(argv, str(self.root), str(out), str(errors),
+                             float(self.config.get("completion_seconds", 60)), validate_result=False,
+                             environment=self.env, runtime_timeout=float(self.config.get("command_seconds", 300)))
         self.audit()
         if status == 124:
             raise Refused("command completion uncertified", RefusalCategory.UNCERTIFIED)
@@ -479,8 +488,13 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
     """Operator-side preparation; never invoked by a model tool."""
     root_plain(export)
     export = export.resolve(strict=True)
+    linux = sys.platform == "linux"
+    if linux and export.is_relative_to(Path.home().resolve()):
+        raise Refused("Linux exports must be outside the operator home")
     git_config_plain(export)
-    lane.mkdir(parents=True, exist_ok=False)
+    root_plain(lane)
+    root_plain(transcript)
+    lane.mkdir(mode=0o700, parents=True, exist_ok=False)
     lane = lane.resolve(strict=True)
     transcript = transcript.resolve()
     if transcript.is_relative_to(export) or lane.is_relative_to(export):
@@ -523,6 +537,17 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         "SM_RUST_BIN": str(Path(paths["cargo"]).parent),
         "CARGO_TARGET_DIR": str(export / "target"),
     }
+    if linux:
+        environment = {
+            "PATH": os.pathsep.join(dict.fromkeys(
+                [str(Path(paths["cargo"]).parent), "/usr/local/bin", "/usr/bin", "/bin"])),
+            "HOME": str(lane / "home"),
+            "TEMP": "/tmp", "TMP": "/tmp", "TMPDIR": "/tmp",
+            "CARGO_HOME": str(lane / "cargo"),
+            "RUSTUP_HOME": str(Path(os.environ.get("RUSTUP_HOME", str(home / ".rustup"))).resolve()),
+            "SM_PY": python, "CLEANROOM_PY": python,
+            "CARGO_TARGET_DIR": str(export / "target"),
+        }
     git = [paths["git"], "-c", "core.hooksPath=" + str(lane / "hooks"), "-c", "core.fsmonitor=false",
            "-c", "core.pager=cat", "-c", "diff.external=", "-c", "core.attributesFile=" + os.devnull]
     safe_env = dict(environment, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
@@ -623,6 +648,11 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
         "environment": environment, "commands": commands,
     }
     config["trusted_files"] += [str(p) for p in here.iterdir() if p.is_file() and p.suffix in (".sh", ".awk", ".txt")]
+    if linux:
+        config["execution"] = "docker"
+        config["trusted_files"].extend(str(path) for path in
+                                       (here / "responses_box.py", here / "box_relay.py",
+                                        here.parent.parent / "Cargo.toml"))
     config["trusted_files"].append(config["provider_config"])
     config_path = lane / "controller.toml"
     config["trusted_files"].append(str(config_path))
@@ -650,8 +680,12 @@ def main() -> int:
     if args.config is None:
         parser.error("config or --prepare required")
     config = tomllib.loads(args.config.read_text(encoding="utf-8"))
+    if sys.platform == "linux" and config.get("execution") != "docker":
+        raise Refused("Linux Responses commands require Docker")
     root, lane = Path(config["export"]), Path(config["lane"])
     broker = Broker(root, lane, config)
+    if broker.box is not None:
+        broker.box.initialize()
     provider_config = tomllib.loads(Path(config["provider_config"]).read_text(encoding="utf-8"))
     provider = provider_config["model_providers"][provider_config["model_provider"]]
     if provider.get("wire_api") != "responses" or not provider["base_url"].startswith("https://"):
@@ -669,6 +703,11 @@ def main() -> int:
         with opener.open(request, timeout=180) as response:
             return json.load(response)
     brief_text = Path(config["brief"]).read_text(encoding="utf-8")
+    if sys.platform == "linux":
+        def interrupted(signum: int, _frame: Any) -> None:
+            raise SystemExit(128 + signum)
+        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+            signal.signal(signum, interrupted)
     response_loop(broker, brief_text, send, Path(config["transcript"]))
     print("RESPONSES COMPLETE (operator must run import and canary checks)")
     return 0
