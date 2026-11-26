@@ -99,6 +99,7 @@ pub(super) fn play(
     }
     let mut previous = rows.record(0)?;
     let mut run = Run::begin(rom, &previous)?;
+    run.compare_carried_hardware(&previous, 0)?;
     let mut held = 0;
     let mut began = previous.clone();
     for cut in 1..=end {
@@ -227,7 +228,7 @@ impl Run {
         // From the title on the uploads are the audio side's: the title's music data ends the
         // same way, at 354 in the any% movie.
         let ended = matches!(before, front_end::State::PowerOn(_)) && upload_ended(&record.apu_log);
-        let loading = matches!(before, front_end::State::PowerOn(power_on) if power_on.stage == PowerOnStage::SoundLoading);
+        let loading = matches!(before, front_end::State::PowerOn(power_on) if power_on.model.stage == PowerOnStage::SoundLoading);
         if ended && !loading {
             return Err(data_failure(
                 Some(cut),
@@ -290,7 +291,7 @@ impl Run {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        self.compare_battery(record, cut)?;
+        self.compare_carried_hardware(record, cut)?;
         if !was_started
             && let Some(run) = self.cartridge.started()
             && record.wram.get(0x09a2..0x0a02) != Some(&profile_bytes(&run.profile))
@@ -305,7 +306,7 @@ impl Run {
         }
         match (&before, self.state.clone()) {
             (front_end::State::PowerOn(before), front_end::State::PowerOn(after)) => {
-                self.compare_power_on(*before, after, record, finished, cut)
+                self.compare_power_on(before.model, after.model, record, finished, cut)
             }
             (_, front_end::State::Screens(after)) => {
                 if self.queues.is_none() {
@@ -322,7 +323,13 @@ impl Run {
         }
     }
 
-    fn compare_battery(&self, record: &FrameRecord, cut: u64) -> Result<(), Outcome> {
+    fn compare_carried_hardware(&self, record: &FrameRecord, cut: u64) -> Result<(), Outcome> {
+        if self.state.oam_dma() != crate::replay::landing_site::channel(record.ppu.dma[0]) {
+            return Err(Outcome::Difference {
+                cut,
+                field: "video.dma[0]".into(),
+            });
+        }
         if cut >= 271 && self.cartridge.image(&self.format).as_slice() != record.sram.as_ref() {
             return Err(Outcome::Difference {
                 cut,
@@ -424,7 +431,7 @@ impl Run {
                     field: "save-files.selected-file".into(),
                 });
             }
-            self.compare_battery(record, cut)
+            self.compare_carried_hardware(record, cut)
         })
     }
 
@@ -794,6 +801,23 @@ mod tests {
     use screens_boot::{
         FinishedFrames, HoldFrames, Level, PowerOnStage, PowerOnState, ScreenLight,
     };
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn first_requested_nmi_programs_oam_dma() {
+        let sources = crate::replay::played::tests::sources();
+        let lock = super::super::read_lock(&sources).unwrap();
+        let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
+        let mut previous = rows.record(0).unwrap();
+        let began = previous.clone();
+        let mut run = super::Run::begin(&sources.rom, &previous).unwrap();
+        run.compare_carried_hardware(&previous, 0).unwrap();
+        for cut in 1..=18 {
+            let current = rows.record(cut).unwrap();
+            run.step(&began, &previous, &current, cut).unwrap();
+            previous = current;
+        }
+    }
 
     #[test]
     #[ignore = "pinned record cache and player ROM"]

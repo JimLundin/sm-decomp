@@ -666,6 +666,20 @@ pub struct DmaChannel {
     pub line_counter: u8,
 }
 
+impl DmaChannel {
+    /// The platform's DMA register contents before the game programs the channel.
+    pub const AT_POWER_ON: Self = Self {
+        control: DmaControl::from_byte(u8::MAX),
+        destination: BBusRegister::from_byte(u8::MAX),
+        source: u16::MAX,
+        source_bank: u8::MAX,
+        count: u16::MAX,
+        indirect_bank: u8::MAX,
+        table: u16::MAX,
+        line_counter: u8::MAX,
+    };
+}
+
 /// The CPU's eight DMA channels.
 pub const DMA_CHANNELS: usize = 8;
 

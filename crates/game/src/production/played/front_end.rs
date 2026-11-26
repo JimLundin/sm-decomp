@@ -25,6 +25,7 @@ mod power_on;
 mod title;
 
 use super::frame::Counts;
+use crate::state::video::DmaChannel;
 use screens_boot::{DriverUpload, PowerOnState};
 use screens_file_select::{FrameOfWork, SaveMemory};
 use screens_intro::{IntroContent, MusicRequest, TrackReply};
@@ -42,9 +43,17 @@ pub use screens_title::{Button, Pressed};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum State {
     /// The console's power-on, until the game settles.
-    PowerOn(PowerOnState),
+    PowerOn(Boot),
     /// The screens from the title on.
     Screens(Screens),
+}
+
+/// Startup work and the physical OAM DMA channel it leaves for game play.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Boot {
+    /// The screen model.
+    pub model: PowerOnState,
+    oam_dma: DmaChannel,
 }
 
 /// The screens from the title on, with the frame owner's counts.
@@ -54,6 +63,7 @@ pub struct Screens {
     pub screen: Screen,
     /// The count of finished frames and the random number.
     pub counts: Counts,
+    oam_dma: DmaChannel,
 }
 
 /// A screen from the title on.
@@ -249,7 +259,19 @@ pub enum Fault {
 
 impl State {
     /// The console just switched on.
-    pub const AT_POWER_ON: Self = Self::PowerOn(PowerOnState::AT_POWER_ON);
+    pub const AT_POWER_ON: Self = Self::PowerOn(Boot {
+        model: PowerOnState::AT_POWER_ON,
+        oam_dma: DmaChannel::AT_POWER_ON,
+    });
+
+    /// The OAM DMA channel to carry into the next scene.
+    #[must_use]
+    pub const fn oam_dma(&self) -> DmaChannel {
+        match self {
+            Self::PowerOn(boot) => boot.oam_dma,
+            Self::Screens(screens) => screens.oam_dma,
+        }
+    }
 
     /// Play one frame end of the part that runs, giving the sounds asked for in it.
     ///
@@ -286,13 +308,14 @@ struct Stepped {
 impl Screens {
     /// The game settled: the title begun on the power-on's screen, the count going on from the
     /// power-on's, the random number as the game settles.
-    fn settled(power_on: PowerOnState, answers: &impl Answers) -> Self {
+    fn settled(boot: Boot, answers: &impl Answers) -> Self {
         Self {
-            screen: Screen::Title(TitleState::begun(power_on.screen)),
+            screen: Screen::Title(TitleState::begun(boot.model.screen)),
             counts: Counts {
-                finished_frames: power_on.frames.0,
+                finished_frames: boot.model.frames.0,
                 random: answers.settled_random(),
             },
+            oam_dma: boot.oam_dma,
         }
     }
 
@@ -321,6 +344,7 @@ impl Screens {
         let screens = Self {
             screen: stepped.screen,
             counts: self.counts.after(stepped.finished, stepped.drawn),
+            oam_dma: self.oam_dma,
         };
         Ok((screens, stepped.sounds))
     }

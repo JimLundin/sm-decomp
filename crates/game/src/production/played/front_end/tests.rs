@@ -120,7 +120,7 @@ fn step(state: &mut State, frame: FrameEnd) -> Result<Vec<Sound>, Fault> {
 
 fn power_on(state: &State) -> screens_boot::PowerOnState {
     match *state {
-        State::PowerOn(power_on) => power_on,
+        State::PowerOn(boot) => boot.model,
         State::Screens(_) => panic!("the title has begun"),
     }
 }
@@ -193,6 +193,7 @@ fn the_options_hand_on_to_the_intro_which_begins_on_the_next_frame() {
             finished_frames: 5,
             random: NewGame.settled_random(),
         },
+        oam_dma: crate::state::video::DmaChannel::default(),
     });
     let intro_stage = |state: &State| match state {
         State::Screens(Screens {

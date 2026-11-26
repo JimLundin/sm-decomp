@@ -35,22 +35,11 @@ impl Video {
     pub fn upload_oam_and_cgram(&mut self) {
         self.memory.oam = self.batch.oam;
         self.memory.cgram = self.batch.cgram;
-        let uploads = [
-            (OAM_CHANNEL, BBusRegister::OamData, OAM_BUFFER, OAM_BYTES),
-            (
-                VRAM_CHANNEL,
-                BBusRegister::ColourData,
-                PALETTE_BUFFER,
-                CGRAM_COLOURS * 2,
-            ),
-        ];
-        for (channel, destination, from, bytes) in uploads {
-            if let Some(channel) = self.dma.get_mut(channel) {
-                channel.control = DmaControl::TO_ONE_REGISTER;
-                channel.destination = destination;
-                channel.transferred(from, bytes);
-            }
-        }
+        self.dma[OAM_CHANNEL].upload_oam();
+        let palette = &mut self.dma[VRAM_CHANNEL];
+        palette.control = DmaControl::TO_ONE_REGISTER;
+        palette.destination = BBusRegister::ColourData;
+        palette.transferred(PALETTE_BUFFER, CGRAM_COLOURS * 2);
     }
 
     /// Bank `$80` log, update IO registers `$80:91EE`: the register mirrors to the PPU.
@@ -232,6 +221,13 @@ fn rom_words(
 }
 
 impl DmaChannel {
+    /// The channel after the requested NMI's OAM DMA.
+    pub(crate) const fn upload_oam(&mut self) {
+        self.control = DmaControl::TO_ONE_REGISTER;
+        self.destination = BBusRegister::OamData;
+        self.transferred(OAM_BUFFER, OAM_BYTES);
+    }
+
     /// The registers a finished transfer of `bytes` from `from` leaves: the source on by the
     /// bytes, within its bank, and the count spent.
     pub(crate) const fn transferred(&mut self, from: BusAddress, bytes: usize) {
