@@ -192,6 +192,18 @@ seed_frame = 11852
 frames = [11853, 11943]
 power_on = false
 
+# Carry the native return fetch, the adjacent rooms and the next passage without
+# reseeding. The first turning-shaft vent placement needs the shaft actor owner.
+[[run]]
+row = "chain-any-0006-E0B5"
+start = 1690
+end = 3000
+held = 1165
+stop = { failed = "Load(TurningShaftVent)" }
+seed_frame = 11852
+frames = [11853, 13017]
+power_on = false
+
 # Start in the slide's wait after the destination content has loaded. The remaining
 # slide, landing, music and brightening carry a held countdown into room 5.
 [[run]]
