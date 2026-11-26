@@ -38,6 +38,7 @@ pub(super) fn play(
             rows,
             previous,
             start.saturating_add(1)..=end,
+            None,
         )?;
         (held, stop, STATION_SEED)
     };
@@ -67,12 +68,19 @@ pub(super) fn through_shaft(
     previous: FrameRecord,
     cuts: core::ops::RangeInclusive<u64>,
 ) -> Result<(u64, Stop), Outcome> {
-    let (production, content, _) =
+    let (production, content, rules) =
         shaft::admit_owned(shaft, assets, cuts.start().saturating_sub(1))?;
     let ProductionContent::Escape(assets) = &content else {
         return Err(data_failure(None, "escape departure assets"));
     };
-    through(production, &assets.departure, rows, previous, cuts)
+    through(
+        production,
+        &assets.departure,
+        rows,
+        previous,
+        cuts,
+        Some((&content, &rules)),
+    )
 }
 
 /// Continue the selected shaft or cinematic on the caller's existing row chain.
@@ -84,6 +92,7 @@ fn through(
     rows: &mut Rows<'_>,
     mut previous: FrameRecord,
     cuts: core::ops::RangeInclusive<u64>,
+    shaft_context: Option<(&ProductionContent, &ProductionRules)>,
 ) -> Result<(u64, Stop), Outcome> {
     let mut observer = explosion::Observed::default();
     let mut held = 0_u64;
@@ -103,6 +112,7 @@ fn through(
                 station: timing,
             },
         };
+        let restored = shaft_checkpoint(&production, shaft_context, input, cut)?;
         let output =
             match production.advance(AdvanceInput::Departure(input)) {
                 Ok(output) => output,
@@ -124,6 +134,12 @@ fn through(
                     ));
                 }
             };
+        if let Some(mut restored) = restored {
+            let resumed = restored.advance(AdvanceInput::Departure(input));
+            if resumed.as_ref() != Ok(&output) || restored != production {
+                return Ok((held, Stop::At(Outcome::CheckpointFailure { cut })));
+            }
+        }
         if let Err(why) = check_outputs(
             &production,
             &output,
@@ -145,6 +161,38 @@ fn through(
         previous = current;
     }
     Ok((held, Stop::End))
+}
+
+fn shaft_checkpoint(
+    production: &Production,
+    context: Option<(&ProductionContent, &ProductionRules)>,
+    input: Input,
+    cut: u64,
+) -> Result<Option<Production>, Outcome> {
+    use game::production::blackout::{Cut, Work};
+    let Some((content, rules)) = context else {
+        return Ok(None);
+    };
+    if !matches!(
+        input,
+        Input::Shaft {
+            work: Cut {
+                work: Work::VerticalEnded | Work::SaveCompleted,
+                ..
+            },
+            ..
+        }
+    ) {
+        return Ok(None);
+    }
+    let fail = |_| Outcome::CheckpointFailure { cut };
+    let saved = production.save().map_err(fail)?;
+    let restored = Production::restore(&saved, content.clone(), rules.clone())
+        .map_err(|_| Outcome::CheckpointFailure { cut })?;
+    if restored != *production {
+        return Err(Outcome::CheckpointFailure { cut });
+    }
+    Ok(Some(restored))
 }
 
 fn check_outputs(
