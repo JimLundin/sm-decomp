@@ -465,14 +465,8 @@ impl Run {
                         carry: *carry,
                     };
                     let next = checkpoint.continue_flight(journey, cut)?;
-                    let (more, stop) = next.through(
-                        rows,
-                        rom,
-                        row,
-                        current,
-                        cut.saturating_add(1)..=end,
-                        |_, _, _| Ok(()),
-                    )?;
+                    let (more, stop) =
+                        next.through(rows, rom, row, current, cut.saturating_add(1)..=end, None)?;
                     return Ok((held.saturating_add(1).saturating_add(more), stop));
                 }
             }

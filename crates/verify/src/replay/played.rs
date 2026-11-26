@@ -391,6 +391,7 @@ struct Run<'a> {
     warning_picture: warning::Picture,
     upper_row: Option<interface_hud::UpperRow>,
     return_timing: return_timing::ReturnTiming,
+    cartridge: Option<power_on::LiveCartridge>,
 }
 
 #[derive(Clone, Copy)]
@@ -517,6 +518,7 @@ impl<'a> Run<'a> {
             warning_picture,
             upper_row: None,
             return_timing: return_timing::ReturnTiming::default(),
+            cartridge: None,
         })
     }
 
@@ -625,7 +627,12 @@ impl<'a> Run<'a> {
                     if fields.iter().any(|field| field.field == play_time::FIELD) {
                         rows.clock_cuts.push(cut);
                     }
-                    if let Err(outcome) = observe(&current, cut) {
+                    if let Err(outcome) = self
+                        .cartridge
+                        .as_mut()
+                        .map_or(Ok(()), |cartridge| cartridge.observe(&current, cut, false))
+                        .and_then(|()| observe(&current, cut))
+                    {
                         return Ok((held, Stop::At(at(cut, outcome))));
                     }
                     matched(cut, fields)?;

@@ -28,7 +28,8 @@ use game::production::played::front_end;
 use oracle_record::{ApuAccess, ApuAccessKind, FrameRecord};
 use screens_boot::{DriverUpload, PowerOnStage, PowerOnState, ScreenLight};
 use std::path::Path;
-use types::save_files::BatteryImage;
+use types::file_select::Slot;
+use types::save_files::{BatteryImage, RunSnapshot};
 
 /// The logo's timer: the hold's frames left.
 const HOLD_LEFT: source::WramWord = source::WramWord {
@@ -157,6 +158,76 @@ struct Run {
     controller: Controller,
     queues: Option<Queues>,
     sounds: Vec<[u8; 3]>,
+}
+
+/// The original cartridge after file selection, retained by the active flight and room.
+#[derive(Clone)]
+pub(super) struct LiveCartridge {
+    pub(super) cartridge: Cartridge,
+    pub(super) format: Format,
+    selected: Option<Slot>,
+    started: RunSnapshot,
+}
+
+impl LiveCartridge {
+    fn new(cartridge: Cartridge, format: Format) -> Result<Self, Outcome> {
+        let selected = cartridge.state.active;
+        let started = cartridge
+            .started()
+            .cloned()
+            .ok_or_else(|| data_failure(None, "Ceres flight requires the selected file"))?;
+        Ok(Self {
+            cartridge,
+            format,
+            selected,
+            started,
+        })
+    }
+
+    pub(super) fn observe(
+        &mut self,
+        record: &FrameRecord,
+        cut: u64,
+        entered: bool,
+    ) -> Result<(), Outcome> {
+        self.cartridge
+            .arrival(&self.format, entered, super::finished(record))
+            .map_err(|fault| Outcome::Unsupported {
+                cut: Some(cut),
+                dependency: format!("played cartridge {fault:?}"),
+            })?;
+        if entered {
+            self.cartridge.state = super::flight::restored(
+                &self.cartridge.state,
+                cut,
+                "Ceres arrival cartridge checkpoint",
+            )?;
+        }
+        if self.cartridge.state.active != self.selected
+            || self.cartridge.started() != Some(&self.started)
+        {
+            return Err(Outcome::Difference {
+                cut,
+                field: "save-files.selected-file".into(),
+            });
+        }
+        compare_battery(&self.cartridge, &self.format, record, cut)
+    }
+}
+
+fn compare_battery(
+    cartridge: &Cartridge,
+    format: &Format,
+    record: &FrameRecord,
+    cut: u64,
+) -> Result<(), Outcome> {
+    if cut >= 271 && cartridge.image(format).as_slice() != record.sram.as_ref() {
+        return Err(Outcome::Difference {
+            cut,
+            field: "save-files.battery".into(),
+        });
+    }
+    Ok(())
 }
 
 impl Run {
@@ -330,13 +401,7 @@ impl Run {
                 field: "video.dma[0]".into(),
             });
         }
-        if cut >= 271 && self.cartridge.image(&self.format).as_slice() != record.sram.as_ref() {
-            return Err(Outcome::Difference {
-                cut,
-                field: "save-files.battery".to_owned(),
-            });
-        }
-        Ok(())
+        compare_battery(&self.cartridge, &self.format, record, cut)
     }
 
     fn flight(
@@ -395,7 +460,7 @@ impl Run {
     }
 
     fn continue_flight(
-        &mut self,
+        self,
         continuation: super::flight::Continuation,
         rows: &mut Rows<'_>,
         rom: &Path,
@@ -403,36 +468,8 @@ impl Run {
         previous: FrameRecord,
         cuts: core::ops::RangeInclusive<u64>,
     ) -> Result<(u64, Stop), Outcome> {
-        let selected = self.cartridge.state.active;
-        let Some(started) = self.cartridge.started().cloned() else {
-            return Err(data_failure(
-                None,
-                "Ceres flight requires the selected file",
-            ));
-        };
-        continuation.through(rows, rom, row, previous, cuts, |record, cut, entered| {
-            self.cartridge
-                .arrival(&self.format, entered, super::finished(record))
-                .map_err(|fault| Outcome::Unsupported {
-                    cut: Some(cut),
-                    dependency: format!("played cartridge {fault:?}"),
-                })?;
-            if entered {
-                self.cartridge.state = super::flight::restored(
-                    &self.cartridge.state,
-                    cut,
-                    "Ceres arrival cartridge checkpoint",
-                )?;
-            }
-            if self.cartridge.state.active != selected || self.cartridge.started() != Some(&started)
-            {
-                return Err(Outcome::Difference {
-                    cut,
-                    field: "save-files.selected-file".into(),
-                });
-            }
-            self.compare_carried_hardware(record, cut)
-        })
+        let live = LiveCartridge::new(self.cartridge, self.format)?;
+        continuation.through(rows, rom, row, previous, cuts, Some(live))
     }
 
     /// The boot's fields at `cut`.

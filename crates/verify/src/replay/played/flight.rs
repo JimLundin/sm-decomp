@@ -229,7 +229,7 @@ pub(super) fn play(
         row,
         seed.clone(),
         start.saturating_add(1)..=end,
-        |_, _, _| Ok(()),
+        None,
     )?;
     Ok(report(held, stop))
 }
@@ -273,7 +273,7 @@ impl Continuation {
         row: &str,
         mut previous: FrameRecord,
         cuts: core::ops::RangeInclusive<u64>,
-        mut observe: impl FnMut(&FrameRecord, u64, bool) -> Result<(), Outcome>,
+        mut cartridge: Option<super::power_on::LiveCartridge>,
     ) -> Result<(u64, Stop), Outcome> {
         let bad = || data_failure(None, "played ROM image");
         let image = Rom::new(std::fs::read(rom).map_err(|_| bad())?).map_err(|_| bad())?;
@@ -322,7 +322,9 @@ impl Continuation {
                         #[cfg(test)]
                         rows.clock_cuts.push(cut);
                     }
-                    observe(&current, cut, entered)
+                    cartridge.as_mut().map_or(Ok(()), |cartridge| {
+                        cartridge.observe(&current, cut, entered)
+                    })
                 });
             if let Err(outcome) = compared {
                 return Ok((held, Stop::At(super::at(cut, outcome))));
@@ -348,13 +350,10 @@ impl Continuation {
                     "Ceres entry checkpoint",
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
-                let (more, stop) = super::Run::load(start, &content, rom, row)?.through_observing(
-                    rows,
-                    current,
-                    entry.controller,
-                    cut.saturating_add(1)..=end,
-                    |record, cut| observe(record, cut, false),
-                )?;
+                let mut room = super::Run::load(start, &content, rom, row)?;
+                room.cartridge = cartridge;
+                let (more, stop) =
+                    room.through(rows, current, entry.controller, cut.saturating_add(1)..=end)?;
                 return Ok((held.saturating_add(more), stop));
             }
             if super::finished(&current) {
