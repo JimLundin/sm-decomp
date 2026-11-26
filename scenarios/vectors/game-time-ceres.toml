@@ -1,4 +1,5 @@
-# Recorded Ceres clock and scheduler witnesses.
+# Recorded Ceres clock and scheduler exemplars for the complete route.
+# The required prefix test consumes docs/behaviours/game-time-ceres.sources.toml.
 
 [[arithmetic]]
 id = "R-ceres-first-carry"

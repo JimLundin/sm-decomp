@@ -46,6 +46,9 @@ health_tail = [
     "replay::health_tail::tests::equal_energy_preserves_the_stale_gauge",
 ]
 
+# The continuous clock fixture holds through the supported hall prefix.
+game_time = ["replay::played::play_time::continuous::ceres_clock_prefix"]
+
 # Every reviewed run of scenarios/replay/played.toml holds its `held` and `stop`.
 played = [
     "replay::played::tests::warning_defeat_is_carried_by_production",

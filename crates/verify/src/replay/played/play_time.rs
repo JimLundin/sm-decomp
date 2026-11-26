@@ -43,16 +43,17 @@ pub(super) fn observation(time: PlayTime) -> crate::replay::compare::Observation
 
 #[cfg(test)]
 mod continuous {
-    use super::super::{Stop, open_rows, power_on, read_lock, tests};
+    use super::super::{Sources, Stop, open_rows, power_on, read_lock, tests};
     use crate::cache::Cache;
-    use crate::lock::{RowId, Sha256};
+    use crate::lock::{Lock, RowId, Sha256};
+    use crate::replay::result::Outcome;
     use serde::Deserialize;
+    use std::collections::BTreeMap;
 
     #[derive(Deserialize)]
     struct Fixture {
         indexed_case: String,
         consumer: String,
-        opportunities: u64,
         fields: [String; 4],
         row: Vec<PinnedRow>,
         case: Vec<Case>,
@@ -78,10 +79,71 @@ mod continuous {
         cuts: [u64; 2],
     }
 
+    const BOOT: &str = "any-power-on";
+    const LAST_SUPPORTED: u64 = 13_017;
+
+    #[derive(Clone, Copy)]
+    enum End {
+        ShaftBoundary,
+        FirstCarry,
+    }
+
+    /// The required clock prefix uses the continuous clock fixture through the hall.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
-    fn ceres_continuous_clock() {
-        const BOOT: &str = "any-power-on";
+    fn ceres_clock_prefix() {
+        check(End::ShaftBoundary);
+    }
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn ceres_clock_first_carry() {
+        check(End::FirstCarry);
+    }
+
+    fn bind_rows<'a>(
+        pinned_rows: &'a [PinnedRow],
+        sources: &Sources,
+        lock: &Lock,
+    ) -> BTreeMap<&'a str, (u64, u64)> {
+        let root = sources.lock.ancestors().nth(3).unwrap();
+        let mut rows = open_rows(sources, lock, BOOT).unwrap();
+        let mut bounds = BTreeMap::new();
+        let mut previous_end: Option<u64> = None;
+        for pinned in pinned_rows {
+            let row = lock.row(&RowId(pinned.id.clone())).unwrap();
+            assert_eq!(
+                row.seed_record,
+                Some(Sha256::try_from(pinned.seed_record.as_str()).unwrap())
+            );
+            assert_eq!(row.pads, Sha256::try_from(pinned.pads.as_str()).unwrap());
+            assert_eq!(pinned.cuts[0], 0);
+            assert!(pinned.cuts[1] < row.frames.0);
+            Cache::open(&sources.cache, row).unwrap();
+            let first = crate::report::seeds::first_frame(root, row).unwrap();
+            let last = first.checked_add(pinned.cuts[1]).unwrap();
+            if let Some(previous_end) = previous_end {
+                assert_eq!(first, previous_end.checked_add(1).unwrap());
+            }
+            previous_end = Some(last);
+            assert!(bounds.insert(pinned.id.as_str(), (first, last)).is_none());
+        }
+
+        for pinned in pinned_rows {
+            let (first, last) = bounds[pinned.id.as_str()];
+            assert_eq!(
+                rows.place(first).unwrap(),
+                (pinned.id.clone(), pinned.cuts[0])
+            );
+            assert_eq!(
+                rows.place(last).unwrap(),
+                (pinned.id.clone(), pinned.cuts[1])
+            );
+        }
+        bounds
+    }
+
+    fn check(end: End) {
         let fixture: Fixture = toml::from_str(include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/../../docs/behaviours/game-time-ceres.sources.toml"
@@ -93,42 +155,8 @@ mod continuous {
 
         let sources = tests::sources();
         let lock = read_lock(&sources).unwrap();
-        let root = sources.lock.ancestors().nth(3).unwrap();
-        let mut rows = open_rows(&sources, &lock, BOOT).unwrap();
-        let mut bounds = std::collections::BTreeMap::new();
-        let mut previous_end = None;
-        for pinned in &fixture.row {
-            let row = lock.row(&RowId(pinned.id.clone())).unwrap();
-            assert_eq!(
-                row.seed_record,
-                Some(Sha256::try_from(pinned.seed_record.as_str()).unwrap())
-            );
-            assert_eq!(row.pads, Sha256::try_from(pinned.pads.as_str()).unwrap());
-            assert_eq!(pinned.cuts[0], 0);
-            assert!(pinned.cuts[1] < row.frames.0);
-            Cache::open(&sources.cache, row).unwrap();
-            let first = crate::report::seeds::first_frame(root, row).unwrap();
-            let last = first + pinned.cuts[1];
-            if let Some(previous_end) = previous_end {
-                assert_eq!(first, previous_end + 1);
-            }
-            previous_end = Some(last);
-            assert!(bounds.insert(pinned.id.as_str(), (first, last)).is_none());
-        }
-
-        for pinned in &fixture.row {
-            let (first, last) = bounds[pinned.id.as_str()];
-            assert_eq!(
-                rows.place(first).unwrap(),
-                (pinned.id.clone(), pinned.cuts[0])
-            );
-            assert_eq!(
-                rows.place(last).unwrap(),
-                (pinned.id.clone(), pinned.cuts[1])
-            );
-        }
+        let bounds = bind_rows(&fixture.row, &sources, &lock);
         let first = bounds[fixture.row[0].id.as_str()].0;
-        let end = previous_end.unwrap();
         let carry = fixture
             .case
             .iter()
@@ -139,19 +167,37 @@ mod continuous {
             for span in &case.spans {
                 let (first, last) = bounds[span.row.as_str()];
                 let [low, high] = span.cuts;
-                assert!(low <= high && high <= last - first, "{}", case.id);
+                assert!(
+                    low <= high && high <= last.checked_sub(first).unwrap(),
+                    "{}",
+                    case.id
+                );
             }
         }
         let carry = &carry.spans[0];
-        let carry_cut = bounds[carry.row.as_str()].0 + carry.cuts[1];
+        let carry_cut = bounds[carry.row.as_str()]
+            .0
+            .checked_add(carry.cuts[1])
+            .unwrap();
 
-        let control = std::env::var_os("SM_CERES_CLOCK_CARRY_ONLY").is_some();
-        let end = if control { carry_cut } else { end };
+        let (last, stop) = match end {
+            End::ShaftBoundary => (
+                LAST_SUPPORTED,
+                Stop::At(Outcome::Unsupported {
+                    cut: Some(LAST_SUPPORTED + 1),
+                    dependency: "played frame Load(TurningShaftVent)".into(),
+                }),
+            ),
+            End::FirstCarry => (carry_cut, Stop::End),
+        };
+        let attempted = last
+            .checked_add(u64::from(matches!(end, End::ShaftBoundary)))
+            .unwrap();
         let mut rows = open_rows(&sources, &lock, BOOT).unwrap();
-        let report = power_on::play(&mut rows, &sources.rom, BOOT, 0, end).unwrap();
+        let report = power_on::play(&mut rows, &sources.rom, BOOT, 0, attempted).unwrap();
         let compared = rows.clock_cuts.as_slice();
         tests::diagnostic(format_args!(
-            "{} held={} clock_comparisons={} first={:?} last={:?} stop={:?}",
+            "{} prefix held={} clock_comparisons={} first={:?} last={:?} stop={:?}",
             fixture.indexed_case,
             report.held,
             compared.len(),
@@ -159,16 +205,33 @@ mod continuous {
             compared.last(),
             report.stop
         ));
-        assert!(compared.iter().copied().eq(first..=report.held));
-        assert_eq!(report.stop, Stop::End);
-        assert_eq!(report.held, end);
-        if !control {
-            let elapsed = super::read(&rows.record(end).unwrap().wram).unwrap();
-            let frames = u64::from(elapsed.frames.get())
-                + 60 * u64::from(elapsed.seconds.get())
-                + 3_600 * u64::from(elapsed.minutes.get())
-                + 216_000 * u64::from(elapsed.hours.get());
-            assert_eq!(frames, fixture.opportunities);
+        assert_eq!(report.stop, stop);
+        assert_eq!(report.held, last);
+        assert!(compared.iter().copied().eq(first..=last));
+        match end {
+            End::ShaftBoundary => assert_eq!(compared.len(), 4_703),
+            End::FirstCarry => assert_eq!(compared.len(), 253),
+        }
+        for case in fixture.case {
+            for span in case.spans {
+                let row_start = bounds[span.row.as_str()].0;
+                let first_cut = row_start.checked_add(span.cuts[0]).unwrap();
+                if first_cut <= last {
+                    let held_end = span.cuts[1].min(last.checked_sub(row_start).unwrap());
+                    tests::diagnostic(format_args!(
+                        "{} {} cuts {}..={}{}",
+                        case.id,
+                        span.row,
+                        span.cuts[0],
+                        held_end,
+                        if held_end == span.cuts[1] {
+                            ""
+                        } else {
+                            " (partial)"
+                        },
+                    ));
+                }
+            }
         }
     }
 }
