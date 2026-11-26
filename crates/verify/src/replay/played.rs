@@ -918,21 +918,23 @@ impl<'a> Run<'a> {
             expected.push(same(true));
             actual.push(same(fresh == self.state.progress));
         }
-        self.room_publication_fields(&outputs, &frame, &passing, (&mut expected, &mut actual))?;
-        expected.push(play_time::observation(play_time::read(&current.wram)?));
-        actual.push(play_time::observation(self.state.play_time));
-        compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
+        self.compare_room_publications(&outputs, &frame, &passing, (&mut expected, &mut actual))?;
         Ok((expected, outputs))
     }
 
-    fn room_publication_fields(
+    fn compare_room_publications(
         &self,
         outputs: &played::Outputs,
         frame: &Frame<'_>,
         passing: &played::passage::Passing,
         (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
     ) -> Result<(), Outcome> {
-        let Frame { current, place, .. } = *frame;
+        let Frame {
+            current,
+            place,
+            cut,
+            ..
+        } = *frame;
         if place.0 == "any-ceres-arrival" {
             let publication = |value| Observation::quantity("hud.setup-publish", i64::from(value));
             expected.insert(0, publication(place.1 == HUD_SETUP_CUT));
@@ -944,12 +946,6 @@ impl<'a> Run<'a> {
                 &self.state.room_video.video.memory.vram,
             )?);
         }
-        samus_picture::compare(
-            frame,
-            &self.state.room_video.video,
-            outputs.samus_body.clone(),
-            (expected, actual),
-        )?;
         room_video::compare(
             &self.state.room_video,
             outputs.shaft_overlay_placement.is_some(),
@@ -966,6 +962,16 @@ impl<'a> Run<'a> {
                 (expected, actual),
             )?;
         }
+        expected.push(play_time::observation(play_time::read(&current.wram)?));
+        actual.push(play_time::observation(self.state.play_time));
+        compare(expected, actual).map_err(|fault| comparison_failure(cut, fault))?;
+        // A wrong pose or hit can change the body picture on the same cut.
+        samus_picture::compare(
+            frame,
+            &self.state.room_video.video,
+            outputs.samus_body.clone(),
+            expected,
+        )?;
         Ok(())
     }
 

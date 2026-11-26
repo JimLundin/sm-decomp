@@ -26,7 +26,7 @@ pub(super) fn compare(
     frame: &Frame<'_>,
     video: &Video,
     span: Option<Range<usize>>,
-    pair: (&mut Vec<Observation>, &mut Vec<Observation>),
+    expected: &mut Vec<Observation>,
 ) -> Result<(), Outcome> {
     let (row, local) = frame.place;
     if row != ROW {
@@ -48,16 +48,9 @@ pub(super) fn compare(
         span.clone(),
     )
     .map_err(|slot| differs(&format!("prepared[{slot}]")))?;
-    compare_picture(&video.memory.oam, Some(&frame.current.oam), span.clone())
+    compare_picture(&video.memory.oam, Some(&frame.current.oam), span)
         .map_err(|slot| differs(&format!("physical[{slot}]")))?;
-    let (expected, actual) = pair;
     expected.extend(native_picture(frame.current, count)?);
-    actual.extend(picture(span, |slot| {
-        (
-            piece(&video.batch.oam, slot),
-            piece(&video.memory.oam, slot),
-        )
-    }));
     Ok(())
 }
 
