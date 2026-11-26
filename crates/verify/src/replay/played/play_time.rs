@@ -184,11 +184,11 @@ mod continuous {
             End::FirstCarry => carry_cut,
         };
         let mut rows = open_rows(&sources, &lock, BOOT).unwrap();
+        let report = power_on::play(&mut rows, &sources.rom, BOOT, 0, last).unwrap();
         assert_eq!(
             rows.place(FINAL_ROOM_CUT).unwrap(),
             ("chain-any-0011-DF45".into(), 239)
         );
-        let report = power_on::play(&mut rows, &sources.rom, BOOT, 0, last).unwrap();
         let compared = rows.clock_cuts.as_slice();
         tests::diagnostic(format_args!(
             "{} prefix held={} clock_comparisons={} first={:?} last={:?} stop={:?}",
