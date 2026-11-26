@@ -536,7 +536,7 @@ mod tests {
         room.station.retire_before(3);
         assert_eq!(room.station.doors, [backdrop.right_wall.door]);
         room.station.retire_before(4);
-        assert!(room.station.doors.is_empty());
+        assert_eq!(room.station.doors, []);
     }
 
     /// Meeting the room's left side fast, his shake reaches the room's quake: the back layers,

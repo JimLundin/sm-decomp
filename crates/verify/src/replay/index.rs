@@ -1332,6 +1332,17 @@ macro_rules! landing_observations {
     };
 }
 
+macro_rules! shaft_observations {
+    () => {
+        ObservationId::ShaftView
+            | ObservationId::ShaftTransform
+            | ObservationId::ShaftRotation
+            | ObservationId::ShaftLevel
+            | ObservationId::ShaftPlacement
+            | ObservationId::ShaftHaze
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -1360,12 +1371,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
             Responsibility::ZebesDrawing
         }
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
-        O::ShaftView
-        | O::ShaftTransform
-        | O::ShaftRotation
-        | O::ShaftLevel
-        | O::ShaftPlacement
-        | O::ShaftHaze => Responsibility::RoomLoading,
+        shaft_observations!() => Responsibility::RoomLoading,
         O::HealthTailState
         | O::HealthTailWarning
         | O::HealthTailDrawnProtection
