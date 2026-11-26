@@ -110,6 +110,7 @@ impl State {
         if let Some(backdrop) = enemies.ridley.and_then(|run| run.backdrop) {
             self.doors
                 .extend([backdrop.left_wall.door, backdrop.right_wall.door]);
+            self.slots.doors.extend([2, 3]);
         }
     }
 
