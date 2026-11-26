@@ -1,0 +1,49 @@
+# Recorded Ceres clock and scheduler witnesses.
+
+[[arithmetic]]
+id = "R-ceres-first-carry"
+source = "recorded"
+entries = ["PlayTimeAdvance"]
+before = { hours = 0, minutes = 0, seconds = 0, frames = 59 }
+after = { hours = 0, minutes = 0, seconds = 1, frames = 0 }
+
+# These recorded timelines qualify the caller's work. The clock arithmetic
+# reader exercises the vectors above independently.
+[[schedule]]
+id = "R-ceres-arrival-work"
+source = "recorded"
+steps = [
+    { work = "ArrivalPreparation", advances = 0, seconds = 0, frames = 0 },
+    { work = "ArrivalRoom", advances = 30, seconds = 0, frames = 30 },
+    { work = "OrdinaryRoom", advances = 1, seconds = 0, frames = 31 },
+]
+
+[[schedule]]
+id = "R-ceres-return-clock"
+source = "recorded"
+steps = [
+    { work = "DoorTouch", advances = 1, seconds = 39, frames = 54 },
+    { work = "Passage", advances = 0, seconds = 39, frames = 54 },
+    { work = "OrdinaryRoom", advances = 1, seconds = 39, frames = 55 },
+]
+
+[[schedule]]
+id = "R-ceres-shaft-resume"
+source = "recorded"
+steps = [
+    { work = "Passage", advances = 0, seconds = 47, frames = 55 },
+    { work = "OrdinaryRoom", advances = 1, seconds = 47, frames = 56 },
+    { work = "ElevatorReach", advances = 1, seconds = 50, frames = 40 },
+    { work = "LockedRoom", advances = 1, seconds = 50, frames = 41 },
+]
+
+[[schedule]]
+id = "R-ceres-last-room-work"
+source = "recorded"
+steps = [
+    { work = "LockedRoom", advances = 1, seconds = 51, frames = 54 },
+    { work = "RoomReady", advances = 1, seconds = 51, frames = 55 },
+    { work = "SavePayload", advances = 0, seconds = 51, frames = 55 },
+    { work = "Publish", advances = 0, seconds = 51, frames = 55 },
+    { work = "Dispatch", advances = 0, seconds = 51, frames = 55 },
+]

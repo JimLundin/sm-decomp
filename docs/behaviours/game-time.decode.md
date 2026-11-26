@@ -66,10 +66,10 @@ Health and an established ordinary opportunity. The advance from 99:59:59.58
 to 99:59:59.59 has no carry and must succeed, preserving Health and the
 other clock components. A further required opportunity from that maximum
 must surface Unsupported. The full model carry and ceiling are covered by
-constructed vectors. Runtime requests for carry, unestablished scheduling, invalid
-clock state, or nonpositive or stale Health at this required opportunity
-remain Unsupported before clock effects. Save-slot encoding, stopped time
-scheduling and additional original gameplay contexts are outside the witness.
+constructed vectors. The extended ordinary Ceres trace proves the first second carry and
+qualifies the work listed below. Other unestablished scheduling, invalid clock
+state, and nonpositive or stale Health remain Unsupported before clock effects.
+Save-slot encoding remains in the save owner.
 
 The reference evaluates a single saturated count of earned frames and decomposes
 it back to all four quantities. It agrees with all 11 vectors. The retained
@@ -80,6 +80,34 @@ continuations restore from complete reference results. Each of the four
 single-component snapshot omissions is rejected. These are reference checks.
 Production scheduling, production checkpoint restoration and indexed replay
 remain integration obligations.
+
+## Ceres arrival, return and departure work
+
+| Case | Source and comparison |
+| --- | --- |
+| R-ceres-first-carry | `chain-any-0001-DF45` cuts 28 to 29. The complete clock changes from 00:00:00.59 to 00:00:01.00 during ordinary play with positive whole Health. |
+| R-ceres-arrival-work | `any-ceres-arrival` cuts 0 to 222 hold zero through preparation and then earn 30 opportunities in state 7, including the turn that publishes state 8. The next row's cut 0 is the next ordinary turn. |
+| R-ceres-return-clock | `chain-any-0006-E0B5` cut 1610 advances once on the touch. Cuts 1611 to 1776 hold 00:00:39.54, including D1's five ready/publish pairs. `chain-any-0007-E06B` cut 0 resumes at 00:00:39.55. |
+| R-ceres-shaft-resume | `chain-any-0010-DF8D` cuts 221 to 278 hold at 00:00:47.55 after the touch. Shaft `chain-any-0011-DF45` cut 0 advances to 00:00:47.56. Its cuts 164 and 165 separately qualify the reach turn and first locked turn. |
+| R-ceres-last-room-work | Shaft cuts 238 to 242. The fresh room pass earns 00:00:51.55 at cut 239, while the HUD and finished-frame counts hold. Cuts 240 through 242 hold elapsed time through the save, final publication and dispatch. |
+
+The clock uses `$82:8BA0..8BB3` after the room's gameplay work, including the
+locked shaft work from `$82:8367..83A6`. Native game states and NMI cuts
+distinguish arrival preparation, active arrival, ordinary work, passage and
+locked work. The late overrun is inside `$80:82CE` after the room pass.
+The subsequent save work at `$81:8066` and requested publication do not
+run the elapsed clock. The scheduler already qualifies completed work
+separately from NMI publication. Do not use record clock values as input.
+
+The observer reference compares the complete clock through arrival and all
+eleven consecutive room rows. It counts 3,115 advances from zero through
+shaft cut 239, checking positive whole Health on advances, every ordinary
+door touch, all passage holds, and each adjacent row boundary. The recorded
+schedule tables are integration witnesses. The Ceres case file keeps the recorded first carry beside the schedule. The
+existing clock model tests cover the same second carry arithmetic with
+C-second-carry. Production must compare the
+entire carried clock against native readback, including after restoration
+of an in-flight shaft turn and before P2 captures the escape save.
 
 ## Budget
 

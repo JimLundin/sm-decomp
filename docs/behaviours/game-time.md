@@ -1,14 +1,16 @@
 # Play time
 
 The elapsed play time the player can see and keep with a run. Vectors:
-[game-time.toml](../../scenarios/vectors/game-time.toml).
+[game-time.toml](../../scenarios/vectors/game-time.toml) and
+[recorded Ceres cases](../../scenarios/vectors/game-time-ceres.toml).
 
 ## Header
 
-**Scope.** One advance of play time at an ordinary active gameplay opportunity.
-The clock has a complete rule for all legal times. Production qualification here
-covers the reached ordinary advance without a carry. This introduces the current
-play-time owner. There is no old production owner to replace.
+**Scope.** One advance of play time at a qualified gameplay opportunity.
+The clock has a complete rule for all legal times. Production qualification
+covers the active Ceres arrival, ordinary room play, and the locked shaft
+passes through the final room work. The same clock carries across room passages
+and into the escape save.
 
 **Reads.** The gameplay scheduler supplies the current ordinary opportunity.
 [Health](samus-health.md) supplies current whole energy after same-frame
@@ -18,8 +20,9 @@ own complete time.
 **Leaves to others.** [Run Progress](run-progress.md) owns pickups and progress.
 [Door passage](world-doors.md) and the gameplay scheduler own when time can
 advance. Health owns reserve, refill and death decisions. Display formatting,
-save-slot persistence, initial time on starting a run, and the other gameplay
-contexts for advancing or stopping time are outside this rule. Other gameplay
+save-slot persistence and the other gameplay contexts for advancing or
+stopping time are outside this rule. The selected fresh file supplies zero
+elapsed time. Other gameplay
 counters and hardware timing have their own owners.
 
 ## Memory and boundary
@@ -37,10 +40,10 @@ Each quantity is independently observable and retained, including the fraction
 of a second the player has already earned. The model returns the complete clock
 after one qualified opportunity. It is total across the stated ranges.
 
-For the first supported production scope, the current ordinary gameplay
-opportunity requires positive whole current Health and a legal clock whose
-frame component is below 59. This admits no carry and leaves the hour component
-below 100. Advancing from 99:59:59.58 to 99:59:59.59 is in scope
+The qualified Ceres work uses positive whole current Health and a legal
+clock. It includes the ordinary carry from frame 59 into the next second
+[R-ceres-first-carry]. The minute, hour and ceiling cases retain their existing
+model proof. Advancing from 99:59:59.58 to 99:59:59.59 is in scope
 [C-ceiling-arrival]. An attempt to advance from 99:59:59.59 requires
 the ceiling arm, which is outside this production scope. In the supported
 scope Health remains unchanged by PlayTimeAdvance. An
@@ -69,8 +72,8 @@ remains Unsupported.
   C-last-hour].
 - Qualified opportunity at 99:59:59.59 → keep the entire time at
   99:59:59.59 [C-ceiling, C-ceiling-again].
-- checked: oracle (R-ordinary-advance); original only for carry and saturation,
-  with constructed vectors.
+- checked: oracle (R-ordinary-advance, R-ceres-first-carry); constructed
+  (other carries and saturation).
 
 ## Order that matters
 
@@ -79,3 +82,20 @@ The scheduler advances the clock once before the completed clock for that frame
 can be observed. Each independent vector begins from its own full time. A
 continuation uses the previous result or a fresh restoration of that same
 complete result. Other counters and hardware refreshes supply no opportunities.
+
+### Ceres work opportunities
+
+- The first-file arrival advances once on each of its 30 active room turns,
+  including the turn that hands on ordinary play. Preparation holds the clock.
+  The next ordinary room turn continues from the carried time
+  [R-ceres-arrival-work].
+- A fresh ordinary room turn advances once, including a turn that touches a
+  door or reaches the elevator. Work during the door passage holds play time.
+  The first ordinary turn after the passage advances the carried clock once
+  [R-ceres-return-clock, R-ceres-shaft-resume].
+- A fresh locked shaft turn advances once during the wait and fade. The final
+  room turn earns time while publication is pending. Vblank-end work, the
+  interrupted escape save, and its publication continue that turn without a
+  second advance [R-ceres-last-room-work].
+- Restore the whole clock with the scheduler's work state. A resumed turn
+  keeps the advance it already earned [R-ceres-last-room-work].
