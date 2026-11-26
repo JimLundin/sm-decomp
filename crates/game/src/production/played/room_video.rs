@@ -160,6 +160,7 @@ impl Default for RoomVideo {
         video.dma[6] = DmaChannel::AT_POWER_ON;
         Self {
             video,
+            bg1_offset: crate::state::video::Scroll::default(),
             standard_objects: None,
             shaft_picture: None,
             shaft_raster_finished: false,
