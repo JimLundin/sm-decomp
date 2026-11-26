@@ -25,6 +25,7 @@ use data::rom::Rom;
 use front_end::{Cartridge, CartridgeFrame, Content, FrameEnd, Rules, Work};
 use game::exact::save_files::{Format, profile_bytes};
 use game::production::played::front_end;
+use game::state::video::{DMA_CHANNELS, DmaChannel, Video};
 use oracle_record::{ApuAccess, ApuAccessKind, FrameRecord};
 use screens_boot::{DriverUpload, PowerOnStage, PowerOnState, ScreenLight};
 use std::path::Path;
@@ -158,6 +159,7 @@ struct Run {
     controller: Controller,
     queues: Option<Queues>,
     sounds: Vec<[u8; 3]>,
+    video: Option<Box<Video>>,
 }
 
 /// The original cartridge after file selection, retained by the active flight and room.
@@ -280,6 +282,10 @@ impl Run {
             controller: Controller::default(),
             queues: None,
             sounds: Vec::new(),
+            video: Some(Box::new(Video {
+                dma: [DmaChannel::AT_POWER_ON; DMA_CHANNELS],
+                ..Video::default()
+            })),
         })
     }
 
@@ -405,7 +411,7 @@ impl Run {
     }
 
     fn flight(
-        &self,
+        &mut self,
         record: &FrameRecord,
         cut: u64,
     ) -> Result<Option<super::flight::Continuation>, Outcome> {
@@ -448,15 +454,18 @@ impl Run {
                 shake: None,
             },
         };
-        Ok(Some(
-            super::intro::Departure {
-                intro: intro.scene.clone(),
-                frame: screens.counts.before_room(),
-                controller: self.controller,
-                carry,
-            }
-            .continue_flight(journey, cut)?,
-        ))
+        let mut continuation = super::intro::Departure {
+            intro: intro.scene.clone(),
+            frame: screens.counts.before_room(),
+            controller: self.controller,
+            carry,
+        }
+        .continue_flight(journey, cut)?;
+        if let Some(mut video) = self.video.take() {
+            video.dma[0] = self.state.oam_dma();
+            continuation.video = Some(video);
+        }
+        Ok(Some(continuation))
     }
 
     fn continue_flight(

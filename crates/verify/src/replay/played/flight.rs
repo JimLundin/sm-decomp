@@ -19,6 +19,7 @@ use core::num::Wrapping;
 use data::rom::Rom;
 use enum_map::EnumMap;
 use game::production::played::flight::{self, FrameEnd};
+use game::state::video::Video;
 use oracle_record::FrameRecord;
 use screens_flight::{FrameReport, MusicQueue, Rules};
 use std::path::Path;
@@ -222,6 +223,7 @@ pub(super) fn play(
         journey,
         controller,
         carry,
+        video: None,
     };
     let (held, stop) = next.through(
         rows,
@@ -261,6 +263,7 @@ pub(super) struct Continuation {
     pub(super) journey: flight::Journey,
     pub(super) controller: super::Controller,
     pub(super) carry: super::start::Carried,
+    pub(super) video: Option<Box<Video>>,
 }
 
 impl Continuation {
@@ -283,12 +286,14 @@ impl Continuation {
             journey,
             mut controller,
             carry,
+            video,
         } = self;
         let mut run = Run {
             journey,
             report: None,
             scene,
             label_steps: 0,
+            video,
         };
         let mut held: u64 = 0;
         let mut began = previous.clone();
@@ -351,6 +356,14 @@ impl Continuation {
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
                 let mut room = super::Run::load(start, &content, rom, row)?;
+                if let Some(video) = run.video {
+                    let restored = canonical::from_bytes(&canonical::to_bytes(&video))
+                        .map_err(|_| Outcome::CheckpointFailure { cut })?;
+                    if video != restored {
+                        return Err(Outcome::CheckpointFailure { cut });
+                    }
+                    room.state.room_video.video = restored;
+                }
                 room.cartridge = cartridge;
                 let (more, stop) =
                     room.through(rows, current, entry.controller, cut.saturating_add(1)..=end)?;
@@ -372,6 +385,7 @@ struct Run {
     report: Option<FrameReport>,
     scene: Scene,
     label_steps: u64,
+    video: Option<Box<Video>>,
 }
 
 impl Run {

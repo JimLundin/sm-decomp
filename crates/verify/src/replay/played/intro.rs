@@ -506,6 +506,7 @@ impl Departure {
             .ok_or(Outcome::CheckpointFailure { cut })?,
             controller: restored.controller,
             carry: restored.carry,
+            video: None,
         })
     }
 }
