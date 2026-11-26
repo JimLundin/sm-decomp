@@ -172,6 +172,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
         clock_figures: None,
+        standing: None,
         shaft_track: None,
         shaft_overlay_art: None,
         shaft_effects: Vec::new(),

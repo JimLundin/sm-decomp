@@ -343,11 +343,7 @@ impl State {
         let room = self.ordinary_room(inputs)?;
         let mut random = self.frame.drawn(passing);
         let mut palette = self.palette;
-        let locked = self
-            .station
-            .escape_shaft
-            .as_ref()
-            .is_some_and(|shaft| shaft.locked);
+        let locked = self.elevator_locked();
         let (mut her, (mut enemies, health)) =
             self.play_actors_and_samus(inputs, passing, content, rules, &mut random, &mut palette)?;
         if let (Some(row), Some(colours)) =
@@ -389,19 +385,7 @@ impl State {
             rules,
         );
 
-        let standing = locked.then(|| {
-            super::blackout::StandingFrame::from_locked(
-                &self.samus,
-                camera.position(),
-                self.passage.room.entry.view.transform,
-            )
-        });
-        self.room_video.prepare_play_picture(
-            &hud_state,
-            standing,
-            hud_outputs.countdown.picture,
-            content,
-        )?;
+        self.prepare_room_picture(&hud_state, &hud_outputs, camera.position(), content)?;
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
         self.room_video.prepare_hud(&hud_state).ok_or(Fault::Hud)?;
@@ -462,6 +446,31 @@ impl State {
         }
     }
 
+    fn prepare_room_picture(
+        &mut self,
+        hud: &interface_hud::HudState,
+        output: &FrameOutputs,
+        camera: types::Position,
+        content: &Content,
+    ) -> Result<(), Fault> {
+        let standing = self.elevator_locked().then(|| {
+            super::blackout::StandingFrame::from_locked(
+                &self.samus,
+                camera,
+                self.passage.room.entry.view.transform,
+            )
+        });
+        self.room_video
+            .prepare_play_picture(hud, standing, output.countdown.picture, content)
+    }
+
+    fn elevator_locked(&self) -> bool {
+        self.station
+            .escape_shaft
+            .as_ref()
+            .is_some_and(|shaft| shaft.locked)
+    }
+
     fn play_actors_and_samus(
         &self,
         inputs: &Inputs,
@@ -471,11 +480,7 @@ impl State {
         random: &mut types::RandomSequence,
         palette: &mut Palette,
     ) -> Result<(samus::Her, (station::Enemies, samus_health::PlayedFrame)), Fault> {
-        let locked = self
-            .station
-            .escape_shaft
-            .as_ref()
-            .is_some_and(|shaft| shaft.locked);
+        let locked = self.elevator_locked();
         // Contact reads the room as it stood before movement.
         let at_start = if locked {
             None
