@@ -95,6 +95,16 @@ pub(super) fn admit(
             state.validate().map_err(AdmissionFault::Blackout)?;
             OwnedState::Blackout(state)
         }
+        (seed, content, rules) => admit_standalone(seed, content, rules)?,
+    })
+}
+
+fn admit_standalone(
+    seed: ProductionSeed,
+    content: &ProductionContent,
+    rules: &ProductionRules,
+) -> Result<OwnedState, AdmissionFault> {
+    Ok(match (seed, content, rules) {
         (ProductionSeed::Intro(state), ProductionContent::Intro(_), ProductionRules::Intro(_)) => {
             OwnedState::Intro(state)
         }
