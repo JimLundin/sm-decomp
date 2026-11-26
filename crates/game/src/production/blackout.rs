@@ -399,7 +399,7 @@ fn room(
     };
     let picture = picture::draw(&mut video.batch, &content.figures, timer)?;
     o.run.profile.play_time =
-        game_time::Clock::restore(o.run.profile.play_time).advance(game_time::QualifiedOpportunity);
+        super::played::play_time::after_work(o.run.profile.play_time, o.health, true);
     game_random::advance_random(&mut o.random);
     Ok(Opportunity::RoomWork(RoomPass { reach, picture }))
 }
