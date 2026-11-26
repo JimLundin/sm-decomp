@@ -20,6 +20,15 @@ pub(super) fn content(
         .map_err(|production::ColourFault| data_failure(None, "Ceres Ridley content"))
 }
 
+/// His slot remains visible during population retirement, independent of its old phase.
+pub(super) fn placement(wram: &[u8]) -> Result<Observation, Outcome> {
+    Ok(placed(ridley::placed(wram)?))
+}
+
+pub(super) fn placed(value: bool) -> Observation {
+    Observation::quantity("ridley.placed", i64::from(value))
+}
+
 /// Ridley as the record holds him, compared at a cut whose frame of work finished.
 pub(super) fn expected(wram: &[u8]) -> Result<Vec<Observation>, Outcome> {
     let Some((ridley, seen)) = ridley::observed(wram)? else {

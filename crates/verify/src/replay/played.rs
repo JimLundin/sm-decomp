@@ -151,6 +151,7 @@ fn expected(
     hud: &super::hud::Content,
     hud_settled: bool,
     counted: bool,
+    retiring_return: bool,
     row: &str,
 ) -> Result<Vec<Observation>, Outcome> {
     let wram = &frame.current.wram;
@@ -166,7 +167,9 @@ fn expected(
     if finished {
         fields.extend(colours::observations(&colours::palette(wram)?));
         fields.extend(ceres_doors::expected(wram)?);
-        fields.extend(ridley::expected(wram)?);
+        if !retiring_return {
+            fields.extend(ridley::expected(wram)?);
+        }
         fields.push(steam::state(&steam::decode(wram)?));
     }
     fields.extend(shaft::expected(wram)?);
@@ -187,6 +190,7 @@ fn actual(
     hud: &super::hud::Content,
     finished: bool,
     hud_settled: bool,
+    retiring_return: bool,
 ) -> Result<Vec<Observation>, Outcome> {
     let mut fields = samus::actual(&state.samus, content);
     fields.extend(camera::initial(&state.camera.0));
@@ -198,7 +202,9 @@ fn actual(
     if finished {
         fields.extend(colours::observations(&state.palette));
         fields.extend(ceres_doors::actual(&state.station));
-        fields.extend(ridley::actual(&state.station));
+        if !retiring_return {
+            fields.extend(ridley::actual(&state.station));
+        }
         fields.push(steam::state(&state.station.vents));
     }
     fields.extend(shaft::actual(&state.station));
@@ -756,12 +762,23 @@ impl<'a> Run<'a> {
             place,
             ..
         } = *frame;
+        let retiring_return =
+            self.state.passage.doorway.is_some_and(|door| {
+                door.through == data::assets::world::doorways::RIDLEY_TO_ESCAPE_58
+            }) && matches!(
+                self.state.passage.doors,
+                Doors::Passing(world_doors::Passage {
+                    phase: world_doors::Phase::Arriving { .. },
+                    ..
+                })
+            );
         let mut expected = expected(
             frame,
             &self.content.appearance,
             &self.hud,
             hud_settled,
             arrival::counted(self.state.arrival),
+            retiring_return,
             self.row,
         )?;
         let mut actual = actual(
@@ -770,25 +787,15 @@ impl<'a> Run<'a> {
             &self.hud,
             finished(current),
             hud_settled,
+            retiring_return,
         )?;
-        let retiring_return =
-            self.state.passage.doorway.is_some_and(|door| {
-                door.through == data::assets::world::doorways::RIDLEY_TO_ESCAPE_58
-            }) && matches!(
-                self.state.passage.doors,
-                Doors::Passing(world_doors::Passage {
-                    phase: world_doors::Phase::Arriving {
-                        fetching: world_doors::Fetching::Done,
-                        ..
-                    },
-                    ..
-                })
-            );
-        if retiring_return && !finished(current) {
-            expected.extend(ceres_doors::expected(&current.wram)?);
-            actual.extend(ceres_doors::actual(&self.state.station));
-            expected.extend(ridley::expected(&current.wram)?);
-            actual.extend(ridley::actual(&self.state.station));
+        if retiring_return {
+            if !finished(current) {
+                expected.extend(ceres_doors::expected(&current.wram)?);
+                actual.extend(ceres_doors::actual(&self.state.station));
+            }
+            expected.push(ridley::placement(&current.wram)?);
+            actual.push(ridley::placed(self.state.station.ridley.is_some()));
         }
         if place.0 == super::shaft_entry::ROW && (222..=278).contains(&place.1) {
             expected.extend(super::shaft_entry::expected(current)?);
@@ -824,8 +831,10 @@ impl<'a> Run<'a> {
                 )?);
                 expected.push(ridley::expected_swish(previous, current)?);
             }
-            expected.extend(ridley::retreat::expected(current)?);
-            expected.extend(ridley::flyby::expected(previous, current)?);
+            if !retiring_return {
+                expected.extend(ridley::retreat::expected(current)?);
+                expected.extend(ridley::flyby::expected(previous, current)?);
+            }
             if self.state.station.warning.is_some() {
                 // The old tail stays in State while the warning owns the room turn.
                 actual.push(contact::actual("ridley.tail.hit", None));

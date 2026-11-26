@@ -130,6 +130,10 @@ fn slot(wram: &[u8]) -> Result<Option<u16>, Outcome> {
     Ok(None)
 }
 
+pub(super) fn placed(wram: &[u8]) -> Result<bool, Outcome> {
+    Ok(slot(wram)?.is_some())
+}
+
 /// What his phase shows of him beyond his State: whether her touch meets him, whether his tail
 /// and wings move, and whether he roars.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

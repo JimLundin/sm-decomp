@@ -150,7 +150,14 @@ pub(in crate::replay) fn run(
             result,
         );
     }
-    let mut frozen = actual(&run.state, &content.appearance, &run.hud, true, false)?;
+    let mut frozen = actual(
+        &run.state,
+        &content.appearance,
+        &run.hud,
+        true,
+        false,
+        false,
+    )?;
     frozen.push(contact::actual("ridley.tail.hit", None));
     frozen.push(ridley::swish(false));
     if let Some(tail) = run
