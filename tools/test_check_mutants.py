@@ -32,24 +32,50 @@ class MutantCheck(unittest.TestCase):
         placement = replace(fault, name="placement", cut=100, field="steam.vents",
                             rule="VentPlaced")
         unassigned = replace(fault, name="unassigned", rule=None)
-        restored = f"RESTORED PASS {fault.case}"
-        logs = [
-            f"KILLED contact: {fault.case} cut137 steam.hit\nTIMING restoration\n{restored}",
-            f"KILLED unassigned: {fault.case} cut137 steam.hit\n{restored}",
-            f"KILLED placement: {fault.case} cut101 steam.vents\n{restored}",
-            f"KILLED placement: {fault.case} cut100 steam.vents",
-            restored,
-        ]
-        output = StringIO()
-        with redirect_stdout(output):
-            check_mutants.report_rule_coverage(["PuffTouches", "PuffReach", "VentPlaced"],
-                                               [fault, placement, unassigned], logs)
-        self.assertEqual(output.getvalue().splitlines(), [
-            "PuffTouches: killed through contact",
-            "PuffReach: unknown",
-            "VentPlaced: unknown",
-            "Unassigned faults: 1",
-        ])
+        def block(entry: Fault) -> list[str]:
+            replay = f"TIMING replay case={entry.case} seconds=0.100000"
+            return [
+                replay,
+                f"KILLED {entry.name}: {entry.case} cut{entry.cut} {entry.field}",
+                f"TIMING restoration fault={entry.name} seconds=0.100000",
+                "TIMING input-check seconds=0.100000",
+                "TIMING compilation seconds=0.100000",
+                replay,
+                "TIMING input-check seconds=0.100000",
+                f"RESTORED PASS {entry.case}",
+            ]
+
+        def report(logs: list[str]) -> list[str]:
+            output = StringIO()
+            with redirect_stdout(output):
+                check_mutants.report_rule_coverage(
+                    ["PuffTouches", "PuffReach", "VentPlaced"],
+                    [fault, placement, unassigned], logs)
+            return output.getvalue().splitlines()
+
+        contact = block(fault)
+        other = block(replace(placement, case="played other 0 200"))
+        expected = ["PuffTouches: unknown", "PuffReach: unknown",
+                    "VentPlaced: unknown", "Unassigned faults: 1"]
+        for label, lines in {
+            "swapped restoration and resumed case": contact[:2] + [other[2], other[5], contact[-1]],
+            "wrong restoration fault": contact[:2] + [other[2]] + contact[3:],
+            "wrong resumed case": contact[:5] + [other[5]] + contact[6:],
+            "wrong kill cut": block(replace(fault, cut=138)),
+            "unassigned": block(unassigned),
+            "orphaned pass": [contact[-1]],
+            "missing restoration": contact[:2] + contact[3:],
+            "missing resumed replay": contact[:5] + contact[6:],
+            "duplicate kill": contact[:2] + contact[1:],
+            "duplicate restoration": contact[:3] + contact[2:],
+            "duplicate resumed replay": contact[:6] + contact[5:],
+            "duplicate pass": contact + contact[-1:],
+        }.items():
+            with self.subTest(label=label):
+                self.assertEqual(report(["\n".join(lines)]), expected)
+        self.assertEqual(report(["\n".join(contact[:-1]), contact[-1]]), expected)
+        self.assertEqual(report(["\n".join(contact + block(unassigned))]),
+                         ["PuffTouches: killed through contact", *expected[1:]])
 
     def test_success_leaves_normal_artifact_vanilla_for_direct_replay(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

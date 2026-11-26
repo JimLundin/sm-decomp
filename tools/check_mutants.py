@@ -234,18 +234,24 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
 
 def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
                          logs: Sequence[str]) -> None:
-    """Credit exact kill and restored-pass pairs from the caller's selected run logs."""
-    receipts = set()
-    for log in logs:
-        lines = [line for line in log.splitlines() if not line.startswith("TIMING ")]
-        receipts.update(zip(lines, lines[1:]))
+    """Credit complete kill and restoration blocks from the selected run logs."""
+    seconds = r" seconds=\d+\.\d{6}\n"
+    input_check = rf"(?:TIMING input-check{seconds})?"
+    compilation = rf"(?:TIMING compilation{seconds})?"
     for rule in rules:
         confirmed = []
         for fault in faults:
             if fault.rule != rule:
                 continue
-            kill = f"KILLED {fault.name}: {fault.case} cut{fault.cut} {fault.field}"
-            if (kill, f"RESTORED PASS {fault.case}") in receipts:
+            name, case, field = map(re.escape, (fault.name, fault.case, fault.field))
+            replay = rf"TIMING replay case={case}{seconds}"
+            block = re.compile(
+                rf"^{replay}KILLED {name}: {case} cut{fault.cut} {field}\n"
+                rf"TIMING restoration fault={name}{seconds}{input_check}{compilation}"
+                rf"{replay}{input_check}RESTORED PASS {case}$(?!\nRESTORED PASS )",
+                re.MULTILINE,
+            )
+            if any(block.search(log) for log in logs):
                 confirmed.append(fault.name)
         status = f"killed through {', '.join(confirmed)}" if confirmed else "unknown"
         print(f"{rule}: {status}")
