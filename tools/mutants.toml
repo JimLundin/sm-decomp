@@ -3,6 +3,16 @@
 
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
+rules = [
+    "boss-ceres-ridley/VentPlaced",
+    "boss-ceres-ridley/VentInView",
+    "boss-ceres-ridley/VentWaits",
+    "boss-ceres-ridley/VentPuffs",
+    "boss-ceres-ridley/VentRests",
+    "boss-ceres-ridley/PuffReach",
+    "boss-ceres-ridley/PuffTouches",
+]
+
 [[fault]]
 name = "movement-double-update"
 responsibility = "movement"
@@ -1106,6 +1116,7 @@ field = "save-files.battery.byte-0164"
 
 [[fault]]
 name = "played-steam-contact-disabled"
+rule = "boss-ceres-ridley/PuffTouches"
 responsibility = "played"
 file = "crates/game/src/production/played/station.rs"
 before = "let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres);"
@@ -1116,6 +1127,7 @@ field = "steam.hit"
 
 [[fault]]
 name = "played-steam-reuses-placement-seed"
+rule = "boss-ceres-ridley/VentPlaced"
 responsibility = "played"
 file = "crates/game/src/production/room_loading.rs"
 before = "vents.push(Vent::place(facing, vent.position, drawn.number.0));"

@@ -36,6 +36,7 @@ class Fault:
     case: str
     cut: int
     field: str
+    rule: str | None = None
 
 def source_path(root: Path, source: str) -> Path:
     relative = Path(source)
@@ -231,6 +232,26 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
     if {fault.responsibility for fault in faults} != required:
         raise ValueError("every supported replay responsibility needs a production fault")
 
+def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
+                         logs: Sequence[str]) -> None:
+    """Credit exact kill and restored-pass pairs from the caller's selected run logs."""
+    receipts = set()
+    for log in logs:
+        lines = [line for line in log.splitlines() if not line.startswith("TIMING ")]
+        receipts.update(zip(lines, lines[1:]))
+    for rule in rules:
+        confirmed = []
+        for fault in faults:
+            if fault.rule != rule:
+                continue
+            kill = f"KILLED {fault.name}: {fault.case} cut{fault.cut} {fault.field}"
+            if (kill, f"RESTORED PASS {fault.case}") in receipts:
+                confirmed.append(fault.name)
+        status = f"killed through {', '.join(confirmed)}" if confirmed else "unknown"
+        print(f"{rule}: {status}")
+    unassigned = sum(fault.rule is None for fault in faults)
+    print(f"Unassigned faults: {unassigned}")
+
 def rebuild_cost(fault: Fault) -> int:
     """A fault's time is its rebuild: one in crates/verify rebuilds the verify crate, about
     three times a game fault's (15-22 s against 4-6 s on CI's runners); its replay is under 1 s."""
@@ -262,15 +283,27 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("plan", help="print the CI worker matrix")
     worker = commands.add_parser("worker", help="run one partition of the fault manifest")
     worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
+    coverage = commands.add_parser(
+        "rule-coverage", help="report declared rules using logs from reviewed runs of this roster")
+    coverage.add_argument("logs", nargs="*", type=Path, metavar="LOG")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
     manifest = root / "tools/mutants.toml"
     raw_manifest = manifest.read_bytes()
-    roster = tuple(Fault(**row) for row in tomllib.loads(raw_manifest.decode())["fault"])
+    data = tomllib.loads(raw_manifest.decode())
+    roster = tuple(Fault(**row) for row in data["fault"])
     if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
         raise ValueError("fault names must be nonempty and unique")
+    rules = data.get("rules", [])
+    if (not isinstance(rules, list) or any(not isinstance(rule, str) or not rule for rule in rules)
+        or len(rules) != len(set(rules))
+        or any(fault.rule is not None and fault.rule not in rules for fault in roster)):
+        raise ValueError("rule coverage needs unique rule IDs and declared fault assignments")
     validate_coverage(root, roster)
     validate_anchors(root, roster)
+    if args.command == "rule-coverage":
+        report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
+        return 0
     if args.command:
         partitions = partition_faults(roster)
         if args.command == "plan":

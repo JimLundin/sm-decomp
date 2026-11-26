@@ -26,6 +26,31 @@ def pass_receipt() -> dict[str, Any]:
     return observed
 
 class MutantCheck(unittest.TestCase):
+    def test_rule_credit_requires_its_assigned_fault_and_complete_receipt(self) -> None:
+        fault = Fault("contact", "played", PLAYED_RUNNER, "old", "new",
+                      "played steam 0 200", 137, "steam.hit", "PuffTouches")
+        placement = replace(fault, name="placement", cut=100, field="steam.vents",
+                            rule="VentPlaced")
+        unassigned = replace(fault, name="unassigned", rule=None)
+        restored = f"RESTORED PASS {fault.case}"
+        logs = [
+            f"KILLED contact: {fault.case} cut137 steam.hit\nTIMING restoration\n{restored}",
+            f"KILLED unassigned: {fault.case} cut137 steam.hit\n{restored}",
+            f"KILLED placement: {fault.case} cut101 steam.vents\n{restored}",
+            f"KILLED placement: {fault.case} cut100 steam.vents",
+            restored,
+        ]
+        output = StringIO()
+        with redirect_stdout(output):
+            check_mutants.report_rule_coverage(["PuffTouches", "PuffReach", "VentPlaced"],
+                                               [fault, placement, unassigned], logs)
+        self.assertEqual(output.getvalue().splitlines(), [
+            "PuffTouches: killed through contact",
+            "PuffReach: unknown",
+            "VentPlaced: unknown",
+            "Unassigned faults: 1",
+        ])
+
     def test_success_leaves_normal_artifact_vanilla_for_direct_replay(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
