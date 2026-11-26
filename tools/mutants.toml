@@ -877,7 +877,11 @@ field = "doors.colours.goal"
 name = "played-countdown-start-every-frame"
 responsibility = "played"
 file = "crates/verify/src/replay/played.rs"
-before = "let start = borrowed_start;"
+before = """let start = if warning::selected(&self.state.station) {
+            None
+        } else {
+            super::hud::countdown_start(&previous.wram, &current.wram)?
+        };"""
 after = "let start = interface_hud::StartTime::new(1, 0);"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
