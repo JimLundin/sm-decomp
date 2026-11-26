@@ -74,13 +74,8 @@ impl Cartridge {
         if self.state.active.is_none() || self.state.pending != PendingAction::Idle {
             return Err(Fault::CartridgeReceipt);
         }
-        let capture = crate::production::played::save_snapshot::capture(
-            selected,
-            room,
-            room.play_time,
-            location,
-        )
-        .ok_or(Fault::CartridgeReceipt)?;
+        let capture = crate::production::played::save_snapshot::capture(selected, room, location)
+            .ok_or(Fault::CartridgeReceipt)?;
         Ok((self.state, capture))
     }
 

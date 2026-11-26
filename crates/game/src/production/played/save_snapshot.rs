@@ -3,7 +3,7 @@
 use interface_hud::{Ammo, SelectableItem};
 use run_progress::Supply as Stock;
 use types::save_files::{Ammunition, ExploredCells, Gear, RunSnapshot, SelectedWeapon, Supply};
-use types::{Area, Pair, PlayTime, StationId};
+use types::{Area, Pair, StationId};
 
 /// The current run and the active map that the staged save receives.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -23,7 +23,6 @@ pub struct Capture {
 pub fn capture(
     selected: &RunSnapshot,
     room: &super::State,
-    time: PlayTime,
     location: (Area, StationId),
 ) -> Option<Capture> {
     let mut run = selected.clone();
@@ -61,7 +60,7 @@ pub fn capture(
         Some(SelectableItem::GrappleBeam) => SelectedWeapon::GrappleBeam,
         Some(SelectableItem::XRayScope) => SelectedWeapon::XRayScope,
     };
-    run.profile.play_time = time;
+    run.profile.play_time = room.play_time;
     run.progress.events = progress.events;
     run.progress.bosses = progress.defeated;
     run.progress.item_count = progress.items_placed.0;
