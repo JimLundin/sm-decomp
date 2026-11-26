@@ -35,6 +35,7 @@ impl State {
         let (view_x, view_y) = start.view;
         Ok(Self {
             room_video: super::room_video::RoomVideo::default(),
+            play_time: crate::production::played::play_time::ZERO,
             clock_picture: super::clock_picture::ClockPicture::default(),
             samus,
             camera: Model(Camera::restore(

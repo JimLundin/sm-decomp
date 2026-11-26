@@ -357,6 +357,12 @@ impl Run {
         let [_, _, _, cancel, select, _, _] =
             game::exact::save_files::control_words(&intro.actors.buttons);
         let carry = super::start::Carried {
+            play_time: self
+                .cartridge
+                .started()
+                .ok_or_else(|| data_failure(None, "selected play time"))?
+                .profile
+                .play_time,
             language: intro.actors.settings.language,
             health: room.actor.health.0,
             bindings: crate::replay::hud::Bindings::new(select, cancel),

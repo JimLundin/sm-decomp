@@ -63,6 +63,7 @@ pub mod intro_missiles;
 pub mod intro_rooms;
 pub mod landing_site;
 pub mod passage;
+pub mod play_time;
 pub mod quake;
 mod ridley;
 pub mod room_video;
@@ -155,6 +156,8 @@ pub struct Rules {
 pub struct State {
     /// Physical room graphics with a qualified writer.
     pub room_video: room_video::RoomVideo,
+    /// Elapsed time carried from the selected file.
+    pub play_time: types::PlayTime,
     /// The timer sprites held in the prepared and published pictures.
     pub clock_picture: clock_picture::ClockPicture,
     /// Her movement, her appearance and the figure she is drawn in.
@@ -368,6 +371,7 @@ impl State {
         }
         self.quake = Model(quake);
         self.frame = self.frame.after(doors.report.finishing, random);
+        self.play_time = play_time::after_work(self.play_time, health.state, passing.work_begun);
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
             movement: her.outcome,

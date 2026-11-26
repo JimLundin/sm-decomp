@@ -29,6 +29,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     let her = fixtures::samus().position;
     State {
         room_video: super::room_video::RoomVideo::default(),
+        play_time: crate::production::played::play_time::ZERO,
         clock_picture: super::clock_picture::ClockPicture::default(),
         samus: samus::State {
             last_draw_jump: Model(samus_movement::JumpButton::Up),

@@ -40,6 +40,7 @@ pub(super) mod indexed;
 pub(super) mod intro;
 mod passage;
 pub(super) mod platform;
+mod play_time;
 mod power_on;
 mod quake;
 #[cfg(test)]
@@ -538,6 +539,7 @@ impl<'a> Run<'a> {
         }
         let state = played::State {
             room_video: played::room_video::RoomVideo::default(),
+            play_time: play_time::read(&seed.wram)?,
             clock_picture: played::clock_picture::ClockPicture::default(),
             samus: samus::seed(&seed.wram, &content.appearance)?,
             camera: Model(camera::seed(&seed.wram, &camera::Content)?),
@@ -741,6 +743,8 @@ impl<'a> Run<'a> {
             &mut expected,
             &mut actual,
         )?;
+        expected.push(play_time::observation(play_time::read(&current.wram)?));
+        actual.push(play_time::observation(self.state.play_time));
         compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
         Ok(expected)
     }
