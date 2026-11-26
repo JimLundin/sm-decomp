@@ -12,6 +12,7 @@ mod compare;
 mod connected;
 mod discovery;
 mod early_map;
+mod explosion;
 mod flashback;
 mod health_tail;
 mod hud;

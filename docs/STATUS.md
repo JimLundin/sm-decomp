@@ -493,6 +493,26 @@ rooms up to movie frame 11,423. It holds 3,911 cuts from the flight seed and sto
 comparison. Delaying the flight handoff until the work finishes first differs
 at cut 803 in `flight.active`.
 
+### The station explosion
+
+The played run starts at the elevator's saved blackout in `chain-any-0011-DF45`,
+cut 241. It holds through cut 1,004, movie frame 14,076, when the station
+dispatches the flight to Zebes. Cut 1,005 is the receiving flight boundary. The run carries the Landing Site
+destination, health, energy capacity, caption choice, palette and OAM.
+The platform supplies work completion at each cut. The music service supplies
+its busy reply after service.
+
+The indexed case `explosion/station-blackout-to-zebes` checks every cut from
+that intake. It compares the scene and its ordered requests, the affine matrix,
+the fractional sprite placements and burst samples, the visible OAM entries
+and their high bits, and all 256 published colours. At setup it compares the
+complete Mode 7 map and graphics and the overlaid sprite graphics. At breakup
+it compares the two replacement map regions. The flash request names its center.
+The interrupted setup writes, the flash's scanline window, hidden sprite
+retention and final pixel composition are outside these comparisons.
+The elevator and cartridge supply the intake. The station's last output is the
+flight dispatch under forced blank.
+
 ### Her arrival at Ceres
 
 The standalone `any-ceres-arrival` run holds all 222 arrival cuts, then plays on through

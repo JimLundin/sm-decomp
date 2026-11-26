@@ -1794,3 +1794,39 @@ provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness", "initial flyby display memory"]
 phase = "frame boundary"
 claim = "Only the seed supplies initial display memory. Production supplies the picture, tile and sound effects thereafter."
+
+[[case]]
+id = "explosion/station-blackout-to-zebes"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 241 }
+end = { cut_inclusive = 1004 }
+rules = ["screens-explosion/StationPictureArrives", "screens-explosion/StationAwaitsMusic", "screens-explosion/StationBrightens", "screens-explosion/SpaceDrifts", "screens-explosion/StationBursts", "screens-explosion/StationBreaks", "screens-explosion/ShipDeparts", "screens-explosion/SpaceHolds", "screens-explosion/SceneBlacksOut"]
+profile = "reference"
+responsibilities = ["station-explosion"]
+content = "player-rom-import"
+inputs = "station-explosion"
+expectations = { provider = "pinned-record-cache", fields = ["explosion.stage", "explosion.motion", "explosion.bursts", "explosion.carry"], outputs = ["explosion.requests", "explosion.drawing"] }
+checkpoints = true
+limits = ["the elevator exit and completed save come from the origin", "setup transfer intermediates are masked before the settled drawing", "the flash is compared at its start request, and full scanline window composition is outside this case", "Ceres music requests and the post-service reply are compared at the queue boundary", "sprite comparisons retain every visible entry, its order and size", "the next owner receives the blackout but does not advance in this case"]
+
+[[case.borrowed]]
+dependency = "explosion.elevator"
+provider = "pinned-elevator-blackout"
+fields = ["station.begin", "health", "video.palette", "video.oam", "options.subtitles", "scheduler.finished", "landing.destination"]
+phase = "seed"
+claim = "the elevator's completed blackout selects this scene and the Landing Site"
+
+[[case.borrowed]]
+dependency = "explosion.cadence"
+provider = "pinned-nmi-work-completion"
+fields = ["scheduler.finished"]
+phase = "per cut"
+claim = "the platform supplies the completion of each cinematic frame and transfer"
+
+[[case.borrowed]]
+dependency = "explosion.music"
+provider = "pinned-post-service-music"
+fields = ["music.busy"]
+phase = "after audio service"
+claim = "the scene reads the independent queued music reply before advancing the reveal"

@@ -3,6 +3,7 @@
 
 use self::audio_checkpoint::PortableAudio;
 use self::played::discovery;
+use self::played::explosion;
 use self::played::flashback;
 use self::played::intro_rooms;
 use crate::state::owned::{CodecState, OwnedState};
@@ -47,6 +48,8 @@ pub use movement::MovementInputs;
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scope {
+    /// Scheduled station explosion and its drawing and health outputs.
+    Explosion,
     /// The shaft blackout and its suspended departure.
     Blackout,
     /// The complete intro with a selected encounter input.
@@ -96,6 +99,8 @@ pub enum Scope {
 /// Complete initial state, admitted once rather than reconstructed each cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionSeed {
+    /// Complete cinematic, palette, sprite buffer and retained destination.
+    Explosion(Box<explosion::State>),
     /// The shaft blackout and its suspended departure.
     Blackout(Box<blackout::State>),
     /// The complete intro and its displayed palette.
@@ -144,6 +149,8 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
+    /// Cinematic completion and the music reply.
+    Explosion(explosion::Cut),
     /// The shaft blackout and its suspended departure.
     Blackout(blackout::Cut),
     /// An intro work-frame boundary.
@@ -230,6 +237,8 @@ pub enum AdvanceInput<'a> {
 /// Fresh complete outputs from the selected entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionOutputs {
+    /// The cinematic and its consumers on this cut.
+    Explosion(Box<explosion::Output>),
     /// The shaft blackout and its suspended departure.
     Blackout(Box<blackout::Output>),
     /// The intro's completed frame publications, if work finished.
@@ -281,6 +290,8 @@ pub enum ProductionOutputs {
 /// Why a selected start or checkpoint cannot be admitted.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AdmissionFault {
+    /// Inconsistent cinematic owners or missing content.
+    Explosion(explosion::Fault),
     /// The shaft blackout and its suspended departure.
     Blackout(blackout::Fault),
     /// The saved playback progress or pad is outside its content.
@@ -316,6 +327,8 @@ pub enum AdmissionFault {
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
+    /// A required station explosion consumer or continuation is unavailable.
+    Explosion(explosion::Fault),
     /// The shaft blackout and its suspended departure.
     Blackout(blackout::Fault),
     /// A required continuation beyond the intro scene provided here.
@@ -413,6 +426,7 @@ impl Production {
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
             ProductionSeed::Blackout(_) => Scope::Blackout,
+            ProductionSeed::Explosion(_) => Scope::Explosion,
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Playback(_) => Scope::Playback,
             ProductionSeed::SaveFiles(_) => Scope::SaveFiles,
@@ -532,6 +546,7 @@ impl Production {
     pub const fn scope(&self) -> Scope {
         match self.state {
             OwnedState::Blackout(_) => Scope::Blackout,
+            OwnedState::Explosion(_) => Scope::Explosion,
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Playback(_) => Scope::Playback,
             OwnedState::SaveFiles(_) => Scope::SaveFiles,
@@ -689,6 +704,7 @@ impl Production {
             | OwnedState::SaveFiles(_)
             | OwnedState::Discovery(_)
             | OwnedState::Blackout(_)
+            | OwnedState::Explosion(_)
             | OwnedState::HealthTail(_)
             | OwnedState::Movement(_)
             | OwnedState::JumpHistory(_)
@@ -715,6 +731,7 @@ impl Production {
                 return Ok(self.encode_save(Model::<save_files::SaveFilesPin>(state.clone())));
             }
             OwnedState::Blackout(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::Explosion(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
@@ -773,6 +790,10 @@ impl Production {
             let checkpoint: Checkpoint<Model<save_files::SaveFilesPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::SaveFiles(checkpoint.state.0)
+        } else if matches!(&content, ProductionContent::Explosion(_)) {
+            let checkpoint: Checkpoint<Box<explosion::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::Explosion(checkpoint.state)
         } else if matches!(&content, ProductionContent::Flashback(_)) {
             let checkpoint: Checkpoint<Model<crate::state::owned::FlashbackPin>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -828,6 +849,8 @@ impl Production {
 
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
+        Scope::Explosion => canonical::model::pin_holds::<explosion::ScenePin>()
+            .and_then(|()| canonical::model::pin_holds::<health_tail::HealthPin>()),
         Scope::Flashback => canonical::model::pin_holds::<crate::state::owned::FlashbackPin>(),
         Scope::Playback => canonical::model::pin_holds::<crate::state::owned::PlaybackPin>(),
         Scope::Discovery => canonical::model::pin_holds::<crate::state::owned::DiscoveryPin>(),

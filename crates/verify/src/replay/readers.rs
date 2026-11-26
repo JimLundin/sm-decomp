@@ -11,6 +11,7 @@ use game::production::{
 use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
+    Explosion(super::explosion::Tape<game::production::played::explosion::Cut>),
     Blackout(super::blackout::Tape<game::production::blackout::Cut>),
     Intro(super::played::intro::indexed::Inputs),
     IntroRooms(super::intro_rooms::Inputs),
@@ -34,6 +35,7 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
+    Explosion(super::explosion::Tape<ExpectedCut>),
     Blackout(super::blackout::Tape<ExpectedCut>),
     Intro(super::played::intro::indexed::Expected),
     IntroRooms(Box<super::intro_rooms::Expected>),
@@ -55,6 +57,7 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone)]
 pub(super) enum ActualReader {
+    Explosion,
     Blackout(bool),
     Intro,
     IntroRooms,
@@ -111,6 +114,7 @@ impl InputReader {
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::Explosion(inputs) => inputs.advance(production, cut),
             Self::Blackout(tape) => tape.advance(production, cut),
             Self::Intro(inputs) => inputs.advance(production, cut),
             Self::Flashback(inputs) => inputs.advance(production, cut),
@@ -214,6 +218,9 @@ impl ActualReader {
             (Self::Discovery, InputReader::Discovery(_), ProductionOutputs::Discovery(outputs)) => {
                 super::discovery::actual(production, Some(&outputs))
             }
+            (Self::Explosion, InputReader::Explosion(_), ProductionOutputs::Explosion(output)) => {
+                super::explosion::actual(production, Some(&output))
+            }
             (Self::Blackout(late), InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
                 super::blackout::actual(production, &out, *late)
             }
@@ -303,6 +310,7 @@ impl ActualReader {
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
             Self::JumpHistory => super::jump_history::actual(production),
             Self::Discovery => super::discovery::actual(production, None),
+            Self::Explosion => super::explosion::actual(production, None),
             Self::Blackout(late) => super::blackout::actual(
                 production,
                 &game::production::blackout::Output::default(),
@@ -356,6 +364,7 @@ impl ExpectedReader {
         match self {
             Self::Intro(expected) => expected.read(cut),
             Self::IntroRooms(expected) => expected.read(cut),
+            Self::Explosion(expected) => expected.read(cut),
             Self::Blackout(tape) => tape.at(cut).cloned(),
             Self::Flashback(expected) => expected.at(cut),
             Self::Playback(expected) => super::playback::at(expected, cut).cloned(),

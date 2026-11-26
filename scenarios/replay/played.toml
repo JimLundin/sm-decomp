@@ -267,3 +267,13 @@ stop = { failed = "RidleyGetawayPush" }
 seed_frame = 6013
 frames = [6014, 11423]
 power_on = false
+
+[[run]]
+row = "chain-any-0011-DF45"
+start = 241
+end = 1005
+held = 763
+stop = { failed = "station dispatched the flight to Zebes" }
+seed_frame = 13313
+frames = [13314, 14076]
+power_on = false

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "ca5619106baa92d1b451d15fbeabb4edbb0fa374c5aee60c2cbf9cc43ec10797"
+index_sha256 = "d144f4e6d3512dbea19efd5e5eb8b73589fd6eae5dd8b26953299e2a5a10ffe2"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1308,5 +1308,23 @@ replies = 0
 null_cuts = 0
 null_fields = 89
 restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "explosion/station-blackout-to-zebes"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "90f51e9b523dffdfc101e7ebf9719e874f2cf6b58c88900c79c2f0870e792979"
+
+[case.counts]
+cuts = 763
+fields = 6662
+outputs = 2212
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 913
+restorations = 763
 pending_boundaries = 0
 pending_restorations = 0

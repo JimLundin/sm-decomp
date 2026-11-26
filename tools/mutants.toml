@@ -1744,3 +1744,13 @@ after = "                        publish_tiles(&mut self.vram, uploads.get(..0).
 case = "ridley/flyby"
 cut = 1158
 field = "ridley.flyby.tiles.0"
+
+[[fault]]
+name = "station-explosion-ship-map"
+responsibility = "station-explosion"
+file = "crates/game/src/production/played/explosion.rs"
+before = "Pages::Ship(MapRegion::Upper, content.ship_front.clone())"
+after = "Pages::Ship(MapRegion::Upper, content.ship_back.clone())"
+case = "explosion/station-blackout-to-zebes"
+cut = 733
+field = "explosion.ship-front"

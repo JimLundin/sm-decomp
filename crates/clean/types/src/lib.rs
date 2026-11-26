@@ -9,6 +9,7 @@ pub mod brightness;
 pub mod ceres_blackout;
 pub mod ceres_getaway;
 pub mod discovery;
+pub mod explosion;
 pub mod file_select;
 pub mod flashback;
 pub mod flight;
