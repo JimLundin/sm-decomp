@@ -1,6 +1,7 @@
 //! The Ceres elevator's scheduler, the interrupted room picture and its two-stage cartridge save.
 mod body;
 mod hud;
+mod live_room;
 mod picture;
 use super::save_files;
 use crate::exact::save_files::Format;
@@ -14,6 +15,7 @@ use canonical::{
 use data::assets::countdown::Figures;
 pub use hud::{HudContent, LockedHud};
 use interface_hud::{Countdown, CountdownInputs, CountdownPicture, CountdownRuns, FinishedFrames};
+pub use live_room::{LiveRoom, TransferFault};
 pub use picture::Platform;
 use screens_blackout::{Opportunity, Reach, RoomPass};
 pub use screens_blackout::{Request, SoundChannel};
