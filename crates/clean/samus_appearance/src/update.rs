@@ -147,6 +147,7 @@ pub fn update(
         cannon,
         colours,
         hurt_count,
+        ..state
     };
     let outputs = FrameOutputs {
         contact,

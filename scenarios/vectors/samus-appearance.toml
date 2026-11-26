@@ -2532,3 +2532,237 @@ push_time = 0
 timed_special_colour = false
 parity = "Odd"
 body_drawn = false
+
+# Wall-jump dust vectors. Default inputs have new ordinary work and an absent arrival.
+# The source names the resulting cut. Recorded placements carry position and look
+# identity only. The reference game's art is imported outside these vectors.
+# An empty before or after means no dust. An empty placement writes nothing.
+# A placement with only left keeps the cursor and contributes a pending left edge.
+# Adjusted is invented content with look lengths 1, 4, 2, 3.
+
+[[wall_jump_dust]]
+id = "R-dust-first-left"
+source = "chain-any-0011-DF45:10"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { view = [0, 464], fresh = true, arrival = "WallJump", facing = "Left", centre = [204, 598], half_height = 19 }
+after = { centre = [210, 615], look = "First", visits_left = 2 }
+placement = { left = 206, top = 147, look = "First" }
+
+[[wall_jump_dust]]
+id = "R-dust-second"
+source = "chain-any-0011-DF45:12"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [210, 614], look = "First", visits_left = 1 }
+inputs = { view = [0, 453], fresh = true }
+after = { centre = [210, 613], look = "Second", visits_left = 3 }
+placement = { left = 206, top = 156, look = "Second" }
+
+[[wall_jump_dust]]
+id = "R-dust-third"
+source = "chain-any-0011-DF45:15"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [210, 611], look = "Second", visits_left = 1 }
+inputs = { view = [0, 437], fresh = true }
+after = { centre = [210, 610], look = "Third", visits_left = 4 }
+placement = { left = 206, top = 169, look = "Third" }
+
+[[wall_jump_dust]]
+id = "R-dust-fourth"
+source = "chain-any-0011-DF45:19"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [210, 607], look = "Third", visits_left = 1 }
+inputs = { view = [0, 417], fresh = true }
+after = { centre = [210, 606], look = "Fourth", visits_left = 5 }
+placement = { left = 206, top = 185, look = "Fourth" }
+
+[[wall_jump_dust]]
+id = "R-dust-expiry"
+source = "chain-any-0011-DF45:24"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [210, 602], look = "Fourth", visits_left = 1 }
+inputs = { view = [0, 395], fresh = true }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "R-dust-first-right"
+source = "chain-any-0011-DF45:35"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { view = [0, 362], fresh = true, arrival = "WallJump", facing = "Right", centre = [171, 519], half_height = 19 }
+after = { centre = [165, 536], look = "First", visits_left = 2 }
+placement = { left = 161, top = 170, look = "First" }
+
+[[wall_jump_dust]]
+id = "R-dust-dry-clear"
+source = "chain-any-0011-DF45:45"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [165, 527], look = "Fourth", visits_left = 5 }
+inputs = { view = [0, 326], fresh = true, arrival = "DryTouchdown" }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "R-dust-held"
+source = "chain-any-0011-DF45:240"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { view = [0, 0], fresh = false }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "R-dust-publish"
+source = "chain-any-0011-DF45:241"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { view = [0, 0], fresh = false }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-right"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [90, 90], look = "Fourth", visits_left = 1 }
+inputs = { arrival = "WallJump", centre = [40, 50], facing = "Right", half_height = 11, view = [5, 10] }
+after = { centre = [34, 59], look = "First", visits_left = 2 }
+placement = { left = 25, top = 45, look = "First" }
+
+[[wall_jump_dust]]
+id = "C-dust-left"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { arrival = "WallJump", centre = [40, 50], facing = "Left", half_height = 14, view = [5, 10] }
+after = { centre = [46, 62], look = "First", visits_left = 2 }
+placement = { left = 37, top = 48, look = "First" }
+
+[[wall_jump_dust]]
+id = "C-dust-clear"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [40, 40], look = "First", visits_left = 1 }
+inputs = { arrival = "DryTouchdown", view = [0, 0] }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-end"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [40, 40], look = "Fourth", visits_left = 1 }
+inputs = { view = [0, 0] }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-aging"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [40, 40], look = "First", visits_left = 2 }
+inputs = { view = [0, 0] }
+after = { centre = [40, 39], look = "First", visits_left = 1 }
+placement = { left = 36, top = 35, look = "First" }
+
+[[wall_jump_dust]]
+id = "C-dust-adjusted"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [40, 40], look = "First", visits_left = 1 }
+inputs = { view = [0, 0] }
+after = { centre = [40, 39], look = "Second", visits_left = 4 }
+placement = { left = 36, top = 35, look = "Second" }
+clip = "Adjusted"
+
+[[wall_jump_dust]]
+id = "C-dust-held"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [40, 40], look = "First", visits_left = 2 }
+inputs = { fresh = false, view = [0, 0] }
+after = { centre = [40, 40], look = "First", visits_left = 2 }
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-idle"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { view = [0, 0] }
+after = {}
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-x-outside"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [3, 40], look = "First", visits_left = 2 }
+inputs = { view = [0, 0] }
+after = { centre = [3, 39], look = "First", visits_left = 1 }
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-x-right-outside"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [260, 40], look = "First", visits_left = 2 }
+inputs = { view = [0, 0] }
+after = { centre = [260, 39], look = "First", visits_left = 1 }
+placement = {}
+
+[[wall_jump_dust]]
+id = "C-dust-left-only"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [4, 4], look = "First", visits_left = 2 }
+inputs = { view = [0, 0] }
+after = { centre = [4, 3], look = "First", visits_left = 1 }
+placement = { left = 0 }
+
+[[wall_jump_dust]]
+id = "C-dust-bottom-outside"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [259, 261], look = "First", visits_left = 2 }
+inputs = { view = [0, 0] }
+after = { centre = [259, 260], look = "First", visits_left = 1 }
+placement = { left = 255 }
+
+[[wall_jump_dust]]
+id = "C-dust-edges"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [259, 5], look = "Third", visits_left = 3 }
+inputs = { view = [0, 0] }
+after = { centre = [259, 4], look = "Third", visits_left = 2 }
+placement = { left = 255, top = 0, look = "Third" }
+restore = true
+
+[[wall_jump_dust]]
+id = "C-dust-bottom-edge"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [4, 260], look = "First", visits_left = 2 }
+inputs = { view = [0, 0] }
+after = { centre = [4, 259], look = "First", visits_left = 1 }
+placement = { left = 0, top = 255, look = "First" }
+
+[[wall_jump_dust]]
+id = "C-dust-wrap"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = { centre = [2, 0], look = "First", visits_left = 2 }
+inputs = { view = [65534, 65531] }
+after = { centre = [2, 65535], look = "First", visits_left = 1 }
+placement = { left = 0, top = 0, look = "First" }
+
+[[wall_jump_dust]]
+id = "C-dust-spawn-wrap"
+source = "constructed"
+entries = ["WallJumpDust", "WallJumpDustPicture"]
+before = {}
+inputs = { arrival = "WallJump", centre = [2, 65533], facing = "Right", half_height = 7, view = [65528, 65534] }
+after = { centre = [65532, 2], look = "First", visits_left = 2 }
+placement = { left = 0, top = 0, look = "First" }

@@ -23,6 +23,13 @@ pub(super) fn body_art(
         .map_err(|_| crate::replay::data_failure(None, "ordinary Samus body art"))
 }
 
+pub(super) fn dust_art(
+    rom: data::rom::Lorom<'_>,
+) -> Result<data::assets::samus::WallJumpDustArt, Outcome> {
+    import::samus::dust::import(rom)
+        .map_err(|_| crate::replay::data_failure(None, "wall-jump dust content"))
+}
+
 /// Her State as the seed holds it.
 pub(in crate::replay) fn seed(
     wram: &[u8],

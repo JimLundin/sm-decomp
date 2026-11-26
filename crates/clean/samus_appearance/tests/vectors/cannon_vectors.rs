@@ -194,6 +194,7 @@ fn run_history(history: &CannonHistory, file: &VectorFile, library: &Library) {
             .unwrap_or_else(|| panic!("{id}: expected an initial delay of 0 to 2 frames")),
         colours: UNTOUCHED_COLOURS,
         hurt_count: HurtCount::NONE,
+        dust: None,
     };
     let mut drawn = appearance.cannon.may_follow();
     for (at, step) in history.steps.iter().enumerate() {
@@ -318,6 +319,7 @@ fn the_delay_is_built_and_restored_only_in_its_range() {
             cannon: delay,
             colours: UNTOUCHED_COLOURS,
             hurt_count: HurtCount::NONE,
+            dust: None,
         };
         assert_eq!(
             kept(appearance),

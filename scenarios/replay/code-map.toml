@@ -1429,3 +1429,23 @@ targets = [
   { role = "adapter", path = "crates/game/src/exact/ridley_picture.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/fight_picture.rs" },
 ]
+
+[[rule]]
+id = "samus-appearance/WallJumpDust"
+targets = [
+  { role = "model", path = "crates/clean/samus_appearance/src/dust.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/dust.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/samus.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/composition.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_dust.rs" },
+]
+
+[[rule]]
+id = "samus-appearance/WallJumpDustPicture"
+targets = [
+  { role = "model", path = "crates/clean/samus_appearance/src/dust.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
+  { role = "adapter", path = "crates/game/src/exact/oam.rs" },
+  { role = "navigation", path = "crates/import/src/samus/dust.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_dust.rs" },
+]

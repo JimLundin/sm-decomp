@@ -6,6 +6,7 @@
 mod vectors {
     mod cannon_vectors;
     mod colour_vectors;
+    mod dust_vectors;
     mod elevator_vectors;
     mod flicker_vectors;
     mod hurt_vectors;
@@ -48,6 +49,7 @@ mod vectors {
         hurt_colours: Vec<hurt_vectors::HurtVector>,
         elevator_body: Vec<elevator_vectors::ElevatorVector>,
         protection_flicker: Vec<flicker_vectors::FlickerVector>,
+        wall_jump_dust: Vec<dust_vectors::DustVector>,
     }
 
     /// Her appearance State as initialization leaves it, quantity by quantity.
@@ -1088,6 +1090,7 @@ mod vectors {
                 charge_glow_position: ChargeGlowPosition::new(given.charge_glow_position),
             },
             hurt_count: HurtCount::NONE,
+            dust: None,
         };
         assert_eq!(
             AppearanceState::INITIAL,
@@ -1138,6 +1141,7 @@ mod vectors {
                     .iter()
                     .flat_map(|draw| &draw.entries),
             )
+            .chain(file.wall_jump_dust.iter().flat_map(|draw| &draw.entries))
             .map(|entry| behaviour(entry))
             .chain(file.ordinary_dry_colours.entries().map(behaviour))
             .collect();

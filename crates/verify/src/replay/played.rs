@@ -61,6 +61,7 @@ pub(super) mod samus_picture;
 mod screens;
 pub(super) mod seed;
 mod shaft;
+pub(super) mod shaft_dust;
 pub(super) mod shaft_native;
 mod shaft_restore;
 pub(super) mod shaft_sound;
@@ -504,6 +505,7 @@ impl<'a> Run<'a> {
                 standing: game::samus_appearance_bridge::elevator::Art::load(image.lorom()).ok(),
                 shaft_track: shaft.as_ref().map(played::shaft::track),
                 shaft_overlay_art: shaft,
+                wall_jump_dust_art: Some(samus::dust_art(image.lorom())?),
                 shaft_vent_art: import::shaft::vent::import(image.lorom()).ok(),
                 shaft_burst_art: Some(shaft::burst_art(image.lorom())?),
                 shaft_effects: import::countdown::shaft_effects(image.lorom())
@@ -983,6 +985,7 @@ impl<'a> Run<'a> {
                 (expected, actual),
             )?;
         }
+        shaft_dust::observations(self, frame, (expected, actual))?;
         expected.push(play_time::observation(play_time::read(&current.wram)?));
         actual.push(play_time::observation(self.state.play_time));
         compare(expected, actual).map_err(|fault| comparison_failure(cut, fault))?;

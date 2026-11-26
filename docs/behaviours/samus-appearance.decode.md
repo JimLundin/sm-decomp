@@ -475,6 +475,7 @@ together, not split by area.
 - Area hurt (old 0): HurtColours, 12
 - Area elevator body (old 0): ElevatorStandingPicture
 - Area ordinary body (old 0): ProtectionFlicker
+- Area wall-jump dust (old 0): WallJumpDust, WallJumpDustPicture
 
 The old code has no hurt palette pulse. The active ordinary picture has no
 protection-visibility producer to replace.
@@ -1239,3 +1240,72 @@ producer to replace. The historical `crates/sm_game/src/scene/samus_body.rs` at
 maps, other drawing modes and the rest of that file. This is historical context for
 the whole module. The two `ProtectionFlicker` arms add 2.0 spec units and 75 weighted
 tokens at k = 37.5.
+
+## Wall-jump dust in the return shaft
+
+### Sources and inputs
+
+| Entry | Source and seam |
+| --- | --- |
+| WallJumpDust | [Bank 91](https://patrickjohnston.org/bank/91/), `$91:FA76..FAC9` initializes dry wall-jump dust when the pose is taken. The source uses the centre at initialization, facing and the newly taken pose's catalogue radius from `$90:EC3E..EC57`. The semantic pose map names pose 0x83 Right and pose 0x84 Left. The corresponding native facing samples are 8 and 4. Both wall-jumping figures in the return shaft have a catalogue half-height of 19 pixels. The collision value at their outgoing cut is 12 pixels and gives the wrong dust origin. |
+| WallJumpDust | `$91:F0BE..F0C4` clears the landing graphics in the dry touchdown opportunity. `$90:8A4C..8AB4` advances the active dust. `$90:8B57..8B63` raises its centre on each appearance. [Bank 90](https://patrickjohnston.org/bank/90/) |
+| WallJumpDustPicture | `$90:EB52..EB85` orders the ordinary room picture and calls the dust before the protected body. `$90:8AC5..8B12` projects the dust with the scrolled layer-one origin. The X store precedes the Y range check. Join the single sprite through the exact OAM writer. Import the four attribute words starting at `$90:8C17` as four checked looks. Read the look lengths through the tables at `$90:8B93` and `$90:8BEF` and the initial timer in bank 91. The initial visit spends one tick, and the terminal timer reload leaves no active dust. [Bank 90](https://patrickjohnston.org/bank/90/) |
+
+### RAM mapping
+
+| Quantity | Observation |
+| --- | --- |
+| Active dust | Slot 3 of the room appearance arrays. The packed kind and look are at `$0AF2`. Kind 6 is wall-jump dust on this witness. The other slots stay empty. |
+| Centre and visits left | X at `$0AE2`, Y at `$0AEA`, clock at `$0ADA`. Read the latter three for an active slot. When the type clears, the other words can retain old values. |
+| Accepted pose and its start | `$0A1C` and facing in `$0A1E`; centre at `$0AF6/$0AFA`; vertical half-size in the pose catalogue at `$91:B62F + 8 * pose`. |
+| Dust picture | Prepared low OAM starts at `$0370`. Continuation `$90:8B09` follows the complete sprite's attribute store. `$0590` is the OAM byte cursor at submission. The draw view is `$0911/$0915`. |
+
+### Native witness
+
+Use `chain-any-0011-DF45`, cuts 0 through 241. The power-on instrumented native run
+uses unmodified LakeSnes and the controller sequence across 18 indexed rows. The
+observer hook records CPU stores, equality to the incoming byte and the OAM DMA
+submission. Prepared and published OAM match the locked row on all 242 cuts.
+The reference compares the active state and projected sprite on each cut. The
+empty baseline matches 180 states and no dust contributions. The rule matches
+242 states and 62 prepared and published dust contributions. The look counts
+are 12, 18, 24 and 8. Every active draw lies within both clipping bounds here.
+The left-only output is checked by the source's two range branches and constructed
+edge cases.
+
+| Cuts | Check |
+| --- | --- |
+| 10, 35, 67, 92, 120, 145 | New wall-jump pose creates dust. Left-facing is witnessed at 10, right-facing at the remaining starts. |
+| 12, 15, 19, 24 | The first puff advances through the other three looks and expires by age. |
+| 45, 76, 102, 129, 155 | Dry touchdown clears dust while it still has time left. |
+| 16, 18, 20, 22 | Dust spends one slot while protection omits Samus's body. |
+| 17, 19, 21, 23 | Dust starts at slots 48, 47, 51 and 50. It moves both the body and any mounted vents one slot later. |
+| 67–71, 127–128 | Countdown occupies the first 17 slots. Dust uses slot 17 before the body. |
+| 239–241 | The last ordinary work prepares a picture at 239, 240 keeps it, and 241 publishes it. Dust is absent throughout. |
+
+The original-side controls first differ at cut 10 when they omit the dust
+placement, invert the facing offset, use the settled collision radius, or omit the
+rise. Ignoring dry clear first differs at cut 45. The constructed held and
+left-only cases discriminate acting during publication and dropping the partial
+placement. The adjusted clip tests a sequence supplied by something other than
+the cartridge. The restored puff continues at the saved centre and look.
+
+### Retained object attribution
+
+At the late endpoint in the strict donor `3de4a9750`, 26 of the 40 mismatching OAM
+bytes trace to two earlier shaft groups. Comparing physical last value change with
+the native write hook distinguishes same-value overwrites. Of the early group at
+slots 53–63, the last writer of the residual fields in slots 53 and 54 is the
+Samus map at c23. Mounted actor 12 writes the retained fields at c17 and c19.
+At c23, actor 11 writes slots 55–56 and actor 12 writes slots 57–58. Actor 12
+writes two tile fields again at c23 with the same values it wrote at c21.
+Mounted actor 9 writes the slot-34 residual at c70. It writes the three affected
+slot-35 fields at c68 and writes identical values at c69. The dust's one occupied slot precedes those actor draws. The
+same missing slot precedes the shorter body and vents around c128.
+
+### Budget
+
+There is no active return-shaft wall-jump dust owner at `788684d4c`. The predecessor
+rule area is `game::atmospheric` at `66e1d64e3`. Its file scores 894.5 weighted tokens
+with `tools size`. That file also contains atmospheric effects outside this slice.
+The two dust entries add 7.0 spec units and 262 weighted tokens at k = 37.5.

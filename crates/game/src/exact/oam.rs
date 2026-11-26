@@ -69,6 +69,15 @@ impl NmiBatch {
         self.sprites = SpriteCount(start.saturating_add(u16::try_from(count).unwrap_or_default()));
     }
 
+    /// Write the position of a vertically clipped puff. The same slot remains available
+    /// to the following sprite or to the finaliser.
+    pub fn write_clipped_puff_x(&mut self, x: u8) {
+        if let Some(entry) = self.oam.low.get_mut(usize::from(self.sprites.0)) {
+            entry.x = x;
+            entry.y = 0;
+        }
+    }
+
     fn draw_piece(&mut self, piece: &SpritePiece) {
         match piece.placing {
             Placing::Mapped(size) => self.write_mapped(piece, size),

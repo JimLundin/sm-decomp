@@ -179,6 +179,8 @@ pub enum InputProvider {
     PlayedCeresInputs,
     /// Ordinary fight draws at finished movie cuts through the played room.
     PlayedSamusPicture,
+    /// Movie pad and platform opportunities for the return shaft's wall-jump dust.
+    PlayedShaftDust,
     /// One elevator arrival and T1 scheduling.
     Blackout,
     /// One admitted room and finished opportunities for the flyby’s owned producers.
@@ -597,6 +599,18 @@ pub enum ObservationId {
     /// Ordered missile and exhaust OAM bytes.
     #[serde(rename = "weapons.intro-oam")]
     IntroMissileOam,
+    /// Carried wall-jump dust centre, look and clock.
+    #[serde(rename = "shaft-dust.state")]
+    ShaftDustState,
+    /// Prepared wall-jump dust OAM slot and entry.
+    #[serde(rename = "shaft-dust.prepared")]
+    ShaftDustPrepared,
+    /// Published wall-jump dust OAM slot and entry.
+    #[serde(rename = "shaft-dust.published")]
+    ShaftDustPublished,
+    /// The native vent entry written after dust and body at the affected cut.
+    #[serde(rename = "shaft-dust.following-vent")]
+    ShaftDustFollowingVent,
     /// Shaft setup view.
     #[serde(rename = "shaft-entry.view")]
     ShaftView,
@@ -1466,6 +1480,10 @@ macro_rules! health_observations {
 macro_rules! appearance_observations {
     () => {
         O::StandingOamPending
+            | O::ShaftDustState
+            | O::ShaftDustPrepared
+            | O::ShaftDustPublished
+            | O::ShaftDustFollowingVent
             | O::StandingStripsPending
             | O::StandingOamPublished
             | O::StandingPublication
@@ -1788,6 +1806,8 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "interface-hud/Exploring" => &[O::HudExplored],
         super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
         "samus-appearance/ProtectionFlicker" => super::played::samus_picture::OUTPUTS,
+        "samus-appearance/WallJumpDust" => &[O::ShaftDustState],
+        "samus-appearance/WallJumpDustPicture" => &[O::ShaftDustPrepared, O::ShaftDustPublished],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
         "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
         _ => {
@@ -2532,6 +2552,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     if case.inputs == InputProvider::PlayedSamusPicture {
         return super::played::samus_picture::valid(case);
     }
+    if case.inputs == InputProvider::PlayedShaftDust {
+        return super::played::shaft_dust::valid(case);
+    }
     if case.inputs == InputProvider::StationExplosion {
         return station_provider_valid(case);
     }
@@ -2748,6 +2771,7 @@ fn start_valid(case: &Case) -> bool {
                     InputProvider::Departure
                         | InputProvider::PlayedShaftSound
                         | InputProvider::ShaftPictures
+                        | InputProvider::PlayedShaftDust
                 )
         }
         Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
