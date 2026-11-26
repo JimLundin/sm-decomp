@@ -4,35 +4,57 @@ use crate::replay::compare::Observation;
 use crate::replay::result::Outcome;
 use crate::replay::{ceres, movement};
 use game::production::played;
+use types::Hitbox;
 
-/// The seed room's Ceres doors, decoded once from the seed record. Her motion meets each one
-/// as the loop carries it, so none may stand among the actor boxes held from the seed too.
+/// The seed room's Ceres doors and whether they own the entire observed collision roster.
 ///
 /// Her motion meets the boxes in the original's slot order, and the first that blocks her
 /// decides the move. Production puts the doors' boxes after the held ones, since the held
 /// geometry keeps no slots, so a held box in a slot after a door's would be met out of order.
-pub(super) fn seed(seed: &[u8]) -> Result<Vec<boss_ceres_ridley::CeresDoor>, Outcome> {
+pub(super) fn seed(
+    seed: &[u8],
+    native_boxes: &[Hitbox],
+) -> Result<(Vec<boss_ceres_ridley::CeresDoor>, bool), Outcome> {
     let slots = ceres::doors(seed)?;
     let roster = movement::roster_slots(seed)?;
     let refuse = |dependency: &str| Outcome::Unsupported {
         cut: None,
         dependency: dependency.into(),
     };
-    if slots.iter().any(|slot| roster.contains(&slot.index())) {
-        return Err(refuse(
-            "played seed holds a Ceres door among the held actor boxes",
-        ));
-    }
+    let owns_roster = slots.iter().any(|slot| roster.contains(&slot.index()));
     let first_door = slots.iter().map(|slot| slot.index()).min();
-    if first_door.is_some_and(|door| roster.iter().any(|&held| held > door)) {
+    if owns_roster {
+        if super::passage::passing(seed)?
+            || roster
+                .iter()
+                .any(|&index| !slots.iter().any(|slot| slot.index() == index))
+            || roster.windows(2).any(|pair| pair[0] >= pair[1])
+        {
+            return Err(refuse(
+                "played seed holds a Ceres door among the held actor boxes",
+            ));
+        }
+    } else if first_door.is_some_and(|door| roster.iter().any(|&held| held > door)) {
         return Err(refuse(
             "played seed holds an actor box in a slot after a Ceres door's",
         ));
     }
-    slots
+    let doors = slots
         .into_iter()
         .map(|slot| ceres::seed(seed, slot))
-        .collect()
+        .collect::<Result<Vec<_>, _>>()?;
+    if owns_roster
+        && !doors
+            .iter()
+            .filter(|door| door.phase.solid())
+            .map(|door| door.hitbox())
+            .eq(native_boxes.iter().cloned())
+    {
+        return Err(refuse(
+            "played seed Ceres door boxes differ from the roster",
+        ));
+    }
+    Ok((doors, owns_roster))
 }
 
 /// The doors as the record holds them, compared at a cut whose frame of work finished.

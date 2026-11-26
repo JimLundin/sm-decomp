@@ -972,6 +972,16 @@ cut = 2
 field = "hud.countdown.time"
 
 [[fault]]
+name = "played-return-countdown-finished-frames-behind"
+responsibility = "played"
+file = "crates/game/src/production/played/hud.rs"
+before = "finished: FinishedFrames(state.frame.finished_frames),"
+after = "finished: FinishedFrames(state.frame.finished_frames.wrapping_sub(1)),"
+case = "played chain-any-0006-E0B5 1776 1781"
+cut = 1777
+field = "hud.countdown.time"
+
+[[fault]]
 name = "played-doors-countdown-dormant-in-passage"
 responsibility = "played"
 file = "crates/game/src/production/played.rs"

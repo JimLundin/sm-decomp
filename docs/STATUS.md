@@ -114,6 +114,15 @@ cut 72, the passage and room 4; there a count of finished frames one ahead diffe
 `chain-any-0003-DFD7` cut 183 in `doors.colours.goal`, a start borrowed on every frame at cut 1
 in `hud.countdown.begun`, and the expiry answer inverted at cut 1 in `hud.countdown.expiry`.
 
+The room 6 row's last cut, 1776, has returned to ordinary play. Its sole interactive box
+belongs to the Ceres door. Admission checks the native box order and geometry against the
+doors before it gives those boxes to the live door owner. The played run from this origin
+holds the first five ordinary cuts of the adjacent room 5 row. The first takes the countdown
+from 59.87 to 59.86 and moves Samus using the pad that the origin latched. A finished-frame
+count one behind first differs on chain cut 1777 in `hud.countdown.time`. The ordinary
+room seed supplies a complete cartridge image, and the cartridge's hold output is compared
+on each successor. The room 6 touch and passage require the live post-warning actor.
+
 The room's Ceres doors (boss-ceres-ridley's `CeresDoor`) play in the loop too. Their State is
 decoded once from the seed record, each door in the room's order of its enemies, and carried
 with nothing fed back. Each frame of play runs every door once through `CeresDoor::run`, before

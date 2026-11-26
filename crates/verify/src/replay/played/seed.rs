@@ -6,6 +6,42 @@ use crate::source;
 use data::{assets::world, rom::Rom, room::RoomKey};
 use game::production::connected::inputs::Inputs;
 use game::production::{played, room_loading};
+use game::{exact::save_files::Format, production::save_files};
+use std::path::Path;
+use types::save_files::{BatteryImage, SaveFilesState};
+
+/// Cartridge state seeded from the complete physical image in an ordinary room.
+pub(super) struct Battery {
+    format: Format,
+    state: SaveFilesState,
+}
+
+impl Battery {
+    pub(super) fn load(record: &oracle_record::FrameRecord, path: &Path) -> Result<Self, Outcome> {
+        let bad = || data_failure(None, "played cartridge seed");
+        let rom = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
+        let format = Format::load(rom.lorom()).map_err(|_| bad())?;
+        let image = BatteryImage::new(record.sram.to_vec()).ok_or_else(bad)?;
+        let state = save_files::power_on(&format, &image);
+        Ok(Self { format, state })
+    }
+
+    pub(super) fn held(
+        &mut self,
+        record: &oracle_record::FrameRecord,
+        cut: u64,
+    ) -> Result<(), Outcome> {
+        let output = save_files::advance(&mut self.state, &self.format, save_files::Input::Hold)
+            .map_err(|_| data_failure(Some(cut), "played cartridge hold"))?;
+        if output.image.as_slice() != record.sram.as_ref() {
+            return Err(Outcome::Difference {
+                cut,
+                field: "save-files.battery".into(),
+            });
+        }
+        Ok(())
+    }
+}
 
 pub(super) fn language(wram: &[u8]) -> Result<types::options::Language, Outcome> {
     let japanese = word(

@@ -92,6 +92,7 @@ pub const SEED_HELD: &[&str] = &[
     "the seed room's camera screens, size, scrollers and lead",
     "progress at room entry, carried by production and updated when the warning reports defeat",
     "Ceres station stage, but where Ridley's placing sets it",
+    "the full cartridge battery for an ordinary room seed, with no save request",
     "from a new game's seed: the platform's counts of finished frames and the random number, which run on through the preparation",
 ];
 
@@ -313,7 +314,24 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Ok(controller) => controller,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
-    let (held, stop) = run.through(&mut rows, seed, controller, start.saturating_add(1)..=end)?;
+    let mut battery = if run.state.arrival.preparing() {
+        None
+    } else {
+        match seed::Battery::load(&seed, &sources.rom) {
+            Ok(battery) => Some(battery),
+            Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
+        }
+    };
+    let (held, stop) = run.through_observing(
+        &mut rows,
+        seed,
+        controller,
+        start.saturating_add(1)..=end,
+        |record, cut| match &mut battery {
+            Some(battery) => battery.held(record, cut),
+            None => Ok(()),
+        },
+    )?;
     Ok(report(held, stop))
 }
 
@@ -484,9 +502,15 @@ impl<'a> Run<'a> {
         content: &connected::Content,
         rooms: &game::production::room_loading::Rooms,
     ) -> Result<(seed::Room, played::State), Outcome> {
-        let (room, seeded, progress) = seed::room(&seed.wram, content, &rooms.world)?;
+        let (mut room, mut seeded, progress) = seed::room(&seed.wram, content, &rooms.world)?;
         let (map_room, _) = room.map;
-        let ceres_doors = ceres_doors::seed(&seed.wram)?;
+        let (ceres_doors, owns_roster) =
+            ceres_doors::seed(&seed.wram, types::World::solid_enemies(&seeded.geometry))?;
+        if owns_roster {
+            let geometry = movement::level_world(&seed.wram, &content.movement, Vec::new())?;
+            room.inputs.geometry = geometry.clone();
+            seeded.geometry = geometry;
+        }
         let state = played::State {
             clock_picture: played::clock_picture::ClockPicture::default(),
             samus: samus::seed(&seed.wram, &content.appearance)?,
