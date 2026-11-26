@@ -174,6 +174,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
     Content {
         samus_body_art: None,
         samus_tiles: None,
+        ridley_picture: None,
         clock_figures: None,
         standing: None,
         shaft_track: None,

@@ -1349,4 +1349,24 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/samus_picture.rs" },
   { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/samus_picture.rs" },
+
+[[rule]]
+id = "boss-ceres-ridley/FightParts"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/fight_picture.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley_picture.rs" },
+  { role = "adapter", path = "crates/game/src/exact/ridley_picture.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/fight_picture.rs" },
+]
+
+
+[[rule]]
+id = "boss-ceres-ridley/FightPictureOrder"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/fight_picture.rs" },
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/ridley_picture.rs" },
+  { role = "adapter", path = "crates/game/src/exact/ridley_picture.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/fight_picture.rs" },
 ]

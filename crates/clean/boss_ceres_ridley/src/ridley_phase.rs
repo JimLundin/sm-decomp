@@ -5,22 +5,12 @@
 
 use core::num;
 
-use types::GameFrames;
 use types::ceres_getaway::{FlybyBeats, GetawayState};
 
 use crate::ridley_wait::RidleyWait;
 use crate::roar::{RidleyLook, RoarFigure};
 use crate::rules::Rules;
 use crate::waking::{BodyColours, EyeColours, ReadyWait, RemainingTurns, RidleyContent, RoarWait};
-
-/// Frame timing as Ridley reads it: the current passage and the game clock, not his own run count.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RidleyFrame {
-    /// Whether the door's passage is still under way (`RidleyWaits`).
-    pub passage_under_way: bool,
-    /// The game clock at the start of this frame (`GetawayPicture`).
-    pub finished: GameFrames,
-}
 
 /// His flight's phases, from his take-off to his hover. Listed alphabetically; the order means
 /// nothing.
@@ -231,12 +221,12 @@ impl RidleyPhase {
     /// and on the run he finds it at 0 starts his roar, its first figure, with the roar's wait.
     pub(crate) fn run(
         self,
-        frame: RidleyFrame,
+        passage_under_way: bool,
         content: &RidleyContent,
         rules: &Rules,
     ) -> PhaseStep {
         let waking = match self {
-            Self::Holding if frame.passage_under_way => PhaseRun::at_rest(Self::Holding),
+            Self::Holding if passage_under_way => PhaseRun::at_rest(Self::Holding),
             Self::Holding => PhaseRun::at_rest(Self::Waiting {
                 wait: rules.wake.first_count(),
             }),

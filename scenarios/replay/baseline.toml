@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "e68a81fae3ef9be7815a57eeb6256838523b28d3ff5dc6897d4d6e81a20d90c7"
+index_sha256 = "83f38faa70c1ebcb8b844d429f6f6bd0a8c0c032321055953e51bb15d6a32a23"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1128,6 +1128,24 @@ replies = 0
 null_cuts = 0
 null_fields = 809
 restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/ordinary-picture"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "4b97819ccec82ea46dcff302b1b36dbb3877b94005e41aac5e0712b7a65e2c66"
+
+[case.counts]
+cuts = 2
+fields = 2
+outputs = 4
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
 

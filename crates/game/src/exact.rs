@@ -4,9 +4,12 @@
 pub mod art;
 pub mod countdown;
 pub mod direct_dma;
+pub mod extended_sprite;
 pub mod oam;
 pub mod ppu;
+pub mod ridley_door;
 pub mod ridley_flyby;
+pub mod ridley_picture;
 pub mod ridley_warning;
 pub mod samus;
 pub mod save_files;

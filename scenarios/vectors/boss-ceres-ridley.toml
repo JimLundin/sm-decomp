@@ -6086,3 +6086,230 @@ entries = ["VentDrawFollowsShaft"]
 before = [4, -2]
 input = { ran = false, anchor = [99, 99], pivot = [100, 100], diagonal = 250, cross = 13 }
 after = [4, -2]
+
+# Ordinary fight picture. All cases are constructed. before and after are
+# [beat, count]. speed is at the ordinary draw opportunity in 1/256 px per
+# run. Each band row is [x speed, y speed, pace]. Links and anchors are
+# invented pixels. places lists links base to tip. tail_anchors lists the
+# expected drawing order. The body snapshots exercise the full take-off
+# turn, including the change after the ordinary draw opportunity. FT-hop
+# supplies the mixed hop's tail case, translated to the invented body anchor.
+
+[[fight_picture]]
+id = "FP-place"
+source = "constructed"
+entries = ["WingsBeat"]
+placed = true
+after = [5, 0]
+
+[[fight_picture]]
+id = "FP-start"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [5, 0]
+speed = [0, 0]
+after = [5, 0]
+
+[[fight_picture]]
+id = "FP-ready"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [5, 2]
+takeoff = true
+speed = [0, 0]
+after = [5, 8]
+
+[[fight_picture]]
+id = "FP-spring"
+source = "constructed"
+entries = ["WingsBeat", "FightParts", "TakesOff"]
+before = [5, 8]
+body_before = { anchor = [55, 99], speed = [0, 0], figure = 3, runs = 5, phase = "TakingOff" }
+body_after = { anchor = [55, 99], speed = [0, -352], figure = 4, runs = 1, phase = "Rising" }
+facing = "Left"
+tail_hidden = true
+after = [5, 8]
+looks = { wing = ["Left", 5], wing_anchor = [55, 99], colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-rise"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [5, 8]
+speed = [0, -368]
+after = [6, 32]
+
+[[fight_picture]]
+id = "FP-equal"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [4, 14]
+speed = [64, -1]
+after = [4, 0]
+
+[[fight_picture]]
+id = "FP-falls"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [4, 14]
+speed = [-64, 1]
+after = [4, 7]
+
+[[fight_picture]]
+id = "FP-wrap"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [9, 0]
+speed = [1, 0]
+after = [0, 32]
+
+[[fight_picture]]
+id = "FP-hold"
+source = "constructed"
+entries = ["WingsBeat"]
+before = [7, 3]
+after = [7, 3]
+
+[[fight_picture]]
+id = "FP-bands"
+source = "constructed"
+entries = ["WingsBeat"]
+bands = [
+  [0, 0, 0], [63, -1, 12], [64, -1, 14], [128, -1, 16],
+  [192, -1, 18], [256, -1, 28], [320, -1, 32], [384, -1, 40],
+  [448, -1, 48], [1023, -1, 48], [1024, -1, 12], [1088, -1, 14],
+  [1, -448, 48], [-448, 1, 24],
+]
+
+[[fight_picture]]
+id = "FP-extreme"
+source = "constructed"
+entries = ["WingsBeat"]
+bands = [[-32768, -32768, 0], [-32768, -1, 12], [0, -32768, 12]]
+
+# An ordinary drawing opportunity supplies the pre-hop anchor, facing,
+# tail state and flash inputs. "Before" and "After" here name room layers.
+
+[[fight_picture]]
+id = "FP-parts-rest"
+source = "constructed"
+entries = ["FightParts"]
+facing = "Left"
+before = [3, 19]
+anchor = [35, 99]
+rest = [67, 115]
+hurt = [1, 2]
+looks = { wing = ["Left", 3], wing_anchor = [35, 99], tail_tip = 11, tail_anchors = [[67, 115], [67, 115], [67, 115], [67, 115], [67, 115], [67, 115], [67, 115]], colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-hop-picture"
+source = "constructed"
+entries = ["WingsBeat", "FightParts", "TakesOff"]
+before = [9, 4]
+body_before = { anchor = [55, 99], speed = [0, 0], figure = 1, runs = 3, phase = "TakingOff" }
+body_after = { anchor = [56, 87], speed = [0, 0], figure = 2, runs = 1, phase = "TakingOff" }
+facing = "Left"
+after = [9, 4]
+tail_case = "FT-hop"
+angles = [16460, 16476]
+places = [[86, 116], [87, 123], [93, 127], [100, 125], [104, 118], [102, 110], [97, 107]]
+looks = { wing = ["Left", 9], wing_anchor = [55, 99], tail_tip = 11, tail_anchors = [[97, 107], [102, 110], [104, 118], [100, 125], [93, 127], [87, 123], [86, 116]], colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-parts-front"
+source = "constructed"
+entries = ["FightParts"]
+facing = "Front"
+before = [3, 19]
+rest = [67, 115]
+looks = { tail_tip = 11, tail_anchors = [[67, 115], [67, 115], [67, 115], [67, 115], [67, 115], [67, 115], [67, 115]], colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-tail-hidden"
+source = "constructed"
+entries = ["FightParts"]
+facing = "Right"
+before = [3, 19]
+anchor = [35, 99]
+rest = [67, 115]
+tail_hidden = true
+looks = { wing = ["Right", 3], wing_anchor = [35, 99], colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-parts-right"
+source = "constructed"
+entries = ["FightParts"]
+facing = "Right"
+before = [8, 2]
+anchor = [35, 99]
+angles = [239, 9]
+places = [[36, 101], [37, 103], [38, 105], [39, 107], [40, 109], [41, 111], [42, 113]]
+hurt = [2, 3]
+looks = { wing = ["Right", 8], wing_anchor = [35, 99], tail_tip = 0, tail_anchors = [[42, 113], [41, 111], [40, 109], [39, 107], [38, 105], [37, 103], [36, 101]], colours = "Hurt" }
+
+[[fight_picture]]
+id = "FP-tip-edge"
+source = "constructed"
+entries = ["FightParts"]
+angles = [239, 8]
+places = [[36, 101], [37, 103], [38, 105], [39, 107], [40, 109], [41, 111], [42, 113]]
+looks = { tail_tip = 15, tail_anchors = [[42, 113], [41, 111], [40, 109], [39, 107], [38, 105], [37, 103], [36, 101]], colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-flash-edge"
+source = "constructed"
+entries = ["FightParts"]
+hurt = [2, 1]
+looks = { colours = "Normal" }
+
+[[fight_picture]]
+id = "FP-order-early"
+source = "constructed"
+entries = ["FightPictureOrder"]
+stage = "Waiting"
+attached = true
+order = { opportunity = "Before", baby = true, door = true }
+
+[[fight_picture]]
+id = "FP-order-late"
+source = "constructed"
+entries = ["FightPictureOrder"]
+stage = "Fighting"
+attached = true
+order = { opportunity = "After", baby = true, door = true }
+
+[[fight_picture]]
+id = "FP-order-escape"
+source = "constructed"
+entries = ["FightPictureOrder", "WingsBeat"]
+stage = "Getaway"
+before = [4, 1]
+after = [4, 1]
+attached = true
+order = { opportunity = "After", baby = false, door = true }
+
+[[fight_picture]]
+id = "FP-door-released"
+source = "constructed"
+entries = ["FightPictureOrder"]
+stage = "Getaway"
+attached = false
+order = { opportunity = "After", baby = false, door = false }
+
+[[fight_picture]]
+id = "FP-hurt-shot"
+source = "constructed"
+entries = ["FightParts"]
+hurt = [0, 2]
+hits = 1
+refreshed = 13
+looks = { colours = "Hurt" }
+
+[[fight_picture]]
+id = "FP-hurt-odd"
+source = "constructed"
+entries = ["FightParts"]
+hurt = [5, 0]
+hits = 1
+refreshed = 14
+looks = { colours = "Normal" }

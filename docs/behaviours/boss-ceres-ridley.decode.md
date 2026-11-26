@@ -1731,6 +1731,129 @@ no hit. This shaft row reaches no positive contact. The source shares the
 ordinary hit path. The scoped check covers the offset, phase and no-contact
 observations and leaves native OAM comparisons to the sprite join.
 
+## Ordinary fight picture
+
+### Source and observations
+
+| Entry | Native source and comparison |
+| --- | --- |
+| WingsBeat | `$A6:A279..A27F` seeds the beat and `$A6:A294..A2A5` qualifies the update after movement. `$A6:D97D..D9EC` uses the pace values at `$A6:D9ED`. Compare beat `$7E:780E`, pace `$7E:7810`, and remaining count `$7E:7812`. The signed speeds are at `$7E:0FAA` and `$7E:0FAC`. Their absolute sum is tested with 16-bit wrapping. Both signed minima together therefore select zero pace. |
+| FightParts | `$A6:DB2A..DBC8` draws the visible tail from tip back to base. Link positions begin at `$7E:202C` and `$7E:202E`, with 20 bytes between links. Angles at `$7E:208E` and `$7E:20A2` supply the tip. At rest their low bytes are 80 and 96 in decimal. `$A6:DAD8..DB29` selects ordinary wings; `$7E:7820` distinguishes left, front and right. |
+| FightParts colours | `$A6:DF92..DFA6` refreshes the hurt wait when Ridley accepts a shot. The hit count at `$7E:781A` qualifies that input. `$A6:D4DA..D4F8` reads `$7E:0F9C` before the common timer decrement and reads the cycle as `$7E:0E44 + 1`. Compare the part colours at `$7E:7818`. `$A0:9128` spends the common timer. `$A0:9149` advances the cycle. The layer draw at `$A0:9497..94C0` reads the advanced cycle and post-decrement timer for the extended body, and also owns frozen colours. |
+| FightPictureOrder | `$A6:A2DC..A2FA` selects the ordinary baby and attached door's opportunity. Read animation at `$7E:7804`, station status at `$7E:093F`, attached door at `$7E:0FEA`, and the installed late hook at `$7E:178C`. `$A0:884D..88CB` sequences room layers and the late hook. `$A6:BF1A..BF2E` takes the current baby look and anchor at `$7E:8804` and `$7E:8808`. The three baby maps are `$A6:BFFD`, `$A6:C018` and `$A6:C033`. |
+
+The indexed source row is `chain-any-0006-E0B5`, the row also used by
+`ridley/flight-tail`. The ordinary reference starts before animation at
+fight cut 576. At c867 `$A6:A4C1` sets the count to 8 before the ordinary
+wing step. The stationary step leaves beat 5, count 8. At c879
+`$A6:E969` changes vertical speed to −352 after the ordinary wing draw.
+That cut still shows beat 5, count 8 and zero pace. Cut 880 moves with
+vertical speed −368 and spends 32, which advances to beat 6 with 32 left.
+At c881 beat 7 draws three wing pieces. Cuts 879 and 880 draw six and five.
+Take-off hops at c870 and c874 move the body later than the wing, tail and
+baby draw anchors.
+
+The source-side reference carries the beat, count and hurt wait through the
+row. It borrows the accepted-hit count delta, animation qualification and
+flash cycle, the existing body phase and speed, tail geometry, and camera.
+The phase transition at c879 selects the stationary sample. Record end speed
+supplies the movement sample elsewhere in this row. The reference uses the
+baby anchor plus (+16, −22) px to recover the wing anchor at the draw.
+Integrated production supplies the causal pre-hop movement result directly.
+The reference compares the strict part entries at the start of prepared WRAM
+and physical OAM separately, including each occupied slot's high pair.
+It carries 581/581 beat and countdown pairs and 581/581 paces. A held
+initial clock matches 290/581 pairs. The carried hurt wait matches 1,157/1,157
+pre-getaway cuts. The colour decision matches 581/581 active cuts, compared
+with 518/581 if held normal. Both part-image comparisons match 581/581
+active cuts. Opposite facing and hidden tail are constructed cases.
+
+| Counterfactual | First difference |
+| --- | --- |
+| Omit the take-off count refresh | c867, beat and count |
+| Always use outgoing speed | c879, pace and beat and count |
+| Draw with normal part colours throughout | c651, part colours |
+| Keep vertically clipped pieces | c1027, prepared tail and wings |
+| Hold the tip pointing down | c577, prepared tail and wings |
+
+[Bank A0](https://patrickjohnston.org/bank/A0) · [Bank A6](https://patrickjohnston.org/bank/A6)
+
+### Renderer join and retained bytes
+
+The room draw appends sprite objects, bomb or explosion sprites and high
+enemy projectiles before its actor layers. Samus and her projectiles
+appear immediately before layer 3, low enemy projectiles before layer 6,
+and Ridley's extended body occupies layer 5. Samus's draw reads her
+appearance before the late pose lock. The weapons owner supplies any
+active weapon pieces. The trace at c675 exercises a weapon append before
+the body. Both c682 and c702 have no weapon append before the door.
+
+| Fight row cut | Tail and wings | Samus | Extended body | Baby | First attached door slot |
+| --- | --- | --- | --- | --- | --- |
+| 7 | 0 | after door | after door if drawn | 5 | 5 |
+| 682 | 13 | 12 | 29 | 5 | 59 |
+| 702 | 13 | 11 | 29 | 5 | 58 |
+
+The art at `$A6:DB02`, `$A6:DC90..DE79` and `$A6:E983` belongs
+in AF3 imported content. A full wing look has 6, 5, 3, 3, 5, 6, 5, 3,
+3 or 5 pieces by beat for either side. The body uses ordered leg, hand,
+torso and head maps. Its fully projected left poses have 26 rest pieces,
+27 with the half-open mouth, 29 with the wide mouth and 25 in each take-off
+pose. AF3 resolves semantic looks to maps. The C1 body draw supplies camera,
+graphical shake and palette selection. It culls each extended submap by
+its screen origin in `[-128,384)` on both axes. Its bank 81 encoders
+clamp part Y and allocate the entry. The strict tail, wing and baby maps
+instead omit individual pieces whose projected top Y is outside `[0,224)`
+and use a wrapping cursor. The attached door uses `$81:879F`, which
+parks a clipped piece while consuming its slot and caps at 128 slots.
+Sample its quake before the room decrements the timer. The attached door
+shifts −1 and −4 px on c1263 and c1264. It keeps its late opportunity
+from c1158, without the ordinary baby. At c1586 the door's own draw can
+write through the same exact writer after its attachment has cleared.
+
+At shaft c240 (`chain-any-0011-DF45`), slots 64 and 65 keep the low X,
+tile and attribute bytes last written by the attached door at fight c702.
+Slot 66 keeps those bytes from c682. Their Y bytes are parked and the
+resulting high-table pairs follow the later room-wide writer. The bytes
+are a property of the carried buffer, including entries hidden at the
+save. Slots 24 through 63 have separate shaft writers. A finished fight
+frame must build the cursor from actual appends. Case c702 can only be
+explained by the changed Samus count, not by a different Ridley look.
+Carry the complete OAM images through real room transitions and final
+save restore. Keep prepared WRAM, at `$7E:0370..058F`, and physical OAM
+as separate 544-byte comparisons.
+
+The independent writer trace reaches the shaft directly by playing the
+movie from power-on. Its complete prepared and physical images agree
+with the lsnes records on all 1,591 selected cuts. These are the picture
+cuts through c1586, the two publication controls and shaft c239–240. Fight c1613 is a publication-only held control. Its prepared
+image changes while physical OAM holds. Fight c1614 is requested and
+selects the prepared image, which matches the carried physical image on
+that cut. The later passage cut c1625 lies outside this picture scope.
+Its native trace and pinned row differ in the prepared image and agree
+in physical OAM. Suppressing requested publication first
+differs at c1. Publishing on a held cut first differs at c1613. The
+published OAM and prepared shadow both hold at shaft c239–240.
+A separate door-operator witness qualifies all eight entries at six
+fight cuts with the independently measured cursor and quake inputs.
+Its shifted-position fault fails the prepared comparison at c7. A
+suppressed upload fails the physical comparison at c7.
+
+T1 supplies the qualified work and upload opportunities. The source
+reference qualifies B8 state and the attributed draws locally. The
+connected replay must carry the real body, appearance, weapons,
+door, room renderer and PPU output through the transitions. Its scope
+compares the entire prepared and physical images on each admitted cut,
+the placement and high pairs of the attached door, and the restored
+continuation after the final shaft save. A future production fault that
+changes the leading sprite count must move or change the attached door
+at c682 or c702 and change the retained bytes at shaft c240. A separate
+fault must distinguish requested publication from a held cut. Keep
+existing replay outcomes and unsupported boundaries until the
+connected runner earns the new comparison.
+
+[Bank 81](https://patrickjohnston.org/bank/81) · [Bank 90](https://patrickjohnston.org/bank/90) · [Bank A0](https://patrickjohnston.org/bank/A0) · [Bank A6](https://patrickjohnston.org/bank/A6)
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -1765,5 +1888,6 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 
 - Area ridley-getaway: GetawayPass, GetawayPicture
 - Area ridley-warning: WarningArt, WarningHeading, WarningTyping, WarningGlow, WarningEnds
+- Area ridley-fight-picture: WingsBeat, FightParts, FightPictureOrder
 
-Budget: 37.5 × 265.3 units = 9,947 (doors 1,062, station 237, shaft 462, lights 200, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, shaft overlay 350, shaft rotation 212, steam 1,375, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675)
+Budget: 37.5 × 276.0 units = 10,347 (doors 1,062, station 237, shaft 462, lights 200, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, shaft overlay 350, shaft rotation 212, steam 1,375, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675, ridley-fight-picture 400)

@@ -28,6 +28,10 @@ mod vectors {
         TimedTakeOffFigure, Vent, VentFacing, VentPhase, Wait, WakeWait, catalogue, run_vents,
     };
     use boss_ceres_ridley::{
+        FightColours, FightFacing, FightFlash, FightParts, FightPictureInputs, FightWings,
+        FlashHalf, RoomLayerOrder, Speed, TailIntent, WingBeat, WingCount,
+    };
+    use boss_ceres_ridley::{
         FlightTail, LagCount, SwingLag, SwingPace, SwingWay, SwishRuns, TAIL_SEGMENTS, TailAngle,
         TailLength, TailMark, TailSegment,
     };
@@ -51,6 +55,7 @@ mod vectors {
         shaft_rotation: Vec<RotationVector>,
         shaft_reach: Vec<ReachVector>,
         shaft_vent_projection: Vec<ProjectionVector>,
+        fight_picture: Vec<FightPictureVector>,
     }
 
     impl VectorFile {
@@ -94,6 +99,11 @@ mod vectors {
                 )
                 .chain(
                     self.shaft_vent_projection
+                        .iter()
+                        .map(|v| (v.id.as_str(), v.entries.as_slice())),
+                )
+                .chain(
+                    self.fight_picture
                         .iter()
                         .map(|v| (v.id.as_str(), v.entries.as_slice())),
                 )
@@ -1666,6 +1676,7 @@ mod vectors {
             baby: baby(vector),
             curl: curl(vector, row),
             flight_tail: vector.flight_tail.as_ref().map(FlightTailRow::shape),
+            wings: FightWings::PLACED,
         }
     }
 
@@ -1772,6 +1783,7 @@ mod vectors {
             boss_ceres_ridley::RidleyFrame {
                 passage_under_way: vector.passing.unwrap_or(false),
                 finished: GameFrames(0),
+                picture: FightPictureInputs::LEFT_UNHURT,
             },
             vector.random(),
             vector.hitter_her().as_ref(),
@@ -2233,6 +2245,7 @@ mod vectors {
         boss_ceres_ridley::RidleyFrame {
             passage_under_way: false,
             finished: GameFrames(finished),
+            picture: FightPictureInputs::LEFT_UNHURT,
         }
     }
 
@@ -2577,6 +2590,10 @@ mod vectors {
         let run = ready.run(frame(8), 0xffff, None, fight, &content, &rules);
         assert_eq!(run.ridley.baby, ready.baby);
         assert_eq!(run.ridley.flight_tail, ready.flight_tail);
+        assert_eq!(run.ridley.wings, ready.wings);
+        assert_eq!(run.parts, None);
+        assert!(ready.picture_order(true).baby);
+        assert!(!run.ridley.picture_order(true).baby);
         assert_eq!(
             (run.hit, run.swish, run.tail_places, run.backdrop),
             (None, None, None, None)
@@ -2609,6 +2626,459 @@ mod vectors {
         );
     }
 
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct FightPictureVector {
+        id: String,
+        source: Source,
+        entries: Vec<String>,
+        #[serde(default)]
+        placed: bool,
+        #[serde(default)]
+        takeoff: bool,
+        before: Option<[u8; 2]>,
+        after: Option<[u8; 2]>,
+        speed: Option<[i16; 2]>,
+        bands: Option<Vec<[i16; 3]>>,
+        body_before: Option<PictureBody>,
+        body_after: Option<PictureBody>,
+        facing: Option<PictureFacing>,
+        anchor: Option<[u16; 2]>,
+        #[serde(default)]
+        tail_hidden: bool,
+        rest: Option<[u16; 2]>,
+        angles: Option<[u16; 2]>,
+        places: Option<[[u16; 2]; TAIL_SEGMENTS]>,
+        tail_case: Option<String>,
+        hurt: Option<[u16; 2]>,
+        hits: Option<usize>,
+        refreshed: Option<u16>,
+        looks: Option<PictureLooks>,
+        stage: Option<PictureStage>,
+        attached: Option<bool>,
+        order: Option<PictureOrderRow>,
+    }
+
+    #[derive(Clone, Copy, Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct PictureBody {
+        anchor: [u16; 2],
+        speed: [i16; 2],
+        figure: u8,
+        runs: u8,
+        phase: PictureBodyPhase,
+    }
+
+    #[derive(Clone, Copy, Deserialize, Debug, PartialEq, Eq)]
+    enum PictureBodyPhase {
+        TakingOff,
+        Rising,
+    }
+
+    #[derive(Clone, Copy, Deserialize)]
+    enum PictureFacing {
+        Left,
+        Front,
+        Right,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum WingSide {
+        Left,
+        Right,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum PartColours {
+        Normal,
+        Hurt,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct PictureLooks {
+        wing: Option<(WingSide, u8)>,
+        wing_anchor: Option<[u16; 2]>,
+        tail_tip: Option<u8>,
+        tail_anchors: Option<[[u16; 2]; TAIL_SEGMENTS]>,
+        colours: PartColours,
+    }
+
+    impl From<FightParts> for PictureLooks {
+        fn from(parts: FightParts) -> Self {
+            Self {
+                wing: parts.wing.map(|wing| {
+                    (
+                        match wing.facing {
+                            Side::Left => WingSide::Left,
+                            Side::Right => WingSide::Right,
+                        },
+                        wing.beat.get(),
+                    )
+                }),
+                wing_anchor: parts.wing.map(|wing| point_row(wing.anchor)),
+                tail_tip: parts.tail.map(|tail| tail.tip.get()),
+                tail_anchors: parts.tail.map(|tail| tail.anchors.map(point_row)),
+                colours: match parts.colours {
+                    FightColours::Normal => PartColours::Normal,
+                    FightColours::Hurt => PartColours::Hurt,
+                },
+            }
+        }
+    }
+
+    #[derive(Clone, Copy, Deserialize)]
+    enum PictureStage {
+        #[serde(rename = "Waiting")]
+        BeforeOrdinaryAnimation,
+        Fighting,
+        Getaway,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    enum OrderOpportunity {
+        Before,
+        After,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    struct PictureOrderRow {
+        opportunity: OrderOpportunity,
+        baby: bool,
+        door: bool,
+    }
+
+    fn picture_speed([x, y]: [i16; 2]) -> Pair<Speed> {
+        Pair {
+            x: Wrapping(x),
+            y: Wrapping(y),
+        }
+    }
+
+    fn saved_wings([beat, count]: [u8; 2]) -> FightWings {
+        FightWings {
+            beat: WingBeat::new(beat).unwrap(),
+            remaining: WingCount::new(count).unwrap(),
+        }
+    }
+
+    impl FightPictureVector {
+        fn inputs(&self) -> FightPictureInputs {
+            let [remaining, turn] = self.hurt.unwrap_or_default();
+            FightPictureInputs {
+                facing: match self.facing.unwrap_or(PictureFacing::Front) {
+                    PictureFacing::Left => FightFacing::Left,
+                    PictureFacing::Front => FightFacing::Front,
+                    PictureFacing::Right => FightFacing::Right,
+                },
+                tail_visible: !self.tail_hidden,
+                flash: FightFlash {
+                    remaining,
+                    accepted_shots: self.hits.unwrap_or_default(),
+                    half: match turn {
+                        0 | 1 => FlashHalf::First,
+                        2 | 3 => FlashHalf::Second,
+                        _ => panic!("{}: invalid flash turn", self.id),
+                    },
+                },
+            }
+        }
+
+        fn check(&self, vectors: &[Vector]) {
+            let mut restored = CeresRidley::place(false).unwrap().ridley;
+            if let Some(before) = self.before {
+                restored.wings = saved_wings(before);
+            }
+            let (wings, parts, refresh) = self.check_run(restored, vectors);
+            if let Some(after) = self.after {
+                assert_eq!(wings, saved_wings(after), "{}: wing clock", self.id);
+            }
+            assert_eq!(
+                parts.map(PictureLooks::from),
+                self.looks,
+                "{}: part looks",
+                self.id
+            );
+            assert_eq!(refresh, self.refreshed, "{}: hurt refresh", self.id);
+            if let Some(bands) = &self.bands {
+                for &[x, y, pace] in bands {
+                    assert_eq!(
+                        i16::from(FightWings::pace(picture_speed([x, y]))),
+                        pace,
+                        "{}: pace at ({x}, {y})",
+                        self.id
+                    );
+                }
+            }
+            self.check_order(restored);
+        }
+
+        fn check_run(
+            &self,
+            mut restored: CeresRidley,
+            vectors: &[Vector],
+        ) -> (FightWings, Option<FightParts>, Option<u16>) {
+            let picture = self.inputs();
+            if let Some(before) = self.body_before {
+                let run = self.run_body(restored, before, vectors);
+                self.check_body_after(&run);
+                return (run.ridley.wings, run.parts, run.hurt_refresh);
+            }
+            if self.takeoff {
+                restored.phase = RidleyPhase::Roaring {
+                    wait: RoarWait::new(0).unwrap(),
+                    figure: FigureSequence::Fifth,
+                };
+                restored.speed = picture_speed(self.speed.unwrap());
+                let run = picture_turn(restored, picture);
+                assert_eq!(
+                    run.ridley.phase,
+                    RidleyPhase::InFlight(FlightPhase::TakingOff)
+                );
+                assert_eq!(run.ridley.speed, restored.speed);
+                return (run.ridley.wings, None, run.hurt_refresh);
+            }
+            if self.placed {
+                assert!(self.before.is_none());
+                return (restored.wings, None, None);
+            }
+            let wings = self.speed.map_or(restored.wings, |speed| {
+                restored.wings.ran(picture_speed(speed))
+            });
+            let parts = self.looks.as_ref().map(|_| {
+                FightParts::at_anchor(
+                    wings,
+                    point(self.anchor.unwrap_or_default()),
+                    self.tail_intent(),
+                    picture,
+                )
+            });
+            (wings, parts, picture.flash.refresh())
+        }
+
+        fn tail_intent(&self) -> Option<TailIntent> {
+            if let Some(place) = self.rest {
+                return Some(TailIntent::resting(point(place)));
+            }
+            self.places
+                .zip(self.angles)
+                .map(|(places, [penultimate, last])| {
+                    TailIntent::linked(places.map(point), TailAngle(penultimate), TailAngle(last))
+                })
+        }
+
+        fn run_body(
+            &self,
+            mut restored: CeresRidley,
+            before: PictureBody,
+            vectors: &[Vector],
+        ) -> RidleyRun {
+            restored.position = point(before.anchor);
+            restored.speed = picture_speed(before.speed);
+            restored.takeoff = Some(figure_sequence(
+                TIMED_TAKEOFF_FIGURES,
+                before.figure,
+                Some(before.runs),
+            ));
+            restored.phase = RidleyPhase::InFlight(match before.phase {
+                PictureBodyPhase::TakingOff => FlightPhase::TakingOff,
+                PictureBodyPhase::Rising => FlightPhase::Rising,
+            });
+            if let Some(id) = &self.tail_case {
+                let seed = vectors.iter().find(|vector| vector.id == *id).unwrap();
+                restored.flight_tail = seed.flight_tail.as_ref().map(FlightTailRow::shape);
+                restored.curl = curl(seed, seed.ridley.as_ref().unwrap());
+                let her = seed.hitter_her();
+                return restored.run(
+                    boss_ceres_ridley::RidleyFrame {
+                        picture: self.inputs(),
+                        ..frame(0)
+                    },
+                    seed.random(),
+                    her.as_ref(),
+                    seed.fight(),
+                    &ridley_content(&stand_in_content()),
+                    &Rules::default(),
+                );
+            }
+            picture_turn(restored, self.inputs())
+        }
+
+        fn check_body_after(&self, run: &RidleyRun) {
+            let after = self.body_after.unwrap();
+            let ridley = run.ridley;
+            let (figure, runs) =
+                figure_sequence_cells(TIMED_TAKEOFF_FIGURES, ridley.takeoff.unwrap());
+            assert_eq!(
+                (figure, runs),
+                (Some(after.figure), Some(after.runs)),
+                "{}: take-off figure",
+                self.id
+            );
+            let phase = match after.phase {
+                PictureBodyPhase::TakingOff => FlightPhase::TakingOff,
+                PictureBodyPhase::Rising => FlightPhase::Rising,
+            };
+            assert_eq!(
+                ridley.phase,
+                RidleyPhase::InFlight(phase),
+                "{}: phase",
+                self.id
+            );
+            assert_eq!(
+                ridley.position,
+                point(after.anchor),
+                "{}: body anchor",
+                self.id
+            );
+            assert_eq!(
+                ridley.speed,
+                picture_speed(after.speed),
+                "{}: body speed",
+                self.id
+            );
+            if let Some(places) = self.places {
+                assert_eq!(
+                    run.tail_places,
+                    Some(places.map(point)),
+                    "{}: moved tail places",
+                    self.id
+                );
+                let tail = ridley.flight_tail.unwrap();
+                let [.., penultimate, last] = tail.segments;
+                assert_eq!(
+                    Some([penultimate.angle.0, last.angle.0]),
+                    self.angles,
+                    "{}: moved tail angles",
+                    self.id
+                );
+            }
+        }
+
+        fn check_order(&self, mut ridley: CeresRidley) {
+            let Some(stage) = self.stage else {
+                return;
+            };
+            ridley.phase = match stage {
+                PictureStage::BeforeOrdinaryAnimation => RidleyPhase::Holding,
+                PictureStage::Fighting => RidleyPhase::BodyFading { sets: 0, runs: 0 },
+                PictureStage::Getaway => RidleyPhase::Getaway(GetawayState::WarningReady),
+            };
+            let door = if self.attached.unwrap() {
+                Phase::Slammed
+            } else {
+                Phase::Standing
+            };
+            let order = ridley.picture_order(door.drawn_with_ridley());
+            let actual = PictureOrderRow {
+                opportunity: match order.opportunity {
+                    RoomLayerOrder::Before => OrderOpportunity::Before,
+                    RoomLayerOrder::After => OrderOpportunity::After,
+                },
+                baby: order.baby,
+                door: order.door,
+            };
+            assert_eq!(Some(actual), self.order, "{}: draw order", self.id);
+        }
+    }
+
+    fn picture_turn(ridley: CeresRidley, picture: FightPictureInputs) -> RidleyRun {
+        ridley.run(
+            boss_ceres_ridley::RidleyFrame {
+                picture,
+                ..frame(0)
+            },
+            0,
+            None,
+            Fight {
+                her_energy: 99,
+                hits_taken: 0,
+            },
+            &ridley_content(&stand_in_content()),
+            &Rules::default(),
+        )
+    }
+
+    #[test]
+    fn first_ordinary_picture_starts_with_body_fade() {
+        let mut ridley = CeresRidley::place(false).unwrap().ridley;
+        ridley.phase = RidleyPhase::Awake;
+        let eye = picture_turn(ridley, FightPictureInputs::LEFT_UNHURT);
+        assert!(eye.parts.is_none());
+        assert_eq!(eye.ridley.wings, FightWings::PLACED);
+        assert_eq!(
+            eye.ridley.picture_order(true).opportunity,
+            RoomLayerOrder::Before
+        );
+        let body = picture_turn(eye.ridley, FightPictureInputs::LEFT_UNHURT);
+        assert_eq!(body.ridley.wings, FightWings::PLACED);
+        let parts = body.parts.unwrap();
+        assert_eq!(parts.wing.unwrap().anchor, ridley.position);
+        assert_eq!(parts.tail, body.ridley.tail().map(TailIntent::resting));
+        assert_eq!(
+            body.ridley.picture_order(true).opportunity,
+            RoomLayerOrder::After
+        );
+    }
+
+    #[test]
+    fn restored_wings_use_bounded_speed_and_shots_refresh_before_colours() {
+        let mut ridley = CeresRidley::place(false).unwrap().ridley;
+        let saved = saved_wings([7, 3]);
+        let serialized = toml::to_string(&saved).unwrap();
+        ridley.wings = toml::from_str(&serialized).unwrap();
+        ridley.phase = RidleyPhase::InFlight(FlightPhase::Rising);
+        ridley.position = point([224, 120]);
+        ridley.speed = picture_speed([447, 16]);
+        let run = picture_turn(
+            ridley,
+            FightPictureInputs {
+                flash: FightFlash {
+                    remaining: 0,
+                    accepted_shots: 2,
+                    half: FlashHalf::Second,
+                },
+                ..FightPictureInputs::LEFT_UNHURT
+            },
+        );
+        assert_eq!(run.bound, Some(Bound::Right));
+        assert_eq!(run.ridley.speed, picture_speed([0, 0]));
+        assert_eq!(run.ridley.wings, saved);
+        assert_eq!(run.hurt_refresh, Some(14));
+        assert_eq!(run.parts.unwrap().colours, FightColours::Hurt);
+    }
+
+    #[test]
+    fn wing_save_rejects_out_of_range_or_incomplete_clocks() {
+        for invalid in [
+            "beat = 10\nremaining = 32",
+            "beat = 9\nremaining = 33",
+            "beat = 9",
+            "remaining = 32",
+        ] {
+            assert!(toml::from_str::<FightWings>(invalid).is_err(), "{invalid}");
+        }
+    }
+
+    #[test]
+    fn restored_fight_advances_the_saved_beat() {
+        let mut ridley = CeresRidley::place(false).unwrap().ridley;
+        ridley.phase = RidleyPhase::InFlight(FlightPhase::Rising);
+        ridley.position = point([186, 120]);
+        ridley.speed = picture_speed([0, -352]);
+        ridley.wings = saved_wings([9, 0]);
+
+        let mut restored = ridley;
+        let serialized = toml::to_string(&ridley.wings).unwrap();
+        restored.wings = toml::from_str(&serialized).unwrap();
+        let picture = FightPictureInputs::LEFT_UNHURT;
+        let run = picture_turn(restored, picture);
+        assert_eq!(run, picture_turn(ridley, picture));
+        assert_eq!(run.ridley.wings, saved_wings([0, 32]));
+        assert_eq!(run.parts.unwrap().wing.unwrap().beat, run.ridley.wings.beat);
+    }
+
     fn entry(name: &str) -> BehaviourId {
         catalogue()
             .into_iter()
@@ -2621,6 +3091,10 @@ mod vectors {
     fn every_vector_passes() {
         let file = vector_file();
         file.check_tilting_room();
+        assert_eq!(file.fight_picture.len(), 24);
+        for vector in &file.fight_picture {
+            vector.source.check(|| vector.check(&file.vector));
+        }
         let vectors = file.vector;
         assert_eq!(vectors.len(), 384);
         assert_eq!(

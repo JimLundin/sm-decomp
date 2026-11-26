@@ -19,6 +19,7 @@ use data::assets::world::{
 use data::enemy::{EnemyError, SpeciesKey};
 use data::id::SpeciesId;
 use data::rom::{AddressError, Lorom, RomAddress};
+use data::spritemap::Spritemap;
 use std::num::Wrapping;
 
 /// The original's place for each registered species, in id order: its header's pointer in the
@@ -151,6 +152,14 @@ pub fn import(rom: Lorom<'_>) -> Result<Actors, ActorsError> {
         ceres_ridley: ceres_ridley_colours(rom)?,
         ceres_tail_worth: ceres_tail_worth(rom)?,
     })
+}
+
+/// Import the closed door drawn with Ridley in his room.
+///
+/// # Errors
+/// An incomplete spritemap returns an address error.
+pub fn attached_ridley_door(rom: Lorom<'_>) -> Result<Spritemap, AddressError> {
+    Spritemap::load(rom, RomAddress::new(0xa6, 0xa329))
 }
 
 /// The whole energy Ceres Ridley's tail's hit is worth: the operand of his set-up's load, read

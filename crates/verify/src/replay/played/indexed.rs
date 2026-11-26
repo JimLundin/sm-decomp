@@ -2,7 +2,9 @@
 
 pub(in crate::replay) mod shaft;
 
-use super::{Run, Stop, actual, contact, open_rows, read_lock, ridley, seed_controller};
+use super::{
+    Run, Stop, actual, contact, fight_picture, open_rows, read_lock, ridley, seed_controller,
+};
 use crate::replay::{
     Sources, appearance, connected, data_failure,
     index::{
@@ -58,9 +60,30 @@ const WARNING_OUTPUTS: &[ObservationId] = &[
     ObservationId::CeresWarningHandoff,
 ];
 
+const FIGHT_PICTURE_FIELDS: &[ObservationId] = &[ObservationId::CeresFightDoorCursor];
+const FIGHT_PICTURE_OUTPUTS: &[ObservationId] = &[
+    ObservationId::CeresFightPreparedOam,
+    ObservationId::CeresFightPhysicalOam,
+];
+
 pub(in crate::replay) fn valid(case: &Case) -> bool {
     if case.inputs == InputProvider::CeresShaftActors {
         return shaft::valid(case);
+    }
+    if case.inputs == InputProvider::ScopedCeresFightPicture {
+        return case.kind == CaseKind::Scoped
+            && case.row == fight_picture::ROW
+            && matches!(
+                (&case.start, case.end.cut_inclusive),
+                (Start::CacheCut { frame: 608 }, 702)
+            )
+            && case.responsibilities == [Responsibility::Ceres]
+            && case.content == ContentProvider::PlayerRomImport
+            && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+            && case.expectations.fields == FIGHT_PICTURE_FIELDS
+            && case.expectations.outputs == FIGHT_PICTURE_OUTPUTS
+            && case.expectations.output_cut.is_none()
+            && case.checkpoints;
     }
     let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
         case.kind == CaseKind::Scoped
@@ -144,6 +167,9 @@ pub(in crate::replay) fn run(
     let mut run = Run::admit(&seed, &content, &sources.rom, &case.row)?;
     if case.inputs == InputProvider::CeresShaftActors {
         return shaft::run(&mut run, &mut rows, seed, controller, case, result);
+    }
+    if case.inputs == InputProvider::ScopedCeresFightPicture {
+        return fight_picture::run(&mut run, &mut rows, seed, controller, case, result);
     }
     if case.inputs == InputProvider::ScopedCeresWarning {
         return warning(&mut run, &mut rows, seed, controller, case, result);

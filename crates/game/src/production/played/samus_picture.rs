@@ -6,6 +6,7 @@ use samus_health::{PlayedFrame, ProtectionFrames};
 use types::{Parity, Position, PushFrames};
 
 use crate::intent::SpriteDraw;
+use crate::production::room_loading;
 
 use super::{Content, Fault, State, samus::Her};
 
@@ -46,5 +47,15 @@ impl State {
     ) -> core::ops::Range<usize> {
         self.room_video.begin_ordinary_sprites();
         self.room_video.append_ordinary_body(body)
+    }
+}
+
+impl Her {
+    pub(super) fn publish_suit_colours(&self, palette: &mut world_doors::Palette) {
+        if let (Some(row), Some(colours)) =
+            (room_loading::suit_row(&mut palette.screen), self.colours)
+        {
+            *row = colours.0;
+        }
     }
 }

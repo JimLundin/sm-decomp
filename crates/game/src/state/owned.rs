@@ -36,6 +36,14 @@ impl Pinned for CameraPin {
     const SHAPE: u64 = 0x1ED5_DF03_BD0A_7BD4;
 }
 
+/// The ordinary Ridley picture's carried wing clock.
+pub struct FightWingsPin;
+impl Pinned for FightWingsPin {
+    type State = boss_ceres_ridley::FightWings;
+    const NAME: &'static str = "ceres-fight-wings";
+    const SHAPE: u64 = 0x837B_0847_748A_7CC3;
+}
+
 /// Her complete appearance State: her animation, kept action, cannon delay and colour sequences.
 pub struct AppearancePin;
 impl Pinned for AppearancePin {

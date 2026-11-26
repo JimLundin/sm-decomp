@@ -6,6 +6,8 @@
 //! the Y offset, then the sprite's tile and attributes as OAM holds them (the Y and X flips,
 //! the priority, the palette and a nine-bit tile).
 
+use types::Pair;
+
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// Bytes of one spritemap entry.
@@ -132,6 +134,25 @@ impl Spritemap {
             .collect();
         Self { entries }
     }
+}
+
+/// One extended-map sprite. The entire X word participates in the encoder's
+/// horizontal addition, whose carry also affects the Y coordinate.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExtendedPiece {
+    /// The interpreted sprite map entry.
+    pub sprite: SpritemapEntry,
+    /// The X offset word, including the size flag.
+    pub x_word: u16,
+}
+
+/// A map placed at an offset from the actor's origin.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExtendedMap {
+    /// The submap's origin relative to the actor.
+    pub offset: Pair<i16>,
+    /// In native draw order.
+    pub pieces: Vec<ExtendedPiece>,
 }
 
 #[cfg(test)]

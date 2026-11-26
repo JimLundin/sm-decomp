@@ -7,6 +7,7 @@ use enum_map::{Enum, EnumMap};
 pub mod arrival;
 pub mod brightness;
 pub mod ceres_blackout;
+pub mod ceres_fight;
 pub mod ceres_getaway;
 pub mod ceres_progress;
 pub mod ceres_shaft;

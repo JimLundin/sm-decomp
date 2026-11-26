@@ -1557,6 +1557,28 @@ phase = "frame boundary"
 claim = "The played room draws its own random number and calculates actor runs and hit delivery. The pad comes from the movie."
 
 [[case]]
+id = "ridley/ordinary-picture"
+kind = "scoped"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 608 }
+end = { cut_inclusive = 702 }
+rules = ["boss-ceres-ridley/FightParts", "boss-ceres-ridley/FightPictureOrder"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "scoped-ceres-fight-picture"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.ordinary.door-cursor"], outputs = ["ridley.ordinary.prepared-oam", "ridley.ordinary.physical-oam"] }
+checkpoints = true
+limits = ["One admitted ordinary fight with carried gameplay and OAM. Door, baby, body, Samus, wings and tail write at the real shared cursor. Compare the complete prepared and physical pictures at cuts 682 and 702, where no weapon draws before the door.", "The other cuts advance the room. Cut 675 includes a native weapon append. Weapon appends, ongoing hit-phase colours, the getaway and later actors are outside the picture comparison. At cut 682, Canonical restores the wing clock, camera, room view and Video with its pending sprite publication into an opaque in-memory room, then continues to cut 702."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "requested publication", "audio readiness"]
+phase = "frame boundary"
+claim = "The room advances its carried State and appends through production. The pad comes from the movie."
+
+[[case]]
 id = "ridley/alternate-rise-hit"
 kind = "integrated"
 row = "samus-ceres-push"

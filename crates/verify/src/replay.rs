@@ -98,6 +98,7 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
                     | index::InputProvider::ScopedCeresFlyby
                     | index::InputProvider::ScopedCeresWarning
                     | index::InputProvider::CeresShaftActors
+                    | index::InputProvider::ScopedCeresFightPicture
             ) {
                 played::indexed::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::PlayedShaftSound {

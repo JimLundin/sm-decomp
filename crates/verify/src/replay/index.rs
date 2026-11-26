@@ -187,6 +187,8 @@ pub enum InputProvider {
     CeresShaftActors,
     /// Played shaft actors with native CPU-side Ambient reply reads.
     PlayedShaftSound,
+    /// One admitted ordinary fight and the played platform publication boundaries.
+    ScopedCeresFightPicture,
     /// Carried Samus turn with a separately observed flyby pass and view edge.
     ScopedGetawayInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
@@ -368,6 +370,15 @@ pub enum ObservationId {
     /// Overlay VRAM, first prepared and published OAM, and platform low bytes.
     #[serde(rename = "shaft-actors.picture")]
     CeresShaftPicture,
+    /// The actual slot at which the attached door is appended.
+    #[serde(rename = "ridley.ordinary.door-cursor")]
+    CeresFightDoorCursor,
+    /// The prepared ordinary fight picture.
+    #[serde(rename = "ridley.ordinary.prepared-oam")]
+    CeresFightPreparedOam,
+    /// The physically published ordinary fight picture.
+    #[serde(rename = "ridley.ordinary.physical-oam")]
+    CeresFightPhysicalOam,
     /// The wrapping HUD frame count.
     #[serde(rename = "hud.frame-count")]
     HudFrameCount,
@@ -1385,6 +1396,9 @@ macro_rules! ceres_observations {
             | ObservationId::CeresShaftEvents
             | ObservationId::CeresShaftPicture
             | ObservationId::ShaftSoundOffer
+            | ObservationId::CeresFightDoorCursor
+            | ObservationId::CeresFightPreparedOam
+            | ObservationId::CeresFightPhysicalOam
     };
 }
 
@@ -1765,6 +1779,11 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
             O::CeresWarningState,
             O::CeresWarningPicture,
             O::CeresWarningAudio,
+        ],
+        "boss-ceres-ridley/FightParts" | "boss-ceres-ridley/FightPictureOrder" => &[
+            O::CeresFightDoorCursor,
+            O::CeresFightPreparedOam,
+            O::CeresFightPhysicalOam,
         ],
         "boss-ceres-ridley/WarningEnds" => &[O::CeresWarningState, O::CeresWarningHandoff],
         "boss-ceres-ridley/OverlayAppears" => &[
@@ -2468,6 +2487,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             | InputProvider::ScopedCeresFlyby
             | InputProvider::ScopedCeresWarning
             | InputProvider::CeresShaftActors
+            | InputProvider::ScopedCeresFightPicture
     ) {
         return super::played::indexed::valid(case);
     }

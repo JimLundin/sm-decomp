@@ -30,6 +30,7 @@ mod ceres_doors;
 mod colours;
 mod contact;
 pub(super) mod explosion;
+mod fight_picture;
 mod flight;
 pub(super) mod flyby_scope;
 mod frame;
@@ -47,6 +48,10 @@ mod quake;
 mod return_fade;
 mod return_timing;
 mod ridley;
+#[cfg(test)]
+mod ridley_body_picture;
+#[cfg(test)]
+mod ridley_door_picture;
 #[cfg(test)]
 mod room_picture;
 mod room_video;
@@ -407,6 +412,7 @@ struct Run<'a> {
     row: &'a str,
     drawing: ridley::flyby::Drawing,
     warning_picture: warning::Picture,
+    compare_fight_picture: bool,
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
     blackout: Option<game::production::blackout::LiveRoom>,
@@ -515,6 +521,10 @@ impl<'a> Run<'a> {
                     import::samus::tile_uploads(image.lorom())
                         .map_err(|_| data_failure(None, "ordinary Samus tile uploads"))?,
                 ),
+                ridley_picture: Some(
+                    import::ridley_picture::import(image.lorom())
+                        .map_err(|_| data_failure(None, "Ridley ordinary sprite art"))?,
+                ),
                 colour_groups: colours::groups(),
                 rooms,
                 hud: hud.pictures,
@@ -533,6 +543,7 @@ impl<'a> Run<'a> {
             row,
             drawing,
             warning_picture,
+            compare_fight_picture: false,
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
             blackout: None,
@@ -945,6 +956,14 @@ impl<'a> Run<'a> {
             actual.extend(hud::video_observations(
                 &self.state.room_video.video.memory.vram,
             )?);
+        }
+        if self.compare_fight_picture {
+            fight_picture::append_observations(
+                *frame,
+                &self.state.room_video.video,
+                outputs.attached_ridley_door.as_ref(),
+                (expected, actual),
+            )?;
         }
         room_video::compare(
             &self.state.room_video,

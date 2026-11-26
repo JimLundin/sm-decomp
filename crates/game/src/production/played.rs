@@ -66,6 +66,7 @@ pub mod passage;
 pub mod play_time;
 pub mod quake;
 mod ridley;
+mod ridley_picture;
 mod room_bg1;
 mod room_palette;
 pub mod room_tiles;
@@ -91,7 +92,7 @@ use crate::production::connected::inputs::Inputs;
 use crate::production::content::MovementContent;
 use crate::production::health_tail::HealthPin;
 use crate::production::hud::HudPin;
-use crate::production::room_loading::{self, LoadFault, Rooms};
+use crate::production::room_loading::{LoadFault, Rooms};
 use crate::production::shaft::LightsFault;
 use crate::state::owned::CameraPin;
 use boss_ceres_ridley::{Lights, RidleyContent, RidleyPlacing, RidleyRun};
@@ -150,6 +151,8 @@ pub struct Content {
     pub ridley: RidleyContent,
     /// The room warning artwork, when admitted for this file.
     pub warning: Option<warning::Content>,
+    /// Ordinary sprite maps for Ridley, the baby, and the attached door.
+    pub ridley_picture: Option<data::assets::ridley_picture::Art>,
     /// The whole energy his tail's hit is worth, imported as his tail's own.
     pub tail_worth: samus_health::WholeEnergy,
 }
@@ -222,6 +225,8 @@ pub struct Outputs {
     pub movement: Option<samus_movement::Outcome>,
     /// OAM slots appended by the ordinary body, empty when it was hidden.
     pub samus_body: Option<core::ops::Range<usize>>,
+    /// The slots appended by the attached door in the ordinary room picture.
+    pub attached_ridley_door: Option<core::ops::Range<usize>>,
     /// Her appearance's sounds, in the order asked; none while a passage runs.
     pub sounds: Vec<samus_appearance::SoundOffer>,
     /// What the doors report.
@@ -317,6 +322,8 @@ pub enum Fault {
     SuitColours,
     /// The ordinary body figure or step has no imported art.
     SamusBody(Figure),
+    /// The ordinary fight requests a sprite map outside the imported looks.
+    RidleyPicture,
     /// The ordinary figure or animation step has no imported strip definition.
     SamusTiles(Figure),
 }
@@ -389,11 +396,7 @@ impl State {
         let (mut her, (mut enemies, health)) =
             self.play_actors_and_samus(inputs, passing, content, rules, &mut random, &mut palette)?;
         let uploads = her.tiles(content)?;
-        if let (Some(row), Some(colours)) =
-            (room_loading::suit_row(&mut palette.screen), her.colours)
-        {
-            *row = colours.0;
-        }
+        her.publish_suit_colours(&mut palette);
         let mut samus = her.samus;
         let pad_and_cover = self.station.pad(&mut samus, rules);
         let camera = self.followed(&room, &her, &samus, rules);
@@ -434,7 +437,8 @@ impl State {
             rules,
         );
 
-        let samus_body = body.map(|body| self.write_ordinary_fight_body(&body));
+        let picture = ridley_picture::picture(content, &enemies, camera.position());
+        let sprites = self.write_ordinary_sprites(body.as_ref(), picture)?;
         self.prepare_room_picture(&hud_state, &hud_outputs, camera.position(), content)?;
         let shaft_sound_offer =
             self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
@@ -469,7 +473,8 @@ impl State {
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
             movement: her.outcome,
-            samus_body,
+            samus_body: sprites.samus,
+            attached_ridley_door: sprites.door,
             sounds: her.sounds,
             doors: doors.report,
             health: Some(health),
@@ -662,16 +667,15 @@ impl State {
         if loaded.actors.is_some() {
             self.station.escape_shaft = loaded.shaft.take();
         }
-        let quake = self.passage_quake(
+        self.quake = Model(self.passage_quake(
             enemies.quake,
             exports.report.call,
             ridley_placed,
             content,
             rules,
-        );
+        ));
         self.station
             .passed(&mut enemies, loaded.actors.take(), pad_and_cover);
-        self.quake = Model(quake);
         self.samus.movement.0 = moved;
         self.samus.last_draw_jump.0 = last_draw_jump;
         self.apply_passage_view(content, view, seen, exports.report.layer_2);
@@ -684,6 +688,7 @@ impl State {
         Ok(Outputs {
             movement: None,
             samus_body: None,
+            attached_ridley_door: None,
             sounds: Vec::new(),
             doors: exports.report,
             health: None,

@@ -74,6 +74,12 @@
 //! any swish, and the same [`types::Hit`] as at rest, now judged from the moved tip.
 //! Aiming describes the ordinary Ceres loadout, without missiles.
 //!
+//! **The ordinary fight picture.** Save [`FightWings`] with the fight. Supply facing, tail
+//! visibility and the actor framework's flash inputs on [`RidleyFrame`]. [`RidleyRun`] reports
+//! the pre-hop parts and any accepted-shot timer refresh; the actor framework spends the timer.
+//! Use [`CeresRidley::picture_order`] with the door owner's attachment state to schedule the
+//! existing baby and door pictures around the room layers. The flyby keeps a separate clock.
+//!
 //! **His real retreat.** `Hovers` starts the pull away on the same run that selects it.
 //! The caller can restore [`RidleyPhase::Retreating`], [`RidleyPhase::CoastingAbove`]
 //! with its remaining [`CoastRuns`], or [`GetawayState::GetawayReady`] with its flyby beats.
@@ -103,6 +109,8 @@
 mod baby;
 mod catalogue;
 mod door;
+mod fight_picture;
+mod fight_wings;
 mod figure;
 mod flight;
 mod flight_tail;
@@ -141,6 +149,11 @@ pub use baby::{
 };
 pub use catalogue::{Behaviour, BehaviourId, catalogue};
 pub use door::{BOX_RADIUS, CeresDoor, DoorKind, OpeningSound, Placement, Run};
+pub use fight_picture::{
+    FightColours, FightFacing, FightFlash, FightParts, FightPictureInputs, FightPictureOrder,
+    FightPictureStage, FlashHalf, RoomLayerOrder, TailIntent, TailTipLook, WingIntent,
+};
+pub use fight_wings::{FightWings, WingCount};
 pub use figure::{Figure, FigureLook};
 pub use flight::{Bound, Fight, HIS_POINT, HoverRuns, Speed};
 pub use flight_tail::{
@@ -161,12 +174,10 @@ pub use pad_wait::PadWait;
 pub use phase::{Phase, Quarter, Wait};
 pub use puff::{Puff, PuffFigure, VentFacing};
 pub use ridley::{
-    Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyPlacing, RidleyRun,
-    RoomColours, ShakeStop,
+    Boss, CeresRidley, Drawn, GoalColours, MusicStop, RidleyDrawing, RidleyFrame, RidleyPlacing,
+    RidleyRun, RoomColours, ShakeStop,
 };
-pub use ridley_phase::{
-    Attack, CoastRuns, FightMusic, FlightPhase, RidleyFrame, RidleyPhase, RoarSound,
-};
+pub use ridley_phase::{Attack, CoastRuns, FightMusic, FlightPhase, RidleyPhase, RoarSound};
 pub use ridley_wait::{RidleyWait, WakeWait};
 pub use roar::{RidleyLook, RoarFigure, TimedRoarFigure};
 pub use rules::Rules;
@@ -185,6 +196,7 @@ pub use station::{
 pub use steam::{FirstPuffWait, MountedVent, Vent, VentPhase, run_vents};
 pub use tail::{TAIL_DAMAGE, TailCurl};
 pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
+pub use types::ceres_fight::WingBeat;
 pub use types::ceres_getaway::{
     FlybyBabyBeat, FlybyBeats, FlybyProgress, FlybyTurn, FlybyWingBeat, GetawayState, OutOfTheWay,
 };

@@ -64,6 +64,7 @@ pub(super) fn run(
         boss_ceres_ridley::RidleyFrame {
             passage_under_way,
             finished,
+            picture: boss_ceres_ridley::FightPictureInputs::LEFT_UNHURT,
         },
         random.number.0,
         her,

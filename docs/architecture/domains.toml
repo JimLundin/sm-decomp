@@ -61,7 +61,7 @@ rounds = 13
 
 [[model]]
 name = "boss-ceres-ridley"
-rounds = 11
+rounds = 12
 
 [[model]]
 name = "screens-explosion"

@@ -6,11 +6,11 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, SlotField, WramWord};
 use boss_ceres_ridley::{
-    Attack, Baby, BabyFigure, BabyRoutine, CeresRidley, CoastRuns, FidgetFigure, FigureLength as _,
-    FlightPhase, FlightTail, GlowFigure, HoverRuns, LagCount, ReadyWait, RidleyLook, RidleyPhase,
-    RidleyWait, RoarFigure, RoarWait, ShownFigure, SwingLag, SwingPace, SwingWay, SwishRuns,
-    TailAngle, TailCurl, TailLength, TailMark, TailSegment, TakeOffFigure, TimedRoarFigure,
-    TimedTakeOffFigure,
+    Attack, Baby, BabyFigure, BabyRoutine, CeresRidley, CoastRuns, FidgetFigure, FightWings,
+    FigureLength as _, FlightPhase, FlightTail, GlowFigure, HoverRuns, LagCount, ReadyWait,
+    RidleyLook, RidleyPhase, RidleyWait, RoarFigure, RoarWait, ShownFigure, SwingLag, SwingPace,
+    SwingWay, SwishRuns, TailAngle, TailCurl, TailLength, TailMark, TailSegment, TakeOffFigure,
+    TimedRoarFigure, TimedTakeOffFigure, WingBeat, WingCount,
 };
 use core::num::{NonZeroU16, Wrapping};
 use enum_map::Enum as _;
@@ -213,6 +213,7 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
         roaring: read(wram, ROARING)? != 0,
     };
     let ridley = CeresRidley {
+        wings: fight_wings(wram)?,
         phase,
         look,
         position: Pair {
@@ -240,6 +241,19 @@ pub(super) fn observed(wram: &[u8]) -> Result<Option<(CeresRidley, Shows)>, Outc
             .ok_or_else(|| unsupported("Ceres Ridley tail curl observation"))?,
     };
     Ok(Some((ridley, seen)))
+}
+
+fn fight_wings(wram: &[u8]) -> Result<FightWings, Outcome> {
+    let clock = |name, offset| {
+        let value = read(wram, WramWord { name, offset })?;
+        u8::try_from(value).map_err(|_| unsupported("Ceres Ridley wing clock observation"))
+    };
+    Ok(FightWings {
+        beat: WingBeat::new(clock("CERES_RIDLEY_WING_BEAT", 0x780e)?)
+            .ok_or_else(|| unsupported("Ceres Ridley wing beat observation"))?,
+        remaining: WingCount::new(clock("CERES_RIDLEY_WING_REMAINING", 0x7812)?)
+            .ok_or_else(|| unsupported("Ceres Ridley wing count observation"))?,
+    })
 }
 
 /// Where his seven tail segments are, tip last, as the record holds them once he moves.

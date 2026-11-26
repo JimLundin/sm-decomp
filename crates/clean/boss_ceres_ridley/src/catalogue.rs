@@ -147,6 +147,12 @@ pub enum BehaviourId {
     ElevatorReached,
     /// Project a mounted vent's drawing origin without moving its contact box.
     VentDrawFollowsShaft,
+    /// Advance the ordinary wings' ten-beat clock using flight speed.
+    WingsBeat,
+    /// Select the ordinary wing and tail looks and their hurt colours.
+    FightParts,
+    /// Place the ordinary baby and attached door around the room layers.
+    FightPictureOrder,
 }
 
 /// A catalogue entry.
@@ -165,7 +171,7 @@ pub struct Behaviour {
 }
 
 /// The number of named behaviours.
-const ENTRIES: usize = 70;
+const ENTRIES: usize = 73;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -691,6 +697,27 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
     Behaviour {
         id: BehaviourId::VentDrawFollowsShaft,
         summary: "the graphic's anchor follows the room's picture when a mounted vent runs",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WingsBeat,
+        summary: "the ordinary wings beat in a ten-look cycle paced by flight speed",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::FightParts,
+        summary: "the wings follow his facing and the tip follows its links, both with current hurt colours",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::FightPictureOrder,
+        summary: "once ordinary animation begins, the room layers draw first, then the ordinary baby and attached door",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

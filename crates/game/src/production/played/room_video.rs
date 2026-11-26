@@ -136,6 +136,12 @@ impl EnemyUploads {
     }
 }
 
+#[derive(canonical::Canonical)]
+struct OrdinaryPictureVideo {
+    video: Box<Video>,
+    pending: bool,
+}
+
 /// The parts of physical room graphics produced by the room's loaders.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RoomVideo {
@@ -563,6 +569,26 @@ impl RoomVideo {
         let start = usize::from(self.video.batch.sprites.0);
         self.video.batch.draw_sprites(body);
         start..usize::from(self.video.batch.sprites.0)
+    }
+
+    /// Encode the complete Video owner and the ordinary sprite publication receipt it reads.
+    #[must_use]
+    pub fn ordinary_picture_checkpoint(&self) -> Vec<u8> {
+        canonical::to_bytes(&OrdinaryPictureVideo {
+            video: self.video.clone(),
+            pending: self.ordinary_oam_pending,
+        })
+    }
+
+    /// Restore Video and the room's ordinary sprite publication receipt together.
+    ///
+    /// # Errors
+    /// Invalid canonical bytes leave the receiver intact.
+    pub fn restore_ordinary_picture(&mut self, bytes: &[u8]) -> Result<(), canonical::DecodeError> {
+        let OrdinaryPictureVideo { video, pending } = canonical::from_bytes(bytes)?;
+        self.video = video;
+        self.ordinary_oam_pending = pending;
+        Ok(())
     }
 
     pub(super) fn publish_ordinary_sprites(&mut self) {

@@ -355,6 +355,19 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
     {
         return false;
     }
+    if case.inputs == InputProvider::ScopedCeresFightPicture {
+        // This producer advances the entire horizon, compares two complete pictures and
+        // restores the first for a single continuation through the second.
+        return floor.expected == Outcome::Pass
+            && *counts
+                == Counts {
+                    cuts: 2,
+                    fields: 2,
+                    outputs: 4,
+                    restorations: 1,
+                    ..Counts::default()
+                };
+    }
     match floor.expected {
         Outcome::Pass => {
             if counts.cuts != horizon

@@ -1096,8 +1096,8 @@ on which part 4b's `TailHits` judges the two hits the movie shows in his flight 
 number (§12.3). It hands drawing his look and position, her touch, her shots and his tail
 that he stays tangible and moving (§15.4), the screen's shaking (R3) a shake when he meets the
 room's left side fast, and the parts after it the bound he met and the run he gives up or
-attacks. Left to others: his tail in flight (4c-1b); his wings' flapping, which
-follows his speed and is drawing only (C1); his retreat (4c-2) and his fake retreat, after her
+attacks. Left to others: his tail in flight (4c-1b); his wings' flapping (§21), which
+follows his speed and supplies a look to drawing (C1); his retreat (4c-2) and his fake retreat, after her
 100th hit on him (a later part); his attacks (later parts); his colours as her hits on him add
 up (a later part: with fewer than 50 hits nothing changes, and his colours on a hovering run
 with 50 or more are that part's); her knockback and hurt colours at the tail's hits
@@ -2209,3 +2209,119 @@ Each product rounds down before the additions and subtractions. The vent reads
 the view it starts with. On a turn where the shaft picks a new sample, that sample
 can be available to a vent on its next turn. The drawn offset is independent of
 the room coordinates used for movement contact.
+
+## 21. Ridley's ordinary fight picture
+
+At first the baby and the door are drawn ahead of the room's actor layers.
+When Ridley's body begins to fade in, his tail and wings precede those layers,
+his body occupies its actor layer, and the baby and door follow the layers.
+The tail tip turns as the last two links swing. His wings beat faster when he
+flies up.
+
+B8 supplies the ordinary wings' look and the tail's drawing intent. It reads
+Ridley's animation opportunity, his facing and speeds, his tail's places
+and angles. The actor framework supplies accepted shots and the hurt-colour
+cycle. The body and baby retain their existing look and position outputs. The door retains
+its own position, phase and quake response. Imported actor art (AF3) owns the
+maps. The room renderer and exact encoding own projection, clipping, allocation
+of sprite slots and publication. Samus and weapons keep their own draw
+producers. The flyby in §16 has its own art and beats. This part replaces no
+ordinary wing model.
+
+### 21.1 State and outputs
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| ordinary wing clock | `FightWings` with a `WingBeat` numbered 0 through 9 and a remaining count of 0 through 32 beat units | WingsBeat, FightParts |
+| post-move speed | x and y from §15, in signed 1/256 px per run, after bounds and before the take-off figure changes | WingsBeat |
+| visibility and facing | animation opportunity and tail visibility as booleans; facing left, front or right | WingsBeat, FightParts, FightPictureOrder |
+| current hurt colours | `FightFlash` reads remaining hurt frames, accepted shots in contact order and the current turn of the shared four-run flash cycle | FightParts |
+| hurt refresh | optional new remaining hurt frames after accepted shots, before the actor timer spends its run | output, actor framework |
+| tail tip look | `TailTipLook`, a direction in sixteenths of a turn, numbered from down toward right | output, actor drawing |
+| wing and tail intents | wing beat, facing and whole-pixel anchor when drawn; seven tail positions in whole px in tip-to-base draw order and the tip look when drawn; a normal or hurt colour selection shared by both | output, actor drawing |
+| baby and door placement in the room picture | `FightPictureOrder`, either before the room layers or after them; ordinary baby availability | output, room drawing |
+
+A caller can restore any wing count with any beat in its range. The count
+and beat hold across a pause and stay independent of the flyby. The normal
+colour selection is the default. Early parts read the cycle turn that the
+actor layers will read later in the same room run.
+
+### 21.2 Order that matters
+
+On the run the body starts fading in, the ordinary wings can already beat.
+They read the speed after the body's move. The tail and wings use the anchor
+before any take-off hop. The baby also uses its existing pre-hop anchor.
+The body uses its look and position after the take-off figure changes. The
+run the figure springs into the air still shows the wing beat of the stationary
+speed. The next run reads its new rising speed. [FP-start, FP-ready, FP-spring,
+FP-rise, FP-hop-picture, FP-order-late]
+
+Within the early parts, the tip precedes the links in order back to the body,
+and wings follow. When the baby and attached door use the same draw
+opportunity, baby precedes door. In the layered room pass, the existing
+Samus and weapon slots precede Ridley's body on layer 5. The late baby and
+door follow all those layers. The renderer advances the cursor by actual
+encoded pieces in this order. Changes in Samus's visible pieces can move
+the door even on otherwise identical Ridley looks. Clipped pieces follow
+their own map's encoder rule. [FP-order-early, FP-order-late, FP-order-escape]
+
+### WingsBeat
+
+- kind: mechanic.
+- summary: Ridley's ordinary wings keep a ten-beat cycle driven by flight speed.
+- params: initial beat 5 with 0 remaining, take-off count 8, and renewed count 32.
+  The pace in beat units per run is 12, 14, 16, 18, 28, 32, 40 or 48 for
+  speed bands 0 through 7. Divide the larger absolute speed by 64, dropping
+  the fraction, take the remainder modulo 16 and cap the band at 7. Use pace
+  zero at rest and at the two simultaneous extreme negative speeds. Half
+  the selected pace applies at zero or downward vertical speed.
+- switch: Fixed.
+- Placed → beat 5 and count 0. [FP-place]
+- An ordinary animation run → subtract the pace. On the first take-off run,
+  start from count 8. If the result is negative, show the next beat cyclically
+  and set the count to 32. [FP-start, FP-ready, FP-spring, FP-rise, FP-equal,
+  FP-falls, FP-wrap, FP-bands, FP-extreme]
+- No ordinary animation run → keep the beat and count. [FP-hold, FP-order-escape]
+- checked: oracle (fight row, cuts 576 through 1158); constructed (pace bands,
+  countdown equality and wrap, extreme speeds, pause).
+
+### FightParts
+
+- kind: mechanic.
+- summary: wings turn with Ridley's facing, the tail tip follows its links
+  and both take the current hurt colours.
+- params: the tip look is `floor(((a + b + 8) mod 256) / 16)` for the tail's
+  last two angles `a` and `b` in the units of §17. At rest the tip uses
+  direction 11. A hurt selection applies with at least two remaining hurt
+  frames,
+  on the second half of the current four-run flash cycle, indexed from zero.
+- switch: Fixed.
+- Ordinary parts draw with Ridley facing left or right → offer the current
+  facing and wing beat at his pre-hop anchor. Facing front omits the wings.
+  [FP-parts-front, FP-parts-right, FP-hop-picture, FP-tail-hidden, FP-spring]
+- Visible ordinary tail at rest → offer its common place and resting tip look.
+  A visible tail in flight → offer the seven places and the rounded tip look
+  from its two last angles. A hidden tail offers no pieces.
+  [FP-parts-rest, FP-parts-front, FP-parts-right, FP-tip-edge, FP-tail-hidden, FP-hop-picture]
+- A shot accepted against Ridley → set his remaining hurt frames to
+  `13 + (remaining mod 2)`. Apply each accepted shot before taking the
+  current colour selection. The actor framework spends the regular timer
+  run. [FP-hurt-shot, FP-hurt-odd]
+- On a hurt selection → give both parts the hurt colours. Otherwise give
+  them the normal colours. [FP-parts-rest, FP-parts-right, FP-flash-edge]
+- checked: oracle (fight row, cuts 577 through 1157); constructed (alternate facing,
+  hidden tail, rounding edge and flash threshold).
+
+### FightPictureOrder
+
+- kind: mechanic.
+- summary: the baby's ordinary picture and attached door change place in
+  the draw order as the fight starts.
+- params: none.
+- Before ordinary animation begins → the baby and attached door draw
+  before the room layers. [FP-order-early]
+- With ordinary animation active before the getaway → the ordinary baby and
+  attached door draw after the room layers. [FP-order-late]
+- From the getaway onward → keep the late opportunity for the attached door
+  while it is attached. The ordinary baby's picture has ended. [FP-order-escape, FP-door-released]
+- checked: oracle (fight row cuts 7, 576, 577, 682, 702, 1158, 1262 through 1264 and 1586).

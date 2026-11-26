@@ -15,17 +15,19 @@
 use core::num::Wrapping;
 
 use types::ceres_getaway::GetawayState;
-use types::{Hit, Pair, Px};
+use types::{GameFrames, Hit, Pair, Px};
 
 use crate::baby::{Baby, BabyColours, BabyCry, BabyLook};
+use crate::fight_picture::{
+    FightParts, FightPictureInputs, FightPictureOrder, FightPictureStage, TailIntent,
+};
+use crate::fight_wings::FightWings;
 use crate::flight::{Bound, Fight, HoverRuns, Ruled, STILL, Speed, Steered, flown};
 use crate::flight_tail::{FlightTail, TAIL_SEGMENTS, TailSwish};
 use crate::flyby::{self, GetawayEffects};
 use crate::getaway::GetawayBackdrop;
 use crate::her::Her;
-use crate::ridley_phase::{
-    FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyFrame, RidleyPhase, RoarSound,
-};
+use crate::ridley_phase::{FightMusic, FlightPhase, PhaseRun, PhaseStep, RidleyPhase, RoarSound};
 use crate::roar::RidleyLook;
 use crate::rules::Rules;
 use crate::station::{ShakeStart, Stage};
@@ -71,6 +73,8 @@ pub struct CeresRidley {
     /// The shape carried between flight runs. Take-off seeds it; callers starting mid-flight
     /// supply their saved shape here. If omitted in flight, the tail starts from its loose shape.
     pub flight_tail: Option<FlightTail>,
+    /// `WingsBeat`: save and restore the ordinary clock alongside the fight.
+    pub wings: FightWings,
 }
 
 /// The boss a placing hands the HUD as encountered, whose mini-map rule is the HUD's own.
@@ -134,6 +138,17 @@ pub struct RidleyPlacing {
     pub colours: RoomColours,
 }
 
+/// The room timing and visual inputs Ridley reads for one turn.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RidleyFrame {
+    /// Whether the door's passage is still under way (`RidleyWaits`).
+    pub passage_under_way: bool,
+    /// The game clock at the start of this frame (`GetawayPicture`).
+    pub finished: GameFrames,
+    /// Actor-framework inputs for `FightParts` at the ordinary opportunity.
+    pub picture: FightPictureInputs,
+}
+
 /// What one run of him answers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RidleyRun {
@@ -167,6 +182,10 @@ pub struct RidleyRun {
     pub backdrop: Option<GetawayBackdrop>,
     /// Stage, audio, movement, quake and drawing requests during the flyby and its return.
     pub getaway: Option<GetawayEffects>,
+    /// `FightParts`: early draw intents at the pre-hop position, if ordinary animation ran.
+    pub parts: Option<FightParts>,
+    /// `FightParts`: accepted-shot timer write, before the actor framework spends the run.
+    pub hurt_refresh: Option<u16>,
 }
 
 impl RidleyRun {
@@ -187,7 +206,30 @@ impl RidleyRun {
             shake: None,
             backdrop: None,
             getaway: None,
+            parts: None,
+            hurt_refresh: None,
         }
+    }
+
+    /// `WingsBeat`, `FightParts`: sample the ordinary picture after motion and tail swing,
+    /// but before the take-off figure can change the body's position or speed.
+    fn ordinary_picture(mut self, picture: FightPictureInputs) -> Self {
+        self.hurt_refresh = picture.flash.refresh();
+        if self.ridley.phase.moving() {
+            let ridley = &mut self.ridley;
+            ridley.wings = ridley.wings.ran(ridley.speed);
+            let tail = ridley
+                .tail()
+                .map(TailIntent::resting)
+                .or_else(|| ridley.flight_tail.as_ref().map(TailIntent::in_flight));
+            self.parts = Some(FightParts::at_anchor(
+                ridley.wings,
+                ridley.position,
+                tail,
+                picture,
+            ));
+        }
+        self
     }
 
     /// `BabyHeld`: run the baby at the position left by the body's move.
@@ -256,6 +298,7 @@ impl CeresRidley {
                 baby: Baby::NEW,
                 curl: TailCurl::PLACED,
                 flight_tail: None,
+                wings: FightWings::PLACED,
             },
             boss: Boss::CeresRidley,
             music: MusicStop,
@@ -285,17 +328,25 @@ impl CeresRidley {
         content: &RidleyContent,
         rules: &Rules,
     ) -> RidleyRun {
-        match self.phase.run(frame, content, rules) {
-            PhaseStep::Waking(phase) => self.waking(&phase, random, her, rules),
-            PhaseStep::TakesOff => self.took_off(random, her, rules),
-            PhaseStep::Flies(phase) => self.flying(phase, fight, random, her, rules),
-            PhaseStep::PullsAway => self.pulls_away(random, her, rules),
+        match self.phase.run(frame.passage_under_way, content, rules) {
+            PhaseStep::Waking(phase) => self
+                .waking(&phase, random, her, rules)
+                .ordinary_picture(frame.picture),
+            PhaseStep::TakesOff => self
+                .took_off(random, her, rules)
+                .ordinary_picture(frame.picture),
+            PhaseStep::Flies(phase) => self.flying(phase, fight, random, her, rules, frame.picture),
+            PhaseStep::PullsAway => self
+                .pulls_away(random, her, rules)
+                .ordinary_picture(frame.picture),
             PhaseStep::Coasts(runs) => {
                 let steered = Steered::coasts(runs, self.speed, self.hover_runs);
                 RidleyRun {
                     backdrop: (steered.phase == RidleyPhase::GETAWAY_START)
                         .then(|| content.getaway.prepare()),
-                    ..self.moved(&steered, random, her, rules)
+                    ..self
+                        .moved(&steered, random, her, rules)
+                        .ordinary_picture(frame.picture)
                 }
             }
             PhaseStep::Flyby(state) => flyby::step(state, frame.finished, &content.flyby)
@@ -350,6 +401,7 @@ impl CeresRidley {
             look: Some(TakeOffFigure::START.look()),
             takeoff: Some(TakeOffFigure::START),
             flight_tail: Some(FlightTail::comes_loose(self.position)),
+            wings: self.wings.starting_takeoff(),
             ..self
         }
         .moved(
@@ -375,15 +427,23 @@ impl CeresRidley {
         random: u16,
         her: Option<&Her>,
         rules: &Rules,
+        picture: FightPictureInputs,
     ) -> RidleyRun {
         match phase.rule(self.position, self.speed, self.hover_runs, fight, random) {
-            Ruled::PullAway => self.pulls_away(random, her, rules),
-            Ruled::FakeHandoff => RidleyRun::handoff(Self {
-                phase: RidleyPhase::FakeRetreat,
-                ..self
-            }),
+            Ruled::PullAway => self
+                .pulls_away(random, her, rules)
+                .ordinary_picture(picture),
+            Ruled::FakeHandoff => RidleyRun {
+                hurt_refresh: picture.flash.refresh(),
+                ..RidleyRun::handoff(Self {
+                    phase: RidleyPhase::FakeRetreat,
+                    ..self
+                })
+            },
             Ruled::FliesOn(steered) => {
-                let run = self.moved(&steered, random, her, rules);
+                let run = self
+                    .moved(&steered, random, her, rules)
+                    .ordinary_picture(picture);
                 RidleyRun {
                     ridley: run.ridley.figure_stepped(),
                     ..run
@@ -484,14 +544,32 @@ impl CeresRidley {
         tail_hit(self.phase.tangible(), her, self.tail()?, rules.tail_reach)
     }
 
-    /// His drawing: his look at his position, the baby's look at its position and his tail's
-    /// place while it rests.
+    /// `FightPictureOrder`: schedule the baby and attached door around the room layers.
+    /// Read attachment from the door's `Phase::drawn_with_ridley`. The stopped coast run
+    /// still has the ordinary baby; the following run starts the flyby.
     #[must_use]
-    pub fn drawing(&self) -> RidleyDrawing {
+    pub const fn picture_order(&self, door_attached: bool) -> FightPictureOrder {
+        self.picture_stage().order(door_attached)
+    }
+
+    const fn picture_stage(&self) -> FightPictureStage {
         if matches!(
             self.phase,
             RidleyPhase::Getaway(GetawayState::FlyingPast(_) | GetawayState::WarningReady)
         ) {
+            FightPictureStage::Getaway
+        } else if self.phase.moving() {
+            FightPictureStage::Fighting
+        } else {
+            FightPictureStage::BeforeOrdinaryAnimation
+        }
+    }
+
+    /// His drawing: his look at his position, the baby's look at its position and his tail's
+    /// place while it rests.
+    #[must_use]
+    pub fn drawing(&self) -> RidleyDrawing {
+        if self.picture_stage() == FightPictureStage::Getaway {
             return RidleyDrawing {
                 ridley: None,
                 baby: None,
