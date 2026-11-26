@@ -1,6 +1,8 @@
 //! Native shaft actor placement, rotation and elevator observations.
 
+mod effect_pool;
 mod effects;
+pub(in crate::replay) mod indexed;
 
 use super::Frame;
 #[cfg(test)]
@@ -173,6 +175,16 @@ pub(super) fn expected(frame: &Frame<'_>) -> Result<Vec<Observation>, Outcome> {
         in_elevator(frame)?,
     );
     observations.extend(effects::expected(frame, placed, after)?);
+    observations.extend(effect_pool::expected(current)?);
+    let slots = core::iter::once(0).chain(super::steam::slots(&current.wram)?);
+    for slot in slots {
+        let offset = 64_usize.wrapping_mul(usize::from(slot));
+        observations.push(clock(
+            usize::from(slot),
+            word(current, 0xfa4_usize.wrapping_add(offset))?,
+            word(current, 0xfa2_usize.wrapping_add(offset))?,
+        ));
+    }
     Ok(observations)
 }
 
@@ -233,7 +245,26 @@ pub(super) fn actual(state: &State, outputs: &Outputs) -> Vec<Observation> {
         shaft.locked,
     );
     observations.extend(effects::actual(outputs.shaft_actors));
+    observations.extend(effect_pool::actual(shaft.effects.slots()));
+    let clocks = &shaft.actor_clocks;
+    let overlay = clocks.overlay();
+    observations.push(clock(0, overlay.count, overlay.shake));
+    observations.extend(clocks.vents.iter().map(|vent| {
+        let state = vent.state();
+        clock(usize::from(vent.slot), state.count, state.shake)
+    }));
     observations
+}
+
+fn clock(slot: usize, count: u16, shake: u16) -> Observation {
+    Observation {
+        field: format!("shaft-actors.clock.{slot}"),
+        bytes: count
+            .to_le_bytes()
+            .into_iter()
+            .chain(shake.to_le_bytes())
+            .collect(),
+    }
 }
 
 #[cfg(test)]

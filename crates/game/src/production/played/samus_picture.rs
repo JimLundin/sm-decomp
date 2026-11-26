@@ -1,4 +1,4 @@
-//! Connect the ordinary fight's body admission and art to the room picture.
+//! Connect the ordinary body admission and art to the room picture.
 
 use boss_ceres_ridley::Stage;
 use samus_appearance::OrdinaryBodyDraw;
@@ -19,7 +19,13 @@ impl State {
         draw_at: Option<Parity>,
         content: &Content,
     ) -> Result<Option<SpriteDraw>, Fault> {
-        if self.station.stage != Stage::Calm || self.station.ridley.is_none() {
+        let fight = self.station.stage == Stage::Calm && self.station.ridley.is_some();
+        let shaft = self
+            .station
+            .escape_shaft
+            .as_ref()
+            .is_some_and(|shaft| !shaft.locked);
+        if !fight && !shaft {
             return Ok(None);
         }
         let (Some(art), Some(push), Some(parity)) =
@@ -39,6 +45,31 @@ impl State {
         let view = self.passage.room.entry.view;
         her.body_picture(art, camera, view.affine.then_some(view.transform))
             .map(Some)
+    }
+
+    pub(super) fn passage_shaft_body(
+        &self,
+        samus: samus_movement::Samus,
+        camera: Position,
+        parity: Parity,
+        content: &Content,
+    ) -> Result<(Option<SpriteDraw>, Option<SpriteDraw>), Fault> {
+        let Some(art) = content.samus_body_art.as_ref() else {
+            return Ok((None, None));
+        };
+        let chance = OrdinaryBodyDraw {
+            protected_while_drawn: self.health.0.protection != ProtectionFrames::ZERO,
+            push_time_left: samus.knockback.time_left != PushFrames::NONE,
+            timed_special_colour: false,
+            finished_frame_parity: parity,
+        };
+        let mut her = self.samus.held();
+        her.samus = samus;
+        let view = self.passage.room.entry.view;
+        let held = her.body_picture(art, camera, view.affine.then_some(view.transform))?;
+        // The fade-in also visits the held pose after the ordinary actor layers.
+        let ordinary = chance.body_drawn().then(|| held.clone());
+        Ok((ordinary, Some(held)))
     }
 
     pub(super) fn write_ordinary_fight_body(

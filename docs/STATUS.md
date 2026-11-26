@@ -164,12 +164,10 @@ not compared. The shaft's overlay is the actor of the doors' species the seed re
 next room's contents place with first parameter 2. On each frame the room's enemies run, it
 steps the lights (`Lights::step`) with the count of finished frames, the doors' fade's steps
 taken and the station's stage; the beacon's step sets the six screen colours its imported
-colour set names, compared as `doors.colours.screen`. The platform's look is the planes', which
-the loop doesn't draw: it is produced and not compared. As the colours come up the lights run before
-the fade's step, and read its steps taken without it; no record yet shows that order or that
-case in a played run, since room 1 is not entered by a door before the escape, so unit tests
-alone check them. In the escape a later piece owns the
-overlay, so a room holding it refuses the frame (`Fault::Escape`).
+colour set names, compared as `doors.colours.screen`. The escape overlay
+prepares its sprite batch and the platform's low-byte tilemap writes during
+the return fade. The played run checks those writes at publication. The
+lights run before the fade advances and read the preceding fade step.
 
 The room's quake (world-quake) is the played State's, decoded once from the seed record (the
 frames of shake left, the kind while some are left, a kind code past the 36 refused, and the
@@ -178,8 +176,8 @@ what its kind's shakes move by its strength, diagonally, for its length. Buildin
 in a passage stops the shake (room loading's effects set-up, inside the building), and so does
 Ridley's placing. Each frame of play, and of its fade in, updates it once, last, with time
 running (a seed that holds time is refused); a passage's frames have no update. Its offsets
-and the actors' request are produced and compared, not drawn: no loop owner draws the layers or
-the enemies, and Drawing's query for the actors' projectiles is not asked. The run compares the
+and the actors' request are produced and compared. The shaft effects read the
+quake offset from before the turn counts it down. The run compares the
 frames left (`quake.remaining`), the phase (`quake.phase`) and, while frames are left, the kind
 (`quake.kind`) at every cut whose frame of work finished. On a frame the record shows the update
 ran (the last cut in main gameplay or its fade in, both cuts finished) it compares each layer's
@@ -729,6 +727,18 @@ Claims past cut 184 need the lag cuts as borrowed inputs: `interface-hud` at 225
 `game-time`, `boss-ceres-ridley`, `weapons-projectiles` and the receipt frame count at 341 or
 more. The row's `run-progress`, `world-blocks`, `world-doors`, `uncompared` and stream-gate
 entries don't depend on the played-alone run.
+
+## The shaft actor picture
+
+The `enemy-interactions/shaft-actor-picture` case admits the return hall at
+cut zero and compares C1 for 294 cuts through shaft cut 239. The comparison
+covers the stable actor clocks and effect slots, the interrupted hall sprite
+prefix and its publication, selected effect and overlay insertion spans, and
+the locked timer, Samus and mounted-vent slots. Each canonical continuation
+restores the C1 clocks, effect pool and room video publication. The replay
+carries the other played owners across that checkpoint. The null comparison
+freezes the empty C1 contribution at the hall origin. Whole OAM remains
+open at the earlier ordinary drawing boundary described in [LEGACY](LEGACY.md#ceres-escape-boundaries).
 
 ## The models' gain over the null model
 

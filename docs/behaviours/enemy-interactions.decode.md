@@ -1,12 +1,12 @@
-# Ceres-door shot contact: decode notes
+# Ceres enemy interactions: decode notes
 
-## Sources per entry
+## Door contact sources per entry
 
 | Entry | Source |
 | --- | --- |
-| ContactAllowed | A0:8FD4, 901E..903E pre-AI gates; A0:9758..9778 normal-box selection; A0:A143..A17F count, spritemap, intangible, DAFF and invincibility guards |
-| BoxOverlap | A0:A1A6..A1D6 wrapped per-axis absolute difference, borrow and strict radius comparison |
-| FirstPowerShot | A0:A181..A225 ascending five slots, ordinary power type, consumed marker and first hit return; A0:A226 response dispatch; E23F header shot response A6:F920 (RTL) |
+| ContactAllowed | $A0:8FD4, 901E..903E pre-AI gates; $A0:9758..9778 normal-box selection; $A0:A143..A17F count, spritemap, intangible, DAFF and invincibility guards |
+| BoxOverlap | $A0:A1A6..A1D6 wrapped per-axis absolute difference, borrow and strict radius comparison |
+| FirstPowerShot | $A0:A181..A225 ascending five slots, ordinary power type, consumed marker and first hit return; $A0:A226 response dispatch; E23F header shot response $A6:F920 (RTL) |
 
 Original source: [bank A0](https://patrickjohnston.org/bank/A0) and
 [bank A6](https://patrickjohnston.org/bank/A6); selector writers and caller order are in
@@ -130,7 +130,7 @@ and22 other constructed cases. Inclusive edges fail C-edge and C-y-edge. Four li
 and one hit are within the supported M0 receipt scope; W1 removes the consumed body at161.
 No expected body, frame whitelist or hash grants admission.
 
-C1 has no retained State. Marker agreement and its stateless free accounting establish
+Shot contact retains no State. Marker agreement and its stateless free accounting establish
 neither whole W1 State, whole OAM, sound, health nor whole-M0 play. A separate executed
 OrdinaryPower production replay compares the complete modeled State, projectile owner and
 all 544 OAM bytes across 183 accepted cuts through the Ceres door contact. That bounded
@@ -155,12 +155,20 @@ already consumed beam may be selected by a second door. No imported content is i
 k = 37.5 weighted tokens per spec unit.
 
 - Area contact: ContactAllowed, BoxOverlap, FirstPowerShot
+- Area shaft picture: ShaftActorDraw, ActorShake, EffectSlots, EffectClip, PictureWindow, ShaftPictureOrder
 
 The reusable bridge applies returned consumption to the complete owned W1 State. The checked
 ordinary runtime calls it per processing actor before that actor's protection decrement and AI.
-The C1 model is stateless; the engine keeps the projectile owner and the transient ordinary pass.
+The contact entry is stateless; the engine keeps the projectile owner and the transient ordinary pass.
 No deletion baseline from earlier engine code is available for this new contact model. The replaced verifier
 contact helper is accounted separately from production model and bridge code.
+
+At base `48e8d0999` the official counter gives 263.5 weighted tokens for the
+existing contact crate's source and 234 for its production bridge. There is no
+shaft effect pool or actor shake picture owner at that base. The existing B8
+producer, quake and exact sprite services remain with their respective owners.
+`tools spec-units` gives 9.7 units for contact and 20.3 for shaft pictures.
+Budget: 37.5 × 30.0 units = 1,124 (contact 362, shaft picture 762).
 
 ### Translated observation provenance
 
@@ -179,3 +187,140 @@ remain observed values. Values are therefore constructed translations, not uncha
 | C-record-159-door-1 | 158 | 159 | 1 |
 | C-record-160-door-0 | 159 | 160 | 0 |
 | C-record-160-door-1 | 159 | 160 | 1 |
+
+## Shaft picture sources
+
+| Entry | Source |
+| --- | --- |
+| ShaftActorDraw | $A0:8EB6..8FD3 establishes selection. $A0:90EF..9118 tests the ordinary box window ($A0:ADE7..AE29) but skips it for extended figures. Both formats test deleted/invisible and the draw-enable result. |
+| ActorShake | $A0:8A6D..8A87 clears the allocated actor slots. $A0:90A6..90B3 increments the frame count on ordinary actor turns. $A0:947B..9494 reads the updated count and spends the prior timer on a draw visit. $A0:8702..872C refreshes the active list after drawing. |
+| EffectSlots | $86:8016..8026 clears the live identities. $86:8097..8103 scans the 18 slots downward, gives the chosen slot an initial timer and an empty map, and ignores the request if full. $A6:F834..F850 issues the stationary effect using $86:E509, with no initial screen test. |
+| EffectClip | $86:8104..8158 advances the live pool when enabled. $86:E4FE..E507 checks $86:E6E0..E721 before each advance, including on the spawn turn. $86:E138 and E1EA are the two finite clips. $86:8154 deletes at the end. |
+| PictureWindow | $A0:9456..9494 places the actor origin. $A0:9538..956C checks the widened origin window for each mounted vent's one extended art entry. $86:83D6..8426 checks the same widened window for effects, using the quake query at $86:8427..846A. The overlay is ordinary and goes straight to $81:8AB8 from $A0:94EE. |
+| ShaftPictureOrder | $A0:884D..88CE draws high-priority effects before ordered actor layers, and Samus before actor layer 3. $A0:9423..9449 appends actor visits within a layer. $86:8390..83B1 draws high-priority projectile slots from highest to lowest. |
+
+Original banks [81](https://patrickjohnston.org/bank/81),
+[82](https://patrickjohnston.org/bank/82), [86](https://patrickjohnston.org/bank/86),
+[A0](https://patrickjohnston.org/bank/A0) and [A6](https://patrickjohnston.org/bank/A6).
+Static clip art is in bank 8D, separate from the 86 clip durations. See the
+[B8 burst decode](boss-ceres-ridley.decode.md) and [room quake](world-quake.decode.md)
+for the separately owned requests.
+
+### Actor mapping and turn order
+
+- In this placement, overlay is actor slot 0, with layer 2 and a simple figure.
+  Mounted vents are slots 2 through 12, layer 5, extended figures. Native stride is
+  40h at 0F78. Current layer is actor word 0F9A, properties 0F86, extended-figure bit
+  0004 at 0F88, figure 0F8E, horizontal radius 0F82, centre 0F7A/0F7E, and projected
+  offset 7E7010/7E7012. Each shown mounted vent's extended figure has one art entry and
+  its local origin is zero. B8's figure ID resolver and AF3 identify the static art.
+- Actor clocks are 0FA4 and 0FA2 per slot. Placement produces zero values. Do not
+  rebuild the frame count from global time or from the count of visible puffs. The actor must
+  have participated even if the overlay is offscreen or the vent is hidden. B8 already owns
+  the checked participation window for mounted vents. Capture its actual result as a typed
+  receipt. The overlay is selected offscreen via 0F86 bit 0800. A0:ADE7's ordinary draw
+  gate uses the overlay's starting view and unprojected position, with inclusive endpoints.
+  The shaft's extended vents skip that draw gate and use their projected origin
+  later. The raw actor draw gate tests 0F86 bits 0300 and 17A2 bit 0001. The shaft's
+  supported drawing actors never disable drawing independently of their selected shown
+  figure. The overlay's placed empty figure draws no pieces.
+- Main gameplay 82:8B44 uses the starting layer-1 camera (0911/0915) for selection.
+  The actor work and then enemy projectile work precede 90:94EC scrolling.
+  Drawing reads the scrolled camera and the quake after B8's new starts but before
+  its countdown. 82:8BAF performs the room quake after drawing, so the actor clock's
+  draw spend uses the existing 0FA2 value. The quake overwrites 0FA2 with 2 for each
+  selected actor, including invisible ones. Both elevator states 20h and 21h call this
+  ordinary sequence, starting with the timer picture at 82:836F and 82:8390.
+- During room-arrival fade-in, 82:E737..E76A does actor selection, actor work, effect
+  advancement and drawing, with no room quake update. A B8 door can start the quake
+  during this sequence. At hall 239, slot 0 runs the B8 overlay opening
+  A6:F7BD..F7DB and lights A6:F850..F86F. The separate shaft door in slot 1
+  runs A6:F76B and starts the quake through A6:F773..F7A4, the existing B8
+  `EscapeShakes` intent. Apply that intent before querying the effect draw offset.
+  The draw uses that quake even though it does not count down yet.
+  Hall 239 executes the first actor turn; hall 240 only completes pending work.
+  The next fresh turn is hall 241. Use the placement and fade-in caller and the pending vblank phase to establish
+  which non-wait cuts execute actor work. Retaining prepared state through suspension belongs to the scheduler.
+- This route has no damage flash, frozen/paralysis override or debug targeted shake
+  (A0:8FE4..8FF9). The checked ordinary runner must admit those facts or report missing
+  coverage. Enemy palettes, invulnerability and other contact or drawing families are outside
+  the shaft capability.
+
+### Effect mapping and drawing
+
+The live projectile identities start at 1997 with 18 two-byte slot offsets. This scope
+admits only zero or stationary dust/explosion E509. Reject unrelated nonempty slots in a
+scoped production replay. Centre words are 1A4B/1A93. Clip next-entry cursor is 1B47,
+current figure is 1B6B, and remaining frames are 1B8F. The room initializer supplies clip
+entry E138 for SmallExplosion and E1EA for Smoke based on the B8 request's kind. The outgoing
+cursor points one entry past the currently drawn figure. At initial placement the cursor is on
+the first entry, 1B8F is one and 1B6B points to the empty figure on bank 8D. The enabled flag
+is 198D bit 8000. The contents are mount-independent and use zero extra graphics selectors
+(19BB) and high drawing priority (1BD7 bit 1000).
+
+An outside lifetime centre clears identity before picture choice. The original can still
+change some scratch payload words in the same turn after it clears identity. The empty slot
+projection compares identity only, because occupancy and the next insertion are the only
+consumers here. Reuse initializes every modeled quantity. The wider draw window is independent
+of this lifetime cull. Use signed wrapped coordinates for clipping and preserve the exact layer
+order across both drawing stages. For the effect and each vent figure, the exact writer
+adds signed piece Y to the admitted origin; out-of-range Y gets F0h while its X, tile,
+attributes and place in the picture are still written (81:8B22/8B96, 81:8C0A/8C7F).
+The ordinary overlay uses 81:8AB8 and preserves byte wrapping of piece Y. Within each
+figure the exact writer preserves piece order. OAM capacity, remaining owners, residual
+hidden entries, and hardware publication stay with the exact writer and caller.
+
+### Shaft evidence and harness
+
+Source records are the locked lean tiers for `chain-any-0010-DF8D` and
+`chain-any-0011-DF45`. The repository's cache fold reproduces all four WRAM,
+four OAM and four timing marks from [the lsnes lock](../../scenarios/locks/lsnes.toml).
+This checks the local cached rows against the lock without starting a second oracle.
+
+Seed at hall 225 after native room placement. Compare hall 226 through 278 and shaft
+0 through 239 in order, including held cuts. Take actor participation inputs from the
+starting camera and B8's actor placement and shown figure observations. The independent
+reference carries every modeled effect slot and actor clock across all of these cuts.
+Use the observer's B8 overlay and RNG rules for arrivals and the room-quake rules for its
+draw offset and refresh. The model reads B8's resolved art and projected relocation, and
+the draw-time layer-1 camera as borrowed inputs from the comparison cut; those facts do
+not prove the B8, AF3, camera or scheduler producers. No next actor clock, native effect
+slot, effect phase, or artwork output is admitted to predict the corresponding C1 result.
+
+The reference matches 293 of 293 complete pool projections (222 frozen-seed matches),
+5,274 of 5,274 stable slot projections (5,044 frozen-empty matches), and 7,032 of 7,032
+actor clock fields (2,154 frozen-seed matches). It sees 255 running turns and ten B8
+requests; nine survive to their first figure. The first slot appears at hall 241, holds
+through 242, shares the picture with the second slot at 256 and changes figure at 265.
+The first slot finishes at shaft 18. Shaft 31 is a due burst whose new slot is immediately
+culled. The pool and slot comparisons include empty slots.
+
+Exact attribution matches 485 prepared and 485 published effect pieces. The effect
+publisher comparison includes pictures prepared at an overrun and published when the
+pending turn completes. Omitting the first arrival or its draw shake changes hall 241.
+Holding clip time still changes hall 244, and reversing the effect slots changes hall 256. The effect
+prefix starts at piece 0 on fade-in turns and at piece 17 after the ordinary timer. It
+matches 528 prepared and 528 published overlay pieces, with the overlay following the last effect piece on
+43 cuts. Shaft 1 distinguishes the overlay's shake and shaft 29 distinguishes its draw
+gate. The locked-standing vent suffix comparison (shaft 165 through 239) matches 192
+prepared and 192 directly published vent pieces, starting after the timer and Samus at
+piece 24. The earlier independent [B8 vent decode](boss-ceres-ridley.decode.md) and
+full-suffix attribution also use the native sprite writer's preserved hidden entries
+through 241. These projections cover the stated picture groups. Whole-engine replay must still check
+the other OAM owners and complete publication.
+
+| Translated vector | Native discriminator |
+| --- | --- |
+| R-vent-first-left | Shaft 166, slot 4. Updated actor count is 87 and incoming shake is 2. It is the first visible vent on the locked suffix and the first effect of dropping vent shake in that suffix. |
+| R-overlay-first-right | Shaft 1. Overlay count goes from 16 to 17, spends its incoming two-turn shake for +1 X, and the room quake refreshes it to two. |
+| R-overlay-leaves | Shaft 29. The overlay keeps running while its ordinary draw gate withholds its picture. |
+| R-effect-first | Hall 241, slot 17 starts Smoke at its first frame. |
+| R-effect-hold | Hall 242 retains the cut 241 slot. |
+| R-effect-order | Hall 256 paints existing slot 17, then new slot 16, then the overlay. |
+| R-effect-change | Hall 265, slot 17 advances from its first Smoke figure to its second. |
+| R-effect-finishes | Shaft 18, the final Smoke figure in slot 17 ends and disappears. |
+| R-effect-cut-off | Shaft 31. The fresh effect is outside the pre-scroll lifetime rectangle and never supplies a picture. |
+
+Vectors translate positions and replace static art and clip content with invented data.
+The authenticated records exercise the actual clips. Full pool, no-update continuation,
+wrapping coordinates, and wide-picture versus lifetime edges use constructed witnesses.

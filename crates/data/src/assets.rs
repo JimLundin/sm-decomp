@@ -17,6 +17,7 @@ pub mod projectile;
 pub mod ridley_flyby;
 pub mod ridley_picture;
 pub mod ridley_warning;
+pub mod room_effects;
 pub mod samus;
 pub mod shaft;
 pub mod start;

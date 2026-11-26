@@ -87,6 +87,44 @@ fn a_spritemap_places_its_pieces_by_their_offsets() {
 }
 
 #[test]
+fn room_effects_hide_vertical_overruns_without_reordering_pieces() {
+    let picture = Spritemap {
+        entries: vec![
+            SpritemapEntry {
+                x: -4,
+                y: 0xfc,
+                size: SpriteSize::Large,
+                attributes: look(0x23, 5, 2),
+            },
+            SpritemapEntry {
+                x: 4,
+                y: 4,
+                size: SpriteSize::Small,
+                attributes: look(0x45, 5, 2),
+            },
+        ],
+    };
+    let mut batch = NmiBatch {
+        sprites: SpriteCount(1),
+        ..NmiBatch::default()
+    };
+    batch.draw_room_effect(&picture, Pair { x: 0, y: -2 });
+    batch.draw_room_effect(&picture, Pair { x: 0, y: 254 });
+    let compact = |entry: &OamEntry| (entry.x, entry.y, entry.tile);
+    assert_eq!(
+        batch.oam.low[1..5].iter().map(compact).collect::<Vec<_>>(),
+        [
+            (252, HIDDEN_Y, 0x23),
+            (4, 2, 0x45),
+            (252, 250, 0x23),
+            (4, HIDDEN_Y, 0x45)
+        ]
+    );
+    assert_eq!(batch.sprites, SpriteCount(5));
+    assert_eq!(batch.oam.high[0], 0b1100_1100);
+}
+
+#[test]
 fn mapped_pieces_write_from_the_count_with_their_high_bits() {
     let large = Placing::Mapped(SpriteSize::Large);
     let small = Placing::Mapped(SpriteSize::Small);

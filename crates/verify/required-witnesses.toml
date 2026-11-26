@@ -65,6 +65,7 @@ game_time = ["replay::played::play_time::continuous::ceres_clock_prefix"]
 played = [
     "replay::played::explosion::tests::shaft_bg2_scroll_reaches_the_station_and_flight",
     "replay::blackout::owned_standing::first_locked_turn_reads_the_carried_look",
+    "replay::played::shaft_native::effect_pool::live_bursts_restore_pending_fade_and_ordinary_room_effects",
     "replay::played::room_video::locked_shaft_publishes_timer_then_standing",
     "replay::played::tests::warning_defeat_is_carried_by_production",
     "replay::played::flyby_scope::tests::flyby_restores_both_native_paths_through_the_warning_handoff",

@@ -104,11 +104,11 @@ fn restored<'a>(run: &super::Run<'a>, cut: u64) -> Result<super::Run<'a>, Outcom
     let view = &mut state.passage.room.entry.view;
     let encoded_view = canonical::to_bytes(view);
     *view = canonical::from_bytes(&encoded_view).map_err(|_| failed())?;
-    let video = state.room_video.ordinary_picture_checkpoint();
+    let video = state.room_video.picture_checkpoint();
     *state.room_video.video = Video::default();
     state
         .room_video
-        .restore_ordinary_picture(&video)
+        .restore_picture(&video)
         .map_err(|_| failed())?;
     if state != &run.state {
         return Err(failed());

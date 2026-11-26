@@ -24,8 +24,28 @@ pub struct Shaft {
     pub overlay: [u8; OVERLAY_BYTES],
     /// The ordered spritemap for the overlay during its rumble.
     pub figure: crate::spritemap::Spritemap,
+    /// Horizontal half-extent of the overlay used at its draw gate.
+    pub overlay_radius: u16,
     /// The two platform looks in cycle order. Each replaces only the low tilemap bytes.
     pub platform: [[u8; 4]; 2],
     /// The samples from one end of the rotation arc to the other.
     pub rotation: [RotationSample; ROTATION_SAMPLES],
+}
+
+/// The ordered puff spritemaps for each direction a vent blows.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct VentPictures {
+    /// Upward figures.
+    pub up: [crate::spritemap::Spritemap; Self::FIGURES],
+    /// Leftward figures.
+    pub left: [crate::spritemap::Spritemap; Self::FIGURES],
+    /// Downward figures.
+    pub down: [crate::spritemap::Spritemap; Self::FIGURES],
+    /// Rightward figures.
+    pub right: [crate::spritemap::Spritemap; Self::FIGURES],
+}
+
+impl VentPictures {
+    /// The number of visible figures in a puff.
+    pub const FIGURES: usize = 7;
 }

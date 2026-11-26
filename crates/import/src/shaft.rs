@@ -1,9 +1,12 @@
 //! Read the Ceres shaft's fixed overlay uploads and ordered rotation track.
 
+pub mod vent;
+
 use data::assets::shaft::{OVERLAY_BYTES, ROTATION_SAMPLES, RotationSample, Shaft};
 use data::rom::{AddressError, Lorom, RomAddress};
 use data::spritemap::Spritemap;
 
+const OVERLAY_RADIUS: RomAddress = RomAddress::new(0xa0, 0xe247);
 const OVERLAY: RomAddress = RomAddress::new(0xb0, 0xc400);
 const FIGURE: RomAddress = RomAddress::new(0xa6, 0xf921);
 const PLATFORM: RomAddress = RomAddress::new(0xa6, 0xf918);
@@ -49,6 +52,11 @@ pub fn import(rom: Lorom<'_>) -> Result<Shaft, AddressError> {
     Ok(Shaft {
         overlay,
         figure: overlay_figure(rom)?,
+        overlay_radius: u16::from_le_bytes(
+            rom.read(OVERLAY_RADIUS, 2)?
+                .try_into()
+                .map_err(|_| AddressError::PastEnd(OVERLAY_RADIUS))?,
+        ),
         platform,
         rotation,
     })

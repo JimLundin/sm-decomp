@@ -99,7 +99,7 @@ pub(in crate::replay) fn live_scene(
     ));
     Ok(())
 }
-pub(super) fn oam_bytes(o: &Oam) -> Vec<u8> {
+pub(in crate::replay) fn oam_bytes(o: &Oam) -> Vec<u8> {
     o.low
         .iter()
         .flat_map(|e| [e.x, e.y, e.tile, e.attributes])

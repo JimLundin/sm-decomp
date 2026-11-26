@@ -328,3 +328,366 @@ entries = ["ContactAllowed"]
 source = "constructed"
 after = { slot = -1 }
 conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 2 }
+
+# Shaft picture cases use invented figures, clips and coordinates.
+# actor = { count, shake } holds the incoming clock. For placement it is omitted.
+# vents contain per-slot B8 draws: absent figure means no visible puff.
+# effects contain occupied slots only. Missing frame means waiting for the first figure.
+# A clip is [[figure, duration], ...]. after.effects lists the surviving slots.
+# after.draw lists ordered [figure, screen x, screen y] triples when drawing is requested.
+# A nonexecuted turn supplies no requests and after.draw is omitted.
+
+[[vector]]
+id = "C-vent-clock-placement"
+source = "constructed"
+entries = ["ActorShake"]
+after = { actor = { count = 0, shake = 0 } }
+
+[[vector]]
+id = "C-vent-clock-wrap"
+source = "constructed"
+entries = ["ActorShake", "PictureWindow"]
+actor = { count = 65535, shake = 1 }
+vents = [{ slot = 2, ran = true, figure = 301, mount = [0, 100], offset = [-3, 2] }]
+draw_view = [65535, 50]
+after = { actor = { count = 0, shake = 0 }, draw = [[301, -1, 52]] }
+
+[[vector]]
+id = "C-vent-clock-skip"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake"]
+actor = { count = 61, shake = 1 }
+vents = [{ slot = 2, ran = false, figure = 301, mount = [35, 20], offset = [0, 0] }]
+refresh = true
+draw_view = [0, 0]
+after = { actor = { count = 61, shake = 1 }, draw = [] }
+
+[[vector]]
+id = "C-vent-hidden-refresh"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake"]
+actor = { count = 12, shake = 1 }
+vents = [{ slot = 2, ran = true }]
+refresh = true
+draw_view = [0, 0]
+after = { actor = { count = 13, shake = 2 }, draw = [] }
+
+[[vector]]
+id = "C-vent-clipped-spends"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 1 }
+vents = [{ slot = 2, ran = true, figure = 302, mount = [0, 100], offset = [-128, 0] }]
+draw_view = [0, 0]
+after = { actor = { count = 2, shake = 0 }, draw = [] }
+
+[[vector]]
+id = "C-vent-unshaken"
+source = "constructed"
+entries = ["ActorShake", "PictureWindow"]
+actor = { count = 2, shake = 0 }
+vents = [{ slot = 2, ran = true, figure = 303, mount = [100, 0], offset = [-3, 2] }]
+draw_view = [30, 130]
+after = { actor = { count = 3, shake = 0 }, draw = [[303, 67, -128]] }
+
+[[vector]]
+id = "R-vent-first-left"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow", "ShaftPictureOrder"]
+observation = "chain-any-0011-DF45, cut 166, vent 4. Translated art and origin."
+actor = { count = 86, shake = 2 }
+vents = [{ slot = 4, ran = true, figure = 304, mount = [30, 40], offset = [-5, 5] }]
+refresh = true
+draw_view = [5, 10]
+after = { actor = { count = 87, shake = 2 }, draw = [[304, 19, 35]] }
+
+[[vector]]
+id = "C-effects-empty"
+source = "constructed"
+entries = ["EffectSlots", "ShaftPictureOrder"]
+lifetime_view = [0, 0]
+draw_view = [0, 0]
+after = { effects = [], draw = [] }
+
+[[vector]]
+id = "C-effects-reuse"
+source = "constructed"
+entries = ["EffectSlots", "EffectClip"]
+clips = { Smoke = [[244, 7]], SmallExplosion = [[215, 1]] }
+effects = [{ slot = 16, kind = "Smoke", centre = [11, 10], frame = 0, remaining = 3 }]
+bursts = [{ kind = "Smoke", centre = [256, 10] }, { kind = "SmallExplosion", centre = [12, 10] }]
+lifetime_view = [0, 0]
+after = { effects = [{ slot = 15, kind = "SmallExplosion", centre = [12, 10], frame = 0, remaining = 1 }, { slot = 16, kind = "Smoke", centre = [11, 10], frame = 0, remaining = 2 }] }
+
+[[vector]]
+id = "C-effects-full"
+source = "constructed"
+entries = ["EffectSlots", "EffectClip"]
+clips = { Smoke = [[247, 1]], SmallExplosion = [[218, 3]] }
+all_slots = { kind = "Smoke", centre = [10, 10], frame = 0, remaining = 1 }
+bursts = [{ kind = "SmallExplosion", centre = [11, 10] }]
+lifetime_view = [0, 0]
+after = { effects = [] }
+
+[[vector]]
+id = "C-effect-first"
+source = "constructed"
+entries = ["EffectClip", "EffectSlots"]
+clips = { Smoke = [[255, 11]] }
+bursts = [{ kind = "Smoke", centre = [5, 8] }]
+lifetime_view = [5, 8]
+after = { effects = [{ slot = 17, kind = "Smoke", centre = [5, 8], frame = 0, remaining = 11 }] }
+
+[[vector]]
+id = "C-effect-life-window"
+source = "constructed"
+entries = ["EffectClip"]
+clips = { Smoke = [[245, 7]] }
+effects = [
+  { slot = 17, kind = "Smoke", centre = [254, 255], frame = 0, remaining = 2 },
+  { slot = 16, kind = "Smoke", centre = [65534, 1], frame = 0, remaining = 2 },
+  { slot = 15, kind = "Smoke", centre = [255, 0], frame = 0, remaining = 2 },
+  { slot = 14, kind = "Smoke", centre = [0, 256], frame = 0, remaining = 2 },
+  { slot = 13, kind = "Smoke", centre = [65535, 0], frame = 0, remaining = 2 },
+]
+lifetime_view = [65535, 0]
+after = { effects = [{ slot = 13, kind = "Smoke", centre = [65535, 0], frame = 0, remaining = 1 }, { slot = 17, kind = "Smoke", centre = [254, 255], frame = 0, remaining = 1 }] }
+
+[[vector]]
+id = "C-effect-clip"
+source = "constructed"
+entries = ["EffectClip"]
+clips = { Smoke = [[200, 4], [201, 2]] }
+effects = [
+  { slot = 17, kind = "Smoke", centre = [10, 10], frame = 0, remaining = 2 },
+  { slot = 16, kind = "Smoke", centre = [11, 10], frame = 0, remaining = 1 },
+  { slot = 15, kind = "Smoke", centre = [12, 10], frame = 1, remaining = 1 },
+]
+lifetime_view = [0, 0]
+after = { effects = [{ slot = 16, kind = "Smoke", centre = [11, 10], frame = 1, remaining = 2 }, { slot = 17, kind = "Smoke", centre = [10, 10], frame = 0, remaining = 1 }] }
+
+[[vector]]
+id = "C-effects-hold"
+source = "constructed"
+entries = ["EffectSlots", "EffectClip"]
+clips = { Smoke = [[228, 10]] }
+effects = [{ slot = 17, kind = "Smoke", centre = [400, 10], frame = 0, remaining = 3 }]
+after = { effects = [{ slot = 17, kind = "Smoke", centre = [400, 10], frame = 0, remaining = 3 }] }
+
+[[vector]]
+id = "C-effect-waiting"
+source = "constructed"
+entries = ["EffectClip", "ShaftPictureOrder"]
+clips = { Smoke = [[256, 5]] }
+effects = [{ slot = 17, kind = "Smoke", centre = [10, 10] }, { slot = 16, kind = "Smoke", centre = [15, 10], frame = 0, remaining = 4 }]
+draw_view = [0, 0]
+after = { effects = [{ slot = 16, kind = "Smoke", centre = [15, 10], frame = 0, remaining = 4 }, { slot = 17, kind = "Smoke", centre = [10, 10] }], draw = [[256, 15, 10]] }
+
+[[vector]]
+id = "C-effect-picture-window"
+source = "constructed"
+entries = ["PictureWindow"]
+clips = { Smoke = [[230, 2]] }
+effects = [
+  { slot = 17, kind = "Smoke", centre = [650, 11], frame = 0, remaining = 2 },
+  { slot = 16, kind = "Smoke", centre = [651, 11], frame = 0, remaining = 2 },
+  { slot = 15, kind = "Smoke", centre = [139, 11], frame = 0, remaining = 2 },
+  { slot = 14, kind = "Smoke", centre = [138, 11], frame = 0, remaining = 2 },
+]
+draw_view = [269, 9]
+effect_shake = [2, -2]
+after = { draw = [[230, 383, 0], [230, -128, 0]] }
+
+[[vector]]
+id = "C-effects-order"
+source = "constructed"
+entries = ["ShaftPictureOrder"]
+clips = { Smoke = [[231, 5]], SmallExplosion = [[235, 3]] }
+effects = [{ slot = 1, kind = "Smoke", centre = [10, 10], frame = 0, remaining = 2 }, { slot = 12, kind = "SmallExplosion", centre = [12, 11], frame = 0, remaining = 2 }]
+vents = [{ slot = 5, ran = true, figure = 307, mount = [55, 65], offset = [0, 0] }, { slot = 2, ran = true, figure = 306, mount = [45, 70], offset = [0, 0] }]
+overlay = [495, 33, 35]
+samus = [500, 10, 11]
+draw_view = [0, 0]
+after = { draw = [[235, 12, 11], [231, 10, 10], [495, 33, 35], [500, 10, 11], [306, 45, 70], [307, 55, 65]] }
+
+[[vector]]
+id = "C-overlay-left-edge"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 610, centre = [50, 90], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [71, 56]
+after = { actor = { count = 2, shake = 1 }, draw = [[610, -22, 34]] }
+
+[[vector]]
+id = "C-overlay-beyond"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 611, centre = [49, 90], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [48, 50]
+after = { actor = { count = 2, shake = 2 }, draw = [] }
+
+[[vector]]
+id = "R-overlay-first-right"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+observation = "chain-any-0011-DF45, cut 1. Translated art and origin."
+actor = { count = 16, shake = 2 }
+overlay_actor = { ran = true, figure = 612, centre = [60, 80], radius = 20 }
+refresh = true
+lifetime_view = [50, 50]
+draw_view = [51, 50]
+after = { actor = { count = 17, shake = 2 }, draw = [[612, 10, 30]] }
+
+[[vector]]
+id = "R-overlay-leaves"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake"]
+observation = "chain-any-0011-DF45, cut 29. Translated art and distances."
+actor = { count = 44, shake = 2 }
+overlay_actor = { ran = true, figure = 613, centre = [40, 60], radius = 20 }
+refresh = true
+lifetime_view = [61, 50]
+draw_view = [61, 50]
+after = { actor = { count = 45, shake = 2 }, draw = [] }
+
+[[vector]]
+id = "R-effect-first"
+source = "constructed"
+entries = ["EffectSlots", "EffectClip", "PictureWindow"]
+observation = "chain-any-0010-DF8D, cut 241, first slot. Translated centre, art and clip."
+clips = { Smoke = [[220, 7], [221, 11]] }
+bursts = [{ kind = "Smoke", centre = [20, 30] }]
+lifetime_view = [10, 15]
+draw_view = [11, 14]
+effect_shake = [-1, -1]
+after = { effects = [{ slot = 17, kind = "Smoke", centre = [20, 30], frame = 0, remaining = 7 }], draw = [[220, 8, 15]] }
+
+[[vector]]
+id = "R-effect-hold"
+source = "constructed"
+entries = ["EffectSlots", "EffectClip"]
+observation = "chain-any-0010-DF8D, cut 242, first effect holds. Translated centre and clip."
+effects = [{ slot = 17, kind = "Smoke", centre = [20, 30], frame = 0, remaining = 7 }]
+after = { effects = [{ slot = 17, kind = "Smoke", centre = [20, 30], frame = 0, remaining = 7 }] }
+
+[[vector]]
+id = "R-effect-change"
+source = "constructed"
+entries = ["EffectClip"]
+observation = "chain-any-0010-DF8D, cut 265, first effect changes phase. Translated centre, art and duration."
+clips = { Smoke = [[220, 7], [221, 11]] }
+effects = [{ slot = 17, kind = "Smoke", centre = [20, 30], frame = 0, remaining = 1 }]
+lifetime_view = [10, 15]
+after = { effects = [{ slot = 17, kind = "Smoke", centre = [20, 30], frame = 1, remaining = 11 }] }
+
+[[vector]]
+id = "R-effect-finishes"
+source = "constructed"
+entries = ["EffectClip"]
+observation = "chain-any-0011-DF45, cut 18, first effect ends. Translated centre and clip."
+clips = { Smoke = [[220, 7], [221, 11]] }
+effects = [{ slot = 17, kind = "Smoke", centre = [20, 30], frame = 1, remaining = 1 }]
+lifetime_view = [10, 15]
+after = { effects = [] }
+
+[[vector]]
+id = "R-effect-cut-off"
+source = "constructed"
+entries = ["EffectClip", "PictureWindow"]
+observation = "chain-any-0011-DF45, cut 31, due burst culled by lifetime view. Translated centre and clip."
+clips = { Smoke = [[220, 7]], SmallExplosion = [[235, 3]] }
+bursts = [{ kind = "SmallExplosion", centre = [60, 500] }]
+lifetime_view = [10, 244]
+draw_view = [10, 245]
+after = { effects = [], draw = [] }
+
+[[vector]]
+id = "R-effect-order"
+source = "constructed"
+entries = ["ShaftPictureOrder"]
+observation = "chain-any-0010-DF8D, cut 256, two effect figures ahead of overlay. Translated origins and art."
+clips = { Smoke = [[220, 7]] }
+effects = [{ slot = 16, kind = "Smoke", centre = [20, 30], frame = 0, remaining = 7 }, { slot = 17, kind = "Smoke", centre = [30, 40], frame = 0, remaining = 3 }]
+effect_shake = [-1, -1]
+draw_view = [10, 15]
+overlay = [495, 33, 35]
+after = { draw = [[220, 19, 24], [220, 9, 14], [495, 33, 35]] }
+
+[[vector]]
+id = "C-overlay-right-edge"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 614, centre = [346, 90], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [70, 50]
+after = { actor = { count = 2, shake = 1 }, draw = [[614, 275, 40]] }
+
+[[vector]]
+id = "C-overlay-right-beyond"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 614, centre = [347, 90], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [70, 50]
+after = { actor = { count = 2, shake = 2 }, draw = [] }
+
+[[vector]]
+id = "C-overlay-top-edge"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 614, centre = [120, 42], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [70, 50]
+after = { actor = { count = 2, shake = 1 }, draw = [[614, 49, -8]] }
+
+[[vector]]
+id = "C-overlay-top-beyond"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 614, centre = [120, 41], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [70, 50]
+after = { actor = { count = 2, shake = 2 }, draw = [] }
+
+[[vector]]
+id = "C-overlay-lower-edge"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 614, centre = [120, 298], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [70, 50]
+after = { actor = { count = 2, shake = 1 }, draw = [[614, 49, 248]] }
+
+[[vector]]
+id = "C-overlay-lower-beyond"
+source = "constructed"
+entries = ["ShaftActorDraw", "ActorShake", "PictureWindow"]
+actor = { count = 1, shake = 2 }
+overlay_actor = { ran = true, figure = 614, centre = [120, 299], radius = 20 }
+lifetime_view = [70, 50]
+draw_view = [70, 50]
+after = { actor = { count = 2, shake = 2 }, draw = [] }
+
+[[vector]]
+id = "C-effect-picture-y-window"
+source = "constructed"
+entries = ["PictureWindow"]
+clips = { Smoke = [[230, 2]] }
+effects = [
+  { slot = 17, kind = "Smoke", centre = [300, 174], frame = 0, remaining = 2 },
+  { slot = 16, kind = "Smoke", centre = [300, 173], frame = 0, remaining = 2 },
+  { slot = 15, kind = "Smoke", centre = [300, 685], frame = 0, remaining = 2 },
+  { slot = 14, kind = "Smoke", centre = [300, 686], frame = 0, remaining = 2 },
+]
+draw_view = [269, 300]
+effect_shake = [2, -2]
+after = { draw = [[230, 33, -128], [230, 33, 383]] }

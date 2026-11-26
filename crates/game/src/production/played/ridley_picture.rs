@@ -257,16 +257,16 @@ mod tests {
                     .all(|(sprite, tile)| sprite.tile == tile)
             );
             assert_eq!(video.memory.oam, before);
-            let stored = room.room_video.ordinary_picture_checkpoint();
+            let stored = room.room_video.picture_checkpoint();
             let mut restored = super::super::room_video::RoomVideo::default();
-            restored.restore_ordinary_picture(&stored).unwrap();
+            restored.restore_picture(&stored).unwrap();
             assert_eq!(*restored.video, **video);
             assert_eq!(
                 canonical::model::pin_holds::<crate::state::owned::FightWingsPin>(),
                 Ok(())
             );
-            room.room_video.publish_ordinary_sprites();
-            restored.publish_ordinary_sprites();
+            room.room_video.publish_sprites();
+            restored.publish_sprites();
             let video = &room.room_video.video;
             assert_eq!(*restored.video, **video);
             assert_eq!(video.memory.oam, video.batch.oam);

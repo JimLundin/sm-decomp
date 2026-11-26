@@ -6,7 +6,7 @@ use crate::exact::art::planar_4bpp;
 use crate::exact::countdown;
 use crate::exact::direct_dma::Transfer;
 use crate::exact::tilemap::{TileQueue, View};
-use crate::intent::{OverlayRows, SpriteDraw, TileWrite, on_screen};
+use crate::intent::{OverlayRows, SpriteDraw, TileWrite};
 use crate::production::blackout::Platform;
 use crate::production::{blackout, hud};
 use crate::state::video::{
@@ -21,7 +21,7 @@ use data::assets::shaft::{OVERLAY_BYTES, Shaft};
 use data::dma::BusAddress;
 use data::pose::tiles::Graphics;
 use interface_hud::{CountdownPicture, HudState};
-use types::{Pair, Parts, Position, Px};
+use types::{Pair, Parts, Position};
 
 const SHADOW_WORDS: usize = 1024;
 const SHAFT_BG2_STAGING: core::ops::Range<usize> = 0x0800..0x0c00;
@@ -56,15 +56,9 @@ impl ShaftOverlay {
         Some(())
     }
 
-    fn draw(batch: &mut NmiBatch, content: &Shaft, anchor: Pair<Px>, camera: Pair<Px>) {
+    fn draw(batch: &mut NmiBatch, content: &Shaft, at: crate::intent::ScreenPoint) {
         let mut draw = SpriteDraw::default();
-        draw.place(
-            &content.figure,
-            Pair {
-                x: on_screen(anchor.x.0, camera.x.0),
-                y: on_screen(anchor.y.0, camera.y.0),
-            },
-        );
+        draw.place(&content.figure, at);
         for piece in &mut draw.pieces {
             piece.look.palette = OVERLAY_PALETTE;
         }
@@ -73,10 +67,13 @@ impl ShaftOverlay {
 }
 
 /// Prepared shaft writes awaiting the same NMI as the room's sprite batch.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct ShaftPicture {
-    platform: Option<Platform>,
-    oam: bool,
+pub(super) struct ShaftSprites {
+    pub(super) actors: super::shaft::actor_picture::ActorPictures,
+    pub(super) effects: Vec<enemy_interactions::picture::FigureRequest>,
+    pub(super) standing: Option<blackout::StandingFrame>,
+    pub(super) body: Option<SpriteDraw>,
+    pub(super) held_body: Option<SpriteDraw>,
+    pub(super) timer: CountdownPicture,
 }
 
 const ENEMY_SHEET_SOURCE: u16 = 0x7000;
@@ -136,19 +133,14 @@ impl EnemyUploads {
     }
 }
 
-#[derive(canonical::Canonical)]
-struct OrdinaryPictureVideo {
-    video: Box<Video>,
-    pending: bool,
-}
-
 /// The parts of physical room graphics produced by the room's loaders.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RoomVideo {
     /// Physical memories and the pending NMI batch carried by the room.
     pub video: Box<Video>,
     standard_objects: Option<Transfer>,
-    shaft_picture: Option<ShaftPicture>,
+    pending_platform: Option<Platform>,
+    sprite_pending: bool,
     /// The background's pixel displacement from the room camera across a passage.
     pub bg1_offset: crate::state::video::Scroll,
     shaft_bg2_offset: Option<crate::state::video::Scroll>,
@@ -156,7 +148,14 @@ pub struct RoomVideo {
     shaft_bg2: Option<Box<[u16]>>,
     enemy_uploads: Option<EnemyUploads>,
     effects_initialized: bool,
-    ordinary_oam_pending: bool,
+}
+
+/// Physical video and the room publication still waiting for NMI.
+#[derive(canonical::Canonical)]
+struct SavedRoomPicture {
+    video: Box<Video>,
+    pending_platform: Option<Platform>,
+    sprite_pending: bool,
 }
 
 impl Default for RoomVideo {
@@ -169,12 +168,12 @@ impl Default for RoomVideo {
             bg1_offset: crate::state::video::Scroll::default(),
             shaft_bg2_offset: None,
             standard_objects: None,
-            shaft_picture: None,
+            pending_platform: None,
+            sprite_pending: false,
             shaft_raster_finished: false,
             shaft_bg2: None,
             enemy_uploads: None,
             effects_initialized: false,
-            ordinary_oam_pending: false,
         }
     }
 }
@@ -224,53 +223,67 @@ impl RoomVideo {
 
     /// The platform transfer currently waiting for publication.
     #[must_use]
-    pub fn pending_platform(&self) -> Option<Platform> {
-        self.shaft_picture.and_then(|picture| picture.platform)
+    pub const fn pending_platform(&self) -> Option<Platform> {
+        self.pending_platform
     }
 
-    pub(super) fn shaft_picture(
+    pub(super) fn prepare_shaft_picture(
         &mut self,
-        turn: Option<OverlayTurn>,
-        camera: Pair<Px>,
-        publishes: bool,
-        art: Option<&Shaft>,
+        turn: OverlayTurn,
+        sprites: ShaftSprites,
+        content: &Content,
     ) -> Result<(), Fault> {
-        if let Some(turn) = turn {
-            let art = art.ok_or(Fault::Escape)?;
-            if self.video.memory.vram.len() != VRAM_WORDS {
-                return Err(Fault::Escape);
-            }
-            let platform = turn.lights.and_then(|lights| lights.platform).map(|look| {
-                let [first, second] = art.platform;
-                Platform {
-                    start: PLATFORM_START,
-                    tiles: match look {
-                        AlternatingLook::First => first,
-                        AlternatingLook::Second => second,
-                    },
-                }
-            });
-            let oam = turn.figure.is_some() || turn.start_rotation.is_some();
-            if oam && self.video.batch.sprites.0 == 0 {
-                self.video.batch.clear_high_oam();
-            }
-            if let Some(anchor) = turn.figure {
-                ShaftOverlay::draw(&mut self.video.batch, art, anchor, camera);
-            }
-            self.shaft_picture = Some(ShaftPicture { platform, oam });
+        let art = content.shaft_overlay_art.as_ref().ok_or(Fault::Escape)?;
+        let vent_art = content.shaft_vent_art.as_ref().ok_or(Fault::Escape)?;
+        let effects = content.shaft_burst_art.as_ref().ok_or(Fault::Escape)?;
+        if self.video.memory.vram.len() != VRAM_WORDS {
+            return Err(Fault::Escape);
         }
-        if publishes && let Some(picture) = self.shaft_picture {
-            if let Some(platform) = picture.platform {
-                platform
-                    .publish(&mut self.video)
-                    .map_err(|_| Fault::Escape)?;
-            }
-            if picture.oam {
-                self.video.batch.finalise_oam();
-                self.video.upload_oam();
-            }
-            self.shaft_picture = None;
+        let mut batch = self.video.batch.clone();
+        batch.restart_sprites();
+        batch.clear_high_oam();
+        if let CountdownPicture::Shown { place, time } = sprites.timer {
+            let figures = content.clock_figures.as_ref().ok_or(Fault::Hud)?;
+            let timer = countdown::sprites(figures, place, time).ok_or(Fault::Hud)?;
+            batch.draw_sprites(&timer);
         }
+        for figure in sprites.effects {
+            effects.draw(&mut batch, figure).ok_or(Fault::Escape)?;
+        }
+        let point = |origin: enemy_interactions::picture::ScreenPoint| Pair {
+            x: i32::from(origin.x),
+            y: i32::from(origin.y),
+        };
+        if let Some(overlay) = sprites.actors.overlay {
+            ShaftOverlay::draw(&mut batch, art, point(overlay.origin));
+        }
+        if let Some(standing) = sprites.standing {
+            let body = content
+                .standing
+                .as_ref()
+                .ok_or(Fault::StandingPicture(blackout::Fault::StandingArt))?;
+            blackout::body::prepare(&mut batch, standing, body).map_err(Fault::StandingPicture)?;
+        } else if let Some(body) = sprites.body {
+            batch.draw_sprites(&body);
+        }
+        for (facing, figure, request) in sprites.actors.vents {
+            super::shaft::vent::append(&mut batch, vent_art, facing, figure, point(request.origin));
+        }
+        if let Some(held) = sprites.held_body {
+            batch.draw_sprites(&held);
+        }
+        self.pending_platform = turn.lights.and_then(|lights| lights.platform).map(|look| {
+            let [first, second] = art.platform;
+            Platform {
+                start: PLATFORM_START,
+                tiles: match look {
+                    AlternatingLook::First => first,
+                    AlternatingLook::Second => second,
+                },
+            }
+        });
+        self.video.batch = batch;
+        self.sprite_pending = true;
         Ok(())
     }
 
@@ -505,14 +518,8 @@ impl RoomVideo {
         Some(())
     }
 
-    /// Prepare the HUD rows and, once the elevator locks, its timer and standing drawing.
-    pub(super) fn prepare_play_picture(
-        &mut self,
-        hud: &HudState,
-        standing: Option<blackout::StandingFrame>,
-        timer: CountdownPicture,
-        content: &Content,
-    ) -> Result<(), Fault> {
+    /// Prepare the room HUD rows for the next NMI.
+    pub(super) fn prepare_play_hud(&mut self, hud: &HudState) -> Result<(), Fault> {
         let bytes = hud::tilemap(hud).map_err(|_| Fault::Hud)?;
         let cells = bytes
             .as_chunks::<2>()
@@ -520,9 +527,6 @@ impl RoomVideo {
             .iter()
             .map(|&cell| TilemapEntry::from_word(u16::from_le_bytes(cell)))
             .collect();
-        if let Some(standing) = standing {
-            self.prepare_locked_sprites(timer, standing, content)?;
-        }
         TileQueue::new(&mut self.video.batch).write(
             View::default(),
             &TileWrite::Overlay(OverlayRows { row: 1, cells }),
@@ -530,36 +534,10 @@ impl RoomVideo {
         Ok(())
     }
 
-    /// Build the locked frame in the room's pending picture, in draw order.
-    fn prepare_locked_sprites(
-        &mut self,
-        timer: CountdownPicture,
-        standing: blackout::StandingFrame,
-        content: &Content,
-    ) -> Result<(), Fault> {
-        let CountdownPicture::Shown { place, time } = timer else {
-            return Err(Fault::Hud);
-        };
-        let figures = content.clock_figures.as_ref().ok_or(Fault::Hud)?;
-        let art = content
-            .standing
-            .as_ref()
-            .ok_or(Fault::StandingPicture(blackout::Fault::StandingArt))?;
-        let draw = countdown::sprites(figures, place, time).ok_or(Fault::Hud)?;
-
-        let mut batch = self.video.batch.clone();
-        batch.restart_sprites();
-        batch.clear_high_oam();
-        batch.draw_sprites(&draw);
-        blackout::body::prepare(&mut batch, standing, art).map_err(Fault::StandingPicture)?;
-        self.video.batch = batch;
-        Ok(())
-    }
-
     pub(super) fn begin_ordinary_sprites(&mut self) {
         self.video.batch.restart_sprites();
         self.video.batch.clear_high_oam();
-        self.ordinary_oam_pending = true;
+        self.sprite_pending = true;
     }
 
     pub(super) fn append_ordinary_body(
@@ -571,49 +549,55 @@ impl RoomVideo {
         start..usize::from(self.video.batch.sprites.0)
     }
 
-    /// Encode the complete Video owner and the ordinary sprite publication receipt it reads.
-    #[must_use]
-    pub fn ordinary_picture_checkpoint(&self) -> Vec<u8> {
-        canonical::to_bytes(&OrdinaryPictureVideo {
-            video: self.video.clone(),
-            pending: self.ordinary_oam_pending,
-        })
-    }
-
-    /// Restore Video and the room's ordinary sprite publication receipt together.
-    ///
-    /// # Errors
-    /// Invalid canonical bytes leave the receiver intact.
-    pub fn restore_ordinary_picture(&mut self, bytes: &[u8]) -> Result<(), canonical::DecodeError> {
-        let OrdinaryPictureVideo { video, pending } = canonical::from_bytes(bytes)?;
-        self.video = video;
-        self.ordinary_oam_pending = pending;
-        Ok(())
-    }
-
-    pub(super) fn publish_ordinary_sprites(&mut self) {
-        if std::mem::take(&mut self.ordinary_oam_pending) {
+    pub(super) fn publish_sprites(&mut self) {
+        if std::mem::take(&mut self.sprite_pending) {
             self.video.batch.finalise_oam();
             self.video.upload_oam();
         }
+    }
+
+    /// Encode physical video and its pending room publication together.
+    #[must_use]
+    pub fn picture_checkpoint(&self) -> Vec<u8> {
+        canonical::to_bytes(&SavedRoomPicture {
+            video: self.video.clone(),
+            pending_platform: self.pending_platform,
+            sprite_pending: self.sprite_pending,
+        })
+    }
+
+    /// Restore the pending picture and physical video into the carried room loaders.
+    ///
+    /// # Errors
+    /// Invalid canonical bytes leave the receiver intact.
+    pub fn restore_picture(&mut self, bytes: &[u8]) -> Result<(), canonical::DecodeError> {
+        let saved: SavedRoomPicture = canonical::from_bytes(bytes)?;
+        self.video = saved.video;
+        self.pending_platform = saved.pending_platform;
+        self.sprite_pending = saved.sprite_pending;
+        Ok(())
     }
 
     /// Commit the room's pending sprites and VRAM writes in NMI order.
     pub(super) fn publish(
         &mut self,
         standing: Option<&crate::samus_appearance_bridge::elevator::Art>,
-    ) {
+    ) -> Result<(), Fault> {
         if self.shaft_bg2_offset.is_some() {
             let layer = self.video.batch.registers.scroll[1];
             self.video.committed.scroll[1] = layer.latched();
         }
         if let Some(art) = standing.filter(|art| art.accepts(self.video.batch.standing_strips)) {
-            self.video.batch.finalise_oam();
-            self.video.upload_oam();
             self.video.publish_standing_strips(&art.graphics);
+        }
+        if let Some(platform) = self.pending_platform.take() {
+            platform
+                .publish(&mut self.video)
+                .map_err(|_| Fault::Escape)?;
         }
         self.video.process_vram_writes(&Graphics::default());
         crate::exact::tilemap::commit_exposures(&mut self.video);
+        Ok(())
     }
 
     /// Advance through ROM and, when available, the mapped low WRAM at the source wrap.

@@ -418,7 +418,7 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
 }
 
 fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
-    use super::index::ObservationId;
+    use super::index::{InputProvider, ObservationId};
     const WIDTHS: &[(ObservationId, usize)] = &[
         (
             ObservationId::IntroRoomGrid,
@@ -442,6 +442,15 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
         (ObservationId::CeresBackdropColours, 6),
         (ObservationId::CeresTailHealth, 6),
     ];
+    if case.inputs == InputProvider::ShaftPictures {
+        // All slots and the overlay clock are compared on every cut. The number of
+        // mounted clocks and compared OAM spans varies with the native room.
+        return counts.fields >= counts.cuts.saturating_mul(19)
+            && counts.outputs >= counts.cuts.min(2)
+            && counts.publications == 1
+            && counts.pending_boundaries == 1
+            && counts.replies == 0;
+    }
     if case.inputs == super::index::InputProvider::ScopedCeresWarning {
         return counts.cuts.checked_mul(3) == Some(counts.fields)
             && counts.outputs >= counts.cuts.saturating_mul(10)

@@ -150,3 +150,5 @@ pub(super) fn expected_hit(previous: &[u8], current: &[u8]) -> Result<Observatio
 pub(super) fn actual_hit(hit: Option<Hit>) -> Observation {
     super::contact::actual("steam.hit", hit)
 }
+
+pub(super) mod mounted_picture;

@@ -2381,3 +2381,25 @@ provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness"]
 phase = "frame boundary"
 claim = "Movie pad and platform timing drive the real played room. Movement and Health carry the push and protection; the room supplies its view and start-of-work parity."
+
+[[case]]
+id = "enemy-interactions/shaft-actor-picture"
+kind = "integrated"
+row = "chain-any-0010-DF8D"
+start = { source = "played-continuation", seed = 0, frame = 224 }
+end = { cut_inclusive = 518 }
+rules = ["enemy-interactions/ShaftActorDraw", "enemy-interactions/ActorShake", "enemy-interactions/EffectSlots", "enemy-interactions/EffectClip", "enemy-interactions/PictureWindow", "enemy-interactions/ShaftPictureOrder"]
+profile = "reference"
+responsibilities = ["shaft-picture"]
+content = "player-rom-import"
+inputs = "shaft-pictures"
+expectations = { provider = "pinned-record-cache", fields = ["shaft-picture.clocks", "shaft-picture.effects"], outputs = ["shaft-picture.oam"] }
+checkpoints = true
+limits = ["Advance from the return-hall origin through shaft cut 239 without reseeding. Compare stable actor clocks and effect slots, the interrupted hall prefix and its publication, selected effect and overlay insertion spans, and the locked timer, Samus and mounted vent slots.", "Earlier retained OAM outside these spans, including ordinary shaft drawing, remains outside the comparison. Canonical checkpoints restore actor clocks, effect slots and the video publication, with other played owners carried by the runner.", "The frozen C1 origin has 18 empty effect slots and no live shaft actor clocks or C1 picture. Retained ordinary OAM from the hall seed is outside the null comparison."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned controller pad and locked NMI boundaries"
+fields = ["movie pad", "work finished", "NMI publication", "platform and bus opportunities"]
+phase = "per cut"
+claim = "The sole hall origin admits the room and controller. Later records supply pad and platform timing. The played path owns actor participation, drawing and publication."

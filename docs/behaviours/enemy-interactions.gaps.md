@@ -40,7 +40,7 @@ Phantoon's executable HDMA wave setup also writes the second actor's parameter w
 The contact-input check rejects that writer when the second processing actor is a Ceres
 door; wave setup for another actor does not authorize or invalidate a door comparison.
 
-C1 has no retained State. Its verifier `Receipt` is an output projection: the null leaves
+Shot contact retains no State. Its verifier `Receipt` is an output projection: the null leaves
 the same independently predicted post-W1 markers unchanged each opportunity. Neither
 marker harness nor stateless free proof establishes uninterrupted W1 State, whole OAM,
 sound, health or whole-engine M0 play. No old runtime contact code is deleted until W1
@@ -69,3 +69,16 @@ retains the selected doorway through the complete touch, and refuses the next un
 passage dispatch with rollback. This is not complete passage or sound support: sound requests
 are disposed in the no-APU path and protection has checked inactive-reader scope. Production
 uses typed motion/level capabilities; it cannot copy the verifier's raw WRAM collision guard.
+
+## Shaft actor and effect pictures
+
+The played shaft carries actor clocks and stationary effect slots from
+placement through publication. B8 supplies participation and figures.
+The picture reads the imported clips, the pre-scroll and draw views, and
+the quake's draw offset and refresh.
+
+The indexed replay compares native clocks, effect slots and selected
+prepared and published OAM spans. It restores the C1 state and held
+video publication with the surrounding played state carried. Whole OAM
+from earlier ordinary drawing and intra-frame work scheduling are outside
+that claim. [Replay scope](../STATUS.md#the-shaft-actor-picture)

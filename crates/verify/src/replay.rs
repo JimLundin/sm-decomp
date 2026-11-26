@@ -105,6 +105,8 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
                 played::shaft_sound::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::PlayedSamusPicture {
                 played::samus_picture::run(case, sources, &mut result)
+            } else if case.inputs == index::InputProvider::ShaftPictures {
+                played::shaft_native::indexed::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedGetawayInputs {
                 played::getaway::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedIntroDeliveryInputs {

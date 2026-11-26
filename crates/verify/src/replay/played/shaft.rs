@@ -16,3 +16,11 @@ pub(super) fn expected(wram: &[u8], elevator: bool) -> Result<[Observation; 2], 
 pub(super) fn actual(station: &played::station::State) -> [Observation; 2] {
     shaft::observations(&station.pad_and_cover)
 }
+
+pub(super) fn burst_art(
+    rom: data::rom::Lorom<'_>,
+) -> Result<game::production::played::shaft::BurstArt, super::Outcome> {
+    import::room_effects::shaft_burst(rom)
+        .map(game::production::played::shaft::BurstArt::new)
+        .map_err(|_| super::data_failure(None, "shaft burst clip content"))
+}

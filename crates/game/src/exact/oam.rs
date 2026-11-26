@@ -7,9 +7,9 @@
 //! the high table's ninth bit), Y to eight. So a piece far off screen wraps back into view
 //! where the original's would.
 
-use crate::intent::{Placing, SpriteDraw, SpritePiece};
+use crate::intent::{Placing, ScreenPoint, SpriteDraw, SpritePiece};
 use crate::state::video::{NmiBatch, OAM_HIGH_BYTES, OAM_SPRITES, Oam, OamEntry, SpriteCount};
-use data::spritemap::SpriteSize;
+use data::spritemap::{SpriteSize, Spritemap};
 
 /// The Y of a hidden sprite: line 240, below the picture. Only Y moves, so a hidden entry
 /// keeps the tile and attributes the buffer last held.
@@ -74,6 +74,19 @@ impl NmiBatch {
             Placing::Mapped(size) => self.write_mapped(piece, size),
             Placing::Lone => self.write_lone(piece),
         }
+    }
+
+    /// Append a room-effect picture whose origin can be up to 128 pixels beyond the display.
+    /// A piece above or below the 256-line span keeps its slot, X and attributes, with Y hidden.
+    pub fn draw_room_effect(&mut self, picture: &Spritemap, origin: ScreenPoint) {
+        let mut draw = SpriteDraw::default();
+        draw.place(picture, origin);
+        for piece in &mut draw.pieces {
+            if u8::try_from(piece.at.y).is_err() {
+                piece.at.y = i32::from(HIDDEN_Y);
+            }
+        }
+        self.draw_sprites(&draw);
     }
 
     /// A mapped piece: its X ninth bit and size bit go into the high table, and the count

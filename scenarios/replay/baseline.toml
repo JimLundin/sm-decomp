@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "83f38faa70c1ebcb8b844d429f6f6bd0a8c0c032321055953e51bb15d6a32a23"
+index_sha256 = "a01981460f98e71b7c3aa05c9af7d2b231c3eea740cfbe557c9228e470e6723d"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1730,3 +1730,21 @@ null_fields = 0
 restorations = 23
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "enemy-interactions/shaft-actor-picture"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "16c5ac7e284b747cebb7695eb781010297e739e8e59b0e315c77abd226f1fa55"
+
+[case.counts]
+cuts = 294
+fields = 8820
+outputs = 306
+publications = 1
+replies = 0
+null_cuts = 0
+null_fields = 5062
+restorations = 294
+pending_boundaries = 1
+pending_restorations = 1

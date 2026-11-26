@@ -1,14 +1,23 @@
-//! Single-box Ceres-door contact with ordinary uncharged power shots.
+//! Ceres-door beam contact and shaft actor and effect pictures.
 //!
 //! The producer must establish this supported contract: ordinary left/right or
 //! shaft Ceres doors, one contact figure, and the five current ordinary-power
 //! shot slots after movement. Other actors, multiple figures and other weapons
 //! are unsupported capabilities to report at the producer's edge, not misses.
-//! No state is retained. The caller applies returned consumption immediately,
+//! Door contact retains no state. The caller applies consumption immediately,
 //! retaining the power body for later actors this frame. Scheduling, protection
 //! countdown, door responses and shot movement belong to callers.
+//!
+//! For shaft pictures, advance participating actor clocks and schedule their
+//! visits, then accept bursts before advancing effects. Draw using the scrolled
+//! view and refresh participating actors after drawing. A turn that only
+//! publishes a pending picture performs none of these operations.
 
 use enum_map::{Enum, EnumMap};
+
+pub mod actor;
+pub mod effect;
+pub mod picture;
 
 /// Spec: `ContactAllowed`. Protection at the start of this opportunity, in frames.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -190,7 +199,7 @@ pub fn consumption(
     })
 }
 
-/// The three specified behaviours, all fixed and without parameters.
+/// The specified behaviours, all fixed and without parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
 pub enum BehaviourId {
     /// Independent permission gates.
@@ -199,6 +208,18 @@ pub enum BehaviourId {
     BoxOverlap,
     /// Stable slot selection and same-frame retention.
     FirstPowerShot,
+    /// Schedule a draw visit for a participating shaft actor.
+    ShaftActorDraw,
+    /// Advance, spend and refresh the actor shake clock.
+    ActorShake,
+    /// Allocate stationary bursts in the highest available slots.
+    EffectSlots,
+    /// Advance and cull single-play stationary effects.
+    EffectClip,
+    /// Project visible figure origins for the exact renderer.
+    PictureWindow,
+    /// Order shaft figures around the normal player picture.
+    ShaftPictureOrder,
 }
 
 /// Classification of a specified rule.
@@ -257,5 +278,34 @@ pub const fn behaviour(id: BehaviourId) -> Behaviour {
             switch: Switch::Fixed,
             checked: "source-backed rules, constructed vectors and recorded boundary/harness checks",
         },
+        BehaviourId::ShaftActorDraw => {
+            shaft_behaviour(id, "The overlay can leave view while it keeps rumbling")
+        }
+        BehaviourId::ActorShake => {
+            shaft_behaviour(id, "The overlay and vents move left and right while shaken")
+        }
+        BehaviourId::EffectSlots => shaft_behaviour(id, "Each burst takes the highest empty slot"),
+        BehaviourId::EffectClip => shaft_behaviour(
+            id,
+            "A stationary burst plays once and disappears when done or offscreen",
+        ),
+        BehaviourId::PictureWindow => shaft_behaviour(
+            id,
+            "Puffs and bursts near the edge can still show sprite pieces",
+        ),
+        BehaviourId::ShaftPictureOrder => shaft_behaviour(
+            id,
+            "Effects precede the overlay; vents follow Samus in room order",
+        ),
+    }
+}
+
+const fn shaft_behaviour(id: BehaviourId, summary: &'static str) -> Behaviour {
+    Behaviour {
+        id,
+        summary,
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: "oracle and constructed vectors",
     }
 }

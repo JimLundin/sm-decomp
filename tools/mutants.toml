@@ -25,6 +25,10 @@ rules = [
     "boss-ceres-ridley/VentRests",
     "boss-ceres-ridley/PuffReach",
     "boss-ceres-ridley/PuffTouches",
+    "enemy-interactions/ActorShake",
+    "enemy-interactions/EffectSlots",
+    "enemy-interactions/ShaftActorDraw",
+    "enemy-interactions/ShaftPictureOrder",
 ]
 
 [[fault]]
@@ -1175,8 +1179,8 @@ name = "played-steam-contact-disabled"
 rule = "boss-ceres-ridley/PuffTouches"
 responsibility = "played"
 file = "crates/game/src/production/played/station.rs"
-before = "|| boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres),"
-after = "|| boss_ceres_ridley::run_vents(&mut vents, camera, None, &rules.ceres),"
+before = "let hit = boss_ceres_ridley::run_vents(&mut ordinary, camera, her, &rules.ceres);"
+after = "let hit = boss_ceres_ridley::run_vents(&mut ordinary, camera, her.filter(|_| false), &rules.ceres);"
 case = "played chain-any-0009-DFD7 0 199"
 cut = 137
 field = "steam.hit"
@@ -2180,8 +2184,67 @@ name = "appearance-ordinary-body-loses-flicker-phase"
 responsibility = "appearance"
 rule = "samus-appearance/ProtectionFlicker"
 file = "crates/game/src/production/played/samus_picture.rs"
-before = "finished_frame_parity: parity,"
-after = "finished_frame_parity: match parity { Parity::Even => Parity::Odd, Parity::Odd => Parity::Even },"
+before = """push_time_left: push != PushFrames::NONE,
+            timed_special_colour: false,
+            finished_frame_parity: parity,"""
+after = """push_time_left: push != PushFrames::NONE,
+            timed_special_colour: false,
+            finished_frame_parity: match parity { Parity::Even => Parity::Odd, Parity::Odd => Parity::Even },"""
 case = "samus-appearance/fight-first-protection"
 cut = 614
 field = "samus-oam.piece-count"
+
+[[fault]]
+name = "shaft-overlay-turn-clock-stalls"
+rule = "enemy-interactions/ActorShake"
+responsibility = "shaft-picture"
+file = "crates/game/src/production/played/shaft.rs"
+before = "self.actor_clocks.overlay.0.advance(Participation::Ran);"
+after = "self.actor_clocks.overlay.0.advance(Participation::Skipped);"
+case = "enemy-interactions/shaft-actor-picture"
+cut = 239
+field = "shaft-actors.clock.0"
+
+[[fault]]
+name = "shaft-effect-arrival-withheld"
+rule = "enemy-interactions/EffectSlots"
+responsibility = "shaft-picture"
+file = "crates/game/src/production/played/shaft/burst.rs"
+before = "self.effects.slots.0.accept(arrival.map(|burst| Burst {"
+after = "self.effects.slots.0.accept(arrival.filter(|_| false).map(|burst| Burst {"
+case = "enemy-interactions/shaft-actor-picture"
+cut = 241
+field = "room-video.shaft-effects-first"
+
+[[fault]]
+name = "shaft-effect-layer-reversed"
+rule = "enemy-interactions/ShaftPictureOrder"
+responsibility = "shaft-picture"
+file = "crates/game/src/production/played/room_video.rs"
+before = "for figure in sprites.effects {"
+after = "for figure in sprites.effects.into_iter().rev() {"
+case = "enemy-interactions/shaft-actor-picture"
+cut = 256
+field = "room-video.shaft-effects-first"
+
+[[fault]]
+name = "shaft-mounted-first-draw-omitted"
+rule = "enemy-interactions/ShaftActorDraw"
+responsibility = "shaft-picture"
+file = "crates/game/src/production/played/room_video.rs"
+before = "for (facing, figure, request) in sprites.actors.vents {"
+after = "for (facing, figure, request) in sprites.actors.vents.into_iter().skip(1) {"
+case = "enemy-interactions/shaft-actor-picture"
+cut = 445
+field = "mounted-vent.pending-oam"
+
+[[fault]]
+name = "shaft-held-sprite-publication-withheld"
+rule = "enemy-interactions/ShaftPictureOrder"
+responsibility = "shaft-picture"
+file = "crates/game/src/production/played/room_video.rs"
+before = "if std::mem::take(&mut self.sprite_pending) {"
+after = "if std::mem::take(&mut self.sprite_pending) && self.pending_platform.is_none() {"
+case = "enemy-interactions/shaft-actor-picture"
+cut = 240
+field = "room-video.shaft-overlay-published"

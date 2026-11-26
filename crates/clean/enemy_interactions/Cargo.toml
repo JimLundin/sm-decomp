@@ -8,9 +8,9 @@ description = "The enemy-interactions model, built from its behaviour spec"
 
 [dependencies]
 enum-map = "=3.1.0"
+serde = { version = "=1.0.229", features = ["derive"] }
 
 [dev-dependencies]
-serde = { version = "=1.0.229", features = ["derive"] }
 toml = "=1.2.1"
 
 [lints]

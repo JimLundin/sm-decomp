@@ -256,7 +256,7 @@ fn byte(r: &[u8], at: usize) -> Result<u8, Outcome> {
         .copied()
         .ok_or_else(|| data_failure(None, "blackout record byte"))
 }
-fn word(r: &[u8], at: usize) -> Result<u16, Outcome> {
+pub(in crate::replay) fn word(r: &[u8], at: usize) -> Result<u16, Outcome> {
     r.get(at..)
         .and_then(<[_]>::first_chunk::<2>)
         .map(|b| u16::from_le_bytes(*b))

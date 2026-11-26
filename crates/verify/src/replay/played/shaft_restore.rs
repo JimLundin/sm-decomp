@@ -108,6 +108,8 @@ impl Checkpoint {
                         overlay: owner.overlay,
                         rotation: owner.rotation,
                         locked: owner.locked,
+                        actor_clocks: carried.actor_clocks,
+                        effects: carried.effects,
                         vents: carried
                             .vents
                             .into_iter()

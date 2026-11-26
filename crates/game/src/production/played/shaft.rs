@@ -4,6 +4,9 @@
 //! animation don't run, and the pad sets her height after her frame. The shaft's overlay, run
 //! with the room's enemies, steps the lights, whose beacon sets screen colours.
 
+pub(super) mod actor_picture;
+pub mod vent;
+
 use super::{Content, Fault, Rules, station};
 use crate::production::shaft;
 use boss_ceres_ridley::{
@@ -12,19 +15,29 @@ use boss_ceres_ridley::{
     TiltSample, TiltTrack, place_shaft_overlay, turn_shaft, turn_shaft_overlay,
 };
 use core::num::Wrapping;
+use enemy_interactions::actor::Participation;
 use types::ceres_shaft::TiltDirection;
 use types::{Pair, Parts as _, RandomSequence, Side, VerticalSpeed};
 use world_doors::Palette;
+
+mod burst;
+mod composition;
+
+pub use burst::{BurstArt, ShaftEffects};
 
 /// Complete B8 state for the escape room's overlay, rotation and mounted vents.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EscapeShaft {
     /// The overlay and its current rumble.
     pub overlay: ShaftOverlay,
+    /// The room's complete stationary effect pool.
+    pub effects: ShaftEffects,
     /// The late view and the next sample.
     pub rotation: ShaftRotation,
     /// Mounted vents in population order.
     pub vents: Vec<MountedVent>,
+    /// Drawing clocks of the overlay and mounted vents.
+    pub actor_clocks: actor_picture::Clocks,
     /// The elevator has taken ordinary control.
     pub locked: bool,
 }
@@ -65,6 +78,7 @@ impl EscapeShaft {
         Ok((
             Self {
                 overlay: placement.overlay,
+                effects: ShaftEffects::default(),
                 rotation: ShaftRotation {
                     active: false,
                     next,
@@ -83,6 +97,7 @@ impl EscapeShaft {
                     },
                 },
                 vents: actors.vents.drain(..).map(MountedVent::new).collect(),
+                actor_clocks: actor_picture::Clocks::placed(&actors.slots.vents)?,
                 locked: false,
             },
             placement,
@@ -115,6 +130,7 @@ impl EscapeShaft {
         if let Some(lights) = turn.lights {
             shaft::show(lights, &content.rooms.actors.beacon, palette).map_err(Fault::Lights)?;
         }
+        self.actor_clocks.overlay.0.advance(Participation::Ran);
         Ok(turn)
     }
 
@@ -123,12 +139,19 @@ impl EscapeShaft {
         camera: Pair<types::Px>,
         her: Option<&boss_ceres_ridley::Her>,
         rules: &Rules,
-    ) -> Option<types::Hit> {
+    ) -> (Option<types::Hit>, Vec<Participation>) {
         let view = self.rotation.view;
-        self.vents.iter_mut().fold(None, |hit, vent| {
+        let mut hit = None;
+        let mut turns = Vec::with_capacity(self.vents.len());
+        for (vent, clock) in self.vents.iter_mut().zip(&mut self.actor_clocks.vents) {
+            let before = vent.vent.phase;
             let touch = vent.run(camera, view, her.filter(|_| hit.is_none()), &rules.ceres);
-            hit.or(touch)
-        })
+            let turn = actor_picture::participation(before, vent.vent.phase);
+            clock.clock.0.advance(turn);
+            turns.push(turn);
+            hit = hit.or(touch);
+        }
+        (hit, turns)
     }
 
     pub(super) fn late_turn(

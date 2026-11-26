@@ -300,7 +300,7 @@ impl super::State {
                     .as_ref()
                     .ok_or(Fault::ArrivalGraphics)?;
                 self.room_video.queue_beam_tiles(*from, words);
-                self.room_video.publish(None);
+                self.room_video.publish(None)?;
             }
             Readiness::RoomEffects => {
                 self.room_video
@@ -312,7 +312,7 @@ impl super::State {
                 self.room_video
                     .queue_enemy_tiles()
                     .ok_or(Fault::ArrivalGraphics)?;
-                self.room_video.publish(None);
+                self.room_video.publish(None)?;
             }
             Readiness::EnemyActors if work_done => {
                 if self.station.shaft_overlay {
@@ -321,7 +321,7 @@ impl super::State {
                         .as_deref()
                         .ok_or(Fault::ArrivalGraphics)?;
                     self.room_video.queue_overlay_tiles(bytes);
-                    self.room_video.publish(None);
+                    self.room_video.publish(None)?;
                 }
             }
             Readiness::BeamGraphics | Readiness::EnemyGraphics | Readiness::EnemyActors => {

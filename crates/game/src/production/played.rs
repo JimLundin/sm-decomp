@@ -115,6 +115,10 @@ pub struct Content {
     pub shaft_track: Option<shaft::Track>,
     /// Sprite graphics written when the escape shaft places its overlay.
     pub shaft_overlay_art: Option<data::assets::shaft::Shaft>,
+    /// Imported puff maps for the shaft's mounted vents.
+    pub shaft_vent_art: Option<data::assets::shaft::VentPictures>,
+    /// Stationary smoke and explosion content for the shaft pool.
+    pub shaft_burst_art: Option<shaft::BurstArt>,
     /// The escape shaft effects tilemap selected by its room FX.
     pub shaft_effects: Vec<u16>,
     /// The haze, mode split and HUD scroll selected in the escape shaft.
@@ -301,6 +305,8 @@ pub enum Fault {
     Escape,
     /// The shaft burst requested an unsupported sound queue limit.
     ShaftSoundAllowance,
+    /// The active shaft effect pool has no admitted clip content.
+    ShaftEffectContent,
     /// The locked standing picture could not be prepared.
     StandingPicture(super::blackout::Fault),
     /// The room's quake can't take the frame: a door's shake of a strength it has no size for,
@@ -371,13 +377,13 @@ impl State {
             }
         }
         if passing.publishes {
-            self.room_video.publish_ordinary_sprites();
+            self.room_video.publish_sprites();
             if let Some((tiles, graphics)) = &content.samus_tiles {
                 self.room_video.video.transfer_samus_tiles(tiles, graphics);
                 self.room_video.video.batch.samus_tiles =
                     crate::state::video::SamusTileUploads::default();
             }
-            self.room_video.publish(content.standing.as_ref());
+            self.room_video.publish(content.standing.as_ref())?;
         }
         Ok(output)
     }
@@ -427,6 +433,7 @@ impl State {
             .ok_or(Fault::Hud)?;
         let mut quake = ridley::finish_getaway(&enemies, &mut samus, &mut palette);
         let elevator_reach = self.late_shaft_turn(&mut enemies, &mut her, &mut samus, content)?;
+        let draw_shake = world_quake::drawn_offset(quake, world_quake::Time::Running);
         let shaken = quake::update(&mut quake)?;
         let doors = self.passage.in_play(
             touched,
@@ -437,11 +444,14 @@ impl State {
             rules,
         );
 
-        let picture = ridley_picture::picture(content, &enemies, camera.position());
-        let sprites = self.write_ordinary_sprites(body.as_ref(), picture)?;
-        self.prepare_room_picture(&hud_state, &hud_outputs, camera.position(), content)?;
-        let shaft_sound_offer =
-            self.shaft_outputs(enemies.shaft_actors, &doors.report, passing, content)?;
+        let sprites = self.assemble_play_picture(
+            &mut enemies,
+            (&hud_state, &hud_outputs),
+            (camera.position(), body),
+            (draw_shake, shaken.actors_asked),
+            content,
+        )?;
+        let shaft_sound_offer = self.shaft_outputs(enemies.shaft_actors, &doors.report, passing)?;
 
         if let Some(uploads) = uploads {
             self.room_video.video.batch.samus_tiles = uploads;
@@ -463,12 +473,7 @@ impl State {
         self.clock_picture = clock_picture;
         self.finish_room_actors(&mut enemies, passing.publishes);
         self.quake = Model(quake);
-        let finishing = if self.station.escape_shaft.is_some() && !passing.publishes {
-            world_doors::Finishing::Overrun
-        } else {
-            doors.report.finishing
-        };
-        self.frame = self.frame.after(finishing, random);
+        self.finish_room_frame(doors.report.finishing, passing.publishes, random);
         self.play_time = play_time::after_work(self.play_time, health.state, passing.work_begun);
         self.arrival = self.arrival.after_play(rules);
         Ok(Outputs {
@@ -505,22 +510,18 @@ impl State {
         }
     }
 
-    fn prepare_room_picture(
+    const fn finish_room_frame(
         &mut self,
-        hud: &interface_hud::HudState,
-        output: &FrameOutputs,
-        camera: types::Position,
-        content: &Content,
-    ) -> Result<(), Fault> {
-        let standing = self.elevator_locked().then(|| {
-            super::blackout::StandingFrame::from_locked(
-                &self.samus,
-                camera,
-                self.passage.room.entry.view.transform,
-            )
-        });
-        self.room_video
-            .prepare_play_picture(hud, standing, output.countdown.picture, content)
+        finishing: world_doors::Finishing,
+        publishes: bool,
+        random: types::RandomSequence,
+    ) {
+        let finishing = if self.station.escape_shaft.is_some() && !publishes {
+            world_doors::Finishing::Overrun
+        } else {
+            finishing
+        };
+        self.frame = self.frame.after(finishing, random);
     }
 
     fn elevator_locked(&self) -> bool {
@@ -660,8 +661,9 @@ impl State {
             &mut palette,
             &mut random,
         )?;
+        self.prepare_passage_shaft_picture(&mut enemies, view, moved, inputs.parity, content)?;
         let shaft_sound_offer =
-            self.shaft_outputs(enemies.shaft_actors, &exports.report, passing, content)?;
+            self.shaft_outputs(enemies.shaft_actors, &exports.report, passing)?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         let shaft_overlay_placement = loaded.shaft_placement.map(|placement| placement.upload);
         if loaded.actors.is_some() {
@@ -712,17 +714,10 @@ impl State {
         turn: Option<boss_ceres_ridley::OverlayTurn>,
         doors: &world_doors::Report,
         passing: &Passing,
-        content: &Content,
     ) -> Result<Option<audio_transport::Offer>, Fault> {
         let (sound, offer) = self
             .shaft_sound
             .next(turn, doors, passing.audio.shaft_reply)?;
-        self.room_video.shaft_picture(
-            turn,
-            self.vent_camera(),
-            passing.publishes,
-            content.shaft_overlay_art.as_ref(),
-        )?;
         self.shaft_sound = sound;
         Ok(offer)
     }

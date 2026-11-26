@@ -81,9 +81,16 @@ pub(super) struct Enemies {
     pub(super) lights: Option<Lights>,
     pub(super) shaft: Option<shaft::EscapeShaft>,
     pub(super) shaft_actors: Option<boss_ceres_ridley::OverlayTurn>,
+    pub(super) shaft_vent_turns: Vec<enemy_interactions::actor::Participation>,
     /// The room's quake after the doors' starts.
     pub(super) quake: world_quake::State,
 }
+
+type VentTurn = (
+    Vec<Vent>,
+    Option<Hit>,
+    Vec<enemy_interactions::actor::Participation>,
+);
 
 impl Enemies {
     /// The contact shared by her reaction and health. Ridley precedes vents in enemy order.
@@ -105,6 +112,7 @@ impl Enemies {
             lights: None,
             shaft: None,
             shaft_actors: None,
+            shaft_vent_turns: Vec::new(),
             quake,
         }
     }
@@ -322,16 +330,8 @@ impl super::State {
         } else {
             self.lights(content, rules, palette)?
         };
-        let mut vents = station.vents.clone();
-        let camera = self.vent_camera();
-        let her = match running {
-            Running::Play(her) => her,
-            Running::Passage => None,
-        };
-        let steam_hit = shaft.as_mut().map_or_else(
-            || boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres),
-            |shaft| shaft.run_vents(camera, her, rules),
-        );
+        let (vents, steam_hit, shaft_vent_turns) =
+            self.vent_turn(running, shaft.as_mut(), shaft_actors, content, rules)?;
         Ok(Enemies {
             ridley,
             warning,
@@ -341,8 +341,36 @@ impl super::State {
             lights,
             shaft,
             shaft_actors,
+            shaft_vent_turns,
             quake,
         })
+    }
+    fn vent_turn(
+        &self,
+        running: Running<'_>,
+        shaft: Option<&mut shaft::EscapeShaft>,
+        overlay: Option<boss_ceres_ridley::OverlayTurn>,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<VentTurn, Fault> {
+        let mut ordinary = self.station.vents.clone();
+        let camera = self.vent_camera();
+        let her = match running {
+            Running::Play(her) => her,
+            Running::Passage => None,
+        };
+        if let Some(shaft) = shaft {
+            let (hit, turns) = shaft.run_vents(camera, her, rules);
+            shaft.advance_effects(
+                overlay.and_then(|turn| turn.burst),
+                camera,
+                content.shaft_burst_art.as_ref(),
+            )?;
+            Ok((ordinary, hit, turns))
+        } else {
+            let hit = boss_ceres_ridley::run_vents(&mut ordinary, camera, her, &rules.ceres);
+            Ok((ordinary, hit, Vec::new()))
+        }
     }
 }
 
@@ -626,17 +654,30 @@ mod tests {
                 },
             },
             vents: Vec::new(),
+            actor_clocks: super::shaft::actor_picture::Clocks::placed(&[]).unwrap(),
+            effects: super::shaft::ShaftEffects::default(),
             locked: false,
         });
         // Zero would start a strong shake. The burst's shared draw crosses the door's threshold.
         let mut random = room.frame.random;
         let mut palette = room.palette;
+        let mut content = content();
+        let picture = || data::assets::room_effects::Picture {
+            hold: core::num::NonZeroU16::MIN,
+            sprites: data::spritemap::Spritemap::default(),
+        };
+        content.shaft_burst_art = Some(super::shaft::BurstArt::new(
+            data::assets::room_effects::ShaftBurst {
+                smoke: core::array::from_fn(|_| picture()),
+                small_explosion: core::array::from_fn(|_| picture()),
+            },
+        ));
         let actors = room
             .enemies(
                 Running::Passage,
                 &mut random,
                 &passing(),
-                &content(),
+                &content,
                 &rules(),
                 &mut palette,
             )

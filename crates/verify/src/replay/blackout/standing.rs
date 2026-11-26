@@ -165,7 +165,7 @@ fn strip_bytes(strips: StandingStrips) -> Vec<u8> {
     .collect()
 }
 
-fn packed_oam(raw: &[u8], slots: core::ops::Range<usize>) -> Option<Vec<u8>> {
+pub(in crate::replay) fn packed_oam(raw: &[u8], slots: core::ops::Range<usize>) -> Option<Vec<u8>> {
     let (low, high) = raw.split_at_checked(512)?;
     let entries = low
         .get(slots.start.wrapping_mul(4)..slots.end.wrapping_mul(4))?

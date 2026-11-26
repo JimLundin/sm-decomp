@@ -149,6 +149,16 @@ targets = [
 ]
 
 [[rule]]
+id = "enemy-interactions/ActorShake"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/actor.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/actor_picture.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/indexed.rs" },
+]
+
+[[rule]]
 id = "enemy-interactions/BoxOverlap"
 targets = [
   { role = "model", path = "crates/clean/enemy_interactions/src/lib.rs" },
@@ -165,11 +175,59 @@ targets = [
 ]
 
 [[rule]]
+id = "enemy-interactions/EffectClip"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/effect.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/burst.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/effect_pool.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/indexed.rs" },
+]
+
+[[rule]]
+id = "enemy-interactions/EffectSlots"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/effect.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/burst.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/effect_pool.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/indexed.rs" },
+]
+
+[[rule]]
 id = "enemy-interactions/FirstPowerShot"
 targets = [
   { role = "model", path = "crates/clean/enemy_interactions/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/weapons.rs" },
   { role = "navigation", path = "docs/behaviours/enemy-interactions.md" },
+]
+
+[[rule]]
+id = "enemy-interactions/PictureWindow"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/actor.rs" },
+  { role = "model", path = "crates/clean/enemy_interactions/src/effect.rs" },
+  { role = "model", path = "crates/clean/enemy_interactions/src/picture.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/actor_picture.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/burst.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/indexed.rs" },
+]
+
+[[rule]]
+id = "enemy-interactions/ShaftActorDraw"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/actor.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/actor_picture.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/indexed.rs" },
+]
+
+[[rule]]
+id = "enemy-interactions/ShaftPictureOrder"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/effect.rs" },
+  { role = "model", path = "crates/clean/enemy_interactions/src/picture.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/shaft/composition.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/indexed.rs" },
 ]
 
 [[rule]]

@@ -64,6 +64,8 @@ pub enum Responsibility {
     Weapons,
     /// Ordered contact consuming produced shots.
     Contact,
+    /// Retained shaft actors and stationary effects, including their picture.
+    ShaftPicture,
     /// The complete status bar and mini-map owner.
     Hud,
     /// The complete animation playhead and boost memory.
@@ -189,6 +191,8 @@ pub enum InputProvider {
     PlayedShaftSound,
     /// One admitted ordinary fight and the played platform publication boundaries.
     ScopedCeresFightPicture,
+    /// The movie pad, return-hall origin and the played platform boundaries.
+    ShaftPictures,
     /// Carried Samus turn with a separately observed flyby pass and view edge.
     ScopedGetawayInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
@@ -352,6 +356,15 @@ pub enum ObservationId {
     /// Warning phase, live progress, glow and Escape stage.
     #[serde(rename = "ridley.warning.state")]
     CeresWarningState,
+    /// Local clocks keyed by shaft actor placement.
+    #[serde(rename = "shaft-picture.clocks")]
+    ShaftPictureClocks,
+    /// Stable effect slots and their playback phases.
+    #[serde(rename = "shaft-picture.effects")]
+    ShaftPictureEffects,
+    /// Selected native shadow and published OAM spans.
+    #[serde(rename = "shaft-picture.oam")]
+    ShaftPictureOam,
     /// Carried room art, positioned text and live and physically published colours.
     #[serde(rename = "ridley.warning.picture")]
     CeresWarningPicture,
@@ -1259,6 +1272,12 @@ fn rule_exists(rule: &str) -> bool {
             enemy_interactions::BehaviourId::ContactAllowed,
             enemy_interactions::BehaviourId::BoxOverlap,
             enemy_interactions::BehaviourId::FirstPowerShot,
+            enemy_interactions::BehaviourId::ShaftActorDraw,
+            enemy_interactions::BehaviourId::ActorShake,
+            enemy_interactions::BehaviourId::EffectSlots,
+            enemy_interactions::BehaviourId::EffectClip,
+            enemy_interactions::BehaviourId::PictureWindow,
+            enemy_interactions::BehaviourId::ShaftPictureOrder,
         ]
         .iter()
         .any(|id| rule == format!("enemy-interactions/{id:?}"))
@@ -1570,12 +1589,24 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         hud_observations!() => Responsibility::Hud,
         weapons_observations!() => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
+        O::ShaftPictureClocks | O::ShaftPictureEffects | O::ShaftPictureOam => {
+            Responsibility::ShaftPicture
+        }
         appearance_observations!() => Responsibility::Appearance,
         progress_observations!() => Responsibility::Progress,
     }
 }
 
 fn rule_owner(rule: &str, provider: InputProvider) -> Option<Responsibility> {
+    if rule.starts_with("enemy-interactions/")
+        && witnessed_fields(rule, InputProvider::ShaftPictures).is_some_and(|fields| {
+            fields
+                .iter()
+                .all(|field| observation_owner(*field) == Responsibility::ShaftPicture)
+        })
+    {
+        return Some(Responsibility::ShaftPicture);
+    }
     if rule == "game-random/AdvanceRandom" {
         return Some(Responsibility::LandingSite);
     }
@@ -1681,6 +1712,13 @@ fn movement_witnessed_fields(
 fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "enemy-interactions/ActorShake" => &[O::ShaftPictureClocks, O::ShaftPictureOam],
+        "enemy-interactions/EffectSlots" | "enemy-interactions/EffectClip" => {
+            &[O::ShaftPictureEffects]
+        }
+        "enemy-interactions/ShaftActorDraw"
+        | "enemy-interactions/PictureWindow"
+        | "enemy-interactions/ShaftPictureOrder" => &[O::ShaftPictureOam],
         game::production::played::intro_rooms::RULE => {
             &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
         }
@@ -2676,6 +2714,9 @@ fn scope_valid(case: &Case) -> bool {
     {
         return false;
     }
+    if case.inputs == InputProvider::ShaftPictures {
+        return super::played::shaft_native::indexed::valid(case);
+    }
     if case.inputs == InputProvider::ScopedGetawayInputs {
         return super::played::getaway::valid(case);
     }
@@ -2704,7 +2745,9 @@ fn start_valid(case: &Case) -> bool {
                 && *frame < case.end.cut_inclusive
                 && matches!(
                     case.inputs,
-                    InputProvider::Departure | InputProvider::PlayedShaftSound
+                    InputProvider::Departure
+                        | InputProvider::PlayedShaftSound
+                        | InputProvider::ShaftPictures
                 )
         }
         Start::CacheCut { frame } => *frame < case.end.cut_inclusive,

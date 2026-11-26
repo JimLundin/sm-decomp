@@ -811,6 +811,28 @@ fn compare_shaft_picture(
             (expected, actual),
         )?;
     }
+    if hall && matches!(local, 241 | 243 | 256) {
+        let pending = local != 243;
+        let (actual, expected) = if pending {
+            let shadow = record
+                .wram
+                .get(super::super::ridley_warning_native::SHADOW_OAM)
+                .ok_or_else(|| super::data_failure(Some(cut), "shaft effect shadow OAM"))?;
+            (&room.video.batch.oam, shadow)
+        } else {
+            (&room.video.memory.oam, record.oam.as_ref())
+        };
+        let prefix = |buffer: &[u8]| super::super::blackout::standing::packed_oam(buffer, 0..1);
+        if prefix(&super::super::blackout::observe::oam_bytes(actual)) != prefix(expected) {
+            return Err(super::Outcome::Difference {
+                cut,
+                field: "room-video.shaft-effects-first".into(),
+            });
+        }
+    }
+    if shaft {
+        compare_ordinary_overlay(room, record, local, cut)?;
+    }
     if hall && (240..=278).contains(&local) || shaft && local <= 163 {
         let span = 0x060e..0x0612;
         let native = record
@@ -859,6 +881,34 @@ fn record_pair(
     Ok(())
 }
 
+fn compare_ordinary_overlay(
+    room: &RoomVideo,
+    record: &oracle_record::FrameRecord,
+    local: u64,
+    cut: u64,
+) -> Result<(), super::Outcome> {
+    let start: usize = match local {
+        0 => 23,
+        1 => 24,
+        28 => 29,
+        _ => return Ok(()),
+    };
+    let native = record
+        .wram
+        .get(super::super::ridley_warning_native::SHADOW_OAM)
+        .ok_or_else(|| super::data_failure(Some(cut), "ordinary shaft overlay OAM"))?;
+    let owned = start..start.wrapping_add(12);
+    let packed = super::super::blackout::standing::packed_oam;
+    let bytes = super::super::blackout::observe::oam_bytes;
+    if packed(&bytes(&room.video.batch.oam), owned.clone()) != packed(native, owned) {
+        return Err(super::Outcome::Difference {
+            cut,
+            field: "room-video.shaft-overlay-after-effects".into(),
+        });
+    }
+    Ok(())
+}
+
 #[test]
 #[ignore = "pinned record cache and player ROM"]
 fn return_hall_prepares_then_publishes_the_shaft_picture() {
@@ -890,8 +940,32 @@ fn return_hall_prepares_then_publishes_the_shaft_picture() {
     let held = run.state.room_video.video.memory == before;
     assert!(held, "the interrupted cut holds physical video");
 
-    let mut restored = run.clone();
+    let mut restored = super::shaft_native::indexed::restore(&run, 239).unwrap();
+    let pending = run.state.room_video.video.batch.clone();
+
+    let before_clocks = run
+        .state
+        .station
+        .escape_shaft
+        .as_ref()
+        .unwrap()
+        .actor_clocks
+        .clone();
     let interrupted = rows.record(239).unwrap();
+    let native_count = super::super::blackout::word(&interrupted.wram, 0x0590).unwrap();
+    assert_eq!(pending.sprites.0 * 4, native_count);
+    let owned = 0..usize::from(pending.sprites.0);
+    let sprites = super::super::blackout::standing::packed_oam;
+    let oam = super::super::blackout::observe::oam_bytes;
+    let native = interrupted
+        .wram
+        .get(super::super::ridley_warning_native::SHADOW_OAM)
+        .unwrap();
+    assert!(
+        sprites(&oam(&pending.oam), owned.clone()) == sprites(native, owned.clone()),
+        "complete prepared prefix at hall 239"
+    );
+
     let controller = seed_controller(&interrupted).unwrap();
     assert_eq!(
         run.through(&mut rows, interrupted.clone(), controller, 240..=240)
@@ -904,6 +978,28 @@ fn return_hall_prepares_then_publishes_the_shaft_picture() {
             .unwrap(),
         (1, Stop::End)
     );
+    let video = &run.state.room_video.video;
+    let mut finished = pending;
+    finished.finalise_oam();
+    assert!(
+        video.memory.oam == finished.oam,
+        "publish the interrupted OAM once"
+    );
+    assert_eq!(video.batch.sprites.0, 0);
+    let native = rows.record(240).unwrap();
+    assert!(
+        sprites(&oam(&video.memory.oam), owned.clone()) == sprites(&native.oam, owned),
+        "complete published prefix at hall 240"
+    );
+
+    let clocks = &run
+        .state
+        .station
+        .escape_shaft
+        .as_ref()
+        .unwrap()
+        .actor_clocks;
+    assert_eq!(clocks, &before_clocks);
     let same = run.state.room_video == restored.state.room_video;
     assert!(same, "the restored pending picture publishes identically");
 
@@ -936,6 +1032,8 @@ fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
     let rom = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
     let first_locked = 444;
     let final_overrun = 518;
+    let vents = import::shaft::vent::import(rom.lorom()).unwrap();
+    let mut retained = 24;
     for cut in 1..=final_overrun {
         let current = rows.record(cut)?;
         let (row, local) = rows.place(cut)?;
@@ -948,6 +1046,13 @@ fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
                 &current,
                 rom.lorom(),
                 local,
+            )?;
+            super::steam::mounted_picture::compare_live_written(
+                &previous,
+                &current,
+                &run.state.room_video.video,
+                &vents,
+                &mut retained,
             )?;
         }
         controller = controller.read(current.pad.0, super::polled(&current));

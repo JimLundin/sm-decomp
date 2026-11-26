@@ -81,7 +81,7 @@ rounds = 2
 
 [[model]]
 name = "enemy-interactions"
-rounds = 1
+rounds = 2
 
 [[model]]
 name = "samus-health"
@@ -331,10 +331,10 @@ name = "Fighting enemies"
 area = "enemy"
 wave = 2
 rounds = 6
-# Inferred: CAM for the window of enemies that run.
+# CAM supplies the window of enemies that run. R3 supplies the quake offset for effects.
 reads = [
     "S1", "S5", "CAM", "W1", "R1", "C2-C11", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
-    "B9", "B10",
+    "B9", "B10", "R3",
 ]
 
 [[domain]]

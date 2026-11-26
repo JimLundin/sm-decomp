@@ -61,7 +61,7 @@ pub(super) mod samus_picture;
 mod screens;
 pub(super) mod seed;
 mod shaft;
-mod shaft_native;
+pub(super) mod shaft_native;
 mod shaft_restore;
 pub(super) mod shaft_sound;
 mod start;
@@ -504,6 +504,8 @@ impl<'a> Run<'a> {
                 standing: game::samus_appearance_bridge::elevator::Art::load(image.lorom()).ok(),
                 shaft_track: shaft.as_ref().map(played::shaft::track),
                 shaft_overlay_art: shaft,
+                shaft_vent_art: import::shaft::vent::import(image.lorom()).ok(),
+                shaft_burst_art: Some(shaft::burst_art(image.lorom())?),
                 shaft_effects: import::countdown::shaft_effects(image.lorom())
                     .map_err(|_| data_failure(None, "shaft effects tilemap"))?,
                 arrival_beam_tiles: Some(art.beam),

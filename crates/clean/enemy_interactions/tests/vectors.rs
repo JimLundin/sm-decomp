@@ -7,10 +7,38 @@ use enemy_interactions::{
 use enum_map::EnumMap;
 use serde::Deserialize;
 
+mod support {
+    pub mod shaft;
+}
+
+use support::shaft;
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Suite {
-    vector: Vec<Vector>,
+    vector: Vec<Scenario>,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum Scenario {
+    Door(Vector),
+    Shaft(shaft::Vector),
+}
+
+impl Scenario {
+    fn run(&self) -> &[Entry] {
+        match self {
+            Self::Door(vector) => {
+                run_vector(vector);
+                &vector.entries
+            }
+            Self::Shaft(vector) => {
+                shaft::run(vector);
+                &vector.entries
+            }
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -35,6 +63,12 @@ enum Entry {
     ContactAllowed,
     BoxOverlap,
     FirstPowerShot,
+    ShaftActorDraw,
+    ActorShake,
+    EffectSlots,
+    EffectClip,
+    PictureWindow,
+    ShaftPictureOrder,
 }
 
 impl Entry {
@@ -43,6 +77,12 @@ impl Entry {
             Self::ContactAllowed => BehaviourId::ContactAllowed,
             Self::BoxOverlap => BehaviourId::BoxOverlap,
             Self::FirstPowerShot => BehaviourId::FirstPowerShot,
+            Self::ShaftActorDraw => BehaviourId::ShaftActorDraw,
+            Self::ActorShake => BehaviourId::ActorShake,
+            Self::EffectSlots => BehaviourId::EffectSlots,
+            Self::EffectClip => BehaviourId::EffectClip,
+            Self::PictureWindow => BehaviourId::PictureWindow,
+            Self::ShaftPictureOrder => BehaviourId::ShaftPictureOrder,
         }
     }
 }
@@ -201,11 +241,10 @@ fn every_vector_and_catalogue_entry() -> Result<(), Box<dyn std::error::Error>> 
     let suite: Suite = toml::from_str(include_str!(
         "../../../../scenarios/vectors/enemy-interactions.toml"
     ))?;
-    assert_eq!(suite.vector.len(), 30);
+    assert_eq!(suite.vector.len(), 64);
     let mut covered: EnumMap<BehaviourId, bool> = EnumMap::default();
     for vector in &suite.vector {
-        run_vector(vector);
-        for entry in &vector.entries {
+        for entry in vector.run() {
             covered[entry.id()] = true;
         }
     }

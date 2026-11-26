@@ -150,11 +150,12 @@ set in the row its species loads to instead. No other species' placement changes
 
 ## Ceres escape boundaries
 
-The escape shaft publishes the overlay figure and platform tiles through the
-room's sprite buffer and low-byte tilemap transfer. After the first overlay
-publication, other sprites can precede the figure. The full sprite order
-depends on the particle, vent and Samus drawing owners. Physical mode changes
-during scanout and the haze fade have their own owners.
+The escape shaft publishes the overlay, stationary effects and mounted vents
+through the room's sprite buffer. The indexed shaft picture compares their
+selected OAM spans with the live timer and Samus. Whole OAM at shaft cut 239
+still differs in retained slots from earlier ordinary drawing. The first
+difference is the X byte of slot 30. Physical mode changes during scanout
+and the haze fade have their own owners.
 
 ## The engine: planned differences from the original
 

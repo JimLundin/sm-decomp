@@ -88,9 +88,16 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "enemy-interactions",
         bridge: Some("enemy_interactions_bridge"),
-        adapters: &["production/weapons.rs"],
-        providers: &["weapons", "shot_drawing"],
-        areas: &[("contact", &["lib.rs"])],
+        adapters: &[
+            "production/weapons.rs",
+            "production/played/shaft/actor_picture.rs",
+            "production/played/shaft/burst.rs",
+        ],
+        providers: &["weapons", "shot_drawing", "played/shaft_native"],
+        areas: &[
+            ("contact", &["lib.rs"]),
+            ("shaft picture", &["actor.rs", "effect.rs", "picture.rs"]),
+        ],
         apart: &[],
     },
     Domain {

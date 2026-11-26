@@ -179,6 +179,8 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         standing: None,
         shaft_track: None,
         shaft_overlay_art: None,
+        shaft_vent_art: None,
+        shaft_burst_art: None,
         shaft_effects: Vec::new(),
         shaft_raster: None,
         ridley_main_screen: None,
