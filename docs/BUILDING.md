@@ -55,6 +55,42 @@ paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the na
 contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
 On a Windows host that blocks new executables, the hosted command above runs the same test.
 
+## Run the replay faults
+
+Set `SM_ROM`, `SM_CACHE` and `SM_AUDIO_NATIVE` to the same fixtures used by replay.
+Run the full manifest locally with one build:
+
+```sh
+uv run --no-project --with-requirements tools/fault-requirements.txt python tools/check_mutants.py selectable
+```
+
+CI runs `worker N` for each partition printed by `python3 tools/check_mutants.py plan`.
+Each worker builds one executable in a private directory. Tree-sitter finds the
+Rust function containing each edit. Every alternative starts with the original
+function body and applies one manifest replacement. Cargo Gamma selects one
+alternative at process startup. The worker compares the first bad cut and field,
+then launches the same binary with the selector cleared and requires the full
+original receipt. [Rust grammar](https://github.com/tree-sitter/tree-sitter-rust/tree/v0.24.2)
+and [Cargo Gamma runtime](https://github.com/microsoft/ox-tools/blob/cargo-gamma-v0.8.0/crates/cargo-gamma-rt/src/lib.rs).
+
+The manifest supplies the reviewed edits and their expected replay outcomes.
+Gamma's CLI generates its own mutations, so the worker uses its runtime directly.
+The played runner can exit successfully when it detects a fault. Its receipt gives
+the first differing cut and field. [Cargo Gamma mutation operators](https://github.com/microsoft/ox-tools/tree/cargo-gamma-v0.8.0/crates/cargo-gamma-engine/src/ops/registry)
+
+Put each edit inside a gameplay or played-runner function. If a `const fn`
+calls an instrumented function, list the caller in `runtime_callers`. Only the
+private build evaluates those functions at runtime. Cargo checks the resulting
+call chain and the worker checks that only the pinned Gamma runtime was added
+to the replay build.
+
+To compare a partition against independent builds of the literal edits, run
+`python3 tools/check_mutants.py --literal worker N` in a dedicated checkout.
+With no arguments the command runs the full literal manifest and leaves a
+normal replay binary for direct use. Both methods print a `RECEIPTS` line after
+each kill and restoration. Compare sorted lines by fault name. The three SHA-256
+values cover the complete clean, faulty and restored receipts.
+
 ## Setting up on Linux
 
 The repository's tools run on Linux as they do on CI's ubuntu-24.04 runner. The Windows

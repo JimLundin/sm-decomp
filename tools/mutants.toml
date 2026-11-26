@@ -31,6 +31,11 @@ rules = [
     "enemy-interactions/ShaftPictureOrder",
 ]
 
+[runtime_callers]
+"crates/game/src/production/played/health.rs" = ["health_frame", "energy_the_hit_leaves"]
+"crates/game/src/production/played/frame.rs" = ["after"]
+"crates/game/src/production/played.rs" = ["finish_room_frame"]
+
 [[fault]]
 name = "movement-double-update"
 responsibility = "movement"
@@ -740,8 +745,8 @@ field = "power-on.finished-frames"
 name = "played-power-on-hold-short"
 responsibility = "played"
 file = "crates/verify/src/replay/played/power_on.rs"
-before = "const RULES: Rules = Rules::REFERENCE;"
-after = "const RULES: Rules = Rules { power_on: screens_boot::Rules { hold: screens_boot::HoldFrames(119), ..screens_boot::Rules::REFERENCE }, ..Rules::REFERENCE };"
+before = "rules: &RULES,"
+after = "rules: &Rules { power_on: screens_boot::Rules { hold: screens_boot::HoldFrames(119), ..screens_boot::Rules::REFERENCE }, ..Rules::REFERENCE },"
 case = "played any-power-on 0 567"
 cut = 33
 field = "power-on.hold"
@@ -750,8 +755,8 @@ field = "power-on.hold"
 name = "played-title-fast-step-3"
 responsibility = "played"
 file = "crates/verify/src/replay/played/power_on.rs"
-before = "const RULES: Rules = Rules::REFERENCE;"
-after = "const RULES: Rules = Rules { title: screens_title::Rules { fast_step: screens_title::FastStep::new(3).unwrap(), ..screens_title::Rules::REFERENCE }, ..Rules::REFERENCE };"
+before = "rules: &RULES,"
+after = "rules: &Rules { title: screens_title::Rules { fast_step: screens_title::FastStep::new(3).unwrap(), ..screens_title::Rules::REFERENCE }, ..Rules::REFERENCE },"
 case = "played any-power-on 0 567"
 cut = 308
 field = "front-end.screen"
@@ -760,8 +765,8 @@ field = "front-end.screen"
 name = "played-file-select-menu-pace-3"
 responsibility = "played"
 file = "crates/verify/src/replay/played/power_on.rs"
-before = "const RULES: Rules = Rules::REFERENCE;"
-after = "const RULES: Rules = Rules { file_select: screens_file_select::Rules { menu_pace: types::file_select::MenuPace::new(3).unwrap(), ..screens_file_select::Rules::REFERENCE }, ..Rules::REFERENCE };"
+before = "rules: &RULES,"
+after = "rules: &Rules { file_select: screens_file_select::Rules { menu_pace: types::file_select::MenuPace::new(3).unwrap(), ..screens_file_select::Rules::REFERENCE }, ..Rules::REFERENCE },"
 case = "played any-power-on 0 567"
 cut = 403
 field = "front-end.screen"
@@ -1038,8 +1043,8 @@ field = "doors.colours.screen"
 name = "played-opening-hud-publishes-after-nineteen-music-waits"
 responsibility = "played"
 file = "crates/game/src/production/played/arrival.rs"
-before = "const MUSIC_WAITS: u8 = 20;"
-after = "const MUSIC_WAITS: u8 = 19;"
+before = "Self::MusicWaits(Self::MUSIC_WAITS) => Self::Published,"
+after = "Self::MusicWaits(19) => Self::Published,"
 case = "played any-ceres-arrival 0 222"
 cut = 183
 field = "hud.setup-publish"

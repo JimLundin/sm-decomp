@@ -60,10 +60,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
-            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
-            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - &rom
         name: Fetch the encrypted ROM
         if: steps.verdict.outputs.reused == ''
@@ -261,7 +261,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *verdict
-      - *cache
       - *fetch_cache
       - *rom
       - *decrypt
@@ -273,7 +272,12 @@ jobs:
       - *shot_drawing
       - *native_search
       - *health_tail
-      - name: Verify recorded bridge fault rejection and exact restoration
+      - name: Install the Rust parser for selectable replay faults
+        if: steps.verdict.outputs.reused == ''
+        run: |
+          python3 -m venv "$RUNNER_TEMP/fault-tools"
+          "$RUNNER_TEMP/fault-tools/bin/pip" install --only-binary=:all: -r tools/fault-requirements.txt
+      - name: Build one selectable replay binary and check every fault in this partition
         if: steps.verdict.outputs.reused == ''
         env:
           CARGO_INCREMENTAL: "1"
@@ -281,5 +285,5 @@ jobs:
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
-            python3 tools/check_mutants.py worker "$WORKER"
+            "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py worker "$WORKER"
       - *record

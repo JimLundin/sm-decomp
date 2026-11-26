@@ -1,10 +1,5 @@
-"""Recorded replay differences must reject temporary production bridge faults.
-
-Run while the coordinator has frozen the worktree, Cargo environment and external
-ROM/cache/native inputs. Restore exact source bytes after every mutation, then
-require a fresh Pass from an immutable vanilla executable. Print safe identities.
-"""
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -14,7 +9,7 @@ import sys
 import tempfile
 import time
 import tomllib
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -65,28 +60,44 @@ def input_bytes(path: Path) -> bytes | None:
 class FrozenInputs:
     """Include dirty and nonignored untracked inputs; preserve absent tracked files."""
     files: dict[Path, bytes | None]
+    listing: Callable[[Path], set[Path]] | None = None
 
     @classmethod
-    def capture(cls, root: Path) -> "FrozenInputs":
-        return cls({path: input_bytes(path) for path in input_paths(root)})
+    def capture(cls, root: Path, listing: Callable[[Path], set[Path]] | None = None) -> "FrozenInputs":
+        paths = (listing or input_paths)(root)
+        return cls({path: input_bytes(path) for path in paths}, listing)
+
+    def copy_to(self, root: Path, tree: Path) -> None:
+        for path, original in self.files.items():
+            if original is not None:
+                copied = tree / path.relative_to(root)
+                copied.parent.mkdir(parents=True, exist_ok=True)
+                copied.write_bytes(original)
+                shutil.copymode(path, copied)
+        self.check(root)
 
     def check(self, root: Path) -> None:
         started = time.perf_counter()
-        if input_paths(root) != self.files.keys() or any(
+        if (self.listing or input_paths)(root) != self.files.keys() or any(
             input_bytes(path) != original for path, original in self.files.items()
         ):
             raise ValueError("worktree inputs changed; coordinator must reconcile")
         print(f"TIMING input-check seconds={time.perf_counter() - started:.6f}", flush=True)
 
-def build_executable(root: Path) -> Path:
+def build_executable(root: Path, *, target: Path | None = None) -> Path:
     """Use Cargo's artifact path, including custom target directories and triples."""
     started = time.perf_counter()
     result = subprocess.run([os.environ.get("CARGO", "cargo"), "build", "--locked",
                              "--profile", "verify", "-p", "tools", "--bin", "tools",
-                             "--message-format=json"], cwd=root, capture_output=True,
+                             "--message-format=json", *(["--target-dir", str(target)] if target else [])], cwd=root, capture_output=True,
                             text=True, encoding="utf-8", errors="replace")
     print(f"TIMING compilation seconds={time.perf_counter() - started:.6f}", flush=True)
-    result.check_returncode()
+    if result.returncode:
+        for line in result.stdout.splitlines():
+            message = json.loads(line).get("message")
+            if isinstance(message, dict) and message.get("level") == "error":
+                print(message.get("message"), file=sys.stderr)
+        result.check_returncode()
     executables = []
     for line in result.stdout.splitlines():
         artifact = json.loads(line)
@@ -102,7 +113,8 @@ def build_executable(root: Path) -> Path:
         raise ValueError("reported tools executable is missing")
     return executable
 
-def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int, str]:
+def run_case(root: Path, case: str, executable: Path | None = None, *,
+             env: Mapping[str, str] | None = None) -> tuple[int, str]:
     if executable is None:
         try:
             executable = build_executable(root)
@@ -114,11 +126,12 @@ def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int
     else:
         command = [str(executable), "replay", "run", "scenarios/replay/index.toml", "--case", case]
         sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM"), ("--native", "SM_AUDIO_NATIVE")]
+    environment = os.environ if env is None else env
     for flag, variable in sources:
-        if value := os.environ.get(variable):
+        if value := environment.get(variable):
             command.extend([flag, value])
     started = time.perf_counter()
-    result = subprocess.run(command, cwd=root, capture_output=True, text=True,
+    result = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True,
                             encoding="utf-8", errors="replace")
     print(f"TIMING replay case={case} seconds={time.perf_counter() - started:.6f}", flush=True)
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
@@ -163,11 +176,13 @@ def passed(result: tuple[int, str], case: str) -> bool:
     observed = receipt(output, case)
     return code == 0 and observed is not None and observed.get("outcome") == {"status": "pass"}
 
-def require_unique_anchor(fault: Fault, source: bytes) -> None:
+def require_unique_anchor(fault: Fault, source: bytes) -> int:
     """A refactor of the patched lines can drift an anchor; it must still name one place."""
     before = fault.before.encode()
-    if not before or before == fault.after.encode() or source.count(before) != 1:
+    start = source.find(before)
+    if not before or before == fault.after.encode() or start < 0 or source.find(before, start + 1) >= 0:
         raise ValueError(f"fault {fault.name} must replace one unique changed fragment of {fault.file}")
+    return start
 
 def validate_anchors(root: Path, faults: Sequence[Fault]) -> None:
     for fault in faults:
@@ -183,17 +198,7 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
     mutated = original.replace(fault.before.encode(), fault.after.encode(), 1)
     try:
         path.write_bytes(mutated)
-        code, output = run_case(root, fault.case)
-        observed = receipt(output, fault.case)
-        # A played run reports where it stopped and exits normally; a replay case fails. A
-        # played run's own pad alignment check may stop it before the comparison does.
-        played = fault.case.startswith(PLAYED)
-        stops = ("difference", "data-failure") if played else ("difference",)
-        killed = code == (0 if played else 1) and observed is not None and observed.get("outcome") in [
-            {"status": status, "cut": fault.cut, "field": fault.field} for status in stops]
-        # A survivor names where the run really stopped: status, cut and field names only.
-        seen = "" if killed else f" observed exit={code} {observed and observed.get('outcome')}"
-        print(f"{'KILLED' if killed else 'INVALID OR SURVIVED'} {fault.name}: {fault.case} cut{fault.cut} {fault.field}{seen}", flush=True)
+        faulty = detected(fault, run_case(root, fault.case))
     finally:
         started = time.perf_counter()
         if path.read_bytes() != mutated:
@@ -207,11 +212,39 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
     restored = run_case(root, fault.case, vanilla)
     if inputs is not None:
         inputs.check(root)
-    if not passed(restored, fault.case) or receipt(restored[1], fault.case) != baseline:
+    return restored_pass(fault, restored, baseline, faulty)
+
+
+def detected(fault: Fault, result: tuple[int, str]) -> dict[str, Any] | None:
+    code, output = result
+    observed = receipt(output, fault.case)
+    played = fault.case.startswith(PLAYED)
+    stops = ("difference", "data-failure") if played else ("difference",)
+    if code == (0 if played else 1) and observed is not None and any(
+        observed.get("outcome") == {"status": status, "cut": fault.cut, "field": fault.field} for status in stops
+    ):
+        print(f"KILLED {fault.name}: {fault.case} cut{fault.cut} {fault.field}", flush=True)
+        return observed
+    print(f"INVALID OR SURVIVED {fault.name}: {fault.case} expected cut{fault.cut} {fault.field} exit={code}", flush=True)
+    return None
+
+
+def receipt_digest(observed: Mapping[str, Any]) -> str:
+    return hashlib.sha256(json.dumps(observed, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def restored_pass(fault: Fault, result: tuple[int, str], baseline: Mapping[str, Any],
+                  faulty: Mapping[str, Any] | None) -> bool:
+    restored = receipt(result[1], fault.case)
+    if result[0] or restored != baseline or restored is None or restored.get("outcome") != {"status": "pass"}:
         print(f"RESTORED BASELINE FAILED {fault.case}", flush=True)
         return False
     print(f"RESTORED PASS {fault.case}", flush=True)
-    return killed
+    if faulty is None:
+        return False
+    print(f"RECEIPTS {fault.name} {receipt_digest(baseline)} {receipt_digest(faulty)} {receipt_digest(restored)}", flush=True)
+    return True
+
 
 def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
     """Every responsibility with a reviewed Pass, and the played runner, needs its own fault."""
@@ -247,7 +280,7 @@ def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
             replay = rf"TIMING replay case={case}{seconds}"
             block = re.compile(
                 rf"^{replay}KILLED {name}: {case} cut{fault.cut} {field}\n"
-                rf"TIMING restoration fault={name}{seconds}{input_check}{compilation}"
+                rf"(?:TIMING restoration fault={name}{seconds}{input_check}{compilation}|SELECTOR OFF fault={name}\n{input_check})"
                 rf"{replay}{input_check}RESTORED PASS {case}$(?!\nRESTORED PASS )",
                 re.MULTILINE,
             )
@@ -283,47 +316,7 @@ def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]
     return tuple(tuple(sorted(worker, key=order.__getitem__)) for worker in workers)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
-    commands = parser.add_subparsers(dest="command")
-    commands.add_parser("plan", help="print the CI worker matrix")
-    worker = commands.add_parser("worker", help="run one partition of the fault manifest")
-    worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
-    coverage = commands.add_parser(
-        "rule-coverage", help="report declared rules using logs from reviewed runs of this roster")
-    coverage.add_argument("logs", nargs="*", type=Path, metavar="LOG")
-    args = parser.parse_args(argv)
-    root = Path(__file__).resolve().parents[1]
-    manifest = root / "tools/mutants.toml"
-    raw_manifest = manifest.read_bytes()
-    data = tomllib.loads(raw_manifest.decode())
-    roster = tuple(Fault(**row) for row in data["fault"])
-    if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
-        raise ValueError("fault names must be nonempty and unique")
-    rules = data.get("rules", [])
-    if (not isinstance(rules, list) or any(not isinstance(rule, str) or not rule for rule in rules)
-        or len(rules) != len(set(rules))
-        or any(fault.rule is not None and fault.rule not in rules for fault in roster)):
-        raise ValueError("rule coverage needs unique rule IDs and declared fault assignments")
-    validate_coverage(root, roster)
-    validate_anchors(root, roster)
-    if args.command == "rule-coverage":
-        report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
-        return 0
-    if args.command:
-        partitions = partition_faults(roster)
-        if args.command == "plan":
-            print(json.dumps({"worker": list(range(len(partitions)))}))
-            return 0
-        index = int(args.index)
-        if index >= len(partitions):
-            parser.error(f"worker {index} is absent from this fault manifest")
-        faults = partitions[index]
-    else:
-        faults = roster
-    inputs = FrozenInputs.capture(root)
-    if inputs.files.get(manifest) != raw_manifest:
-        raise ValueError("fault manifest changed while planning")
+def run_literal(root: Path, inputs: FrozenInputs, faults: Sequence[Fault]) -> int:
     # Cargo's output is overwritten by mutant builds. The saved binary is private;
     # every baseline/restored receipt still comes from a newly executed process.
     with tempfile.TemporaryDirectory(prefix="sm-mutants-") as directory:
@@ -352,6 +345,156 @@ def main(argv: list[str] | None = None) -> int:
         last = faults[-1]
         results.append(check_fault(root, last, baselines[last.case], inputs=inputs))
     return 0 if all(results) else 1
+
+
+def runtime_callers(root: Path, raw: object) -> dict[str, tuple[str, ...]]:
+    if not isinstance(raw, dict):
+        raise ValueError("runtime_callers must be a table")
+    result = {}
+    for file, names in raw.items():
+        if (not isinstance(file, str) or not isinstance(names, list) or not names
+            or any(not isinstance(name, str) or not name for name in names)
+            or len(names) != len(set(names))):
+            raise ValueError("runtime_callers must list distinct function names per Rust file")
+        source_path(root, file)
+        result[file] = tuple(names)
+    return result
+
+
+def replay_dependencies(tree: Path, *, locked: bool) -> set[str]:
+    command = [os.environ.get("CARGO", "cargo"), "tree", "-p", "tools", "--edges", "normal,build",
+               "--prefix", "none", "--format", "{p} [{f}]"]
+    if locked:
+        command.append("--locked")
+    output = subprocess.check_output(command, cwd=tree, text=True)
+    return {line.removesuffix(" (*)") for line in output.splitlines()}
+
+
+def plant_selectors(tree: Path, faults: Sequence[Fault], callers: Mapping[str, Sequence[str]]) -> None:
+    from selectable_faults import Replacement, instrument_file
+    edits: dict[str, list[tuple[int, Fault]]] = {}
+    for ordinal, fault in enumerate(faults, 1):
+        edits.setdefault(fault.file, []).append((ordinal, fault))
+    for file in dict.fromkeys((*edits, *callers)):
+        source = source_path(tree, file)
+        original = source.read_bytes()
+        changes = [
+            Replacement(ordinal, require_unique_anchor(fault, original), fault.before.encode(), fault.after.encode())
+            for ordinal, fault in edits.get(file, ())
+        ]
+        source.write_bytes(instrument_file(original, changes, callers.get(file, ())))
+    normal = replay_dependencies(tree, locked=True)
+    if any(package.startswith("cargo-gamma-rt v") for package in normal):
+        raise ValueError("normal replay already links the fault selector")
+    version = "0.8.0"
+    for crate in sorted({Path(file).parts[1] for file in edits}):
+        with (tree / "crates" / crate / "Cargo.toml").open("a", encoding="utf-8", newline="\n") as manifest:
+            manifest.write(f'\n[dependencies.cargo-gamma-rt]\nversion = "={version}"\n')
+    if replay_dependencies(tree, locked=False) != normal | {f"cargo-gamma-rt v{version} []"}:
+        raise ValueError("the selectable build changed another dependency or feature")
+
+
+def scratch_files(tree: Path) -> set[Path]:
+    return {path for path in tree.rglob("*") if path.is_file() or path.is_symlink()}
+
+
+def replay_selectable(tree: Path, faults: Sequence[Fault], executable: Path,
+                      frozen: FrozenInputs, env: Mapping[str, str]) -> bool:
+    baselines = {}
+    for case in dict.fromkeys(fault.case for fault in faults):
+        clean = run_case(tree, case, executable, env=env)
+        frozen.check(tree)
+        baseline = receipt(clean[1], case)
+        if not passed(clean, case) or baseline is None:
+            print(f"BASELINE FAILED {case}", flush=True)
+            return False
+        baselines[case] = baseline
+        print(f"BASELINE PASS {case}", flush=True)
+    success = True
+    for ordinal, fault in enumerate(faults, 1):
+        selected = {**env, "GAMMA_ACTIVE": str(ordinal)}
+        faulty = detected(fault, run_case(tree, fault.case, executable, env=selected))
+        print(f"SELECTOR OFF fault={fault.name}", flush=True)
+        frozen.check(tree)
+        restored = run_case(tree, fault.case, executable, env=env)
+        frozen.check(tree)
+        if not restored_pass(fault, restored, baselines[fault.case], faulty):
+            success = False
+    return success
+
+
+def run_selectable(root: Path, inputs: FrozenInputs, faults: Sequence[Fault],
+                   callers: Mapping[str, Sequence[str]]) -> int:
+    started = time.perf_counter()
+    env = dict(os.environ)
+    env.pop("GAMMA_ACTIVE", None)
+    env.pop("GAMMA_REACH", None)
+    for name in ("SM_ROM", "SM_CACHE", "SM_AUDIO_NATIVE"):
+        if value := env.get(name):
+            env[name] = str((root / value).resolve())
+    target = root / "target"
+    target.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=target, prefix="selectable-faults-") as directory:
+        scratch = Path(directory)
+        tree = scratch / "source"
+        inputs.copy_to(root, tree)
+        plant_selectors(tree, faults, callers)
+        frozen = FrozenInputs.capture(tree, scratch_files)
+        executable = build_executable(tree, target=scratch / "build")
+        frozen.check(tree)
+        success = replay_selectable(tree, faults, executable, frozen, env)
+        inputs.check(root)
+    print(f"TIMING worker faults={len(faults)} seconds={time.perf_counter() - started:.6f}", flush=True)
+    return 0 if success else 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Check replay fault detection and restoration.", allow_abbrev=False)
+    parser.add_argument("--literal", action="store_true", help="compare with a separate Cargo build per literal edit")
+    commands = parser.add_subparsers(dest="command")
+    commands.add_parser("selectable", help="run the complete manifest in one selectable build")
+    commands.add_parser("plan", help="print the CI worker matrix")
+    worker = commands.add_parser("worker", help="run one partition of the fault manifest")
+    worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
+    coverage = commands.add_parser(
+        "rule-coverage", help="report declared rules using logs from reviewed runs of this roster")
+    coverage.add_argument("logs", nargs="*", type=Path, metavar="LOG")
+    args = parser.parse_args(argv)
+    root = Path(__file__).resolve().parents[1]
+    manifest = root / "tools/mutants.toml"
+    raw_manifest = manifest.read_bytes()
+    data = tomllib.loads(raw_manifest.decode())
+    roster = tuple(Fault(**row) for row in data["fault"])
+    if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
+        raise ValueError("fault names must be nonempty and unique")
+    rules = data.get("rules", [])
+    if (not isinstance(rules, list) or any(not isinstance(rule, str) or not rule for rule in rules)
+        or len(rules) != len(set(rules))
+        or any(fault.rule is not None and fault.rule not in rules for fault in roster)):
+        raise ValueError("rule coverage needs unique rule IDs and declared fault assignments")
+    callers = runtime_callers(root, data.get("runtime_callers", {}))
+    validate_coverage(root, roster)
+    validate_anchors(root, roster)
+    if args.command == "rule-coverage":
+        report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
+        return 0
+    if args.command in ("plan", "worker"):
+        partitions = partition_faults(roster)
+        if args.command == "plan":
+            print(json.dumps({"worker": list(range(len(partitions)))}))
+            return 0
+        index = int(args.index)
+        if index >= len(partitions):
+            parser.error(f"worker {index} is absent from this fault manifest")
+        faults = partitions[index]
+    else:
+        faults = roster
+    inputs = FrozenInputs.capture(root)
+    if inputs.files.get(manifest) != raw_manifest:
+        raise ValueError("fault manifest changed while planning")
+    if args.command is None or args.literal:
+        return run_literal(root, inputs, faults)
+    return run_selectable(root, inputs, faults, callers)
 
 if __name__ == "__main__":
     sys.exit(main())
