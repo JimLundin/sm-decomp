@@ -18,7 +18,7 @@ mod stages;
 
 pub use catalogue::{Behaviour, BehaviourId, catalogue};
 pub use frame::{FrameReport, step};
-pub use plane::PlaneTransform;
+pub use plane::{PlaneTransform, transform};
 pub use rules::Rules;
 pub use sprites::SpriteView;
 pub use stages::MusicQueue;

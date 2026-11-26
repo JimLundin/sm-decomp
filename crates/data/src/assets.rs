@@ -18,3 +18,5 @@ pub mod samus;
 pub mod start;
 pub mod tilesets;
 pub mod world;
+
+pub mod explosion;

@@ -26,6 +26,8 @@ pub enum CaseKind {
 #[serde(rename_all = "kebab-case")]
 /// An existing selected production owner.
 pub enum Responsibility {
+    /// The station scene after Ceres.
+    StationExplosion,
     /// The shaft blackout.
     Blackout,
     /// The intro stage, scripts and their frame publications.
@@ -152,6 +154,8 @@ pub struct End {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
+    /// The scheduled NMI completion and post-service music reply.
+    StationExplosion,
     /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
     PlayedCeresInputs,
     /// One elevator arrival and T1 scheduling.
@@ -257,6 +261,24 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// The station scene's stage observations.
+    #[serde(rename = "explosion.stage")]
+    ExplosionStage,
+    /// The station scene's motion observations.
+    #[serde(rename = "explosion.motion")]
+    ExplosionMotion,
+    /// The station scene's bursts observations.
+    #[serde(rename = "explosion.bursts")]
+    ExplosionBursts,
+    /// The station scene's carry observations.
+    #[serde(rename = "explosion.carry")]
+    ExplosionCarry,
+    /// The station scene's requests observations.
+    #[serde(rename = "explosion.requests")]
+    ExplosionRequests,
+    /// The station scene's drawing observations.
+    #[serde(rename = "explosion.drawing")]
+    ExplosionDrawing,
     /// Ridley's carried body, held baby and retreat phase, with the station still calm.
     #[serde(rename = "ridley.retreat.body")]
     CeresRetreatBody,
@@ -925,6 +947,10 @@ pub enum IndexFault {
 }
 
 fn rule_exists(rule: &str) -> bool {
+    if let Some(name) = rule.strip_prefix("screens-explosion/") {
+        let rules = enum_map::EnumMap::<screens_explosion::catalogue::BehaviourId, ()>::default();
+        return rules.iter().any(|(id, ())| format!("{id:?}") == name);
+    }
     screens_intro::catalogue()
         .iter()
         .any(|(id, _)| rule == format!("screens-intro/{id:?}"))
@@ -1013,6 +1039,17 @@ macro_rules! flashback_observations {
             | ObservationId::FlashbackCgram
             | ObservationId::FlashbackOam
             | ObservationId::FlashbackBg1Y
+    };
+}
+
+macro_rules! explosion_observations {
+    () => {
+        O::ExplosionStage
+            | O::ExplosionMotion
+            | O::ExplosionBursts
+            | O::ExplosionCarry
+            | O::ExplosionRequests
+            | O::ExplosionDrawing
     };
 }
 
@@ -1135,6 +1172,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::HealthTailWarning
         | O::HealthTailDrawnProtection
         | O::CeresTailHealth => Responsibility::Health,
+        explosion_observations!() => Responsibility::StationExplosion,
         blackout_observations!() => Responsibility::Blackout,
         O::CeresTailKnockback
         | O::TouchdownClip
@@ -1208,6 +1246,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("screens-flashback/", Responsibility::Flashback),
         ("screens-discovery/", Responsibility::Discovery),
         ("samus-movement/", Responsibility::Movement),
+        ("screens-explosion/", Responsibility::StationExplosion),
         ("screens-blackout/", Responsibility::Blackout),
         ("screens-playback/", Responsibility::Playback),
         ("audio-transport/", Responsibility::Audio),
@@ -1232,6 +1271,26 @@ fn movement_witnessed_fields(
 ) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "screens-explosion/StationPictureArrives" => {
+            &[O::ExplosionStage, O::ExplosionDrawing, O::ExplosionRequests]
+        }
+        "screens-explosion/StationAwaitsMusic" | "screens-explosion/SpaceHolds" => {
+            &[O::ExplosionStage]
+        }
+        "screens-explosion/StationBrightens" | "screens-explosion/ShipDeparts" => {
+            &[O::ExplosionStage, O::ExplosionMotion]
+        }
+        "screens-explosion/SpaceDrifts" => &[O::ExplosionMotion, O::ExplosionDrawing],
+        "screens-explosion/StationBursts" => &[O::ExplosionBursts, O::ExplosionDrawing],
+        "screens-explosion/StationBreaks" => &[
+            O::ExplosionStage,
+            O::ExplosionBursts,
+            O::ExplosionRequests,
+            O::ExplosionDrawing,
+        ],
+        "screens-explosion/SceneBlacksOut" => {
+            &[O::ExplosionStage, O::ExplosionCarry, O::ExplosionRequests]
+        }
         "screens-blackout/ElevatorStopsSamus"
         | "screens-blackout/PlatformWait"
         | "screens-blackout/DepartureHandoff" => &[
@@ -1886,13 +1945,35 @@ fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
             ]
 }
 
-fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+fn station_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
+    case.kind == CaseKind::Scoped
+        && case.responsibilities == [Responsibility::StationExplosion]
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && matches!(case.start, Start::CacheCut { .. })
+        && case.expectations.output_cut.is_none()
+        && case.expectations.fields
+            == [
+                O::ExplosionStage,
+                O::ExplosionMotion,
+                O::ExplosionBursts,
+                O::ExplosionCarry,
+            ]
+        && case.expectations.outputs == [O::ExplosionRequests, O::ExplosionDrawing]
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+}
+
+fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     if matches!(
         case.inputs,
         InputProvider::PlayedCeresInputs | InputProvider::ScopedCeresFlyby
     ) {
         return super::played::indexed::valid(case);
+    }
+    if case.inputs == InputProvider::StationExplosion {
+        return station_provider_valid(case);
     }
     if case.inputs == InputProvider::Blackout {
         return super::blackout::valid(case);
@@ -1909,6 +1990,11 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     if case.inputs == InputProvider::Unavailable {
         return unavailable_provider_valid(case, observations);
     }
+    responsibility_provider_valid(case, observations)
+}
+
+fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    use ObservationId as O;
     let recorded = case.kind == CaseKind::Scoped
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
         && matches!(case.start, Start::CacheCut { .. });

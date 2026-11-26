@@ -29,6 +29,7 @@ mod arrival;
 mod ceres_doors;
 mod colours;
 mod contact;
+mod explosion;
 mod flight;
 pub(super) mod flyby_scope;
 mod frame;
@@ -270,6 +271,12 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         return power_on::play(&mut rows, &sources.rom, row, start, end);
     }
     let seed = rows.record(start)?;
+    if let Some(before) = start.checked_sub(1)
+        && super::explosion::pending(&seed)?
+        && super::explosion::enters_from(&rows.record(before)?)?
+    {
+        return explosion::play(&mut rows, &sources.rom, seed, row, start, end);
+    }
     if flight::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
         return flight::play(&mut rows, &sources.rom, &seed, row, start, end);
     }

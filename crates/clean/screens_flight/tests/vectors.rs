@@ -435,6 +435,7 @@ fn run(vector: &Vector) -> Vec<String> {
     let scene = scene(inputs.and_then(|inputs| inputs.scene.as_ref()));
     let mut actual = state(&vector.before);
     let report = step(&mut actual, &scene, music, rules);
+    assert_eq!(screens_flight::transform(&actual.plane), report.transform);
     let expected = state(&vector.after);
     let mut differences = Vec::new();
     if actual != expected {

@@ -258,6 +258,22 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
     if case.inputs == InputProvider::ScopedIntroInputs {
         return Some(super::played::intro::indexed::valid_count_shape(counts));
     }
+    if case.inputs == InputProvider::StationExplosion {
+        let base = counts.cuts.checked_mul(4)?;
+        let settled_fields = counts.fields.checked_sub(base)?;
+        let settled = settled_fields / 5;
+        let extra = counts
+            .outputs
+            .checked_sub(counts.cuts.checked_add(settled.checked_mul(2)?)?)?;
+        return Some(
+            settled_fields.is_multiple_of(5)
+                && settled <= counts.cuts
+                && matches!(extra, 0 | 3 | 5)
+                && counts.publications == 0
+                && counts.replies == 0
+                && counts.pending_boundaries == 0,
+        );
+    }
     if case.inputs == InputProvider::Blackout {
         return Some(
             counts.cuts.checked_mul(case.expectations.fields.len()) == Some(counts.fields)

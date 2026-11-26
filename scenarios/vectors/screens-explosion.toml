@@ -1,0 +1,298 @@
+# The before and after tables describe one scene step. Pose is [angle, zoom, x, y].
+# Angle and zoom use 256ths. Coordinates use signed pixels and exact binary fractions.
+# Sky is [large asteroid x, small asteroid x, alternating purple picture number].
+# Burst lists are in front-to-back order. Each row is [picture identity, animation
+# update number, x, y, displayed sample number]. Identity names group and occurrence.
+# A negative update number counts toward zero during the delay. Picture zero means hidden.
+# Unstated before fields default to Pending, blanked light (level 0), no fade wait,
+# uninstalled view, zero pose, age and hold, and no drawings. Unstated after
+# fields are unconstrained. Outputs are complete for the scene step.
+# WaitingForMusic reads music_busy after audio service. Set it explicitly in those cases.
+# The advance decision defaults to true and is independent of music_busy.
+# Music is an ordered list of [request, delay frames]. flash has a style and screen center.
+# Map writes are ordered pairs of source drawing and target region.
+# rules.hold_frames belongs to SpaceHolds and defaults to 192.
+# Recorded cases assert RAM-derived scene quantities. Picture numbers name
+# animation positions, with no game drawing content in the fixture. The
+# colours and graphics in constructed setup use invented content.
+
+[[vector]]
+id = "R-music-waits"
+source = "recorded"
+entries = ["StationAwaitsMusic"]
+music_busy = true
+before = { "stage" = "WaitingForMusic", "pose" = [0, 256, -44, -112], "level" = 0 }
+after = { "stage" = "WaitingForMusic", "pose" = [0, 256, -44, -112], "level" = 0 }
+output = {  }
+
+[[vector]]
+id = "R-sky"
+source = "recorded"
+entries = ["SpaceDrifts"]
+music_busy = true
+before = { "stage" = "WaitingForMusic", "sky" = [80.75, 128.09375, 1], "age" = 3 }
+after = { "stage" = "WaitingForMusic", "sky" = [81.0, 128.125, 0], "age" = 4 }
+output = {  }
+
+[[vector]]
+id = "R-music-ready"
+source = "recorded"
+entries = ["StationAwaitsMusic"]
+music_busy = false
+before = { "stage" = "WaitingForMusic", "pose" = [0, 256, -44, -112], "level" = 0 }
+after = { "stage" = "Revealing", "pose" = [0, 256, -44, -112], "level" = 0 }
+output = {  }
+
+[[vector]]
+id = "R-reveal-wait"
+source = "recorded"
+entries = ["StationBrightens"]
+before = { "stage" = "Revealing", "pose" = [0, 256, -44, -112], "level" = 0, "fade" = 1 }
+after = { "stage" = "Revealing", "pose" = [0, 257, -44.25, -111.9375], "level" = 0, "fade" = 0 }
+output = {  }
+
+[[vector]]
+id = "R-first-light"
+source = "recorded"
+entries = ["StationBrightens"]
+before = { "stage" = "Revealing", "pose" = [0, 257, -44.25, -111.9375], "level" = 0, "fade" = 0 }
+after = { "stage" = "Revealing", "pose" = [0, 258, -44.5, -111.875], "level" = 1, "fade" = 1 }
+output = {  }
+
+[[vector]]
+id = "R-full-light"
+source = "recorded"
+entries = ["StationBrightens"]
+before = { "stage" = "Revealing", "pose" = [0, 285, -51.25, -110.1875], "level" = 14, "fade" = 0 }
+after = { "stage" = "Station", "pose" = [0, 286, -51.5, -110.125], "level" = 15, "fade" = 0 }
+output = {  }
+
+[[vector]]
+id = "R-station-drifts"
+source = "recorded"
+entries = ["StationBreaks"]
+before = { "stage" = "Station", "pose" = [0, 286, -51.5, -110.125] }
+after = { "stage" = "Station", "pose" = [0, 287, -51.75, -110.0625] }
+output = {  }
+
+[[vector]]
+id = "R-first-group"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 344, -66.0, -106.5], "age" = 128, "bursts" = [], "sky" = [112.0, 132.0, 0] }
+after = { "stage" = "Station", "pose" = [0, 345, -66.25, -106.4375], "age" = 129, "bursts" = [["first-1", 0, 135.25, 138.9375, 1], ["first-2", -15, 103.25, 170.9375, 0], ["first-3", -31, 135.25, 170.9375, 0], ["first-4", -47, 103.25, 138.9375, 0], ["first-5", -63, 119.25, 154.9375, 0]], "sky" = [112.25, 132.03125, 1] }
+output = {  }
+
+[[vector]]
+id = "R-first-picture"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 359, -69.75, -105.5625], "age" = 143, "bursts" = [["first-1", 14, 138.75, 138.0625, 5], ["first-2", -1, 106.75, 170.0625, 0], ["first-3", -17, 138.75, 170.0625, 0], ["first-4", -33, 106.75, 138.0625, 0], ["first-5", -49, 122.75, 154.0625, 0]], "sky" = [115.75, 132.46875, 1] }
+after = { "stage" = "Station", "pose" = [0, 360, -70.0, -105.5], "age" = 144, "bursts" = [["first-1", 15, 139.0, 138.0, 6], ["first-2", 0, 107.0, 170.0, 1], ["first-3", -16, 139.0, 170.0, 0], ["first-4", -32, 107.0, 138.0, 0], ["first-5", -48, 123.0, 154.0, 0]], "sky" = [116.0, 132.5, 0] }
+output = {  }
+
+[[vector]]
+id = "R-middle-start"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 425, -86.25, -101.4375], "age" = 209, "bursts" = [["first-5", 17, 139.25, 149.9375, 6]], "sky" = [132.25, 134.53125, 1] }
+after = { "stage" = "Station", "pose" = [0, 426, -86.5, -101.375], "age" = 210, "bursts" = [["middle-1", 0, 153.25, 141.9375, 1]], "sky" = [132.5, 134.5625, 0] }
+output = {  }
+
+[[vector]]
+id = "R-middle-next"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 437, -89.25, -100.6875], "age" = 221, "bursts" = [["middle-1", 11, 156.0, 141.25, 4]], "sky" = [135.25, 134.90625, 1] }
+after = { "stage" = "Station", "pose" = [0, 438, -89.5, -100.625], "age" = 222, "bursts" = [["middle-1", 12, 156.25, 141.1875, 5], ["middle-2", 0, 150.25, 160.9375, 1]], "sky" = [135.5, 134.9375, 0] }
+output = {  }
+
+[[vector]]
+id = "R-last-group"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 488, -102.0, -97.5], "age" = 272, "bursts" = [["middle-1", 62, 168.75, 138.0625, 0], ["middle-2", 50, 162.75, 157.8125, 6], ["middle-3", 38, 138.75, 157.5625, 2], ["middle-4", 26, 146.75, 132.3125, 0], ["middle-5", 14, 154.75, 146.0625, 5], ["middle-6", 2, 170.75, 159.8125, 1]], "sky" = [148.0, 136.5, 0] }
+after = { "stage" = "Station", "pose" = [0, 489, -102.25, -97.4375], "age" = 273, "bursts" = [["middle-1", 63, 169.0, 138.0, 0], ["middle-2", 51, 163.0, 157.75, 6], ["middle-3", 39, 139.0, 157.5, 2], ["middle-4", 27, 147.0, 132.25, 0], ["middle-5", 15, 155.0, 146.0, 6], ["middle-6", 3, 171.0, 159.75, 2], ["last-1", 0, 163.25, 141.9375, 1], ["last-2", -3, 167.25, 153.9375, 0], ["last-3", -7, 147.25, 135.9375, 0], ["last-4", -15, 143.25, 157.9375, 0]], "sky" = [148.25, 136.53125, 1] }
+output = {  }
+
+[[vector]]
+id = "R-drift"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 489, -102.25, -97.4375], "age" = 273, "bursts" = [["middle-1", 63, 169.0, 138.0, 0], ["middle-2", 51, 163.0, 157.75, 6], ["middle-3", 39, 139.0, 157.5, 2], ["middle-4", 27, 147.0, 132.25, 0], ["middle-5", 15, 155.0, 146.0, 6], ["middle-6", 3, 171.0, 159.75, 2], ["last-1", 0, 163.25, 141.9375, 1], ["last-2", -3, 167.25, 153.9375, 0], ["last-3", -7, 147.25, 135.9375, 0], ["last-4", -15, 143.25, 157.9375, 0]], "sky" = [148.25, 136.53125, 1] }
+after = { "stage" = "Station", "pose" = [0, 490, -102.5, -97.375], "age" = 274, "bursts" = [["middle-1", 64, 169.25, 137.9375, 0], ["middle-2", 52, 163.25, 157.6875, 0], ["middle-3", 40, 139.25, 157.4375, 3], ["middle-4", 28, 147.25, 132.1875, 0], ["middle-5", 16, 155.25, 145.9375, 6], ["middle-6", 4, 171.25, 159.6875, 2], ["last-1", 1, 163.5, 141.875, 1], ["last-2", -2, 167.5, 153.875, 0], ["last-3", -6, 147.5, 135.875, 0], ["last-4", -14, 143.5, 157.875, 0]], "sky" = [148.5, 136.5625, 0] }
+output = {  }
+
+[[vector]]
+id = "R-zoom-limit"
+source = "recorded"
+entries = ["StationBreaks"]
+before = { "stage" = "Station", "pose" = [0, 639, -139.75, -88.0625] }
+after = { "stage" = "Station", "pose" = [0, 640, -140.0, -88.0] }
+output = {  }
+
+[[vector]]
+id = "R-flash"
+source = "recorded"
+entries = ["StationBreaks", "StationBursts"]
+before = { "stage" = "Station", "pose" = [0, 640, -140.0, -88.0], "view" = "Station", "age" = 424, "bursts" = [["middle-2", 202, 200.75, 148.3125, 0], ["middle-3", 190, 176.75, 148.0625, 0], ["middle-4", 178, 184.75, 122.8125, 3], ["middle-5", 166, 192.75, 136.5625, 0], ["middle-6", 154, 208.75, 150.3125, 0], ["last-1", 151, 201.0, 132.5, 3], ["last-2", 148, 205.0, 144.5, 2], ["last-3", 144, 185.0, 126.5, 1], ["last-4", 136, 181.0, 148.5, 0]], "sky" = [186.0, 141.25, 0] }
+after = { "stage" = "Departing", "pose" = [0, 768, -140.25, -87.9375], "view" = "Gunship", "age" = 425, "bursts" = [["final-1", 0, 193.25, 135.9375, 1], ["middle-2", 203, 201.0, 148.25, 0], ["middle-3", 191, 177.0, 148.0, 0], ["middle-4", 179, 185.0, 122.75, 4], ["middle-5", 167, 193.0, 136.5, 0], ["middle-6", 155, 209.0, 150.25, 0], ["last-1", 152, 201.25, 132.4375, 3], ["last-2", 149, 205.25, 144.4375, 2], ["last-3", 145, 185.25, 126.4375, 2], ["last-4", 137, 181.25, 148.4375, 0]], "sky" = [186.25, 141.28125, 1] }
+output = { "flash" = { "style" = "StationFlash", "center" = [193.0, 136.0] }, "map_writes" = [["ShipFront", "Upper"], ["Empty", "Lower"]] }
+
+[[vector]]
+id = "R-turn-wrap"
+source = "recorded"
+entries = ["ShipDeparts"]
+before = { "stage" = "Departing", "pose" = [0, 768, -140.25, -87.9375] }
+after = { "stage" = "Departing", "pose" = [255, 752, -138.25, -87.9375] }
+output = {  }
+
+[[vector]]
+id = "R-burst-end"
+source = "recorded"
+entries = ["StationBursts"]
+before = { "stage" = "Departing", "pose" = [227, 304, -82.25, -87.9375], "age" = 454, "bursts" = [["final-1", 29, 200.5, 134.125, 6], ["middle-5", 196, 200.25, 134.6875, 0], ["middle-6", 184, 216.25, 148.4375, 5], ["last-1", 181, 208.5, 130.625, 3], ["last-2", 178, 212.5, 142.625, 3], ["last-3", 174, 192.5, 124.625, 2], ["last-4", 166, 188.5, 146.625, 0]], "sky" = [193.5, 142.1875, 0] }
+after = { "stage" = "Departing", "pose" = [226, 288, -80.25, -87.9375], "age" = 455, "bursts" = [["middle-5", 197, 200.5, 134.625, 0], ["middle-6", 185, 216.5, 148.375, 6], ["last-1", 182, 208.75, 130.5625, 3], ["last-2", 179, 212.75, 142.5625, 3], ["last-3", 175, 192.75, 124.5625, 2], ["last-4", 167, 188.75, 146.5625, 0]], "sky" = [193.75, 142.21875, 1] }
+output = {  }
+
+[[vector]]
+id = "R-zero-zoom"
+source = "recorded"
+entries = ["ShipDeparts"]
+before = { "stage" = "Departing", "pose" = [209, 16, -46.25, -87.9375] }
+after = { "stage" = "Departing", "pose" = [208, 0, -44.25, -87.9375] }
+output = {  }
+
+[[vector]]
+id = "R-hold-start"
+source = "recorded"
+entries = ["ShipDeparts"]
+before = { "stage" = "Departing", "pose" = [208, 0, -44.25, -87.9375], "hold" = 0 }
+after = { "stage" = "Holding", "pose" = [207, 0, -42.25, -87.9375], "hold" = 192 }
+output = {  }
+
+[[vector]]
+id = "R-hold-ticks"
+source = "recorded"
+entries = ["SpaceHolds"]
+before = { "stage" = "Holding", "hold" = 192 }
+after = { "stage" = "Holding", "hold" = 191 }
+output = {  }
+
+[[vector]]
+id = "R-fade-start"
+source = "recorded"
+entries = ["SpaceHolds"]
+before = { "stage" = "Holding", "hold" = 1, "level" = 15, "fade" = 0 }
+after = { "stage" = "Dimming", "hold" = 0, "level" = 15, "fade" = 1 }
+output = {  }
+
+[[vector]]
+id = "R-fade-wait"
+source = "recorded"
+entries = ["SceneBlacksOut"]
+before = { "stage" = "Dimming", "level" = 15, "fade" = 1 }
+after = { "stage" = "Dimming", "level" = 15, "fade" = 0 }
+output = {  }
+
+[[vector]]
+id = "R-fade-step"
+source = "recorded"
+entries = ["SceneBlacksOut"]
+before = { "stage" = "Dimming", "level" = 15, "fade" = 0 }
+after = { "stage" = "Dimming", "level" = 14, "fade" = 1 }
+output = {  }
+
+[[vector]]
+id = "R-handoff"
+source = "recorded"
+entries = ["SceneBlacksOut"]
+before = { "stage" = "Dimming", "level" = 1, "fade" = 0, "pose" = [207, 0, -42.25, -87.9375], "view" = "Gunship" }
+after = { "stage" = "Complete", "level" = 0, "fade" = 0, "pose" = [207, 0, -42.25, -87.9375], "view" = "Gunship" }
+output = { "begin_zebes" = true }
+
+[[vector]]
+id = "C-setup-waits"
+source = "constructed"
+entries = ["StationPictureArrives"]
+before = { "stage" = "Pending" }
+after = { "stage" = "Pending", "level" = 0 }
+output = {  }
+
+[[vector]]
+id = "C-setup"
+source = "constructed"
+entries = ["StationPictureArrives"]
+before = { "stage" = "Pending" }
+after = { "stage" = "WaitingForMusic", "level" = 0, "fade" = 1, "pose" = [0, 256, -44, -112], "age" = 2, "view" = "Station", "sky" = [80.5, 128.0625, 0] }
+output = { "setup" = "TestStation", "palette" = "VioletPulse", "music" = [["Stop", 8], ["Ceres", 8], ["ZebesFlight", 14]] }
+ready = true
+scene = { "art" = "TestStation", "palette" = "VioletPulse" }
+
+[[vector]]
+id = "C-sky-wrap"
+source = "constructed"
+entries = ["SpaceDrifts"]
+before = { "stage" = "WaitingForMusic", "age" = 10, "sky" = [511.875, 511.96875, 0] }
+after = { "age" = 11, "sky" = [0.125, 0, 1] }
+output = {  }
+music_busy = true
+
+[[vector]]
+id = "C-loop"
+source = "constructed"
+entries = ["StationBursts"]
+before = { "stage" = "Departing", "age" = 500, "sky" = [0, 0, 0], "bursts" = [["middle-1", 33, 10, 20, 0]] }
+after = { "bursts" = [["middle-1", 34, 10.25, 19.9375, 1]] }
+output = {  }
+
+[[vector]]
+id = "C-typed-flash"
+source = "constructed"
+entries = ["StationBreaks", "StationBursts"]
+before = { "stage" = "Station", "age" = 444, "sky" = [1, 2, 0], "level" = 15, "pose" = [0, 640, 4, 8], "view" = "Station" }
+after = { "stage" = "Departing", "age" = 445, "view" = "Gunship", "pose" = [0, 768, 3.75, 8.0625], "bursts" = [["final-1", 0, 49.25, 39.9375, 1]] }
+output = { "flash" = { "style" = "ExampleRing", "center" = [49, 40] }, "map_writes" = [["ScoutNose", "Upper"], ["BlankRows", "Lower"]] }
+scene = { "flash_style" = "ExampleRing", "ship_front" = "ScoutNose", "empty_map" = "BlankRows" }
+
+[[vector]]
+id = "C-short-hold"
+source = "constructed"
+entries = ["ShipDeparts", "SpaceHolds"]
+before = { "stage" = "Departing", "level" = 15, "pose" = [0, 0, 0, 0] }
+after = { "stage" = "Holding", "hold" = 2, "pose" = [255, 0, 2, 0] }
+output = {  }
+rules = { "hold_frames" = 2 }
+
+[[vector]]
+id = "C-short-tick"
+source = "constructed"
+entries = ["SpaceHolds"]
+before = { "stage" = "Holding", "hold" = 2, "level" = 15 }
+after = { "stage" = "Holding", "hold" = 1, "level" = 15 }
+output = {  }
+
+[[vector]]
+id = "C-short-end"
+source = "constructed"
+entries = ["SpaceHolds"]
+before = { "stage" = "Holding", "hold" = 1, "level" = 15 }
+after = { "stage" = "Dimming", "hold" = 0, "level" = 15, "fade" = 1 }
+output = {  }
+
+[[vector]]
+id = "C-complete"
+source = "constructed"
+entries = ["SceneBlacksOut"]
+before = { "stage" = "Complete" }
+after = { "stage" = "Complete", "level" = 0 }
+output = {  }
+
+[[vector]]
+id = "C-lag"
+source = "constructed"
+entries = ["SceneBlacksOut"]
+before = { "stage" = "Dimming", "fade" = 0, "level" = 1 }
+after = { "stage" = "Dimming", "fade" = 0, "level" = 1 }
+output = {  }
+advance = false

@@ -289,8 +289,10 @@ fn origin_checkpoint(
     let Start::CacheCut { frame } = &case.start else {
         return Ok(None);
     };
-    if matches!(inputs, InputReader::MovementTouchdown(_))
-        || case.id.0 == super::jump_history::LEAP_CASE
+    if matches!(
+        inputs,
+        InputReader::MovementTouchdown(_) | InputReader::Explosion(_)
+    ) || case.id.0 == super::jump_history::LEAP_CASE
     {
         capture_checkpoint(production, actual, *frame).map(Some)
     } else {

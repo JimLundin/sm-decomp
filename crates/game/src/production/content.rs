@@ -74,6 +74,8 @@ impl MovementContent {
 /// Content selected by the finite production recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionContent {
+    /// Checked flight scene and its page, palette and sprite content.
+    Explosion(Box<data::assets::explosion::Station>),
     /// Ceres blackout with its room picture and cartridge.
     Blackout(Box<super::blackout::Content>),
     /// The imported intro scene.
@@ -124,6 +126,8 @@ pub enum ProductionContent {
 /// Rules selected by the same recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionRules {
+    /// The flight scene’s tuning parameters.
+    Explosion(screens_explosion::Rules),
     /// Ceres blackout with its room picture and cartridge.
     Blackout,
     /// Rules of the intro scene.

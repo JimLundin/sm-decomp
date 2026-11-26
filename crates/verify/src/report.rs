@@ -521,6 +521,18 @@ const DOMAINS: &[Domain] = &[
             },
         ],
     },
+    Domain {
+        name: "screens-explosion",
+        bridge: None,
+        adapters: &["production/played/explosion.rs"],
+        providers: &["explosion"],
+        areas: &[
+            ("opening", &["opening.rs", "sky.rs"]),
+            ("station", &["bursts.rs", "station.rs"]),
+            ("departure", &["departure.rs"]),
+        ],
+        apart: &[],
+    },
     // The frame's order, its report, the content and the catalogue are the domain's shared code.
     Domain {
         name: "screens-intro",

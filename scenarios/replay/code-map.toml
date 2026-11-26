@@ -1029,3 +1029,75 @@ targets = [
   { role = "adapter", path = "crates/game/src/exact/ridley_flyby.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/ridley/flyby.rs" },
 ]
+
+[[rule]]
+id = "screens-explosion/StationPictureArrives"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/opening.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/StationAwaitsMusic"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/opening.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/StationBrightens"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/opening.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/SpaceDrifts"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/sky.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/StationBursts"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/bursts.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/StationBreaks"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/station.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/ShipDeparts"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/departure.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/SpaceHolds"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/departure.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]
+
+[[rule]]
+id = "screens-explosion/SceneBlacksOut"
+targets = [
+  { role = "model", path = "crates/clean/screens_explosion/src/departure.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/explosion.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/explosion.rs" },
+]

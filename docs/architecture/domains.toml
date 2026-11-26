@@ -64,6 +64,10 @@ name = "boss-ceres-ridley"
 rounds = 9
 
 [[model]]
+name = "screens-explosion"
+rounds = 1
+
+[[model]]
 name = "screens-blackout"
 rounds = 1
 
@@ -408,7 +412,7 @@ wave = 3
 rounds = 5
 # The elevator receives the shaft reach and carries the timer, Health, room clocks and cartridge.
 reads = ["B8", "G1", "G2", "H1", "H2", "P2"]
-model = ["screens-arrival", "screens-flight", "screens-blackout"]
+model = ["screens-arrival", "screens-flight", "screens-blackout", "screens-explosion"]
 status = "in-progress"
 
 [[domain]]
