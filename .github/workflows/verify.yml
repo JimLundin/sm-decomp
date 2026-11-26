@@ -215,12 +215,18 @@ jobs:
               chain-any-0003-DFD7 "$start" 344 --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc \
               --lock scenarios/locks/lsnes.toml
           done
+      - name: Compare selectable and literal replay faults
+        if: steps.verdict.outputs.reused == '' && inputs.target == 'fault-pilot'
+        env:
+          SM_CACHE: ${{ runner.temp }}/cache
+          SM_ROM: ${{ github.workspace }}/rom/sm.smc
+        run: python3 tools/pilot_mutants.py
       - name: Check the required witnesses and indexed replay against the reviewed baseline
         if: steps.verdict.outputs.reused == '' && inputs.target == ''
         env: *witness_env
         run: bash tools/ci/replay_parallel.sh "$RUNNER_TEMP/replay-receipt.toml"
       - name: Check one indexed replay case against the reviewed baseline
-        if: steps.verdict.outputs.reused == '' && inputs.target != '' && inputs.target != 'played' && !contains(inputs.target, '::')
+        if: steps.verdict.outputs.reused == '' && inputs.target != '' && inputs.target != 'played' && inputs.target != 'fault-pilot' && !contains(inputs.target, '::')
         env:
           CARGO_INCREMENTAL: "1"
           REPLAY_CASE: ${{ inputs.target }}

@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Indexed case ID, exact verify library test name, played for the M0 room alone, or replay::played::tests::reviewed_runs_hold to hold every reviewed played run (empty runs full CI)
+        description: Indexed case ID, exact verify library test name, played for the M0 room alone, fault-pilot for the two selectable faults, or replay::played::tests::reviewed_runs_hold to hold every reviewed played run (empty runs full CI)
         type: string
         required: false
 

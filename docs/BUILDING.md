@@ -55,6 +55,45 @@ paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the na
 contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
 On a Windows host that blocks new executables, the hosted command above runs the same test.
 
+## Compare selectable replay faults with literal edits
+
+Set `SM_ROM` and `SM_CACHE` to the ROM and the lock-row cache, then run
+`python3 tools/pilot_mutants.py`. To use the pinned CI fixtures, run
+`gh workflow run ci.yml --ref BRANCH -f target=fault-pilot`.
+The command takes two private copies of the same Git commit. It reads the field replacements and expected stops from
+`tools/mutants.toml`. In the first copy it puts both replacements into one
+replay binary. Each process selects one fault by its ordinal or runs clean.
+In the second copy the literal runner compiles each edit. The command compares
+the complete clean, faulty and restored receipts between the two methods.
+
+| Fault | First differing cut | Field |
+| --- | ---: | --- |
+| Suppress Samus's reaction to the tail hit | 609 | `movement.pose` |
+| Reverse her protection flicker | 614 | `samus-oam.piece-count` |
+
+The pilot uses Cargo Gamma's runtime for selection. Its CLI discovers mutations
+with its own operators. We found no documented way to import the reviewed field
+replacements into the CLI. The test build pins `cargo-gamma-rt` to 0.8.0 because
+upstream treats it as part of Cargo Gamma. The pilot checks the ordinary
+dependency list and compares the resolved packages and features before building
+with the runtime. [Gamma runtime](https://github.com/microsoft/ox-tools/blob/cargo-gamma-v0.8.0/crates/cargo-gamma-rt/src/lib.rs)
+and [mutation operators](https://github.com/microsoft/ox-tools/tree/cargo-gamma-v0.8.0/crates/cargo-gamma-engine/src/ops/registry).
+
+`cargo-mutants` 27.1.0 runs Cargo for each source edit. `cargo-schemata` 0.6.0
+can compile many mutations together, but its published operators do not express
+these two field substitutions and its runner credits a failing test process.
+The played replay exits successfully when it reports a difference. `failspot`
+0.2.0 supports explicit alternatives through a public API. It would also need an
+enum for the sites and code in the replay process to enable one.
+[cargo-mutants execution](https://github.com/sourcefrog/cargo-mutants/blob/v27.1.0/src/lab.rs#L242-L292),
+[cargo-schemata commands and operators](https://github.com/t09tanaka/cargo-schemata/blob/v0.6.0/README.md)
+and [failspot API](https://docs.rs/failspot/0.2.0/failspot/).
+
+Keep the literal CI workers for the full manifest. The pilot can generate a
+switch for a struct field. For example, `movement-double-update` adds statements
+and still requires a literal build. Move a fault only after its own clean,
+faulty and restored receipts agree and the worker plan accounts for it once.
+
 ## Setting up on Linux
 
 The repository's tools run on Linux as they do on CI's ubuntu-24.04 runner. The Windows

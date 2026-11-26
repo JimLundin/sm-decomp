@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 import tomllib
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -102,7 +102,8 @@ def build_executable(root: Path) -> Path:
         raise ValueError("reported tools executable is missing")
     return executable
 
-def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int, str]:
+def run_case(root: Path, case: str, executable: Path | None = None, *,
+             env: Mapping[str, str] | None = None) -> tuple[int, str]:
     if executable is None:
         try:
             executable = build_executable(root)
@@ -114,11 +115,12 @@ def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int
     else:
         command = [str(executable), "replay", "run", "scenarios/replay/index.toml", "--case", case]
         sources = [("--cache", "SM_CACHE"), ("--rom", "SM_ROM"), ("--native", "SM_AUDIO_NATIVE")]
+    environment = os.environ if env is None else env
     for flag, variable in sources:
-        if value := os.environ.get(variable):
+        if value := environment.get(variable):
             command.extend([flag, value])
     started = time.perf_counter()
-    result = subprocess.run(command, cwd=root, capture_output=True, text=True,
+    result = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True,
                             encoding="utf-8", errors="replace")
     print(f"TIMING replay case={case} seconds={time.perf_counter() - started:.6f}", flush=True)
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
@@ -173,8 +175,9 @@ def validate_anchors(root: Path, faults: Sequence[Fault]) -> None:
     for fault in faults:
         require_unique_anchor(fault, source_path(root, fault.file).read_bytes())
 
-def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
-                vanilla: Path | None = None, inputs: FrozenInputs | None = None) -> bool:
+def check_fault(root: Path, fault: Fault, baseline: Mapping[str, Any],
+                vanilla: Path | None = None, inputs: FrozenInputs | None = None,
+                expected_fault: Mapping[str, Any] | None = None) -> bool:
     if inputs is not None:
         inputs.check(root)
     path = source_path(root, fault.file)
@@ -191,8 +194,12 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
         stops = ("difference", "data-failure") if played else ("difference",)
         killed = code == (0 if played else 1) and observed is not None and observed.get("outcome") in [
             {"status": status, "cut": fault.cut, "field": fault.field} for status in stops]
+        if expected_fault is not None:
+            killed = killed and observed == expected_fault
         # A survivor names where the run really stopped: status, cut and field names only.
-        seen = "" if killed else f" observed exit={code} {observed and observed.get('outcome')}"
+        seen = "" if killed else f" observed exit={code}"
+        if not killed and expected_fault is None:
+            seen += f" {observed and observed.get('outcome')}"
         print(f"{'KILLED' if killed else 'INVALID OR SURVIVED'} {fault.name}: {fault.case} cut{fault.cut} {fault.field}{seen}", flush=True)
     finally:
         started = time.perf_counter()
@@ -283,6 +290,19 @@ def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]
     return tuple(tuple(sorted(worker, key=order.__getitem__)) for worker in workers)
 
 
+def read_manifest(manifest: Path) -> tuple[bytes, tuple[Fault, ...], list[str]]:
+    raw_manifest = manifest.read_bytes()
+    data = tomllib.loads(raw_manifest.decode())
+    roster = tuple(Fault(**row) for row in data["fault"])
+    if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
+        raise ValueError("fault names must be nonempty and unique")
+    rules = data.get("rules", [])
+    if (not isinstance(rules, list) or any(not isinstance(rule, str) or not rule for rule in rules)
+        or len(rules) != len(set(rules))
+        or any(fault.rule is not None and fault.rule not in rules for fault in roster)):
+        raise ValueError("rule coverage needs unique rule IDs and declared fault assignments")
+    return raw_manifest, roster, rules
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     commands = parser.add_subparsers(dest="command")
@@ -295,16 +315,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
     manifest = root / "tools/mutants.toml"
-    raw_manifest = manifest.read_bytes()
-    data = tomllib.loads(raw_manifest.decode())
-    roster = tuple(Fault(**row) for row in data["fault"])
-    if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
-        raise ValueError("fault names must be nonempty and unique")
-    rules = data.get("rules", [])
-    if (not isinstance(rules, list) or any(not isinstance(rule, str) or not rule for rule in rules)
-        or len(rules) != len(set(rules))
-        or any(fault.rule is not None and fault.rule not in rules for fault in roster)):
-        raise ValueError("rule coverage needs unique rule IDs and declared fault assignments")
+    raw_manifest, roster, rules = read_manifest(manifest)
     validate_coverage(root, roster)
     validate_anchors(root, roster)
     if args.command == "rule-coverage":

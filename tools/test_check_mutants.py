@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 import check_mutants
+import pilot_mutants
 from check_mutants import (PLAYED_RUNNER, Fault, FrozenInputs, build_executable, check_fault, receipt,
                            run_case, source_path, validate_coverage)
 
@@ -26,6 +27,51 @@ def pass_receipt() -> dict[str, Any]:
     return observed
 
 class MutantCheck(unittest.TestCase):
+    def test_pilot_requires_the_literal_fault_receipt_even_at_the_expected_cut(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "crates/game/src/production.rs"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"measured")
+            fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero",
+                          "audio/example", 3, "audio.reply0")
+            literal = outcome("difference")
+            selected = receipt(literal.replace("original", "different"), fault.case)
+            assert selected is not None
+            with patch("check_mutants.run_case", side_effect=[(1, literal), (0, outcome("pass"))]):
+                self.assertFalse(check_fault(root, fault, pass_receipt(), expected_fault=selected))
+            self.assertEqual(path.read_bytes(), b"measured")
+
+    def test_pilot_refuses_a_selector_in_the_ordinary_build(self) -> None:
+        with patch("pilot_mutants.build_dependencies", return_value=("cargo-gamma-rt v0.7.0 []",)), \
+             patch("pilot_mutants.instrument") as instrument, self.assertRaises(ValueError):
+            pilot_mutants.selectable(Path("/pilot"), ())
+        instrument.assert_not_called()
+
+    def test_pilot_restores_the_complete_receipt_on_the_same_executable(self) -> None:
+        fault = Fault("zero", "audio", "crates/game/src/production.rs",
+                      "sample,", "sample: None,", "audio/example", 3, "audio.reply0")
+        clean = (0, outcome("pass"))
+        killed = (1, outcome("difference"))
+        wrong_digest = (0, clean[1].replace("original", "changed"))
+        root = Path("/pilot")
+        executable = root / "tools"
+        for restored in (clean, wrong_digest):
+            with self.subTest(restored=restored), patch("pilot_mutants.instrument"), \
+                 patch("pilot_mutants.build_dependencies", side_effect=[
+                     (), (f"cargo-gamma-rt v{pilot_mutants.RUNTIME} []",)]), \
+                 patch("pilot_mutants.build_executable", return_value=executable) as build, \
+                 patch("pilot_mutants.run_case", side_effect=[clean, killed, restored]) as replay:
+                if restored == clean:
+                    self.assertEqual(len(pilot_mutants.selectable(root, [fault])), 1)
+                else:
+                    with self.assertRaises(ValueError):
+                        pilot_mutants.selectable(root, [fault])
+                build.assert_called_once_with(root)
+                self.assertEqual([call.args[2] for call in replay.call_args_list], [executable] * 3)
+                self.assertEqual(replay.call_args_list[1].kwargs["env"]["GAMMA_ACTIVE"], "1")
+                self.assertNotIn("env", replay.call_args_list[2].kwargs)
+
     def test_rule_credit_requires_its_assigned_fault_and_complete_receipt(self) -> None:
         fault = Fault("contact", "played", PLAYED_RUNNER, "old", "new",
                       "played steam 0 200", 137, "steam.hit", "PuffTouches")
