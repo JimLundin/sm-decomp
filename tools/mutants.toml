@@ -2019,3 +2019,29 @@ after = "let _kept = self.placement;"
 case = "room-loading/escape-shaft-entry"
 cut = 234
 field = "shaft-entry.placement"
+
+
+[[fault]]
+name = "played-return-retains-ridley-slot"
+responsibility = "played"
+file = "crates/game/src/production/played/station.rs"
+before = """        if first_live > 0 {
+            self.ridley = None;
+            self.warning = None;
+        }"""
+after = """        if first_live > 0 {
+            self.warning = None;
+        }"""
+case = "played chain-any-0006-E0B5 1270 2855"
+cut = 1690
+field = "ridley.placed"
+
+[[fault]]
+name = "played-boot-loses-tiled-shaft-hud-mode"
+responsibility = "played"
+file = "crates/game/src/production/played/start.rs"
+before = "        started.room.entry.view.hud = tiled;"
+after = "        started.room.entry.view.hud = crate::state::video::BgMode::default();"
+case = "played any-power-on 0 13017"
+cut = 13015
+field = "shaft-entry.view"

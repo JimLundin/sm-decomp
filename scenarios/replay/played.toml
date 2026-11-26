@@ -25,15 +25,15 @@ movie = "any"
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
 # The fight returns to page two. The recorded demo drives discovery before the delivery and examination.
 # The live intro hands the dark screen to the flight. The selected file carries into arrival.
-# Room play continues through Ridley's retreat and the flyby up to the shove request.
+# The warning and return carry through to the shaft's destination actor placement.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 11851
-held = 11850
-stop = { failed = "Ceres Ridley flight tail observation" }
+end = 13018
+held = 13017
+stop = { failed = "Load(TurningShaftVent)" }
 seed_frame = 0
-frames = [1, 11850]
+frames = [1, 13017]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -350,4 +350,16 @@ held = 1885
 stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
 seed_frame = 13311
 frames = [13312, 15196]
+power_on = false
+
+# The admitted warning starts while Ridley's room still owns the picture. Its
+# return carries through the physical actor clear and five more rooms.
+[[run]]
+row = "chain-any-0006-E0B5"
+start = 1270
+end = 3000
+held = 1585
+stop = { failed = "Load(TurningShaftVent)" }
+seed_frame = 11432
+frames = [11433, 13017]
 power_on = false
