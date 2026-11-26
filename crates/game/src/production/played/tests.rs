@@ -32,6 +32,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
         shaft_sound: super::shaft_sound::State::default(),
         play_time: crate::production::played::play_time::ZERO,
         clock_picture: super::clock_picture::ClockPicture::default(),
+        room_tiles: super::room_tiles::ShaftBackground::Pending,
         samus: samus::State {
             last_draw_jump: Model(samus_movement::JumpButton::Up),
             travelled: Model(samus_movement::TravelledDistances::default()),
@@ -173,7 +174,9 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         clock_figures: None,
         shaft_track: None,
         shaft_overlay_art: None,
-        arrival_bg3: None,
+        shaft_effects: Vec::new(),
+        shaft_raster: None,
+        arrival_graphics: None,
         movement: MovementContent::new(
             poses
                 .clone()
@@ -299,6 +302,8 @@ pub(super) fn play_with(
 fn passing() -> Passing {
     Passing {
         actor_fetch: crate::production::played::passage::ActorFetch::Place,
+        shaft_background: super::room_tiles::ShaftBackground::Pending,
+        shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
         work_begun: true,
         work_done: true,
         publishes: true,

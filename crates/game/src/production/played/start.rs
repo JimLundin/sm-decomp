@@ -25,6 +25,7 @@ impl State {
         arrival: arrival::State,
         frame: frame::State,
         quake: world_quake::State,
+        staging: Option<super::room_video::EnemyStaging>,
     ) -> Result<Self, Fault> {
         let samus = fresh_at(start.her)?;
         // The gameplay display uses small tiles and keeps the HUD above the room.
@@ -33,11 +34,14 @@ impl State {
         started.room.entry.view.room = tiled;
         let her = samus.movement.0.position;
         let (view_x, view_y) = start.view;
+        let mut room_video = super::room_video::RoomVideo::default();
+        room_video.offer_enemy_tiles(staging, started.enemy_tiles);
         Ok(Self {
-            room_video: super::room_video::RoomVideo::default(),
+            room_video,
             play_time: crate::production::played::play_time::ZERO,
             clock_picture: super::clock_picture::ClockPicture::default(),
             shaft_sound: super::shaft_sound::State::default(),
+            room_tiles: super::room_tiles::ShaftBackground::Pending,
             samus,
             camera: Model(Camera::restore(
                 ViewPosition(Pair {

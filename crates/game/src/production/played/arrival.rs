@@ -35,7 +35,16 @@ pub enum Readiness {
     /// Not on this frame.
     NotYet,
     /// The platform reaches the sprite DMA after the standard background upload.
-    StandardBackground,
+    StandardBackground {
+        /// Accepted object bytes before the selected source read.
+        accepted: u16,
+    },
+    /// The platform has finished the standard object upload and subsequent tilemap writes.
+    StandardObjectsFinished,
+    /// Room work has initialized the effect channels and staged the enemy tiles.
+    RoomEffects,
+    /// A requested NMI publishes the next prepared enemy tile chunk.
+    EnemyGraphics,
     /// The platform ends the first wait of the prepared room's final music service.
     FinalMusicWait,
     /// It is ready this frame.
@@ -186,16 +195,14 @@ impl super::State {
         if passing.start == Readiness::Ready && self.arrival.setup != Setup::Published {
             return Err(Fault::HudStartup);
         }
-        if passing.start == Readiness::StandardBackground {
-            let background = content.arrival_bg3.as_deref().ok_or(Fault::HudStartup)?;
-            self.room_video
-                .standard_background(background)
-                .ok_or(Fault::HudStartup)?;
-        }
+        self.prepare_graphics(passing.start, passing.work_done, content)?;
         if let Some(opening) = &opening {
             self.room_video
                 .opening_hud(opening)
                 .ok_or(Fault::HudStartup)?;
+        }
+        if passing.publishes {
+            self.room_video.video.upload_oam();
         }
         self.arrival.setup = setup;
         let upper_row = opening.map(|opening| {
@@ -218,6 +225,7 @@ impl super::State {
             self.station.pad_and_cover =
                 PadAndCover::arrival(arrived.place, &rules.ceres).pad_and_cover;
             self.palette.screen = arrived.colours.0;
+            self.prepare_room_palette(passing.publishes);
             self.hud.0.mini_map = interface_hud::MiniMapPower::On;
         }
         // The preparation's own waits for the frame's end are the frames it finishes.
@@ -251,6 +259,52 @@ impl super::State {
             ridley_placed: None,
             quake: None,
         })
+    }
+
+    fn prepare_graphics(
+        &mut self,
+        readiness: Readiness,
+        work_done: bool,
+        content: &Content,
+    ) -> Result<(), Fault> {
+        match readiness {
+            Readiness::StandardBackground { accepted } => {
+                let graphics = content
+                    .arrival_graphics
+                    .as_ref()
+                    .ok_or(Fault::ArrivalGraphics)?;
+                self.room_video
+                    .standard_graphics(graphics, accepted)
+                    .ok_or(Fault::ArrivalGraphics)?;
+                self.room_video.video.memory.oam.clear_first_position();
+                self.room_video.video.batch.clear_high_oam();
+                self.room_video.video.batch.restart_sprites();
+            }
+            Readiness::StandardObjectsFinished => {
+                let graphics = content
+                    .arrival_graphics
+                    .as_ref()
+                    .ok_or(Fault::ArrivalGraphics)?;
+                self.room_video
+                    .finish_standard_objects(graphics, None)
+                    .ok_or(Fault::ArrivalGraphics)?;
+            }
+            Readiness::RoomEffects => {
+                self.room_video
+                    .prepare_enemy_tiles()
+                    .ok_or(Fault::ArrivalGraphics)?;
+                self.room_video.initialize_effects();
+            }
+            Readiness::EnemyGraphics if work_done => {
+                self.room_video
+                    .queue_enemy_tiles()
+                    .ok_or(Fault::ArrivalGraphics)?;
+                self.room_video.publish();
+            }
+            Readiness::EnemyGraphics => return Err(Fault::ArrivalGraphics),
+            Readiness::NotYet | Readiness::FinalMusicWait | Readiness::Ready => {}
+        }
+        Ok(())
     }
 }
 
@@ -309,6 +363,8 @@ mod tests {
     ) {
         let passing = Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
+            shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
+            shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun,
             work_done,
             publishes: work_done,
@@ -358,6 +414,8 @@ mod tests {
         let rules = rules();
         let mut passing = Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
+            shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
+            shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun: true,
             work_done: true,
             publishes: true,
@@ -438,6 +496,8 @@ mod tests {
         arriving.arrival.setup = super::Setup::Published;
         let passing = Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
+            shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
+            shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun: true,
             work_done: true,
             publishes: true,

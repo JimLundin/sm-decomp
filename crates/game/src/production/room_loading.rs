@@ -571,6 +571,8 @@ pub struct Started {
     pub actors: CeresActors,
     /// The colours a fade heads for.
     pub goal: [types::Colour; COLOURS],
+    /// The selected version’s writes into the cold-start enemy tile sheet.
+    pub enemy_tiles: Vec<actors::EnemyTilePatch>,
     /// Where the room sits on her map, and its area.
     pub map: (interface_hud::Room, Area),
 }
@@ -626,6 +628,7 @@ pub fn start(
         )?,
         actors: actors_of(version, run, false, random)?,
         goal: palette.goal,
+        enemy_tiles: version.starting_enemy_tiles.clone(),
         map: (map_room(room), room.place.area),
     })
 }
@@ -791,6 +794,23 @@ fn set(
     Ok(())
 }
 
+/// The Mode 7 sheet loaded when the return passage fetches the escape shaft's tiles.
+pub(super) fn shaft_sheet<'a>(
+    rooms: &'a Rooms,
+    through: DoorwayId,
+    progress: &Progress,
+) -> Result<Option<&'a data::assets::art::TileSheet>, LoadFault> {
+    let version = version(rooms, through, progress)?;
+    if !matches!(version.setup, world::RoomSetup::CeresHazeDoorShut { .. }) {
+        return Ok(None);
+    }
+    rooms
+        .tilesets
+        .get(version.tileset)
+        .map(|tileset| Some(&tileset.sheet))
+        .ok_or(LoadFault::Tileset)
+}
+
 /// The version of the room `through` leads to that loads: the first whose condition holds for
 /// `progress` as she comes in through it, or the default.
 fn version<'a>(
@@ -914,6 +934,7 @@ mod tests {
                 species: CERES_DOOR,
                 row: SpriteRow::new(2).unwrap(),
             }],
+            starting_enemy_tiles: Vec::new(),
             ceres_doors: vec![placed(CeresDoorKind::Door(Side::Left))],
             ceres_ridley: false,
             ceres_vents: Vec::new(),

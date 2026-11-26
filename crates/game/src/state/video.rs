@@ -678,9 +678,52 @@ impl DmaChannel {
         table: u16::MAX,
         line_counter: u8::MAX,
     };
+
+    /// Reload an active indirect table for the start of the visible frame.
+    ///
+    /// Returns false if its program and the physical channel disagree.
+    #[must_use]
+    pub const fn restart_indirect_hdma(
+        &mut self,
+        header: data::assets::countdown::IndirectHdmaStart,
+    ) -> bool {
+        if !self.control.indirect
+            || self.source != header.source.offset
+            || self.source_bank != header.source.bank
+            || header.lines == 0
+        {
+            return false;
+        }
+        self.count = header.indirect_address;
+        self.table = self.source.wrapping_add(3);
+        self.line_counter = header.lines;
+        true
+    }
 }
 
 impl Video {
+    /// Publish the shaft's HDMA registers after all three visible tables terminated.
+    pub fn finish_shaft_hdma(
+        &mut self,
+        programs: &[data::assets::countdown::IndirectHdmaProgram; 3],
+    ) {
+        let [haze, mode, scroll] = *programs;
+        for (channel, raster) in [(2, haze), (3, mode), (7, scroll)] {
+            if let Some(registers) = self.dma.get_mut(channel) {
+                *registers = DmaChannel {
+                    control: DmaControl::from_byte(raster.control),
+                    destination: BBusRegister::from_byte(raster.destination),
+                    source: raster.opening.source.offset,
+                    source_bank: raster.opening.source.bank,
+                    indirect_bank: raster.data_bank,
+                    count: raster.terminal_address,
+                    table: raster.terminal_cursor,
+                    line_counter: 0,
+                };
+            }
+        }
+    }
+
     /// Initialize the room's effect channels before any new HDMA objects program them.
     ///
     /// Room setup points channels 2 through 7 at BG4 horizontal scroll and clears

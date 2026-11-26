@@ -214,3 +214,167 @@ mod tests {
         assert_eq!(read.read(0x0100, false), read);
     }
 }
+
+/// T1 identifies the frame that begins the fade on the return to the shaft. The haze,
+/// mode split and scroll have finished their first full picture by this requested NMI.
+pub(super) fn shaft_raster(
+    previous: &FrameRecord,
+    current: &FrameRecord,
+) -> Result<game::production::played::passage::ShaftRaster, Outcome> {
+    use game::production::played::passage::ShaftRaster;
+    const HANDLER: source::WramWord = source::WramWord {
+        name: "door transition handler",
+        offset: 0x099c,
+    };
+    const POSITION_AFTER_SCROLL: u16 = 0xe6a2;
+    const FADE_IN: u16 = 0xe737;
+    if finished(current)
+        && word(&previous.wram, HANDLER)? == POSITION_AFTER_SCROLL
+        && word(&current.wram, HANDLER)? == FADE_IN
+    {
+        Ok(ShaftRaster::Finished)
+    } else {
+        Ok(ShaftRaster::Pending)
+    }
+}
+
+/// T1 supplies the completed-work boundary during the interrupted shaft fetch.
+/// The effects transfer's destination distinguishes its wait from other direct uploads.
+/// The slide wait follows the completed library background transfer.
+pub(super) fn shaft_background(
+    record: &FrameRecord,
+    doors: Doors,
+) -> game::production::played::room_tiles::ShaftBackground {
+    use game::production::played::room_tiles::ShaftBackground;
+    if !fetch_under_way(doors) {
+        return ShaftBackground::Pending;
+    }
+    match record.nmi().map(|nmi| nmi.interrupted_pc) {
+        Some(0x0082_e06b | 0x0082_e06e)
+            if record.wram.get(0x05be..0x05c0) == Some(&[0x80, 0x58]) =>
+        {
+            ShaftBackground::EffectsPrepared
+        }
+        Some(0x0082_e591) => ShaftBackground::EffectsTransferred,
+        Some(0x0082_e526 | 0x0082_e529) => ShaftBackground::BackgroundTransferred,
+        _ => ShaftBackground::Pending,
+    }
+}
+
+/// Compare the completed shaft writes. The interrupted fill's staging bytes belong to T1.
+pub(super) fn compare_shaft_background(
+    state: game::production::played::room_tiles::ShaftBackground,
+    video: &game::state::video::Video,
+    record: &FrameRecord,
+    cut: u64,
+) -> Result<(), Outcome> {
+    let difference = |field| Outcome::Difference {
+        cut,
+        field: format!("shaft-entry.{field}"),
+    };
+    if (225..=226).contains(&cut) || (228..=278).contains(&cut) {
+        let shadow = record
+            .wram
+            .get(0x4000..0x4800)
+            .ok_or_else(|| data_failure(Some(cut), "shaft background shadow"))?;
+        let words = shadow
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .copied()
+            .map(u16::from_le_bytes);
+        if state
+            .shadow_word()
+            .is_none_or(|value| words.into_iter().any(|word| word != value))
+        {
+            return Err(difference("bg1-shadow"));
+        }
+    }
+    if (225..=278).contains(&cut) {
+        let expected = record
+            .vram
+            .get(0x5880..0x6000)
+            .ok_or_else(|| data_failure(Some(cut), "shaft effects VRAM"))?;
+        if video.memory.vram.get(0x5880..0x6000) != Some(expected) {
+            return Err(difference("effects"));
+        }
+    }
+    if (228..=278).contains(&cut) {
+        let expected = record
+            .vram
+            .get(0x4800..0x5000)
+            .ok_or_else(|| data_failure(Some(cut), "shaft background VRAM"))?;
+        if video.memory.vram.get(0x4800..0x5000) != Some(expected) {
+            return Err(difference("background"));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod shaft_background_tests {
+    use super::*;
+    use crate::lock::Lock;
+    use std::path::Path;
+
+    #[test]
+    fn shaft_background_carries_across_native_fetch_cuts() {
+        let Ok(cache) = std::env::var("SM_CACHE") else {
+            return;
+        };
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let lock =
+            Lock::parse(&std::fs::read_to_string(root.join("scenarios/locks/lsnes.toml")).unwrap())
+                .unwrap();
+        let mut rows =
+            super::super::rows::Rows::open(&lock, &root, Path::new(&cache), "chain-any-0010-DF8D")
+                .unwrap();
+        let fetching = Doors::Passing(Passage {
+            phase: Phase::Arriving {
+                placed: true,
+                fetching: Fetching::Done,
+            },
+            arrival: None,
+            slide_frames: 0,
+        });
+        let mut background = game::production::played::room_tiles::ShaftBackground::default();
+        let Ok(path) = std::env::var("SM_ROM") else {
+            return;
+        };
+        let rom = data::rom::Rom::new(std::fs::read(path).unwrap()).unwrap();
+        let effects = import::countdown::shaft_effects(rom.lorom()).unwrap();
+        let mut video = game::state::video::Video::default();
+        let origin = rows.record(221).unwrap();
+        video.memory.vram = origin.vram.to_vec();
+        for cut in 222..=278 {
+            let current = rows.record(cut).unwrap();
+            let before = background;
+            background.advance(shaft_background(&current, fetching));
+            if background != before {
+                background.install_background(&mut video, &effects).unwrap();
+            }
+            compare_shaft_background(background, &video, &current, cut).unwrap();
+            if (225..=227).contains(&cut) {
+                assert_eq!(
+                    video.memory.vram.get(0x4800..0x5000),
+                    current.vram.get(0x4800..0x5000),
+                    "BG2 holds at {cut}"
+                );
+            }
+            if cut == 227 {
+                let prepared = current.wram.get(0x4000..0x4800).unwrap();
+                let words: Vec<_> = prepared
+                    .as_chunks::<2>()
+                    .0
+                    .iter()
+                    .copied()
+                    .map(u16::from_le_bytes)
+                    .collect();
+                let split = words.iter().position(|&word| word == 0x0338).unwrap();
+                assert_eq!(split, 477);
+                assert!(words.iter().take(split).all(|&word| word == 0x184e));
+                assert!(words.iter().skip(split).all(|&word| word == 0x0338));
+            }
+        }
+    }
+}

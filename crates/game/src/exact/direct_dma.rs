@@ -116,8 +116,18 @@ impl Transfer {
     /// # Errors
     /// Draining requires the complete transfer and a valid VRAM buffer.
     pub fn drain(&mut self, memory: &mut [u16]) -> Result<(), Fault> {
-        if self.accepted != self.length
-            || self.selected.is_some()
+        if self.accepted != self.length {
+            return Err(Fault::Position);
+        }
+        self.retire_pending(memory)
+    }
+
+    /// Finish a destination write when the source bus has not selected another read yet.
+    ///
+    /// # Errors
+    /// The transfer needs a pending write, an idle source bus and complete VRAM storage.
+    pub fn retire_pending(&mut self, memory: &mut [u16]) -> Result<(), Fault> {
+        if self.selected.is_some()
             || self.pending.is_none()
             || memory.len() != crate::state::video::VRAM_WORDS
         {

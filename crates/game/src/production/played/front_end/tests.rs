@@ -194,6 +194,7 @@ fn the_options_hand_on_to_the_intro_which_begins_on_the_next_frame() {
             random: NewGame.settled_random(),
         },
         oam_dma: crate::state::video::DmaChannel::default(),
+        enemy_staging: crate::production::played::room_video::EnemyStaging::Cleared,
     });
     let intro_stage = |state: &State| match state {
         State::Screens(Screens {

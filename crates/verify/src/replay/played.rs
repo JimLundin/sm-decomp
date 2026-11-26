@@ -47,6 +47,8 @@ mod quake;
 mod return_fade;
 mod return_timing;
 mod ridley;
+#[cfg(test)]
+mod room_picture;
 mod room_video;
 pub(super) mod rows;
 pub(super) mod samus;
@@ -107,6 +109,7 @@ pub const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
     "lag: the return doorway darkening turn's completed-work interrupt site before frame publication",
     "lag: the interrupted escape-shaft population clear and its slot cursor",
+    "lag: completed shaft background work during the interrupted contents fetch",
     "lag: the contents' fetch done on its first frame, within the slide",
     "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
     "the random number through a passage, except the draws held from placing the room's vents to the end of that frame",
@@ -493,10 +496,15 @@ impl<'a> Run<'a> {
                 clock_figures: Some(timer),
                 shaft_track: shaft.as_ref().map(played::shaft::track),
                 shaft_overlay_art: shaft,
-                arrival_bg3: Some(
+                shaft_effects: import::countdown::shaft_effects(image.lorom())
+                    .map_err(|_| data_failure(None, "shaft effects tilemap"))?,
+                arrival_graphics: Some(
                     import::landing_site::import(image.lorom())
-                        .map_err(|_| data_failure(None, "standard room background art"))?
-                        .background,
+                        .map_err(|_| data_failure(None, "standard room graphics"))?,
+                ),
+                shaft_raster: Some(
+                    import::countdown::shaft_raster(image.lorom())
+                        .map_err(|_| data_failure(None, "shaft raster content"))?,
                 ),
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
@@ -562,6 +570,7 @@ impl<'a> Run<'a> {
             shaft_sound: shaft_sound::seed(&seed.wram)?,
             play_time: play_time::read(&seed.wram)?,
             clock_picture: played::clock_picture::ClockPicture::default(),
+            room_tiles: played::room_tiles::ShaftBackground::Pending,
             samus: samus::seed(&seed.wram, &content.appearance)?,
             camera: Model(camera::seed(&seed.wram, &camera::Content)?),
             progress,
@@ -814,6 +823,8 @@ impl<'a> Run<'a> {
             work_done: platform.ready || fetching_contents(doors),
             publishes: platform.publishes,
             actor_fetch: platform::actor_fetch(current),
+            shaft_background: platform::shaft_background(current, doors),
+            shaft_raster: platform::shaft_raster(previous, current)?,
             audio: played::passage::PassageAudio {
                 shaft_reply: shaft_sound::reply(place, finished(current)),
                 sounds_sent: sounds_sent(&previous.wram)?,
@@ -851,7 +862,6 @@ impl<'a> Run<'a> {
             platform.publishes,
             cut,
         )?;
-        let published = outputs.opening_hud.is_some();
         let frame = Frame {
             previous,
             current,
@@ -871,10 +881,30 @@ impl<'a> Run<'a> {
             expected.push(same(true));
             actual.push(same(fresh == self.state.progress));
         }
+        self.room_publication_fields(
+            &outputs,
+            &frame,
+            passing.start,
+            (&mut expected, &mut actual),
+        )?;
+        expected.push(play_time::observation(play_time::read(&current.wram)?));
+        actual.push(play_time::observation(self.state.play_time));
+        compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
+        Ok((expected, outputs))
+    }
+
+    fn room_publication_fields(
+        &self,
+        outputs: &played::Outputs,
+        frame: &Frame<'_>,
+        readiness: played::arrival::Readiness,
+        (expected, actual): (&mut Vec<Observation>, &mut Vec<Observation>),
+    ) -> Result<(), Outcome> {
+        let Frame { current, place, .. } = *frame;
         if place.0 == "any-ceres-arrival" {
             let publication = |value| Observation::quantity("hud.setup-publish", i64::from(value));
             expected.insert(0, publication(place.1 == HUD_SETUP_CUT));
-            actual.push(publication(published));
+            actual.push(publication(outputs.opening_hud.is_some()));
         }
         if opening_witness(place) {
             expected.extend(hud::video_observations(&current.vram)?);
@@ -885,22 +915,20 @@ impl<'a> Run<'a> {
         room_video::compare(
             &self.state.room_video,
             outputs.shaft_overlay_placement.is_some(),
-            &frame,
-            &mut expected,
-            &mut actual,
+            readiness,
+            frame,
+            expected,
+            actual,
         )?;
         if let Some(scene) = &self.blackout {
             super::blackout::observe::live_scene(
                 current,
                 scene.scene(),
                 &self.state.room_video.video,
-                (&mut expected, &mut actual),
+                (expected, actual),
             )?;
         }
-        expected.push(play_time::observation(play_time::read(&current.wram)?));
-        actual.push(play_time::observation(self.state.play_time));
-        compare(&expected, &actual).map_err(|fault| comparison_failure(cut, fault))?;
-        Ok((expected, outputs))
+        Ok(())
     }
 
     fn blackout_turn(
@@ -1090,6 +1118,13 @@ impl<'a> Run<'a> {
         if frame.place.0 == super::shaft_entry::ROW && (222..=278).contains(&frame.place.1) {
             expected.extend(super::shaft_entry::expected(current)?);
             actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
+            platform::compare_shaft_background(
+                self.state.room_tiles,
+                &self.state.room_video.video,
+                current,
+                frame.place.1,
+            )?;
+
             if !finished(current) {
                 let observed = colours::observations(&colours::palette(&current.wram)?);
                 let played = colours::observations(&self.state.palette);

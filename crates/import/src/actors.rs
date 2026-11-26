@@ -8,8 +8,8 @@
 
 use data::assets::actors::{
     Actors, BLUE_BRINSTAR_FACE_BLOCK, BeaconColours, CERES_DOOR, CERES_RIDLEY, CeresDoorColours,
-    CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, EyeShades, GEEGA, Getaway,
-    MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
+    CeresRidleyColours, DoorShades, ELEVATOR, EnemyGraphics, EnemyTilePatch, EyeShades, GEEGA,
+    Getaway, MORPH_BALL_EYE, ROACH, SIDEHOPPER, SUPER_SIDEHOPPER, Species, SpriteRow, ZOOMER,
 };
 use data::assets::art::{Colour, Palette, ROW_COLOURS};
 use data::assets::world::{
@@ -99,6 +99,8 @@ pub enum ActorsError {
     Unregistered(RomAddress),
     /// A graphics set gives a species a palette row past the eight.
     Row(RomAddress),
+    /// A species header could not be read.
+    Species(EnemyError),
     /// Ridley's eye has no steps, its steps have no end byte before its sets, or a step names a
     /// colour set past them.
     EyeSteps,
@@ -314,6 +316,46 @@ pub fn graphics_set(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<EnemyGraphics>
             species: id,
             row: SpriteRow::new(row).ok_or(ActorsError::Row(named))?,
         });
+        place = place
+            .advance(ENTRY_BYTES)
+            .ok_or(AddressError::PastEnd(place))?;
+    }
+}
+
+/// Import the common tiles and the writes named by this room's starting enemy set.
+///
+/// # Errors
+/// A set entry or tile source outside the image is refused.
+pub fn starting_enemy_tiles(
+    rom: Lorom<'_>,
+    at: RomAddress,
+) -> Result<Vec<EnemyTilePatch>, ActorsError> {
+    let common = rom.read(RomAddress::new(0x9a, 0xea00), 0x200)?;
+    let mut patches = vec![EnemyTilePatch {
+        offset: 0,
+        bytes: common.to_vec(),
+    }];
+    let mut next = 0x800_u16;
+    let mut place = at;
+    loop {
+        let key = word(rom, place, 0)?;
+        if key == END_OF_SET {
+            return Ok(patches);
+        }
+        let species = data::enemy::species(rom, SpeciesKey(key)).map_err(ActorsError::Species)?;
+        let row = word(rom, place, 2)?;
+        let size = usize::from(species.tile_bytes & 0x7fff);
+        let offset = if species.tile_bytes & 0x8000 == 0 {
+            next
+        } else {
+            // The upper bits in the palette word select a reserved object tile slot.
+            (row & 0x3000) >> 3
+        };
+        patches.push(EnemyTilePatch {
+            offset: usize::from(offset),
+            bytes: rom.read(species.tiles, size)?.to_vec(),
+        });
+        next = next.wrapping_add(species.tile_bytes);
         place = place
             .advance(ENTRY_BYTES)
             .ok_or(AddressError::PastEnd(place))?;

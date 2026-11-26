@@ -70,6 +70,8 @@ impl Run<'_> {
             work_done: true,
             publishes: true,
             actor_fetch: super::platform::actor_fetch(current),
+            shaft_background: played::room_tiles::ShaftBackground::Pending,
+            shaft_raster: played::passage::ShaftRaster::Pending,
             audio: played::passage::PassageAudio {
                 shaft_reply: None,
                 sounds_sent: true,

@@ -4,7 +4,7 @@
 use super::seed;
 use crate::replay::{connected, data_failure, result::Outcome};
 use data::assets::start::NewGame;
-use game::production::played;
+use game::production::played::{self, room_video::EnemyStaging};
 use game::production::room_loading::{self, Rooms};
 
 /// The actor, controls, room effects and held appearance inputs that precede room loading.
@@ -16,6 +16,7 @@ pub(super) struct Carried {
     pub(super) bindings: crate::replay::hud::Bindings,
     pub(super) appearance: connected::AppearanceInputs,
     pub(super) quake: world_quake::State,
+    pub(super) enemy_staging: Option<EnemyStaging>,
 }
 
 impl Carried {
@@ -27,6 +28,7 @@ impl Carried {
             bindings: crate::replay::hud::bindings(wram)?,
             appearance: connected::AppearanceInputs::seed(wram)?,
             quake: super::quake::seed(wram)?,
+            enemy_staging: EnemyStaging::admit(wram),
         })
     }
 
@@ -82,6 +84,7 @@ pub(super) fn admit(
         arrival,
         frame,
         carried.quake,
+        carried.enemy_staging,
     )
     .map_err(|_| bad())?;
     state.play_time = carried.play_time;

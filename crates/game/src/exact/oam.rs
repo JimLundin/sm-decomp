@@ -8,12 +8,22 @@
 //! where the original's would.
 
 use crate::intent::{Placing, SpriteDraw, SpritePiece};
-use crate::state::video::{NmiBatch, OAM_HIGH_BYTES, OAM_SPRITES, OamEntry, SpriteCount};
+use crate::state::video::{NmiBatch, OAM_HIGH_BYTES, OAM_SPRITES, Oam, OamEntry, SpriteCount};
 use data::spritemap::SpriteSize;
 
 /// The Y of a hidden sprite: line 240, below the picture. Only Y moves, so a hidden entry
 /// keeps the tile and attributes the buffer last held.
 pub const HIDDEN_Y: u8 = 240;
+
+impl Oam {
+    /// Clear the first entry's coordinates as a direct OAM word write.
+    pub(crate) const fn clear_first_position(&mut self) {
+        if let Some(first) = self.low.first_mut() {
+            first.x = 0;
+            first.y = 0;
+        }
+    }
+}
 
 impl NmiBatch {
     /// Bank `$80` log, clear high OAM `$80:8B1A`: every sprite's X ninth bit and size bit.
@@ -43,10 +53,26 @@ impl NmiBatch {
     /// Write `draw`'s pieces at the next entries, in order.
     pub fn draw_sprites(&mut self, draw: &SpriteDraw) {
         for piece in &draw.pieces {
-            match piece.placing {
-                Placing::Mapped(size) => self.write_mapped(piece, size),
-                Placing::Lone => self.write_lone(piece),
-            }
+            self.draw_piece(piece);
+        }
+    }
+
+    /// Add cinematic pieces until the OAM table fills, leaving the cursor at the end.
+    pub(crate) fn draw_capped_sprites(&mut self, draw: &SpriteDraw) {
+        let start = self.sprites.0;
+        let count = OAM_SPRITES
+            .saturating_sub(usize::from(start))
+            .min(draw.pieces.len());
+        for piece in draw.pieces.iter().take(count) {
+            self.draw_piece(piece);
+        }
+        self.sprites = SpriteCount(start.saturating_add(u16::try_from(count).unwrap_or_default()));
+    }
+
+    fn draw_piece(&mut self, piece: &SpritePiece) {
+        match piece.placing {
+            Placing::Mapped(size) => self.write_mapped(piece, size),
+            Placing::Lone => self.write_lone(piece),
         }
     }
 

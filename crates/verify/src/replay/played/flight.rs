@@ -19,6 +19,7 @@ use core::num::Wrapping;
 use data::rom::Rom;
 use enum_map::EnumMap;
 use game::production::played::flight::{self, FrameEnd};
+use game::production::played::room_video::RoomVideo;
 use game::state::video::Video;
 use oracle_record::FrameRecord;
 use screens_flight::{FrameReport, MusicQueue, Rules};
@@ -31,7 +32,7 @@ use types::flight::{
 /// The streams outside the comparison and their owners.
 pub const MASKED: &[&str] = &[
     "CGRAM: the flight's colours as the setup loads them at cut 32 (T1), and the colours that cycle from the turn on (R4)",
-    "OAM and the sprites' pictures and animation (E1)",
+    "initial undrawn low OAM lanes, before the drifting objects fill the table (E1)",
     "VRAM's mode 7 tilemap and tiles, with the picture's swap at the turn (E4)",
     "the BG1 tilemap but for the letters the label types: its emptying at the station, and each letter's palette, priority and flips (E2)",
     "the PPU mirrors the stages write: the layers and colour math at the turn, the layers, mode and bases at the station (E4)",
@@ -282,6 +283,8 @@ impl Continuation {
         let image = Rom::new(std::fs::read(rom).map_err(|_| bad())?).map_err(|_| bad())?;
         let scene = import::flight::import(image.lorom())
             .map_err(|_| data_failure(None, "played flight scene"))?;
+        let pictures = import::flight::sprite_pictures(image.lorom())
+            .map_err(|_| data_failure(None, "flight sprite art"))?;
         let Self {
             journey,
             mut controller,
@@ -293,7 +296,9 @@ impl Continuation {
             report: None,
             scene,
             label_steps: 0,
-            video,
+            video: video.unwrap_or_else(|| RoomVideo::default().video),
+            picture: flight::Picture::default(),
+            pictures,
         };
         let mut held: u64 = 0;
         let mut began = previous.clone();
@@ -356,14 +361,13 @@ impl Continuation {
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
                 let mut play = super::Run::load(start, &content, rom, row)?;
-                if let Some(video) = run.video {
-                    let restored = canonical::from_bytes(&canonical::to_bytes(&video))
-                        .map_err(|_| Outcome::CheckpointFailure { cut })?;
-                    if video != restored {
-                        return Err(Outcome::CheckpointFailure { cut });
-                    }
-                    play.state.room_video.video = restored;
+                let video = run.video;
+                let restored = canonical::from_bytes(&canonical::to_bytes(&video))
+                    .map_err(|_| Outcome::CheckpointFailure { cut })?;
+                if video != restored {
+                    return Err(Outcome::CheckpointFailure { cut });
                 }
+                play.state.room_video.video = restored;
                 play.cartridge = cartridge;
                 let (more, stop) =
                     play.through(rows, current, entry.controller, cut.saturating_add(1)..=end)?;
@@ -385,7 +389,9 @@ struct Run {
     report: Option<FrameReport>,
     scene: Scene,
     label_steps: u64,
-    video: Option<Box<Video>>,
+    video: Box<Video>,
+    picture: flight::Picture,
+    pictures: data::assets::flight::SpritePictures,
 }
 
 impl Run {
@@ -415,6 +421,25 @@ impl Run {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
+        if let Some(report) = &report {
+            self.picture
+                .publish(&mut self.video, report, &self.pictures);
+        }
+        let oam_settled = match self.journey.stage {
+            flight::Stage::Flight(state) => {
+                super::finished(current) && Stage::of(state.stage).turned()
+            }
+            flight::Stage::Arrival(_) => true,
+        };
+        if oam_settled {
+            let physical = crate::replay::landing_site::oam(current).map_err(at)?;
+            if self.video.memory.oam != physical {
+                return Err(Outcome::Difference {
+                    cut,
+                    field: "flight.physical-oam".into(),
+                });
+            }
+        }
         let previous_function = word(&previous.wram, source::CINEMATIC_ACTIVE).map_err(at)?;
         let recorded_flight = word(&current.wram, source::GAME_STATE).map_err(at)? == FLIGHT
             && STAGES
@@ -974,6 +999,8 @@ mod tests {
             ..Default::default()
         };
         let report = super::super::play(&sources, "any-fly-to-ceres", 0, 802).unwrap();
+        assert_eq!(report.stop, super::Stop::End);
+        assert_eq!(report.held, 802);
         for start in 1..32 {
             let resumed = super::super::play(&sources, "any-fly-to-ceres", start, 32).unwrap();
             assert_eq!(resumed.held, 32 - start, "flight setup seed {start}");

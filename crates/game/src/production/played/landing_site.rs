@@ -218,10 +218,7 @@ impl State {
         // The direct COLDATA writes clear the live colour. The next NMI uses its queued writes.
         video.committed.colour_math.fixed = FixedColour::default();
         video.batch.sprites = SpriteCount(0);
-        if let Some(first) = video.memory.oam.low.first_mut() {
-            first.x = 0;
-            first.y = 0;
-        }
+        video.memory.oam.clear_first_position();
         for (index, tile) in self.shadow.bg1.iter_mut().take(1023).enumerate() {
             *tile = if index < 127 { 0x2c0f } else { 0x006f };
         }

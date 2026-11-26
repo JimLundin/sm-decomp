@@ -64,6 +64,7 @@ pub(super) const BORROWED: &[&str] = &[
     "T1 timing of an interrupted fight frame, from its CPU program counter and calling stack",
     "the initial platform battery and the cut at which the startup diagnostic and scan have finished",
     "flight and Ceres: NMI work boundaries, audio queue replies, room setup readiness and passage fetch timing",
+    "lag: completed shaft background work during the interrupted contents fetch",
     "room passages: the random number at frame start; escape countdown initiation until the boss owns the start",
 ];
 
@@ -449,6 +450,7 @@ impl Run {
                 charge: samus_appearance::Charge::new(0)
                     .ok_or_else(|| data_failure(None, "intro actor charge"))?,
             },
+            enemy_staging: Some(screens.enemy_staging),
             quake: world_quake::State {
                 phase: world_quake::QuakePhase(0),
                 shake: None,
@@ -862,6 +864,43 @@ mod tests {
             let current = rows.record(cut).unwrap();
             run.step(&began, &previous, &current, cut).unwrap();
             previous = current;
+        }
+    }
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn shaft_carries_completed_hdma_until_the_vblank_reload() {
+        use crate::replay::landing_site::channel;
+        use data::rom::Rom;
+        use game::state::video::Video;
+
+        let sources = crate::replay::played::tests::sources();
+        let lock = super::super::read_lock(&sources).unwrap();
+        let mut rows = super::super::open_rows(&sources, &lock, "any-power-on").unwrap();
+        let rom = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
+        let programs = import::countdown::shaft_raster(rom.lorom()).unwrap();
+        let channels = [2, 3, 7];
+        let mut video = Video::default();
+        video.finish_shaft_hdma(&programs);
+        for cut in 13_031..=13_313 {
+            if cut == 13_312 {
+                for (index, program) in channels.into_iter().zip(programs) {
+                    assert!(
+                        video
+                            .dma
+                            .get_mut(index)
+                            .unwrap()
+                            .restart_indirect_hdma(program.opening),
+                        "opening HDMA descriptor {index}",
+                    );
+                }
+            }
+            let current = rows.record(cut).unwrap();
+            for index in channels {
+                let matches = video.dma.get(index).copied()
+                    == current.ppu.dma.get(index).copied().map(channel);
+                assert!(matches, "video.dma[{index}] at movie cut {cut}");
+            }
         }
     }
 

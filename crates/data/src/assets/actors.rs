@@ -97,6 +97,15 @@ pub struct EnemyGraphics {
     pub row: SpriteRow,
 }
 
+/// One imported write into the room's startup enemy tile sheet.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EnemyTilePatch {
+    /// Byte offset in the shared sheet.
+    pub offset: usize,
+    /// Consecutive tile bytes.
+    pub bytes: Vec<u8>,
+}
+
 /// A species' colours.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Species {

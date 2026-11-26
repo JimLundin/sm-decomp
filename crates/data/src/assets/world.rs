@@ -14,7 +14,7 @@ pub mod rooms;
 
 pub use types::{BossKind, Event, Fixed, Heading, Item, Pair, Px, Set, Side};
 
-use crate::assets::actors::EnemyGraphics;
+use crate::assets::actors::{EnemyGraphics, EnemyTilePatch};
 use crate::id::{DoorwayId, RoomId, TilesetId};
 use crate::level::{Block, ScrollArea};
 use crate::plm::PlmPopulation;
@@ -168,6 +168,8 @@ pub struct Version {
     pub plms: PlmPopulation,
     /// The species it loads, in order, each with its sprite palette row.
     pub enemies: Vec<EnemyGraphics>,
+    /// The patches staged by this version when it starts the game.
+    pub starting_enemy_tiles: Vec<EnemyTilePatch>,
     /// The station's door actors it places, in the room's order of its enemies.
     pub ceres_doors: Vec<CeresDoorPlacement>,
     /// It places Ceres Ridley, who stands at his own place whatever his placement says, as
@@ -384,6 +386,7 @@ mod tests {
                 scroll_changes: Vec::new(),
             },
             enemies: Vec::new(),
+            starting_enemy_tiles: Vec::new(),
             ceres_doors: Vec::new(),
             ceres_ridley: false,
             ceres_vents: Vec::new(),

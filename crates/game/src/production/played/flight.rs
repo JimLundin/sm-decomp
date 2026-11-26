@@ -6,6 +6,10 @@
 //! that finished; a lag frame is the platform's and changes nothing of it. The frame of work
 //! after the flight is done begins the new game, even if that frame has not yet finished.
 
+mod picture;
+
+pub use picture::Picture;
+
 use super::{arrival, frame};
 use screens_flight::{FrameReport, MusicQueue, Rules, step};
 use types::flight::{

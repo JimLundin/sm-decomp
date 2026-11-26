@@ -478,6 +478,12 @@ fn version(
         plms: state.plms,
         enemies: crate::actors::graphics_set(image, state.enemy_set)
             .map_err(|error| WorldError::Enemies { room, error })?,
+        starting_enemy_tiles: if room == CERES_ELEVATOR_ROOM {
+            crate::actors::starting_enemy_tiles(image, state.enemy_set)
+                .map_err(|error| WorldError::Enemies { room, error })?
+        } else {
+            Vec::new()
+        },
         ceres_doors: crate::actors::ceres_doors(image, state.enemy_population)
             .map_err(ceres_actor)?,
         ceres_ridley: crate::actors::ceres_ridley(image, state.enemy_population)

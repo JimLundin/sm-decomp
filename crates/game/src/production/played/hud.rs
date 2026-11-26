@@ -207,6 +207,8 @@ mod tests {
     fn frame_of_play(state: &mut State, hud: &HudFrame) -> FrameOutputs {
         let passing = passage::Passing {
             actor_fetch: crate::production::played::passage::ActorFetch::Place,
+            shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
+            shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
             work_begun: true,
             work_done: true,
             publishes: true,

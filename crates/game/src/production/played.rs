@@ -66,6 +66,8 @@ pub mod passage;
 pub mod play_time;
 pub mod quake;
 mod ridley;
+mod room_palette;
+pub mod room_tiles;
 pub mod room_video;
 pub mod samus;
 pub mod save_snapshot;
@@ -107,8 +109,12 @@ pub struct Content {
     pub shaft_track: Option<shaft::Track>,
     /// Sprite graphics written when the escape shaft places its overlay.
     pub shaft_overlay_art: Option<data::assets::shaft::Shaft>,
-    /// Standard background text graphics for the Ceres start.
-    pub arrival_bg3: Option<Vec<u16>>,
+    /// The escape shaft effects tilemap selected by its room FX.
+    pub shaft_effects: Vec<u16>,
+    /// The haze, mode split and HUD scroll selected in the escape shaft.
+    pub shaft_raster: Option<[data::assets::countdown::IndirectHdmaProgram; 3]>,
+    /// Standard background and object graphics for the Ceres start.
+    pub arrival_graphics: Option<data::assets::landing_site::Graphics>,
     /// Pose bodies and cannon headings.
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.
@@ -166,6 +172,8 @@ pub struct State {
     pub play_time: types::PlayTime,
     /// The timer sprites held in the prepared and published pictures.
     pub clock_picture: clock_picture::ClockPicture,
+    /// The completed room background writes.
+    pub room_tiles: room_tiles::ShaftBackground,
     /// Her movement, her appearance and the figure she is drawn in.
     pub samus: samus::State,
     /// The camera.
@@ -259,6 +267,10 @@ pub enum Fault {
     Hud,
     /// The new file's room setup has no opening HUD provider.
     HudStartup,
+    /// The return shaft has no imported raster programs.
+    ShaftRaster,
+    /// The arrival graphics or its direct transfer could not be published.
+    ArrivalGraphics,
     /// The fresh file's Samus could not be constructed.
     NewGame,
     /// The station's escape in the shaft: a later piece owns the shaft's overlay.
@@ -386,17 +398,11 @@ impl State {
         self.passage.doors = doors.doors;
         self.passage.doorway = touched;
         self.palette = doors.scene.palette;
+        self.prepare_room_palette(passing.publishes);
         self.health = Model(health.state);
         self.hud = Model(hud_state);
         self.clock_picture = clock_picture;
-        self.station.ran(&enemies);
-        if let Some(shaft) = enemies.shaft {
-            shaft.update_entry(&mut self.passage.room.entry, passing.publishes);
-            self.station.escape_shaft = Some(shaft);
-        }
-        if let Some(vents) = enemies.vents {
-            self.station.vents = vents;
-        }
+        self.finish_room_actors(&mut enemies, passing.publishes);
         self.quake = Model(quake);
         let finishing = if self.station.escape_shaft.is_some() && !passing.publishes {
             world_doors::Finishing::Overrun
@@ -426,6 +432,17 @@ impl State {
             ridley_placed: None,
             quake: Some(shaken),
         })
+    }
+
+    fn finish_room_actors(&mut self, enemies: &mut station::Enemies, publishes: bool) {
+        self.station.ran(enemies);
+        if let Some(shaft) = enemies.shaft.take() {
+            shaft.update_entry(&mut self.passage.room.entry, publishes);
+            self.station.escape_shaft = Some(shaft);
+        }
+        if let Some(vents) = enemies.vents.take() {
+            self.station.vents = vents;
+        }
     }
 
     fn play_actors_and_samus(
@@ -555,8 +572,8 @@ impl State {
                 passing,
             )
             .ok_or(Fault::Hud)?;
-        let mut loaded = self.load_with_overlay(
-            exports.report.call,
+        let mut loaded = self.load_passage_contents(
+            &exports.report,
             passing,
             content,
             &mut palette,
@@ -583,10 +600,11 @@ impl State {
         self.samus.last_draw_jump.0 = last_draw_jump;
         self.camera.0 = camera::passed(self.camera.0, view, seen);
         self.palette = palette;
+        self.prepare_room_palette(passing.publishes);
         self.frame = self.frame.after(exports.report.finishing, random);
         self.clock_picture = clock_picture;
         self.hud.0.out_of_play(&hud::out_of_play(&exports.report));
-        self.finish_passage(&exports, loaded, passing.actor_fetch);
+        self.finish_passage(&exports, loaded, passing);
         Ok(Outputs {
             elevator_reach: None,
             movement: None,

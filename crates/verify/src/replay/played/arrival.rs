@@ -91,8 +91,17 @@ pub(super) fn start(
     if word(&previous.wram, source::GAME_STATE)? != PREPARING {
         return Ok(Readiness::NotYet);
     }
-    if standard_background_done(current) && !standard_background_done(previous) {
-        return Ok(Readiness::StandardBackground);
+    if let Some(accepted) = standard_objects_started(current) {
+        return Ok(Readiness::StandardBackground { accepted });
+    }
+    if standard_objects_started(previous).is_some() && standard_objects_finished(current) {
+        return Ok(Readiness::StandardObjectsFinished);
+    }
+    if room_effects_initialized(current) && !room_effects_initialized(previous) {
+        return Ok(Readiness::RoomEffects);
+    }
+    if enemy_tiles_written(previous, current)?.is_some() {
+        return Ok(Readiness::EnemyGraphics);
     }
     if word(&current.wram, source::GAME_STATE)? == FADING_IN {
         return Ok(Readiness::Ready);
@@ -107,17 +116,73 @@ pub(super) fn start(
 }
 
 // Ceres preparation reaches the sprite DMA after the fixed background transfer.
-fn standard_background_done(record: &FrameRecord) -> bool {
-    let Some([_, bus, from_lo, from_hi, bank, left_lo, left_hi, ..]) = record.ppu.dma.get(1) else {
-        return false;
-    };
-    matches!(record.cut, Cut::VblankWithoutNmi)
+fn standard_objects_started(record: &FrameRecord) -> Option<u16> {
+    let [_, bus, from_lo, from_hi, bank, left_lo, left_hi, ..] = *record.ppu.dma.get(1)?;
+    let source = u16::from_le_bytes([from_lo, from_hi]);
+    let remaining = u16::from_le_bytes([left_lo, left_hi]);
+    let accepted = 0x4000_u16.checked_sub(remaining)?;
+    (matches!(record.cut, Cut::VblankWithoutNmi)
         && record.cpu.k == 0x82
         && record.cpu.pc == 0x8327
-        && *bus == 0x18
-        && *bank == 0x9a
-        && u16::from_le_bytes([*from_lo, *from_hi]) >= 0xd200
-        && u16::from_le_bytes([*left_lo, *left_hi]) != 0
+        && bus == 0x18
+        && bank == 0x9a
+        && remaining != 0
+        && source == 0xd200_u16.checked_add(accepted)?.checked_add(1)?)
+    .then_some(accepted)
+}
+
+// The tilemap transfers follow the standard object upload in the same loading work.
+fn standard_objects_finished(record: &FrameRecord) -> bool {
+    matches!(record.cut, Cut::VblankWithoutNmi)
+        && record
+            .ppu
+            .dma
+            .get(1)
+            .is_some_and(|channel| matches!(channel, [1, 0x18, 0, 0x48, 0x7e, 0, 0, ..]))
+}
+
+// T1: enabling NMI for the second music service follows the room effects reset.
+fn room_effects_initialized(record: &FrameRecord) -> bool {
+    let stack_base = usize::from(record.cpu.s);
+    let return_address = |offset: usize, address: u16| {
+        let start = stack_base.saturating_add(offset);
+        record.wram.get(start..start.saturating_add(2)) == Some(&address.to_le_bytes())
+    };
+    matches!(record.cut, Cut::NmiReturn(nmi) if nmi.interrupted_pc == 0x0080_835a)
+        && return_address(3, 0xa131)
+        && return_address(7, 0xa0d4)
+}
+
+/// Number of enemy tile words the preparation has published at a requested upload cut.
+pub(super) fn enemy_tiles_written(
+    previous: &FrameRecord,
+    current: &FrameRecord,
+) -> Result<Option<usize>, Outcome> {
+    const SOURCE: source::WramWord = source::WramWord {
+        name: "ENEMY_TILE_SOURCE",
+        offset: 0x0e7c,
+    };
+    const DESTINATION: source::WramWord = source::WramWord {
+        name: "ENEMY_TILE_DESTINATION",
+        offset: 0x0e7e,
+    };
+    if !super::finished(current) || word(&previous.wram, source::GAME_STATE)? != PREPARING {
+        return Ok(None);
+    }
+    let next = word(&current.wram, SOURCE)?;
+    if !(0x7800..=0x9800).contains(&next) || !next.is_multiple_of(0x800) {
+        return Ok(None);
+    }
+    let prior = if next == 0x7800 {
+        0
+    } else {
+        next.saturating_sub(0x800)
+    };
+    let words = usize::from(next.saturating_sub(0x7000)) / 2;
+    let to = word(&current.wram, DESTINATION)?;
+    let reached = to == 0x6c00_u16.saturating_add(u16::try_from(words).unwrap_or_default())
+        && word(&previous.wram, SOURCE)? == prior;
+    Ok(reached.then_some(words))
 }
 
 /// The borrowed loading beat preceding the HUD by twenty waits. The other calls to

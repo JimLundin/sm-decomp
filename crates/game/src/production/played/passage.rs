@@ -63,6 +63,10 @@ pub struct Passing {
     pub publishes: bool,
     /// Actor loading reached at the interrupted cut of an escape-shaft fetch.
     pub actor_fetch: ActorFetch,
+    /// Completed background work while the shaft contents are fetched.
+    pub shaft_background: super::room_tiles::ShaftBackground,
+    /// The beam's progress on the return room's visible HDMA tables.
+    pub shaft_raster: ShaftRaster,
     /// Audio's answers.
     pub audio: PassageAudio,
     /// The random numbers' owner's, where this loop doesn't own every draw: the game's random
@@ -72,6 +76,15 @@ pub struct Passing {
     /// The start's loading's, with the platform's lag: whether a new game's start is made ready
     /// this frame.
     pub start: super::arrival::Readiness,
+}
+
+/// Whether the first visible pass has completed the return shaft's HDMA tables.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShaftRaster {
+    /// The complete raster has not reached the cut.
+    Pending,
+    /// The raster is finished and the door transition is ready for its first fade turn.
+    Finished,
 }
 
 /// How much actor loading the platform permitted before the cut.
@@ -178,17 +191,79 @@ impl State {
 }
 
 impl super::State {
-    /// Commit the built room, partial population and block-script turn together.
-    pub(super) fn finish_passage(
+    pub(super) fn publish_shaft_sheet(
         &mut self,
-        exports: &Exports,
-        loaded: Loaded,
-        actor_fetch: ActorFetch,
-    ) {
+        call: Option<RoomCall>,
+        content: &Content,
+    ) -> Result<(), Fault> {
+        if call == Some(RoomCall::FetchTiles)
+            && let Some(doorway) = self.passage.doorway
+            && let Some(sheet) =
+                room_loading::shaft_sheet(&content.rooms, doorway.through, &self.progress)
+                    .map_err(Fault::Load)?
+        {
+            self.room_video
+                .shaft_sheet(sheet)
+                .ok_or(Fault::Load(room_loading::LoadFault::Tileset))?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn load_passage_contents(
+        &mut self,
+        report: &world_doors::Report,
+        passing: &Passing,
+        content: &Content,
+        palette: &mut Palette,
+        random: &mut types::RandomSequence,
+    ) -> Result<Loaded, Fault> {
+        let loaded = self.load_with_overlay(report.call, passing, content, palette, random)?;
+        let destination = loaded.room.as_ref().unwrap_or(&self.passage.room);
+        let raster = (passing.shaft_raster == ShaftRaster::Finished
+            && destination.entry.haze == shaft_entry::Haze::Red
+            && destination.entry.view.hud_lines.is_some())
+        .then(|| content.shaft_raster.as_ref().ok_or(Fault::ShaftRaster))
+        .transpose()?;
+        if report.call == Some(RoomCall::FetchTiles) {
+            self.publish_shaft_sheet(report.call, content)?;
+        } else {
+            self.finish_shaft_background(
+                loaded.room.as_ref(),
+                passing.shaft_background,
+                &content.shaft_effects,
+            )?;
+        }
+        if let Some(raster) = raster {
+            self.room_video.finish_shaft_hdma(raster);
+        }
+        Ok(loaded)
+    }
+
+    pub(super) fn finish_shaft_background(
+        &mut self,
+        room: Option<&Room>,
+        work: super::room_tiles::ShaftBackground,
+        effects: &[u16],
+    ) -> Result<(), Fault> {
+        if room.unwrap_or(&self.passage.room).entry.view.affine {
+            let mut background = self.room_tiles;
+            background.advance(work);
+            if background != self.room_tiles {
+                background
+                    .install_background(&mut self.room_video.video, effects)
+                    .ok_or(Fault::Load(room_loading::LoadFault::Tileset))?;
+                self.room_tiles = background;
+            }
+        }
+        Ok(())
+    }
+
+    /// Commit the built room, partial population and block-script turn together.
+    pub(super) fn finish_passage(&mut self, exports: &Exports, loaded: Loaded, passing: &Passing) {
         self.passage.passed(exports.doors, loaded.room);
         self.passage.awaiting_actors = loaded.awaiting_actors;
         if loaded.awaiting_actors {
-            match actor_fetch {
+            match passing.actor_fetch {
                 ActorFetch::Clearing(first_live) => self.station.retire_before(first_live),
                 ActorFetch::Graphics => self.station.retire_before(usize::MAX),
                 ActorFetch::Place => {}

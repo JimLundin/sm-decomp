@@ -44,3 +44,112 @@ pub fn indirect_hdma_start(
         indirect_address: u16::from_le_bytes([low, high]),
     })
 }
+
+/// Why the shaft's indirect raster content could not be imported.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RasterError {
+    /// An address in a spawn descriptor or a table was outside the ROM.
+    Address(AddressError),
+    /// A table was outside the supported full-frame indirect programs.
+    Table,
+}
+
+impl From<AddressError> for RasterError {
+    fn from(error: AddressError) -> Self {
+        Self::Address(error)
+    }
+}
+
+/// Import the haze, elevator mode split and HUD scroll programs of the return shaft.
+///
+/// # Errors
+/// A spawn descriptor or table is invalid, or a table does not terminate in the visible frame.
+pub fn shaft_raster(
+    rom: Lorom<'_>,
+) -> Result<[data::assets::countdown::IndirectHdmaProgram; 3], RasterError> {
+    const HAZE: RomAddress = RomAddress::new(0x88, 0xdddd);
+    const ELEVATOR_MODE: RomAddress = RomAddress::new(0x88, 0xd92c);
+    const HUD_SCROLL: RomAddress = RomAddress::new(0x88, 0xd869);
+    Ok([
+        raster_program(rom, HAZE, 17)?,
+        raster_program(rom, ELEVATOR_MODE, 10)?,
+        raster_program(rom, HUD_SCROLL, 8)?,
+    ])
+}
+
+fn raster_program(
+    rom: Lorom<'_>,
+    spawn: RomAddress,
+    table_pointer_offset: usize,
+) -> Result<data::assets::countdown::IndirectHdmaProgram, RasterError> {
+    use data::assets::countdown::IndirectHdmaProgram;
+
+    let mut descriptor = [0; 4];
+    descriptor.copy_from_slice(rom.read(spawn, 4)?);
+    let [control, destination, script_low, script_high] = descriptor;
+    if control & 0x40 == 0 {
+        return Err(RasterError::Table);
+    }
+    let script = RomAddress::new(spawn.bank, u16::from_le_bytes([script_low, script_high]));
+    let table_bank = read_byte(rom, script, 2)?;
+    let data_bank = read_byte(rom, script, 5)?;
+    let table_register = script
+        .advance(table_pointer_offset)
+        .ok_or(RasterError::Table)?;
+    let mut address = [0; 2];
+    address.copy_from_slice(rom.read(table_register, 2)?);
+    let table = RomAddress::new(table_bank, u16::from_le_bytes(address));
+    let opening = indirect_hdma_start(rom, table)?;
+    if opening.lines == 0 {
+        return Err(RasterError::Table);
+    }
+
+    let mut cursor = table;
+    let mut lines = 0u16;
+    // Fixed Ceres is a 224-line mode and these three tables all reach a terminator.
+    while lines < 224 {
+        let header = read_byte(rom, cursor, 0)?;
+        if header == 0 {
+            let terminal_address = u16::from_le_bytes([header, read_byte(rom, cursor, 1)?]);
+            return Ok(IndirectHdmaProgram {
+                control,
+                destination,
+                data_bank,
+                opening,
+                terminal_address,
+                terminal_cursor: cursor.advance(2).ok_or(RasterError::Table)?.offset,
+            });
+        }
+        let line_count = header & 0x7f;
+        lines = lines.saturating_add(if line_count == 0 {
+            128
+        } else {
+            u16::from(line_count)
+        });
+        cursor = cursor.advance(3).ok_or(RasterError::Table)?;
+    }
+    Err(RasterError::Table)
+}
+
+fn read_byte(rom: Lorom<'_>, start: RomAddress, offset: usize) -> Result<u8, RasterError> {
+    let address = start.advance(offset).ok_or(RasterError::Table)?;
+    rom.read(address, 1)?
+        .first()
+        .copied()
+        .ok_or(RasterError::Table)
+}
+
+/// The tilemap selected by the escape shaft's room effects.
+///
+/// # Errors
+/// Returns an address error if the selected graphics are outside the ROM.
+pub fn shaft_effects(rom: Lorom<'_>) -> Result<Vec<u16>, AddressError> {
+    Ok(rom
+        .read(RomAddress::new(0x8a, 0xb279), 0x840)?
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .copied()
+        .map(u16::from_le_bytes)
+        .collect())
+}

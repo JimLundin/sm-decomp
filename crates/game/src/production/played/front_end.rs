@@ -64,6 +64,8 @@ pub struct Screens {
     /// The count of finished frames and the random number.
     pub counts: Counts,
     oam_dma: DmaChannel,
+    /// The startup clear has made the initial enemy sheet staging available.
+    pub enemy_staging: super::room_video::EnemyStaging,
 }
 
 /// A screen from the title on.
@@ -316,6 +318,7 @@ impl Screens {
                 random: answers.settled_random(),
             },
             oam_dma: boot.oam_dma,
+            enemy_staging: super::room_video::EnemyStaging::Cleared,
         }
     }
 
@@ -345,6 +348,7 @@ impl Screens {
             screen: stepped.screen,
             counts: self.counts.after(stepped.finished, stepped.drawn),
             oam_dma: self.oam_dma,
+            enemy_staging: self.enemy_staging,
         };
         Ok((screens, stepped.sounds))
     }

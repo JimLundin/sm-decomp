@@ -171,17 +171,10 @@ fn restart_indirect_hdma(
     opening: &[Option<IndirectHdmaStart>; DMA_CHANNELS],
 ) -> Result<(), blackout::Fault> {
     for (channel, header) in video.dma.iter_mut().zip(opening) {
-        if let Some(header) = header {
-            if !channel.control.indirect
-                || channel.source != header.source.offset
-                || channel.source_bank != header.source.bank
-                || header.lines == 0
-            {
-                return Err(blackout::Fault::Picture);
-            }
-            channel.count = header.indirect_address;
-            channel.table = channel.source.wrapping_add(3);
-            channel.line_counter = header.lines;
+        if let Some(header) = header
+            && !channel.restart_indirect_hdma(*header)
+        {
+            return Err(blackout::Fault::Picture);
         }
     }
     Ok(())

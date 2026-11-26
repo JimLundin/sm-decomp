@@ -9,9 +9,11 @@ use std::num::NonZeroU16;
 
 use data::assets::flight::{
     Angle, Drift, Drifter, Keystroke, LabelPlace, LabelStep, RushSpeed, Scene, SceneSetup,
-    SceneTurn, SpritePlacement, SpriteWrap, TypedLetter, WholePlace, Zoom,
+    SceneTurn, SpriteArt, SpritePictures, SpritePlacement, SpriteWrap, TypedLetter, WholePlace,
+    Zoom,
 };
 use data::rom::{AddressError, Lorom, RomAddress};
+use data::spritemap::Spritemap;
 use enum_map::EnumMap;
 
 /// Why the flight's scene cannot be imported. Errors carry no content bytes.
@@ -23,6 +25,8 @@ pub enum ImportError {
     Code(RomAddress),
     /// The setup's zoom is over 32,767.
     Zoom,
+    /// A flight drawing or its palette selection is invalid.
+    Drawing,
     /// A step of the label holds for no frames.
     Hold,
     /// A step of the label draws something other than one letter of the label's font.
@@ -170,6 +174,40 @@ pub fn import(rom: Lorom<'_>) -> Result<Scene, ImportError> {
         setup,
         turn,
         label: label(rom)?,
+    })
+}
+
+/// Read the flight's sprite maps and the palette selections of their objects.
+///
+/// # Errors
+/// The image does not contain the expected maps or palette operands.
+pub fn sprite_pictures(rom: Lorom<'_>) -> Result<SpritePictures, ImportError> {
+    let load_map = |list, offset| {
+        let pointer = word(rom, at(CODE, list), offset)?;
+        let map = Spritemap::load(rom, at(LABEL, pointer))?;
+        if map.entries.is_empty() || map.entries.len() > 128 {
+            return Err(ImportError::Drawing);
+        }
+        Ok(map)
+    };
+    let art = |list, palette_address| {
+        let bits = load(rom, palette_address)?;
+        if bits & !0x0e00 != 0 {
+            return Err(ImportError::Drawing);
+        }
+        Ok(SpriteArt {
+            map: load_map(list, 2)?,
+            palette: bits.to_le_bytes()[1] >> 1,
+        })
+    };
+    Ok(SpritePictures {
+        rushing: art(0xcda3, 0xbe95)?,
+        large_asteroids: art(0xce4b, 0xbf2e)?,
+        station: art(0xcc47, 0xbf58)?,
+        small_asteroids: art(0xcc4f, 0xbf82)?,
+        vortex: art(0xcc57, 0xbfbf)?,
+        distant_stars: art(0xcda3, 0xbeae)?,
+        alternate_vortex: load_map(0xcc57, 6)?,
     })
 }
 
