@@ -692,7 +692,7 @@ def retry_delay(header: str | None, fallback: int) -> float:
 
 def open_response(opener: urllib.request.OpenerDirector, request: urllib.request.Request) -> Any:
     deadline = time.monotonic() + RESPONSE_SECONDS
-    remaining = RESPONSE_SECONDS
+    remaining: float = RESPONSE_SECONDS
     for attempt in range(RATE_LIMIT_RETRIES + 1):
         try:
             response = opener.open(request, timeout=remaining)

@@ -2,7 +2,9 @@
 
 import json
 import io
+from collections.abc import Callable
 from contextlib import redirect_stderr
+from email.message import Message
 import os
 import shutil
 import signal
@@ -16,6 +18,7 @@ import uuid
 from urllib.error import HTTPError, URLError
 from urllib.request import Request
 from pathlib import Path
+from types import FrameType
 from typing import Any
 from unittest.mock import patch
 
@@ -23,6 +26,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from launch_stream import capture
 from responses_controller import Broker, Refused, RefusalCategory, OBSERVED_MODEL, main, open_response, prepare, response_loop, unique_object
+
+
+FIXTURE_RESPONSE_URL = "https://fixture.invalid/responses"
+
+
+def fixture_http_error(status: int, retry_after: str | None = None, body: bytes = b"{}") -> HTTPError:
+    headers: Message[str, str] = Message()
+    if retry_after is not None:
+        headers["Retry-After"] = retry_after
+    return HTTPError(FIXTURE_RESPONSE_URL, status, "fixture", headers, io.BytesIO(body))
 
 
 class Contract(unittest.TestCase):
@@ -309,8 +322,7 @@ class Contract(unittest.TestCase):
             "type": "message", "role": "assistant", "status": "completed",
             "content": [{"type": "output_text", "text": "Done"}],
         }]}
-        rate_limit = HTTPError("https://fixture.invalid/responses", 429, "fixture",
-                               {"Retry-After": "0"}, io.BytesIO(b"{}"))
+        rate_limit = fixture_http_error(429, "0")
         open_request = unittest.mock.Mock(side_effect=[
             io.BytesIO(json.dumps(accepted).encode()), rate_limit,
             io.BytesIO(json.dumps(finished).encode()),
@@ -330,10 +342,9 @@ class Contract(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == "linux", "Linux controller cancellation")
     def test_transport_cancellation_during_retry_wait(self) -> None:
-        rate_limit = HTTPError("https://fixture.invalid/responses", 429, "fixture",
-                               {"Retry-After": "1"}, io.BytesIO(b"{}"))
+        rate_limit = fixture_http_error(429, "1")
         open_request = unittest.mock.Mock(side_effect=rate_limit)
-        handlers = {}
+        handlers: dict[int, Callable[[int, FrameType | None], None]] = {}
         def interrupt(_delay: float) -> None:
             handlers[signal.SIGTERM](signal.SIGTERM, None)
         with patch("signal.signal", side_effect=handlers.__setitem__), \
@@ -569,13 +580,9 @@ class Contract(unittest.TestCase):
 
 class ResponseTransport(unittest.TestCase):
     def setUp(self) -> None:
-        self.request = Request("https://fixture.invalid/responses", data=b"{}")
+        self.request = Request(FIXTURE_RESPONSE_URL, data=b"{}")
         self.opener = unittest.mock.Mock()
         self.now = 0.0
-
-    def rate_limit(self, retry_after: str | None = None) -> HTTPError:
-        headers = {} if retry_after is None else {"Retry-After": retry_after}
-        return HTTPError(self.request.full_url, 429, "fixture", headers, io.BytesIO(b"{}"))
 
     def advance(self, seconds: float) -> None:
         self.now += seconds
@@ -587,8 +594,8 @@ class ResponseTransport(unittest.TestCase):
             return open_response(self.opener, self.request)
 
     def test_retry_after_and_fallback_exhaustion(self) -> None:
-        errors = [self.rate_limit("3"), self.rate_limit("Thu, 01 Jan 1970 00:00:06 GMT"),
-                  self.rate_limit("malformed"), self.rate_limit()]
+        errors = [fixture_http_error(429, "3"), fixture_http_error(429, "Thu, 01 Jan 1970 00:00:06 GMT"),
+                  fixture_http_error(429, "malformed"), fixture_http_error(429)]
         self.opener.open.side_effect = errors
         with self.assertRaises(HTTPError) as failed:
             self.send()
@@ -599,7 +606,7 @@ class ResponseTransport(unittest.TestCase):
         self.assertFalse(failed.exception.fp.closed)
 
     def test_retry_after_beyond_allowed_budget_fails_immediately(self) -> None:
-        error = self.rate_limit("31")
+        error = fixture_http_error(429, "31")
         self.opener.open.side_effect = error
         with self.assertRaises(HTTPError) as failed:
             self.send()
@@ -608,7 +615,7 @@ class ResponseTransport(unittest.TestCase):
         self.assertEqual(self.now, 0)
 
     def test_attempt_time_counts_against_the_retry_deadline(self) -> None:
-        error = self.rate_limit("3")
+        error = fixture_http_error(429, "3")
         def reject(*args: Any, **kwargs: Any) -> None:
             self.advance(178)
             raise error
@@ -620,8 +627,7 @@ class ResponseTransport(unittest.TestCase):
         self.assertEqual(self.now, 178)
 
     def test_oversleep_preserves_provider_error_without_another_attempt(self) -> None:
-        error = HTTPError(self.request.full_url, 429, "fixture", {"Retry-After": "3"},
-                          io.BytesIO(b'{"error":{"code":"fixture_rate_limit"}}'))
+        error = fixture_http_error(429, "3", b'{"error":{"code":"fixture_rate_limit"}}')
         self.opener.open.side_effect = error
         with patch.object(self, "advance", side_effect=lambda _delay: setattr(self, "now", 181)), \
                 self.assertRaises(HTTPError) as failed:
@@ -631,8 +637,7 @@ class ResponseTransport(unittest.TestCase):
         self.assertEqual(failed.exception.read(), b'{"error":{"code":"fixture_rate_limit"}}')
 
     def test_other_open_failures_are_not_retried(self) -> None:
-        for failure in (HTTPError(self.request.full_url, 503, "fixture", {}, io.BytesIO(b"{}")),
-                        URLError("fixture")):
+        for failure in (fixture_http_error(503), URLError("fixture")):
             with self.subTest(failure=type(failure)), self.assertRaises(URLError) as failed:
                 self.opener.open.reset_mock()
                 self.opener.open.side_effect = failure
@@ -642,7 +647,7 @@ class ResponseTransport(unittest.TestCase):
         self.assertEqual(self.now, 0)
 
     def test_accepted_response_read_failure_is_not_retried(self) -> None:
-        error = self.rate_limit()
+        error = fixture_http_error(429)
         response = io.BytesIO(b"{}")
         self.opener.open.return_value = response
         with patch.object(response, "read", side_effect=error), self.assertRaises(HTTPError) as failed:
