@@ -462,7 +462,6 @@ impl<'a> Run<'a> {
             Start::Room(seed) => Self::seeded(seed, content, &rooms)?,
         };
         let hud = super::hud::Content::load(path)?;
-        let (_, area) = room.map;
         let opening_hud = Self::opening_hud(origin, image.lorom(), &start)?;
         let language = match origin {
             Start::Preparing(_, _, carried) => carried.language,
