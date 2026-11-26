@@ -358,8 +358,11 @@ or abandoned branch with unmerged commits, verify a recovery ref or archive firs
 Keep the default checkout and shared build seed. Leave local edits, untracked work and
 unexpected ignored files with their owner.
 
-Check the branch and tip of each released checkout, then use `tools/lane/worktree.sh remove`
-to retire it and its build output. Delete a released local ref with
+Immediately before running `tools/lane/worktree.sh remove`, check the released checkout's
+branch, tip and status, including untracked and ignored files. Confirm no live job or
+successor uses that path. The helper removes the checkout and its build output.
+Before deleting a local ref, check `git worktree list --porcelain` again. Keep the ref
+if any registered worktree has it checked out. Delete a released local ref with
 `git update-ref -d <ref> <expected-tip>` and its remote counterpart with
 `git push --force-with-lease=<ref>:<expected-tip> origin :<ref>`. Verify removal against
 `git worktree list`, local refs and `git ls-remote --heads origin`. Record removals and
