@@ -299,7 +299,6 @@ impl super::State {
                 self.room_video.queue_beam_tiles(*from, words);
                 self.room_video.publish();
             }
-            Readiness::BeamGraphics => return Err(Fault::ArrivalGraphics),
             Readiness::RoomEffects => {
                 self.room_video
                     .prepare_enemy_tiles()
@@ -312,7 +311,9 @@ impl super::State {
                     .ok_or(Fault::ArrivalGraphics)?;
                 self.room_video.publish(None);
             }
-            Readiness::EnemyGraphics => return Err(Fault::ArrivalGraphics),
+            Readiness::BeamGraphics | Readiness::EnemyGraphics => {
+                return Err(Fault::ArrivalGraphics);
+            }
             Readiness::NotYet | Readiness::FinalMusicWait | Readiness::Ready => {}
         }
         Ok(())
