@@ -10,8 +10,8 @@ use crate::intent::{OverlayRows, SpriteDraw, TileWrite, on_screen};
 use crate::production::blackout::Platform;
 use crate::production::{blackout, hud};
 use crate::state::video::{
-    DmaChannel, NmiBatch, TilemapEntry, VRAM_WORDS, Video, VramSource, VramStep, VramTransfer,
-    VramWord,
+    BBusRegister, DmaChannel, DmaControl, NmiBatch, TilemapEntry, VRAM_WORDS, Video, VramSource,
+    VramStep, VramTransfer, VramWord,
 };
 use boss_ceres_ridley::{AlternatingLook, OverlayTurn};
 use data::assets::actors::{DoorEnemyTiles, EnemyTilePatch};
@@ -156,8 +156,7 @@ impl Default for RoomVideo {
     fn default() -> Self {
         let mut video = Box::<Video>::default();
         // These channels keep their reset state until Ceres room setup.
-        video.dma[5] = DmaChannel::AT_POWER_ON;
-        video.dma[6] = DmaChannel::AT_POWER_ON;
+        video.dma[4..=6].fill(DmaChannel::AT_POWER_ON);
         Self {
             video,
             bg1_offset: crate::state::video::Scroll::default(),
@@ -173,6 +172,20 @@ impl Default for RoomVideo {
 }
 
 impl RoomVideo {
+    pub(super) fn reset_ridley_main_screen(&mut self) {
+        self.video.dma[4].clear_room_effect();
+    }
+
+    pub(super) fn finish_ridley_main_screen(&mut self, raster: data::dma::DirectHdmaProgram) {
+        let channel = &mut self.video.dma[4];
+        channel.control = DmaControl::from_byte(raster.control);
+        channel.destination = BBusRegister::from_byte(raster.destination);
+        channel.source = raster.source.offset;
+        channel.source_bank = raster.source.bank;
+        channel.table = raster.terminal_cursor;
+        channel.line_counter = 0;
+    }
+
     /// The platform transfer currently waiting for publication.
     #[must_use]
     pub fn pending_platform(&self) -> Option<Platform> {

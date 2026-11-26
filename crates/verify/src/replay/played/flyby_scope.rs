@@ -73,6 +73,7 @@ impl Run<'_> {
             enemy_tiles: played::passage::EnemyTileTransfer::Waiting,
             shaft_background: played::room_tiles::ShaftBackground::Pending,
             shaft_raster: played::passage::ShaftRaster::Pending,
+            room_hdma: played::passage::RoomHdma::Hold,
             audio: played::passage::PassageAudio {
                 shaft_reply: None,
                 sounds_sent: true,

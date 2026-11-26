@@ -679,6 +679,17 @@ impl DmaChannel {
         line_counter: u8::MAX,
     };
 
+    /// Clear the channel's room effect while retaining its bank latch and line counter.
+    pub fn clear_room_effect(&mut self) {
+        *self = Self {
+            control: DmaControl::TO_ONE_REGISTER,
+            destination: BBusRegister::Other(0x13),
+            indirect_bank: self.indirect_bank,
+            line_counter: self.line_counter,
+            ..Self::default()
+        };
+    }
+
     /// Reload an active indirect table for the start of the visible frame.
     ///
     /// Returns false if its program and the physical channel disagree.
@@ -731,13 +742,7 @@ impl Video {
     /// their preceding values.
     pub fn reset_room_hdma(&mut self) {
         for channel in self.dma.iter_mut().skip(2) {
-            *channel = DmaChannel {
-                control: DmaControl::TO_ONE_REGISTER,
-                destination: BBusRegister::Other(0x13),
-                indirect_bank: channel.indirect_bank,
-                line_counter: channel.line_counter,
-                ..DmaChannel::default()
-            };
+            channel.clear_room_effect();
         }
     }
 }

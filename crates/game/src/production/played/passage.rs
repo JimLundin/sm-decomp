@@ -71,6 +71,8 @@ pub struct Passing {
     pub shaft_background: super::room_tiles::ShaftBackground,
     /// The beam's progress on the return room's visible HDMA tables.
     pub shaft_raster: ShaftRaster,
+    /// The observed work boundary of the direct room effects.
+    pub room_hdma: RoomHdma,
     /// Audio's answers.
     pub audio: PassageAudio,
     /// The random numbers' owner's, where this loop doesn't own every draw: the game's random
@@ -98,6 +100,17 @@ pub enum ShaftRaster {
     Pending,
     /// The raster is finished and the door transition is ready for its first fade turn.
     Finished,
+}
+
+/// A platform interval that affects Ridley's direct main-screen channel.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RoomHdma {
+    /// No relevant room effect work reached this cut.
+    Hold,
+    /// The next room reset its effect channels before decoding level data.
+    Reset,
+    /// The visible beam reached the terminator of the active Ridley table.
+    RidleyMainScreenComplete,
 }
 
 /// How much actor loading the platform permitted before the cut.
@@ -232,6 +245,17 @@ impl super::State {
     ) -> Result<Loaded, Fault> {
         let loaded = self.load_with_overlay(report.call, passing, content, palette, random)?;
         let destination = loaded.room.as_ref().unwrap_or(&self.passage.room);
+        match passing.room_hdma {
+            RoomHdma::Reset => self.room_video.reset_ridley_main_screen(),
+            RoomHdma::RidleyMainScreenComplete
+                if destination.id == data::assets::world::rooms::CERES_RIDLEY_ROOM =>
+            {
+                self.room_video.finish_ridley_main_screen(
+                    content.ridley_main_screen.ok_or(Fault::RidleyMainScreen)?,
+                );
+            }
+            RoomHdma::Hold | RoomHdma::RidleyMainScreenComplete => {}
+        }
         let raster = (passing.shaft_raster == ShaftRaster::Finished
             && destination.entry.haze == shaft_entry::Haze::Red
             && destination.entry.view.hud_lines.is_some())

@@ -495,6 +495,7 @@ impl<'a> Run<'a> {
                     import::countdown::shaft_raster(image.lorom())
                         .map_err(|_| data_failure(None, "shaft raster content"))?,
                 ),
+                ridley_main_screen: import::countdown::ridley_main_screen(image.lorom()).ok(),
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 samus_body_art: Some(samus::body_art(image.lorom())?),
@@ -858,6 +859,7 @@ impl<'a> Run<'a> {
             enemy_tiles: platform::door_enemy_tiles(previous, current),
             shaft_background: platform::shaft_background(current, doors),
             shaft_raster: platform::shaft_raster(previous, current)?,
+            room_hdma: platform::room_hdma(previous, current)?,
             audio: played::passage::PassageAudio {
                 shaft_reply: shaft_sound::reply(place, finished(current)),
                 sounds_sent: sounds_sent(&previous.wram)?,

@@ -210,6 +210,7 @@ mod tests {
             enemy_tiles: crate::production::played::passage::EnemyTileTransfer::Waiting,
             shaft_background: crate::production::played::room_tiles::ShaftBackground::Pending,
             shaft_raster: crate::production::played::passage::ShaftRaster::Pending,
+            room_hdma: crate::production::played::passage::RoomHdma::Hold,
             work_begun: true,
             work_done: true,
             publishes: true,

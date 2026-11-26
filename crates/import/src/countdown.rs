@@ -77,6 +77,48 @@ pub fn shaft_raster(
     ])
 }
 
+/// Import the direct main-screen layer table used in Ridley's room.
+///
+/// # Errors
+/// The table is invalid, names an unsupported transfer, or runs past the visible frame.
+pub fn ridley_main_screen(rom: Lorom<'_>) -> Result<data::dma::DirectHdmaProgram, RasterError> {
+    use data::dma::{BusAddress, DirectHdmaProgram};
+
+    let spawn = RomAddress::new(0x88, 0xd8ea);
+    let [control, destination, low, high] = rom
+        .read(spawn, 4)?
+        .try_into()
+        .map_err(|_| RasterError::Table)?;
+    if control != 0 || destination != 0x2c {
+        return Err(RasterError::Table);
+    }
+    let script = RomAddress::new(spawn.bank, u16::from_le_bytes([low, high]));
+    let address = u16::from_le_bytes([read_byte(rom, script, 5)?, read_byte(rom, script, 6)?]);
+    let table = RomAddress::new(read_byte(rom, script, 2)?, address);
+    let mut cursor = table;
+    let mut visible = 0u16;
+    while visible < 224 {
+        let lines = read_byte(rom, cursor, 0)?;
+        if lines == 0 && visible > 0 {
+            return Ok(DirectHdmaProgram {
+                control,
+                destination,
+                source: BusAddress {
+                    bank: table.bank,
+                    offset: table.offset,
+                },
+                terminal_cursor: cursor.advance(1).ok_or(RasterError::Table)?.offset,
+            });
+        }
+        if lines == 0 || lines > 127 {
+            return Err(RasterError::Table);
+        }
+        visible = visible.saturating_add(u16::from(lines));
+        cursor = cursor.advance(2).ok_or(RasterError::Table)?;
+    }
+    Err(RasterError::Table)
+}
+
 fn raster_program(
     rom: Lorom<'_>,
     spawn: RomAddress,

@@ -34,6 +34,19 @@ impl From<GraphicsRef> for BusAddress {
     }
 }
 
+/// The posted registers and final table cursor of a direct scanline transfer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DirectHdmaProgram {
+    /// The control byte selecting the transfer pattern.
+    pub control: u8,
+    /// The B-bus destination register.
+    pub destination: u8,
+    /// The table's first entry.
+    pub source: BusAddress,
+    /// The table cursor after its terminator was read.
+    pub terminal_cursor: u16,
+}
+
 /// The OAM buffer, which the frame's DMA copies to OAM through channel 0.
 pub const OAM_BUFFER: BusAddress = BusAddress {
     bank: 0x00,

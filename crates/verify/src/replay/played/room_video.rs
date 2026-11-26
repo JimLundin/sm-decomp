@@ -98,6 +98,7 @@ pub(super) fn compare(
         (expected, actual),
     )?;
     compare_shaft_sheet(room, frame.current, frame.place, frame.cut)?;
+    compare_ridley_hdma(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_raster(room, frame.current, expected, actual);
     if passing.enemy_tiles == game::production::played::passage::EnemyTileTransfer::Published {
         compare_door_enemy_tiles(room, frame.current, expected, actual)?;
@@ -176,6 +177,32 @@ pub(super) fn compare_door_enemy_tiles(
             .get(0x6d00..0x8000)
             .unwrap_or_default(),
     ));
+    Ok(())
+}
+
+/// Observe the channel after its first visible table and across the next room's reset.
+pub(super) fn compare_ridley_hdma(
+    video: &RoomVideo,
+    record: &FrameRecord,
+    place: (&str, u64),
+    cut: u64,
+) -> Result<(), Outcome> {
+    let scope = match place {
+        ("chain-any-0005-E06B", 214..=215) | ("chain-any-0006-E0B5", 1659..=1660) => {
+            "room-video.ridley-main-screen-dma"
+        }
+        ("chain-any-0006-E0B5", 1661..=1664) => "room-video.ridley-main-screen-reset",
+        _ => return Ok(()),
+    };
+    // An ordinary room seed does not carry the earlier startup's effect channels.
+    if video.idle_hdma().is_some()
+        && crate::replay::landing_site::io_bytes(video.video.dma[4]) != record.ppu.dma[4]
+    {
+        return Err(Outcome::Difference {
+            cut,
+            field: scope.into(),
+        });
+    }
     Ok(())
 }
 

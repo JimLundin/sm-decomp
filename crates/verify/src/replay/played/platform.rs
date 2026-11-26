@@ -258,6 +258,40 @@ pub(super) fn shaft_raster(
     }
 }
 
+/// T1 marks a completed visible interval for Ridley's direct table or the room's effects clear.
+pub(super) fn room_hdma(
+    previous: &FrameRecord,
+    current: &FrameRecord,
+) -> Result<game::production::played::passage::RoomHdma, Outcome> {
+    use game::production::played::passage::RoomHdma;
+
+    const HANDLER: source::WramWord = source::WramWord {
+        name: "door transition handler",
+        offset: 0x099c,
+    };
+    const BUILD_ROOM: u16 = 0xe36e;
+    const CHANNEL_FOUR_TABLE: source::WramWord = source::WramWord {
+        name: "channel four HDMA object's table",
+        offset: 0x18dc,
+    };
+    const RIDLEY_MAIN_SCREEN_TABLE: u16 = 0xd8fd;
+    let level_decode = matches!(
+        current.cut,
+        Cut::NmiReturn(nmi) if (0x0082_ea73..=0x0082_eb0f).contains(&nmi.interrupted_pc)
+    );
+    if level_decode && finished(previous) && word(&previous.wram, HANDLER)? == BUILD_ROOM {
+        return Ok(RoomHdma::Reset);
+    }
+    let armed = previous.wram.get(0x85).is_some_and(|mask| mask & 0x10 != 0);
+    if finished(current)
+        && armed
+        && word(&previous.wram, CHANNEL_FOUR_TABLE)? == RIDLEY_MAIN_SCREEN_TABLE
+    {
+        return Ok(RoomHdma::RidleyMainScreenComplete);
+    }
+    Ok(RoomHdma::Hold)
+}
+
 /// T1 supplies the completed-work boundary during the interrupted shaft fetch.
 /// The effects transfer's destination distinguishes its wait from other direct uploads.
 /// The slide wait follows the completed library background transfer.

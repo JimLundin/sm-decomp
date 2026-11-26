@@ -118,6 +118,8 @@ pub struct Content {
     pub shaft_effects: Vec<u16>,
     /// The haze, mode split and HUD scroll selected in the escape shaft.
     pub shaft_raster: Option<[data::assets::countdown::IndirectHdmaProgram; 3]>,
+    /// The direct main-screen layer raster of Ridley's room.
+    pub ridley_main_screen: Option<data::dma::DirectHdmaProgram>,
     /// Standard background and object graphics for the Ceres start.
     pub arrival_graphics: Option<data::assets::landing_site::Graphics>,
     /// The starting beam tiles and their cartridge source.
@@ -282,6 +284,8 @@ pub enum Fault {
     HudStartup,
     /// The return shaft has no imported raster programs.
     ShaftRaster,
+    /// Ridley's room has no imported main-screen raster.
+    RidleyMainScreen,
     /// The arrival graphics or its direct transfer could not be published.
     ArrivalGraphics,
     /// The doorway’s selected enemy tile uploads could not be represented.
