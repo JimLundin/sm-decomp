@@ -905,8 +905,13 @@ impl<'a> Run<'a> {
                 });
             }
             (Some(scene), None) if worked => {
+                let standing = game::production::blackout::StandingFrame::from_locked(
+                    &self.state.samus,
+                    self.state.camera.0.position(),
+                    view,
+                );
                 scene
-                    .worked(&mut self.state, publishes)
+                    .worked(&mut self.state, standing, publishes)
                     .map_err(unsupported)?;
             }
             (Some(_) | None, None) => {}
