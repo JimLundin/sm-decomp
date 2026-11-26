@@ -16,6 +16,7 @@ pub mod projectile;
 pub mod ridley_flyby;
 pub mod ridley_warning;
 pub mod samus;
+pub mod shaft;
 pub mod start;
 pub mod tileset;
 pub mod world;
