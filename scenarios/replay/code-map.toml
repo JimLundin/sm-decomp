@@ -1176,3 +1176,11 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/zebes.rs" },
   { role = "navigation", path = "docs/behaviours/screens-zebes.md" },
 ]
+
+[[rule]]
+id = "game-random/AdvanceRandom"
+targets = [
+  { role = "model", path = "crates/clean/game_random/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/landing_site.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/landing_site.rs" },
+]

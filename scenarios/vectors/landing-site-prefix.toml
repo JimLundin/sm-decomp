@@ -1,0 +1,81 @@
+# Constructed transfer data. All graphics and colours here are invented.
+# Base state has Ceres, shaft station and shaft room, visited [1, 2], map available.
+# Finished count is 12, energy 37 and random seed 19. The active mode is Flight.
+# Base graphics memory is twelve bytes: 31 through 42. BG3 destination starts at byte 2 and
+# imports [71, 72]. The sprite destination starts at byte 6 and imports
+# [81, 82, 83, 84]. Palette is [51, 52, 53, 54], and objects are [61, 62, 63, 64].
+# The destination's explored cells are [3, 7] and its map is unavailable.
+# An operation opens work, accepts the indicated additional bytes, optionally
+# selects the following read or drains the transfer. None performs a display publication.
+# A restored state is given the same input receipts as its uninterrupted twin.
+# Unlisted fields are outside the case's assertion.
+
+[[vector]]
+id = "L-open"
+source = "constructed"
+entries = ["LandingWorkOpens", "GameplayDisplaySetup", "StandardGraphics"]
+before = { target = "LandingSite", opens = true }
+after = { area = "Crateria", station = "LandingSite", room = "Shaft", phase = "Sprites", accepted = 0, committed = 0, graphics = [31, 32, 71, 72, 35, 36, 37, 38, 39, 40, 41, 42], count = 12 }
+
+[[vector]]
+id = "L-no-work"
+source = "constructed"
+entries = ["LandingWorkOpens"]
+before = { target = "LandingSite", opens = false }
+after = { area = "Ceres", station = "Shaft", room = "Shaft", phase = "Pending", visited = [1, 2], mapped = true, count = 12, random = 19, graphics = [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42] }
+
+[[vector]]
+id = "L-other-target"
+source = "constructed"
+entries = ["LandingWorkOpens"]
+before = { target = "Other", opens = true }
+after = { area = "Ceres", station = "Shaft", room = "Shaft", phase = "Pending", visited = [1, 2], mapped = true, count = 12, random = 19 }
+
+[[vector]]
+id = "L-map"
+source = "constructed"
+entries = ["LandingWorkOpens"]
+before = { target = "LandingSite", opens = true }
+after = { visited = [3, 7], mapped = false, room = "Shaft" }
+
+[[vector]]
+id = "L-display"
+source = "constructed"
+entries = ["GameplayDisplaySetup"]
+before = { target = "LandingSite", opens = true }
+after = { mode = "Gameplay", objects = [0, 0, 63, 64], palette = [51, 52, 53, 54] }
+
+[[vector]]
+id = "L-no-finish"
+source = "constructed"
+entries = ["LandingWorkOpens", "GameplayDisplaySetup", "StandardGraphics"]
+before = { target = "LandingSite", opens = true, accepts = 2 }
+after = { count = 12, energy = 37, random = 368, phase = "Sprites", accepted = 2, committed = 1, room = "Shaft", graphics = [31, 32, 71, 72, 35, 36, 81, 38, 39, 40, 41, 42] }
+
+[[vector]]
+id = "L-split"
+source = "constructed"
+entries = ["GameplayDisplaySetup", "StandardGraphics"]
+before = { target = "LandingSite", opens = true, accepts = 2, selects = true }
+after = { phase = "Sprites", accepted = 2, committed = 1, selected = true, graphics = [31, 32, 71, 72, 35, 36, 81, 38, 39, 40, 41, 42] }
+
+[[vector]]
+id = "L-resume"
+source = "constructed"
+entries = ["StandardGraphics"]
+before = { target = "LandingSite", opens = true, accepts = 2, selects = true, restores = true, continues = 1 }
+after = { phase = "Sprites", accepted = 3, committed = 2, selected = false, graphics = [31, 32, 71, 72, 35, 36, 81, 82, 39, 40, 41, 42] }
+
+[[vector]]
+id = "L-reopen"
+source = "constructed"
+entries = ["StandardGraphics"]
+before = { target = "LandingSite", opens = true, accepts = 2, selects = true, reopens = true, continues = 1 }
+after = { phase = "Sprites", accepted = 3, committed = 2, selected = false, random = 368, graphics = [31, 32, 71, 72, 35, 36, 81, 82, 39, 40, 41, 42] }
+
+[[vector]]
+id = "L-drain"
+source = "constructed"
+entries = ["StandardGraphics"]
+before = { target = "LandingSite", opens = true, accepts = 4, drains = true }
+after = { phase = "Ready", accepted = 4, committed = 4, selected = false, count = 12, graphics = [31, 32, 71, 72, 35, 36, 81, 82, 83, 84, 41, 42] }

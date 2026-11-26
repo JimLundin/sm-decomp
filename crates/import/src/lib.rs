@@ -10,6 +10,7 @@ pub mod discovery;
 pub mod flashback;
 pub mod flight;
 pub mod intro;
+pub mod landing_site;
 pub mod playback;
 pub mod projectile;
 pub mod ridley_flyby;

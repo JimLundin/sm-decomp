@@ -325,6 +325,21 @@ fn effect(content: &Zebes, id: ColourEffectRef) -> Result<&Effect, Fault> {
         .ok_or(Fault::ColourEffect)
 }
 
+impl Pages {
+    /// Install the flight's three drawing writes in live VRAM. Shared ship graphics are inherited.
+    pub fn install(&self, vram: &mut [u16]) {
+        use crate::commit::write_words;
+        use crate::state::video::VramWord;
+
+        for (word, &low) in vram.iter_mut().zip(&self.ship_map) {
+            let [_, high] = word.to_le_bytes();
+            *word = u16::from_le_bytes([low, high]);
+        }
+        write_words(vram, VramWord(0x5c00), 1, self.flat_map.iter().copied());
+        write_words(vram, VramWord(0x6000), 1, self.zebes_tiles.iter().copied());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Flow, LoadDestination, State};

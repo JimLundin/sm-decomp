@@ -59,6 +59,7 @@ mod hud;
 pub mod intro;
 pub mod intro_missiles;
 pub mod intro_rooms;
+pub mod landing_site;
 pub mod passage;
 pub mod quake;
 mod ridley;

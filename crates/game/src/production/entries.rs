@@ -96,6 +96,11 @@ pub(super) fn admit(
             ProductionRules::Discovery,
         ) => OwnedState::Discovery(Model(state)),
         (
+            ProductionSeed::LandingSite(state),
+            ProductionContent::LandingSite(_),
+            ProductionRules::LandingSite,
+        ) => OwnedState::LandingSite(state),
+        (
             ProductionSeed::Zebes(state),
             ProductionContent::Zebes(content),
             ProductionRules::Zebes(_),
@@ -201,6 +206,17 @@ pub(super) fn advance_intro(
             ProductionOutputs::Zebes(Box::new(state.advance(content, *rules, cut).map_err(
                 |fault| ProductionFault::Unsupported(super::Unsupported::Zebes(fault)),
             )?))
+        }
+        (
+            OwnedState::LandingSite(state),
+            ProductionContent::LandingSite(content),
+            ProductionRules::LandingSite,
+            AdvanceInput::LandingSite(work),
+        ) => {
+            state
+                .advance(content, work)
+                .map_err(|fault| ProductionFault::Unsupported(Unsupported::LandingSite(fault)))?;
+            ProductionOutputs::LandingSite
         }
         (state, content, rules, input) => advance(state, content, rules, input)?,
     })

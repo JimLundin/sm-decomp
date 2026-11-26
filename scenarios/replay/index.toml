@@ -1890,3 +1890,38 @@ provider = "pinned-record-station-blackout"
 fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
 phase = "seed cut"
 claim = "the incoming station owner, retained outputs and subtitle selection are admitted at the boundary"
+
+[[case]]
+id = "landing-site/receiving-prefix"
+kind = "scoped"
+row = "chain-any-0011-DF45"
+start = { source = "cache-cut", frame = 2123 }
+end = { cut_inclusive = 2125 }
+rules = ["game-random/AdvanceRandom"]
+profile = "reference"
+responsibilities = ["landing-site"]
+content = "player-rom-import"
+inputs = "landing-site-timing"
+expectations = { provider = "pinned-record-cache", fields = ["landing.random", "landing.carried", "landing.map", "landing.pipeline"], outputs = ["landing.vram", "landing.cgram", "landing.oam", "landing.display.live", "landing.display.published", "landing.display.mirrors", "landing.dma", "landing.tilemaps"] }
+checkpoints = true
+limits = [
+    "Run cut 2124 is any-zebes-arrival cut 0 at movie 15196",
+    "Run cut 2125 is a constructed continuation accepting two further sprite bytes within ROM",
+    "T1 supplies work openings and transfer progress through the vblank without NMI",
+    "Full VRAM, CGRAM and physical OAM at the receiving cut, with departure OAM admitted as a scoped input",
+    "The receipt ends before mapped RAM, tilemap DMA and room initialization",
+]
+
+[[case.borrowed]]
+dependency = "platform.work-and-transfer"
+provider = "pinned NMI and direct DMA channel receipts"
+fields = ["work-open", "accepted-byte-count", "selected-read"]
+phase = "work opening through the selected read before NMI-off vblank"
+claim = "The record qualifies the work and bus progress. The movie alone does not determine those opportunities."
+
+[[case.borrowed]]
+dependency = "prior-room-and-video"
+provider = "pinned shaft map storage and pinned flight departure OAM, placement, live registers and shadow tilemaps"
+fields = ["stored Crateria map", "active map", "physical OAM", "room", "player placement", "live display", "tilemap tails"]
+phase = "before opening the receiving load"
+claim = "VRAM, random state, palette, energy, destination and finished work are carried by the preceding flight. The scope admits the other owners from their prior records."

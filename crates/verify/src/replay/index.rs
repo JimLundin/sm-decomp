@@ -42,6 +42,8 @@ pub enum Responsibility {
     SaveFiles,
     /// The egg and baby in the intro.
     Discovery,
+    /// The first Landing Site work interval and its direct DMA.
+    LandingSite,
     /// The complete flight to Zebes.
     Zebes,
     /// Page, sprite and palette consumers selected alongside the flight.
@@ -186,6 +188,8 @@ pub enum InputProvider {
     ScopedIntroDeliveryInputs,
     /// The intro requests, completion and resulting actor position in the discovery room.
     DiscoveryInputs,
+    /// Receiving T1 work opening and byte progress.
+    LandingSiteTiming,
     /// Recorded work completion after the station handoff.
     ZebesFlightInputs,
     /// Locked current Movement stimuli and early mini-map premises.
@@ -537,6 +541,42 @@ pub enum ObservationId {
     /// Visible discovery pieces and priority relative to the room.
     #[serde(rename = "discovery.oam")]
     DiscoveryOam,
+    /// Receiving loader random.
+    #[serde(rename = "landing.random")]
+    LandingRandom,
+    /// Receiving loader carried.
+    #[serde(rename = "landing.carried")]
+    LandingCarried,
+    /// Receiving loader map.
+    #[serde(rename = "landing.map")]
+    LandingMap,
+    /// Receiving loader pipeline.
+    #[serde(rename = "landing.pipeline")]
+    LandingPipeline,
+    /// Receiving loader vram.
+    #[serde(rename = "landing.vram")]
+    LandingVram,
+    /// Receiving loader cgram.
+    #[serde(rename = "landing.cgram")]
+    LandingCgram,
+    /// Receiving loader oam.
+    #[serde(rename = "landing.oam")]
+    LandingOam,
+    /// Receiving loader display.live.
+    #[serde(rename = "landing.display.live")]
+    LandingLive,
+    /// Receiving loader display.published.
+    #[serde(rename = "landing.display.published")]
+    LandingPublished,
+    /// Receiving loader display.mirrors.
+    #[serde(rename = "landing.display.mirrors")]
+    LandingMirrors,
+    /// Receiving loader dma.
+    #[serde(rename = "landing.dma")]
+    LandingDma,
+    /// Receiving loader tilemaps.
+    #[serde(rename = "landing.tilemaps")]
+    LandingTilemaps,
 
     /// The flight stage and stage-local counters.
     #[serde(rename = "zebes.stage")]
@@ -1186,6 +1226,23 @@ macro_rules! ceres_observations {
     };
 }
 
+macro_rules! landing_observations {
+    () => {
+        O::LandingRandom
+            | O::LandingCarried
+            | O::LandingMap
+            | O::LandingPipeline
+            | O::LandingVram
+            | O::LandingCgram
+            | O::LandingOam
+            | O::LandingLive
+            | O::LandingPublished
+            | O::LandingMirrors
+            | O::LandingDma
+            | O::LandingTilemaps
+    };
+}
+
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -1205,6 +1262,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::PlaybackFinish
         | O::PlaybackAuthority => Responsibility::Playback,
         O::Battery => Responsibility::SaveFiles,
+        landing_observations!() => Responsibility::LandingSite,
         O::ZebesStage | O::ZebesPicture | O::ZebesMotion | O::ZebesRequests => {
             Responsibility::Zebes
         }
@@ -1281,6 +1339,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
 }
 
 fn rule_owner(rule: &str) -> Option<Responsibility> {
+    if rule == "game-random/AdvanceRandom" {
+        return Some(Responsibility::LandingSite);
+    }
     if rule == "audio-transport/OfferAcceptance" {
         return Some(Responsibility::AudioSender);
     }
@@ -1351,6 +1412,7 @@ fn movement_witnessed_fields(
         "samus-movement/BackwardLeap" | "samus-movement/WhatHerMovesMet" => {
             &[O::LandingPose, O::LandingFloor]
         }
+        "game-random/AdvanceRandom" => &[O::LandingRandom],
         "screens-zebes/GunshipAppears" | "screens-zebes/ShipApproachesPlanet" => {
             &[O::ZebesStage, O::ZebesPicture]
         }
@@ -2044,6 +2106,41 @@ fn station_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
+fn landing_provider_valid(case: &Case) -> bool {
+    use super::landing_site as landing;
+    use ObservationId as O;
+    case.kind == CaseKind::Scoped
+        && case.row == landing::ROW
+        && case.start
+            == (Start::CacheCut {
+                frame: landing::DEPARTURE,
+            })
+        && case.end.cut_inclusive == landing::RESUMED
+        && case.responsibilities == [Responsibility::LandingSite]
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && case.expectations.fields
+            == [
+                O::LandingRandom,
+                O::LandingCarried,
+                O::LandingMap,
+                O::LandingPipeline,
+            ]
+        && case.expectations.outputs
+            == [
+                O::LandingVram,
+                O::LandingCgram,
+                O::LandingOam,
+                O::LandingLive,
+                O::LandingPublished,
+                O::LandingMirrors,
+                O::LandingDma,
+                O::LandingTilemaps,
+            ]
+        && case.expectations.output_cut.is_none()
+        && case.checkpoints
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     if matches!(
         case.inputs,
@@ -2062,6 +2159,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     }
     if case.inputs == InputProvider::SaveFileBoundaries {
         return save_files_provider_valid(case);
+    }
+    if case.inputs == InputProvider::LandingSiteTiming {
+        return landing_provider_valid(case);
     }
     if case.inputs == InputProvider::ZebesFlightInputs {
         return zebes_provider_valid(case);

@@ -45,6 +45,7 @@ pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRul
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
 pub use immutable::{BlockRules, CameraRules, HudRules};
 pub use movement::MovementInputs;
+use played::landing_site;
 
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -61,6 +62,8 @@ pub enum Scope {
     Playback,
     /// Cartridge persistence.
     SaveFiles,
+    /// The first Landing Site work interval.
+    LandingSite,
     /// Scheduled flight to Zebes and its drawing and health outputs.
     Zebes,
     /// Carried movement, appearance and camera through an ordinary opportunity.
@@ -114,6 +117,8 @@ pub enum ProductionSeed {
     Playback(playback::ScenePhase),
     /// Complete cartridge, working profile and pending work.
     SaveFiles(Box<save_files::State>),
+    /// Complete state carried into or through the receiving load.
+    LandingSite(Box<landing_site::Run>),
     /// Complete flight, palette, sprite buffer and retained destination.
     Zebes(Box<zebes::State>),
     /// Complete coupled owners and any actual pending semantic work.
@@ -174,6 +179,8 @@ pub enum AdvanceInput<'a> {
     JumpHistory(Option<samus_movement::JumpButton>),
     /// The next authorized scene phase and any completed drawing opportunity.
     Discovery(discovery::Frame),
+    /// T1 work and transfer receipts for the receiving load.
+    LandingSite(landing_site::Work),
     /// A scheduled flight cut.
     Zebes(screens_zebes::FrameAdvance),
     /// One whole scoped Health frame and its Drawing and HUD consumers.
@@ -264,6 +271,8 @@ pub enum ProductionOutputs {
     JumpHistory,
     /// Requests to the surrounding owners and the completed sprite publication.
     Discovery(discovery::Publication),
+    /// The receiving load publishes its progress and live writes in State.
+    LandingSite,
     /// The flight and its consumers on this cut.
     Zebes(Box<zebes::Output>),
     /// One scoped Health frame's requests and gauge redraw.
@@ -348,6 +357,8 @@ pub enum Unsupported {
     IntroRooms(intro_rooms::Fault),
     /// The cartridge cannot accept this request in its current state.
     SaveFiles(::save_files::Refusal),
+    /// The receiving load needs an unavailable source or work opportunity.
+    LandingSite(landing_site::Fault),
     /// A required Zebes flight consumer or continuation is unavailable.
     Zebes(zebes::Fault),
     /// A weapon impact cue needs its qualified sender mapping.
@@ -443,6 +454,7 @@ impl Production {
             ProductionSeed::Intro(_) => Scope::Intro,
             ProductionSeed::Playback(_) => Scope::Playback,
             ProductionSeed::SaveFiles(_) => Scope::SaveFiles,
+            ProductionSeed::LandingSite(_) => Scope::LandingSite,
             ProductionSeed::Zebes(_) => Scope::Zebes,
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::IntroRooms(_) => Scope::IntroRooms,
@@ -564,6 +576,7 @@ impl Production {
             OwnedState::Intro(_) => Scope::Intro,
             OwnedState::Playback(_) => Scope::Playback,
             OwnedState::SaveFiles(_) => Scope::SaveFiles,
+            OwnedState::LandingSite(_) => Scope::LandingSite,
             OwnedState::Zebes(_) => Scope::Zebes,
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::IntroRooms(_) => Scope::IntroRooms,
@@ -712,6 +725,7 @@ impl Production {
             OwnedState::Audio(state) => Some(&state.0),
             OwnedState::MovementTouchdown(state) => Some(&state.audio.0),
             OwnedState::Intro(_)
+            | OwnedState::LandingSite(_)
             | OwnedState::Connected(_)
             | OwnedState::IntroRooms(_)
             | OwnedState::Flashback(_)
@@ -748,6 +762,7 @@ impl Production {
             }
             OwnedState::Blackout(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Explosion(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::LandingSite(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::IntroRooms(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Flashback(state) => return Ok(self.encode_save(state.clone())),
@@ -844,6 +859,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<intro_rooms::Scoped>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::IntroRooms(checkpoint.state)
+        } else if matches!(&content, ProductionContent::LandingSite(_)) {
+            let checkpoint: Checkpoint<Box<landing_site::Run>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::LandingSite(checkpoint.state)
         } else if matches!(&content, ProductionContent::Zebes(_)) {
             let checkpoint: Checkpoint<Box<zebes::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -905,6 +924,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Intro
         | Scope::Blackout
         | Scope::SaveFiles
+        | Scope::LandingSite
         | Scope::Blocks
         | Scope::Progress
         | Scope::Hud

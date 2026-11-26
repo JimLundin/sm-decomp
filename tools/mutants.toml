@@ -1799,3 +1799,27 @@ after = "self.flow = Flow::Loading(LoadDestination::CeresStart);"
 case = "zebes/station-blackout-to-landing-load"
 cut = 2123
 field = "zebes.destination"
+
+[[fault]]
+name = "landing-keeps-outgoing-map"
+responsibility = "landing-site"
+file = "crates/game/src/production/played/landing_site.rs"
+before = "self.maps.active = self.maps.crateria;"
+after = "let _ = self.maps.crateria;"
+case = "landing-site/receiving-prefix"
+cut = 2124
+field = "landing.map"
+
+[[fault]]
+name = "landing-checkpoint-corrupts-pending-high-byte"
+responsibility = "landing-site"
+file = "crates/game/src/production.rs"
+before = "ProductionSeed::LandingSite(checkpoint.state)"
+after = '''let mut state = checkpoint.state;
+            if let landing_site::Phase::Sprites(ref mut transfer) = state.loader.phase
+                && let Some(ref mut write) = transfer.pending
+            { write.value ^= 1; }
+            ProductionSeed::LandingSite(state)'''
+case = "landing-site/receiving-prefix"
+cut = 2125
+field = "landing.vram"

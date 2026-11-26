@@ -534,14 +534,14 @@ fn actual_outputs(state: &State, output: &Output, integrated: bool) -> Vec<Obser
     fields
 }
 
-const fn flow_word(flow: Flow) -> u16 {
+pub(super) const fn flow_word(flow: Flow) -> u16 {
     match flow {
         Flow::Flight(_) => SCENE_FLOW,
         Flow::Loading(_) => LOADING_FLOW,
     }
 }
 
-const fn destination_word(destination: LoadDestination) -> u16 {
+pub(super) const fn destination_word(destination: LoadDestination) -> u16 {
     match destination {
         LoadDestination::LandingSite => LANDING_SITE,
         LoadDestination::CeresStart => CERES_START,

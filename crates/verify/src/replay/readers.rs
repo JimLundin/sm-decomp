@@ -21,6 +21,7 @@ pub(super) enum InputReader {
     IntroMissiles(super::intro_missiles::Inputs),
     JumpHistory(Vec<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
+    LandingSite(super::landing_site::Inputs),
     Zebes(super::zebes::Inputs),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
@@ -46,6 +47,7 @@ pub(super) enum ExpectedReader {
     IntroMissiles(super::intro_missiles::Expected),
     JumpHistory(Vec<ExpectedCut>),
     Discovery(super::discovery::Expectations),
+    LandingSite(Box<[ExpectedCut; 2]>),
     Zebes(super::zebes::Expected),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
@@ -69,6 +71,7 @@ pub(super) enum ActualReader {
     IntroMissiles,
     JumpHistory,
     Discovery,
+    LandingSite,
     Zebes {
         integrated: bool,
         scene: types::zebes::ZebesScene,
@@ -129,6 +132,7 @@ impl InputReader {
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::Discovery(inputs) => inputs.advance(production, cut),
+            Self::LandingSite(inputs) => super::landing_site::advance(inputs, production, cut),
             Self::Zebes(inputs) => inputs.advance(production, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
@@ -264,6 +268,9 @@ impl ActualReader {
             (Self::Blackout(late), InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
                 super::blackout::actual(production, &out, *late)
             }
+            (Self::LandingSite, InputReader::LandingSite(_), ProductionOutputs::LandingSite) => {
+                super::landing_site::actual(production)
+            }
             (
                 Self::Zebes { integrated, .. },
                 InputReader::Zebes(_),
@@ -336,6 +343,7 @@ impl ActualReader {
                 &game::production::blackout::Output::default(),
                 *late,
             ),
+            Self::LandingSite => super::landing_site::actual(production),
             Self::Zebes { integrated, scene } => {
                 super::zebes::initial(production, scene, *integrated)
             }
@@ -395,6 +403,17 @@ impl ExpectedReader {
             Self::IntroMissiles(expected) => expected.at(cut),
             Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
             Self::Discovery(expected) => expected.at(cut),
+            Self::LandingSite(expected) => match cut {
+                super::landing_site::RECEIVING => Ok(expected
+                    .first()
+                    .cloned()
+                    .ok_or_else(|| data_failure(Some(cut), "landing receiving expectation"))?),
+                super::landing_site::RESUMED => Ok(expected
+                    .last()
+                    .cloned()
+                    .ok_or_else(|| data_failure(Some(cut), "landing resumed expectation"))?),
+                _ => Err(data_failure(Some(cut), "landing expected cut coordinate")),
+            },
             Self::Zebes(expected) => expected.read(cut),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),

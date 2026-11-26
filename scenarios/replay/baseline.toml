@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "c332451c445229ef13f3611236fd6c9928cc029b1c725c2dc3d3b760e3ce8ba3"
+index_sha256 = "7d237daa4ad11fe00a0b6f1b1f464ae52260dec90d8b89de469264279188329f"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1365,5 +1365,23 @@ replies = 0
 null_cuts = 9
 null_fields = 8418
 restorations = 1119
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "landing-site/receiving-prefix"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "388af47e9fc275a92374d57cb744293b9a4cc99495f21537cc2166b9673fb2fa"
+
+[case.counts]
+cuts = 2
+fields = 8
+outputs = 16
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 2
 pending_boundaries = 0
 pending_restorations = 0

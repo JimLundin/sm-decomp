@@ -94,6 +94,8 @@ pub enum ProductionContent {
     JumpHistory,
     /// Imported discovery drawings, poses and particle paths.
     Discovery(Box<super::played::discovery::Discovery>),
+    /// Checked standard graphics for the receiving load.
+    LandingSite(Box<data::assets::landing_site::Graphics>),
     /// Checked flight scene and its page, palette and sprite content.
     Zebes(Box<data::assets::zebes::Zebes>),
     /// Checked shared connected movement/appearance content.
@@ -148,6 +150,8 @@ pub enum ProductionRules {
     JumpHistory,
     /// The fixed shipping discovery rules.
     Discovery,
+    /// The platform receiving loader.
+    LandingSite,
     /// The flight scene’s tuning parameters.
     Zebes(screens_zebes::Rules),
     /// Complete parameters for every connected selected owner.
