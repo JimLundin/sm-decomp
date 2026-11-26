@@ -20,6 +20,29 @@ type Fields<'a> = (
     &'a mut Vec<super::Observation>,
 );
 
+pub(super) struct ArrivalArt {
+    pub(super) graphics: data::assets::landing_site::Graphics,
+    pub(super) beam: (data::dma::BusAddress, Vec<u16>),
+    pub(super) overlay: Box<[u8; data::assets::shaft::OVERLAY_BYTES]>,
+}
+
+impl ArrivalArt {
+    pub(super) fn load(rom: data::rom::Lorom<'_>) -> Result<Self, Outcome> {
+        let graphics = import::landing_site::import(rom)
+            .map_err(|_| super::data_failure(None, "standard room graphics"))?;
+        let beam = import::start::beam_tiles(rom)
+            .map_err(|_| super::data_failure(None, "startup beam tiles"))?;
+        let overlay = import::shaft::import(rom)
+            .map_err(|_| super::data_failure(None, "startup Ceres door overlay"))?
+            .overlay;
+        Ok(Self {
+            graphics,
+            beam,
+            overlay: Box::new(overlay),
+        })
+    }
+}
+
 #[test]
 #[ignore = "pinned record cache and player ROM"]
 fn shaft_overlay_placement_publishes_its_complete_strip() {
@@ -817,5 +840,33 @@ fn assert_bg1(row: &str, origin: u64, end: u64) {
         let differs = actual.iter().zip(expected).filter(|(a, b)| a != b).count();
         assert_eq!(differs, 0, "room-video.bg1 at {row} cut {cut}");
         previous = current;
+    }
+}
+
+/// The native arrival fixture requires each display event even if a selector drops it.
+#[test]
+#[ignore = "pinned record cache and player ROM"]
+fn arrival_display_events_match_native_cuts() {
+    let sources = sources();
+    let lock = read_lock(&sources).unwrap();
+    let mut rows = open_rows(&sources, &lock, "any-ceres-arrival").unwrap();
+    let events = [
+        (86, Readiness::BeamGraphics),
+        (106, Readiness::RoomEffects),
+        (184, Readiness::EnemyGraphics),
+        (185, Readiness::EnemyGraphics),
+        (186, Readiness::EnemyGraphics),
+        (187, Readiness::EnemyGraphics),
+        (188, Readiness::EnemyGraphics),
+        (191, Readiness::EnemyActors),
+    ];
+    for (cut, event) in events {
+        let before = rows.record(cut - 1).unwrap();
+        let after = rows.record(cut).unwrap();
+        assert_eq!(
+            super::arrival::start(&before, &after),
+            Ok(event),
+            "cut {cut}"
+        );
     }
 }

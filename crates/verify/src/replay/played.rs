@@ -481,6 +481,7 @@ impl<'a> Run<'a> {
             },
         )?;
         let shaft = import::shaft::import(image.lorom()).ok();
+        let art = room_video::ArrivalArt::load(image.lorom())?;
         Ok(Self {
             state,
             played: played::Content {
@@ -490,19 +491,9 @@ impl<'a> Run<'a> {
                 shaft_overlay_art: shaft,
                 shaft_effects: import::countdown::shaft_effects(image.lorom())
                     .map_err(|_| data_failure(None, "shaft effects tilemap"))?,
-                arrival_beam_tiles: Some(
-                    import::start::beam_tiles(image.lorom())
-                        .map_err(|_| data_failure(None, "startup beam tiles"))?,
-                ),
-                arrival_overlay: Some(Box::new(
-                    import::shaft::import(image.lorom())
-                        .map_err(|_| data_failure(None, "startup Ceres door overlay"))?
-                        .overlay,
-                )),
-                arrival_graphics: Some(
-                    import::landing_site::import(image.lorom())
-                        .map_err(|_| data_failure(None, "standard room graphics"))?,
-                ),
+                arrival_beam_tiles: Some(art.beam),
+                arrival_overlay: Some(art.overlay),
+                arrival_graphics: Some(art.graphics),
                 shaft_raster: Some(
                     import::countdown::shaft_raster(image.lorom())
                         .map_err(|_| data_failure(None, "shaft raster content"))?,
