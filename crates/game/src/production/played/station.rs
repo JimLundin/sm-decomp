@@ -1,6 +1,6 @@
 //! The Ceres station's actors and their frame order.
 //!
-//! Ridley runs first, followed by the Ceres doors, the shaft's overlay and the steam vents.
+//! Ridley runs first. The shaft's overlay precedes its door, and the doors precede the steam vents.
 //!
 //! The room's enemies run before her moves. The Ceres doors read where she was at the end of the
 //! last frame. The tail and the vents read her from before she moves. Loading the next room
@@ -231,9 +231,9 @@ impl super::State {
         }
     }
 
-    /// One run of the room's enemies, in its order: Ridley, then the Ceres doors, then the
-    /// shaft's overlay and the vents. The baby's colours and the beacon's go to `palette`, and Ridley's shake
-    /// and then the doors' to the room's quake as the frame began.
+    /// Run the room's enemies in slot order. Ridley's shake reaches the quake before the
+    /// doors, and the shaft's burst takes its draw before its door reads the random number.
+    /// The baby's colours and the beacon's go to `palette`.
     pub(super) fn enemies(
         &self,
         running: Running<'_>,
@@ -302,6 +302,12 @@ impl super::State {
         if let Some(shake) = ridley.and_then(|run| run.shake) {
             world_quake::start_or_stop(&mut quake, ceres_doors::order(shake)?);
         }
+        // The overlay occupies the first slot, so the shaft door reads its burst draw.
+        let mut shaft = station.escape_shaft.clone();
+        let shaft_actors = shaft
+            .as_mut()
+            .map(|shaft| shaft.overlay_turn(self, random, content, rules, palette))
+            .transpose()?;
         let doors = ceres_doors::run(
             station,
             stage,
@@ -311,11 +317,6 @@ impl super::State {
             &rules.ceres,
             &mut quake,
         )?;
-        let mut shaft = station.escape_shaft.clone();
-        let shaft_actors = shaft
-            .as_mut()
-            .map(|shaft| shaft.overlay_turn(self, random, content, rules, palette))
-            .transpose()?;
         let lights = if let Some(turn) = shaft_actors {
             turn.lights
         } else {
@@ -403,8 +404,9 @@ impl super::State {
 
 #[cfg(test)]
 mod tests {
+    use super::Running;
     use crate::production::played::State;
-    use crate::production::played::tests::{play, state};
+    use crate::production::played::tests::{content, passing, play, rules, state};
     use crate::production::tests::fixtures;
     use boss_ceres_ridley::{
         CeresDoor, CeresRidley, DoorKind, FlightPhase, Phase, RidleyPhase, Stage, Wait,
@@ -589,6 +591,62 @@ mod tests {
         assert_eq!(shake.kind.direction, QuakeDirection::Sideways);
         assert_eq!(shake.kind.size.pixels(), 3);
         assert_eq!(shake.remaining.get(), 11);
+    }
+
+    #[test]
+    fn the_shaft_door_reads_the_overlay_bursts_draw() {
+        use boss_ceres_ridley::{BurstPoint, BurstWait, RumbleTurns, ShaftOverlayPhase};
+        use types::ceres_shaft::{ShaftOverlay, ShaftRotation, ShaftView, TiltDirection};
+
+        let door = CeresDoor {
+            kind: DoorKind::ShaftDoor,
+            phase: Phase::Wall,
+            ..far_door()
+        };
+        let mut room = state(vec![door]);
+        room.station.stage = Stage::Escape;
+        room.station.slots.doors = vec![1];
+        room.station.escape_shaft = Some(super::shaft::EscapeShaft {
+            overlay: ShaftOverlay {
+                anchor: door.position,
+                phase: ShaftOverlayPhase::Rumbling {
+                    remaining: RumbleTurns::MAX,
+                    wait: BurstWait::ZERO,
+                    point: BurstPoint::First,
+                },
+            },
+            rotation: ShaftRotation {
+                active: false,
+                next: 34,
+                direction: TiltDirection::Forward,
+                hold: 0,
+                view: ShaftView {
+                    pivot: door.position,
+                    matrix: [256, 0, 0, 256],
+                },
+            },
+            vents: Vec::new(),
+            locked: false,
+        });
+        // Zero would start a strong shake. The burst's shared draw crosses the door's threshold.
+        let mut random = room.frame.random;
+        let mut palette = room.palette;
+        let actors = room
+            .enemies(
+                Running::Passage,
+                &mut random,
+                &passing(),
+                &content(),
+                &rules(),
+                &mut palette,
+            )
+            .unwrap();
+        assert!(actors.shaft_actors.and_then(|turn| turn.burst).is_some());
+        let shake = actors.quake.shake.unwrap();
+        assert_eq!(shake.kind.reach, QuakeReach::Whole);
+        assert_eq!(shake.kind.direction, QuakeDirection::Diagonal);
+        assert_eq!(shake.kind.size.pixels(), 1);
+        assert_eq!(shake.remaining.get(), 2);
     }
 
     /// Ridley runs before the doors: a door that would start the escape's shake on a steady

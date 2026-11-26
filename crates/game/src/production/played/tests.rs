@@ -310,7 +310,7 @@ pub(super) fn play_with(
     state.step(&inputs(held), &passing(), &hud_frame(), content, &rules())
 }
 
-fn passing() -> Passing {
+pub(super) fn passing() -> Passing {
     Passing {
         actor_fetch: crate::production::played::passage::ActorFetch::Place,
         enemy_tiles: crate::production::played::passage::EnemyTileTransfer::Waiting,
