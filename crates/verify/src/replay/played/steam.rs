@@ -9,20 +9,33 @@ use crate::source::{self, SlotField};
 
 const SPECIES: u16 = 0xe1ff;
 
+/// Active vents in population order.
+pub(super) fn slots(wram: &[u8]) -> Result<Vec<u16>, Outcome> {
+    let mut slots = Vec::new();
+    for slot in 0..32 {
+        if source::ENEMY_DATA
+            .word(source::ENEMY_SPECIES, slot)
+            .and_then(|field| field.read(wram))
+            .map_err(|_| data_failure(None, "steam vent slot"))?
+            == SPECIES
+        {
+            slots.push(slot);
+        }
+    }
+    Ok(slots)
+}
+
 /// Restore each vent from its facing, instruction, displayed figure and counters.
 pub(super) fn decode(wram: &[u8]) -> Result<Vec<Vent>, Outcome> {
     let mut vents = Vec::new();
     let bad = || data_failure(None, "steam vent encoding");
-    for slot in 0..32 {
+    for slot in slots(wram)? {
         let read = |field: SlotField| {
             source::ENEMY_DATA
                 .word(field, slot)
                 .and_then(|field| field.read(wram))
                 .map_err(|_| bad())
         };
-        if read(source::ENEMY_SPECIES)? != SPECIES {
-            continue;
-        }
         let (facing, list, first_figure): (_, u16, u16) = match read(source::ENEMY_PARAMETER_1)? {
             0 => (VentFacing::Up, 0xf04d, 0xf142),
             1 => (VentFacing::Left, 0xf081, 0xf188),

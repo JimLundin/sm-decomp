@@ -290,6 +290,7 @@ mod tests {
         start: Readiness,
     ) {
         let passing = Passing {
+            actor_fetch: crate::production::played::passage::ActorFetch::Place,
             work_begun,
             work_done,
             publishes: work_done,
@@ -337,6 +338,7 @@ mod tests {
         state.progress.inventory.held.0[run_progress::Supply::Energy] = Wrapping(81);
         let rules = rules();
         let mut passing = Passing {
+            actor_fetch: crate::production::played::passage::ActorFetch::Place,
             work_begun: true,
             work_done: true,
             publishes: true,
@@ -415,6 +417,7 @@ mod tests {
         arriving.hud.0.mini_map = interface_hud::MiniMapPower::Off;
         arriving.arrival.setup = super::Setup::Published;
         let passing = Passing {
+            actor_fetch: crate::production::played::passage::ActorFetch::Place,
             work_begun: true,
             work_done: true,
             publishes: true,

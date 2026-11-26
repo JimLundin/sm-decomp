@@ -49,7 +49,7 @@ mod ridley;
 pub(super) mod rows;
 pub(super) mod samus;
 mod screens;
-mod seed;
+pub(super) mod seed;
 mod shaft;
 mod start;
 mod station;
@@ -101,6 +101,7 @@ pub const SEED_HELD: &[&str] = &[
 pub const BORROWED: &[&str] = &[
     "lag: whether each cut's frame of work finished",
     "lag: the return doorway darkening turn's completed-work interrupt site before frame publication",
+    "lag: the interrupted escape-shaft population clear and its slot cursor",
     "lag: the contents' fetch done on its first frame, within the slide",
     "lag: whether a frame of work begins, the last one's done, when the random number is drawn",
     "the random number through a passage, except the draws held from placing the room's vents to the end of that frame",
@@ -502,7 +503,7 @@ impl<'a> Run<'a> {
         content: &connected::Content,
         rooms: &game::production::room_loading::Rooms,
     ) -> Result<(seed::Room, played::State), Outcome> {
-        let (mut room, mut seeded, progress) = seed::room(&seed.wram, content, &rooms.world)?;
+        let (mut room, mut seeded, progress) = seed::room(seed, content, &rooms.world)?;
         let (map_room, _) = room.map;
         let pending = seed::completed_fetch(seed, &rooms.world)?;
         let (ceres_doors, owns_roster) = ceres_doors::seed(
@@ -523,6 +524,7 @@ impl<'a> Run<'a> {
             passage: played::passage::State {
                 doors: pending.map_or(Doors::Play, |(passing, _)| Doors::Passing(passing)),
                 doorway: pending.map(|(_, doorway)| doorway),
+                awaiting_actors: false,
                 room: seeded,
                 map_room,
             },
@@ -653,6 +655,7 @@ impl<'a> Run<'a> {
             work_begun: finished(previous),
             work_done: platform.ready || fetching_contents(doors),
             publishes: platform.publishes,
+            actor_fetch: platform::actor_fetch(current),
             audio: played::passage::PassageAudio {
                 sounds_sent: sounds_sent(&previous.wram)?,
                 music_ready: music_ready(&previous.wram)?,
@@ -759,6 +762,18 @@ impl<'a> Run<'a> {
             finished(current),
             hud_settled,
         )?;
+        if place.0 == super::shaft_entry::ROW && (222..=278).contains(&place.1) {
+            expected.extend(super::shaft_entry::expected(current)?);
+            actual.extend(super::shaft_entry::fields(&self.state.passage.room.entry));
+            if !finished(current) {
+                expected.extend(colours::observations(&colours::palette(&current.wram)?));
+                actual.extend(colours::observations(&self.state.palette));
+                expected.extend(ceres_doors::expected(&current.wram)?);
+                actual.extend(ceres_doors::actual(&self.state.station));
+                expected.push(steam::state(&steam::decode(&current.wram)?));
+                actual.push(steam::state(&self.state.station.vents));
+            }
+        }
         // A frame of play answers the escape's scene whether its time has run out.
         if let Some(hud) = &outputs.hud {
             expected.push(hud::expiry_expected(&current.wram)?);

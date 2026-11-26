@@ -48,7 +48,9 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
         passage: passage::State {
             doors: Doors::Play,
             doorway: None,
+            awaiting_actors: false,
             room: passage::Room {
+                entry: crate::production::shaft_entry::State::default(),
                 geometry: empty_world(),
                 doorways: Vec::new(),
                 camera: inputs(types::Buttons::default()).camera,
@@ -87,6 +89,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
             mini_map: hud::MiniMapPower::On,
         }),
         station: station::State {
+            slots: crate::production::room_loading::ActorSlots::default(),
             doors,
             vents: Vec::new(),
             pad_and_cover: crate::production::shaft::GONE,
@@ -284,6 +287,7 @@ pub(super) fn play_with(
 
 fn passing() -> Passing {
     Passing {
+        actor_fetch: crate::production::played::passage::ActorFetch::Place,
         work_begun: true,
         work_done: true,
         publishes: true,

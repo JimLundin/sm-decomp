@@ -10,6 +10,7 @@ use super::samus::Her;
 use super::{Content, Fault, Rules};
 use crate::production::connected::inputs::CameraInputs;
 use crate::production::room_loading::{self, CeresActors};
+use crate::production::shaft_entry;
 use types::{Pair, Parts};
 use world_doors::{Arrival, Doors, Exports, Palette, Passage, Phase, RoomCall, Scene};
 
@@ -35,6 +36,8 @@ pub struct Doorway {
 /// the camera's room. A passage's building of the next room replaces it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Room {
+    /// The built level and the room setup carried through the passage.
+    pub entry: shaft_entry::State,
     /// The room's blocks and the boxes of its solid actors other than the Ceres doors.
     pub geometry: crate::production::world::MovementWorld,
     /// Its doors to other rooms, by cell.
@@ -52,6 +55,8 @@ pub struct Passing {
     pub work_done: bool,
     /// The platform publishes the current prepared picture and counts its frame.
     pub publishes: bool,
+    /// Actor loading reached at the interrupted cut of an escape-shaft fetch.
+    pub actor_fetch: ActorFetch,
     /// Audio's answers.
     pub audio: PassageAudio,
     /// The random numbers' owner's, where this loop doesn't own every draw: the game's random
@@ -61,6 +66,17 @@ pub struct Passing {
     /// The start's loading's, with the platform's lag: whether a new game's start is made ready
     /// this frame.
     pub start: super::arrival::Readiness,
+}
+
+/// How much actor loading the platform permitted before the cut.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ActorFetch {
+    /// First slot whose old actor has not yet been retired.
+    Clearing(usize),
+    /// All old slots are clear and the species graphics have been prepared.
+    Graphics,
+    /// Cleared the old actors; destination placement can run.
+    Place,
 }
 
 /// What audio answers the passage.
@@ -79,6 +95,8 @@ pub struct State {
     pub doors: Doors,
     /// The door she touched, from the touch until play goes on.
     pub doorway: Option<Doorway>,
+    /// Static setup has run while the loader is retiring the previous population.
+    pub awaiting_actors: bool,
     /// What play reads of her room.
     pub room: Room,
     /// Where her room sits on her map.
@@ -150,6 +168,27 @@ impl State {
 }
 
 impl super::State {
+    /// Commit the built room, partial population and block-script turn together.
+    pub(super) fn finish_passage(
+        &mut self,
+        exports: &Exports,
+        loaded: Loaded,
+        actor_fetch: ActorFetch,
+    ) {
+        self.passage.passed(exports.doors, loaded.room);
+        self.passage.awaiting_actors = loaded.awaiting_actors;
+        if loaded.awaiting_actors {
+            match actor_fetch {
+                ActorFetch::Clearing(first_live) => self.station.retire_before(first_live),
+                ActorFetch::Graphics => self.station.retire_before(usize::MAX),
+                ActorFetch::Place => {}
+            }
+        }
+        if exports.report.runs[world_doors::Activity::Blocks] {
+            self.passage.room.entry.run_blocks();
+        }
+    }
+
     /// What the passage's call `call` loads of the next room, as its work is done: the colours
     /// it sets, the room it builds and the Ceres actors it places.
     pub(super) fn load(
@@ -162,6 +201,7 @@ impl super::State {
         let mut loaded = Loaded {
             room: None,
             actors: None,
+            awaiting_actors: self.passage.awaiting_actors,
         };
         let Some(doorway) = self.passage.doorway else {
             return Ok(loaded);
@@ -170,27 +210,54 @@ impl super::State {
             progress: &self.progress,
             ceres: self.station.stage,
         };
-        room_loading::load(call, doorway.through, run, &content.rooms, palette)
-            .map_err(Fault::Load)?;
+        if call != Some(RoomCall::FetchContents) {
+            room_loading::load(call, doorway.through, run, &content.rooms, palette)
+                .map_err(Fault::Load)?;
+        }
         match call {
             // Building the next room replaces what play reads of hers.
             Some(RoomCall::BuildRoom) => {
-                loaded.room = Some(
-                    room_loading::room(
-                        doorway.through,
-                        run,
-                        &content.rooms,
-                        &self.passage.room.camera,
-                    )
-                    .map_err(Fault::Load)?,
-                );
+                let mut room = room_loading::room(
+                    doorway.through,
+                    run,
+                    &content.rooms,
+                    &self.passage.room.camera,
+                )
+                .map_err(Fault::Load)?;
+                room.entry.view = self.passage.room.entry.view;
+                room.entry.displayed = self.passage.room.entry.displayed;
+                loaded.room = Some(room);
             }
             // The next room's contents let the last room's Ceres actors go and place its own.
             Some(RoomCall::FetchContents) => {
-                loaded.actors = Some(
-                    room_loading::ceres_actors(doorway.through, run, &content.rooms, random)
-                        .map_err(Fault::Load)?,
-                );
+                let setup = room_loading::setup(&content.rooms, doorway.through, run.progress)
+                    .map_err(Fault::Load)?;
+                let mut room = self.passage.room.clone();
+                room.entry
+                    .advance(setup, shaft_entry::Opportunity::Fetch)
+                    .map_err(Fault::Load)?;
+                if let Some([x, y]) = room.entry.placement {
+                    for row in y..y.saturating_add(4) {
+                        let at = types::Cell { x, y: row };
+                        room.geometry
+                            .close(at)
+                            .map_err(|_| Fault::Load(room_loading::LoadFault::Geometry))?;
+                        room.doorways.retain(|door| door.cell != at);
+                    }
+                }
+                if setup.door == data::assets::world::DoorRule::ToCeresElevatorShaft
+                    && setup.room.closing_anchor().is_some()
+                {
+                    loaded.awaiting_actors = true;
+                } else {
+                    room_loading::load(call, doorway.through, run, &content.rooms, palette)
+                        .map_err(Fault::Load)?;
+                    loaded.actors = Some(
+                        room_loading::ceres_actors(doorway.through, run, &content.rooms, random)
+                            .map_err(Fault::Load)?,
+                    );
+                }
+                loaded.room = Some(room);
             }
             None
             | Some(
@@ -201,6 +268,23 @@ impl super::State {
                 | RoomCall::PlayMusic
                 | RoomCall::ReadLiquid,
             ) => {}
+        }
+        if loaded.awaiting_actors {
+            room_loading::fetch_palette(
+                doorway.through,
+                run,
+                &content.rooms,
+                palette,
+                passing.actor_fetch,
+            )
+            .map_err(Fault::Load)?;
+        }
+        if loaded.awaiting_actors && passing.actor_fetch == ActorFetch::Place {
+            loaded.actors = Some(
+                room_loading::ceres_actors(doorway.through, run, &content.rooms, random)
+                    .map_err(Fault::Load)?,
+            );
+            loaded.awaiting_actors = false;
         }
         Ok(loaded)
     }
@@ -224,6 +308,7 @@ pub(super) fn draws_jump(doors: Doors, passing: &Passing, report: &world_doors::
 
 /// What the passage loaded from the next room.
 pub(super) struct Loaded {
+    pub(super) awaiting_actors: bool,
     /// The room building it gives, which replaces hers.
     pub(super) room: Option<Room>,
     /// The Ceres actors fetching its contents places, which replace the last room's.

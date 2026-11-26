@@ -19,6 +19,8 @@ use world_doors::Palette;
 pub struct State {
     /// The room's Ceres doors, in its order of its enemies.
     pub doors: Vec<CeresDoor>,
+    /// Population indices of each active door and vent.
+    pub slots: room_loading::ActorSlots,
     /// The room's steam vents, in enemy slot order.
     pub vents: Vec<Vent>,
     /// The Ceres shaft's elevator pad and the cover below it.
@@ -111,6 +113,17 @@ impl State {
         }
     }
 
+    /// Retire the old hall population in slot order as the clearing work progresses.
+    pub(super) fn retire_before(&mut self, first_live: usize) {
+        fn retire<T>(actors: &mut Vec<T>, slots: &mut Vec<usize>, first_live: usize) {
+            let count = slots.partition_point(|slot| *slot < first_live);
+            slots.drain(..count);
+            actors.drain(..count);
+        }
+        retire(&mut self.vents, &mut self.slots.vents, first_live);
+        retire(&mut self.doors, &mut self.slots.doors, first_live);
+    }
+
     /// The station after a frame of play's run of its enemies.
     pub(super) fn ran(&mut self, enemies: &Enemies) {
         self.doors = enemies.doors.iter().map(|run| run.door).collect();
@@ -151,6 +164,7 @@ impl State {
             self.vents = vents;
         }
         if let Some(placed) = placed {
+            self.slots = placed.slots;
             self.vents = placed.vents;
             self.doors = placed.doors;
             self.shaft_overlay = placed.shaft_overlay;

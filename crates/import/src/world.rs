@@ -277,7 +277,7 @@ const DOOR_RULES: [(u16, DoorRule); 3] = [
 const SETUPS: [(u16, RoomSetup); 5] = [
     (0x91bc, RoomSetup::Nothing),
     (0x91d5, RoomSetup::Nothing),
-    (0xc96e, RoomSetup::CeresHazeDoorShut),
+    (0xc96e, RoomSetup::CeresHazeDoorShut { top: [15, 38] }),
     (0xc976, RoomSetup::CeresHaze),
     (0xc97b, RoomSetup::CeresRidleyHaze),
 ];

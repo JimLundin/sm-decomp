@@ -218,16 +218,15 @@ seed_frame = 11939
 frames = [11940, 12197]
 power_on = false
 
-# The escape from room 5 through room 2 with no new seed. The shaft entrance
-# needs the room loading rule for its rotating view.
+# The escape from room 5 through room 2 with no new seed, up to destination actor placement.
 [[run]]
 row = "chain-any-0007-E06B"
 start = 0
 end = 3000
-held = 1075
-stop = { failed = "Load(DoorRule(ToCeresElevatorShaft))" }
+held = 1078
+stop = { failed = "Load(TurningShaftVent)" }
 seed_frame = 11939
-frames = [11940, 13014]
+frames = [11940, 13017]
 power_on = false
 
 # The escape's room 4 alone, from its own seed, shaking, and the passage out of it, the doors
@@ -260,10 +259,10 @@ power_on = false
 row = "chain-any-0010-DF8D"
 start = 0
 end = 278
-held = 221
-stop = { failed = "Load(DoorRule(ToCeresElevatorShaft))" }
+held = 224
+stop = { failed = "Load(TurningShaftVent)" }
 seed_frame = 12793
-frames = [12794, 13014]
+frames = [12794, 13017]
 power_on = false
 
 # The intro's last pages alone, from inside page 4's turn: the dissolve to the baby being

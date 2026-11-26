@@ -9,7 +9,7 @@ use core::num::Wrapping;
 use types::{Pair, Side};
 
 #[derive(Clone, Copy)]
-pub(super) struct Slot(u16);
+pub(super) struct Slot(pub(super) u16);
 
 impl Slot {
     /// Its place among the enemy slots.

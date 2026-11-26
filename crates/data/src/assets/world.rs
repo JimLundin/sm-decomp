@@ -64,11 +64,25 @@ pub enum RoomSetup {
     /// The station's haze: a backdrop colour blended over the screen.
     CeresHaze,
     /// The haze, with the elevator's door shut as solid blocks: the escape's elevator room.
-    CeresHazeDoorShut,
+    CeresHazeDoorShut {
+        /// Top cell of the four-cell closing placement.
+        top: [u16; 2],
+    },
     /// The haze, with Ridley's room's own tile bases and the floor's screen mode.
     CeresRidleyHaze,
     /// Nothing.
     Nothing,
+}
+
+impl RoomSetup {
+    /// The top cell of the closing placement added by this setup.
+    #[must_use]
+    pub const fn closing_anchor(self) -> Option<[u16; 2]> {
+        match self {
+            Self::CeresHazeDoorShut { top } => Some(top),
+            Self::CeresHaze | Self::CeresRidleyHaze | Self::Nothing => None,
+        }
+    }
 }
 
 /// A coordinate on a room's grid of 256-pixel screens.
@@ -168,6 +182,8 @@ pub struct Version {
 /// A steam vent as the room places it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CeresVentPlacement {
+    /// Slot in the complete enemy population.
+    pub slot: usize,
     /// Which way the vent blows.
     pub facing: CeresVentFacing,
     /// The centre of the vent in the room.
@@ -194,6 +210,8 @@ pub enum CeresVentFacing {
 /// A Ceres door actor as a room's start places it: what it is and where.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CeresDoorPlacement {
+    /// Slot in the complete enemy population.
+    pub slot: usize,
     /// What it is.
     pub kind: CeresDoorKind,
     /// The centre of its box in the room.

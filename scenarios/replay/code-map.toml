@@ -1260,3 +1260,19 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/played/station.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/warning.rs" },
 ]
+
+[[rule]]
+id = "world-shaft-entry/ShaftViewStarts"
+targets = [
+  { role = "model", path = "crates/game/src/production/shaft_entry.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/shaft_entry.rs" },
+]
+
+[[rule]]
+id = "world-shaft-entry/ShaftDoorSeals"
+targets = [
+  { role = "model", path = "crates/game/src/production/shaft_entry.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/shaft_entry.rs" },
+]

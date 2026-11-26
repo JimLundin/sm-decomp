@@ -72,10 +72,11 @@ pub(super) struct Room {
 /// The facts held from the seed, and what play reads of the seed's room: its geometry and
 /// camera room as the seed holds them, and its doors by the seed's door cells.
 pub(super) fn room(
-    seed: &[u8],
+    record: &oracle_record::FrameRecord,
     content: &connected::Content,
     world: &world::World,
 ) -> Result<(Room, played::passage::Room, run_progress::Progress), Outcome> {
+    let seed = &record.wram;
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator || crate::replay::hud::time_stopped(seed)? {
         return Err(Outcome::Unsupported {
@@ -86,6 +87,7 @@ pub(super) fn room(
     let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
     let (doorways, map) = doorways(seed, world)?;
     let played = played::passage::Room {
+        entry: crate::replay::shaft_entry::observed(record)?,
         geometry: inputs.geometry.clone(),
         doorways,
         camera: inputs.camera.clone(),
@@ -130,7 +132,7 @@ fn doorways(seed: &[u8], world: &world::World) -> Result<Doorways, Outcome> {
 
 /// The rooms the engine loads, their tilesets, the sprites' colours and the slopes, imported
 /// from the player's ROM.
-pub(super) fn rooms(image: &Rom) -> Result<room_loading::Rooms, Outcome> {
+pub(in crate::replay) fn rooms(image: &Rom) -> Result<room_loading::Rooms, Outcome> {
     let bad = || data_failure(None, "played rooms import");
     let world = import::world::import(image.lorom(), &import::world::LOADED).map_err(|_| bad())?;
     let tilesets = import::tileset::import(image.lorom(), &world).map_err(|_| bad())?;

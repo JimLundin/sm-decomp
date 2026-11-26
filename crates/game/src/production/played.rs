@@ -460,7 +460,7 @@ impl State {
                 passing,
             )
             .ok_or(Fault::Hud)?;
-        let loaded = self.load(exports.report.call, content, &mut palette, &mut random)?;
+        let mut loaded = self.load(exports.report.call, passing, content, &mut palette, &mut random)?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         let mut quake = enemies.quake;
         // Room loading's effects set-up, inside the building, stops the shake.
@@ -474,7 +474,7 @@ impl State {
             quake::stop(&mut quake);
         }
         self.station
-            .passed(&mut enemies, loaded.actors, pad_and_cover);
+            .passed(&mut enemies, loaded.actors.take(), pad_and_cover);
         self.quake = Model(quake);
         self.samus.movement.0 = moved;
         self.samus.last_draw_jump.0 = last_draw_jump;
@@ -483,7 +483,7 @@ impl State {
         self.frame = self.frame.after(exports.report.finishing, random);
         self.clock_picture = clock_picture;
         self.hud.0.out_of_play(&hud::out_of_play(&exports.report));
-        self.passage.passed(exports.doors, loaded.room);
+        self.finish_passage(&exports, loaded, passing.actor_fetch);
         Ok(Outputs {
             movement: None,
             sounds: Vec::new(),

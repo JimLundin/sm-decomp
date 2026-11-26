@@ -90,6 +90,8 @@ pub enum OwnedState {
     LandingSite(Box<crate::production::played::landing_site::Run>),
     /// Complete flight to Zebes and its receiving owners.
     Zebes(Box<crate::production::played::zebes::State>),
+    /// Built room level, view, rotation seed, haze and closing placement.
+    ShaftEntry(crate::production::shaft_entry::State),
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
     /// Every actor, pending timer and background offset of the flashback encounter.

@@ -39,6 +39,7 @@ mod runner;
 mod save_files;
 mod sender_offer;
 mod shaft;
+mod shaft_entry;
 mod shot_drawing;
 mod touched_cells;
 mod weapons;
@@ -132,6 +133,10 @@ fn production_failure(cut: u64, fault: game::production::ProductionFault) -> Out
         game::production::ProductionFault::Unsupported(dependency) => Outcome::Unsupported {
             cut: Some(cut),
             dependency: format!("{dependency:?}"),
+        },
+        game::production::ProductionFault::RoomLoad(fault) => Outcome::Unsupported {
+            cut: Some(cut),
+            dependency: format!("room loading {fault:?}"),
         },
         game::production::ProductionFault::WrongScope => {
             data_failure(Some(cut), "production input scope")

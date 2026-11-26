@@ -136,9 +136,9 @@ set in the row its species loads to instead. No other species' placement changes
 
 ## Ceres escape boundaries
 
-The escape's last passage needs the shaft entrance's room loading rule
-(`Load(DoorRule(ToCeresElevatorShaft))`). Vents attached to the turning shaft
-need the shaft's motion (`TurningShaftVent`).
+The escape's last passage stops when the destination population places vents attached to
+the turning shaft (`TurningShaftVent`). The overlay's graphics, the ensuing rotation,
+physical mode changes during scanout and the haze fade retain their own owners.
 
 ## The engine: planned differences from the original
 

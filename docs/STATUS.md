@@ -341,15 +341,19 @@ lets her go at cut 101, and she leaves by room 1's door. `chain-any-0002-DF8D` a
 its seed. The Ceres rows from `chain-any-0001-DF45` hold 2,885 cuts through room 6's cut 1,261.
 Starting at `chain-any-0003-DFD7` holds 2,191 cuts. From her arrival
 (`any-ceres-arrival`, below) they hold 3,108, to movie frame 11,423. In the
-escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 1,075 through room 2
+escape, room 5 (`chain-any-0007-E06B`) holds all 258 cuts on its own and 1,078 through room 2
 without a new seed. Room 4 (`chain-any-0008-E021`) holds all 263 cuts, including the placement
 of room 3's vents. Room 3 (`chain-any-0009-DFD7`) holds all 330 cuts. Its passage counts jump
 during the darkening draws and on the first cut of brightening work, including the interrupted
 draw at cut 291. Active play counts jump against the previous history-writing draw. Pose
 choice reads the controller's new press. Played replay compares the carried sample as
 `movement.last-draw-jump`. Room 2 (`chain-any-0010-DF8D`) lands the backward leap at cut 87 and holds
-until cut 221. The shaft entrance's room loading reports `Load(DoorRule(ToCeresElevatorShaft))`
-at room 2 cut 222, or cut 1,076 in the continuous escape.
+through cut 224. At cut 222 the shaft installer closes four cells, publishes its affine
+transform and seeds rotation. The previous population clears across cuts 222–224. At
+cut 225, or 1,079 in the continuous escape, destination placement reports
+`Load(TurningShaftVent)`. The scoped installer continues through cut 278, including
+retirement of the closing placement at 234. Its 57 cuts compare all 768 cells and marks,
+the placement, haze program, display request, affine registers and rotation seed.
 
 Steam State is compared at finished cuts, including the puff figure. Room 3's puff pushes
 left at cut 137 and room 2's pushes right at cut 66. Both give a five-frame push, leave

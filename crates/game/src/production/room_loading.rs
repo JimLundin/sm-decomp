@@ -7,7 +7,8 @@
 //! its doors to other rooms by cell, and the camera's room.
 
 use super::connected::inputs::{CameraInputs, Lead, Screen};
-use super::played::passage::{Doorway, Room};
+use super::played::passage::{ActorFetch, Doorway, Room};
+use super::shaft_entry;
 use super::world::{Boundary, MovementWorld};
 use boss_ceres_ridley::{
     CeresDoor, CeresRidley, ColourSet, DoorColours, DoorKind, DoorPalette, GoalColours,
@@ -18,9 +19,7 @@ use data::assets::actors::{self, Actors, SpriteRow};
 use data::assets::art::{Colour, ROW_COLOURS};
 use data::assets::samus::palettes::SamusPalettes;
 use data::assets::tilesets::Tilesets;
-use data::assets::world::{
-    self, CeresDoorKind, CeresVentFacing, Door, DoorRule, ItemLighting, RoomSetup, World,
-};
+use data::assets::world::{self, CeresDoorKind, CeresVentFacing, Door, ItemLighting, World};
 use data::id::DoorwayId;
 use data::level::slope::{Shape, Slopes};
 use data::level::{BlockKind, PlmChoice, ScrollArea};
@@ -84,10 +83,7 @@ pub enum LoadFault {
     TurningShaftVent,
     /// The version places a PLM whose blocks no owner here places.
     Plm,
-    /// The version's setup runs what no owner here runs.
-    RoomSetup(RoomSetup),
-    /// Passing through the doorway runs what no owner here runs.
-    DoorRule(DoorRule),
+
     /// A slope block names a shape the slopes don't hold.
     Slope,
     /// The new game's start room, or the version it starts in, is not in the world.
@@ -118,7 +114,7 @@ pub fn load(
     let progress = run.progress;
     match call {
         Some(RoomCall::FetchContents) => {
-            contents(version(rooms, through, progress)?, run, rooms, palette)
+            fetch_palette(through, run, rooms, palette, ActorFetch::Place)
         }
         Some(RoomCall::FetchTiles) => {
             let version = version(rooms, through, progress)?;
@@ -155,8 +151,19 @@ pub struct CeresActors {
     pub doors: Vec<CeresDoor>,
     /// Its steam vents, in enemy slot order.
     pub vents: Vec<Vent>,
+    /// Population slots for the vents and doors during retirement.
+    pub slots: ActorSlots,
     /// It places the shaft's overlay, which shows the shaft's lights.
     pub shaft_overlay: bool,
+}
+
+/// The active actors' original population indices.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ActorSlots {
+    /// Slot of each vent in the same order as its state.
+    pub vents: Vec<usize>,
+    /// Slot of each door in the same order as its state.
+    pub doors: Vec<usize>,
 }
 
 /// What a version's start places of the station's actors, in its order of its enemies: Ridley
@@ -208,11 +215,11 @@ fn placed(version: &world::Version, run: Run<'_>) -> Placed {
 /// The station actors the room `through` leads to places as its contents are fetched.
 ///
 /// Ridley places before the doors because his placing can change the stage they read. Each
-/// steam vent draws once from `random`, in slot order. The supported doorway rules and room
-/// setups affect the station's drawing only.
+/// steam vent draws once from `random`, in slot order. Doorway and room setup belong to the
+/// preceding static contents installation.
 ///
 /// # Errors
-/// A missing room, unsupported doorway rule or room setup, or unowned actor leaves `random`
+/// A missing room or unowned actor leaves `random`
 /// unchanged.
 pub fn ceres_actors(
     through: DoorwayId,
@@ -221,18 +228,30 @@ pub fn ceres_actors(
     random: &mut RandomSequence,
 ) -> Result<CeresActors, LoadFault> {
     let version = version(rooms, through, run.progress)?;
-    let rule = rooms
-        .world
-        .doorway(through)
-        .ok_or(LoadFault::Room(through))?
-        .rule;
-    if !matches!(rule, DoorRule::Nothing | DoorRule::FromCeresElevatorShaft) {
-        return Err(LoadFault::DoorRule(rule));
-    }
     actors_of(version, run, random)
 }
 
-/// The Ceres actors `version` places, refusing another actor or a setup no owner here runs.
+/// The entry selected independently by the incoming doorway and room version.
+///
+/// # Errors
+/// The door or its selected version must exist in the imported world.
+pub fn setup(
+    rooms: &Rooms,
+    through: DoorwayId,
+    progress: &Progress,
+) -> Result<shaft_entry::Setup, LoadFault> {
+    Ok(shaft_entry::Setup {
+        door: rooms
+            .world
+            .doorway(through)
+            .ok_or(LoadFault::Room(through))?
+            .rule,
+        room: version(rooms, through, progress)?.setup,
+        ridley_beaten: progress.defeated[types::Area::Ceres][BossKind::MainBoss],
+    })
+}
+
+/// The Ceres actors `version` places, refusing other actors.
 fn actors_of(
     version: &world::Version,
     run: Run<'_>,
@@ -244,12 +263,6 @@ fn actors_of(
     };
     if !version.enemies.iter().all(|loaded| owned(loaded.species)) {
         return Err(LoadFault::OtherActors);
-    }
-    if !matches!(
-        version.setup,
-        RoomSetup::Nothing | RoomSetup::CeresHaze | RoomSetup::CeresRidleyHaze
-    ) {
-        return Err(LoadFault::RoomSetup(version.setup));
     }
     let mut drawn = *random;
     let mut vents = Vec::with_capacity(version.ceres_vents.len());
@@ -269,6 +282,15 @@ fn actors_of(
     *random = drawn;
     Ok(CeresActors {
         vents,
+        slots: ActorSlots {
+            vents: version.ceres_vents.iter().map(|vent| vent.slot).collect(),
+            doors: version
+                .ceres_doors
+                .iter()
+                .filter(|door| door.kind != CeresDoorKind::ShaftOverlay)
+                .map(|door| door.slot)
+                .collect(),
+        },
         ridley: placed.ridley,
         doors: placed.doors,
         shaft_overlay: placed.shaft_overlay,
@@ -280,12 +302,11 @@ fn actors_of(
 ///
 /// What her moves meet is the version's level, with the blocks its scroll PLMs and extensions
 /// place as the room starts, and no actor's box: fetching its contents places no actor but the
-/// Ceres doors ([`ceres_doors`]), which play carries itself. The original places those blocks as
+/// Ceres doors ([`ceres_actors`]), which play carries itself. The original places those blocks as
 /// the contents are fetched; nothing reads her room between. Its doors to other rooms are the
 /// door blocks of that level; a door block lets her through when its door leads to a room. The
 /// camera's room is the version's scroll areas, the room's size and its scrollers, and building
-/// it turns the camera's lead back to ahead. Neither the room's setup nor the doorway's rule
-/// changes any of it: fetching the contents refuses those that would ([`ceres_doors`]).
+/// it turns the camera's lead back to ahead. The following contents fetch applies the doorway rule and room setup to this built room.
 ///
 /// # Errors
 /// A doorway or room the content lacks, a version placing PLMs no owner here places, or a level
@@ -319,14 +340,15 @@ fn built(
         return Err(LoadFault::Plm);
     }
     let width = room.size.blocks_across();
-    let mut kinds: Vec<BlockKind> = version.level.iter().map(|block| block.kind).collect();
+    let mut level = version.level.clone();
     for (index, kind) in version.plms.placed_blocks(width) {
-        if let Some(slot) = kinds.get_mut(usize::from(index)) {
-            *slot = kind;
+        if let Some(slot) = level.get_mut(usize::from(index)) {
+            slot.kind = kind;
         }
     }
     let mut screens: Vec<Screen> = version.scrolls.iter().copied().map(screen).collect();
     screens.extend(before.screens.iter().skip(screens.len()));
+    let kinds: Vec<_> = level.iter().map(|block| block.kind).collect();
     let door_cells = kinds.iter().zip(0_u16..).filter_map(|(kind, at)| {
         let BlockKind::Door(door) = kind else {
             return None;
@@ -336,6 +358,11 @@ fn built(
     let leads = |place| matches!(room.doors.get(place), Some(Door::To(_)));
     let (cells, lets_through) = blocks(&kinds, width, &rooms.slopes, leads)?;
     Ok(Room {
+        entry: shaft_entry::State {
+            width,
+            cells: level,
+            ..shaft_entry::State::default()
+        },
         geometry: MovementWorld::new(width, cells, lets_through, Vec::new(), Boundary::Air)
             .map_err(|_| LoadFault::Geometry)?,
         doorways: doorways(&rooms.world, room, door_cells)?,
@@ -547,7 +574,7 @@ pub fn start(
     for (goal, colour) in palette.goal.iter_mut().zip(colours) {
         *goal = types::Colour::new(colour.0).ok_or(LoadFault::Colour)?;
     }
-    contents(version, run, rooms, &mut palette)?;
+    contents(version, run, rooms, &mut palette, ActorFetch::Place)?;
     if let Some(row) = suit_row(&mut palette.goal) {
         for (goal, colour) in row.iter_mut().zip(her_row) {
             *goal = types::Colour::new(colour.0).ok_or(LoadFault::Colour)?;
@@ -592,6 +619,23 @@ fn entered(rooms: &Rooms, through: DoorwayId) -> Result<&world::Room, LoadFault>
         .ok_or(LoadFault::Room(through))
 }
 
+/// Publish the portion of the destination colours reached by the fetch.
+pub(super) fn fetch_palette(
+    through: DoorwayId,
+    run: Run<'_>,
+    rooms: &Rooms,
+    palette: &mut Palette,
+    fetched: ActorFetch,
+) -> Result<(), LoadFault> {
+    contents(
+        version(rooms, through, run.progress)?,
+        run,
+        rooms,
+        palette,
+        fetched,
+    )
+}
+
 /// Fetching the contents, in the original's order, so a later row wins where two share one:
 /// her shots' palette for the beams switched on, shown at once as well as headed for; the
 /// flashing enemies' white and the common sprites'; each species' the version loads, in its
@@ -603,6 +647,7 @@ fn contents(
     run: Run<'_>,
     rooms: &Rooms,
     palette: &mut Palette,
+    fetched: ActorFetch,
 ) -> Result<(), LoadFault> {
     let inventory = &run.progress.inventory;
     let mut screen = palette.screen;
@@ -615,22 +660,26 @@ fn contents(
     set(&mut goal, SpriteRow::BEAM, 0, &beam.0)?;
     set(&mut goal, SpriteRow::FLASH, 0, &rooms.actors.flash.0)?;
     set(&mut goal, SpriteRow::COMMON, 0, &rooms.actors.common.0)?;
-    for loaded in &version.enemies {
-        let own = rooms
-            .actors
-            .species(loaded.species)
-            .and_then(|species| species.palette)
-            .ok_or(LoadFault::Species(loaded.species))?;
-        set(&mut goal, loaded.row, 0, &own.0)?;
+    if !matches!(fetched, ActorFetch::Clearing(_)) {
+        for loaded in &version.enemies {
+            let own = rooms
+                .actors
+                .species(loaded.species)
+                .and_then(|species| species.palette)
+                .ok_or(LoadFault::Species(loaded.species))?;
+            set(&mut goal, loaded.row, 0, &own.0)?;
+        }
     }
-    let placed = placed(version, run);
-    if let Some(ridley) = placed.ridley {
-        room_colours(ridley, &rooms.actors.ceres_ridley, &mut goal)?;
+    if fetched == ActorFetch::Place {
+        let placed = placed(version, run);
+        if let Some(ridley) = placed.ridley {
+            room_colours(ridley, &rooms.actors.ceres_ridley, &mut goal)?;
+        }
+        for colours in placed.door_colours {
+            door_goal(colours, &rooms.actors, &mut goal)?;
+        }
+        set(&mut goal, SpriteRow::SUIT, 0, &suit(rooms, inventory).0)?;
     }
-    for colours in placed.door_colours {
-        door_goal(colours, &rooms.actors, &mut goal)?;
-    }
-    set(&mut goal, SpriteRow::SUIT, 0, &suit(rooms, inventory).0)?;
     palette.screen = screen;
     palette.goal = goal;
     Ok(())
@@ -843,6 +892,7 @@ mod tests {
     /// A Ceres actor of `kind`, placed at an invented position.
     fn placed(kind: CeresDoorKind) -> data::assets::world::CeresDoorPlacement {
         data::assets::world::CeresDoorPlacement {
+            slot: 0,
             kind,
             position: types::Pair {
                 x: Wrapping(128),
@@ -1153,60 +1203,6 @@ mod tests {
         assert_eq!(built(&rooms()).unwrap().camera.lead, Lead::Ahead);
     }
 
-    #[test]
-    fn fetching_the_contents_refuses_a_setup_or_door_rule_that_changes_what_play_reads() {
-        let progress = run_progress::Progress::default();
-        let run = Run {
-            progress: &progress,
-            ceres: boss_ceres_ridley::Stage::Calm,
-        };
-        let mut shut = version(1);
-        shut.setup = RoomSetup::CeresHazeDoorShut;
-        let rooms = rooms_of(shut, version(0));
-        assert_eq!(
-            super::ceres_actors(CHOSEN, run, &rooms, &mut test_random()),
-            Err(LoadFault::RoomSetup(RoomSetup::CeresHazeDoorShut))
-        );
-        assert_eq!(
-            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
-            Ok(no_actors())
-        );
-        let mut rooms = rooms;
-        rooms.world = World::new(
-            rooms.world.rooms().cloned().collect(),
-            [CHOSEN, OTHER]
-                .map(|id| {
-                    let mut doorway = *rooms.world.doorway(id).unwrap();
-                    if id == OTHER {
-                        doorway.rule = DoorRule::ToCeresElevatorShaft;
-                    }
-                    doorway
-                })
-                .to_vec(),
-        )
-        .unwrap();
-        assert_eq!(
-            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
-            Err(LoadFault::DoorRule(DoorRule::ToCeresElevatorShaft))
-        );
-        // The way out of the elevator room only turns the screen out of its rotating view.
-        rooms.world = World::new(
-            rooms.world.rooms().cloned().collect(),
-            [CHOSEN, OTHER]
-                .map(|id| {
-                    let mut doorway = *rooms.world.doorway(id).unwrap();
-                    doorway.rule = DoorRule::FromCeresElevatorShaft;
-                    doorway
-                })
-                .to_vec(),
-        )
-        .unwrap();
-        assert_eq!(
-            super::ceres_actors(OTHER, run, &rooms, &mut test_random()),
-            Ok(no_actors())
-        );
-    }
-
     /// What the fixture's version places: its one door.
     fn no_actors() -> super::CeresActors {
         let door = |kind, facing| {
@@ -1219,6 +1215,10 @@ mod tests {
             .door
         };
         super::CeresActors {
+            slots: super::ActorSlots {
+                vents: vec![],
+                doors: vec![0],
+            },
             vents: Vec::new(),
             ridley: None,
             doors: vec![door(boss_ceres_ridley::DoorKind::Door, Side::Left)],

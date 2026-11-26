@@ -46,6 +46,7 @@ impl State {
             passage: super::passage::State {
                 doors: Doors::Play,
                 doorway: None,
+                awaiting_actors: false,
                 room: started.room,
                 map_room: started.map.0,
             },
@@ -55,6 +56,7 @@ impl State {
             },
             station: super::station::State {
                 doors: started.actors.doors,
+                slots: started.actors.slots,
                 vents: started.actors.vents,
                 pad_and_cover: crate::production::shaft::GONE,
                 shaft_overlay: started.actors.shaft_overlay,

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "824a1167f1bade561337a3931f6b39883c9940541fc710b51664a0a9a9e1ea10"
+index_sha256 = "2c98faf2a0a9b1c4d2cc65035751d047c1ccff7f1b109b5b89014ea4a41c6a91"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1548,5 +1548,23 @@ replies = 0
 null_cuts = 0
 null_fields = 350
 restorations = 341
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "room-loading/escape-shaft-entry"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "895db69227834a7467fcda4bed5bd64e05ec9ee10a35709917948594137a394c"
+
+[case.counts]
+cuts = 57
+fields = 342
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 45
+restorations = 57
 pending_boundaries = 0
 pending_restorations = 0

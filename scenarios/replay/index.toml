@@ -2140,3 +2140,25 @@ provider = "preceding pinned record and locked NMI boundaries"
 fields = ["frame of work finished", "audio readiness", "initial room memory"]
 phase = "frame boundary"
 claim = "The seed admits the room; platform opportunities have no warning phase or countdown-start authority."
+
+[[case]]
+id = "room-loading/escape-shaft-entry"
+kind = "scoped"
+row = "chain-any-0010-DF8D"
+start = { source = "cache-cut", frame = 221 }
+end = { cut_inclusive = 278 }
+rules = ["world-shaft-entry/ShaftViewStarts", "world-shaft-entry/ShaftDoorSeals"]
+profile = "reference"
+responsibilities = ["room-loading"]
+content = "player-rom-import"
+inputs = "shaft-setup-turns"
+expectations = { provider = "pinned-record-cache", fields = ["shaft-entry.view", "shaft-entry.affine-registers", "shaft-entry.rotation", "shaft-entry.cells", "shaft-entry.placement", "shaft-entry.haze"], outputs = [] }
+checkpoints = true
+limits = ["The installed mode split and affine registers are compared. The scanout scheduler, physical PPU background mode, actor population, subsequent haze intensity and shaft rotation are outside this static setup."]
+
+[[case.borrowed]]
+dependency = "passage.fetch-and-block-turn"
+provider = "pinned passage phase and NMI completion"
+fields = ["incoming doorway", "progress", "fetch opportunity", "slide wait completion"]
+phase = "early contents and first block-script turn"
+claim = "The scoped entry borrows passage timing and begins with its built grid. The played passage selects and builds its own destination."

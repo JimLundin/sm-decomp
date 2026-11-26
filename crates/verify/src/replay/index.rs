@@ -50,6 +50,8 @@ pub enum Responsibility {
     ZebesDrawing,
     /// The scheduler's published landing request and retained destination.
     ZebesScheduler,
+    /// Static entry setup for the built room.
+    RoomLoading,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -193,6 +195,8 @@ pub enum InputProvider {
     SaveFileBoundaries,
     /// Authored demo controls and borrowed cinematic weapon opportunities.
     IntroMissileInputs,
+    /// Passage contents and block-script opportunities.
+    ShaftSetupTurns,
     /// Independent passage phase and sampled button at each draw opportunity.
     PassageJumpDraws,
     /// Scoped discovery and delivery inputs, including the interrupted start.
@@ -518,6 +522,25 @@ pub enum ObservationId {
     /// Ordered missile and exhaust OAM bytes.
     #[serde(rename = "weapons.intro-oam")]
     IntroMissileOam,
+    /// Shaft setup view.
+    #[serde(rename = "shaft-entry.view")]
+    ShaftView,
+    /// Shaft setup affine-registers.
+    #[serde(rename = "shaft-entry.affine-registers")]
+    ShaftTransform,
+    /// Shaft setup rotation.
+    #[serde(rename = "shaft-entry.rotation")]
+    ShaftRotation,
+    /// Shaft setup cells.
+    #[serde(rename = "shaft-entry.cells")]
+    ShaftLevel,
+    /// Shaft setup placement.
+    #[serde(rename = "shaft-entry.placement")]
+    ShaftPlacement,
+    /// Shaft setup haze.
+    #[serde(rename = "shaft-entry.haze")]
+    ShaftHaze,
+
     /// Jump count and pending landing or end check.
     #[serde(rename = "movement.drawn-jump-held")]
     DrawnJumpHeld,
@@ -1106,6 +1129,7 @@ fn rule_exists(rule: &str) -> bool {
         || screens_zebes::BehaviourId::ALL
             .iter()
             .any(|id| rule == format!("screens-zebes/{id:?}"))
+        || game::production::shaft_entry::CATALOGUE.contains(&rule)
         || samus_movement::CATALOGUE
             .iter()
             .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
@@ -1336,6 +1360,12 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
             Responsibility::ZebesDrawing
         }
         O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
+        O::ShaftView
+        | O::ShaftTransform
+        | O::ShaftRotation
+        | O::ShaftLevel
+        | O::ShaftPlacement
+        | O::ShaftHaze => Responsibility::RoomLoading,
         O::HealthTailState
         | O::HealthTailWarning
         | O::HealthTailDrawnProtection
@@ -1431,6 +1461,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
         ("world-camera/", Responsibility::Camera),
+        ("world-shaft-entry/", Responsibility::RoomLoading),
         ("world-doors/", Responsibility::Doors),
         ("weapons-projectiles/", Responsibility::Weapons),
         ("enemy-interactions/", Responsibility::Contact),
@@ -1468,6 +1499,8 @@ fn movement_witnessed_fields(
             O::BlackoutBattery,
             O::BlackoutTimerDrawing,
         ],
+        "world-shaft-entry/ShaftViewStarts" => &[O::ShaftView, O::ShaftTransform, O::ShaftRotation],
+        "world-shaft-entry/ShaftDoorSeals" => &[O::ShaftLevel, O::ShaftPlacement, O::ShaftHaze],
         "samus-movement/Jumping" if provider == InputProvider::PassageJumpDraws => {
             &[O::DrawnJumpHeld, O::LastDrawJump]
         }
@@ -2175,6 +2208,28 @@ fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
             ]
 }
 
+fn shaft_provider_valid(
+    case: &Case,
+    observations: &BTreeSet<ObservationId>,
+    recorded: bool,
+) -> bool {
+    recorded
+        && case.kind == CaseKind::Scoped
+        && case.row == super::shaft_entry::ROW
+        && case.start
+            == Start::CacheCut {
+                frame: super::shaft_entry::START,
+            }
+        && case.end.cut_inclusive == super::shaft_entry::END
+        && case.inputs == InputProvider::ShaftSetupTurns
+        && case.content == ContentProvider::PlayerRomImport
+        && case.checkpoints
+        && observations.len() == 6
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+        && case.expectations.outputs.is_empty()
+}
+
 fn zebes_provider_valid(case: &Case) -> bool {
     use super::zebes::{INTEGRATED_FIELDS, INTEGRATED_OUTPUTS, SCOPED_FIELDS, SCOPED_OUTPUTS};
     use Responsibility::{Health, Zebes, ZebesDrawing, ZebesScheduler};
@@ -2315,6 +2370,7 @@ fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<Observatio
         [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
         [Responsibility::Weapons] => intro_missile_provider_valid(case, recorded),
         [Responsibility::Discovery] => discovery_provider_valid(case, recorded),
+        [Responsibility::RoomLoading] => shaft_provider_valid(case, observations, recorded),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Playback] => playback_provider_valid(case, recorded),

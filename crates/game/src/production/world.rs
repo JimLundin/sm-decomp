@@ -126,6 +126,17 @@ impl MovementWorld {
         self.index(at).is_some()
     }
 
+    /// A room setup replaces a cell's terrain with ordinary solid collision.
+    pub(crate) fn close(&mut self, at: Cell) -> Result<(), WorldFault> {
+        let index = self.index(at).ok_or(WorldFault::Shape)?;
+        *self.cells.get_mut(index).ok_or(WorldFault::Shape)? = Block::Solid;
+        *self
+            .lets_through
+            .get_mut(index)
+            .ok_or(WorldFault::Permissions)? = false;
+        Ok(())
+    }
+
     fn index(&self, at: Cell) -> Option<usize> {
         if at.x >= self.width {
             return None;

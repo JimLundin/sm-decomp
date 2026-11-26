@@ -200,9 +200,11 @@ pub fn ceres_doors(
         .map_err(CeresActorsError::Population)?
         .placements
         .iter()
-        .filter(|placed| placed.species == door)
-        .map(|placed| {
+        .enumerate()
+        .filter(|(_, placed)| placed.species == door)
+        .map(|(slot, placed)| {
             Ok(CeresDoorPlacement {
+                slot,
                 kind: ceres_door_kind(placed.parameter_1)
                     .ok_or(CeresActorsError::Kind(placed.parameter_1))?,
                 position: Pair {
@@ -240,8 +242,9 @@ pub fn ceres_vents(
         .map_err(CeresActorsError::Population)?
         .placements
         .iter()
-        .filter(|placed| placed.species == SpeciesKey(CERES_STEAM_PLACE))
-        .map(|placed| {
+        .enumerate()
+        .filter(|(_, placed)| placed.species == SpeciesKey(CERES_STEAM_PLACE))
+        .map(|(slot, placed)| {
             let facing = match placed.parameter_1 {
                 0 => CeresVentFacing::Up,
                 1 => CeresVentFacing::Left,
@@ -252,6 +255,7 @@ pub fn ceres_vents(
                 other => return Err(CeresActorsError::Kind(other)),
             };
             Ok(CeresVentPlacement {
+                slot,
                 facing,
                 position: Pair {
                     x: Wrapping(placed.x),

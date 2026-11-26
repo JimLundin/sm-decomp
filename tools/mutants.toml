@@ -1999,3 +1999,13 @@ after = "        if timing.publishes && draws {"
 case = "ridley/warning-through-passage"
 cut = 1611
 field = "ridley.warning.clock.published"
+
+[[fault]]
+name = "shaft-closing-placement-stays-after-first-turn"
+responsibility = "room-loading"
+file = "crates/game/src/production/shaft_entry.rs"
+before = "self.placement = None;"
+after = "let _kept = self.placement;"
+case = "room-loading/escape-shaft-entry"
+cut = 234
+field = "shaft-entry.placement"

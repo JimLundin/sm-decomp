@@ -92,6 +92,8 @@ pub enum ProductionContent {
     SaveFiles(Box<crate::exact::save_files::Format>),
     /// Checked cinematic missile and power weapon assets.
     IntroMissiles(Box<super::played::intro_missiles::Content>),
+    /// The fixed room setup selected by the incoming door and destination version.
+    ShaftEntry(super::shaft_entry::Setup),
     /// Jump history requires only the observed draw button sample.
     JumpHistory,
     /// Imported discovery drawings, poses and particle paths.
@@ -150,6 +152,8 @@ pub enum ProductionRules {
     SaveFiles,
     /// Complete weapon rule parameters in the cinematic.
     IntroMissiles(weapons_projectiles::Rules),
+    /// The fixed room setup selected by the incoming door and destination version.
+    ShaftEntry,
     /// Fixed jump history on paused draws.
     JumpHistory,
     /// The fixed shipping discovery rules.

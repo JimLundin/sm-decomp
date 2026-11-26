@@ -72,6 +72,30 @@ pub(in crate::replay) const fn finished(record: &FrameRecord) -> bool {
     matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested))
 }
 
+/// The interrupt cursor in the old population's clearing loops. Slot identities
+/// are retired by their owner's original indices, independently of the observed roster.
+pub(super) fn actor_fetch(record: &FrameRecord) -> game::production::played::passage::ActorFetch {
+    use game::production::played::passage::ActorFetch;
+    match record.cut {
+        Cut::NmiReturn(nmi) if matches!(nmi.interrupted_pc, 0x00a0_8a7f..=0x00a0_8a87) => {
+            // The clear writes a word, then advances its cursor twice. Count a slot
+            // as retired as soon as its identity word was written.
+            let ahead = match nmi.interrupted_pc {
+                0x00a0_8a83 => 2,
+                0x00a0_8a84 | 0x00a0_8a85 => 1,
+                _ => 0,
+            };
+            ActorFetch::Clearing(usize::from(record.cpu.x).saturating_add(ahead).div_ceil(64))
+        }
+        Cut::NmiReturn(nmi) if matches!(nmi.interrupted_pc, 0x00a0_8aa9..=0x00a0_8ab0) => {
+            ActorFetch::Graphics
+        }
+        Cut::NmiReturn(_) | Cut::VblankWithoutNmi | Cut::NmiStillRunning { .. } => {
+            ActorFetch::Place
+        }
+    }
+}
+
 /// The borrowed lag of the contents' fetch: done on its first frame. The fetch's work waits on
 /// its own uploads, so every NMI through it is a lag NMI and none says when its colours were
 /// set; the record shows them set within the slide, and the visor lit as the slide ends, which

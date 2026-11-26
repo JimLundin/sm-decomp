@@ -19,6 +19,7 @@ pub(super) enum InputReader {
     Playback(Vec<game::production::playback::Cut>),
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
+    ShaftEntry(Vec<game::production::shaft_entry::Opportunity>),
     JumpHistory(Vec<Option<samus_movement::JumpButton>>),
     Discovery(super::discovery::Inputs),
     Departure(super::departure::Tape<game::production::played::departure::Input>),
@@ -46,6 +47,7 @@ pub(super) enum ExpectedReader {
     Playback(Vec<ExpectedCut>),
     SaveFiles(super::save_files::Expected),
     IntroMissiles(super::intro_missiles::Expected),
+    ShaftEntry(Vec<ExpectedCut>),
     JumpHistory(Vec<ExpectedCut>),
     Discovery(super::discovery::Expectations),
     Departure(super::departure::Tape<ExpectedCut>),
@@ -71,6 +73,7 @@ pub(super) enum ActualReader {
     Playback,
     SaveFiles,
     IntroMissiles,
+    ShaftEntry,
     JumpHistory,
     Discovery,
     Departure,
@@ -133,6 +136,11 @@ impl InputReader {
             Self::Playback(inputs) => super::playback::advance(production, inputs, cut),
             Self::SaveFiles(inputs) => inputs.advance(production, cut),
             Self::IntroMissiles(inputs) => inputs.advance(production, cut),
+            Self::ShaftEntry(samples) => production
+                .advance(AdvanceInput::ShaftEntry(*super::shaft_entry::at(
+                    samples, cut,
+                )?))
+                .map_err(|fault| super::production_failure(cut, fault)),
             Self::JumpHistory(samples) => super::jump_history::advance(samples, production, cut),
             Self::Discovery(inputs) => inputs.advance(production, cut),
             Self::Departure(tape) => production
@@ -262,6 +270,9 @@ impl ActualReader {
                 InputReader::IntroMissiles(_),
                 ProductionOutputs::IntroMissiles(output),
             ) => super::intro_missiles::actual(production, Some(&output)),
+            (Self::ShaftEntry, InputReader::ShaftEntry(_), ProductionOutputs::ShaftEntry) => {
+                super::shaft_entry::actual(production)
+            }
             (Self::JumpHistory, InputReader::JumpHistory(_), ProductionOutputs::JumpHistory) => {
                 super::jump_history::actual(production)
             }
@@ -344,6 +355,7 @@ impl ActualReader {
                 .map(|battery| vec![battery])
                 .ok_or_else(|| data_failure(None, "battery null scope")),
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
+            Self::ShaftEntry => super::shaft_entry::actual(production),
             Self::JumpHistory => super::jump_history::actual(production),
             Self::Discovery => super::discovery::actual(production, None),
             Self::Explosion => super::explosion::actual(production, None),
@@ -411,6 +423,7 @@ impl ExpectedReader {
             Self::Playback(expected) => super::playback::at(expected, cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
             Self::IntroMissiles(expected) => expected.at(cut),
+            Self::ShaftEntry(tape) => super::shaft_entry::at(tape, cut).cloned(),
             Self::JumpHistory(tape) => super::jump_history::at(tape, cut).cloned(),
             Self::Discovery(expected) => expected.at(cut),
             Self::Departure(tape) => tape.get(cut).cloned(),
