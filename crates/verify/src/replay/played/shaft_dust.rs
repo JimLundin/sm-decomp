@@ -7,7 +7,8 @@ use game::state::video::{OAM_HIGH_BYTES, OAM_SPRITES};
 use oracle_record::FrameRecord;
 
 use super::{
-    Run, appearance, connected, movement, open_rows, platform, read_lock, seed_controller,
+    PictureScope, Run, appearance, connected, movement, open_rows, platform, read_lock,
+    seed_controller,
 };
 use crate::replay::{
     Sources,
@@ -190,8 +191,9 @@ pub(super) fn observations(
         let looks = looks(run)?;
         native.extend(expected(frame.current, looks)?);
         written.extend(actual(run, looks)?);
-        if frame.place.1 == 17 {
-            // The native vent's last piece is one slot farther down when the dust is present.
+        if frame.place.1 == 17 && run.picture_scope != PictureScope::ShaftActors {
+            // The dust and aggregate witnesses check the shifted vent entry. The shaft
+            // actor witness compares its own mounted spans during locked work.
             let video = &run.state.room_video.video;
             let prepared = frame.current.wram.get(PREPARED_OAM).unwrap_or_default();
             native.push(following_vent(prepared, &frame.current.oam)?);

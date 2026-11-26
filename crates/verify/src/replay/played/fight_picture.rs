@@ -126,7 +126,7 @@ pub(super) fn run(
 ) -> Result<(), Outcome> {
     use crate::replay::{readers::ExpectedCut, runner};
 
-    run.compare_fight_picture = true;
+    run.picture_scope = super::PictureScope::Fight;
     admit(&mut run.state.room_video.video, &previous)?;
     let mut digest = Vec::new();
     let mut continuation = None;

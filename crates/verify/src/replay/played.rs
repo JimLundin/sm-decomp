@@ -413,10 +413,17 @@ struct Run<'a> {
     row: &'a str,
     drawing: ridley::flyby::Drawing,
     warning_picture: warning::Picture,
-    compare_fight_picture: bool,
+    picture_scope: PictureScope,
     return_timing: return_timing::ReturnTiming,
     cartridge: Option<power_on::LiveCartridge>,
     blackout: Option<game::production::blackout::LiveRoom>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PictureScope {
+    Room,
+    Fight,
+    ShaftActors,
 }
 
 #[derive(Clone, Copy)]
@@ -547,7 +554,7 @@ impl<'a> Run<'a> {
             row,
             drawing,
             warning_picture,
-            compare_fight_picture: false,
+            picture_scope: PictureScope::Room,
             return_timing: return_timing::ReturnTiming::default(),
             cartridge: None,
             blackout: None,
@@ -961,7 +968,7 @@ impl<'a> Run<'a> {
                 &self.state.room_video.video.memory.vram,
             )?);
         }
-        if self.compare_fight_picture {
+        if self.picture_scope == PictureScope::Fight {
             fight_picture::append_observations(
                 *frame,
                 &self.state.room_video.video,

@@ -10,7 +10,7 @@ use crate::replay::{
         Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
     },
     movement,
-    played::{Run, open_rows, polled, read_lock, seed_controller},
+    played::{PictureScope, Run, open_rows, polled, read_lock, seed_controller},
     readers::ExpectedCut,
     result::{CaseResult, Outcome},
     runner,
@@ -241,6 +241,7 @@ pub(in crate::replay) fn run(
         appearance: appearance::Content::load(&sources.rom)?,
     };
     let mut run = Run::admit(&previous, &content, &sources.rom, &case.row)?;
+    run.picture_scope = PictureScope::ShaftActors;
     let mut retained = LOCKED_PREFIX;
     let mut digest = Vec::new();
     // The admitted hall has no C1 clocks or picture and all 18 effect slots are empty.
