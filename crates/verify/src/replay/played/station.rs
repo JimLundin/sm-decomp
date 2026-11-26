@@ -17,6 +17,7 @@ pub(super) fn seed(
         pad_and_cover: shaft::pad_and_cover(wram)?,
         shaft_overlay: ceres::shaft_overlay(wram)?,
         ridley: ridley::seed(wram)?,
+        warning: None,
         stage,
     })
 }

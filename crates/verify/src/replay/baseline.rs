@@ -417,6 +417,13 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
         (ObservationId::CeresBackdropColours, 6),
         (ObservationId::CeresTailHealth, 6),
     ];
+    if case.inputs == super::index::InputProvider::ScopedCeresWarning {
+        return counts.cuts.checked_mul(3) == Some(counts.fields)
+            && counts.outputs >= counts.cuts.saturating_mul(10)
+            && counts.publications == 0
+            && counts.replies == 0
+            && counts.pending_boundaries == 0;
+    }
     if case.inputs == super::index::InputProvider::ScopedCeresFlyby {
         // The first successor finishes the retreat. The last restores the room and has
         // no active zoom or two body palette observations.

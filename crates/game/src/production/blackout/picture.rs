@@ -1,11 +1,10 @@
 //! Assemble the HUD owner's timer output and keep its queued room picture until NMI.
 use super::Fault;
-use crate::intent::SpriteDraw;
+use crate::exact::countdown;
 use crate::state::video::{BgMode, Brightness, Layer, NmiBatch, Registers, Video, VramWord};
 use canonical::Canonical;
 use data::assets::countdown::Figures;
 use interface_hud::CountdownPicture;
-use types::Pair;
 use types::ceres_blackout::{BlackoutLight, PreparedPicture, TimerSprite};
 
 /// The rotating overlay's queued low-byte writes. E2 preserves the tile graphics in the high lane.
@@ -40,35 +39,8 @@ pub(super) fn draw(
     let CountdownPicture::Shown { place, time } = picture else {
         return Err(Fault::Timer);
     };
-    let origin = Pair {
-        x: i32::from(place.x),
-        y: i32::from(place.y),
-    };
-    let mut draw = SpriteDraw::default();
-    draw.place(&figures.frame, origin);
-    for (pair, offset) in time.shown().into_iter().zip([-28_i32, -4, 20]) {
-        for (digit, x) in [pair / 10, pair % 10]
-            .into_iter()
-            .zip([offset, offset.saturating_add(8)])
-        {
-            let map = usize::try_from(digit)
-                .ok()
-                .and_then(|n| figures.digits.get(n))
-                .ok_or(Fault::Picture)?;
-            draw.place(
-                map,
-                Pair {
-                    x: origin.x.saturating_add(x),
-                    y: origin.y,
-                },
-            );
-        }
-    }
-    if draw.pieces.len() > crate::state::video::OAM_SPRITES {
-        return Err(Fault::Picture);
-    }
-    for (i, piece) in draw.pieces.iter_mut().enumerate() {
-        piece.look.palette |= 5;
+    let draw = countdown::sprites(figures, place, time).ok_or(Fault::Picture)?;
+    for (i, _) in draw.pieces.iter().enumerate() {
         if let Some(high) = batch.oam.high.get_mut(i / 4) {
             *high &= !(3 << ((i % 4).wrapping_mul(2)));
         }

@@ -344,11 +344,12 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "boss-ceres-ridley",
         bridge: Some("boss_ceres_ridley_bridge"),
-        adapters: &[],
-        providers: &["ceres"],
+        adapters: &["exact/ridley_warning.rs"],
+        providers: &["ceres", "ridley_warning_native", "played/warning"],
         areas: &[
             ("doors", &["door.rs", "phase.rs", "figure.rs"]),
             ("station", &["station.rs"]),
+            ("ridley-warning", &["warning.rs", "warning_picture.rs"]),
         ],
         apart: &[
             // `SheIsNear`: whether she is within the reach, and its per-axis gap.

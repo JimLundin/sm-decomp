@@ -54,6 +54,7 @@ mod shaft;
 mod start;
 mod station;
 mod steam;
+mod warning;
 mod zebes;
 
 use super::compare::{CompareFault, Observation, compare};
@@ -89,7 +90,7 @@ pub const SEED_HELD: &[&str] = &[
     "cinematic and elevator status",
     "the seed room's geometry and the boxes of its actors other than the Ceres doors",
     "the seed room's camera screens, size, scrollers and lead",
-    "progress, which chooses the next room's version, her suit and her beams, and whether the station's boss is beaten",
+    "progress at room entry, carried by production and updated when the warning reports defeat",
     "Ceres station stage, but where Ridley's placing sets it",
     "from a new game's seed: the platform's counts of finished frames and the random number, which run on through the preparation",
 ];
@@ -338,9 +339,12 @@ struct Frame<'a> {
     previous: &'a FrameRecord,
     current: &'a FrameRecord,
     cut: u64,
+    doors_before: Doors,
+    publishes: bool,
 }
 
 /// One played run's carried owners and the facts held from its seed.
+#[derive(Clone)]
 struct Run<'a> {
     state: played::State,
     played: played::Content,
@@ -350,6 +354,7 @@ struct Run<'a> {
     hud: super::hud::Content,
     row: &'a str,
     drawing: ridley::flyby::Drawing,
+    warning_picture: warning::Picture,
     upper_row: Option<interface_hud::UpperRow>,
     return_timing: return_timing::ReturnTiming,
 }
@@ -414,13 +419,32 @@ impl<'a> Run<'a> {
         } else {
             None
         };
+        let language = match origin {
+            Start::Preparing(_, _, carried) => carried.language,
+            Start::Room(seed) => seed::language(&seed.wram)?,
+        };
+        let warning_art = import::ridley_warning::import(image.lorom()).ok();
+        let warning = warning_art
+            .clone()
+            .and_then(|art| played::warning::Content::new(art, language));
         let drawing = match origin {
             Start::Preparing(..) => ridley::flyby::Drawing::unpublished(flyby),
             Start::Room(seed) => ridley::flyby::Drawing::new(flyby, seed),
         };
+        let timer = import::countdown::import(image.lorom())
+            .map_err(|_| data_failure(None, "warning countdown content"))?;
+        let warning_picture = warning::Picture::new(
+            timer.clone(),
+            warning_art.as_ref(),
+            match origin {
+                Start::Room(seed) => Some(seed),
+                Start::Preparing(..) => None,
+            },
+        )?;
         Ok(Self {
             state,
             played: played::Content {
+                clock_figures: Some(timer),
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 colour_groups: colours::groups(),
@@ -430,6 +454,7 @@ impl<'a> Run<'a> {
                 map: hud.map_of(area)?.clone(),
                 start_x: core::num::Wrapping(start.her.0),
                 ridley,
+                warning,
                 tail_worth,
             },
             rules: played::Rules {
@@ -447,6 +472,7 @@ impl<'a> Run<'a> {
             hud,
             row,
             drawing,
+            warning_picture,
             upper_row: None,
             return_timing: return_timing::ReturnTiming::default(),
         })
@@ -458,12 +484,14 @@ impl<'a> Run<'a> {
         content: &connected::Content,
         rooms: &game::production::room_loading::Rooms,
     ) -> Result<(seed::Room, played::State), Outcome> {
-        let (room, seeded) = seed::room(&seed.wram, content, &rooms.world)?;
+        let (room, seeded, progress) = seed::room(&seed.wram, content, &rooms.world)?;
         let (map_room, _) = room.map;
         let ceres_doors = ceres_doors::seed(&seed.wram)?;
         let state = played::State {
+            clock_picture: played::clock_picture::ClockPicture::default(),
             samus: samus::seed(&seed.wram, &content.appearance)?,
             camera: Model(camera::seed(&seed.wram, &camera::Content)?),
+            progress,
             passage: played::passage::State {
                 doors: Doors::Play,
                 doorway: None,
@@ -600,14 +628,18 @@ impl<'a> Run<'a> {
                 sounds_sent: sounds_sent(&previous.wram)?,
                 music_ready: music_ready(&previous.wram)?,
             },
-            progress: &self.room.progress,
             // Borrow random draws during passages outside the vent placement work frame.
             random: (matches!(doors, Doors::Passing(_)) && !owns_vent_draws)
                 .then(|| frame::random(&previous.wram))
                 .transpose()?,
             start: arrival::start(previous, current)?,
         };
-        let start = super::hud::countdown_start(&previous.wram, &current.wram)?;
+        let borrowed_start = if warning::selected(&self.state.station) {
+            None
+        } else {
+            super::hud::countdown_start(&previous.wram, &current.wram)?
+        };
+        let start = borrowed_start;
         let hud_frame = hud::frame(&self.room.hud, controller, start);
         let outputs = self
             .state
@@ -644,6 +676,8 @@ impl<'a> Run<'a> {
                 previous,
                 current,
                 cut,
+                doors_before: doors,
+                publishes: platform.publishes,
             };
             self.compared(&frame, hud_settled, owns_vent_draws, &outputs)?
         };
@@ -651,7 +685,7 @@ impl<'a> Run<'a> {
             let fresh = super::progress::decode(&current.wram)?;
             let same = |value| Observation::quantity("progress.fresh-file", i64::from(value));
             expected.push(same(true));
-            actual.push(same(fresh == self.room.progress));
+            actual.push(same(fresh == self.state.progress));
         }
         if place.0 == "any-ceres-arrival" {
             let publication = |value| Observation::quantity("hud.setup-publish", i64::from(value));
@@ -720,6 +754,11 @@ impl<'a> Run<'a> {
             }
             expected.extend(ridley::retreat::expected(current)?);
             expected.extend(ridley::flyby::expected(previous, current)?);
+            if self.state.station.warning.is_some() {
+                // The old tail stays in State while the warning owns the room turn.
+                actual.push(contact::actual("ridley.tail.hit", None));
+                actual.push(ridley::swish(false));
+            }
             if let Some(run) = outputs.ridley {
                 actual.extend(ridley::retreat::actual(&self.state, Some(&run)));
                 if let Some(effects) = run.getaway {
@@ -740,6 +779,25 @@ impl<'a> Run<'a> {
             if owns_vent_draws && passage::passing(&current.wram)? {
                 expected.push(frame::random_observation(frame::random(&current.wram)?));
             }
+        }
+        let warning_turn = matches!(
+            frame.doors_before,
+            Doors::Play
+                | Doors::Passing(world_doors::Passage {
+                    phase: world_doors::Phase::Quieting { .. },
+                    ..
+                })
+        );
+        if self.state.station.warning.is_some() && finished(current) && warning_turn {
+            let (warning_expected, warning_actual) =
+                self.warning_picture.checked(frame, &self.state, outputs)?;
+            expected.extend(warning_expected);
+            actual.extend(warning_actual);
+        }
+        if self.state.station.warning.is_some() {
+            let (clock_expected, clock_actual) = self.warning_picture.clock(frame, &self.state)?;
+            expected.extend(clock_expected);
+            actual.extend(clock_actual);
         }
         Ok((expected, actual))
     }
@@ -868,24 +926,20 @@ mod tests {
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn retreat_continues_from_observed_checkpoints() {
-        use super::{Outcome, Stop};
+        use super::Stop;
         let sources = sources();
         for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
             let continuous = super::play(&sources, row, 0, 1271).unwrap();
-            assert_eq!(continuous.held, 1270);
-            assert!(
-                matches!(continuous.stop, Stop::At(Outcome::Unsupported { cut: Some(1271), dependency }) if dependency.ends_with("RidleyWarning"))
-            );
+            assert_eq!(continuous.held, 1271);
+            assert_eq!(continuous.stop, Stop::End);
             for start in [926, 993, 1004, 1093, 1115, 1156, 1158, 1170, 1261] {
                 let report = super::play(&sources, row, start, 1271).unwrap();
                 diagnostic(format_args!(
                     "RETREAT row={row} origin={start} held={} stop={:?}",
                     report.held, report.stop
                 ));
-                assert_eq!(report.held, 1270_u64.saturating_sub(start));
-                assert!(
-                    matches!(report.stop, Stop::At(Outcome::Unsupported { cut: Some(1271), dependency }) if dependency.ends_with("RidleyWarning"))
-                );
+                assert_eq!(report.held, 1271_u64.saturating_sub(start));
+                assert_eq!(report.stop, Stop::End);
             }
             restore_stopped_station(&sources, row);
         }
@@ -930,6 +984,80 @@ mod tests {
         diagnostic(format_args!(
             "RETREAT row={row} restored station at 1157 through its handoff"
         ));
+    }
+
+    /// The `MainBoss` report reaches production progress once and survives restoration.
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
+    fn warning_defeat_is_carried_by_production() {
+        use super::{Run, Stop, appearance, connected, movement};
+        use types::{Area, BossKind};
+
+        let sources = sources();
+        let lock = super::read_lock(&sources).unwrap();
+        let content = connected::Content {
+            movement: movement::Content::load(&sources.rom).unwrap(),
+            appearance: appearance::Content::load(&sources.rom).unwrap(),
+        };
+        for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
+            let mut rows = super::open_rows(&sources, &lock, row).unwrap();
+            let origin = rows.record(1270).unwrap();
+            let mut run = Run::admit(&origin, &content, &sources.rom, row).unwrap();
+            let controller = super::seed_controller(&origin).unwrap();
+            assert_eq!(
+                run.through(&mut rows, origin, controller, 1271..=1585)
+                    .unwrap(),
+                (315, Stop::End),
+            );
+            let ready = rows.record(1585).unwrap();
+            let active = rows.record(1586).unwrap();
+            let next = rows.record(1587).unwrap();
+            let before = run.state.progress.clone();
+            let native_before = crate::replay::progress::decode(&ready.wram).unwrap();
+            let native_after = crate::replay::progress::decode(&active.wram).unwrap();
+            assert!(!native_before.defeated[Area::Ceres][BossKind::MainBoss]);
+            assert!(native_after.defeated[Area::Ceres][BossKind::MainBoss]);
+            assert!(!before.defeated[Area::Ceres][BossKind::MainBoss]);
+            let mut expected = before;
+            expected.defeated[Area::Ceres][BossKind::MainBoss] = true;
+
+            let mut restored = run.clone();
+            let controller = super::seed_controller(&ready).unwrap();
+            for played in [&mut run, &mut restored] {
+                assert_eq!(
+                    played
+                        .through(&mut rows, ready.clone(), controller, 1586..=1586)
+                        .unwrap(),
+                    (1, Stop::End),
+                );
+                assert!(
+                    played.state.progress == expected,
+                    "{row} 1586 carried MainBoss"
+                );
+            }
+            assert!(run.state == restored.state, "{row} 1586 restored state");
+            let controller = super::seed_controller(&active).unwrap();
+            for played in [&mut run, &mut restored] {
+                assert_eq!(
+                    played
+                        .through(&mut rows, active.clone(), controller, 1587..=1587)
+                        .unwrap(),
+                    (1, Stop::End),
+                );
+                assert!(
+                    played.state.progress == expected,
+                    "{row} 1587 held progress"
+                );
+            }
+            assert!(run.state == restored.state, "{row} 1587 restored state");
+            assert!(
+                crate::replay::progress::decode(&next.wram)
+                    .unwrap()
+                    .defeated
+                    == native_after.defeated,
+                "{row} 1587 native defeat held",
+            );
+        }
     }
 
     /// Every reviewed run of `scenarios/replay/played.toml`, or those `SM_PLAYED` names, played

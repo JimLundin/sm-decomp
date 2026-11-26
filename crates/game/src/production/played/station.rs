@@ -7,9 +7,10 @@
 //! replaces the station's actors.
 
 use super::passage::Passing;
-use super::{Content, Fault, Rules, ceres_doors, ridley};
+use super::{Content, Fault, Rules, ceres_doors, ridley, warning};
 use crate::production::room_loading::{self, CeresActors};
 use boss_ceres_ridley::{CeresDoor, CeresRidley, Her, Lights, PadAndCover, RidleyRun, Stage, Vent};
+use types::ceres_warning::WarningState;
 use types::{Hit, Pair, Parts as _};
 use world_doors::Palette;
 
@@ -26,6 +27,8 @@ pub struct State {
     pub shaft_overlay: bool,
     /// Ceres Ridley and the baby, in his room.
     pub ridley: Option<CeresRidley>,
+    /// The warning phase and glow while Ridley's room carries them.
+    pub warning: Option<WarningState>,
     /// The Ceres station's stage, which his placing sets.
     pub stage: Stage,
 }
@@ -63,6 +66,7 @@ impl Contact {
 pub(super) struct Enemies {
     /// Ridley's run; none outside his room.
     pub(super) ridley: Option<RidleyRun>,
+    pub(super) warning: Option<warning::Output>,
     /// The vents after their run, if the room ran its enemies.
     pub(super) vents: Option<Vec<Vent>>,
     /// The first puff hit in slot order.
@@ -88,6 +92,7 @@ impl Enemies {
     pub(super) const fn none(quake: world_quake::State) -> Self {
         Self {
             ridley: None,
+            warning: None,
             vents: None,
             steam_hit: None,
             doors: Vec::new(),
@@ -109,7 +114,14 @@ impl State {
     /// The station after a frame of play's run of its enemies.
     pub(super) fn ran(&mut self, enemies: &Enemies) {
         self.doors = enemies.doors.iter().map(|run| run.door).collect();
-        self.ridley = enemies.ridley.map(|run| run.ridley);
+        if let Some(output) = &enemies.warning {
+            self.warning = Some(output.state);
+            if let Some(activation) = output.activation {
+                self.stage = activation.stage;
+            }
+        } else {
+            self.ridley = enemies.ridley.map(|run| run.ridley);
+        }
         if let Some(stage) = enemies
             .ridley
             .and_then(|run| run.getaway)
@@ -143,6 +155,7 @@ impl State {
             self.doors = placed.doors;
             self.shaft_overlay = placed.shaft_overlay;
             self.ridley = placed.ridley.map(|placing| placing.ridley);
+            self.warning = None;
             if let Some(placing) = placed.ridley {
                 self.stage = placing.stage;
             }
@@ -179,15 +192,37 @@ impl super::State {
         &self,
         running: Running<'_>,
         random: types::RandomSequence,
-        passing: &Passing<'_>,
+        passing: &Passing,
         content: &Content,
         rules: &Rules,
         palette: &mut Palette,
     ) -> Result<Enemies, Fault> {
         let station = &self.station;
         let her_energy = self.health.0.energy.whole.get();
+        let warning = station
+            .warning
+            .or_else(|| {
+                matches!(
+                    station.ridley?.phase,
+                    boss_ceres_ridley::RidleyPhase::Getaway(
+                        types::ceres_getaway::GetawayState::WarningReady
+                    )
+                )
+                .then_some(WarningState::ready())
+            })
+            .map(|state| {
+                warning::run(
+                    state,
+                    content.warning.as_ref().ok_or(Fault::RidleyWarning)?,
+                    self.frame,
+                    matches!(running, Running::Play(_)) && passing.work_begun,
+                    palette,
+                )
+            })
+            .transpose()?;
         let ridley = station
             .ridley
+            .filter(|_| warning.is_none())
             .map(|ridley| {
                 ridley::run(
                     ridley,
@@ -200,15 +235,21 @@ impl super::State {
                 )
             })
             .transpose()?;
-        let stage = ridley
-            .and_then(|run| run.getaway)
-            .and_then(|getaway| getaway.stage)
+        let activation = warning.as_ref().and_then(|output| output.activation);
+        let stage = activation
+            .map(|activation| activation.stage)
+            .or_else(|| {
+                ridley
+                    .and_then(|run| run.getaway)
+                    .and_then(|getaway| getaway.stage)
+            })
             .unwrap_or(station.stage);
         let ridley_beaten = room_loading::Run {
-            progress: passing.progress,
+            progress: &self.progress,
             ceres: station.stage,
         }
-        .ridley_beaten();
+        .ridley_beaten()
+            || activation.is_some();
         let mut quake = self.quake.0;
         // Ridley runs first, so the shake he starts is under way as the doors run: each door
         // reads its frames left and starts a shake only on a steady room.
@@ -238,6 +279,7 @@ impl super::State {
         let steam_hit = boss_ceres_ridley::run_vents(&mut vents, camera, her, &rules.ceres);
         Ok(Enemies {
             ridley,
+            warning,
             vents: Some(vents),
             steam_hit,
             doors,
@@ -265,7 +307,7 @@ impl super::State {
     /// Returns a typed fault for a missing flyby, warning handoff or invalid room turn.
     pub fn step_flyby(
         &mut self,
-        passing: &Passing<'_>,
+        passing: &Passing,
         content: &Content,
         rules: &Rules,
     ) -> Result<FlybyOutput, Fault> {

@@ -15,6 +15,7 @@ pub mod landing_site;
 pub mod playback;
 pub mod projectile;
 pub mod ridley_flyby;
+pub mod ridley_warning;
 pub mod samus;
 pub mod start;
 pub mod tilesets;

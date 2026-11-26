@@ -76,7 +76,14 @@
 //! changing the station's stage. On the next run [`CeresRidley::run`] starts the flyby using
 //! the room's [`FlybyContent`] and the caller's game clock. [`GetawayEffects`] reports the
 //! stage for the walls, the picture, and any sound, movement and quake requests. The fake
-//! retreat and the warning are separate handoffs.
+//! retreat is a separate handoff.
+//!
+//! **The self-destruct warning.** On the next ordinary run after `WarningReady`,
+//! [`step_warning`] starts loading the caller's [`WarningContent`]. The caller saves
+//! [`WarningState`] alongside the drawing owner's room picture and applies each run's
+//! [`WarningEffects`]. The last art batch places the heading, which holds before English typing.
+//! With Japanese enabled, a subtitle can appear during typing. When the warning is finished,
+//! the following run publishes the escape stage, Ceres defeat and countdown start together.
 //!
 //! **The escape's steam.** On her way out, steam vents in the station's floors, walls and
 //! ceilings blow puffs. A caller holds one [`Vent`] for each vent the room holds and places each
@@ -118,6 +125,8 @@ mod tail_aim;
 mod takeoff;
 mod turn;
 mod waking;
+mod warning;
+mod warning_picture;
 
 pub use baby::{
     Baby, BabyColours, BabyCry, BabyFigure, BabyLook, BabyRoutine, BabyRun, FidgetFigure,
@@ -164,7 +173,20 @@ pub use takeoff::{TakeOffFigure, TimedTakeOffFigure};
 pub use types::ceres_getaway::{
     FlybyBabyBeat, FlybyBeats, FlybyProgress, FlybyTurn, FlybyWingBeat, GetawayState, OutOfTheWay,
 };
+pub use types::ceres_warning::{
+    HeadingHold, StrokeBeat, SubtitleHold, TypingWait, WARNING_GLOW_LOOKS, WarningArtProgress,
+    WarningGlow, WarningHold, WarningPhase, WarningState, WarningTypingProgress,
+};
 pub use waking::{
     BodyColours, EyeColours, FadeSets, ReadyWait, RemainingTurns as RunsLeft, RidleyContent,
     RoarWait,
+};
+pub use warning::{
+    CountdownStart, EscapeActivation, EscapeTrack, WarningEffects, WarningInputs, WarningStroke,
+    step_warning,
+};
+pub use warning_picture::{
+    PositionedGlyph, WarningArtUpdate, WarningColourPair, WarningColourWrite, WarningContent,
+    WarningEnglishCell, WarningForeground, WarningPalette, WarningPictureUpdates, WarningSheet,
+    WarningTextWrite,
 };

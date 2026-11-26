@@ -2096,3 +2096,47 @@ provider = "recorded-work-and-source-bus-progress"
 fields = ["scheduler.finished", "shaft.vblank-ended", "shaft.save-completed", "audio.queue-busy", "dma.accepted-and-selected"]
 phase = "per cut"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
+
+[[case]]
+id = "ridley/warning-through-passage"
+kind = "scoped"
+row = "chain-any-0006-E0B5"
+start = { source = "cache-cut", frame = 1270 }
+end = { cut_inclusive = 1612 }
+rules = ["boss-ceres-ridley/WarningArt", "boss-ceres-ridley/WarningHeading", "boss-ceres-ridley/WarningTyping", "boss-ceres-ridley/WarningGlow", "boss-ceres-ridley/WarningEnds"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "scoped-ceres-warning"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.warning.state"], outputs = ["ridley.warning.picture", "ridley.warning.audio", "ridley.warning.handoff"] }
+checkpoints = true
+limits = ["One English WarningReady room origin admits the displayed room and pad. Actual movement, actors, quake, run progress, and countdown advance through ordinary production. The last two cuts compare D1's initial countdown drawing choice.", "The comparison covers the carried warning writes and timed clock sprite bytes, without claiming full room pixel composition. Music and stroke offers are measured at their producer boundary."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness", "initial room memory"]
+phase = "frame boundary"
+claim = "The seed admits the room; platform opportunities have no warning phase or countdown-start authority."
+
+[[case]]
+id = "ridley/alternate-warning"
+kind = "scoped"
+row = "samus-ceres-push"
+start = { source = "cache-cut", frame = 1270 }
+end = { cut_inclusive = 1611 }
+rules = ["boss-ceres-ridley/WarningArt", "boss-ceres-ridley/WarningHeading", "boss-ceres-ridley/WarningTyping", "boss-ceres-ridley/WarningGlow", "boss-ceres-ridley/WarningEnds"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "player-rom-import"
+inputs = "scoped-ceres-warning"
+expectations = { provider = "pinned-record-cache", fields = ["ridley.warning.state"], outputs = ["ridley.warning.picture", "ridley.warning.audio", "ridley.warning.handoff"] }
+checkpoints = true
+limits = ["One English WarningReady room origin admits the displayed room and pad. Actual movement, actors, quake, run progress, and countdown advance through ordinary production. This movie stays in the room and ticks at its last cut.", "The comparison covers the carried warning writes and timed clock sprite bytes, without claiming full room pixel composition. Music and stroke offers are measured at their producer boundary."]
+
+[[case.borrowed]]
+dependency = "played.platform"
+provider = "preceding pinned record and locked NMI boundaries"
+fields = ["frame of work finished", "audio readiness", "initial room memory"]
+phase = "frame boundary"
+claim = "The seed admits the room; platform opportunities have no warning phase or countdown-start authority."

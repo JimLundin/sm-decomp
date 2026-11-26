@@ -10,6 +10,7 @@ use interface_hud::{
 };
 use std::path::Path;
 
+#[derive(Clone)]
 pub struct Content {
     pub pictures: HudPictures,
     maps: Vec<(data::room::Area, HerMap)>,

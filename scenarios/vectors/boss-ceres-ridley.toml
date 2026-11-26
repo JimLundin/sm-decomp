@@ -5594,3 +5594,298 @@ camera = [200, 0]
 her = { position = [300, 120], body = [5, 21], protection = 0 }
 vents_after = [{ phase = "Resting", runs = 4, shown = false }, { phase = "Puffing", figure = 2, runs = 2, shown = true }]
 hit = { side = "Left", push = 5 }
+
+# Part 4c-4. The self-destruct warning.
+# WX- compares the complete warning and all current effects. warning and
+# warning_after give phase and glow, and exactly the progress fields used by
+# that phase. SettingArt has loaded, Heading and SubtitleWait have left,
+# Typing and SubtitleWait have consumed, wait and silent. Other fields depend
+# on the phase as above.
+# ordinary defaults to true, finished to 1, fade and passage to false, and
+# language to English. "JapaneseSubtitle" enables the second hold.
+# art lists the named updates for each run. text lists [column, row, glyph]
+# or [column, row] for a blank. Named art and glyphs are invented.
+# warning_effects is a complete sparse record. Omission means no effect.
+# colour_copy entries are [source palette, source colour, destination palette,
+# destination colour]. art names ordered updates, heading and subtitle place
+# their content, glyph gives the written cell, glow_palette selects a look,
+# music_delay requests the escape track, and stroke requests the stroke.
+# stage and defeat name their kinds, and countdown is [minutes, seconds].
+
+[[vector]]
+id = "WX-first"
+source = "constructed"
+entries = ["WarningArt"]
+warning = { phase = "WarningReady", glow = 7 }
+art = [["SpriteA"], ["SpriteB", "BackgroundA"], ["BackgroundB"]]
+warning_after = { phase = "SettingArt", glow = 7, loaded = 1 }
+warning_effects = { colour_copy = [[0, 1, 6, 1], [0, 3, 6, 3], [1, 1, 5, 1], [1, 3, 5, 3]], art = ["SpriteA"] }
+
+[[vector]]
+id = "WX-art"
+source = "constructed"
+entries = ["WarningArt"]
+warning = { phase = "SettingArt", glow = 0, loaded = 1 }
+art = [["SpriteA"], ["BackgroundA"], ["DoorA"]]
+warning_after = { phase = "SettingArt", glow = 0, loaded = 2 }
+warning_effects = { art = ["BackgroundA"] }
+
+[[vector]]
+id = "WX-overlap"
+source = "constructed"
+entries = ["WarningArt"]
+warning = { phase = "SettingArt", glow = 0, loaded = 1 }
+art = [["SpriteA"], ["SpriteB", "BackgroundA"], ["DoorA"]]
+warning_after = { phase = "SettingArt", glow = 0, loaded = 2 }
+warning_effects = { art = ["SpriteB", "BackgroundA"] }
+
+[[vector]]
+id = "WX-heading"
+source = "constructed"
+entries = ["WarningArt", "WarningGlow"]
+warning = { phase = "SettingArt", glow = 4, loaded = 2 }
+finished = 4
+art = [["SpriteA"], ["BackgroundA"], ["DoorA"]]
+warning_after = { phase = "Heading", glow = 4, left = 128 }
+warning_effects = { art = ["DoorA"], heading = true, music_delay = 8 }
+
+[[vector]]
+id = "WX-one-art-run"
+source = "constructed"
+entries = ["WarningArt"]
+warning = { phase = "WarningReady", glow = 0 }
+art = [["SpriteA"]]
+warning_after = { phase = "Heading", glow = 0, left = 128 }
+warning_effects = { colour_copy = [[0, 1, 6, 1], [0, 3, 6, 3], [1, 1, 5, 1], [1, 3, 5, 3]], art = ["SpriteA"], heading = true, music_delay = 8 }
+
+[[vector]]
+id = "WX-hold"
+source = "constructed"
+entries = ["WarningHeading", "WarningGlow"]
+warning = { phase = "Heading", glow = 1, left = 128 }
+finished = 5
+warning_after = { phase = "Heading", glow = 1, left = 127 }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-english"
+source = "constructed"
+entries = ["WarningHeading"]
+warning = { phase = "Heading", glow = 3, left = 1 }
+finished = 1
+warning_after = { phase = "Typing", glow = 3, consumed = 0, wait = 0, silent = true }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-japanese"
+source = "constructed"
+entries = ["WarningHeading", "WarningGlow"]
+warning = { phase = "Heading", glow = 3, left = 1 }
+language = "JapaneseSubtitle"
+finished = 4
+warning_after = { phase = "SubtitleWait", glow = 4, left = 32, consumed = 0, wait = 0, silent = true }
+warning_effects = { glow_palette = 4 }
+
+[[vector]]
+id = "WX-subtitle-wait"
+source = "constructed"
+entries = ["WarningHeading", "WarningTyping", "WarningGlow"]
+warning = { phase = "SubtitleWait", glow = 4, left = 32, consumed = 0, wait = 0, silent = true }
+finished = 8
+text = [[2, 4, "L"], [3, 4, "M"]]
+warning_after = { phase = "SubtitleWait", glow = 5, left = 31, consumed = 1, wait = 0, silent = false }
+warning_effects = { glow_palette = 5, glyph = [2, 4, "L"] }
+
+[[vector]]
+id = "WX-subtitle"
+source = "constructed"
+entries = ["WarningHeading", "WarningTyping", "WarningGlow"]
+warning = { phase = "SubtitleWait", glow = 4, left = 1, consumed = 1, wait = 0, silent = false }
+finished = 12
+text = [[2, 4, "L"], [3, 4, "M"]]
+warning_after = { phase = "Typing", glow = 5, consumed = 2, wait = 2, silent = true }
+warning_effects = { glow_palette = 5, subtitle = true, glyph = [3, 4, "M"], stroke = true }
+
+[[vector]]
+id = "WX-subtitle-with-end"
+source = "constructed"
+entries = ["WarningHeading", "WarningTyping"]
+warning = { phase = "SubtitleWait", glow = 4, left = 1, consumed = 1, wait = 0, silent = false }
+text = [[2, 4, "L"]]
+warning_after = { phase = "EscapeReady", glow = 4 }
+warning_effects = { subtitle = true }
+
+[[vector]]
+id = "WX-short-text"
+source = "constructed"
+entries = ["WarningHeading", "WarningTyping"]
+warning = { phase = "SubtitleWait", glow = 4, left = 31, consumed = 1, wait = 0, silent = false }
+text = [[2, 4, "L"]]
+warning_after = { phase = "Typing", glow = 4, consumed = 1, wait = 2, silent = false }
+warning_effects = {}
+
+[[vector]]
+id = "WX-short-text-rest"
+source = "constructed"
+entries = ["WarningTyping"]
+warning = { phase = "Typing", glow = 4, consumed = 1, wait = 2, silent = false }
+text = [[2, 4, "L"]]
+warning_after = { phase = "Typing", glow = 4, consumed = 1, wait = 1, silent = false }
+warning_effects = {}
+
+[[vector]]
+id = "WX-first-letter"
+source = "constructed"
+entries = ["WarningTyping"]
+warning = { phase = "Typing", glow = 0, consumed = 0, wait = 0, silent = true }
+text = [[2, 4, "L"], [3, 4, "M"]]
+warning_after = { phase = "Typing", glow = 0, consumed = 1, wait = 0, silent = false }
+warning_effects = { glyph = [2, 4, "L"] }
+
+[[vector]]
+id = "WX-second-letter"
+source = "constructed"
+entries = ["WarningTyping"]
+warning = { phase = "Typing", glow = 0, consumed = 1, wait = 0, silent = false }
+text = [[2, 4, "L"], [3, 4, "M"]]
+warning_after = { phase = "Typing", glow = 0, consumed = 2, wait = 2, silent = true }
+warning_effects = { glyph = [3, 4, "M"], stroke = true }
+
+[[vector]]
+id = "WX-blank"
+source = "constructed"
+entries = ["WarningTyping"]
+warning = { phase = "Typing", glow = 0, consumed = 1, wait = 0, silent = false }
+text = [[2, 4, "L"], [3, 4], [4, 4, "M"]]
+warning_after = { phase = "Typing", glow = 0, consumed = 2, wait = 2, silent = false }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-rest"
+source = "constructed"
+entries = ["WarningTyping"]
+warning = { phase = "Typing", glow = 0, consumed = 2, wait = 2, silent = true }
+text = [[2, 4, "L"], [3, 4, "M"]]
+warning_after = { phase = "Typing", glow = 0, consumed = 2, wait = 1, silent = true }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-last"
+source = "constructed"
+entries = ["WarningTyping"]
+warning = { phase = "Typing", glow = 0, consumed = 2, wait = 0, silent = false }
+text = [[2, 4, "L"], [3, 4], [8, 7, "M"]]
+warning_after = { phase = "Typing", glow = 0, consumed = 3, wait = 2, silent = true }
+warning_effects = { glyph = [8, 7, "M"], stroke = true }
+
+[[vector]]
+id = "WX-finished"
+source = "constructed"
+entries = ["WarningTyping", "WarningEnds"]
+warning = { phase = "Typing", glow = 0, consumed = 2, wait = 0, silent = true }
+text = [[2, 4, "L"], [3, 4, "M"]]
+warning_after = { phase = "EscapeReady", glow = 0 }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-glow"
+source = "constructed"
+entries = ["WarningGlow", "WarningHeading"]
+warning = { phase = "Heading", glow = 7, left = 2 }
+finished = 4
+warning_after = { phase = "Heading", glow = 8, left = 1 }
+warning_effects = { glow_palette = 8 }
+
+[[vector]]
+id = "WX-wrap"
+source = "constructed"
+entries = ["WarningGlow", "WarningEnds"]
+warning = { phase = "Escape", glow = 15 }
+finished = 8
+warning_after = { phase = "Escape", glow = 0 }
+warning_effects = { glow_palette = 0 }
+
+[[vector]]
+id = "WX-fade"
+source = "constructed"
+entries = ["WarningGlow", "WarningEnds"]
+warning = { phase = "Escape", glow = 5 }
+finished = 8
+fade = true
+warning_after = { phase = "Escape", glow = 5 }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-passage"
+source = "constructed"
+entries = ["WarningGlow", "WarningEnds"]
+warning = { phase = "Escape", glow = 5 }
+finished = 8
+passage = true
+warning_after = { phase = "Escape", glow = 5 }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-start"
+source = "constructed"
+entries = ["WarningEnds", "WarningGlow"]
+warning = { phase = "EscapeReady", glow = 6 }
+finished = 4
+warning_after = { phase = "Escape", glow = 7 }
+warning_effects = { stage = "Escape", defeat = "MainBoss", countdown = [1, 0], glow_palette = 7 }
+
+[[vector]]
+id = "WX-escape"
+source = "constructed"
+entries = ["WarningEnds", "WarningGlow"]
+warning = { phase = "Escape", glow = 7 }
+finished = 5
+warning_after = { phase = "Escape", glow = 7 }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-stopped"
+source = "constructed"
+entries = ["WarningEnds", "WarningGlow"]
+warning = { phase = "EscapeReady", glow = 7 }
+finished = 8
+ordinary = false
+warning_after = { phase = "EscapeReady", glow = 7 }
+warning_effects = {  }
+
+[[vector]]
+id = "WX-record-hold"
+source = "chain-any-0006-E0B5:1285"
+entries = ["WarningHeading", "WarningGlow"]
+warning = { phase = "Heading", glow = 0, left = 128 }
+finished = 10463
+warning_after = { phase = "Heading", glow = 0, left = 127 }
+warning_effects = {}
+
+[[vector]]
+id = "WX-record-typing-ready"
+source = "chain-any-0006-E0B5:1412"
+entries = ["WarningHeading", "WarningGlow"]
+warning = { phase = "Heading", glow = 0, left = 1 }
+finished = 10590
+warning_after = { phase = "Typing", glow = 0, consumed = 0, wait = 0, silent = true }
+warning_effects = {}
+
+[[vector]]
+id = "WX-record-rest"
+source = "chain-any-0006-E0B5:1583"
+entries = ["WarningTyping", "WarningGlow"]
+warning = { phase = "Typing", glow = 11, consumed = 58, wait = 2, silent = true }
+finished = 10761
+warning_after = { phase = "Typing", glow = 11, consumed = 58, wait = 1, silent = true }
+warning_effects = {}
+
+[[vector]]
+id = "WX-record-stopped"
+source = "chain-any-0006-E0B5:1611"
+entries = ["WarningEnds", "WarningGlow"]
+warning = { phase = "Escape", glow = 2 }
+ordinary = false
+finished = 10789
+warning_after = { phase = "Escape", glow = 2 }
+warning_effects = {}

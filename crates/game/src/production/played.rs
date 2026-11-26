@@ -48,6 +48,7 @@
 pub mod arrival;
 mod camera;
 mod ceres_doors;
+pub mod clock_picture;
 pub mod departure;
 pub mod discovery;
 pub mod explosion;
@@ -68,6 +69,8 @@ pub mod samus;
 mod shaft;
 mod start;
 pub mod station;
+pub mod warning;
+pub mod warning_drawing;
 pub mod zebes;
 
 pub use hud::HudFrame;
@@ -94,6 +97,8 @@ use world_doors::{Activity, COLOURS, ColourGroup, Doors, Palette, RoomCall, Scen
 /// Imported pose bodies, cannon headings, clips, run paces and the HUD's colours.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Content {
+    /// Imported timer sprite figures for room drawing.
+    pub clock_figures: Option<data::assets::countdown::Figures>,
     /// Pose bodies and cannon headings.
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.
@@ -112,6 +117,8 @@ pub struct Content {
     pub start_x: types::Px,
     /// Ceres Ridley's eye's steps and his body's colour sets.
     pub ridley: RidleyContent,
+    /// The room warning artwork, when admitted for this file.
+    pub warning: Option<warning::Content>,
     /// The whole energy his tail's hit is worth, imported as his tail's own.
     pub tail_worth: samus_health::WholeEnergy,
 }
@@ -143,6 +150,8 @@ pub struct Rules {
 /// yet, so this State is carried but not checkpointed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct State {
+    /// The timer sprites held in the prepared and published pictures.
+    pub clock_picture: clock_picture::ClockPicture,
     /// Her movement, her appearance and the figure she is drawn in.
     pub samus: samus::State,
     /// The camera.
@@ -151,6 +160,8 @@ pub struct State {
     pub health: Model<HealthPin>,
     /// The HUD.
     pub hud: Model<HudPin>,
+    /// The run's inventory and persistent progress, carried across rooms.
+    pub progress: run_progress::Progress,
     /// Her room, play or a passage under way, and the door she touched.
     pub passage: passage::State,
     /// The screen's colours and the colours they head for.
@@ -186,6 +197,8 @@ pub struct Outputs {
     pub lights: Option<Lights>,
     /// Ridley's run, with the baby's cry; none on a frame he doesn't run.
     pub ridley: Option<RidleyRun>,
+    /// The Ceres warning requests for drawing, audio and progress.
+    pub warning: Option<warning::Output>,
     /// The steam hit offered to her movement and health.
     pub steam_hit: Option<types::Hit>,
     /// His placing, with the music's stop and the shake's stop it asks for; none on a frame
@@ -257,7 +270,7 @@ impl State {
     pub fn step(
         &mut self,
         inputs: &Inputs,
-        passing: &Passing<'_>,
+        passing: &Passing,
         hud: &HudFrame,
         content: &Content,
         rules: &Rules,
@@ -268,15 +281,7 @@ impl State {
         if matches!(self.passage.doors, Doors::Passing(_)) {
             return self.pass(inputs, passing, content, rules);
         }
-        self.passage
-            .room
-            .geometry
-            .validate()
-            .map_err(|_| Fault::Geometry)?;
-        if inputs.items[Item::VariaSuit] || inputs.items[Item::GravitySuit] {
-            return Err(Fault::Suit);
-        }
-        let room = camera::room(&self.passage.room.camera)?;
+        let room = self.ordinary_room(inputs)?;
         let random = self.frame.drawn(passing);
         let mut palette = self.palette;
         // Every hitter reads her position, body and protection as the frame starts, as the
@@ -312,15 +317,24 @@ impl State {
         let pad_and_cover = self.station.pad(&mut samus, rules);
         let camera = self.followed(&room, &her, &samus, rules);
         let touched = self.passage.touched(&her)?;
-        let (hud_state, hud_outputs) =
-            self.hud_frame(hud, &samus, her.after_moves(), health.state, content, rules)?;
-        let mut quake = enemies.quake;
-        if let Some(effects) = enemies.ridley.and_then(|run| run.getaway) {
-            if effects.push.is_some() {
-                samus::GetawayPass.arm(&mut samus);
-            }
-            ridley::apply_getaway(effects, &mut quake, &mut palette);
-        }
+        let hud = warning::countdown_input(hud, enemies.warning.as_ref())?;
+        let (hud_state, hud_outputs) = self.hud_frame(
+            &hud,
+            &samus,
+            her.after_moves(),
+            health.state,
+            content,
+            rules,
+        )?;
+        let clock_picture = self
+            .clock_picture
+            .play(
+                content.clock_figures.as_ref(),
+                hud_outputs.countdown.picture,
+                passing.publishes,
+            )
+            .ok_or(Fault::Hud)?;
+        let mut quake = ridley::finish_getaway(&enemies, &mut samus, &mut palette);
         let shaken = quake::update(&mut quake)?;
         let doors = self.passage.in_play(
             touched,
@@ -336,11 +350,13 @@ impl State {
             .played(samus, &her, samus::jump_button(inputs.held));
         self.station.pad_and_cover = pad_and_cover;
         self.camera = Model(camera);
+        warning::record_progress(&mut self.progress, enemies.warning.as_ref());
         self.passage.doors = doors.doors;
         self.passage.doorway = touched;
         self.palette = doors.scene.palette;
         self.health = Model(health.state);
         self.hud = Model(hud_state);
+        self.clock_picture = clock_picture;
         self.station.ran(&enemies);
         if let Some(vents) = enemies.vents {
             self.station.vents = vents;
@@ -358,10 +374,23 @@ impl State {
             ceres_doors: enemies.doors,
             lights: enemies.lights,
             ridley: enemies.ridley,
+            warning: enemies.warning,
             steam_hit: enemies.steam_hit,
             ridley_placed: None,
             quake: Some(shaken),
         })
+    }
+
+    fn ordinary_room(&self, inputs: &Inputs) -> Result<world_camera::Room, Fault> {
+        self.passage
+            .room
+            .geometry
+            .validate()
+            .map_err(|_| Fault::Geometry)?;
+        if inputs.items[Item::VariaSuit] || inputs.items[Item::GravitySuit] {
+            return Err(Fault::Suit);
+        }
+        camera::room(&self.passage.room.camera)
     }
 
     /// A frame of a passage: the doors alone, moving her position, the view, where the camera
@@ -371,7 +400,7 @@ impl State {
     fn pass(
         &mut self,
         inputs: &Inputs,
-        passing: &Passing<'_>,
+        passing: &Passing,
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
@@ -420,26 +449,18 @@ impl State {
         };
         let mut moved = self.samus.movement.0;
         moved.position = her;
-        let mut last_draw_jump = self.samus.last_draw_jump.0;
-        if passage::draws_jump(self.passage.doors, passing, &exports.report) {
-            samus::passage_jump_draw(
-                &mut moved.jump_held,
-                &mut last_draw_jump,
-                samus::jump_button(inputs.held),
-            );
-        }
-        let pad_and_cover = if exports.report.runs[Activity::Projectiles] {
-            self.station.pad(&mut moved, rules)
-        } else {
-            self.station.pad_and_cover
-        };
-        let loaded = self.load(
-            exports.report.call,
-            passing,
-            content,
-            &mut palette,
-            &mut random,
-        )?;
+        let last_draw_jump = self.passage_jump(&mut moved, inputs, passing, &exports.report);
+        let pad_and_cover = self.passage_pad(&mut moved, &exports.report, rules);
+        let clock_picture = self
+            .clock_picture
+            .passage(
+                content.clock_figures.as_ref(),
+                self.hud.0.countdown,
+                exports.report.runs[Activity::Timer],
+                passing,
+            )
+            .ok_or(Fault::Hud)?;
+        let loaded = self.load(exports.report.call, content, &mut palette, &mut random)?;
         let ridley_placed = loaded.actors.as_ref().and_then(|placed| placed.ridley);
         let mut quake = enemies.quake;
         // Room loading's effects set-up, inside the building, stops the shake.
@@ -460,6 +481,7 @@ impl State {
         self.camera.0 = camera::passed(self.camera.0, view, seen);
         self.palette = palette;
         self.frame = self.frame.after(exports.report.finishing, random);
+        self.clock_picture = clock_picture;
         self.hud.0.out_of_play(&hud::out_of_play(&exports.report));
         self.passage.passed(exports.doors, loaded.room);
         Ok(Outputs {
@@ -472,10 +494,41 @@ impl State {
             ceres_doors: enemies.doors,
             lights: enemies.lights,
             ridley: enemies.ridley,
+            warning: enemies.warning,
             steam_hit: enemies.steam_hit,
             ridley_placed,
             quake: None,
         })
+    }
+    fn passage_jump(
+        &self,
+        moved: &mut samus_movement::Samus,
+        inputs: &Inputs,
+        passing: &Passing,
+        report: &world_doors::Report,
+    ) -> samus_movement::JumpButton {
+        let mut last_draw_jump = self.samus.last_draw_jump.0;
+        if passage::draws_jump(self.passage.doors, passing, report) {
+            samus::passage_jump_draw(
+                &mut moved.jump_held,
+                &mut last_draw_jump,
+                samus::jump_button(inputs.held),
+            );
+        }
+        last_draw_jump
+    }
+
+    fn passage_pad(
+        &self,
+        moved: &mut samus_movement::Samus,
+        report: &world_doors::Report,
+        rules: &Rules,
+    ) -> boss_ceres_ridley::PadAndCover {
+        if report.runs[Activity::Projectiles] {
+            self.station.pad(moved, rules)
+        } else {
+            self.station.pad_and_cover
+        }
     }
 }
 

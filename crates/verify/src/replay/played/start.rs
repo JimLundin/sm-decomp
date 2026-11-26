@@ -10,6 +10,7 @@ use game::production::room_loading::{self, Rooms};
 /// The actor, controls, room effects and held appearance inputs that precede room loading.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub(super) struct Carried {
+    pub(super) language: types::options::Language,
     pub(super) health: samus_health::State,
     pub(super) bindings: crate::replay::hud::Bindings,
     pub(super) appearance: connected::AppearanceInputs,
@@ -19,6 +20,7 @@ pub(super) struct Carried {
 impl Carried {
     pub(super) fn seed(wram: &[u8]) -> Result<Self, Outcome> {
         Ok(Self {
+            language: super::seed::language(wram)?,
             health: crate::replay::health_tail::decode(wram, None)?,
             bindings: crate::replay::hud::bindings(wram)?,
             appearance: connected::AppearanceInputs::seed(wram)?,
@@ -84,7 +86,6 @@ pub(super) fn admit(
         seed::Room {
             inputs,
             hud: super::hud::fresh(carried.bindings, &progress)?,
-            progress,
             ceres,
             map,
         },

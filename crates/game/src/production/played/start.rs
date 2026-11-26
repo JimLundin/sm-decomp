@@ -30,6 +30,7 @@ impl State {
         let her = samus.movement.0.position;
         let (view_x, view_y) = start.view;
         Ok(Self {
+            clock_picture: super::clock_picture::ClockPicture::default(),
             samus,
             camera: Model(Camera::restore(
                 ViewPosition(Pair {
@@ -41,6 +42,7 @@ impl State {
             )),
             health: Model(health),
             hud: Model(blank_hud()?),
+            progress: run_progress::Progress::default(),
             passage: super::passage::State {
                 doors: Doors::Play,
                 doorway: None,
@@ -57,6 +59,7 @@ impl State {
                 pad_and_cover: crate::production::shaft::GONE,
                 shaft_overlay: started.actors.shaft_overlay,
                 ridley: None,
+                warning: None,
                 stage: boss_ceres_ridley::Stage::Calm,
             },
             quake: Model(quake),

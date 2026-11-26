@@ -173,7 +173,6 @@ mod tests {
     use types::Pair;
 
     fn frame_of_play(state: &mut State, hud: &HudFrame) -> FrameOutputs {
-        let progress = run_progress::Progress::default();
         let passing = passage::Passing {
             work_begun: true,
             work_done: true,
@@ -182,7 +181,6 @@ mod tests {
                 sounds_sent: true,
                 music_ready: true,
             },
-            progress: &progress,
             random: None,
             start: arrival::Readiness::NotYet,
         };

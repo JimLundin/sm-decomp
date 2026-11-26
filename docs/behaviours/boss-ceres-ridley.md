@@ -1862,3 +1862,198 @@ Cells: `x` and `y` denote `dx` and `dy`; `u` is the quotient above.
 - Pace at least 8 as the run starts and count 15 → request the whip's swish and set
   count 0 [FT-swish]
 - checked: oracle (W9, W14 to W16); constructed (the run before the swish).
+
+## Part 4c-4, the self-destruct warning
+
+The room returns in `WarningReady`. The following ordinary run begins the warning.
+The warning owns its words and colours and the single start of the escape. The
+played room currently stops before it can run the warning.
+
+**Reads.** The room scheduler supplies ordinary runs, the count of finished frames
+at the start of each run and whether a palette fade or a door passage is active.
+The file supplies the text language when the heading hold ends. The room supplies
+the current foreground colours and checked warning art.
+
+**Leaves to others.** [Audio transport](audio-transport.md) takes the music and stroke
+requests. [Run progress](run-progress.md) receives the Ceres MainBoss defeat, which room loading reads as Ridley defeated.
+[The countdown](interface-hud.md) receives a start at one minute and owns its wait,
+ticks, display and place. `LockedIn`, `GetawayWalls` and `EscapeShakes` consume the
+new stage. [Door passage](world-doors.md) owns the change of room and showing the
+stopped countdown in transit. Drawing composes the warning with the existing room
+layers. Samus continues her ordinary play.
+
+### What a caller can hold
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| the warning | `WarningPhase` with `WarningReady`, `SettingArt`, `Heading`, `SubtitleWait`, `Typing`, `EscapeReady` or `Escape` | the warning entries |
+| art progress | `WarningArtProgress` in `SettingArt`, the number of ordinary runs already spent loading art, from 1 to one less than the schedule length | WarningArt |
+| the hold | runs left, 1 through 128 in `Heading`, 1 through 32 before the Japanese subtitle appears | WarningHeading |
+| typing | `WarningTypingProgress`: consumed cells, from 0 through the text length, a wait of 0 through 2 ordinary runs, and whether the next printed letter is silent in `Typing` and `SubtitleWait` | WarningTyping |
+| heading glow | `WarningGlow`, one of sixteen colour looks numbered 0 through 15 | WarningGlow, drawing |
+| warning picture | loaded art, current warning colours and the text cells written so far, carried by drawing | output |
+| current foreground colours | two pairs of existing room colours, one for each warning text palette | WarningArt |
+| current language | English or Japanese subtitle enabled | WarningHeading |
+| qualified run and glow conditions | ordinary room run and fade and passage activity are booleans. The count is in finished frames, wrapping at 65,536 | all entries, WarningGlow |
+| warning art | immutable checked art schedule, heading and subtitle cells, English text cells, sixteen ordered glow palettes | WarningArt, WarningHeading, WarningTyping, WarningGlow |
+| escape start | stage `Escape`, Ceres boss defeat, countdown start at 1:00.00 | doors, walls, quake, run progress, countdown |
+
+The caller can set, read and restore the phase and its progress, the glow, and the
+current picture. A fresh room starts at glow look zero. The art schedule loads
+countdown sprite art, foreground text art and the returning door art over
+successive runs. Each run can carry several updates. Content names the destination within the appropriate sprite or background
+sheet and the exact cells it replaces. The room's schedule has fourteen runs. Runs one through six update the
+countdown sprite sheet. Run seven finishes that sheet and begins foreground
+text art. Runs eight through eleven continue and finish the foreground text art.
+Runs twelve through fourteen load the door art. The final run places the
+heading after the last door batch.
+Drawing applies the named updates in order and preserves the rest of each sheet.
+The schedule is checked before use. The first run and each subsequent art run have
+at least one update. Each update fits its named sheet and has complete tiles.
+The checked heading and subtitle cells refer to tiles available by the end of
+this schedule. The English cells refer to the same prepared foreground art.
+
+Text updates are foreground tile cells. The heading uses palette 6 at high priority.
+The English letters use palette 5 at high priority. The subtitle uses palette 7 at
+high priority. For the station's content, `EMERGENCY` starts at column 11, row 6.
+The three English lines start at column 5 on rows 8, 10 and 12. They read
+`SELF DESTRUCT SEQUENCE`, `ACTIVATED EVACUATE` and `COLONY IMMEDIATELY`.
+A blank cell in the English text consumes time and leaves its underlying tile in
+place. The Japanese subtitle occupies four tile rows beginning at column 10,
+row 20. Its first two rows are twelve tiles wide and the other two are eleven.
+Glyph patterns, tile identities, colour values and sheet contents come from the
+importer's checked art. The model takes a flat sequence of positioned English
+cells with optional glyphs. It needs no markup reader. Cells must fit the
+foreground plane. For the station's content there are 58 English cells, including
+four blanks. Checked English content has at least one cell.
+
+Drawing retains placed cells and their palette assignments when their colours
+change. It uses the ordinary foreground scroll and layer priority. A door passage
+can fade the room and carry the countdown display while the warning itself rests.
+Restore the drawing state alongside the phase and glow so already written cells
+and art remain present. The room load owns disposal of the previous room's picture.
+
+### WarningArt
+
+- kind: mechanic
+- summary: restore the colours and load the art used by the warning and clock.
+- params: none
+- switch: Fixed
+- `WarningReady` on a run → copy slots 1 and 3 from foreground palette 0 into
+  the same slots of heading palette 6. Copy slots 1 and 3 from foreground
+  palette 1 into the same slots of English palette 5. Keep their
+  other colours and the glow look. Apply the first scheduled art updates and count the run
+  [WX-first, WX-one-art-run].
+- `SettingArt` on a run → apply the next scheduled art updates and count the run
+  [WX-art, WX-overlap].
+- An art run with further runs in the schedule → `SettingArt` with the count
+  just reached [WX-first, WX-art, WX-overlap].
+- The final art run → place the heading, enter `Heading` with 128 runs left and
+  request the escape track with a delay of 8 frames [WX-heading, WX-one-art-run].
+- checked: oracle (WX1 through WX14), with constructed art in vectors.
+
+### WarningHeading
+
+- kind: mechanic
+- summary: the heading holds before the warning text begins.
+- params: none
+- switch: Fixed
+- `Heading` with more than one run left → spend one run
+  [WX-hold, WX-record-hold].
+- `Heading` with one run left, English → `Typing` with zero cells consumed,
+  zero wait and the first printed letter silent [WX-english, WX-record-typing-ready].
+- `Heading` with one run left, Japanese subtitle enabled → `SubtitleWait`
+  with 32 runs left and the same initial typing progress [WX-japanese].
+- `SubtitleWait` with more than one run left → spend one run and retain the
+  subtitle wait unless `WarningTyping` finishes the text [WX-subtitle-wait, WX-short-text].
+- `SubtitleWait` with one run left → place all four subtitle rows and enter
+  `Typing` with the current typing progress. Process typing on this same run
+  [WX-subtitle, WX-subtitle-with-end].
+- checked: oracle (WX15 through WX16); original only for the Japanese wait and
+  subtitle, with constructed vectors.
+
+### WarningTyping
+
+- kind: mechanic
+- summary: the English letters appear one at a time and alternate silent and audible strokes.
+- params: none
+- switch: Fixed
+- `Typing` or `SubtitleWait` while its typing wait is positive → spend one run of the wait [WX-rest, WX-record-rest].
+- `Typing` or `SubtitleWait` ready for a cell, with a cell left → consume that cell. Set the wait
+  to zero for the first cell and two for each later cell. For a blank, keep the
+  picture and the stroke beat. For a letter, place its tile and flip the beat.
+  Request the warning stroke on an audible letter, in the second effects channel
+  with a queue limit of three [WX-first-letter, WX-second-letter, WX-blank, WX-last].
+- Ready for a cell with all cells consumed, and typing is past any subtitle
+  wait, including its last run → `EscapeReady` [WX-finished, WX-subtitle-with-end].
+- If the text ends while more than one subtitle run was left → enter
+  `Typing` with the completed cell count and a fresh two-run typing wait.
+  When that wait is spent, the next run enters `EscapeReady`
+  [WX-short-text, WX-short-text-rest, WX-finished].
+- checked: oracle (WX17 through WX19), with constructed text in vectors.
+
+### WarningGlow
+
+- kind: mechanic
+- summary: the heading changes colour in a sixteen-look cycle.
+- params: none
+- switch: Fixed
+- An ordinary run starting in `Heading`, `SubtitleWait`, `Typing`, `EscapeReady` or `Escape`,
+  finished-frame count divisible by four, with neither a fade nor a passage
+  active → advance the look by one mod 16 and replace slots 1 through 3 in
+  heading palette 6 with that look's colours [WX-glow, WX-wrap, WX-start, WX-subtitle-wait, WX-subtitle].
+- Any other run → keep the glow and issue no glow palette update
+  [WX-heading, WX-hold, WX-fade, WX-passage, WX-stopped].
+- checked: oracle (WX15 through WX22); original only for the palette fade and
+  Japanese wait cadence, with constructed vectors.
+
+### WarningEnds
+
+- kind: mechanic
+- summary: once the warning finishes, the escape begins on the next run.
+- params: none
+- switch: Fixed
+- An ordinary run starting in `EscapeReady` → enter `Escape`, set the station
+  stage to `Escape`, report the Ceres boss defeat and start the countdown at
+  one minute [WX-start].
+- An ordinary run starting in `Escape` → keep `Escape` and issue no new start
+  or defeat [WX-escape].
+- A cut without an ordinary room run → retain warning phase and progress and
+  issue no art, text, palette, sound, stage, progress or start request [WX-stopped, WX-record-stopped].
+- checked: oracle (WX19 through WX22), with constructed continuation cases.
+
+### Order that matters
+
+The last flyby run leaves `WarningReady` and the room picture intact. Loading
+starts on the next ordinary run. The heading appears and the music is offered
+on the last art run. The hold and glow start on the following ordinary run.
+Leaving the heading arms the first letter for the following ordinary run in
+both languages. The Japanese subtitle appears during English typing. On the
+run that places the subtitle, its four rows are applied before that run's
+letter update. `WarningGlow` uses the phase at the start of the run.
+
+`EscapeReady` still has stage `Getaway`. On the following ordinary run the
+stage reaches the room actors and quake before they finish. The defeat and
+one-minute start reach progress and the countdown in that same frame. Ordinary
+play ticks the countdown by its own rules. Play that requests a passage still
+runs the clock on the request cut. The passage keeps the clock state and owns
+when to show it. It can omit the clock sprites on its first step and draw the
+held time on the next step, as it does for this room. The warning
+stays in `Escape` until the room is replaced.
+
+### Supported boundary
+
+The played acceptance scope uses the two recorded English routes. A production
+request with the Japanese subtitle enabled is Unsupported before any warning
+updates unless the imported subtitle and that route have been qualified.
+English admission needs the complete common art schedule, heading, English
+cells and glow looks. Japanese admission would also need the positioned
+subtitle cells and their art. The caller checks the content when admitting
+a fresh or restored warning. Absent or incompatible art for the admitted
+language, an unestablished run opportunity, or a restore without complete
+warning and drawing state is Unsupported.
+The pure warning rules include the Japanese hold and positioned subtitle for
+checked content. The door and countdown handoff uses their existing qualified
+room and passage paths. Prior to a passage, a restored `Escape` also needs
+the actual countdown state, the incoming finished-frame count and the room
+actors' state. A passage restore additionally needs the passage owner's state.

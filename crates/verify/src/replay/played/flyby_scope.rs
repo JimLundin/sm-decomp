@@ -73,7 +73,6 @@ impl Run<'_> {
                 sounds_sent: true,
                 music_ready: true,
             },
-            progress: &self.room.progress,
             random: None,
             start: played::arrival::Readiness::NotYet,
         };

@@ -357,6 +357,7 @@ impl Run {
         let [_, _, _, cancel, select, _, _] =
             game::exact::save_files::control_words(&intro.actors.buttons);
         let carry = super::start::Carried {
+            language: intro.actors.settings.language,
             health: room.actor.health.0,
             bindings: crate::replay::hud::Bindings::new(select, cancel),
             appearance: crate::replay::connected::AppearanceInputs {

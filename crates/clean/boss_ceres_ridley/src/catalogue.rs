@@ -127,6 +127,16 @@ pub enum BehaviourId {
     TailBends,
     /// Fast swings make a swish every sixteen runs.
     TailSwishes,
+    /// Load the art for the warning and countdown and copy the text colours.
+    WarningArt,
+    /// Hold the heading before typing, and the subtitle while typing begins.
+    WarningHeading,
+    /// Print the English text, alternating silent and audible letters.
+    WarningTyping,
+    /// Cycle the heading colours on qualified runs.
+    WarningGlow,
+    /// Start the escape once the warning is finished.
+    WarningEnds,
 }
 
 /// A catalogue entry.
@@ -144,9 +154,8 @@ pub struct Behaviour {
     pub checked: Checked,
 }
 
-/// How many entries the spec has: the doors' eleven, the shaft's seven, Ridley's room's ten,
-/// his waking's four, his tail's three, his flight's six, his retreat's two, the flight tail's eight and the escape's steam's seven.
-const ENTRIES: usize = 60;
+/// Number of catalogue entries, including the flyby and the warning.
+const ENTRIES: usize = 65;
 
 /// Every entry's behaviour, as the spec gives it, one row for each entry.
 const BEHAVIOURS: [Behaviour; ENTRIES] = [
@@ -604,6 +613,41 @@ const BEHAVIOURS: [Behaviour; ENTRIES] = [
     Behaviour {
         id: BehaviourId::TailSwishes,
         summary: "fast swings make a swish every sixteen runs",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WarningArt,
+        summary: "restore the colours and load the art used by the warning and clock",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WarningHeading,
+        summary: "the heading holds before the warning text begins",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WarningTyping,
+        summary: "the English letters appear one at a time and alternate silent and audible strokes",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WarningGlow,
+        summary: "the heading changes colour in a sixteen-look cycle",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::WarningEnds,
+        summary: "once the warning finishes, the escape begins on the next run",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

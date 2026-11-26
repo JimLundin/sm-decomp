@@ -7,10 +7,25 @@ use data::{assets::world, rom::Rom, room::RoomKey};
 use game::production::connected::inputs::Inputs;
 use game::production::{played, room_loading};
 
+pub(super) fn language(wram: &[u8]) -> Result<types::options::Language, Outcome> {
+    let japanese = word(
+        wram,
+        source::WramWord {
+            name: "warning language",
+            offset: 0x09e2,
+        },
+    )?;
+    Ok(if japanese == 0 {
+        types::options::Language::English
+    } else {
+        types::options::Language::Japanese
+    })
+}
+
 /// Seed-held room facts.
+#[derive(Clone)]
 pub(super) struct Room {
     pub(super) inputs: Inputs,
-    pub(super) progress: run_progress::Progress,
     pub(super) ceres: boss_ceres_ridley::Stage,
     /// The HUD's neighbours outside the loop.
     pub(super) hud: super::hud::Held,
@@ -24,7 +39,7 @@ pub(super) fn room(
     seed: &[u8],
     content: &connected::Content,
     world: &world::World,
-) -> Result<(Room, played::passage::Room), Outcome> {
+) -> Result<(Room, played::passage::Room, run_progress::Progress), Outcome> {
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator || crate::replay::hud::time_stopped(seed)? {
         return Err(Outcome::Unsupported {
@@ -43,7 +58,6 @@ pub(super) fn room(
         inputs,
         map,
         hud: super::hud::held(seed)?,
-        progress: progress::decode(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
             0 => boss_ceres_ridley::Stage::Calm,
             1 => boss_ceres_ridley::Stage::Getaway,
@@ -58,7 +72,7 @@ pub(super) fn room(
             }
         },
     };
-    Ok((held, played))
+    Ok((held, played, progress::decode(seed)?))
 }
 
 type Doorways = (

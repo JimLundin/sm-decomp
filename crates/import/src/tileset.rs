@@ -196,7 +196,7 @@ fn looks(table: &[u8]) -> Vec<BlockLook> {
 
 /// The cell a tilemap word places: ten bits of tile, three of palette row, then priority and
 /// the two flips.
-const fn cell_of(word: u16) -> Cell {
+pub(crate) const fn cell_of(word: u16) -> Cell {
     let [palette, _] = ((word >> PALETTE_SHIFT) & PALETTE_BITS).to_le_bytes();
     Cell {
         tile: TileRef(word & TILE_BITS),
@@ -208,7 +208,7 @@ const fn cell_of(word: u16) -> Cell {
 }
 
 /// The tiles of 4bpp planar bytes, or `None` if they end partway through a tile.
-fn sheet(bytes: &[u8]) -> Option<TileSheet> {
+pub(crate) fn sheet(bytes: &[u8]) -> Option<TileSheet> {
     let (tiles, rest) = bytes.as_chunks::<TILE_BYTES>();
     rest.is_empty()
         .then(|| TileSheet(tiles.iter().map(tile_of).collect()))

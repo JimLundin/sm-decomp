@@ -12,6 +12,7 @@ use types::ceres_getaway::{FlybyBabyBeat, FlybyWingBeat, GetawayState};
 pub(in crate::replay::played) use self::native::expected;
 
 /// The previously published plane and art. Restore them once at an observed origin.
+#[derive(Clone)]
 pub(in crate::replay::played) struct Drawing {
     pub(in crate::replay::played) art: Flyby,
     plane: Plane,

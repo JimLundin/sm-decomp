@@ -4,6 +4,9 @@
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
 rules = [
+    "boss-ceres-ridley/WarningArt",
+    "boss-ceres-ridley/WarningGlow",
+    "boss-ceres-ridley/WarningEnds",
     "samus-movement/GetawayArms",
     "samus-movement/GetawayStarts",
     "samus-movement/GetawayTravels",
@@ -869,7 +872,7 @@ field = "doors.colours.goal"
 name = "played-countdown-start-every-frame"
 responsibility = "played"
 file = "crates/verify/src/replay/played.rs"
-before = "let start = super::hud::countdown_start(&previous.wram, &current.wram)?;"
+before = "let start = borrowed_start;"
 after = "let start = interface_hud::StartTime::new(1, 0);"
 case = "played chain-any-0003-DFD7 0 41"
 cut = 1
@@ -1926,3 +1929,53 @@ after = "channel.line_counter = 0;"
 case = "played chain-any-0011-DF45 239 2124"
 cut = 240
 field = "blackout.dma[2]"
+
+[[fault]]
+name = "ridley-warning-overlap-foreground-withheld"
+rule = "boss-ceres-ridley/WarningArt"
+responsibility = "ceres"
+file = "crates/game/src/production/played/warning.rs"
+before = '''    let both = [
+        update(WarningSheet::Sprites, last),
+        update(WarningSheet::Foreground, &overlap.patch),
+    ];'''
+after = '''    let both = [update(WarningSheet::Sprites, last)];
+    let _ = overlap;'''
+case = "ridley/warning-through-passage"
+cut = 1277
+field = "ridley.warning.art"
+
+[[fault]]
+name = "ridley-warning-glow-withheld"
+rule = "boss-ceres-ridley/WarningGlow"
+responsibility = "ceres"
+file = "crates/game/src/production/played/warning.rs"
+before = "        *palette.screen.get_mut(position).ok_or_else(bad)? = write.colour;"
+after = '''        if effects.picture.colours.len() != 3 {
+            *palette.screen.get_mut(position).ok_or_else(bad)? = write.colour;
+        }'''
+case = "ridley/warning-through-passage"
+cut = 1286
+field = "doors.colours.screen"
+
+[[fault]]
+name = "ridley-warning-withheld-activation"
+rule = "boss-ceres-ridley/WarningEnds"
+responsibility = "ceres"
+file = "crates/game/src/production/played/warning.rs"
+before = "        activation: effects.activation,"
+after = "        activation: None,"
+case = "ridley/warning-through-passage"
+cut = 1586
+field = "ceres.0.phase"
+
+[[fault]]
+name = "ridley-warning-quieting-clock-publication-withheld"
+rule = "boss-ceres-ridley/WarningEnds"
+responsibility = "ceres"
+file = "crates/game/src/production/played/clock_picture.rs"
+before = "        if timing.publishes {"
+after = "        if timing.publishes && draws {"
+case = "ridley/warning-through-passage"
+cut = 1611
+field = "ridley.warning.clock.published"

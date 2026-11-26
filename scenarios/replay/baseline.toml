@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "01820fd2f8beee15c782621416f54bb9f9de893cd5a970dc9d4c3148e80cf988"
+index_sha256 = "824a1167f1bade561337a3931f6b39883c9940541fc710b51664a0a9a9e1ea10"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1512,5 +1512,41 @@ replies = 0
 null_cuts = 0
 null_fields = 1
 restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/warning-through-passage"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "9eef6b45f2b4f899ca5e9057b9a14f886ced5f670124bc86a2af88c7becc9234"
+
+[case.counts]
+cuts = 342
+fields = 1026
+outputs = 13877
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 350
+restorations = 342
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "ridley/alternate-warning"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "cde5347da71658757f596985f6fe86c6b02b7186e8d873c3667cc8b994c16b1c"
+
+[case.counts]
+cuts = 341
+fields = 1023
+outputs = 13841
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 350
+restorations = 341
 pending_boundaries = 0
 pending_restorations = 0

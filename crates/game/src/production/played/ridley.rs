@@ -7,7 +7,7 @@
 //! tail rests behind him. At take-off it swings loose and can whip toward her. Once he is
 //! tangible, the moved tip can hit her. Her energy and motion read the same hit.
 
-use super::{Content, Fault, Rules, station};
+use super::{Content, Fault, Rules, samus, station};
 use crate::production::{ridley, room_loading};
 use boss_ceres_ridley::{CeresRidley, Fight, RidleyPhase, RidleyRun};
 use world_doors::Palette;
@@ -95,6 +95,21 @@ pub(super) fn run(
         ridley::show_getaway(backdrop.colours, palette);
     }
     Ok(run)
+}
+
+pub(super) fn finish_getaway(
+    enemies: &station::Enemies,
+    samus: &mut samus_movement::Samus,
+    palette: &mut Palette,
+) -> world_quake::State {
+    let mut quake = enemies.quake;
+    if let Some(effects) = enemies.ridley.and_then(|run| run.getaway) {
+        if effects.push.is_some() {
+            samus::GetawayPass.arm(samus);
+        }
+        apply_getaway(effects, &mut quake, palette);
+    }
+    quake
 }
 
 /// The room work after Samus moves publishes the selected flyby picture and starts its shake.

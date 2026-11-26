@@ -29,11 +29,11 @@ movie = "any"
 [[run]]
 row = "any-power-on"
 start = 0
-end = 11433
-held = 11432
-stop = { failed = "RidleyWarning" }
+end = 11851
+held = 11850
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 0
-frames = [1, 11432]
+frames = [1, 11850]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it
@@ -55,11 +55,11 @@ power_on = false
 [[run]]
 row = "any-fly-to-ceres"
 start = 0
-end = 4026
-held = 3920
-stop = { failed = "RidleyWarning" }
+end = 4339
+held = 4338
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 7512
-frames = [7513, 11432]
+frames = [7513, 11850]
 power_on = false
 
 # A new game's arrival at Ceres, from the intro's last frame: the screen dark while the start is
@@ -81,11 +81,11 @@ power_on = false
 [[run]]
 row = "any-ceres-arrival"
 start = 0
-end = 3223
-held = 3117
-stop = { failed = "RidleyWarning" }
+end = 3536
+held = 3535
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 8315
-frames = [8316, 11432]
+frames = [8316, 11850]
 power_on = false
 
 # Ceres's first room from her arrival: the elevator's pad holds her, lowers her to the shaft's
@@ -97,11 +97,11 @@ power_on = false
 [[run]]
 row = "chain-any-0001-DF45"
 start = 0
-end = 3000
-held = 2894
-stop = { failed = "RidleyWarning" }
+end = 3313
+held = 3312
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 8538
-frames = [8539, 11432]
+frames = [8539, 11850]
 power_on = false
 
 # Ceres's first room alone, from her arrival.
@@ -134,10 +134,10 @@ power_on = false
 row = "chain-any-0003-DFD7"
 start = 0
 end = 3000
-held = 2200
-stop = { failed = "RidleyWarning" }
+held = 2618
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 9232
-frames = [9233, 11432]
+frames = [9233, 11850]
 power_on = false
 
 # Ceres's fourth room alone, from its own seed.
@@ -160,10 +160,10 @@ power_on = false
 row = "chain-any-0006-E0B5"
 start = 0
 end = 1785
-held = 1270
-stop = { failed = "RidleyWarning" }
+held = 1688
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 10162
-frames = [10163, 11432]
+frames = [10163, 11850]
 power_on = false
 
 # The intro's opening and page 1 alone, from the intro's first frame: dark while the first tune
@@ -261,11 +261,11 @@ power_on = false
 [[run]]
 row = "any-intro-6012"
 start = 1
-end = 5421
-held = 5419
-stop = { failed = "RidleyWarning" }
+end = 5839
+held = 5837
+stop = { failed = "Ceres Ridley flight tail observation" }
 seed_frame = 6013
-frames = [6014, 11432]
+frames = [6014, 11850]
 power_on = false
 
 # The flight to Zebes from the station blackout through the frame that clears the

@@ -32,6 +32,9 @@ mod readers;
 mod recorded;
 pub mod result;
 mod ridley;
+#[cfg(test)]
+mod ridley_warning_art;
+mod ridley_warning_native;
 mod runner;
 mod save_files;
 mod sender_offer;
@@ -90,7 +93,9 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         .and_then(|()| {
             if matches!(
                 case.inputs,
-                index::InputProvider::PlayedCeresInputs | index::InputProvider::ScopedCeresFlyby
+                index::InputProvider::PlayedCeresInputs
+                    | index::InputProvider::ScopedCeresFlyby
+                    | index::InputProvider::ScopedCeresWarning
             ) {
                 played::indexed::run(case, sources, &mut result)
             } else if case.inputs == index::InputProvider::ScopedGetawayInputs {

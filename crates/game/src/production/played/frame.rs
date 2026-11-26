@@ -38,7 +38,7 @@ impl State {
     }
 
     /// The random number the frame's enemies read: drawn once as a frame of work begins.
-    pub(super) fn drawn(self, passing: &Passing<'_>) -> types::RandomSequence {
+    pub(super) fn drawn(self, passing: &Passing) -> types::RandomSequence {
         let random = passing.random.unwrap_or(self.random);
         if passing.work_begun {
             draw(random)

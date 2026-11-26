@@ -177,6 +177,8 @@ pub enum InputProvider {
     Blackout,
     /// One admitted room and finished opportunities for the flyby’s owned producers.
     ScopedCeresFlyby,
+    /// One admitted warning-ready room and the usual played room/passage inputs.
+    ScopedCeresWarning,
     /// Carried Samus turn with a separately observed flyby pass and view edge.
     ScopedGetawayInputs,
     /// The movie pad, platform completion and the Zebes encounter cue for scoped intro play.
@@ -335,6 +337,18 @@ pub enum ObservationId {
     /// The room’s door state, clock and quake at each flyby cut.
     #[serde(rename = "ridley.flyby.room")]
     CeresFlybyRoom,
+    /// Warning phase, live progress, glow and Escape stage.
+    #[serde(rename = "ridley.warning.state")]
+    CeresWarningState,
+    /// Carried room art, positioned text and live and physically published colours.
+    #[serde(rename = "ridley.warning.picture")]
+    CeresWarningPicture,
+    /// Delayed escape track and stroke offers.
+    #[serde(rename = "ridley.warning.audio")]
+    CeresWarningAudio,
+    /// Defeat, doors, quake results and the clock picture through the first passage turns.
+    #[serde(rename = "ridley.warning.handoff")]
+    CeresWarningHandoff,
     /// Complete carried flight tail, compared by segment and field.
     #[serde(rename = "ridley.tail.state")]
     CeresTailState,
@@ -1267,6 +1281,10 @@ macro_rules! ceres_observations {
             | ObservationId::CeresFlybySound
             | ObservationId::CeresFlybyPush
             | ObservationId::CeresFlybyRoom
+            | ObservationId::CeresWarningState
+            | ObservationId::CeresWarningPicture
+            | ObservationId::CeresWarningAudio
+            | ObservationId::CeresWarningHandoff
     };
 }
 
@@ -1569,6 +1587,15 @@ fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
         "boss-ceres-ridley/GetawayPicture" => {
             &[O::CeresFlybyPlane, O::CeresFlybyColours, O::CeresFlybyTiles]
         }
+        "boss-ceres-ridley/WarningArt" | "boss-ceres-ridley/WarningGlow" => {
+            &[O::CeresWarningState, O::CeresWarningPicture]
+        }
+        "boss-ceres-ridley/WarningHeading" | "boss-ceres-ridley/WarningTyping" => &[
+            O::CeresWarningState,
+            O::CeresWarningPicture,
+            O::CeresWarningAudio,
+        ],
+        "boss-ceres-ridley/WarningEnds" => &[O::CeresWarningState, O::CeresWarningHandoff],
         "boss-ceres-ridley/FliesOutOfReach" => &[O::CeresRetreatBody, O::CeresRetreatBound],
         "boss-ceres-ridley/GetawayBackdrop" => &[
             O::CeresRetreatBody,
@@ -2230,7 +2257,9 @@ fn landing_provider_valid(case: &Case) -> bool {
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     if matches!(
         case.inputs,
-        InputProvider::PlayedCeresInputs | InputProvider::ScopedCeresFlyby
+        InputProvider::PlayedCeresInputs
+            | InputProvider::ScopedCeresFlyby
+            | InputProvider::ScopedCeresWarning
     ) {
         return super::played::indexed::valid(case);
     }

@@ -4,7 +4,13 @@
 //! the spec gives.
 
 #[cfg(test)]
+mod support;
+
+#[cfg(test)]
 mod vectors {
+    use super::support::warning::{
+        self as warning_vectors, EnglishCellRow, WarningEffectsRow, WarningLanguage, WarningRow,
+    };
     use core::num;
     use core::num::Wrapping;
 
@@ -84,6 +90,16 @@ mod vectors {
         length: Option<usize>,
         getaway_after: Option<GetawayRow>,
         effects: Option<GetawayEffectsRow>,
+        // The warning.
+        warning: Option<WarningRow>,
+        warning_after: Option<WarningRow>,
+        warning_effects: Option<WarningEffectsRow>,
+        ordinary: Option<bool>,
+        language: Option<WarningLanguage>,
+        fade: Option<bool>,
+        passage: Option<bool>,
+        art: Option<Vec<Vec<String>>>,
+        text: Option<Vec<EnglishCellRow>>,
         // The pad and the cover.
         arrival: Option<[u16; 2]>,
         pad: Option<PadRow>,
@@ -290,10 +306,28 @@ mod vectors {
     }
 
     #[derive(Deserialize)]
-    #[serde(rename_all = "lowercase")]
+    #[serde(try_from = "String")]
     enum Source {
         Constructed,
         Recorded,
+    }
+
+    impl TryFrom<String> for Source {
+        type Error = &'static str;
+
+        fn try_from(text: String) -> Result<Self, Self::Error> {
+            match text.as_str() {
+                "constructed" => Ok(Self::Constructed),
+                "recorded" => Ok(Self::Recorded),
+                _ if text.split_once(':').is_some_and(|(route, cut)| {
+                    route.starts_with("chain-") && cut.parse::<u32>().is_ok()
+                }) =>
+                {
+                    Ok(Self::Recorded)
+                }
+                _ => Err("unknown vector source"),
+            }
+        }
     }
 
     #[derive(Deserialize, Default)]
@@ -2381,6 +2415,30 @@ mod vectors {
         })
     }
 
+    fn check_warning(vector: &Vector, expected: &WarningRow) -> Option<String> {
+        let inputs = boss_ceres_ridley::WarningInputs {
+            ordinary: vector.ordinary.unwrap_or(true),
+            finished: GameFrames(vector.finished.unwrap_or(1)),
+            fade: vector.fade.unwrap_or(false),
+            passage: vector.passage.unwrap_or(false),
+            language: vector.language.unwrap_or(WarningLanguage::English).into(),
+            foreground: warning_vectors::foreground(),
+        };
+        let (actual, effects) = warning_vectors::run(
+            vector.warning.as_ref().unwrap(),
+            inputs,
+            vector.art.as_deref(),
+            vector.text.as_deref(),
+        );
+        let expected_effects = vector.warning_effects.as_ref().unwrap();
+        (&actual != expected || &effects != expected_effects).then(|| {
+            format!(
+                "{}: expected {expected:?}, {expected_effects:?}; got {actual:?}, {effects:?}",
+                vector.id
+            )
+        })
+    }
+
     /// The vector's check, by the result it names; exactly one.
     fn check(vector: &Vector) -> Option<String> {
         match (
@@ -2390,13 +2448,15 @@ mod vectors {
             &vector.ridley_after,
             &vector.vents_after,
             &vector.getaway_after,
+            &vector.warning_after,
         ) {
-            (Some(after), None, None, None, None, None) => check_door(vector, after),
-            (None, Some(after), None, None, None, None) => check_pad(vector, after),
-            (None, None, Some(after), None, None, None) => check_lights(vector, after),
-            (None, None, None, Some(after), None, None) => check_ridley(vector, after),
-            (None, None, None, None, Some(after), None) => check_steam(vector, after),
-            (None, None, None, None, None, Some(after)) => check_getaway(vector, after),
+            (Some(after), None, None, None, None, None, None) => check_door(vector, after),
+            (None, Some(after), None, None, None, None, None) => check_pad(vector, after),
+            (None, None, Some(after), None, None, None, None) => check_lights(vector, after),
+            (None, None, None, Some(after), None, None, None) => check_ridley(vector, after),
+            (None, None, None, None, Some(after), None, None) => check_steam(vector, after),
+            (None, None, None, None, None, Some(after), None) => check_getaway(vector, after),
+            (None, None, None, None, None, None, Some(after)) => check_warning(vector, after),
             _ => panic!("{}: a vector names exactly one result", vector.id),
         }
     }
@@ -2529,7 +2589,14 @@ mod vectors {
     #[test]
     fn every_vector_passes() {
         let vectors = vectors();
-        assert!(!vectors.is_empty());
+        assert_eq!(vectors.len(), 384);
+        assert_eq!(
+            vectors
+                .iter()
+                .filter(|vector| vector.warning_after.is_some())
+                .count(),
+            30
+        );
         assert_eq!(
             vectors
                 .iter()
@@ -2544,6 +2611,11 @@ mod vectors {
             })
             .collect();
         assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+
+    #[test]
+    fn escape_activation_does_not_republish_after_restore() {
+        warning_vectors::escape_activation_survives_restore();
     }
 
     #[test]

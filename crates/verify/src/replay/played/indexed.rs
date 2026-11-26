@@ -4,7 +4,8 @@ use super::{Run, Stop, actual, contact, open_rows, read_lock, ridley, seed_contr
 use crate::replay::{
     Sources, appearance, connected, data_failure,
     index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
+        Case, CaseKind, ContentProvider, ExpectedProvider, InputProvider, ObservationId,
+        Responsibility, Start,
     },
     movement,
     readers::ExpectedCut,
@@ -48,12 +49,24 @@ const FLYBY_OUTPUTS: &[ObservationId] = &[
     ObservationId::CeresFlybyRoom,
 ];
 
+const WARNING_STATE: &[ObservationId] = &[ObservationId::CeresWarningState];
+const WARNING_OUTPUTS: &[ObservationId] = &[
+    ObservationId::CeresWarningPicture,
+    ObservationId::CeresWarningAudio,
+    ObservationId::CeresWarningHandoff,
+];
+
 pub(in crate::replay) fn valid(case: &Case) -> bool {
     let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
         case.kind == CaseKind::Scoped
             && case.responsibilities == [Responsibility::Ceres]
             && case.expectations.fields == FLYBY_STATE
             && case.expectations.outputs == FLYBY_OUTPUTS
+    } else if case.inputs == InputProvider::ScopedCeresWarning {
+        case.kind == CaseKind::Scoped
+            && case.responsibilities == [Responsibility::Ceres]
+            && case.expectations.fields == WARNING_STATE
+            && case.expectations.outputs == WARNING_OUTPUTS
     } else {
         case.kind == CaseKind::Integrated
             && case.responsibilities
@@ -71,7 +84,7 @@ pub(in crate::replay) fn valid(case: &Case) -> bool {
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
         && case.expectations.output_cut.is_none()
-        && !case.checkpoints
+        && case.checkpoints == (case.inputs == InputProvider::ScopedCeresWarning)
 }
 
 /// Comparison fields for the indexed claim. Other played fields still gate every turn.
@@ -124,6 +137,9 @@ pub(in crate::replay) fn run(
         appearance: appearance::Content::load(&sources.rom)?,
     };
     let mut run = Run::admit(&seed, &content, &sources.rom, &case.row)?;
+    if case.inputs == InputProvider::ScopedCeresWarning {
+        return warning(&mut run, &mut rows, seed, controller, case, result);
+    }
     if case.expectations.fields == FLYBY_STATE {
         return flyby(
             &mut run,
@@ -213,6 +229,84 @@ fn flyby(
         };
         runner::record_cut(result, &mut digest, &observed, &frozen, cut)
     })?;
+    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
+    Ok(())
+}
+
+fn warning_semantic(field: &str) -> bool {
+    matches!(
+        field,
+        "ridley.warning.phase" | "ridley.warning.glow" | "ridley.warning.stage"
+    )
+}
+
+fn warning_field(field: &str) -> bool {
+    field.starts_with("ridley.warning.")
+        || field.starts_with("hud.countdown.")
+        || field.starts_with("ceres.")
+        || field.starts_with("quake.")
+        || field == "finished-frames"
+}
+
+fn warning(
+    run: &mut Run<'_>,
+    rows: &mut super::rows::Rows<'_>,
+    mut previous: oracle_record::FrameRecord,
+    mut controller: super::Controller,
+    case: &Case,
+    result: &mut CaseResult,
+) -> Result<(), Outcome> {
+    use crate::replay::{compare::Observation, ridley_warning_native as native};
+    let start = previous.index;
+    if !matches!(native::state(&previous)?.phase, native::Phase::Ready) {
+        return Err(data_failure(Some(start), "warning-ready origin"));
+    }
+    let frozen = [
+        Observation {
+            field: "ridley.warning.phase".into(),
+            bytes: vec![0; 8],
+        },
+        Observation::quantity("ridley.warning.glow", 0),
+        Observation::quantity("ridley.warning.stage", 1),
+    ];
+    let mut digest = Vec::new();
+    for cut in start.saturating_add(1)..=case.end.cut_inclusive {
+        let current = rows.record(cut)?;
+        let (row, local) = rows.place(cut)?;
+        let mut restored = run.clone();
+        let mut fields = run.step(controller, &previous, &current, cut, (&row, local))?;
+        let replayed = restored.step(controller, &previous, &current, cut, (&row, local));
+        if replayed.as_ref() != Ok(&fields)
+            || restored.state != run.state
+            || restored.warning_picture != run.warning_picture
+            || restored.return_timing != run.return_timing
+        {
+            return Err(Outcome::CheckpointFailure { cut });
+        }
+        result.counts.restorations = result.counts.restorations.saturating_add(1);
+        if !fields
+            .iter()
+            .any(|field| field.field == "ridley.warning.phase")
+        {
+            return Err(data_failure(Some(cut), "warning comparison opportunity"));
+        }
+        fields.retain(|field| warning_field(&field.field));
+        let semantics: Vec<_> = fields
+            .iter()
+            .filter(|field| warning_semantic(&field.field))
+            .cloned()
+            .collect();
+        let observed = ExpectedCut {
+            semantic_count: semantics.len(),
+            output_count: fields.len().saturating_sub(semantics.len()),
+            semantics,
+            fields,
+            replies: 0,
+        };
+        runner::record_cut(result, &mut digest, &observed, &frozen, cut)?;
+        controller = controller.read(current.pad.0, super::polled(&current));
+        previous = current;
+    }
     result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
     Ok(())
 }

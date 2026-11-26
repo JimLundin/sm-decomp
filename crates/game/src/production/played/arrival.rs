@@ -153,19 +153,19 @@ impl super::State {
     /// the frame the start is ready she arrives (`ArrivesAtTheTop`).
     pub(super) fn prepare(
         &mut self,
-        passing: &Passing<'_>,
+        passing: &Passing,
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
         let start = Start {
             x: content.start_x,
-            suit: suit(content, passing)?,
+            suit: suit(content, &self.progress.inventory)?,
             goal: types::Palette(self.palette.goal),
         };
         let setup = self.arrival.setup.advance(passing.start, passing.work_done);
         let opening = if self.arrival.setup != Setup::Published && setup == Setup::Published {
             let (opening, preview) = content.opening_hud.as_ref().ok_or(Fault::HudStartup)?;
-            let inventory = &passing.progress.inventory;
+            let inventory = &self.progress.inventory;
             let energy = run_progress::Supply::Energy;
             Some(interface_hud::HudState::new_file(
                 &rules.hud,
@@ -228,6 +228,7 @@ impl super::State {
             ceres_doors: Vec::new(),
             lights: None,
             ridley: None,
+            warning: None,
             steam_hit: None,
             ridley_placed: None,
             quake: None,
@@ -239,13 +240,12 @@ impl super::State {
 ///
 /// # Errors
 /// [`Fault::SuitColours`] for a colour of more than 15 bits or a palette short of sixteen.
-fn suit(content: &Content, passing: &Passing<'_>) -> Result<SuitColours, Fault> {
-    let colours: Option<Vec<_>> =
-        crate::production::room_loading::suit(&content.rooms, &passing.progress.inventory)
-            .0
-            .iter()
-            .map(|colour| types::Colour::new(colour.0))
-            .collect();
+fn suit(content: &Content, inventory: &run_progress::Inventory) -> Result<SuitColours, Fault> {
+    let colours: Option<Vec<_>> = crate::production::room_loading::suit(&content.rooms, inventory)
+        .0
+        .iter()
+        .map(|colour| types::Colour::new(colour.0))
+        .collect();
     colours
         .and_then(|colours| colours.try_into().ok())
         .map(SuitColours)
@@ -289,7 +289,6 @@ mod tests {
         work_done: bool,
         start: Readiness,
     ) {
-        let progress = run_progress::Progress::default();
         let passing = Passing {
             work_begun,
             work_done,
@@ -298,7 +297,6 @@ mod tests {
                 sounds_sent: true,
                 music_ready: true,
             },
-            progress: &progress,
             random: None,
             start,
         };
@@ -336,8 +334,7 @@ mod tests {
     fn room_setup_publishes_once_and_leaves_state_when_the_hud_provider_is_missing() {
         let mut state = preparing();
         let mut content = content();
-        let mut progress = run_progress::Progress::default();
-        progress.inventory.held.0[run_progress::Supply::Energy] = Wrapping(81);
+        state.progress.inventory.held.0[run_progress::Supply::Energy] = Wrapping(81);
         let rules = rules();
         let mut passing = Passing {
             work_begun: true,
@@ -347,7 +344,6 @@ mod tests {
                 sounds_sent: true,
                 music_ready: true,
             },
-            progress: &progress,
             random: None,
             start: Readiness::FinalMusicWait,
         };
@@ -418,7 +414,6 @@ mod tests {
         arriving.palette.goal = [types::Colour::new(0x7fff).unwrap(); world_doors::COLOURS];
         arriving.hud.0.mini_map = interface_hud::MiniMapPower::Off;
         arriving.arrival.setup = super::Setup::Published;
-        let progress = run_progress::Progress::default();
         let passing = Passing {
             work_begun: true,
             work_done: true,
@@ -427,7 +422,6 @@ mod tests {
                 sounds_sent: true,
                 music_ready: true,
             },
-            progress: &progress,
             random: None,
             start: Readiness::Ready,
         };

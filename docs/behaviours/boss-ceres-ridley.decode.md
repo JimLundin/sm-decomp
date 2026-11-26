@@ -1454,6 +1454,134 @@ substitution preserves the curl and the rising tail's branch.
 | W20 | 982 | FT-turn-back |
 | W21 | 993 | FT-hit-hovering |
 
+## Part 4c-4, the self-destruct warning
+
+The existing played path at `74f10d6c8` stops at Ridley's retreat. There is no
+existing warning owner or competing implementation. This round starts from the
+flyby's `WarningReady` and uses the existing B8 doors, P1 boss progress, H2
+countdown, U1 transport, and R1 passage. The prior flyby remains its own round.
+
+### Sources and mapping
+
+The original sources are in the [A6 bank log](https://patrickjohnston.org/bank/A6).
+The warning's successor is established by `$A6:AB2E..AB5E`. Its ordinary
+runs are selected by `$A6:C04E..C061`. The apparent `$0FB0` hold of 32
+after English is armed has no reader on the English path.
+
+| Entry | Source | State and observed fields |
+| --- | --- | --- |
+| WarningArt | `$A6:C062..C0BA`, `C136..C175`, `C26E..C2A6`, `C4CB..C537` | `0FA8=C04E`, `0FB2` values 0, 2, 4 map to ready, sprite progress and background progress. `0FB0` advances through the two art lists. At the overlap, the first background batch has already gone out. `C002/C006` and `C022/C026` supply the colour pairs and `C0C2/C0C6` and `C0A2/C0A6` receive them. |
+| WarningHeading | `$A6:C0BB..C103`, `C383..C44F` | `0FB2` 6 is the heading, 8 the Japanese wait. `0FB0` is the remaining hold. `09E2` is the file's subtitle setting. |
+| WarningTyping | `$A6:C104..C116`, `C2A7..C382`, `C450..C49B` | `0FB2=10`. `8036` and `8038` give the current cell and its destination. `803A` is wait and `803E` is whether the next printed letter makes a request. The first cell has zero wait because the reset value is read before the leading timing entry supplies 2. After the last wait reaches zero, the delimiter gets its own run. `803C` follows content and is implied by the cell progress. When the English text ends before the subtitle, the delimiter reloads a live two-run wait. In the usual completion it reloads scratch whose reader has finished. |
+| WarningGlow | `$A6:C19C..C23E`, `AA50..AA53` | `8030` is the look. Incoming `05B6`, `7EC400` and `0797` supply the cadence, fade and passage. Live `7EC0C2..C0C7` and physical CGRAM entries 97 through 99 hold the heading colours. |
+| WarningEnds | `$A6:C117..C135`, `AA50..AA53`, `$80:81A6`, `$80:9DE7..A07A` | `0FB2=12` readies the start. Activation clears it to 0 with `0FA8=AA50`, and zeroes Ridley's remaining velocities. `093F=2`, Ceres MainBoss bit 0 of `7ED82E`, and the start consumed into H2's `0943..094B` prove the effect. `0FEA` is the door lock, `1006/1046` bit 8 the two walls' hidden states. |
+
+The current heading and English palette colours, prior baked room plane,
+instantiated doors and wall visibility belong to their existing owners.
+The inactive flyby matrix can retain its last physical value after the return.
+This round compares the room layer and warning footprint with that transform
+inactive. It does not mask a warning tile or colour written in the qualified
+range. At the exit the door scheduler is the writer of palette fades, room
+setup and when H2 is drawn. The inactive `0FB0`, `8038`, `803A`, `803C`,
+and `803E` scratch values outside their live phases are excluded by owner
+and phase. The rendered text and all previously updated art still carry.
+
+### Asset import
+
+Decode the art batches in `$A6:C4CB..C537` at the ROM edge. Verify the seven
+sprite batches and eight foreground/door batches against the actual target tile
+memory mapping. Those eight batches are five foreground text batches followed
+by three door batches. The overlap puts two writes on run seven and the last
+door batch and heading on run fourteen. Convert to a checked
+schedule of semantic sheet patches with their foreground-versus-sprite placement.
+The heading and subtitle retain each tile's relative position, palette and
+priority. Decode positioned English cells from `C450` once and check that
+the first rest is zero and subsequent rests are two. Ceres uses foreground
+tile base `$6000` words and map base `$5000` words. Verify compatible bank
+placement for the warning text tiles, partly reached by the tile-pattern
+address wrap. Resolve blank slots to an absent glyph. Select the stroke on
+the audible beat as sound 45h on library 2 with cap 3, and escape track 7
+with delay 8. The track request on 1284 and the reply on 1293 are separate
+observations. Keep a music queue at the audio boundary. No warning phase may
+infer completion from a track reply.
+
+The Japanese subtitle appears on the 32nd ordinary run after the heading hold.
+At `C0F8` the nonzero branch goes directly to `C104`. On the last run
+`C100` places four subtitle rows and returns to `C104`. Both routes run the
+glow and English typing, so `8036`, `8038`, `803A`, and `803E` are live
+during the subtitle wait. The first English glyph is still on projected cut
+1413. On 1444 the subtitle rows and an English glyph are written. With the
+original text, completion and activation remain on 1585 and 1586. A shortened
+invented text can finish before the subtitle appears. In that case the first
+finish moves from phase 8 to 10. The reset at `C2BD` leaves two wait runs
+before the finished text advances phase 10 to 12. The cached records use
+the English setting. Japanese played admission needs an indexed
+original-side capture and a qualified importer.
+
+### Recorded cuts and acceptance
+
+WX1 through WX22 are observation groups for `chain-any-0006-E0B5` and
+`samus-ceres-push`. The English warning before the door is common to both.
+Read each vector's recorded cut as the result cut. Use the corresponding
+prior cut for its input.
+
+| IDs | Cuts | Observation |
+| --- | --- | --- |
+| WX1–WX6 | 1270–1276 | Room return and colour copies, then first six sprite transfers |
+| WX7 | 1277 | Last sprite transfer and first background transfer |
+| WX8–WX14 | 1278–1284 | Remaining background and door art, then heading and music request |
+| WX15 | 1285–1411 | Heading rest and glow, track acknowledgement on 1293 |
+| WX16 | 1412 | English typing ready, no first glyph yet |
+| WX17 | 1413–1582 | Cells, gaps, glow and alternating letter sounds |
+| WX18 | 1583–1584 | Final wait reduces to zero |
+| WX19 | 1585 | Escape ready, still locked, no clock |
+| WX20 | 1586 | MainBoss progress, stage Escape, door release, walls hide, quake, clock at 1:00.00 |
+| WX21 | 1587–1609 | Glow, countdown hold reaches age 16 at 1602, first ticks at 1603 and 59.98 |
+| WX22 | 1610–1612 | Movie touches the door with 59.87, keeps time through the first step without clock sprites, then draws the frozen time. The second row continues play and reaches 59.85 at 1611. |
+
+The reference reads the original cache and ROM once for content, restores the
+warning and picture at 1270, and evolves its own state through each row.
+Ordinary versus passage opportunity, the current count of finished frames, and
+the fade and passage flags are borrowed from their owners only in the scoped
+reference. A played witness must derive them. Never use the result cut as a
+phase trigger or supply the result's clock, actor, palette or progress state
+back to the warning as fresh input. Time expiry belongs to the later escape.
+
+The checked fields are the warning phase and progress, palette selections,
+live and physical colours, the cumulative warning/door art and all its
+placed text cells, actual foreground layer and text priorities, both audio
+offers, stage, boss defeat, lock and walls, clock state, and the clock sprite
+buffer and physical OAM. The previous cut is the null baseline. Each of 70
+transfer events changes its physical target in both rows. The figure and
+room composition checks use tile/palette/layer and sprite bytes in the lean
+cache. Rendered picture dots are not available in this tier.
+
+| Comparison | Movie | Movie null | Second row | Second row null |
+| --- | ---: | ---: | ---: | ---: |
+| Warning phase | 342/342 | 336/342 | 341/341 | 335/341 |
+| Heading glow look | 342/342 | 260/342 | 341/341 | 259/341 |
+| Warning art and text footprint | 342/342 | 274/342 | 341/341 | 273/341 |
+| Transfer events | 70/70 | 0/70 | 70/70 | 0/70 |
+| Begun clock state and display | 27/27 | 2/27 state only | 26/26 | 0/26 state only |
+
+`$TEMP/collab/ridley-escape-warning-evidence/` holds the scripts and receipts.
+`reference.py` runs the 30 strict warning vectors. `records.py --restores`
+checks both rows and independently decodes and continues eight live states
+on each route, plus the first passage step on the movie. These checkpoints
+cover middle art, heading, typing start, partial text, completion wait,
+EscapeReady, the initial clock hold ending, and the clock/door handoff.
+The existing `ridley-getaway-motion-evidence/warning.py` adds random and
+physical quake through 1611. The original-side mutations pin the art overlap,
+heading duration, glow, blank-cell beat, one-off start and passage clock.
+
+Production acceptance should use the played paths and the ordinary room and
+door entry points. Run the movie from 1270 through the first passage handoff
+and the other row to 1611 with the same owners. Qualify checkpoints using
+production carry and compare their next cuts against the uninterrupted run
+and oracle. Plant a production fault at the overlap, a displaced glow,
+an early or repeated escape start, and a countdown step during the passage.
+Report those as production evidence only once those checks run.
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -1485,5 +1613,6 @@ Part 4c-1b adds the moving tail, for which base `a6a2a0604` has no old implement
 - Area ridley-retreat: FliesOutOfReach, GetawayBackdrop
 
 - Area ridley-getaway: GetawayPass, GetawayPicture
+- Area ridley-warning: WarningArt, WarningHeading, WarningTyping, WarningGlow, WarningEnds
 
-Budget: 37.5 × 227.0 units = 8,510 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362)
+Budget: 37.5 × 245.0 units = 9,185 (doors 1,062, station 237, shaft 462, lights 275, ridley-door 425, ridley 700, ridley-wakes 625, ridley-tail 350, ridley-flight 1,212, steam 1,100, ridley-tail-flight 1,350, ridley-retreat 350, ridley-getaway 362, ridley-warning 675)

@@ -7,6 +7,7 @@ const PHASE: usize = 0x0fa8;
 const READY: u16 = 0xaa11;
 const FLYING: u16 = 0xaa4f;
 const WARNING: u16 = 0xc04e;
+const WARNING_PHASE: usize = 0x0fb2;
 
 const TILES: [(usize, usize); 8] = [
     (0x504, 2),
@@ -49,7 +50,8 @@ pub(super) fn state(record: &FrameRecord) -> Result<Option<State>, Outcome> {
             baby: read(0x802c)?,
             wings: read(0x802e)?,
         }),
-        WARNING => Some(State::Warning),
+        // Only the room return belongs to the flyby. Warning art keeps the same routine.
+        WARNING if read(WARNING_PHASE)? == 0 => Some(State::Warning),
         _ => None,
     })
 }

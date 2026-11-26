@@ -399,7 +399,7 @@ fn phase(wram: &[u8], slot: u16) -> Result<RidleyPhase, Outcome> {
         0xA9A0 => {
             RidleyPhase::CoastingAbove(CoastRuns::new(runs(wait)?).ok_or_else(wait_unsupported)?)
         }
-        code @ (0xAA11 | 0xAA4F | 0xC04E) => return getaway(wram, code),
+        code @ (0xAA11 | 0xAA4F | 0xC04E | 0xAA50) => return getaway(wram, code),
         0xBD9A => RidleyPhase::FakeRetreat,
         _ => return Err(unsupported("Ceres Ridley phase observation")),
     })
@@ -419,7 +419,7 @@ fn getaway(wram: &[u8], code: u16) -> Result<RidleyPhase, Outcome> {
         )
     };
     let bad = || unsupported("Ceres Ridley flyby observation");
-    if code == 0xc04e {
+    if matches!(code, 0xc04e | 0xaa50) {
         return Ok(RidleyPhase::Getaway(GetawayState::WarningReady));
     }
     let baby = match get(0x802c)? {

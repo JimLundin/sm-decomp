@@ -45,7 +45,7 @@ pub struct Room {
 
 /// What a frame brings the doors from owners outside this loop.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Passing<'a> {
+pub struct Passing {
     /// The platform's: a frame of work begins in this frame, the last one's work done.
     pub work_begun: bool,
     /// The platform's: the passage's work in progress is done by this frame's end.
@@ -54,9 +54,6 @@ pub struct Passing<'a> {
     pub publishes: bool,
     /// Audio's answers.
     pub audio: PassageAudio,
-    /// Her progress, which chooses the next room's version, her suit and her beams, and says
-    /// whether the station's boss is beaten.
-    pub progress: &'a run_progress::Progress,
     /// The random numbers' owner's, where this loop doesn't own every draw: the game's random
     /// number as the last frame left it, which replaces the one State carries. None where
     /// State's own is the game's. The frame draws it once as its work begins.
@@ -119,7 +116,7 @@ impl State {
         touched: Option<Doorway>,
         countdown_begun: bool,
         scene: &Scene,
-        passing: &Passing<'_>,
+        passing: &Passing,
         content: &Content,
         rules: &Rules,
     ) -> Exports {
@@ -158,7 +155,6 @@ impl super::State {
     pub(super) fn load(
         &self,
         call: Option<RoomCall>,
-        passing: &Passing<'_>,
         content: &Content,
         palette: &mut Palette,
         random: &mut types::RandomSequence,
@@ -171,7 +167,7 @@ impl super::State {
             return Ok(loaded);
         };
         let run = room_loading::Run {
-            progress: passing.progress,
+            progress: &self.progress,
             ceres: self.station.stage,
         };
         room_loading::load(call, doorway.through, run, &content.rooms, palette)
@@ -212,11 +208,7 @@ impl super::State {
 
 /// Darkening draws report with completed work. Brightening reaches its history-writing draw
 /// when work begins, which can precede the cut that advances the fade.
-pub(super) fn draws_jump(
-    doors: Doors,
-    passing: &Passing<'_>,
-    report: &world_doors::Report,
-) -> bool {
+pub(super) fn draws_jump(doors: Doors, passing: &Passing, report: &world_doors::Report) -> bool {
     if matches!(
         doors,
         Doors::Passing(Passage {
@@ -240,7 +232,7 @@ pub(super) struct Loaded {
 
 /// As the colours come up, the enemies run before the fade takes its step, so the beacon's
 /// colours go in first; that frame of work runs them whenever its work is done.
-pub(super) const fn brightening(doors: Doors, passing: &Passing<'_>) -> bool {
+pub(super) const fn brightening(doors: Doors, passing: &Passing) -> bool {
     passing.work_done
         && matches!(
             doors,
@@ -274,7 +266,7 @@ pub(super) fn doors_inputs(
     touched: bool,
     countdown_begun: bool,
     doorway: Option<Doorway>,
-    passing: &Passing<'_>,
+    passing: &Passing,
     content: &Content,
 ) -> world_doors::Inputs {
     world_doors::Inputs {

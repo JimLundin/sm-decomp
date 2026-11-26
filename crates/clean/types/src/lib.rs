@@ -8,6 +8,8 @@ pub mod arrival;
 pub mod brightness;
 pub mod ceres_blackout;
 pub mod ceres_getaway;
+pub mod ceres_progress;
+pub mod ceres_warning;
 pub mod discovery;
 pub mod explosion;
 pub mod file_select;

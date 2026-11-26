@@ -17,6 +17,9 @@ connected = [
 ]
 
 content = [
+    "replay::ridley_warning_art::imported_warning_art_matches_native_transfers",
+    "replay::ridley_warning_native::warning_native_admits_both_room_origins",
+    "replay::ridley_warning_native::warning_clock_holds_across_the_first_passage_steps",
     "tests::content::every_selectable_pose_has_a_unique_valid_clip",
     "tests::content::all_room_versions_decode",
     "tests::content::all_placed_items_count_a_hundred_percent",
@@ -42,6 +45,7 @@ health_tail = [
 
 # Every reviewed run of scenarios/replay/played.toml holds its `held` and `stop`.
 played = [
+    "replay::played::tests::warning_defeat_is_carried_by_production",
     "replay::played::flyby_scope::tests::flyby_restores_both_native_paths_through_the_warning_handoff",
     "replay::played::tests::reviewed_runs_hold",
     "replay::played::tests::airborne_tail_continues_from_observed_checkpoints",

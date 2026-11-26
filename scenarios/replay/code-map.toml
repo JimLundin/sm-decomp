@@ -1218,3 +1218,45 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/played/getaway.rs" },
   { role = "navigation", path = "docs/behaviours/samus-movement.md" },
 ]
+
+[[rule]]
+id = "boss-ceres-ridley/WarningArt"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/warning.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/warning.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/warning_drawing.rs" },
+  { role = "navigation", path = "crates/import/src/ridley_warning.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/warning.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/WarningHeading"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/warning.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/warning.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/warning.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/WarningTyping"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/warning.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/warning_drawing.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/warning.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/WarningGlow"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/warning.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/warning_drawing.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/warning.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/WarningEnds"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/warning.rs" },
+  { role = "adapter", path = "crates/game/src/production/played/station.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/played/warning.rs" },
+]

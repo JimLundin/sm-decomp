@@ -9,6 +9,7 @@ use game::production::played;
 use interface_hud::{Countdown, CountdownExpiry, StartTime};
 
 /// The HUD's inputs that no owner in the loop produces.
+#[derive(Clone)]
 pub(super) struct Held {
     bindings: hud::Bindings,
     stock_at_start: interface_hud::StockAtStart,

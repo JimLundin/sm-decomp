@@ -28,6 +28,7 @@ pub(super) fn figure() -> Figure {
 pub(super) fn state(doors: Vec<CeresDoor>) -> State {
     let her = fixtures::samus().position;
     State {
+        clock_picture: super::clock_picture::ClockPicture::default(),
         samus: samus::State {
             last_draw_jump: Model(samus_movement::JumpButton::Up),
             travelled: Model(samus_movement::TravelledDistances::default()),
@@ -43,6 +44,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
             RememberedPosition(her),
             types::VerticalFraction(0),
         )),
+        progress: run_progress::Progress::default(),
         passage: passage::State {
             doors: Doors::Play,
             doorway: None,
@@ -90,6 +92,7 @@ pub(super) fn state(doors: Vec<CeresDoor>) -> State {
             pad_and_cover: crate::production::shaft::GONE,
             shaft_overlay: false,
             ridley: None,
+            warning: None,
             stage: Stage::Calm,
         },
         quake: Model(world_quake::State {
@@ -156,6 +159,7 @@ pub(super) fn content() -> Content {
 pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalettes) -> Content {
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
     Content {
+        clock_figures: None,
         movement: MovementContent::new(
             poses
                 .clone()
@@ -241,6 +245,7 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
             )])
             .unwrap(),
         },
+        warning: None,
         // The worth the player's ROM gives his tail's hit.
         tail_worth: samus_health::WholeEnergy::new(15).unwrap(),
     }
@@ -273,18 +278,11 @@ pub(super) fn play_with(
     held: types::Buttons,
     ceres: Stage,
 ) -> Result<Outputs, Fault> {
-    let progress = run_progress::Progress::default();
     state.station.stage = ceres;
-    state.step(
-        &inputs(held),
-        &passing(&progress),
-        &hud_frame(),
-        content,
-        &rules(),
-    )
+    state.step(&inputs(held), &passing(), &hud_frame(), content, &rules())
 }
 
-fn passing(progress: &run_progress::Progress) -> Passing<'_> {
+fn passing() -> Passing {
     Passing {
         work_begun: true,
         work_done: true,
@@ -293,7 +291,6 @@ fn passing(progress: &run_progress::Progress) -> Passing<'_> {
             sounds_sent: true,
             music_ready: true,
         },
-        progress,
         random: None,
         start: arrival::Readiness::NotYet,
     }
@@ -312,8 +309,7 @@ fn first_active_draw_reads_the_last_draw_after_a_poll_gap() {
     });
     let content = content();
     let rules = rules();
-    let progress = run_progress::Progress::default();
-    let mut passing = passing(&progress);
+    let mut passing = passing();
 
     passing.work_done = false;
     passing.publishes = false;
@@ -391,7 +387,7 @@ fn fresh_jump_still_selects_takeoff_when_the_last_draw_held_jump() {
     state
         .step(
             &inputs(JUMP),
-            &passing(&run_progress::Progress::default()),
+            &passing(),
             &hud_frame(),
             &content(),
             &rules(),
@@ -415,13 +411,7 @@ fn armed_jump_is_spent_before_the_active_draw_counts() {
     let mut input = inputs(JUMP);
     input.pressed = Buttons::default();
     state
-        .step(
-            &input,
-            &passing(&run_progress::Progress::default()),
-            &hud_frame(),
-            &content(),
-            &rules(),
-        )
+        .step(&input, &passing(), &hud_frame(), &content(), &rules())
         .unwrap();
 
     let samus = &state.samus.movement.0;
