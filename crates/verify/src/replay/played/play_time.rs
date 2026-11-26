@@ -3,8 +3,6 @@
 use crate::replay::{data_failure, result::Outcome};
 use types::{PlayFrames, PlayHours, PlayMinutes, PlaySeconds, PlayTime};
 
-pub(super) const FIELD: &str = "game-time.elapsed";
-
 pub(super) fn read(wram: &[u8]) -> Result<PlayTime, Outcome> {
     let invalid = || data_failure(None, "elapsed play time");
     let component = |offset: usize| {
@@ -32,7 +30,7 @@ pub(super) fn read(wram: &[u8]) -> Result<PlayTime, Outcome> {
 
 pub(super) fn observation(time: PlayTime) -> crate::replay::compare::Observation {
     crate::replay::compare::Observation {
-        field: FIELD.into(),
+        field: "game-time.elapsed".into(),
         bytes: [
             time.hours.get(),
             time.minutes.get(),
@@ -48,7 +46,6 @@ mod continuous {
     use super::super::{Sources, Stop, open_rows, power_on, read_lock, tests};
     use crate::cache::Cache;
     use crate::lock::{Lock, RowId, Sha256};
-    use crate::replay::result::Outcome;
     use serde::Deserialize;
     use std::collections::BTreeMap;
 
@@ -82,19 +79,19 @@ mod continuous {
     }
 
     const BOOT: &str = "any-power-on";
-    const LAST_SUPPORTED: u64 = 13_310;
+    const FINAL_ROOM_CUT: u64 = 13_311;
 
     #[derive(Clone, Copy)]
     enum End {
-        ShaftBoundary,
+        FinalRoomWork,
         FirstCarry,
     }
 
-    /// The required clock prefix uses the continuous clock fixture through the last finished shaft turn.
+    /// The required clock prefix ends after the shaft's final fresh room turn.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn ceres_clock_prefix() {
-        check(End::ShaftBoundary);
+        check(End::FinalRoomWork);
     }
 
     #[test]
@@ -182,21 +179,16 @@ mod continuous {
             .checked_add(carry.cuts[1])
             .unwrap();
 
-        let (last, stop) = match end {
-            End::ShaftBoundary => (
-                LAST_SUPPORTED,
-                Stop::At(Outcome::Unsupported {
-                    cut: Some(LAST_SUPPORTED + 1),
-                    dependency: "lag cut in play (T1)".into(),
-                }),
-            ),
-            End::FirstCarry => (carry_cut, Stop::End),
+        let last = match end {
+            End::FinalRoomWork => FINAL_ROOM_CUT,
+            End::FirstCarry => carry_cut,
         };
-        let attempted = last
-            .checked_add(u64::from(matches!(end, End::ShaftBoundary)))
-            .unwrap();
         let mut rows = open_rows(&sources, &lock, BOOT).unwrap();
-        let report = power_on::play(&mut rows, &sources.rom, BOOT, 0, attempted).unwrap();
+        assert_eq!(
+            rows.place(FINAL_ROOM_CUT).unwrap(),
+            ("chain-any-0011-DF45".into(), 239)
+        );
+        let report = power_on::play(&mut rows, &sources.rom, BOOT, 0, last).unwrap();
         let compared = rows.clock_cuts.as_slice();
         tests::diagnostic(format_args!(
             "{} prefix held={} clock_comparisons={} first={:?} last={:?} stop={:?}",
@@ -207,11 +199,11 @@ mod continuous {
             compared.last(),
             report.stop
         ));
-        assert_eq!(report.stop, stop);
+        assert_eq!(report.stop, Stop::End);
         assert_eq!(report.held, last);
         assert!(compared.iter().copied().eq(first..=last));
         match end {
-            End::ShaftBoundary => assert_eq!(compared.len(), 4_996),
+            End::FinalRoomWork => assert_eq!(compared.len(), 4_997),
             End::FirstCarry => assert_eq!(compared.len(), 253),
         }
         for case in fixture.case {

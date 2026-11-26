@@ -121,6 +121,10 @@ overrun has reached the completed room work's vblank wait. This combines a
 prior work boundary and the authenticated interrupted site. NMI kind alone
 does not establish that work ran.
 
+The required production clock prefix compares all four components through
+shaft cut 239, movie cut 13,311. The clock proof across the pending save,
+final publication and dispatch remains scoped at the shaft origin.
+
 Restore the actual production checkpoint at cut 238 before work, at cut 239
 before the save payload, and at cut 240 before save completion. Compare the
 complete clock and next output on each continuation. Plant skip and duplicate
