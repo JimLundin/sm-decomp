@@ -296,7 +296,9 @@ fn origin_checkpoint(
     };
     if matches!(
         inputs,
-        InputReader::MovementTouchdown(_) | InputReader::Explosion(_) | InputReader::Zebes(_)
+        InputReader::MovementTouchdown(_)
+            | InputReader::Explosion(_)
+            | InputReader::Zebes(_)
             | InputReader::ShaftEntry(_)
     ) || case.id.0 == super::jump_history::LEAP_CASE
     {

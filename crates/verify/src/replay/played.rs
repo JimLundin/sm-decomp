@@ -360,6 +360,7 @@ struct Frame<'a> {
     cut: u64,
     doors_before: Doors,
     publishes: bool,
+    place: (&'a str, u64),
 }
 
 /// One played run's carried owners and the facts held from its seed.
@@ -510,7 +511,7 @@ impl<'a> Run<'a> {
         let (ceres_doors, owns_roster) = if awaiting_actors {
             (Vec::new(), false)
         } else {
-            ceres_doors::seed(
+            ceres_doors::seed_with_roster(
                 &seed.wram,
                 types::World::solid_enemies(&seeded.geometry),
                 pending.is_some(),
@@ -545,7 +546,6 @@ impl<'a> Run<'a> {
     }
 
     /// Continue room play from the active owners at the cut before this range.
-    #[cfg(test)]
     fn through(
         &mut self,
         rows: &mut rows::Rows<'_>,
@@ -715,6 +715,7 @@ impl<'a> Run<'a> {
                 cut,
                 doors_before: doors,
                 publishes: platform.publishes,
+                place,
             };
             self.compared(&frame, hud_settled, owns_vent_draws, &outputs)?
         };
@@ -750,7 +751,10 @@ impl<'a> Run<'a> {
         outputs: &played::Outputs,
     ) -> Result<(Vec<Observation>, Vec<Observation>), Outcome> {
         let Frame {
-            previous, current, ..
+            previous,
+            current,
+            place,
+            ..
         } = *frame;
         let mut expected = expected(
             frame,
@@ -1035,7 +1039,7 @@ mod tests {
         );
         let carried = run.state.clone();
         let boxes = movement::enemy_roster(&stopped.wram).unwrap();
-        let (doors, _) = ceres_doors::seed(&stopped.wram, &boxes, false).unwrap();
+        let (doors, _) = ceres_doors::seed_with_roster(&stopped.wram, &boxes, false).unwrap();
         run.state.station = station::seed(&stopped.wram, doors, carried.station.stage).unwrap();
         assert_eq!(run.state.station, carried.station);
         let controller = super::seed_controller(&stopped).unwrap();

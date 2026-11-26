@@ -69,6 +69,7 @@ impl Run<'_> {
             work_begun: true,
             work_done: true,
             publishes: true,
+            actor_fetch: super::platform::actor_fetch(current),
             audio: played::passage::PassageAudio {
                 sounds_sent: true,
                 music_ready: true,
