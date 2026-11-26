@@ -127,6 +127,7 @@ impl State {
         // actors have their own slot indices.
         if first_live > 0 {
             self.ridley = None;
+            self.warning = None;
         }
     }
 
