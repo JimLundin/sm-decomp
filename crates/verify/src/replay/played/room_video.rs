@@ -101,9 +101,7 @@ pub(super) fn compare(
     compare_ridley_hdma(room, frame.current, frame.place, frame.cut)?;
     compare_gameplay_tile_layout(room, frame.current, frame.place, frame.cut)?;
     compare_shaft_affine(room, frame.current, frame.place, frame.cut)?;
-    if matches!(frame.place, ("chain-any-0011-DF45", 0..=239))
-        && room.standard_bg3().is_some()
-    {
+    if matches!(frame.place, ("chain-any-0011-DF45", 0..=239)) && room.standard_bg3().is_some() {
         compare_shaft_bg2_scroll(&room.video, frame.current, frame.cut)?;
     }
     compare_shaft_raster(room, frame.current, expected, actual);
