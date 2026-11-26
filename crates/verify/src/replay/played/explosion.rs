@@ -421,6 +421,26 @@ mod tests {
 
     #[test]
     #[ignore = "pinned record cache and player ROM"]
+    fn power_on_reaches_the_landing_site_before_the_rom_bank_boundary() {
+        let sources = super::super::tests::sources();
+        let play = |end| super::super::play(&sources, "any-power-on", 0, end).unwrap();
+        let no_seed: &[&str] = &[];
+        let ending = play(15_196);
+        assert_eq!((ending.held, ending.stop), (15_196, super::Stop::End));
+        assert_eq!(ending.seed_held, no_seed);
+
+        let boundary = play(15_197);
+        assert_eq!(boundary.held, 15_196);
+        assert_eq!(boundary.seed_held, no_seed);
+        assert!(matches!(
+            boundary.stop,
+            super::Stop::At(super::Outcome::Unsupported { cut: Some(15_197), dependency })
+                if dependency == "Landing Site sprite DMA needs the live source after the ROM bank wraps"
+        ));
+    }
+
+    #[test]
+    #[ignore = "pinned record cache and player ROM"]
     fn owned_shaft_uses_the_existing_movie_coordinates() {
         let sources = super::super::tests::sources();
         let lock = super::super::read_lock(&sources).unwrap();

@@ -25,15 +25,16 @@ movie = "any"
 # its opening and page 1 with no new seed. The press after page 1 requests the Zebes fight.
 # The fight returns to page two. The recorded demo drives discovery before the delivery and examination.
 # The live intro hands the dark screen to the flight. The selected file carries into arrival.
-# The return hall places the shaft actors. The elevator locks Samus after she reaches it.
+# Samus reaches the elevator. The shaft publishes the room and saves the selected file.
+# The station and flight carry into the Landing Site loader's first sprite transfer.
 [[run]]
 row = "any-power-on"
 start = 0
-end = 13311
-held = 13311
-stop = "end"
+end = 15197
+held = 15196
+stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
 seed_frame = 0
-frames = [1, 13311]
+frames = [1, 15196]
 power_on = true
 
 # The flight to Ceres from its first frame: the gunship rushes in, the view turns away and it

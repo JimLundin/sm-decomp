@@ -63,6 +63,7 @@ game_time = ["replay::played::play_time::continuous::ceres_clock_prefix"]
 
 # Every reviewed run of scenarios/replay/played.toml holds its `held` and `stop`.
 played = [
+    "replay::played::explosion::tests::power_on_reaches_the_landing_site_before_the_rom_bank_boundary",
     "replay::played::explosion::tests::shaft_bg2_scroll_reaches_the_station_and_flight",
     "replay::blackout::owned_standing::first_locked_turn_reads_the_carried_look",
     "replay::played::shaft_native::effect_pool::live_bursts_restore_pending_fade_and_ordinary_room_effects",
