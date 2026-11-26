@@ -41,6 +41,41 @@ pub struct HudContent {
 }
 
 impl LockedHud {
+    /// Carry the ordinary HUD and its held inputs into the locked room.
+    #[must_use]
+    pub fn from_ordinary(
+        model: &Model<HudPin>,
+        finished: u8,
+        layout: (HudPictures, HerMap, Room),
+        centre: Pair<u16>,
+        energy: u16,
+        frame: &crate::production::played::HudFrame,
+    ) -> (Self, HudContent) {
+        let (pictures, map, room) = layout;
+        (
+            Self {
+                model: model.clone(),
+                finished,
+            },
+            HudContent {
+                pictures,
+                map,
+                room,
+                centre,
+                map_collected: frame.map_collected,
+                stock: frame.stock_at_start,
+                status: Status {
+                    energy: interface_hud::Energy {
+                        now: energy,
+                        capacity: frame.capacity,
+                    },
+                    reserve: frame.reserve,
+                    ammunition: frame.ammunition,
+                },
+            },
+        )
+    }
+
     pub(super) fn prepare(
         &mut self,
         content: &HudContent,

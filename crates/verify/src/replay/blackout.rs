@@ -272,8 +272,10 @@ fn digits(r: &[u8]) -> Result<u32, Outcome> {
 mod owned_standing {
     use super::*;
     use crate::replay::{appearance, camera, compared, played};
+    use canonical::model::Model;
     use game::production::blackout::StandingFrame;
     use game::state::video::Mode7;
+    use types::Parts as _;
 
     #[test]
     #[ignore = "pinned record cache and player ROM"]
@@ -287,14 +289,14 @@ mod owned_standing {
         let image = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
         let rom = image.lorom();
         let format = game::exact::save_files::Format::load(rom).unwrap();
-        let (state, content) = first_owners(&prior, rom, format)?;
+        let samus = played::samus::seed(&prior.wram, &appearance::Content::load(&sources.rom)?)?;
+        let (state, content) = first_owners(&prior, rom, format, samus.movement.0.position)?;
         let mut production = Production::admit(
             ProductionSeed::Blackout(Box::new(state)),
             ProductionContent::Blackout(Box::new(content)),
             ProductionRules::Blackout,
         )
         .unwrap();
-        let samus = played::samus::seed(&prior.wram, &appearance::Content::load(&sources.rom)?)?;
         let camera = camera::seed(&prior.wram, &camera::Content)?;
         let view = Mode7 {
             centre: [
@@ -341,9 +343,10 @@ mod owned_standing {
         prior: &oracle_record::FrameRecord,
         rom: data::rom::Lorom<'_>,
         format: game::exact::save_files::Format,
+        position: types::Position,
     ) -> Result<(blackout::State, blackout::Content), Outcome> {
         let mut state = seed::read(prior, rom, &format, false)?;
-        let hud = hud::admit(prior, rom, &mut state)?;
+        let hud = carried_hud(prior, rom, &mut state, position)?;
         let standing = standing::admit_art(prior, &mut state, rom, false)?;
         Ok((
             state,
@@ -355,5 +358,39 @@ mod owned_standing {
                 hud: Some(hud),
             },
         ))
+    }
+
+    fn carried_hud(
+        prior: &oracle_record::FrameRecord,
+        rom: data::rom::Lorom<'_>,
+        state: &mut blackout::State,
+        position: types::Position,
+    ) -> Result<blackout::HudContent, Outcome> {
+        let ram = &prior.wram;
+        let owner = crate::replay::hud::Content::from_rom(rom)?;
+        let map = owner.map(ram)?.clone();
+        let room = crate::replay::hud::room_from_words(
+            [word(ram, 0x07a1)?, word(ram, 0x07a3)?],
+            [word(ram, 0x07a5)?, word(ram, 0x07a7)?],
+        );
+        let ordinary = played::hud::frame(
+            &played::hud::held(ram)?,
+            played::platform::Controller::seeded(ram)?,
+            None,
+        );
+        let (model, assets) = blackout::LockedHud::from_ordinary(
+            &Model(crate::replay::hud::decode_state(ram)?),
+            crate::replay::hud::frame_count(ram)?.0,
+            (owner.pictures, map, room),
+            types::Pair {
+                x: position.x.pixel().0,
+                y: position.y.pixel().0,
+            },
+            state.owners.0.health.energy.whole.get(),
+            &ordinary,
+        );
+        state.hud = Some(model);
+        state.owners.0.countdown = interface_hud::Countdown::Dormant;
+        Ok(assets)
     }
 }

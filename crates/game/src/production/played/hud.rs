@@ -80,32 +80,21 @@ impl super::State {
         crate::production::blackout::LockedHud,
         crate::production::blackout::HudContent,
     ) {
-        use crate::production::blackout::{HudContent, LockedHud};
         let centre = self.samus.movement.0.position;
-        (
-            LockedHud {
-                model: self.hud.clone(),
-                finished: self.frame.count.0,
+        crate::production::blackout::LockedHud::from_ordinary(
+            &self.hud,
+            self.frame.count.0,
+            (
+                content.hud.clone(),
+                content.map.clone(),
+                self.passage.map_room,
+            ),
+            Pair {
+                x: centre.x.pixel().0,
+                y: centre.y.pixel().0,
             },
-            HudContent {
-                pictures: content.hud.clone(),
-                map: content.map.clone(),
-                room: self.passage.map_room,
-                centre: Pair {
-                    x: centre.x.pixel().0,
-                    y: centre.y.pixel().0,
-                },
-                map_collected: frame.map_collected,
-                stock: frame.stock_at_start,
-                status: Status {
-                    energy: Energy {
-                        now: self.health.0.energy.whole.get(),
-                        capacity: frame.capacity,
-                    },
-                    reserve: frame.reserve,
-                    ammunition: frame.ammunition,
-                },
-            },
+            self.health.0.energy.whole.get(),
+            frame,
         )
     }
 

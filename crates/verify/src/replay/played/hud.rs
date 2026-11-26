@@ -10,7 +10,7 @@ use interface_hud::{Countdown, CountdownExpiry, StartTime};
 
 /// The HUD's inputs that no owner in the loop produces.
 #[derive(Clone)]
-pub(super) struct Held {
+pub(in crate::replay) struct Held {
     bindings: hud::Bindings,
     stock_at_start: interface_hud::StockAtStart,
     status: interface_hud::Status,
@@ -18,7 +18,7 @@ pub(super) struct Held {
 }
 
 /// The HUD's inputs as the seed holds them.
-pub(super) fn held(seed: &[u8]) -> Result<Held, Outcome> {
+pub(in crate::replay) fn held(seed: &[u8]) -> Result<Held, Outcome> {
     Ok(Held {
         bindings: hud::bindings(seed)?,
         stock_at_start: hud::stock_at_start(seed)?,
@@ -118,7 +118,7 @@ pub(super) fn video_observations(vram: &[u16]) -> Result<[Observation; 2], Outco
 
 /// What a frame of play brings the HUD: the held facts, with the item buttons `controller`
 /// reads and the countdown's start, borrowed from the records.
-pub(super) const fn frame(
+pub(in crate::replay) const fn frame(
     held: &Held,
     controller: Controller,
     countdown_starts: Option<StartTime>,

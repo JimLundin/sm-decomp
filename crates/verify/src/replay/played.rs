@@ -35,7 +35,7 @@ pub(super) mod flyby_scope;
 mod frame;
 pub(super) mod getaway;
 mod health;
-mod hud;
+pub(super) mod hud;
 pub(super) mod indexed;
 pub(super) mod intro;
 mod passage;
