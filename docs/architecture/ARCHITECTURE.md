@@ -56,7 +56,7 @@ A scoped entry does not imply boot, general actor dispatch, room loading or CPU 
 | D23 | Speed targets | P14 | 12 |
 | D24 | Size, trait and behaviour-catalogue budgets, reported on every landing | P16, P20 | 13 |
 | D25 | Each stream's lock comes from the most accurate oracle producing it | P10, P12 | 11 |
-| D26 | Short trick movies from seeds; full TAS movies nightly | P10, P11 | 11 |
+| D26 | Short trick movies from seeds; full TAS movies checked by hand, in no workflow | P10, P11 | 11 |
 
 ## 4. Packages and ownership
 
