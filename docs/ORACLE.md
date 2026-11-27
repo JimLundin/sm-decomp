@@ -262,7 +262,7 @@ heals span 3 shows spans 4 on as green again, and long rows can be recorded as p
 | --- | --- | --- |
 | `vram`, `cgram`, `oam`, `sram` | raw memories at the cut | at quiescent cuts |
 | `ppu` | every `PpuRegisters` field in declaration order but the five lsnes lacks (Q4) | at quiescent cuts |
-| `apu` | the CPU's `$2140-$2143` reads and writes, `(kind, port, value)`; DMA and SPC entries dropped on both sides | bytes since the last quiescent cut, folded at each quiescent cut; accesses after the row's last are not folded |
+| `apu` | the CPU's `$2140-$2143` reads and writes as `(kind, port, value)` | bytes since the last quiescent cut. Each quiescent cut folds them. Accesses after the final quiescent cut stay outside the marks |
 | `video` | `Picture::shown()`'s bytes | every frame |
 | `timing` | `[cut, nmi, overrun]`: cut 0 RTI, 1 vblank without NMI, 2 still running; NMI 0 none, 1 requested, 2 overrun | every frame |
 | `input`, `samus`, `camera`, `room`, `progress`, `actors`, `effects`, `rng` | the projection of `verify::decode`; absent until a decoder records it | at quiescent cuts |
@@ -270,9 +270,7 @@ heals span 3 shows spans 4 on as green again, and long rows can be recorded as p
 
 A cut is **quiescent** when it is `Cut::NmiReturn` with `NmiKind::Requested`, the NMI having
 interrupted a wait site (`relock::is_quiescent`). The overrun and NMI-off schedules are the
-complement. `data::span::SpanFold` folds the independent capture in `oracle::relock::Recorder`
-and the record cache. `verify::fold::EngineFold` retains a frame-fold representation, but
-production does not emit complete engine frames or replay a `Recorded` timing source.
+complement. `oracle::relock::Recorder` uses `data::span::SpanFold` to record the independent capture.
 Acceptance uses the [indexed production runner](STATUS.md) and each case's
 declared observations and timing limits. `audio` is not recorded.
 
@@ -352,14 +350,10 @@ A recording is one file or its shards' files joined by commas.
 ### Step f and g: reader, comparison and gate (RELOCK §8)
 
 `verify::lock::Lock::parse_for(text, &oracle)` reads the strict TOML subset (`lock/text.rs`) and
-rejects a lock of another oracle version. `Row::compare(&EngineRow)` gives per stream `Equal`,
-`Differs { span }`, `Absent(Side)` or `NotLocked`, and per fact `Agrees`, `Disagrees`, `Unevaluated`,
-`NotEvaluated`. `RowReport::green()` is ARCHITECTURE D22's green: every compared stream (all but
-`wram`) the entry has is `Equal` and no fact blocks. Writer and reader share the fixture
+rejects a lock of another oracle version. Writer and reader share the fixture
 `crates/verify/src/lock/format2.toml`, which `oracle::relock`'s test writes byte for byte.
 `oracle relock-refold A SIDECAR_DIR` re-folds a recording's sidecars through `SpanFold` and checks
-every mark. Current acceptance is `tools replay check` ([STATUS](STATUS.md)); this lock reader validates
-independent capture metadata rather than dispatching gameplay.
+every mark. [Indexed replay](STATUS.md) checks production against the declared observations.
 
 ### Seed records with the PPU registers (RELOCK §9)
 

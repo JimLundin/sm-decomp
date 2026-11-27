@@ -1,9 +1,8 @@
 //! The span fold of the format-2 lock (docs/ORACLE.md, RELOCK §2 and §6).
 //!
 //! Which streams fold at which cuts, how the APU port log is joined over a busy span,
-//! and where a span's mark closes. The oracle's recorder and the engine's verifier both
-//! fold through [`SpanFold`], so the engine's marks are computed by exactly the
-//! recorder's rules.
+//! and where a span's mark closes. The oracle uses [`SpanFold`] to record the marks
+//! and check them against its per-frame sidecars.
 //!
 //! A cut is quiescent when it is the return of a requested NMI ([`Cut::Requested`]):
 //! the NMI found the main strand waiting. The memory streams, `ppu`, `wram` and `apu`

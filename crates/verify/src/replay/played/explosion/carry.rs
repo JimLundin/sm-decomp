@@ -129,7 +129,7 @@ pub(in crate::replay) fn origin(
         room,
         landing: landing_site::State::new(area, maps, shadow),
         progress: (&crate::replay::progress::decode(&record.wram)?).into(),
-        publication: crate::replay::landing_site::registers(&record.ppu),
+        publication: crate::ppu::registers(&record.ppu),
         random: word(record, 0x05e5)?,
         work_ready: matches!(
             crate::replay::explosion::timing(record)?,
@@ -141,14 +141,14 @@ pub(in crate::replay) fn origin(
                 oam: station.oam,
                 cgram: station.palette,
             },
-            committed: crate::replay::landing_site::registers(&record.ppu),
+            committed: crate::ppu::registers(&record.ppu),
             dma: record.ppu.dma.map(crate::replay::landing_site::channel),
             batch: game::state::video::NmiBatch {
                 fixed_colour: crate::replay::landing_site::queued_colour(record)?
                     .map(game::state::video::ColourWrite),
                 cgram: station.palette,
                 oam: station.oam,
-                registers: crate::replay::landing_site::registers(&record.ppu),
+                registers: crate::ppu::registers(&record.ppu),
                 ..game::state::video::NmiBatch::default()
             },
             ..Video::default()
@@ -207,7 +207,7 @@ pub(super) fn check(run: &Run, record: &FrameRecord, timing: Cut, cut: u64) -> R
             return Err(differs(&format!("vram[{i}]")));
         }
         let actual = &carry.video.committed;
-        let native = crate::replay::landing_site::registers(&record.ppu);
+        let native = crate::ppu::registers(&record.ppu);
         if actual.mode7 != native.mode7 || actual.scroll != native.scroll {
             return Err(differs("affine"));
         }

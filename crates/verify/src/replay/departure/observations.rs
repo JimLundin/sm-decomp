@@ -228,18 +228,18 @@ pub(super) fn native(
             words("vram", record.vram.iter().copied()),
             bytes("oam", record.oam.to_vec()),
             palette(record.cgram.iter().copied()),
-            plane(&landing_site::registers(&record.ppu)),
+            plane(&crate::ppu::registers(&record.ppu)),
         ]);
     }
     if receiving {
         outputs.extend([
             bytes(
                 "display",
-                canonical::to_bytes(&landing_site::registers(&record.ppu)),
+                canonical::to_bytes(&crate::ppu::registers(&record.ppu)),
             ),
             bytes(
                 "published",
-                canonical::to_bytes(&landing_site::registers(&previous.ppu)),
+                canonical::to_bytes(&crate::ppu::registers(&previous.ppu)),
             ),
             bytes("mirrors", landing_site::observed_mirrors(record)?),
             channels(record.ppu.dma.map(landing_site::channel)),

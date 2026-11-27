@@ -1,5 +1,4 @@
-//! The format-2 lock (docs/ORACLE.md, RELOCK §2 and §8): its reader and the comparison of
-//! an engine run's span marks with it, per (row, stream), with the row's green status (D22).
+//! Reader for the format-2 oracle lock (docs/ORACLE.md, RELOCK §2 and §8).
 //!
 //! `oracle::relock` writes the text; this reads exactly that. `verify` doesn't depend on
 //! `oracle`, so the two share a fixture instead of a type: `lock/format2.toml` is what the
@@ -8,13 +7,10 @@
 //! The reader is strict: an unknown key, a duplicate key or row, a stream neither marked
 //! nor named `absent`, or a mark count that doesn't fit the row's frames is an error.
 
-mod compare;
 mod text;
 
 #[cfg(test)]
 mod tests;
-
-pub use compare::{EngineRow, FactOutcome, Outcome, RowReport, Side, SpanIndex, StreamReport};
 
 use core::fmt;
 use data::digest::Digest;
@@ -112,31 +108,6 @@ impl Stream {
             Self::Actors => "actors",
             Self::Effects => "effects",
             Self::Rng => "rng",
-        }
-    }
-
-    /// Whether the stream decides green (D22): every stream but `wram`, which is recorded
-    /// for oracle determinism and the unowned-RAM report.
-    #[must_use]
-    pub const fn compared(self) -> bool {
-        match self {
-            Self::Wram => false,
-            Self::Vram
-            | Self::Cgram
-            | Self::Oam
-            | Self::Sram
-            | Self::Ppu
-            | Self::Apu
-            | Self::Video
-            | Self::Timing
-            | Self::Input
-            | Self::Samus
-            | Self::Camera
-            | Self::Room
-            | Self::Progress
-            | Self::Actors
-            | Self::Effects
-            | Self::Rng => true,
         }
     }
 
@@ -358,24 +329,6 @@ pub struct Row {
     pub facts: Vec<(String, FactResult)>,
     /// Every machine stream, and the typed streams recorded.
     pub streams: BTreeMap<Stream, StreamLock>,
-}
-
-impl Row {
-    /// The stream's lock, `None` where the entry has none (a typed stream not recorded).
-    #[must_use]
-    pub fn stream(&self, stream: Stream) -> Option<&StreamLock> {
-        self.streams.get(&stream)
-    }
-
-    /// The streams that decide the row's green (D22): those [`Stream::compared`] names that the
-    /// lock holds marks for. `wram` is recorded but never compared, and a stream the lock
-    /// lacks can't be equal, so neither counts toward a row's green.
-    pub fn compared_streams(&self) -> impl Iterator<Item = Stream> + '_ {
-        self.streams
-            .iter()
-            .filter(|(stream, lock)| stream.compared() && matches!(lock, StreamLock::Marks(_)))
-            .map(|(&stream, _)| stream)
-    }
 }
 
 /// A parsed format-2 lock.

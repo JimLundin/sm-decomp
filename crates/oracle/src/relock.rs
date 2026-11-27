@@ -3,14 +3,12 @@
 //! A [`Recorder`] folds one row's video frames into span marks: each stream's
 //! digest of every 1000-frame span, folded from empty (Q1), the last span
 //! partial. A row's digest per stream is the fold of its marks
-//! ([`data::digest::fold_all`]). The rules live in `data::span::SpanFold`, which the
-//! engine's verifier folds through too, so both sides compute marks the same way.
+//! ([`data::digest::fold_all`]). The recorder and sidecar checker both use [`SpanFold`].
 //!
 //! A cut is quiescent when it is the RTI of an NMI that found the main thread
 //! at one of [`crate::game::WAIT_SITES`] ([`NmiKind::Requested`]). The memory,
 //! `ppu`, `wram` and `apu` streams fold at quiescent cuts only; `video` and
-//! `timing` fold every frame. The overrun and NMI-off schedules name the other
-//! cuts, so a `Recorded` timing source folds the engine at the same frames.
+//! `timing` fold every frame. The row records its overrun and NMI-off schedules.
 
 use crate::record::{ApuAccessKind, Cut, FrameRecord, NmiKind, PpuRegisters};
 use core::hash::{Hash, Hasher};

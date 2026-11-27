@@ -5,8 +5,7 @@
 //! `index.txt`, the row's lock pins and one `frame offset length cut` line per frame. A
 //! [`Cache`] opens a row's directory, refuses it unless its pins are the lock row's, and
 //! gives its records in frame order, read from the file a record at a time: a row's records
-//! run to hundreds of megabytes. [`fold`] folds them through the recorder's span rules,
-//! so a cache can be checked against the lock it was taken for.
+//! run to hundreds of megabytes.
 //!
 //! A row recorded with watched instruction addresses also has `hits.txt` (a `# watched`
 //! line, then `frame pc line dot peek` per hit); [`Cache::record`] puts each frame's hits
@@ -19,13 +18,11 @@
 //! the full tier otherwise; a reader that needs pictures needs a full tier taken with them.
 //! [`Cache::write_lean`] writes a row's lean tier from either.
 
-use crate::lock::{EngineRow, Frame, FrameCount, Row, Sha256, Stream};
+use crate::lock::{Frame, FrameCount, Row, Sha256};
 use core::fmt;
-use data::digest::Digest;
-use data::span::{self, PortAccess, PortDirection, SpanFold};
 use oracle_record::codec::{self, CodecError, PictureMode};
 use oracle_record::lean;
-use oracle_record::{ApuAccessKind, Beam, Cut, FrameRecord, Hit, NmiKind, PpuRegisters};
+use oracle_record::{Beam, Cut, FrameRecord, Hit, NmiKind};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs::File;
@@ -730,155 +727,11 @@ impl Cache {
     }
 }
 
-/// A cached record as the span fold reads it, under the recorder's rules.
-///
-/// As `oracle::relock` reads a record: lsnes's bus hook sees no DMA side of the APU ports, so DMA and SPC
-/// entries are dropped, and `ppu` leaves out the five registers lsnes doesn't expose.
-pub struct RecordFrame<'a>(pub &'a FrameRecord);
-
-impl span::Frame for RecordFrame<'_> {
-    fn cut(&self) -> span::Cut {
-        match CutKind::of(self.0.cut) {
-            CutKind::Requested => span::Cut::Requested,
-            CutKind::Overrun => span::Cut::Overrun,
-            CutKind::VblankWithoutNmi => span::Cut::VblankWithoutNmi,
-            CutKind::NmiStillRunning => span::Cut::NmiStillRunning,
-        }
-    }
-
-    fn memory(&self, stream: span::Stream) -> Option<u64> {
-        let record = self.0;
-        match stream {
-            span::Stream::Vram => {
-                (record.vram.len() == 0x8000).then(|| span::vram_digest(&record.vram))
-            }
-            span::Stream::Cgram => {
-                (record.cgram.len() == 0x100).then(|| span::cgram_digest(&record.cgram))
-            }
-            span::Stream::Oam => oam_digest(&record.oam),
-            span::Stream::Sram => Some(span::bytes_digest(&record.sram)),
-            span::Stream::Ppu => Some(ppu_digest(&record.ppu)),
-            span::Stream::Wram => Some(span::bytes_digest(&record.wram)),
-            span::Stream::Apu | span::Stream::Video | span::Stream::Timing => None,
-        }
-    }
-
-    fn ports(&self) -> impl Iterator<Item = PortAccess> {
-        self.0.apu_log.iter().filter_map(|access| {
-            let direction = match access.kind {
-                ApuAccessKind::CpuWrite => PortDirection::Write,
-                ApuAccessKind::CpuRead => PortDirection::Read,
-                ApuAccessKind::DmaWrite | ApuAccessKind::DmaRead | ApuAccessKind::SpcWrite => {
-                    return None;
-                }
-            };
-            Some(PortAccess {
-                direction,
-                port: access.port,
-                value: access.value,
-            })
-        })
-    }
-
-    fn video(&self) -> Option<u64> {
-        self.0
-            .picture
-            .as_ref()
-            .map(|picture| span::bytes_digest(picture.shown().as_flattened()))
-    }
-}
-
-/// OAM as the record holds it: 256 little-endian words of the low table, then the high
-/// table's 32 bytes.
-fn oam_digest(oam: &[u8]) -> Option<u64> {
-    let (low, high) = oam.split_at_checked(0x200)?;
-    let mut words = [0; 256];
-    for (word, pair) in words.iter_mut().zip(low.as_chunks::<2>().0) {
-        *word = u16::from_le_bytes(*pair);
-    }
-    Some(span::oam_digest(&words, high.try_into().ok()?))
-}
-
-/// The `ppu` stream's digest, the recorder's rule: the architectural registers in
-/// declaration order without `nmitimen`, `htime`, `vtime`, `hdmaen` and `memsel`.
-#[must_use]
-pub fn ppu_digest(ppu: &PpuRegisters) -> u64 {
-    let PpuRegisters {
-        inidisp,
-        obsel,
-        bgmode,
-        mosaic,
-        bg_sc,
-        bg12nba,
-        bg34nba,
-        bg_scroll,
-        m7sel,
-        m7,
-        window_select,
-        window_positions,
-        wbglog,
-        wobjlog,
-        screens,
-        cgwsel,
-        cgadsub,
-        fixed_color,
-        setini,
-        nmitimen: _,
-        htime: _,
-        vtime: _,
-        hdmaen: _,
-        memsel: _,
-        dma,
-    } = ppu;
-    span::hashed(&(
-        (inidisp, obsel, bgmode, mosaic, bg_sc, bg12nba, bg34nba),
-        (bg_scroll, m7sel, m7, window_select, window_positions),
-        (
-            wbglog,
-            wobjlog,
-            screens,
-            cgwsel,
-            cgadsub,
-            fixed_color,
-            setini,
-        ),
-        dma,
-    ))
-}
-
-/// The row a cache's records fold to under the recorder's span rules: every machine
-/// stream's marks, a stream some frame lacked left out. Facts are not evaluated.
-///
-/// # Errors
-///
-/// The first record that can't be read.
-pub fn fold(cache: &Cache) -> Result<EngineRow, CacheError> {
-    let mut spans = SpanFold::default();
-    for item in cache.records() {
-        let (_, record) = item?;
-        spans.fold(&RecordFrame(&record));
-    }
-    let streams: BTreeMap<Stream, Vec<Digest>> = spans
-        .finish()
-        .into_iter()
-        .filter_map(|(stream, marks)| {
-            Some((
-                Stream::from(stream),
-                marks?.into_iter().map(Digest).collect(),
-            ))
-        })
-        .collect();
-    Ok(EngineRow {
-        streams,
-        facts: BTreeMap::new(),
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lock::{RowId, Start, Ticks};
-    use oracle_record::{CpuRegisters, Pad, Picture};
+    use oracle_record::{CpuRegisters, Pad, Picture, PpuRegisters};
 
     const SHA: &str = "36f9967524b6959d84129fe8fc770ce83127c08b51bfaf8dd066208e9383a172";
 

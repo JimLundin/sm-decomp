@@ -117,10 +117,9 @@ The lean codec reconstructs SRAM along with WRAM, VRAM, CGRAM and OAM. The
 records contain all 8,192 bytes and can be compared byte for byte without
 pictures or new captures. Fold-only digests attest whole spans and cannot
 identify the first differing cut or byte. Stream availability does not mean
-the current indexed production runner compares it. `verify::fold` can take
-an optional SRAM image and the existing file-select played probe reads oracle
-SRAM as input. The new observation needs a required output at the named
-boundary, failing explicitly if the owner or bytes are missing.
+the current indexed production runner compares it. The file-select played probe
+reads oracle SRAM as input. The new observation needs a required output at the
+named boundary, failing explicitly if the owner or bytes are missing.
 
 | Row and cuts | Independent input and output proof | Production obligation |
 | --- | --- | --- |

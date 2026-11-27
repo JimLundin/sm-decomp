@@ -4,9 +4,8 @@
 
 pub mod cache;
 pub mod decode;
-pub mod fold;
 pub mod lock;
-pub mod ppu;
+mod ppu;
 pub mod replay;
 pub mod report;
 pub mod size;
