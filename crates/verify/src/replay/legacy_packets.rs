@@ -18,6 +18,7 @@ struct Search {
 struct Packets {
     sender_control: BTreeMap<String, SenderOfferControl>,
     fixture: Vec<FixturePair>,
+    native_packet: Vec<super::index::NativePacket>,
     connected: BTreeMap<String, ConnectedPacket>,
     native_search: BTreeMap<String, Search>,
 }
@@ -28,6 +29,14 @@ static PACKETS: LazyLock<Option<Packets>> = LazyLock::new(|| {
     ))
     .ok()
 });
+
+pub(super) fn native(case: &super::index::Case) -> Option<&'static super::index::NativePacket> {
+    PACKETS
+        .as_ref()?
+        .native_packet
+        .iter()
+        .find(|packet| packet.applies_to(case))
+}
 
 pub(super) fn connected(id: &str) -> Option<&'static ConnectedPacket> {
     PACKETS.as_ref()?.connected.get(id)

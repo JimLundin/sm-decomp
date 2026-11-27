@@ -5,6 +5,8 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+pub use super::native_packets::NativePacket;
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(transparent)]
 /// Stable committed witness identity.
@@ -1184,7 +1186,7 @@ pub struct FixtureFile {
 }
 
 impl FixtureFile {
-    fn valid(&self) -> bool {
+    pub(super) fn valid(&self) -> bool {
         let component = |part: &str| fixture_component(part) && !part.contains(['\\', ':', '\0']);
         self.path
             .split_once('/')
@@ -1270,6 +1272,9 @@ pub struct Case {
     /// Input and observation files selected for this provider.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fixture: Option<FixturePair>,
+    /// Authenticated native capture consumed by this case.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_packet: Option<NativePacket>,
     /// Declared independent comparison observations.
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
@@ -1312,6 +1317,8 @@ struct IndexDocument {
     lock: PathBuf,
     #[serde(default)]
     fixture: Vec<FixturePair>,
+    #[serde(default)]
+    native_packet: Vec<NativePacket>,
     #[serde(rename = "case")]
     cases: Vec<Case>,
 }
@@ -1326,7 +1333,20 @@ impl TryFrom<IndexDocument> for Index {
                 return Err("invalid or duplicate provider fixture");
             }
         }
+        let mut kinds = std::collections::HashSet::new();
+        for packet in &doc.native_packet {
+            if !packet.valid() || !kinds.insert(std::mem::discriminant(packet)) {
+                return Err("invalid or duplicate native packet");
+            }
+        }
         for case in &mut doc.cases {
+            if case.native_packet.is_none() {
+                case.native_packet = doc
+                    .native_packet
+                    .iter()
+                    .find(|packet| packet.applies_to(case))
+                    .cloned();
+            }
             if case.fixture.is_none() {
                 case.fixture = by_provider.get(&case.inputs).cloned();
             }
@@ -2325,7 +2345,9 @@ fn sender_offer_provider_valid(case: &Case) -> bool {
 fn touchdown_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
     case.kind == CaseKind::Scoped
-        && case.row == super::sender_offer::SOURCE_ROW
+        && case
+            .sender_packet()
+            .is_ok_and(|packet| packet.row == case.row)
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::NativeTouchdownInputs
         && case.expectations.provider == ExpectedProvider::NativeTouchdownObservations
@@ -2955,10 +2977,9 @@ fn start_valid(case: &Case) -> bool {
                 && *frame < case.end.cut_inclusive
         }
         Start::NativeSeed { path, sha256 } => !path.as_os_str().is_empty() && valid_hash(sha256),
-        Start::NativeSenderOffer { source_id } => {
-            *source_id < super::sender_offer::NATIVE_WINDOWS
-                && case.row == super::sender_offer::SOURCE_ROW
-        }
+        Start::NativeSenderOffer { source_id } => case
+            .sender_packet()
+            .is_ok_and(|packet| *source_id < packet.windows && packet.row == case.row),
         Start::ConstructedSenderOffer { control } => {
             control.valid() && case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
         }
@@ -3001,6 +3022,13 @@ impl Case {
         let unique: BTreeSet<_> = observations.iter().copied().collect();
         if (case.fixture.is_some() || case.inputs.uses_fixture_pair())
             && case.fixture_pair().is_err()
+        {
+            return Err(IndexFault::InvalidCase(case.id.clone()));
+        }
+        if case
+            .native_packet
+            .as_ref()
+            .is_some_and(|packet| !packet.applies_to(case) || !packet.valid())
         {
             return Err(IndexFault::InvalidCase(case.id.clone()));
         }
@@ -3203,6 +3231,33 @@ mod tests {
             }
             assert!(!invalid.valid());
         }
+    }
+
+    #[test]
+    fn native_packets_remain_attached_to_cases_extracted_from_the_index() {
+        let index = Index::parse(INDEX).unwrap();
+        let sender = index
+            .cases
+            .iter()
+            .find(|case| matches!(case.start, super::Start::NativeSenderOffer { .. }))
+            .unwrap();
+        let standalone: super::Case = toml::from_str(&toml::to_string(sender).unwrap()).unwrap();
+        assert!(standalone.native_packet.is_some() && standalone.validate().is_ok());
+        let mut constructed = index
+            .cases
+            .iter()
+            .find(|case| matches!(case.start, super::Start::ConstructedSenderOffer { .. }))
+            .unwrap()
+            .clone();
+        assert!(constructed.native_packet.is_none());
+        constructed.native_packet = standalone.native_packet;
+        assert!(constructed.validate().is_err());
+
+        let mut document: super::IndexDocument = toml::from_str(INDEX).unwrap();
+        document
+            .native_packet
+            .push(document.native_packet.first().unwrap().clone());
+        assert!(Index::try_from(document).is_err());
     }
 
     #[test]

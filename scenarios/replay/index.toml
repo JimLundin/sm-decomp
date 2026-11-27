@@ -18,6 +18,18 @@ provider = "scoped-shot-drawing-inputs"
 inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
 expected = { path = "shot-contact-v1/expected.toml", sha256 = "1a4dccf4d4717546adbfd987de39a95cf730030e86bbbe9f5ae2908e11d8e9e1" }
 
+[[native_packet]]
+kind = "sender"
+row = "chain-any-0003-DFD7"
+capture_sha256 = "deed3fab55b6d610429a7e74aa006d39e95189d1dfd031cf387323874ec5e629"
+windows = 19
+inputs = { path = "sender-offers-v1/inputs.toml", sha256 = "5ba2872046c74d2f7fae52445d5ef1143a629cc53566d41f649217586c6b085c" }
+expected = { path = "sender-offers-v1/expected.toml", sha256 = "8dfedf3bc590683cfcaef8a0afcd9678aef23310d086b7ec8477f1224db5ceb8" }
+simultaneous = [
+    { cut = 157, offers = [["Action", "Beam"], ["Contact", "Door"]] },
+    { cut = 183, offers = [["Action", "SamusSilence"], ["Ambient", "BackgroundSilence"]] },
+]
+
 [[case]]
 id = "movement/D-inherited-cut"
 kind = "scoped"

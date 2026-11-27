@@ -20,21 +20,69 @@ use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
     ProductionSeed, audio,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::compare::Observation;
-use super::index::{Case, SenderOfferControl, Start};
+use super::index::{Case, FixtureFile, SenderOfferControl, Start, valid_hash};
 use super::readers::{ActualReader, AdmittedCase, ExpectedReader, InputReader};
 use super::result::Outcome;
 use super::{Sources, data_failure, production_failure};
-use crate::lock::Sha256;
 
-pub(super) const SOURCE_ROW: &str = "chain-any-0003-DFD7";
-pub(super) const NATIVE_WINDOWS: usize = 19;
+/// Pinned causal and observation streams for native sender windows.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SenderPacket {
+    /// Locked capture row recorded in both file headers.
+    pub(super) row: String,
+    capture_sha256: String,
+    pub(super) windows: usize,
+    inputs: FixtureFile,
+    expected: FixtureFile,
+    simultaneous: Vec<OfferOrder>,
+}
 
-const CAPTURE: &str = "deed3fab55b6d610429a7e74aa006d39e95189d1dfd031cf387323874ec5e629";
-const INPUTS: &str = "5ba2872046c74d2f7fae52445d5ef1143a629cc53566d41f649217586c6b085c";
-const EXPECTED: &str = "8dfedf3bc590683cfcaef8a0afcd9678aef23310d086b7ec8477f1224db5ceb8";
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct OfferOrder {
+    cut: u64,
+    offers: Vec<(SoundGroup, CueId)>,
+}
+
+impl SenderPacket {
+    pub(super) fn valid(&self) -> bool {
+        !self.row.is_empty()
+            && valid_hash(&self.capture_sha256)
+            && self.windows > 0
+            && self.inputs.valid()
+            && self.expected.valid()
+            && self.inputs.path != self.expected.path
+            && self.inputs.sha256 != self.expected.sha256
+            && self
+                .simultaneous
+                .is_sorted_by(|first, second| first.cut < second.cut)
+            && self
+                .simultaneous
+                .iter()
+                .all(|order| order.offers.len() >= 2)
+    }
+
+    fn cross_group_order(&self, offers: &[NativeOffer]) -> bool {
+        self.simultaneous.iter().all(|order| {
+            offers
+                .iter()
+                .filter(|offer| offer.cut == order.cut)
+                .map(|offer| (offer.group, offer.cue))
+                .eq(order.offers.iter().copied())
+        }) && offers.windows(2).all(|pair| {
+            pair[0].cut != pair[1].cut
+                || pair[0].group == pair[1].group
+                || self
+                    .simultaneous
+                    .iter()
+                    .any(|order| order.cut == pair[0].cut)
+        })
+    }
+}
 
 #[derive(Deserialize)]
 struct Header {
@@ -47,10 +95,10 @@ struct Header {
 }
 
 impl Header {
-    fn valid(&self) -> bool {
+    fn valid(&self, packet: &SenderPacket) -> bool {
         self.schema == 1
-            && self.source_row == SOURCE_ROW
-            && self.source_ciphertext_sha256 == CAPTURE
+            && self.source_row == packet.row
+            && self.source_ciphertext_sha256 == packet.capture_sha256
             && self.time_unit == "CpuMasterTicks"
             && self.origin == "LockedRoomEntry"
             && self.scope == "ScopedSingleOffer"
@@ -274,36 +322,26 @@ pub(super) fn silent_transport(group: SoundGroup, sender: SenderState) -> State 
     }
 }
 
-fn read_pinned<T: serde::de::DeserializeOwned>(path: &Path, pin: &str) -> Result<T, Outcome> {
-    let bytes = std::fs::read(path).map_err(|_| data_failure(None, "sender offer fixture file"))?;
-    if Sha256::of(&bytes).to_string() != pin {
-        return Err(data_failure(None, "sender offer fixture pin"));
-    }
-    let text = std::str::from_utf8(&bytes)
-        .map_err(|_| data_failure(None, "sender offer fixture encoding"))?;
-    toml::from_str(text).map_err(|_| data_failure(None, "sender offer fixture schema"))
-}
-
 fn native_records(
     path: &Path,
+    packet: &SenderPacket,
     source_id: usize,
     cut: u64,
     require_no_intervening_contact: bool,
 ) -> Result<(NativeOffer, Fifo), Outcome> {
-    let path = path.join("sender-offers-v1");
-    let inputs: Inputs = read_pinned(&path.join("inputs.toml"), INPUTS)?;
-    let expected: Expected = read_pinned(&path.join("expected.toml"), EXPECTED)?;
-    if !inputs.header.valid()
-        || !expected.header.valid()
-        || inputs.offer.len() != NATIVE_WINDOWS
-        || expected.fifo.len() != NATIVE_WINDOWS
+    let inputs: Inputs = packet.inputs.read(path)?;
+    let expected: Expected = packet.expected.read(path)?;
+    if !inputs.header.valid(packet)
+        || !expected.header.valid(packet)
+        || inputs.offer.len() != packet.windows
+        || expected.fifo.len() != packet.windows
         || inputs.offer.windows(2).any(|pair| {
             matches!(pair, [first, second] if first.exec_master_ticks >= second.exec_master_ticks || first.cut > second.cut)
         })
         || !inputs.offer.iter().zip(&expected.fifo).enumerate().all(|(id, (offer, fifo))| {
             id == offer.source_id && id == fifo.source_id && offer.valid_bracket(fifo)
         })
-        || !cross_group_order(&inputs.offer)
+        || !packet.cross_group_order(&inputs.offer)
     {
         return Err(data_failure(None, "sender offer source order or bracket"));
     }
@@ -335,8 +373,13 @@ fn native_records(
         .ok_or_else(|| data_failure(Some(cut), "sender offer source identity"))
 }
 
-fn native(path: &Path, source_id: usize, cut: u64) -> Result<Window, Outcome> {
-    let (offer, fifo) = native_records(path, source_id, cut, false)?;
+fn native(
+    path: &Path,
+    packet: &SenderPacket,
+    source_id: usize,
+    cut: u64,
+) -> Result<Window, Outcome> {
+    let (offer, fifo) = native_records(path, packet, source_id, cut, false)?;
     let request = audio_transport::Offer {
         cue: offer.cue,
         allowance: offer.allowance,
@@ -369,12 +412,13 @@ pub(super) struct ContactIngress {
 
 pub(super) fn contact_ingress(
     path: &Path,
+    packet: &SenderPacket,
     cut: u64,
     seed_master_ticks: u64,
 ) -> Result<ContactIngress, Outcome> {
     use game::production::sender::{Demo, OfferCurrent, PowerBomb, Sounds};
-    let inputs: Inputs = read_pinned(&path.join("sender-offers-v1/inputs.toml"), INPUTS)?;
-    if !inputs.header.valid() || inputs.offer.len() != NATIVE_WINDOWS {
+    let inputs: Inputs = packet.inputs.read(path)?;
+    if !inputs.header.valid(packet) || inputs.offer.len() != packet.windows {
         return Err(data_failure(None, "native Contact ingress header"));
     }
     let mut matching = inputs.offer.into_iter().enumerate().filter(|(_, offer)| {
@@ -425,29 +469,17 @@ pub(super) struct ContactFifo {
 
 pub(super) fn contact_fifo(
     path: &Path,
+    packet: &SenderPacket,
     source_id: usize,
     cut: u64,
 ) -> Result<ContactFifo, Outcome> {
-    let (offer, fifo) = native_records(path, source_id, cut, true)?;
+    let (offer, fifo) = native_records(path, packet, source_id, cut, true)?;
     Ok(ContactFifo {
         ingress_prefetch: offer.prefetch_master_ticks,
         service_master_ticks: fifo.master_ticks,
         queue: fifo.queue,
         progress: fifo.progress.decode()?,
     })
-}
-
-fn cross_group_order(offers: &[NativeOffer]) -> bool {
-    use CueId::{BackgroundSilence, Beam, Door, SamusSilence};
-    use SoundGroup::{Action, Ambient, Contact};
-    let at_cut = |cut| {
-        offers
-            .iter()
-            .filter(move |offer| offer.cut == cut)
-            .map(|offer| (offer.group, offer.cue))
-    };
-    at_cut(157).eq([(Action, Beam), (Contact, Door)])
-        && at_cut(183).eq([(Action, SamusSilence), (Ambient, BackgroundSilence)])
 }
 
 fn constructed(control: &SenderOfferControl) -> Window {
@@ -478,7 +510,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         offers,
         expected,
     } = match case.start {
-        Start::NativeSenderOffer { source_id } => native(&sources.native, source_id, cut)?,
+        Start::NativeSenderOffer { source_id } => {
+            native(&sources.native, case.sender_packet()?, source_id, cut)?
+        }
         Start::ConstructedSenderOffer { ref control } => constructed(control),
         Start::NativeOpportunity { .. }
         | Start::NativeRecord { .. }

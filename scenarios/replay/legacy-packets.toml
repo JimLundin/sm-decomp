@@ -38,3 +38,15 @@ deny-smaller-limit = { group = "Contact", seed = ["Footstep", "Footstep", "Foots
 deny-disabled = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Disabled", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
 deny-demo = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Demo", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
 deny-explosion = { group = "Contact", seed = ["Footstep", "Footstep", "Footstep", "Footstep"], cues = ["Door"], allowance = "Six", permission = "Explosion", expected = ["Footstep", "Footstep", "Footstep", "Footstep"] }
+
+[[native_packet]]
+kind = "sender"
+row = "chain-any-0003-DFD7"
+capture_sha256 = "deed3fab55b6d610429a7e74aa006d39e95189d1dfd031cf387323874ec5e629"
+windows = 19
+inputs = { path = "sender-offers-v1/inputs.toml", sha256 = "5ba2872046c74d2f7fae52445d5ef1143a629cc53566d41f649217586c6b085c" }
+expected = { path = "sender-offers-v1/expected.toml", sha256 = "8dfedf3bc590683cfcaef8a0afcd9678aef23310d086b7ec8477f1224db5ceb8" }
+simultaneous = [
+    { cut = 157, offers = [["Action", "Beam"], ["Contact", "Door"]] },
+    { cut = 183, offers = [["Action", "SamusSilence"], ["Ambient", "BackgroundSilence"]] },
+]
