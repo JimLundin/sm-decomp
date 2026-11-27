@@ -164,6 +164,34 @@ fn include_allowed(target: &Path, text: bool, domain: Option<&str>) -> bool {
             .is_some_and(|rest| rest.contains("/src/"))
 }
 
+pub fn rust_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
+    if !dir.is_dir() {
+        return Ok(());
+    }
+    let mut files = Vec::new();
+    walk(dir, "", &mut files)?;
+    out.extend(
+        files
+            .into_iter()
+            .filter(|(p, link)| !link && Path::new(p).extension().is_some_and(|e| e == "rs"))
+            .map(|(p, _)| dir.join(p)),
+    );
+    Ok(())
+}
+
+pub fn reads_docs(text: &str) -> bool {
+    let toks = lex::tokens(text, 0);
+    let toks = lex::Toks(&toks);
+    (0..toks.len()).any(|i| {
+        matches!(toks.text(i), "include" | "include_str" | "include_bytes")
+            && toks.punct(i.saturating_add(1), "!")
+            && toks.is(i.saturating_add(2), lex::Kind::Open)
+            && toks
+                .get(i.saturating_add(3))
+                .is_some_and(|t| t.kind == lex::Kind::Lit && t.text.contains("docs/"))
+    })
+}
+
 pub fn check(root: &Path, policy: &Policy) -> Result<Vec<Finding>, String> {
     let clean = root.join("crates/clean");
     let mut out = Vec::new();

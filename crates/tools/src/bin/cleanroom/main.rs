@@ -11,8 +11,10 @@
 //! sources, the decode notes and a list of distinctive single words. Nothing it reads is
 //! written out unhashed.
 
+mod export;
 mod lexicon;
 mod mirror;
+mod process;
 mod rules;
 mod scan;
 mod text;
@@ -26,7 +28,8 @@ use std::process::ExitCode;
 use lexicon::{Lexicon, Plain};
 use scan::{Allow, Class, Finding};
 
-const USAGE: &str = "usage: cleanroom check [ROOT]\n       \
+const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN BRIEF\n       \
+                     cleanroom check [ROOT]\n       \
                      cleanroom scan [--lexicon DIR] [--allow FILE] PATH...\n       \
                      cleanroom mirror [--lexicon DIR] SPEC DECODE MODEL...\n       \
                      cleanroom lexicon OUT SALT --logs FILE... --rust FILE... --notes FILE... --words FILE";
@@ -251,6 +254,50 @@ fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
     Ok((plain.write(Path::new(out_dir), salt)?, false))
 }
 
+fn scan_text(repo: &Path, name: &str, text: &str) -> Result<String, String> {
+    let lex = Lexicon::load(&repo.join(DEFAULT_LEXICON))?;
+    let allow_path = repo.join(DEFAULT_ALLOW);
+    let allow = Allow::parse(
+        &fs::read_to_string(&allow_path).map_err(|e| format!("{}: {e}", allow_path.display()))?,
+    );
+    let mut findings = Vec::new();
+    scan::file(&lex, &allow, name, text, &mut findings);
+    let mut out = String::new();
+    for f in &findings {
+        let _ = writeln!(out, "{}:{}: {}: {}", f.path, f.line, f.class, f.detail);
+    }
+    Ok(out)
+}
+
+fn run_export(args: &[String]) -> Result<(String, bool), String> {
+    let mut commit = "HEAD";
+    let mut role = export::Role::Implementer;
+    let mut rest = args;
+    loop {
+        match rest {
+            [flag, value, tail @ ..] if flag == "--commit" => {
+                commit = value;
+                rest = tail;
+            }
+            [flag, tail @ ..] if flag == "--review" => {
+                role = export::Role::Reviewer;
+                rest = tail;
+            }
+            _ => break,
+        }
+    }
+    let [domain, brief] = rest else {
+        return Err(USAGE.to_owned());
+    };
+    let out = export::Export {
+        domain,
+        commit,
+        role,
+    }
+    .write(Path::new(brief))?;
+    Ok((out, false))
+}
+
 fn run_check(args: &[String]) -> Result<(String, bool), String> {
     let root = match args {
         [] => Path::new("."),
@@ -269,6 +316,7 @@ fn run_check(args: &[String]) -> Result<(String, bool), String> {
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.as_slice() {
+        [command, rest @ ..] if command == "export" => run_export(rest),
         [command, rest @ ..] if command == "check" => run_check(rest),
         [command, rest @ ..] if command == "scan" => run_scan(rest),
         [command, rest @ ..] if command == "mirror" => run_mirror(rest),

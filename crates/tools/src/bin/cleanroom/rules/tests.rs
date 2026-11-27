@@ -154,3 +154,13 @@ fn an_inherited_dependency_takes_its_version_and_features_from_the_workspace() {
         .refuses("dep-git");
     ws.workspace("toml = {").refuses("manifest");
 }
+
+#[test]
+fn a_test_that_includes_the_spec_reads_docs() {
+    assert!(super::reads_docs(
+        "const SPEC: &str = include_str!(\"../../../../docs/behaviours/demo.md\");"
+    ));
+    assert!(!super::reads_docs(
+        "const V: &str = include_str!(\"../../../../scenarios/vectors/demo.toml\"); // docs/"
+    ));
+}
