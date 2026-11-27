@@ -16,19 +16,13 @@ pub(in crate::replay) enum Origin {
     Standing,
     SuspendedStanding,
     Hud,
-    Station,
-    ShaftSave,
 }
 
 impl Origin {
     /// Index admission can check the reader and scope before opening the pinned native record.
     pub(super) fn candidates(case: &Case) -> &'static [Self] {
-        use Origin::{
-            Hud, Locked, Reach, ShaftSave, Standing, Station, Suspended, SuspendedStanding,
-        };
-        if case.inputs == InputProvider::Departure {
-            &[Station, ShaftSave]
-        } else if case.inputs != InputProvider::Blackout {
+        use Origin::{Hud, Locked, Reach, Standing, Suspended, SuspendedStanding};
+        if case.inputs != InputProvider::Blackout {
             &[]
         } else if case.responsibilities == [Responsibility::Appearance] {
             &[Standing, SuspendedStanding]
@@ -57,15 +51,15 @@ mod tests {
     use crate::replay::{borrowed, index::Index};
 
     #[test]
-    fn checking_the_admitted_origin_rejects_the_other_valid_departure_contract() {
+    fn checking_the_admitted_origin_rejects_the_other_valid_standing_contract() {
         let index =
             Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
         let find = |id| index.cases.iter().find(|case| case.id.0 == id).unwrap();
-        let mut shaft = find("departure/shaft-save-to-landing").clone();
-        let station = find("departure/interrupted-station-setup");
-        assert!(Origin::ShaftSave.check(&shaft, 0).is_ok());
-        shaft.borrowed.clone_from(&station.borrowed);
-        assert!(borrowed::valid(&shaft));
-        assert!(Origin::ShaftSave.check(&shaft, 0).is_err());
+        let mut suspended = find("appearance/elevator-standing-suspended").clone();
+        let locked = find("appearance/elevator-standing-picture");
+        assert!(Origin::SuspendedStanding.check(&suspended, 0).is_ok());
+        suspended.borrowed.clone_from(&locked.borrowed);
+        assert!(borrowed::valid(&suspended));
+        assert!(Origin::SuspendedStanding.check(&suspended, 0).is_err());
     }
 }

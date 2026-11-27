@@ -28,7 +28,6 @@ impl<T> Tape<T> {
 }
 
 pub(super) enum InputReader {
-    Explosion(super::explosion::Tape<game::production::played::explosion::Cut>),
     Blackout(Tape<game::production::blackout::Cut>),
     Intro(super::played::intro::indexed::Inputs),
     IntroRooms(super::intro_rooms::Inputs),
@@ -37,9 +36,7 @@ pub(super) enum InputReader {
     SaveFiles(Box<super::save_files::Inputs>),
     IntroMissiles(super::intro_missiles::Inputs),
     Discovery(CutTape<game::production::played::discovery::Frame>),
-    Departure(super::departure::Tape<game::production::played::departure::Input>),
     LandingSite(CutTape<game::production::played::landing_site::Work>),
-    Zebes(CutTape<screens_zebes::FrameAdvance>),
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<audio_transport::Offer>),
@@ -54,12 +51,10 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
-    Explosion(super::explosion::Tape<ExpectedCut>),
     Blackout(Tape<ExpectedCut>),
     Intro(super::played::intro::indexed::Expected),
     RecordedCuts(CutTape<ExpectedCut>),
     SaveFiles(super::save_files::Expected),
-    Departure(super::departure::Tape<ExpectedCut>),
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Vec<super::health_tail::Expected>),
     SenderOffer(Vec<Observation>),
@@ -72,7 +67,6 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone, PartialEq, Eq)]
 pub(super) enum ActualReader {
-    Explosion,
     Blackout(bool),
     StandingBody,
     ShaftHud,
@@ -83,15 +77,8 @@ pub(super) enum ActualReader {
     SaveFiles,
     IntroMissiles,
     Discovery,
-    Departure,
     LandingSite,
-    Zebes {
-        integrated: bool,
-        scene: types::zebes::ZebesScene,
-    },
-    EarlyMap {
-        carry_cut: u64,
-    },
+    EarlyMap { carry_cut: u64 },
     HealthTail,
     SenderOffer(audio_transport::SoundGroup),
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
@@ -181,7 +168,6 @@ impl InputReader {
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
-            Self::Explosion(inputs) => inputs.advance(production, cut),
             Self::Blackout(tape) => tape.advance(production, cut),
             Self::Intro(inputs) => inputs.advance(production, cut),
             Self::Flashback(inputs) => inputs.advance(production, cut),
@@ -191,13 +177,9 @@ impl InputReader {
             Self::Discovery(inputs) => production
                 .advance(AdvanceInput::Discovery(*inputs.at(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
-            Self::Departure(tape) => production
-                .advance(AdvanceInput::Departure(*tape.get(cut)?))
-                .map_err(|fault| super::production_failure(cut, fault)),
             Self::LandingSite(inputs) => production
                 .advance(AdvanceInput::LandingSite(*inputs.at(cut)?))
                 .map_err(|fault| super::production_failure(cut, fault)),
-            Self::Zebes(inputs) => super::zebes::advance(production, *inputs.at(cut)?, cut),
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::IntroRooms(inputs) => inputs.advance(production, cut),
             Self::HealthTail(inputs) => inputs
@@ -324,23 +306,12 @@ impl ActualReader {
             (Self::StandingBody, InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
                 super::blackout::standing::actual(production, &out)
             }
-            (Self::Departure, InputReader::Departure(_), _) => {
-                super::departure::actual(production, cut)
-            }
-            (Self::Explosion, InputReader::Explosion(_), ProductionOutputs::Explosion(output)) => {
-                super::explosion::actual(production, Some(&output))
-            }
             (Self::Blackout(late), InputReader::Blackout(_), ProductionOutputs::Blackout(out)) => {
                 super::blackout::actual(production, &out, *late)
             }
             (Self::LandingSite, InputReader::LandingSite(_), ProductionOutputs::LandingSite) => {
                 super::landing_site::actual(production)
             }
-            (
-                Self::Zebes { integrated, .. },
-                InputReader::Zebes(_),
-                ProductionOutputs::Zebes(output),
-            ) => super::zebes::actual(production, &output, *integrated),
             (
                 Self::HealthTail,
                 InputReader::HealthTail(_),
@@ -404,7 +375,6 @@ impl ActualReader {
                 .ok_or_else(|| data_failure(None, "battery null scope")),
             Self::IntroMissiles => super::intro_missiles::actual(production, None),
             Self::Discovery => super::discovery::actual(production, None),
-            Self::Explosion => super::explosion::actual(production, None),
             Self::ShaftHud => super::blackout::hud::actual(production, &[]),
             Self::StandingBody => super::blackout::standing::actual(
                 production,
@@ -415,11 +385,7 @@ impl ActualReader {
                 &game::production::blackout::Output::default(),
                 *late,
             ),
-            Self::Departure => super::departure::actual(production, cut),
             Self::LandingSite => super::landing_site::actual(production),
-            Self::Zebes { integrated, scene } => {
-                super::zebes::initial(production, scene, *integrated)
-            }
             Self::EarlyMap { carry_cut } => {
                 super::early_map::actual(production, None, cut == *carry_cut)
             }
@@ -469,11 +435,9 @@ impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
             Self::Intro(expected) => expected.read(cut),
-            Self::Explosion(expected) => expected.read(cut),
             Self::Blackout(tape) => tape.at(cut).cloned(),
             Self::RecordedCuts(expected) => expected.at(cut).cloned(),
             Self::SaveFiles(expected) => expected.read(cut),
-            Self::Departure(tape) => tape.get(cut).cloned(),
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),

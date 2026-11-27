@@ -30,8 +30,6 @@ pub enum CaseKind {
 #[serde(rename_all = "kebab-case")]
 /// An existing selected production owner.
 pub enum Responsibility {
-    /// The station scene after Ceres.
-    StationExplosion,
     /// The shaft blackout.
     Blackout,
     /// The intro stage, scripts and their frame publications.
@@ -48,12 +46,6 @@ pub enum Responsibility {
     Discovery,
     /// The first Landing Site work interval and its direct DMA.
     LandingSite,
-    /// The complete flight to Zebes.
-    Zebes,
-    /// Page, sprite and palette consumers selected alongside the flight.
-    ZebesDrawing,
-    /// The scheduler's published landing request and retained destination.
-    ZebesScheduler,
     /// The existing movement and semantic pose owner.
     Movement,
     /// Audio transport, played one frame at a time.
@@ -187,8 +179,6 @@ pub struct End {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
-    /// The scheduled NMI completion and post-service music reply.
-    StationExplosion,
     /// Movie pad, room seed and the played platform boundaries for a Ceres tail window.
     PlayedCeresInputs,
     /// One elevator arrival and T1 scheduling.
@@ -226,12 +216,8 @@ pub enum InputProvider {
     /// The intro requests, completion and resulting actor position in the discovery room.
     #[serde(rename = "discovery-segments")]
     DiscoveryInputs,
-    /// Station, flight and direct transfer work from one elevator origin.
-    Departure,
     /// Receiving T1 work opening and byte progress.
     LandingSiteTiming,
-    /// Recorded work completion after the station handoff.
-    ZebesFlightInputs,
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
     /// Independent scoped actor query/delivery, current equipment and active close.
@@ -311,24 +297,6 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
-    /// The station scene's stage observations.
-    #[serde(rename = "explosion.stage")]
-    ExplosionStage,
-    /// The station scene's motion observations.
-    #[serde(rename = "explosion.motion")]
-    ExplosionMotion,
-    /// The station scene's bursts observations.
-    #[serde(rename = "explosion.bursts")]
-    ExplosionBursts,
-    /// The station scene's carry observations.
-    #[serde(rename = "explosion.carry")]
-    ExplosionCarry,
-    /// The station scene's requests observations.
-    #[serde(rename = "explosion.requests")]
-    ExplosionRequests,
-    /// The station scene's drawing observations.
-    #[serde(rename = "explosion.drawing")]
-    ExplosionDrawing,
     /// Ridley's carried body, held baby and retreat phase, with the station still calm.
     #[serde(rename = "ridley.retreat.body")]
     CeresRetreatBody,
@@ -657,24 +625,6 @@ pub enum ObservationId {
     /// Visible discovery pieces and priority relative to the room.
     #[serde(rename = "discovery.oam")]
     DiscoveryOam,
-    /// The scheduled scene, finished count, capacity, caption and destination.
-    #[serde(rename = "departure.schedule")]
-    DepartureSchedule,
-    /// Complete health across the station blackout and flight refill.
-    #[serde(rename = "departure.health")]
-    DepartureHealth,
-    /// The once-per-work RNG across interrupted scene and room setup.
-    #[serde(rename = "departure.random")]
-    DepartureRandom,
-    /// The room, active and stored maps, tilemaps and whole run progress.
-    #[serde(rename = "departure.room")]
-    DepartureRoom,
-    /// Every byte of settled VRAM, OAM and CGRAM, and the affine transform.
-    #[serde(rename = "departure.picture")]
-    DeparturePicture,
-    /// Live and published registers and the accepted and committed loader transfer.
-    #[serde(rename = "departure.loader")]
-    DepartureLoader,
     /// Receiving loader random.
     #[serde(rename = "landing.random")]
     LandingRandom,
@@ -712,33 +662,6 @@ pub enum ObservationId {
     #[serde(rename = "landing.tilemaps")]
     LandingTilemaps,
 
-    /// The flight stage and stage-local counters.
-    #[serde(rename = "zebes.stage")]
-    ZebesStage,
-    /// Brightness, view, mosaic, pose and affine output.
-    #[serde(rename = "zebes.picture")]
-    ZebesPicture,
-    /// The presence and motion of each placed picture.
-    #[serde(rename = "zebes.motion")]
-    ZebesMotion,
-    /// Requests the flight publishes on this cut.
-    #[serde(rename = "zebes.requests")]
-    ZebesRequests,
-    /// The energy held and restored by the receiving owner.
-    #[serde(rename = "zebes.health")]
-    ZebesHealth,
-    /// Current game flow and retained Landing Site context.
-    #[serde(rename = "zebes.schedule")]
-    ZebesSchedule,
-    /// Exact page and graphics transfers.
-    #[serde(rename = "zebes.pages")]
-    ZebesPages,
-    /// Ordered visible sprite entries and high-table bits.
-    #[serde(rename = "zebes.oam")]
-    ZebesOam,
-    /// Complete published BGR555 palette, including the engine accent and caption.
-    #[serde(rename = "zebes.palette")]
-    ZebesPalette,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -1537,17 +1460,6 @@ macro_rules! flashback_observations {
     };
 }
 
-macro_rules! explosion_observations {
-    () => {
-        O::ExplosionStage
-            | O::ExplosionMotion
-            | O::ExplosionBursts
-            | O::ExplosionCarry
-            | O::ExplosionRequests
-            | O::ExplosionDrawing
-    };
-}
-
 macro_rules! blackout_observations {
     () => {
         O::BlackoutScene
@@ -1653,10 +1565,7 @@ macro_rules! ceres_observations {
 
 macro_rules! landing_observations {
     () => {
-        O::DepartureRandom
-            | O::DepartureRoom
-            | O::DepartureLoader
-            | O::LandingRandom
+        O::LandingRandom
             | O::LandingCarried
             | O::LandingMap
             | O::LandingPipeline
@@ -1677,8 +1586,6 @@ macro_rules! health_observations {
             | ObservationId::HealthTailWarning
             | ObservationId::HealthTailDrawnProtection
             | ObservationId::CeresTailHealth
-            | ObservationId::DepartureHealth
-            | ObservationId::ZebesHealth
     };
 }
 
@@ -1745,20 +1652,12 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::PlaybackAuthority => Responsibility::Playback,
         O::Battery => Responsibility::SaveFiles,
         landing_observations!() => Responsibility::LandingSite,
-        O::ZebesStage | O::ZebesPicture | O::ZebesMotion | O::ZebesRequests => {
-            Responsibility::Zebes
-        }
-        O::DepartureSchedule | O::ZebesSchedule => Responsibility::ZebesScheduler,
-        O::DeparturePicture | O::ZebesPages | O::ZebesOam | O::ZebesPalette => {
-            Responsibility::ZebesDrawing
-        }
         O::SenderQueue
         | O::SenderProgress
         | O::SenderPermission
         | O::SenderRequest
         | O::TouchdownOffer => Responsibility::AudioSender,
         health_observations!() => Responsibility::Health,
-        explosion_observations!() => Responsibility::StationExplosion,
         blackout_observations!() => Responsibility::Blackout,
         O::CeresTailKnockback
         | O::TouchdownClip
@@ -1839,9 +1738,7 @@ fn rule_owner(rule: &str, provider: InputProvider) -> Option<Responsibility> {
         ("world-intro-rooms/", Responsibility::IntroRooms),
         ("screens-flashback/", Responsibility::Flashback),
         ("screens-discovery/", Responsibility::Discovery),
-        ("screens-zebes/", Responsibility::Zebes),
         ("samus-movement/", Responsibility::Movement),
-        ("screens-explosion/", Responsibility::StationExplosion),
         ("screens-blackout/", Responsibility::Blackout),
         ("screens-playback/", Responsibility::Playback),
         ("audio-transport/", Responsibility::Audio),
@@ -1865,12 +1762,6 @@ fn movement_witnessed_fields(
     provider: InputProvider,
 ) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
-    if provider == InputProvider::Departure
-        || rule.starts_with("screens-zebes/")
-        || rule.starts_with("screens-explosion/")
-    {
-        return cinematic_witnesses(rule, provider);
-    }
     if rule.starts_with("screens-blackout/") {
         return super::blackout::witnessed_fields(rule);
     }
@@ -2162,54 +2053,6 @@ fn playback_fields(rule: &str) -> Option<&'static [ObservationId]> {
             O::PlaybackProgress,
             O::PlaybackCurrentHeld,
         ],
-        _ => return None,
-    })
-}
-
-fn cinematic_witnesses(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    if provider == InputProvider::Departure {
-        return match rule {
-            "screens-explosion/SceneBlacksOut" => Some(&[O::DepartureSchedule, O::DepartureHealth]),
-            "screens-zebes/LandingSiteLoadBegins" => {
-                Some(&[O::DepartureSchedule, O::DepartureHealth, O::DepartureLoader])
-            }
-            "game-random/AdvanceRandom" => Some(&[O::DepartureRandom]),
-            _ => None,
-        };
-    }
-    Some(match rule {
-        "screens-zebes/GunshipAppears" | "screens-zebes/ShipApproachesPlanet" => {
-            &[O::ZebesStage, O::ZebesPicture]
-        }
-        "screens-zebes/PlanetAppears" | "screens-zebes/PlanetAndStarsSlide" => {
-            &[O::ZebesStage, O::ZebesMotion]
-        }
-        "screens-zebes/PlanetIsNamed" | "screens-zebes/LandingSiteLoadBegins" => {
-            &[O::ZebesStage, O::ZebesRequests]
-        }
-        "screens-zebes/PlanetHolds" => &[O::ZebesStage],
-        "screens-explosion/StationPictureArrives" => {
-            &[O::ExplosionStage, O::ExplosionDrawing, O::ExplosionRequests]
-        }
-        "screens-explosion/StationAwaitsMusic" | "screens-explosion/SpaceHolds" => {
-            &[O::ExplosionStage]
-        }
-        "screens-explosion/StationBrightens" | "screens-explosion/ShipDeparts" => {
-            &[O::ExplosionStage, O::ExplosionMotion]
-        }
-        "screens-explosion/SpaceDrifts" => &[O::ExplosionMotion, O::ExplosionDrawing],
-        "screens-explosion/StationBursts" => &[O::ExplosionBursts, O::ExplosionDrawing],
-        "screens-explosion/StationBreaks" => &[
-            O::ExplosionStage,
-            O::ExplosionBursts,
-            O::ExplosionRequests,
-            O::ExplosionDrawing,
-        ],
-        "screens-explosion/SceneBlacksOut" => {
-            &[O::ExplosionStage, O::ExplosionCarry, O::ExplosionRequests]
-        }
-
         _ => return None,
     })
 }
@@ -2530,49 +2373,6 @@ fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
             ]
 }
 
-fn zebes_provider_valid(case: &Case) -> bool {
-    use super::zebes::{INTEGRATED_FIELDS, INTEGRATED_OUTPUTS, SCOPED_FIELDS, SCOPED_OUTPUTS};
-    use Responsibility::{Health, Zebes, ZebesDrawing, ZebesScheduler};
-
-    let supported = match case.kind {
-        CaseKind::Scoped => {
-            case.responsibilities == [Zebes]
-                && case.expectations.fields == SCOPED_FIELDS
-                && case.expectations.outputs == SCOPED_OUTPUTS
-        }
-        CaseKind::Integrated => {
-            case.responsibilities == [Zebes, ZebesDrawing, Health, ZebesScheduler]
-                && case.expectations.fields == INTEGRATED_FIELDS
-                && case.expectations.outputs == INTEGRATED_OUTPUTS
-        }
-    };
-    supported
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.output_cut.is_none()
-        && matches!(case.start, Start::CacheCut { .. })
-}
-
-fn station_provider_valid(case: &Case) -> bool {
-    use ObservationId as O;
-    case.kind == CaseKind::Scoped
-        && case.responsibilities == [Responsibility::StationExplosion]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && matches!(case.start, Start::CacheCut { .. })
-        && case.expectations.output_cut.is_none()
-        && case.expectations.fields
-            == [
-                O::ExplosionStage,
-                O::ExplosionMotion,
-                O::ExplosionBursts,
-                O::ExplosionCarry,
-            ]
-        && case.expectations.outputs == [O::ExplosionRequests, O::ExplosionDrawing]
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
 fn landing_provider_valid(case: &Case) -> bool {
     use ObservationId as O;
     case.kind == CaseKind::Scoped
@@ -2615,9 +2415,6 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     ) {
         return super::played::indexed::valid(case);
     }
-    if case.inputs == InputProvider::StationExplosion {
-        return station_provider_valid(case);
-    }
     if case.inputs == InputProvider::Blackout {
         return super::blackout::valid(case);
     }
@@ -2629,9 +2426,6 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     }
     if case.inputs == InputProvider::LandingSiteTiming {
         return landing_provider_valid(case);
-    }
-    if case.inputs == InputProvider::ZebesFlightInputs {
-        return zebes_provider_valid(case);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);
@@ -2792,9 +2586,6 @@ fn scope_valid(case: &Case) -> bool {
     if case.inputs == InputProvider::ScopedGetawayInputs {
         return super::played::getaway::valid(case);
     }
-    if case.inputs == InputProvider::Departure {
-        return super::departure::valid(case);
-    }
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
 }
 
@@ -2817,9 +2608,7 @@ fn start_valid(case: &Case) -> bool {
                 && *frame < case.end.cut_inclusive
                 && matches!(
                     case.inputs,
-                    InputProvider::Departure
-                        | InputProvider::PlayedShaftSound
-                        | InputProvider::ShaftPictures
+                    InputProvider::PlayedShaftSound | InputProvider::ShaftPictures
                 )
         }
         Start::CacheCut { frame } => {

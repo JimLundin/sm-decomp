@@ -1572,51 +1572,51 @@ case = "played chain-any-0006-E0B5 0 3149"
 
 [[fault]]
 name = "station-explosion-ship-map"
-responsibility = "station-explosion"
+responsibility = "played"
 file = "crates/game/src/production/played/explosion.rs"
 before = "Pages::Ship(MapRegion::Upper, content.ship_front.clone())"
 after = "Pages::Ship(MapRegion::Upper, content.ship_back.clone())"
-case = "explosion/station-blackout-to-zebes"
+case = "played chain-any-0011-DF45 239 2124"
 
 [[fault]]
 name = "zebes-skips-finished-setup"
 rule = "screens-zebes/GunshipAppears"
-responsibility = "zebes"
+responsibility = "played"
 file = "crates/game/src/production/played/zebes.rs"
 before = "let scene = screens_zebes::step(&mut self.scene.0, &content.scene, rules, subtitles, cut);"
 after = "let scene = screens_zebes::step(&mut self.scene.0, &content.scene, rules, subtitles, FrameAdvance::BorrowedLag);"
-case = "zebes/flight-to-zebes"
+case = "played chain-any-0011-DF45 239 2124"
 
 
 
 [[fault]]
 name = "zebes-rear-map-omitted"
-responsibility = "zebes-drawing"
+responsibility = "played"
 file = "crates/game/src/production/played/zebes.rs"
 before = "ship_map: content.ship_map.clone(),"
 after = "ship_map: Vec::new(),"
-case = "zebes/station-blackout-to-landing-load"
+case = "played chain-any-0011-DF45 239 2124"
 
 
 
 [[fault]]
 name = "zebes-landing-load-not-scheduled"
 rule = "screens-zebes/LandingSiteLoadBegins"
-responsibility = "zebes-scheduler"
+responsibility = "played"
 file = "crates/game/src/production/played/zebes.rs"
 before = "self.flow = Flow::Loading(self.flow.destination());"
 after = "self.flow = Flow::Flight(self.flow.destination());"
-case = "zebes/station-blackout-to-landing-load"
+case = "played chain-any-0011-DF45 239 2124"
 
 
 [[fault]]
 name = "zebes-landing-context-substituted"
 rule = "screens-zebes/LandingSiteLoadBegins"
-responsibility = "zebes-scheduler"
+responsibility = "played"
 file = "crates/game/src/production/played/zebes.rs"
 before = "self.flow = Flow::Loading(self.flow.destination());"
 after = "self.flow = Flow::Loading(LoadDestination::CeresStart);"
-case = "zebes/station-blackout-to-landing-load"
+case = "played chain-any-0011-DF45 239 2124"
 
 [[fault]]
 name = "landing-keeps-outgoing-map"
@@ -1680,28 +1680,28 @@ rule = "samus-movement/GetawayTravels"
 
 [[fault]]
 name = "departure-loses-flight-capacity"
-responsibility = "zebes-scheduler"
+responsibility = "played"
 file = "crates/game/src/production/played/departure.rs"
 before = "station.maximum,"
 after = "station.health.0.energy.whole.get(),"
-case = "departure/station-dispatches-flight"
+case = "played chain-any-0011-DF45 239 2124"
 
 
 [[fault]]
 name = "departure-drops-placement-draw"
-responsibility = "station-explosion"
+responsibility = "played"
 file = "crates/game/src/production/played/explosion.rs"
 before = "self.draw(content, &placement)?;"
 after = "let _ = placement;"
-case = "departure/interrupted-station-setup"
+case = "played chain-any-0011-DF45 239 2124"
 
 [[fault]]
 name = "departure-loader-disables-pad-reads"
-responsibility = "landing-site"
+responsibility = "played"
 file = "crates/game/src/production/played/departure.rs"
 before = "self.carry.work_ready = false;"
 after = "self.carry.landing.control.auto_read = false; self.carry.work_ready = false;"
-case = "departure/flight-dispatches-loader"
+case = "played chain-any-0011-DF45 239 2124"
 
 [[fault]]
 name = "played-shaft-loses-cinematic-work-count"

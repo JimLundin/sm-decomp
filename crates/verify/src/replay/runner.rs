@@ -363,19 +363,11 @@ fn origin_checkpoint(
     if !case.checkpoints {
         return Ok(None);
     }
-    if let (InputReader::Departure(_), Start::PlayedContinuation { frame, .. }) =
-        (inputs, &case.start)
-    {
-        return capture_checkpoint(production, actual, *frame).map(Some);
-    }
     let Start::CacheCut { frame } = &case.start else {
         return Ok(None);
     };
     if matches!(actual, ActualReader::StandingBody | ActualReader::ShaftHud)
-        || matches!(
-            inputs,
-            InputReader::MovementTouchdown(_) | InputReader::Zebes(_) | InputReader::Explosion(_)
-        )
+        || matches!(inputs, InputReader::MovementTouchdown(_))
         || (case.inputs == InputProvider::PrecedingCutMovementInputs
             && frame.checked_add(1) == Some(case.end.cut_inclusive)
             && case

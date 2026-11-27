@@ -235,41 +235,6 @@ provider = "recorded NMI kind and interrupted work site"
 fields = ["end of vblank", "cartridge write completion", "requested commit"]
 phase = "suspended work and NMI return"
 
-[station-blackout-seed]
-readers = ["station-explosion"]
-dependency = "explosion.elevator"
-provider = "pinned-elevator-blackout"
-fields = ["station.begin", "health", "video.palette", "video.oam", "options.subtitles", "scheduler.finished", "landing.destination"]
-phase = "seed"
-
-[station-work-cadence]
-readers = ["station-explosion"]
-dependency = "explosion.cadence"
-provider = "pinned-nmi-work-completion"
-fields = ["scheduler.finished"]
-phase = "per cut"
-
-[station-music-reply]
-readers = ["station-explosion"]
-dependency = "explosion.music"
-provider = "pinned-post-service-music"
-fields = ["music.busy"]
-phase = "after audio service"
-
-[flight-work-cadence]
-readers = ["zebes-flight-inputs"]
-dependency = "zebes.scheduler-cadence"
-provider = "pinned-record-nmi-work-completion"
-fields = ["scheduler.finished"]
-phase = "per cut"
-
-[station-flight-handoff]
-readers = ["zebes-flight-inputs"]
-dependency = "zebes.entry-and-options"
-provider = "pinned-record-station-blackout"
-fields = ["flight.pending", "health.energy", "video.palette", "video.oam", "scheduler.landing-context", "options.subtitles"]
-phase = "seed cut"
-
 [loader-transfer-progress]
 readers = ["landing-site-timing"]
 dependency = "platform.work-and-transfer"
@@ -297,22 +262,6 @@ dependency = "room.samus-neighbours"
 provider = "preceding pinned record and imported pose and terrain content"
 fields = ["solid blocks and actor boxes", "front layer view left", "horizontal slowdown and room carry", "held and fresh buttons", "equipment", "frame parity", "appearance neighbours"]
 phase = "before movement and appearance"
-
-[station-departure-platform]
-readers = ["departure"]
-selection = { escape = ["station"] }
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
-
-[shaft-departure-platform]
-readers = ["departure"]
-selection = { escape = ["shaft-save"] }
-dependency = "departure.platform"
-provider = "recorded-work-and-source-bus-progress"
-fields = ["scheduler.finished", "shaft.vblank-ended", "shaft.save-completed", "audio.queue-busy", "dma.accepted-and-selected"]
-phase = "per cut"
 
 [locked-standing-draw]
 readers = ["blackout"]

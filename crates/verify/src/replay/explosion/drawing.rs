@@ -3,7 +3,6 @@
 use super::super::{compare::Observation, data_failure, result::Outcome};
 use game::production::Production;
 use game::production::played::explosion::{Flow, Output, Pages};
-use game::state::owned::OwnedState;
 use screens_explosion::{BurstFrame, MapRegion, MusicRequest, SceneEvent};
 use types::explosion::{BackdropFrame, BurstGroup, ExplosionStage, FadeWait, Light};
 
@@ -61,13 +60,10 @@ pub(in crate::replay) fn actual(
     production: &Production,
     output: Option<&Output>,
 ) -> Result<Vec<Observation>, Outcome> {
-    let state = if let OwnedState::Explosion(state) = production.state() {
-        state
-    } else if let Some(run) = production.departure()
-        && let game::production::played::departure::Scene::Station(state) = &run.scene
-    {
-        state
-    } else {
+    let Some(run) = production.departure() else {
+        return Err(data_failure(None, "station actual scope"));
+    };
+    let game::production::played::departure::Scene::Station(state) = &run.scene else {
         return Err(data_failure(None, "station actual scope"));
     };
     let scene = &state.scene.0;
