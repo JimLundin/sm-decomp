@@ -1,7 +1,7 @@
-//! The digest of the verification streams, shared by the oracle's recorder and
-//! the engine's verifier so both sides compute the same marks (docs/ORACLE.md, RELOCK §2).
+//! The word-at-a-time digest the content fingerprint is computed with
+//! (`assets::fingerprint`).
 //!
-//! Every committed lock digest depends on these constants. They were moved
+//! Every stored fingerprint depends on these constants. They were moved
 //! bit for bit from the old engine (commit `09486a2fd`).
 
 use core::hash::Hasher;
@@ -33,46 +33,19 @@ impl Hasher for Digest {
     }
 }
 
-impl Digest {
-    /// The digest of `bytes`.
-    #[must_use]
-    pub fn of(bytes: &[u8]) -> u64 {
-        let mut digest = Self::default();
-        digest.write(bytes);
-        digest.finish()
-    }
-}
-
-/// Fold one value's digest into a running digest.
-#[must_use]
-pub fn fold(running: u64, value: u64) -> u64 {
-    let mut digest = Digest(running);
-    digest.write_u64(value);
-    digest.finish()
-}
-
-/// The fold of `values` from the empty digest: a span's mark from its
-/// cuts' digests, and a row's digest from its marks (docs/ORACLE.md, Q1).
-#[must_use]
-pub fn fold_all(values: impl IntoIterator<Item = u64>) -> u64 {
-    values.into_iter().fold(Digest::default().0, fold)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /// Every committed lock digest depends on this exact function, so a
-    /// change to it must fail here, not only on the ROM rows.
+    /// Every stored fingerprint depends on this exact function, so a change to it must
+    /// fail here.
     #[test]
-    fn the_digest_is_the_one_the_lock_recorded() {
-        assert_eq!(Digest::of(b""), 0xcbf2_9ce4_8422_2325);
-        let text = Digest::of(b"sm-decomp digest");
-        assert_eq!(text, 0x619b_8bdf_b4a8_3537);
-        assert_eq!(fold(text, 7), 0xf546_e3f9_213e_d8ea);
-        assert_eq!(
-            fold_all([text, 7]),
-            fold(fold(Digest::default().0, text), 7)
-        );
+    fn the_digest_is_the_one_the_fingerprints_were_taken_with() {
+        let mut digest = Digest::default();
+        assert_eq!(digest.finish(), 0xcbf2_9ce4_8422_2325);
+        digest.write(b"sm-decomp digest");
+        assert_eq!(digest.finish(), 0x619b_8bdf_b4a8_3537);
+        digest.write_u64(7);
+        assert_eq!(digest.finish(), 0xf546_e3f9_213e_d8ea);
     }
 }

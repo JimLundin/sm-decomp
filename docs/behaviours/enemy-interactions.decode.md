@@ -258,9 +258,7 @@ hidden entries, and hardware publication stay with the exact writer and caller.
 ### Shaft evidence and harness
 
 Source records are the locked lean tiers for `chain-any-0010-DF8D` and
-`chain-any-0011-DF45`. The repository's cache fold reproduces all four WRAM,
-four OAM and four timing marks from [the lsnes lock](../../scenarios/locks/lsnes.toml).
-This checks the local cached rows against the lock without starting a second oracle.
+`chain-any-0011-DF45`.
 
 Seed at hall 225 after native room placement. Compare hall 226 through 278 and shaft
 0 through 239 in order, including held cuts. Take actor participation inputs from the

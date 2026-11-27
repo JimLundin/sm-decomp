@@ -18,9 +18,9 @@
 //!
 //! `verify::cache` reads it.
 
-use crate::record::FrameRecord;
 use crate::record::codec::{self, PictureMode};
 use crate::record::lean;
+use crate::record::{Cut, FrameRecord, NmiKind};
 use std::fmt::Write as _;
 use std::io::{BufWriter, Write as _};
 use std::path::{Path, PathBuf};
@@ -48,6 +48,18 @@ impl From<&crate::lock::Row> for Pins {
             seed_words: row.seed_words.map(|sha| sha.to_string()),
             pads: row.pads.to_string(),
         }
+    }
+}
+
+/// The letter the index names a record's cut by.
+const fn cut_letter(record: &FrameRecord) -> char {
+    match record.cut {
+        Cut::NmiReturn(nmi) => match nmi.kind {
+            NmiKind::Requested => 'R',
+            NmiKind::Overrun => 'O',
+        },
+        Cut::VblankWithoutNmi => 'V',
+        Cut::NmiStillRunning { .. } => 'S',
     }
 }
 
@@ -157,7 +169,7 @@ impl Writer {
             "{} {} {length} {}",
             self.frames,
             self.offset,
-            crate::relock::cut_letter(record)
+            cut_letter(record)
         );
         self.offset = self.offset.saturating_add(length);
         self.frames = self.frames.saturating_add(1);

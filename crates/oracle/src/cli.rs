@@ -422,15 +422,6 @@ pub fn main(arguments: &[String]) -> i32 {
         Some((command, rest)) if command == "derive-seed" => derive_seed(rest),
         Some((command, rest)) if command == "ladder-check" => return ladder_check(rest),
         Some((command, rest)) if command == "ladder-rung" => ladder_rung(rest),
-        Some((command, rest)) if command == "relock-compare" => {
-            return crate::relock_check::compare_command(rest);
-        }
-        Some((command, rest)) if command == "relock-merge" => {
-            return crate::relock_check::merge_command(rest);
-        }
-        Some((command, rest)) if command == "relock-refold" => {
-            return crate::relock_check::refold_command(rest);
-        }
         _ => fail("usage: oracle movie ROM INPUTS [...]"),
     }
     0
@@ -565,21 +556,6 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
     csv::lag_log(&text).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
 }
 
-/// Frame `frame` of row `id`'s picture as `DIR/<id>.<frame>.png`: the dots the
-/// `video` stream digests (`Picture::shown`).
-fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
-    let path = directory.join(format!("{id}.{frame}.png"));
-    let Some(picture) = record.picture.as_ref() else {
-        println!("  {id} frame {frame}: no picture to dump");
-        return;
-    };
-    let dots = picture.shown();
-    let png = crate::png::encode_rgb(crate::record::WIDTH, picture.lines, dots.as_flattened())
-        .unwrap_or_else(|| fail(format!("{}: the picture's size", path.display())));
-    std::fs::write(&path, png).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-    println!("  {id} frame {frame}: {}", path.display());
-}
-
 fn read_corpus_lock(path: &Path) -> crate::lock::Lock {
     let text = std::fs::read_to_string(path)
         .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
@@ -590,13 +566,9 @@ fn read_corpus_lock(path: &Path) -> crate::lock::Lock {
     if header.oracle.emulator != oracle.emulator
         || header.oracle.version != oracle.version
         || header.oracle.fixes != oracle.fixes
-        || header.mark_frames.0 != crate::relock::MARK_FRAMES
         || !crate::lsnes::compatible_server(header.oracle.server)
     {
-        fail(format!(
-            "{}: incompatible oracle or span length",
-            path.display()
-        ));
+        fail(format!("{}: incompatible oracle", path.display()));
     }
     let name = |value: &str| {
         !value.is_empty()
@@ -614,45 +586,6 @@ fn read_corpus_lock(path: &Path) -> crate::lock::Lock {
     lock
 }
 
-fn acquire_corpus_outputs(
-    outputs: Vec<requests::CorpusOutput>,
-    bundles: &[crate::lock::Bundle],
-) -> Option<std::fs::File> {
-    use std::io::Write as _;
-    let mut recording = None;
-    for output in outputs {
-        match output {
-            requests::CorpusOutput::RecordV2(path) => {
-                let mut file = std::fs::File::create(&path)
-                    .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-                let header =
-                    crate::relock::header(crate::lsnes::IDENTITY, &crate::lsnes::server_sha256());
-                file.write_all(header.as_bytes())
-                    .unwrap_or_else(|error| fail(error));
-                if !bundles.is_empty() {
-                    let pins = bundles
-                        .iter()
-                        .map(|bundle| {
-                            format!(
-                                r#"{{ name = "{}", sha256 = "{}" }}"#,
-                                bundle.name, bundle.sha256
-                            )
-                        })
-                        .collect::<Vec<_>>();
-                    writeln!(file, "bundles = [{}]", pins.join(", "))
-                        .unwrap_or_else(|error| fail(error));
-                }
-                recording = Some(file);
-            }
-            requests::CorpusOutput::Directory(path) => {
-                std::fs::create_dir_all(&path)
-                    .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-            }
-        }
-    }
-    recording
-}
-
 fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
     let requests::CorpusRequest {
         rom,
@@ -661,9 +594,6 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
         only,
         limit,
         shard,
-        outputs,
-        sidecar,
-        dump_frames,
         watched,
         watched_pcs,
         lean,
@@ -678,13 +608,9 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
             fail(format!("{id}: no such row in the lock"));
         }
     }
-    let mut recording = acquire_corpus_outputs(outputs, &lock.header.bundles);
-    let compare = recording.is_none() && cache.is_none() && !lean;
     let tiers = Tiers {
-        picture: compare
-            || recording.is_some()
-            || matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
-        apu_log: compare || recording.is_some() || cache.is_some(),
+        picture: matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
+        apu_log: cache.is_some(),
     };
     let observing = crate::corpus::Observe {
         tiers,
@@ -714,14 +640,6 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
         };
         let mut last: Vec<Option<u16>> = vec![None; watched.len()];
         let mut frame = 0u64;
-        let mut recorder = (compare || recording.is_some()).then(|| {
-            let recorder = crate::relock::Recorder::default();
-            if sidecar.is_some() {
-                recorder.logging()
-            } else {
-                recorder
-            }
-        });
         let mut cached = cache.as_deref().map(|root| {
             crate::cache::Writer::create(root, id, cache_pictures)
                 .map(|writer| writer.watching(&watched_pcs))
@@ -746,16 +664,6 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
                     *last = Some(value);
                 }
             }
-            if let Some(recorder) = recorder.as_mut() {
-                recorder.fold(record);
-            }
-            if let Some(directory) = sidecar.as_deref()
-                && dump_frames
-                    .iter()
-                    .any(|(row, at)| row == id && *at == frame)
-            {
-                dump_frame(directory, id, frame, record);
-            }
             frame += 1;
         };
         let run = match crate::corpus::run_row_with(&rom, sources, &observing, &mut watch) {
@@ -771,42 +679,6 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
                 .finish(id, &row.into())
                 .unwrap_or_else(|error| fail(format!("{id}: cache: {error}")));
             println!("  {id} cache: {} frames, {bytes} bytes", run.frames);
-        }
-        if let Some(recorder) = recorder {
-            let recorded = recorder.finish();
-            if let Some(file) = recording.as_mut() {
-                use std::io::Write as _;
-                let written = crate::relock::entry(row, run.ticks, recorded);
-                let streams: Vec<String> = written
-                    .recorded
-                    .streams
-                    .iter()
-                    .map(|(name, marks)| match marks {
-                        Some(marks) => format!(
-                            "{name}={:016x}",
-                            data::digest::fold_all(marks.iter().copied())
-                        ),
-                        None => format!("{name}=absent"),
-                    })
-                    .collect();
-                println!("  {id} v2: {}", streams.join(" "));
-                if let (Some(directory), Some(log)) =
-                    (sidecar.as_deref(), &written.recorded.frame_log)
-                {
-                    let path = crate::relock_check::sidecar_path(directory, id);
-                    std::fs::write(&path, log)
-                        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-                }
-                write!(file, "\n{}", written.to_toml()).unwrap_or_else(|error| fail(error));
-            } else {
-                let differences = crate::relock::differences(row, run.ticks, &recorded);
-                if differences.is_empty() {
-                    println!("  {id}: all recorded streams and cuts match");
-                } else {
-                    println!("  {id}: differs in {}", differences.join(", "));
-                    failed += 1;
-                }
-            }
         }
         rows += 1;
         ticks += u64::from(run.ticks);

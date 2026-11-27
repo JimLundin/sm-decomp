@@ -1,8 +1,7 @@
 //! The TOML subset a format-2 lock is written in: one `key = value` per line, `[[row]]`
-//! section heads, `#` comments and blank lines. Values are strings without escapes,
-//! unsigned integers, booleans, arrays and inline tables. The writer
-//! (`oracle::relock`) emits nothing else, so anything else is an error rather than a
-//! guess.
+//! section heads, `#` comments and blank lines. Keys are bare, and values are strings
+//! without escapes, unsigned integers, arrays and inline tables. Anything else is an error
+//! rather than a guess.
 
 use super::ErrorKind;
 
@@ -11,7 +10,6 @@ use super::ErrorKind;
 pub enum Value {
     Str(String),
     Int(u64),
-    Bool(bool),
     Array(Vec<Self>),
     /// An inline table's pairs, in the order written.
     Table(Vec<(String, Self)>),
@@ -23,7 +21,6 @@ impl Value {
         match self {
             Self::Str(_) => "string",
             Self::Int(_) => "integer",
-            Self::Bool(_) => "boolean",
             Self::Array(_) => "array",
             Self::Table(_) => "table",
         }
@@ -35,7 +32,7 @@ impl Value {
 pub enum Line {
     /// `[[name]]`.
     ArrayHead(String),
-    /// `key = value`; a dotted key such as `streams.vram` keeps its dots.
+    /// `key = value`.
     Pair { key: String, value: Value },
 }
 
@@ -53,7 +50,7 @@ pub fn line(text: &str) -> Result<Option<Line>, ErrorKind> {
         }
         Line::ArrayHead(name)
     } else {
-        let key = cursor.key()?;
+        let key = cursor.bare_key()?;
         cursor.skip_blank();
         if !cursor.eat('=') {
             return Err(ErrorKind::Syntax("a key is followed by `=`"));
@@ -74,7 +71,7 @@ struct Cursor<'a> {
 }
 
 const fn is_bare(character: char) -> bool {
-    character.is_ascii_alphanumeric() || matches!(character, '_' | '-' | '.')
+    character.is_ascii_alphanumeric() || matches!(character, '_' | '-')
 }
 
 impl Cursor<'_> {
@@ -118,14 +115,6 @@ impl Cursor<'_> {
         Ok(key.to_owned())
     }
 
-    fn key(&mut self) -> Result<String, ErrorKind> {
-        if self.peek() == Some('"') {
-            self.string()
-        } else {
-            self.bare_key()
-        }
-    }
-
     fn string(&mut self) -> Result<String, ErrorKind> {
         if !self.eat('"') {
             return Err(ErrorKind::Syntax("expected `\"`"));
@@ -133,8 +122,6 @@ impl Cursor<'_> {
         let Some((body, rest)) = self.rest.split_once('"') else {
             return Err(ErrorKind::Syntax("unterminated string"));
         };
-        // The writer escapes nothing, so a backslash or control character was not written
-        // by it.
         if body.contains(|character: char| character == '\\' || character.is_control()) {
             return Err(ErrorKind::Syntax(
                 "strings hold no escapes or control characters",
@@ -151,8 +138,6 @@ impl Cursor<'_> {
             Some('[') => self.array(),
             Some('{') => self.table(),
             Some(character) if character.is_ascii_digit() => self.integer(),
-            Some(_) if self.eat_str("true") => Ok(Value::Bool(true)),
-            Some(_) if self.eat_str("false") => Ok(Value::Bool(false)),
             Some(_) | None => Err(ErrorKind::Syntax("expected a value")),
         }
     }
@@ -204,7 +189,7 @@ impl Cursor<'_> {
     fn table(&mut self) -> Result<Value, ErrorKind> {
         self.eat('{');
         self.items('}', |cursor| {
-            let key = cursor.key()?;
+            let key = cursor.bare_key()?;
             cursor.skip_blank();
             if !cursor.eat('=') {
                 return Err(ErrorKind::Syntax("a key is followed by `=`"));

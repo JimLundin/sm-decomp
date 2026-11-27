@@ -10,7 +10,7 @@ The rebuild's crates, as planned in
 | `runtime` | the line compositor. Presentation, sound backends and storage are planned; compositor output feeds nothing back into production State. | `data` |
 | `app` | `super-metroid` currently returns `UnsupportedPowerOn`. Application admission and effect delivery are the target. | `data`, `import`, `game`, `runtime` |
 | `import` | the importers ([assets.md §5](../docs/architecture/assets.md#5-the-importers)): the only code that knows the ROM's layout of the content it writes, into `data`'s formats, and the content cache ([assets.md §6](../docs/architecture/assets.md#6-loading-at-runtime)). `game` and `runtime` never reach it. | `data`, `canonical` (the cache is written with the codec) |
-| `oracle` | the lsnes adapter, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
+| `oracle` | the lsnes adapter, seeds, the record cache writer; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
 | `oracle_record` | `FrameRecord` and the types in it, the lsnes raw record decoder, the wait sites and the pad file reader, with no emulator, so `verify` reads records without `oracle`. | none |
 | `verify` | independent record/input admission, observation projections, the indexed production replay runner and its baseline. No engine crate depends on it. | `data`, `import` (it builds the content from the ROM), `game`, `runtime`, `oracle_record`, `canonical` (state codecs), `types` and the clean models (typed input/state observation edges) |
 | `tools` | `tools replay` delegates to `verify::replay`. Oracle capture has its own `oracle` binary. | `verify`, `oracle`, `runtime`, `import` |

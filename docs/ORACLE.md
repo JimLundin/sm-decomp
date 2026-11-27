@@ -24,10 +24,10 @@ with the engine (PRINCIPLES P12). lsnes is a separate GPL process driven by
 ### Which oracle records which stream (D25)
 
 Acceptance replay never runs an oracle: it compares actual production with pinned independent
-observations. Each stream's lock comes from the most accurate oracle that produces it. lsnes
-records **every stream** (memories, `ppu`, `apu`, `video`, `timing`), since it gives the
-picture, the CPU port log and the PPU registers too (MEASUREMENTS (o), (r)). The five PPU fields
-lsnes doesn't expose are not compared (Q4), and no stream holds the SPC700 side (Q7).
+observations. Each observation comes from the most accurate oracle that produces it. lsnes
+records the memories, the picture, the CPU port log and the PPU registers (MEASUREMENTS (o),
+(r)). The five PPU fields lsnes doesn't expose are not compared (Q4), and no record holds the
+SPC700 side (Q7).
 
 ### The frame record (contract v1)
 
@@ -113,8 +113,8 @@ lsnes rejects a state given on its command line with this ROM and hangs.
 **Crate layout.** `crates/oracle/src`: `lib.rs` (`Start`, `Tiers`, `OracleId`, `OracleError`),
 `lsnes.rs` (open a start, step one video frame with a pad, request a save, record streams),
 `seed.rs` (lsnes room captures' work RAM), `corpus.rs` (row inputs and playback),
-`relock.rs` and `relock_check.rs` (format-2 recordings), `ladder.rs`, `measure.rs`,
-`cli.rs` and `bin/oracle.rs`. The format-2 reader is `data::oracle_lock`, shared by capture and replay.
+`cache.rs` (the record cache's writer), `ladder.rs`, `measure.rs`, `cli.rs` and `bin/oracle.rs`.
+The lock's reader is `data::oracle_lock`, shared by capture and replay.
 `crates/oracle_record`: `FrameRecord`, its codec, the lsnes raw record decoder, `oracle_record::game::WAIT_SITES`
 and `inputs.rs`. No crates.io dependency, and no test needs lsnes.
 
@@ -165,19 +165,13 @@ python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inpu
 ROM-derived and stay local (`.gitignore`) or in encrypted bundles. The Mother Brain phase rows
 start from the `100-mb-phases` captures (her form word `$7E:7800` changing), one per form.
 
-## 4. The format-2 lock (RELOCK §2)
+## 4. The lock
 
-`scenarios/locks/lsnes.toml`, one file per oracle, committed: digests, schedules and fact
-results are hashes, frame numbers and booleans. ROM-derived bytes (seeds, records, pads) go in an
-encrypted bundle the file pins.
-
-**Key.** (row, oracle, oracle version). The version names everything that decides the record's
-bytes: the emulator build, the SHA-256 of `lsnes_server.lua` compiled into the build
-(`lsnes::server_sha256`), the record format, and for typed streams the decoder version.
+`scenarios/locks/lsnes.toml` is committed. It names each row the oracle plays and pins the row's
+inputs, which stay in an encrypted bundle.
 
 ```toml
 format = 2
-mark_frames = 1000
 oracle = { emulator = "lsnes-bsnes", version = "rr2-beta23 (bsnes v085)", server = "<sha256>", fixes = [] }
 bundles = [{ name = "relock-v2-lsnes-<id>.tar.gz.enc", sha256 = "<ciphertext sha256>" }]
 
@@ -187,48 +181,19 @@ start = "100-input-phase:17"   # a native seed; "power-on" for one row
 seed_record = "<sha256 of the seed's .lss>"
 pads = "<sha256 of the .pads file>"
 frames = 477
-ticks = 477                    # requested NMIs of the run
-overruns = []                  # frames whose NMI interrupted a non-wait site
-nmi_off = []                   # frames cut at vblank without an NMI
-facts = {  }                   # "room:9E9F" = true, or "unevaluated"
-streams.vram = ["<span digest>"]   # one per 1000-frame span, the last partial
 ```
 
-Optional keys: `seed_words` (a derived seed), `still_running` (never from pads), `absent = [...]`
-(a stream some frame lacked), `rungs`, `decoder`.
-
-**Marks (Q1).** Each mark is the digest of its 1000-frame span, folded from empty; the row's
-digest is the fold of its marks (`data::digest::fold_all`). A mismatch names its span, a fix that
-heals span 3 shows spans 4 on as green again, and long rows can be recorded as parallel spans.
-
-### Streams (RELOCK §2 "Streams")
-
-| Stream | Oracle side (lsnes record) | Folded |
-| --- | --- | --- |
-| `vram`, `cgram`, `oam`, `sram` | raw memories at the cut | at quiescent cuts |
-| `ppu` | every `PpuRegisters` field in declaration order but the five lsnes lacks (Q4) | at quiescent cuts |
-| `apu` | the CPU's `$2140-$2143` reads and writes as `(kind, port, value)` | bytes since the last quiescent cut. Each quiescent cut folds them. Accesses after the final quiescent cut stay outside the marks |
-| `video` | `Picture::shown()`'s bytes | every frame |
-| `timing` | `[cut, nmi, overrun]`: cut 0 RTI, 1 vblank without NMI, 2 still running; NMI 0 none, 1 requested, 2 overrun | every frame |
-| `input`, `samus`, `camera`, `room`, `progress`, `actors`, `effects`, `rng` | the projection of `verify::decode`; absent until a decoder records it | at quiescent cuts |
-| `wram` | raw, unmasked; determinism and the unowned-RAM report, never the gate | at quiescent cuts |
-
-A cut is **quiescent** when it is `Cut::NmiReturn` with `NmiKind::Requested`, the NMI having
-interrupted a wait site (`relock::is_quiescent`). The overrun and NMI-off schedules are the
-complement. `oracle::relock::Recorder` uses `data::span::SpanFold` to record the independent capture.
-Acceptance uses the [indexed production runner](STATUS.md) and each case's
-declared observations and timing limits. `audio` is not recorded.
-
-**Facts** are declarations on each format-2 row. The recorder copies their names and results
-from the lock. The current lock's facts are `"unevaluated"` until a decoder can check them on the
-oracle State. Indexed replay defines its own observation obligations.
+A row from a derived seed also pins its edits with `seed_words`. `server` is the SHA-256 of
+`lsnes_server.lua`. `data::oracle_lock::Lock` reads the file for capture and replay, and refuses an
+unknown key, a key given twice or a row entered twice. Capture checks the emulator, version, fixes
+and server before it plays a row. The lock holds nothing a run produces. The record cache (§6)
+holds the runs.
 
 ## 5. The re-lock (RELOCK §3)
 
-Seed cuts produce the native seeds, pad files determine each row's inputs, and
-`corpus --record-v2` records the machine streams. Compare two independent captures before
-using their entries in the lock. The encrypted bundle contains the row inputs and seed
-records. The lock pins that bundle and each row's pad and native state files.
+Seed cuts produce the native seeds, and pad files determine each row's inputs. The encrypted
+bundle contains the row inputs and seed records. The lock pins that bundle and each row's pad and
+native state files.
 
 ### Step a1: the cut plan
 
@@ -258,43 +223,6 @@ chosen for. The any% Ceres chain rows `chain-any-0001` to `chain-any-0011` are c
 too: each ends at the next seed's frame counter and crosses its room's door. The 100% chain rows
 are re-cut and re-locked the same way (§9).
 
-### Step c: the recorder (RELOCK §6)
-
-`oracle corpus ROM LOCK BUNDLE --record-v2 FILE` plays each selected row on lsnes with the picture
-and APU tiers. It writes the format-2 header, including the bundle pin, and one `[[row]]` per
-row. Each summary gives the row's digest per stream.
-`--sidecar DIR` also writes `DIR/<row>.frames`: one line per frame with the frame, lsnes's frame
-counter, the cut kind and each stream's folded digest (`-` for no fold, `absent`). `--dump-frames
-ROW:F,...` writes those frames' shown pictures as PNG (`png.rs`).
-
-What remains: (1) evaluate facts on the decoded State; (2) typed streams through
-`relock::TypedStream`/`Recorder::with_typed`; (3) row rungs every 5000 frames for long rows; (4)
-`--shard I/N` packed by frame count, not round-robin; (5) the pad-mutant proof.
-
-### Recordings check themselves (RELOCK §7)
-
-lsnes's `video` stream rarely differs between two runs (2 of 67 row runs, never on demand; one
-screenshot at one frame, every other stream equal). So a lock entry is kept only where two
-recordings agree byte for byte:
-
-1. Record every row as wave A with `--sidecar side-a`, then wave B in another shard layout with `--sidecar side-b`.
-2. `oracle relock-compare A B --sidecars side-a side-b`: each row `agree` or `DISAGREE`, with the
-   first differing span and frame; exit 1 on any disagreement.
-3. `oracle relock-merge OUT A B [C]` writes each row's entry that two recordings share and lists rows
-   with no agreeing pair (exit 1). Re-record those (`--only ID`) as wave C and merge again.
-
-A recording is one file or its shards' files joined by commas.
-
-### Step f and g: reader, comparison and gate (RELOCK §8)
-
-`data::oracle_lock::Lock` reads the strict TOML subset. Capture checks the emulator, version,
-fixes, server and mark length before reading any rows. The committed server pin covers the
-observations without the optional WRAM peek used by `measure`. New recordings identify the
-compiled server. Writer and reader share the fixture
-`crates/verify/src/lock/format2.toml`, which `oracle::relock`'s test writes byte for byte.
-`oracle relock-refold A SIDECAR_DIR` re-folds a recording's sidecars through `SpanFold` and checks
-every mark. [Indexed replay](STATUS.md) checks production against the declared observations.
-
 ### Seed records with the PPU registers (RELOCK §9)
 
 `oracle movie --ppu` asks lsnes for the PPU tier alone (`T 0 0 1`); the record is the lean record
@@ -311,17 +239,13 @@ the `seed_record` pins, so only the `bundles` line changes.
 
 ### Engineering answers
 
-- **Q1.** Span marks, each folded from empty, not one running chain.
 - **Q2.** Pads per video frame, converted once from the Tick words (b1).
-- **Q3.** Typed streams are absent until the decoder covers a row, keyed by decoder version, and
-  re-recorded when a cluster's decode rules land.
 - **Q4.** The five `ppu` fields lsnes lacks (`nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel`) are
-  not compared, named in ARCHITECTURE §11.6. `timing` covers NMI; the IRQ lines are measured (D11).
+  not compared, named in ARCHITECTURE §11.6. The IRQ lines are measured (D11).
 - **Q5.** `boss-golden-torizo`'s capture comes from a snes9x movie lsnes can't play. The 100%
   movie's visit to room B283 doesn't defeat Golden Torizo, so the row waits for a D26 trick movie.
-- **Q6.** Determinism: a second recording of every row in a different shard layout (§7).
 - **Q7.** lsnes gives no SPC700 state. The driver model starts from the decoded WRAM sound state;
-  no oracle stream records SPC RAM.
+  no oracle record holds SPC RAM.
 
 ## 6. Commands
 
@@ -330,10 +254,9 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 | Command | Does |
 | --- | --- |
 | `oracle movie ROM INPUTS [--frames N] [--from STATE FRAME] [--lag-log CSV [--positions-only]] [--seeds CSV DIR [--ranges]] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--watch FROM EVERY] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
-| `oracle corpus ROM LOCK BUNDLE [--record-v2 FILE] [--sidecar DIR] [--dump-frames ROW:F,...] [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--watch-words ADDR,...] [--watch-pcs ADDR,...]` | plays the selected format-2 rows, compares their cuts and machine streams, or writes recordings and caches |
+| `oracle corpus ROM LOCK BUNDLE [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories]` | plays the selected rows and writes their record caches |
 | `oracle measure ROM LOCK BUNDLE ID...`, `oracle trace ROM LOCK BUNDLE ID FROM TO` | measurements and frame traces |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
-| `oracle relock-compare`, `relock-merge`, `relock-refold` | checking recordings (§5) |
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
 | `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-lean LOCK FROM TO ROW...` | writes record cache rows again as the lean tier |
@@ -342,7 +265,7 @@ Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build -
 For these commands, `LOCK` is `scenarios/locks/lsnes.toml` and `BUNDLE` is the unpacked
 `relock-v2-lsnes/` directory. Capture checks each selected row's pad SHA-256 and length, then
 checks the native state and edit file hashes for a seeded start. Use `--no-memories` for cut
-counts without stream comparison. `oracle trace` shows CPU, room and APU port observations
+counts alone. `oracle trace` shows CPU, room and APU port observations
 for a row's frame range. `oracle measure` reads instruction hits, decompression pointers and
 the CPU's APU port accesses; lsnes has no PPU write log and no SPC700 side to time.
 
@@ -428,8 +351,6 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
 
 ## 9. Open items
 
-- `video` rarely differs between lsnes runs; the cause is open (§5 handles it by agreement).
-- Facts, typed streams, row rungs and packed shards in the recorder (§5, step c).
 - The 100% chain rows' pads, one frame early against the movie (§5, step b1): re-cut them from
   the movie at each seed record's frame counter and re-lock those rows.
 
