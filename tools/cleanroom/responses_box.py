@@ -11,7 +11,7 @@ from launch_stream import capture
 
 IMAGE = "sm-cleanroom-root:1"
 HERE = Path(__file__).resolve().parent
-SCAN_FILES = ("code_check.sh", "variant_import_warn.txt", "allowed_deps.txt", "check_manifest.awk",
+SCAN_FILES = ("code_check.sh", "variant_import_warn.txt", "allowed_deps.txt", "check_manifest.py",
               "strip_rust.awk", "lint_scan.awk", "source_scan.awk", "shape_scan.awk")
 RUNNER_FILES = ("vector_runner.py", "strip_rust.awk", "shape_scan.awk", "awk.path")
 PROXIES = ("cargo", "rustc", "rustup", "rustdoc", "cargo-clippy", "clippy-driver", "cargo-fmt", "rustfmt")

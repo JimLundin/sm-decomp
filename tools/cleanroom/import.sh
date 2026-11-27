@@ -72,6 +72,7 @@ done
 # user's full access, which launch.sh cannot confine. The check runs on the committed tree of the
 # export's HEAD, which is what the patches add up to.
 git_isolated "$scratch/export.git" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
+git show HEAD:Cargo.toml >"$checked/Cargo.toml"
 bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh refused the export's crates; nothing applied"
 
 # The clean room's scan (scan.sh's checks 1-3: the original's addresses, names and shapes) on what

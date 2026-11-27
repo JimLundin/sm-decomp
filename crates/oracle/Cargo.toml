@@ -1,9 +1,9 @@
 [package]
 name = "oracle"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "The oracle harness: the unmodified ROM on an emulator, recorded per video frame"
 
 # The digest is the only shared code (`data::digest`): no dependency on the old engine (commit `09486a2fd`).

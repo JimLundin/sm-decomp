@@ -24,7 +24,7 @@ suite() {
 cargo=(Cargo.toml Cargo.lock rust-toolchain.toml .cargo/config .cargo/config.toml 'crates/*/Cargo.toml')
 scanner=(crates/tools/src/bin/cleanroom "$clean"/{scan.sh,scan_tool.sh,scan_lexicon,scan_allow.txt} "${cargo[@]}")
 brief=("$clean"/{scan_brief.sh,score_scan.sh,score_words.txt} "${scanner[@]}")
-source_checks=("$clean"/{code_check.sh,allowed_deps.txt,variant_import_warn.txt,check_manifest.awk}
+source_checks=("$clean"/{code_check.sh,allowed_deps.txt,variant_import_warn.txt,check_manifest.py}
   "$clean"/{source_scan,lint_scan,shape_scan,strip_rust}.awk Cargo.toml)
 runner=("$clean"/{vector_runner.py,shape_scan.awk,strip_rust.awk})
 launch=("$clean"/{launch.sh,launch_stream.py,box_relay.py,lib.sh,allowlist.txt,canary.sh}
@@ -44,7 +44,7 @@ suite "$clean/blind_copy_test.sh" "$clean"/{blind_copy.sh,lib.sh,allowlist.txt} 
 suite "$clean/adjusted_vectors_test.sh" "$clean"/{adjusted_vectors.sh,adjusted_vectors_fixtures}
 # The fixture changes shared types and requires the importer to name world_blocks when it breaks.
 suite "$clean/import_check_test.sh" "${scanner[@]}" "${source_checks[@]}" \
-  "$clean"/{import.sh,export.sh,lib.sh,allowlist.txt,clippy.toml} clippy.toml \
+  "$clean"/{import.sh,export.sh,export_workspace.py,lib.sh,allowlist.txt,clippy.toml} clippy.toml \
   crates/clean/{types,world_blocks,import_test} .gitattributes docs/cleanroom/DESIGN.md .agents/skills/implementer/SKILL.md \
   docs/behaviours/import-test.md docs/behaviours/import-test.decode.md scenarios/vectors/import-test.toml
 suite "$lane/self_tests_test.sh"

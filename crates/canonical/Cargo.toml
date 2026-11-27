@@ -1,19 +1,19 @@
 [package]
 name = "canonical"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "The one canonical codec, diff and schema hash of every State type (K6)"
 
 [dependencies]
 canonical_derive = { path = "../canonical_derive" }
 # A clean model's State reaches the codec through serde (src/model.rs).
-serde = "=1.0.229"
+serde.workspace = true
 
 [dev-dependencies]
-enum-map = { version = "=3.1.0", features = ["serde"] }
-serde = { version = "=1.0.229", features = ["derive"] }
+enum-map = { workspace = true, features = ["serde"] }
+serde = { workspace = true, features = ["derive"] }
 
 [lints]
 workspace = true

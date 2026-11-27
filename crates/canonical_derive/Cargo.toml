@@ -1,9 +1,9 @@
 [package]
 name = "canonical_derive"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "#[derive(Canonical)]: writes each State type's encode, decode, diff and schema"
 
 [lib]

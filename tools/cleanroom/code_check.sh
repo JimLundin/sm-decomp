@@ -126,7 +126,7 @@ check_include() { # FILE REL ROOT DOMAIN CALL
 }
 
 check_crate() { # CRATE_DIR
-  local crate root domain rel p t allowed w tag detail sources=() library=() paths=()
+  local crate root domain rel p t w tag detail findings allowed=() sources=() library=() paths=()
   cd "$start" && cd "$1" && crate=$PWD
   case $crate in
     */crates/clean/types) root=${crate%/crates/clean/types}; domain="" ;;
@@ -136,15 +136,17 @@ check_crate() { # CRATE_DIR
   rel=${crate#"$root"/}; [ "$rel" = "$crate" ] && rel=${crate##*/}
   variants=0; variant_warn=0
   for w in "${warned[@]}"; do [ "$w" = "$rel" ] && variant_warn=1; done
-  allowed="$root/crates/clean/types"
-  [ -n "$domain" ] && allowed="$allowed|$crate"
+  allowed=("$root/crates/clean/types")
+  [ -z "$domain" ] || allowed+=("$crate")
 
-  [ -f Cargo.toml ] || hit "$rel" extra-file "no Cargo.toml"
-  if [ -f Cargo.toml ]; then
+  if [ ! -f Cargo.toml ]; then
+    hit "$rel" extra-file "no Cargo.toml"
+  elif findings=$("${SM_PY:-python3}" -I "$here/check_manifest.py" "$crate" "$root" "$here/allowed_deps.txt" "${allowed[@]}"); then
     while IFS=$'\t' read -r tag detail; do
       [ -n "$tag" ] && hit "$rel/Cargo.toml" "$tag" "$detail"
-    done < <(awk -v crate="$crate" -v allowed="$allowed" -v allowfile="$here/allowed_deps.txt" \
-      -f "$here/check_manifest.awk" Cargo.toml)
+    done <<<"$findings"
+  else
+    hit "$rel/Cargo.toml" manifest "could not read the package or workspace manifest"
   fi
 
   # One listing serves every rule below: what the crate holds, its sources and its library.
@@ -184,12 +186,12 @@ check_crate() { # CRATE_DIR
 
 for dir in "$@"; do
   [ -d "$dir" ] || { echo "code_check: no directory $dir" >&2; exit 2; }
-  if [ -f "$dir/Cargo.toml" ]; then
-    check_crate "$dir"
-  else
+  if [ -d "$dir/crates/clean" ] && [[ $(cd "$dir" && pwd) != */crates/clean/* ]]; then
     for m in "$dir"/crates/clean/*/; do
       [ -d "$m" ] && check_crate "$m"
     done
+  elif [ -f "$dir/Cargo.toml" ]; then
+    check_crate "$dir"
   fi
 done
 if [ "$bad" -eq 0 ]; then

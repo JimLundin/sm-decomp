@@ -5,6 +5,18 @@ members = [
     "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean/*", "crates/data", "crates/game", "crates/import", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
 ]
 
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+enum-map = "=3.1.0"
+serde = "=1.0.229"
+serde-big-array = "=0.5.1"
+toml = "=1.2.1"
+
 # The new crates' lint set (PRINCIPLES K5, K7, K8), taken by each with `[lints] workspace = true`.
 # Sites are never silenced with `allow` or `expect`. A forbidden lint is one no attribute may lift:
 # unstable features, a cfg no

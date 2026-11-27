@@ -52,7 +52,7 @@ binary dispatches independently through `oracle::cli`. See D17 and the [post-M0 
 
 The table lists workspace packages only. A clean crate may also take the registry crates of
 `tools/cleanroom/allowed_deps.txt` (MODEL §1 decision 12), and an engine or verification crate
-takes one of them, at the same pin, where its types cross the bridge: `game` and `verify` depend
+inherits the same exact version from the root `[workspace.dependencies]` where its types cross the bridge: `game` and `verify` depend
 on `enum-map` because the progress model's tables are `EnumMap`s.
 
 `data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint

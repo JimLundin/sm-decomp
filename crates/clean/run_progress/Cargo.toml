@@ -1,18 +1,18 @@
 [package]
 name = "run_progress"
-version = "0.1.0"
-edition = "2024"
-license = "MIT"
-publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
 description = "The progress model, built from its behaviour spec"
 
 [dependencies]
 types = { path = "../types" }
-enum-map = "=3.1.0"
+enum-map.workspace = true
 
 [dev-dependencies]
-serde = { version = "=1.0.229", features = ["derive"] }
-toml = "=1.2.1"
+serde = { workspace = true, features = ["derive"] }
+toml.workspace = true
 
 [lints]
 workspace = true
