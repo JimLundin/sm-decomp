@@ -379,27 +379,3 @@ from a checkpoint after 993, and compare complete Health State and the warning
 request at each cut, and protection while drawn where Appearance's drawing consumes
 it. Wider actor behavior, physical Drawing output, the gauge and VRAM publication
 require their own owners' comparisons.
-
-## Budget
-
-Fixed base: `5f47bb69187ed694464e7addc1813bd48cd0a133`. There is no existing H1 clean
-model or periodic-loss production owner to replace; planned H1 rounds are not an
-implemented baseline. An attributable old-code `tools size` baseline is unavailable
-for this new owner; no zero-size receipt or passing size assessment is inferred.
-Retained pickup and HUD models are neighboring responsibilities, not complete old
-implementations of this bounded health area.
-
-k = 37.5 weighted tokens per spec unit, the frozen coefficient.
-
-- Area current-energy: PeriodicLoss, LowEnergyWarning
-- Area protection: TailHit, ProtectionTime
-
-Budget counter: four entries, eight arms, no cell terms or counted operators.
-The counter reports 8.0 units and 299 weighted tokens after conversion by area
-(current-energy 187, protection 112), before and after the whole-frame step: the
-step removed prose and vector fields, no arm. A private std-only CLI wrapper calls the
-byte-identical `verify::spec_units` implementation. The previous periodic Health
-owner is retained and extended. At fixed base
-`0ede0e619848bc630c24bf45c853136c276d49fe` the production Health and frame-tail
-admission are limited to inactive protection. There is no implemented tail-hit
-or active protection gameplay owner to count as replaced.

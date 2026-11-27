@@ -75,16 +75,6 @@ These checks leave the unproduced inherited room memory tail, final picture and
 encounter to their existing owners. If only the first room turn is integrated, the
 next completed fight cut at 2,221 needs the ongoing demo and encounter turn.
 
-## Budget
-
-At `122394a26` the front end routes screens and has no earlier production actor setup or
-loan application. The file, movement, appearance, health, weapon and room rules keep their
-own budgets.
-
-k = 37.5 weighted tokens per spec unit.
-
-Area intro actor entry (old 0): Samus at the start of the intro, SamusEntersTheIntro.
-
 ## Reference results
 
 The local reference takes the new-file result as its starting point and plays the actor

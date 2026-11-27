@@ -118,14 +118,3 @@ The local observer scripts in `$TEMP/collab/demo-input-obs-notes/` are `referenc
   Advancing again when that frame completes first fails on 102. Changing the discovery
   stopping line from 178 to 177 first fails on 1,469. Reading the stale fade count first
   fails discovery's release at `any-intro-4323` cut 128.
-
-## Budget
-
-Fixed base `b7dc44c8e5a3fe66434eaddcb0688be5e23a4db6`. The portable intro has no demo pad
-engine to replace, so there is no attributable old code area.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area controls: DemoReceivesScene, DemoPlaysPad, SamusReachesEgg, BattleLocksOnLeft, DiscoveryReleasesSamus
-
-The counter reports five entries and nine arms, 9.0 units and a budget of 337 weighted tokens.

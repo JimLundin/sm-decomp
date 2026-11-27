@@ -1,8 +1,8 @@
 # How Samus looks, part 1, her animation's timing: decode notes
 
 For the observer, the adversary, the integrator and the root only: implementers never see this
-file. It holds the sources by entry, the RAM mapping, the importer's format, the harness note and
-the Budget section of [samus-appearance.md](samus-appearance.md). Bank logs:
+file. It holds the sources by entry, the RAM mapping, the importer's format and the harness note of
+[samus-appearance.md](samus-appearance.md). Bank logs:
 <https://patrickjohnston.org/bank/> (banks `$90`, `$91`, `$80`).
 
 ## How the spec was made
@@ -423,7 +423,7 @@ graphics (splashes, dust, `$90:80E6`, `$90:A413`), and the echoes' pictures. Old
 ## Scan
 
 `tools/cleanroom/scan.sh` on the spec and the vectors: 0 (address-form 0, address-known 0, name 0,
-enum-order 0, ram-field 0, single-routine 0, entry-point 0, route 0). `score_scan.sh`: 0.
+enum-order 0, ram-field 0, single-routine 0, entry-point 0, route 0).
 `scan.sh --mirror` on the spec and these notes: 3 of 22 entries single-routine (13 %, limit
 30 %), 1 unsourced. FootContact,
 CannonItemDelay and CannonReadinessReset each have one source mechanism; the spec states their
@@ -436,50 +436,6 @@ clip's holds shifted by a constant, or shares a run of 4 holds with one; it flag
 uniform, equals one of the game's six pace lists, differs from one by a constant, keeps one's
 pattern of differences, or shares a run of 4 holds. Round 1's content gave 104 findings; the
 content now gives 0.
-
-## Budget
-
-Moved from the spec's header by design (MODEL §1 decision 10): the implementer is not told the
-score or the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas'
-old figures and the commit.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-movement. An
-area's budget is k × its units. The old code (for reference, not a bound) is the `tools size`
-score, under the tools at `5e2e4ee51` (score v2: lookups as data, duplication), of the files at
-`f1df56ede`: `game/src/animation.rs` (1,282.25) and the animation's part of `game/src/pose.rs`
-(`reset_animation` and `run_super_special`, an extract measured with `animation.rs`, whose code
-it repeats: 242.75, of which duplication 45; 197.75 alone): 1,525 together, not split by area
-(the old module interleaves the clip, her moves' writes and the run's pace in one handler). The few lines of `pose.rs`'s `refresh` and `change`
-that set and reset `new_pose_frame` are left out: a handful of tokens inside functions that do
-the pose's other work. The old code modelled neither the boost stages (`world_blocks_bridge.rs`: the
-engine keeps no speed booster's charge) nor any slowdown (`animation::frame_buffer` returns 0),
-so its figure covers the clip and the moves; the run area has almost no old counterpart. The
-budget is an indicator: the fit is score ÷ budget, and being
-over it costs in proportion to how far over, never as a wall.
-
-Budget: 37.5 × 60.0 units = 2,248 (clip 1,287, moves 225, run 412, cannon 212, palette 112),
-23 entries, 56 arms, 193 vectors. The kept action's preparation arm in `SpinEnds` is 1.0 of
-them; naming each input once counts no unit. The cold-read round (#735) moved 58.3 to 60.0:
-`CountedLapHold`'s arm (+1.0, run), the palette's refused and unrecognized arms (+2.0), and the
-clip area's slowdown formulas written out in words (−1.3).
-
-Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
-together, not split by area.
-
-- Area clip: 1.4, ClipPlays, ClipControls, Breathing, ClipEnds, WallJumpBranch, HandOverSlowdown,
-  StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor
-- Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
-- Area run: RunPace, BoostStages, CountedLapHold, BoostingLap
-- Area cannon: CannonItemDelay, CannonReadinessReset
-- Area palette (old 183): OrdinaryDryColours
-- Area hurt (old 0): HurtColours, 12
-- Area elevator body (old 0): ElevatorStandingPicture
-- Area ordinary body (old 0): ProtectionFlicker
-- Area wall-jump dust (old 0): WallJumpDust, WallJumpDustPicture
-
-The old code has no hurt palette pulse. The active ordinary picture has no
-protection-visibility producer to replace.
-
 
 ## Stride, spin and passage sound opportunities
 
@@ -614,9 +570,8 @@ fails C-contact-stage3 on its sound. Five further decision faults are caught: wr
 plain continuation sounds, spin-to-wall wrongly ending, and charge threshold 15 instead of 16.
 Observer artifacts live in `$TEMP/collab/night-20261115/appearance-spec/`.
 
-FootContact, SpinStarts, SpinEnds and AtTheDoor belong to area clip. The old animation code has no generic producer counterpart; this amendment does
-not rebuild part2 rendering. `tools spec-units` counts 50.7 units, a budget of 1,900,
-using the fixed k and the areas above.
+The old animation code has no generic producer counterpart; this amendment does
+not rebuild part2 rendering.
 
 
 ### The prepared movement snapshot and boundary accounting
@@ -1025,14 +980,6 @@ is same-value. Both banks are unchanged at 182/182, and each recorded history ma
 action. For indexed replay, the integrator compares the opening's palette opportunities at the
 cuts above with the same declared fields as `R-ordinary-run-colours`.
 
-### Palette budget
-
-The old implementation is the palette area of the [domain inventory](../architecture/domains.md):
-183 tokens for `samus_palette`, using the earlier engine's baseline. The bounded entry contributes 1.0 unit (one arm for
-OrdinaryDryColours). The admitted actions widen the one OrdinaryDryColours arm without a new
-outcome, so the units are unchanged. At k = 37.5 the increment is 37.5.
-The general active colour effects remain outside this allowance.
-
 ## Her hurt colours and the push's poses (#753, spec §12)
 
 Records: lean cache `SM_CACHE=$TEMP/collab/ci-cache/rows`, `chain-any-0006-E0B5` (0006), the
@@ -1165,16 +1112,6 @@ survives this cinematic setup.
 The previous scope has no production body picture or reserved body tile producer.
 The separate object and video encoders remain available to consume those outputs.
 
-### Budget
-
-At `1ef154efc` the current production drawing has no owner for this picture.
-For historical context, `tools size` gives 2,679 weighted tokens to
-`sm_game/src/scene/samus_body.rs` and 2,511 to
-`sm_game/src/scene/samus_position_tiles.rs` at `18cc7f8b0`. Those files include
-general body, echoes and positions outside this standing scope.
-
-The four elevator body arms add 4.0 spec units and 150 weighted tokens at k = 37.5.
-
 ## Ordinary protection flicker
 
 ### Sources and inputs
@@ -1231,15 +1168,6 @@ At `chain-any-0011-DF45` cut 240, fight cut 682 is the last writer of the retain
 door lanes in slot 66, and fight cut 702 is the last writer of those in slots 64 and 65.
 These are writer-trace results. The room pipeline derives the prefix by drawing its
 earlier objects in order, including the admitted body. The body rule supplies no cursor.
-
-### Budget
-
-At `922da47ee` the active ordinary picture has no landed protection-visibility
-producer to replace. The historical `crates/sm_game/src/scene/samus_body.rs` at
-`18cc7f8b0` scores 2,679 weighted tokens with `tools size`, including body placement,
-maps, other drawing modes and the rest of that file. This is historical context for
-the whole module. The two `ProtectionFlicker` arms add 2.0 spec units and 75 weighted
-tokens at k = 37.5.
 
 ## Wall-jump dust in the return shaft
 
@@ -1302,10 +1230,3 @@ writes two tile fields again at c23 with the same values it wrote at c21.
 Mounted actor 9 writes the slot-34 residual at c70. It writes the three affected
 slot-35 fields at c68 and writes identical values at c69. The dust's one occupied slot precedes those actor draws. The
 same missing slot precedes the shorter body and vents around c128.
-
-### Budget
-
-There is no active return-shaft wall-jump dust owner at `788684d4c`. The predecessor
-rule area is `game::atmospheric` at `66e1d64e3`. Its file scores 894.5 weighted tokens
-with `tools size`. That file also contains atmospheric effects outside this slice.
-The two dust entries add 7.0 spec units and 262 weighted tokens at k = 37.5.

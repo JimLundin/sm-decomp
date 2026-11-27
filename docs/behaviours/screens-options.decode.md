@@ -134,16 +134,3 @@ agree:
 
 A do-nothing model (the hand-over State frozen) agrees at 0 of 103 cuts: screen 11 of 103,
 finished frames 0 of 103, random number 0 of 97, block size 37 of 97, settings 48 of 97, cursor 0 of 97, sounds 99 of 103.
-
-## Budget
-
-Fixed base `1e2674a1ce4fa2944357bfe49d7dbac03b9ca635`. There is no production options owner
-there to replace, so there is no attributable old-code size baseline.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area menu: OptionsLoad, OptionsBrighten, OptionsCursor, OptionsChoice, SpecialSettings, Dissolve, OptionsLeave
-
-Counted by hand to the counter's rules (the `tools` executable is blocked locally): seven
-entries, 18 arms and six operators, 20.0 units. The root runs `tools spec-units` for the
-official figure.

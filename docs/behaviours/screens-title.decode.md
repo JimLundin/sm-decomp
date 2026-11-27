@@ -188,17 +188,3 @@ stops Unsupported.
 
 Recorded vectors take `before` from the last finished cut ahead of the one they model, and give
 `pressed` as the latch the frame read (Start at 308 and 314, A at 313 and 315).
-
-## Budget
-
-Fixed base `1e2674a1ce4fa2944357bfe49d7dbac03b9ca635`. There is no production title owner
-there to replace (the application refuses power-on), so there is no attributable old-code
-size baseline.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area screen: TitleBegins, TitleLoads, OpeningSkipped, SkipDims, TitlePrepared, TitleBrightens, TitleWaits, TitleLeaves
-
-Counted by hand to the counter's rules (the `tools` executable is blocked locally): eight
-entries, 18 arms and five operators, 19.7 units; 18.7 if `OpeningSkipped`'s arm, which refers to
-`SkipDims`, counts as a cross-reference. The root runs `tools spec-units` for the official figure.

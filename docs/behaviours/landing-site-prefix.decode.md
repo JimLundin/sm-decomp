@@ -122,13 +122,3 @@ missing pending byte fails the split-word restoration example. Premature dispatc
 restarting an open upload fail their own negative examples. The scoped continuation
 uses two additional accepted reads from the same asset on both the running and the
 restored State. It compares the resulting prefix, untouched suffix and complete State.
-
-## Budget
-
-k = 37.5 weighted tokens per spec unit, per MODEL decision 7. At `4507df531` the
-flight recipe explicitly stops where this platform work begins. Existing room, RNG
-and video services remain shared, so there is no replaced implementation score.
-
-- Area receiving (old 0): LandingWorkOpens, GameplayDisplaySetup, StandardGraphics
-
-Budget: 37.5 × 7.0 units = 262 (receiving 262).

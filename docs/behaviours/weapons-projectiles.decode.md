@@ -206,34 +206,6 @@ motion and its trail; `x offset`, `y offset` and `radius` name perceivable muzzl
 distances. No address, routine name or broad scanner pattern is exempted. The adversary reviews
 these additions together with the World boundary and the spec.
 
-## Budget
-
-k = 37.5 weighted tokens per spec unit, frozen by MODEL decision 7.
-
-At commit `294746ad5212c9e60df8c08940f907b12e98b557`, `tools size` over
-`crates/game/src/projectile.rs` and `crates/game/src/state/projectile.rs` reports:
-
-| File | Score | Logic | Types | Data |
-| --- | ---: | ---: | ---: | ---: |
-| projectile.rs | 2579.25 | 2584 | 146 | 183 |
-| state/projectile.rs | 25.5 | 86 | 522 | 26 |
-| total | 2604.75 | 2670 | 668 | 209 |
-
-The old code implements this power-beam flight/contact/clip path, with stubs for other weapons;
-it does not fire shots. This first scope's baseline therefore understates its firing behaviour.
-Importer and World bridge logic are outside the clean model baseline.
-
-- Area shots (old 2604.75): ShotSpacing, HoldingShoot, CannonOrigin, InheritedMotion, MuzzleContact, FlyingBeam, ShotContact, BeamTrail, LeavingView, EndingShot, BeamPictures, BeamVisibility, Content and inputs
-
-At the same baseline the ordinary missile routines are stubs. None of the old score is
-assigned to this missile behaviour.
-
-- Area missiles (old 0): MissileRelease, MissileTravel, MissileBurst, MissileExhaust, CinematicMissilePictures, Missile content
-
-Budget: 37.5 × 77.0 units = 2,887 (shots 2,062, missiles 825).
-
-Official count: 17 entries, 62 arms, 7 cell terms, 38 formula operators. No findings.
-
 ## Picture eligibility and presentation boundary
 
 BeamVisibility sources: $93:8254..82F0 power drawing; $93:834D..83BB impact drawing;

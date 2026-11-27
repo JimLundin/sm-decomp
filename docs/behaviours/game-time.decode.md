@@ -134,16 +134,3 @@ restoring cuts 239 and 240. Keep the first differing clock field and prove the
 healthy continuation again. The observer audit checks native inputs and
 arithmetic. These production controls and checkpoint receipts remain required
 integration evidence.
-
-## Budget
-
-Fixed base `67ed6b7b591ba0b586a10149147b1044d57b37bc`. There is no existing
-production gameplay-time owner to replace, so there is no attributable
-old-code size baseline.
-
-k = 37.5 weighted tokens per spec unit, the frozen coefficient.
-
-- Area clock: PlayTimeAdvance
-
-The spec-units counter reports one entry, five arms, no cell terms or counted
-operators, 5.0 units and a reported budget of 187 weighted tokens.

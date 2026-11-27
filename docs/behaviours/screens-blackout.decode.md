@@ -145,13 +145,3 @@ The preceding room pass on cut 239 prepares the regular upload queue and the
 platform patch. A run starting before that pass still needs the locked-room
 drawing producer. The after-motion elevator reach on cut 164 remains B8's
 input to the separate blackout scope.
-
-## Budget
-
-k = 37.5 weighted tokens per spec unit, per MODEL decision 7. At `d45f84b0d` the
-explosion accepts a completed blackout. The old programme supplies no portable
-implementation for the cut interval before that admission.
-
-- Area blackout (old 0): ElevatorStopsSamus, PlatformWait, DepartureHandoff
-
-Budget: 37.5 × 9.0 units = 337 (blackout 337).

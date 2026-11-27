@@ -162,15 +162,3 @@ sprite output. Use Python 3.11 or newer.
   encounter step when an overrun finishes first disagrees at cut 102 in the boss,
   ring schedule and ring State. Dropping the start fails the pending start and Y at
   cut 0 and the boss and schedule at cut 1.
-
-## Budget
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. The base
-`b7dc44c8e` has no production flashback encounter. No area has `old`.
-
-- Area timing: EncounterBeats
-- Area boss: EncounterStarts, BrainBreathes, BrainEndures, BrainFlashes
-- Area rings: RingsAppear, RingsSweep
-- Area return: BurstsPulse, BackgroundBobs, ReturnToPage
-- Area drawing: FightPictures
-Budget: 37.5 × 30.7 units = 1,148 (timing 75, boss 337, rings 312, return 387, drawing 37)

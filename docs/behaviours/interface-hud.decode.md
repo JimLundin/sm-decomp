@@ -486,8 +486,6 @@ Every other entry is a fixed rule.
   The original has no such word: each writer stores 0 to `05F7` at once (§Inputs); the event is
   the spec's, so that a turn-on outside play, which the State would see only on the next frame, has
   a frame to land in.
-- **The re-measure** of the old code under score v2 is §Size baseline, and §Budget carries its
-  figures and the whole-domain line.
 
 ## The selection's writers
 
@@ -771,31 +769,6 @@ same. The reference model (`$TEMP/collab/hud-fix/ref`) drops its separate branch
 bar on can switch, and C-shot-cancels-cannot-switch still kills it alone (33 mutants, all
 killed).
 
-## Size baseline (tokens, score v2, 2026-11-11)
-
-`tools size` at main `83f4bb4ea` (score v2, built as a DLL), over cuts of the old code at spine
-`387640758` in `$TEMP/collab/hud-spec/old` (`status.rs`, `minimap.rs`), measured together:
-
-| Area | Old code | Score | Logic | Types | Data | Depth | Duplication | Lines |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| status | `game/src/hud.rs` (all of it: the phase and its upload, the draws, the highlight); `game/src/state/hud.rs`: `Cell`, `HudTilemap` and their methods | 1,068.75 | 1,155 | 211 | 462 | 82.75 | 58 | 252 |
-| minimap | `game/src/mini_map.rs`; `data/src/map.rs`: `Page`, `MapCell::layout`, `LayoutIndex` and its methods, `MapCells::contains`, `contains_at`, `insert`, `AreaMap::tile`, `AreaMaps::of`; `game/src/state/hud.rs`: `MiniMap` | 1,672.75 | 1,739 | 454 | 49 | 144.5 | 62.25 | 347 |
-| total | | 2,741.5 | 2,894 | 665 | 511 | 227.25 | 120.25 | 599 |
-
-Under the first counter (2026-11-08) the same cuts scored 1,253.75, 1,665.5 and 2,919.25. Score v2
-counts the old status bar's constant tables (its pictures and the digits' places) as data, 251 to
-462 tokens, so its score falls by 185; the minimap's rises by 7.25 with the duplication term.
-
-Lines are code lines (`$TEMP/collab/scripts/code_lines.py`: no blanks, comments or tests). Not
-counted: `MapCells::from_bitmap`, `to_bitmap` and `AreaMaps::load` (the importer and the decoder's),
-`tick.rs`'s `mini_map` (the bridge's). The selection has no old code: the old engine kept the
-selected item in the State and never changed it.
-
-**k out of sample:** under score v2 the old code scores 50.9 a unit on the status bar (1,068.75
-over 21.0) and 61.3 on the minimap area (1,672.75 over 27.3); 56.8 over both (2,741.5 over 48.3,
-the selection's 8.0 units having no old code), which at 0.55 would give k = 31.2 against the
-frozen 37.5.
-
 ## Scan
 
 `tools/cleanroom/scan.sh docs/behaviours/interface-hud.md scenarios/vectors/interface-hud.toml`: 0 in every check
@@ -843,82 +816,6 @@ this round; none is a leak.
 vector's boss by the screens it blanked, so a swap of two bosses' screens passed. Round 3's
 vectors name the boss (`boss` in a "BossEvent" step, `mother_brain_falls` in a frame), one vector
 per boss (§Round 2's gate), so the test reads the name.
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas' old
-figures and the commit.
-
-Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and so is
-each bracket pair; comments, layout and tests are free. Two kinds of token are counted apart and
-reported, not held against the target: the values of constants and statics (tables of the game's
-data, such as the HUD's pictures and where each count sits), and declarations (the `struct`, `enum`
-and `type` items and attributes that define the model's shapes; define as many as the behaviour
-needs). The target is on everything else, the logic.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-movement. An
-area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
-score of the old code that area replaces, measured under score v2 (§Size baseline) over the
-old code at spine `387640758`: for the status bar `game/src/hud.rs` and the
-cells of the HUD in `game/src/state/hud.rs`; for the mini-map `game/src/mini_map.rs` and the
-map layout it walks in `data/src/map.rs`, without the ROM loader and the bitmap conversions. The
-selection has no old code: the old engine never changed the selected item. The budget is an
-indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
-as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
-
-- Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
-  SwitchClick, OneShotFlash, IconsAppear, NewFileStatusBar
-- Area countdown: 5.1, EscapeCountdown, CountdownBegins, CountdownWaits, CountdownTicks,
-  CountdownRunsOut, CountdownSlides, CountdownShown
-- Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
-- Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, OutOfPlay,
-  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift, NewFileMiniMap
-
-Budget: 37.5 × 79.7 units = 2,987 (status 825, countdown 500, selection 412, minimap 1,250)
-
-Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
-one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
-The arm the gated draft added for Mother Brain's fall is a "So" (adversary 79 F4).
-
-Old code (old 2,741.5): the status bar's and the minimap's old code together, under score v2;
-the selection has none.
-
-Round 4 adds no arm and no operator: its three vectors are cited by arms that were there, and
-`DiagonalPicture`'s new bullet and §5's order are a "So" and prose. 56.3 units.
-
-Round 5 adds none either: its two vectors are cited by arms that were there, and its spec text
-(§1.4's two paragraphs, `SelectionHighlight`'s "So", the input row) is prose. 56.3 units.
-
-The Ceres free run's amendment (§Ceres's free run) adds `OutOfPlay`'s two arms, in the minimap
-area: 56.3 → 58.3 units. The §1.3 paragraph on frames of play and the input rows it changed are
-prose.
-
-The Ceres gate's answers (§Adversary 110's fixes) add four arms: `CancellingTheItem`'s drop of
-the one-shot item alone and its drop after the status bar (selection 8 → 10 arms), and
-`OutOfPlay`'s new area and its drop (minimap). The drop before the status bar joins the shot's
-cancel's arm, and `OneShotFlash`'s and `HerBlink`'s `2n` and `n` replace 32, 16 and 8 at the same
-operator count: 58.3 → 62.3 units.
-
-Adversary 112's C3 (§Adversary 112's C3) folds the shot's input into `CancellingTheItem`'s drop
-before the status bar, an arm that already named it: no arm or operator changes. 62.3 units.
-
-The countdown's and the frame's staged entries took the units to 73.3 (26 entries, 56 arms):
-`ItemControls`, `MiniMapUpdate`, `StatusRefresh` and `RetainedHudWork` (9 arms), the escape
-countdown's `EscapeCountdown` and `CountdownContinuation` (2), with `RetainedHudWork` in no area.
-
-The whole-frame amendment (§The whole frame) removes those five timing entries and their 10
-arms, and adds one: `Switching`'s report of the selection after the controls. `CyclingItems`'
-stock as the frame begins changes an arm's words, not its count. 73.3 → 64.3 units, 21 entries,
-47 arms.
-
-The countdown's running (§The escape countdown) adds six entries and nine arms with
-`EscapeCountdown` in a new area, countdown, which has no old code (the old engine had no
-countdown owner): the rhythm's table (one cell term), the clamps and the subtractions. 64.3 →
-76.7 units, 27 entries, 55 arms; status loses `EscapeCountdown`'s unit.
-
-Budget: 37.5 × 76.7 units = 2,874 (status 787, countdown 500, selection 412, minimap 1,175)
-
 
 ## The escape countdown
 

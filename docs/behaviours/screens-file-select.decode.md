@@ -150,16 +150,3 @@ A do-nothing model (the hand-over State frozen) agrees at 0 of 72 cuts: screen 8
 frames 0 of 72, random number 0 of 67, cursor 0 of 64.
 
 Recorded vectors take `before` from the last finished cut ahead of the one they model.
-
-## Budget
-
-Fixed base `1e2674a1ce4fa2944357bfe49d7dbac03b9ca635`. There is no production file select owner
-there to replace, so there is no attributable old-code size baseline.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area menu: MenuLoads, CursorStarts, MenuBrightens, ItemPressed, CursorMoves, HelmetTurns, MenuDims
-
-Counted by hand to the counter's rules (the `tools` executable is blocked locally): seven
-entries, 26 arms and seven operators, 28.3 units. The root runs `tools spec-units` for the
-official figure.

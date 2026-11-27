@@ -132,18 +132,3 @@ them from the start's content.
   placing from it as an input, §5 there, and names F4 and P2 as the arrival's owners), so it has
   its own spec and file; the brightness fade is shared with every scene that fades in (the
   title, the intro's pages, the flights), which F2 and F4's later pieces may read from here.
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. There is no old code:
-the engine has no arrival (the played runner refuses a seed outside ordinary play), so no area
-has `old`.
-
-- Area arrival: StartsInTheDark, ArrivesAtTheTop
-- Area fade: PictureBrightens, PlayBegins
-
-The spec-units counter reports four entries, nine arms, no cells and two operators.
-Budget: 37.5 × 9.7 units = 362 (arrival 112, fade 250)

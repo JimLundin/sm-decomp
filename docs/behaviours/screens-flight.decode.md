@@ -158,21 +158,3 @@ the label imported from the scene's content.
 - The label's letters and holds are content (bank 8C); the spec takes them as an input and
   states only the stepping, as the intro's text pages will. Which label is shown for a language
   (`$8B:C096` skips the Japanese line unless `09E2` is set) is the caller's choice of content.
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. There is no old code:
-the engine has no flight (the played runner refuses a seed outside ordinary play), so no area
-has `old`.
-
-- Area scene: FlightIsMadeReady, PictureAppears, GunshipRushesIn, StarsRushPast, ViewTurnsAway, GunshipFliesAway, FlashFades, SpritesDrift, StationComesIntoView
-- Area label: LabelIsTyped
-- Area fade: PictureDarkens, FlightEnds
-- Area plane: PlaneTransforms
-
-The spec-units counter reports thirteen entries, 24 arms, no cells and 25 operators, and no
-findings.
-Budget: 37.5 × 32.3 units = 1,212 (scene 700, label 125, fade 250, plane 137)

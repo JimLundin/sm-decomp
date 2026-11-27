@@ -150,26 +150,6 @@ exact x/y edges fail, negative and wrap offsets strictly inside succeed, half-wo
 zero door radii still overlap when the shot encloses its centre, first slot wins, and an
 already consumed beam may be selected by a second door. No imported content is in vectors.
 
-## Budget
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area contact: ContactAllowed, BoxOverlap, FirstPowerShot
-- Area shaft picture: ShaftActorDraw, ActorShake, EffectSlots, EffectClip, PictureWindow, ShaftPictureOrder
-
-The reusable bridge applies returned consumption to the complete owned W1 State. The checked
-ordinary runtime calls it per processing actor before that actor's protection decrement and AI.
-The contact entry is stateless; the engine keeps the projectile owner and the transient ordinary pass.
-No deletion baseline from earlier engine code is available for this new contact model. The replaced verifier
-contact helper is accounted separately from production model and bridge code.
-
-At base `48e8d0999` the official counter gives 263.5 weighted tokens for the
-existing contact crate's source and 234 for its production bridge. There is no
-shaft effect pool or actor shake picture owner at that base. The existing B8
-producer, quake and exact sprite services remain with their respective owners.
-`tools spec-units` gives 9.7 units for contact and 20.3 for shaft pictures.
-Budget: 37.5 × 30.0 units = 1,124 (contact 362, shaft picture 762).
-
 ### Translated observation provenance
 
 All rows in this table are `chain-any-0003-DFD7`; preceding cut R supplies W1 inputs and
@@ -187,6 +167,11 @@ remain observed values. Values are therefore constructed translations, not uncha
 | C-record-159-door-1 | 158 | 159 | 1 |
 | C-record-160-door-0 | 159 | 160 | 0 |
 | C-record-160-door-1 | 159 | 160 | 1 |
+
+The reusable bridge applies returned consumption to the complete owned W1 State. The checked
+ordinary runtime calls it per processing actor before that actor's protection decrement and AI.
+The contact entry is stateless; the engine keeps the projectile owner and the transient ordinary
+pass.
 
 ## Shaft picture sources
 

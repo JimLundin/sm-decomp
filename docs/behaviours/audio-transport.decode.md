@@ -373,20 +373,3 @@ handling count is T1 work and is not part of the frame model's content.
 The observer's reference model implements the frame-form spec and runs every vector, 77/77;
 its per-frame checks over the native arms and the cached rows give the agreement above,
 against a do-nothing step.
-
-## Budget
-
-k = 37.5 weighted tokens per spec unit, frozen from samus-movement's old score
-13,169.75 / 193.3 units times 0.55 (MODEL decision 7).
-
-At `19242c525e03a1c981818dbba4498fb8ec0d307e`, this scope replaces no existing engine
-implementation of sender queues, effect/music progress or physical reply transport. The old
-source area is empty in each area below, so its size is zero; no surrogate source is counted.
-The clean model adds the missing admitted behaviour.
-
-- Area sender (old 0): OfferAcceptance, RequestDelivery, RequestRelease
-- Area effects (old 0): StagedRequests, EffectResources, ConnectedPitchMotion
-- Area music (old 0): MusicalProgress, FinitePhrases, WholeArrangement, LoudnessProgress, SongControls
-- Area transport (old 0): FrameCadence, PublishedReplies
-
-Budget: 37.5 × 52.3 units = 1,962 (sender 450, effects 725, music 637, transport 150)

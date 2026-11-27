@@ -90,17 +90,3 @@ first such cut is 1736.
 
 The constructed vectors provide their own data for animation windows and drawing IDs. They
 do not assume the cartridge's drawing numbers or script layout.
-
-## Budget
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. At `b7dc44c8e`
-there is no previous discovery owner to size. Existing intro and E1 facilities are dependencies.
-
-- Area hatch: EggHatches, ShellScatters
-- Area baby: BabyEmerges, BabyPulses, BabyFollows, SlimeFalls
-- Area handoff: PageThreeApproaches
-
-The spec has seven entries, 28 arms, no table cells and four formula operators.
-The unit counter reports no findings.
-
-Budget: 37.5 × 29.3 units = 1,099 (hatch 262, baby 650, handoff 187)

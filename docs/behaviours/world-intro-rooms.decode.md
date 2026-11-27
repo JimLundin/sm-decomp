@@ -108,12 +108,3 @@ The indexed fight and discovery cases each compare the interrupted installation 
 first completed turn through the production room adapter. Delaying installation first
 changes the fight's cell 0 at movie frame 2,219 and discovery's width at 3,517. Each case
 also restores the pending installation and completes the first turn from that checkpoint.
-
-## Budget
-
-The room import and join have no existing code in the production intro at `f3076e4f5`.
-The clean movement and block owners are unchanged and have their own budgets.
-
-k = 37.5 weighted tokens per spec unit.
-
-Area room loading (old 0): The intro's playable rooms, ShowIntroRoom.

@@ -69,17 +69,3 @@ restored states. State equality on recorded opportunities is 3/3 versus
 suppressed replacement at equal levels fail their named vectors. Integrated display, unrelated
 layer and transport lifetimes, and played-alone coverage require production
 replay.
-
-## Budget
-
-Fixed base 9525e5966f0c158faa3e33b8054066013932c6f1. No attributable portable
-haze simulation exists there. The production prelude carries externally
-borrowed haze readiness and terminal receipts. Their scheduler and transfer
-consumers also serve timing responsibilities outside these three rules.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area backdrop: HazeBrightens, HazeSettles, HazeHolds
-
-The spec-units counter reports three entries, three arms and three
-operators. Budget: 4.0 units, 150 weighted tokens.

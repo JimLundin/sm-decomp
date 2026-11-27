@@ -38,7 +38,6 @@ frames. The observer's tools, all in `$TEMP/collab/blocks-spec`:
   reactions they use, and `vec.py` runs every vector through the model: 100 of 100 agree. It also
   refuses a reaction name no table holds, a flipped whole look, a wait outside 1 to 32,767, and a
   `remembers` given for a script with no `Regrow`.
-- `cut.py` cuts the old code into the areas' files in `old/` for `tools size`.
 
 **Results** (`harness_hits.py`). Of the 20,615 frames that ran one frame of gameplay in one room
 (§The harness; 125 of them with the run paused), 786 are frames where a reaction of this part ran,
@@ -596,61 +595,3 @@ each would fail loudly, as a false mismatch, never hide one. For a row that reac
 - **Free run:** from a seed commit, carry the cells and places forward, take only the inputs from
   the records (or the other domains' models); report the first differing frame per place and per
   cell. Re-seed at a room change.
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas' old
-figures and the commit.
-
-Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and so is
-each bracket pair; comments, layout and tests are free. Two kinds of token are counted apart and
-reported, not held against the target: the values of constants and statics (tables of the game's
-data), and declarations (the `struct`, `enum` and `type` items and attributes that define the
-model's shapes; define as many as the behaviour needs). The scripts are imported assets (§2): they
-are data the importer writes, not code. The target is on everything else, the logic.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-movement. An
-area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
-score of the old code that area replaces, at spine `387640758`. The old code covers the places and
-the scroll cells, but of the blocks that break only the start of one shot block (175.5), so
-breakables has no `old`. The budget
-is an indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over,
-never as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
-
-- Area places (old 1,252): 2, Places, TheScriptsRun, PatternCells, Regrowing, RoomStart,
-  WhatTheScreenRedraws, Sounds
-- Area scroll (old 1,145): ScrollCells
-- Area breakables: CrumbleBlocks, SpeedBlocks, BombBlocks, ShotBlocks, SuperMissileBlocks,
-  PowerBombBlocks, BombsReveal, AnswersToHerMotion, BlocksMarkedNothing, FullPlacesLetHerThrough
-
-Budget: 37.5 × 55.3 units = 2,074 (places 837, scroll 150, breakables 1,087)
-
-### The old code (tokens, 2026-11-08)
-
-`tools size` (the wire-cam counter, `$TEMP/collab/wire-cam/size.dll`), over cuts of the old code at
-spine `387640758` in `$TEMP/collab/blocks-spec/old` (`cut.py`), measured together so the clumps
-are counted across them:
-
-| Area | Old code | Score | Logic | Types | Data | Lines |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| places | `plm.rs`: `NO_PLMS`, `RoomPlms`, `slot_index`, `free_slot`, `fill`, `write_block`, `extension_block`, `spawn` (less its item arm), `spawn_population`, `process`, `run_below` (less its item arms); `plm/crumble.rs`: `Instruction`, `crumble_tile`, `LIST`, `next_instruction`, `place`, `run` | 1,251.5 | 1,150 | 64 | 0 | |
-| scroll | `plm.rs`: `SCROLL_TRIGGER`, `TouchFault`, `slot_on`, `touch_scroll_block`, `update_scroll`; `collision.rs`: `Touch`, `Touches` and its impls; `collision/inside.rs`: all | 1,145 | 1,122 | 116 | 4 | |
-| breakables | `plm/crumble.rs`: `SHOT_BLOCK_1X1`, `TYPE_KEPT`, `ShotFault`, `shoot_block` | 175.5 | 169 | 32 | 6 | |
-| total | | 2,572 | 2,441 | 212 | 10 | 405 |
-
-Lines by `$TEMP/collab/scripts/code_lines.py` over the three cuts. Not counted: `plm/draw.rs`
-(drawing PLMs into the tilemap, E2's), `plm/item_gfx.rs` and the item paths (W3's),
-`collision.rs`'s `Room`, `ScanOrder` and `Surroundings` (samus-movement's bridge), and
-`samus_movement_bridge.rs`'s mapping of the clean touches (the bridge's). The areas below state places' old
-code as 1,252 and scroll's as 1,145; breakables has none.
-
-**The ceiling** (decode-only; the plan's proposal for domains without old code): the whole-game
-port (`crates/sm_game`, in git history) holds this part's mechanism in `room_mechanisms/scheduler.rs` (1,161),
-`commands.rs` (4,739), `creation.rs` (1,817), `rules/scroll_setup.rs` (482),
-`projectile_block_reactions.rs` (1,717) and `player_collision/inside.rs` (914): 10,830, shared with
-the other three parts (`$TEMP/collab/reviews/sz_old.txt`).
-
-**k out of sample:** the old places and scroll score 2,396.5 over their 26.3 units, 91.1 a unit
-(samus-movement's 65.8, the camera's 53.7); 0.55 of it would give 50.1 against the frozen 37.5. The budget is 37.5 × 55.3 = 2,074 (places 837, §2's four cell terms
-included; scroll 150; breakables 1,087).

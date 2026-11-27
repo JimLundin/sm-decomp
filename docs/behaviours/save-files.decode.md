@@ -179,19 +179,3 @@ with bytes generated independently. The other 15,188 cuts all match,
 versus 263 for the fixed initial image. The two save opportunities and their
 interrupted completion points are supplied by the named scoped witness.
 Integrated production replay and authored timing remain open.
-
-## Budget
-
-The legacy branch at `b7dc44c8e` has only the exact codec and scoped decode
-at this boundary. There is no attributable portable behavior producer.
-The codec is retained at the exact edge, outside this model's baseline.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area cartridge (old 0): Memory and boundary, ReadSlot, BootFiles, MenuFiles
-- Area run (old 0): ChooseFile, WriteFile
-
-The exact codec scores 533 weighted tokens at this base, measured with
-`tools size crates/game/src/state/sram.rs`. The spec counter reports five
-entries, eleven arms, one table term and eight operators.
-Budget: 37.5 × 14.0 units = 524 (cartridge 337, run 187).

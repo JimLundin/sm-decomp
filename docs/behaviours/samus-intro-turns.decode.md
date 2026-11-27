@@ -55,11 +55,3 @@ frames left and the animation tick leaves 9. Skipping the placement's history
 write leaves recoil as the older pose. A restart test that compares only facing
 keeps the recoil playhead and leaves step 1 with 6 frames. The vector detects
 both faults.
-
-## Budget
-
-These rules cover the room adapter's projection and reached owner opportunities.
-
-k = 37.5 weighted tokens per spec unit.
-
-Area intro actor turns (old 0): Samus's turns in the intro fight, SampleIntroBody, RememberIntroPose, FinishIntroControlTurn.

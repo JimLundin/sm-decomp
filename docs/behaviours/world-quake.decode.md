@@ -254,17 +254,3 @@ time held (H1 and the x-ray scope: never in these rows); the random number
 the doors read (game-random, already carried); the starts' choices
 (boss-ceres-ridley's `EscapeShakes`, already modelled); the stop at
 `BuildRoom` (world-doors and room loading).
-
-## Budget
-
-Fixed base `df88c84ad`. No attributable old production quake owner is
-available for this area: the engine has no shake today.
-
-k = 37.5 weighted tokens per spec unit, the frozen coefficient.
-
-- Area quiet-quake: QuietQuakePhase
-- Area shaking: ShakeStarts, ShakeCountsDown, ShakenLayers, ShakenActors
-
-The spec-units counter reports five entries, eleven arms, seven counted
-operators and four cell terms. This gives 14.7 units and a reported budget of
-549 weighted tokens: quiet-quake 1.7 units (62), shaking 13.0 units (487).

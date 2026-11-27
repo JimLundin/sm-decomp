@@ -145,19 +145,3 @@ uploads, palette initialization, room initialization and gameplay follow this cu
 The current indexed integration compares the shared finished count, flow, retained
 destination, Health, blanking and plane against the receiving record. The production load prefix remains
 Unsupported.
-
-## Budget
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. At `b7dc44c8e` there is
-no replaced legacy flight owner, so the areas have no old code to size. The existing E4
-arithmetic and assets are shared dependencies.
-
-- Area reveal: GunshipAppears, PlanetAppears
-- Area caption: PlanetIsNamed
-- Area flight: ShipApproachesPlanet
-- Area departure: PlanetHolds, PlanetAndStarsSlide, LandingSiteLoadBegins
-
-The spec has seven entries, 25 arms, no table cells and no formula operator tokens. The
-counter reports no findings.
-
-Budget: 37.5 × 25.0 units = 936 (reveal 262, caption 187, flight 225, departure 262)

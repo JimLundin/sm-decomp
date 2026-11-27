@@ -67,17 +67,3 @@ captured products or the terminal number as production input. The first
 and adjacent intervals use the same exposure profile. Production proof of
 a wrong-product rejection, split budgets, suspend and restore, and the
 next cross-domain consumer remains an integration obligation.
-
-## Budget
-
-Fixed base 9525e5966f0c158faa3e33b8054066013932c6f1. No attributable portable
-advance exists at that base. The timed service prepares and samples the
-hardware while a borrowed receipt supplies sequence completion. Timing
-remains outside this model area.
-
-k = 37.5 weighted tokens per spec unit.
-
-- Area sequence: AdvanceRandom
-
-The spec-units counter reports one entry, one arm and ten operators.
-Budget: 4.3 units, 162 weighted tokens.

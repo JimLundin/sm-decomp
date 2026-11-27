@@ -132,12 +132,3 @@ closure or placement fails at 222. Two recorded cases pin the setup and retireme
 a carried old hold, a changed HUD mode and a clobbered mark. These are observer
 checks. Indexed production replay still needs the installer and the separate
 actor, haze and display routes for the remaining comparisons.
-
-## Budget
-
-The production loop at `c44e3bcef` recognizes the typed rule and stops before
-applying it. The imported room formats, cell conversion and renderer are reused.
-
-k = 37.5 weighted tokens per spec unit.
-
-Area room loading (old 0): Entering the Ceres shaft during the escape, ShaftViewStarts, ShaftDoorSeals.

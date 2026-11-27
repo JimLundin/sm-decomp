@@ -980,16 +980,16 @@ Lead-in pads: 0280 (jump pressed) at 17, 4200 at 18 (item cancel `4000` dropped)
 **R9-2, the second bounce.** No record holds a second bounce; C-bounce-second, C-bounce-third and
 C-bounce-pulled are worked from `$91:F20A`..`$91:F245` and `$90:90E2`.
 
-**SlopesCarry's units (adversary 27, item 7).** Against `$94:84D6`..`$94:8919`, `$94:8DBD` and
+**SlopesCarry's arms (adversary 27, item 7).** Against `$94:84D6`..`$94:8919`, `$94:8DBD` and
 `$94:9763`: the entry stated every rule but two counted nothing (the ceiling push cited records
 only; the clamp is original only and, after the floor check, is reached only by a move with no
 horizontal move before it) and one rule was missing (the carry). The re-lay adds the carry arm
 (SL1, SL2, C-slope-carry-kept), gives the ceiling push C-slope-ceiling-push (samus-walljump-16:44
 started following the pad, which the spin with forward held moves the same), and widens the
 passing arm to what `$94:8742`/`$94:87B9` and the centre-column test let through
-(C-slope-ceiling-side): 11 counted arms to 13, 12.0 units to 16.3. After adversary 28 (F4) the
+(C-slope-ceiling-side): 11 counted arms to 13. After adversary 28 (F4) the
 stop is stated once, as the formula's arm with the no-carry, carry and clamp cases as its
-consequences: 12 arms, 15.0 units.
+consequences: 12 arms.
 
 **Adversary 28's fixes.** F1: the moonwalk's jump turn keeps her facing (4Ah facing left into BFh
 facing left, chain-0232-D5A7 17 → 18), the one turn that doesn't face back; `PadChart`'s cell says
@@ -1291,10 +1291,6 @@ The vectors whose input changed (JH1, JH2, SJ1, C-moonfall-jump; SH2, SH3 and C-
 which now switch the morph ball on) pass under that reading, and so do C-fit-tunnel-aimed,
 C-held-let-go, the five slope vectors and C-near-wall-item.
 
-**Units.** `tools spec-units` with these notes: 209.0 → 213.0 (motion 77.0 → 79.0, pose chart
-56.0 → 58.0, pose fit and collision unchanged), so the budget is 7,092 → 7,133: motion's
-36 × 79.0 = 2,844 meets its cap, 2,813 (70% of 4,019), and the pose chart stays capped at 1,584.
-
 ## Round 15's amendments (2026-11-10)
 
 From adversary 71's observer items (V1-V7, Q1), and adversary 73's O1 and O2. 258 vectors
@@ -1398,10 +1394,6 @@ C-morph-end-spring and C-morph-end-spring-air; M15 (space jump without the item)
 C-space-jump-no-item; M5 (long counts from 32,778) fails C-held-long-edge; M9 (the unmorph's end
 drops "on the ground") fails C-unmorph-air-end-off and C-unmorph-air-end-floor.
 
-**Units.** `tools spec-units` with these notes: 213.0, unchanged (motion 79.0, pose chart
-58.0): every new rule is a consequence of an arm already counted, so the budget stays 7,133, with
-motion and the pose chart at their caps (2,813 and 1,584).
-
 ## Round 16's amendments (2026-11-10)
 
 From adversary 78's observer items (V1-V3) and its finding I3, and adversary 81's findings 1, 3
@@ -1471,10 +1463,6 @@ string, each `#` or `.`, and no other character.
 catalogue test pass. The gate's three survivors, each one line and reverted: R4 fails
 C-fit-land-refused, B1 fails C-bounce-under, S1 fails C-screen-skid, and each fails nothing
 else.
-
-**Units.** `tools spec-units` with these notes: 213.0 → 214.0 (pose fit 16.3 → 17.3): the
-same-side arm was original only and is now checked. The budget is 7,169, with pose fit 624;
-motion and the pose chart stay at their caps (2,813 and 1,584).
 
 ## Round 17's amendments (2026-11-10): the speed booster
 
@@ -1611,15 +1599,6 @@ and the Toggle for WordwiseTopSpeed. "Mechanic and parameter" kinds became "mech
 line carries it. The round-16 catalogue gives Parameter to SpeedBuildsAndBrakes and Jumping alone,
 so its catalogue test still passes; the next round's catalogue follows the switch lines.
 
-**R-B1, motion's units recounted.** Motion counts 84.0 units now (79.0 before this round): 71 arms,
-8 cells, 31 operators. Ten of its arms count 0 as original only or record only (SpeedBuildsAndBrakes
-3, TurningRound, AimingAndShooting's shot, Jumping's carry with a dash, DriftInTheAir's carry,
-Moonfall's end by a kick, WallJump's enemy test, Landing's turn end), and the frame's order
-(`PoseFollows`, `PoseFitAfterMoves`, `MovesAsShePosed`) is prose, not arms; vectors for all of them
-would add about 10 units. The booster's own arms (+4.7 units here, counted in motion) raise
-motion's budget by 36 × 5.0 = 180, as every area's budget is k × its units. The old code shown
-beside it had no booster rule (c7f927ab6's `extra_run_speed` has one cap and no jump bonus).
-
 **The current model against the amended vectors.** With the landed test and a local reading of the
 pose steps' three keys: every old vector and pose step passes, and 12 of the 22 new vectors fail,
 all of them the booster: MB1, SB2, C-booster-dash and C-booster-dashcap-b (the cap: the model's dash
@@ -1639,11 +1618,6 @@ rises at 1.0000; the round-16 model passes it. O3: the Switches note says which 
 parameter; SolidEnemies stays `none` because its 1 px is the pixel a subpixel part reaches into,
 measured on the boxes' whole pixels (`$A0:A8F0`), not a distance of its own; PoseFitAfterMoves'
 params name the 8 px small body; Jumping's params say the booster share's arithmetic is fixed.
-
-**Units.** `tools spec-units` with these notes: 214.0 → 219.0 (motion 79.0 → 84.0: Dash 3.3 → 4.7,
-the booster's cap; Jumping 11.0 → 13.7, the booster's rise and its formula; Landing 6.7 → 7.7, the
-spring ball's landing with jump held, original only before). The budget is 7,704 → 7,884: motion
-2,844 → 3,024, the other areas unchanged.
 
 ## Round 18's amendments (2026-11-11): what a frame reports for her animation
 
@@ -1811,12 +1785,7 @@ kind is its pose's in the game's clips. 312 vectors and 63 pose steps. `ref18.py
 34 constructed and given-way vectors and the 95 recorded ones; its mutants "only `Ball` clears",
 "a landing takes the let-go", "an animation's end takes the let-go" and "heading down at the
 frame's end" each fail a vector (C-dash-spring-rest; C-dash-landing-letgo; C-dash-takeoff-end;
-C-ceiling and C-slope-run-off). The ceiling's arm adds 1 unit.
-
-**Units.** `tools spec-units` with these notes: 219.0 → 229.0 (motion 84.0 → 92.0: `Dashing` 5.0,
-`RisingAndFalling` 5.7 → 8.7 for `heading down` and the ceiling's frame, `RidingTheElevator`
-unchanged; pose chart 58.0 → 60.0, `AnimationEnds` 2.7 → 4.7 for the end that gives way and
-`handed over`). The budget is 7,884 → 8,244: motion 3,024 → 3,312, pose chart 2,088 → 2,160.
+C-ceiling and C-slope-run-off).
 
 ## Round 19's amendments (2026-11-11): adversary 96's observer items
 
@@ -1971,16 +1940,6 @@ fails 12 of 326: C-dash-lost-not-dashing, C-elevator-jump, C-elevator-side, C-mo
 C-morph-land-run, C-takeoff-loses-dash, C-unmorph-land-run, C-unmorph-on-bounce,
 C-walljump-letgo-plain, C-walljump-letgo-space, R-morph-land and R-walljump-letgo.
 
-**Units.** `tools spec-units` with these notes: 229.0 → 235.3 (motion 92.0 → 95.0:
-`RisingAndFalling` 8.7 → 10.7 for the change of shape's landing and the vertical speed after her
-moves, the wall jump joining an existing arm; `RidingTheElevator` 1.0 → 2.0 for the pose kept on
-the ride; `Dash` unchanged, its arm now read from dashing; pose chart 60.0 → 61.0, `PadChart` 35.0
-→ 36.0 for the wall jump's let-go with the screw attack or space jump; with adversary 97's fixes,
-pose fit 17.3 → 18.3, `ShrinkingLowersHer` 2.3 → 3.3 for the change of shape from a bouncing
-ball, and collision 59.7 → 61.0, `WallsAndCeilings` 3.0 → 4.3 for a change of shape's rise into
-a ceiling and its pulled speed): 229.0 → 235.3 in all. The budget is 8,244 → 8,472: motion 3,312
-→ 3,420, pose fit 624 → 660, pose chart 2,160 → 2,196, collision 2,148 → 2,196.
-
 **The gaps file** keeps gap 36 alone; gap 38 and the unmasked wall-jump frame are answered here.
 
 ## Ceres's free run (2026-11-12): why samus-movement holds the least of rungs M0 to M2
@@ -2053,58 +2012,12 @@ hides exactly the 6 frames of chain-any-0006 and the 4 of chain-any-0011 above.
 So, with the pose carried, M0's row holds 182 of its 344 frames, every frame the domain runs in;
 the other 162 are the door's (R1).
 
-**Units.** `tools spec-units` with these notes: 235.3 → 239.7 (motion 95.0 → 96.0,
-`SpeedBuildsAndBrakes` 11.0 → 12.0 for a skid braked to 0 moving the old way; pose chart 61.0 →
-63.3, `PadChart` 36.0 → 38.3 for the facing-the-screen rows, the moonwalk's turn and the crouched
-turn's effect; collision 61.0 → 62.0, `SolidEnemies` 9.0 → 10.0 for a move of 0 touching an
-enemy). The budget is 8,823 → 8,987: motion 3,562 → 3,600, pose chart 2,287 → 2,375, collision
-2,287 → 2,325.
-
 **Vectors.** 9 new, 389 → 398: recorded CE1 to CE4, constructed C-skid-zero-enemy,
 C-screen-turn, C-moonwalk-turn and C-crouch-turn-skid, and the pose step C-screen-jump. The landed
 model fails 7 of them, each as its amendment says (CE1, C-skid-zero-enemy, CE2, CE3,
 C-moonwalk-turn, CE4, C-crouch-turn-skid) and the pose step C-screen-jump (it takes off); it
 passes C-screen-turn, where the standing rows already turn her. The observer's reference for the
 amendments (`$TEMP/collab/sm-ceres/ref_ceres.py`) agrees with all 8 new motion vectors.
-
-## Size baseline (tokens, 2026-11-07)
-
-Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
-counted against the model). Old code, the files below: logic 13,342, types 1,781, data 153. The
-round-7 model: logic 9,265, types 2,090, data 7,386. The bridge (`game/src/samus_movement_bridge*`, the
-integrator's): logic 3,272, types 192, data 11. The tables below are the earlier logic-and-types
-counts.
-
-Counted with `tools size` at 29c4d0876, tests excluded, as logic and data (the values of
-constants and statics). The old code the domain replaces:
-
-| Old code | Logic | Data |
-| --- | ---: | ---: |
-| `game/src/model/samus.rs`, `model/samus/` (motion, its pose) | 5,160 | 0 |
-| `game/src/motion.rs` | 971 | 24 |
-| `game/src/collision/world.rs` | 1,335 | 1 |
-| `game/src/model/collision.rs` | 543 | 0 |
-| `game/src/pose/contact.rs` | 1,065 | 0 |
-| `game/src/collision.rs`, the block scans (`SlopeFlag` to `scan_y`) | 2,499 | 0 |
-| `game/src/pose.rs`, the pad's pose requests (`PoseRequests` to `input`) | 572 | 91 |
-| `game/src/collision/solid_enemy.rs` | 1,220 | 0 |
-| `game/src/pose/fit.rs` (pose fit, in the domain from 4d34fe9ae) | 1,758 | 37 |
-| Total | 15,123 | 153 |
-
-`collision/inside.rs` (696) is not counted: the engine keeps its touch handling. The old engine
-read the pose chart and the sprite list from the ROM, so its data column is near zero.
-
-The new code at the same commit, round 5:
-
-| New code | Logic | Data |
-| --- | ---: | ---: |
-| `types` | 1,764 | 3 |
-| `clean/samus_movement` (catalogue, chart and its rows, collide, lib, rules) | 12,320 | 3,369 |
-| `game/src/samus_movement_bridge*` (the world, the frame, the pose map) | 2,250 | 3,701 |
-| Total | 16,334 | 7,073 |
-
-The pose map (`samus_movement_bridge/pose.rs`, 3,610 of data) is which sprite shows each pose: the drawing
-domain's data, held in the bridge until the engine draws from the pose itself.
 
 ## Directional travel outputs
 
@@ -2197,8 +2110,7 @@ The registered vector decoder accepts `after.travelled` and `distance_history`, 
 directional expectation to name all four directions, and compares the model's movement outputs
 and isolated caller histories separately.
 
-**Units.** The official counter adds six arms: 239.7 to 245.7 units, with collision
-62.0 to 68.0 and the other areas unchanged. Its 423 vector ids comprise 352 movement vectors,
+**Vectors.** The amendment adds six arms. Its 423 vector ids comprise 352 movement vectors,
 64 pose steps and seven distance histories. The 19 existing cases given new expectations and
 seven additional movement cases contain no changes to the original observations.
 
@@ -2228,7 +2140,7 @@ It derives the gain and cap before collision and checks position.x for both
 constructed cases. Every other observation of the amended spec is preserved.
 The focused proof has 26 movement distance checks and seven lifetime histories;
 352 movement vectors, 64 pose steps and seven histories give 423 vector ids.
-The spec's six distance arms and its 245.7 units are unchanged. Setting the unstopped case's expected fraction to 0000 fails this position check,
+The spec's six distance arms are unchanged. Setting the unstopped case's expected fraction to 0000 fails this position check,
 even though its distance remains -1.0000.
 
 ### Vocabulary review
@@ -2253,59 +2165,6 @@ phrase, so the adversary must review these additions before export.
 | block grapple | `OtherBlockKinds`: a block her grapple holds | a visible grapple anchor |
 | no solid | vector header: a slope column has no solid pixel | the column's measurable shape |
 | frame pose | vector header: a lead-in frame's pose | the visible pose in that frame |
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas' old
-figures and the commit.
-
-Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and
-so is each bracket pair; comments, layout and tests are free. Two kinds of token are counted
-apart and reported, not held against the target: the values of constants and statics (tables of
-the game's data, such as the chart's rows), and declarations (the `struct`, `enum` and `type`
-items and attributes that define the model's shapes; define as many as the behaviour needs). The
-target is on everything else, the logic.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen: the old code's
-score under MODEL §4's weights, 13,169.75 (`tools size` over the old code at `c7f927ab6` and its
-two cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`),
-times 0.55 is 37.47, which is 37.5 to one decimal. An area's budget is k × its units; its old code
-(`old`, the score of the old files that area replaces at `c7f927ab6`, measured before lookups were
-data, duplication was priced and visibility and impl headers were free) is for reference and
-doesn't bound it. The budget is an
-indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
-as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
-
-- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
-  RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
-  DriftInTheAir, Moonfall, WallJump, Landing, AcceptedFloorResponse, TouchdownRequests, WordwiseTopSpeed,
-  1.2, 9
-- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
-- Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
-  AnimationEnds
-- Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
-  SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
-- Area getaway (old 0): GetawayArms, GetawayStarts, GetawayTravels
-- Area recoil (old 0: no old code models the push): PushTime, PushStarts, PushMoves, BackwardLeap,
-  PushEnds, AfterThePush, 12
-
-Budget: 37.5 × 265.7 units = 9,961 (motion 4,200, pose fit 687, pose chart 2,412, collision 2,662).
-The official counter reports 111.0 motion units, 18.3 pose-fit units, 64.3 pose-chart units
-and 71.0 collision units for the direct whole-frame step, from 287.7 (117.0, 20.3, 64.3, 86.0)
-with the seven timing entries: they held 27.0 units, and the rules moved out of them and the
-position after her moves add 4.0 (`MovesAsShePosed` 1.0 → 2.0, `SolidEnemies` 10.0 → 12.0,
-`SlopesSlowTheWalk` 2.7 → 3.7). #738's `DriftInTheAir` arm adds 1.0 (motion 111.0 → 112.0).
-Old-code baselines and k above are unchanged.
-
-Getaway uses the ordinary movement queries. Baseline `6fc602284` has no forced-movement
-implementation to replace, so the old area has zero tokens to measure. The official
-counter assigns 11.0 units and a getaway budget of 412 at the existing k.
-
-From the spec's §7 (the pose chart), moved with the header's:
-
-**Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
-effects. The tables below are data records (about 120 rows), counted as data.
 
 ## Transition firing aim
 
@@ -2758,10 +2617,6 @@ fixes: stops at 10). Its spin memory matches the game's (`0A27` ∈ {3, 14h}) at
 spins: 31 of 31 (0002) and 22 of 22 (0006). A do-nothing model holds 0 cuts in either row: her
 x moves at cut 1.
 
-**Budget.** `tools spec-units` (scratch, against main's spec): 264.7 → 265.7 units (+1.0, the
-`DriftInTheAir` arm; `WallJump`'s carried-on arm is replaced one for one, and `PadChart`'s rule is
-a table cell), budget 9,923 → 9,961.
-
 ## Thrown back by a hit (#753, spec §12)
 
 The hit's push and the backward leap, for Ceres Ridley's tail. Records: lean cache
@@ -2892,8 +2747,7 @@ any-intro-2219 170-181: 12, model 12, do-nothing 0; r05 65-76, 139-145, 390-400 
 1.4000 holds 81 of 91 (r05 16 of 25), `leap_top` 4.8000 holds 29 of 91, `push_brake` 0.4000 holds
 r05 24 of 25. Vectors (`vecrun.py`): 26 of the 28 §12 vectors pass the model; C-push-waits (a
 turn's own motion) is worked by hand, and PE4 (a lead-in through her own jump) is the per-frame
-run's r05:400. `tools spec-units` was not run here (the
-tools executable is blocked locally); the recoil area's units are the root's to add.
+run's r05:400.
 
 ## An aimed crouched turn let go (0006:539, #753)
 

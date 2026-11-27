@@ -362,16 +362,3 @@ Real content no vector may carry, loaded by the importer in the integrator's har
 | R16 | `chain-0097-ACF0`: 663 | Right | square-up (14 frames of squaring) |
 | R17 | `chain-0106-AD5E`: 482 | Left | square-down |
 | R18 | `chain-0224-D0B9`: 201 | Right | touch-passing |
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on
-samus-movement. There is no old code: the engine has no passage (its only game mode is
-gameplay), so no area has `old` for the guideline comparison (MODEL §1 decision 19).
-
-- Area passage: TheTouch, PassageTime, FinishedFrames, Quieting, TheFades, Fading, Squaring, Building, SettingOff, Sliding, Carrying, Arriving, WhereSheLands, Landing, SheKeepsHerMotion, WhatRuns
-
-Budget: 37.5 × 76.7 units = 2,875 (passage 2,875)

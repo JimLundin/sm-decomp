@@ -447,28 +447,3 @@ colour's levels under an invented index, with invented content and the recorded 
   (`$94D6`, `$94C3`), then a separate instruction starts page 5 (`$B34E`): in the spec, one
   repeat step (ten times in all) and a signal step.
 - The caret is placed for the next letter by each letter, not by its own script.
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. There is no old code:
-the engine had no intro before this model, so no area has `old`. The flashback replaces no
-room-play code. The existing intro model at `b7dc44c8e` scores 4,050.25 using `tools size
-crates/clean/screens_intro/src`.
-
-- Area scripts: ScriptSteps
-- Area dissolve: PicturesDissolve, DissolveEnds
-- Area baby: BabyRises, BabyLeaves
-- Area pages: PageFiveBegins, LetterIsTyped, LetterGlows, CaretBlinks, PageEnds, PressTurnsThePage
-- Area fade: PictureDarkens, IntroEnds
-- Area opening: IntroBegins, SlowFade, OpeningUnfolds
-- Area page one: PageOneIsMadeReady, PageOneBegins
-- Area flashback: BattleBegins, BattleDissolves, PageTwoBegins, PageTwoEnds
-- Area discovery: DiscoveryBegins, DiscoveryReturns
-- Area delivery: DeliveryBegins, BabyCrossesThePicture, PageFourBegins
-- Area joins: DiscoveryAndDeliveryPagesEnd, ExaminationBegins
-
-The spec-units counter reports 29 entries, 80 arms, no cells and 18 operators.
-Budget: 37.5 × 86.0 units = 3,222 (scripts 287, dissolve 325, baby 87, pages 687, fade 250, opening 600, page one 150, flashback 375, discovery 187, delivery 162, joins 112)

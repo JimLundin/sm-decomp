@@ -97,16 +97,3 @@ blank and explosion flow. Independent witnesses compare the navigation light and
 on all 722 settled cuts and the retained palette at Zebes setup. Both map regions change
 at 733. The setup changes the affine map, affine graphics and sprite graphics. The queued
 requests and their delays match at 283.
-
-## Budget
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit. At `b7dc44c8e`
-no production scene owner is replaced.
-
-- Area opening: StationPictureArrives, StationAwaitsMusic, StationBrightens, SpaceDrifts
-- Area station: StationBursts, StationBreaks
-- Area departure: ShipDeparts, SpaceHolds, SceneBlacksOut
-
-The counter reports nine entries, 22 arms, no table cells or formula operator tokens, and no findings.
-
-Budget: 37.5 × 22.0 units = 824 (opening 337, station 187, departure 300)

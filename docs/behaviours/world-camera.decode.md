@@ -451,10 +451,6 @@ be verified on its own from the records, with her motion's outputs decoded as in
   row's output the same. In the harness cases R3 and R16 the move crosses into the last row past its
   aim, but the view stops on its aim under either read. It is checked by C-ahead, C-below-closed and
   C-below-short-row, and the bank log (`$80:A8A6`..`$80:A8D4`).
-- **k out of sample:** the old code scores 2,273.5 over this spec's 47.0 units, 48.4 a unit
-  (samus-movement's 65.8); its own 0.55 would give k = 26.6 against the frozen 36, so the 70% cap
-  binds in both areas (limits at 31.3 units). The old code lacks the knockback's
-  turn of the lead and time stopped.
 - **Free run:** from a seed frame, carry the camera's own State forward and take only the inputs
   from the records; report the first differing frame per axis. Re-seed at a room change.
 - **Per-behaviour attribution:** `model.py`'s tags name the branch each frame takes; the entries
@@ -703,46 +699,3 @@ carried receipt credit. These counts add no full-view or whole-engine credit.
 Source: [bank 82](https://patrickjohnston.org/bank/82),
 [bank 90](https://patrickjohnston.org/bank/90) and
 [bank B4](https://patrickjohnston.org/bank/B4).
-## Size baseline (tokens, 2026-11-08)
-
-`tools size` (the quality-terms counter, `$TEMP/collab/sizedll-quality`), at spine `cc505407c`,
-over cuts of the old code in `$TEMP/collab/camera-spec/old`, measured together so the clumps are
-counted across both:
-
-| Area | Old code | Score | Logic | Types | Data |
-| --- | --- | ---: | ---: | ---: | ---: |
-| follow | `scrolling.rs`: `speed`, `ONE_PIXEL`, `moved`, `follow`, `horizontal`, `vertical`; `state/room.rs`: `CameraDistance::lead` | 715 | 763 | 18 | 16 |
-| limits | `scrolling.rs`: `ScrollAreas` and its methods, `screen`, `middle_screen`, `screen_start`, `next_screen`, `negative`, `before`, `ahead`, `behind`, `settle_x`, `scroll_right`, `scroll_left`, `bottom_rows`, `settle_y`, `settled_y`, `scroll_down`, `scroll_up` | 1,558.5 | 1,586 | 41 | 0 |
-| total | | 2,273.5 | 2,349 | 59 | 16 |
-
-Not counted: `layer2` and `scroll_backgrounds` (252, layer 2 and the BG scroll registers, the
-background's domain), the `CameraDistance` and `Layer2Scroll` codes' `TryFrom`/`From` (the
-decoder's), and `tick.rs`'s building of `ScrollAreas` (the bridge's). The spec's header states
-limits' old code as 1,559.
-
-## Budget
-
-Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
-the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas' old
-figures and the commit.
-
-Size is counted in logical tokens: each identifier, keyword, literal and operator is one, and so is
-each bracket pair; comments, layout and tests are free. Two kinds of token are counted apart and
-reported, not held against the target: the values of constants and statics (tables of the game's
-data, such as the lead distances), and declarations (the `struct`, `enum` and `type` items and
-attributes that define the model's shapes; define as many as the behaviour needs). The target is on
-everything else, the logic.
-
-**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-movement and
-tested here out of sample. An area's budget is k × its units; its old code (`old`, for reference,
-not a bound) is the `tools size` score of the old code that area replaces: `game/src/scrolling.rs`
-without its layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at
-spine `cc505407c`. The old code lacks two of this spec's rules, the knockback's turn of the lead and time
-stopped, so `old` slightly understates the domain. The budget is an indicator: the fit is score ÷
-budget, and being over it costs in proportion to how far over, never as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
-
-- Area follow (old 715): FollowingHer, LeadingHer, AimingHeight, Remembering, CreepReadsRightward, RememberedHeightFraction
-- Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
-  DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
-
-Budget: 37.5 × 52.3 units = 1,962 (follow 787, limits 1,175)
