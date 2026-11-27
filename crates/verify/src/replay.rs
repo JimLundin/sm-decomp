@@ -67,6 +67,12 @@ pub struct Sources {
     pub lock: PathBuf,
 }
 
+fn read_lock(sources: &Sources) -> Result<crate::lock::Lock, Outcome> {
+    let text = std::fs::read_to_string(&sources.lock)
+        .map_err(|_| data_failure(None, "record lock file"))?;
+    crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))
+}
+
 /// Admit and replay one case through production with carried selected state.
 #[must_use]
 pub fn run(case: &Case, sources: &Sources) -> CaseResult {

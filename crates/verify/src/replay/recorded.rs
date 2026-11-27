@@ -10,7 +10,7 @@ use super::{
     Sources, appearance, camera, ceres, data_failure, hud, production_failure, progress, weapons,
 };
 use crate::cache::Cache;
-use crate::lock::{Lock, RowId};
+use crate::lock::RowId;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
 };
@@ -252,9 +252,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let Start::CacheCut { frame } = case.start else {
         return Err(data_failure(None, "recorded recipe start"));
     };
-    let text = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "record lock file"))?;
-    let lock = Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))?;
+    let lock = super::read_lock(sources)?;
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "indexed lock row"))?;

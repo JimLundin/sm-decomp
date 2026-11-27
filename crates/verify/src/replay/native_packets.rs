@@ -1,5 +1,6 @@
 //! Reviewed source declarations shared by cases that consume the same native capture.
 
+use super::audio::AudioPacket;
 use super::index::{Case, InputProvider, Start};
 use super::result::Outcome;
 use super::sender_offer::SenderPacket;
@@ -11,17 +12,21 @@ use serde::{Deserialize, Serialize};
 pub enum NativePacket {
     /// Sender ingress and its independent FIFO observations.
     Sender(SenderPacket),
+    /// Opening-room transport capture and its provenance.
+    Audio(AudioPacket),
 }
 
 impl NativePacket {
     pub(super) fn valid(&self) -> bool {
         match self {
             Self::Sender(packet) => packet.valid(),
+            Self::Audio(packet) => packet.valid(),
         }
     }
 
     pub(super) fn applies_to(&self, case: &Case) -> bool {
         match self {
+            Self::Audio(_) => case.inputs == InputProvider::NativeFrameInputs,
             Self::Sender(_) => {
                 matches!(case.start, Start::NativeSenderOffer { .. })
                     || case.inputs == InputProvider::NativeTouchdownInputs
@@ -42,6 +47,14 @@ impl Case {
     pub(super) fn sender_packet(&self) -> Result<&SenderPacket, Outcome> {
         match self.native_packet()? {
             NativePacket::Sender(packet) => Ok(packet),
+            _ => Err(super::data_failure(None, "native sender packet")),
+        }
+    }
+
+    pub(super) fn audio_packet(&self) -> Result<&AudioPacket, Outcome> {
+        match self.native_packet()? {
+            NativePacket::Audio(packet) => Ok(packet),
+            _ => Err(super::data_failure(None, "native audio packet")),
         }
     }
 }

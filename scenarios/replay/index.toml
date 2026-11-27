@@ -30,6 +30,23 @@ simultaneous = [
     { cut = 183, offers = [["Action", "SamusSilence"], ["Ambient", "BackgroundSilence"]] },
 ]
 
+[[native_packet]]
+kind = "audio"
+origin = { path = "opening-ceres-audio-v1/origin.toml", sha256 = "d9605917649a048cec3e66f1dd5debb703849b8095b54776d31fb88f87b94ed2" }
+seed_row = "chain-any-0003-DFD7"
+roster_sha256 = "7a9305e8f4a582254da3c91304e535523739617376cf98bb9874d1b04e1d6a60"
+roster_files = 7206
+pins = 27
+cuts = 184
+publications = 764
+writer_masks = 77
+writers = ["music157", "music913-914/196-197", "music175", "music510", "music785-795", "music517-520"]
+max_inactive_ramp_observations = 736
+expiry_prefix_end = 64
+instruments = 8
+samples = 8
+resources_sha256 = "6e63acdfeac091680644842973030b62100d718ddf9a5a7a2053ca29b0540036"
+
 [[case]]
 id = "movement/D-inherited-cut"
 kind = "scoped"

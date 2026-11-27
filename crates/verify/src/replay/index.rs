@@ -3032,6 +3032,9 @@ impl Case {
         {
             return Err(IndexFault::InvalidCase(case.id.clone()));
         }
+        if case.inputs == InputProvider::NativeFrameInputs && case.audio_packet().is_err() {
+            return Err(IndexFault::InvalidCase(case.id.clone()));
+        }
         if (case.expectations.projection.is_some()
             && case.inputs != InputProvider::NativeSearchInputs)
             || (case.connected_packet.is_some()
