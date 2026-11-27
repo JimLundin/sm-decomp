@@ -351,17 +351,6 @@ pub fn compose(memory: &VideoMemory, frame: &DisplayFrame) -> Picture {
         },
         ..Picture::default()
     };
-    compose_into(memory, frame, &mut picture);
-    picture
-}
-
-/// Compose into an existing picture, so a caller can reuse its buffer.
-pub fn compose_into(memory: &VideoMemory, frame: &DisplayFrame, picture: &mut Picture) {
-    picture.lines = if frame.overscan {
-        MAX_LINES
-    } else {
-        NORMAL_LINES
-    };
     let mut file = RegisterFile::new(frame.start);
     let mut setup = LineSetup::from(&file);
     let mut masks = setup.windows.masks();
@@ -437,6 +426,7 @@ pub fn compose_into(memory: &VideoMemory, frame: &DisplayFrame, picture: &mut Pi
             *dot = shade(&setup, &palette, main, sub, window);
         }
     }
+    picture
 }
 
 #[cfg(test)]

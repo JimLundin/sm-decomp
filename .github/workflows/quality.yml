@@ -61,8 +61,6 @@ jobs:
         run: cargo clippy --locked --workspace --all-targets --no-deps
       - name: Test the rebuild's crates
         run: cargo test --locked --workspace --exclude oracle --no-fail-fast
-      - name: "Report the compositor time per frame (A5 target: 0.3 ms)"
-        run: cargo run --locked --profile verify -p runtime --example compose_bench
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
         with:
