@@ -191,8 +191,8 @@ first clean-room lane on a machine, and after a new CLI version:
    launch's Linux rules without a session.
 2. The played runs reproduce `scenarios/replay/played.toml`: `tools/lane/played.sh` plays them
    all, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree has no `rom/`).
-   Each run prints a `PLAYED` line with its cuts held and stop beside its run's `held` and `stop`,
-   ending `HOLDS` when they match, and the test passes when every run holds:
+   Each `PLAYED` line shows the observed and reviewed counts and outcomes. The test passes
+   when every run holds:
 
    ```sh
    SM_ROM=$PWD/rom/sm.smc bash tools/lane/played.sh

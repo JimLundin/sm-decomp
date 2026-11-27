@@ -6,9 +6,9 @@
 # reviews it at landing.
 #
 # [[run]]: `row` the lock row; `start` the seed cut; `end` the last cut asked for; `held` the
-# cuts after the seed whose compared fields all matched; `stop` "end" when every cut through
-# `end` held, else { failed = "the first difference, missing owner or bad data" } at cut
-# start + held + 1.
+# cuts after the seed whose compared fields all matched; `outcome` with status "pass" when
+# every cut through `end` held, or status "difference" or "unsupported" with the exact cut
+# and field or dependency where the run stopped.
 #
 # In movie frames: a row's cut c is movie frame f + c, f its seed's `movie_frame` in
 # movies/room-seeds-<capture>.csv, or 0 for a row from power-on, so a row's cut 0 is the frame
@@ -32,7 +32,7 @@ row = "any-power-on"
 start = 0
 end = 15197
 held = 15196
-stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
+outcome = { status = "unsupported", cut = 15197, dependency = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
 seed_frame = 0
 frames = [1, 15196]
 power_on = true
@@ -45,7 +45,7 @@ row = "any-fly-to-ceres"
 start = 0
 end = 802
 held = 802
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 7512
 frames = [7513, 8314]
 power_on = false
@@ -58,7 +58,7 @@ row = "any-fly-to-ceres"
 start = 0
 end = 5799
 held = 5799
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 7512
 frames = [7513, 13311]
 power_on = false
@@ -70,7 +70,7 @@ row = "any-ceres-arrival"
 start = 0
 end = 222
 held = 222
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 8315
 frames = [8316, 8537]
 power_on = false
@@ -84,7 +84,7 @@ row = "any-ceres-arrival"
 start = 0
 end = 4996
 held = 4996
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 8315
 frames = [8316, 13311]
 power_on = false
@@ -100,7 +100,7 @@ row = "chain-any-0001-DF45"
 start = 0
 end = 4773
 held = 4773
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 8538
 frames = [8539, 13311]
 power_on = false
@@ -111,7 +111,7 @@ row = "chain-any-0001-DF45"
 start = 0
 end = 411
 held = 411
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 8538
 frames = [8539, 8949]
 power_on = false
@@ -122,7 +122,7 @@ row = "chain-any-0002-DF8D"
 start = 0
 end = 281
 held = 281
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 8950
 frames = [8951, 9231]
 power_on = false
@@ -136,7 +136,7 @@ row = "chain-any-0003-DFD7"
 start = 0
 end = 4079
 held = 4079
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 9232
 frames = [9233, 13311]
 power_on = false
@@ -147,7 +147,7 @@ row = "chain-any-0004-E021"
 start = 0
 end = 263
 held = 263
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 9577
 frames = [9578, 9840]
 power_on = false
@@ -162,7 +162,7 @@ row = "chain-any-0006-E0B5"
 start = 0
 end = 3149
 held = 3149
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 10162
 frames = [10163, 13311]
 power_on = false
@@ -176,7 +176,7 @@ row = "any-intro-0568"
 start = 0
 end = 1650
 held = 1650
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 568
 frames = [569, 2218]
 power_on = false
@@ -188,7 +188,7 @@ row = "chain-any-0006-E0B5"
 start = 1690
 end = 1781
 held = 91
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 11852
 frames = [11853, 11943]
 power_on = false
@@ -200,7 +200,7 @@ row = "chain-any-0006-E0B5"
 start = 1690
 end = 3149
 held = 1459
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 11852
 frames = [11853, 13311]
 power_on = false
@@ -212,7 +212,7 @@ row = "chain-any-0006-E0B5"
 start = 1698
 end = 1781
 held = 83
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 11860
 frames = [11861, 11943]
 power_on = false
@@ -224,7 +224,7 @@ row = "chain-any-0006-E0B5"
 start = 1776
 end = 1781
 held = 5
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 11938
 frames = [11939, 11943]
 power_on = false
@@ -238,7 +238,7 @@ row = "chain-any-0007-E06B"
 start = 0
 end = 258
 held = 258
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 11939
 frames = [11940, 12197]
 power_on = false
@@ -249,7 +249,7 @@ row = "chain-any-0007-E06B"
 start = 0
 end = 3000
 held = 1372
-stop = { failed = "live shaft departure needs the selected cartridge" }
+outcome = { status = "unsupported", cut = 1373, dependency = "live shaft departure needs the selected cartridge" }
 seed_frame = 11939
 frames = [11940, 13311]
 power_on = false
@@ -261,7 +261,7 @@ row = "chain-any-0008-E021"
 start = 0
 end = 263
 held = 263
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 12198
 frames = [12199, 12461]
 power_on = false
@@ -273,7 +273,7 @@ row = "chain-any-0009-DFD7"
 start = 0
 end = 330
 held = 330
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 12462
 frames = [12463, 12792]
 power_on = false
@@ -285,7 +285,7 @@ row = "chain-any-0010-DF8D"
 start = 0
 end = 518
 held = 518
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 12793
 frames = [12794, 13311]
 power_on = false
@@ -299,7 +299,7 @@ row = "any-intro-6012"
 start = 1
 end = 1499
 held = 1498
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 6013
 frames = [6014, 7511]
 power_on = false
@@ -311,7 +311,7 @@ row = "any-intro-6012"
 start = 1
 end = 7299
 held = 7298
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 6013
 frames = [6014, 13311]
 power_on = false
@@ -323,7 +323,7 @@ row = "chain-any-0011-DF45"
 start = 1004
 end = 2124
 held = 1119
-stop = { failed = "Zebes flight LandingSiteLoader" }
+outcome = { status = "unsupported", cut = 2124, dependency = "Zebes flight LandingSiteLoader" }
 seed_frame = 14076
 frames = [14077, 15195]
 power_on = false
@@ -335,7 +335,7 @@ row = "chain-any-0011-DF45"
 start = 241
 end = 2125
 held = 1883
-stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
+outcome = { status = "unsupported", cut = 2125, dependency = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
 seed_frame = 13313
 frames = [13314, 15196]
 power_on = false
@@ -348,7 +348,7 @@ row = "chain-any-0011-DF45"
 start = 239
 end = 2125
 held = 1885
-stop = { failed = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
+outcome = { status = "unsupported", cut = 2125, dependency = "Landing Site sprite DMA needs the live source after the ROM bank wraps" }
 seed_frame = 13311
 frames = [13312, 15196]
 power_on = false
@@ -360,7 +360,7 @@ row = "chain-any-0006-E0B5"
 start = 1270
 end = 3149
 held = 1879
-stop = "end"
+outcome = { status = "pass" }
 seed_frame = 11432
 frames = [11433, 13311]
 power_on = false

@@ -29,6 +29,7 @@ mod arrival;
 mod ceres_doors;
 mod colours;
 mod contact;
+pub(crate) mod declarations;
 pub(super) mod explosion;
 mod fight_picture;
 mod flight;
@@ -1565,43 +1566,27 @@ pub(super) mod tests {
         }
     }
 
-    /// Every reviewed run of `scenarios/replay/played.toml`, or those `SM_PLAYED` names, played
-    /// in this one process (`tools/lane/played.sh`), each held to the file's `held` and `stop`.
-    /// A run is named `<row>/<start>-<end>`, and a bare row names all its runs. The file names
-    /// a failed stop by its field, or by the missing piece that ends the dependency's name.
+    /// Every reviewed run of `scenarios/replay/played.toml`, or those `SM_PLAYED` names.
+    /// A name is `<row>/<start>-<end>`, or a bare row for all its runs.
     #[test]
     #[ignore = "pinned record cache and player ROM"]
     fn reviewed_runs_hold() {
+        use super::declarations::{Listed, Listing, PATH};
         use super::{Outcome, Stop};
-        #[derive(serde::Deserialize)]
-        struct Listed {
-            run: Vec<Listing>,
-        }
-        #[derive(serde::Deserialize)]
-        struct Listing {
-            row: String,
-            start: u64,
-            end: u64,
-            held: u64,
-            stop: toml::Value,
-        }
-        let path = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../scenarios/replay/played.toml"
-        );
-        let listed: Listed = toml::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-        assert!(!listed.run.is_empty(), "{path} lists no run");
-        let name = |run: &Listing| format!("{}/{}-{}", run.row, run.start, run.end);
+
+        let root = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+        let listed = Listed::read(root).unwrap();
+        assert!(!listed.run.is_empty(), "{PATH} lists no run");
         let asked = std::env::var("SM_PLAYED").unwrap_or_default();
         let asked: Vec<&str> = asked.split_whitespace().collect();
-        let selects = |asked: &str, run: &Listing| asked == run.row || asked == name(run);
+        let selects = |asked: &str, run: &Listing| asked == run.row || asked == run.name();
         let unknown: Vec<_> = asked
             .iter()
             .filter(|asked| !listed.run.iter().any(|run| selects(asked, run)))
             .collect();
         assert!(
             unknown.is_empty(),
-            "SM_PLAYED names no run of {path}: {unknown:?}"
+            "SM_PLAYED names no run of {PATH}: {unknown:?}"
         );
         let sources = sources();
         let mut wrong = Vec::new();
@@ -1609,48 +1594,30 @@ pub(super) mod tests {
             if !asked.is_empty() && !asked.iter().any(|asked| selects(asked, run)) {
                 continue;
             }
-            let failed = run.stop.get("failed").and_then(toml::Value::as_str);
-            let after = run.start.saturating_add(run.held).saturating_add(1);
-            let stated = |identity: &str| {
-                failed.is_some_and(|failed| {
-                    identity == failed || identity.ends_with(&format!(" {failed}"))
-                })
+            let expected = if run.outcome == Outcome::Pass {
+                Stop::End
+            } else {
+                Stop::At(run.outcome.clone())
             };
             let played = super::play(&sources, &run.row, run.start, run.end);
             let holds = played.as_ref().is_ok_and(|report| {
                 report.held == run.held
-                    && match &report.stop {
-                        Stop::End => run.stop.as_str() == Some("end"),
-                        Stop::At(Outcome::Difference { cut, field }) => {
-                            *cut == after && stated(field)
-                        }
-                        Stop::At(
-                            Outcome::Unsupported {
-                                cut: Some(cut),
-                                dependency: identity,
-                            }
-                            | Outcome::DataFailure {
-                                cut: Some(cut),
-                                source: identity,
-                            },
-                        ) => *cut == after && stated(identity),
-                        Stop::At(
-                            Outcome::Pass
-                            | Outcome::Unsupported { cut: None, .. }
-                            | Outcome::DataFailure { cut: None, .. }
-                            | Outcome::CheckpointFailure { .. },
-                        ) => false,
-                    }
+                    && report.stop == expected
+                    && (!run.power_on || report.seed_held.is_empty())
             });
             let seen = match &played {
-                Ok(report) => format!("held={} stop={:?}", report.held, report.stop),
+                Ok(report) => format!(
+                    "held={} stop={:?} seed_held={}",
+                    report.held,
+                    report.stop,
+                    report.seed_held.len()
+                ),
                 Err(outcome) => format!("refused={outcome:?}"),
             };
-            let name = name(run);
+            let name = run.name();
             diagnostic(format_args!(
-                "PLAYED {name} {seen} reviewed held={} stop={} {}",
+                "PLAYED {name} {seen} reviewed held={} stop={expected:?} {}",
                 run.held,
-                run.stop,
                 if holds { "HOLDS" } else { "DIFFERS" }
             ));
             if !holds {
@@ -1659,7 +1626,7 @@ pub(super) mod tests {
         }
         assert!(
             wrong.is_empty(),
-            "played runs that differ from {path}: {wrong:?}"
+            "played runs that differ from {PATH}: {wrong:?}"
         );
     }
 

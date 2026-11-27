@@ -12,17 +12,14 @@ mod stretches;
 use std::fmt::Write as _;
 use std::path::Path;
 
-use serde::Deserialize;
-
 use super::plan::Plan;
 use super::seeds::{first_frame, following, row_movie, seed_frame};
 use super::{COMMAND, read};
 use crate::lock::{Lock, Row, RowId, Start};
+use crate::replay::played::declarations::{Listed, Listing, PATH as PLAYED};
 
 /// The README, from the repository root.
 pub(super) const PATH: &str = "README.md";
-/// The reviewed played runs, from the repository root.
-pub(super) const PLAYED: &str = "scenarios/replay/played.toml";
 /// The lock whose rows the runs play.
 const LOCK: &str = "scenarios/locks/lsnes.toml";
 
@@ -32,49 +29,6 @@ each one can be reproduced exactly, adjusted (the space jump timing), added (res
 (lag). In the end only this engine runs. The emulator, running the original, unmodified ROM, is \
 the oracle that proves the vanilla behaviours exact: every compared frame cut and output byte \
 matches.";
-
-/// The played-runs file.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Listed {
-    /// The movie the runs play, the milestone's.
-    movie: String,
-    #[serde(default)]
-    run: Vec<Listing>,
-}
-
-/// A run as the file states it: in cuts of its lock row, and in movie frames for its reviewer.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Listing {
-    /// The lock row played.
-    row: String,
-    /// The seed cut.
-    start: u64,
-    /// The last cut asked for, counted from the row's cut 0; it may lie in the rows that follow
-    /// back to back.
-    end: u64,
-    /// The cuts after the seed whose compared fields all matched.
-    held: u64,
-    stop: Stop,
-    /// The seed cut's movie frame.
-    seed_frame: u64,
-    /// The first and last movie frame held; none when it held none.
-    frames: Option<[u64; 2]>,
-    /// Whether it starts from the console's power-on, frame 0.
-    power_on: bool,
-}
-
-/// Where a reviewed run stopped.
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "kebab-case")]
-enum Stop {
-    /// Every cut it asked for held.
-    End,
-    /// The first difference, missing owner or bad data, at the cut after the last it held; it
-    /// names one.
-    Failed(String),
-}
 
 /// A reviewed played run, in movie frames.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -105,12 +59,11 @@ impl Run {
 ///
 /// Why the file, the lock or a seed can't be read, or the first run the lock contradicts.
 fn runs(root: &Path, movie: &str) -> Result<Vec<Run>, String> {
-    listed(root, &read(&root.join(PLAYED))?, movie)
+    listed(root, &Listed::read(root)?, movie)
 }
 
-/// The runs `text` lists for `movie`, each checked against the lock under `root`.
-fn listed(root: &Path, text: &str, movie: &str) -> Result<Vec<Run>, String> {
-    let listed: Listed = toml::from_str(text).map_err(|e| format!("{PLAYED}: {e}"))?;
+/// Checks the reviewed runs against the lock under `root`.
+fn listed(root: &Path, listed: &Listed, movie: &str) -> Result<Vec<Run>, String> {
     if listed.movie != movie {
         return Err(format!(
             "{PLAYED}: the runs play {}, not the milestone's {movie}",
@@ -161,24 +114,10 @@ fn checked(root: &Path, lock: &Lock, movie: &str, listing: &Listing) -> Result<R
     }
     let first = first_frame(root, row)?;
     let cuts = reach(root, lock, row, listing.end)?;
-    if listing.start >= listing.end || listing.end >= cuts {
+    if listing.end >= cuts {
         return Err(wrong(format!(
             "asks for cuts {} to {}, outside the {cuts} it can play back to back",
             listing.start, listing.end
-        )));
-    }
-    let asked = listing.end.saturating_sub(listing.start);
-    let stopped = match &listing.stop {
-        Stop::End => listing.held == asked,
-        Stop::Failed(why) if why.is_empty() => {
-            return Err(wrong(String::from("its failed stop names no cause")));
-        }
-        Stop::Failed(_) => listing.held < asked,
-    };
-    if listing.held > asked || !stopped {
-        return Err(wrong(format!(
-            "holds {} of the {asked} cuts it asks for, which its stop {:?} contradicts",
-            listing.held, listing.stop
         )));
     }
     let run = Run {
@@ -373,7 +312,7 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        MOVIE, PLAYED, Run, cell_frames, from_start, headline, listed, passing, percent,
+        Listed, MOVIE, PLAYED, Run, cell_frames, from_start, headline, passing, percent,
         power_on_bar,
     };
 
@@ -417,6 +356,10 @@ mod tests {
         Some(())
     }
 
+    fn listed(root: &std::path::Path, text: &str, movie: &str) -> Result<Vec<Run>, String> {
+        super::listed(root, &Listed::parse(text)?, movie)
+    }
+
     #[test]
     fn the_committed_runs_agree_with_the_lock() {
         let (root, text, file) = committed();
@@ -429,11 +372,9 @@ mod tests {
         assert_eq!(runs.as_ref().map(Vec::len), Ok(count));
         // The file written back unchanged lists the same runs, so a fault below is its figure.
         assert_eq!(listed(&root, &file.to_string(), "any"), runs);
-        // Each figure every run states is held to the lock: its row, its cuts within the rows it
-        // plays back to back, its stop and the cause a failed one names, its seed's frame, the
-        // frames it held and power-on. Each fault is one figure of one run moved off the committed
-        // one.
-        let faults: [(&str, Fault); 9] = [
+        // Each fault changes one declaration. The shared reader checks outcome consistency,
+        // and the report checks the row and movie coordinates against the lock.
+        let faults: [(&str, Fault); 10] = [
             ("a row not in the lock", |run| {
                 let row = format!("{}-NONE", run.get("row")?.as_str()?);
                 run.insert(String::from("row"), toml::Value::String(row));
@@ -461,21 +402,22 @@ mod tests {
                 run.insert(String::from("power_on"), toml::Value::Boolean(power_on));
                 Some(())
             }),
-            ("a failed stop that names no cause", |run| {
-                let stop = run.get_mut("stop")?.as_table_mut()?.get_mut("failed")?;
-                *stop = toml::Value::String(String::new());
+            ("an unsupported outcome with no dependency", |run| {
+                let outcome = run.get_mut("outcome")?.as_table_mut()?;
+                *outcome.get_mut("dependency")? = toml::Value::String(String::new());
                 Some(())
             }),
-            ("the other stop", |run| {
-                let stop = if run.get("stop")?.as_str() == Some("end") {
-                    toml::Value::Table(toml::Table::from_iter([(
-                        String::from("failed"),
-                        toml::Value::String(String::from("a difference")),
-                    )]))
-                } else {
-                    toml::Value::String(String::from("end"))
-                };
-                run.insert(String::from("stop"), stop);
+            ("a boundary one cut late", |run| {
+                shift(run.get_mut("outcome")?.as_table_mut()?, "cut", 1)
+            }),
+            ("a completed outcome at an unsupported boundary", |run| {
+                let outcome = run.get_mut("outcome")?.as_table_mut()?;
+                outcome.get("dependency")?;
+                outcome.clear();
+                outcome.insert(
+                    String::from("status"),
+                    toml::Value::String(String::from("pass")),
+                );
                 Some(())
             }),
         ];
