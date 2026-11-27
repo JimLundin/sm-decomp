@@ -9,6 +9,8 @@ use crate::production::tests::{empty_world, fixtures};
 use crate::production::{FigureClip, PoseContent};
 use boss_ceres_ridley::{CeresDoor, Stage};
 use core::num::Wrapping;
+use data::assets::ridley_ribs::{Art as RibsArt, STRIP_WORDS, Strip};
+use data::dma::BusAddress;
 use interface_hud as hud;
 use interface_hud::{
     Ammunition, CancelButton, CountdownRuns, FrameCount, HerMap, HudPictures, Reserve,
@@ -171,6 +173,12 @@ pub(super) fn content() -> Content {
 /// The fixture's content, with her pulse colours taken from `palettes`.
 pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalettes) -> Content {
     let poses = data::assets::samus::map::MAP.iter().map(|entry| entry.key);
+    let strips = |top, bottom| {
+        [top, bottom].map(|word| Strip {
+            source: BusAddress::default(),
+            words: [word; STRIP_WORDS],
+        })
+    };
     Content {
         samus_body_art: None,
         samus_tiles: None,
@@ -240,7 +248,11 @@ pub(super) fn content_with(palettes: &data::assets::samus::palettes::SamusPalett
         map: HerMap::default(),
         start_x: Wrapping(0x80),
         ridley: ridley_content(),
-        ridley_ribs_art: None,
+        ridley_ribs_art: Some(RibsArt {
+            closed: strips(1, 2),
+            partly_open: strips(3, 4),
+            wide: strips(5, 6),
+        }),
         warning: None,
         // The worth the player's ROM gives his tail's hit.
         tail_worth: samus_health::WholeEnergy::new(15).unwrap(),
