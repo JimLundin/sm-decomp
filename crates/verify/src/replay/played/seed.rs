@@ -5,13 +5,12 @@ use crate::replay::{connected, data_failure, movement, progress, result::Outcome
 use crate::source;
 use data::{
     assets::world,
-    rom::{Rom, RomAddress},
+    rom::{Lorom, Rom, RomAddress},
     room::RoomKey,
 };
 use game::production::connected::inputs::Inputs;
 use game::production::{played, room_loading};
 use game::{exact::save_files::Format, production::save_files};
-use std::path::Path;
 use types::save_files::{BatteryImage, SaveFilesState};
 
 /// Cartridge state seeded from the complete physical image in an ordinary room.
@@ -21,10 +20,12 @@ pub(super) struct Battery {
 }
 
 impl Battery {
-    pub(super) fn load(record: &oracle_record::FrameRecord, path: &Path) -> Result<Self, Outcome> {
+    pub(super) fn load(
+        record: &oracle_record::FrameRecord,
+        rom: Lorom<'_>,
+    ) -> Result<Self, Outcome> {
         let bad = || data_failure(None, "played cartridge seed");
-        let rom = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
-        let format = Format::load(rom.lorom()).map_err(|_| bad())?;
+        let format = Format::load(rom).map_err(|_| bad())?;
         let image = BatteryImage::new(record.sram.to_vec()).ok_or_else(bad)?;
         let state = save_files::power_on(&format, &image);
         Ok(Self { format, state })

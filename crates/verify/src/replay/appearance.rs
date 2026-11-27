@@ -25,6 +25,10 @@ impl Content {
     pub fn load(path: &std::path::Path) -> Result<Self, Outcome> {
         let bytes = std::fs::read(path).map_err(|_| data_failure(None, "player ROM file"))?;
         let rom = Rom::new(bytes).map_err(|_| data_failure(None, "player ROM pin"))?;
+        Self::from_rom(&rom)
+    }
+
+    pub(super) fn from_rom(rom: &Rom) -> Result<Self, Outcome> {
         let poses = Poses::load(rom.lorom()).map_err(|_| data_failure(None, "pose content"))?;
         let delays = AnimationDelays::load(rom.lorom(), &poses)
             .map_err(|_| data_failure(None, "animation clip content"))?;
@@ -33,7 +37,7 @@ impl Content {
         let clips = Clips::import(&delays, &paces)
             .map_err(|_| data_failure(None, "semantic animation content"))?;
         Ok(Self {
-            appearance: production_content(&rom, &clips)?,
+            appearance: production_content(rom, &clips)?,
             clips,
             poses,
         })
