@@ -78,7 +78,10 @@ pub fn git_breaches(lane: &Lane) -> Result<Vec<String>, String> {
         let empty = fs::symlink_metadata(&dir).is_ok_and(|m| m.is_dir())
             && fs::read_dir(&dir).is_ok_and(|mut d| d.next().is_none());
         if !empty {
-            found.push(format!("{} is not the empty exported folder", dir.display()));
+            found.push(format!(
+                "{} is not the empty exported folder",
+                dir.display()
+            ));
         }
     }
     for entry in fs::read_dir(&src).map_err(|e| format!("{}: {e}", src.display()))? {
@@ -969,14 +972,14 @@ mod tests {
         );
         round.commit(TRAILER);
         let git = round.lane.export.join(".git");
-        assert_eq!(
-            git_breaches(&round.lane).unwrap(),
-            Vec::<String>::new()
-        );
+        assert_eq!(git_breaches(&round.lane).unwrap(), Vec::<String>::new());
         for (made, found) in [
             ("hooks/post-checkout", "is not the empty exported folder"),
             ("info/attributes", "is not the empty exported folder"),
-            ("hooks/sub/post-checkout", "is not the empty exported folder"),
+            (
+                "hooks/sub/post-checkout",
+                "is not the empty exported folder",
+            ),
             ("config.worktree", "is not git's"),
             ("commondir", "is not git's"),
             ("packed-refs", "is not git's"),
@@ -990,7 +993,11 @@ mod tests {
         let _ = fs::remove_dir(git.join("hooks/sub"));
         let config = fs::read(git.join("config")).unwrap();
         write(&git, "config", "[core]\n\tfsmonitor = /bin/true\n");
-        assert!(round.refusal().contains("is not the exported configuration"));
+        assert!(
+            round
+                .refusal()
+                .contains("is not the exported configuration")
+        );
         fs::write(git.join("config"), &config).unwrap();
         let moved = round.base.join("moved-git");
         fs::rename(&git, &moved).unwrap();

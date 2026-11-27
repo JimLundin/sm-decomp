@@ -218,6 +218,9 @@ fn the_capability_rule_refuses_unix_sockets_symlinks_and_raw_descriptors() {
         "method `std::fs::soft_link`",
         "type `std::os::fd::FromRawFd`",
     ] {
-        assert!(found.contains(&format!("disallowed {path}")), "{path}: {found}");
+        assert!(
+            found.contains(&format!("disallowed {path}")),
+            "{path}: {found}"
+        );
     }
 }

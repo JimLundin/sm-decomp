@@ -140,7 +140,8 @@ impl Lane {
     /// configuration. The notes live in the lane folder, outside the box.
     pub fn record_git(&self) -> Result<(), String> {
         let git = self.export.join(".git");
-        let meta = std::fs::symlink_metadata(&git).map_err(|e| format!("{}: {e}", git.display()))?;
+        let meta =
+            std::fs::symlink_metadata(&git).map_err(|e| format!("{}: {e}", git.display()))?;
         std::fs::write(self.git_inode(), inode(&meta)).map_err(|e| e.to_string())?;
         std::fs::copy(git.join("config"), self.git_config()).map_err(|e| e.to_string())?;
         Ok(())
