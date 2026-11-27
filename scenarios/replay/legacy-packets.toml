@@ -127,3 +127,34 @@ output_fields = 4987
 [played."ridley/ordinary-ribs"]
 kind = "ribs-reveal"
 cut = 577
+
+[save_schedule]
+"save-files/power-on-through-ceres" = [
+    { row = "any-power-on", cut = 262, request = "hold" },
+    { row = "any-power-on", cut = 263, request = { diagnostic = { clearing = 2347 } } },
+    { row = "any-power-on", cut = 264, request = { diagnostic = { testing = 2463 } } },
+    { row = "any-power-on", cut = 265, request = { diagnostic = { testing = 0 } } },
+    { row = "any-power-on", cut = 266, request = { diagnostic = { restoring = 3880 } } },
+    { row = "any-power-on", cut = 267, request = { diagnostic = { restoring = 1044 } } },
+    { row = "any-power-on", cut = 268, request = { diagnostic = { clearing-files = 151 } } },
+    { row = "any-power-on", cut = 269, request = { diagnostic = { clearing-files = 964 } } },
+    { row = "any-power-on", cut = 270, request = { diagnostic = { clearing-files = 1777 } } },
+    { row = "any-power-on", cut = 271, request = "boot" },
+    { row = "any-power-on", cut = 396, request = "hold" },
+    { row = "any-power-on", cut = 399, request = "hold" },
+    { row = "any-power-on", cut = 400, request = "menu" },
+    { row = "any-power-on", cut = 431, request = "hold" },
+    { row = "any-power-on", cut = 432, request = "choose" },
+    { row = "any-power-on", cut = 433, request = "start" },
+    { row = "any-power-on", cut = 567, request = "hold" },
+    { row = "any-fly-to-ceres", cut = 802, request = "hold" },
+    { row = "any-ceres-arrival", cut = 0, request = "arrival" },
+    { row = "any-ceres-arrival", cut = 1, request = "finish" },
+    { row = "any-ceres-arrival", cut = 2, request = "hold" },
+    { row = "chain-any-0011-DF45", cut = 239, request = "hold" },
+    { row = "chain-any-0011-DF45", cut = 240, request = "escape" },
+    { row = "chain-any-0011-DF45", cut = 241, request = "finish" },
+    { row = "chain-any-0011-DF45", cut = 242, request = "hold" },
+    { row = "chain-any-0011-DF45", cut = 2123, request = "hold" },
+    { row = "any-zebes-arrival", cut = 0, request = "hold" },
+]

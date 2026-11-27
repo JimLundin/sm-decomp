@@ -64,7 +64,7 @@ pub(super) fn movie(capture: &str) -> Option<&str> {
 }
 
 /// The movie `row` plays: its seed's capture's or, from power-on, the first word of its id.
-pub(super) fn row_movie(row: &Row) -> Option<&str> {
+pub fn row_movie(row: &Row) -> Option<&str> {
     match &row.start {
         Start::PowerOn => row.id.0.split('-').next(),
         Start::Seed { capture, .. } => movie(capture),

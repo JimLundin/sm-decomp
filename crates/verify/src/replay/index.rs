@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 pub use super::native_packets::NativePacket;
+pub use super::save_files::SaveSchedule;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -223,7 +224,11 @@ pub enum InputProvider {
     /// Recorded scene setup and reached room actor opportunities.
     CinematicActorOpportunities,
     /// Ordered startup and save boundaries from pinned preceding cuts.
+    #[serde(rename = "save-file-schedule")]
     SaveFileBoundaries,
+    /// The published format-1 spelling for the original save witness.
+    #[serde(rename = "save-file-boundaries")]
+    PublishedSaveFileBoundaries,
     /// Authored demo controls and borrowed cinematic weapon opportunities.
     IntroMissileInputs,
     /// Passage contents and block-script opportunities.
@@ -1285,6 +1290,9 @@ pub struct Case {
     pub content: ContentProvider,
     /// Independent causal stimulus provider.
     pub inputs: InputProvider,
+    /// Ordered requests with their independent battery observation coordinates.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub save_steps: Option<SaveSchedule>,
     /// Reviewed fixture for connected ordinary inputs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connected_packet: Option<ConnectedPacket>,
@@ -1366,6 +1374,13 @@ impl TryFrom<IndexDocument> for Index {
             }
         }
         for case in &mut doc.cases {
+            if case.inputs == InputProvider::PublishedSaveFileBoundaries {
+                if case.save_steps.is_some() {
+                    return Err("published save witness already has a schedule");
+                }
+                case.save_steps = super::legacy_packets::save_schedule(&case.id.0).cloned();
+                case.inputs = InputProvider::SaveFileBoundaries;
+            }
             if case.native_packet.is_none() {
                 let shared = declarations.iter().find(|packet| packet.applies_to(case));
                 let published = super::legacy_packets::native(case);
@@ -2596,9 +2611,11 @@ fn playback_provider_valid(case: &Case, recorded: bool) -> bool {
 
 fn save_files_provider_valid(case: &Case) -> bool {
     case.kind == CaseKind::Scoped
-        && case.row == "any-power-on"
         && matches!(case.start, Start::CacheCut { frame: 0 })
-        && case.end.cut_inclusive == super::save_files::END
+        && case
+            .save_steps
+            .as_ref()
+            .is_some_and(|schedule| schedule.valid(case))
         && case.responsibilities == [Responsibility::SaveFiles]
         && case.content == ContentProvider::PlayerRomImport
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
@@ -3079,6 +3096,8 @@ impl Case {
                 })
             || (case.connected_packet.is_some()
                 && case.inputs != InputProvider::ConnectedOrdinaryInputs)
+            || (case.save_steps.is_some() && case.inputs != InputProvider::SaveFileBoundaries)
+            || case.inputs == InputProvider::PublishedSaveFileBoundaries
             || case.id.0.is_empty()
             || case.row.is_empty()
             || (case.rules.is_empty() && case.inputs != InputProvider::Unavailable)

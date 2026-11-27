@@ -303,7 +303,8 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
                 && counts.outputs == 0
                 && counts.publications == 0
                 && counts.replies == 0
-                && counts.pending_boundaries == 2,
+                && counts.pending_boundaries
+                    == case.save_steps.as_ref()?.pending_boundaries(counts.cuts),
         );
     }
     if case.inputs == InputProvider::ZebesFlightInputs {

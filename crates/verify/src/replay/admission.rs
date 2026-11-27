@@ -25,7 +25,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         return super::flashback::admit(case, sources);
     }
     if case.inputs == InputProvider::SaveFileBoundaries {
-        return super::save_files::admit(sources);
+        return super::save_files::admit(case, sources);
     }
     if case.inputs == InputProvider::IntroMissileInputs {
         return super::intro_missiles::admit(case, sources);

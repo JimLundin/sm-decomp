@@ -16,6 +16,7 @@ struct Search {
 
 #[derive(Deserialize)]
 struct Packets {
+    save_schedule: BTreeMap<String, super::index::SaveSchedule>,
     played: BTreeMap<String, super::index::PlayedWindow>,
     native_cases: std::collections::BTreeSet<String>,
     sender_control: BTreeMap<String, SenderOfferControl>,
@@ -41,6 +42,10 @@ pub(super) fn native(case: &super::index::Case) -> Option<&'static super::index:
         .native_packet
         .iter()
         .find(|packet| packet.applies_to(case))
+}
+
+pub(super) fn save_schedule(id: &str) -> Option<&'static super::index::SaveSchedule> {
+    PACKETS.as_ref()?.save_schedule.get(id)
 }
 
 pub(super) fn played(id: &str) -> Option<&'static super::index::PlayedWindow> {
