@@ -233,7 +233,7 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> list[str]:
     return rules
 
 def catalogue_rules(root: Path) -> list[str]:
-    """Read the published catalogue IDs, using spec_units' '### Id' entry convention."""
+    """Read the published catalogue IDs, from the specs' '### Id' entries."""
     with (root / "docs/architecture/domains.toml").open("rb") as stream:
         models = [model["name"] for model in tomllib.load(stream)["model"]]
     # These two catalogues belong to production room loading, outside the clean model crates.
@@ -254,12 +254,11 @@ def catalogue_rules(root: Path) -> list[str]:
     return sorted(rules)
 
 def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
-                         logs: Sequence[str]) -> list[str]:
+                         logs: Sequence[str]) -> None:
     """Credit complete kill and restoration blocks from the selected run logs."""
     seconds = r" seconds=\d+\.\d{6}\n"
     input_check = rf"(?:TIMING input-check{seconds})?"
     compilation = rf"(?:TIMING compilation{seconds})?"
-    detections: list[str] = []
     for rule in rules:
         confirmed = []
         for fault in faults:
@@ -275,12 +274,10 @@ def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
             )
             if any(block.search(log) for log in logs):
                 confirmed.append(fault.name)
-        detections.extend(confirmed)
         status = f"killed through {', '.join(confirmed)}" if confirmed else "unknown"
         print(f"{rule}: {status}")
     unassigned = sum(fault.rule is None for fault in faults)
     print(f"Unassigned faults: {unassigned}")
-    return detections
 
 def runtime_callers(root: Path, raw: object) -> dict[str, tuple[str, ...]]:
     if not isinstance(raw, dict):
@@ -390,7 +387,6 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("validate", help="validate the manifest without building or running replay")
     coverage = commands.add_parser(
         "rule-coverage", help="report every catalogue rule using logs from reviewed runs of this roster")
-    coverage.add_argument("--write", type=Path, metavar="RECEIPT", help="save detections for tools report")
     coverage.add_argument("logs", nargs="*", type=Path, metavar="LOG")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
@@ -404,12 +400,7 @@ def main(argv: list[str] | None = None) -> int:
     callers = runtime_callers(root, data.get("runtime_callers", {}))
     validate_anchors(root, roster)
     if args.command == "rule-coverage":
-        detected = report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
-        if args.write is not None:
-            names = json.dumps(detected, ensure_ascii=False).replace("\x7f", "\\u007f")
-            args.write.write_text(
-                f'format = 1\nmanifest_sha256 = "{hashlib.sha256(raw_manifest).hexdigest()}"\n'
-                f'detected = {names}\n', encoding="utf-8", newline="\n")
+        report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
         return 0
     if args.command == "validate":
         return 0

@@ -30,4 +30,4 @@ A ✓ marks a stretch completed in a single run from power-on. The first stretch
 | The escape | `······························━━━━━·····` | `████████████████████`&nbsp;✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 | The explosion and the flight to Zebes | `··································━━━━━━` | `████████████████████`&nbsp;✓ | [#757](https://github.com/JimLundin/sm-decomp/issues/757) |
 
-Building and checking it, and the command that prints the models' sizes and the indexed replay evidence, are in [BUILDING](docs/BUILDING.md).
+Building and checking it are in [BUILDING](docs/BUILDING.md).

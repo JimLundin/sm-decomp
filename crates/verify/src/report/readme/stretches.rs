@@ -150,7 +150,7 @@ pub(super) fn table(stretches: &[Stretch], started: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::{Issue, STRETCHES, Stretch, stretches, table};
-    use crate::report::plan::{PLAN, Plan, seed};
+    use crate::report::readme::milestone::{Milestone, seed};
     use crate::report::readme::{Run, from_start, passing};
     use crate::report::seeds::seed_frame;
 
@@ -161,14 +161,9 @@ mod tests {
 
     /// The milestone's last frame: the movie frame of the seed that ends it, in the plan.
     fn total() -> u64 {
-        let rebuilt = crate::report::DOMAINS
-            .iter()
-            .map(|domain| domain.name)
-            .collect();
-        let plan = std::fs::read_to_string(root().join(PLAN)).unwrap_or_default();
-        let ends = Plan::parse(&plan, &rebuilt)
-            .and_then(|plan| {
-                plan.milestone()
+        let ends = Milestone::read(root())
+            .and_then(|milestone| {
+                milestone
                     .end()
                     .map(|(capture, index)| (capture.to_owned(), index))
             })

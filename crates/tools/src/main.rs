@@ -10,22 +10,18 @@ use std::process::ExitCode;
 
 fn usage() -> String {
     format!(
-        "usage: {}\n       {}\n       {}\n       {}\n       {}\n       {}",
+        "usage: {}\n       {}\n       {}\n       {}",
         replay::USAGE,
-        verify::spec_units::USAGE,
         cache_check::USAGE,
         cache_lean::USAGE,
-        verify::size::USAGE,
         verify::report::USAGE
     )
 }
 
 fn run(args: &[String]) -> Result<String, String> {
     match args {
-        [command, rest @ ..] if command == "spec-units" => verify::spec_units::run(rest),
         [command, rest @ ..] if command == "cache-check" => cache_check::run(rest),
         [command, rest @ ..] if command == "cache-lean" => cache_lean::run(rest),
-        [command, rest @ ..] if command == "size" => verify::size::run(rest),
         [command, rest @ ..] if command == "report" => verify::report::run(rest),
         [command, rest @ ..] if command == "replay" => replay::run(rest),
         _ => Err(usage()),

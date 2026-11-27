@@ -7,12 +7,13 @@
 //! frame s that held h cuts holds frames s + 1 through s + h. The milestone's frames are 1
 //! through the frame of the seed that ends it; frame 0 is power-on.
 
+mod milestone;
 mod stretches;
 
 use std::fmt::Write as _;
 use std::path::Path;
 
-use super::plan::Plan;
+use self::milestone::Milestone;
 use super::seeds::{first_frame, following, row_movie, seed_frame};
 use super::{COMMAND, read};
 use crate::lock::{Lock, Row, RowId, Start};
@@ -268,8 +269,8 @@ fn headline(runs: &[Run], total: u64, started: u64) -> String {
 ///
 /// Why the plan's seeds, the lock or the played runs can't be read, or the first run the lock
 /// contradicts.
-pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
-    let milestone = plan.milestone();
+pub(super) fn page(root: &Path) -> Result<String, String> {
+    let milestone = Milestone::read(root)?;
     let total = frame_at(root, milestone.end()?)?;
     let runs = runs(root, &milestone.movie)?;
     let stretches = stretches::stretches(
@@ -302,10 +303,7 @@ pub(super) fn page(root: &Path, plan: &Plan) -> Result<String, String> {
          stretch still in progress from power-on is in bold.\n\n",
     );
     out.push_str(&stretches::table(&stretches, started));
-    out.push_str(
-        "\nBuilding and checking it, and the command that prints the models' sizes and the \
-         indexed replay evidence, are in [BUILDING](docs/BUILDING.md).\n",
-    );
+    out.push_str("\nBuilding and checking it are in [BUILDING](docs/BUILDING.md).\n");
     Ok(out)
 }
 

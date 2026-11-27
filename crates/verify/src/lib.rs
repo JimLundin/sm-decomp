@@ -8,9 +8,7 @@ pub mod lock;
 mod ppu;
 pub mod replay;
 pub mod report;
-pub mod size;
 pub mod source;
-pub mod spec_units;
 
 #[cfg(test)]
 mod tests;
