@@ -273,7 +273,7 @@ class Scan(Relay):
         scanner = pathlib.Path(self.dir.name, "scanner")
         scanner.write_text(f"#!{sys.executable} -I\n{FAKE_SCANNER}")
         scanner.chmod(0o700)
-        return ["--scan", str(scanner), self.dir.name]
+        return ["--scan", str(scanner), self.dir.name, "crates/clean/a"]
 
     def test_the_box_gets_counts_and_lines_and_the_scan_is_logged_not_forwarded(self):
         reply = self.exchange(scan_request(("crates/clean/a/src/lib.rs", "fn f() {}\nlet quux = 1;\n"),
@@ -284,6 +284,29 @@ class Scan(Relay):
         log = pathlib.Path(self.dir.name, "scan.log").read_text()
         self.assertIn("call 1: 2 files", log)
         self.assertIn("crates/clean/a/src/lib.rs: 1 hits\n    2: let quux = 1;", log)
+
+    def test_only_the_model_s_files_get_hit_lines(self):
+        reply = self.exchange(scan_request(("crates/clean/types/src/lib.rs", "quux\nquux\n"),
+                                           ("crates/clean/a/tests/v.rs", "quux\n"),
+                                           ("crates/clean/a/Cargo.toml", "quux\n")))
+        self.assertTrue(reply.endswith(b"\r\n\r\ncrates/clean/types/src/lib.rs\t2\t\n"
+                                       b"crates/clean/a/tests/v.rs\t1\t1\ncrates/clean/a/Cargo.toml\t1\t\n"), reply)
+
+    def test_a_call_and_a_session_get_capped_bytes_of_new_lines(self):
+        line = "x" * 1023 + "\n"
+        big = scan_request(("crates/clean/a/src/lib.rs", line * 257))
+        self.assertEqual(self.send(big), 413)
+        part = line * 200
+        for i in range(10):
+            status = self.send(scan_request((f"crates/clean/a/src/f{i}.rs", part)))
+            self.assertEqual(status, 200)
+        self.assertEqual(self.send(scan_request(("crates/clean/a/src/f0.rs", part))), 200)
+        self.assertEqual(self.send(scan_request(("crates/clean/a/src/f10.rs", part))), 429)
+        body = f'[[file]]\npath = "crates/clean/a/src/old.rs"\nstart = """{part}"""\nhead = """{part}y\n"""\n'.encode()
+        self.assertEqual(self.send(b"POST /cleanroom/scan HTTP/1.1\r\nContent-Length: %d\r\n\r\n" % len(body) + body), 200)
+        log = pathlib.Path(self.dir.name, "scan.log").read_text()
+        self.assertIn("over 262144 a call", log)
+        self.assertIn("2048000 new this session", log)
 
     def test_an_answer_that_holds_more_than_counts_and_lines_never_reaches_the_box(self):
         reply = self.exchange(scan_request(("crates/clean/a/src/leak.rs", "quux\n")))

@@ -196,7 +196,7 @@ impl Drop for Relay {
     }
 }
 
-fn relay(repo: &Path, lane: &Path) -> Result<(Relay, Vec<String>), String> {
+fn relay(repo: &Path, lane: &Path, model: &str) -> Result<(Relay, Vec<String>), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let script = repo.join("tools/cleanroom/box_relay.py");
     let auth = std::env::var_os("CLEANROOM_AUTH").map_or_else(
@@ -228,6 +228,7 @@ fn relay(repo: &Path, lane: &Path) -> Result<(Relay, Vec<String>), String> {
         .arg("--scan")
         .arg(&exe)
         .arg(repo)
+        .arg(model)
         .stdin(Stdio::null())
         .stderr(log)
         .spawn()
@@ -375,7 +376,11 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
         ));
     }
     image(&repo)?;
-    let (relay, env) = relay(&repo, &lane.dir)?;
+    let model = format!(
+        "crates/clean/{}",
+        name.trim_end_matches("-review").replace('-', "_")
+    );
+    let (relay, env) = relay(&repo, &lane.dir, &model)?;
     let mut cell = Sandbox::new(&lane.export, &repo, &lane.dir)?;
     for line in env {
         if let Some((key, value)) = line.split_once('=') {
@@ -625,10 +630,12 @@ fn new_names(socket: &Path, out: &mut String) -> Result<usize, String> {
             .parse()
             .map_err(|_| format!("the name scan answered {line}"))?;
         if hits > 0 {
-            let _ = writeln!(
-                out,
-                "{path}: {hits} words the original's code uses, on lines {lines}"
-            );
+            let at = if lines.is_empty() {
+                String::new()
+            } else {
+                format!(", on lines {lines}")
+            };
+            let _ = writeln!(out, "{path}: {hits} words the original's code uses{at}");
             added = added.saturating_add(hits);
         }
     }

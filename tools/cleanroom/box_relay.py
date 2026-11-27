@@ -18,15 +18,19 @@ user agent, anthropic-*, x-stainless-*, x-claude-*, x-app), and anthropic-beta k
 values in BETAS. A body whose object repeats a member and a folded header are refused, since
 the API could read either otherwise than the relay does.
 
-  serve SOCKET AUTH [PARENT] [--scan SCANNER REPO]
+  serve SOCKET AUTH [PARENT] [--scan SCANNER REPO MODEL]
                               outside: AUTH (a file, or - for stdin, so it touches no disk) is an
                               object of Claude Code's top-level settings members (apiKeyHelper,
                               env); this process's ANTHROPIC_API_KEY counts too.
                               It exits when PARENT (a PID) does. With --scan it answers a POST of
                               /cleanroom/scan itself, never forwarding it: `SCANNER names` runs in
-                              REPO on the request, and the box gets each file's hit count and line
-                              numbers alone, never the lexicon's words. It answers SCAN_CALLS
-                              requests a session and logs each in scan.log beside SOCKET.
+                              REPO on the request, and the box gets each file's hit count alone,
+                              never the lexicon's words, and the first SCAN_LINES hit lines of a
+                              file under MODEL's src/ or tests/. A call holds at most
+                              SCAN_CALL_BYTES of new lines and a session SCAN_SESSION_BYTES, over
+                              at most SCAN_CALLS calls; a file asked about again as it was costs
+                              nothing. It logs each call and the session's total in scan.log
+                              beside SOCKET.
   env AUTH PORT               prints the environment the session gets instead, a KEY=VALUE a
                               line: the box's base URL, a placeholder credential and the model
                               and CLAUDE_CODE_DISABLE_* lines; the other ANTHROPIC_* lines
@@ -90,6 +94,13 @@ SCAN_TARGET = "/cleanroom/scan"
 # is no fast way to try words against the lexicon.
 SCAN_CALLS = 100
 SCAN_BYTES = 4 << 20
+# A guess costs the bytes of the new lines that hold it: the head's lines its start doesn't hold.
+# A call may spend this much, and a session this much in all, which is room for a model written
+# in a session and many test runs, and little for a list of guesses.
+SCAN_CALL_BYTES = 256 << 10
+SCAN_SESSION_BYTES = 2 << 20
+# The hit lines a file of the model gets back; any other file gets its count alone.
+SCAN_LINES = 200
 SCAN_PATH = re.compile(r"crates/clean/[A-Za-z0-9_./-]+")
 SCAN_ANSWER = re.compile(r"(\S+)\t([0-9]+)\t([0-9]+(?:,[0-9]+)*)?")
 
@@ -111,13 +122,26 @@ def scan_files(body: bytes) -> list[dict] | None:
     return files
 
 
-class Scanner:
-    """The name scan the relay serves to the box, counted and logged."""
+def new_bytes(f: dict) -> int:
+    """The bytes of the head's lines that its start doesn't hold, which alone can add a hit."""
+    start = set(f.get("start", "").splitlines())
+    return sum(len(line.encode()) + 1 for line in f["head"].splitlines() if line not in start)
 
-    def __init__(self, exe: str, repo: str, log: str):
+
+def asked(f: dict) -> str:
+    return hashlib.sha256(json.dumps([f["path"], f.get("start"), f["head"]]).encode()).hexdigest()
+
+
+class Scanner:
+    """The name scan the relay serves to the box, counted, capped and logged."""
+
+    def __init__(self, exe: str, repo: str, model: str, log: str):
         self.exe, self.repo, self.log = exe, repo, log
+        self.lines_for = (f"{model.rstrip('/')}/src/", f"{model.rstrip('/')}/tests/")
         self.lock = threading.Lock()
         self.calls = 0
+        self.spent = 0
+        self.answered: set[str] = set()
 
     def answer(self, body: bytes) -> tuple[int, str]:
         with self.lock:
@@ -130,6 +154,17 @@ class Scanner:
         if files is None:
             self.note(f"call {call}: refused, not a scan request")
             return 400, "not a scan request"
+        with self.lock:
+            cost = sum(new_bytes(f) for f in files if asked(f) not in self.answered)
+            spent = self.spent + cost
+            if cost <= SCAN_CALL_BYTES and spent <= SCAN_SESSION_BYTES:
+                self.spent = spent
+        if cost > SCAN_CALL_BYTES:
+            self.note(f"call {call}: refused, {cost} new bytes, over {SCAN_CALL_BYTES} a call")
+            return 413, f"a scan call holds at most {SCAN_CALL_BYTES} bytes of new lines"
+        if spent > SCAN_SESSION_BYTES:
+            self.note(f"call {call}: refused, {cost} new bytes, over {SCAN_SESSION_BYTES} a session")
+            return 429, f"the name scan reads {SCAN_SESSION_BYTES} bytes of new lines a session"
         done = subprocess.run([self.exe, "names"], cwd=self.repo, input=body, capture_output=True,
                               timeout=300)
         lines = done.stdout.decode("utf-8", "replace").splitlines()
@@ -138,14 +173,19 @@ class Scanner:
         if done.returncode not in (0, 1) or not all(answers) or [a[1] for a in answers] != paths:
             self.note(f"call {call}: the scanner failed: {done.stderr.decode('utf-8', 'replace')[:200]}")
             return 500, "the name scan failed"
-        note = [f"call {call}: {len(files)} files, {len(body)} bytes"]
+        with self.lock:
+            self.answered.update(asked(f) for f in files)
+        note = [f"call {call}: {len(files)} files, {len(body)} bytes, {cost} new, {spent} new this session"]
+        reply = []
         for f, a in zip(files, answers):
+            numbers = a[3].split(",")[:SCAN_LINES] if a[3] and f["path"].startswith(self.lines_for) else []
+            reply.append(f"{a[1]}\t{a[2]}\t{','.join(numbers)}\n")
             if a[2] != "0":
                 text = f["head"].splitlines()
-                hit = [f"    {n}: {text[int(n) - 1] if 0 < int(n) <= len(text) else ''}" for n in a[3].split(",")]
+                hit = [f"    {n}: {text[int(n) - 1] if 0 < int(n) <= len(text) else ''}" for n in (a[3] or "").split(",") if n]
                 note.append(f"  {f['path']}: {a[2]} hits\n" + "\n".join(hit))
         self.note("\n".join(note))
-        return 200, "".join(f"{line}\n" for line in lines)
+        return 200, "".join(reply)
 
     def note(self, text: str) -> None:
         with self.lock, open(self.log, "a", encoding="utf-8") as f:
@@ -307,7 +347,7 @@ def watch_parent(parent: int) -> None:
         time.sleep(1)
 
 
-def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str] | None) -> None:
+def serve(sock_path: str, auth: str, parent: int | None, scan: tuple[str, str, str] | None) -> None:
     env, helper = load_auth(auth)
     scanner = Scanner(*scan, os.path.join(os.path.dirname(os.path.abspath(sock_path)), "scan.log")) \
         if scan else None
@@ -512,8 +552,8 @@ def image(name: str) -> int:
 def main() -> int:
     args = sys.argv[1:]
     scan = None
-    if len(args) >= 3 and args[-3] == "--scan":
-        scan, args = (args[-2], args[-1]), args[:-3]
+    if len(args) >= 4 and args[-4] == "--scan":
+        scan, args = (args[-3], args[-2], args[-1]), args[:-4]
     if len(args) in (3, 4) and args[0] == "serve":
         serve(args[1], args[2], int(args[3]) if len(args) == 4 else None, scan)
         return 0
