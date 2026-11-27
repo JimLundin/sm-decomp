@@ -19,7 +19,7 @@ fn admitted_windows() -> [AdmittedCase; 2] {
         ..Sources::default()
     };
 
-    WINDOWS.map(|(_, cut, _)| {
+    [57, 124].map(|cut| {
         let id = format!("movement/soft-touchdown-{cut}");
         let case = cases.cases.iter().find(|case| case.id.0 == id).unwrap();
         admit(case, &sources).unwrap()

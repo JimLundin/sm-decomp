@@ -39,8 +39,6 @@ mod observations;
 mod tests;
 pub(super) use observations::{actual, initial};
 
-pub(super) const WINDOWS: [(u64, u64, usize); 2] = [(56, 57, 4), (123, 124, 9)];
-
 #[derive(Deserialize)]
 struct Fixture<T> {
     schema: u8,
@@ -48,19 +46,25 @@ struct Fixture<T> {
     window: Vec<T>,
 }
 
-impl<T> Fixture<T> {
-    fn load(path: &Path, file: &FixtureFile) -> Result<Self, Outcome>
-    where
-        T: serde::de::DeserializeOwned,
-    {
+impl<T: serde::de::DeserializeOwned> Fixture<T> {
+    fn window(
+        path: &Path,
+        file: &FixtureFile,
+        cut: u64,
+        at: impl Fn(&T) -> u64,
+    ) -> Result<T, Outcome> {
         let fixture: Self = file.read(path)?;
-        if fixture.schema != 1
-            || fixture.row != sender_offer::SOURCE_ROW
-            || fixture.window.len() != WINDOWS.len()
-        {
+        if fixture.schema != 1 || fixture.row != sender_offer::SOURCE_ROW {
             return Err(data_failure(None, "touchdown fixture origin"));
         }
-        Ok(fixture)
+        let mut windows = fixture
+            .window
+            .into_iter()
+            .filter(|window| at(window) == cut);
+        match (windows.next(), windows.next()) {
+            (Some(window), None) => Ok(window),
+            _ => Err(data_failure(Some(cut), "touchdown fixture window")),
+        }
     }
 }
 
@@ -183,11 +187,12 @@ impl Expected {
         if cut != self.cut {
             return Err(data_failure(Some(cut), "touchdown comparison schedule"));
         }
-        let captured = Fixture::<observations::Captured>::load(&self.path, &self.observations)?
-            .window
-            .into_iter()
-            .find(|capture| capture.cut == cut)
-            .ok_or_else(|| data_failure(Some(cut), "touchdown comparison window"))?;
+        let captured = Fixture::<observations::Captured>::window(
+            &self.path,
+            &self.observations,
+            cut,
+            |window| window.cut,
+        )?;
         let fifo = sender_offer::contact_fifo(&self.path, self.source_id, cut)?;
         captured.compare_with(&fifo)
     }
@@ -198,10 +203,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         return Err(data_failure(None, "touchdown seed cut"));
     };
     let cut = case.end.cut_inclusive;
-    let (_, _, source_id) = WINDOWS
-        .into_iter()
-        .find(|(before, after, _)| *before == start && *after == cut)
-        .ok_or_else(|| data_failure(Some(cut), "touchdown native window"))?;
     let record_lock = std::fs::read_to_string(&sources.lock)
         .map_err(|_| data_failure(None, "record lock file"))?;
     let record_lock =
@@ -214,11 +215,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let before = record(&cache, start)?;
     let wram = &before.wram;
     let files = case.fixture_pair()?;
-    let observed = Fixture::<Borrowed>::load(&sources.native, &files.inputs)?
-        .window
-        .into_iter()
-        .find(|window| window.cut == cut)
-        .ok_or_else(|| data_failure(Some(cut), "touchdown input window"))?;
+    let observed =
+        Fixture::<Borrowed>::window(&sources.native, &files.inputs, cut, |window| window.cut)?;
     let content = movement::Content::load(&sources.rom)?;
     let samus = movement::seed(wram)?;
     let preceding = movement::input(wram, samus.pose, &content)?;
@@ -226,7 +224,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         .read(wram)
         .ok()
         .and_then(|id| data::assets::samus::map::key_of(data::pose::PoseId(id)));
-    let owned_contact = sender_offer::contact_ingress(&sources.native, source_id, cut)?;
+    let owned_contact =
+        sender_offer::contact_ingress(&sources.native, cut, observed.contact_seed_master_ticks)?;
     let [first, second] = observed.current_solid_actors;
     if observed.movement_seed_cut != start
         || observed.room_terrain_source_cut != start
@@ -243,7 +242,6 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         || first.roster_slot >= 32
         || second.roster_slot >= 32
         || first.roster_slot == second.roster_slot
-        || owned_contact.seed_master_ticks != observed.contact_seed_master_ticks
         || owned_contact.seed.queue.cues() != &observed.contact_seed_queue
         || owned_contact.seed.progress != observed.contact_seed_progress
         || observed.contact_offer_permission != "Enabled"
@@ -289,7 +287,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             path: sources.native.clone(),
             observations: files.expected.clone(),
             cut,
-            source_id,
+            source_id: owned_contact.source_id,
         }),
         actual: ActualReader::MovementTouchdown(None),
         schedule: vec![cut],

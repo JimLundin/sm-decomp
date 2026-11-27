@@ -2329,11 +2329,7 @@ fn touchdown_provider_valid(case: &Case) -> bool {
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::NativeTouchdownInputs
         && case.expectations.provider == ExpectedProvider::NativeTouchdownObservations
-        && super::movement_touchdown::WINDOWS
-            .iter()
-            .any(|(before, after, _)| {
-                case.start == Start::CacheCut { frame: *before } && case.end.cut_inclusive == *after
-            })
+        && matches!(case.start, Start::CacheCut { frame } if frame.checked_add(1) == Some(case.end.cut_inclusive))
         && case.expectations.fields
             == [
                 O::PositionX,
