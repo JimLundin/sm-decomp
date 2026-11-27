@@ -3,7 +3,7 @@
 //! `oracle movie ROM INPUTS [...]` plays a per-video-frame movie from power-on;
 //!   `--lag-log` compares it frame by frame with an lsnes lag log and
 //!   `--seeds` with lsnes room captures.
-//! `oracle corpus ROM LOCK DATA [...]` runs the lock's rows and compares them.
+//! `oracle corpus ROM LOCK BUNDLE [...]` runs the lock's rows from their pinned pads and native seeds.
 //! `oracle ladder-check ROM INPUTS DIR` checks that each rung of a movie's
 //!   ladder (`movie --ladder N DIR`), resumed, reproduces the next.
 //! `oracle cross ROM INPUTS [--frames A..B]` steps LakeSnes and lsnes with the
@@ -16,7 +16,7 @@ mod requests;
 mod tests;
 
 use crate::lakesnes::LakeSnes;
-use crate::{Cut, FrameRecord, NmiKind, Oracle, Pad, Start, Tiers};
+use crate::{FrameRecord, NmiKind, Oracle, Start, Tiers};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -630,111 +630,6 @@ fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
     csv::lag_log(&text).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
 }
 
-/// `corpus ROM LOCK DATA [--only ID]... [--limit N]`: run the lock's rows
-/// whose private data is restored under DATA (one directory per bundle) and
-/// compare each with its `faithful` entry.
-/// Frame-pad files (docs/ORACLE.md, RELOCK b1), one set per row in a
-/// directory: `ROW.pads` (the `.inputs` format, one pad per video frame),
-/// and from a run with memories `ROW.cuts` (each frame's cut and memory hash)
-/// and `ROW.end` (the last frame's work RAM).
-enum FramePads {
-    /// Run the rows under the Tick rule and write their files.
-    Write(PathBuf),
-    /// Run the rows from their pads and compare with the files written.
-    Play(PathBuf),
-}
-
-/// A frame's cut and a hash of its memories, as a `.cuts` line.
-fn cut_line(record: &FrameRecord) -> String {
-    use std::hash::{Hash as _, Hasher as _};
-    let kind = match record.cut {
-        Cut::NmiReturn(nmi) => match nmi.kind {
-            NmiKind::Requested => 'R',
-            NmiKind::Overrun => 'O',
-        },
-        Cut::VblankWithoutNmi => 'V',
-        Cut::NmiStillRunning { .. } => 'S',
-    };
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    record.wram.hash(&mut hasher);
-    record.vram.hash(&mut hasher);
-    record.cgram.hash(&mut hasher);
-    record.oam.hash(&mut hasher);
-    format!("{kind} {:016x}", hasher.finish())
-}
-
-fn write_frame_pads(directory: &Path, id: &str, pads: &[Pad], cuts: &[String], end: &[u8]) {
-    let path = |extension: &str| directory.join(format!("{id}.{extension}"));
-    crate::inputs::write(&path("pads"), pads).unwrap_or_else(|error| fail(error));
-    if !cuts.is_empty() {
-        let text: String = cuts.iter().map(|line| format!("{line}\n")).collect();
-        std::fs::write(path("cuts"), text).unwrap_or_else(|error| fail(error));
-        std::fs::write(path("end"), end).unwrap_or_else(|error| fail(error));
-    }
-}
-
-/// How a run from frame pads compares with the Tick run that wrote them.
-/// Both present the same pad to every lsnes frame, so they emulate the
-/// same; they differ only in where they cut. Every cut the Tick run made at
-/// an RTI must come, in order and with the same memories, among the cuts
-/// from pads; the cuts from pads add the RTIs of the NMIs that outlasted
-/// their frame, which the Tick run cut at the boundary instead.
-fn compare_frame_pads(directory: &Path, id: &str, cuts: &[String], end: &[u8]) -> String {
-    let path = |extension: &str| directory.join(format!("{id}.{extension}"));
-    let Ok(written) = std::fs::read_to_string(path("cuts")) else {
-        return format!("  {id}: no {id}.cuts to compare with");
-    };
-    let at_rti: Vec<&str> = written
-        .lines()
-        .filter(|line| !line.starts_with('S'))
-        .collect();
-    let mut played = cuts.iter().enumerate();
-    let mut matched = None;
-    let mut missing = None;
-    for (number, cut) in at_rti.iter().enumerate() {
-        match played.by_ref().find(|(_, line)| line == cut) {
-            Some((frame, _)) => matched = Some(frame),
-            None => {
-                missing = Some(number);
-                break;
-            }
-        }
-    }
-    let mut report = format!(
-        "  {id}: {} frames from pads; the Tick run's {} of {} cuts at an RTI ",
-        cuts.len(),
-        at_rti.len(),
-        written.lines().count()
-    );
-    match (missing, matched) {
-        (Some(number), _) => report.push_str(&format!("NOT all found: cut {number} is missing")),
-        (None, Some(frame)) => report.push_str(&format!(
-            "all found in order, the last at frame {frame}, with the same memories"
-        )),
-        (None, None) => report.push_str("none to find"),
-    }
-    if let Ok(locked) = std::fs::read(path("end")) {
-        let bytes: Vec<usize> = locked
-            .iter()
-            .zip(end)
-            .enumerate()
-            .filter(|(_, (left, right))| left != right)
-            .map(|(address, _)| address)
-            .collect();
-        let first: Vec<String> = bytes
-            .iter()
-            .take(8)
-            .map(|address| format!("${address:05x}"))
-            .collect();
-        report.push_str(&format!(
-            "; the last frames' WRAM: {} bytes differ {}",
-            bytes.len(),
-            first.join(" ")
-        ));
-    }
-    report
-}
-
 /// Frame `frame` of row `id`'s picture as `DIR/<id>.<frame>.png`: the dots the
 /// `video` stream digests (`Picture::shown`).
 fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
@@ -750,26 +645,69 @@ fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
     println!("  {id} frame {frame}: {}", path.display());
 }
 
+fn read_corpus_lock(path: &Path) -> crate::lock::Lock {
+    let text = std::fs::read_to_string(path)
+        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+    let lock = crate::lock::Lock::parse(&text)
+        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
+    let oracle = crate::lsnes::IDENTITY;
+    let header = &lock.header;
+    if header.oracle.emulator != oracle.emulator
+        || header.oracle.version != oracle.version
+        || header.oracle.fixes != oracle.fixes
+        || header.mark_frames.0 != crate::relock::MARK_FRAMES
+        || !crate::lsnes::compatible_server(header.oracle.server)
+    {
+        fail(format!(
+            "{}: incompatible oracle or span length",
+            path.display()
+        ));
+    }
+    let name = |value: &str| {
+        !value.is_empty()
+            && value
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+    };
+    for row in &lock.rows {
+        if !name(&row.id.0)
+            || matches!(&row.start, crate::lock::Start::Seed { capture, .. } if !name(capture))
+        {
+            fail(format!("{}: invalid row or seed name", path.display()));
+        }
+    }
+    lock
+}
+
 fn acquire_corpus_outputs(
     outputs: Vec<requests::CorpusOutput>,
-) -> (Option<std::fs::File>, Option<std::fs::File>) {
-    let (mut record, mut record_v2) = (None, None);
+    bundles: &[crate::lock::Bundle],
+) -> Option<std::fs::File> {
+    use std::io::Write as _;
+    let mut recording = None;
     for output in outputs {
         match output {
-            requests::CorpusOutput::Record(path) => {
-                record = Some(
-                    std::fs::File::create(&path)
-                        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display()))),
-                );
-            }
             requests::CorpusOutput::RecordV2(path) => {
                 let mut file = std::fs::File::create(&path)
                     .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
                 let header =
                     crate::relock::header(crate::lsnes::IDENTITY, &crate::lsnes::server_sha256());
-                std::io::Write::write_all(&mut file, header.as_bytes())
+                file.write_all(header.as_bytes())
                     .unwrap_or_else(|error| fail(error));
-                record_v2 = Some(file);
+                if !bundles.is_empty() {
+                    let pins = bundles
+                        .iter()
+                        .map(|bundle| {
+                            format!(
+                                r#"{{ name = "{}", sha256 = "{}" }}"#,
+                                bundle.name, bundle.sha256
+                            )
+                        })
+                        .collect::<Vec<_>>();
+                    writeln!(file, "bundles = [{}]", pins.join(", "))
+                        .unwrap_or_else(|error| fail(error));
+                }
+                recording = Some(file);
             }
             requests::CorpusOutput::Directory(path) => {
                 std::fs::create_dir_all(&path)
@@ -777,105 +715,81 @@ fn acquire_corpus_outputs(
             }
         }
     }
-    (record, record_v2)
+    recording
 }
 
 fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
     let requests::CorpusRequest {
         rom,
         lock,
-        data,
+        bundle,
         only,
         limit,
         shard,
         outputs,
         sidecar,
         dump_frames,
-        backend,
-        native_seeds,
         watched,
         watched_pcs,
-        pads,
         lean,
         cache,
         cache_pictures,
     } = requests::CorpusRequest::parse(arguments)?;
-    let backend = backend.into_name();
-    let scenarios = lock.parent().map(Path::to_path_buf).unwrap_or_default();
     let rom =
         std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
-    let lock = std::fs::read_to_string(&lock)
-        .unwrap_or_else(|error| fail(format!("{}: {error}", lock.display())));
-    let lock = crate::lock::Lock::parse(&lock);
-    let data = data.as_path();
-    let (mut record, mut record_v2) = acquire_corpus_outputs(outputs);
+    let lock = read_corpus_lock(&lock);
+    for id in &only {
+        if !lock.rows.iter().any(|row| row.id.0 == *id) {
+            fail(format!("{id}: no such row in the lock"));
+        }
+    }
+    let mut recording = acquire_corpus_outputs(outputs, &lock.header.bundles);
+    let compare = recording.is_none() && cache.is_none() && !lean;
     let tiers = Tiers {
-        picture: record_v2.is_some()
+        picture: compare
+            || recording.is_some()
             || matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
-        apu_log: record_v2.is_some() || cache.is_some(),
+        apu_log: compare || recording.is_some() || cache.is_some(),
         ..Tiers::default()
     };
-    let mut still_running = 0u64;
-    let names = crate::streams::NAMES;
-    let mut matched = [0u32; 8];
-    let mut compared = [0u32; 8];
-    let (mut rows, mut failed, mut all_six) = (0u32, 0u32, 0u32);
+    let observing = crate::corpus::Observe {
+        tiers,
+        watch: &watched_pcs,
+        lean,
+        ..Default::default()
+    };
+    let (mut rows, mut failed) = (0u32, 0u32);
     let (mut ticks, mut frames, mut seconds) = (0u64, 0u64, 0.0f64);
     let entries = lock
-        .entries
+        .rows
         .iter()
-        .filter(|entry| entry.oracle == "faithful")
-        .filter(|entry| only.is_empty() || only.contains(&entry.id))
+        .filter(|row| only.is_empty() || only.contains(&row.id.0))
         .enumerate()
         .filter(|(position, _)| shard.includes(*position))
-        .map(|(_, entry)| entry)
+        .map(|(_, row)| row)
         .take(limit);
-    for entry in entries {
-        let Some(pin) = lock.pin(&entry.id) else {
-            println!("{}: no pin", entry.id);
-            continue;
-        };
-        let played = match &pads {
-            Some(FramePads::Play(directory)) => {
-                let path = directory.join(format!("{}.pads", entry.id));
-                match crate::inputs::read(&path) {
-                    Ok(pads) => Some(pads),
-                    Err(error) => {
-                        failed += 1;
-                        println!("{}: not run: {error}", entry.id);
-                        continue;
-                    }
-                }
+    for row in entries {
+        let id = &row.id.0;
+        let sources = match crate::corpus::Sources::read(&bundle, row) {
+            Ok(sources) => sources,
+            Err(error) => {
+                failed += 1;
+                println!("{id}: {error}");
+                continue;
             }
-            Some(FramePads::Write(_)) | None => None,
-        };
-        let observing = crate::corpus::Observe {
-            backend: &backend,
-            native_seeds: native_seeds.as_deref(),
-            pads: played
-                .as_deref()
-                .map_or(crate::corpus::Pads::Ticks, crate::corpus::Pads::Frames),
-            lean,
-            tiers,
-            watch: &watched_pcs,
-            ..crate::corpus::Observe::default()
         };
         let mut last: Vec<Option<u16>> = vec![None; watched.len()];
         let mut frame = 0u64;
-        let mut recorder = record_v2
-            .as_ref()
-            .map(|_| crate::relock::Recorder::default())
-            .map(|recorder| {
-                if sidecar.is_some() {
-                    recorder.logging()
-                } else {
-                    recorder
-                }
-            });
-        let mut cuts: Vec<String> = Vec::new();
-        let mut end: Vec<u8> = Vec::new();
+        let mut recorder = (compare || recording.is_some()).then(|| {
+            let recorder = crate::relock::Recorder::default();
+            if sidecar.is_some() {
+                recorder.logging()
+            } else {
+                recorder
+            }
+        });
         let mut cached = cache.as_deref().map(|root| {
-            crate::cache::Writer::create(root, &entry.id, cache_pictures)
+            crate::cache::Writer::create(root, id, cache_pictures)
                 .map(|writer| writer.watching(&watched_pcs))
                 .unwrap_or_else(|error| fail(format!("{}: {error}", root.display())))
         });
@@ -883,185 +797,134 @@ fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
             if let Some(writer) = cached.as_mut() {
                 writer
                     .push(record)
-                    .unwrap_or_else(|error| fail(format!("{}: cache: {error}", entry.id)));
+                    .unwrap_or_else(|error| fail(format!("{id}: cache: {error}")));
             }
             for hit in &record.hits {
                 println!(
-                    "  {} frame {frame}: pc ${:06x} at {},{}",
-                    entry.id, hit.pc, hit.beam.v, hit.beam.h
+                    "  {id} frame {frame}: pc ${:06x} at {},{}",
+                    hit.pc, hit.beam.v, hit.beam.h
                 );
             }
             for (address, last) in watched.iter().zip(last.iter_mut()) {
                 let value = word(&record.wram, *address);
                 if *last != Some(value) {
-                    println!("  {} frame {frame}: ${address:04x}={value:#06x}", entry.id);
+                    println!("  {id} frame {frame}: ${address:04x}={value:#06x}");
                     *last = Some(value);
                 }
-            }
-            if pads.is_some() && !lean {
-                cuts.push(cut_line(record));
-                end.clear();
-                end.extend_from_slice(&record.wram);
             }
             if let Some(recorder) = recorder.as_mut() {
                 recorder.fold(record);
             }
             if let Some(directory) = sidecar.as_deref()
-                && dump_frames.contains(&(entry.id.clone(), frame))
+                && dump_frames
+                    .iter()
+                    .any(|(row, at)| row == id && *at == frame)
             {
-                dump_frame(directory, &entry.id, frame, record);
+                dump_frame(directory, id, frame, record);
             }
             frame += 1;
         };
-        match crate::corpus::run_row_with(&rom, pin, entry, data, &observing, &mut watch) {
+        let run = match crate::corpus::run_row_with(&rom, sources, &observing, &mut watch) {
+            Ok(run) => run,
             Err(error) => {
                 failed += 1;
-                println!("{}: {error}", entry.id);
+                println!("{id}: {error}");
+                continue;
             }
-            Ok(run) => {
-                if let (Some(writer), Some(FramePads::Play(directory))) = (cached, &pads) {
-                    let pins = crate::cache::pins(
-                        pin.seed.as_deref(),
-                        native_seeds.as_deref(),
-                        &directory.join(format!("{}.pads", entry.id)),
-                    );
-                    let bytes = writer
-                        .finish(&entry.id, &pins)
-                        .unwrap_or_else(|error| fail(format!("{}: cache: {error}", entry.id)));
-                    println!("  {} cache: {} frames, {bytes} bytes", entry.id, run.frames);
-                }
-                match &pads {
-                    Some(FramePads::Write(directory)) => {
-                        write_frame_pads(directory, &entry.id, &run.pads, &cuts, &end);
-                    }
-                    Some(FramePads::Play(directory)) if !lean => {
-                        println!("{}", compare_frame_pads(directory, &entry.id, &cuts, &end));
-                        let text: String = cuts.iter().map(|line| format!("{line}\n")).collect();
-                        std::fs::write(directory.join(format!("{}.played", entry.id)), text)
-                            .unwrap_or_else(|error| fail(error));
-                    }
-                    Some(FramePads::Play(_)) | None => {}
-                }
-                rows += 1;
-                still_running += run.still_running;
-                ticks += u64::from(run.ticks);
-                frames += run.frames;
-                seconds += run.seconds;
-                if let Some(file) = record.as_mut() {
-                    use std::io::Write as _;
-                    let oracle = if backend == "lsnes" {
-                        crate::lsnes::IDENTITY
-                    } else {
-                        crate::lakesnes::IDENTITY
-                    };
-                    let text = crate::corpus::lock_entry(entry, oracle, &run);
-                    writeln!(file, "{text}").unwrap_or_else(|error| fail(error));
-                }
-                if let (Some(file), Some(recorder), Some(FramePads::Play(directory))) =
-                    (record_v2.as_mut(), recorder, &pads)
+        };
+        if let Some(writer) = cached {
+            let bytes = writer
+                .finish(id, &row.into())
+                .unwrap_or_else(|error| fail(format!("{id}: cache: {error}")));
+            println!("  {id} cache: {} frames, {bytes} bytes", run.frames);
+        }
+        if let Some(recorder) = recorder {
+            let recorded = recorder.finish();
+            if let Some(file) = recording.as_mut() {
+                use std::io::Write as _;
+                let written = crate::relock::entry(row, run.ticks, recorded);
+                let streams: Vec<String> = written
+                    .recorded
+                    .streams
+                    .iter()
+                    .map(|(name, marks)| match marks {
+                        Some(marks) => format!(
+                            "{name}={:016x}",
+                            data::digest::fold_all(marks.iter().copied())
+                        ),
+                        None => format!("{name}=absent"),
+                    })
+                    .collect();
+                println!("  {id} v2: {}", streams.join(" "));
+                if let (Some(directory), Some(log)) =
+                    (sidecar.as_deref(), &written.recorded.frame_log)
                 {
-                    use std::io::Write as _;
-                    let pad_file = directory.join(format!("{}.pads", entry.id));
-                    let sources = crate::relock::Sources {
-                        pads: &pad_file,
-                        native_seeds: native_seeds.as_deref(),
-                        scenarios: &scenarios,
-                    };
-                    let written =
-                        crate::relock::entry(pin, entry, run.ticks, recorder.finish(), sources);
-                    let rows: Vec<String> = written
-                        .recorded
-                        .streams
-                        .iter()
-                        .map(|(name, marks)| match marks {
-                            Some(marks) => format!(
-                                "{name}={:016x}",
-                                data::digest::fold_all(marks.iter().copied())
-                            ),
-                            None => format!("{name}=absent"),
-                        })
-                        .collect();
-                    println!("  {} v2: {}", entry.id, rows.join(" "));
-                    if let (Some(directory), Some(log)) =
-                        (sidecar.as_deref(), &written.recorded.frame_log)
-                    {
-                        let path = crate::relock_check::sidecar_path(directory, &entry.id);
-                        std::fs::write(&path, log)
-                            .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-                    }
-                    write!(file, "\n{}", written.to_toml()).unwrap_or_else(|error| fail(error));
+                    let path = crate::relock_check::sidecar_path(directory, id);
+                    std::fs::write(&path, log)
+                        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
                 }
-                let verdicts = crate::corpus::compare(entry, &run);
-                let mut line = String::new();
-                for (stream, verdict) in verdicts.iter().enumerate() {
-                    if let Some(same) = verdict {
-                        compared[stream] += 1;
-                        matched[stream] += u32::from(*same);
-                        line.push_str(&format!(
-                            " {}={}",
-                            names[stream],
-                            if *same { "ok" } else { "DIFF" }
-                        ));
-                    }
+                write!(file, "\n{}", written.to_toml()).unwrap_or_else(|error| fail(error));
+            } else {
+                let differences = crate::relock::differences(row, run.ticks, &recorded);
+                if differences.is_empty() {
+                    println!("  {id}: all recorded streams and cuts match");
+                } else {
+                    println!("  {id}: differs in {}", differences.join(", "));
+                    failed += 1;
                 }
-                all_six += u32::from(verdicts.iter().flatten().all(|&same| same));
-                println!(
-                    "{}: {} ticks, {} frames, {} overrun, {} without NMI, {} cut with the NMI running, {:.0} frames/s;{line}",
-                    entry.id,
-                    run.ticks,
-                    run.frames,
-                    run.overrun,
-                    run.without_nmi,
-                    run.still_running,
-                    run.frames as f64 / run.seconds
-                );
             }
         }
+        rows += 1;
+        ticks += u64::from(run.ticks);
+        frames += run.frames;
+        seconds += run.seconds;
+        println!(
+            "{id}: {} ticks, {} frames, {} overrun, {} without NMI, {} cut with the NMI running, {:.0} frames/s",
+            run.ticks,
+            run.frames,
+            run.overrun,
+            run.without_nmi,
+            run.still_running,
+            run.frames as f64 / run.seconds
+        );
     }
-    println!(
-        "rows run {rows}, failed or not run {failed}; all comparable streams equal on {all_six}; {still_running} frames cut with the NMI running"
-    );
-    for (stream, name) in names.iter().enumerate() {
-        if compared[stream] > 0 {
-            println!(
-                "  {name}: {} of {} rows equal",
-                matched[stream], compared[stream]
-            );
-        } else {
-            println!("  {name}: not comparable (redefined by the oracle contract)");
-        }
+    println!("rows run {rows}, failed or not run {failed}");
+    if rows > 0 {
+        println!(
+            "{ticks} ticks, {frames} frames in {seconds:.1}s: {:.0} frames/s",
+            frames as f64 / seconds
+        );
     }
-    println!(
-        "{ticks} ticks, {frames} frames in {seconds:.1}s: {:.0} ticks/s, {:.0} frames/s",
-        ticks as f64 / seconds,
-        frames as f64 / seconds
-    );
+    if failed != 0 {
+        return Err(requests::RequestError::Invalid(format!(
+            "{failed} rows failed"
+        )));
+    }
     Ok(())
 }
 
-/// `trace ROM LOCK DATA ID FROM TO`: one row's frames FROM-TO in detail.
+/// `trace ROM LOCK BUNDLE ID FROM TO`: one row's frames FROM-TO in detail.
 fn trace(arguments: &[String]) {
-    let [rom, lock, data, id, from, to] = arguments else {
-        fail("trace ROM LOCK DATA ID FROM TO")
+    let [rom, lock, bundle, id, from, to] = arguments else {
+        fail("trace ROM LOCK BUNDLE ID FROM TO")
     };
     let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
-    let lock =
-        std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
-    let lock = crate::lock::Lock::parse(&lock);
-    let (Some(pin), Some(entry)) = (lock.pin(id), lock.entry(id, "faithful")) else {
-        fail(format!("{id}: no pin or entry"))
-    };
+    let lock = read_corpus_lock(Path::new(lock));
+    let row = lock
+        .row(&crate::lock::RowId(id.clone()))
+        .unwrap_or_else(|| fail(format!("{id}: no such row in the lock")));
+    let sources =
+        crate::corpus::Sources::read(Path::new(bundle), row).unwrap_or_else(|error| fail(error));
     let range = from.parse().unwrap_or(0)..=to.parse().unwrap_or(0);
     let mut frame = 0usize;
     let tiers = Tiers {
-        apu_state: true,
+        picture: false,
+        apu_log: true,
         ..Tiers::default()
     };
     let result = crate::corpus::run_row_with(
         &rom,
-        pin,
-        entry,
-        Path::new(data),
+        sources,
         &crate::corpus::Observe {
             tiers,
             ..Default::default()
@@ -1069,10 +932,6 @@ fn trace(arguments: &[String]) {
         &mut |record| {
             if range.contains(&frame) {
                 let w = |address| word(&record.wram, address);
-                let spc = record
-                    .spc
-                    .as_ref()
-                    .map(|spc| (spc.pc, spc.cpu_to_apu, spc.apu_to_cpu));
                 let apu: Vec<String> = record
                     .apu_log
                     .iter()
@@ -1080,7 +939,7 @@ fn trace(arguments: &[String]) {
                     .map(|access| format!("{:?}{}={:02x}", access.kind, access.port, access.value))
                     .collect();
                 println!(
-                    "frame {frame}: cut {:?} cpu {:02x}:{:04x} state {:04x} room {:04x} spc {spc:02x?} apu[{}] {}",
+                    "frame {frame}: cut {:?} cpu {:02x}:{:04x} state {:04x} room {:04x} apu[{}] {}",
                     record.cut,
                     record.cpu.k,
                     record.cpu.pc,
@@ -1094,7 +953,7 @@ fn trace(arguments: &[String]) {
         },
     );
     if let Err(error) = result {
-        println!("{id}: {error}");
+        fail(format!("{id}: {error}"));
     }
 }
 
@@ -1107,40 +966,43 @@ fn measuring() -> Tiers {
     }
 }
 
-/// `measure ROM LOCK DATA ID...`: the architecture lane's measurements over
+/// `measure ROM LOCK BUNDLE ID...`: the architecture lane's measurements over
 /// lock rows (from their lsnes seeds), as Markdown.
 fn measure(arguments: &[String]) {
-    let [rom_path, lock, data, ids @ ..] = arguments else {
-        fail("measure ROM LOCK DATA ID...")
+    let [rom_path, lock, bundle, ids @ ..] = arguments else {
+        fail("measure ROM LOCK BUNDLE ID...")
     };
     let rom = std::fs::read(rom_path).unwrap_or_else(|error| fail(format!("{rom_path}: {error}")));
-    let lock =
-        std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
-    let lock = crate::lock::Lock::parse(&lock);
+    let lock = read_corpus_lock(Path::new(lock));
     for id in ids {
-        let (Some(pin), Some(entry)) = (lock.pin(id), lock.entry(id, "faithful")) else {
-            println!("### {id}\n- no pin or entry");
-            continue;
-        };
+        let row = lock
+            .row(&crate::lock::RowId(id.clone()))
+            .unwrap_or_else(|| fail(format!("{id}: no such row in the lock")));
+        let sources = crate::corpus::Sources::read(Path::new(bundle), row)
+            .unwrap_or_else(|error| fail(error));
         let mut measurements = crate::measure::Measurements::default();
         let result = crate::corpus::run_row_with(
             &rom,
-            pin,
-            entry,
-            Path::new(data),
+            sources,
             &crate::corpus::Observe {
-                tiers: measuring(),
+                tiers: Tiers {
+                    write_log: false,
+                    ..measuring()
+                },
                 watch: &crate::measure::WATCHED,
-                peek: crate::measure::PEEK,
+                peek: Some(crate::measure::PEEK),
                 ..crate::corpus::Observe::default()
             },
             &mut |record| measurements.frame(record),
         );
         println!("### {id} (from its lsnes seed)");
         if let Err(error) = result {
-            println!("- run ended: {error}");
+            fail(format!("{id}: {error}"));
         }
-        print!("{}", measurements.report(&rom));
+        print!(
+            "{}",
+            measurements.report(&rom, crate::measure::Source::Lsnes)
+        );
     }
 }
 
@@ -1162,7 +1024,10 @@ fn measure_movie(arguments: &[String]) {
         measurements.frame(oracle.step(pad).unwrap_or_else(|error| fail(error)));
     }
     println!("### {inputs}, frames 0-{} (from power-on)", frames - 1);
-    print!("{}", measurements.report(&rom));
+    print!(
+        "{}",
+        measurements.report(&rom, crate::measure::Source::LakeSnes)
+    );
 }
 
 /// `cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B]`: step

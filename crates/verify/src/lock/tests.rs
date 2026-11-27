@@ -2,6 +2,7 @@
 //! test writes byte for byte) and the strict rejections.
 
 use super::*;
+use data::digest::Digest;
 
 const FIXTURE: &str = include_str!("format2.toml");
 

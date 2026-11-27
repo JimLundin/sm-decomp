@@ -25,13 +25,12 @@
 //!
 //! Watched-PC hits come from the server's trace (`OH_TRACE`, asked for at
 //! start by [`Lsnes::open_watching`]): each with its beam position, split
-//! between records at the cut (the NMI handler's RTI, or the frame boundary),
-//! and without the four peeked WRAM bytes, which the trace doesn't carry.
+//! between records at the cut (the NMI handler's RTI, or the frame boundary).
+//! Measurement traces can also peek four bytes of WRAM at a watched instruction.
 //!
 //! Not recorded by this backend: the SPC state (lsnes exposes SPC700 and DSP
 //! only as raw core structs), the instruction profile, the PPU register write
-//! log, the hits' peeks, the per-line forced blank, `overscan` and the old
-//! lock's `legacy_ppu_digest`.
+//! log, the per-line forced blank and `overscan`.
 //!
 //! A saved state is lsnes's own, taken at the frame boundary that ends the
 //! step it was requested before: after that step's cut, or inside its NMI
@@ -40,6 +39,7 @@
 //! counts restart where the straight run's do (at the RTI of an NMI the
 //! state was saved inside).
 
+use crate::lock::Sha256;
 use crate::record::lsnes::RawPicture;
 use crate::record::{Beam, Cut, FrameRecord, Hit, MAX_LINES, Pad, Picture, WIDTH, shown_channel};
 use crate::{Oracle, OracleError, OracleId, Start, Tiers};
@@ -151,8 +151,8 @@ pub struct Lsnes {
 }
 
 /// The server's trace of watched instruction addresses (`OH_TRACE_LOG`): a
-/// `pc ADDRESS LINE DOT` line per hit and a `cut FRAME` line as each record
-/// is sent. The trace watches the NMI handler's RTI too, which marks the cut:
+/// `pc ADDRESS LINE DOT [PEEK]` line per hit and a `cut FRAME` line when it
+/// sends each record. The trace watches the NMI handler's RTI too, which marks the cut:
 /// - an NMI that outlasts lsnes's frame boundary is cut and sent at its RTI,
 ///   by the server's own callback, which runs before the trace's: that RTI's
 ///   line opens the next record's lines;
@@ -164,6 +164,8 @@ struct Trace {
     read: usize,
     /// The NMI handler's RTI.
     rti: u32,
+    /// Whether watched instructions must carry four WRAM bytes.
+    peek: bool,
     /// Hits after the last record's cut, carried into the next record.
     carried: Vec<Hit>,
     /// A resumed run's first RTI returns from the NMI its state was saved
@@ -178,7 +180,7 @@ enum TraceLine {
 }
 
 impl Trace {
-    fn parse(line: &str) -> Option<TraceLine> {
+    fn parse(line: &str, need_peek: bool, rti: u32) -> Option<TraceLine> {
         let mut fields = line.split(' ');
         match fields.next()? {
             "cut" => Some(TraceLine::Cut),
@@ -186,10 +188,17 @@ impl Trace {
                 let pc = u32::from_str_radix(fields.next()?, 16).ok()?;
                 let v = fields.next()?.parse().ok()?;
                 let h = fields.next()?.parse().ok()?;
+                let peek = match fields.next() {
+                    Some(encoded) if encoded.len() == 8 => {
+                        u32::from_str_radix(encoded, 16).ok()?.to_be_bytes()
+                    }
+                    None if !need_peek || pc == rti => [0; 4],
+                    _ => return None,
+                };
                 Some(TraceLine::Hit(Hit {
                     pc,
                     beam: Beam { v, h },
-                    peek: [0; 4],
+                    peek,
                 }))
             }
             _ => None,
@@ -208,13 +217,13 @@ impl Trace {
         let mut at = 0;
         for line in text.split_inclusive('\n') {
             at += line.len();
-            match Self::parse(line.trim_end()) {
+            match Self::parse(line.trim_end(), self.peek, self.rti) {
                 Some(TraceLine::Hit(hit)) => lines.push(hit),
                 Some(TraceLine::Cut) => {
                     consumed = Some(at);
                     break;
                 }
-                None => return Err(Cause::Record(format!("trace: {}", line.trim_end()))),
+                None => return Err(Cause::Record("invalid trace line".into())),
             }
         }
         let consumed = consumed.ok_or_else(|| Cause::Record("trace: no cut line".into()))?;
@@ -329,19 +338,50 @@ impl NativeSeed {
 
     /// The seed whose state is `path` (`NNNN.lss`), with its edits if it has any.
     pub fn read(path: &Path) -> Result<Self, String> {
+        Self::read_checked(path, None)
+    }
+
+    /// Read the native state and edits against the lock's pins before parsing them.
+    pub(crate) fn read_pinned(
+        path: &Path,
+        state: Sha256,
+        words: Option<Sha256>,
+    ) -> Result<Self, String> {
+        Self::read_checked(path, Some((state, words)))
+    }
+
+    fn read_checked(path: &Path, pins: Option<(Sha256, Option<Sha256>)>) -> Result<Self, String> {
         let state = std::fs::read(path)
             .map_err(|error| format!("native seed {}: {error}", path.display()))?;
+        if pins.is_some_and(|(pin, _)| Sha256::of(&state) != pin) {
+            return Err(format!(
+                "{}: seed pin differs from the lock",
+                path.display()
+            ));
+        }
         let words_path = Self::words_path(path);
-        let words = match std::fs::read_to_string(&words_path) {
-            Ok(text) => text
+        let bytes = match std::fs::read(&words_path) {
+            Ok(bytes) => Some(bytes),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(format!("{}: {error}", words_path.display())),
+        };
+        if pins.is_some_and(|(_, pin)| bytes.as_deref().map(Sha256::of) != pin) {
+            return Err(format!(
+                "{}: edit pin differs from the lock",
+                words_path.display()
+            ));
+        }
+        let mut words = Vec::new();
+        if let Some(bytes) = bytes {
+            let text = std::str::from_utf8(&bytes)
+                .map_err(|error| format!("{}: {error}", words_path.display()))?;
+            words = text
                 .lines()
                 .filter(|line| !line.is_empty())
                 .map(str::parse)
                 .collect::<Result<_, _>>()
-                .map_err(|error| format!("{}: {error}", words_path.display()))?,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Vec::new(),
-            Err(error) => return Err(format!("{}: {error}", words_path.display())),
-        };
+                .map_err(|error| format!("{}: {error}", words_path.display()))?;
+        }
         Ok(Self { state, words })
     }
 
@@ -443,10 +483,25 @@ impl Lsnes {
     /// As [`Oracle::open`], and [`OracleError::Rom`] for a ROM whose NMI
     /// handler has no single epilogue.
     pub fn open_watching(rom: &[u8], start: Start, addresses: &[u32]) -> Result<Self, OracleError> {
-        Self::spawn(rom, start, addresses)
+        Self::spawn(rom, start, addresses, None)
     }
 
-    fn spawn(rom: &[u8], start: Start, watch: &[u32]) -> Result<Self, OracleError> {
+    /// Open a row with instruction watches and an optional four-byte WRAM peek.
+    pub(crate) fn open_measuring(
+        rom: &[u8],
+        start: Start,
+        addresses: &[u32],
+        peek: u32,
+    ) -> Result<Self, OracleError> {
+        Self::spawn(rom, start, addresses, Some(peek))
+    }
+
+    fn spawn(
+        rom: &[u8],
+        start: Start,
+        watch: &[u32],
+        peek: Option<u32>,
+    ) -> Result<Self, OracleError> {
         let directory = Self::directory();
         std::fs::create_dir_all(&directory).map_err(|_| OracleError::Rom)?;
         let rom_path = directory.join("game.sfc");
@@ -489,10 +544,16 @@ impl Lsnes {
             command
                 .env("OH_TRACE", list.join(","))
                 .env("OH_TRACE_LOG", &log);
+            if let Some(peek) = peek {
+                command.env("OH_TRACE_PEEK", format!("{peek:05x}"));
+            } else {
+                command.env_remove("OH_TRACE_PEEK");
+            }
             Some(Trace {
                 log,
                 read: 0,
                 rti,
+                peek: peek.is_some(),
                 carried: Vec::new(),
                 dangling: resumed,
             })
@@ -663,7 +724,7 @@ impl Oracle for Lsnes {
     }
 
     fn open(rom: &[u8], start: Start) -> Result<Self, OracleError> {
-        Self::spawn(rom, start, &[])
+        Self::spawn(rom, start, &[], None)
     }
 
     fn step(&mut self, pad: Pad) -> Result<&FrameRecord, OracleError> {
@@ -768,6 +829,17 @@ pub fn server_sha256() -> String {
     crate::ladder::hex(&data::rom::sha256(SERVER.as_bytes()))
 }
 
+/// Whether the recorder can reproduce observations from this server.
+pub(crate) fn compatible_server(pinned: Sha256) -> bool {
+    const CAPTURE_SERVER: &str = "833e4df966372d1277ecc1449fb59f9ba61c527b691336c6f87f09b3c5090ee9";
+    const MEASUREMENT_SERVER: &str =
+        "e952a381b5a53a82a0dabb3cc68a006907319c92a1b987a1ea3a50c49f4dfd46";
+    let current = server_sha256();
+    let pinned = pinned.to_string();
+    // The optional measurement peek changes only the trace when it is enabled.
+    pinned == current || (pinned == CAPTURE_SERVER && current == MEASUREMENT_SERVER)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -788,6 +860,7 @@ mod tests {
             log: log.to_owned(),
             read: 0,
             rti: RTI,
+            peek: false,
             carried: Vec::new(),
             dangling,
         }
@@ -795,6 +868,23 @@ mod tests {
 
     fn pcs(hits: &[Hit]) -> Vec<u32> {
         hits.iter().map(|hit| hit.pc).collect()
+    }
+
+    #[test]
+    fn measurements_read_the_trace_peek_in_wram_order() {
+        let Some(TraceLine::Hit(hit)) = Trace::parse("pc 900000 10 0 a10b0c0d", true, RTI) else {
+            panic!("expected a watched instruction hit");
+        };
+        assert_eq!(hit.peek, [0xa1, 0x0b, 0x0c, 0x0d]);
+        assert!(Trace::parse("pc 900000 10 0", true, RTI).is_none());
+    }
+
+    #[test]
+    fn the_current_server_accepts_the_committed_lock() {
+        let lock = crate::lock::Lock::parse(include_str!("../../../scenarios/locks/lsnes.toml"))
+            .expect("valid capture lock");
+        assert!(compatible_server(lock.header.oracle.server));
+        assert!(!compatible_server(crate::lock::Sha256([0; 32])));
     }
 
     /// An RTI past the boundary sent the record before: its frame's hits

@@ -59,6 +59,13 @@ struct Frame {
     dma_bytes_blank: usize,
 }
 
+/// Which measurement tiers the backend can provide.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Source {
+    Lsnes,
+    LakeSnes,
+}
+
 /// A run's measurements, accumulated one frame at a time.
 #[derive(Clone, Debug, Default)]
 pub struct Measurements {
@@ -167,7 +174,7 @@ impl Measurements {
     }
 
     /// The summary, as Markdown lines (ids, frames, counts and beam positions).
-    pub fn report(&self, rom: &[u8]) -> String {
+    pub fn report(&self, rom: &[u8], source: Source) -> String {
         let mut text = String::new();
         let frames = self.frames.len();
         let overrun = self
@@ -239,13 +246,17 @@ impl Measurements {
                 .iter()
                 .map(|frame| frame.dma_bytes_blank)
                 .sum();
-            let _ = writeln!(
+            let _ = write!(
                 text,
-                "  - door transition frames {first}-{last} ({} frames, {busy} busy): room {:04X} -> {:04X}; APU port writes {uploads}; DMA bytes under forced blank {dma}",
+                "  - door transition frames {first}-{last} ({} frames, {busy} busy): room {:04X} -> {:04X}; APU port writes {uploads}",
                 last - first + 1,
                 self.frames[first.saturating_sub(1)].room,
                 self.frames[(last + 1).min(frames - 1)].room
             );
+            if source == Source::LakeSnes {
+                let _ = write!(text, "; DMA bytes under forced blank {dma}");
+            }
+            text.push('\n');
         }
         for call in &self.decompressions {
             let (output, commands) = decompressed_size(rom, call.source);
@@ -307,6 +318,17 @@ impl Measurements {
                     "  - line {v}, $21{register:02X}: {count} writes, H {low}-{high}"
                 );
             }
+        }
+        if source == Source::Lsnes {
+            let _ = writeln!(
+                text,
+                "- APU ports: CPU writes {:?}, CPU reads {:?} (ports 0-3)",
+                self.cpu_port_writes, self.cpu_port_reads
+            );
+            text.push_str(
+                "- IRQ/DMA write timing and SPC700 writes/echo latency are unavailable on lsnes.\n",
+            );
+            return text;
         }
         let _ = writeln!(
             text,

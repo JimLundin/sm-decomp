@@ -1,71 +1,34 @@
-//! Running the lock's corpus rows on an oracle and comparing their streams.
-//!
-//! The existing lock (`oracle = "faithful"`) was recorded by the old frame
-//! stepper, whose Tick is one run of the game's main loop. Its rows' inputs
-//! hold one pad word per Tick, and the NMI ending Tick k latched word k+1.
-//! On a real machine a Tick is a requested frame, so the runner presents word
-//! k+1 until the k-th requested NMI has read it, and folds the existing lock's
-//! streams on requested frames only. The oracle contract's streams fold on
-//! every video frame.
-//!
-//! The new lock gives a pad per video frame instead (ARCHITECTURE D20,
-//! docs/ORACLE.md, RELOCK b1). A run under the Tick rule records the pad
-//! it presented at each frame ([`RowRun::pads`]) once; a run from those pads
-//! ([`Pads::Frames`]) knows every next pad, so it previews it and lsnes cuts
-//! every frame at its NMI's RTI, also where the NMI outlasts the frame.
+//! Running format-2 rows from their pinned frame pads and native seeds.
 
-use crate::lock::{Entry, Pin};
+use crate::lock::{Row, Sha256, Start as LockStart};
+use crate::lsnes::{Lsnes, NativeSeed};
 use crate::record::{Cut, FrameRecord, NmiKind, Pad};
-use crate::seed::Capture;
-use crate::streams::{self, NAMES, Running};
-use crate::{Backend, OracleError, Start, Tiers};
-use std::path::{Path, PathBuf};
+use crate::{Oracle, OracleError, Start, Tiers};
+use std::path::Path;
 use std::time::Instant;
 
-/// One row's run.
-#[derive(Clone, Debug)]
+/// Counts and timing for a completed row.
+#[derive(Clone, Debug, Default)]
 pub struct RowRun {
-    /// Requested frames: the old stepper's Ticks.
     pub ticks: u32,
-    /// Video frames.
     pub frames: u64,
-    /// Frames whose NMI interrupted the main thread outside a wait site: lag frames.
     pub overrun: u64,
-    /// Frames without an NMI (NMI disabled).
     pub without_nmi: u64,
-    /// Frames cut at lsnes's boundary with their NMI still running: the
-    /// steps a run without the next pad cannot cut at the RTI.
     pub still_running: u64,
-    /// The pad presented at each video frame, then the pad of the frame
-    /// after the row, which the last frame's NMI reads if it outlasts it.
-    pub pads: Vec<Pad>,
-    /// How often an overrun NMI interrupted each address.
-    pub interrupted: std::collections::BTreeMap<u32, u32>,
-    /// The frames (from 0) whose NMI overran.
-    pub overrun_frames: Vec<u64>,
-    /// The existing lock's streams, folded per Tick.
-    pub legacy: Running,
-    /// The oracle contract's streams, folded per video frame.
-    pub v1: Running,
     pub seconds: f64,
 }
 
-/// Why a row has no run.
+/// Why a row could not be played.
 #[derive(Debug)]
 pub enum RowError {
-    /// Its data or start could not be set up, so it never ran.
-    NotRun(String),
-    /// The game stopped requesting frames.
-    Stalled(String),
-    /// The oracle failed under it; the rest of the corpus still runs.
+    Source(String),
     Oracle(OracleError),
 }
 
 impl core::fmt::Display for RowError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::NotRun(reason) => write!(f, "not run: {reason}"),
-            Self::Stalled(reason) => write!(f, "stalled: {reason}"),
+            Self::Source(reason) => write!(f, "not run: {reason}"),
             Self::Oracle(error) => write!(f, "failed: {error}"),
         }
     }
@@ -73,7 +36,7 @@ impl core::fmt::Display for RowError {
 
 impl From<String> for RowError {
     fn from(reason: String) -> Self {
-        Self::NotRun(reason)
+        Self::Source(reason)
     }
 }
 
@@ -83,259 +46,156 @@ impl From<OracleError> for RowError {
     }
 }
 
-/// Where a row's private data lives under `data`: one directory per
-/// ci-data bundle, named as the asset without `.tar.gz.enc`.
-pub fn bundle_directory(data: &Path, pin: &Pin) -> PathBuf {
-    data.join(pin.bundle.trim_end_matches(".tar.gz.enc"))
+/// ROM-derived inputs for one row, validated against the format-2 lock.
+pub struct Sources {
+    pads: Vec<Pad>,
+    seed: Option<NativeSeed>,
 }
 
-/// Run `entry`'s row with `pin`'s data from `data`.
-pub fn run_row(rom: &[u8], pin: &Pin, entry: &Entry, data: &Path) -> Result<RowRun, RowError> {
-    run_row_with(rom, pin, entry, data, &Observe::default(), &mut |_| ())
+impl Sources {
+    /// Read only the active row's pad file and, for a seeded row, its native
+    /// state and optional WRAM edits. The last pad previews the next frame.
+    pub fn read(bundle: &Path, row: &Row) -> Result<Self, RowError> {
+        let path = bundle.join("pads").join(format!("{}.pads", row.id));
+        let bytes = std::fs::read(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+        if Sha256::of(&bytes) != row.pads {
+            return Err(format!("{}: pad pin differs from the lock", path.display()).into());
+        }
+        let text =
+            std::str::from_utf8(&bytes).map_err(|error| format!("{}: {error}", path.display()))?;
+        let pads = crate::inputs::parse(&path, text)?;
+        let frames = pads.len().saturating_sub(1);
+        if pads.is_empty() || u64::try_from(frames).ok() != Some(row.frames.0) {
+            return Err(format!(
+                "{}: expected {} frames and a preview pad, got {} pads",
+                path.display(),
+                row.frames.0,
+                pads.len()
+            )
+            .into());
+        }
+        let seed = match &row.start {
+            LockStart::Seed { capture, index } => Some(NativeSeed::read_pinned(
+                &bundle
+                    .join("seeds")
+                    .join(capture)
+                    .join(format!("{index:04}.lss")),
+                row.seed_record
+                    .ok_or_else(|| "native seed has no pin".to_owned())?,
+                row.seed_words,
+            )?),
+            LockStart::PowerOn if row.seed_record.is_none() && row.seed_words.is_none() => None,
+            LockStart::PowerOn => return Err("power-on row has a seed pin".to_owned().into()),
+        };
+        Ok(Self { pads, seed })
+    }
 }
 
-/// Where a row's pads come from.
-#[derive(Clone, Copy, Debug, Default)]
-pub enum Pads<'a> {
-    /// The lock's inputs: one word per Tick, word k+1 presented until the
-    /// k-th requested NMI has read it.
-    #[default]
-    Ticks,
-    /// One pad per video frame and the pad of the frame after the row
-    /// ([`RowRun::pads`]); the run is one frame shorter than the list.
-    Frames(&'a [Pad]),
-}
-
-/// What a run records beyond its streams, and on which oracle.
+/// Optional tiers and watched addresses.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Observe<'a> {
-    /// The backend `Backend::open` names (LakeSnes when empty).
-    pub backend: &'a str,
-    /// Harness-native seeds (`movie --native-seeds`): a row seeded from
-    /// `CAPTURE:INDEX` resumes the oracle's own state `DIR/CAPTURE/INDEX.lss`
-    /// instead of loading the migration capture.
-    pub native_seeds: Option<&'a Path>,
     pub tiers: Tiers,
-    /// Watched instruction addresses (`Oracle::set_watch`).
     pub watch: &'a [u32],
-    /// The WRAM address a watch hit peeks.
-    pub peek: u32,
-    pub pads: Pads<'a>,
-    /// Records without the memories (lsnes), for runs that need only the
-    /// pads and the cuts.
+    /// Four bytes of WRAM to sample at each watched instruction.
+    pub peek: Option<u32>,
+    /// Omit memory records when only cuts are needed.
     pub lean: bool,
 }
 
-/// `run_row` with chosen tiers and watched addresses, showing `observe` every frame.
+/// Play a validated row and deliver each frame record to `observe`.
 pub fn run_row_with(
     rom: &[u8],
-    pin: &Pin,
-    entry: &Entry,
-    data: &Path,
+    sources: Sources,
     observing: &Observe<'_>,
     observe: &mut dyn FnMut(&FrameRecord),
 ) -> Result<RowRun, RowError> {
-    let root = bundle_directory(data, pin);
-    let inputs = crate::inputs::read(&root.join("movies").join(&pin.inputs))?;
-    let mut native_seed = None;
-    let start = match (&pin.seed, &pin.checkpoint) {
-        (_, Some(checkpoint)) => {
-            return Err(RowError::NotRun(format!(
-                "starts from the old verifier's checkpoint (commit `09486a2fd`) {checkpoint}"
-            )));
-        }
-        (Some(seed), None) => {
-            let (capture, index) = seed
-                .split_once(':')
-                .ok_or_else(|| format!("seed {seed} is not CAPTURE:INDEX"))?;
-            let index: u32 = index
-                .parse()
-                .map_err(|_| format!("seed {seed}: bad index"))?;
-            if let Some(native) = observing.native_seeds {
-                let seed = crate::lsnes::NativeSeed::read(
-                    &native.join(capture).join(format!("{index:04}.lss")),
-                )?;
-                let start = Start::State(seed.state.clone());
-                native_seed = Some(seed);
-                start
-            } else {
-                let directory = root.join("target").join("seeds").join(capture);
-                Start::Capture(Box::new(Capture::read(&directory, index)?))
-            }
-        }
-        (None, None) => Start::PowerOn { wram_fill: 0x55 },
-    };
-    let mut oracle = Backend::open_watching(
-        observing.backend,
-        rom,
-        start,
-        observing.watch,
-        observing.peek,
-    )?;
-    match (&mut oracle, &native_seed) {
-        (Backend::Lsnes(lsnes), Some(seed)) => seed.apply(lsnes)?,
-        (Backend::LakeSnes(_), Some(_)) => {
-            return Err(RowError::NotRun("native seeds are lsnes states".into()));
-        }
-        (_, None) => {}
+    let start = sources
+        .seed
+        .as_ref()
+        .map_or(Start::PowerOn { wram_fill: 0x55 }, |seed| {
+            Start::State(seed.state.clone())
+        });
+    let mut oracle = match observing.peek {
+        Some(peek) => Lsnes::open_measuring(rom, start, observing.watch, peek),
+        None => Lsnes::open_watching(rom, start, observing.watch),
+    }?;
+    if let Some(seed) = &sources.seed {
+        seed.apply(&mut oracle)?;
     }
-    oracle.set_tiers(observing.tiers);
-    if let Backend::Lsnes(lsnes) = &mut oracle {
-        lsnes.memories = !observing.lean;
-        // lsnes takes its stream tiers by request, before the first step.
-        if observing.tiers.picture || observing.tiers.apu_log {
-            lsnes.record_streams(observing.tiers)?;
-        }
+    oracle.memories = !observing.lean;
+    if observing.tiers.picture || observing.tiers.apu_log {
+        oracle.record_streams(observing.tiers)?;
     }
     let started = Instant::now();
-    let mut run = RowRun {
-        ticks: 0,
-        frames: 0,
-        overrun: 0,
-        without_nmi: 0,
-        still_running: 0,
-        pads: Vec::new(),
-        interrupted: std::collections::BTreeMap::new(),
-        overrun_frames: Vec::new(),
-        legacy: Running::default(),
-        v1: Running::default(),
-        seconds: 0.0,
-    };
-    let mut scratch = Vec::with_capacity(0x2_0000);
-    // A stall (the game never requesting a frame) ends the row.
-    let limit = u64::from(entry.ticks) * 4 + 600;
-    let index = |count: u64| usize::try_from(count).unwrap_or(usize::MAX);
-    // Word k+1 until the k-th requested NMI has read it.
-    let tick_pad = |ticks: u32| {
-        let tick = u64::from(ticks);
-        inputs
-            .get(index(tick + 1))
-            .or_else(|| inputs.get(index(tick)))
-            .copied()
-            .unwrap_or(Pad(0))
-    };
-    loop {
-        let pad = match observing.pads {
-            Pads::Ticks if run.ticks >= entry.ticks => {
-                run.pads.push(tick_pad(run.ticks));
-                break;
-            }
-            Pads::Ticks => tick_pad(run.ticks),
-            Pads::Frames(pads) => {
-                let (Some(&pad), Some(&next)) =
-                    (pads.get(index(run.frames)), pads.get(index(run.frames + 1)))
-                else {
-                    run.pads.extend(pads.last());
-                    break;
-                };
-                oracle.preview(next);
-                pad
-            }
-        };
-        run.pads.push(pad);
-        let record = oracle.step(pad)?;
+    let mut run = RowRun::default();
+    for [pad, next] in sources.pads.array_windows() {
+        oracle.preview(*next);
+        let record = oracle.step(*pad)?;
         run.frames += 1;
         observe(record);
-        run.v1.fold(&streams::v1(record));
-        match record.nmi().map(|nmi| nmi.kind) {
-            Some(NmiKind::Requested) => {
-                run.legacy.fold(&streams::legacy(record, &mut scratch));
-                run.ticks += 1;
-            }
-            Some(NmiKind::Overrun) => {
-                run.overrun += 1;
-                run.overrun_frames.push(run.frames - 1);
-                if let Some(nmi) = record.nmi() {
-                    *run.interrupted.entry(nmi.interrupted_pc).or_default() += 1;
-                }
-            }
-            None if matches!(record.cut, Cut::NmiStillRunning { .. }) => run.still_running += 1,
-            None => run.without_nmi += 1,
-        }
-        if matches!(observing.pads, Pads::Ticks) && run.frames > limit {
-            let mut common: Vec<(u32, u32)> = run
-                .interrupted
-                .iter()
-                .map(|(&pc, &count)| (count, pc))
-                .collect();
-            common.sort_unstable_by(|a, b| b.cmp(a));
-            let common: Vec<String> = common
-                .iter()
-                .take(3)
-                .map(|(count, pc)| format!("${pc:06X}x{count}"))
-                .collect();
-            return Err(RowError::Stalled(format!(
-                "{} Ticks in {} frames; overruns interrupted {}",
-                run.ticks,
-                run.frames,
-                common.join(" ")
-            )));
+        match record.cut {
+            Cut::NmiReturn(nmi) => match nmi.kind {
+                NmiKind::Requested => run.ticks += 1,
+                NmiKind::Overrun => run.overrun += 1,
+            },
+            Cut::NmiStillRunning { .. } => run.still_running += 1,
+            Cut::VblankWithoutNmi => run.without_nmi += 1,
         }
     }
     run.seconds = started.elapsed().as_secs_f64();
     Ok(run)
 }
 
-/// Which of the existing lock's streams the run matches: `Some(true)` or
-/// `Some(false)` per stream, `None` where the harness cannot compute it.
-pub fn compare(entry: &Entry, run: &RowRun) -> [Option<bool>; 8] {
-    core::array::from_fn(|stream| {
-        let mine = run.legacy.digest(stream)?;
-        let locked = entry.digests.get(NAMES[stream])?;
-        Some(format!("{mine:016x}") == *locked)
-    })
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lock::{FrameCount, Lock};
 
-/// The lock entry the harness records for a run: the v1 streams per video
-/// frame, the existing lock's definitions per Tick beside them, and the
-/// frames whose NMI overran.
-pub fn lock_entry(entry: &Entry, oracle: crate::OracleId, run: &RowRun) -> String {
-    use std::fmt::Write as _;
-    let digests = |running: &Running| {
-        NAMES
-            .iter()
-            .enumerate()
-            .filter_map(|(stream, name)| {
-                running
-                    .digest(stream)
-                    .map(|digest| format!("\"{name}\" = \"{digest:016x}\""))
-            })
-            .collect::<Vec<_>>()
-            .join(", ")
-    };
-    let marks = run
-        .v1
-        .marks
-        .iter()
-        .map(|(frames, digest)| format!("\"{frames}\" = \"{digest:016x}\""))
-        .collect::<Vec<_>>()
-        .join(", ");
-    let overruns = run
-        .overrun_frames
-        .iter()
-        .map(u64::to_string)
-        .collect::<Vec<_>>()
-        .join(", ");
-    let mut text = String::new();
-    let _ = writeln!(text, "[[scenario]]");
-    let _ = writeln!(text, "id = \"{}\"", entry.id);
-    let _ = writeln!(text, "oracle = \"{}\"", oracle.emulator);
-    let _ = writeln!(text, "version = \"{}\"", oracle.version);
-    let fixes: Vec<String> = oracle
-        .fixes
-        .iter()
-        .map(|fix| format!("\"{fix}\""))
-        .collect();
-    let _ = writeln!(text, "fixes = [{}]", fixes.join(", "));
-    let _ = writeln!(text, "start = \"{}\"", entry.start);
-    let _ = writeln!(text, "inputs = \"{}\"", entry.inputs);
-    let _ = writeln!(text, "format = 1");
-    let _ = writeln!(text, "frames = {}", run.frames);
-    let _ = writeln!(text, "ticks = {}", run.ticks);
-    let _ = writeln!(text, "combined = \"{:016x}\"", run.v1.combined);
-    let _ = writeln!(text, "digests = {{ {} }}", digests(&run.v1));
-    let _ = writeln!(text, "legacy = {{ {} }}", digests(&run.legacy));
-    let _ = writeln!(text, "marks = {{ {marks} }}");
-    let _ = writeln!(text, "overruns = [{overruns}]");
-    text
+    #[test]
+    fn a_row_reads_the_pinned_native_seed_and_pads_without_movies() {
+        let mut lock = Lock::parse(include_str!("../../verify/src/lock/format2.toml"))
+            .expect("the fixture parses");
+        let row = &mut lock.rows[0];
+        let bundle =
+            std::env::temp_dir().join(format!("oracle-corpus-sources-{}", std::process::id()));
+        let seed_dir = bundle.join("seeds/capture-a");
+        let pads_dir = bundle.join("pads");
+        std::fs::create_dir_all(&seed_dir).unwrap();
+        std::fs::create_dir_all(&pads_dir).unwrap();
+        let state = b"synthetic native state";
+        let words = b"0012=3400\n";
+        let pads = b"0000\n0001\n";
+        let pad_path = pads_dir.join("row-alpha.pads");
+        let words_path = seed_dir.join("0003.words");
+        std::fs::write(seed_dir.join("0003.lss"), state).unwrap();
+        std::fs::write(&words_path, words).unwrap();
+        std::fs::write(&pad_path, pads).unwrap();
+        row.seed_record = Some(Sha256::of(state));
+        row.seed_words = Some(Sha256::of(words));
+        row.pads = Sha256::of(pads);
+        row.frames = FrameCount(1);
+
+        let sources = Sources::read(&bundle, row).unwrap();
+        assert_eq!(sources.pads, [Pad(0), Pad(1)]);
+        assert_eq!(sources.seed.unwrap().words[0].offset, 0x12);
+
+        row.frames = FrameCount(2);
+        assert!(matches!(
+            Sources::read(&bundle, row),
+            Err(RowError::Source(_))
+        ));
+        row.frames = FrameCount(1);
+        std::fs::write(&pad_path, b"0000\n0002\n").unwrap();
+        assert!(matches!(
+            Sources::read(&bundle, row),
+            Err(RowError::Source(_))
+        ));
+        std::fs::write(&pad_path, pads).unwrap();
+        std::fs::remove_file(&words_path).unwrap();
+        assert!(matches!(
+            Sources::read(&bundle, row),
+            Err(RowError::Source(_))
+        ));
+        std::fs::remove_dir_all(bundle).unwrap();
+    }
 }

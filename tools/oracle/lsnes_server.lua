@@ -466,12 +466,19 @@ end)
 if trace_path ~= nil then
     -- Hits from this lsnes frame on (OH_TRACE_FROM); cut lines always.
     local trace_from = tonumber(os.getenv("OH_TRACE_FROM") or "0")
+    local peek = tonumber(os.getenv("OH_TRACE_PEEK") or "", 16)
     for hex in string.gmatch(os.getenv("OH_TRACE") or "", "%x+") do
         local address = tonumber(hex, 16)
         memory.registerexec(BUS + address, function()
             if movie.currentframe() < trace_from then return end
             local r = memory.getregisters()
-            trace[#trace + 1] = string.format("pc %06x %d %d", address, r.vcounter, r.hcounter)
+            local line = string.format("pc %06x %d %d", address, r.vcounter, r.hcounter)
+            if peek and address ~= NMI_RTI then
+                line = line .. string.format(" %02x%02x%02x%02x",
+                    memory.readbyte(0x7E0000 + peek), memory.readbyte(0x7E0001 + peek),
+                    memory.readbyte(0x7E0002 + peek), memory.readbyte(0x7E0003 + peek))
+            end
+            trace[#trace + 1] = line
         end)
     end
 end

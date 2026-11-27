@@ -1,5 +1,4 @@
 //! Complete command requests are validated without acquiring inputs or outputs.
-use super::FramePads;
 use crate::Tiers;
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
@@ -102,24 +101,20 @@ pub(super) struct MovieRequest {
 pub(super) struct CorpusRequest {
     pub rom: PathBuf,
     pub lock: PathBuf,
-    pub data: PathBuf,
+    pub bundle: PathBuf,
     pub only: Vec<String>,
     pub limit: usize,
     pub shard: Shard,
     pub outputs: Vec<CorpusOutput>,
     pub sidecar: Option<PathBuf>,
     pub dump_frames: Vec<(String, u64)>,
-    pub backend: BackendName,
-    pub native_seeds: Option<PathBuf>,
     pub watched: Vec<usize>,
     pub watched_pcs: Vec<u32>,
-    pub pads: Option<FramePads>,
     pub lean: bool,
     pub cache: Option<PathBuf>,
     pub cache_pictures: crate::record::codec::PictureMode,
 }
 pub(super) enum CorpusOutput {
-    Record(PathBuf),
     RecordV2(PathBuf),
     Directory(PathBuf),
 }
@@ -321,8 +316,8 @@ impl MovieRequest {
 }
 impl CorpusRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
-        let [rom, lock, data, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid("corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
+        let [rom, lock, bundle, rest @ ..] = arguments else {
+            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lsnes] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
         };
         let mut only = Vec::new();
         let mut limit = usize::MAX;
@@ -331,11 +326,8 @@ impl CorpusRequest {
         let mut outputs = Vec::new();
         let mut sidecar: Option<PathBuf> = None;
         let mut dump_frames: Vec<(String, u64)> = Vec::new();
-        let mut backend = String::new();
-        let mut native_seeds: Option<PathBuf> = None;
         let mut watched: Vec<usize> = Vec::new();
         let mut watched_pcs: Vec<u32> = Vec::new();
-        let mut pads: Option<FramePads> = None;
         let mut lean = false;
         let mut cache: Option<PathBuf> = None;
         let mut cache_pictures = crate::record::codec::PictureMode::Drop;
@@ -359,12 +351,6 @@ impl CorpusRequest {
                         index.parse().map_err(|_| RequestError::Shard)?,
                         count.parse().map_err(|_| RequestError::Shard)?,
                     )?;
-                }
-                "--record" => {
-                    let path = options
-                        .next()
-                        .ok_or_else(|| RequestError::Invalid("--record FILE".to_string()))?;
-                    outputs.push(CorpusOutput::Record(PathBuf::from(path)));
                 }
                 "--record-v2" => {
                     let path = options
@@ -400,16 +386,9 @@ impl CorpusRequest {
                     }
                 }
                 "--oracle" => {
-                    backend = options
-                        .next()
-                        .cloned()
-                        .ok_or_else(|| RequestError::Invalid("--oracle NAME".to_string()))?;
-                }
-                "--native-seeds" => {
-                    native_seeds =
-                        Some(PathBuf::from(options.next().ok_or_else(|| {
-                            RequestError::Invalid("--native-seeds DIR".to_string())
-                        })?));
+                    if options.next().map(String::as_str) != Some("lsnes") {
+                        return Err(RequestError::Compatibility);
+                    }
                 }
                 "--watch-words" => {
                     // Work-RAM words (hex) printed whenever their value changes,
@@ -418,17 +397,18 @@ impl CorpusRequest {
                         RequestError::Invalid("--watch-words ADDR,...".to_string())
                     })?;
                     for address in list.split(',') {
-                        watched.push(
-                            usize::from_str_radix(address.trim_start_matches('$'), 16).map_err(
-                                |_| RequestError::Invalid(format!("--watch-words: {address}")),
-                            )?,
-                        );
+                        let offset = usize::from_str_radix(address.trim_start_matches('$'), 16)
+                            .ok()
+                            .filter(|&offset| offset < 0x1_ffff)
+                            .ok_or_else(|| {
+                                RequestError::Invalid(format!("--watch-words: {address}"))
+                            })?;
+                        watched.push(offset);
                     }
                 }
                 "--watch-pcs" => {
                     // Instruction addresses (24-bit hex) whose hits each record
-                    // carries, printed per frame and kept in a --cache's hits.txt
-                    // (LakeSnes watches the first 32).
+                    // carries, printed per frame and kept in a --cache's hits.txt.
                     let list = options
                         .next()
                         .ok_or_else(|| RequestError::Invalid("--watch-pcs ADDR,...".to_string()))?;
@@ -438,7 +418,9 @@ impl CorpusRequest {
                                 address.trim_start_matches('$').replace(':', "").as_str(),
                                 16,
                             )
-                            .map_err(|_| {
+                            .ok()
+                            .filter(|&pc| pc <= 0xff_ffff)
+                            .ok_or_else(|| {
                                 RequestError::Invalid(format!("--watch-pcs: {address}"))
                             })?,
                         );
@@ -449,19 +431,6 @@ impl CorpusRequest {
                         .next()
                         .and_then(|value| value.parse().ok())
                         .ok_or_else(|| RequestError::Invalid("--limit N".to_string()))?;
-                }
-                "--frame-pads" => {
-                    let directory = options
-                        .next()
-                        .ok_or_else(|| RequestError::Invalid("--frame-pads DIR".to_string()))?;
-                    pads = Some(FramePads::Write(PathBuf::from(directory)));
-                    outputs.push(CorpusOutput::Directory(PathBuf::from(directory)));
-                }
-                "--from-frame-pads" => {
-                    let directory = options.next().ok_or_else(|| {
-                        RequestError::Invalid("--from-frame-pads DIR".to_string())
-                    })?;
-                    pads = Some(FramePads::Play(PathBuf::from(directory)));
                 }
                 "--no-memories" => lean = true,
                 "--cache" => {
@@ -475,12 +444,6 @@ impl CorpusRequest {
                 other => return Err(RequestError::Invalid(format!("unknown option {other}"))),
             }
         }
-        if record_v2.is_some() && (backend != "lsnes" || !matches!(pads, Some(FramePads::Play(_))))
-        {
-            return Err(RequestError::Invalid(
-                "--record-v2 records lsnes rows played --from-frame-pads".to_string(),
-            ));
-        }
         if (sidecar.is_some() || !dump_frames.is_empty()) && record_v2.is_none() {
             return Err(RequestError::Invalid(
                 "--sidecar and --dump-frames go with --record-v2".to_string(),
@@ -491,26 +454,24 @@ impl CorpusRequest {
                 "--dump-frames writes into the --sidecar DIR".to_string(),
             ));
         }
-        if cache.is_some() && (lean || !matches!(pads, Some(FramePads::Play(_)))) {
-            return Err(RequestError::Invalid(
-                "--cache records rows played --from-frame-pads, with their memories".to_string(),
-            ));
+        if lean && (cache.is_some() || record_v2.is_some() || !watched.is_empty()) {
+            return Err(RequestError::Compatibility);
+        }
+        if cache_pictures == crate::record::codec::PictureMode::Keep && cache.is_none() {
+            return Err(RequestError::Compatibility);
         }
         Ok(Self {
             rom: rom.into(),
             lock: lock.into(),
-            data: data.into(),
+            bundle: bundle.into(),
             only,
             limit,
             shard,
             outputs,
             sidecar,
             dump_frames,
-            backend: BackendName::from(backend),
-            native_seeds,
             watched,
             watched_pcs,
-            pads,
             lean,
             cache,
             cache_pictures,

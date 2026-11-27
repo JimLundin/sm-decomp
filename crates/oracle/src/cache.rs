@@ -41,6 +41,16 @@ pub struct Pins {
     pub pads: String,
 }
 
+impl From<&crate::lock::Row> for Pins {
+    fn from(row: &crate::lock::Row) -> Self {
+        Self {
+            seed_record: row.seed_record.map(|sha| sha.to_string()),
+            seed_words: row.seed_words.map(|sha| sha.to_string()),
+            pads: row.pads.to_string(),
+        }
+    }
+}
+
 /// The tier a writer takes.
 enum Tier {
     /// Each record whole, with its picture.
@@ -184,23 +194,5 @@ impl Writer {
         }
         std::fs::write(self.directory.join(index), text)?;
         Ok(self.offset)
-    }
-}
-
-/// Row `id`'s pins: the native seed `start` names under `native_seeds`, and its pad file.
-pub fn pins(start: Option<&str>, native_seeds: Option<&Path>, pads: &Path) -> Pins {
-    let seed = start
-        .and_then(|start| start.split_once(':'))
-        .zip(native_seeds)
-        .and_then(|((capture, index), native)| {
-            let index: u32 = index.parse().ok()?;
-            Some(native.join(capture).join(format!("{index:04}.lss")))
-        });
-    Pins {
-        seed_record: seed.as_deref().and_then(crate::relock::file_sha256),
-        seed_words: seed
-            .as_deref()
-            .and_then(|state| crate::relock::file_sha256(&state.with_extension("words"))),
-        pads: crate::relock::file_sha256(pads).unwrap_or_default(),
     }
 }

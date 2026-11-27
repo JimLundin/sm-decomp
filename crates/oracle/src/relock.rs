@@ -10,12 +10,12 @@
 //! `ppu`, `wram` and `apu` streams fold at quiescent cuts only; `video` and
 //! `timing` fold every frame. The row records its overrun and NMI-off schedules.
 
+use crate::lock::{FactResult, Row, Stream as LockStream, StreamLock};
 use crate::record::{ApuAccessKind, Cut, FrameRecord, NmiKind, PpuRegisters};
 use core::hash::{Hash, Hasher};
 use data::digest::Digest;
 use data::span::{self, Folded, Marks, PortAccess, PortDirection, SpanFold};
 use std::fmt::Write as _;
-use std::path::Path;
 
 pub use data::span::{MARK_FRAMES, Stream};
 
@@ -44,7 +44,7 @@ impl span::Frame for RecordFrame<'_> {
             Stream::Cgram => {
                 (record.cgram.len() == 0x100).then(|| span::cgram_digest(&record.cgram))
             }
-            Stream::Oam => crate::streams::oam_digest(record),
+            Stream::Oam => oam_digest(record),
             Stream::Sram => Some(span::bytes_digest(&record.sram)),
             Stream::Ppu => Some(ppu_digest(&record.ppu)),
             Stream::Wram => Some(span::bytes_digest(&record.wram)),
@@ -81,6 +81,24 @@ impl span::Frame for RecordFrame<'_> {
 /// The architectural PPU registers without the five lsnes doesn't expose
 /// (docs/ORACLE.md, MEASUREMENTS (o); `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` are not
 /// compared, RELOCK Q4), in declaration order.
+/// The `oam` stream; `None` for a record without the memories.
+pub(crate) fn oam_digest(record: &FrameRecord) -> Option<u64> {
+    let (low, high) = record.oam.split_at_checked(0x200)?;
+    let words: Vec<u16> = low
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|&pair| u16::from_le_bytes(pair))
+        .collect();
+    let mut digest = Digest::default();
+    // The lock folds 256 words followed by the 32 high-table bytes.
+    <[u16; 256]>::try_from(words.as_slice())
+        .ok()?
+        .hash(&mut digest);
+    <[u8; 32]>::try_from(high).ok()?.hash(&mut digest);
+    Some(digest.finish())
+}
+
 fn ppu_digest(ppu: &PpuRegisters) -> u64 {
     let PpuRegisters {
         inidisp,
@@ -270,15 +288,6 @@ pub struct Recorded {
     pub frame_log: Option<String>,
 }
 
-/// A fact's result on the oracle.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FactResult {
-    Holds(bool),
-    /// Not evaluated: `probe:` facts are the old engine's instrumentation, and the
-    /// others wait for `verify::decode` (step c, second part).
-    Unevaluated,
-}
-
 /// One format-2 `[[row]]` entry.
 #[derive(Clone, Debug)]
 pub struct Entry {
@@ -389,104 +398,56 @@ pub fn header(oracle: crate::OracleId, server_sha256: &str) -> String {
     )
 }
 
-/// SHA-256 of a file's bytes, `None` if it doesn't exist.
-pub fn file_sha256(path: &Path) -> Option<String> {
-    let bytes = std::fs::read(path).ok()?;
-    Some(crate::ladder::hex(&data::rom::sha256(&bytes)))
-}
-
-/// Row `id`'s facts from the scenario files in `directory` (every `.toml`
-/// but the lock), in file order: from a `facts = [...]` on the line naming
-/// `id = "ID"` (route files' inline rows), or on a later line of its
-/// `[[scenario]]` block.
-pub fn scenario_facts(directory: &Path, id: &str) -> Vec<String> {
-    let Ok(listing) = std::fs::read_dir(directory) else {
-        return Vec::new();
+/// Name each observed field that differs from the lock.
+pub(crate) fn differences(row: &Row, ticks: u32, recorded: &Recorded) -> Vec<&'static str> {
+    let same_frames = |schedule: &[crate::lock::Frame], observed: &[u64]| {
+        schedule
+            .iter()
+            .map(|frame| frame.0)
+            .eq(observed.iter().copied())
     };
-    let mut paths: Vec<_> = listing
-        .filter_map(|item| item.ok().map(|item| item.path()))
-        .filter(|path| {
-            path.extension()
-                .is_some_and(|extension| extension == "toml")
-        })
-        .filter(|path| path.file_name().is_some_and(|name| name != "lock.toml"))
-        .collect();
-    paths.sort();
-    let named = format!("id = \"{id}\"");
-    let facts_of = |line: &str| -> Option<Vec<String>> {
-        let list = line.split_once("facts = [")?.1.split_once(']')?.0;
-        Some(
-            list.split(',')
-                .map(|fact| fact.trim().trim_matches('"').to_owned())
-                .filter(|fact| !fact.is_empty())
-                .collect(),
-        )
-    };
-    for path in paths {
-        let Ok(text) = std::fs::read_to_string(&path) else {
-            continue;
+    let mut differences = [
+        ("frames", row.frames.0 == recorded.frames),
+        ("ticks", row.ticks.0 == ticks),
+        ("overruns", same_frames(&row.overruns, &recorded.overruns)),
+        ("nmi_off", same_frames(&row.nmi_off, &recorded.nmi_off)),
+        (
+            "still_running",
+            same_frames(&row.still_running, &recorded.still_running),
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(name, same)| (!same).then_some(name))
+    .collect::<Vec<_>>();
+    for (name, observed) in &recorded.streams {
+        let expected = LockStream::try_from(*name)
+            .ok()
+            .and_then(|stream| row.streams.get(&stream));
+        let same = match (expected, observed) {
+            (Some(StreamLock::Absent), None) => true,
+            (Some(StreamLock::Marks(marks)), Some(observed)) => {
+                marks.iter().map(|mark| mark.0).eq(observed.iter().copied())
+            }
+            _ => false,
         };
-        let mut lines = text.lines();
-        while let Some(line) = lines.next() {
-            if !line.contains(&named) {
-                continue;
-            }
-            if let Some(facts) = facts_of(line) {
-                return facts;
-            }
-            return lines
-                .take_while(|line| !line.trim_start().starts_with("[["))
-                .find_map(facts_of)
-                .unwrap_or_default();
+        if !same {
+            differences.push(name);
         }
     }
-    Vec::new()
+    differences
 }
 
-/// Where a row's format-2 entry takes its pins from.
-#[derive(Clone, Copy, Debug)]
-pub struct Sources<'a> {
-    /// The per-frame pad file the row played.
-    pub pads: &'a Path,
-    /// The native seeds' directory (`DIR/CAPTURE/NNNN.lss`).
-    pub native_seeds: Option<&'a Path>,
-    /// The scenario files' directory, for the row's facts.
-    pub scenarios: &'a Path,
-}
-
-/// Row `entry`'s format-2 entry from its run's `recorded` marks.
-pub fn entry(
-    pin: &crate::lock::Pin,
-    entry: &crate::lock::Entry,
-    ticks: u32,
-    recorded: Recorded,
-    sources: Sources<'_>,
-) -> Entry {
-    let seed = pin.seed.as_deref().and_then(|seed| {
-        let (capture, index) = seed.split_once(':')?;
-        let index: u32 = index.parse().ok()?;
-        let state = sources
-            .native_seeds?
-            .join(capture)
-            .join(format!("{index:04}.lss"));
-        Some((
-            file_sha256(&state),
-            file_sha256(&state.with_extension("words")),
-        ))
-    });
-    let (seed_record, seed_words) = seed.unwrap_or_default();
-    let facts = scenario_facts(sources.scenarios, &entry.id)
-        .into_iter()
-        .map(|fact| (fact, FactResult::Unevaluated))
-        .collect();
+/// The row's pins and declared facts come from the lock. The runner verifies
+/// the inputs before it plays them.
+pub fn entry(row: &Row, ticks: u32, recorded: Recorded) -> Entry {
     Entry {
-        id: entry.id.clone(),
-        start: pin.seed.clone().unwrap_or_else(|| "power-on".to_owned()),
-        seed_record,
-        seed_words,
-        pads: file_sha256(sources.pads).unwrap_or_default(),
+        id: row.id.to_string(),
+        start: row.start.to_string(),
+        seed_record: row.seed_record.map(|sha| sha.to_string()),
+        seed_words: row.seed_words.map(|sha| sha.to_string()),
+        pads: row.pads.to_string(),
         ticks,
-        facts,
+        facts: row.facts.clone(),
         recorded,
     }
 }

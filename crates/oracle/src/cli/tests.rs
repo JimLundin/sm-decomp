@@ -1,5 +1,5 @@
 use super::requests::{CorpusRequest, CrossRequest, MovieRequest, RequestError};
-use super::{FramePads, RoomSeed, corpus, cross, csv, movie, save_due};
+use super::{RoomSeed, corpus, cross, csv, movie, save_due};
 use std::path::PathBuf;
 
 fn args(values: &[&str]) -> Vec<String> {
@@ -213,22 +213,16 @@ fn corpus_options_parse_without_acquiring_outputs() {
         "1/3",
         "--oracle",
         "lsnes",
-        "--record",
-        "missing.record",
         "--record-v2",
         "missing.v2",
         "--sidecar",
         "missing.sidecar",
         "--dump-frames",
         "one:1,3",
-        "--native-seeds",
-        "missing.native",
         "--watch-words",
         "$1234,abcd",
         "--watch-pcs",
         "$80:8000,818000",
-        "--from-frame-pads",
-        "missing.pads",
         "--cache",
         "missing.cache",
         "--cache-pictures",
@@ -252,9 +246,9 @@ fn corpus_repeat_precedence_preserves_selection_and_effective_outputs() {
         "rom",
         "lock",
         "data",
-        "--record",
+        "--record-v2",
         "one",
-        "--record",
+        "--record-v2",
         "two",
         "--limit",
         "3",
@@ -264,10 +258,6 @@ fn corpus_repeat_precedence_preserves_selection_and_effective_outputs() {
         "1/2",
         "--shard",
         "0/3",
-        "--frame-pads",
-        "write",
-        "--from-frame-pads",
-        "play",
         "--watch-words",
         "1",
         "--watch-words",
@@ -275,14 +265,11 @@ fn corpus_repeat_precedence_preserves_selection_and_effective_outputs() {
     ]))
     .unwrap();
     assert!(
-        matches!(&request.outputs[1], super::requests::CorpusOutput::Record(path) if path == &PathBuf::from("two"))
+        matches!(&request.outputs[1], super::requests::CorpusOutput::RecordV2(path) if path == &PathBuf::from("two"))
     );
     assert_eq!(request.limit, 4);
     assert_eq!(request.watched, [1, 2]);
     assert!(request.shard.includes(0) && request.shard.includes(3));
-    assert!(
-        matches!(request.pads, Some(FramePads::Play(directory)) if directory.as_path() == std::path::Path::new("play"))
-    );
 }
 
 #[test]
@@ -319,17 +306,11 @@ fn corpus_missing_operands_and_compatibility_are_rejected() {
     }
     for tail in [
         vec!["--record-v2", "file", "--oracle", "lakesnes"],
-        vec!["--record-v2", "file", "--oracle", "lsnes"],
+        vec!["--watch-words", "$1ffff"],
+        vec!["--watch-pcs", "$1000000"],
         vec!["--sidecar", "dir"],
         vec!["--dump-frames", "row:1"],
-        vec!["--cache", "dir"],
-        vec![
-            "--cache",
-            "dir",
-            "--from-frame-pads",
-            "pads",
-            "--no-memories",
-        ],
+        vec!["--cache", "dir", "--no-memories"],
     ] {
         let mut values = vec!["rom", "lock", "data"];
         values.extend(tail);
@@ -344,7 +325,8 @@ fn invalid_tail_preserves_existing_outputs_and_does_not_create_directories() {
     std::fs::create_dir_all(&directory).unwrap();
     let output = directory.join("sentinel.txt");
     let new_directory = directory.join("uncreated");
-    for flag in ["--record", "--record-v2"] {
+    {
+        let flag = "--record-v2";
         std::fs::write(&output, b"synthetic sentinel").unwrap();
         let mut values = args(&["missing.rom", "missing.lock", "missing.data", flag]);
         values.push(output.to_string_lossy().into_owned());
@@ -372,7 +354,7 @@ fn successful_repeated_outputs_are_acquired_in_option_order() {
     std::fs::create_dir_all(&directory).unwrap();
     let first = directory.join("first.txt");
     let last = directory.join("last.txt");
-    let pads = directory.join("pads");
+    let sidecar = directory.join("sidecar");
     for path in [&first, &last] {
         std::fs::write(path, b"synthetic sentinel").unwrap();
     }
@@ -380,26 +362,27 @@ fn successful_repeated_outputs_are_acquired_in_option_order() {
         "rom".to_owned(),
         "lock".to_owned(),
         "data".to_owned(),
-        "--record".to_owned(),
+        "--record-v2".to_owned(),
         first.to_string_lossy().into_owned(),
-        "--frame-pads".to_owned(),
-        pads.to_string_lossy().into_owned(),
-        "--record".to_owned(),
+        "--sidecar".to_owned(),
+        sidecar.to_string_lossy().into_owned(),
+        "--record-v2".to_owned(),
         last.to_string_lossy().into_owned(),
-        "--from-frame-pads".to_owned(),
-        "play".to_owned(),
     ];
     let request = CorpusRequest::parse(&values).unwrap();
-    let (mut record, record_v2) = super::acquire_corpus_outputs(request.outputs);
+    let mut record = super::acquire_corpus_outputs(request.outputs, &[]);
     std::io::Write::write_all(record.as_mut().unwrap(), b"active record").unwrap();
     drop(record);
-    assert!(record_v2.is_none());
-    assert_eq!(std::fs::read(&first).unwrap(), b"");
-    assert_eq!(std::fs::read(&last).unwrap(), b"active record");
-    assert!(pads.is_dir());
+    let header = crate::relock::header(crate::lsnes::IDENTITY, &crate::lsnes::server_sha256());
+    assert_eq!(std::fs::read_to_string(&first).unwrap(), header);
+    assert_eq!(
+        std::fs::read_to_string(&last).unwrap(),
+        format!("{header}active record")
+    );
+    assert!(sidecar.is_dir());
     std::fs::remove_file(first).unwrap();
     std::fs::remove_file(last).unwrap();
-    std::fs::remove_dir(pads).unwrap();
+    std::fs::remove_dir(sidecar).unwrap();
     std::fs::remove_dir(directory).unwrap();
 }
 

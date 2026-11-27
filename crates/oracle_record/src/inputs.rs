@@ -1,5 +1,4 @@
-//! Scenario input files: one hexadecimal JOY1 word per line, per Tick in
-//! the lock's inputs and per video frame in a frame-pad file (docs/ORACLE.md, RELOCK b1).
+//! Movie and corpus inputs, one hexadecimal JOY1 word per video frame.
 
 use crate::Pad;
 use std::path::Path;
@@ -8,6 +7,11 @@ use std::path::Path;
 pub fn read(path: &Path) -> Result<Vec<Pad>, String> {
     let text =
         std::fs::read_to_string(path).map_err(|error| format!("{}: {error}", path.display()))?;
+    parse(path, &text)
+}
+
+/// Parse text already read from an input file.
+pub fn parse(path: &Path, text: &str) -> Result<Vec<Pad>, String> {
     text.lines()
         .enumerate()
         .filter(|(_, line)| !line.trim().is_empty())

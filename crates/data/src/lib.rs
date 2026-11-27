@@ -17,6 +17,7 @@ pub mod level;
 pub mod map;
 pub mod message;
 pub mod movement;
+pub mod oracle_lock;
 pub mod palette;
 pub mod plm;
 pub mod pose;

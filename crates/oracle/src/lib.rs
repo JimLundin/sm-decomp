@@ -16,7 +16,7 @@ pub use oracle_record::game;
 pub use oracle_record::inputs;
 pub mod ladder;
 pub mod lakesnes;
-pub mod lock;
+pub use data::oracle_lock as lock;
 pub mod lsnes;
 pub mod measure;
 pub mod png;
@@ -24,7 +24,6 @@ pub mod relock;
 pub mod relock_check;
 pub use oracle_record as record;
 pub mod seed;
-pub mod streams;
 
 pub use record::{
     ApuAccess, ApuAccessKind, Beam, CpuRegisters, Cut, FrameRecord, Hit, Nmi, NmiKind, Pad,
