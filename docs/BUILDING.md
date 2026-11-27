@@ -1,7 +1,8 @@
 # Building and checking
 
-You need your own unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`, SHA-1
-`da957f0d63d14cb441d215462904c4fa8519c613`. No ROM or game data is in this repository.
+You need your own unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`, whose
+SHA-256 is `ROM_SHA256` in [`tools/ci/replay_data.py`](../tools/ci/replay_data.py). No ROM or
+game data is in this repository.
 Credits and licences for the tools and data the project uses are [below](#credits-and-licence).
 
 ```sh
@@ -102,47 +103,28 @@ components of `rust-toolchain.toml` (`rustup show` does it at once). Install a C
 **Folders.** The tools keep their scratch, the lanes' worktrees and the seed under `$TEMP`
 (else `$TMPDIR`, else `/tmp`). `/tmp` is often a RAM file system and is cleared on reboot, and the
 seed's hard links need the seed and the lanes on one file system, so point `TEMP` at a disk
-folder in your shell's profile, with the record cache's folder beside it:
+folder in your shell's profile, with the replay data's record cache beside it:
 
 ```sh
-export TEMP=$HOME/scratch SM_CACHE=$HOME/scratch/collab/ci-cache/rows
+export TEMP=$HOME/scratch SM_CACHE=$HOME/scratch/collab/replay-data/cache
 mkdir -p "$TEMP/collab"
 ```
 
-**The ROM** goes at `rom/sm.smc` (above; `sha1sum rom/sm.smc` checks it).
+**The ROM** goes at `rom/sm.smc` (above; `sha256sum rom/sm.smc` checks it).
 
-**The record cache** is CI's, rebuilt from the encrypted asset that `CACHE_ASSET` and
-`CACHE_SHA256` pin in `.github/workflows/verify.yml`, with a key made from the ROM. It lives at
-`$SM_CACHE`, outside `/tmp`, so it survives a reboot; rebuild it when the pin changes:
-
-```sh
-asset=$(sed -n 's/^ *CACHE_ASSET: //p' .github/workflows/verify.yml | head -1)
-sum=$(sed -n 's/^ *CACHE_SHA256: //p' .github/workflows/verify.yml | head -1)
-curl -fL --retry 8 -o "$TEMP/$asset" "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$asset"
-echo "$sum  $TEMP/$asset" | sha256sum --check
-SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
-export SM_SEED_PASSPHRASE
-mkdir -p "$SM_CACHE"
-set -o pipefail   # a failed decrypt must not leave a partial cache unnoticed
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
-  -in "$TEMP/$asset" | tar -xJ -C "$SM_CACHE"
-rm "$TEMP/$asset"
-```
-
-The native fixtures some indexed cases also read come from `tools/ci/fetch_replay_fixtures.sh`,
-which takes the ROM and an installation directory. `fetch_audio_native.sh`
-needs `AUDIO_NATIVE_ASSET` and `AUDIO_NATIVE_SHA256`, pinned beside the cache's in `verify.yml`:
+**The replay data** is CI's record cache and native fixtures, one encrypted asset that
+[`tools/ci/replay_data.py`](../tools/ci/replay_data.py) pins and decrypts with a key made from the
+ROM. It lives outside `/tmp`, so it survives a reboot; install it again when the pin changes:
 
 ```sh
-export AUDIO_NATIVE_ASSET=$(sed -n "s/^ *AUDIO_NATIVE_ASSET: //p" .github/workflows/verify.yml | head -1 | tr -d '"')
-export AUDIO_NATIVE_SHA256=$(sed -n "s/^ *AUDIO_NATIVE_SHA256: //p" .github/workflows/verify.yml | head -1 | tr -d '"')
-native=$TEMP/collab/audio-native
-bash tools/ci/fetch_replay_fixtures.sh rom/sm.smc "$native"
+rm -rf "$TEMP/collab/replay-data"
+python3 tools/ci/replay_data.py fetch rom/sm.smc "$TEMP/collab/replay-data"
 ```
 
-Then point the variables of `verify.yml`'s witness environment at it: `SM_AUDIO_NATIVE` and
-`SM_CONNECTED_SOURCE` at the folder, `SM_SEARCH_PACKET` at `$native/native-search-inputs-v1`,
-`SM_TOUCH_PACKET` at `$native/native-search-order-v1`, and the rest as that list names them.
+Then point the variables of `verify.yml`'s witness environment at it: `SM_CACHE` at its
+`cache` folder, `SM_AUDIO_NATIVE` and `SM_CONNECTED_SOURCE` at its `native` folder,
+`SM_SEARCH_PACKET` at `native/native-search-inputs-v1`, `SM_TOUCH_PACKET` at
+`native/native-search-order-v1`, and the rest as that list names them.
 
 **The seed** is the warm build new lanes start from: `bash tools/lane/worktree.sh seed` once, and
 again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).

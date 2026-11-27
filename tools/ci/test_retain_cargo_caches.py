@@ -8,7 +8,7 @@ from unittest.mock import patch
 from retain_cargo_caches import Api, Cache, candidates, main
 
 
-PREFIXES = [f"cargo-{job}-Linux-toolchain-lock-" for job in ("quality", "content", "replay")]
+PREFIXES = [f"cargo-{job}-Linux-toolchain-lock-" for job in ("quality", "replay")]
 CURRENT = "a" * 40
 
 
@@ -97,7 +97,7 @@ class RetentionTests(unittest.TestCase):
                 patch.object(Api, "prune") as prune:
             main()
         self.assertEqual(prune.call_args.args,
-                         ([f"cargo-{job}-Linux-{expected}-{expected}-" for job in ("quality", "content", "replay")], CURRENT))
+                         ([f"cargo-{job}-Linux-{expected}-{expected}-" for job in ("quality", "replay")], CURRENT))
 
     def test_consumer_cannot_prune(self):
         with patch.dict(os.environ, {"GITHUB_REF": "refs/pull/1/merge", "GITHUB_EVENT_NAME": "pull_request"}), \

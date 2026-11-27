@@ -1,5 +1,5 @@
 # Content import checks and the indexed production replay acceptance.
-# ROM and captured fixture bytes remain encrypted in the pinned CI assets.
+# The ROM and the replay data stay encrypted at rest; tools/ci/replay_data.py pins the replay data.
 
 on:
   workflow_call:
@@ -16,27 +16,17 @@ on:
 permissions:
   contents: read
 
-env:
-  CACHE_ASSET: lockstep-cache-19e7684d7ff099ba.tar.xz.enc
-  CACHE_SHA256: a9e4fa04844821514806259744a55dad7b0d1c32b58fd5a18cd2a4ff8589707f
-  # Root pins the validated fixture set after uploading its ciphertext.
-  AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
-  AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"
-
 jobs:
-  # The rebuild's content tests read the real ROM (data::room's Morph Ball Room test returns
-  # early without it), so they run here, where the ROM is decrypted.
-  content:
-    if: inputs.target == ''
+  # One complete index and baseline hold all currently admitted replay claims.
+  replay:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       # Main runs, scheduled or dispatched, build cold and publish this clean revision; a dispatched
       # single target restores. Other refs only restore.
       # Cached paths exclude the ROM and records, which are read only at runtime.
-      - &cache
-        name: Restore the cargo registry and the build
+      - name: Restore the cargo registry and the build
         if: inputs.target != '' || github.ref != 'refs/heads/main'
         id: cargo_cache
         uses: actions/cache/restore@v4
@@ -49,8 +39,7 @@ jobs:
           restore-keys: |
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
-      - &refresh_sources
-        name: Refresh source timestamps after restoring a build
+      - name: Refresh source timestamps after restoring a build
         if: steps.cargo_cache.outputs.cache-matched-key != ''
         # Stable Cargo compares source mtimes to the previous build's dep-info.
         run: git ls-files -z | xargs -0r touch -ch --
@@ -62,87 +51,31 @@ jobs:
           ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
           path: .ci-data
           persist-credentials: false
-      # Decrypt the ROM, check its SHA-1, then remove the ci-data checkout.
-      - &decrypt
-        name: Decrypt the ROM
+      # replay_data.py checks the ROM, then installs the record cache and the native fixtures from
+      # their one pinned asset as replay-data/cache and replay-data/native.
+      - &replay_data
+        name: Decrypt the ROM and install the replay data
         env:
           SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
         run: |
           mkdir -p rom
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
-          if ! echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check; then
-            rm -f rom/sm.smc
-            echo "wrong ROM"
-            exit 1
-          fi
           rm -rf .ci-data
-      - name: Test the rebuild's content decoders and importers against the ROM
-        run: cargo test --locked -p data -p import --no-fail-fast
-      - &cache_save
-        name: Save the cargo registry and the build
-        if: inputs.target == '' && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
-
-  # One complete index and baseline hold all currently admitted replay claims.
-  replay:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-      - *cache
-      - *refresh_sources
-      - &fetch_cache
-        name: Fetch the record cache and check its pin
-        run: |
-          if ! grep -qE '^[0-9a-f]{64}$' <<<"$CACHE_SHA256"; then
-            echo "::error::CACHE_SHA256 is not pinned: upload $CACHE_ASSET to ci-data and set its SHA-256"
-            exit 1
-          fi
-          # The release host answers 504 at times: back off for up to ten minutes.
-          if ! curl --fail --silent --show-error --location \
-            --retry 8 --retry-delay 15 --retry-all-errors --retry-max-time 600 \
-            --output "$RUNNER_TEMP/cache.tar.xz.enc" \
-            "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$CACHE_ASSET"; then
-            echo "::error::$CACHE_ASSET could not be fetched from the ci-data release"
-            exit 1
-          fi
-          echo "$CACHE_SHA256  $RUNNER_TEMP/cache.tar.xz.enc" | sha256sum --check
-      - *rom
-      - *decrypt
-      - &unpack_cache
-        name: Decrypt and unpack the record cache
-        run: |
-          # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (docs/ORACLE.md).
-          SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
-          export SM_SEED_PASSPHRASE
-          set -o pipefail
-          mkdir -p "$RUNNER_TEMP/cache"
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
-            -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
-          rm "$RUNNER_TEMP/cache.tar.xz.enc"
-      - &native_fixtures
-        name: Fetch and validate the replay fixtures
-        run: bash tools/ci/fetch_replay_fixtures.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+          python3 tools/ci/replay_data.py fetch rom/sm.smc "$RUNNER_TEMP/replay-data"
       - name: Run one verification library test
         if: contains(inputs.target, '::')
         env: &witness_env
           VERIFY_TEST: ${{ inputs.target }}
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
-          SM_SEARCH_PACKET: ${{ runner.temp }}/audio-native/native-search-inputs-v1
+          SM_SEARCH_PACKET: ${{ runner.temp }}/replay-data/native/native-search-inputs-v1
           SM_SEARCH_RECEIPT: ${{ runner.temp }}/search-receipt.toml
           SM_SEARCH_FAULT_RECEIPT: ${{ runner.temp }}/search-fault-control.toml
-          SM_TOUCH_PACKET: ${{ runner.temp }}/audio-native/native-search-order-v1
+          SM_TOUCH_PACKET: ${{ runner.temp }}/replay-data/native/native-search-order-v1
           SM_TOUCH_RECEIPT: ${{ runner.temp }}/search-touch-receipt.toml
-          SM_CACHE: ${{ runner.temp }}/cache
-          SM_CONNECTED_SOURCE: ${{ runner.temp }}/audio-native
+          SM_CACHE: ${{ runner.temp }}/replay-data/cache
+          SM_CONNECTED_SOURCE: ${{ runner.temp }}/replay-data/native
           SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
-          SM_AUDIO_NATIVE: ${{ runner.temp }}/audio-native
+          SM_AUDIO_NATIVE: ${{ runner.temp }}/replay-data/native
         run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
       - name: Build the shared replay command
         if: inputs.target == ''
@@ -153,7 +86,7 @@ jobs:
         run: |
           for start in 0 6; do
             cargo run --quiet --locked --profile verify -p tools --bin tools -- replay played \
-              chain-any-0003-DFD7 "$start" 344 --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc \
+              chain-any-0003-DFD7 "$start" 344 --cache "$RUNNER_TEMP/replay-data/cache" --rom rom/sm.smc \
               --lock scenarios/locks/lsnes.toml
           done
       - name: Check the required witnesses and indexed replay against the reviewed baseline
@@ -166,13 +99,27 @@ jobs:
           CARGO_INCREMENTAL: "1"
           REPLAY_CASE: ${{ inputs.target }}
         run: |
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
-            SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
+          SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
             bash tools/ci/replay.sh --case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
+      # data::room's Morph Ball Room test returns early without the ROM, so the content tests run
+      # in this job, after the replay steps so that a replay failure doesn't hide their results
+      # and theirs doesn't hide the replay's.
+      - name: Test the rebuild's content decoders and importers against the ROM
+        if: ${{ !cancelled() && inputs.target == '' }}
+        run: cargo test --locked -p data -p import --no-fail-fast
       - name: Reproduce a verification failure on this revision
         if: failure()
         run: echo "Reproduce $GITHUB_SHA with gh run rerun $GITHUB_RUN_ID --failed"
-      - *cache_save
+      - name: Save the cargo registry and the build
+        if: inputs.target == '' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
 
   faults:
     if: inputs.target == ''
@@ -180,11 +127,8 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - *fetch_cache
       - *rom
-      - *decrypt
-      - *unpack_cache
-      - *native_fixtures
+      - *replay_data
       - name: Install the Rust parser for selectable replay faults
         run: |
           python3 -m venv "$RUNNER_TEMP/fault-tools"
@@ -193,6 +137,6 @@ jobs:
         env:
           CARGO_INCREMENTAL: "1"
         run: |
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
-            SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
+          SM_CACHE="$RUNNER_TEMP/replay-data/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/replay-data/native" \
             "$RUNNER_TEMP/fault-tools/bin/python" tools/check_mutants.py selectable
