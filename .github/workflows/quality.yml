@@ -112,11 +112,27 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Pull requests and pushes run it only when one of its inputs changed since main: the specs,
+      # the vectors, the rule owners, the prover and its fixtures, the clean crates it builds and
+      # their build inputs. A main push's head passed it as a pull request.
+      - name: Find whether an input of the adjusted vectors changed
+        id: inputs
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          . tools/lane/changes.sh
+          if ! changed_since origin/main docs/behaviours scenarios/vectors crates/clean Cargo.toml Cargo.lock \
+            rust-toolchain.toml 'tools/cleanroom/adjusted_*' tools/cleanroom/test_adjusted_vectors_run.py \
+            tools/lane/changes.sh .github/workflows/quality.yml; then
+            echo unchanged=true >>"$GITHUB_OUTPUT"
+          fi
       - name: Install the repository toolchain
+        if: steps.inputs.outputs.unchanged != 'true'
         run: rustup toolchain install
       # Restores the Quality job's build, which holds the clean crates' tests; saves nothing.
       - name: Restore the cargo registry and the build
-        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        if: steps.inputs.outputs.unchanged != 'true' && github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
         id: cargo_cache
         uses: actions/cache/restore@v4
         with:
@@ -130,8 +146,10 @@ jobs:
             cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - *refresh_sources
       - name: Test the adjusted-vector prover
+        if: steps.inputs.outputs.unchanged != 'true'
         run: python3 -m unittest discover -s tools/cleanroom -p test_adjusted_vectors_run.py
       - name: Require each adjusted vector to fail at the reference rules
         # MODEL §1 decision 16: a Parameter entry's adjusted vector proves nothing unless its
         # answer depends on the value it changes.
+        if: steps.inputs.outputs.unchanged != 'true'
         run: python3 tools/cleanroom/adjusted_vectors_run.py
