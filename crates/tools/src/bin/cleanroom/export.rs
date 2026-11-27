@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 
 use serde::Deserialize;
 
-use crate::process::{Lane, git, output, repo};
+use crate::process::{Lane, git, host_git, output, repo};
 use crate::rules;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -75,7 +75,7 @@ impl Export<'_> {
                 "the brief names what the clean room hides:\n{hits}"
             ));
         }
-        let sha = output(Command::new("git").current_dir(&repo).args([
+        let sha = output(host_git(&repo).args([
             "rev-parse",
             "--verify",
             &format!("{}^{{commit}}", self.commit),
@@ -108,6 +108,8 @@ impl Export<'_> {
             "-m",
             &format!("Clean-room export: {}", self.domain),
         ]))?;
+        let root = output(git(&lane.export).args(["rev-parse", "HEAD"]))?;
+        fs::write(lane.export_root(), root).map_err(|e| e.to_string())?;
         Ok(format!(
             "EXPORT OK {} from {} into {}\n",
             self.domain,
@@ -119,21 +121,15 @@ impl Export<'_> {
     fn copy(&self, repo: &Path, sha: &str, dest: &Path) -> Result<(), String> {
         let mut present = Vec::new();
         for entry in self.entries() {
-            let listed = output(Command::new("git").current_dir(repo).args([
-                "ls-tree",
-                "--name-only",
-                sha,
-                "--",
-                &entry,
-            ]))?;
+            let listed =
+                output(host_git(repo).args(["ls-tree", "--name-only", sha, "--", &entry]))?;
             if !listed.trim().is_empty() {
                 present.push(entry);
             } else if !entry.starts_with("crates/clean/") {
                 return Err(format!("{entry} is not in {sha}"));
             }
         }
-        let archive = Command::new("git")
-            .current_dir(repo)
+        let archive = host_git(repo)
             .args(["archive", "--format=tar", sha, "--"])
             .args(&present)
             .stdout(Stdio::piped())
@@ -154,13 +150,7 @@ impl Export<'_> {
     }
 
     fn workspace(&self, repo: &Path, sha: &str, dest: &Path) -> Result<(), String> {
-        let show = |path: &str| {
-            output(
-                Command::new("git")
-                    .current_dir(repo)
-                    .args(["show", &format!("{sha}:{path}")]),
-            )
-        };
+        let show = |path: &str| output(host_git(repo).args(["show", &format!("{sha}:{path}")]));
         let root: Root = toml::from_str(&show("Cargo.toml")?).map_err(|e| e.to_string())?;
         let ws = root.workspace;
         let model = crate_of(self.domain);
@@ -307,8 +297,8 @@ listings); if you recognise something from such a source, report it.
   you changed, `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` and
   `cargo test --workspace`, and passes only when all of them do. A name hit is a word the
   original's code uses: reword it in the player's terms.
-- Commit only under the two crates, each message ending with the trailer `Role: implementer`.
-  Anything else is refused on import.
+- Commit only the two crates' Rust files under `src/` and `tests/`, each message ending with
+  the trailer `Role: implementer`. Anything else is refused on import.
 - Report a gap you can't explain, with the vector, the field, the expected and actual values and
   the spec entry you suspect.
 "

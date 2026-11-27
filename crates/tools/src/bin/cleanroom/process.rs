@@ -15,6 +15,22 @@ pub fn output(cmd: &mut Command) -> Result<String, String> {
     String::from_utf8(out.stdout).map_err(|e| format!("{cmd:?}: {e}"))
 }
 
+/// Git in a repository on the host, reading no attributes from outside it: not the system's
+/// file, `core.attributesFile`, nor its default under `$XDG_CONFIG_HOME`.
+pub fn host_git(dir: &Path) -> Command {
+    let mut cmd = Command::new("git");
+    no_outside_attributes(&mut cmd);
+    cmd.arg("-C").arg(dir);
+    cmd
+}
+
+fn no_outside_attributes(cmd: &mut Command) {
+    cmd.env("GIT_ATTR_NOSYSTEM", "1")
+        .args(["-c", "core.attributesFile=/dev/null"]);
+}
+
+/// Git on an export or its mirror: none of the caller's git environment, configuration or
+/// attributes, and no hooks.
 pub fn git(dir: &Path) -> Command {
     let mut cmd = Command::new("git");
     for (key, _) in std::env::vars_os() {
@@ -22,6 +38,7 @@ pub fn git(dir: &Path) -> Command {
             cmd.env_remove(key);
         }
     }
+    no_outside_attributes(&mut cmd);
     cmd.env("GIT_CONFIG_NOSYSTEM", "1")
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_NO_REPLACE_OBJECTS", "1")
@@ -45,7 +62,7 @@ pub fn git(dir: &Path) -> Command {
 }
 
 pub fn repo() -> Result<PathBuf, String> {
-    let top = output(Command::new("git").args(["rev-parse", "--show-toplevel"]))?;
+    let top = output(host_git(Path::new(".")).args(["rev-parse", "--show-toplevel"]))?;
     Ok(PathBuf::from(top.trim()))
 }
 
@@ -102,5 +119,10 @@ impl Lane {
 
     pub fn brief(&self) -> PathBuf {
         self.dir.join("brief.md")
+    }
+
+    /// The export's one commit, as `cleanroom export` made it.
+    pub fn export_root(&self) -> PathBuf {
+        self.dir.join("export-root")
     }
 }

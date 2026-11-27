@@ -117,10 +117,13 @@ Each step names its owner, what it waits for, and its done-condition.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and `cleanroom test` passes: the code rules, the name scan on the changed files, fmt, clippy
    and the tests.
-7. **Import** (root): `cargo cleanroom import DOMAIN` on the lane branch. It refuses a commit
-   that touches anything but the shared types and the model, then reruns the code rules on the
-   export's head, the name scan on each file the commits add or change (a hit that file didn't
-   hold at the export's start is refused; the trunk's own hits don't block), and the mirror scan
+7. **Import** (root): `cargo cleanroom import DOMAIN` on the lane branch. It refuses a history
+   that doesn't start at the export's commit, and a commit that touches anything but the
+   manifest and the Rust files under `src/` and `tests/` of the shared types and the model (an
+   attributes file, a build script, cargo configuration or a hidden file among them). It then
+   reruns the code rules on the export's head, each file read as git stores it, the name scan
+   on each file the commits add or change (a hit that file didn't hold at the export's start is
+   refused; the trunk's own hits don't block), and the mirror scan
    on the model against the spec and decode notes on the lane branch (a non-private function the
    export's start didn't have that opens with an entry whose source is one routine is refused).
    It applies the commits to the lane branch, takes the branch back if the export's crates break

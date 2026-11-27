@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use crate::process::{Lane, git, output, repo};
+use crate::process::{Lane, git, host_git, output, repo};
 use crate::scan::Class;
 use crate::{mirror, rules, scan, vocabulary};
 
@@ -76,8 +76,24 @@ impl Mirror {
         output(self.git().args(args))
     }
 
+    /// A blob as stored: `cat-file` applies no attributes, so no filter or `export-ignore` the
+    /// export wrote changes what the checks read.
+    fn blob(&self, object: &str) -> Result<Vec<u8>, String> {
+        let out = self
+            .git()
+            .args(["cat-file", "blob", object])
+            .stdin(Stdio::null())
+            .output()
+            .map_err(|e| e.to_string())?;
+        if out.status.success() {
+            Ok(out.stdout)
+        } else {
+            Err(format!("can't read {object}"))
+        }
+    }
+
     fn show(&self, rev: &str, path: &str) -> Option<String> {
-        self.text(&["show", &format!("{rev}:{path}")]).ok()
+        String::from_utf8(self.blob(&format!("{rev}:{path}")).ok()?).ok()
     }
 
     fn lines(&self, args: &[&str]) -> Result<Vec<String>, String> {
@@ -118,32 +134,58 @@ fn main_ref(git_dir: &Path) -> Result<String, String> {
         .ok_or_else(|| format!("{} has no main branch", git_dir.display()))
 }
 
+/// Writes the plain files under `paths` at `rev` into `dest`, each blob read as stored.
 fn unpack(mirror: &Mirror, rev: &str, paths: &[&str], dest: &Path) -> Result<(), String> {
-    fs::create_dir_all(dest).map_err(|e| e.to_string())?;
-    let archive = mirror
-        .git()
-        .args(["archive", "--format=tar", rev, "--"])
-        .args(paths)
-        .stdout(Stdio::piped())
-        .spawn()
-        .map_err(|e| e.to_string())?;
-    let stdout = archive.stdout.ok_or("git archive gave no output")?;
-    let ok = Command::new("tar")
-        .args(["-x", "-m", "-C"])
-        .arg(dest)
-        .stdin(stdout)
-        .status()
-        .map_err(|e| e.to_string())?
-        .success();
-    if ok {
-        Ok(())
-    } else {
-        Err(format!("can't unpack {rev}"))
+    let listing = mirror.text(&[&["ls-tree", "-r", "-z", rev, "--"][..], paths].concat())?;
+    for entry in listing.split('\0').filter(|e| !e.is_empty()) {
+        let (meta, path) = entry.split_once('\t').unwrap_or((entry, ""));
+        let [mode, _, object] = meta.split(' ').collect::<Vec<_>>()[..] else {
+            return Err(format!("can't read the tree entry {entry}"));
+        };
+        let plain = Path::new(path)
+            .components()
+            .all(|c| matches!(c, std::path::Component::Normal(_)));
+        if !matches!(mode, "100644" | "100755") || !plain {
+            return Err(format!("{path} in {rev} is not a plain file"));
+        }
+        let target = dest.join(path);
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        fs::write(&target, mirror.blob(object)?).map_err(|e| e.to_string())?;
     }
+    Ok(())
 }
 
-fn writable(path: &str, model: &str) -> bool {
-    path.starts_with("crates/clean/types/") || path.starts_with(&format!("{model}/"))
+/// Why a commit may not touch `path`, or None. A commit changes the shared types or the
+/// model, and in them only the manifest and the Rust sources under `src/` and `tests/`.
+fn refused(path: &str, model: &str) -> Option<&'static str> {
+    let Some(rest) = path
+        .strip_prefix("crates/clean/types/")
+        .or_else(|| path.strip_prefix(model)?.strip_prefix('/'))
+    else {
+        return Some("is outside the shared types and the model");
+    };
+    let parts: Vec<&str> = rest.split('/').collect();
+    if parts.contains(&".gitattributes") {
+        return Some("is an attributes file");
+    }
+    if parts.contains(&".cargo") {
+        return Some("is cargo configuration");
+    }
+    if parts.iter().any(|p| p.starts_with('.') || p.is_empty()) {
+        return Some("is hidden");
+    }
+    if parts.last() == Some(&"build.rs") {
+        return Some("is a build script");
+    }
+    match parts.as_slice() {
+        ["Cargo.toml"] => None,
+        ["src" | "tests", .., file] if Path::new(file).extension().is_some_and(|e| e == "rs") => {
+            None
+        }
+        _ => Some("is not the manifest or a Rust source under src/ or tests/"),
+    }
 }
 
 struct Import {
@@ -155,18 +197,12 @@ struct Import {
 }
 
 pub fn run(name: &str) -> Result<(String, bool), String> {
-    let lane = Lane::of(name)?;
-    let repo = repo()?;
-    let branch = output(
-        Command::new("git")
-            .current_dir(&repo)
-            .args(["branch", "--show-current"]),
-    )?;
-    let dirty = output(Command::new("git").current_dir(&repo).args([
-        "status",
-        "--porcelain",
-        "--untracked-files=no",
-    ]))?;
+    run_at(&repo()?, &Lane::of(name)?, name)
+}
+
+fn run_at(repo: &Path, lane: &Lane, name: &str) -> Result<(String, bool), String> {
+    let branch = output(host_git(repo).args(["branch", "--show-current"]))?;
+    let dirty = output(host_git(repo).args(["status", "--porcelain", "--untracked-files=no"]))?;
     if branch.trim().is_empty() || !dirty.trim().is_empty() {
         return Err("check out the lane branch, with nothing uncommitted, first".to_owned());
     }
@@ -175,17 +211,19 @@ pub fn run(name: &str) -> Result<(String, bool), String> {
     fs::create_dir_all(&scratch.0).map_err(|e| e.to_string())?;
     let mirror = Mirror::of(&lane.export, &scratch.0.join("export.git"))?;
     let roots = mirror.lines(&["rev-list", "--max-parents=0", "main"])?;
-    let [root] = roots.as_slice() else {
+    let exported = fs::read_to_string(lane.export_root())
+        .map_err(|e| format!("{}: {e}", lane.export_root().display()))?;
+    if roots.as_slice() != [exported.trim()] {
         return Err(format!(
-            "the export has {} root commits, not one",
-            roots.len()
+            "the export's history doesn't start at its export commit {}",
+            exported.trim()
         ));
-    };
+    }
     let import = Import {
         domain: name.to_owned(),
         model: format!("crates/clean/{}", name.replace('-', "_")),
-        root: root.clone(),
-        repo,
+        root: exported.trim().to_owned(),
+        repo: repo.to_owned(),
         mirror,
     };
     let mut out = String::new();
@@ -216,7 +254,7 @@ impl Import {
         if commits.is_empty() {
             return Err("no commits after the export's".to_owned());
         }
-        let mut refused = false;
+        let mut refused_any = false;
         for c in &commits {
             let subject = self.mirror.text(&["log", "-1", "--format=%s", c])?;
             let short = c.get(..9).unwrap_or(c);
@@ -230,9 +268,9 @@ impl Import {
             ])? {
                 let (meta, path) = line.split_once('\t').unwrap_or((&line, ""));
                 let mode = meta.split_whitespace().nth(1).unwrap_or_default();
-                if !writable(path, &self.model) {
-                    let _ = writeln!(out, "refused {short} {}: touches {path}", subject.trim());
-                    refused = true;
+                if let Some(why) = refused(path, &self.model) {
+                    let _ = writeln!(out, "refused {short} {}: {path} {why}", subject.trim());
+                    refused_any = true;
                 }
                 if matches!(mode, "120000" | "160000") {
                     let _ = writeln!(
@@ -240,7 +278,7 @@ impl Import {
                         "refused {short} {}: {path} is a symlink or submodule",
                         subject.trim()
                     );
-                    refused = true;
+                    refused_any = true;
                 }
             }
             let role =
@@ -252,10 +290,10 @@ impl Import {
                     "refused {short} {}: no 'Role: implementer' trailer",
                     subject.trim()
                 );
-                refused = true;
+                refused_any = true;
             }
         }
-        if refused {
+        if refused_any {
             refuse(out, "a commit reaches outside the clean crates")?;
         }
         Ok(commits.len())
@@ -330,13 +368,8 @@ impl Import {
     }
 
     fn mirror_scan(&self, out: &mut String) -> Result<(), String> {
-        let show = |path: &str| {
-            output(
-                Command::new("git")
-                    .current_dir(&self.repo)
-                    .args(["show", &format!("HEAD:{path}")]),
-            )
-        };
+        let show =
+            |path: &str| output(host_git(&self.repo).args(["show", &format!("HEAD:{path}")]));
         let spec_path = format!("docs/behaviours/{}.md", self.domain);
         let spec = show(&spec_path)
             .map_err(|_| format!("no spec {spec_path} on the branch; nothing applied"))?;
@@ -378,9 +411,7 @@ impl Import {
     }
 
     fn repo_git(&self) -> Command {
-        let mut cmd = Command::new("git");
-        cmd.current_dir(&self.repo);
-        cmd
+        host_git(&self.repo)
     }
 
     fn cargo(&self) -> Command {
@@ -455,7 +486,7 @@ impl Import {
                     .args(["diff", "--name-only", &scaffolded, "HEAD"]),
             )?
             .lines()
-            .filter(|p| !writable(p, &self.model))
+            .filter(|p| refused(p, &self.model).is_some())
             .map(str::to_owned)
             .collect();
         if !outside.is_empty() {
@@ -557,23 +588,42 @@ fn errors(stderr: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
-    use super::{Mirror, writable};
+    use super::{Import, Mirror, refused, run_at};
+    use crate::process::{Lane, git, output};
+
+    const MODEL: &str = "crates/clean/world_haze";
 
     #[test]
-    fn a_patch_may_touch_only_the_shared_types_and_its_model() {
-        let model = "crates/clean/world_haze";
-        assert!(writable("crates/clean/types/src/lib.rs", model));
-        assert!(writable("crates/clean/world_haze/src/lib.rs", model));
+    fn a_patch_may_touch_only_the_sources_and_manifests_of_the_shared_types_and_its_model() {
+        for path in [
+            "crates/clean/types/src/lib.rs",
+            "crates/clean/types/Cargo.toml",
+            "crates/clean/world_haze/Cargo.toml",
+            "crates/clean/world_haze/src/lib.rs",
+            "crates/clean/world_haze/src/motion/step.rs",
+            "crates/clean/world_haze/tests/vectors.rs",
+        ] {
+            assert_eq!(refused(path, MODEL), None, "{path}");
+        }
         for path in [
             "crates/clean/world_hazel/src/lib.rs",
             "crates/clean/samus_movement/src/lib.rs",
             "docs/behaviours/world-haze.md",
             "Cargo.toml",
             ".cargo/config.toml",
+            "crates/clean/world_haze/.cargo/config.toml",
+            "crates/clean/world_haze/.gitattributes",
+            "crates/clean/world_haze/src/.gitattributes",
+            "crates/clean/world_haze/build.rs",
+            "crates/clean/world_haze/src/build.rs",
+            "crates/clean/world_haze/src/.hidden.rs",
+            "crates/clean/world_haze/src/lib.txt",
+            "crates/clean/world_haze/benches/b.rs",
+            "crates/clean/world_haze/Cargo.lock",
         ] {
-            assert!(!writable(path, model), "{path}");
+            assert!(refused(path, MODEL).is_some(), "{path}");
         }
     }
 
@@ -587,5 +637,263 @@ mod tests {
         let made = Path::new(&dir.join("mirror.git")).exists();
         fs::remove_dir_all(&dir).unwrap();
         assert!(refused && !made);
+    }
+
+    /// An export of `world-haze` with its lane folder and a lane branch to import onto, all in
+    /// one temporary folder that is removed on drop.
+    struct Round {
+        base: PathBuf,
+        lane: Lane,
+        repo: PathBuf,
+    }
+
+    impl Drop for Round {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.base);
+        }
+    }
+
+    fn run(dir: &Path, args: &[&str]) -> String {
+        output(git(dir).args(args)).unwrap()
+    }
+
+    fn write(dir: &Path, path: &str, text: &str) {
+        let target = dir.join(path);
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        fs::write(target, text).unwrap();
+    }
+
+    impl Round {
+        fn new(tag: &str) -> Self {
+            let base =
+                std::env::temp_dir().join(format!("cleanroom-import-{tag}-{}", std::process::id()));
+            let _ = fs::remove_dir_all(&base);
+            let lane = Lane {
+                export: base.join("world-haze"),
+                dir: base.join("world-haze.lane"),
+            };
+            let repo = base.join("repo");
+            for dir in [&lane.export, &lane.dir, &repo] {
+                fs::create_dir_all(dir).unwrap();
+                run(dir, &["init", "-q", "--template=", "-b", "main"]);
+            }
+            for krate in ["types", "world_haze"] {
+                let manifest = format!("[package]\nname = \"{krate}\"\n");
+                write(
+                    &lane.export,
+                    &format!("crates/clean/{krate}/Cargo.toml"),
+                    &manifest,
+                );
+                write(
+                    &lane.export,
+                    &format!("crates/clean/{krate}/src/lib.rs"),
+                    "//! A crate.\n",
+                );
+            }
+            run(&lane.export, &["add", "-A"]);
+            run(
+                &lane.export,
+                &["commit", "-q", "-m", "Clean-room export: world-haze"],
+            );
+            fs::write(
+                lane.export_root(),
+                run(&lane.export, &["rev-parse", "HEAD"]),
+            )
+            .unwrap();
+            write(&repo, "README.md", "lane\n");
+            run(&repo, &["add", "-A"]);
+            run(&repo, &["commit", "-q", "-m", "lane"]);
+            Self { base, lane, repo }
+        }
+
+        fn commit(&self, message: &str) {
+            run(&self.lane.export, &["add", "-A"]);
+            run(&self.lane.export, &["commit", "-q", "-m", message]);
+        }
+
+        /// The import's refusal, after checking it applied nothing.
+        fn refusal(&self) -> String {
+            let before = run(&self.repo, &["rev-parse", "HEAD"]);
+            let result = run_at(&self.repo, &self.lane, "world-haze");
+            assert_eq!(run(&self.repo, &["rev-parse", "HEAD"]), before);
+            assert_eq!(run(&self.repo, &["status", "--porcelain"]), "");
+            result.expect_err("the import was refused")
+        }
+    }
+
+    const TRAILER: &str = "model: a change\n\nRole: implementer";
+
+    #[test]
+    fn the_import_refuses_a_commit_outside_the_model() {
+        let round = Round::new("outside");
+        write(
+            &round.lane.export,
+            "docs/behaviours/world-haze.md",
+            "changed\n",
+        );
+        round.commit(TRAILER);
+        assert!(
+            round
+                .refusal()
+                .contains("docs/behaviours/world-haze.md is outside")
+        );
+    }
+
+    #[test]
+    fn the_import_refuses_a_symlink() {
+        let round = Round::new("symlink");
+        std::os::unix::fs::symlink(
+            "/etc/passwd",
+            round.lane.export.join(MODEL).join("src/link.rs"),
+        )
+        .unwrap();
+        round.commit(TRAILER);
+        assert!(
+            round
+                .refusal()
+                .contains("src/link.rs is a symlink or submodule")
+        );
+    }
+
+    #[test]
+    fn the_import_refuses_a_submodule() {
+        let round = Round::new("submodule");
+        let head = run(&round.lane.export, &["rev-parse", "HEAD"]);
+        let entry = format!("160000,{},{MODEL}/src/sub", head.trim());
+        run(
+            &round.lane.export,
+            &["update-index", "--add", "--cacheinfo", &entry],
+        );
+        run(&round.lane.export, &["commit", "-q", "-m", TRAILER]);
+        assert!(
+            round
+                .refusal()
+                .contains("src/sub is a symlink or submodule")
+        );
+    }
+
+    #[test]
+    fn the_import_refuses_a_commit_without_the_role_trailer() {
+        let round = Round::new("trailer");
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/src/lib.rs"),
+            "//! Changed.\n",
+        );
+        round.commit("model: a change");
+        assert!(round.refusal().contains("no 'Role: implementer' trailer"));
+    }
+
+    #[test]
+    fn the_import_refuses_an_attributes_file() {
+        let round = Round::new("attributes");
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/.gitattributes"),
+            "*.rs -diff\n",
+        );
+        round.commit(TRAILER);
+        assert!(
+            round
+                .refusal()
+                .contains("/.gitattributes is an attributes file")
+        );
+    }
+
+    #[test]
+    fn the_import_refuses_a_build_script_an_attributes_file_hides() {
+        let round = Round::new("build");
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/.gitattributes"),
+            "build.rs export-ignore\n",
+        );
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/build.rs"),
+            "fn main() {}\n",
+        );
+        round.commit(TRAILER);
+        assert!(round.refusal().contains("/build.rs is a build script"));
+    }
+
+    #[test]
+    fn the_import_refuses_a_hidden_file() {
+        let round = Round::new("hidden");
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/src/.hidden.rs"),
+            "fn f() {}\n",
+        );
+        round.commit(TRAILER);
+        assert!(round.refusal().contains("src/.hidden.rs is hidden"));
+    }
+
+    #[test]
+    fn the_import_refuses_a_history_that_does_not_start_at_the_export() {
+        let round = Round::new("root");
+        run(
+            &round.lane.export,
+            &["checkout", "-q", "--orphan", "forged"],
+        );
+        round.commit(TRAILER);
+        run(&round.lane.export, &["branch", "-q", "-M", "main"]);
+        assert!(
+            round
+                .refusal()
+                .contains("doesn't start at its export commit")
+        );
+    }
+
+    #[test]
+    fn the_code_rules_read_what_an_attributes_file_would_leave_out_of_an_archive() {
+        let round = Round::new("archive");
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/.gitattributes"),
+            "build.rs export-ignore\n",
+        );
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/build.rs"),
+            "fn main() {}\n",
+        );
+        round.commit(TRAILER);
+        let mirror = Mirror::of(&round.lane.export, &round.base.join("mirror.git")).unwrap();
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(Path::parent)
+            .unwrap();
+        let import = Import {
+            repo: repo.to_owned(),
+            domain: "world-haze".to_owned(),
+            model: MODEL.to_owned(),
+            mirror,
+            root: String::new(),
+        };
+        let mut out = String::new();
+        let refusal = import
+            .rules(&round.base.join("head"), &mut out)
+            .unwrap_err();
+        assert!(refusal.contains("build.rs"), "{refusal}");
+    }
+
+    #[test]
+    fn host_git_reads_no_attributes_from_outside_the_repository() {
+        let round = Round::new("xdg");
+        write(&round.base, "xdg/git/attributes", "* export-ignore\n");
+        let seen = output(
+            crate::process::host_git(&round.repo)
+                .env("XDG_CONFIG_HOME", round.base.join("xdg"))
+                .args(["check-attr", "export-ignore", "--", "README.md"]),
+        )
+        .unwrap();
+        assert_eq!(seen, "README.md: export-ignore: unspecified\n");
+        let isolated = git(&round.repo);
+        assert!(
+            isolated
+                .get_envs()
+                .any(|(k, v)| k == "GIT_ATTR_NOSYSTEM" && v == Some("1".as_ref()))
+        );
     }
 }
