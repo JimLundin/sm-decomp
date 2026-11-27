@@ -3,36 +3,6 @@
 
 # CI deals each case's faults to one worker, costliest first, by rebuild cost (tools/check_mutants.py).
 
-rules = [
-    "samus-appearance/ProtectionFlicker",
-    "samus-appearance/WallJumpDust",
-    "samus-appearance/WallJumpDustPicture",
-    "boss-ceres-ridley/WarningArt",
-    "boss-ceres-ridley/WarningGlow",
-    "boss-ceres-ridley/WarningEnds",
-    "samus-movement/GetawayArms",
-    "samus-movement/GetawayStarts",
-    "samus-movement/GetawayTravels",
-    "boss-ceres-ridley/GetawayPass",
-    "boss-ceres-ridley/GetawayPicture",
-    "samus-movement/PadChart",
-    "boss-ceres-ridley/FliesOutOfReach",
-    "boss-ceres-ridley/GetawayBackdrop",
-    "boss-ceres-ridley/TailHits",
-    "boss-ceres-ridley/TailSwishes",
-    "boss-ceres-ridley/VentPlaced",
-    "boss-ceres-ridley/VentInView",
-    "boss-ceres-ridley/VentWaits",
-    "boss-ceres-ridley/VentPuffs",
-    "boss-ceres-ridley/VentRests",
-    "boss-ceres-ridley/PuffReach",
-    "boss-ceres-ridley/PuffTouches",
-    "enemy-interactions/ActorShake",
-    "enemy-interactions/EffectSlots",
-    "enemy-interactions/ShaftActorDraw",
-    "enemy-interactions/ShaftPictureOrder",
-]
-
 [[fault]]
 name = "movement-double-update"
 responsibility = "movement"

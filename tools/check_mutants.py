@@ -213,7 +213,7 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
     print(f"RESTORED PASS {fault.case}", flush=True)
     return killed
 
-def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
+def validate_coverage(root: Path, faults: Sequence[Fault]) -> list[str]:
     """Every responsibility with a reviewed Pass, and the played runner, needs its own fault."""
     with (root / "scenarios/replay/index.toml").open("rb") as stream:
         cases = {case["id"]: case for case in tomllib.load(stream)["case"]}
@@ -231,6 +231,32 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
         source_path(root, fault.file)
     if {fault.responsibility for fault in faults} != required:
         raise ValueError("every supported replay responsibility needs a production fault")
+    rules = catalogue_rules(root)
+    for fault in faults:
+        if fault.rule is not None and fault.rule not in rules:
+            raise ValueError(f"fault {fault.name} names unknown catalogue rule {fault.rule}")
+    return rules
+
+def catalogue_rules(root: Path) -> list[str]:
+    """Read the published catalogue IDs, using spec_units' '### Id' entry convention."""
+    with (root / "docs/architecture/domains.toml").open("rb") as stream:
+        models = [model["name"] for model in tomllib.load(stream)["model"]]
+    # These two catalogues belong to production room loading, outside the clean model crates.
+    domains = [*models, "world-intro-rooms", "world-shaft-entry"]
+    rules: set[str] = set()
+    for domain in domains:
+        spec = root / "docs/behaviours" / f"{domain}.md"
+        fenced = False
+        for line in spec.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("```"):
+                fenced = not fenced
+            elif not fenced and (entry := re.fullmatch(r"###\s*([^\W\d_]\w*)", line)):
+                rule = f"{spec.stem}/{entry[1]}"
+                if rule in rules:
+                    raise ValueError(f"{spec}: duplicate catalogue entry {rule}")
+                rules.add(rule)
+    return sorted(rules)
 
 def report_rule_coverage(rules: Sequence[str], faults: Sequence[Fault],
                          logs: Sequence[str]) -> None:
@@ -290,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     worker = commands.add_parser("worker", help="run one partition of the fault manifest")
     worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
     coverage = commands.add_parser(
-        "rule-coverage", help="report declared rules using logs from reviewed runs of this roster")
+        "rule-coverage", help="report every catalogue rule using logs from reviewed runs of this roster")
     coverage.add_argument("logs", nargs="*", type=Path, metavar="LOG")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
@@ -300,12 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     roster = tuple(Fault(**row) for row in data["fault"])
     if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
         raise ValueError("fault names must be nonempty and unique")
-    rules = data.get("rules", [])
-    if (not isinstance(rules, list) or any(not isinstance(rule, str) or not rule for rule in rules)
-        or len(rules) != len(set(rules))
-        or any(fault.rule is not None and fault.rule not in rules for fault in roster)):
-        raise ValueError("rule coverage needs unique rule IDs and declared fault assignments")
-    validate_coverage(root, roster)
+    rules = validate_coverage(root, roster)
     validate_anchors(root, roster)
     if args.command == "rule-coverage":
         report_rule_coverage(rules, roster, [log.read_text(encoding="utf-8") for log in args.logs])
