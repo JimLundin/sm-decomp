@@ -1,6 +1,6 @@
 //! Native standing-body comparisons at the locked room's preparation and NMI cuts.
 
-use super::{ExpectedCut, O, Outcome, data_failure, word};
+use super::{ExpectedCut, Outcome, data_failure, word};
 use crate::replay::compare::Observation;
 use data::pose::PoseId;
 use data::pose::animation::AnimationFrame;
@@ -15,20 +15,8 @@ use samus_appearance::{ShaftView, Step};
 use types::{Pair, Pose};
 
 pub(in crate::replay) const RULE: &str = "samus-appearance/ElevatorStandingPicture";
-pub(in crate::replay) const OBSERVATIONS: &[O] = &[
-    O::StandingOamPending,
-    O::StandingStripsPending,
-    O::StandingOamPublished,
-    O::StandingPublication,
-    O::StandingUpperFirst,
-    O::StandingUpperSecond,
-    O::StandingLowerFirst,
-    O::StandingLowerSecond,
-];
-
-pub(super) const fn partition() -> (&'static [O], &'static [O]) {
-    OBSERVATIONS.split_at(2)
-}
+const SEMANTIC_FIELDS: usize = 2;
+const OUTPUT_FIELDS: usize = 6;
 
 const OTHER_SUITS: u16 = 0x21;
 const OAM_START: usize = 17;
@@ -254,12 +242,11 @@ pub(super) fn expected(record: &FrameRecord, rom: Lorom<'_>) -> Result<ExpectedC
         serviced,
         &record.vram,
     )?;
-    let (semantic, outputs) = partition();
     Ok(ExpectedCut {
-        semantics: fields.iter().take(semantic.len()).cloned().collect(),
+        semantics: fields.iter().take(SEMANTIC_FIELDS).cloned().collect(),
         fields,
-        semantic_count: semantic.len(),
-        output_count: outputs.len(),
+        semantic_count: SEMANTIC_FIELDS,
+        output_count: OUTPUT_FIELDS,
         replies: 0,
     })
 }

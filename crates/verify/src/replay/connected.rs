@@ -443,26 +443,12 @@ pub(super) fn expected(
     content: &appearance::Content,
 ) -> Result<Vec<Observation>, Outcome> {
     let mut fields = vec![state_observation(&movement::seed(bytes)?)];
-    fields.extend(movement::expected(
-        bytes,
-        &[
-            super::index::ObservationId::PositionX,
-            super::index::ObservationId::PositionY,
-        ],
-    )?);
+    fields.extend(movement::expected(bytes, &movement::POSITION)?);
     let (state, playing) = appearance::running_animation(bytes, content)?;
     fields.extend(appearance::initial(state, content));
     fields.push(playing_observation(playing));
     fields.extend(camera::expected(bytes)?);
-    fields.extend(movement::expected(
-        bytes,
-        &[
-            super::index::ObservationId::TravelLeft,
-            super::index::ObservationId::TravelRight,
-            super::index::ObservationId::TravelUp,
-            super::index::ObservationId::TravelDown,
-        ],
-    )?);
+    fields.extend(movement::expected(bytes, &movement::TRAVELS)?);
     Ok(fields)
 }
 

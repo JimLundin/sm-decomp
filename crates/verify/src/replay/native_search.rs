@@ -286,7 +286,7 @@ mod tests {
         assert!(Packet::for_case(&case).is_none());
         case.expectations.projection = Some(projection);
         case.expectations.projection.as_mut().unwrap().member = "../inputs/world.bin".to_owned();
-        assert!(case.validate().is_err());
+        assert!(Packet::for_case(&case).is_none());
     }
 
     fn retained(actual: &ActualReader) -> Option<&samus_movement::Outcome> {

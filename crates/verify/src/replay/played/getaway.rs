@@ -5,10 +5,7 @@ use crate::replay::{
     Sources, appearance,
     compare::Observation,
     compared, connected, data_failure,
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility,
-        Start,
-    },
+    index::{Case, Start},
     movement,
     readers::ExpectedCut,
     result::Outcome,
@@ -21,34 +18,6 @@ use game::production::played;
 use game::production::played::samus::{GetawayInputs, GetawayPass, TurnContent};
 use samus_movement::Getaway;
 use types::{Parts, Side};
-
-const STATE: &[O] = &[
-    O::GetawayPhase,
-    O::MovementPose,
-    O::PositionX,
-    O::PositionY,
-    O::MovementBaseSpeed,
-    O::VerticalSpeed,
-    O::GetawayLatestPose,
-    O::GetawayOlderPose,
-    O::GetawayBodyX,
-    O::GetawayBodyY,
-    O::AppearanceStep,
-    O::AppearanceTimeLeft,
-];
-const OUTPUTS: &[O] = &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown];
-
-pub(in crate::replay) fn valid(case: &Case) -> bool {
-    case.kind == CaseKind::Scoped
-        && matches!(case.start, Start::CacheCut { .. })
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields == STATE
-        && case.expectations.outputs == OUTPUTS
-        && case.expectations.output_cut.is_none()
-        && case.responsibilities == [Responsibility::Movement, Responsibility::Appearance]
-        && case.checkpoints
-}
 
 fn field(wram: &[u8], name: &'static str, offset: u16) -> Result<u16, Outcome> {
     word(wram, WramWord { name, offset })
@@ -139,10 +108,10 @@ fn expected(wram: &[u8], content: &appearance::Content) -> Result<ExpectedCut, O
     semantics.extend(movement::expected(
         wram,
         &[
-            O::MovementPose,
-            O::PositionX,
-            O::PositionY,
-            O::MovementBaseSpeed,
+            "movement.pose",
+            "movement.position.x",
+            "movement.position.y",
+            "movement.base-speed",
         ],
     )?);
     let magnitude = types::fixed(
@@ -167,12 +136,12 @@ fn expected(wram: &[u8], content: &appearance::Content) -> Result<ExpectedCut, O
     let (animation, _) = appearance::animation_owner(wram, content)?;
     semantics.extend(appearance_fields(appearance::initial(animation, content)));
     let mut fields = semantics.clone();
-    fields.extend(movement::expected(wram, OUTPUTS)?);
+    fields.extend(movement::expected(wram, &movement::TRAVELS)?);
     Ok(ExpectedCut {
         fields,
         semantic_count: semantics.len(),
         semantics,
-        output_count: OUTPUTS.len(),
+        output_count: movement::TRAVELS.len(),
         replies: 0,
     })
 }

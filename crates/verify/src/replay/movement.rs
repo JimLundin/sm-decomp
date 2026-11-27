@@ -1,6 +1,6 @@
 //! Once-only movement admission and preceding-cut causal neighbour observations.
 
-use super::{compare::Observation, data_failure, index::ObservationId, result::Outcome};
+use super::{compare::Observation, data_failure, result::Outcome};
 use crate::source::{self, WramWord};
 use core::num::Wrapping;
 use data::assets::samus::map;
@@ -600,9 +600,9 @@ pub(super) fn expected_cut(
             case.ordinary_witness()
         {
             for output in &case.expectations.outputs {
-                if *output == super::index::ObservationId::WallTest {
+                if output == WALL_TEST {
                     fields.push(self::wall(*wall));
-                } else if *output == super::index::ObservationId::Reached {
+                } else if output == REACHED {
                     fields.push(self::reached(reached));
                 } else {
                     fields.extend(expected(wram, std::slice::from_ref(output))?);
@@ -625,110 +625,79 @@ pub(super) fn expected_cut(
     })
 }
 
-pub fn expected(wram: &[u8], selected: &[ObservationId]) -> Result<Vec<Observation>, Outcome> {
+pub fn expected(wram: &[u8], selected: &[impl AsRef<str>]) -> Result<Vec<Observation>, Outcome> {
     let travels = crate::decode::directional_travel(wram)
         .map_err(|_| data_failure(None, "directional travel observation"))?;
     selected
         .iter()
-        .map(|field| expected_field(wram, *field, &travels))
+        .map(|field| expected_field(wram, field.as_ref(), &travels))
         .collect()
 }
 
-fn travel_quantity(
-    travels: &types::DirectionalTravels,
-    direction: types::Direction,
-) -> (&'static str, i64) {
-    let name = match direction {
-        types::Direction::Left => "movement.travel.Left",
-        types::Direction::Right => "movement.travel.Right",
-        types::Direction::Up => "movement.travel.Up",
-        types::Direction::Down => "movement.travel.Down",
-    };
-    (name, i64::from(travels[direction].0.0))
-}
+pub(super) const POSITION: [&str; 2] = ["movement.position.x", "movement.position.y"];
+pub(super) const TRAVELS: [&str; 4] = [
+    "movement.travel.Left",
+    "movement.travel.Right",
+    "movement.travel.Up",
+    "movement.travel.Down",
+];
+pub(super) const LANDING_FLOOR: &str = "movement.landing.floor";
+const WALL_TEST: &str = "movement.wall_test";
+const REACHED: &str = "movement.reached";
+/// Every name a movement case declares.
+pub(super) const NAMES: [&str; 14] = [
+    "movement.position.x",
+    "movement.position.y",
+    "movement.vertical_speed",
+    "movement.base-speed",
+    "movement.travel.Left",
+    "movement.travel.Right",
+    "movement.travel.Up",
+    "movement.travel.Down",
+    "movement.landing.pose",
+    "movement.pose",
+    "movement.drawn-jump-held",
+    LANDING_FLOOR,
+    WALL_TEST,
+    REACHED,
+];
 
 fn expected_field(
     wram: &[u8],
-    field: ObservationId,
+    field: &str,
     travels: &types::DirectionalTravels,
 ) -> Result<Observation, Outcome> {
-    use ObservationId as O;
     use types::Direction;
 
-    for (id, name, whole, fraction) in [
-        (
-            O::PositionX,
-            "movement.position.x",
-            source::SAMUS_X_POS,
-            source::SAMUS_X_SUBPOS,
-        ),
-        (
-            O::PositionY,
-            "movement.position.y",
-            source::SAMUS_Y_POS,
-            source::SAMUS_Y_SUBPOS,
-        ),
-        (
-            O::VerticalSpeed,
-            "movement.vertical_speed",
-            source::SAMUS_Y_SPEED,
-            source::SAMUS_Y_SUBSPEED,
-        ),
-    ] {
-        if field == id {
-            return Ok(Observation::quantity(
-                name,
-                i64::from(fixed(wram, whole, fraction)?.0),
-            ));
+    let quantity = |value: i64| Ok(Observation::quantity(field, value));
+    let fixed_at = |whole, fraction| quantity(i64::from(fixed(wram, whole, fraction)?.0));
+    let travel = |direction: Direction| quantity(i64::from(travels[direction].0.0));
+    match field {
+        "movement.position.x" => fixed_at(source::SAMUS_X_POS, source::SAMUS_X_SUBPOS),
+        "movement.position.y" => fixed_at(source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS),
+        "movement.vertical_speed" => fixed_at(source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED),
+        "movement.base-speed" => {
+            fixed_at(source::SAMUS_X_BASE_SPEED, source::SAMUS_X_BASE_SUBSPEED)
         }
-    }
-    for (id, direction) in [
-        (O::TravelLeft, Direction::Left),
-        (O::TravelRight, Direction::Right),
-        (O::TravelUp, Direction::Up),
-        (O::TravelDown, Direction::Down),
-    ] {
-        if field == id {
-            let (name, value) = travel_quantity(travels, direction);
-            return Ok(Observation::quantity(name, value));
+        "movement.travel.Left" => travel(Direction::Left),
+        "movement.travel.Right" => travel(Direction::Right),
+        "movement.travel.Up" => travel(Direction::Up),
+        "movement.travel.Down" => travel(Direction::Down),
+        "movement.landing.pose" | "movement.pose" => {
+            let raw = PoseId(word(wram, source::SAMUS_POSE)?);
+            let pose = map::key_of(raw).ok_or_else(|| unsupported("movement pose observation"))?;
+            Ok(pose_observation(field, pose))
         }
+        "movement.drawn-jump-held" => Ok(jump_part(jump_held(wram)?)),
+        LANDING_FLOOR => {
+            let response = crate::source::WramWord {
+                name: "landing floor result",
+                offset: 0x0a2e,
+            };
+            quantity(i64::from(word(wram, response)? == 5))
+        }
+        _ => Err(data_failure(None, "movement observation scope")),
     }
-    if matches!(field, O::LandingPose | O::MovementPose) {
-        let raw = PoseId(word(wram, source::SAMUS_POSE)?);
-        let pose = map::key_of(raw).ok_or_else(|| unsupported("movement pose observation"))?;
-        return Ok(if field == O::LandingPose {
-            landing_pose(pose)
-        } else {
-            movement_pose(pose)
-        });
-    }
-    if field == O::MovementBaseSpeed {
-        return Ok(Observation::quantity(
-            "movement.base-speed",
-            i64::from(
-                fixed(
-                    wram,
-                    source::SAMUS_X_BASE_SPEED,
-                    source::SAMUS_X_BASE_SUBSPEED,
-                )?
-                .0,
-            ),
-        ));
-    }
-    if field == O::DrawnJumpHeld {
-        return Ok(jump_part(jump_held(wram)?));
-    }
-    if field == O::LandingFloor {
-        let response = crate::source::WramWord {
-            name: "landing floor result",
-            offset: 0x0a2e,
-        };
-        return Ok(Observation::quantity(
-            "movement.landing.floor",
-            i64::from(word(wram, response)? == 5),
-        ));
-    }
-    Err(data_failure(None, "movement observation scope"))
 }
 
 pub(super) fn landing_pose(pose: Pose) -> Observation {

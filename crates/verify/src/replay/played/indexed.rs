@@ -5,109 +5,12 @@ use crate::replay::{
     Sources, appearance,
     compare::Observation,
     connected, data_failure,
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, InputProvider, ObservationId,
-        Responsibility, Start,
-    },
+    index::{Case, InputProvider, Start},
     movement,
     readers::{ExpectedCut, FieldRole},
     result::Outcome,
     runner,
 };
-
-const STATE: &[ObservationId] = &[
-    ObservationId::CeresTailState,
-    ObservationId::CeresTailKnockback,
-    ObservationId::CeresTailHealth,
-];
-const OUTPUTS: &[ObservationId] = &[
-    ObservationId::CeresTailPlaces,
-    ObservationId::CeresTailHit,
-    ObservationId::CeresTailSwish,
-];
-
-const RETREAT_STATE: &[ObservationId] = &[
-    ObservationId::CeresRetreatBody,
-    ObservationId::CeresTailState,
-    ObservationId::CeresTailKnockback,
-    ObservationId::CeresTailHealth,
-];
-const RETREAT_OUTPUTS: &[ObservationId] = &[
-    ObservationId::CeresRetreatBound,
-    ObservationId::CeresBackdropWalls,
-    ObservationId::CeresBackdropColours,
-    ObservationId::CeresTailPlaces,
-    ObservationId::CeresTailHit,
-    ObservationId::CeresTailSwish,
-];
-
-const FLYBY_STATE: &[ObservationId] = &[ObservationId::CeresFlybyState];
-const FLYBY_OUTPUTS: &[ObservationId] = &[
-    ObservationId::CeresFlybyPlane,
-    ObservationId::CeresFlybyColours,
-    ObservationId::CeresFlybyTiles,
-    ObservationId::CeresFlybySound,
-    ObservationId::CeresFlybyPush,
-    ObservationId::CeresFlybyRoom,
-];
-
-const WARNING_STATE: &[ObservationId] = &[ObservationId::CeresWarningState];
-const WARNING_OUTPUTS: &[ObservationId] = &[
-    ObservationId::CeresWarningPicture,
-    ObservationId::CeresWarningAudio,
-    ObservationId::CeresWarningHandoff,
-];
-
-const FIGHT_PICTURE_FIELDS: &[ObservationId] = &[ObservationId::CeresFightDoorCursor];
-const FIGHT_PICTURE_OUTPUTS: &[ObservationId] = &[
-    ObservationId::CeresFightPreparedOam,
-    ObservationId::CeresFightPhysicalOam,
-];
-
-pub(in crate::replay) fn valid(case: &Case) -> bool {
-    if case.inputs == InputProvider::ScopedCeresFightPicture {
-        return case.kind == CaseKind::Scoped
-            && fight_picture::valid_window(case)
-            && case.responsibilities == [Responsibility::Ceres]
-            && case.content == ContentProvider::PlayerRomImport
-            && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-            && case.expectations.fields == FIGHT_PICTURE_FIELDS
-            && case.expectations.outputs == FIGHT_PICTURE_OUTPUTS
-            && case.expectations.output_cut.is_none()
-            && case.checkpoints;
-    }
-    let scope = if case.inputs == crate::replay::index::InputProvider::ScopedCeresFlyby {
-        case.kind == CaseKind::Scoped
-            && case.responsibilities == [Responsibility::Ceres]
-            && matches!((&case.start, &case.expectations.played),
-                (Start::CacheCut { frame }, Some(crate::replay::index::PlayedWindow::Flyby { first, output_fields }))
-                    if frame < first && *first <= case.end.cut_inclusive && *output_fields > 0)
-            && case.expectations.fields == FLYBY_STATE
-            && case.expectations.outputs == FLYBY_OUTPUTS
-    } else if case.inputs == InputProvider::ScopedCeresWarning {
-        case.kind == CaseKind::Scoped
-            && case.responsibilities == [Responsibility::Ceres]
-            && case.expectations.fields == WARNING_STATE
-            && case.expectations.outputs == WARNING_OUTPUTS
-    } else {
-        case.kind == CaseKind::Integrated
-            && case.responsibilities
-                == [
-                    Responsibility::Ceres,
-                    Responsibility::Movement,
-                    Responsibility::Health,
-                ]
-            && (case.expectations.fields == STATE && case.expectations.outputs == OUTPUTS
-                || case.expectations.fields == RETREAT_STATE
-                    && case.expectations.outputs == RETREAT_OUTPUTS)
-    };
-    scope
-        && matches!(case.start, Start::CacheCut { .. })
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints == (case.inputs == InputProvider::ScopedCeresWarning)
-}
 
 /// Comparison fields for the indexed claim. Other played fields still gate every turn.
 fn flyby_selection(field: &str) -> Option<FieldRole> {
@@ -231,13 +134,28 @@ fn run(
     )
 }
 
+pub(in crate::replay) const RETREAT_BODY: &str = "ridley.retreat.body";
+/// The names a tail case declares, the retreat's included.
+pub(in crate::replay) const TAIL_NAMES: [&str; 10] = [
+    "ridley.tail.state",
+    "movement.tail-reaction",
+    "health.tail-reaction",
+    "ridley.tail.places",
+    "ridley.tail.hit",
+    "ridley.tail.swish-request",
+    RETREAT_BODY,
+    "ridley.retreat.bound",
+    "ridley.backdrop.walls",
+    "ridley.backdrop.colours",
+];
+
 fn tail(
     mut room: AdmittedRoom<'_, '_>,
     case: &Case,
     result: &mut runner::Receipt,
 ) -> Result<(), Outcome> {
     let start = room.origin;
-    let retreat = case.expectations.fields == RETREAT_STATE;
+    let retreat = case.declares(&TAIL_NAMES, RETREAT_BODY)?;
     let mut held = tail_held(&room.run, retreat);
     let played = room.run.witness_through(
         &mut room.rows,
@@ -373,51 +291,25 @@ fn warning(
 
 #[cfg(test)]
 mod tests {
-    use crate::replay::index::{DoorAppend, Index, PlayedWindow, Start};
+    use crate::replay::index::{DoorAppend, Index, PlayedWindow};
 
     #[test]
-    fn played_comparisons_require_distinct_witnesses_inside_the_declared_run() {
+    fn a_played_window_belongs_to_its_provider() {
         let index =
             Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
-        let case = |id| {
-            index
-                .cases
-                .iter()
-                .find(|case| case.id.0 == id)
-                .unwrap()
-                .clone()
-        };
-        let mut picture = case("ridley/ordinary-picture");
-        picture.id.0 = "invented/fight".into();
-        picture.start = Start::CacheCut { frame: 9 };
-        picture.end.cut_inclusive = 14;
-        picture.expectations.played = Some(PlayedWindow::FightPicture {
-            appends: [
-                DoorAppend { cut: 10, cursor: 3 },
-                DoorAppend { cut: 14, cursor: 4 },
-            ],
-        });
-        assert!(picture.validate().is_ok());
-        picture.end.cut_inclusive = 13;
-        assert!(picture.validate().is_err());
-        picture.end.cut_inclusive = 14;
-        if let Some(PlayedWindow::FightPicture {
-            appends: [first, second],
-        }) = &mut picture.expectations.played
-        {
-            first.cut = second.cut;
-        }
-        assert!(picture.validate().is_err());
-
-        let mut flyby = case("ridley/alternate-flyby");
+        let mut flyby = index
+            .cases
+            .iter()
+            .find(|case| case.id.0 == "ridley/alternate-flyby")
+            .unwrap()
+            .clone();
+        assert!(flyby.validate().is_ok());
         flyby.expectations.played = Some(PlayedWindow::FightPicture {
             appends: [
                 DoorAppend { cut: 10, cursor: 3 },
                 DoorAppend { cut: 14, cursor: 4 },
             ],
         });
-        assert!(flyby.validate().is_err());
-        flyby.expectations.played = None;
         assert!(flyby.validate().is_err());
     }
 }

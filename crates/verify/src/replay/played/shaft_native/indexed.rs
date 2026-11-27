@@ -6,9 +6,7 @@ use crate::replay::{
     blackout::{observe::oam_bytes, standing::packed_oam},
     compare::Observation,
     data_failure,
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
-    },
+    index::{Case, Start},
     played::{PictureScope, Run},
     readers::ExpectedCut,
     result::Outcome,
@@ -16,22 +14,6 @@ use crate::replay::{
 };
 use game::production::played::{room_video::RoomVideo, shaft::ShaftEffects};
 use oracle_record::FrameRecord;
-
-pub(in crate::replay) fn valid(case: &Case) -> bool {
-    case.kind == CaseKind::Integrated
-        && matches!(case.start, Start::PlayedContinuation { .. })
-        && case.responsibilities == [Responsibility::ShaftPicture]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields
-            == [
-                ObservationId::ShaftPictureClocks,
-                ObservationId::ShaftPictureEffects,
-            ]
-        && case.expectations.outputs == [ObservationId::ShaftPictureOam]
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-}
 
 fn c1_field(field: &Observation) -> bool {
     field.field.starts_with("shaft-effects.slot-") || field.field.starts_with("shaft-actors.clock.")

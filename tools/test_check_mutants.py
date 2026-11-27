@@ -222,6 +222,18 @@ class MutantCheck(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_coverage(root, [changed, *faults[1:]])
 
+    def test_every_case_rule_is_a_catalogue_entry(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        with (root / "tools/mutants.toml").open("rb") as stream:
+            faults = [Fault(**row) for row in tomllib.load(stream)["fault"]]
+        with (root / "scenarios/replay/index.toml").open("rb") as stream:
+            declared = {rule for case in tomllib.load(stream)["case"] for rule in case["rules"]}
+        missing = sorted(declared - {fault.rule for fault in faults})[0]
+        published = [rule for rule in check_mutants.catalogue_rules(root) if rule != missing]
+        with patch("check_mutants.catalogue_rules", return_value=published), \
+             self.assertRaisesRegex(ValueError, f"names unknown catalogue rule {missing}$"):
+            validate_coverage(root, faults)
+
     def test_every_anchor_names_one_place_in_its_source(self) -> None:
         root = Path(__file__).resolve().parents[1]
         with (root / "tools/mutants.toml").open("rb") as stream:

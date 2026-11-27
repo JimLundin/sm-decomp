@@ -4,9 +4,7 @@ pub(super) mod observe;
 pub(super) mod seed;
 pub(super) mod standing;
 use super::borrowed::escape::Origin;
-use super::index::{
-    Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility, Start,
-};
+use super::index::{Case, Start};
 use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
@@ -19,53 +17,19 @@ use game::production::{
 pub(super) use observe::actual;
 use oracle_record::{Cut, NmiKind};
 
-pub(super) fn witnessed_fields(rule: &str) -> Option<&'static [O]> {
-    match rule {
-        "screens-blackout/ElevatorStopsSamus"
-        | "screens-blackout/PlatformWait"
-        | "screens-blackout/DepartureHandoff" => Some(&[
-            O::BlackoutScene,
-            O::BlackoutRoom,
-            O::BlackoutRequests,
-            O::BlackoutBattery,
-            O::BlackoutTimerDrawing,
-        ]),
-        _ => None,
-    }
-}
+pub(super) const MEMORY: &str = "blackout.memory";
+/// The names a handoff case declares. The standing body cases declare their own.
+pub(super) const NAMES: [&str; 6] = [
+    "blackout.scene",
+    "blackout.room",
+    "blackout.timer-drawing",
+    "blackout.battery",
+    "blackout.requests",
+    MEMORY,
+];
 
 fn standing_body(case: &Case) -> bool {
     case.rules.iter().any(|rule| rule == standing::RULE)
-}
-
-pub(super) fn valid(case: &Case) -> bool {
-    if case.kind != CaseKind::Scoped
-        || !matches!(case.start, Start::CacheCut { .. })
-        || !case.checkpoints
-        || case.content != ContentProvider::PlayerRomImport
-        || case.expectations.provider != ExpectedProvider::PinnedRecordCache
-        || case.expectations.output_cut.is_some()
-    {
-        return false;
-    }
-    if standing_body(case) {
-        let (fields, outputs) = standing::partition();
-        return case.responsibilities == [Responsibility::Appearance]
-            && case.expectations.fields == fields
-            && case.expectations.outputs == outputs;
-    }
-    let outputs = &case.expectations.outputs;
-    let common = outputs
-        .strip_suffix(&[O::BlackoutMemory])
-        .unwrap_or(outputs);
-    case.responsibilities == [Responsibility::Blackout]
-        && case.expectations.fields == [O::BlackoutScene, O::BlackoutRoom]
-        && common
-            == [
-                O::BlackoutTimerDrawing,
-                O::BlackoutBattery,
-                O::BlackoutRequests,
-            ]
 }
 
 impl Tape<blackout::Cut> {
@@ -85,7 +49,7 @@ fn origin(case: &Case, record: &oracle_record::FrameRecord) -> Result<Origin, Ou
     if !elevator_room(record)? {
         return Err(bad());
     }
-    let memory = case.expectations.outputs.contains(&O::BlackoutMemory);
+    let memory = !standing_body(case) && case.declares(&NAMES, MEMORY)?;
     if word(&record.wram, 0x998)? == 8
         && word(&record.wram, 0x93f)? & 0x8000 != 0
         && matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)

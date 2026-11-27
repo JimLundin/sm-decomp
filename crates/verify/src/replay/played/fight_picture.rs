@@ -5,15 +5,8 @@ use core::ops::Range;
 use game::state::video::{Oam, OamEntry, Video};
 use oracle_record::FrameRecord;
 
-use crate::replay::index::{Case, PlayedWindow, Start};
+use crate::replay::index::PlayedWindow;
 use crate::replay::{compare::Observation, data_failure, result::Outcome};
-
-pub(super) const fn valid_window(case: &Case) -> bool {
-    matches!((&case.start, &case.expectations.played),
-        (Start::CacheCut { frame }, Some(PlayedWindow::FightPicture { appends: [first, second] }))
-        if *frame < first.cut && first.cut < second.cut && second.cut == case.end.cut_inclusive
-            && first.cursor != second.cursor && first.cursor <= 120 && second.cursor <= 120)
-}
 
 pub(super) const DOOR_CURSOR: &str = "ridley.ordinary.door-cursor";
 pub(super) const PREPARED: &str = "ridley.ordinary.prepared-oam";

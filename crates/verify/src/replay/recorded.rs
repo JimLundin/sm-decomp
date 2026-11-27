@@ -1,9 +1,7 @@
 //! Finite recorded recipes supply independent facts to the shared production runner.
 
 use super::compare::Observation;
-use super::index::{
-    Case, ExpectedProvider, FixtureFile, InputProvider, ObservationId, Responsibility, Start,
-};
+use super::index::{Case, ExpectedProvider, FixtureFile, InputProvider, Responsibility, Start};
 use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
@@ -48,87 +46,39 @@ pub(super) enum Witness {
         inputs: FixtureFile,
         actors: Vec<u8>,
     },
-    PublishedDoorVisits {
-        row: String,
-        first: u64,
-        last: u64,
-        actors: Vec<u8>,
-    },
 }
 
 impl Witness {
-    pub(super) fn required(case: &Case) -> bool {
-        matches!(
-            case.inputs,
-            InputProvider::PrecedingCutCameraInputs
-                | InputProvider::PrecedingCutWeaponsContactInputs
-        ) || case
-            .expectations
-            .fields
-            .iter()
-            .chain(&case.expectations.outputs)
-            .any(|field| matches!(field, ObservationId::WallTest | ObservationId::Reached))
+    pub(super) fn valid_for(case: &Case) -> bool {
+        let declared = case.expectations.provider == ExpectedProvider::WitnessedRecordCache;
+        declared == case.ordinary_witness.is_some()
+            && case
+                .ordinary_witness
+                .as_ref()
+                .is_none_or(|witness| witness.binds(case))
     }
 
-    pub(super) fn valid_for(case: &Case) -> bool {
-        use InputProvider as I;
-        use ObservationId as O;
-        let declared = case.expectations.provider == ExpectedProvider::WitnessedRecordCache;
-        if declared != case.ordinary_witness.is_some() {
-            return false;
-        }
-        if !Self::required(case) {
-            return !declared;
-        }
-        match (case.ordinary_witness(), case.inputs) {
-            (
-                Some(Self::WallCells {
-                    source, reached, ..
-                }),
-                I::PrecedingCutMovementInputs,
-            ) => {
+    fn binds(&self, case: &Case) -> bool {
+        match self {
+            Self::WallCells {
+                source, reached, ..
+            } => {
                 source.valid(case)
                     && case.expectations.output_cut == Some(source.cut)
-                    && case
-                        .expectations
-                        .fields
-                        .iter()
-                        .all(|field| !matches!(field, O::WallTest | O::Reached))
-                    && case
-                        .expectations
-                        .outputs
-                        .iter()
-                        .any(|field| matches!(field, O::WallTest | O::Reached))
                     && !reached.is_empty()
                     && reached.iter().all(|touch| {
                         touch.cell.x.checked_mul(16).is_some()
                             && touch.cell.y.checked_mul(16).is_some()
                     })
             }
-            (Some(Self::CameraFollow { source }), I::PrecedingCutCameraInputs) => {
+            Self::CameraFollow { source } => {
                 source.valid(case)
                     && case.end.cut_inclusive == source.cut
                     && case.first_cut() == Some(source.cut)
             }
-            (Some(Self::DoorVisits { inputs, actors }), I::PrecedingCutWeaponsContactInputs) => {
-                declared && inputs.valid() && super::shot_drawing::valid_slots(actors)
+            Self::DoorVisits { inputs, actors } => {
+                inputs.valid() && super::shot_drawing::valid_slots(actors)
             }
-            (
-                Some(Self::PublishedDoorVisits {
-                    row,
-                    first,
-                    last,
-                    actors,
-                }),
-                I::PrecedingCutWeaponsContactInputs,
-            ) => {
-                !declared
-                    && case.row == *row
-                    && case.first_cut().is_some_and(|cut| cut >= *first)
-                    && case.end.cut_inclusive <= *last
-                    && super::shot_drawing::valid_slots(actors)
-            }
-            _ => false,
         }
     }
 
@@ -307,16 +257,6 @@ fn weapons_recipe(
                     })
                     .collect::<Result<_, _>>()?
             }
-            Some(Witness::PublishedDoorVisits { actors, .. }) => window
-                .cuts
-                .map(|cut| {
-                    weapons::ordinary_input(
-                        &preceding(cache, cut)?.wram,
-                        &content,
-                        actors.iter().copied(),
-                    )
-                })
-                .collect::<Result<_, _>>()?,
             _ => return Err(data_failure(None, "ordinary door visit source")),
         };
         (

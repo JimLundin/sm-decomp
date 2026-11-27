@@ -1,4 +1,4 @@
-//! Strict case metadata. Cases name witnesses; rule identifiers resolve to clean catalogues.
+//! Strict case metadata. Each case names its witness, the rules it holds and the fields it compares.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -288,589 +288,6 @@ pub enum ExpectedProvider {
     NativeDecodedCuts,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-/// A concrete supported compared field or output stream.
-pub enum ObservationId {
-    /// Ridley's carried body, held baby and retreat phase, with the station still calm.
-    #[serde(rename = "ridley.retreat.body")]
-    CeresRetreatBody,
-    /// The boundary his move met, if any.
-    #[serde(rename = "ridley.retreat.bound")]
-    CeresRetreatBound,
-    /// The pair of placements at the stopped cut.
-    #[serde(rename = "ridley.backdrop.walls")]
-    CeresBackdropWalls,
-    /// Three independent current and native physical palette spans at publication.
-    #[serde(rename = "ridley.backdrop.colours")]
-    CeresBackdropColours,
-    /// Phase, position, turn, picture counter and both beats.
-    #[serde(rename = "ridley.flyby.state")]
-    CeresFlybyState,
-    /// Effective plane and physical transform, scroll, mode, and zoom.
-    #[serde(rename = "ridley.flyby.plane")]
-    CeresFlybyPlane,
-    /// Current body shades and their published CGRAM span.
-    #[serde(rename = "ridley.flyby.colours")]
-    CeresFlybyColours,
-    /// The low-byte tilemap updates for the baby and the wings.
-    #[serde(rename = "ridley.flyby.tiles")]
-    CeresFlybyTiles,
-    /// The flyby sound offer on the second effects channel.
-    #[serde(rename = "ridley.flyby.sound")]
-    CeresFlybySound,
-    /// The side-free request from Ridley to movement.
-    #[serde(rename = "ridley.flyby.push")]
-    CeresFlybyPush,
-    /// The room’s door state, clock and quake at each flyby cut.
-    #[serde(rename = "ridley.flyby.room")]
-    CeresFlybyRoom,
-    /// Warning phase, live progress, glow and Escape stage.
-    #[serde(rename = "ridley.warning.state")]
-    CeresWarningState,
-    /// Local clocks keyed by shaft actor placement.
-    #[serde(rename = "shaft-picture.clocks")]
-    ShaftPictureClocks,
-    /// Stable effect slots and their playback phases.
-    #[serde(rename = "shaft-picture.effects")]
-    ShaftPictureEffects,
-    /// Selected native shadow and published OAM spans.
-    #[serde(rename = "shaft-picture.oam")]
-    ShaftPictureOam,
-    /// Carried room art, positioned text and live and physically published colours.
-    #[serde(rename = "ridley.warning.picture")]
-    CeresWarningPicture,
-    /// Delayed escape track and stroke offers.
-    #[serde(rename = "ridley.warning.audio")]
-    CeresWarningAudio,
-    /// Defeat, doors, quake results and the clock picture through the first passage turns.
-    #[serde(rename = "ridley.warning.handoff")]
-    CeresWarningHandoff,
-    /// The actual slot at which the attached door is appended.
-    #[serde(rename = "ridley.ordinary.door-cursor")]
-    CeresFightDoorCursor,
-    /// The prepared ordinary fight picture.
-    #[serde(rename = "ridley.ordinary.prepared-oam")]
-    CeresFightPreparedOam,
-    /// The physically published ordinary fight picture.
-    #[serde(rename = "ridley.ordinary.physical-oam")]
-    CeresFightPhysicalOam,
-    /// Complete carried flight tail, compared by segment and field.
-    #[serde(rename = "ridley.tail.state")]
-    CeresTailState,
-    /// Seven tail places as produced for drawing.
-    #[serde(rename = "ridley.tail.places")]
-    CeresTailPlaces,
-    /// The hit's side and initial push time.
-    #[serde(rename = "ridley.tail.hit")]
-    CeresTailHit,
-    /// The tail's swish request.
-    #[serde(rename = "ridley.tail.swish-request")]
-    CeresTailSwish,
-    /// The movement pose and push reaction at the cut.
-    #[serde(rename = "movement.tail-reaction")]
-    CeresTailKnockback,
-    /// Energy, protection, pending loss and warning at the cut.
-    #[serde(rename = "health.tail-reaction")]
-    CeresTailHealth,
-    #[doc = "Blackout scene observation."]
-    #[serde(rename = "blackout.scene")]
-    BlackoutScene,
-    #[doc = "Blackout room observation."]
-    #[serde(rename = "blackout.room")]
-    BlackoutRoom,
-    #[doc = "Blackout battery observation."]
-    #[serde(rename = "blackout.battery")]
-    BlackoutBattery,
-    #[doc = "Blackout timer-drawing observation."]
-    #[serde(rename = "blackout.timer-drawing")]
-    BlackoutTimerDrawing,
-    #[doc = "Blackout requests observation."]
-    #[serde(rename = "blackout.requests")]
-    BlackoutRequests,
-    #[doc = "Blackout memory observation."]
-    #[serde(rename = "blackout.memory")]
-    BlackoutMemory,
-    /// Standing body's pending OAM slots.
-    #[serde(rename = "standing-body.pending-oam")]
-    StandingOamPending,
-    /// Standing body's pending named strip transfers.
-    #[serde(rename = "standing-body.pending-strips")]
-    StandingStripsPending,
-    /// Standing body's physical OAM slots.
-    #[serde(rename = "standing-body.published-oam")]
-    StandingOamPublished,
-    /// Standing body's strip transfers serviced by video.
-    #[serde(rename = "standing-body.publication")]
-    StandingPublication,
-    /// Physical first upper-body strip row.
-    #[serde(rename = "standing-body.upper-first")]
-    StandingUpperFirst,
-    /// Physical second upper-body strip row.
-    #[serde(rename = "standing-body.upper-second")]
-    StandingUpperSecond,
-    /// Physical first lower-body strip row.
-    #[serde(rename = "standing-body.lower-first")]
-    StandingLowerFirst,
-    /// Physical second lower-body strip row.
-    #[serde(rename = "standing-body.lower-second")]
-    StandingLowerSecond,
-    /// Intro stage, scripts, dissolves, visibility and brightness.
-    #[serde(rename = "intro.state")]
-    IntroState,
-    /// Intro encounter, layout, text, sound and palette publications.
-    #[serde(rename = "intro.publications")]
-    IntroPublications,
-    /// Logical width, height, all backed words and their marks.
-    #[serde(rename = "intro-room.grid")]
-    IntroRoomGrid,
-    /// Samus and demo at the room join.
-    #[serde(rename = "intro-room.actor")]
-    IntroRoomActor,
-    /// The carried finished-work count.
-    #[serde(rename = "intro-room.finished-frames")]
-    IntroRoomClock,
-    /// Pending scene start.
-    #[serde(rename = "flashback.pending-start")]
-    FlashbackStart,
-    /// Carried background Y.
-    #[serde(rename = "flashback.background-y")]
-    FlashbackY,
-    /// Complete boss State.
-    #[serde(rename = "flashback.brain")]
-    FlashbackBrain,
-    /// Any scheduled pair and its remaining wait.
-    #[serde(rename = "flashback.pair-schedule")]
-    FlashbackPair,
-    /// Each ring, with position, rank and clip.
-    #[serde(rename = "flashback.rings")]
-    FlashbackRings,
-    /// Each burst, with position, rank and clip.
-    #[serde(rename = "flashback.bursts")]
-    FlashbackBursts,
-    /// A fresh encounter turn.
-    #[serde(rename = "flashback.turn")]
-    FlashbackTurn,
-    /// The weapon slot requested for conversion to impact.
-    #[serde(rename = "flashback.missile-impact")]
-    FlashbackImpact,
-    /// The push direction and holds the ring sets.
-    #[serde(rename = "flashback.ring-knockback")]
-    FlashbackPush,
-    /// The selection of colours written by the flash.
-    #[serde(rename = "flashback.flash")]
-    FlashbackFlash,
-    /// The one-turn page-two cue.
-    #[serde(rename = "flashback.page-two")]
-    FlashbackCue,
-    /// The request to hide Samus and her shots.
-    #[serde(rename = "flashback.hide")]
-    FlashbackHide,
-    /// The flash write to the palette mirror.
-    #[serde(rename = "flashback.palette-mirror")]
-    FlashbackMirror,
-    /// The flash row as observed in CGRAM.
-    #[serde(rename = "flashback.cgram")]
-    FlashbackCgram,
-    /// Each visible encounter OAM piece and its high bits in order.
-    #[serde(rename = "flashback.oam")]
-    FlashbackOam,
-    /// The signed Y published to the room background.
-    #[serde(rename = "flashback.bg1-y")]
-    FlashbackBg1Y,
-
-    /// Current playback phase.
-    #[serde(rename = "playback.phase")]
-    PlaybackPhase,
-    /// Issued opportunities within the active timeline.
-    #[serde(rename = "playback.progress")]
-    PlaybackProgress,
-    /// Last retained held buttons.
-    #[serde(rename = "playback.last.held")]
-    PlaybackLastHeld,
-    /// Last retained fresh presses.
-    #[serde(rename = "playback.last.fresh")]
-    PlaybackLastFresh,
-    /// Current held buttons delivered to the actors.
-    #[serde(rename = "playback.current.held")]
-    PlaybackCurrentHeld,
-    /// Current fresh presses delivered to the actors.
-    #[serde(rename = "playback.current.fresh")]
-    PlaybackCurrentFresh,
-    /// Previous held buttons delivered to the actors.
-    #[serde(rename = "playback.previous.held")]
-    PlaybackPreviousHeld,
-    /// Previous fresh presses delivered to the actors.
-    #[serde(rename = "playback.previous.fresh")]
-    PlaybackPreviousFresh,
-    /// Scene setup handoff.
-    #[serde(rename = "playback.start")]
-    PlaybackStart,
-    /// Terminal control handoff.
-    #[serde(rename = "playback.finish")]
-    PlaybackFinish,
-    /// Work authorized on this room actor opportunity.
-    #[serde(rename = "playback.authority")]
-    PlaybackAuthority,
-    /// The complete cartridge image at the selected cut.
-    #[serde(rename = "save-files.battery")]
-    Battery,
-    /// Carried ammunition, selection and protection.
-    #[serde(rename = "weapons.intro-stock")]
-    IntroMissileStock,
-    /// Cannon clock and shot count.
-    #[serde(rename = "weapons.intro-spacing")]
-    IntroMissileSpacing,
-    /// Five weapon slots and retained trail holds.
-    #[serde(rename = "weapons.intro-slots")]
-    IntroMissileSlots,
-    /// Live exhaust positions and clip holds.
-    #[serde(rename = "weapons.intro-exhaust")]
-    IntroMissileExhaust,
-    /// Fresh ammunition debit.
-    #[serde(rename = "weapons.intro-release")]
-    IntroMissileRelease,
-    /// Applied encounter request by weapon slot.
-    #[serde(rename = "weapons.intro-impact")]
-    IntroMissileImpact,
-    /// Exhaust requests and their pre-motion centres.
-    #[serde(rename = "weapons.intro-puffs")]
-    IntroMissilePuffs,
-    /// After-flight positions in encounter precedence.
-    #[serde(rename = "weapons.intro-candidates")]
-    IntroMissileCandidates,
-    /// Missile point contact requests.
-    #[serde(rename = "weapons.intro-point-reads")]
-    IntroMissilePoints,
-    /// Weapon launch and impact sound requests.
-    #[serde(rename = "weapons.intro-sound")]
-    IntroMissileSound,
-    /// Ordered missile and exhaust OAM bytes.
-    #[serde(rename = "weapons.intro-oam")]
-    IntroMissileOam,
-    /// Jump count and pending landing or end check.
-    #[serde(rename = "movement.drawn-jump-held")]
-    DrawnJumpHeld,
-    /// Semantic body and cannon pose selected on landing.
-    #[serde(rename = "movement.landing.pose")]
-    LandingPose,
-    /// The semantic body and cannon pose after ordinary movement.
-    #[serde(rename = "movement.pose")]
-    MovementPose,
-    /// The horizontal base speed retained after landing.
-    #[serde(rename = "movement.base-speed")]
-    MovementBaseSpeed,
-    /// Getaway pending or active on a side, or the ordinary movement phase.
-    #[serde(rename = "movement.getaway-phase")]
-    GetawayPhase,
-    /// Latest resolved pose recorded by Movement.
-    #[serde(rename = "movement.getaway-latest-pose")]
-    GetawayLatestPose,
-    /// Pose recorded before the latest resolved choice.
-    #[serde(rename = "movement.getaway-older-pose")]
-    GetawayOlderPose,
-    /// Horizontal half-width used at the beginning of the shove opportunity.
-    #[serde(rename = "movement.getaway-body-x")]
-    GetawayBodyX,
-    /// Vertical half-height used at the beginning of the shove opportunity.
-    #[serde(rename = "movement.getaway-body-y")]
-    GetawayBodyY,
-    /// The grounded upright floor response.
-    #[serde(rename = "movement.landing.floor")]
-    LandingFloor,
-    /// Native shell phase and hatch age.
-    #[serde(rename = "discovery.egg")]
-    DiscoveryEgg,
-    /// The baby’s position and current motion memory.
-    #[serde(rename = "discovery.baby")]
-    DiscoveryBaby,
-    /// Current pulse age, including an unseen first frame.
-    #[serde(rename = "discovery.pulse")]
-    DiscoveryPulse,
-    /// All live shell fragments.
-    #[serde(rename = "discovery.fragments")]
-    DiscoveryFragments,
-    /// All live droplets, including splashes.
-    #[serde(rename = "discovery.droplets")]
-    DiscoveryDroplets,
-    /// The scene’s relative foreground order.
-    #[serde(rename = "discovery.order")]
-    DiscoveryOrder,
-    /// Ordered shell and baby sound offers.
-    #[serde(rename = "discovery.sounds")]
-    DiscoverySounds,
-    /// The page-three cue.
-    #[serde(rename = "discovery.page-three")]
-    DiscoveryCue,
-    /// Whether the playable room got its last turn.
-    #[serde(rename = "discovery.room-turn")]
-    DiscoveryTurn,
-    /// Visible discovery pieces and priority relative to the room.
-    #[serde(rename = "discovery.oam")]
-    DiscoveryOam,
-    /// Receiving loader random.
-    #[serde(rename = "landing.random")]
-    LandingRandom,
-    /// Receiving loader carried.
-    #[serde(rename = "landing.carried")]
-    LandingCarried,
-    /// Receiving loader map.
-    #[serde(rename = "landing.map")]
-    LandingMap,
-    /// Receiving loader pipeline.
-    #[serde(rename = "landing.pipeline")]
-    LandingPipeline,
-    /// Receiving loader vram.
-    #[serde(rename = "landing.vram")]
-    LandingVram,
-    /// Receiving loader cgram.
-    #[serde(rename = "landing.cgram")]
-    LandingCgram,
-    /// Receiving loader oam.
-    #[serde(rename = "landing.oam")]
-    LandingOam,
-    /// Receiving loader display.live.
-    #[serde(rename = "landing.display.live")]
-    LandingLive,
-    /// Receiving loader display.published.
-    #[serde(rename = "landing.display.published")]
-    LandingPublished,
-    /// Receiving loader display.mirrors.
-    #[serde(rename = "landing.display.mirrors")]
-    LandingMirrors,
-    /// Receiving loader dma.
-    #[serde(rename = "landing.dma")]
-    LandingDma,
-    /// Receiving loader tilemaps.
-    #[serde(rename = "landing.tilemaps")]
-    LandingTilemaps,
-
-    /// Exact 15 mini-map cells in display order.
-    #[serde(rename = "hud.map-window")]
-    EarlyMapWindow,
-    /// Complete finished ordinary Movement state.
-    #[serde(rename = "movement.ordinary-completion")]
-    MapCarryMovement,
-    /// Complete finished ordinary Appearance state and Figure.
-    #[serde(rename = "appearance.ordinary-completion")]
-    MapCarryAppearance,
-    /// Complete finished ordinary Camera state.
-    #[serde(rename = "camera.ordinary-completion")]
-    MapCarryCamera,
-    /// Complete Health at the frame cut.
-    #[serde(rename = "health.tail.state")]
-    HealthTailState,
-    /// The Warning request, before any receiver.
-    #[serde(rename = "health.tail.warning_request")]
-    HealthTailWarning,
-    /// The protection Drawing reads for the flash after damage, before the frame spends one.
-    #[serde(rename = "health.tail.protection_drawn")]
-    HealthTailDrawnProtection,
-    /// Drawing's energy history at the frame cut.
-    #[serde(rename = "appearance.drawing.energy")]
-    DrawingEnergy,
-    /// The gauge's shown energy at the frame cut and whether the frame redrew it.
-    #[serde(rename = "hud.gauge.refresh")]
-    GaugeRefresh,
-    /// All sixteen CPU-side gauge words.
-    #[serde(rename = "hud.gauge.words")]
-    GaugeWords,
-    /// Complete pending sound queue, oldest first.
-    #[serde(rename = "sender.queue")]
-    SenderQueue,
-    /// Room sound enable carried through passage.
-    #[serde(rename = "sender.permission")]
-    SenderPermission,
-    /// The CPU's current request to the Ambient sound group.
-    #[serde(rename = "sender.request")]
-    SenderRequest,
-    /// The shaft overlay's sound offer and its queue limit.
-    #[serde(rename = "shaft-sound.offer")]
-    ShaftSoundOffer,
-    /// Complete committed sender progress.
-    #[serde(rename = "sender.progress")]
-    SenderProgress,
-    /// Her downward travel this frame, after collision.
-    #[serde(rename = "movement.touchdown.floor_clip")]
-    TouchdownClip,
-    /// Her position after her moves, before the pose change moves her.
-    #[serde(rename = "movement.touchdown.body_fit")]
-    TouchdownFit,
-    /// Actual accepted floor response and its speed.
-    #[serde(rename = "movement.touchdown.floor_response")]
-    TouchdownResponse,
-    /// Ordered offer that reached Contact, including its allowance.
-    #[serde(rename = "sender.touchdown_offer")]
-    TouchdownOffer,
-    /// Ordered Appearance clear operation for the selected figure.
-    #[serde(rename = "appearance.touchdown_graphics")]
-    TouchdownGraphics,
-    /// Complete retained movement owner.
-    #[serde(rename = "movement.state.complete")]
-    MovementStateComplete,
-    /// Complete currently playing Figure.
-    #[serde(rename = "appearance.playing")]
-    AppearancePlaying,
-    /// Complete ordered reaction-facing reaches.
-    #[serde(rename = "movement.reached.complete")]
-    CompleteReached,
-    /// All starting inside cells, distinct from leading-edge tests.
-    #[serde(rename = "movement.inside")]
-    Inside,
-    #[serde(rename = "movement.position.x")]
-    /// Fixed-point horizontal position.
-    PositionX,
-    #[serde(rename = "movement.position.y")]
-    /// Fixed-point vertical position.
-    PositionY,
-    #[serde(rename = "movement.vertical_speed")]
-    /// Observed vertical speed magnitude.
-    VerticalSpeed,
-    #[serde(rename = "movement.travel.Left")]
-    /// Latest accepted signed left travel.
-    TravelLeft,
-    #[serde(rename = "movement.travel.Right")]
-    /// Latest accepted signed right travel.
-    TravelRight,
-    #[serde(rename = "movement.travel.Up")]
-    /// Latest accepted signed upward travel.
-    TravelUp,
-    #[serde(rename = "movement.travel.Down")]
-    /// Latest accepted signed downward travel.
-    TravelDown,
-    #[serde(rename = "movement.wall_test")]
-    /// Performed near-wall test outcome.
-    WallTest,
-    #[serde(rename = "movement.reached")]
-    /// Ordered reached-cell receipt.
-    Reached,
-    #[serde(rename = "audio.semantic")]
-    /// Every admitted native semantic quantity.
-    AudioSemantic,
-    #[serde(rename = "audio.replies")]
-    /// Reply bytes last published on each line at each cut.
-    AudioReplies,
-    #[serde(rename = "audio.request_lines")]
-    /// Request bytes last presented on each group's line at each cut.
-    AudioRequestLines,
-    /// Exact independently decoded camera.view.x.pixel.
-    #[serde(rename = "camera.view.x.pixel")]
-    CameraViewXPixel,
-    /// Exact independently decoded camera.view.x.fraction.
-    #[serde(rename = "camera.view.x.fraction")]
-    CameraViewXFraction,
-    /// Exact independently decoded camera.view.y.pixel.
-    #[serde(rename = "camera.view.y.pixel")]
-    CameraViewYPixel,
-    /// Exact independently decoded camera.view.y.fraction.
-    #[serde(rename = "camera.view.y.fraction")]
-    CameraViewYFraction,
-    /// Exact independently decoded camera.remembered.x.pixel.
-    #[serde(rename = "camera.remembered.x.pixel")]
-    CameraRememberedXPixel,
-    /// Exact independently decoded camera.remembered.x.fraction.
-    #[serde(rename = "camera.remembered.x.fraction")]
-    CameraRememberedXFraction,
-    /// Exact independently decoded camera.remembered.y.pixel.
-    #[serde(rename = "camera.remembered.y.pixel")]
-    CameraRememberedYPixel,
-    /// Exact independently decoded camera.remembered.y.fraction.
-    #[serde(rename = "camera.remembered.y.fraction")]
-    CameraRememberedYFraction,
-    /// Exact independently decoded camera.vertical-fraction.
-    #[serde(rename = "camera.vertical-fraction")]
-    CameraVerticalFraction,
-    /// Exact independently decoded weapons.state.
-    #[serde(rename = "weapons.state")]
-    WeaponsState,
-    /// Exact independently decoded contact.consumed-markers.
-    #[serde(rename = "contact.consumed-markers")]
-    ContactConsumedMarkers,
-    /// Reached power spawn and trail request sequence.
-    #[serde(rename = "weapons.update-events")]
-    WeaponsUpdateEvents,
-    /// Ordered physical receiver and shot slots.
-    #[serde(rename = "contact.receivers")]
-    ContactReceivers,
-    /// Selected flying picture intents.
-    #[serde(rename = "weapons.flying-pictures")]
-    WeaponsFlyingPictures,
-    /// Exact low entry and high pair at the reached insertion.
-    #[serde(rename = "weapons.oam-insertion")]
-    WeaponsOamInsertion,
-    /// Exact independently decoded hud.explored.
-    #[serde(rename = "hud.explored")]
-    HudExplored,
-    /// Independently decoded appearance.step.
-    #[serde(rename = "appearance.step")]
-    AppearanceStep,
-    /// Independently decoded appearance.time-left.
-    #[serde(rename = "appearance.time-left")]
-    AppearanceTimeLeft,
-    /// Independently decoded appearance.boost-stage.
-    #[serde(rename = "appearance.boost-stage")]
-    AppearanceBoostStage,
-    /// Independently decoded appearance.laps-left.
-    #[serde(rename = "appearance.laps-left")]
-    AppearanceLapsLeft,
-    /// Independently decoded progress.events.PlanetAwake.
-    #[serde(rename = "progress.events.PlanetAwake")]
-    ProgressPlanetAwake,
-    /// Independently decoded progress.events.MotherBrainTankBroken.
-    #[serde(rename = "progress.events.MotherBrainTankBroken")]
-    ProgressMotherBrainTankBroken,
-    /// Independently decoded progress.events.PhantoonStatueGrey.
-    #[serde(rename = "progress.events.PhantoonStatueGrey")]
-    ProgressPhantoonStatueGrey,
-    /// Independently decoded progress.events.RidleyStatueGrey.
-    #[serde(rename = "progress.events.RidleyStatueGrey")]
-    ProgressRidleyStatueGrey,
-    /// Independently decoded progress.events.DraygonStatueGrey.
-    #[serde(rename = "progress.events.DraygonStatueGrey")]
-    ProgressDraygonStatueGrey,
-    /// Independently decoded progress.events.KraidStatueGrey.
-    #[serde(rename = "progress.events.KraidStatueGrey")]
-    ProgressKraidStatueGrey,
-    /// Independently decoded progress.events.TourianOpen.
-    #[serde(rename = "progress.events.TourianOpen")]
-    ProgressTourianOpen,
-    /// Independently decoded progress.events.GlassTunnelBroken.
-    #[serde(rename = "progress.events.GlassTunnelBroken")]
-    ProgressGlassTunnelBroken,
-    /// Independently decoded progress.events.AcidReceded.
-    #[serde(rename = "progress.events.AcidReceded")]
-    ProgressAcidReceded,
-    /// Independently decoded progress.events.ShaktoolPath.
-    #[serde(rename = "progress.events.ShaktoolPath")]
-    ProgressShaktoolPath,
-    /// Independently decoded progress.events.TimeBombSet.
-    #[serde(rename = "progress.events.TimeBombSet")]
-    ProgressTimeBombSet,
-    /// Independently decoded progress.events.AnimalsFreed.
-    #[serde(rename = "progress.events.AnimalsFreed")]
-    ProgressAnimalsFreed,
-    /// Independently decoded progress.events.MetroidRoom1Empty.
-    #[serde(rename = "progress.events.MetroidRoom1Empty")]
-    ProgressMetroidRoom1Empty,
-    /// Independently decoded progress.events.MetroidRoom2Empty.
-    #[serde(rename = "progress.events.MetroidRoom2Empty")]
-    ProgressMetroidRoom2Empty,
-    /// Independently decoded progress.events.MetroidRoom3Empty.
-    #[serde(rename = "progress.events.MetroidRoom3Empty")]
-    ProgressMetroidRoom3Empty,
-    /// Independently decoded progress.events.MetroidRoom4Empty.
-    #[serde(rename = "progress.events.MetroidRoom4Empty")]
-    ProgressMetroidRoom4Empty,
-    /// Independently decoded progress.events.TourianRoomsUnset.
-    #[serde(rename = "progress.events.TourianRoomsUnset")]
-    ProgressTourianRoomsUnset,
-    /// Independently decoded progress.events.LavaQuakeOutrun.
-    #[serde(rename = "progress.events.LavaQuakeOutrun")]
-    ProgressLavaQuakeOutrun,
-    /// Independently decoded progress.zebetites.
-    #[serde(rename = "progress.zebetites")]
-    ProgressZebetites,
-}
-
 /// Authenticated source of independent, post-execution observations.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -906,9 +323,9 @@ pub struct Expectations {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(super) played: Option<PlayedWindow>,
     /// Compared semantic field identities or quantities.
-    pub fields: Vec<ObservationId>,
+    pub fields: Vec<String>,
     /// Compared output identities or occurrences.
-    pub outputs: Vec<ObservationId>,
+    pub outputs: Vec<String>,
     #[serde(default)]
     /// Outputs compare only at this cut, or every cut when absent.
     pub output_cut: Option<u64>,
@@ -1283,1192 +700,29 @@ pub enum IndexFault {
     DuplicateCase(CaseId),
     /// Case violates its metadata contract.
     InvalidCase(CaseId),
-    /// Rule absent from existing clean catalogues.
-    UnknownRule(String),
     /// Selected case absent from the index.
     UnknownCase(CaseId),
     /// Repeated selected case.
     DuplicateSelection(CaseId),
 }
 
-fn rule_exists(rule: &str) -> bool {
-    if let Some(name) = rule.strip_prefix("screens-explosion/") {
-        let rules = enum_map::EnumMap::<screens_explosion::catalogue::BehaviourId, ()>::default();
-        return rules.iter().any(|(id, ())| format!("{id:?}") == name);
-    }
-    screens_intro::catalogue()
-        .iter()
-        .any(|(id, _)| rule == format!("screens-intro/{id:?}"))
-        || rule == game::production::played::intro_rooms::RULE
-        || screens_flashback::catalogue()
-            .iter()
-            .any(|entry| rule == format!("screens-flashback/{:?}", entry.id))
-        || screens_playback::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("screens-playback/{id:?}"))
-        || save_files::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("save-files/{:?}", entry.id))
-        || screens_blackout::catalogue::BehaviourId::ALL
-            .iter()
-            .any(|id| rule == format!("screens-blackout/{id:?}"))
-        || screens_discovery::catalogue::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("screens-discovery/{id:?}"))
-        || screens_zebes::BehaviourId::ALL
-            .iter()
-            .any(|id| rule == format!("screens-zebes/{id:?}"))
-        || game::production::shaft_entry::CATALOGUE.contains(&rule)
-        || samus_movement::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("samus-movement/{:?}", entry.id))
-        || audio_transport::catalogue::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("audio-transport/{id:?}"))
-        || boss_ceres_ridley::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("boss-ceres-ridley/{id:?}"))
-        || world_doors::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("world-doors/{:?}", entry.id))
-        || world_camera::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("world-camera/{:?}", entry.id))
-        || interface_hud::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("interface-hud/{:?}", entry.id))
-        || samus_appearance::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("samus-appearance/{id:?}"))
-        || run_progress::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("run-progress/{id:?}"))
-        || world_haze::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("world-haze/{id:?}"))
-        || world_quake::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("world-quake/{:?}", entry.id))
-        || game_random::CATALOGUE
-            .iter()
-            .any(|entry| rule == format!("game-random/{:?}", entry.id))
-        || game_time::BEHAVIOURS
-            .iter()
-            .any(|entry| rule == format!("game-time/{:?}", entry.id))
-        || samus_health::BehaviourId::ALL
-            .iter()
-            .any(|id| rule == format!("samus-health/{id:?}"))
-        || weapons_projectiles::catalogue()
-            .iter()
-            .any(|(id, _)| rule == format!("weapons-projectiles/{id:?}"))
-        || [
-            enemy_interactions::BehaviourId::ContactAllowed,
-            enemy_interactions::BehaviourId::BoxOverlap,
-            enemy_interactions::BehaviourId::FirstPowerShot,
-            enemy_interactions::BehaviourId::ShaftActorDraw,
-            enemy_interactions::BehaviourId::ActorShake,
-            enemy_interactions::BehaviourId::EffectSlots,
-            enemy_interactions::BehaviourId::EffectClip,
-            enemy_interactions::BehaviourId::PictureWindow,
-            enemy_interactions::BehaviourId::ShaftPictureOrder,
-        ]
-        .iter()
-        .any(|id| rule == format!("enemy-interactions/{id:?}"))
-}
-
-macro_rules! flashback_observations {
-    () => {
-        ObservationId::FlashbackStart
-            | ObservationId::FlashbackY
-            | ObservationId::FlashbackBrain
-            | ObservationId::FlashbackPair
-            | ObservationId::FlashbackRings
-            | ObservationId::FlashbackBursts
-            | ObservationId::FlashbackTurn
-            | ObservationId::FlashbackImpact
-            | ObservationId::FlashbackPush
-            | ObservationId::FlashbackFlash
-            | ObservationId::FlashbackCue
-            | ObservationId::FlashbackHide
-            | ObservationId::FlashbackMirror
-            | ObservationId::FlashbackCgram
-            | ObservationId::FlashbackOam
-            | ObservationId::FlashbackBg1Y
-    };
-}
-
-macro_rules! blackout_observations {
-    () => {
-        O::BlackoutScene
-            | O::BlackoutRoom
-            | O::BlackoutBattery
-            | O::BlackoutRequests
-            | O::BlackoutMemory
-            | O::BlackoutTimerDrawing
-    };
-}
-
-macro_rules! weapons_observations {
-    () => {
-        ObservationId::IntroMissileStock
-            | ObservationId::IntroMissileSpacing
-            | ObservationId::IntroMissileSlots
-            | ObservationId::IntroMissileExhaust
-            | ObservationId::IntroMissileRelease
-            | ObservationId::IntroMissileImpact
-            | ObservationId::IntroMissilePuffs
-            | ObservationId::IntroMissileCandidates
-            | ObservationId::IntroMissilePoints
-            | ObservationId::IntroMissileSound
-            | ObservationId::IntroMissileOam
-            | ObservationId::WeaponsState
-            | ObservationId::WeaponsUpdateEvents
-            | ObservationId::WeaponsFlyingPictures
-            | ObservationId::WeaponsOamInsertion
-    };
-}
-
-macro_rules! progress_observations {
-    () => {
-        ObservationId::ProgressPlanetAwake
-            | ObservationId::ProgressMotherBrainTankBroken
-            | ObservationId::ProgressPhantoonStatueGrey
-            | ObservationId::ProgressRidleyStatueGrey
-            | ObservationId::ProgressDraygonStatueGrey
-            | ObservationId::ProgressKraidStatueGrey
-            | ObservationId::ProgressTourianOpen
-            | ObservationId::ProgressGlassTunnelBroken
-            | ObservationId::ProgressAcidReceded
-            | ObservationId::ProgressShaktoolPath
-            | ObservationId::ProgressTimeBombSet
-            | ObservationId::ProgressAnimalsFreed
-            | ObservationId::ProgressMetroidRoom1Empty
-            | ObservationId::ProgressMetroidRoom2Empty
-            | ObservationId::ProgressMetroidRoom3Empty
-            | ObservationId::ProgressMetroidRoom4Empty
-            | ObservationId::ProgressTourianRoomsUnset
-            | ObservationId::ProgressLavaQuakeOutrun
-            | ObservationId::ProgressZebetites
-    };
-}
-
-macro_rules! discovery_observations {
-    () => {
-        ObservationId::DiscoveryEgg
-            | ObservationId::DiscoveryBaby
-            | ObservationId::DiscoveryPulse
-            | ObservationId::DiscoveryFragments
-            | ObservationId::DiscoveryDroplets
-            | ObservationId::DiscoveryOrder
-            | ObservationId::DiscoverySounds
-            | ObservationId::DiscoveryCue
-            | ObservationId::DiscoveryTurn
-            | ObservationId::DiscoveryOam
-    };
-}
-
-macro_rules! ceres_observations {
-    () => {
-        ObservationId::CeresRetreatBody
-            | ObservationId::CeresRetreatBound
-            | ObservationId::CeresBackdropWalls
-            | ObservationId::CeresBackdropColours
-            | ObservationId::CeresTailState
-            | ObservationId::CeresTailPlaces
-            | ObservationId::CeresTailHit
-            | ObservationId::CeresTailSwish
-            | ObservationId::CeresFlybyState
-            | ObservationId::CeresFlybyPlane
-            | ObservationId::CeresFlybyColours
-            | ObservationId::CeresFlybyTiles
-            | ObservationId::CeresFlybySound
-            | ObservationId::CeresFlybyPush
-            | ObservationId::CeresFlybyRoom
-            | ObservationId::CeresWarningState
-            | ObservationId::CeresWarningPicture
-            | ObservationId::CeresWarningAudio
-            | ObservationId::CeresWarningHandoff
-            | ObservationId::ShaftSoundOffer
-            | ObservationId::CeresFightDoorCursor
-            | ObservationId::CeresFightPreparedOam
-            | ObservationId::CeresFightPhysicalOam
-    };
-}
-
-macro_rules! landing_observations {
-    () => {
-        O::LandingRandom
-            | O::LandingCarried
-            | O::LandingMap
-            | O::LandingPipeline
-            | O::LandingVram
-            | O::LandingCgram
-            | O::LandingOam
-            | O::LandingLive
-            | O::LandingPublished
-            | O::LandingMirrors
-            | O::LandingDma
-            | O::LandingTilemaps
-    };
-}
-
-macro_rules! health_observations {
-    () => {
-        ObservationId::HealthTailState
-            | ObservationId::HealthTailWarning
-            | ObservationId::HealthTailDrawnProtection
-            | ObservationId::CeresTailHealth
-    };
-}
-
-macro_rules! appearance_observations {
-    () => {
-        O::StandingOamPending
-            | O::StandingStripsPending
-            | O::StandingOamPublished
-            | O::StandingPublication
-            | O::StandingUpperFirst
-            | O::StandingUpperSecond
-            | O::StandingLowerFirst
-            | O::StandingLowerSecond
-            | O::DrawingEnergy
-            | O::TouchdownGraphics
-            | O::AppearancePlaying
-            | O::AppearanceStep
-            | O::AppearanceTimeLeft
-            | O::AppearanceBoostStage
-            | O::AppearanceLapsLeft
-            | O::MapCarryAppearance
-    };
-}
-
-macro_rules! hud_observations {
-    () => {
-        ObservationId::GaugeRefresh
-            | ObservationId::GaugeWords
-            | ObservationId::EarlyMapWindow
-            | ObservationId::HudExplored
-    };
-}
-
-const fn observation_owner(field: ObservationId) -> Responsibility {
-    use ObservationId as O;
-    match field {
-        discovery_observations!() => Responsibility::Discovery,
-        O::IntroState | O::IntroPublications => Responsibility::Intro,
-        O::IntroRoomGrid | O::IntroRoomActor | O::IntroRoomClock => Responsibility::IntroRooms,
-        flashback_observations!() => Responsibility::Flashback,
-        O::PlaybackPhase
-        | O::PlaybackProgress
-        | O::PlaybackLastHeld
-        | O::PlaybackLastFresh
-        | O::PlaybackCurrentHeld
-        | O::PlaybackCurrentFresh
-        | O::PlaybackPreviousHeld
-        | O::PlaybackPreviousFresh
-        | O::PlaybackStart
-        | O::PlaybackFinish
-        | O::PlaybackAuthority => Responsibility::Playback,
-        O::Battery => Responsibility::SaveFiles,
-        landing_observations!() => Responsibility::LandingSite,
-        O::SenderQueue
-        | O::SenderProgress
-        | O::SenderPermission
-        | O::SenderRequest
-        | O::TouchdownOffer => Responsibility::AudioSender,
-        health_observations!() => Responsibility::Health,
-        blackout_observations!() => Responsibility::Blackout,
-        O::CeresTailKnockback
-        | O::TouchdownClip
-        | O::TouchdownFit
-        | O::TouchdownResponse
-        | O::CompleteReached
-        | O::Inside
-        | O::MovementStateComplete
-        | O::DrawnJumpHeld
-        | O::MovementPose
-        | O::LandingPose
-        | O::GetawayPhase
-        | O::GetawayLatestPose
-        | O::GetawayOlderPose
-        | O::GetawayBodyX
-        | O::GetawayBodyY
-        | O::MovementBaseSpeed
-        | O::LandingFloor
-        | O::PositionX
-        | O::PositionY
-        | O::VerticalSpeed
-        | O::TravelLeft
-        | O::TravelRight
-        | O::TravelUp
-        | O::TravelDown
-        | O::WallTest
-        | O::Reached
-        | O::MapCarryMovement => Responsibility::Movement,
-        O::AudioSemantic | O::AudioReplies | O::AudioRequestLines => Responsibility::Audio,
-        ceres_observations!() => Responsibility::Ceres,
-        O::CameraViewXPixel
-        | O::CameraViewXFraction
-        | O::CameraViewYPixel
-        | O::CameraViewYFraction
-        | O::CameraRememberedXPixel
-        | O::CameraRememberedXFraction
-        | O::CameraRememberedYPixel
-        | O::CameraRememberedYFraction
-        | O::CameraVerticalFraction
-        | O::MapCarryCamera => Responsibility::Camera,
-        hud_observations!() => Responsibility::Hud,
-        weapons_observations!() => Responsibility::Weapons,
-        O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
-        O::ShaftPictureClocks | O::ShaftPictureEffects | O::ShaftPictureOam => {
-            Responsibility::ShaftPicture
-        }
-        appearance_observations!() => Responsibility::Appearance,
-        progress_observations!() => Responsibility::Progress,
-    }
-}
-
-fn rule_owner(rule: &str, provider: InputProvider) -> Option<Responsibility> {
-    if rule.starts_with("enemy-interactions/")
-        && witnessed_fields(rule, InputProvider::ShaftPictures).is_some_and(|fields| {
-            fields
-                .iter()
-                .all(|field| observation_owner(*field) == Responsibility::ShaftPicture)
+fn scope_valid(case: &Case) -> bool {
+    let owners: BTreeSet<_> = case.responsibilities.iter().collect();
+    owners.len() == case.responsibilities.len()
+        && case.expectations.output_cut.is_none_or(|at| {
+            case.first_cut().is_some_and(|first| at >= first)
+                && at <= case.end.cut_inclusive
+                && !case.expectations.outputs.is_empty()
         })
-    {
-        return Some(Responsibility::ShaftPicture);
-    }
-    if rule == "game-random/AdvanceRandom" {
-        return Some(Responsibility::LandingSite);
-    }
-    if provider == InputProvider::PlayedShaftSound
-        && matches!(
-            rule,
-            "audio-transport/RequestDelivery" | "audio-transport/RequestRelease"
-        )
-    {
-        return Some(Responsibility::AudioSender);
-    }
-    if rule == "audio-transport/OfferAcceptance" {
-        return Some(Responsibility::AudioSender);
-    }
-    [
-        ("screens-intro/", Responsibility::Intro),
-        ("world-intro-rooms/", Responsibility::IntroRooms),
-        ("screens-flashback/", Responsibility::Flashback),
-        ("screens-discovery/", Responsibility::Discovery),
-        ("samus-movement/", Responsibility::Movement),
-        ("screens-blackout/", Responsibility::Blackout),
-        ("screens-playback/", Responsibility::Playback),
-        ("audio-transport/", Responsibility::Audio),
-        ("boss-ceres-ridley/", Responsibility::Ceres),
-        ("world-camera/", Responsibility::Camera),
-        ("world-doors/", Responsibility::Doors),
-        ("weapons-projectiles/", Responsibility::Weapons),
-        ("enemy-interactions/", Responsibility::Contact),
-        ("interface-hud/", Responsibility::Hud),
-        ("samus-appearance/", Responsibility::Appearance),
-        ("run-progress/", Responsibility::Progress),
-        ("save-files/", Responsibility::SaveFiles),
-        ("samus-health/", Responsibility::Health),
-    ]
-    .iter()
-    .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
-}
-
-fn movement_witnessed_fields(
-    rule: &str,
-    provider: InputProvider,
-) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    if rule.starts_with("screens-blackout/") {
-        return super::blackout::witnessed_fields(rule);
-    }
-    Some(match rule {
-        "screens-blackout/ElevatorStopsSamus"
-        | "screens-blackout/PlatformWait"
-        | "screens-blackout/DepartureHandoff" => &[
-            O::BlackoutScene,
-            O::BlackoutRoom,
-            O::BlackoutRequests,
-            O::BlackoutBattery,
-            O::BlackoutTimerDrawing,
-        ],
-        "samus-movement/BackwardLeap" | "samus-movement/WhatHerMovesMet" => {
-            &[O::LandingPose, O::LandingFloor]
-        }
-        "game-random/AdvanceRandom" => &[O::LandingRandom],
-        "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
-            &[O::PositionX, O::PositionY]
-        }
-        "samus-movement/PadChart" => &[O::MovementPose],
-        "samus-movement/GetawayArms" => &[O::GetawayPhase],
-        "samus-movement/GetawayStarts" => &[O::GetawayPhase, O::MovementPose, O::PositionY],
-        "samus-movement/GetawayTravels" => &[O::GetawayPhase, O::PositionX, O::PositionY],
-        "samus-movement/Dash" => &[O::MovementStateComplete],
-        "samus-movement/AimingAndShooting"
-        | "samus-movement/SlopesCarry"
-        | "samus-movement/SlopesSlowTheWalk"
-        | "samus-movement/FollowingTheGround" => {
-            &[O::MovementStateComplete, O::PositionX, O::PositionY]
-        }
-        "samus-movement/TravelledDistances" => {
-            &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
-        }
-        "samus-movement/AcceptedFloorResponse" => &[O::TouchdownResponse, O::VerticalSpeed],
-        "samus-movement/TouchdownRequests" => &[O::TouchdownOffer, O::TouchdownGraphics],
-        "samus-movement/WallJump" => &[O::WallTest],
-        "samus-movement/TouchedCells" if provider == InputProvider::NativeSearchInputs => {
-            &[O::CompleteReached, O::Inside]
-        }
-        "samus-movement/TouchedCells" => &[O::Reached],
-        _ => return None,
-    })
-}
-
-fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    Some(match rule {
-        "enemy-interactions/ActorShake" => &[O::ShaftPictureClocks, O::ShaftPictureOam],
-        "enemy-interactions/EffectSlots" | "enemy-interactions/EffectClip" => {
-            &[O::ShaftPictureEffects]
-        }
-        "enemy-interactions/ShaftActorDraw"
-        | "enemy-interactions/PictureWindow"
-        | "enemy-interactions/ShaftPictureOrder" => &[O::ShaftPictureOam],
-        game::production::played::intro_rooms::RULE => {
-            &[O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
-        }
-        "save-files/ReadSlot"
-        | "save-files/BootFiles"
-        | "save-files/MenuFiles"
-        | "save-files/ChooseFile"
-        | "save-files/WriteFile" => &[O::Battery],
-        "audio-transport/OfferAcceptance" => &[O::SenderQueue],
-        "audio-transport/MusicalProgress"
-        | "audio-transport/WholeArrangement"
-        | "audio-transport/FinitePhrases" => &[O::AudioSemantic],
-        "audio-transport/FrameCadence"
-        | "audio-transport/PublishedReplies"
-        | "audio-transport/StagedRequests" => &[O::AudioReplies],
-        "boss-ceres-ridley/OverlayRumbles" if provider == InputProvider::PlayedShaftSound => {
-            &[O::ShaftSoundOffer]
-        }
-        "audio-transport/RequestDelivery" | "audio-transport/RequestRelease"
-            if provider == InputProvider::PlayedShaftSound =>
-        {
-            &[O::SenderProgress, O::SenderRequest]
-        }
-        "audio-transport/RequestDelivery" | "audio-transport/RequestRelease" => {
-            &[O::AudioRequestLines]
-        }
-        "world-camera/FollowingHer"
-        | "world-camera/Remembering"
-        | "world-camera/RememberedHeightFraction" => &[
-            O::CameraViewXPixel,
-            O::CameraViewXFraction,
-            O::CameraViewYPixel,
-            O::CameraViewYFraction,
-            O::CameraRememberedXPixel,
-            O::CameraRememberedXFraction,
-            O::CameraRememberedYPixel,
-            O::CameraRememberedYFraction,
-            O::CameraVerticalFraction,
-        ],
-        "weapons-projectiles/ShotSpacing"
-        | "weapons-projectiles/HoldingShoot"
-        | "weapons-projectiles/CannonOrigin"
-        | "weapons-projectiles/InheritedMotion"
-        | "weapons-projectiles/FlyingBeam" => &[O::WeaponsState],
-        "weapons-projectiles/EndingShot" => &[O::WeaponsState, O::ContactConsumedMarkers],
-        "weapons-projectiles/BeamTrail" => &[O::WeaponsState, O::WeaponsUpdateEvents],
-        "weapons-projectiles/BeamVisibility" => &[O::WeaponsFlyingPictures, O::WeaponsOamInsertion],
-        "enemy-interactions/ContactAllowed"
-        | "enemy-interactions/BoxOverlap"
-        | "enemy-interactions/FirstPowerShot" => &[O::ContactConsumedMarkers],
-        "samus-health/PeriodicLoss" | "samus-health/TailHit" => &[O::HealthTailState],
-        "samus-health/ProtectionTime" => &[O::HealthTailState, O::HealthTailDrawnProtection],
-        "samus-health/LowEnergyWarning" => &[O::HealthTailState, O::HealthTailWarning],
-        "interface-hud/EnergyGauge" => &[O::GaugeRefresh, O::GaugeWords],
-        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::EarlyMapWindow],
-        "interface-hud/Exploring" => &[O::HudExplored],
-        super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
-        "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
-        "run-progress/EventsHappen" => &[O::ProgressPlanetAwake],
-        _ => {
-            return movement_witnessed_fields(rule, provider)
-                .or_else(|| intro_fields(rule))
-                .or_else(|| flashback_fields(rule))
-                .or_else(|| playback_fields(rule))
-                .or_else(|| intro_missile_fields(rule))
-                .or_else(|| ceres_tail_fields(rule));
-        }
-    })
-}
-
-fn ceres_tail_fields(rule: &str) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    Some(match rule {
-        "boss-ceres-ridley/GetawayPass" => {
-            &[O::CeresFlybyState, O::CeresFlybySound, O::CeresFlybyPush]
-        }
-        "boss-ceres-ridley/GetawayPicture" => {
-            &[O::CeresFlybyPlane, O::CeresFlybyColours, O::CeresFlybyTiles]
-        }
-        "boss-ceres-ridley/WarningArt" | "boss-ceres-ridley/WarningGlow" => {
-            &[O::CeresWarningState, O::CeresWarningPicture]
-        }
-        "boss-ceres-ridley/WarningHeading" | "boss-ceres-ridley/WarningTyping" => &[
-            O::CeresWarningState,
-            O::CeresWarningPicture,
-            O::CeresWarningAudio,
-        ],
-        "boss-ceres-ridley/FightParts" | "boss-ceres-ridley/FightPictureOrder" => &[
-            O::CeresFightDoorCursor,
-            O::CeresFightPreparedOam,
-            O::CeresFightPhysicalOam,
-        ],
-        "boss-ceres-ridley/WarningEnds" => &[O::CeresWarningState, O::CeresWarningHandoff],
-        "boss-ceres-ridley/FliesOutOfReach" => &[O::CeresRetreatBody, O::CeresRetreatBound],
-        "boss-ceres-ridley/GetawayBackdrop" => &[
-            O::CeresRetreatBody,
-            O::CeresBackdropWalls,
-            O::CeresBackdropColours,
-        ],
-        "boss-ceres-ridley/TailComesLoose"
-        | "boss-ceres-ridley/TailFollows"
-        | "boss-ceres-ridley/TailSwings"
-        | "boss-ceres-ridley/TailWhips"
-        | "boss-ceres-ridley/TailRecovers"
-        | "boss-ceres-ridley/TailStretches" => &[O::CeresTailState],
-        "boss-ceres-ridley/TailBends" => &[O::CeresTailState, O::CeresTailPlaces],
-        "boss-ceres-ridley/TailSwishes" => &[O::CeresTailState, O::CeresTailSwish],
-        "boss-ceres-ridley/TailHits" => &[
-            O::CeresTailPlaces,
-            O::CeresTailHit,
-            O::CeresTailKnockback,
-            O::CeresTailHealth,
-        ],
-        _ => return None,
-    })
-}
-
-fn intro_fields(rule: &str) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    Some(match rule {
-        "screens-discovery/EggHatches" => &[O::DiscoveryEgg, O::DiscoveryOam],
-        "screens-discovery/ShellScatters" => {
-            &[O::DiscoveryFragments, O::DiscoverySounds, O::DiscoveryOam]
-        }
-        "screens-discovery/BabyEmerges" => &[O::DiscoveryBaby],
-        "screens-discovery/SlimeFalls" => {
-            &[O::DiscoveryDroplets, O::DiscoverySounds, O::DiscoveryOam]
-        }
-        "screens-discovery/BabyPulses" => &[O::DiscoveryPulse, O::DiscoveryOam],
-        "screens-discovery/BabyFollows" => {
-            &[O::DiscoveryBaby, O::DiscoveryOrder, O::DiscoverySounds]
-        }
-        "screens-discovery/PageThreeApproaches" => {
-            &[O::DiscoveryCue, O::DiscoveryTurn, O::DiscoveryOam]
-        }
-        "screens-intro/DiscoveryBegins"
-        | "screens-intro/DiscoveryReturns"
-        | "screens-intro/DeliveryBegins"
-        | "screens-intro/BabyCrossesThePicture"
-        | "screens-intro/PageFourBegins"
-        | "screens-intro/DiscoveryAndDeliveryPagesEnd"
-        | "screens-intro/ExaminationBegins"
-        | "screens-intro/BattleBegins"
-        | "screens-intro/BattleDissolves"
-        | "screens-intro/PageTwoBegins"
-        | "screens-intro/PageTwoEnds" => &[O::IntroState, O::IntroPublications],
-        _ => return None,
-    })
-}
-
-fn intro_missile_fields(rule: &str) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    Some(match rule {
-        "weapons-projectiles/MissileRelease" => &[
-            O::IntroMissileStock,
-            O::IntroMissileSpacing,
-            O::IntroMissileRelease,
-            O::IntroMissileSound,
-        ],
-        "weapons-projectiles/MissileTravel" => &[
-            O::IntroMissileSlots,
-            O::IntroMissileCandidates,
-            O::IntroMissilePoints,
-        ],
-        "weapons-projectiles/MissileBurst" => &[
-            O::IntroMissileSlots,
-            O::IntroMissileImpact,
-            O::IntroMissileSound,
-        ],
-        "weapons-projectiles/MissileExhaust" => &[O::IntroMissileExhaust, O::IntroMissilePuffs],
-        "weapons-projectiles/CinematicMissilePictures" => {
-            &[O::IntroMissileOam, O::IntroMissileExhaust]
-        }
-        _ => return None,
-    })
-}
-
-fn flashback_fields(rule: &str) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    Some(match rule {
-        "screens-flashback/EncounterBeats" => &[O::FlashbackTurn],
-        "screens-flashback/EncounterStarts" => &[
-            O::FlashbackStart,
-            O::FlashbackY,
-            O::FlashbackBrain,
-            O::FlashbackPair,
-        ],
-        "screens-flashback/BrainBreathes" => &[O::FlashbackBrain],
-        "screens-flashback/BrainEndures" => &[O::FlashbackBrain, O::FlashbackImpact],
-        "screens-flashback/BrainFlashes" => &[
-            O::FlashbackBrain,
-            O::FlashbackFlash,
-            O::FlashbackMirror,
-            O::FlashbackCgram,
-        ],
-        "screens-flashback/RingsAppear" => &[O::FlashbackPair, O::FlashbackRings],
-        "screens-flashback/RingsSweep" => &[O::FlashbackRings, O::FlashbackPush],
-        "screens-flashback/BurstsPulse" => &[O::FlashbackBursts],
-        "screens-flashback/BackgroundBobs" => &[O::FlashbackY, O::FlashbackBg1Y],
-        "screens-flashback/ReturnToPage" => &[O::FlashbackBrain, O::FlashbackCue, O::FlashbackHide],
-        "screens-flashback/FightPictures" => &[O::FlashbackOam],
-        _ => return None,
-    })
-}
-
-fn playback_fields(rule: &str) -> Option<&'static [ObservationId]> {
-    use ObservationId as O;
-    Some(match rule {
-        "screens-playback/DemoReceivesScene" => {
-            &[O::PlaybackPhase, O::PlaybackProgress, O::PlaybackStart]
-        }
-        "screens-playback/BattleLocksOnLeft" | "screens-playback/DiscoveryReleasesSamus" => {
-            &[O::PlaybackPhase, O::PlaybackFinish, O::PlaybackAuthority]
-        }
-        "screens-playback/DemoPlaysPad" => &[
-            O::PlaybackCurrentHeld,
-            O::PlaybackCurrentFresh,
-            O::PlaybackPreviousHeld,
-            O::PlaybackPreviousFresh,
-        ],
-        "screens-playback/SamusReachesEgg" => &[
-            O::PlaybackPhase,
-            O::PlaybackProgress,
-            O::PlaybackCurrentHeld,
-        ],
-        _ => return None,
-    })
-}
-
-fn native_search_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    use ObservationId as O;
-    super::native_search::Packet::for_case(case).is_some()
-        && *observations == BTreeSet::from([O::CompleteReached, O::Inside])
-        && case.kind == CaseKind::Scoped
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::NativeCompleteMovementWork
-        && !case.limits.is_empty()
-        && !case.borrowed.is_empty()
-}
-
-fn movement_provider_valid(
-    case: &Case,
-    observations: &BTreeSet<ObservationId>,
-    recorded: bool,
-) -> bool {
-    if case.inputs == InputProvider::NativeSearchInputs {
-        return native_search_provider_valid(case, observations);
-    }
-    recorded
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::PrecedingCutMovementInputs
-}
-
-fn ordinary_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    use ObservationId as O;
-
-    case.kind == CaseKind::Integrated
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && super::recorded::Witness::valid_for(case)
         && case
             .connected_packet
             .as_ref()
-            .is_some_and(|packet| packet.admits(case))
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::ConnectedOrdinaryInputs
-        && observations.len() == 21
-        && case.expectations.fields.len() == 17
-        && case.expectations.outputs == [O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
-}
-
-fn sender_offer_provider_valid(case: &Case) -> bool {
-    use ObservationId as O;
-
-    case.responsibilities == [Responsibility::AudioSender]
-        && case.kind == CaseKind::Scoped
-        && case.content == ContentProvider::SenderGroup
-        && case.inputs == InputProvider::SenderOffers
-        && case.expectations.provider == ExpectedProvider::SenderOfferQueue
-        && matches!(
-            case.start,
-            Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. }
-        )
-        && case.expectations.fields == [O::SenderQueue, O::SenderProgress]
-        && case.expectations.outputs.is_empty()
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
-fn touchdown_provider_valid(case: &Case) -> bool {
-    use ObservationId as O;
-    case.kind == CaseKind::Scoped
-        && case
-            .sender_packet()
-            .is_ok_and(|packet| packet.row == case.row)
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::NativeTouchdownInputs
-        && case.expectations.provider == ExpectedProvider::NativeTouchdownObservations
-        && matches!(case.start, Start::CacheCut { frame } if frame.checked_add(1) == Some(case.end.cut_inclusive))
-        && case.expectations.fields
-            == [
-                O::PositionX,
-                O::PositionY,
-                O::VerticalSpeed,
-                O::TouchdownClip,
-                O::TouchdownFit,
-                O::TouchdownResponse,
-                O::SenderQueue,
-                O::SenderProgress,
-            ]
-        && case.expectations.outputs == [O::TouchdownOffer, O::TouchdownGraphics]
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
-fn weapons_provider_valid(case: &Case, recorded: bool) -> bool {
-    use ObservationId as O;
-    if case.content != ContentProvider::PlayerRomImport
-        || case.expectations.fields != [O::WeaponsState]
-        || case.expectations.output_cut.is_some()
-    {
-        return false;
-    }
-    if case.inputs == InputProvider::PrecedingCutWeaponsContactInputs {
-        return recorded && case.expectations.outputs == [O::ContactConsumedMarkers];
-    }
-    case.inputs == InputProvider::ScopedShotDrawingInputs
-        && case.kind == CaseKind::Scoped
-        && case.expectations.provider == ExpectedProvider::PinnedShotDrawingObservations
-        && case.cache_window().is_ok()
-        && case.expectations.outputs
-            == [
-                O::ContactConsumedMarkers,
-                O::WeaponsUpdateEvents,
-                O::ContactReceivers,
-                O::WeaponsFlyingPictures,
-                O::WeaponsOamInsertion,
-            ]
-}
-
-fn audio_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    use ObservationId as O;
-    case.kind == CaseKind::Scoped
-        && case.content == ContentProvider::OpeningCeresAudio
-        && matches!(case.start, Start::NativeSeed { .. })
-        && case.inputs == InputProvider::NativeFrameInputs
-        && case.expectations.provider == ExpectedProvider::NativeDecodedCuts
-        && *observations
-            == BTreeSet::from([O::AudioSemantic, O::AudioReplies, O::AudioRequestLines])
-        && case.expectations.output_cut.is_none()
-}
-
-fn early_map_provider_valid(case: &Case) -> bool {
-    use ObservationId as O;
-    case.kind == CaseKind::Scoped
-        && case.cache_window().is_ok_and(|window| {
-            window.origin > 0 && window.origin.checked_add(2) == Some(case.end.cut_inclusive)
-        })
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::NativeEarlyMap
-        && case.responsibilities
-            == [
-                Responsibility::Movement,
-                Responsibility::Appearance,
-                Responsibility::Camera,
-                Responsibility::Hud,
-            ]
-        && case.checkpoints
-        && case.expectations.fields
-            == [
-                O::HudExplored,
-                O::EarlyMapWindow,
-                O::PositionX,
-                O::PositionY,
-                O::MapCarryMovement,
-                O::MapCarryAppearance,
-                O::MapCarryCamera,
-            ]
-        && case.expectations.outputs.is_empty()
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
-fn intro_provider_valid(case: &Case, recorded: bool) -> bool {
-    let Start::CacheCut { frame } = case.start else {
-        return false;
-    };
-    recorded
-        && case.content == ContentProvider::PlayerRomImport
-        // A delivery start must include both the interrupted room turn and its resume.
-        && (case.inputs == InputProvider::ScopedIntroInputs
-            || (case.inputs == InputProvider::ScopedIntroDeliveryInputs
-                && case.end.cut_inclusive.saturating_sub(frame) >= 2))
-        && case.expectations.fields == [ObservationId::IntroState]
-        && case.expectations.outputs == [ObservationId::IntroPublications]
-        && case.expectations.output_cut.is_none()
-        && !case.checkpoints
-}
-
-fn flashback_provider_valid(case: &Case, recorded: bool) -> bool {
-    use ObservationId as O;
-
-    recorded
-        && case.intro_join.is_some()
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::FlashbackInputs
-        && case.expectations.output_cut.is_none()
-        && case.expectations.fields
-            == [
-                O::FlashbackStart,
-                O::FlashbackY,
-                O::FlashbackBrain,
-                O::FlashbackPair,
-                O::FlashbackRings,
-                O::FlashbackBursts,
-            ]
-        && case.expectations.outputs
-            == [
-                O::FlashbackTurn,
-                O::FlashbackImpact,
-                O::FlashbackPush,
-                O::FlashbackFlash,
-                O::FlashbackCue,
-                O::FlashbackHide,
-                O::FlashbackMirror,
-                O::FlashbackCgram,
-                O::FlashbackOam,
-                O::FlashbackBg1Y,
-            ]
-        && case.checkpoints
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
-fn intro_missile_provider_valid(case: &Case, recorded: bool) -> bool {
-    use ObservationId as O;
-
-    recorded
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::IntroMissileInputs
-        && case.expectations.output_cut.is_none()
-        && case.expectations.fields
-            == [
-                O::IntroMissileStock,
-                O::IntroMissileSpacing,
-                O::IntroMissileSlots,
-                O::IntroMissileExhaust,
-            ]
-        && case.expectations.outputs
-            == [
-                O::IntroMissileRelease,
-                O::IntroMissileImpact,
-                O::IntroMissilePuffs,
-                O::IntroMissileCandidates,
-                O::IntroMissilePoints,
-                O::IntroMissileSound,
-                O::IntroMissileOam,
-            ]
-        && case.checkpoints
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
-
-fn playback_provider_valid(case: &Case, recorded: bool) -> bool {
-    use ObservationId as O;
-    recorded
-        && case.intro_join.is_some()
-        && case.content == ContentProvider::PlayerRomImport
-        && case.inputs == InputProvider::CinematicActorOpportunities
-        && case.expectations.fields
-            == [
-                O::PlaybackPhase,
-                O::PlaybackProgress,
-                O::PlaybackLastHeld,
-                O::PlaybackLastFresh,
-            ]
-        && case.expectations.outputs
-            == [
-                O::PlaybackStart,
-                O::PlaybackCurrentHeld,
-                O::PlaybackCurrentFresh,
-                O::PlaybackPreviousHeld,
-                O::PlaybackPreviousFresh,
-                O::PlaybackFinish,
-                O::PlaybackAuthority,
-            ]
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-}
-
-fn save_files_provider_valid(case: &Case) -> bool {
-    case.kind == CaseKind::Scoped
-        && matches!(case.start, Start::CacheCut { frame: 0 })
+            .is_none_or(|packet| packet.admits(case))
         && case
             .save_steps
             .as_ref()
-            .is_some_and(|schedule| schedule.valid(case))
-        && case.responsibilities == [Responsibility::SaveFiles]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields == [ObservationId::Battery]
-        && case.expectations.outputs.is_empty()
-        && case.checkpoints
-}
-
-fn unavailable_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    case.kind == CaseKind::Scoped
-        && matches!(
-            case.responsibilities.as_slice(),
-            [Responsibility::Blocks | Responsibility::AudioSender | Responsibility::Appearance]
-        )
-        && case.rules.is_empty()
-        && observations.is_empty()
-        && !case.checkpoints
-        && !case.limits.is_empty()
-}
-
-fn discovery_provider_valid(case: &Case, recorded: bool) -> bool {
-    use ObservationId as O;
-    recorded
-        && case.intro_join.is_some()
-        && case.inputs == InputProvider::DiscoveryInputs
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-        && case.expectations.fields
-            == [
-                O::DiscoveryEgg,
-                O::DiscoveryBaby,
-                O::DiscoveryPulse,
-                O::DiscoveryFragments,
-                O::DiscoveryDroplets,
-                O::DiscoveryOrder,
-            ]
-        && case.expectations.outputs
-            == [
-                O::DiscoverySounds,
-                O::DiscoveryCue,
-                O::DiscoveryTurn,
-                O::DiscoveryOam,
-            ]
-}
-
-fn landing_provider_valid(case: &Case) -> bool {
-    use ObservationId as O;
-    case.kind == CaseKind::Scoped
-        && case.cache_window().is_ok()
-        && case.responsibilities == [Responsibility::LandingSite]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields
-            == [
-                O::LandingRandom,
-                O::LandingCarried,
-                O::LandingMap,
-                O::LandingPipeline,
-            ]
-        && case.expectations.outputs
-            == [
-                O::LandingVram,
-                O::LandingCgram,
-                O::LandingOam,
-                O::LandingLive,
-                O::LandingPublished,
-                O::LandingMirrors,
-                O::LandingDma,
-                O::LandingTilemaps,
-            ]
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-}
-
-fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    if case.inputs == InputProvider::PlayedShaftSound {
-        return super::played::shaft_sound::valid(case);
-    }
-    if matches!(
-        case.inputs,
-        InputProvider::PlayedCeresInputs
-            | InputProvider::ScopedCeresFlyby
-            | InputProvider::ScopedCeresWarning
-            | InputProvider::ScopedCeresFightPicture
-    ) {
-        return super::played::indexed::valid(case);
-    }
-    if case.inputs == InputProvider::Blackout {
-        return super::blackout::valid(case);
-    }
-    if case.inputs == InputProvider::IntroRoomJoinInputs {
-        return super::intro_rooms::valid(case);
-    }
-    if case.inputs == InputProvider::SaveFileBoundaries {
-        return save_files_provider_valid(case);
-    }
-    if case.inputs == InputProvider::LandingSiteTiming {
-        return landing_provider_valid(case);
-    }
-    if case.inputs == InputProvider::EarlyMapInputs {
-        return early_map_provider_valid(case);
-    }
-    if case.inputs == InputProvider::Unavailable {
-        return unavailable_provider_valid(case, observations);
-    }
-    responsibility_provider_valid(case, observations)
-}
-
-fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    let recorded = case.kind == CaseKind::Scoped
-        && matches!(
-            case.expectations.provider,
-            ExpectedProvider::PinnedRecordCache | ExpectedProvider::WitnessedRecordCache
-        )
-        && matches!(case.start, Start::CacheCut { .. });
-    match case.responsibilities.as_slice() {
-        [
-            Responsibility::Health,
-            Responsibility::Appearance,
-            Responsibility::Hud,
-        ] => health_tail_provider_valid(case),
-        [
-            Responsibility::Movement,
-            Responsibility::Appearance,
-            Responsibility::Camera,
-        ] => ordinary_provider_valid(case, observations),
-        [
-            Responsibility::Movement,
-            Responsibility::Appearance,
-            Responsibility::AudioSender,
-        ] => touchdown_provider_valid(case),
-        [Responsibility::Intro] => intro_provider_valid(case, recorded),
-        [Responsibility::Flashback] => flashback_provider_valid(case, recorded),
-        [Responsibility::Weapons] => intro_missile_provider_valid(case, recorded),
-        [Responsibility::Discovery] => discovery_provider_valid(case, recorded),
-        [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
-        [Responsibility::Audio] => audio_provider_valid(case, observations),
-        [Responsibility::Playback] => playback_provider_valid(case, recorded),
-        [Responsibility::Camera] => {
-            recorded
-                && case.content == ContentProvider::RecordedScrollRun
-                && case.inputs == InputProvider::PrecedingCutCameraInputs
-                && case.expectations.outputs.is_empty()
-                && observations.len() == 9
-        }
-        [Responsibility::Weapons, Responsibility::Contact] => {
-            weapons_provider_valid(case, recorded)
-        }
-        [Responsibility::Appearance] => {
-            recorded
-                && case.content == ContentProvider::PlayerRomImport
-                && case.inputs == InputProvider::PrecedingCutAppearanceInputs
-                && case.expectations.outputs.is_empty()
-                && observations.len() == 4
-        }
-        [Responsibility::Progress] => {
-            recorded
-                && case.content == ContentProvider::PlayerRomImport
-                && case.inputs == InputProvider::ObservedFixedProgressEvents
-                && case.expectations.outputs.is_empty()
-                && observations.len() == 19
-        }
-        _ => case.kind != CaseKind::Scoped && case.borrowed.is_empty(),
-    }
-}
-
-fn health_tail_provider_valid(case: &Case) -> bool {
-    use ObservationId as O;
-
-    case.kind == CaseKind::Scoped
-        && matches!(case.start, Start::NativeRecord { frame, .. } if frame < case.end.cut_inclusive)
-        && case.health_packet().is_ok()
-        && case.inputs == InputProvider::NativeHealthTailInputs
-        && case.expectations.provider == ExpectedProvider::NativeHealthTailObservations
-        && case.content == ContentProvider::HudReference
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-        && case.checkpoints
-        && case.expectations.output_cut.is_none()
-        && case.expectations.fields == [O::HealthTailState, O::DrawingEnergy, O::GaugeRefresh]
-        && case.expectations.outputs
-            == [
-                O::HealthTailWarning,
-                O::HealthTailDrawnProtection,
-                O::GaugeWords,
-            ]
-}
-
-fn scope_valid(case: &Case) -> bool {
-    let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
-    if owners.len() != case.responsibilities.len() {
-        return false;
-    }
-    let observations: BTreeSet<_> = case
-        .expectations
-        .fields
-        .iter()
-        .chain(&case.expectations.outputs)
-        .copied()
-        .collect();
-    if observations
-        .iter()
-        .any(|field| !owners.contains(&observation_owner(*field)))
-    {
-        return false;
-    }
-    for rule in &case.rules {
-        if rule_owner(rule, case.inputs).is_none_or(|owner| !owners.contains(&owner)) {
-            return false;
-        }
-        if witnessed_fields(rule, case.inputs)
-            .is_none_or(|fields| fields.iter().any(|field| !observations.contains(field)))
-        {
-            return false;
-        }
-    }
-    if let Some(at) = case.expectations.output_cut
-        && (case.first_cut().is_none_or(|first| at < first)
-            || at > case.end.cut_inclusive
-            || case.expectations.outputs.is_empty())
-    {
-        return false;
-    }
-    if !super::recorded::Witness::valid_for(case) {
-        return false;
-    }
-    if case.inputs == InputProvider::ShaftPictures {
-        return super::played::shaft_native::indexed::valid(case);
-    }
-    if case.inputs == InputProvider::ScopedGetawayInputs {
-        return super::played::getaway::valid(case);
-    }
-    sender_offer_provider_valid(case) || provider_valid(case, &observations)
+            .is_none_or(|schedule| schedule.valid(case))
 }
 
 fn start_valid(case: &Case) -> bool {
@@ -2503,6 +757,7 @@ fn start_valid(case: &Case) -> bool {
             frame,
         } => {
             case.inputs == InputProvider::NativeHealthTailInputs
+                && case.health_packet().is_ok()
                 && !path.as_os_str().is_empty()
                 && valid_hash(sha256)
                 && *frame < case.end.cut_inclusive
@@ -2553,6 +808,34 @@ impl Case {
         }
     }
 
+    /// Whether the case declares `flag`, after checking that its reader knows every name the
+    /// case declares.
+    ///
+    /// # Errors
+    /// A declared field or output missing from `known` is a data failure naming it, so a
+    /// misspelled flag fails the case instead of reading as undeclared.
+    pub(super) fn declares(
+        &self,
+        known: &[&str],
+        flag: &str,
+    ) -> Result<bool, super::result::Outcome> {
+        let mut declared = self
+            .expectations
+            .fields
+            .iter()
+            .chain(&self.expectations.outputs);
+        if let Some(unknown) = declared
+            .clone()
+            .find(|name| !known.contains(&name.as_str()))
+        {
+            return Err(super::data_failure(
+                None,
+                &format!("declared field {unknown} is unknown to its reader"),
+            ));
+        }
+        Ok(declared.any(|name| name == flag))
+    }
+
     pub(super) fn fixture_pair(&self) -> Result<&FixturePair, super::result::Outcome> {
         self.fixture
             .as_ref()
@@ -2563,14 +846,9 @@ impl Case {
     /// Validate the complete public execution recipe before source admission.
     ///
     /// # Errors
-    /// Invalid schedules, unsupported provider combinations and unknown rules are rejected.
+    /// Invalid starts, schedules, attachments and borrowed inputs are rejected.
     pub fn validate(&self) -> Result<(), IndexFault> {
         let case = self;
-        for rule in &case.rules {
-            if !rule_exists(rule) {
-                return Err(IndexFault::UnknownRule(rule.clone()));
-            }
-        }
         let observations: Vec<_> = case
             .expectations
             .fields
@@ -2739,11 +1017,6 @@ impl Index {
                 return Err(IndexFault::UnknownCase(id.clone()));
             }
         }
-        if let Some(rule) = rule
-            && !rule_exists(rule)
-        {
-            return Err(IndexFault::UnknownRule(rule.to_owned()));
-        }
         let selected: Vec<_> = self
             .cases
             .iter()
@@ -2777,7 +1050,7 @@ mod tests {
     use super::{CaseId, Index, IndexFault};
     const INDEX: &str = include_str!("../../../../scenarios/replay/index.toml");
     #[test]
-    fn committed_cases_resolve_real_rules_and_empty_selections_fail() {
+    fn selections_take_every_case_and_refuse_empty_duplicate_or_unknown_ones() {
         let index = Index::parse(INDEX).unwrap();
         assert_eq!(
             index.select(&[], None, None).unwrap().len(),
@@ -2876,8 +1149,6 @@ mod tests {
             assert!(case.validate().is_ok());
             case.ordinary_witness = None;
             assert!(case.validate().is_err());
-            case.expectations.provider = super::ExpectedProvider::PinnedRecordCache;
-            assert!(case.validate().is_err());
         }
     }
 
@@ -2958,23 +1229,15 @@ mod tests {
     }
 
     #[test]
-    fn malformed_fields_unknown_keys_and_fictitious_rules_are_rejected() {
-        assert!(matches!(
-            Index::parse(&INDEX.replace("movement.travel.Left", "movement.travel.Unknown")),
-            Err(IndexFault::Syntax)
-        ));
+    fn unknown_keys_are_rejected() {
         assert!(matches!(
             Index::parse(&format!("extra = true\n{INDEX}")),
             Err(IndexFault::Syntax)
         ));
-        assert!(matches!(
-            Index::parse(&INDEX.replace("TravelledDistances", "ImaginaryRule")),
-            Err(IndexFault::UnknownRule(_))
-        ));
     }
 
     #[test]
-    fn public_recipe_cannot_add_unwitnessed_rules_or_relabel_scope() {
+    fn public_recipe_cannot_borrow_undeclared_inputs_or_start_at_its_end() {
         let index = Index::parse(INDEX).unwrap();
         let mut boundary = index
             .cases
@@ -2994,15 +1257,57 @@ mod tests {
             Err(IndexFault::InvalidCase(_))
         ));
         let mut case = index.cases.first().unwrap().clone();
-        case.rules.push("samus-movement/SpaceJump".to_owned());
-        assert!(case.validate().is_err());
-        let mut case = index.cases.first().unwrap().clone();
-        case.kind = super::CaseKind::Integrated;
-        assert!(matches!(case.validate(), Err(IndexFault::InvalidCase(_))));
-        case.kind = super::CaseKind::Scoped;
         case.start = super::Start::CacheCut {
             frame: case.end.cut_inclusive,
         };
         assert!(matches!(case.validate(), Err(IndexFault::InvalidCase(_))));
+    }
+
+    #[test]
+    fn a_misspelled_flag_name_fails_the_reader_that_checks_it() {
+        use crate::replay::{blackout, movement, played::indexed, result::Outcome};
+        let index = Index::parse(INDEX).unwrap();
+        for (id, known, flag) in [
+            (
+                "blackout/pending-room-publication",
+                &blackout::NAMES[..],
+                blackout::MEMORY,
+            ),
+            (
+                "ridley/alternate-offscreen-retreat",
+                &indexed::TAIL_NAMES[..],
+                indexed::RETREAT_BODY,
+            ),
+            (
+                "movement/escape-leap-landing",
+                &movement::NAMES[..],
+                movement::LANDING_FLOOR,
+            ),
+        ] {
+            let mut case = index
+                .cases
+                .iter()
+                .find(|case| case.id.0 == id)
+                .unwrap()
+                .clone();
+            assert_eq!(case.declares(known, flag), Ok(true));
+            let expectations = &mut case.expectations;
+            for name in expectations
+                .fields
+                .iter_mut()
+                .chain(&mut expectations.outputs)
+            {
+                if name == flag {
+                    name.push('s');
+                }
+            }
+            assert_eq!(
+                case.declares(known, flag),
+                Err(Outcome::DataFailure {
+                    cut: None,
+                    source: format!("declared field {flag}s is unknown to its reader"),
+                })
+            );
+        }
     }
 }

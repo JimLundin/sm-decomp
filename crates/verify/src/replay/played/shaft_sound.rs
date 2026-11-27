@@ -4,10 +4,7 @@ use super::{Run, word};
 use crate::replay::{
     compare::Observation,
     compared, data_failure,
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId as O, Responsibility,
-        Start,
-    },
+    index::{Case, Start},
     readers::ExpectedCut,
     result::Outcome,
     runner, sender_offer,
@@ -18,20 +15,7 @@ use game::production::{played, sender::Sounds};
 use std::{collections::VecDeque, num::NonZeroU8};
 use types::audio::{CueAllowance, CueId, OfferPermission, Request, SenderProgress, SenderState};
 
-const STATE: &[O] = &[O::SenderPermission, O::SenderQueue, O::SenderProgress];
-const OUTPUTS: &[O] = &[O::ShaftSoundOffer, O::SenderRequest];
-
-pub(in crate::replay) fn valid(case: &Case) -> bool {
-    case.kind == CaseKind::Integrated
-        && matches!(case.start, Start::PlayedContinuation { .. })
-        && case.responsibilities == [Responsibility::Ceres, Responsibility::AudioSender]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields == STATE
-        && case.expectations.outputs == OUTPUTS
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-}
+const OUTPUTS: usize = 2;
 
 /// Reply reads reconstructed from the acknowledged native cue and clear edges. Between edges
 /// the last acknowledged value gives the same CPU comparison at the scheduled service.
@@ -113,7 +97,7 @@ fn observations(
     });
     ExpectedCut {
         semantic_count: semantics.len(),
-        output_count: OUTPUTS.len(),
+        output_count: OUTPUTS,
         semantics,
         fields,
         replies: 0,

@@ -227,6 +227,10 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> list[str]:
     if {fault.responsibility for fault in faults} != required:
         raise ValueError("every supported replay responsibility needs a production fault")
     rules = catalogue_rules(root)
+    for case_id, case in cases.items():
+        for rule in case["rules"]:
+            if rule not in rules:
+                raise ValueError(f"case {case_id} names unknown catalogue rule {rule}")
     for fault in faults:
         if fault.rule is not None and fault.rule not in rules:
             raise ValueError(f"fault {fault.name} names unknown catalogue rule {fault.rule}")

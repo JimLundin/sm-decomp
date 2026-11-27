@@ -359,7 +359,7 @@ fn origin_checkpoint(
     production: &Production,
     actual: &ActualReader,
 ) -> Result<Option<CutCheckpoint>, Outcome> {
-    use super::index::{InputProvider, ObservationId, Start};
+    use super::index::{InputProvider, Start};
     if !case.checkpoints {
         return Ok(None);
     }
@@ -369,11 +369,8 @@ fn origin_checkpoint(
     if matches!(actual, ActualReader::StandingBody)
         || matches!(inputs, InputReader::MovementTouchdown(_))
         || (case.inputs == InputProvider::PrecedingCutMovementInputs
-            && frame.checked_add(1) == Some(case.end.cut_inclusive)
-            && case
-                .expectations
-                .outputs
-                .contains(&ObservationId::LandingFloor))
+            && case.declares(&super::movement::NAMES, super::movement::LANDING_FLOOR)?
+            && frame.checked_add(1) == Some(case.end.cut_inclusive))
     {
         capture_checkpoint(production, actual, *frame).map(Some)
     } else {
@@ -399,13 +396,11 @@ mod tests {
     #[test]
     #[ignore = "uses the pinned landing row and ROM"]
     fn a_single_floor_opportunity_restores_from_its_predecessor() {
-        use crate::replay::index::ObservationId;
-
         let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
         let mut case = index
             .cases
             .into_iter()
-            .find(|case| case.expectations.outputs == [ObservationId::LandingFloor])
+            .find(|case| case.expectations.outputs == [super::super::movement::LANDING_FLOOR])
             .unwrap();
         case.id.0 = "reissued-floor".into();
         let sources = Sources {

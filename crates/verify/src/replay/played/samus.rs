@@ -1,7 +1,6 @@
 //! Her movement, her appearance and the figure she shows: their seed and compared fields.
 
 use crate::replay::compare::Observation;
-use crate::replay::index::ObservationId;
 use crate::replay::result::Outcome;
 use crate::replay::{appearance, connected, movement};
 use crate::source::WramWord;
@@ -92,10 +91,7 @@ pub(super) fn expected(
     }
     let mut fields = parts(&seeded);
     fields.push(last_draw_observation(last_draw(wram)?));
-    fields.extend(movement::expected(
-        wram,
-        &[ObservationId::PositionX, ObservationId::PositionY],
-    )?);
+    fields.extend(movement::expected(wram, &movement::POSITION)?);
     let (state, playing) = appearance::animation_owner(wram, content)?;
     fields.extend(appearance::initial(state, content));
     fields.push(appearance::hurt_observation(appearance::hurt_count(wram)?));

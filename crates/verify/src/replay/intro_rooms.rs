@@ -1,9 +1,7 @@
 //! Independent one-origin checks for the intro's interrupted setup and completed first turn.
 
 use super::compare::Observation;
-use super::index::{
-    Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility,
-};
+use super::index::Case;
 use super::intro_sources::{self, Join};
 use super::played::platform::{Controller, finished, polled};
 use super::readers::{
@@ -30,21 +28,6 @@ use types::{Pair, Pose, Position};
 use weapons_projectiles as beam;
 
 pub(super) const ACTOR_FIELDS: usize = 18;
-
-pub(super) fn valid(case: &Case) -> bool {
-    use ObservationId as O;
-    case.intro_join.is_some()
-        && case.kind == CaseKind::Scoped
-        && case.responsibilities == [Responsibility::IntroRooms]
-        && case.rules == [rooms::RULE]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields == [O::IntroRoomGrid, O::IntroRoomActor, O::IntroRoomClock]
-        && case.expectations.outputs.is_empty()
-        && case.checkpoints
-        && !case.borrowed.is_empty()
-        && !case.limits.is_empty()
-}
 
 pub(super) struct Inputs {
     first: u64,
