@@ -101,6 +101,9 @@ impl Export<'_> {
                 .map_err(|e| e.to_string())?;
         }
         output(git(&lane.export).args(["init", "-q", "--template=", "-b", "main"]))?;
+        for folder in ["info", "hooks"] {
+            fs::create_dir_all(lane.export.join(".git").join(folder)).map_err(|e| e.to_string())?;
+        }
         output(git(&lane.export).args(["add", "-A"]))?;
         output(git(&lane.export).args([
             "commit",

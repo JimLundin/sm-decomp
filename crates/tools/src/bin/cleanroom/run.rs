@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 
+use crate::import::{GIT_READ_ONLY, git_breaches};
 use crate::lexicon::Lexicon;
 use crate::process::{Lane, output, repo};
 use crate::scan::Allow;
@@ -85,6 +86,15 @@ impl Sandbox {
         ]);
         let mut cell = Self { args };
         cell.mount(export, export, true)?;
+        for name in GIT_READ_ONLY {
+            let path = export.join(".git").join(name);
+            let meta =
+                fs::symlink_metadata(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+            if meta.file_type().is_symlink() {
+                return Err(format!("{} is a symlink", path.display()));
+            }
+            cell.mount(&path, &path, false)?;
+        }
         for system in ["/usr", "/etc/alternatives", "/etc/ld.so.cache"] {
             cell.mount(Path::new(system), Path::new(system), false)?;
         }
@@ -254,6 +264,13 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
         }
         fs::write(lane.brief(), text).map_err(|e| e.to_string())?;
     }
+    let breaches = git_breaches(&lane.export)?;
+    if !breaches.is_empty() {
+        return Err(format!(
+            "the export's .git holds what no session's git leaves:\n{}",
+            breaches.join("\n")
+        ));
+    }
     image(&repo)?;
     let (relay, env) = relay(&repo, &lane.dir)?;
     let mut cell = Sandbox::new(&lane.export, &repo, &lane.dir)?;
@@ -308,6 +325,15 @@ pub fn run(name: &str, brief: Option<&Path>) -> Result<(String, bool), String> {
     drop(relay);
     let mut out = String::new();
     let _ = writeln!(out, "transcript {}", transcript.display());
+    let breaches = git_breaches(&lane.export)?;
+    if !breaches.is_empty() {
+        let _ = writeln!(
+            out,
+            "RUN BREACH {name}: the export's .git holds what no session's git leaves, and the import will refuse it:\n{}",
+            breaches.join("\n")
+        );
+        return Ok((out, true));
+    }
     if status.success() {
         let _ = writeln!(out, "RUN OK {name}");
         Ok((out, false))
@@ -559,8 +585,10 @@ mod tests {
         image(repo).unwrap();
         let base = std::env::temp_dir().join(format!("cleanroom-box-{}", std::process::id()));
         let (export, lane) = (base.join("export"), base.join("lane"));
-        fs::create_dir_all(&export).unwrap();
-        fs::create_dir_all(&lane).unwrap();
+        for dir in [&export.join(".git/info"), &export.join(".git/hooks"), &lane] {
+            fs::create_dir_all(dir).unwrap();
+        }
+        fs::write(export.join(".git/config"), "").unwrap();
         fs::write(export.join("inside.txt"), "inside").unwrap();
         fs::write(base.join("outside.txt"), "outside").unwrap();
         let sandbox = Sandbox::new(&export, repo, &lane).unwrap();
@@ -574,6 +602,21 @@ mod tests {
                 .success()
                 .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
         };
+        let write = |path: &Path| {
+            let name = format!("cleanroom-probe-{}", std::process::id());
+            let script = format!("echo x >> '{}'", path.display());
+            sandbox
+                .command(&name, &["/bin/sh", "-c", &script])
+                .output()
+                .unwrap()
+                .status
+                .success()
+        };
+        let written = write(&export.join("written.txt"));
+        let git_written: Vec<_> = ["config", "info/attributes", "hooks/pre-commit"]
+            .iter()
+            .filter(|p| write(&export.join(".git").join(p)))
+            .collect();
         let inside = read(&export.join("inside.txt"));
         let outside: Vec<_> = [
             base.join("outside.txt"),
@@ -589,6 +632,8 @@ mod tests {
         .collect();
         fs::remove_dir_all(&base).unwrap();
         assert_eq!(inside.as_deref(), Some("inside"));
+        assert!(written);
+        assert_eq!(git_written, Vec::<&&str>::new());
         assert_eq!(outside, Vec::<String>::new());
     }
 }

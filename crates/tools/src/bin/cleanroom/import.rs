@@ -32,24 +32,96 @@ impl Drop for Scratch {
 
 struct Mirror(PathBuf);
 
-impl Mirror {
-    fn of(export: &Path, at: &Path) -> Result<Self, String> {
-        let src = export.join(".git");
-        let meta = fs::symlink_metadata(&src).map_err(|e| format!("{}: {e}", src.display()))?;
-        if !meta.is_dir() {
-            return Err(format!("{} is not a directory", src.display()));
+/// What a session's git leaves in `.git`, with `config`, `info` and `hooks`, which the box
+/// mounts read-only.
+const GIT_ENTRIES: &[&str] = &[
+    "objects",
+    "refs",
+    "HEAD",
+    "index",
+    "logs",
+    "COMMIT_EDITMSG",
+    "ORIG_HEAD",
+    "config",
+    "info",
+    "hooks",
+];
+pub const GIT_READ_ONLY: &[&str] = &["config", "info", "hooks"];
+const MIRROR_MAX_MB: u64 = 1024;
+
+/// Everything in an export's `.git` that a session's git work doesn't leave, one a line: an
+/// entry beyond `GIT_ENTRIES`, anything but files and folders, a file in `info` or `hooks`, and
+/// alternates, which point git elsewhere.
+pub fn git_breaches(export: &Path) -> Result<Vec<String>, String> {
+    let src = export.join(".git");
+    let meta = fs::symlink_metadata(&src).map_err(|e| format!("{}: {e}", src.display()))?;
+    if !meta.is_dir() {
+        return Ok(vec![format!("{} is not a directory", src.display())]);
+    }
+    let mut found = Vec::new();
+    for entry in fs::read_dir(&src).map_err(|e| format!("{}: {e}", src.display()))? {
+        let name = entry.map_err(|e| e.to_string())?.file_name();
+        if !GIT_ENTRIES.iter().any(|e| name == *e) {
+            found.push(format!("{} is not git's", src.join(name).display()));
         }
-        for pointer in [
-            "objects/info/alternates",
-            "objects/info/http-alternates",
-            "commondir",
-        ] {
-            if fs::symlink_metadata(src.join(pointer)).is_ok() {
-                return Err(format!(
-                    "{} points git elsewhere",
-                    src.join(pointer).display()
-                ));
+    }
+    let mut stack = vec![src.clone()];
+    while let Some(dir) = stack.pop() {
+        for entry in fs::read_dir(&dir).map_err(|e| format!("{}: {e}", dir.display()))? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let kind = entry.file_type().map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if kind.is_dir() {
+                stack.push(path);
+            } else if !kind.is_file() {
+                found.push(format!("{} is not a file or folder", path.display()));
+            } else if ["info", "hooks"].iter().any(|d| dir == src.join(d)) {
+                found.push(format!("{} is in a read-only folder", path.display()));
             }
+        }
+    }
+    for pointer in ["objects/info/alternates", "objects/info/http-alternates"] {
+        if fs::symlink_metadata(src.join(pointer)).is_ok() {
+            found.push(format!(
+                "{} points git elsewhere",
+                src.join(pointer).display()
+            ));
+        }
+    }
+    found.sort();
+    Ok(found)
+}
+
+fn size(dir: &Path) -> Result<u64, String> {
+    let mut total = 0u64;
+    for entry in fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let meta = entry.metadata().map_err(|e| e.to_string())?;
+        total = total.saturating_add(if meta.is_dir() {
+            size(&entry.path())?
+        } else {
+            meta.len()
+        });
+    }
+    Ok(total)
+}
+
+impl Mirror {
+    fn of(export: &Path, at: &Path, max_mb: u64) -> Result<Self, String> {
+        let src = export.join(".git");
+        let breaches = git_breaches(export)?;
+        if !breaches.is_empty() {
+            return Err(format!(
+                "the export's .git holds what no session's git leaves:\n{}",
+                breaches.join("\n")
+            ));
+        }
+        let bytes = size(&src.join("objects"))?;
+        if bytes > max_mb.saturating_mul(1 << 20) {
+            return Err(format!(
+                "{} holds {bytes} bytes, over CLEANROOM_MIRROR_MAX_MB={max_mb}",
+                src.join("objects").display()
+            ));
         }
         output(
             git(Path::new("."))
@@ -122,16 +194,9 @@ fn copy_files(from: &Path, to: &Path) -> Result<(), String> {
 }
 
 fn main_ref(git_dir: &Path) -> Result<String, String> {
-    let loose = git_dir.join("refs/heads/main");
-    if let Ok(text) = fs::read_to_string(&loose) {
-        return Ok(text.trim().to_owned());
-    }
-    let packed = fs::read_to_string(git_dir.join("packed-refs")).unwrap_or_default();
-    packed
-        .lines()
-        .find_map(|l| l.strip_suffix(" refs/heads/main"))
-        .map(str::to_owned)
-        .ok_or_else(|| format!("{} has no main branch", git_dir.display()))
+    fs::read_to_string(git_dir.join("refs/heads/main"))
+        .map(|text| text.trim().to_owned())
+        .map_err(|_| format!("{} has no main branch", git_dir.display()))
 }
 
 /// Writes the plain files under `paths` at `rev` into `dest`, each blob read as stored.
@@ -209,7 +274,13 @@ fn run_at(repo: &Path, lane: &Lane, name: &str) -> Result<(String, bool), String
     let scratch = Scratch(lane.dir.join("import"));
     let _ = fs::remove_dir_all(&scratch.0);
     fs::create_dir_all(&scratch.0).map_err(|e| e.to_string())?;
-    let mirror = Mirror::of(&lane.export, &scratch.0.join("export.git"))?;
+    let max_mb = match std::env::var("CLEANROOM_MIRROR_MAX_MB") {
+        Ok(mb) => mb
+            .parse()
+            .map_err(|e| format!("CLEANROOM_MIRROR_MAX_MB={mb}: {e}"))?,
+        Err(_) => MIRROR_MAX_MB,
+    };
+    let mirror = Mirror::of(&lane.export, &scratch.0.join("export.git"), max_mb)?;
     let roots = mirror.lines(&["rev-list", "--max-parents=0", "main"])?;
     let exported = fs::read_to_string(lane.export_root())
         .map_err(|e| format!("{}: {e}", lane.export_root().display()))?;
@@ -590,7 +661,7 @@ mod tests {
     use std::fs;
     use std::path::{Path, PathBuf};
 
-    use super::{Import, Mirror, refused, run_at};
+    use super::{Import, Mirror, git_breaches, refused, run_at};
     use crate::process::{Lane, git, output};
 
     const MODEL: &str = "crates/clean/world_haze";
@@ -633,7 +704,7 @@ mod tests {
         let info = dir.join("export/.git/objects/info");
         fs::create_dir_all(&info).unwrap();
         fs::write(info.join("alternates"), "/elsewhere/objects\n").unwrap();
-        let refused = Mirror::of(&dir.join("export"), &dir.join("mirror.git")).is_err();
+        let refused = Mirror::of(&dir.join("export"), &dir.join("mirror.git"), 1024).is_err();
         let made = Path::new(&dir.join("mirror.git")).exists();
         fs::remove_dir_all(&dir).unwrap();
         assert!(refused && !made);
@@ -846,6 +917,60 @@ mod tests {
     }
 
     #[test]
+    fn the_import_refuses_an_export_whose_git_holds_more_than_a_session_leaves() {
+        let round = Round::new("breach");
+        write(
+            &round.lane.export,
+            &format!("{MODEL}/src/lib.rs"),
+            "//! Changed.\n",
+        );
+        round.commit(TRAILER);
+        let git = round.lane.export.join(".git");
+        assert_eq!(
+            git_breaches(&round.lane.export).unwrap(),
+            Vec::<String>::new()
+        );
+        for (made, found) in [
+            ("hooks/post-checkout", "is in a read-only folder"),
+            ("info/attributes", "is in a read-only folder"),
+            ("config.worktree", "is not git's"),
+            ("commondir", "is not git's"),
+            ("packed-refs", "is not git's"),
+            ("objects/info/alternates", "points git elsewhere"),
+        ] {
+            write(&git, made, "x\n");
+            let refusal = round.refusal();
+            assert!(refusal.contains(found), "{made}: {refusal}");
+            let _ = fs::remove_file(git.join(made));
+        }
+        std::os::unix::fs::symlink("/etc", git.join("refs/link")).unwrap();
+        assert!(round.refusal().contains("is not a file or folder"));
+    }
+
+    #[test]
+    fn the_mirror_refuses_objects_over_its_cap() {
+        let round = Round::new("cap");
+        let mut state = 0x2545_f491_u32;
+        let noise: String = (0..3 << 20)
+            .map(|_| {
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                char::from(b'a'.saturating_add(u8::try_from(state % 26).unwrap_or(0)))
+            })
+            .collect();
+        write(&round.lane.export, &format!("{MODEL}/src/big.rs"), &noise);
+        round.commit(TRAILER);
+        let over = Mirror::of(&round.lane.export, &round.base.join("small.git"), 1);
+        let under = Mirror::of(&round.lane.export, &round.base.join("large.git"), 1024);
+        assert!(
+            over.err()
+                .is_some_and(|e| e.contains("over CLEANROOM_MIRROR_MAX_MB=1"))
+        );
+        assert!(under.is_ok());
+    }
+
+    #[test]
     fn the_code_rules_read_what_an_attributes_file_would_leave_out_of_an_archive() {
         let round = Round::new("archive");
         write(
@@ -859,7 +984,7 @@ mod tests {
             "fn main() {}\n",
         );
         round.commit(TRAILER);
-        let mirror = Mirror::of(&round.lane.export, &round.base.join("mirror.git")).unwrap();
+        let mirror = Mirror::of(&round.lane.export, &round.base.join("mirror.git"), 1024).unwrap();
         let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .and_then(Path::parent)
