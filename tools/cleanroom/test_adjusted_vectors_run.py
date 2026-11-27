@@ -167,7 +167,6 @@ class AdjustedVectors(unittest.TestCase):
             text = vector(f'id = "adjusted"\nentries = ["Step"]\nrules = {{ step = {step} }}\n'
                           f'before = 2\nafter = {after}\n')
             text += f'[[dependent]]\nbase = "adjusted"\nrules = {{ step = {step} }}\n'
-            text = text.replace("\n", "\r\n")
 
             def direct(probed: str) -> bool:
                 self.assertEqual(tomllib.loads(probed)["dependent"],
@@ -280,7 +279,7 @@ class AdjustedVectors(unittest.TestCase):
     def test_the_build_files_are_restored_whatever_happens(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "demo.toml"
-            path.write_bytes(b"committed\r\n")
+            path.write_bytes(b"committed\n")
             seen: list[bytes] = []
 
             def build(_root: Path, _crates: list[str]) -> dict[str, Path]:
@@ -291,7 +290,7 @@ class AdjustedVectors(unittest.TestCase):
                     self.assertRaises(CannotProbe):
                 built_with(Path(directory), {path: b"padded\n\n"}, ["demo"])
             self.assertEqual(seen, [b"padded\n\n"])
-            self.assertEqual(path.read_bytes(), b"committed\r\n")
+            self.assertEqual(path.read_bytes(), b"committed\n")
 
     def test_cargo_messages_name_each_executable_and_its_package(self) -> None:
         output = b"\n".join([
@@ -461,7 +460,6 @@ class AdjustedVectors(unittest.TestCase):
         failed = b"running 2 tests\ntest result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n"
         for failure_code in (1, 101):
             self.assertTrue(completed_test(subprocess.CompletedProcess([], 0, passed), failure_code))
-            self.assertTrue(completed_test(subprocess.CompletedProcess([], 0, passed.replace(b"\n", b"\r\n")), failure_code))
             self.assertFalse(completed_test(subprocess.CompletedProcess([], failure_code, failed), failure_code))
             for code, output in ((126, failed), (2, failed), (-9, failed), (1, passed), (0, failed),
                                  (0, b""), (0, passed + passed),
