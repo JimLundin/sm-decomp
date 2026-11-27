@@ -21,14 +21,14 @@ fn tags(root: &Path) -> Vec<String> {
 
 #[test]
 fn the_clean_fixture_passes() {
-    let found = tags(&repo().join("tools/cleanroom/code_check_fixtures/clean"));
+    let found = tags(&repo().join("tools/cleanroom/rule_fixtures/clean"));
     assert!(found.is_empty(), "{found:#?}");
 }
 
 #[test]
 fn every_other_fixture_is_refused_by_its_tag() {
     let mut count = 0;
-    for entry in fs::read_dir(repo().join("tools/cleanroom/code_check_fixtures")).unwrap() {
+    for entry in fs::read_dir(repo().join("tools/cleanroom/rule_fixtures")).unwrap() {
         let path = entry.unwrap().path();
         let name = path.file_name().unwrap().to_str().unwrap().to_owned();
         let Some((tag, _)) = name.split_once("__") else {
@@ -51,10 +51,7 @@ impl Workspace {
         let dir =
             std::env::temp_dir().join(format!("cleanroom-rules-{}-{name}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
-        copy(
-            &repo().join("tools/cleanroom/code_check_fixtures/clean"),
-            &dir,
-        );
+        copy(&repo().join("tools/cleanroom/rule_fixtures/clean"), &dir);
         Self(dir)
     }
 

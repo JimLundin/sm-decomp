@@ -1,4 +1,4 @@
-# The registry crates a clean crate may depend on (MODEL §1 decision 12). code_check.sh refuses
+# The registry crates a clean crate may depend on (MODEL §1 decision 12). `cleanroom check` refuses
 # any other registry, git or out-of-tree dependency, and on a listed one any key but `version`,
 # `features`, `default-features` and `package`.
 #

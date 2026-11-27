@@ -196,9 +196,9 @@ behaviour exact. Use enums with data and newtypes, never raw numbers for a mode 
   the standard library and the crates their manifests name.
 - End every commit message with the trailer `Role: implementer`, and use the spec's words and entry
   ids in it.
-- Check with `cargo check`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`. Run the
-  tests with the one runner command your brief gives.
-- What you read is checked after the lane. Read only this repository.
+- Check with `cleanroom test`: the code rules, the name scan on what you changed, fmt, clippy and
+  the tests.
+- Read only this repository; nothing else is in your workspace.
 - **Use nothing you remember about how the original game is programmed:** its code, its memory
   layout, disassemblies or annotated listings of it. Build only from the spec. If you notice you
   recognise something from such a source, say so in your report and don't use it.

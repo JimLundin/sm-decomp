@@ -1,0 +1,2 @@
+[alias]
+cleanroom = "run -q --profile verify -p tools --no-default-features --bin cleanroom --"

@@ -1,8 +1,8 @@
-"""The API path out of launch.sh's box on Linux, and the box's first process.
+"""The API path out of `cleanroom run`'s box, and the box's first process.
 
 The box (a container with no network) holds no credential. Its CLI talks plain HTTP to
 127.0.0.1 inside the box; `box` forwards each connection there to a Unix socket mounted from the
-lane directory, where `serve`, outside the box, adds the real credential and sends the request
+export's lane folder, where `serve`, outside the box, adds the real credential and sends the request
 on to the API over TLS. So the key never enters the box, and the API is the one place the box
 can reach.
 
@@ -15,14 +15,13 @@ outside (a web search or fetch tool, an MCP server, a document or image by URL) 
 the API is no way to the web.
 
   serve SOCKET AUTH [PARENT]  outside: AUTH (a file, or - for stdin, so it touches no disk) is an
-                              object of the top-level settings members launch.sh collects
-                              (apiKeyHelper, env); this process's ANTHROPIC_API_KEY counts too.
+                              object of Claude Code's top-level settings members (apiKeyHelper,
+                              env); this process's ANTHROPIC_API_KEY counts too.
                               It exits when PARENT (a PID) does.
-  settings AUTH PORT          prints the settings members the session gets instead: env with
-                              the box's base URL, a placeholder credential and the model and
-                              CLAUDE_CODE_DISABLE_* lines; the other ANTHROPIC_* lines (custom
-                              headers among them) stay with the relay.
-  env AUTH PORT               the same, as the box's environment, a KEY=VALUE a line.
+  env AUTH PORT               prints the environment the session gets instead, a KEY=VALUE a
+                              line: the box's base URL, a placeholder credential and the model
+                              and CLAUDE_CODE_DISABLE_* lines; the other ANTHROPIC_* lines
+                              (custom headers among them) stay with the relay.
   box PORT SOCKET SECONDS -- ARGV
                               inside: listens on 127.0.0.1:PORT, runs ARGV, stops it after
                               SECONDS, exits with its status.
@@ -119,10 +118,6 @@ def box_env(auth: str, port: int) -> dict[str, str]:
         sys.exit("box_relay: no credential: no apiKeyHelper, ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN")
     out[kind] = PLACEHOLDER
     return out
-
-
-def settings(auth: str, port: int) -> None:
-    print(f'  "env": {json.dumps(box_env(auth, port), sort_keys=True)},')
 
 
 class Credential:
@@ -350,20 +345,6 @@ def image(name: str) -> int:
     return 0 if image_ok(name, want) else 1
 
 
-def image_id(name: str) -> int:
-    status = image(name)
-    if status:
-        return status
-    selected = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", name],
-                              capture_output=True, text=True)
-    identity = selected.stdout.strip()
-    want = [f"sha256:{hashlib.sha256(root_tar()).hexdigest()}"]
-    if selected.returncode or not re.fullmatch(r"sha256:[0-9a-f]{64}", identity) or not image_ok(identity, want):
-        return 1
-    print(identity)
-    return 0
-
-
 def main() -> int:
     args = sys.argv[1:]
     if len(args) in (3, 4) and args[0] == "serve":
@@ -373,13 +354,8 @@ def main() -> int:
         for key, value in sorted(box_env(args[1], int(args[2])).items()):
             print(f"{key}={value}")
         return 0
-    if len(args) == 3 and args[0] == "settings":
-        settings(args[1], int(args[2]))
-        return 0
     if len(args) == 2 and args[0] == "image":
         return image(args[1])
-    if len(args) == 2 and args[0] == "image-id":
-        return image_id(args[1])
     if len(args) >= 6 and args[0] == "box" and args[4] == "--":
         return box(int(args[1]), args[2], float(args[3]), args[5:])
     print(__doc__, file=sys.stderr)

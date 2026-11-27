@@ -58,11 +58,11 @@ class Body(unittest.TestCase):
         self.assertFalse(box_relay.body_reaches_outside(b"not json"))
 
 
-class Settings(unittest.TestCase):
+class Env(unittest.TestCase):
     def run_settings(self, env):
-        out = subprocess.run([sys.executable, "-I", str(HERE / "box_relay.py"), "settings", "-", "8765"],
+        out = subprocess.run([sys.executable, "-I", str(HERE / "box_relay.py"), "env", "-", "8765"],
                              input=json.dumps({"env": env}), capture_output=True, text=True, check=True)
-        return json.loads("{" + out.stdout.strip().rstrip(",") + "}")["env"], out.stderr
+        return dict(line.split("=", 1) for line in out.stdout.splitlines()), out.stderr
 
     def test_only_the_cli_lines_enter_the_box(self):
         env, err = self.run_settings({
@@ -74,13 +74,6 @@ class Settings(unittest.TestCase):
                                "ANTHROPIC_MODEL": "opus", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"})
         self.assertIn("ANTHROPIC_CUSTOM_HEADERS", err)
         self.assertNotIn("secret", err)
-
-    def test_the_box_environment_is_the_same_lines(self):
-        env = {"ANTHROPIC_BASE_URL": "https://gw.example/p", "ANTHROPIC_API_KEY": "k-secret"}
-        out = subprocess.run([sys.executable, "-I", str(HERE / "box_relay.py"), "env", "-", "8765"],
-                             input=json.dumps({"env": env}), capture_output=True, text=True, check=True)
-        self.assertEqual(out.stdout.splitlines(), ["ANTHROPIC_API_KEY=cleanroom-relay",
-                                                   "ANTHROPIC_BASE_URL=http://127.0.0.1:8765/p"])
 
 
 class Relay(unittest.TestCase):

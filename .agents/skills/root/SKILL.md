@@ -77,36 +77,34 @@ For the two confined roles, the brief is also part of the barrier:
 
 ## The confined sessions
 
-From a checkout of `main`:
-1. `bash tools/cleanroom/canary.sh plant`.
-2. `bash tools/cleanroom/export.sh DOMAIN`, adding `-c COMMIT` when the spec is an amendment
-   still on its branch. It writes the domain under `$CLEANROOM_ROOT` (default `/cleanroom`), outside the home.
-3. `bash tools/cleanroom/launch.sh ROOT/DOMAIN BRIEF TRANSCRIPT`, with the transcript
-   under `~/.cleanroom/transcripts/`. Done on `LAUNCH OK` and `CANARY CLEAN`.
-4. Read the session's report: the last `result` event of the transcript.
-5. `bash tools/cleanroom/import.sh ROOT/DOMAIN lane/<domain>-rN`. Done on `IMPORT OK`:
-   `code_check.sh` passes, `scan.sh` finds nothing new in the changed files, and Clippy
-   passes over every clean crate. On `IMPORT CLIPPY FAIL`, commit a mechanical fix yourself, right
-   after the import, as `[exact]` naming the lint it answers.
-   Send anything that changes an item's logic back to an implementer
-   ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7).
+From a checkout of the round's branch, with the toolchain's bin directory on `PATH`:
+1. `cargo cleanroom export [--commit COMMIT] DOMAIN BRIEF`, adding `--commit` when the spec is an
+   amendment still on its branch. It scans the brief, writes the export to `ROOT/DOMAIN` and the
+   brief to `ROOT/DOMAIN.lane/`, ROOT being `$CLEANROOM_ROOT` (default `/cleanroom`), outside the
+   home. Done on `EXPORT OK`.
+2. `cargo cleanroom run DOMAIN`. Done on `RUN OK`.
+3. Read the session's report: the last `result` event of `ROOT/DOMAIN.lane/transcript.jsonl`.
+4. `cargo cleanroom import DOMAIN` on `lane/<domain>-rN`. Done on `IMPORT OK`: the code rules
+   pass, the name scan finds nothing new in the changed files, and Clippy passes over every clean
+   crate. On `IMPORT CLIPPY FAIL`, commit a mechanical fix yourself, right after the import, as
+   `[exact]` naming the lint it answers. Send anything that changes an item's logic back to an
+   implementer ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7), as a follow-up
+   session on the same export: `cargo cleanroom run DOMAIN BRIEF`.
 
-The blind review (a domain's first round, or when the last round gate asked for one) uses the
-same launch, on a code-only copy that
-`bash tools/cleanroom/blind_copy.sh EXPORT DEST` makes from the round's export: the model crate,
-its tests, the vector file and the [blind-reviewer](../blind-reviewer/SKILL.md) skill, without
-the spec, the design notes, `CLEANROOM.md` or a test that reads them. Its brief is one line:
-"Read .agents/skills/blind-reviewer/SKILL.md in this workspace with the Read tool and follow it;
-it is your whole task." A confined session has no Skill tool, so every confined brief names its
-skill file by path.
+The blind review (a domain's first round, or when the last round gate asked for one) runs on a
+code-only export of the lane branch after the import:
+`cargo cleanroom export --review --commit lane/<domain>-rN DOMAIN BRIEF`, then
+`cargo cleanroom run DOMAIN-review`. It holds the model crate, its tests, the vector file and the
+[blind-reviewer](../blind-reviewer/SKILL.md) skill, without the spec, the design notes,
+`CLEANROOM.md` or a test that reads them. Its brief is one line: "Read
+.agents/skills/blind-reviewer/SKILL.md in this workspace with the Read tool and follow it; it is
+your whole task." A confined session has no Skill tool, so every confined brief names its skill
+file by path.
 
-Confined sessions have no `cleanroom` function or other tool beyond the launch's allow-list: a
-brief names the checks as CLEANROOM.md does (`cargo check --all-targets`,
-`cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, with `-p <crate> -p types` to
-narrow a run) and the exact vector-runner command `launch.sh` appends. Before `launch.sh`, put
-the toolchain's bin directory on `PATH` (`export.sh` runs cargo). When `launch.sh` refuses a
-brief on a `name` hit, that is usually an ordinary phrase that matches the lexicon, which
-rewording clears.
+A confined session has the export, the toolchain and `cleanroom test`, and nothing else: no
+network but the model's API. The implementer checks with `cleanroom test`, which `CLEANROOM.md`
+names. When the export or a run refuses a brief on a `name` hit, that is usually an ordinary
+phrase that matches the lexicon, which rewording clears.
 
 ## Landing
 

@@ -37,13 +37,14 @@ report.
    bare name as words. Done when the model compiles and every spec entry has code that carries it
    out.
 4. **Vectors.** Write a test that runs every vector in the vector file through the model, and
-   fails on any key it doesn't know. Run it with the runner command at the end of your brief. Done
+   fails on any key it doesn't know. Run it with `cleanroom test`. Done
    when every vector passes, or each one that doesn't is a gap (below).
 5. **The catalogue:** one behaviour per spec entry, with its kind, its switch and how it is
    checked, and a test that every entry checked by vectors has one. Done when the catalogue
    matches the spec one for one.
-6. **Check** with `cargo check`, `cargo clippy --all-targets -- -D warnings` and
-   `cargo fmt --check`, each as its own command. Done when all three are clean.
+6. **Check** with `cleanroom test`: the code rules, the name scan on what you changed, fmt,
+   clippy and the tests. Done when it prints `TEST OK`. A name hit is a word the original's code
+   uses; reword it in the player's terms.
 7. **Read your code as a newcomer would.** Each name says what it is, each doc states its rule in
    plain words (a spec entry named as "Spec: Name"), and each function does one job. Done when a
    developer could follow every module without the spec open.
@@ -59,6 +60,6 @@ later round brings the amended entry.
 
 ## Report
 
-Give the committed export tip, the public interface you built, the runner result and the number
+Give the committed export tip, the public interface you built, the `cleanroom test` result and the number
 of passing vectors. List each unresolved entry under Gaps. Say whether you read anything outside
 this workspace or used anything you remember about how the original game is programmed.

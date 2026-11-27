@@ -13,7 +13,7 @@ is the review's value, so report what the code tells you rather than what you gu
 ## Steps
 
 1. **Read** everything under `crates/` and the vector file under `scenarios/`, if there is one.
-   Run the tests with the runner command at the end of your brief. Done when you have opened every
+   Run the tests with `cargo test --workspace`. Done when you have opened every
    source file and know how many tests ran.
 2. **What it does.** In plain words, the behaviour it models as a player would see it. Done when
    every claim is marked "clear from the code" or "a guess".

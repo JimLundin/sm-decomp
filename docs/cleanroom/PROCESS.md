@@ -61,7 +61,7 @@ Use `gpt-6.2-sol` for lane sub-agents unless Jim selects another model for the t
 
 The **barrier** is the reason the clean room exists: the model is shaped by what a player sees,
 not by the original's code. The implementer and the blind reviewer work in a confined export
-(`tools/cleanroom/launch.sh`) that holds only their column. Every other role works in the
+(`cargo cleanroom export`, then `cargo cleanroom run`) that holds only their column. Every other role works in the
 repository.
 
 | Material | observer | adversary | implementer | blind reviewer | integrator | root |
@@ -97,9 +97,8 @@ Each step names its owner, what it waits for, and its done-condition.
    - the doc links pass.
 2. **Brief** (root), after 1. Done when the brief:
    - names only spec entries and shape findings;
-   - carries the runner command;
-   - passes `tools/cleanroom/scan_brief.sh`, which `launch.sh` and the responses controller run
-     before they take a brief.
+   - passes the name scan, which `cargo cleanroom export` and `cargo cleanroom run` run before
+     they take a brief.
 3. **Spec gate** (adversary), after 1 and 2, on a domain's first spec and on a spec delta that
    adds a mechanism (a new table, interpreter or kind of state) or crosses into another domain
    (MODEL §1 decision 20). It gates the spec and the brief together. Done on a verdict of
@@ -111,25 +110,27 @@ Each step names its owner, what it waits for, and its done-condition.
    round's branch, a new domain's first spec as much as an amendment, and the round exports from
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
    model must do, so the model's own vector test fails on it until the round implements it.
-5. **Export and launch** (root): `canary.sh plant`, `export.sh -c COMMIT` with the spec's commit
-   on the round's branch, then `launch.sh`. Done on `LAUNCH OK` with a clean canary check. A new
+5. **Export and launch** (root): `cargo cleanroom export --commit COMMIT DOMAIN BRIEF` with the
+   spec's commit on the round's branch, then `cargo cleanroom run DOMAIN`. Done on `RUN OK`. A new
    domain is named `<area>-<name>`, its area from `domains.toml`, and its first export creates its
    crate at `crates/clean/<area>_<name>`.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
-   and check, clippy and fmt are clean.
-7. **Import** (root): `import.sh` first runs `code_check.sh`. Then it runs
-   `scan.sh` on each file the commits add or change, and refuses a hit that file didn't hold at
-   the export's start; the trunk's own hits don't block. It runs the mirror scan
-   (`scan.sh --mirror`) on the model against the spec and decode notes on the lane branch, and
-   refuses a non-private function the export's start didn't have that opens with an entry whose
-   source is one routine. It applies the commits to a lane
-   branch, takes the branch back if the export's crates break the capability rule (clippy's
-   forbidden lints), then lints every clean crate in the workspace: an export holds one domain's model and `types`, so a change to
-   `types` can break a crate its implementer never saw. Done when the import passes. A
-   refusal goes back to the same implementer's export as a short follow-up session: the brief
-   quotes each finding (file, line, the rule it breaks) in the coding standards' words, and the
-   import runs again. A scan hit that is a word a player uses may instead become a reviewed
-   entry in `tools/cleanroom/scan_allow.txt`, with its reason, before the import runs again.
+   and `cleanroom test` passes: the code rules, the name scan on the changed files, fmt, clippy
+   and the tests.
+7. **Import** (root): `cargo cleanroom import DOMAIN` on the lane branch. It refuses a commit
+   that touches anything but the shared types and the model, then reruns the code rules on the
+   export's head, the name scan on each file the commits add or change (a hit that file didn't
+   hold at the export's start is refused; the trunk's own hits don't block), and the mirror scan
+   on the model against the spec and decode notes on the lane branch (a non-private function the
+   export's start didn't have that opens with an entry whose source is one routine is refused).
+   It applies the commits to the lane branch, takes the branch back if the export's crates break
+   the capability rule (clippy's forbidden lints), then lints every clean crate in the workspace:
+   an export holds one domain's model and `types`, so a change to `types` can break a crate its
+   implementer never saw. Done on `IMPORT OK`. A refusal goes back to the same implementer's
+   export as a short follow-up session (`cargo cleanroom run DOMAIN BRIEF`): the brief quotes
+   each finding (file, line, the rule it breaks) in the coding standards' words, and the import
+   runs again. A scan hit that is a word a player uses may instead become a reviewed entry in
+   `tools/cleanroom/scan_allow.txt`, with its reason, before the import runs again.
    A clippy failure names the crates and leaves the patches applied:
    - a **mechanical** fix (a parameter by value instead of by reference, a derive, `assert_eq!`
      for `assert!(a == b)`, an import path; no item's logic changed) is the root's own commit,
@@ -139,9 +140,10 @@ Each step names its owner, what it waits for, and its done-condition.
      wasn't needed, the broken crate's next round when it was;
    - an integrator never edits a clean crate. A fix it finds it needs is a finding for the root.
 8. **Blind review** (blind reviewer, confined), after 7, on a domain's first round and when the
-   last round gate asked for one (MODEL §1 decision 20). The root makes a code-only copy (the
-   model, its tests and the vector file) with `tools/cleanroom/blind_copy.sh EXPORT DEST` and
-   launches the review on it. Done on its report. The root compares the review's "what the code
+   last round gate asked for one (MODEL §1 decision 20). The root makes a code-only export (the
+   model, its tests and the vector file) of the lane branch with
+   `cargo cleanroom export --review --commit BRANCH DOMAIN BRIEF` and runs the review on it with
+   `cargo cleanroom run DOMAIN-review`. Done on its report. The root compares the review's "what the code
    does" with the spec: where the reviewer misread the code, the code doesn't explain itself.
 9. **Integrate** (integrator), after 7. Done when:
    - the engine runs the model through an adapter, which holds the model's State as the

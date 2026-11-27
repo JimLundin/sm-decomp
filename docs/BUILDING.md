@@ -136,51 +136,34 @@ Then point the variables of `verify.yml`'s witness environment at it: `SM_CACHE`
 **The seed** is the warm build new lanes start from: `bash tools/lane/worktree.sh seed` once, and
 again after big landings ([lane](../.agents/skills/lane/SKILL.md#resources)).
 
-**The clean room.** `tools/cleanroom/export.sh` writes exports under `$CLEANROOM_ROOT` (default
-`/cleanroom`, outside the home), and `tools/cleanroom/launch.sh` keeps its record in `~/.cleanroom`. The session runs in a box: a docker container with no network whose file system holds only the
-export, the lane's home and temporary folder, and read-only `/usr`, toolchain, CLI and settings.
-Inside it the launch's pattern rules still deny every place beside the export's path, as a
-second layer; its header says what each layer holds and why. The session needs an API key:
-`ANTHROPIC_API_KEY` in the environment, an `apiKeyHelper` or `ANTHROPIC_*` lines in
-`~/.claude/settings.json`, or `CLEANROOM_AUTH`. A relay outside the box adds it to each request,
-so it never enters the box.
+**The clean room.** `cargo cleanroom export` writes exports under `$CLEANROOM_ROOT` (default
+`/cleanroom`, outside the home), and `cargo cleanroom run` starts a session on one in a box: a
+docker container from the image `sm-cleanroom-root:1`, with no network, whose file system holds
+the export, a temporary `/tmp`, and read-only `/usr`, toolchain, CLI and the `cleanroom` binary
+with the files it reads. The session needs an API key: `ANTHROPIC_API_KEY` in the environment,
+an `apiKeyHelper` or `ANTHROPIC_*` lines in `~/.claude/settings.json`, or a settings file named
+by `CLEANROOM_AUTH`. A relay outside the box (`tools/cleanroom/box_relay.py`) adds it to each
+request, so it never enters the box.
 
 ### Before any confined session on the box
 
-The operating system confines the session, and the pattern rules are a second layer. Before the
-first clean-room lane on a machine, and after a new CLI version:
-
 - **The exports' root is outside the home.** Make `/cleanroom` once, owned by you and private
-  (`sudo install -d -o "$USER" -m 700 /cleanroom`). export.sh and launch.sh refuse an export
-  under the home: host tools run git in the repositories they find there (VS Code's source
-  control runs `git status` in every repository under its workspace, with the repository's own
-  configuration), and the session writes the export. For the same reason, while a session runs,
-  don't open `/cleanroom` (or a folder above it) in VS Code, and don't run git or a shell whose
-  prompt runs git there; the launch reports what the box left in `.git` afterwards, but a tool
-  that reads it during the session would already have run it.
+  (`sudo install -d -o "$USER" -m 700 /cleanroom`). The tool refuses a root under the home:
+  host tools run git in the repositories they find there (VS Code's source control runs
+  `git status` in every repository under its workspace, with the repository's own
+  configuration), and the session writes the export. For the same reason, don't open
+  `/cleanroom` in VS Code or run git there yourself; `cargo cleanroom import` reads an export
+  through a mirror of its objects alone.
 - **Docker runs as you.** `docker info` works without `sudo` (your user is in the `docker`
-  group). The box needs nothing else changed on the host: bubblewrap and the CLI's own sandbox
-  need unprivileged user namespaces, which Ubuntu's AppArmor restricts, and docker doesn't.
-- **The box is proven.** `bash tools/cleanroom/launch_config_test.sh` prints `LAUNCH CONFIG TEST
-  OK`: it runs a launch with a fake CLI that tries the home, cargo's home, the canary record,
-  the temporary folder, the checkout, a search from `/`, the docker socket, writes into the
-  root, the lane and the export's git configuration, the network, the key and the relay's other
-  targets, and each must fail, while the export, the relay and the test runner work. The fake
-  CLI then commits a canary token, removes it, and plants a replace ref, a commondir with a
-  textconv driver, a nested repository and a renamed `.git`; the launch must report each as a
-  breach, and nothing planted may run. canary.sh must still find a removed token behind a
-  textconv driver or a replace ref.
-- **The key stays outside the box.** The dry run's `settings.json` holds the placeholder
-  `cleanroom-relay` and `env.txt` holds no key. Other `ANTHROPIC_*` lines (custom headers, other
-  keys) stay with the relay too; the launch names them.
-- **The probe passes in the box** (below): every CHECK refused, and nothing outside the export
-  is in the box to find, so CHECKs 29 to 31 (searches from `/` and the home) find nothing.
+  group). The box needs nothing else changed on the host.
+- **The box is proven.** `cargo test -p tools --no-default-features --bin cleanroom the_box`
+  runs the box on a probe export: it reads the export and nothing beside it, the checkout or the
+  decode notes. Quality runs the same test.
 
 ### First run on the box
 
 1. `bash tools/lane/gate.sh` prints `GATE OK`, and `bash tools/lane/self_tests.sh` (all of them,
-   with no base) prints `SELF TESTS OK`. It includes `launch_config_test.sh`, which checks the
-   launch's Linux rules without a session.
+   with no base) prints `SELF TESTS OK`.
 2. The played runs reproduce `scenarios/replay/played.toml`: `tools/lane/played.sh` plays them
    all, given `SM_CACHE` and `SM_ROM`, the ROM's absolute path (a lane's worktree has no `rom/`).
    Each `PLAYED` line shows the observed and reviewed counts and outcomes. The test passes
@@ -189,28 +172,6 @@ first clean-room lane on a machine, and after a new CLI version:
    ```sh
    SM_ROM=$PWD/rom/sm.smc bash tools/lane/played.sh
    ```
-
-3. The launch probe and the canary ([launch.sh](../tools/cleanroom/launch.sh)'s header). On a
-   fresh box the canary means something only once the forbidden sources are there to plant:
-   copy them under `$TEMP` where `canary.sh` looks (`c4a/logs*`, `banklogs`, `collab/reviews`,
-   `bank*`) or name them in `CANARY_ALSO`, and check `canary.sh list` shows them before the
-   probe counts. Its CHECKs 1 to 3 name files there.
-
-   ```sh
-   bash tools/cleanroom/canary.sh plant
-   bash tools/cleanroom/canary.sh list
-   CLEANROOM_ALLOW_MISSING=1 bash tools/cleanroom/export.sh launch-probe
-   ex=${CLEANROOM_ROOT:-/cleanroom}/launch-probe t=~/.cleanroom/transcripts/probe.jsonl
-   CLEANROOM_DRY_RUN=1 bash tools/cleanroom/launch.sh --probe "$ex" "$t"
-   bash tools/cleanroom/launch.sh --probe "$ex" "$t"
-   bash tools/cleanroom/canary.sh check "$t" "$ex"
-   rm -rf "$ex"
-   ```
-
-   The dry run writes the lane record and stops: read its `settings.json` deny list, `env.txt`
-   and `box.txt`, the box's `docker run`. The probe passes when it prints `LAUNCH OK launch-probe`, the transcript shows
-   every CHECK refused and every TASK done (TASK 7's runner ends `vector_runner: all targets
-   passed`), and the canary check prints `CANARY CLEAN`.
 
 ## The README
 

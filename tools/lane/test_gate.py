@@ -6,16 +6,6 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-LIB_WRAPPER = """
-outside_home_temp() {
-  local selected
-  selected=$(select_outside_home_temp) || return
-  if [ "$selected" = /tmp ] && [ -n "${GATE_TEST_FALLBACK:-}" ]; then
-    selected=$GATE_TEST_FALLBACK
-  fi
-  printf '%s\\n' "$selected"
-}
-"""
 FAKE_PYTHON = """import os, pathlib, sys
 pathlib.Path({ran!r}, "{name}").write_text("")
 print(os.environ.get("GATE_TEST_OUT_{name}", ""))
@@ -36,10 +26,6 @@ class Gate(unittest.TestCase):
             path.mkdir(parents=True)
         for name in ("gate.sh", "changes.sh"):
             shutil.copy(HERE / name, self.repo / "tools/lane" / name)
-        lib = (HERE.parent / "cleanroom/lib.sh").read_text()
-        renamed = lib.replace("\noutside_home_temp() {", "\nselect_outside_home_temp() {")
-        self.assertNotEqual(renamed, lib)
-        (self.repo / "tools/cleanroom/lib.sh").write_text(renamed + LIB_WRAPPER)
         (self.repo / "rust-toolchain.toml").write_text('channel = "0.0.0"\n')
         (self.repo / "scenarios/demo.toml").write_text("Invented vectors.\n")
         if dash := shutil.which("dash"):
@@ -145,8 +131,6 @@ class Gate(unittest.TestCase):
         self.fake("shellcheck", self.bin / "shellcheck")
         self.assertFalse(self.reuses(), "a gate with shellcheck installed reused a pass made without it")
         (self.bin / "shellcheck").unlink()
-        self.settled()
-        self.assertFalse(self.reuses(CANARY_SALT="other"))
 
     def test_a_cargo_configuration_outside_the_tree_runs_again(self) -> None:
         self.settled()
@@ -187,21 +171,6 @@ class Gate(unittest.TestCase):
         (elsewhere / ".cargo").mkdir()
         (elsewhere / ".cargo/config.toml").write_text("[build]\n")
         self.assertFalse(self.reuses(TEMP=str(elsewhere / "tmp")))
-
-    def test_a_cargo_configuration_above_the_self_tests_build_runs_again(self) -> None:
-        home_temp = self.scratch / "home/tmp"
-        fallback = self.scratch / "fallback"
-        home_temp.mkdir(parents=True)
-        fallback.mkdir()
-        selected = subprocess.run(["bash", "-c", '. "$1" && outside_home_temp', "-", str(HERE.parent / "cleanroom/lib.sh")],
-                                  env=os.environ | {"HOME": str(self.scratch / "home"), "TEMP": str(home_temp)},
-                                  check=True, capture_output=True, text=True).stdout.strip()
-        self.assertEqual(selected, "/tmp", "the self-tests' build folder with TEMP inside the home")
-        settings = {"HOME": str(self.scratch / "home"), "TEMP": str(home_temp), "GATE_TEST_FALLBACK": str(fallback)}
-        self.settled(**settings)
-        (fallback / ".cargo").mkdir()
-        (fallback / ".cargo/config.toml").write_text("[build]\n")
-        self.assertFalse(self.reuses(**settings))
 
     def test_a_file_only_an_outside_ignore_rule_hides_turns_reuse_off(self) -> None:
         self.settled()

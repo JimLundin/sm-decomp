@@ -61,7 +61,7 @@ Jim's decisions, 2026-11-09:
     crate is used when it is widely used and the standard choice for its job, std doesn't cover
     that job, it helps model the domain, and it builds on the development machine. The root
     approves each, at an exact version: `tools/cleanroom/allowed_deps.txt` lists those the
-    clean crates may use, with their kinds and features, and `code_check.sh` refuses the rest.
+    clean crates may use, with their kinds and features, and `cleanroom check` refuses the rest.
     Cargo verifies registry sources against the lock. The [crate policy](../../crates/README.md)
     pins the releases permitted to run a build script.
 13. **Vectors hold RAM observations and invented content only**, in every domain. A vector
@@ -107,7 +107,7 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     why the expected improvement warrants the cost and risk; a cut brief carries concrete shape
     outcomes. A scope change goes to Jim, and the lane stops until he answers.
 20. **A round's fixed cost is cut where automation already holds the barrier.** The export,
-    the scans, the canaries and `code_check.sh` hold the clean room on every round. The
+    the box, the scans and the code rules hold the clean room on every round. The
     adversary gates a domain's first spec, and later a spec delta that adds a mechanism (a
     new table, interpreter or kind of state) or crosses into another domain; any other
     amendment goes on the round gate's review. The blind review runs on a domain's first
@@ -319,7 +319,8 @@ encoder rule).
 
 ## 4. Gates and lints
 
-`tools/cleanroom/code_check.sh` applies the gates and lints to the clean crates. Test code is
+`cleanroom check` (crates/tools/src/bin/cleanroom) applies the gates and lints to the clean
+crates; the crate rules, `cleanroom test` in the box and the import run it. Test code is
 `#[cfg(test)]` items, `tests` directories and `tests.rs` files.
 
 - **A value that holds behaviour is logic** (rule L3). A constant's or static's
@@ -335,7 +336,7 @@ encoder rule).
   (`Divisor::new(100).expect(..)`, `.unwrap()`, `.map(..)`), a field or an index (`A.0`,
   `T[2]`), a turbofish, a cast, a range with an operator or a call at either end (`0..A + 1`,
   `..16`), and every other operator but a minus on a literal (`A | B << 4`, `-A`). Chart rows
-  are data while they state the spec's chart; L3 and review guard the line. `code_check.sh`
+  are data while they state the spec's chart; L3 and review guard the line. `cleanroom check`
   applies the same rule.
 - **An exhaustive lookup is data.** A table the compiler checks for a missing or repeated member
   is data as a constant's rows are: the arms of a `match` of two or more arms with no guard,
@@ -346,16 +347,15 @@ encoder rule).
   the same test (`K::A => Speed(2)`). The `match`, its scrutinee and its braces, and the macro's
   name and brackets, stay logic. A guard, a block arm, a binding, a local, a field, a method
   call or an operator in any arm keeps a decision there, and the whole `match` stays logic.
-  `code_check.sh`'s L2 exempts the same values.
+  `cleanroom check`'s L2 exempts the same values.
 - **Gates** are hard ceilings on the clean crates.
   - **G5, the clean room's clippy configuration** (`crates/clean/.clippy.toml`, which
-    `export.sh` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
+    `cleanroom export` writes as the export's `clippy.toml` and the trunk's gate and Quality run on its
     clean crates): at most one `bool` parameter (`max-fn-params-bools = 1`), no block nested 5
     deep (`excessive_nesting`, denied in `[workspace.lints]` and off wherever no threshold is
     set), cognitive complexity at most 15. `too-many-arguments-threshold` stays at 7: a lower
     one would make a struct of the arguments a compliance tool.
-  - **G6, `argument-object`** (`tools/cleanroom/code_check.sh`, through `shape_scan.awk` over a
-    crate's library sources together): a struct taken by exactly one signature and built only in
+  - **G6, `argument-object`** (`cleanroom check`, over a crate's library sources together): a struct taken by exactly one signature and built only in
     the argument lists of calls to that function, with no `impl` (no methods, no trait), and not
     a field's or a variant's type, a return type, a constant's or an alias's type or named in a
     trait. That is a bag of one call's arguments, which a parameter-count rule would reward;
@@ -365,7 +365,7 @@ encoder rule).
     `self::` or a child module's name, `use` groups included, and any cycle among them is
     refused, a child naming its parent while the parent reads the child included. It stops
     passing a whole owner (`&Samus`) down to a helper module to shorten its signatures.
-- **Three lints**, as `tools/cleanroom/code_check.sh` tags them on the clean crates:
+- **Three lints**, as `cleanroom check` tags them on the clean crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
     `#[expect]` carries a `reason = "..."` (`allow_attributes_without_reason` is denied too).
     Outside test code, no attribute may expect, allow or warn a lint that `[workspace.lints]`
@@ -418,18 +418,20 @@ leak is not a fixed one.
 
 **The clean room is enforced by construction, not by trust (Jim, 2026-11-07).** Every worktree
 shares one object store and every ref, so a sparse checkout is not enough. So:
-- **The implementer works in an export,** not a worktree: a fresh repository built by
-  `tools/cleanroom/export.sh` with `git archive` from an allowlist
-  (`tools/cleanroom/allowlist.txt`: the clean crates, [DESIGN](../cleanroom/DESIGN.md), the
-  domain's spec and vectors, the implementer skill). It has no history, no other refs, no
-  remote and no alternates, and lives outside the project's directories. Results come back as
-  patches, applied by the import.
-- **Canaries prove what was read.** Unique tokens are planted in every forbidden source (the
-  bank-log copies, the decode notes, `verify`'s address files). `tools/cleanroom/canary.sh`
-  searches the implementer's transcript and commits for them after each lane. A canary found is
-  a breach.
-- **Scans run on everything that enters the export or the clean crates**, briefs and commit
-  messages included (`tools/cleanroom/scan.sh`, `scan_brief.sh`):
+- **The implementer works in an export,** not a worktree: a fresh repository of one commit
+  that `cleanroom export` builds with `git archive` from a fixed list (the clean crates,
+  [DESIGN](../cleanroom/DESIGN.md), the domain's spec and vectors, the implementer skill). It
+  has no history, no other refs and no remote, and lives outside the home. Results come back
+  as patches, applied by `cleanroom import`, which reads the export through a mirror of its
+  objects alone.
+- **The session runs in a box.** `cleanroom run` starts the agent in a container with no
+  network whose file system is the export, the toolchain and the tool, so nothing else is
+  there to read. The model's API is the one way out, through a relay that holds the
+  credential and refuses a request that asks the API itself to reach the web. A Rust test
+  proves the box reads its export and nothing beside it.
+- **Scans run on everything that enters the export or the clean crates**, briefs included
+  (`cleanroom scan`; `cleanroom export` and `run` scan the brief, and `cleanroom test` and the
+  import scan what the implementer changed):
   - addresses in every form: `$XX:XXXX`, split bank/offset pairs, `RomAddress`/`Source::bank`, and
     a hashed set of the original's known WRAM and ROM addresses;
   - names, against a lexicon drawn from the bank logs, with a reviewed allowlist of player vocabulary;

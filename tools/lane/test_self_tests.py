@@ -6,8 +6,7 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SHELL_SUITES = {name: f"tools/cleanroom/{name}_test.sh" for name in
-                ("launch", "launch_config", "code_check", "canary", "blind_copy", "adjusted_vectors", "import_check")}
+SHELL_SUITES = {"adjusted_vectors": "tools/cleanroom/adjusted_vectors_test.sh"}
 PYTHON_SUITES = {name: f"tools/lane/test_{name}.py" for name in ("worktree", "gate", "self_tests")}
 EVERY_SUITE = sorted(SHELL_SUITES | PYTHON_SUITES)
 PYTHON_SUITE = """import os
@@ -22,11 +21,6 @@ class Ran(unittest.TestCase):
 
 unittest.main()
 """
-IMPORT_INPUTS = ("tools/cleanroom/lib.sh", "tools/cleanroom/export.sh", "tools/cleanroom/export_workspace.py",
-                 "tools/cleanroom/code_check.sh", "tools/cleanroom/check_manifest.py", "tools/cleanroom/allowlist.txt",
-                 "tools/cleanroom/shape_scan.awk", "tools/cleanroom/scan_tool.sh", "crates/clean/.clippy.toml",
-                 "crates/tools/src/bin/cleanroom/scan.rs", "crates/clean/world_blocks/src/model.rs",
-                 "rust-toolchain.toml", "Cargo.toml", "Cargo.lock", "crates/clean/demo/Cargo.toml")
 
 
 class SelfTestSelection(unittest.TestCase):
@@ -42,7 +36,8 @@ class SelfTestSelection(unittest.TestCase):
             (self.repo / suite).write_text(f'#!/bin/sh\ntouch "$RAN/{name}"\n')
         for name, suite in PYTHON_SUITES.items():
             (self.repo / suite).write_text(PYTHON_SUITE.format(name=name))
-        for path in ("tools/lane/gate.sh", "tools/lane/land.py", "tools/cleanroom/import.sh", "tools/cleanroom/lib.sh"):
+        for path in ("tools/lane/gate.sh", "tools/lane/land.py", "tools/cleanroom/adjusted_vectors.sh",
+                     "tools/cleanroom/box_relay.py"):
             (self.repo / path).touch()
         self.git("init", "-q")
         for setting in ("user.name=Fixture", "user.email=fixture@example.invalid", "commit.gpgsign=false",
@@ -84,39 +79,27 @@ class SelfTestSelection(unittest.TestCase):
         self.assertEqual(self.run_selector(self.base), ["gate"])
 
     def test_a_tool_with_its_own_tests_runs_no_suite(self) -> None:
-        self.append("tools/lane/land.py")
-        self.assertEqual(self.run_selector("HEAD"), [])
+        for path in ("tools/lane/land.py", "tools/cleanroom/box_relay.py"):
+            with self.subTest(path=path):
+                self.append(path)
+                self.assertEqual(self.run_selector("HEAD"), [])
+                self.git("restore", "--", path)
 
     def test_a_package_marker_runs_no_suite(self) -> None:
         self.append("tools/lane/__init__.py")
         self.append("tools/cleanroom/__init__.py")
         self.assertEqual(self.run_selector("HEAD"), [])
 
-    def test_an_import_input_runs_the_import_check(self) -> None:
-        self.append("tools/cleanroom/import.sh")
-        self.assertEqual(self.run_selector("HEAD"), ["import_check"])
+    def test_an_adjusted_vector_input_runs_its_suite(self) -> None:
+        self.append("tools/cleanroom/adjusted_vectors.sh")
+        self.assertEqual(self.run_selector("HEAD"), ["adjusted_vectors"])
         self.append("tools/lane/gate.sh")
-        self.git("commit", "-qam", "Edit the gate and the importer")
-        self.assertEqual(self.run_selector(self.base), ["gate", "import_check"])
+        self.git("commit", "-qam", "Edit the gate and the adjusted-vector prover")
+        self.assertEqual(self.run_selector(self.base), ["adjusted_vectors", "gate"])
 
     def test_an_unknown_lane_file_runs_every_suite(self) -> None:
         self.git("mv", "tools/lane/gate.sh", "tools/lane/renamed")
         self.assertEqual(self.run_selector("HEAD"), EVERY_SUITE)
-
-    def test_an_untracked_clean_type_runs_the_import_check(self) -> None:
-        (self.repo / "crates/clean/types/src").mkdir(parents=True)
-        (self.repo / "crates/clean/types/src/untracked.rs").touch()
-        self.assertEqual(self.run_selector("HEAD"), ["import_check"])
-
-    def test_every_shared_import_input_runs_the_import_check(self) -> None:
-        for path in IMPORT_INPUTS:
-            with self.subTest(path=path):
-                self.append(path)
-                self.assertIn("import_check", self.run_selector("HEAD"))
-                if self.git("ls-files", path):
-                    self.git("restore", "--", path)
-                else:
-                    (self.repo / path).unlink()
 
     def test_a_subject_moved_out_of_its_folder_still_runs_its_suite(self) -> None:
         self.git("mv", "tools/lane/gate.sh", "removed-gate.sh")

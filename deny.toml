@@ -7,7 +7,7 @@
 # oracle or tools, game and runtime reaching each other or import, and a clean crate reaching
 # anything but `types` all fail here. A new workspace crate takes its line in the same change
 # that adds it: until then any crate may depend on it. The registry crates are not constrained
-# here; tools/cleanroom/allowed_deps.txt and code_check.sh hold the clean crates' ones.
+# here; tools/cleanroom/allowed_deps.txt and `cleanroom check` hold the clean crates' ones.
 
 [graph]
 all-features = true

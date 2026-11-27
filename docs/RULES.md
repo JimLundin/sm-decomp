@@ -79,7 +79,8 @@ ROM-derived bytes never go in commits or logs ([ORACLE §7](ORACLE.md#7-data-the
 
 ## The clean room
 
-13. Implementers never see the original; the export, scans and canaries enforce it
+13. *Retired.*
+13a. Implementers never see the original; the export, the box and the scans enforce it
     ([MODEL §5](architecture/MODEL.md#5-how-the-work-is-planned)). A domain is verifiable on
     its own and planned by mechanism (MODEL §5).
 14. Structure leaks, perceivable quantities don't (MODEL §5, "What counts as a leak").

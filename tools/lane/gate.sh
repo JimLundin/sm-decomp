@@ -37,12 +37,10 @@ deny=$(command -v cargo-deny || echo "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-deny
 PASSED="${SM_GATE_PASSED:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate-passed}"
 key=
 # The configuration files cargo and rustfmt read from outside the tree: in CARGO_HOME, rustfmt's
-# home and user folders, and the checkout's folder, TEMP's, the folder the clean-room self-tests
-# build in (lib.sh's outside_home_temp: /tmp when TEMP is in the home) and every folder above them.
+# home and user folders, and the checkout's folder, TEMP's and every folder above them.
 configs=("${CARGO_HOME:-$HOME/.cargo}"/config{,.toml} "$HOME"/{rustfmt,.rustfmt}.toml
   "${XDG_CONFIG_HOME:-$HOME/.config}"/rustfmt/{rustfmt,.rustfmt}.toml)
-build_temp=$(. tools/cleanroom/lib.sh && outside_home_temp) || build_temp=
-for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}" ${build_temp:+"$build_temp"}; do
+for dir in "$(git rev-parse --show-toplevel)" "${TEMP:-${TMPDIR:-/tmp}}"; do
   up=
   while [ "$dir" != "$up" ]; do
     configs+=("$dir"/.cargo/config{,.toml} "$dir"/{rustfmt,.rustfmt}.toml)
@@ -64,7 +62,7 @@ included() {
 }
 # Nothing uncommitted, nothing git is told to skip, and no file hidden only by ignore rules from
 # outside the tree (core.excludesFile, info/exclude), which status doesn't show.
-if [ -n "$build_temp" ] && [ -z "$(git status --porcelain --untracked-files=all)" ] &&
+if [ -z "$(git status --porcelain --untracked-files=all)" ] &&
   ! git ls-files -v | grep -q '^[a-zS]' &&
   [ -z "$(git -C "$(git rev-parse --show-toplevel)" ls-files -o --exclude-per-directory=.gitignore)" ] &&
   ! included &&
@@ -76,7 +74,7 @@ if [ -n "$build_temp" ] && [ -z "$(git status --porcelain --untracked-files=all)
     if shellcheck=$(command -v shellcheck); then echo "shellcheck $shellcheck"; cksum <"$shellcheck"
     else echo "no shellcheck"; fi
     "${SM_PY:-python3}" --version 2>&1
-    env | LC_ALL=C grep -E '^(RUST|CARGO|CLEANROOM_|CANARY_|CLIPPY_CONF_DIR=|SM_RUST_BIN=|SM_PY=)' |
+    env | LC_ALL=C grep -E '^(RUST|CARGO|CLEANROOM_|CLIPPY_CONF_DIR=|SM_RUST_BIN=|SM_PY=)' |
       LC_ALL=C sort
     # A link at a configuration's name counts even when it leads nowhere readable.
     for config in "${configs[@]}"; do

@@ -90,7 +90,7 @@ disallowed-methods = [
   { path = "std::io::stderr", reason = "a model writes no terminal" },
 ]
 # Build-time reach: what the compiler reads from the environment or the disk, or emits as
-# assembly. include! and include_str! stay with code_check.sh, which allows the domain's own
+# assembly. include! and include_str! stay with `cleanroom check`, which allows the domain's own
 # vector file, spec and sources by path.
 disallowed-macros = [
   { path = "std::env", reason = "a model reads no environment, even at build time" },
