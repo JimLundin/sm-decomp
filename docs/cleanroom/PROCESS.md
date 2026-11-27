@@ -111,7 +111,13 @@ Each step names its owner, what it waits for, and its done-condition.
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
    model must do, so the model's own vector test fails on it until the round implements it.
 5. **Export and launch** (root): `cargo cleanroom export --commit COMMIT DOMAIN BRIEF` with the
-   spec's commit on the round's branch, then `cargo cleanroom run DOMAIN`. Done on `RUN OK`. A new
+   spec's commit on the round's branch, then the pre-round check `cargo cleanroom run --probe
+   DOMAIN`, then `cargo cleanroom run DOMAIN`. The probe runs the box on the export with a
+   command that writes there and tries to read the checkout, the lane folder and the home, then
+   prints the mounted CLI's version. It refuses a CLI other than the one the last passing probe
+   recorded beside the lane folders, and `run` refuses to start without such a probe. On a new
+   CLI, read what it changes in the flags `run` passes, delete the record and probe again.
+   Done on `RUN OK`. A new
    domain is named `<area>-<name>`, its area from `domains.toml`, and its first export creates its
    crate at `crates/clean/<area>_<name>`.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,

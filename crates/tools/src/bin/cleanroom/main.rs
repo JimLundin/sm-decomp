@@ -36,6 +36,7 @@ use scan::{Allow, Class, Finding};
 
 const USAGE: &str = "usage: cleanroom export [--commit COMMIT] [--review] DOMAIN BRIEF\n       \
                      cleanroom run NAME [BRIEF]\n       \
+                     cleanroom run --probe NAME\n       \
                      cleanroom import NAME\n       \
                      cleanroom test\n       \
                      cleanroom names\n       \
@@ -332,6 +333,7 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.as_slice() {
         [command, rest @ ..] if command == "export" => run_export(rest),
+        [command, flag, name] if command == "run" && flag == "--probe" => run::probe(name),
         [command, name] if command == "run" => run::run(name, None),
         [command, name, brief] if command == "run" => run::run(name, Some(Path::new(brief))),
         [command, name] if command == "import" => import::run(name),

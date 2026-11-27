@@ -82,7 +82,9 @@ From a checkout of the round's branch, with the toolchain's bin directory on `PA
    amendment still on its branch. It scans the brief, writes the export to `ROOT/DOMAIN` and the
    brief to `ROOT/DOMAIN.lane/`, ROOT being `$CLEANROOM_ROOT` (default `/cleanroom`), outside the
    home. Done on `EXPORT OK`.
-2. `cargo cleanroom run DOMAIN`. Done on `RUN OK`.
+2. `cargo cleanroom run --probe DOMAIN`, then `cargo cleanroom run DOMAIN`. Done on `RUN OK`.
+   The probe refuses a CLI other than the one the last passing probe ran; see
+   [PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 5.
 3. Read the session's report: the last `result` event of `ROOT/DOMAIN.lane/transcript.jsonl`.
 4. `cargo cleanroom import DOMAIN` on `lane/<domain>-rN`. Done on `IMPORT OK`: the code rules
    pass, the name scan finds nothing new in the changed files, and Clippy passes over every clean

@@ -158,7 +158,8 @@ request, so it never enters the box.
   group). The box needs nothing else changed on the host.
 - **The box is proven.** `cargo test -p tools --no-default-features --bin cleanroom the_box`
   runs the box on a probe export: it reads the export and nothing beside it, the checkout or the
-  decode notes. Quality runs the same test.
+  decode notes. Quality runs the same test. Before each round the root runs
+  `cargo cleanroom run --probe DOMAIN` on the real export and CLI.
 
 ### First run on the box
 
