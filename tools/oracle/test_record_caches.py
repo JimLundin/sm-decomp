@@ -16,13 +16,15 @@ SCRIPT = Path(__file__).with_name("record_caches.sh").resolve()
 
 STUB = """#!/usr/bin/env bash
 set -eu
+[[ $1 == corpus && $3 == "$SM_LOCK" && -d $4/pads ]]
+shift 4
 
 while (($#)); do
   case $1 in
     --only) row=$2; shift ;;
     --cache) cache=$2; shift ;;
-    --from-frame-pads) pads=$2; shift ;;
     --watch-pcs) watch_pcs=$2; shift ;;
+    *) exit 2 ;;
   esac
   shift
 done
@@ -138,7 +140,7 @@ absent = ["wram", "vram", "cgram", "oam", "sram", "ppu", "apu", "video", "timing
             self.write_inputs(rows)
         return subprocess.run(
             [
-                "bash", SCRIPT, "-", self.bundle, self.root, self.rom,
+                "bash", SCRIPT, "-", self.bundle, self.rom,
                 self.cache, str(jobs),
             ],
             input="\n".join(rows),

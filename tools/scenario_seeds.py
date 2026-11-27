@@ -1,43 +1,19 @@
 #!/usr/bin/env python3
-"""Write scenario seeds: recorded room seeds with declared state edits.
+"""Plan work-RAM edits to derive scenario seeds from lsnes movie captures.
 
-A scenario names a recorded original-emulator room seed and the work-RAM
-state to change in it: Samus's energy, ammunition, items and beams, her
-position, or any other RAM word (a boss phase, for example). The tool copies
-the seed's regions and registers into target/seeds/scenario-NAME/, applies the
-edits to its WRAM, and records the new region hashes in that capture's
-rooms.csv. The verifier then loads the scenario seed into both engines like
-any other seed, so the original game decides what follows from the edited
-state; a scenario starts from it with the `start` this tool prints and pins
-`seed=scenario-NAME:INDEX`.
-
-Edits stay within the seed's room: the room, its level data and its video
-memory come from the recording. The gameplay state, room and NMI words and
+Edits stay within the seed's room. The gameplay state, room and NMI words and
 the latched controller words the seed loader checks cannot be edited.
-Scenario seeds are ROM-derived like their sources; they stay local and are
-published only in encrypted bundles.
 
-    python tools/scenario_seeds.py write draygon-repel
-    python tools/scenario_seeds.py show draygon-repel
     python tools/scenario_seeds.py check
     python tools/scenario_seeds.py native-args one-energy-crocomire DIR
 
-native-args prints the arguments of `oracle derive-seed ROM ...`, which cuts
-the scenario's lsnes native seed DIR/scenario-NAME/INDEX.lss from the base's
-DIR/CAPTURE/INDEX.lss with the same edits.
+native-args prints the arguments of `oracle derive-seed ROM ...`, which derives
+DIR/scenario-NAME/INDEX.lss from DIR/CAPTURE/INDEX.lss with the declared edits.
 """
 import argparse
-import csv
-import hashlib
 import re
-import shutil
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-REGIONS = (("wram", 131072), ("sram", 8192), ("vram", 65536), ("cgram", 512),
-           ("oam", 544), ("apuram", 65536))
 
 # Named work-RAM words ($7E bank offsets).
 FIELDS = {
@@ -220,65 +196,6 @@ def planned_words(scenario: Scenario) -> dict[int, int]:
     return words
 
 
-def base_entries(base: str) -> tuple[Path, list[dict[str, str]]]:
-    capture, index = base.split(":")
-    directory = ROOT / "target/seeds" / capture
-    with (directory / "rooms.csv").open(newline="") as stream:
-        rows = [row for row in csv.DictReader(stream) if row["room_index"] == index]
-    if len(rows) != len(REGIONS):
-        raise ValueError(f"{base}: the capture has no complete seed")
-    return directory, rows
-
-
-def seed_digest(directory: Path, prefix: str) -> str:
-    digest = hashlib.sha256()
-    for region, size in REGIONS:
-        data = (directory / f"{prefix}-{region}.bin").read_bytes()
-        if len(data) != size:
-            raise ValueError(f"{region} has {len(data)} bytes, not {size}")
-        digest.update(data)
-    digest.update((directory / f"{prefix}-registers.csv").read_bytes())
-    return digest.hexdigest()
-
-
-def write(name: str) -> None:
-    scenario = SCENARIOS[name]
-    words = planned_words(scenario)
-    source, rows = base_entries(scenario.base)
-    prefix = rows[0]["file"].removesuffix("-wram.bin")
-    target = ROOT / "target/seeds" / f"scenario-{name}"
-    if target.exists():
-        shutil.rmtree(target)
-    target.mkdir(parents=True)
-    for region, _ in REGIONS:
-        shutil.copyfile(source / f"{prefix}-{region}.bin", target / f"{prefix}-{region}.bin")
-    shutil.copyfile(source / f"{prefix}-registers.csv", target / f"{prefix}-registers.csv")
-    wram = bytearray((target / f"{prefix}-wram.bin").read_bytes())
-    for offset, value in sorted(words.items()):
-        wram[offset:offset + 2] = value.to_bytes(2, "little")
-    (target / f"{prefix}-wram.bin").write_bytes(wram)
-    with (target / "rooms.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
-        writer.writeheader()
-        for row in rows:
-            data = (target / row["file"]).read_bytes()
-            writer.writerow({**row, "sha256": hashlib.sha256(data).hexdigest()})
-    index = int(rows[0]["room_index"])
-    print(f'start = "seed:{seed_digest(target, prefix)}"')
-    print(f"# pin: seed=scenario-{name}:{index}")
-    print(f"# {len(words)} edited words; wram: {target / (prefix + '-wram.bin')}")
-
-
-def show(name: str) -> None:
-    scenario = SCENARIOS[name]
-    source, rows = base_entries(scenario.base)
-    wram = (source / rows[0]["file"]).read_bytes()
-    names = {offset: field for field, offset in FIELDS.items()}
-    for offset, value in sorted(planned_words(scenario).items()):
-        before = int.from_bytes(wram[offset:offset + 2], "little")
-        print(f"${offset:04X} {names.get(offset, 'word'):20} {before:#06x} -> {value:#06x}")
-
-
 def native_args(name: str, directory: str) -> None:
     scenario = SCENARIOS[name]
     capture, index = scenario.base.split(":")
@@ -316,8 +233,6 @@ def check() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
-    for command in ("write", "show"):
-        commands.add_parser(command).add_argument("scenario", choices=sorted(SCENARIOS))
     commands.add_parser("check")
     native = commands.add_parser("native-args")
     native.add_argument("scenario", choices=sorted(SCENARIOS))
@@ -326,13 +241,9 @@ def main() -> None:
     try:
         if args.command == "check":
             check()
-        elif args.command == "native-args":
-            native_args(args.scenario, args.directory)
-        elif args.command == "write":
-            write(args.scenario)
         else:
-            show(args.scenario)
-    except (ValueError, OSError) as error:
+            native_args(args.scenario, args.directory)
+    except (ValueError, KeyError) as error:
         sys.exit(f"scenario_seeds: {error}")
 
 

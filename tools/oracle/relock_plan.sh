@@ -5,10 +5,10 @@
 # Usage: tools/oracle/relock_plan.sh NATIVE LADDERS > PLAN
 #   NATIVE   lsnes native seeds: NATIVE/<capture>/NNNN.lss
 #   LADDERS  the movie ladders: LADDERS/<movie>/ladder.txt
-# Environment: PYTHON (default python), to run tools/scenario_seeds.py.
+# Environment: PYTHON (default python3), with tomllib.
 #
-# It reads scenarios/lock.toml (each row's seed, by its pin), the room-seed
-# CSVs movies/room-seeds-<capture>.csv and the scenario definitions, and adds
+# It reads each seeded start from scenarios/locks/lsnes.toml, uses the room-seed
+# CSVs movies/room-seeds-<capture>.csv and the scenario edit recipes, and adds
 # each derivation's base seed. One line a seed, sorted so that each window's
 # captures are adjacent and in frame order:
 #   cut MOVIE RUNG CAPTURE INDEX ROOM FRAME
@@ -28,7 +28,7 @@ fi
 native=$1
 ladders=$2
 root=$(cd "$(dirname "$0")/../.." && pwd)
-python=${PYTHON:-python}
+python=${PYTHON:-python3}
 
 # The movie a capture was cut from; empty when no lsnes movie gives it.
 movie_of() {
@@ -51,23 +51,29 @@ rung_for() {
     awk -v step="$2" '!/^#/ && $1 <= step && $1 > best { best = $1 } END { print best + 0 }' "$file"
 }
 
-# The distinct seeds of the lock's rows: a [[scenario]]'s id, through its pin.
-seeds=$(awk '
-    /^\[\[scenario\]\]/ { row = 1; next }
-    row && /^id = "/ { split($0, part, "\""); rows[part[2]] = 1; row = 0; next }
-    /\{ id = "/ && /seed = "/ {
-        match($0, /id = "[^"]*"/); id = substr($0, RSTART + 6, RLENGTH - 7)
-        match($0, /seed = "[^"]*"/); pins[id] = substr($0, RSTART + 8, RLENGTH - 9)
-    }
-    END { for (id in rows) if (id in pins) print pins[id] }
-' "$root/scenarios/lock.toml" | sort -u)
+# The current lock names each native start directly.
+seeds=$("$python" - "$root/scenarios/locks/lsnes.toml" <<'PYTHON'
+import sys
+import tomllib
 
-# Each scenario seed's base and words, from the scenario definitions.
-derivations=$(
-    "$python" -c 'import sys; sys.path.insert(0, sys.argv[1]); import scenario_seeds; print("\n".join(sorted(scenario_seeds.SCENARIOS)))' \
-        "$root/tools" | tr -d '\r' | while read -r name; do
-        "$python" "$root/tools/scenario_seeds.py" native-args "$name" @ | tr -d '\r'
-    done
+with open(sys.argv[1], "rb") as lock:
+    document = tomllib.load(lock)
+if document["format"] != 2:
+    sys.exit("expected format-2 lock")
+print("\n".join(sorted({row["start"] for row in document["row"]} - {"power-on"})))
+PYTHON
+)
+
+# Each scenario seed's base and words, from the scenario edit recipes.
+derivations=$("$python" - "$root/tools" <<'PYTHON'
+import sys
+
+sys.path.insert(0, sys.argv[1])
+from scenario_seeds import SCENARIOS, native_args
+
+for name in sorted(SCENARIOS):
+    native_args(name, "@")
+PYTHON
 )
 
 # Whether NATIVE holds seed CAPTURE INDEX.

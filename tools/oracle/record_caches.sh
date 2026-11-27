@@ -1,28 +1,23 @@
 #!/usr/bin/env bash
 # Records the lockstep record cache (docs/ORACLE.md §6) of a list of rows, several at a time.
 #
-#   tools/oracle/record_caches.sh <rows> <bundle> <data> <rom> <cache> [jobs]
+#   tools/oracle/record_caches.sh <rows> <bundle> <rom> <cache> [jobs]
 #
 # <rows>    a file of row ids, one per line; `#` starts a comment. `-` reads stdin.
 # <bundle>  the decrypted relock bundle's `relock-v2-lsnes/` directory (its `pads/` and `seeds/`).
-# <data>    the decrypted bundles of scenarios/lock.toml, one directory per bundle stem: corpus
-#           still reads each row's start and its movie from the old lock (ORACLE §9).
 # <rom>     the unheadered ROM.
 # <cache>   the cache root; each row is written to `<cache>/<row>/`.
 # [jobs]    rows recorded at once, default 8. Each is one lsnes process.
 #
-# Each row is `oracle corpus ... --oracle lsnes --native-seeds <bundle>/seeds
-# --from-frame-pads <dir> --cache <cache> --only <row>`, with the row's pad file copied to a
-# directory of its own, since corpus writes `<row>.played` beside the pads. No pictures, so
-# corpus writes the lean tier (`lean.bin`, `lean.txt`): the harnesses and lockstep don't read
-# pictures, and the lean tier is about a hundredth of the full one's bytes.
+# Each row is `oracle corpus ROM LOCK BUNDLE --cache CACHE --only ROW`. Corpus
+# writes the lean tier (`lean.bin`, `lean.txt`), which omits pictures.
 #
 # Resumable: reuse a readable lean row with its pinned inputs and all requested watches.
 # Each row reports cached, recorded or failed, with corpus output in <cache>/.logs/<row>.log.
 #
 # ORACLE runs the oracle command line (default target/verify/oracle).
 # SM_TOOLS runs the cache reader (default target/verify/tools, built before use).
-# SM_LOCK names the format-2 lock for cache validation (default scenarios/locks/lsnes.toml).
+# SM_LOCK names the format-2 lock (default scenarios/locks/lsnes.toml).
 #
 # WATCH_PCS, when set, is the comma-separated list of instruction addresses passed to corpus as
 # `--watch-pcs`, so each row also gets its `hits.txt` (docs/ORACLE.md §6): the harnesses that hear
@@ -34,23 +29,21 @@ if ((BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 1))); 
   exit 2
 fi
 
-if [ $# -lt 5 ] || [ $# -gt 6 ]; then
-  echo "usage: $0 <rows> <bundle> <data> <rom> <cache> [jobs]" >&2
+if [ $# -lt 4 ] || [ $# -gt 5 ]; then
+  echo "usage: $0 <rows> <bundle> <rom> <cache> [jobs]" >&2
   exit 2
 fi
 rows_file=$1
 bundle=$2
-data=$3
-rom=$4
-cache=$5
-jobs=${6:-8}
+rom=$3
+cache=$4
+jobs=${5:-8}
 if [[ ! $jobs =~ ^[1-9][0-9]*$ ]]; then
   echo "jobs must be a positive integer" >&2
   exit 2
 fi
 here=$(cd "$(dirname "$0")/../.." && pwd)
-lock=$here/scenarios/lock.toml
-cache_lock=${SM_LOCK:-$here/scenarios/locks/lsnes.toml}
+lock=${SM_LOCK:-$here/scenarios/locks/lsnes.toml}
 read -r -a oracle <<<"${ORACLE:-$here/target/verify/oracle}"
 for directory in "$bundle/pads" "$bundle/seeds"; do
   if [ ! -d "$directory" ]; then
@@ -82,14 +75,14 @@ if ! command -v "$checker" >/dev/null; then
 fi
 
 # Validate the command and lock before any worker can replace a row.
-lock_rows=$("$checker" cache-check "$cache_lock")
+lock_rows=$("$checker" cache-check "$lock")
 if [[ ! $lock_rows =~ ^[1-9][0-9]*$ ]]; then
   echo "cache reader returned no lock rows: $checker" >&2
   exit 2
 fi
 
 cache_check() {
-  "$checker" cache-check "$cache_lock" "$bundle" "$@"
+  "$checker" cache-check "$lock" "$bundle" "$@"
 }
 
 publish_row() {
@@ -148,12 +141,10 @@ record() (
   trap 'rm -rf -- "$stage"' EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
-  mkdir "$stage/pads"
-  cp "$pads" "$stage/pads/"
   started=$SECONDS
   status=0
-  "${oracle[@]}" corpus "$rom" "$lock" "$data" --oracle lsnes --native-seeds "$bundle/seeds" \
-    --from-frame-pads "$stage/pads" --cache "$stage/cache" --only "$row" "${watch[@]}" >"$log" 2>&1 || status=$?
+  "${oracle[@]}" corpus "$rom" "$lock" "$bundle" --cache "$stage/cache" --only "$row" "${watch[@]}" \
+    >"$log" 2>&1 || status=$?
   if [ "$status" -ne 0 ]; then echo "oracle exit $status" >>"$log"; fi
   if [ "$status" -eq 0 ] && frames=$(cache_check "$stage/cache" "$row" "$requested" 2>>"$log"); then
     publish_row "$stage/cache/$row" "$target"
