@@ -16,6 +16,7 @@ struct Search {
 
 #[derive(Deserialize)]
 struct Packets {
+    ordinary_witness: BTreeMap<String, super::recorded::Witness>,
     save_schedule: BTreeMap<String, super::index::SaveSchedule>,
     intro_join: BTreeMap<String, PublishedJoin>,
     played_witnesses: super::played::witnesses::Witnesses,
@@ -34,6 +35,10 @@ static PACKETS: LazyLock<Option<Packets>> = LazyLock::new(|| {
     ))
     .ok()
 });
+
+pub(super) fn ordinary_witness(id: &str) -> Option<&'static super::recorded::Witness> {
+    PACKETS.as_ref()?.ordinary_witness.get(id)
+}
 
 pub(super) fn native(case: &super::index::Case) -> Option<&'static super::index::NativePacket> {
     let packets = PACKETS.as_ref()?;

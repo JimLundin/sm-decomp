@@ -587,17 +587,50 @@ pub(super) fn door_cells(wram: &[u8]) -> Result<Vec<(types::Cell, usize)>, Outco
     Ok(doors)
 }
 
-pub fn expected(
+pub(super) fn expected_cut(
     wram: &[u8],
-    selected: &[ObservationId],
-    row: &str,
+    case: &super::index::Case,
     cut: u64,
-) -> Result<Vec<Observation>, Outcome> {
+) -> Result<super::readers::ExpectedCut, Outcome> {
+    let outputs_selected = case.expectations.output_cut.is_none_or(|at| at == cut);
+    let semantics = expected(wram, &case.expectations.fields)?;
+    let mut fields = semantics.clone();
+    if outputs_selected {
+        if let Some(super::recorded::Witness::WallCells { wall, reached, .. }) =
+            case.ordinary_witness()
+        {
+            for output in &case.expectations.outputs {
+                if *output == super::index::ObservationId::WallTest {
+                    fields.push(self::wall(*wall));
+                } else if *output == super::index::ObservationId::Reached {
+                    fields.push(self::reached(reached));
+                } else {
+                    fields.extend(expected(wram, std::slice::from_ref(output))?);
+                }
+            }
+        } else {
+            fields.extend(expected(wram, &case.expectations.outputs)?);
+        }
+    }
+    Ok(super::readers::ExpectedCut {
+        fields,
+        semantic_count: semantics.len(),
+        semantics,
+        output_count: if outputs_selected {
+            case.expectations.outputs.len()
+        } else {
+            0
+        },
+        replies: 0,
+    })
+}
+
+pub fn expected(wram: &[u8], selected: &[ObservationId]) -> Result<Vec<Observation>, Outcome> {
     let travels = crate::decode::directional_travel(wram)
         .map_err(|_| data_failure(None, "directional travel observation"))?;
     selected
         .iter()
-        .map(|field| expected_field(wram, *field, &travels, row, cut))
+        .map(|field| expected_field(wram, *field, &travels))
         .collect()
 }
 
@@ -618,8 +651,6 @@ fn expected_field(
     wram: &[u8],
     field: ObservationId,
     travels: &types::DirectionalTravels,
-    row: &str,
-    cut: u64,
 ) -> Result<Observation, Outcome> {
     use ObservationId as O;
     use types::Direction;
@@ -697,9 +728,6 @@ fn expected_field(
             i64::from(word(wram, response)? == 5),
         ));
     }
-    if matches!(field, O::WallTest | O::Reached) {
-        return reached_observation(field, row, cut);
-    }
     Err(data_failure(None, "movement observation scope"))
 }
 
@@ -718,70 +746,32 @@ pub(super) fn pose_observation(field: &str, pose: Pose) -> Observation {
     }
 }
 
-fn reached_observation(field: ObservationId, row: &str, cut: u64) -> Result<Observation, Outcome> {
-    if row != "item-morph-ball" || cut != 817 {
-        return Err(data_failure(
-            Some(cut),
-            "named reached-cell witness row and cut",
-        ));
-    }
-    if field == ObservationId::WallTest {
-        Ok(Observation::quantity("movement.wall_test", 0))
-    } else {
-        Ok(Observation {
-            field: "movement.reached".to_owned(),
-            bytes: reached_w15(),
-        })
-    }
+pub(super) fn wall(result: samus_movement::WallTest) -> Observation {
+    let number = match result {
+        samus_movement::WallTest::Neither => 0,
+        samus_movement::WallTest::Readied => 1,
+        samus_movement::WallTest::Kicked => 2,
+    };
+    Observation::quantity("movement.wall_test", number)
 }
 
-/// Observer's named W15 ordered reached-cell witness, in pixel coordinates.
-fn reached_w15() -> Vec<u8> {
-    encode_reached(&[
-        ([1120, 640], 1),
-        ([1120, 656], 1),
-        ([1104, 640], 0),
-        ([1104, 656], 0),
-        ([1120, 656], 4),
-        ([1136, 656], 4),
-        ([1120, 624], 0),
-        ([1136, 624], 0),
-        ([1120, 672], 0),
-        ([1136, 672], 0),
-    ])
-}
-
-fn encode_reached(reached: &[([u16; 2], u8)]) -> Vec<u8> {
+pub(super) fn reached(cells: &[types::Touch]) -> Observation {
     let mut bytes = Vec::new();
-    for ([x, y], way) in reached {
-        bytes.extend_from_slice(&x.to_le_bytes());
-        bytes.extend_from_slice(&y.to_le_bytes());
-        bytes.push(*way);
+    for touch in cells {
+        let way = match touch.way {
+            types::Way::Look => 0,
+            types::Way::Move(types::Heading::Left) => 1,
+            types::Way::Move(types::Heading::Right) => 2,
+            types::Way::Move(types::Heading::Up) => 3,
+            types::Way::Move(types::Heading::Down) => 4,
+        };
+        bytes.extend(touch.cell.x.wrapping_mul(16).to_le_bytes());
+        bytes.extend(touch.cell.y.wrapping_mul(16).to_le_bytes());
+        bytes.push(way);
     }
-    bytes
-}
-
-pub fn reached(outcome: &samus_movement::Outcome) -> Observation {
-    let reached: Vec<_> = outcome
-        .reached
-        .iter()
-        .map(|touch| {
-            let way = match touch.way {
-                types::Way::Look => 0,
-                types::Way::Move(types::Heading::Left) => 1,
-                types::Way::Move(types::Heading::Right) => 2,
-                types::Way::Move(types::Heading::Up) => 3,
-                types::Way::Move(types::Heading::Down) => 4,
-            };
-            (
-                [touch.cell.x.wrapping_mul(16), touch.cell.y.wrapping_mul(16)],
-                way,
-            )
-        })
-        .collect();
     Observation {
         field: "movement.reached".to_owned(),
-        bytes: encode_reached(&reached),
+        bytes,
     }
 }
 

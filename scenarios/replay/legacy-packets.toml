@@ -55,6 +55,7 @@ expected = { path = "movement-touchdown-v1/expected.toml", sha256 = "8b1dfa66303
 
 [[fixture]]
 provider = "scoped-shot-drawing-inputs"
+door_slots = [0, 1]
 inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
 expected = { path = "shot-contact-v1/expected.toml", sha256 = "1a4dccf4d4717546adbfd987de39a95cf730030e86bbbe9f5ae2908e11d8e9e1" }
 
@@ -203,3 +204,31 @@ row = "chain-any-0006-E0B5"
 first = 681
 slot = 13
 pieces = [0, 12, 0, 10, 0, 8, 0, 10, 0, 11, 0, 9, 0, 9, 0, 7, 0, 9, 0, 11, 0, 11, 0, 6]
+
+[ordinary_witness."movement/W15"]
+kind = "wall-cells"
+source = { row = "item-morph-ball", cut = 817, preceding_wram_sha256 = "e85ee44358c78e6e1d626ef2b4f51bb33f97e66e597f95976aa7bda8149a666c" }
+wall = "Neither"
+reached = [
+  { cell = { x = 70, y = 40 }, way = { Move = "Left" } },
+  { cell = { x = 70, y = 41 }, way = { Move = "Left" } },
+  { cell = { x = 69, y = 40 }, way = "Look" },
+  { cell = { x = 69, y = 41 }, way = "Look" },
+  { cell = { x = 70, y = 41 }, way = { Move = "Down" } },
+  { cell = { x = 71, y = 41 }, way = { Move = "Down" } },
+  { cell = { x = 70, y = 39 }, way = "Look" },
+  { cell = { x = 71, y = 39 }, way = "Look" },
+  { cell = { x = 70, y = 42 }, way = "Look" },
+  { cell = { x = 71, y = 42 }, way = "Look" },
+]
+
+[ordinary_witness."camera/unchanged-centre-follow"]
+kind = "camera-follow"
+source = { row = "item-morph-ball", cut = 1216, preceding_wram_sha256 = "2ef989598ce92ec1af6e6ff773d1055c6a0b6623a5fe1c97e5030ac94b0c17ed" }
+
+[ordinary_witness."weapons-contact/M0-four-searches"]
+kind = "published-door-visits"
+row = "chain-any-0003-DFD7"
+first = 157
+last = 160
+actors = [0, 1]

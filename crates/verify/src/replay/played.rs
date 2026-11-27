@@ -183,11 +183,10 @@ fn expected(
     hud_settled: bool,
     counted: bool,
     retiring_return: bool,
-    row: &str,
 ) -> Result<Vec<Observation>, Outcome> {
     let wram = &frame.current.wram;
     let finished = finished(frame.current);
-    let mut fields = samus::expected(&frame.previous.wram, wram, content, row, frame.cut)?;
+    let mut fields = samus::expected(&frame.previous.wram, wram, content)?;
     fields.extend(camera::expected(wram)?);
     let shaft_elevator = shaft_native::in_elevator(frame)?;
     let passing = !shaft_elevator && passage::passing(wram)?;
@@ -1153,7 +1152,6 @@ impl<'a> Run<'a> {
             hud_settled,
             arrival::counted(self.state.arrival),
             retiring_return,
-            self.row,
         )?;
         let mut actual = actual(
             &self.state,

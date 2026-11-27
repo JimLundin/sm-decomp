@@ -98,16 +98,11 @@ pub struct Input {
     pub opportunities: Vec<DoorOpportunity>,
 }
 
-/// No selector or pose eligibility policy: this tape covers the watched ordinary caller only.
-pub fn input(wram: &[u8], content: &Content, row: &str, cut: u64) -> Result<Input, Outcome> {
-    if row != "chain-any-0003-DFD7" || !(157..=160).contains(&cut) {
-        return Err(unsupported("independent weapons/contact opportunity tape"));
-    }
-    ordinary_input(wram, content)
-}
-
-// The independently watched extended insertion supplies its own cut qualification.
-pub(super) fn ordinary_input(wram: &[u8], content: &Content) -> Result<Input, Outcome> {
+pub(super) fn ordinary_input(
+    wram: &[u8],
+    content: &Content,
+    slots: impl Iterator<Item = u8>,
+) -> Result<Input, Outcome> {
     // These checks admit the observed ordinary producer; they do not choose a producer.
     if word(wram, 0x0998)? != 8
         || word(wram, 0x09a6)? != 0
@@ -176,10 +171,9 @@ pub(super) fn ordinary_input(wram: &[u8], content: &Content) -> Result<Input, Ou
         }),
     };
     let world = terrain(wram)?;
-    let opportunities = [0_usize, 1]
-        .into_iter()
+    let opportunities = slots
         .enumerate()
-        .map(|(occurrence, slot)| opportunity(wram, occurrence, slot))
+        .map(|(occurrence, slot)| opportunity(wram, occurrence, usize::from(slot)))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Input {
         update,

@@ -1,7 +1,9 @@
 //! Finite recorded recipes supply independent facts to the shared production runner.
 
 use super::compare::Observation;
-use super::index::{Case, InputProvider, Responsibility, Start};
+use super::index::{
+    Case, ExpectedProvider, FixtureFile, InputProvider, ObservationId, Responsibility, Start,
+};
 use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, Tape, record,
 };
@@ -15,12 +17,144 @@ use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
 };
 use game::state::owned::OwnedState;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ObservedCut {
+    row: String,
+    cut: u64,
+    preceding_wram_sha256: String,
+}
+
+impl ObservedCut {
+    fn valid(&self, case: &Case) -> bool {
+        self.row == case.row
+            && self.cut > 0
+            && super::index::valid_hash(&self.preceding_wram_sha256)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+pub(super) enum Witness {
+    WallCells {
+        source: ObservedCut,
+        wall: samus_movement::WallTest,
+        reached: Vec<types::Touch>,
+    },
+    CameraFollow {
+        source: ObservedCut,
+    },
+    DoorVisits {
+        inputs: FixtureFile,
+        actors: Vec<u8>,
+    },
+    PublishedDoorVisits {
+        row: String,
+        first: u64,
+        last: u64,
+        actors: Vec<u8>,
+    },
+}
+
+impl Witness {
+    pub(super) fn required(case: &Case) -> bool {
+        matches!(
+            case.inputs,
+            InputProvider::PrecedingCutCameraInputs
+                | InputProvider::PrecedingCutWeaponsContactInputs
+        ) || case
+            .expectations
+            .fields
+            .iter()
+            .chain(&case.expectations.outputs)
+            .any(|field| matches!(field, ObservationId::WallTest | ObservationId::Reached))
+    }
+
+    pub(super) fn valid_for(case: &Case) -> bool {
+        use InputProvider as I;
+        use ObservationId as O;
+        let declared = case.expectations.provider == ExpectedProvider::WitnessedRecordCache;
+        if declared != case.ordinary_witness.is_some() {
+            return false;
+        }
+        if !Self::required(case) {
+            return !declared;
+        }
+        match (case.ordinary_witness(), case.inputs) {
+            (
+                Some(Self::WallCells {
+                    source, reached, ..
+                }),
+                I::PrecedingCutMovementInputs,
+            ) => {
+                source.valid(case)
+                    && case.expectations.output_cut == Some(source.cut)
+                    && case
+                        .expectations
+                        .fields
+                        .iter()
+                        .all(|field| !matches!(field, O::WallTest | O::Reached))
+                    && case
+                        .expectations
+                        .outputs
+                        .iter()
+                        .any(|field| matches!(field, O::WallTest | O::Reached))
+                    && !reached.is_empty()
+                    && reached.iter().all(|touch| {
+                        touch.cell.x.checked_mul(16).is_some()
+                            && touch.cell.y.checked_mul(16).is_some()
+                    })
+            }
+            (Some(Self::CameraFollow { source }), I::PrecedingCutCameraInputs) => {
+                source.valid(case)
+                    && case.end.cut_inclusive == source.cut
+                    && case.first_cut() == Some(source.cut)
+            }
+            (Some(Self::DoorVisits { inputs, actors }), I::PrecedingCutWeaponsContactInputs) => {
+                declared && inputs.valid() && super::shot_drawing::valid_slots(actors)
+            }
+            (
+                Some(Self::PublishedDoorVisits {
+                    row,
+                    first,
+                    last,
+                    actors,
+                }),
+                I::PrecedingCutWeaponsContactInputs,
+            ) => {
+                !declared
+                    && case.row == *row
+                    && case.first_cut().is_some_and(|cut| cut >= *first)
+                    && case.end.cut_inclusive <= *last
+                    && super::shot_drawing::valid_slots(actors)
+            }
+            _ => false,
+        }
+    }
+
+    pub(super) fn qualify_origin(&self, cache: &Cache) -> Result<(), Outcome> {
+        if let Self::CameraFollow { source } | Self::WallCells { source, .. } = self {
+            let cut = source
+                .cut
+                .checked_sub(1)
+                .ok_or_else(|| data_failure(None, "missing observed predecessor"))?;
+            let prior = record(cache, cut)?;
+            if crate::lock::Sha256::of(&prior.wram).to_string() != source.preceding_wram_sha256 {
+                return Err(data_failure(Some(cut), "observed predecessor WRAM"));
+            }
+        }
+        Ok(())
+    }
+}
 
 #[derive(Clone)]
 enum Context {
     Ceres(ceres::Slot),
     Weapons(Arc<weapons::Content>),
+    DoorInputs(Arc<weapons::Content>, Arc<Tape<weapons::Input>>),
     ShotInputs(
         Arc<weapons::Content>,
         Arc<Tape<super::shot_drawing::InputCut>>,
@@ -43,7 +177,6 @@ enum Context {
 pub(super) struct Inputs {
     cache: Box<Cache>,
     recipe: Context,
-    row: String,
 }
 
 pub(super) struct Expected {
@@ -140,24 +273,63 @@ fn ordinary_recipe(
     })
 }
 
-fn weapons_recipe(wram: &[u8], sources: &Sources, case: &Case) -> Result<Recipe, Outcome> {
+fn weapons_recipe(
+    wram: &[u8],
+    sources: &Sources,
+    case: &Case,
+    cache: &Cache,
+) -> Result<Recipe, Outcome> {
     let content = Arc::new(weapons::Content::load(&sources.rom)?);
     let seed = ProductionSeed::WeaponsContact(Box::new(weapons::seed(wram, &content)?));
     let production_content = ProductionContent::WeaponsContact(Box::new(content.weapons.clone()));
     let (source, actual) = if case.inputs == InputProvider::ScopedShotDrawingInputs {
+        let fixtures = case.fixture_pair()?;
         (
             Context::ShotInputs(
                 content,
                 Arc::new(super::shot_drawing::InputCut::load(
                     case,
                     &sources.native,
-                    &case.fixture_pair()?.inputs,
+                    &fixtures.inputs,
+                    fixtures
+                        .door_slots()
+                        .ok_or_else(|| data_failure(None, "shot door roster"))?,
                 )?),
             ),
             Actual::ShotDrawing,
         )
     } else {
-        (Context::Weapons(content), Actual::Weapons)
+        let window = case.cache_window()?;
+        let first = *window.cuts.start();
+        let visits = match case.ordinary_witness() {
+            Some(Witness::DoorVisits { inputs, actors }) => {
+                let observed =
+                    super::shot_drawing::InputCut::load(case, &sources.native, inputs, actors)?;
+                window
+                    .cuts
+                    .map(|cut| {
+                        observed
+                            .at(cut)?
+                            .ordinary(&preceding(cache, cut)?.wram, &content)
+                    })
+                    .collect::<Result<_, _>>()?
+            }
+            Some(Witness::PublishedDoorVisits { actors, .. }) => window
+                .cuts
+                .map(|cut| {
+                    weapons::ordinary_input(
+                        &preceding(cache, cut)?.wram,
+                        &content,
+                        actors.iter().copied(),
+                    )
+                })
+                .collect::<Result<_, _>>()?,
+            _ => return Err(data_failure(None, "ordinary door visit source")),
+        };
+        (
+            Context::DoorInputs(content, Arc::new(Tape::new(first, visits))),
+            Actual::Weapons,
+        )
     };
     Ok(Recipe {
         source,
@@ -194,7 +366,7 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
             )
         }
         [Responsibility::Weapons, Responsibility::Contact] => {
-            return weapons_recipe(wram, sources, case);
+            return weapons_recipe(wram, sources, case, cache);
         }
         [Responsibility::Camera] => (
             Context::Camera,
@@ -257,6 +429,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "indexed lock row"))?;
+    if case.end.cut_inclusive >= row.frames.0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "comparison beyond locked row",
+        ));
+    }
     let inputs = Box::new(
         Cache::open(&sources.cache, row)
             .map_err(|_| data_failure(None, "input record cache pins"))?,
@@ -265,6 +443,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         Cache::open(&sources.cache, row)
             .map_err(|_| data_failure(None, "expected record cache pins"))?,
     );
+    if let Some(witness) = case.ordinary_witness() {
+        witness.qualify_origin(&inputs)?;
+    }
     let seed_record = record(&inputs, frame)?;
     if case.responsibilities == [Responsibility::Progress] {
         progress::validate_watches(inputs.watched())?;
@@ -295,12 +476,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         inputs: InputReader::Recorded(Box::new(Inputs {
             cache: inputs,
             recipe: recipe.clone(),
-            row: case.row.clone(),
         })),
         expected: ExpectedReader::Recorded(Box::new(Expected {
             cache: expected,
             recipe: match recipe {
                 Context::Connected { content, .. } => Context::ConnectedObservations(content),
+                Context::DoorInputs(content, _) => Context::Weapons(content),
                 Context::ShotInputs(content, _) => Context::ShotExpected(
                     content,
                     Arc::new(super::shot_drawing::ExpectedCut::load(
@@ -337,36 +518,27 @@ fn preceding(cache: &Cache, cut: u64) -> Result<oracle_record::FrameRecord, Outc
 }
 
 impl Inputs {
-    fn advance_weapons(
-        &self,
-        production: &mut Production,
-        wram: &[u8],
-        cut: u64,
-    ) -> Result<ProductionOutputs, Outcome> {
-        if let Context::ShotInputs(content, tape) = &self.recipe {
-            return super::shot_drawing::InputCut::advance(tape, wram, content, cut, production);
-        }
-        let Context::Weapons(content) = &self.recipe else {
-            return Err(data_failure(Some(cut), "wrong weapons input scope"));
-        };
-        let input = weapons::input(wram, content, &self.row, cut)?;
-        production
-            .advance(AdvanceInput::WeaponsContact {
-                input: &input.update,
-                world: &input.world,
-                contacts: &input.opportunities,
-            })
-            .map_err(|fault| production_failure(cut, fault))
-    }
-
     pub fn advance(
         &self,
         production: &mut Production,
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
+        if let Context::DoorInputs(_, tape) = &self.recipe {
+            let input = tape.at(cut)?;
+            return production
+                .advance(AdvanceInput::WeaponsContact {
+                    input: &input.update,
+                    world: &input.world,
+                    contacts: &input.opportunities,
+                })
+                .map_err(|fault| production_failure(cut, fault));
+        }
         let prior = preceding(&self.cache, cut)?;
         let outputs = match &self.recipe {
-            Context::ConnectedObservations(_) | Context::ShotExpected(..) => {
+            Context::ConnectedObservations(_)
+            | Context::Weapons(_)
+            | Context::ShotExpected(..)
+            | Context::DoorInputs(..) => {
                 return Err(data_failure(
                     Some(cut),
                     "expected reader cannot advance production",
@@ -387,8 +559,14 @@ impl Inputs {
                 let input = ceres::input(&prior.wram, *slot)?;
                 production.advance(AdvanceInput::Ceres(&input))
             }
-            Context::Weapons(_) | Context::ShotInputs(..) => {
-                return self.advance_weapons(production, &prior.wram, cut);
+            Context::ShotInputs(content, tape) => {
+                return super::shot_drawing::InputCut::advance(
+                    tape,
+                    &prior.wram,
+                    content,
+                    cut,
+                    production,
+                );
             }
             Context::Camera => {
                 camera::validate_step(&prior.wram, &record(&self.cache, cut)?.wram)?;
@@ -421,9 +599,9 @@ impl Expected {
         let current = record(&self.cache, cut)?;
         let fields = match &self.recipe {
             Context::ConnectedObservations(content) => {
-                super::connected::expected(&current.wram, &content.appearance, case, cut)?
+                super::connected::expected(&current.wram, &content.appearance)?
             }
-            Context::Connected { .. } | Context::ShotInputs(..) => {
+            Context::Connected { .. } | Context::DoorInputs(..) | Context::ShotInputs(..) => {
                 return Err(data_failure(
                     Some(cut),
                     "input reader cannot read expectations",

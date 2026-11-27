@@ -134,12 +134,7 @@ fn body_fields(x: u16, y: u16) -> [Observation; 2] {
     ]
 }
 
-fn expected(
-    case: &Case,
-    cut: u64,
-    wram: &[u8],
-    content: &appearance::Content,
-) -> Result<ExpectedCut, Outcome> {
+fn expected(wram: &[u8], content: &appearance::Content) -> Result<ExpectedCut, Outcome> {
     let mut semantics = vec![phase(movement::getaway(wram)?)];
     semantics.extend(movement::expected(
         wram,
@@ -149,8 +144,6 @@ fn expected(
             O::PositionY,
             O::MovementBaseSpeed,
         ],
-        &case.row,
-        cut,
     )?);
     let magnitude = types::fixed(
         Wrapping(word(wram, crate::source::SAMUS_Y_SPEED)?),
@@ -174,7 +167,7 @@ fn expected(
     let (animation, _) = appearance::animation_owner(wram, content)?;
     semantics.extend(appearance_fields(appearance::initial(animation, content)));
     let mut fields = semantics.clone();
-    fields.extend(movement::expected(wram, OUTPUTS, &case.row, cut)?);
+    fields.extend(movement::expected(wram, OUTPUTS)?);
     Ok(ExpectedCut {
         fields,
         semantic_count: semantics.len(),
@@ -292,7 +285,7 @@ pub(in crate::replay) fn run(
         let body = radius(&state)?;
         let null = actual(&state, &appearance, body);
         let publication = advance(&mut state, &input, content, cut)?;
-        let expected = expected(case, cut, &records.record(cut)?.wram, &appearance)?;
+        let expected = expected(&records.record(cut)?.wram, &appearance)?;
         compared(cut, &expected.fields, &actual(&state, &appearance, body))?;
         runner::record_cut(result, &mut digest, &expected, &null, cut)?;
         for continuation in &mut restored {

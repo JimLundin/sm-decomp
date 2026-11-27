@@ -452,8 +452,6 @@ pub(super) fn playing_observation(figure: samus_appearance::Figure) -> Observati
 pub(super) fn expected(
     bytes: &[u8],
     content: &appearance::Content,
-    case: &super::index::Case,
-    cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
     let mut fields = vec![state_observation(&movement::seed(bytes)?)];
     fields.extend(movement::expected(
@@ -462,8 +460,6 @@ pub(super) fn expected(
             super::index::ObservationId::PositionX,
             super::index::ObservationId::PositionY,
         ],
-        &case.row,
-        cut,
     )?);
     let (state, playing) = appearance::running_animation(bytes, content)?;
     fields.extend(appearance::initial(state, content));
@@ -477,8 +473,6 @@ pub(super) fn expected(
             super::index::ObservationId::TravelUp,
             super::index::ObservationId::TravelDown,
         ],
-        &case.row,
-        cut,
     )?);
     Ok(fields)
 }

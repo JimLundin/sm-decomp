@@ -41,6 +41,7 @@ expected = { path = "movement-touchdown-v1/expected.toml", sha256 = "8b1dfa66303
 
 [[fixture]]
 provider = "scoped-shot-drawing-inputs"
+door_slots = [0, 1]
 inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
 expected = { path = "shot-contact-v1/expected.toml", sha256 = "1a4dccf4d4717546adbfd987de39a95cf730030e86bbbe9f5ae2908e11d8e9e1" }
 
@@ -122,9 +123,26 @@ profile = "reference"
 responsibilities = ["movement"]
 content = "player-rom-import"
 inputs = "preceding-cut-movement-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed"], outputs = ["movement.wall_test", "movement.reached"], output_cut = 817 }
+expectations = { provider = "witnessed-record-cache", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed"], outputs = ["movement.wall_test", "movement.reached"], output_cut = 817 }
 checkpoints = true
 limits = ["appearance feedback externally admitted", "upstream producers externally admitted", "prior-cut observed actor roster; current actor-selection update and request timing unproved", "camera and pixel composition omitted"]
+
+[case.ordinary_witness]
+kind = "wall-cells"
+source = { row = "item-morph-ball", cut = 817, preceding_wram_sha256 = "e85ee44358c78e6e1d626ef2b4f51bb33f97e66e597f95976aa7bda8149a666c" }
+wall = "Neither"
+reached = [
+  { cell = { x = 70, y = 40 }, way = { Move = "Left" } },
+  { cell = { x = 70, y = 41 }, way = { Move = "Left" } },
+  { cell = { x = 69, y = 40 }, way = "Look" },
+  { cell = { x = 69, y = 41 }, way = "Look" },
+  { cell = { x = 70, y = 41 }, way = { Move = "Down" } },
+  { cell = { x = 71, y = 41 }, way = { Move = "Down" } },
+  { cell = { x = 70, y = 39 }, way = "Look" },
+  { cell = { x = 71, y = 39 }, way = "Look" },
+  { cell = { x = 70, y = 42 }, way = "Look" },
+  { cell = { x = 71, y = 42 }, way = "Look" },
+]
 
 [[case.borrowed]]
 dependency = "movement.animation"
@@ -223,9 +241,14 @@ profile = "reference"
 responsibilities = ["weapons", "contact"]
 content = "player-rom-import"
 inputs = "preceding-cut-weapons-contact-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["weapons.state"], outputs = ["contact.consumed-markers"] }
+expectations = { provider = "witnessed-record-cache", fields = ["weapons.state"], outputs = ["contact.consumed-markers"] }
 checkpoints = true
 limits = ["four-step scoped weapons/contact witness", "controller, movement inheritance, muzzle context, room geometry and actor opportunities externally admitted", "actor selection and AI not executed; watch validates preceding contact fields", "retained trail appearance, event consumers, OAM, pixels, door response and sound/shake effects uncompared", "occupied starts require independent retained appearance and are unsupported"]
+
+[case.ordinary_witness]
+kind = "door-visits"
+actors = [0, 1]
+inputs = { path = "shot-contact-v1/inputs.toml", sha256 = "a5373a6c1b02dee912465ac7b9ee58ba94e7f41bd3c36066f9f8b947b4420178" }
 
 [[case.borrowed]]
 dependency = "weapons.cannon-and-world"
@@ -288,9 +311,13 @@ profile = "reference"
 responsibilities = ["camera"]
 content = "recorded-scroll-run"
 inputs = "preceding-cut-camera-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["camera.view.x.pixel", "camera.view.x.fraction", "camera.view.y.pixel", "camera.view.y.fraction", "camera.remembered.x.pixel", "camera.remembered.x.fraction", "camera.remembered.y.pixel", "camera.remembered.y.fraction", "camera.vertical-fraction"], outputs = [] }
+expectations = { provider = "witnessed-record-cache", fields = ["camera.view.x.pixel", "camera.view.x.fraction", "camera.view.y.pixel", "camera.view.y.fraction", "camera.remembered.x.pixel", "camera.remembered.x.fraction", "camera.remembered.y.pixel", "camera.remembered.y.fraction", "camera.vertical-fraction"], outputs = [] }
 checkpoints = true
 limits = ["one ordinary follow externally scheduled", "movement centre and unchanged pose externally observed; no placement supplied", "scroll producer externally observed", "gameplay update scheduling and other room writers unproved", "screen reads past the captured 50-byte run unsupported", "downstream weapons receipt consumption and pixels omitted"]
+
+[case.ordinary_witness]
+kind = "camera-follow"
+source = { row = "item-morph-ball", cut = 1216, preceding_wram_sha256 = "2ef989598ce92ec1af6e6ff773d1055c6a0b6623a5fe1c97e5030ac94b0c17ed" }
 
 [[case.borrowed]]
 dependency = "camera.movement-and-room"

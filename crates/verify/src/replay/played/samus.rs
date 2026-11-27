@@ -66,13 +66,11 @@ pub(in crate::replay) fn last_draw_observation(jump: samus_movement::JumpButton)
     )
 }
 
-/// Her fields as the record at `cut` of `row` holds them.
+/// Her fields as the records hold them.
 pub(super) fn expected(
     previous: &[u8],
     wram: &[u8],
     content: &appearance::Content,
-    row: &str,
-    cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
     let mut seeded = movement::observed_state(wram)?;
     if seeded.getaway == samus_movement::Getaway::Idle
@@ -97,8 +95,6 @@ pub(super) fn expected(
     fields.extend(movement::expected(
         wram,
         &[ObservationId::PositionX, ObservationId::PositionY],
-        row,
-        cut,
     )?);
     let (state, playing) = appearance::animation_owner(wram, content)?;
     fields.extend(appearance::initial(state, content));

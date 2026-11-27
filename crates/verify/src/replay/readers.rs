@@ -1,7 +1,7 @@
 //! Input, actual projection and expectation readers have disjoint access to their data.
 
 use super::compare::Observation;
-use super::index::{Case, ObservationId};
+use super::index::Case;
 use super::result::Outcome;
 use super::{audio, data_failure, movement};
 use crate::cache::Cache;
@@ -75,7 +75,7 @@ pub(super) enum ExpectedReader {
     NativeSearch(super::native_search::Expected),
     Recorded(Box<super::recorded::Expected>),
     Audio(Box<audio::ExpectedTape>),
-    Movement { cache: Box<Cache>, row: String },
+    Movement(Box<Cache>),
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -256,13 +256,8 @@ fn movement_actual(
             i64::from(travel.0.0),
         )
     }));
-    let wall = match outputs.wall_test {
-        samus_movement::WallTest::Neither => 0,
-        samus_movement::WallTest::Readied => 1,
-        samus_movement::WallTest::Kicked => 2,
-    };
-    actual.push(Observation::quantity("movement.wall_test", wall));
-    actual.push(movement::reached(outputs));
+    actual.push(movement::wall(outputs.wall_test));
+    actual.push(movement::reached(&outputs.reached));
     actual.push(Observation::quantity(
         "movement.landing.floor",
         i64::from(
@@ -527,37 +522,7 @@ impl ExpectedReader {
                     replies: capture.replies,
                 })
             }
-            Self::Movement { cache, row } => {
-                let outputs_selected = case.expectations.output_cut.is_none_or(|at| at == cut);
-                let selected: Vec<ObservationId> = case
-                    .expectations
-                    .fields
-                    .iter()
-                    .chain(
-                        case.expectations
-                            .outputs
-                            .iter()
-                            .filter(|_| outputs_selected),
-                    )
-                    .copied()
-                    .collect();
-                let fields = movement::expected(&record(cache, cut)?.wram, &selected, row, cut)?;
-                Ok(ExpectedCut {
-                    semantics: fields
-                        .iter()
-                        .take(case.expectations.fields.len())
-                        .cloned()
-                        .collect(),
-                    fields,
-                    semantic_count: case.expectations.fields.len(),
-                    output_count: if outputs_selected {
-                        case.expectations.outputs.len()
-                    } else {
-                        0
-                    },
-                    replies: 0,
-                })
-            }
+            Self::Movement(cache) => movement::expected_cut(&record(cache, cut)?.wram, case, cut),
         }
     }
 }

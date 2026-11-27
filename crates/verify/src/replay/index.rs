@@ -321,6 +321,8 @@ pub enum ExpectedProvider {
     NativeCompleteMovementWork,
     /// Live floor, fit and consumer observations, with the independent Contact FIFO.
     NativeTouchdownObservations,
+    /// Pinned oracle records qualified by the case's independent ordinary witness.
+    WitnessedRecordCache,
     /// Independent pinned oracle records.
     PinnedRecordCache,
     /// Independent queue and committed progress.
@@ -1252,6 +1254,8 @@ pub struct FixturePair {
     /// Capture repository revision recorded by early Map input fixtures.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repository: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    door_slots: Option<Vec<u8>>,
     /// File read for admission.
     pub inputs: FixtureFile,
     /// File read by the provider's comparison reader.
@@ -1267,6 +1271,14 @@ impl FixturePair {
         })
     }
 
+    pub(super) fn door_slots(&self) -> Option<&[u8]> {
+        self.door_slots.as_deref().or_else(|| {
+            super::legacy_packets::fixture(self.provider)?
+                .door_slots
+                .as_deref()
+        })
+    }
+
     fn valid(&self) -> bool {
         let revision_valid = if self.provider == InputProvider::EarlyMapInputs {
             self.repository()
@@ -1274,7 +1286,14 @@ impl FixturePair {
         } else {
             self.repository.is_none()
         };
+        let slots_valid = if self.provider == InputProvider::ScopedShotDrawingInputs {
+            self.door_slots()
+                .is_some_and(super::shot_drawing::valid_slots)
+        } else {
+            self.door_slots.is_none()
+        };
         self.provider.uses_fixture_pair()
+            && slots_valid
             && revision_valid
             && self.inputs.path != self.expected.path
             && self.inputs.sha256 != self.expected.sha256
@@ -1349,6 +1368,8 @@ pub struct Case {
     /// Native trace coordinates for played comparisons.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(super) played_witnesses: Option<super::played::witnesses::Witnesses>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) ordinary_witness: Option<super::recorded::Witness>,
     /// Declared independent comparison observations.
     pub expectations: Expectations,
     /// Explicit unproved dependencies and omitted outputs.
@@ -2860,7 +2881,10 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
 fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     let recorded = case.kind == CaseKind::Scoped
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && matches!(
+            case.expectations.provider,
+            ExpectedProvider::PinnedRecordCache | ExpectedProvider::WitnessedRecordCache
+        )
         && matches!(case.start, Start::CacheCut { .. });
     match case.responsibilities.as_slice() {
         [
@@ -2905,9 +2929,6 @@ fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<Observatio
             recorded
                 && case.content == ContentProvider::RecordedScrollRun
                 && case.inputs == InputProvider::PrecedingCutCameraInputs
-                && case.row == "item-morph-ball"
-                && matches!(case.start, Start::CacheCut { frame: 1215 })
-                && case.end.cut_inclusive == 1216
                 && case.expectations.outputs.is_empty()
                 && observations.len() == 9
         }
@@ -2999,10 +3020,7 @@ fn scope_valid(case: &Case) -> bool {
     {
         return false;
     }
-    if (observations.contains(&ObservationId::WallTest)
-        || observations.contains(&ObservationId::Reached))
-        && (case.row != "item-morph-ball" || case.expectations.output_cut != Some(817))
-    {
+    if !super::recorded::Witness::valid_for(case) {
         return false;
     }
     if case.inputs == InputProvider::ShaftPictures {
@@ -3090,6 +3108,18 @@ impl Case {
             return Err(super::data_failure(None, "cache window origin"));
         };
         Window::after(self, frame)
+    }
+
+    pub(super) fn ordinary_witness(&self) -> Option<&super::recorded::Witness> {
+        if self.expectations.provider == ExpectedProvider::WitnessedRecordCache {
+            self.ordinary_witness.as_ref()
+        } else if self.expectations.provider == ExpectedProvider::PinnedRecordCache
+            && super::recorded::Witness::required(self)
+        {
+            super::legacy_packets::ordinary_witness(&self.id.0)
+        } else {
+            None
+        }
     }
 
     pub(super) fn fixture_pair(&self) -> Result<&FixturePair, super::result::Outcome> {
@@ -3424,6 +3454,21 @@ mod tests {
                 )
             });
             assert!(Index::try_from(doc).is_err());
+        }
+    }
+
+    #[test]
+    fn witnessed_records_require_an_explicit_source_after_renaming() {
+        let index = Index::parse(INDEX).unwrap();
+        for mut case in index.cases.into_iter().filter(|case| {
+            case.expectations.provider == super::ExpectedProvider::WitnessedRecordCache
+        }) {
+            case.id.0.push_str("-reissued");
+            assert!(case.validate().is_ok());
+            case.ordinary_witness = None;
+            assert!(case.validate().is_err());
+            case.expectations.provider = super::ExpectedProvider::PinnedRecordCache;
+            assert!(case.validate().is_err());
         }
     }
 

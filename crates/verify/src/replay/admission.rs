@@ -170,7 +170,10 @@ fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     }
     if case.content != ContentProvider::PlayerRomImport
         || case.inputs != InputProvider::PrecedingCutMovementInputs
-        || case.expectations.provider != ExpectedProvider::PinnedRecordCache
+        || !matches!(
+            case.expectations.provider,
+            ExpectedProvider::PinnedRecordCache | ExpectedProvider::WitnessedRecordCache
+        )
     {
         return Err(data_failure(None, "movement provider contract"));
     }
@@ -181,10 +184,19 @@ fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "indexed lock row"))?;
+    if case.end.cut_inclusive >= row.frames.0 {
+        return Err(data_failure(
+            Some(case.end.cut_inclusive),
+            "comparison beyond locked row",
+        ));
+    }
     let input_cache = Cache::open(&sources.cache, row)
         .map_err(|_| data_failure(None, "input record cache pins"))?;
     let expected_cache = Cache::open(&sources.cache, row)
         .map_err(|_| data_failure(None, "expected record cache pins"))?;
+    if let Some(witness) = case.ordinary_witness() {
+        witness.qualify_origin(&expected_cache)?;
+    }
     let content = movement::Content::load(&sources.rom)?;
     let seed = movement::seed(&record(&input_cache, start)?.wram)?;
     let production_content = ProductionContent::Movement(content.movement.clone());
@@ -209,9 +221,6 @@ fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
             cache: Box::new(input_cache),
             content: Box::new(content),
         },
-        expected: ExpectedReader::Movement {
-            cache: Box::new(expected_cache),
-            row: case.row.clone(),
-        },
+        expected: ExpectedReader::Movement(Box::new(expected_cache)),
     })
 }

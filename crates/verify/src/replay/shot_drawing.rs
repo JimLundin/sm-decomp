@@ -1,6 +1,6 @@
 //! The scoped ordinary power insertion observes ordered contact and exact sprite bytes.
 
-use super::index::{Case, FixtureFile};
+use super::index::{Case, FixtureFile, InputProvider};
 use super::readers::Tape;
 use super::{compare::Observation, data_failure, result::Outcome, weapons};
 use enemy_interactions::{
@@ -33,12 +33,24 @@ fn load<T: serde::de::DeserializeOwned>(
 ) -> Result<Tape<T>, Outcome> {
     let window = case.cache_window()?;
     let tape: Capture<T> = file.read(root)?;
-    if (tape.row.as_str(), tape.admission_cut) != (window.row, window.origin)
-        || !tape.cut.iter().map(number).eq(window.cuts.clone())
-    {
+    let first = tape
+        .admission_cut
+        .checked_add(1)
+        .ok_or_else(|| data_failure(None, "scoped shot origin"))?;
+    let end = tape
+        .cut
+        .last()
+        .map(&number)
+        .ok_or_else(|| data_failure(None, "empty scoped shot fixture"))?;
+    let covers = if case.inputs == InputProvider::PrecedingCutWeaponsContactInputs {
+        first <= *window.cuts.start() && end >= *window.cuts.end()
+    } else {
+        window.cuts == (first..=end)
+    };
+    if !covers || tape.row != window.row || !tape.cut.iter().map(number).eq(first..=end) {
         return Err(data_failure(None, "scoped shot fixture"));
     }
-    Ok(Tape::new(*window.cuts.start(), tape.cut))
+    Ok(Tape::new(first, tape.cut))
 }
 
 #[derive(Deserialize)]
@@ -63,6 +75,7 @@ pub(super) struct InputCut {
     reason = "independent contact permissions"
 )]
 struct Actor {
+    kind: String,
     slot: u8,
     centre: [u16; 2],
     radius: [u16; 2],
@@ -90,7 +103,8 @@ impl Actor {
                 radii: Radii { x: rx, y: ry },
             })
         };
-        self.normal_box
+        self.kind == "CeresDoor"
+            && self.normal_box
             && actual.actor.0 == self.slot
             && actual.door == door
             && actual.conditions
@@ -105,13 +119,53 @@ impl Actor {
     }
 }
 
+pub(super) fn valid_slots(slots: &[u8]) -> bool {
+    slots.last().is_some_and(|slot| *slot < 32) && slots.iter().is_sorted_by(|a, b| a < b)
+}
+
 impl InputCut {
     pub(super) fn load(
         case: &Case,
         root: &Path,
         file: &FixtureFile,
+        slots: &[u8],
     ) -> Result<Tape<Self>, Outcome> {
-        load(case, root, file, |input: &Self| input.cut)
+        let tape = load(case, root, file, |input: &Self| input.cut)?;
+        for cut in case.cache_window()?.cuts {
+            if !tape
+                .at(cut)?
+                .actor
+                .iter()
+                .map(|actor| actor.slot)
+                .eq(slots.iter().copied())
+            {
+                return Err(data_failure(Some(cut), "incomplete watched door roster"));
+            }
+        }
+        Ok(tape)
+    }
+
+    pub(super) fn ordinary(
+        &self,
+        wram: &[u8],
+        content: &weapons::Content,
+    ) -> Result<weapons::Input, Outcome> {
+        let input =
+            weapons::ordinary_input(wram, content, self.actor.iter().map(|actor| actor.slot))?;
+        if (
+            input.update.cannon.shoot,
+            input.update.cannon.new_press,
+            input.update.cannon.previous_new_press,
+        ) != (self.shoot_held, self.shoot_new, self.shoot_previous_new)
+            || !input
+                .opportunities
+                .iter()
+                .zip(&self.actor)
+                .all(|(actual, seen)| seen.aligned(actual))
+        {
+            return Err(data_failure(Some(self.cut), "scoped shot input alignment"));
+        }
+        Ok(input)
     }
 
     pub(super) fn advance(
@@ -122,24 +176,9 @@ impl InputCut {
         production: &mut game::production::Production,
     ) -> Result<game::production::ProductionOutputs, Outcome> {
         let observed = tape.at(cut)?;
-        let input = weapons::ordinary_input(wram, content)?;
-        if (
-            input.update.cannon.shoot,
-            input.update.cannon.new_press,
-            input.update.cannon.previous_new_press,
-        ) != (
-            observed.shoot_held,
-            observed.shoot_new,
-            observed.shoot_previous_new,
-        ) || !observed.scoped_insertion_cursor_bytes.is_multiple_of(4)
-            || input.opportunities.len() != observed.actor.len()
-            || !input
-                .opportunities
-                .iter()
-                .zip(&observed.actor)
-                .all(|(actual, seen)| seen.aligned(actual))
-        {
-            return Err(data_failure(Some(cut), "scoped shot input alignment"));
+        let input = observed.ordinary(wram, content)?;
+        if !observed.scoped_insertion_cursor_bytes.is_multiple_of(4) {
+            return Err(data_failure(Some(cut), "scoped shot insertion cursor"));
         }
         let [x, y] = observed.draw_camera;
         let batch = NmiBatch {
