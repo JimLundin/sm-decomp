@@ -453,7 +453,6 @@ doesn't fall, root integration and review, not implementation, set the pace.
 9. **Recordings missing.** The pause screen and the attract demos have no lock row; the 100%
    chains may cover pausing (check before recording). Rare boss phases need segment rows.
 
-The plan's domains, their waves, their progress and the rounds landed are data in
-[domains.toml](domains.toml), from which `verify::report` draws the domain graph `tools report`
-prints and the README's milestone; the README's stretches come from
-[stretches.toml](../../scenarios/replay/stretches.toml).
+The plan's domains, their waves and their progress are data in [domains.toml](domains.toml),
+from which `verify::report` draws the domain graph `tools report` prints and the README's
+milestone; the README's stretches come from [stretches.toml](../../scenarios/replay/stretches.toml).
