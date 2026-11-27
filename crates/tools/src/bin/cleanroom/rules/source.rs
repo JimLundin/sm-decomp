@@ -69,6 +69,17 @@ fn renames(toks: Toks<'_>, hits: &mut Vec<Hit>) {
         {
             hit(hits, "macro-path", format!("{}::{}", at(0), at(2)));
         }
+        if at(0) == "use" && toks.is(i, Kind::Word) {
+            let end = (i..toks.len())
+                .find(|&k| toks.punct(k, ";"))
+                .unwrap_or(toks.len());
+            if let Some(k) = (i..end).find(|&k| {
+                toks.is(k, Kind::Word)
+                    && matches!(toks.text(k), "include" | "include_str" | "include_bytes")
+            }) {
+                hit(hits, "macro-path", format!("use .. {}", toks.text(k)));
+            }
+        }
         if let Some(open) = toks.attribute_at(i) {
             let end = toks.after_group(open);
             if (open..end).any(|k| toks.text(k) == "path" && toks.punct(k.saturating_add(1), "=")) {
