@@ -100,10 +100,7 @@ impl Export<'_> {
             fs::write(lane.export.join("CLEANROOM.md"), cleanroom_md(self.domain))
                 .map_err(|e| e.to_string())?;
         }
-        output(git(&lane.export).args(["init", "-q", "--template=", "-b", "main"]))?;
-        for folder in ["info", "hooks"] {
-            fs::create_dir_all(lane.export.join(".git").join(folder)).map_err(|e| e.to_string())?;
-        }
+        init(&lane.export)?;
         output(git(&lane.export).args(["add", "-A"]))?;
         output(git(&lane.export).args([
             "commit",
@@ -224,6 +221,19 @@ impl Export<'_> {
     }
 }
 
+/// The export's git, with the `info` and `hooks` folders the box mounts read-only, and a
+/// configuration that never packs on its own: an automatic gc writes `packed-refs` and `gc.log`,
+/// which the import refuses.
+fn init(export: &Path) -> Result<(), String> {
+    output(git(export).args(["init", "-q", "--template=", "-b", "main"]))?;
+    for folder in ["info", "hooks"] {
+        fs::create_dir_all(export.join(".git").join(folder)).map_err(|e| e.to_string())?;
+    }
+    output(git(export).args(["config", "gc.auto", "0"]))?;
+    output(git(export).args(["config", "maintenance.auto", "false"]))?;
+    Ok(())
+}
+
 fn write(dest: &Path, path: &str, text: &str) -> Result<(), String> {
     let target = dest.join(path);
     if let Some(parent) = target.parent() {
@@ -306,4 +316,26 @@ listings); if you recognise something from such a source, report it.
   the spec entry you suspect.
 "
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use crate::process::{git, output};
+
+    #[test]
+    fn the_export_s_git_never_packs_on_its_own() {
+        let dir = std::env::temp_dir().join(format!("cleanroom-export-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        super::init(&dir).unwrap();
+        let get = |key: &str| output(git(&dir).args(["config", "--get", key]));
+        let (gc, maintenance) = (get("gc.auto"), get("maintenance.auto"));
+        let folders = ["info", "hooks"].map(|f| dir.join(".git").join(f).is_dir());
+        fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(gc.unwrap(), "0\n");
+        assert_eq!(maintenance.unwrap(), "false\n");
+        assert_eq!(folders, [true, true]);
+    }
 }
