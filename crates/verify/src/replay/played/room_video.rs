@@ -499,7 +499,7 @@ fn arrival_produces_standard_background_before_hud() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1..=1).unwrap(),
@@ -616,7 +616,7 @@ fn return_hall_publishes_the_complete_shaft_sheet() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1..=224).unwrap(),
@@ -713,7 +713,7 @@ fn arrival_stages_enemies_and_initializes_idle_hdma() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1..=105).unwrap(),
@@ -785,50 +785,6 @@ fn overlay_prefix(raw: &[u8], pieces: u8, cut: u64) -> Result<Vec<u8>, Outcome> 
 
 fn platform_low(words: &[u16]) -> Vec<u8> {
     words.iter().map(|word| word.to_le_bytes()[0]).collect()
-}
-
-pub(super) fn held_shaft(
-    room: &RoomVideo,
-    pieces: u8,
-    cut: u64,
-) -> Result<Vec<Observation>, Outcome> {
-    let words = |span| {
-        room.video
-            .memory
-            .vram
-            .get(span)
-            .ok_or_else(|| super::data_failure(Some(cut), "held shaft VRAM"))
-    };
-    let bytes = |field: &str, bytes| Observation {
-        field: field.into(),
-        bytes,
-    };
-    Ok(vec![
-        bytes(
-            "room-video.shaft-overlay-strip",
-            words(0x7000..0x7200)?
-                .iter()
-                .copied()
-                .flat_map(u16::to_le_bytes)
-                .collect(),
-        ),
-        bytes(
-            "room-video.shaft-platform-low",
-            platform_low(words(0x060e..0x0612)?),
-        ),
-        bytes(
-            "room-video.shaft-platform-pending",
-            vec![u8::from(room.pending_platform().is_some())],
-        ),
-        bytes(
-            "room-video.shaft-overlay-prepared",
-            overlay_prefix(&oam_bytes(&room.video.batch.oam), pieces, cut)?,
-        ),
-        bytes(
-            "room-video.shaft-overlay-published",
-            overlay_prefix(&oam_bytes(&room.video.memory.oam), pieces, cut)?,
-        ),
-    ])
 }
 
 fn compare_shaft_picture(
@@ -967,7 +923,7 @@ fn return_hall_prepares_then_publishes_the_shaft_picture() {
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
     let seed = rows.record(0).unwrap();
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1..=238).unwrap(),
@@ -1070,7 +1026,7 @@ fn locked_shaft_publishes_timer_then_standing() -> Result<(), super::Outcome> {
         movement: movement::Content::load(&sources.rom)?,
         appearance: appearance::Content::load(&sources.rom)?,
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row)?;
+    let mut run = Run::admit(&seed, &content, &sources.rom)?;
     let mut controller = seed_controller(&seed)?;
     let mut previous = seed;
     let rom = Rom::new(std::fs::read(&sources.rom).unwrap()).unwrap();
@@ -1150,7 +1106,7 @@ fn fresh_arrival_produces_retained_bg1() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     let end = 4702;
     assert_eq!(
@@ -1176,7 +1132,7 @@ fn assert_bg1(row: &str, origin: u64, end: u64) {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1..=origin)
@@ -1247,7 +1203,7 @@ fn ridley_doorway_publishes_the_selected_enemy_sheets() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1..=177).unwrap(),
@@ -1302,7 +1258,7 @@ fn warning_object_upload_restores_the_live_video() {
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+    let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
     let controller = seed_controller(&seed).unwrap();
     assert_eq!(
         run.through(&mut rows, seed, controller, 1271..=1271)

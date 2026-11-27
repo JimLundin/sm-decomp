@@ -393,7 +393,7 @@ mod tests {
             movement: movement::Content::load(&sources.rom).unwrap(),
             appearance: appearance::Content::load(&sources.rom).unwrap(),
         };
-        let mut room = Run::admit(&start, &content, &sources.rom, row).unwrap();
+        let mut room = Run::admit(&start, &content, &sources.rom).unwrap();
         let controller = seed_controller(&start).unwrap();
         assert_eq!(
             room.through(&mut rows, start, controller, 1..=518).unwrap(),

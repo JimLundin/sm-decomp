@@ -897,16 +897,6 @@ targets = [
 ]
 
 [[rule]]
-id = "boss-ceres-ridley/TailRecovers"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
-]
-
-[[rule]]
 id = "boss-ceres-ridley/TailStretches"
 targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
@@ -930,16 +920,6 @@ targets = [
 id = "boss-ceres-ridley/TailSwishes"
 targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/flight_tail.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/indexed.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/TailWhips"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/tail_aim.rs" },
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
   { role = "adapter", path = "crates/game/src/production/played/ridley.rs" },
   { role = "navigation", path = "crates/verify/src/replay/ridley.rs" },
@@ -1359,54 +1339,11 @@ targets = [
 ]
 
 [[rule]]
-id = "boss-ceres-ridley/OverlayAppears"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_overlay.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/passage.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/room_video.rs" },
-]
-
-[[rule]]
 id = "boss-ceres-ridley/OverlayRumbles"
 targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_overlay.rs" },
   { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
   { role = "navigation", path = "crates/verify/src/replay/played/shaft_native/effects.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/ShaftTilts"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_rotation.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/ElevatorReached"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/shaft_rotation.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
-  { role = "adapter", path = "crates/game/src/production/played.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/VentDrawFollowsShaft"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/steam.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/shaft.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/shaft_native.rs" },
-]
-
-[[rule]]
-id = "samus-appearance/ProtectionFlicker"
-targets = [
-  { role = "model", path = "crates/clean/samus_appearance/src/flicker.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/samus_picture.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/room_video.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/samus_picture.rs" },
 ]
 
 [[rule]]
@@ -1450,12 +1387,3 @@ targets = [
   { role = "navigation", path = "crates/verify/src/replay/played/shaft_dust.rs" },
 ]
 
-[[rule]]
-id = "boss-ceres-ridley/RibsBeat"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/fight_ribs.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/ridley.rs" },
-  { role = "adapter", path = "crates/game/src/production/played/ridley_ribs.rs" },
-  { role = "adapter", path = "crates/game/src/exact/ridley_ribs.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/played/ridley_ribs.rs" },
-]

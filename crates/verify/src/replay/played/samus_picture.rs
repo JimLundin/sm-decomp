@@ -4,16 +4,8 @@ use core::ops::Range;
 
 use game::state::video::{OAM_SPRITES, Oam, Video};
 
-use super::{Frame, Outcome, Run, witnesses};
-use crate::replay::{
-    compare::Observation,
-    data_failure,
-    index::{
-        Case, CaseKind, ContentProvider, ExpectedProvider, ObservationId, Responsibility, Start,
-    },
-    readers::{ExpectedCut, FieldRole},
-    runner,
-};
+use super::{Frame, Outcome};
+use crate::replay::{compare::Observation, data_failure};
 use oracle_record::FrameRecord;
 
 pub(super) fn compare(
@@ -144,96 +136,5 @@ fn picture(
     ]
 }
 
-pub(in crate::replay) const OUTPUTS: &[ObservationId] = &[
-    ObservationId::OrdinaryBodyVisible,
-    ObservationId::OrdinaryBodyCount,
-    ObservationId::OrdinaryBodyPrepared,
-    ObservationId::OrdinaryBodyPhysical,
-];
-
-pub(in crate::replay) fn valid(case: &Case) -> bool {
-    let Start::CacheCut { frame } = case.start else {
-        return false;
-    };
-    witnesses::selected(case).is_ok_and(|data| {
-        data.body(&case.row, frame, case.end.cut_inclusive)
-            .is_some_and(|trace| trace.has_draw(frame.saturating_add(1), case.end.cut_inclusive))
-    }) && case.kind == CaseKind::Scoped
-        && case.responsibilities == [Responsibility::Appearance]
-        && case.content == ContentProvider::PlayerRomImport
-        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && case.expectations.fields.is_empty()
-        && case.expectations.outputs == OUTPUTS
-        && case.expectations.output_cut.is_none()
-        && case.checkpoints
-}
-
-pub(in crate::replay::played) fn run(
-    mut room: crate::replay::played::indexed::AdmittedRoom<'_, '_>,
-    case: &Case,
-    result: &mut runner::Receipt,
-) -> Result<(), Outcome> {
-    let start = room.seed.index;
-    let (row, local) = room.rows.place(start)?;
-    let slots = room
-        .run
-        .witnesses
-        .body(&row, local, local)
-        .and_then(|trace| trace.slots(local))
-        .ok_or_else(|| data_failure(Some(start), "ordinary body origin count"))?;
-    let mut null = native_picture(&room.seed, slots)?;
-    let mut continuations = runner::Continuations::new();
-    room.replay(case, |run, turn, _| {
-        let cut = turn.cut;
-        let (row, local) = turn.place;
-        let previous = turn.previous;
-        if row != case.row || local != cut {
-            return Err(data_failure(Some(cut), "ordinary body trace row"));
-        }
-        let saved_cut = previous.index;
-        let saved = restore(run).ok_or(Outcome::CheckpointFailure { cut: saved_cut })?;
-        let (fields, outputs) = turn.advance(run)?;
-        continuations.check(saved_cut, saved, |origin, restored| {
-            if turn.fields(restored).as_ref() != Ok(&fields) || restored.state != run.state {
-                return Err(Outcome::CheckpointFailure { cut: origin });
-            }
-            Ok(())
-        })?;
-        let observed = ExpectedCut::select(fields, |field| {
-            field.starts_with("samus-oam.").then_some(FieldRole::Output)
-        });
-        if observed.output_count != OUTPUTS.len() {
-            return Err(data_failure(
-                Some(cut),
-                "ordinary body comparison opportunity",
-            ));
-        }
-        result.record(&observed, &null, cut)?;
-        let span = outputs
-            .samus_body
-            .ok_or_else(|| data_failure(Some(cut), "ordinary body span"))?;
-        let video = &run.state.room_video.video;
-        null = picture(span, |slot| {
-            (
-                piece(&video.batch.oam, slot),
-                piece(&video.memory.oam, slot),
-            )
-        });
-        Ok(())
-    })?;
-    continuations.finish(result)
-}
-
 // The room supplies context. Resume the existing canonical owners that carry
 // Samus, her protection, her view, and the pending and published sprite data.
-fn restore<'a>(run: &Run<'a>) -> Option<Run<'a>> {
-    fn round_trip<T: canonical::Canonical>(state: &T) -> Option<T> {
-        canonical::from_bytes(&canonical::to_bytes(state)).ok()
-    }
-    let mut restored = run.clone();
-    restored.state.samus = round_trip(&run.state.samus)?;
-    restored.state.health = round_trip(&run.state.health)?;
-    restored.state.camera = round_trip(&run.state.camera)?;
-    *restored.state.room_video.video = round_trip(&*run.state.room_video.video)?;
-    Some(restored)
-}

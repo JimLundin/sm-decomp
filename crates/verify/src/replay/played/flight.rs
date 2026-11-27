@@ -226,14 +226,8 @@ pub(super) fn play(
         carry,
         video: None,
     };
-    let (held, stop) = next.through(
-        rows,
-        rom,
-        row,
-        seed.clone(),
-        start.saturating_add(1)..=end,
-        None,
-    )?;
+    let (held, stop) =
+        next.through(rows, rom, seed.clone(), start.saturating_add(1)..=end, None)?;
     Ok(report(held, stop))
 }
 
@@ -284,7 +278,6 @@ impl Continuation {
         self,
         rows: &mut Rows<'_>,
         rom: &Path,
-        row: &str,
         mut previous: FrameRecord,
         cuts: core::ops::RangeInclusive<u64>,
         mut cartridge: Option<super::power_on::LiveCartridge>,
@@ -372,7 +365,7 @@ impl Continuation {
                 )?;
                 let start = super::Start::Preparing(entry.arrival, entry.frame, entry.carry);
                 let witnesses = rows.witnesses()?;
-                let mut play = super::Run::load(start, &content, rom, row, &witnesses)?;
+                let mut play = super::Run::load(start, &content, rom, &witnesses)?;
                 play.state.room_video.video = restored_video(&run.video, cut)?;
                 play.cartridge = cartridge;
                 let (more, stop) =

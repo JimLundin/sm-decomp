@@ -107,7 +107,7 @@ fn live_bursts_restore_pending_fade_and_ordinary_room_effects() -> Result<(), Ou
         movement: movement::Content::load(&sources.rom).unwrap(),
         appearance: appearance::Content::load(&sources.rom).unwrap(),
     };
-    let mut run = Run::admit(&previous, &content, &sources.rom, HALL)?;
+    let mut run = Run::admit(&previous, &content, &sources.rom)?;
     let mut restored = Vec::new();
     let mut slot_checks = 0_usize;
     for cut in 1..=518 {

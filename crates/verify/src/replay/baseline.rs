@@ -388,19 +388,6 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
                     ..Counts::default()
                 };
     }
-    if case.checkpoints
-        && case
-            .expectations
-            .outputs
-            .contains(&super::index::ObservationId::CeresRibsUploads)
-    {
-        // One continuation forks the carried first reveal with publication held.
-        return floor.expected == Outcome::Pass
-            && counts.cuts == horizon
-            && counts.restorations == 1
-            && counts.pending_boundaries == 1
-            && scoped_counts(case, counts, first);
-    }
     match floor.expected {
         Outcome::Pass => {
             if counts.cuts != horizon
@@ -426,9 +413,6 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         Outcome::Difference { .. }
         | Outcome::DataFailure { .. }
         | Outcome::CheckpointFailure { .. } => return false,
-    }
-    if case.inputs == super::index::InputProvider::CeresShaftActors {
-        return super::played::indexed::shaft::valid_counts(case, counts);
     }
     if let Some(valid) = expanded_counts(case, counts) {
         return valid;
@@ -518,20 +502,11 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
                 .is_some_and(|offset| offset < counts.cuts),
         )
     });
-    let has_ribs = case
-        .expectations
-        .outputs
-        .contains(&ObservationId::CeresRibsUploads);
-    let valid_publications = if has_ribs {
-        counts.publications > 0 && counts.publications <= counts.cuts
-    } else {
-        counts.publications == 0
-    };
     fields.checked_mul(counts.cuts) == Some(counts.fields)
         && outputs.checked_mul(output_cuts) == Some(counts.outputs)
-        && valid_publications
+        && counts.publications == 0
         && counts.replies == 0
-        && (has_ribs && case.checkpoints || counts.pending_boundaries == 0)
+        && counts.pending_boundaries == 0
 }
 
 #[cfg(test)]

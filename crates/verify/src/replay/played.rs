@@ -65,6 +65,7 @@ pub(super) mod seed;
 mod shaft;
 pub(super) mod shaft_dust;
 pub(super) mod shaft_native;
+#[cfg(test)]
 mod shaft_restore;
 pub(super) mod shaft_sound;
 mod start;
@@ -345,7 +346,7 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         masked: &[],
     };
     let witnesses = rows.witnesses()?;
-    let mut run = match Run::from_record(&seed, &content, &sources.rom, row, &witnesses) {
+    let mut run = match Run::from_record(&seed, &content, &sources.rom, &witnesses) {
         Ok(run) => run,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
@@ -406,7 +407,6 @@ struct Run<'a> {
     content: &'a connected::Content,
     rom: &'a Path,
     hud: super::hud::Content,
-    row: &'a str,
     drawing: ridley::flyby::Drawing,
     warning_picture: warning::Picture,
     picture_scope: PictureScope,
@@ -436,13 +436,7 @@ impl<'a> Run<'a> {
         sources: &'a Sources,
         case: &'a super::index::Case,
     ) -> Result<Self, Outcome> {
-        Self::from_record(
-            seed,
-            content,
-            &sources.rom,
-            &case.row,
-            witnesses::selected(case)?,
-        )
+        Self::from_record(seed, content, &sources.rom, witnesses::selected(case)?)
     }
 
     #[cfg(test)]
@@ -450,16 +444,14 @@ impl<'a> Run<'a> {
         seed: &FrameRecord,
         content: &'a connected::Content,
         path: &'a Path,
-        row: &'a str,
     ) -> Result<Self, Outcome> {
-        Self::from_record(seed, content, path, row, witnesses::indexed()?)
+        Self::from_record(seed, content, path, witnesses::indexed()?)
     }
 
     fn from_record(
         seed: &FrameRecord,
         content: &'a connected::Content,
         path: &'a Path,
-        row: &'a str,
         witnesses: &'a witnesses::Witnesses,
     ) -> Result<Self, Outcome> {
         let arrival = arrival::seed(&seed.wram)?;
@@ -472,14 +464,13 @@ impl<'a> Run<'a> {
         } else {
             Start::Room(seed)
         };
-        Self::load(origin, content, path, row, witnesses)
+        Self::load(origin, content, path, witnesses)
     }
 
     fn load(
         origin: Start<'_>,
         content: &'a connected::Content,
         path: &'a Path,
-        row: &'a str,
         witnesses: &'a witnesses::Witnesses,
     ) -> Result<Self, Outcome> {
         let image = &content.movement.rom;
@@ -574,7 +565,6 @@ impl<'a> Run<'a> {
             content,
             rom: path,
             hud,
-            row,
             drawing,
             warning_picture,
             picture_scope: PictureScope::Room,
@@ -1463,7 +1453,7 @@ pub(super) mod tests {
             movement: movement::Content::load(&sources.rom).unwrap(),
             appearance: appearance::Content::load(&sources.rom).unwrap(),
         };
-        let mut run = Run::admit(&coast, &content, &sources.rom, row).unwrap();
+        let mut run = Run::admit(&coast, &content, &sources.rom).unwrap();
         let controller = super::seed_controller(&coast).unwrap();
         assert_eq!(
             run.through(&mut rows, coast, controller, 1157..=1157)
@@ -1508,7 +1498,7 @@ pub(super) mod tests {
         for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
             let mut rows = super::open_rows(&sources, &lock, row).unwrap();
             let origin = rows.record(1270).unwrap();
-            let mut run = Run::admit(&origin, &content, &sources.rom, row).unwrap();
+            let mut run = Run::admit(&origin, &content, &sources.rom).unwrap();
             let controller = super::seed_controller(&origin).unwrap();
             assert_eq!(
                 run.through(&mut rows, origin, controller, 1271..=1585)

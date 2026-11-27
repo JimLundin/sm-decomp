@@ -97,11 +97,6 @@ impl BodyTrace {
         let slot = usize::from(self.slot);
         Some(slot..slot.checked_add(count)?)
     }
-
-    pub(super) fn has_draw(&self, first: u64, last: u64) -> bool {
-        self.counts(first, last)
-            .is_some_and(|counts| counts.iter().any(|&count| count > 0))
-    }
 }
 
 impl Witnesses {
@@ -208,7 +203,7 @@ mod tests {
         document["case"]
             .as_array_mut()
             .unwrap()
-            .retain(|case| case["id"].as_str() == Some("ridley/ribs-from-opening"));
+            .retain(|case| case["id"].as_str() == Some("ridley/alternate-rise-hit"));
         for omitted in ["played_witnesses", "room_video", "shaft", "front_end"] {
             let mut partial = document.clone();
             if omitted == "played_witnesses" {

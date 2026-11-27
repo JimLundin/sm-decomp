@@ -1619,25 +1619,6 @@ operation = "recorded-movement-frame"
 claim = "Movement computes the floor and accepts the landing pose against the independently supplied geometry."
 
 [[case]]
-id = "ridley/flight-tail"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 866 }
-end = { cut_inclusive = 993 }
-rules = ["boss-ceres-ridley/TailComesLoose", "boss-ceres-ridley/TailFollows", "boss-ceres-ridley/TailSwings", "boss-ceres-ridley/TailWhips", "boss-ceres-ridley/TailRecovers", "boss-ceres-ridley/TailStretches", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailSwishes", "boss-ceres-ridley/TailHits"]
-profile = "reference"
-responsibilities = ["ceres", "movement", "health"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
-checkpoints = false
-limits = ["The ordinary played room carries its imported geometry, RNG and actor state. It borrows frame completion and the audio replies at the played platform boundary.", "The returned swish occurrence is compared with the native Library 3 append. Production channel routing, queue limits, audio transport and rendered sprites are outside the comparison.", "A later cut may be admitted from its complete observed flight-tail state. The room does not supply a saved State codec."]
-
-[[case.borrowed]]
-operation = "played-boundaries"
-claim = "The played room draws its own random number and calculates actor runs and hit delivery. The pad comes from the movie."
-
-[[case]]
 id = "ridley/ordinary-picture"
 kind = "scoped"
 row = "chain-any-0006-E0B5"
@@ -1728,25 +1709,6 @@ claim = "The later intro turns sample the preceding queue."
 [[case.borrowed]]
 operation = "intro-egg-reply"
 claim = "Only the intro consumes the externally observed cue"
-
-[[case]]
-id = "ridley/offscreen-retreat"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 993 }
-end = { cut_inclusive = 1157 }
-rules = ["boss-ceres-ridley/FliesOutOfReach", "boss-ceres-ridley/GetawayBackdrop", "boss-ceres-ridley/TailBends", "boss-ceres-ridley/TailSwishes", "boss-ceres-ridley/TailHits"]
-profile = "reference"
-responsibilities = ["ceres", "movement", "health"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.retreat.body", "ridley.tail.state", "movement.tail-reaction", "health.tail-reaction"], outputs = ["ridley.retreat.bound", "ridley.backdrop.walls", "ridley.backdrop.colours", "ridley.tail.places", "ridley.tail.hit", "ridley.tail.swish-request"] }
-checkpoints = false
-limits = ["Ordinary played Ceres admits the actors, Samus, health and RNG once at cut 993. Continuation from observed retreat states is checked separately. The played room has no saved State codec.", "Both routes use movie controls and prove no new hit during retreat. The swish comparison ends at the returned request. The live palette producer is compared separately to each native current and CGRAM span on the stopped cut.", "The next cut requires the getaway picture and stage advance. The distinct fake-retreat branch and a live shot counter in this fight are outside these routes."]
-
-[[case.borrowed]]
-operation = "played-boundaries"
-claim = "The played room draws its own random number and calculates the body, tail, hit and backdrop. The pad comes from the movie."
 
 [[case]]
 id = "ridley/alternate-offscreen-retreat"
@@ -1842,25 +1804,6 @@ operation = "suspended-room-work"
 claim = "the cartridge and queued graphics finish from the one suspended seed"
 
 [[case]]
-id = "ridley/flyby"
-kind = "scoped"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 1156 }
-end = { cut_inclusive = 1270 }
-rules = ["boss-ceres-ridley/GetawayPass", "boss-ceres-ridley/GetawayPicture"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "scoped-ceres-flyby"
-expectations = { played = { kind = "flyby", first = 1158, output_fields = 4987 }, provider = "pinned-record-cache", fields = ["ridley.flyby.state"], outputs = ["ridley.flyby.plane", "ridley.flyby.colours", "ridley.flyby.tiles", "ridley.flyby.sound", "ridley.flyby.push", "ridley.flyby.room"] }
-checkpoints = false
-limits = ["The stopped retreat is reached inside ordinary play. The scope holds the carried Samus position from the backdrop and compares the boss, doors, clock and quake. At cut 1262 it checks the unserved shove request.", "The display comparison covers the dedicated exact publication consumer and sampled physical PPU, CGRAM and VRAM. Live renderer scheduling and pixel composition are outside this scope.", "The sound evidence compares the second queue append. Downstream audio service and queue limits are outside this run."]
-
-[[case.borrowed]]
-operation = "flyby-boundaries"
-claim = "Only the seed supplies initial display memory. Production supplies the picture, tile and sound effects thereafter."
-
-[[case]]
 id = "ridley/alternate-flyby"
 kind = "scoped"
 row = "samus-ceres-push"
@@ -1928,8 +1871,6 @@ claim = "T1 owns the work spanning setup's nine borrowed lag cuts"
 [[case.borrowed]]
 operation = "station-flight-handoff"
 claim = "the incoming station owner, retained outputs and subtitle selection are admitted at the boundary"
-
-
 
 [[case]]
 id = "zebes/station-blackout-to-landing-load"
@@ -2048,7 +1989,6 @@ limits = ["sole seeded origin is the completed elevator exit at 241", "unfinishe
 operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
-
 [[case]]
 id = "departure/music-transfer"
 kind = "integrated"
@@ -2068,7 +2008,6 @@ limits = ["sole seeded origin is the completed elevator exit at 241", "unfinishe
 operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
 
-
 [[case]]
 id = "departure/station-dispatches-flight"
 kind = "integrated"
@@ -2087,7 +2026,6 @@ limits = ["sole seeded origin is the completed elevator exit at 241", "unfinishe
 [[case.borrowed]]
 operation = "station-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
-
 
 [[case]]
 id = "departure/flight-dispatches-loader"
@@ -2126,25 +2064,6 @@ limits = ["the sole seed admits the shaft and queued room publication at 239, be
 [[case.borrowed]]
 operation = "shaft-departure-platform"
 claim = "the running scene receives T1 completion and the station music service reply; the loader receives T1 source-bus progress"
-
-[[case]]
-id = "ridley/warning-through-passage"
-kind = "scoped"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 1270 }
-end = { cut_inclusive = 1612 }
-rules = ["boss-ceres-ridley/WarningArt", "boss-ceres-ridley/WarningHeading", "boss-ceres-ridley/WarningTyping", "boss-ceres-ridley/WarningGlow", "boss-ceres-ridley/WarningEnds"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "scoped-ceres-warning"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.warning.state"], outputs = ["ridley.warning.picture", "ridley.warning.audio", "ridley.warning.handoff"] }
-checkpoints = true
-limits = ["One English WarningReady room origin admits the displayed room and pad. Actual movement, actors, quake, run progress, and countdown advance through ordinary production. The last two cuts compare D1's initial countdown drawing choice.", "The comparison covers the carried warning writes and timed clock sprite bytes, without claiming full room pixel composition. Music and stroke offers are measured at their producer boundary."]
-
-[[case.borrowed]]
-operation = "warning-boundaries"
-claim = "The seed admits the room; platform opportunities have no warning phase or countdown-start authority."
 
 [[case]]
 id = "ridley/alternate-warning"
@@ -2250,25 +2169,6 @@ operation = "locked-hud-work"
 claim = "T1 supplies opportunities to prepare, hold and publish the carried regular queue"
 
 [[case]]
-id = "ridley/shaft-actors"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 1690 }
-end = { cut_inclusive = 3075 }
-rules = ["boss-ceres-ridley/OverlayAppears", "boss-ceres-ridley/OverlayRumbles", "boss-ceres-ridley/ShaftTilts", "boss-ceres-ridley/ElevatorReached", "boss-ceres-ridley/VentDrawFollowsShaft"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "ceres-shaft-actors"
-expectations = { played = { kind = "shaft-actors", first = 2856, picture_fields = 208 }, provider = "pinned-record-cache", fields = ["shaft-actors.state"], outputs = ["shaft-actors.events", "shaft-actors.picture"] }
-checkpoints = true
-limits = ["One occupied return-room origin carries ordinary production through joined rooms and interrupted placement. Comparison starts at hall cut 225 and ends on the first held turn after shaft cut 164 reach.", "The rotation comparison covers the carried view. Display comparison covers the placement strip, the first prepared and published overlay, and the platform map low bytes through shaft cut 163. Reach compares the initial hold and fade from the native scene transition.", "Burst particle, centre and sound limit are compared at the producer. Native shaft cut 31 derives the culled offer from the actor cursor and RNG. Effect lifetime, audio queue delivery, later full OAM and the elevator scene are outside this scope.", "Continuation encodes shaft fields, the room entry and timer picture and retains the live surrounding room, ordinary vent phases and pending video. The no-advance control holds the uninstalled shaft origin."]
-
-[[case.borrowed]]
-operation = "return-room-and-shaft-scheduling"
-claim = "The return play carries its room. T1 and audio replies admit opportunities. The shaft owns its actor draws, state and outputs once installed."
-
-[[case]]
 id = "audio-sender/shaft-bursts"
 kind = "integrated"
 row = "chain-any-0006-E0B5"
@@ -2290,63 +2190,6 @@ claim = "Reply values are reconstructed from independent native acceptance edges
 [[case.borrowed]]
 operation = "shaft-sender-room-work"
 claim = "The carried passage drives sound permission and the shaft actor drives offers. The existing platform inputs supply readiness and work opportunities."
-
-[[case]]
-id = "samus-appearance/fight-initial-body"
-kind = "scoped"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 0 }
-end = { cut_inclusive = 6 }
-rules = ["samus-appearance/ProtectionFlicker"]
-profile = "reference"
-responsibilities = ["appearance"]
-content = "player-rom-import"
-inputs = "played-samus-picture"
-expectations = { provider = "pinned-record-cache", fields = [], outputs = ["samus-oam.visible", "samus-oam.piece-count", "samus-oam.prepared", "samus-oam.physical"] }
-checkpoints = true
-limits = ["The first ordinary fight draws carry the unprotected body through its opening clip steps.", "The body's OAM entries are compared in emission order, from the output range and the independently traced native range. Absolute placement among other sprites, tile uploads, and the timed special-colour branch are outside scope.", "Continuations restore the canonical Samus, Health, camera and Video owners in carried room context. The played room has no whole-world save codec."]
-
-[[case.borrowed]]
-operation = "played-boundaries"
-claim = "Movie pad and platform timing drive the real played room. Movement and Health carry the push and protection; the room supplies its view and start-of-work parity."
-
-[[case]]
-id = "samus-appearance/fight-first-protection"
-kind = "scoped"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 608 }
-end = { cut_inclusive = 615 }
-rules = ["samus-appearance/ProtectionFlicker"]
-profile = "reference"
-responsibilities = ["appearance"]
-content = "player-rom-import"
-inputs = "played-samus-picture"
-expectations = { provider = "pinned-record-cache", fields = [], outputs = ["samus-oam.visible", "samus-oam.piece-count", "samus-oam.prepared", "samus-oam.physical"] }
-checkpoints = true
-limits = ["The origin has an unprotected body. The carried room supplies the first hit, the last push turn and the first hidden body draw.", "The body's OAM entries are compared in emission order, from the output range and the independently traced native range. Absolute placement among other sprites, tile uploads, and the timed special-colour branch are outside scope.", "Continuations restore the canonical Samus, Health, camera and Video owners in carried room context. The played room has no whole-world save codec."]
-
-[[case.borrowed]]
-operation = "played-boundaries"
-claim = "Movie pad and platform timing drive the real played room. Movement and Health carry the push and protection; the room supplies its view and start-of-work parity."
-
-[[case]]
-id = "samus-appearance/fight-protection-hold"
-kind = "scoped"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 681 }
-end = { cut_inclusive = 704 }
-rules = ["samus-appearance/ProtectionFlicker"]
-profile = "reference"
-responsibilities = ["appearance"]
-content = "player-rom-import"
-inputs = "played-samus-picture"
-expectations = { provider = "pinned-record-cache", fields = [], outputs = ["samus-oam.visible", "samus-oam.piece-count", "samus-oam.prepared", "samus-oam.physical"] }
-checkpoints = true
-limits = ["The origin has active protection and a hidden body. The room carries alternating draws and the final opportunity with protection still present at draw.", "The body's OAM entries are compared in emission order, from the output range and the independently traced native range. Absolute placement among other sprites, tile uploads, and the timed special-colour branch are outside scope.", "Continuations restore the canonical Samus, Health, camera and Video owners in carried room context. The played room has no whole-world save codec."]
-
-[[case.borrowed]]
-operation = "played-boundaries"
-claim = "Movie pad and platform timing drive the real played room. Movement and Health carry the push and protection; the room supplies its view and start-of-work parity."
 
 [[case]]
 id = "enemy-interactions/shaft-actor-picture"
@@ -2385,98 +2228,3 @@ limits = ["The return hall supplies the sole seed. Dust comparison begins with t
 [[case.borrowed]]
 operation = "shaft-dust-scheduling"
 claim = "The ordinary played runner observes scheduler opportunities. Movement, view, actor sprites, the dust clock and the two OAM lanes advance through production."
-
-[[case]]
-id = "ridley/ordinary-ribs"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 0 }
-end = { cut_inclusive = 1614 }
-rules = ["boss-ceres-ridley/RibsBeat"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { played = { kind = "ribs-reveal", cut = 577 }, provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
-checkpoints = true
-limits = ["The opening cut admits a placed Ridley and the doorway strip words. The case includes the first fade, wall placement and the first flyby turn.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows. A fork of the carried first reveal withholds publication, then restores the complete ribs clock and pending room picture for the following cut."]
-
-[[case.borrowed]]
-operation = "ribs-boundaries"
-claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
-
-[[case]]
-id = "ridley/ribs-from-opening"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 596 }
-end = { cut_inclusive = 598 }
-rules = ["boss-ceres-ridley/RibsBeat"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
-checkpoints = false
-limits = ["The seed holds the opening beat with one eligible run remaining.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
-
-[[case.borrowed]]
-operation = "ribs-boundaries"
-claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
-
-[[case]]
-id = "ridley/ribs-from-wide"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 616 }
-end = { cut_inclusive = 618 }
-rules = ["boss-ceres-ridley/RibsBeat"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
-checkpoints = false
-limits = ["The seed holds the wide beat with one eligible run remaining.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
-
-[[case.borrowed]]
-operation = "ribs-boundaries"
-claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
-
-[[case]]
-id = "ridley/ribs-from-closing"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 636 }
-end = { cut_inclusive = 638 }
-rules = ["boss-ceres-ridley/RibsBeat"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
-checkpoints = false
-limits = ["The seed holds the closing beat with one eligible run remaining.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
-
-[[case.borrowed]]
-operation = "ribs-boundaries"
-claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."
-
-[[case]]
-id = "ridley/ribs-from-closed"
-kind = "integrated"
-row = "chain-any-0006-E0B5"
-start = { source = "cache-cut", frame = 656 }
-end = { cut_inclusive = 658 }
-rules = ["boss-ceres-ridley/RibsBeat"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "player-rom-import"
-inputs = "played-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ridley.ribs.beat", "ridley.ribs.wait"], outputs = ["ridley.ribs.uploads", "ridley.ribs.vram.upper", "ridley.ribs.vram.lower"] }
-checkpoints = false
-limits = ["The seed holds the closed beat with one eligible run remaining after a full circuit.", "The native origin supplies the carried beat, wait and strip words once. The model selects the look from live room work. The receipt covers the ordered regular transfers and both physical strip rows."]
-
-[[case.borrowed]]
-operation = "ribs-boundaries"
-claim = "The pad comes from the movie. Ridley's placement and preceding fight state determine whether the model emits a look."

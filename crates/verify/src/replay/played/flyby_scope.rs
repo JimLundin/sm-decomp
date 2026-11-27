@@ -131,7 +131,7 @@ mod tests {
         for row in ["chain-any-0006-E0B5", "samus-ceres-push"] {
             let mut rows = super::super::open_rows(&sources, &lock, row).unwrap();
             let seed = rows.record(1156).unwrap();
-            let mut run = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+            let mut run = Run::admit(&seed, &content, &sources.rom).unwrap();
             let mut previous_tile = None;
             let mut previous_turn = None;
             let mut turns_changed = 0;
@@ -165,7 +165,7 @@ mod tests {
             for cut in [1157, 1170, 1261, 1262, 1269, 1270] {
                 let record = rows.record(cut).unwrap();
                 let seed = rows.record(1156).unwrap();
-                let mut resumed = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+                let mut resumed = Run::admit(&seed, &content, &sources.rom).unwrap();
                 resumed
                     .flyby_scope(&mut rows, seed, 1158, cut, |_, _, _| Ok(()))
                     .unwrap();
@@ -186,7 +186,7 @@ mod tests {
             // Carry Samus and the rest of the room in ordinary play before crossing
             // the handoff. The scoped flyby deliberately holds Samus in place.
             let seed = rows.record(1156).unwrap();
-            let mut live = Run::admit(&seed, &content, &sources.rom, row).unwrap();
+            let mut live = Run::admit(&seed, &content, &sources.rom).unwrap();
             let controller = seed_controller(&seed).unwrap();
             assert_eq!(
                 live.through(&mut rows, seed, controller, 1157..=1270)

@@ -1742,8 +1742,8 @@ observations and leaves native OAM comparisons to the sprite join.
 | FightParts colours | `$A6:DF92..DFA6` refreshes the hurt wait when Ridley accepts a shot. The hit count at `$7E:781A` qualifies that input. `$A6:D4DA..D4F8` reads `$7E:0F9C` before the common timer decrement and reads the cycle as `$7E:0E44 + 1`. Compare the part colours at `$7E:7818`. `$A0:9128` spends the common timer. `$A0:9149` advances the cycle. The layer draw at `$A0:9497..94C0` reads the advanced cycle and post-decrement timer for the extended body, and also owns frozen colours. |
 | FightPictureOrder | `$A6:A2DC..A2FA` selects the ordinary baby and attached door's opportunity. Read animation at `$7E:7804`, station status at `$7E:093F`, attached door at `$7E:0FEA`, and the installed late hook at `$7E:178C`. `$A0:884D..88CB` sequences room layers and the late hook. `$A6:BF1A..BF2E` takes the current baby look and anchor at `$7E:8804` and `$7E:8808`. The three baby maps are `$A6:BFFD`, `$A6:C018` and `$A6:C033`. |
 
-The indexed source row is `chain-any-0006-E0B5`, the row also used by
-`ridley/flight-tail`. The ordinary reference starts before animation at
+The indexed source row is `chain-any-0006-E0B5`, the row the played runs of
+Ridley's room play. The ordinary reference starts before animation at
 fight cut 576. At c867 `$A6:A4C1` sets the count to 8 before the ordinary
 wing step. The stationary step leaves beat 5, count 8. At c879
 `$A6:E969` changes vertical speed to −352 after the ordinary wing draw.

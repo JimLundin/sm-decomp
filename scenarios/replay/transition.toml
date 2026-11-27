@@ -34855,3 +34855,159 @@ witness_case_ids = []
 test_ids = []
 reason = "The played run on row any-power-on from cut 0 plays the front end from the model's power-on State and holds every cut to 15196, so the boundary that said power-on was unsupported no longer holds."
 lost_observations = ["movie/missing-power-on: its Unsupported boundary is not a current obligation. The played run on row any-power-on from cut 0 starts from power-on and stops Unsupported at cut 15197; no indexed case compares a whole movie from power-on."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/flight-tail"
+before_values = [127, 9525, 1143, 0, 0, 0, 7134, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 867 to 993, it compares every field and output the case compared, under the same name and from the same record value. Its two planted faults now stop that run. The scoped case only repeated that comparison."
+lost_observations = ["ridley/flight-tail: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/offscreen-retreat"
+before_values = [164, 16072, 2952, 0, 0, 0, 12284, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 994 to 1157, it compares every field and output the case compared, under the same name and from the same record value. Its two planted faults now stop that run. The scoped case only repeated that comparison."
+lost_observations = ["ridley/offscreen-retreat: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/flyby"
+before_values = [113, 678, 4987, 0, 0, 0, 295, 0, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 1158 to 1270, it compares every field and output the case compared, under the same name and from the same record value. Its tile fault now stops that run. Its shove offer fault stops ridley/alternate-flyby, which compares the same flyby on the alternative route, because the room run does not read the offer from the flyby's outputs. The scoped case only repeated that comparison."
+lost_observations = ["ridley/flyby: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there. The played runs compare the flyby's shove offer as ridley.flyby.push, but the room run does not read the offer from the flyby's outputs, so on the main route nothing stops when the station withholds it. Only ridley/alternate-flyby, on the alternative route, catches that."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/warning-through-passage"
+before_values = [342, 1026, 13877, 0, 0, 0, 627, 342, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 1271 to 1612, it compares every field and output the case compared, under the same name and from the same record value. Its four planted faults now stop that run. The scoped case only repeated that comparison."
+lost_observations = ["ridley/warning-through-passage: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/shaft-actors"
+before_values = [220, 1100, 1308, 0, 0, 34, 709, 220, 1, 1]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 2856 to 3075, it compares every field and output the case compared, under the same name and from the same record value. The scoped case only repeated that comparison."
+lost_observations = ["ridley/shaft-actors: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ordinary-ribs"
+before_values = [1614, 3228, 4842, 30, 0, 1033, 2617, 1, 1, 1]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 1 to 1614, it compares every field and output the case compared, under the same name and from the same record value. The scoped case only repeated that comparison."
+lost_observations = ["ridley/ordinary-ribs: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. Its held first reveal at cut 577, restored and released at cut 578, is not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-opening"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At this case's compared cuts, 597 and 598, it compares every ribs field the case compared, under the same name and from the same record value, from a run carried through the fight rather than admitted at cut 596. The scoped case only repeated that comparison."
+lost_observations = ["ridley/ribs-from-opening: its two compared cuts are not an indexed obligation. The required played runs compare the same fields at the same cuts, but no case admits the fight at cut 596."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-wide"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At this case's compared cuts, 617 and 618, it compares every ribs field the case compared, under the same name and from the same record value, from a run carried through the fight rather than admitted at cut 616. The scoped case only repeated that comparison."
+lost_observations = ["ridley/ribs-from-wide: its two compared cuts are not an indexed obligation. The required played runs compare the same fields at the same cuts, but no case admits the fight at cut 616."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-closing"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At this case's compared cuts, 637 and 638, it compares every ribs field the case compared, under the same name and from the same record value, from a run carried through the fight rather than admitted at cut 636. The scoped case only repeated that comparison."
+lost_observations = ["ridley/ribs-from-closing: its two compared cuts are not an indexed obligation. The required played runs compare the same fields at the same cuts, but no case admits the fight at cut 636."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "ridley/ribs-from-closed"
+before_values = [2, 4, 6, 1, 0, 0, 1, 0, 0, 0]
+before_scope = "Reviewed integrated behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At this case's compared cuts, 657 and 658, it compares every ribs field the case compared, under the same name and from the same record value, from a run carried through the fight rather than admitted at cut 656. The scoped case only repeated that comparison."
+lost_observations = ["ridley/ribs-from-closed: its two compared cuts are not an indexed obligation. The required played runs compare the same fields at the same cuts, but no case admits the fight at cut 656."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "samus-appearance/fight-initial-body"
+before_values = [6, 0, 24, 0, 0, 0, 0, 6, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 1 to 6, the run compares every piece of her body in the prepared and physical OAM at the slots the native trace attributes to it, and its piece count, which is what the case compared as samus-oam.visible, piece-count, prepared and physical. The scoped case only repeated that comparison."
+lost_observations = ["samus-appearance/fight-initial-body: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "samus-appearance/fight-first-protection"
+before_values = [7, 0, 28, 0, 0, 0, 0, 7, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 609 to 615, the run compares every piece of her body in the prepared and physical OAM at the slots the native trace attributes to it, and its piece count, which is what the case compared as samus-oam.visible, piece-count, prepared and physical. Its flicker fault now stops that run. The scoped case only repeated that comparison."
+lost_observations = ["samus-appearance/fight-first-protection: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a67bd7b6b663db6ba07599eb9e48ef22106af89a79547b88c8fd6a375b9492f7"
+identity = "samus-appearance/fight-protection-hold"
+before_values = [23, 0, 92, 0, 0, 0, 0, 23, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played run of chain-any-0006-E0B5 from cut 0 holds every cut through 3149, and the power-on run holds the same cuts of that row. At each of this case's compared cuts, 682 to 704, the run compares every piece of her body in the prepared and physical OAM at the slots the native trace attributes to it, and its piece count, which is what the case compared as samus-oam.visible, piece-count, prepared and physical. The scoped case only repeated that comparison."
+lost_observations = ["samus-appearance/fight-protection-hold: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same fields at the same cuts. The case's per-cut restorations of its owners are not repeated there."]

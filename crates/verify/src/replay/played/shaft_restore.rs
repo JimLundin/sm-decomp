@@ -1,27 +1,19 @@
 //! Restore the clean shaft state into the carried room and replay the same native inputs.
 
 use super::Run;
-#[cfg(test)]
 use super::{appearance, connected, movement, open_rows, polled, read_lock, seed_controller};
-#[cfg(test)]
 use crate::replay::result::Outcome;
 use boss_ceres_ridley::{MountedVent, ShaftOverlay, ShaftRotation, TiltTrack, VentDrawOffset};
 use canonical::model::{Model, Pinned};
 use canonical::{Canonical, from_bytes, to_bytes};
-#[cfg(test)]
 use game::production::played::Outputs;
 use game::production::played::{Content, shaft};
 use serde::{Deserialize, Serialize};
 
-#[cfg(test)]
 const RETURN: &str = "chain-any-0006-E0B5";
-#[cfg(test)]
 const HALL: &str = "chain-any-0010-DF8D";
-#[cfg(test)]
 const SHAFT: &str = "chain-any-0011-DF45";
-#[cfg(test)]
 const HALL_START: u64 = 2631;
-#[cfg(test)]
 const SHAFT_START: u64 = 2910;
 
 #[derive(Serialize, Deserialize)]
@@ -148,7 +140,7 @@ fn shaft_actor_checkpoints_continue_from_the_live_return() -> Result<(), Outcome
     );
     let start = 1690_u64;
     let mut previous = rows.record(start)?;
-    let mut live = Run::admit(&previous, &content, &sources.rom, RETURN)?;
+    let mut live = Run::admit(&previous, &content, &sources.rom)?;
     let mut controller = seed_controller(&previous)?;
     let mut restored: Vec<((&str, u64), Run<'_>)> = Vec::new();
     let mut placement = Vec::new();
@@ -236,7 +228,6 @@ fn shaft_actor_checkpoints_continue_from_the_live_return() -> Result<(), Outcome
     Ok(())
 }
 
-#[cfg(test)]
 fn check_admission(live: &Run<'_>) {
     let mut saved = Checkpoint::capture(live).unwrap();
     let mut mismatched = live.clone();
@@ -254,7 +245,6 @@ fn check_admission(live: &Run<'_>) {
     assert!(matches!(saved.restore(live), Err(Refused::Cursor)));
 }
 
-#[cfg(test)]
 fn check_work_edge(place: (&str, u64), record: &oracle_record::FrameRecord, outputs: &Outputs) {
     match place {
         (HALL, 239) => {

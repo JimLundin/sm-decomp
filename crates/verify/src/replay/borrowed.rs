@@ -30,8 +30,6 @@ pub(super) enum Selection {
     Escape(Vec<escape::Origin>),
     NativeOffer,
     ConstructedOffer,
-    Ribs,
-    OrdinaryRoom,
     IntroRoom(#[serde(with = "Room")] Scene),
     Save(SaveSource),
 }
@@ -44,8 +42,6 @@ impl Selection {
             Self::Escape(origins) => origin.is_some_and(|actual| origins.contains(&actual)),
             Self::NativeOffer => matches!(case.start, Start::NativeSenderOffer { .. }),
             Self::ConstructedOffer => matches!(case.start, Start::ConstructedSenderOffer { .. }),
-            Self::Ribs => super::played::ridley_ribs::is_case(case),
-            Self::OrdinaryRoom => !super::played::ridley_ribs::is_case(case),
             Self::IntroRoom(scene) => matches!(
                 &case.intro_join, Some(Join::Room { scene: selected, .. }) if selected == scene
             ),
