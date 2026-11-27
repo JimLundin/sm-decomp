@@ -178,8 +178,7 @@ frames (`crates/oracle/src/ladder.rs`), so a cut or a measurement resumes from t
 - `oracle ladder-rung INPUTS LADDERS FRAME` prints `RUNG PATH` for `movie --from PATH RUNG`;
   `movie ... --native-seeds CSV DIR --from-ladder LADDERS` starts at the latest rung before the
   earliest seed. Rungs: 100% 22, low% 16, any% 12; every `ladder-check` equal.
-- The nightly check runs each movie whole with `--ladder` into a fresh directory, diffs
-  `ladder.txt`, and `ladder-check`s the stored ladder.
+- No workflow builds or checks the ladders. `ladder-check` runs only by hand.
 
 **Movie sync.** `oracle movie ROM movies/any.inputs --lag-log CSV` compares each frame with the
 lsnes lag log (`any-boundary/lag.csv`): `$05B6`, `$05B8`, the lag flag, the game state, the room
