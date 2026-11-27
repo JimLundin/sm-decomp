@@ -400,7 +400,7 @@ limits = [
   "The complete ordered reached cells and the inside cells are compared. The original's work inside the step (motion, support and fit work, collision tests, the first request's enemy candidates, skip status) has no whole-frame counterpart and is not compared. Elapsed CPU timing remains unproved.",
   "Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change."
 ]
-expectations = { provider = "native-complete-movement-work", fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
+expectations = { provider = "native-complete-movement-work", projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "baseline-expected.toml" }, fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
 
 [[case.borrowed]]
 dependency = "complete scoped seed and ordinary opportunity"
@@ -439,7 +439,7 @@ limits = [
   "The complete ordered reached cells and the inside cells are compared, as the enemy stop leaves them. The original's work inside the step (the ordinary-right terrain tests the stop skips, motion, support and fit work, the first request's enemy candidates, skip status) has no whole-frame counterpart and is not compared.",
   "Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically."
 ]
-expectations = { provider = "native-complete-movement-work", fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
+expectations = { provider = "native-complete-movement-work", projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "intervention-expected.toml" }, fields = ["movement.reached.complete", "movement.inside"], outputs = [] }
 
 [[case.borrowed]]
 dependency = "derived complete scoped seed and unique ordinary-right opportunity"

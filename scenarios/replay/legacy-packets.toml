@@ -1,0 +1,16 @@
+# Reviewed defaults for published format-1 indexes that omit packet declarations.
+[connected]
+"connected-ordinary/carried-running-camera" = { directory = "connected-ordinary-v1", sha256 = "df96f1be4f5a8e54802d6b55e8e9c05f9ab3cf37aeed04a27d9d8b6f3efdda4c", row = "chain-any-0003-DFD7", initial_cut = 6, first_end = 10, last_cut = 15 }
+"connected-ordinary/run-release-floor-aim" = { directory = "connected-run-slope-v1", sha256 = "f6440b4daf6ddf75fa62172108d706fa33e8b462c4429358082c100924e70e4d", row = "chain-any-0003-DFD7", initial_cut = 126, first_end = 142, last_cut = 142 }
+
+[native_search."2adee318fb765d39da0fcb85a16a326de3c84522946df2b37811fe52782a880c"]
+video_frame = 9233
+source_start_index = 424
+source_completion_index = 4283
+projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "baseline-expected.toml" }
+
+[native_search."e6e41959d1d4ee9b9f8c811642849a18bc23a6a1df91f0acbedda613d2b1de73"]
+video_frame = 9233
+source_start_index = 424
+source_completion_index = 4052
+projection = { directory = "native-search-work-v2", sha256 = "00fdffb102bbf05fa184010538d66207c4cbf5f43375ecde123886d0e2945443", member = "intervention-expected.toml" }
