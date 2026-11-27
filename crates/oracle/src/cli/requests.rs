@@ -73,18 +73,11 @@ pub(super) struct CorpusRequest {
     pub only: Vec<String>,
     pub limit: usize,
     pub shard: Shard,
-    pub outputs: Vec<CorpusOutput>,
-    pub sidecar: Option<PathBuf>,
-    pub dump_frames: Vec<(String, u64)>,
     pub watched: Vec<usize>,
     pub watched_pcs: Vec<u32>,
     pub lean: bool,
     pub cache: Option<PathBuf>,
     pub cache_pictures: crate::record::codec::PictureMode,
-}
-pub(super) enum CorpusOutput {
-    RecordV2(PathBuf),
-    Directory(PathBuf),
 }
 impl MovieRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
@@ -246,15 +239,11 @@ impl MovieRequest {
 impl CorpusRequest {
     pub(super) fn parse(arguments: &[String]) -> Result<Self, RequestError> {
         let [rom, lock, bundle, rest @ ..] = arguments else {
-            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
+            return Err(RequestError::Invalid("corpus ROM LOCK BUNDLE [--only ID]... [--shard I/N] [--limit N] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--no-memories] [--cache DIR [--cache-pictures]]".to_string()));
         };
         let mut only = Vec::new();
         let mut limit = usize::MAX;
         let mut shard = Shard::default();
-        let mut record_v2: Option<PathBuf> = None;
-        let mut outputs = Vec::new();
-        let mut sidecar: Option<PathBuf> = None;
-        let mut dump_frames: Vec<(String, u64)> = Vec::new();
         let mut watched: Vec<usize> = Vec::new();
         let mut watched_pcs: Vec<u32> = Vec::new();
         let mut lean = false;
@@ -280,39 +269,6 @@ impl CorpusRequest {
                         index.parse().map_err(|_| RequestError::Shard)?,
                         count.parse().map_err(|_| RequestError::Shard)?,
                     )?;
-                }
-                "--record-v2" => {
-                    let path = options
-                        .next()
-                        .ok_or_else(|| RequestError::Invalid("--record-v2 FILE".to_string()))?;
-                    record_v2 = Some(PathBuf::from(path));
-                    outputs.push(CorpusOutput::RecordV2(PathBuf::from(path)));
-                }
-                "--sidecar" => {
-                    // Each row's per-frame stream digests, `DIR/<row>.frames`,
-                    // so two recordings that disagree name their first frame.
-                    let directory = options
-                        .next()
-                        .ok_or_else(|| RequestError::Invalid("--sidecar DIR".to_string()))?;
-                    sidecar = Some(PathBuf::from(directory));
-                    outputs.push(CorpusOutput::Directory(PathBuf::from(directory)));
-                }
-                "--dump-frames" => {
-                    // The pictures of named frames, `DIR/<row>.<frame>.png` in
-                    // the sidecar directory, to look at a frame a sidecar named.
-                    let usage = "--dump-frames ROW:F,...";
-                    let text = options
-                        .next()
-                        .ok_or_else(|| RequestError::Invalid(usage.to_string()))?;
-                    let (row, list) = text
-                        .rsplit_once(':')
-                        .ok_or_else(|| RequestError::Invalid(usage.to_string()))?;
-                    for number in list.split(',') {
-                        let number: u64 = number
-                            .parse()
-                            .map_err(|_| RequestError::Invalid(usage.to_string()))?;
-                        dump_frames.push((row.to_owned(), number));
-                    }
                 }
                 "--watch-words" => {
                     // Work-RAM words (hex) printed whenever their value changes,
@@ -368,17 +324,7 @@ impl CorpusRequest {
                 other => return Err(RequestError::Invalid(format!("unknown option {other}"))),
             }
         }
-        if (sidecar.is_some() || !dump_frames.is_empty()) && record_v2.is_none() {
-            return Err(RequestError::Invalid(
-                "--sidecar and --dump-frames go with --record-v2".to_string(),
-            ));
-        }
-        if !dump_frames.is_empty() && sidecar.is_none() {
-            return Err(RequestError::Invalid(
-                "--dump-frames writes into the --sidecar DIR".to_string(),
-            ));
-        }
-        if lean && (cache.is_some() || record_v2.is_some() || !watched.is_empty()) {
+        if lean && (cache.is_some() || !watched.is_empty()) {
             return Err(RequestError::Compatibility);
         }
         if cache_pictures == crate::record::codec::PictureMode::Keep && cache.is_none() {
@@ -391,9 +337,6 @@ impl CorpusRequest {
             only,
             limit,
             shard,
-            outputs,
-            sidecar,
-            dump_frames,
             watched,
             watched_pcs,
             lean,

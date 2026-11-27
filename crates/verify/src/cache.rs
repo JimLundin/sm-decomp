@@ -87,12 +87,6 @@ impl CutKind {
             Self::NmiStillRunning => 'S',
         }
     }
-
-    /// Whether the frame ends at a quiescent cut, where the memory streams fold.
-    #[must_use]
-    pub const fn quiescent(self) -> bool {
-        matches!(self, Self::Requested)
-    }
 }
 
 /// A lock pin a cache is checked against.
@@ -736,7 +730,7 @@ impl Cache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lock::{RowId, Start, Ticks};
+    use crate::lock::{RowId, Start};
     use oracle_record::{CpuRegisters, Pad, Picture, PpuRegisters};
 
     const SHA: &str = "36f9967524b6959d84129fe8fc770ce83127c08b51bfaf8dd066208e9383a172";
@@ -789,13 +783,6 @@ mod tests {
             seed_words: None,
             pads: Sha256::try_from(SHA).ok()?,
             frames: FrameCount(frames),
-            ticks: Ticks(0),
-            overruns: Vec::new(),
-            nmi_off: Vec::new(),
-            still_running: Vec::new(),
-            rungs: Vec::new(),
-            facts: Vec::new(),
-            streams: BTreeMap::new(),
         })
     }
 

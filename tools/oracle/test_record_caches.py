@@ -108,7 +108,7 @@ class RecordCachesTest(unittest.TestCase):
 
     def write_inputs(self, rows):
         self.lock.write_text(
-            'format = 2\nmark_frames = 1000\n'
+            'format = 2\n'
             'oracle = { emulator = "synthetic", version = "test", '
             f'server = "{digest(b"")}", fixes = [] }}\n'
             + "".join(f"""
@@ -118,11 +118,6 @@ start = "capture:1"
 seed_record = "{digest(self.state.read_bytes())}"
 pads = "{digest(self.pads)}"
 frames = 1
-ticks = 0
-overruns = []
-nmi_off = ["0"]
-facts = {{ }}
-absent = ["wram", "vram", "cgram", "oam", "sram", "ppu", "apu", "video", "timing"]
 """ for row in rows)
         )
         (self.fixtures / "lean.txt").write_text(

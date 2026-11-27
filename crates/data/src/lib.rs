@@ -23,6 +23,5 @@ pub mod plm;
 pub mod pose;
 pub mod rom;
 pub mod room;
-pub mod span;
 pub mod spritemap;
 pub mod video;

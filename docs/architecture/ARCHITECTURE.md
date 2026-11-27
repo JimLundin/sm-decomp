@@ -51,11 +51,11 @@ A scoped entry does not imply boot, general actor dispatch, room loading or CPU 
 | D18 | Sound: protocol and driver model in the Session; synthesis in `runtime` | P18, P4 | 9 |
 | D19 | Profiles: Reference, Gameplay (resolved `Rules`), Timing source, Presentation, Input | P17, P4 | 10 |
 | D20 | The oracle contract: one record per video frame, cut at each NMI return | P5, P12 | 11 |
-| D21 | One decoder, one projection per stream, compared at quiescent cuts | P6, P7 | 11 |
-| D22 | Green = every compared stream matches, plus facts; locks keyed by (row, oracle) | P10, P11, P13 | 11 |
+| D21 | The lock pins each row's inputs and frame count | P6, P7 | 11 |
+| D22 | Replay compares production with records from the cache | P10, P11, P13 | 11 |
 | D23 | Speed targets | P14 | 12 |
 | D24 | Trait and behaviour-catalogue budgets, reported on every landing | P16, P20 | 13 |
-| D25 | Each stream's lock comes from the most accurate oracle producing it | P10, P12 | 11 |
+| D25 | Each observation comes from the most accurate oracle producing it | P10, P12 | 11 |
 | D26 | Short trick movies from seeds; full TAS movies checked by hand, in no workflow | P10, P11 | 11 |
 
 ## 4. Packages and ownership
