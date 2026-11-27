@@ -90,7 +90,7 @@ jobs:
         run: python3 tools/check_replay_transition_test.py
       - name: Test the planted-fault runner
         run: '"$RUNNER_TEMP/fault-tools/bin/python" -m unittest discover -s tools -p "test_*mutants.py"'
-      - name: Test movie input qualification and publication
+      - name: Test the movie input import
         run: python3 -m unittest discover -s tools -p test_movie_inputs.py
       - name: Test native fixture qualification and publication
         run: python3 -m unittest discover -s tools/ci -p test_publish_native_fixture.py
