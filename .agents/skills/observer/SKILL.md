@@ -51,7 +51,7 @@ engine's current code for your domain.
    a routine, an enum ordered like a RAM code, and a word the lexicon flags. Run
    `bash tools/cleanroom/scan.sh` on the spec and vectors, and `bash tools/check_doc_links.sh`.
    Done when both report 0.
-8. **Commit** with the trailer `Role: observer` and push your branch. Report: scope, units, the
+8. **Commit** and push your branch. Report: scope, units, the
    vectors (recorded and constructed), the reference model's agreement, the scan, open questions,
    and the head. Link the receipts and state which assigned rules still lack proof.
 

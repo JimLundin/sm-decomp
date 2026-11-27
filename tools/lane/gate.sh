@@ -12,7 +12,7 @@
 # shellcheck or their absence, Python, the environment variables cargo, rustc, the gate and the
 # self-tests read, and the cargo and rustfmt configuration files outside the tree (below). Those
 # decide what every check reads, which checks run and how, so a later gate of the same key with
-# nothing uncommitted passed already: the root's gate of a squashed or picked commit whose tree is
+# nothing uncommitted passed already: the root's gate of a picked commit whose tree is
 # the lane's, on the base the lane was gated on, says whose pass it reuses and runs nothing. A file
 # git is told to ignore changes to (skip-worktree, assume-unchanged), a file hidden by ignore rules
 # from outside the tree, or a cargo configuration that includes another turns this off.

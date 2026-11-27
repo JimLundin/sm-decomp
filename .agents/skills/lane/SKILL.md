@@ -29,9 +29,8 @@ role skill your brief names. For engineering work, follow the task route in AGEN
   (`samus-movement:`, `verify:`, `process:`), says in at most about 100 characters what is true
   afterwards, and ends with its kind: `[exact]` (behaviour unchanged) or `(behaviour: <what>)`.
   The detail goes in the body.
-- In a round, end each commit's message with `Role: <your role>`: a round lands on `main` as one
-  commit (`tools/lane/squash.sh`), whose body lists your commits under that role, each with its
-  own body indented under it, so explain the change in the body. Your branch keeps them.
+- Your commits land on `main` as they are. Before handing the branch over, drop or fold in
+  work-in-progress and notes commits, so each commit is one coherent change.
 - For Rust changes, follow [Rust style](../../../docs/architecture/PRINCIPLES.md#rust-style).
 - A difference from the original is fixed, or listed in `docs/LEGACY.md` in the same commit.
 - UTF-8 and LF. Data goes in `.toml` or `.rs`, never JSON.

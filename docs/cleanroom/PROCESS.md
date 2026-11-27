@@ -107,7 +107,7 @@ Each step names its owner, what it waits for, and its done-condition.
    for the spec, the root for the brief), then a re-gate of the delta. Any other amendment
    skips this step: its scans and `adjusted_vectors.sh --gate` still pass before the launch,
    and the round gate (step 10) reviews the spec delta with the code.
-4. **Hold the spec** (root). A round lands as one commit (step 11), so the spec stays on the
+4. **Hold the spec** (root). A round lands whole (step 11), so the spec stays on the
    round's branch, a new domain's first spec as much as an amendment, and the round exports from
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
    model must do, so the model's own vector test fails on it until the round implements it.
@@ -133,8 +133,8 @@ Each step names its owner, what it waits for, and its done-condition.
    A clippy failure names the crates and leaves the patches applied:
    - a **mechanical** fix (a parameter by value instead of by reference, a derive, `assert_eq!`
      for `assert!(a == b)`, an import path; no item's logic changed) is the root's own commit,
-     right after the import, titled `[exact]` with `Role: root` and the lint it answers. The
-     round's squashed commit lists it under the root, and the round gate checks it;
+     right after the import, titled `[exact]` and naming the lint it answers. The round gate
+     checks it;
    - anything else goes back to an implementer: this domain's when its `types` change
      wasn't needed, the broken crate's next round when it was;
    - an integrator never edits a clean crate. A fix it finds it needs is a finding for the root.
@@ -167,19 +167,14 @@ Each step names its owner, what it waits for, and its done-condition.
     outcomes and first differences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (replay provider, adapter),
     or into the next round's queue (model shape, spec gaps).
-11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
-    together. On the round's branch the root moves a plan domain's `status` in
+11. **Land** (root): the spec, the import and the integration of the round together, each
+    as its own commits. On the round's branch the root moves a plan domain's `status` in
     [`docs/architecture/domains.toml`](../architecture/domains.toml) when its work starts or
     ends, and regenerates the README
     (`tools report --write`); the integration already carries `played.toml` and the README for
-    any played run it moved, and the root reviews those figures. It rebases the branch onto `origin/main`, re-gates
-    it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
-    the branch's tree on `origin/main`, its subject the root's, its body each part under its role
-    (spec, model, integration) with its own body indented under it, every `Role:` and
-    `Co-Authored-By:` line kept once, at the end. The import's
-    checks ran on the branch's own commits at step 7; the round's branch keeps them. The squashed
-    commit lands through `land.sh`, a fast-forward. Quality and verification run independently;
-    both must pass before landing.
+    any played run it moved, and the root reviews those figures. The round then lands like any
+    other branch ([landing](../../.agents/skills/root/SKILL.md#landing)). Quality and
+    verification run independently; both must pass before landing.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     So does every item two blind reads name, a zero-cost one (a name, a wrong doc, an
     unreachable arm) included.

@@ -36,7 +36,6 @@ suite "$clean/launch_test.sh" "${launch[@]}" "${brief[@]}" "${source_checks[@]}"
 suite "$clean/launch_config_test.sh" "${launch[@]}" "${brief[@]}" "$clean/export.sh" "$lane/worktree.sh"
 suite "$clean/code_check_test.sh" "${source_checks[@]}" "${runner[@]}" "$clean"/{code_check_fixtures,vector_runner_test.py}
 suite "$clean/canary_test.sh" "$clean"/{canary.sh,canary_plant_test.sh,lib.sh,allowlist.txt}
-suite "$lane/squash_test.sh" "$lane/squash.sh"
 suite "$lane/worktree_test.sh" "$lane/worktree.sh"
 suite "$lane/gate_test.sh" "$lane/gate.sh" "$clean/lib.sh"
 suite "$clean/blind_copy_test.sh" "$clean"/{blind_copy.sh,lib.sh,allowlist.txt} .agents/skills/blind-reviewer/SKILL.md

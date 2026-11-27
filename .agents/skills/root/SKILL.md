@@ -88,8 +88,7 @@ From a checkout of `main`:
 5. `bash tools/cleanroom/import.sh ROOT/DOMAIN lane/<domain>-rN`. Done on `IMPORT OK`:
    `code_check.sh` passes, `scan.sh` finds nothing new in the changed files, and Clippy
    passes over every clean crate. On `IMPORT CLIPPY FAIL`, commit a mechanical fix yourself, right
-   after the import, as `[exact]` with `Role: root` and the lint it answers, so the squashed
-   commit records it under your role.
+   after the import, as `[exact]` naming the lint it answers.
    Send anything that changes an item's logic back to an implementer
    ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7).
 
@@ -122,8 +121,7 @@ The commands below apply to rounds and other work.
 
 One landing PR may carry several independently reviewed changes (Jim, 2026-11-25), each kept as
 its own commits, in an order where each applies onto the one before, sharing the PR's one CI run.
-A batch holds at most one round, squashed first (squash.sh needs the round's branch to hold the
-landing branch's head); other work is picked after it. When that run fails:
+A batch holds at most one round. When that run fails:
 
 - Find the failing change in its log. The changes before it are the green prefix; when it is the
   first, the prefix is empty and nothing lands.
@@ -135,17 +133,13 @@ landing branch's head); other work is picked after it. When that run fails:
 - A cancelled run names no failing change: re-run it.
 
 1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
-2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
-   `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`, which makes the one
-   commit PROCESS step 11 describes (a lane of one commit keeps that commit's body as its own)
-   and refuses a branch that doesn't hold `HEAD`.
-   Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; for a batch, each change's
-   commits in turn, a round's squash made first. It stops at a conflict for you to resolve by
+2. `bash tools/lane/pick.sh <hash>...` in the lane's order, a round's included; for a batch,
+   each change's commits in turn. It stops at a conflict for you to resolve by
    hand, reading every hunk, then `git cherry-pick --continue`.
 3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
    each change's commits, its review, evidence and ratchet deltas. When a gate on this machine
-   already passed the same tree over the same base with the same tools (the rebased round branch,
-   or a lane based on `origin/main`), it prints `GATE REUSED` naming that pass and runs nothing,
+   already passed the same tree over the same base with the same tools (a lane based on
+   `origin/main`), it prints `GATE REUSED` naming that pass and runs nothing,
    and the landing gate may rest on that recorded pass, a lane's included (Jim, 2026-11-25); the
    PR's CI still runs every check. `SM_GATE_FRESH=1` runs the gate anyway.
 4. In the background: `bash tools/lane/watch.sh <pr> <sha>`, with the sha you pushed: it lands only

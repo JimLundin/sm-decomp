@@ -76,7 +76,7 @@ grep -q '^GATE OK ' <<<"$out" || fail "a clean branch printed no GATE OK: $out"
 ! ran verify_lib || fail "a clean branch ran verify's lib tests: $out"
 
 commit() { git -C "$repo" -c user.name=fixture -c user.email=fixture@invalid commit -q "$@"; }
-# A new commit of the same tree over the same base, as a squash or a pick makes.
+# A new commit of the same tree over the same base, as a pick makes.
 commit --allow-empty -m "Same tree"
 out=$(gate) || fail "the same tree's second gate failed: $out"
 grep -q '^GATE REUSED: ' <<<"$out" || fail "the same tree's second gate reused nothing: $out"

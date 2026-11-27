@@ -10,7 +10,7 @@
 # scan.sh hit to a file that didn't hold it at the export's start, and add no function the
 # mirror scan maps onto one routine (against the spec and decode notes on BRANCH), or nothing is
 # applied. If BRANCH lacks a clean crate the export started with, its empty scaffold is committed
-# first (trailer `Role: integrator`), so the patches apply as they were made. The workspace takes
+# first, so the patches apply as they were made. The workspace takes
 # every folder of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring
 # the model into the engine is the integrator's next commit.
 #
@@ -159,7 +159,7 @@ if [ ${#missing[@]} -gt 0 ]; then
   # below need it locked.
   "$cargo" metadata -q --offline --format-version 1 >/dev/null || die "cargo can't lock the new crates"
   git add -- "${missing[@]}" Cargo.lock
-  git commit -q -m "Clean room: the empty clean crates for $domain, as exported [exact]" -m "Role: integrator"
+  git commit -q -m "Clean room: the empty clean crates for $domain, as exported [exact]"
   echo "import: scaffold committed for ${missing[*]}"
 fi
 scaffolded=$(git rev-parse HEAD)
