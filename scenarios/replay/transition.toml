@@ -35167,3 +35167,15 @@ witness_case_ids = []
 test_ids = []
 reason = "The played runs of chain-any-0001-DF45 from cut 0 hold the row's cuts through 411 and on, and the power-on run holds the same cuts. At each of this case's compared cuts, 8 to 24, they compare hud.explored, energy, missiles, supers, bombs, highlighted, selected, one-shot and map-off under the same names and values, and the grid the case compared as hud.grid in its two parts, hud.map-window and hud.status-bar, from the same record bytes. The case's clock offset fault patched the scoped HUD adapter, which goes with it. The same fault on the played HUD's frame now stops the played run of chain-any-0001-DF45 from cut 0. The scoped case only repeated that comparison."
 lost_observations = ["hud/stationary-map-blink: its compared cuts and fields are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The scoped HUD owner and its check that 18 combinations of dropped items and map turn-on leave the frame unchanged are gone."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b0ef5926d6ff9cc199609c82ca47bc37831fb957a19ebfb34c226ec7dc28e3c4"
+identity = "hud/locked-shaft-publication"
+before_values = [77, 847, 231, 0, 0, 1, 763, 77, 1, 1]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The power-on run holds chain-any-0011-DF45 from cut 0 through 2123, and the played runs from cuts 239 and 241 hold the row through 2124. At this case's compared cuts 240 and 241 the played run from cut 239 compares every field and output the case compared, under the same names and from the same record values. At cuts 165 to 239 the played runs compare the HUD's State fields and its grid as the mini-map window and the status bar, and the required witness replay::played::room_video::locked_shaft_publishes_timer_then_standing compares the published HUD tilemap rows in VRAM on each of those cuts. The case's queued transfer and its publication are the steps that make that tilemap. Both of its faults now stop the power-on run."
+lost_observations = ["hud/locked-shaft-publication: its compared cuts, fields and outputs are not an indexed obligation. The required played runs and witness compare the HUD and the tilemap it publishes on every one of those cuts, but no played run compares the queued HUD transfer or its publication receipt before cut 240. This retirement is the one exception to the rule in docs/STATUS.md that the played runs compare every field a retired case compared at every cut it compared. At cuts 165 to 239 the required witness replay::played::room_video::locked_shaft_publishes_timer_then_standing, listed under played in crates/verify/required-witnesses.toml, compares the tilemap that transfer and its publication make."]

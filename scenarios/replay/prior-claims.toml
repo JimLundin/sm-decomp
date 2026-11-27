@@ -3884,3 +3884,10 @@ source_sha256 = "a2190ffa9f2ac5cd8293b0951638896d1be2372841df8c95f945c5d6491ddda
 identity = "hud/stationary-map-blink"
 before_values = [17, 170, 0, 0, 0, 14, 167, 0, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 240c1cbf98171fa4487f64d758c62412f866d60d7a06ca262b9481a179522e16; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "b0ef5926d6ff9cc199609c82ca47bc37831fb957a19ebfb34c226ec7dc28e3c4"
+identity = "hud/locked-shaft-publication"
+before_values = [77, 847, 231, 0, 0, 1, 763, 77, 1, 1]
+meaning = "reviewed behaviour case holding Pass with observation digest eaf86ae0411f0fed3b05732f1f7ed78b38124a47a4c305e756634a47ea178d47; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

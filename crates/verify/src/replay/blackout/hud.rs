@@ -1,6 +1,6 @@
 //! Observe the locked room's HUD buffer, queued source and physical tilemap independently.
 
-use super::{ExpectedCut, O, Outcome, data_failure, word};
+use super::{Outcome, data_failure, word};
 use crate::replay::{compare::Observation, hud};
 use crate::source::{VRAM_WRITE_QUEUE, VRAM_WRITE_QUEUE_TAIL};
 use canonical::model::Model;
@@ -11,26 +11,6 @@ use game::state::video::{VramSource, VramStep, VramTransfer};
 use interface_hud::Countdown;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 use types::Pair;
-
-pub(super) const FIELDS: &[O] = &[
-    O::HudGrid,
-    O::HudExplored,
-    O::HudEnergy,
-    O::HudMissiles,
-    O::HudSupers,
-    O::HudBombs,
-    O::HudHighlighted,
-    O::HudSelected,
-    O::HudOneShot,
-    O::HudMapOff,
-    O::HudFrameCount,
-];
-
-pub(super) const OUTPUTS: &[O] = &[
-    O::HudPendingTransfer,
-    O::HudPublication,
-    O::HudPublishedGrid,
-];
 
 // The native entry writes the 96 HUD words from the WRAM grid to overlay row 1.
 const DESCRIPTOR: [u8; 7] = [0xc0, 0, 0x08, 0xc6, 0x7e, 0x20, 0x58];
@@ -99,7 +79,7 @@ fn fields(
 pub(in crate::replay) fn expected(
     prior: &FrameRecord,
     record: &FrameRecord,
-) -> Result<ExpectedCut, Outcome> {
+) -> Result<Vec<Observation>, Outcome> {
     let pending = native_queue(record)?;
     let serviced = if matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested) {
         let expected_dma = [1, 0x18, 0xc8, 0xc6, 0x7e, 0, 0];
@@ -121,20 +101,13 @@ pub(in crate::replay) fn expected(
     } else {
         Vec::new()
     };
-    let fields = fields(
+    fields(
         hud::native_fields(&record.wram)?,
         hud::frame_count(&record.wram)?.0,
         pending,
         serviced,
         &record.vram,
-    )?;
-    Ok(ExpectedCut {
-        semantics: fields.iter().take(FIELDS.len()).cloned().collect(),
-        fields,
-        semantic_count: FIELDS.len(),
-        output_count: OUTPUTS.len(),
-        replies: 0,
-    })
+    )
 }
 
 fn native_queue(record: &FrameRecord) -> Result<Vec<u8>, Outcome> {

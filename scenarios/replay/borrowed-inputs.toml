@@ -258,22 +258,6 @@ provider = "recorded NMI kind and interrupted work site"
 fields = ["end of vblank", "cartridge write completion", "requested commit"]
 phase = "room preparation, suspended work and NMI return"
 
-[locked-hud-origin]
-readers = ["blackout"]
-selection = { escape = ["hud"] }
-dependency = "shaft.lock"
-provider = "post-reach pinned record"
-fields = ["movement-handler", "room placement and map", "stock and reserve"]
-phase = "sole origin"
-
-[locked-hud-work]
-readers = ["blackout"]
-selection = { escape = ["hud"] }
-dependency = "platform.work"
-provider = "recorded NMI kind and interrupted work site"
-fields = ["fresh work", "end of vblank", "cartridge write completion", "requested commit"]
-phase = "suspended work and NMI return"
-
 [shaft-cpu-acknowledgements]
 readers = ["played-shaft-sound"]
 dependency = "shaft-sound.reply"

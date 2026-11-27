@@ -191,7 +191,7 @@ pub(super) fn run(
     };
     let mut checkpoints = Vec::new();
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
-    if matches!(actual, ActualReader::StandingBody | ActualReader::ShaftHud) {
+    if matches!(actual, ActualReader::StandingBody) {
         // Restore the admitted picture, then every nonterminal continuation.
         checkpoints.extend(origin.take());
     }
@@ -366,7 +366,7 @@ fn origin_checkpoint(
     let Start::CacheCut { frame } = &case.start else {
         return Ok(None);
     };
-    if matches!(actual, ActualReader::StandingBody | ActualReader::ShaftHud)
+    if matches!(actual, ActualReader::StandingBody)
         || matches!(inputs, InputReader::MovementTouchdown(_))
         || (case.inputs == InputProvider::PrecedingCutMovementInputs
             && frame.checked_add(1) == Some(case.end.cut_inclusive)

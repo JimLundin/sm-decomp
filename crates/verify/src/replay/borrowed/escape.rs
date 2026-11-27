@@ -15,19 +15,16 @@ pub(in crate::replay) enum Origin {
     Suspended,
     Standing,
     SuspendedStanding,
-    Hud,
 }
 
 impl Origin {
     /// Index admission can check the reader and scope before opening the pinned native record.
     pub(super) fn candidates(case: &Case) -> &'static [Self] {
-        use Origin::{Hud, Locked, Reach, Standing, Suspended, SuspendedStanding};
+        use Origin::{Locked, Reach, Standing, Suspended, SuspendedStanding};
         if case.inputs != InputProvider::Blackout {
             &[]
         } else if case.responsibilities == [Responsibility::Appearance] {
             &[Standing, SuspendedStanding]
-        } else if case.responsibilities == [Responsibility::Hud] {
-            &[Hud]
         } else {
             &[Reach, Locked, Suspended]
         }

@@ -354,18 +354,6 @@ pub enum ObservationId {
     /// The physically published ordinary fight picture.
     #[serde(rename = "ridley.ordinary.physical-oam")]
     CeresFightPhysicalOam,
-    /// The wrapping HUD frame count.
-    #[serde(rename = "hud.frame-count")]
-    HudFrameCount,
-    /// The regular queue's descriptor and source words at an NMI cut.
-    #[serde(rename = "hud.pending-transfer")]
-    HudPendingTransfer,
-    /// The descriptor and source words the NMI services.
-    #[serde(rename = "hud.publication")]
-    HudPublication,
-    /// The full HUD window in physical VRAM.
-    #[serde(rename = "hud.published-grid")]
-    HudPublishedGrid,
     /// Complete carried flight tail, compared by segment and field.
     #[serde(rename = "ridley.tail.state")]
     CeresTailState,
@@ -809,36 +797,9 @@ pub enum ObservationId {
     /// Exact low entry and high pair at the reached insertion.
     #[serde(rename = "weapons.oam-insertion")]
     WeaponsOamInsertion,
-    /// Exact independently decoded hud.grid.
-    #[serde(rename = "hud.grid")]
-    HudGrid,
     /// Exact independently decoded hud.explored.
     #[serde(rename = "hud.explored")]
     HudExplored,
-    /// Exact independently decoded hud.energy.
-    #[serde(rename = "hud.energy")]
-    HudEnergy,
-    /// Exact independently decoded hud.missiles.
-    #[serde(rename = "hud.missiles")]
-    HudMissiles,
-    /// Exact independently decoded hud.supers.
-    #[serde(rename = "hud.supers")]
-    HudSupers,
-    /// Exact independently decoded hud.bombs.
-    #[serde(rename = "hud.bombs")]
-    HudBombs,
-    /// Exact independently decoded hud.highlighted.
-    #[serde(rename = "hud.highlighted")]
-    HudHighlighted,
-    /// Exact independently decoded hud.selected.
-    #[serde(rename = "hud.selected")]
-    HudSelected,
-    /// Exact independently decoded hud.one-shot.
-    #[serde(rename = "hud.one-shot")]
-    HudOneShot,
-    /// Exact independently decoded hud.map-off.
-    #[serde(rename = "hud.map-off")]
-    HudMapOff,
     /// Independently decoded appearance.step.
     #[serde(rename = "appearance.step")]
     AppearanceStep,
@@ -1586,20 +1547,7 @@ macro_rules! hud_observations {
         ObservationId::GaugeRefresh
             | ObservationId::GaugeWords
             | ObservationId::EarlyMapWindow
-            | ObservationId::HudGrid
             | ObservationId::HudExplored
-            | ObservationId::HudEnergy
-            | ObservationId::HudMissiles
-            | ObservationId::HudSupers
-            | ObservationId::HudBombs
-            | ObservationId::HudHighlighted
-            | ObservationId::HudSelected
-            | ObservationId::HudOneShot
-            | ObservationId::HudMapOff
-            | ObservationId::HudFrameCount
-            | ObservationId::HudPendingTransfer
-            | ObservationId::HudPublication
-            | ObservationId::HudPublishedGrid
     };
 }
 
@@ -1842,12 +1790,7 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "samus-health/ProtectionTime" => &[O::HealthTailState, O::HealthTailDrawnProtection],
         "samus-health/LowEnergyWarning" => &[O::HealthTailState, O::HealthTailWarning],
         "interface-hud/EnergyGauge" => &[O::GaugeRefresh, O::GaugeWords],
-        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow"
-            if provider == InputProvider::EarlyMapInputs =>
-        {
-            &[O::EarlyMapWindow]
-        }
-        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
+        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::EarlyMapWindow],
         "interface-hud/Exploring" => &[O::HudExplored],
         super::blackout::standing::RULE => super::blackout::standing::OBSERVATIONS,
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
