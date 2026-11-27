@@ -77,7 +77,6 @@ use super::result::Outcome;
 use super::{Sources, appearance, camera, connected, data_failure, health_tail, movement};
 use crate::source;
 use canonical::model::Model;
-use data::rom::Rom;
 use game::production::played;
 use oracle_record::FrameRecord;
 use platform::{
@@ -332,9 +331,10 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     if let Some(part) = intro::starts(&seed.wram).map_err(|outcome| at(start, outcome))? {
         return intro::play(&mut rows, &sources.rom, seed, part, row, start, end);
     }
+    let movement = movement::Content::load(&sources.rom)?;
     let content = connected::Content {
-        movement: movement::Content::load(&sources.rom)?,
-        appearance: appearance::Content::load(&sources.rom)?,
+        appearance: appearance::Content::from_rom(&movement.rom)?,
+        movement,
     };
     let report = |held, stop| Report {
         row: row.to_owned(),
@@ -354,7 +354,7 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
     let mut battery = match (!run.state.arrival.preparing())
-        .then(|| seed::Battery::load(&seed, &sources.rom))
+        .then(|| seed::Battery::load(&seed, content.movement.rom.lorom()))
         .transpose()
     {
         Ok(battery) => battery,
@@ -459,11 +459,10 @@ impl<'a> Run<'a> {
         path: &'a Path,
         row: &'a str,
     ) -> Result<Self, Outcome> {
-        let bad = || data_failure(None, "played ROM image");
-        let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
+        let image = &content.movement.rom;
         let start = import::start::import(image.lorom())
             .map_err(|_| data_failure(None, "played new game's start"))?;
-        let rooms = seed::rooms(&image)?;
+        let rooms = seed::rooms(image)?;
         let flyby = import::ridley_flyby::import(image.lorom())
             .map_err(|_| data_failure(None, "Ridley flyby assets"))?;
         let ridley = ridley::content(&rooms.actors.ceres_ridley, &flyby)?;
@@ -476,7 +475,7 @@ impl<'a> Run<'a> {
             }
             Start::Room(seed) => Self::seeded(seed, content, &rooms)?,
         };
-        let hud = super::hud::Content::load(path)?;
+        let hud = super::hud::Content::from_rom(image.lorom())?;
         let language = match origin {
             Start::Preparing(_, _, carried) => carried.language,
             Start::Room(seed) => seed::language(&seed.wram)?,

@@ -38,7 +38,7 @@ pub struct Content {
     /// Her clips as production plays them, for her clip's look ahead.
     appearance: game::production::AppearanceContent,
     slopes: Slopes,
-    rom: Rom,
+    pub(super) rom: Rom,
 }
 
 impl Content {
