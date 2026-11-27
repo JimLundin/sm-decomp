@@ -6,11 +6,6 @@
 
 use core::hash::Hasher;
 
-/// The machine streams of a Tick in the format-1 lock, in stream order.
-pub const MACHINE: [&str; 8] = [
-    "wram", "sram", "vram", "cgram", "oam", "ppu", "video", "apu",
-];
-
 /// A word-at-a-time 64-bit digest of bytes or `Hash` values. It detects
 /// change; it is not meant to resist anyone choosing the input.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
