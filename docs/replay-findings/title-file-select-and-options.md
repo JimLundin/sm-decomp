@@ -41,9 +41,8 @@ entries, and only the scoped intro runs compare them and the caret's picture.
 The scoped case `intro/flashback-from-page-one` admits the last finished cut of page 1
 and its latched pad. It carries the intro through the interrupted cut in the next row
 and through page 2's wait. It compares 1,293 finished cuts and five interrupted cuts,
-with 37,507 State fields and 9,186 outputs. Holding the seed matches the five interrupted
-cuts and no finished cuts. The scoped frame borrows the encounter's return cue from
-its explosion hold and callback. It compares the intro's requests before their
+with 37,507 State fields and 9,186 outputs. Holding the preceding State matches five complete
+cuts. The scoped frame borrows the encounter's return cue from its explosion hold and callback. It compares the intro's requests before their
 consumers. The boss's active hurt flash owns sprite palette 7 on two palette
 publication cuts. The durable intro checkpoint codec remains unavailable.
 
@@ -52,16 +51,16 @@ The R2 room adapter imports the populated collision grids for the Zebes fight an
 interrupted cut and takes its first ordinary movement and appearance turn on completion.
 `intro-rooms/discovery-first-turn` compares the same handoff at movie cuts 3517 and 3518.
 The two scoped cases admit their preceding actor and backed room image once. Each compares
-2,090 fields, matches zero full cuts with the frozen origin, and restores from both cut
-checkpoints. Delaying installation first differs at movie 2219 in `intro-room.cell.0` and
-at movie 3517 in `intro-room.width`. Integrated power-on play still needs the actor and the
+2,090 fields and restores from both cut checkpoints. Holding the preceding State matches zero
+complete cuts in either room. Delaying installation first differs at movie 2219 in
+`intro-room.cell.0` and at movie 3517 in `intro-room.width`. Integrated power-on play still needs the actor and the
 room intent on the unfinished work interval, followed by the live demo and encounter.
 
 The scoped case `flashback/zebes-encounter` starts with the latched press and inherited
 background Y from `any-intro-0568` cut 1650. It compares the encounter through
-`any-intro-2219` cuts 0 to 650, with 3,906 State fields and 6,510 outputs. The frozen
-origin matches zero full cuts. All 651 checkpoint restorations hold. Moving the contact
-line one pixel farther fails at cut 109 in `flashback.brain`. Room, demo, Samus, weapons
+`any-intro-2219` cuts 0 to 650, with 3,906 State fields and 6,510 outputs. Holding
+the preceding State matches two complete cuts. All 651 checkpoint restorations hold.
+Moving the contact line one pixel farther fails at cut 109 in `flashback.brain`. Room, demo, Samus, weapons
 and intro inputs are admitted for this witness. The encounter publishes the selected
 missile slot, ring knockback, palette flash, page-two cue, draw gate and visible encounter
 OAM. Weapons owns the impact continuation, and the integrated intro and renderer still
@@ -69,9 +68,9 @@ have to consume these publications.
 
 The scoped case `screens-playback/intro-demos` carries the recorded pad from the end of
 page 1 across the fight and discovery. It compares 2,234 cuts, with 8,936 State fields
-and 15,638 output observations. All 2,234 checkpoint continuations hold. The frozen origin
-matches zero full cuts. Dropping a fresh press during a continued hold fails at run cut 1786
-in `playback.current.fresh`. The playback owner publishes held and fresh buttons and the
+and 15,638 output observations. All 2,234 checkpoint continuations hold. Holding the preceding
+State matches 656 complete cuts. Dropping a fresh press during a continued hold fails
+at run cut 1786 in `playback.current.fresh`. The playback owner publishes held and fresh buttons and the
 scene-start and finish handoffs. The scope admits room actor opportunities, Samus's
 pre-motion whole X and the intro's fade count from the locked records.
 

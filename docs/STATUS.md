@@ -290,8 +290,8 @@ and starting push time compare separately as `ridley.tail.hit`.
 The indexed cases `ridley/flight-tail`, `ridley/alternate-rise-hit` and
 `ridley/alternate-hover-hit` exercise the same played room. The first compares
 all 127 cuts from take-off through the last hover, 9,525 state fields and 1,143
-outputs. Freezing the seed matches 809 state fields and no complete cut. The
-other two play the alternative row `samus-ceres-push` from 866 through 905 and from 926 through 993. Its
+outputs. Holding the preceding State matches 7,134 state fields and zero complete cuts.
+The other two play the alternative row `samus-ceres-push` from 866 through 905 and from 926 through 993. Its
 continuous run first differs at 906 in [falling aim](LEGACY.md#samuss-aim-after-an-isolated-down-press-in-a-fall).
 Each row also continues from observed checkpoints at 930, 940 and 992 through
 993, admitting all tail fields at each origin. Serialised room snapshots still
@@ -465,8 +465,8 @@ cut at movie 3,516 through the first finished examination cut at 6,013. It compa
 discovery start interrupted at 3,517. The start publishes the scene, palette, split and
 encounter request on that cut. At 3,518 the saved intro State, palette and pending room
 turn restore. The restored turn matches the uninterrupted ownership transfer, including
-the complete report, and does not repeat the start. Holding the initial State matches the
-six brightness-only cuts.
+the complete report, and does not repeat the start. Holding the preceding State matches
+six complete cuts.
 
 The replay borrows the egg's return cue from its instruction and last hold. It compares
 the introduced page scripts, the delivery baby's position and animation, the pan and
@@ -617,14 +617,21 @@ covers the stable actor clocks and effect slots, the interrupted hall sprite
 prefix and its publication, selected effect and overlay insertion spans, and
 the locked timer, Samus and mounted-vent slots. Each canonical continuation
 restores the C1 clocks, effect pool and room video publication. The replay
-carries the other played owners across that checkpoint. The null comparison
-freezes the empty C1 contribution at the hall origin. Whole OAM remains
+carries the other played owners across that checkpoint. The null comparison holds the preceding
+actor clocks, effect slots and prepared and published OAM spans. Whole OAM remains
 open at the earlier ordinary drawing boundary described in [LEGACY](LEGACY.md#ceres-escape-boundaries).
 
 ## The models' gain over the null model
 
-A witness must exercise a rule, not merely compare unchanged fields. Null-model and harness
-figures from before indexed replay are labelled as historical evidence, never as acceptance.
+At each transition the null comparison holds the preceding production State and latched inputs.
+Queues, bus lines and display memory keep their values. A held step issues no new hit, draw,
+transfer or request. It earns a cut only when every declared field and output matches.
+The null field count covers matching semantic fields.
+
+Across 16,186 compared cuts, the held step matches 2,865 and production matches all 16,186.
+The gain is 13,321 cuts. The [per-case transition](../scenarios/replay/held-state-transition.toml)
+records both null counts for the former and current comparisons. Earlier replay figures remain
+historical evidence.
 
 [`tools/mutants.toml`](../tools/mutants.toml) pins one production wiring fault per supported
 responsibility to its exact recorded Difference cut and field. CI builds one
