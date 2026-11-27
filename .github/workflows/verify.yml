@@ -17,8 +17,8 @@ permissions:
   contents: read
 
 env:
-  CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
-  CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
+  CACHE_ASSET: lockstep-cache-19e7684d7ff099ba.tar.xz.enc
+  CACHE_SHA256: a9e4fa04844821514806259744a55dad7b0d1c32b58fd5a18cd2a4ff8589707f
   # Root pins the validated fixture set after uploading its ciphertext.
   AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
   AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"

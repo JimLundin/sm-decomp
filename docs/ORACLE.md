@@ -296,10 +296,10 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
   `.lss` and `.words`, and all 651 rows' `pads/<row>.pads`. These remain independent source assets;
   indexed replay declares which seed and input formats its admission supports.
-- **The lockstep record cache** `lockstep-cache-5663de2c4b548c68.tar.xz.enc` (SHA-256
-  `4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f`), pinned in
+- **The lockstep record cache** `lockstep-cache-19e7684d7ff099ba.tar.xz.enc` (SHA-256
+  `a9e4fa04844821514806259744a55dad7b0d1c32b58fd5a18cd2a4ff8589707f`), pinned in
   `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
-  92 MB, the lean tier). The asset retains independent recorded rows and watched causal traces.
+  86 MB). The asset retains independent recorded rows and watched causal traces.
   Replay case metadata selects required rows; admission checks source pins and record coverage.
   Required acceptance runs the complete index rather than former harness floor-file unions.
   Local selection can use the cases whose required sources are available; missing data fails
