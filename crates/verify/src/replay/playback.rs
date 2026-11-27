@@ -18,6 +18,9 @@ use game::production::{
 use game::state::owned::OwnedState;
 use types::playback::{PadSample, TimelinePlace};
 
+// The intro's second Samus update calls the watched pose update after the pad step.
+const SAMUS_POSE_UPDATE: u32 = 0x91_eb88;
+
 pub(super) fn advance(
     production: &mut Production,
     inputs: &CutTape<Cut>,
@@ -41,7 +44,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             .into(),
     );
     let rules = ProductionRules::Playback;
-    let (rows, prior) = intro_sources::origin(case, sources, &lock)?;
+    let (mut rows, prior) = intro_sources::origin(case, sources, &lock)?;
     let window = case.cache_window()?;
     let first = *window.cuts.start();
     let origin = window.origin;
@@ -61,6 +64,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         rules.clone(),
     )
     .map_err(|_| data_failure(Some(origin), "playback origin admission"))?;
+    rows.require_watch(SAMUS_POSE_UPDATE);
     let native = NativeTimelines::read(rom.lorom())?;
     let mut inputs = Vec::new();
     let mut expected = Vec::new();
@@ -71,7 +75,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         window.cuts.clone(),
         |_, prior, current| {
             inputs.push(stimulus(&prior.wram, &current.wram)?);
-            expected.push(native.observe(&prior.wram, &current.wram)?);
+            expected.push(native.observe(&prior.wram, current)?);
             Ok(())
         },
     )?;
@@ -295,7 +299,12 @@ impl NativeTimelines {
         })
     }
 
-    fn observe(&self, before: &[u8], after: &[u8]) -> Result<ExpectedCut, Outcome> {
+    fn observe(
+        &self,
+        before: &[u8],
+        record: &oracle_record::FrameRecord,
+    ) -> Result<ExpectedCut, Outcome> {
+        let after = &record.wram;
         let phase = Phase::native(after)?;
         let prior = Phase::native(before)?;
         let progress = match phase {
@@ -304,6 +313,14 @@ impl NativeTimelines {
             Phase::Watch => self.watch.progress(after)?,
             Phase::Off | Phase::Locked | Phase::Released => -1,
         };
+        let mut hits = record.hits.iter().filter(|hit| hit.pc == SAMUS_POSE_UPDATE);
+        let pose_updated = hits.next().is_some();
+        if hits.next().is_some() {
+            return Err(data_failure(
+                Some(record.index),
+                "multiple watched intro pose updates",
+            ));
+        }
         let last = Pad::retained(after)?;
         let mut publication = Publication::EMPTY;
         match (prior, phase, progress) {
@@ -325,7 +342,9 @@ impl NativeTimelines {
                 publication.finish = Some(Handoff::Release);
                 publication.authority = Some(Authority::Releasing);
             }
-            _ if actor_reached(before, after)? => {
+            // Discovery's release disables the second update mid-turn. Its mode change
+            // above records that handoff even though the pose update did not run.
+            _ if pose_updated => {
                 publication.authority = Some(match phase {
                     Phase::Battle | Phase::Approach | Phase::Watch => Authority::Controlled,
                     Phase::Locked => Authority::BattleLocked,

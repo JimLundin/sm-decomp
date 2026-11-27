@@ -61,6 +61,7 @@ pub(in crate::replay) struct Rows<'a> {
     cache: &'a Path,
     /// The caches of the rows reached, in the chain's order.
     opened: Vec<Cache>,
+    required_watch: Option<u32>,
     #[cfg(test)]
     pub(super) clock_cuts: Vec<u64>,
 }
@@ -78,6 +79,7 @@ impl<'a> Rows<'a> {
             chain: Chain::new(lock, root, row)?,
             cache,
             opened: Vec::new(),
+            required_watch: None,
             #[cfg(test)]
             clock_cuts: Vec::new(),
         })
@@ -85,6 +87,11 @@ impl<'a> Rows<'a> {
 
     pub(super) fn witnesses(&self) -> Result<super::witnesses::Witnesses, Outcome> {
         super::witnesses::read(self.chain.root)
+    }
+
+    /// Every subsequent record must distinguish an absent hit from an unwatched address.
+    pub(in crate::replay) const fn require_watch(&mut self, pc: u32) {
+        self.required_watch = Some(pc);
     }
 
     /// The row that holds the run's `cut`, and its own cut there.
@@ -129,6 +136,15 @@ impl<'a> Rows<'a> {
             .opened
             .get(place)
             .ok_or_else(|| data_failure(Some(cut), "played rows"))?;
+        if self
+            .required_watch
+            .is_some_and(|pc| !cache.watched().contains(&pc))
+        {
+            return Err(data_failure(
+                Some(cut),
+                "missing required instruction watch",
+            ));
+        }
         record(cache, own)
     }
 }

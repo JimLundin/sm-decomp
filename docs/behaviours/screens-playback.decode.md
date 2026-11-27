@@ -90,6 +90,12 @@ two start cuts, room setup is visible before the first actor turn. In the two en
 the hide is later than the pad opportunity. The discovery stop must read the count the
 fade stage just changed on that turn.
 
+For the indexed comparison, the borrowed actor opportunity uses the old gate and cinematic
+counter. The expected authority uses the recorded instruction watch at `$91:EB88`, called by
+Samus's second update after the pad step. It also runs while battle input is locked. The last
+discovery turn disables that update mid-turn. Its captured change to the released handlers
+witnesses the handoff.
+
 The current production intro reports `Intro(BattleBegins)` at the opening boundary. Closure
 needs scene staging, room collision, Samus, weapons and cinematic actor joins. This pad source
 feeds the real movement and weapons paths. Reference comparison does not certify their outputs.
