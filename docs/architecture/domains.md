@@ -349,11 +349,10 @@ visible in the [replay index](../../scenarios/replay/index.toml) and the
 [transition ledger](../../scenarios/replay/transition.toml).
 
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
-the first step whose prerequisites hold. That rung's order comes from
-[domains.toml](domains.toml)'s edges: what can start, what waits on which unstarted work, and
-what runs ahead of work it needs. The edges are platform work's `before` and the domains a
-domain reads, within the rung's needs; work outside them doesn't count, since nothing outside
-the needs starts (MODEL §1 decision 24).
+the first step whose prerequisites hold. Within the rung's needs in [domains.toml](domains.toml),
+an item waits on the platform work whose `before` names it and on the domains §3's Depends
+column names; work outside the needs doesn't count, since nothing outside them starts (MODEL §1
+decision 24).
 
 1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,195) are recorded
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock

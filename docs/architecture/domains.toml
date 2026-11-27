@@ -1,5 +1,5 @@
-# The whole-game plan of domains.md (§3 the domains, §4 the waves) as data: its domain graph, the
-# milestone the README counts frames over (`verify::report`), and the rungs toward it. The root
+# The whole-game plan of domains.md (§3 the domains, §4 the waves) as data: the
+# milestone the README counts frames over (`verify::report`) and the rungs toward it. The root
 # changes a domain's `status` in the commit that lands a round when its work starts or its queue
 # empties.
 #
@@ -11,16 +11,6 @@
 # each model's name; `rounds` is the plan's estimate of its rounds; `model` is the model crate or list of model crates
 # that hold it; `status` is "not-started" (the default), "in-progress" or "done", and
 # a domain past "not-started" names at least one model.
-#
-# A domain's `reads` are the ids of the domains whose exports it reads: the domain graph. Most are
-# stated in domains.md §3 (its Reads / exports column, a scope that names the other domain's
-# output, or the bosses' paragraph); a read the plan only implies, by a scope that needs the
-# other domain's output or a Depends entry, has an `# Inferred:` comment above it saying why.
-# Audio is one convention, not edges: any domain may send U1 a sound request, so none reads U1
-# for one and U1 reads none for them; U1 reads R1 for the room's track.
-#
-# A rung's order of work comes from these edges, within its needs: an item waits on the
-# platform work whose `before` names it and on the domains it `reads`, while they have not started.
 #
 # [[platform]]: platform work outside the clean room (hardware formats, assets, timing, tools),
 # in lanes, not rounds. `before` names the plan items that wait for it: the asset formats
@@ -125,8 +115,6 @@ name = "Samus's motion: follow-ups"
 area = "samus"
 wave = 0
 rounds = 1
-# Inferred: W3 for the equipment it exports.
-reads = ["S5", "S6", "W3", "R1"]
 model = "samus-movement"
 status = "in-progress"
 
@@ -136,10 +124,6 @@ name = "The camera"
 area = "world"
 wave = 0
 rounds = 1
-reads = [
-    "S1", "S4", "S7", "W2", "R1", "R3", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9",
-    "B10",
-]
 model = "world-camera"
 status = "in-progress"
 
@@ -166,7 +150,6 @@ name = "Liquids and pushes"
 area = "samus"
 wave = 1
 rounds = 4
-reads = ["R3"]
 model = "samus-movement"
 status = "in-progress"
 
@@ -176,8 +159,6 @@ name = "How Samus looks"
 area = "samus"
 wave = 1
 rounds = 3
-# Inferred: H1 for the hurt flash and i-frames; H2 for current item controls.
-reads = ["S1", "S3", "H1", "H2"]
 model = "samus-appearance"
 status = "in-progress"
 
@@ -187,8 +168,6 @@ name = "The HUD and the mini-map"
 area = "interface"
 wave = 1
 rounds = 2
-# Inferred: S1 for the current position and action; W3 for item selection; P1 for map stations.
-reads = ["S1", "W3", "H1", "P1"]
 model = "interface-hud"
 status = "in-progress"
 
@@ -198,7 +177,6 @@ name = "Blocks that react"
 area = "world"
 wave = 1
 rounds = 5
-reads = ["S1", "S5", "W1", "R1"]
 model = "world-blocks"
 status = "in-progress"
 
@@ -208,8 +186,6 @@ name = "Progress"
 area = "run"
 wave = 1
 rounds = 1
-# Inferred: B1-B10 for boss flags.
-reads = ["W3", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10"]
 model = "run-progress"
 status = "in-progress"
 
@@ -273,8 +249,6 @@ name = "Doors and elevators"
 area = "world"
 wave = 2
 rounds = 6
-# Inferred: H2 for the HUD's colour groups the passage's fades keep lit.
-reads = ["S1", "P1", "H2"]
 model = "world-doors"
 status = "in-progress"
 
@@ -284,8 +258,6 @@ name = "Beams, missiles and bombs"
 area = "weapons"
 wave = 2
 rounds = 5
-# Inferred: F1 for the equipment screen's toggles.
-reads = ["S1", "W3", "F1"]
 model = "weapons-projectiles"
 status = "in-progress"
 
@@ -298,10 +270,6 @@ area = "enemy"
 wave = 2
 rounds = 6
 # CAM supplies the window of enemies that run. R3 supplies the quake offset for effects.
-reads = [
-    "S1", "S5", "CAM", "W1", "R1", "C2-C11", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
-    "B9", "B10", "R3",
-]
 
 [[domain]]
 id = "H1"
@@ -309,8 +277,6 @@ name = "Energy, reserves and death"
 area = "samus"
 wave = 2
 rounds = 2
-# Inferred: P2 for refill stations.
-reads = ["W2", "R3", "C1", "P2"]
 model = "samus-health"
 status = "in-progress"
 
@@ -320,7 +286,6 @@ name = "Hurt and knockback, bomb jumps"
 area = "samus"
 wave = 2
 rounds = 2
-reads = ["W1", "C1"]
 model = "samus-movement"
 
 # The static shaft entry sets the affine view and temporarily closes the passage.
@@ -361,7 +326,6 @@ name = "Ceres Ridley and the escape"
 area = "boss"
 wave = 3
 rounds = 4
-reads = ["S1", "CAM", "C1"]
 model = "boss-ceres-ridley"
 status = "in-progress"
 
@@ -371,8 +335,6 @@ name = "Title, intro, file select, options"
 area = "screens"
 wave = 3
 rounds = 8
-# Inferred: P2 for the file a file select loads.
-reads = ["S1", "S5", "W1", "P2"]
 model = ["screens-boot", "screens-title", "screens-file-select", "screens-options", "screens-intro", "screens-flashback", "screens-playback", "screens-discovery"]
 status = "in-progress"
 
@@ -383,7 +345,6 @@ area = "screens"
 wave = 3
 rounds = 6
 # The elevator receives the shaft reach and carries the timer, Health, room clocks and cartridge.
-reads = ["B8", "G1", "G2", "H1", "H2", "P2"]
 model = ["screens-arrival", "screens-flight", "screens-blackout", "screens-explosion", "screens-zebes"]
 status = "in-progress"
 
@@ -393,7 +354,6 @@ name = "Liquids and room weather"
 area = "world"
 wave = 3
 rounds = 4
-reads = ["R1"]
 model = ["world-quake", "world-haze"]
 status = "in-progress"
 
@@ -403,7 +363,6 @@ name = "Play time"
 area = "game"
 wave = 3
 rounds = 1
-reads = ["H1"]
 model = "game-time"
 status = "in-progress"
 
@@ -413,7 +372,6 @@ name = "Shared random sequence"
 area = "game"
 wave = 3
 rounds = 1
-reads = []
 model = "game-random"
 status = "in-progress"
 
@@ -423,7 +381,6 @@ name = "Room ambience"
 area = "world"
 wave = 3
 rounds = 3
-reads = ["S7", "R1"]
 
 [[domain]]
 id = "P2"
@@ -431,8 +388,6 @@ name = "Saving, loading and stations"
 area = "run"
 wave = 3
 rounds = 3
-# Inferred: F3 for the continue.
-reads = ["H3", "P1", "F3"]
 model = "save-files"
 status = "in-progress"
 
@@ -444,7 +399,6 @@ name = "Audio, the CPU side"
 area = "audio"
 wave = 3
 rounds = 3
-reads = ["R1"]
 
 # MODEL §1 decision 23: audio runs no code of the game. The sequencer is clean room over songs,
 # samples, instruments and sound effects imported into our own format (A3), compared on its
@@ -455,7 +409,6 @@ name = "The music and sound sequencer"
 area = "audio"
 wave = 5
 rounds = 10
-reads = ["U1"]
 
 [[platform]]
 id = "A3"
@@ -505,7 +458,6 @@ name = "Items to pick up"
 area = "world"
 wave = 4
 rounds = 2
-reads = ["W2"]
 
 [[domain]]
 id = "H3"
@@ -513,7 +465,6 @@ name = "Message boxes"
 area = "interface"
 wave = 4
 rounds = 2
-reads = ["W3"]
 
 [[platform]]
 id = "AF4b"
@@ -528,7 +479,6 @@ name = "Enemy families"
 area = "enemy"
 wave = 4
 rounds = 27
-reads = ["S1", "W2", "C1"]
 
 [[domain]]
 id = "B1"
@@ -536,7 +486,6 @@ name = "Spore Spawn"
 area = "boss"
 wave = 4
 rounds = 2
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B2"
@@ -544,7 +493,6 @@ name = "Bomb Torizo, Golden Torizo"
 area = "boss"
 wave = 4
 rounds = 3
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B3"
@@ -552,7 +500,6 @@ name = "Botwoon"
 area = "boss"
 wave = 4
 rounds = 2
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B4"
@@ -560,7 +507,6 @@ name = "Crocomire"
 area = "boss"
 wave = 4
 rounds = 4
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B5"
@@ -568,7 +514,6 @@ name = "Kraid"
 area = "boss"
 wave = 4
 rounds = 4
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B6"
@@ -576,7 +521,6 @@ name = "Phantoon"
 area = "boss"
 wave = 4
 rounds = 4
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B7"
@@ -584,7 +528,6 @@ name = "Draygon"
 area = "boss"
 wave = 4
 rounds = 3
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B9"
@@ -592,7 +535,6 @@ name = "Ridley"
 area = "boss"
 wave = 4
 rounds = 5
-reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B10"
@@ -600,7 +542,6 @@ name = "Mother Brain and the escape"
 area = "boss"
 wave = 4
 rounds = 8
-reads = ["S1", "CAM", "C1"]
 
 # Wave 5: the rest of Samus and the screens around play.
 
@@ -610,7 +551,6 @@ name = "The shinespark and echoes"
 area = "samus"
 wave = 5
 rounds = 2
-reads = ["S5"]
 model = "samus-movement"
 
 [[domain]]
@@ -619,8 +559,6 @@ name = "The grapple beam"
 area = "samus"
 wave = 5
 rounds = 3
-# Inferred: S2 for aiming from her pose (S6 depends on S2).
-reads = ["S2", "W2"]
 
 [[domain]]
 id = "S7"
@@ -628,7 +566,6 @@ name = "The x-ray scope"
 area = "samus"
 wave = 5
 rounds = 2
-reads = []
 
 [[domain]]
 id = "F1"
@@ -636,8 +573,6 @@ name = "The pause screen"
 area = "interface"
 wave = 5
 rounds = 5
-# Inferred: W3 for the equipment screen.
-reads = ["W3", "P1"]
 
 [[domain]]
 id = "F3"
@@ -645,7 +580,6 @@ name = "Game over"
 area = "screens"
 wave = 5
 rounds = 1
-reads = ["H1"]
 
 # The headline milestone (MODEL §1 decision 14): the engine replays the any% movie from
 # power-on to the frame of its seed any-opening:7, after the flight to Zebes and before the
