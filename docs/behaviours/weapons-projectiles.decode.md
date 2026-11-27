@@ -133,8 +133,7 @@ never a ROM room or an address-shaped content layout.
 
 Private scripts live in `$TEMP/collab/night-20261113/w1-observer/`: `reference.py`,
 `make_vectors.py`, `record_proof.py`, `mutant.py`, `composed.py` and `composed_vectors.py`; `observe.py` reads lean cache records.
-Run with `$LOCALAPPDATA/sm-decomp-tools/python-3.13.7/python.exe`. The embedded Python requires
-adding the script directory to sys.path when importing the other scripts. These private files
+Run the scripts from that directory with Python 3.13.7 so they can import each other. These private files
 are outside the implementer export and contain no committed ROM content.
 
 `reference.py` agrees with all 81 constructed vectors. Expected vector values were worked by

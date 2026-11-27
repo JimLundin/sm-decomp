@@ -243,8 +243,8 @@ The tests hold each listed run to the lock and the stretches to the milestone's 
 moves a played run, its own commits change the run there and regenerate the README, and the root
 reviews the figures at landing (Jim, 2026-11-25); full CI's replay witnesses hold every run to
 the file.
-`tools/check_readme.sh` in Quality, and verify's lib tests, which `tools/lane/gate.sh` runs when
-the README's inputs change, fail when the README differs from what the tree generates.
+Quality runs `cargo run --locked -q -p tools --bin tools -- report --check`. The local source gate
+also checks the generated README through verify's library tests when the report inputs change.
 
 The report is printed, not committed:
 

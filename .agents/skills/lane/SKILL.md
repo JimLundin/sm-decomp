@@ -54,11 +54,10 @@ role skill your brief names. For engineering work, follow the task route in AGEN
   [STATUS](../../../docs/STATUS.md) shows. Local acceptance and CI use the same runner.
   Compare case outcomes, declared fields/outputs, null evidence and checkpoint continuations;
   an expected Unsupported result is a held boundary, never a passing behaviour case.
-- Iterate locally on the narrowest single test,
-  started from the saved checkpoint nearest the question rather than from cut 1. Send full
-  cases, the required witnesses and fault checks to focused CI (`gh workflow run ci.yml --ref
-  <branch> -f target=<case or test>`), which runs without blocking the machine. Your lane ends
-  at the push: hand back the run ids, and the root watches them.
+- Iterate on the narrowest test from the nearest saved checkpoint. Record the tested commit
+  and the local acceptance results. If a required case or witness needs hosted fixtures, run
+  that target in CI (`gh workflow run ci.yml --ref <branch> -f target=<case or test>`) and
+  include the run ID in the handoff.
 - A new check must catch a deliberate one-line bug: apply the mutant locally, confirm the check
   fails at the right frame and field, revert. Never commit the mutant.
 - **Fixing a failure.** Reproduce the exact failure (the same command, row, frame and field)
