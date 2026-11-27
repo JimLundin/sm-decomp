@@ -5,7 +5,7 @@ use super::readers::{ActualReader, AdmittedCase, ExpectedReader, InputReader, re
 use super::result::Outcome;
 use super::{Sources, audio, data_failure, movement};
 use crate::cache::Cache;
-use crate::lock::{Lock, RowId};
+use crate::lock::RowId;
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
@@ -124,14 +124,14 @@ fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     } else {
         sources.native.join(path)
     };
-    let (input_tape, expected_tape) =
-        audio::load(&path, sha256, case.end.cut_inclusive).map_err(|fault| match fault {
+    let packet = case.audio_packet()?;
+    let (input_tape, expected_tape) = audio::load(&path, sha256, case.end.cut_inclusive, packet)
+        .map_err(|fault| match fault {
             audio::ProviderFault::Admission(source) => data_failure(None, source),
             audio::ProviderFault::Pin => data_failure(None, "native fixture pin"),
             audio::ProviderFault::Missing => data_failure(None, "native fixture file"),
         })?;
-    let (seed, content) =
-        audio::room_load::admit(&sources.rom, &sources.native, &input_tape, sha256)?;
+    let (seed, content) = audio::room_load::admit(sources, packet, &input_tape, sha256)?;
     let rules = ProductionRules::Audio;
     let production = Production::admit(seed, content.clone(), rules.clone())
         .map_err(|_| data_failure(None, "production audio admission"))?;
@@ -177,9 +177,7 @@ fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let Start::CacheCut { frame: start } = case.start else {
         return Err(data_failure(None, "movement start contract"));
     };
-    let lock = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "record lock file"))?;
-    let lock = Lock::parse(&lock).map_err(|_| data_failure(None, "record lock schema"))?;
+    let lock = super::read_lock(sources)?;
     let row = lock
         .row(&RowId(case.row.clone()))
         .ok_or_else(|| data_failure(None, "indexed lock row"))?;

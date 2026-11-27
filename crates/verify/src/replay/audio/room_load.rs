@@ -1,16 +1,12 @@
 //! The opening room's ROM-imported audio and its loaded senders, joined to the native capture.
 
-use super::{InputTape, encode, group};
+use super::{AudioPacket, InputTape, encode, group};
 use crate::lock::{Lock, RowId, Sha256};
-use crate::replay::{Outcome, data_failure};
+use crate::replay::{Outcome, Sources, data_failure, read_lock};
 use audio_transport::{ReleaseHistory, Request, SenderProgress, SenderState, SoundGroup, State};
 use data::assets::world::rooms::MAGNET_STAIRS_ROOM;
 use game::production::{ProductionContent, ProductionSeed, audio};
 use serde::Deserialize;
-use std::path::Path;
-
-const MEMBER: &str = "opening-ceres-audio-v1/origin.toml";
-const PIN: &str = "d9605917649a048cec3e66f1dd5debb703849b8095b54776d31fb88f87b94ed2";
 
 #[derive(Deserialize)]
 struct Groups<T> {
@@ -34,20 +30,21 @@ struct Packet {
 }
 
 impl Packet {
-    fn load(bytes: &[u8], current_tape: &str) -> Result<Self, Outcome> {
-        if Sha256::try_from(PIN).ok() != Some(Sha256::of(bytes)) {
-            return Err(data_failure(None, "opening Ceres audio origin pin"));
-        }
-        let source = std::str::from_utf8(bytes)
-            .map_err(|_| data_failure(None, "opening Ceres audio origin encoding"))?;
-        let packet: Self = toml::from_str(source)
-            .map_err(|_| data_failure(None, "opening Ceres audio origin fields"))?;
-        let locked = Lock::parse(include_str!("../../../../../scenarios/locks/lsnes.toml"))
-            .ok()
-            .and_then(|lock| {
-                lock.row(&RowId("chain-any-0003-DFD7".to_owned()))
-                    .and_then(|row| row.seed_record)
-            });
+    fn load(
+        sources: &Sources,
+        declaration: &AudioPacket,
+        current_tape: &str,
+    ) -> Result<Self, Outcome> {
+        let packet: Self = declaration.origin.read(&sources.native)?;
+        let lock = if sources.lock.as_os_str().is_empty() {
+            Lock::parse(include_str!("../../../../../scenarios/locks/lsnes.toml"))
+                .map_err(|_| data_failure(None, "record lock schema"))?
+        } else {
+            read_lock(sources)?
+        };
+        let locked = lock
+            .row(&RowId(declaration.seed_row.clone()))
+            .and_then(|row| row.seed_record);
         let seed_identity = Sha256::try_from(packet.locked_seed_sha256.as_str())
             .map_err(|_| data_failure(None, "opening Ceres locked seed identity"))?;
         if packet.schema != "opening-ceres-audio-v1"
@@ -69,12 +66,12 @@ fn by_group<T>(groups: Groups<T>) -> enum_map::EnumMap<SoundGroup, T> {
 /// Admit the opening room's load: the ROM's resident bank, the capture's loaded audio side and
 /// the load packet's senders, all three Ready with empty queues.
 pub(in crate::replay) fn admit(
-    rom: &Path,
-    native: &Path,
+    sources: &Sources,
+    declaration: &AudioPacket,
     tape: &InputTape,
     tape_hash: &str,
 ) -> Result<(ProductionSeed, ProductionContent), Outcome> {
-    let image = std::fs::read(rom).map_err(|_| data_failure(None, "opening Ceres ROM"))?;
+    let image = std::fs::read(&sources.rom).map_err(|_| data_failure(None, "opening Ceres ROM"))?;
     let rom =
         data::rom::Rom::new(image).map_err(|_| data_failure(None, "opening Ceres ROM identity"))?;
     let bank = import::audio::resident_ceres(&rom, MAGNET_STAIRS_ROOM)
@@ -98,9 +95,7 @@ pub(in crate::replay) fn admit(
             "ROM-selected audio and native graph disagree",
         ));
     }
-    let bytes = std::fs::read(native.join(MEMBER))
-        .map_err(|_| data_failure(None, "opening Ceres audio origin file"))?;
-    let packet = Packet::load(&bytes, tape_hash)?;
+    let packet = Packet::load(sources, declaration, tape_hash)?;
     let request_lines = enum_map::EnumMap::from_array(packet.requests);
     let history = by_group(packet.history);
     let senders = by_group(packet.sender);

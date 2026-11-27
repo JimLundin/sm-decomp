@@ -74,7 +74,9 @@ mod zebes;
 
 use super::compare::{CompareFault, Observation, compare};
 use super::result::Outcome;
-use super::{Sources, appearance, camera, connected, data_failure, health_tail, movement};
+use super::{
+    Sources, appearance, camera, connected, data_failure, health_tail, movement, read_lock,
+};
 use crate::source;
 use canonical::model::Model;
 use data::rom::Rom;
@@ -269,12 +271,6 @@ fn at(cut: u64, outcome: Outcome) -> Outcome {
         | Outcome::DataFailure { .. }
         | Outcome::CheckpointFailure { .. }) => other,
     }
-}
-
-fn read_lock(sources: &Sources) -> Result<crate::lock::Lock, Outcome> {
-    let text = std::fs::read_to_string(&sources.lock)
-        .map_err(|_| data_failure(None, "record lock file"))?;
-    crate::lock::Lock::parse(&text).map_err(|_| data_failure(None, "record lock schema"))
 }
 
 fn open_rows<'a>(

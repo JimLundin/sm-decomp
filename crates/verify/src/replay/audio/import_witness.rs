@@ -52,7 +52,8 @@ fn opening_ceres_rom_content_matches_resident_observations() {
         panic!("native control seed");
     };
     let native = PathBuf::from(std::env::var_os("SM_AUDIO_NATIVE").unwrap());
-    let (observed, _) = load(&native.join(path), sha256, case.end.cut_inclusive).unwrap();
+    let packet = case.audio_packet().unwrap();
+    let (observed, _) = load(&native.join(path), sha256, case.end.cut_inclusive, packet).unwrap();
     assert!(
         imported.content.tracks == observed.content.tracks,
         "song graph"
@@ -76,11 +77,10 @@ fn opening_ceres_rom_content_matches_resident_observations() {
 
     // Independently observed in the locked room-entry seed, with dense timbres assigned in
     // the native graph's order. Includes the identity of every addressed sample stream.
-    let expected = "6e63acdfeac091680644842973030b62100d718ddf9a5a7a2053ca29b0540036";
-    assert_eq!(imported.instruments.len(), 8);
-    assert_eq!(imported.samples.len(), 8);
+    assert_eq!(imported.instruments.len(), packet.instruments);
+    assert_eq!(imported.samples.len(), packet.samples);
     assert_eq!(
         resource_receipt(&imported),
-        Sha256::try_from(expected).unwrap()
+        Sha256::try_from(packet.resources_sha256.as_str()).unwrap()
     );
 }

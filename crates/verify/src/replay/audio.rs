@@ -8,17 +8,50 @@
 
 use super::audio_projection::SemanticObservation;
 use super::compare::Observation;
+use super::index::{FixtureFile, valid_hash};
 use audio_transport::frame::{EffectCadence, FrameCadence, TurnCount};
 use audio_transport::{
     Content, CueId, GroupState, OfferPermission, QueueAllowance, Request, ResidentMusicReply,
     SongState, SoundGroup,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::path::Path;
 
 pub(super) mod room_load;
+
+/// Independently reviewed provenance for native captures of the opening room.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct AudioPacket {
+    origin: FixtureFile,
+    seed_row: String,
+    roster_sha256: String,
+    roster_files: usize,
+    pins: usize,
+    cuts: usize,
+    publications: usize,
+    writer_masks: usize,
+    writers: BTreeSet<String>,
+    max_inactive_ramp_observations: usize,
+    expiry_prefix_end: u64,
+    instruments: usize,
+    samples: usize,
+    resources_sha256: String,
+}
+
+impl AudioPacket {
+    pub(super) fn valid(&self) -> bool {
+        self.origin.valid()
+            && !self.seed_row.is_empty()
+            && valid_hash(&self.roster_sha256)
+            && valid_hash(&self.resources_sha256)
+            && self.roster_files > 0
+            && self.pins > 0
+            && usize::try_from(self.expiry_prefix_end).is_ok_and(|end| end < self.cuts)
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProviderFault {
@@ -258,14 +291,19 @@ fn read(path: &Path, hash: &str) -> Result<Fixture, ProviderFault> {
         .ok_or(ProviderFault::Admission("native fixture schema"))
 }
 
-pub fn load(path: &Path, hash: &str, end: u64) -> Result<(InputTape, ExpectedTape), ProviderFault> {
+pub fn load(
+    path: &Path,
+    hash: &str,
+    end: u64,
+    packet: &AudioPacket,
+) -> Result<(InputTape, ExpectedTape), ProviderFault> {
     let fixture = read(path, hash)?;
-    if fixture.expire && end > 64 {
+    if fixture.expire && end > packet.expiry_prefix_end {
         return Err(ProviderFault::Admission(
             "expiry ends before the external repeat-count intervention",
         ));
     }
-    validate_provenance(&fixture)?;
+    validate_provenance(&fixture, packet)?;
     validate_order(&fixture)?;
     let writes = fixture
         .inputs
@@ -286,37 +324,29 @@ pub fn load(path: &Path, hash: &str, end: u64) -> Result<(InputTape, ExpectedTap
     ))
 }
 
-fn validate_provenance(fixture: &Fixture) -> Result<(), ProviderFault> {
-    if fixture.source_writer_masks != 77
-        || fixture.masks.len() != 77
+fn validate_provenance(fixture: &Fixture, packet: &AudioPacket) -> Result<(), ProviderFault> {
+    if fixture.source_writer_masks != packet.writer_masks
+        || fixture.masks.len() != packet.writer_masks
         || fixture.masks.iter().any(|mask| {
-            mask.cut >= 184
+            mask.cut >= fixture.cuts.len()
                 || mask.field.is_empty()
-                || !matches!(
-                    mask.writer.as_str(),
-                    "music157"
-                        | "music913-914/196-197"
-                        | "music175"
-                        | "music510"
-                        | "music785-795"
-                        | "music517-520"
-                )
+                || !packet.writers.contains(&mask.writer)
         })
-        || fixture.pins.len() != 27
-        || fixture.roster_files != 7206
-        || fixture.roster_sha256
-            != "7a9305e8f4a582254da3c91304e535523739617376cf98bb9874d1b04e1d6a60"
-        || fixture.pins.iter().any(|pin| {
-            pin.name.is_empty() || pin.size == 0 || !super::index::valid_hash(&pin.sha256)
-        })
-        || fixture.cuts.len() != 184
-        || fixture.publications.len() != 764
+        || fixture.pins.len() != packet.pins
+        || fixture.roster_files != packet.roster_files
+        || fixture.roster_sha256 != packet.roster_sha256
+        || fixture
+            .pins
+            .iter()
+            .any(|pin| pin.name.is_empty() || pin.size == 0 || !valid_hash(&pin.sha256))
+        || fixture.cuts.len() != packet.cuts
+        || fixture.publications.len() != packet.publications
         || fixture
             .cuts
             .iter()
             .enumerate()
             .any(|(index, cut)| cut.index != index || cut.fields.is_empty())
-        || fixture.inactive_ramp_observations > 736
+        || fixture.inactive_ramp_observations > packet.max_inactive_ramp_observations
         || fixture.timbres == 0
         || !fixture.seed.reservations.is_empty()
     {
