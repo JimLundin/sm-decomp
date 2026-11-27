@@ -33,30 +33,6 @@ impl PartialEq for BlockRules {
 
 impl Eq for BlockRules {}
 
-/// Complete HUD rules held by identity; clones retain that exact context.
-#[derive(Clone, Debug)]
-pub struct HudRules(Arc<interface_hud::Rules>);
-
-impl HudRules {
-    /// Bind the complete model rules once.
-    #[must_use]
-    pub fn new(rules: interface_hud::Rules) -> Self {
-        Self(Arc::new(rules))
-    }
-
-    pub(super) fn get(&self) -> &interface_hud::Rules {
-        &self.0
-    }
-}
-
-impl PartialEq for HudRules {
-    fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-}
-
-impl Eq for HudRules {}
-
 /// Complete following-camera parameters bound to their immutable identity.
 #[derive(Clone, Debug)]
 pub struct CameraRules(Arc<world_camera::Rules>);

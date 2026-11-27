@@ -230,16 +230,12 @@ pub enum InputProvider {
     NativeTouchdownInputs,
     /// Causal neighbours from the preceding pinned cut.
     PrecedingCutMovementInputs,
-    /// Independent prior facts plus observed external Ceres run scheduling.
-    PrecedingCutCeresInputs,
     /// Independent prior facts while captured camera producers remain unchanged.
     PrecedingCutCameraInputs,
     /// Independent cannon/terrain facts and bounded watched actor opportunities.
     PrecedingCutWeaponsContactInputs,
     /// Independently watched ordinary weapon inputs and the flying-picture insertion context.
     ScopedShotDrawingInputs,
-    /// Independent stable status/map facts and inert-input representatives.
-    PrecedingCutHudInputs,
     /// Independent stable standing-figure neighbours.
     PrecedingCutAppearanceInputs,
     /// Observed visits to independently identified fixed event setters.
@@ -262,8 +258,6 @@ pub enum ContentProvider {
     SenderGroup,
     /// ROM-selected audio for the independently admitted opening-room load.
     OpeningCeresAudio,
-    /// Static figures and geometry in the existing Ceres model.
-    CeresReference,
     /// Independently observed room scroll kinds and dimensions.
     RecordedScrollRun,
     /// Checked imported HUD pictures and area maps.
@@ -770,21 +764,6 @@ pub enum ObservationId {
     #[serde(rename = "audio.request_lines")]
     /// Request bytes last presented on each group's line at each cut.
     AudioRequestLines,
-    /// Exact independently decoded ceres.phase.
-    #[serde(rename = "ceres.phase")]
-    CeresPhase,
-    /// Exact independently decoded ceres.wait.
-    #[serde(rename = "ceres.wait")]
-    CeresWait,
-    /// Exact independently decoded ceres.figure.
-    #[serde(rename = "ceres.figure")]
-    CeresFigure,
-    /// Exact independently decoded ceres.shown.
-    #[serde(rename = "ceres.shown")]
-    CeresShown,
-    /// Exact independently decoded ceres.solid.
-    #[serde(rename = "ceres.solid")]
-    CeresSolid,
     /// Exact independently decoded camera.view.x.pixel.
     #[serde(rename = "camera.view.x.pixel")]
     CameraViewXPixel,
@@ -1196,9 +1175,6 @@ pub struct Case {
     #[serde(default)]
     /// Prove complete saved continuations through the horizon.
     pub checkpoints: bool,
-    #[serde(default)]
-    /// Explicit original actor slot for a scoped Ceres door; never selected by expected state.
-    pub actor_slot: Option<u16>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -1532,12 +1508,7 @@ macro_rules! discovery_observations {
 
 macro_rules! ceres_observations {
     () => {
-        ObservationId::CeresPhase
-            | ObservationId::CeresWait
-            | ObservationId::CeresFigure
-            | ObservationId::CeresShown
-            | ObservationId::CeresSolid
-            | ObservationId::CeresRetreatBody
+        ObservationId::CeresRetreatBody
             | ObservationId::CeresRetreatBound
             | ObservationId::CeresBackdropWalls
             | ObservationId::CeresBackdropColours
@@ -1843,12 +1814,6 @@ fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [Obs
         "audio-transport/RequestDelivery" | "audio-transport/RequestRelease" => {
             &[O::AudioRequestLines]
         }
-        "boss-ceres-ridley/Waiting" | "boss-ceres-ridley/Polling" => &[O::CeresPhase, O::CeresWait],
-        "boss-ceres-ridley/SheIsNear" | "boss-ceres-ridley/Closing" => {
-            &[O::CeresPhase, O::CeresFigure]
-        }
-        "boss-ceres-ridley/Shown" => &[O::CeresShown],
-        "boss-ceres-ridley/Solid" => &[O::CeresSolid],
         "world-camera/FollowingHer"
         | "world-camera/Remembering"
         | "world-camera/RememberedHeightFraction" => &[
@@ -2437,7 +2402,6 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
 }
 
 fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
-    use ObservationId as O;
     let recorded = case.kind == CaseKind::Scoped
         && matches!(
             case.expectations.provider,
@@ -2467,21 +2431,6 @@ fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<Observatio
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Playback] => playback_provider_valid(case, recorded),
-        [Responsibility::Ceres] => {
-            recorded
-                && case.content == ContentProvider::CeresReference
-                && case.inputs == InputProvider::PrecedingCutCeresInputs
-                && case.actor_slot.is_some_and(|slot| slot < 32)
-                && case.expectations.outputs.is_empty()
-                && *observations
-                    == BTreeSet::from([
-                        O::CeresPhase,
-                        O::CeresWait,
-                        O::CeresFigure,
-                        O::CeresShown,
-                        O::CeresSolid,
-                    ])
-        }
         [Responsibility::Camera] => {
             recorded
                 && case.content == ContentProvider::RecordedScrollRun
@@ -2491,14 +2440,6 @@ fn responsibility_provider_valid(case: &Case, observations: &BTreeSet<Observatio
         }
         [Responsibility::Weapons, Responsibility::Contact] => {
             weapons_provider_valid(case, recorded)
-        }
-        [Responsibility::Hud] => {
-            recorded
-                && case.content == ContentProvider::HudReference
-                && case.inputs == InputProvider::PrecedingCutHudInputs
-                && case.expectations.outputs.is_empty()
-                && observations.len() == 10
-                && case.expectations.output_cut.is_none()
         }
         [Responsibility::Appearance] => {
             recorded
@@ -2542,9 +2483,7 @@ fn health_tail_provider_valid(case: &Case) -> bool {
 
 fn scope_valid(case: &Case) -> bool {
     let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
-    if owners.len() != case.responsibilities.len()
-        || (case.actor_slot.is_some() && case.responsibilities != [Responsibility::Ceres])
-    {
+    if owners.len() != case.responsibilities.len() {
         return false;
     }
     let observations: BTreeSet<_> = case

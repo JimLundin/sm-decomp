@@ -3670,9 +3670,9 @@ identity = "interface-hud/chain-any-0001-DF45"
 before_values = [293]
 before_scope = "Per-row verified matched cuts"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/chain-any-0001-DF45: former Per-row verified matched cuts [293] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -5962,9 +5962,9 @@ identity = "boss-ceres-ridley/chain-any-0003-DFD7"
 before_values = [341]
 before_scope = "Per-row verified matched cuts"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/chain-any-0003-DFD7: former Per-row verified matched cuts [341] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -12742,9 +12742,9 @@ identity = "interface-hud/chain-any-0001-DF45"
 before_values = [293, 262, 293, 4, 0, 0, 118]
 before_scope = "Per-row [held, null-held, compared, masked, out-of-scope, unreached, folded]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/chain-any-0001-DF45: former Per-row [held, null-held, compared, masked, out-of-scope, unreached, folded] [293, 262, 293, 4, 0, 0, 118] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -15034,9 +15034,9 @@ identity = "boss-ceres-ridley/chain-any-0003-DFD7"
 before_values = [341, 127, 341, 0, 3, 0, 0]
 before_scope = "Per-row [held, null-held, compared, masked, out-of-scope, unreached, folded]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/chain-any-0003-DFD7: former Per-row [held, null-held, compared, masked, out-of-scope, unreached, folded] [341, 127, 341, 0, 3, 0, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20530,9 +20530,9 @@ identity = "interface-hud/frames"
 before_values = [37669, 26823, 26821, 2, 23968]
 before_scope = "Aggregate domain frames [frames, compared, matched-and-verified, unverified, null-model-matched]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/frames: former Aggregate domain frames [frames, compared, matched-and-verified, unverified, null-model-matched] [37669, 26823, 26821, 2, 23968] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20542,9 +20542,9 @@ identity = "interface-hud/field/status bar"
 before_values = [26823, 0]
 before_scope = "Aggregate domain field/status bar [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/status bar: former Aggregate domain field/status bar [compared, masked] [26823, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20554,9 +20554,9 @@ identity = "interface-hud/field/values last shown"
 before_values = [26823, 0]
 before_scope = "Aggregate domain field/values last shown [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/values last shown: former Aggregate domain field/values last shown [compared, masked] [26823, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20566,9 +20566,9 @@ identity = "interface-hud/field/selected item"
 before_values = [26823, 0]
 before_scope = "Aggregate domain field/selected item [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/selected item: former Aggregate domain field/selected item [compared, masked] [26823, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20578,9 +20578,9 @@ identity = "interface-hud/field/one-shot item"
 before_values = [26823, 0]
 before_scope = "Aggregate domain field/one-shot item [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/one-shot item: former Aggregate domain field/one-shot item [compared, masked] [26823, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20590,9 +20590,9 @@ identity = "interface-hud/field/mini-map window"
 before_values = [25778, 1045]
 before_scope = "Aggregate domain field/mini-map window [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/mini-map window: former Aggregate domain field/mini-map window [compared, masked] [25778, 1045] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20602,9 +20602,9 @@ identity = "interface-hud/field/explored cells"
 before_values = [25778, 1045]
 before_scope = "Aggregate domain field/explored cells [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/explored cells: former Aggregate domain field/explored cells [compared, masked] [25778, 1045] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20614,9 +20614,9 @@ identity = "interface-hud/field/mini-map off"
 before_values = [26823, 0]
 before_scope = "Aggregate domain field/mini-map off [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/field/mini-map off: former Aggregate domain field/mini-map off [compared, masked] [26823, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20626,9 +20626,9 @@ identity = "interface-hud/entry/AmmoCounts"
 before_values = [50, 0, 50, 0]
 before_scope = "Aggregate domain entry/AmmoCounts [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/AmmoCounts: former Aggregate domain entry/AmmoCounts [matched-and-verified, null-model-matched, exercised, unchecked] [50, 0, 50, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20638,9 +20638,9 @@ identity = "interface-hud/entry/AutoReserveSign"
 before_values = [13853, 13048, 13853, 0]
 before_scope = "Aggregate domain entry/AutoReserveSign [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/AutoReserveSign: former Aggregate domain entry/AutoReserveSign [matched-and-verified, null-model-matched, exercised, unchecked] [13853, 13048, 13853, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20650,9 +20650,9 @@ identity = "interface-hud/entry/BossBlanksTheMap"
 before_values = [1, 0, 1, 0]
 before_scope = "Aggregate domain entry/BossBlanksTheMap [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/BossBlanksTheMap: former Aggregate domain entry/BossBlanksTheMap [matched-and-verified, null-model-matched, exercised, unchecked] [1, 0, 1, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20662,9 +20662,9 @@ identity = "interface-hud/entry/CancellingTheItem"
 before_values = [53, 16, 53, 0]
 before_scope = "Aggregate domain entry/CancellingTheItem [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/CancellingTheItem: former Aggregate domain entry/CancellingTheItem [matched-and-verified, null-model-matched, exercised, unchecked] [53, 16, 53, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20674,9 +20674,9 @@ identity = "interface-hud/entry/CyclingItems"
 before_values = [90, 0, 90, 0]
 before_scope = "Aggregate domain entry/CyclingItems [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/CyclingItems: former Aggregate domain entry/CyclingItems [matched-and-verified, null-model-matched, exercised, unchecked] [90, 0, 90, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20686,9 +20686,9 @@ identity = "interface-hud/entry/DiagonalPicture"
 before_values = [68, 68, 68, 23]
 before_scope = "Aggregate domain entry/DiagonalPicture [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/DiagonalPicture: former Aggregate domain entry/DiagonalPicture [matched-and-verified, null-model-matched, exercised, unchecked] [68, 68, 68, 23] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20698,9 +20698,9 @@ identity = "interface-hud/entry/EnergyGauge"
 before_values = [659, 0, 659, 0]
 before_scope = "Aggregate domain entry/EnergyGauge [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/EnergyGauge: former Aggregate domain entry/EnergyGauge [matched-and-verified, null-model-matched, exercised, unchecked] [659, 0, 659, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20710,9 +20710,9 @@ identity = "interface-hud/entry/Exploring"
 before_values = [16197, 16127, 16197, 1045]
 before_scope = "Aggregate domain entry/Exploring [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/Exploring: former Aggregate domain entry/Exploring [matched-and-verified, null-model-matched, exercised, unchecked] [16197, 16127, 16197, 1045] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20722,9 +20722,9 @@ identity = "interface-hud/entry/FirstColumnsShift"
 before_values = [0, 0, 0, 0]
 before_scope = "Aggregate domain entry/FirstColumnsShift [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/FirstColumnsShift: former Aggregate domain entry/FirstColumnsShift [matched-and-verified, null-model-matched, exercised, unchecked] [0, 0, 0, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20734,9 +20734,9 @@ identity = "interface-hud/entry/HerBlink"
 before_values = [16197, 14081, 16197, 1045]
 before_scope = "Aggregate domain entry/HerBlink [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/HerBlink: former Aggregate domain entry/HerBlink [matched-and-verified, null-model-matched, exercised, unchecked] [16197, 14081, 16197, 1045] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20746,9 +20746,9 @@ identity = "interface-hud/entry/IconsAppear"
 before_values = [0, 0, 0, 0]
 before_scope = "Aggregate domain entry/IconsAppear [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/IconsAppear: former Aggregate domain entry/IconsAppear [matched-and-verified, null-model-matched, exercised, unchecked] [0, 0, 0, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20758,9 +20758,9 @@ identity = "interface-hud/entry/LastColumnsShift"
 before_values = [0, 0, 0, 0]
 before_scope = "Aggregate domain entry/LastColumnsShift [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/LastColumnsShift: former Aggregate domain entry/LastColumnsShift [matched-and-verified, null-model-matched, exercised, unchecked] [0, 0, 0, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20770,9 +20770,9 @@ identity = "interface-hud/entry/MiniMapStill"
 before_values = [6542, 6542, 6542, 0]
 before_scope = "Aggregate domain entry/MiniMapStill [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/MiniMapStill: former Aggregate domain entry/MiniMapStill [matched-and-verified, null-model-matched, exercised, unchecked] [6542, 6542, 6542, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20782,9 +20782,9 @@ identity = "interface-hud/entry/MiniMapWindow"
 before_values = [16197, 14081, 16197, 1045]
 before_scope = "Aggregate domain entry/MiniMapWindow [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/MiniMapWindow: former Aggregate domain entry/MiniMapWindow [matched-and-verified, null-model-matched, exercised, unchecked] [16197, 14081, 16197, 1045] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20794,9 +20794,9 @@ identity = "interface-hud/entry/OneShotFlash"
 before_values = [50, 38, 50, 0]
 before_scope = "Aggregate domain entry/OneShotFlash [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/OneShotFlash: former Aggregate domain entry/OneShotFlash [matched-and-verified, null-model-matched, exercised, unchecked] [50, 38, 50, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20806,9 +20806,9 @@ identity = "interface-hud/entry/OneShotItem"
 before_values = [90, 85, 90, 0]
 before_scope = "Aggregate domain entry/OneShotItem [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/OneShotItem: former Aggregate domain entry/OneShotItem [matched-and-verified, null-model-matched, exercised, unchecked] [90, 85, 90, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20818,9 +20818,9 @@ identity = "interface-hud/entry/OutOfPlay"
 before_values = [3036, 3036, 3038, 0]
 before_scope = "Aggregate domain entry/OutOfPlay [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/OutOfPlay: former Aggregate domain entry/OutOfPlay [matched-and-verified, null-model-matched, exercised, unchecked] [3036, 3036, 3038, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20830,9 +20830,9 @@ identity = "interface-hud/entry/SelectionHighlight"
 before_values = [127, 0, 127, 0]
 before_scope = "Aggregate domain entry/SelectionHighlight [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/SelectionHighlight: former Aggregate domain entry/SelectionHighlight [matched-and-verified, null-model-matched, exercised, unchecked] [127, 0, 127, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20842,9 +20842,9 @@ identity = "interface-hud/entry/SwitchClick"
 before_values = [0, 0, 0, 127]
 before_scope = "Aggregate domain entry/SwitchClick [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/SwitchClick: former Aggregate domain entry/SwitchClick [matched-and-verified, null-model-matched, exercised, unchecked] [0, 0, 0, 127] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -20854,9 +20854,9 @@ identity = "interface-hud/entry/Switching"
 before_values = [0, 0, 0, 139]
 before_scope = "Aggregate domain entry/Switching [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["hud/stationary-map-blink"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DF45 cuts8..24 compare status/map fields with a stationary powered map. Exploring rule exercise, general input ownership, rendering and durable saves are not established. Since then the played run of chain-any-0001-DF45 from cut 0 compares the HUD's State and grid on 369 of the row's 411 cuts, all but its cuts 325 to 366, and hud/stationary-map-blink, which held only DF45 cuts 8 to 24, is retired too."
 lost_observations = ["interface-hud/entry/Switching: former Aggregate domain entry/Switching [matched-and-verified, null-model-matched, exercised, unchecked] [0, 0, 0, 139] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21418,9 +21418,9 @@ identity = "boss-ceres-ridley/frames"
 before_values = [40835, 5437, 5437, 0, 3233]
 before_scope = "Aggregate domain frames [frames, compared, matched-and-verified, unverified, null-model-matched]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/frames: former Aggregate domain frames [frames, compared, matched-and-verified, unverified, null-model-matched] [40835, 5437, 5437, 0, 3233] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21430,9 +21430,9 @@ identity = "boss-ceres-ridley/field/phase"
 before_values = [5437, 0]
 before_scope = "Aggregate domain field/phase [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/phase: former Aggregate domain field/phase [compared, masked] [5437, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21442,9 +21442,9 @@ identity = "boss-ceres-ridley/field/figure"
 before_values = [5437, 0]
 before_scope = "Aggregate domain field/figure [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/figure: former Aggregate domain field/figure [compared, masked] [5437, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21454,9 +21454,9 @@ identity = "boss-ceres-ridley/field/shown"
 before_values = [5437, 0]
 before_scope = "Aggregate domain field/shown [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/shown: former Aggregate domain field/shown [compared, masked] [5437, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21466,9 +21466,9 @@ identity = "boss-ceres-ridley/field/solid"
 before_values = [5437, 0]
 before_scope = "Aggregate domain field/solid [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/solid: former Aggregate domain field/solid [compared, masked] [5437, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21478,9 +21478,9 @@ identity = "boss-ceres-ridley/field/new figure"
 before_values = [5437, 0]
 before_scope = "Aggregate domain field/new figure [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/new figure: former Aggregate domain field/new figure [compared, masked] [5437, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21490,9 +21490,9 @@ identity = "boss-ceres-ridley/field/shake"
 before_values = [5056, 381]
 before_scope = "Aggregate domain field/shake [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/shake: former Aggregate domain field/shake [compared, masked] [5056, 381] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21502,9 +21502,9 @@ identity = "boss-ceres-ridley/field/colours"
 before_values = [3847, 1590]
 before_scope = "Aggregate domain field/colours [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/colours: former Aggregate domain field/colours [compared, masked] [3847, 1590] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21514,9 +21514,9 @@ identity = "boss-ceres-ridley/field/box"
 before_values = [5437, 0]
 before_scope = "Aggregate domain field/box [compared, masked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/field/box: former Aggregate domain field/box [compared, masked] [5437, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21526,9 +21526,9 @@ identity = "boss-ceres-ridley/entry/Closing"
 before_values = [45, 0, 45, 0]
 before_scope = "Aggregate domain entry/Closing [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/Closing: former Aggregate domain entry/Closing [matched-and-verified, null-model-matched, exercised, unchecked] [45, 0, 45, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21538,9 +21538,9 @@ identity = "boss-ceres-ridley/entry/EscapeShakes"
 before_values = [2069, 1347, 2069, 138]
 before_scope = "Aggregate domain entry/EscapeShakes [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/EscapeShakes: former Aggregate domain entry/EscapeShakes [matched-and-verified, null-model-matched, exercised, unchecked] [2069, 1347, 2069, 138] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21550,9 +21550,9 @@ identity = "boss-ceres-ridley/entry/Opening"
 before_values = [50, 0, 50, 0]
 before_scope = "Aggregate domain entry/Opening [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/Opening: former Aggregate domain entry/Opening [matched-and-verified, null-model-matched, exercised, unchecked] [50, 0, 50, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21562,9 +21562,9 @@ identity = "boss-ceres-ridley/entry/Polling"
 before_values = [942, 0, 942, 0]
 before_scope = "Aggregate domain entry/Polling [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/Polling: former Aggregate domain entry/Polling [matched-and-verified, null-model-matched, exercised, unchecked] [942, 0, 942, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21574,9 +21574,9 @@ identity = "boss-ceres-ridley/entry/RoomStart"
 before_values = [32, 0, 32, 0]
 before_scope = "Aggregate domain entry/RoomStart [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/RoomStart: former Aggregate domain entry/RoomStart [matched-and-verified, null-model-matched, exercised, unchecked] [32, 0, 32, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21586,9 +21586,9 @@ identity = "boss-ceres-ridley/entry/ShaftWall"
 before_values = [254, 253, 254, 0]
 before_scope = "Aggregate domain entry/ShaftWall [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/ShaftWall: former Aggregate domain entry/ShaftWall [matched-and-verified, null-model-matched, exercised, unchecked] [254, 253, 254, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21598,9 +21598,9 @@ identity = "boss-ceres-ridley/entry/SheIsNear"
 before_values = [952, 0, 952, 0]
 before_scope = "Aggregate domain entry/SheIsNear [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/SheIsNear: former Aggregate domain entry/SheIsNear [matched-and-verified, null-model-matched, exercised, unchecked] [952, 0, 952, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21610,9 +21610,9 @@ identity = "boss-ceres-ridley/entry/Shown"
 before_values = [2218, 2167, 2218, 0]
 before_scope = "Aggregate domain entry/Shown [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/Shown: former Aggregate domain entry/Shown [matched-and-verified, null-model-matched, exercised, unchecked] [2218, 2167, 2218, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21622,9 +21622,9 @@ identity = "boss-ceres-ridley/entry/Solid"
 before_values = [2218, 2168, 2218, 0]
 before_scope = "Aggregate domain entry/Solid [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/Solid: former Aggregate domain entry/Solid [matched-and-verified, null-model-matched, exercised, unchecked] [2218, 2168, 2218, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21634,9 +21634,9 @@ identity = "boss-ceres-ridley/entry/TheDoorsColours"
 before_values = [11, 0, 11, 0]
 before_scope = "Aggregate domain entry/TheDoorsColours [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/TheDoorsColours: former Aggregate domain entry/TheDoorsColours [matched-and-verified, null-model-matched, exercised, unchecked] [11, 0, 11, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -21646,9 +21646,9 @@ identity = "boss-ceres-ridley/entry/Waiting"
 before_values = [2207, 253, 2207, 0]
 before_scope = "Aggregate domain entry/Waiting [matched-and-verified, null-model-matched, exercised, unchecked]"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established."
+reason = "The previous domain replay executor and its aggregate floor are retired. Independent records remain available. Only DFD7 cuts7..10 compare five door state fields. Other actors/stages, sound/shake/pixel output and durable saves are not established. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
 lost_observations = ["boss-ceres-ridley/entry/Waiting: former Aggregate domain entry/Waiting [matched-and-verified, null-model-matched, exercised, unchecked] [2207, 253, 2207, 0] is not a current obligation. Exact overlap cannot be inferred from aggregate totals; related short cases carry only their own declared fields, outputs and cuts."]
 
 [[claim]]
@@ -34827,10 +34827,10 @@ identity = "movement-ceres/carried-position-proximity"
 before_values = [4, 28, 0, 0, 0, 0, 15, 0, 0, 0]
 before_scope = "Reviewed integrated behaviour case and its exact counts"
 disposition = "retired"
-witness_case_ids = ["ceres/door-closes-after-departure"]
+witness_case_ids = []
 test_ids = []
-reason = "The played-alone run carries the room's Ceres doors with movement, from the seed through the passage into the next room: each door runs once a frame through CeresDoor::run, reading where she was at the end of the last frame, and her motion meets the doors that were solid as the frame began. It compares her position and every door's phase, wait, figure, shown and solid at every finished cut of chain-any-0003-DFD7, cuts 1 to 344 from cut 0 and 7 to 344 from cut 6. The movement-ceres production path it exercised is removed."
-lost_observations = ["movement-ceres/carried-position-proximity: its compared cuts (4) and fields (28) are not an indexed obligation. The played-alone run is a diagnostic that compares them, and ceres/door-closes-after-departure carries only its own declared fields and cuts."]
+reason = "The played-alone run carries the room's Ceres doors with movement, from the seed through the passage into the next room: each door runs once a frame through CeresDoor::run, reading where she was at the end of the last frame, and her motion meets the doors that were solid as the frame began. It compares her position and every door's phase, wait, figure, shown and solid at every finished cut of chain-any-0003-DFD7, cuts 1 to 344 from cut 0 and 7 to 344 from cut 6. The movement-ceres production path it exercised is removed. Since then the played run of chain-any-0003-DFD7 from cut 0 compares every Ceres door's phase, wait, figure, shown and solid on 225 of the row's 344 cuts, cuts 7 to 10 among them, and ceres/door-closes-after-departure, which held only DFD7 cuts 7 to 10, is retired too."
+lost_observations = ["movement-ceres/carried-position-proximity: its compared cuts (4) and fields (28) are not an indexed obligation. The required played runs compare them, and ceres/door-closes-after-departure is retired."]
 
 [[claim]]
 source_path = "scenarios/replay/baseline.toml"
@@ -35143,3 +35143,27 @@ witness_case_ids = []
 test_ids = []
 reason = "The played runs of chain-any-0011-DF45 from cuts 239 and 241 hold every cut through 2124, and the power-on run holds the row's cuts through 2123. This case compared cuts 2123 and 2124 of the same continuous run under departure names. The played runs compare departure.schedule, health, random, progress, room, pipeline, vram, oam, palette and plane by name at the receiving cut 2124. At the other cuts they compare the same record quantities under the station's and the flight's names, explosion.stage and explosion.context or zebes.finished, flow, destination and maximum for the schedule, explosion.health or zebes.energy for the health, and the carried random number, room, maps, shadow tilemaps, progress and health on every cut. On every settled finished cut where this case compared video memory, the carried check compares the same VRAM, OAM, palette and affine registers. The Japanese subtitle flag, constant through the flight, is compared by name at cut 2124. The case only repeated those comparisons."
 lost_observations = ["departure/shaft-save-to-landing: its compared cuts, fields and outputs are not an indexed obligation. The required played runs compare the same record quantities at the same cuts under the station's and the flight's names. The case's checkpoint at its comparison origin is not repeated there."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a2190ffa9f2ac5cd8293b0951638896d1be2372841df8c95f945c5d6491ddda2"
+identity = "ceres/door-closes-after-departure"
+before_values = [4, 20, 0, 0, 0, 0, 13, 0, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0003-DFD7 from cuts 0 and 16 hold the row's cuts through 344 and on, and the power-on run holds the same cuts. At each of this case's compared cuts, 7 to 10, they compare the room's door in slot 0 as ceres.0.phase, wait, figure, shown and solid, the same encodings of the same record words the case compared as ceres.phase, wait, figure, shown and solid. The case's double run fault patched the scoped Ceres adapter, which goes with it. The same fault on the played room's door run now stops the played run of chain-any-0003-DFD7 from cut 0. The scoped case only repeated that comparison."
+lost_observations = ["ceres/door-closes-after-departure: its compared cuts and fields are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The scoped Ceres door owner and its admission at cut 6 are gone."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a2190ffa9f2ac5cd8293b0951638896d1be2372841df8c95f945c5d6491ddda2"
+identity = "hud/stationary-map-blink"
+before_values = [17, 170, 0, 0, 0, 14, 167, 0, 0, 0]
+before_scope = "Reviewed scoped behaviour case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "The played runs of chain-any-0001-DF45 from cut 0 hold the row's cuts through 411 and on, and the power-on run holds the same cuts. At each of this case's compared cuts, 8 to 24, they compare hud.explored, energy, missiles, supers, bombs, highlighted, selected, one-shot and map-off under the same names and values, and the grid the case compared as hud.grid in its two parts, hud.map-window and hud.status-bar, from the same record bytes. The case's clock offset fault patched the scoped HUD adapter, which goes with it. The same fault on the played HUD's frame now stops the played run of chain-any-0001-DF45 from cut 0. The scoped case only repeated that comparison."
+lost_observations = ["hud/stationary-map-blink: its compared cuts and fields are not an indexed obligation. The required played runs compare the same quantities at the same cuts. The scoped HUD owner and its check that 18 combinations of dropped items and map turn-on leave the frame unchanged are gone."]

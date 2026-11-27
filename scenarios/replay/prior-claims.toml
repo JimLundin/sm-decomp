@@ -3870,3 +3870,17 @@ source_sha256 = "b6ac38923430842c6dedd5774363df3a7c47662c214dc29390ecac08bf27a24
 identity = "departure/shaft-save-to-landing"
 before_values = [2, 10, 14, 0, 0, 0, 3, 2, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 316d192f763fa20ab2b5ca9703dc77e3ff63e1e0dd9b252e60e172b269dfb013; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a2190ffa9f2ac5cd8293b0951638896d1be2372841df8c95f945c5d6491ddda2"
+identity = "ceres/door-closes-after-departure"
+before_values = [4, 20, 0, 0, 0, 0, 13, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest d39f90510a392df4f5910a0d9a27c6ee2732c14d94816b61a2699cdb63a180b4; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "a2190ffa9f2ac5cd8293b0951638896d1be2372841df8c95f945c5d6491ddda2"
+identity = "hud/stationary-map-blink"
+before_values = [17, 170, 0, 0, 0, 14, 167, 0, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 240c1cbf98171fa4487f64d758c62412f866d60d7a06ca262b9481a179522e16; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

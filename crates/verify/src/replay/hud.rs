@@ -2,11 +2,11 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use enum_map::enum_map;
 use interface_hud::{
-    Ammo, Ammunition, BegunCountdown, CancelButton, ColourSet, Controls, Countdown, CountdownAge,
-    CountdownInputs, CountdownPlace, CountdownRuns, Dropped, Energy, Equipped, Flip, FrameCount,
-    FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet, MapPictures,
-    MiniMapInputs, MiniMapPower, Mute, Pair, Picture, Place, Reserve, ReserveMode, Room,
-    SelectButton, SelectableItem, Selection, Shown, Status, Stock, StockAtStart, Tile,
+    Ammo, Ammunition, BegunCountdown, CancelButton, ColourSet, Countdown, CountdownAge,
+    CountdownInputs, CountdownPlace, CountdownRuns, Energy, Equipped, Flip, FrameCount, HerMap,
+    HudGrid, HudPictures, HudState, Icons, Look, MapCellSet, MapPictures, MiniMapPower, Mute, Pair,
+    Picture, Place, Reserve, ReserveMode, Room, SelectButton, SelectableItem, Selection, Shown,
+    Status, Stock, StockAtStart, Tile,
 };
 use std::path::Path;
 
@@ -151,17 +151,6 @@ fn bitmap(wram: &[u8]) -> Result<MapCellSet, Outcome> {
         }
     }
     Ok(set)
-}
-pub fn seed(wram: &[u8], _content: &Content) -> Result<HudState, Outcome> {
-    let state = decode_state(wram)?;
-    if state.selection != Selection::None || state.mini_map != MiniMapPower::On {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "HUD drop/turn-on equivalence requires unselected powered-on seed"
-                .to_owned(),
-        });
-    }
-    Ok(state)
 }
 
 /// The escape countdown's words (bank 80's timer): its status, its time left as three BCD
@@ -324,84 +313,6 @@ pub fn decode_state(wram: &[u8]) -> Result<HudState, Outcome> {
     })
 }
 
-pub struct OwnedInput<'a> {
-    frame: FrameInputs<'a>,
-}
-impl OwnedInput<'_> {
-    #[cfg(test)]
-    pub const fn frame(&self) -> FrameInputs<'_> {
-        self.frame
-    }
-    pub const fn input(&self) -> game::production::HudInput<'_> {
-        game::production::HudInput::Play(&self.frame)
-    }
-}
-/// Only externally owned quantities participate in this stationary interval check.
-/// Empty physical controls and no pickup publication preserve the seed's unselected invariant.
-pub fn validate_step(prior: &[u8], current: &[u8]) -> Result<(), Outcome> {
-    let unsupported = || Outcome::Unsupported {
-        cut: None,
-        dependency: "HUD stationary ordinary quiet-producer premise".to_owned(),
-    };
-    if word(prior, 0x0998)? != 8
-        || word(current, 0x0998)? != 8
-        || word(current, 0x05b6)?.wrapping_sub(word(prior, 0x05b6)?) != 1
-    {
-        return Err(unsupported());
-    }
-    for at in [
-        0x079b, 0x079f, 0x0789, 0x07a1, 0x07a3, 0x07a5, 0x07a7, 0x09a2, 0x09b8, 0x09ba, 0x09c0,
-        0x09c2, 0x09c4, 0x09c6, 0x09c8, 0x09ca, 0x09cc, 0x09ce, 0x09d0, 0x09d6, 0x0a1c, 0x0a1e,
-        0x0a42, 0x0a44, 0x0a78, 0x0af6, 0x0afa, 0x0d32, 0x09ea, 0x179c,
-    ] {
-        if word(prior, at)? != word(current, at)? {
-            return Err(unsupported());
-        }
-    }
-    Ok(())
-}
-/// Reject recorded publications outside this bounded stationary witness.
-/// Unrecorded drops are represented by Nothing only under the unselected invariant:
-/// each permitted drop leaves selection None. A turn-on similarly preserves an already On map.
-pub fn validate_events(record: &oracle_record::FrameRecord) -> Result<(), Outcome> {
-    if record.hits.iter().any(|hit| {
-        matches!(
-            hit.pc,
-            0x90_bf25
-                | 0x90_bf41
-                | 0x90_c091
-                | 0x90_c0a6
-                | 0x80_99cf
-                | 0x80_9a0e
-                | 0x80_9a1e
-                | 0x80_9a2e
-                | 0x80_9a3e
-                | 0x90_a7e2
-        )
-    }) {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "HUD quiet event source contradicted".to_owned(),
-        });
-    }
-    Ok(())
-}
-fn validate_quiet_controls(prior: &[u8]) -> Result<(), Outcome> {
-    if word(prior, 0x008b)? != 0
-        || word(prior, 0x008f)? != 0
-        || word(prior, 0x09a2)? & 0xc000 != 0
-        || word(prior, 0x09ea)? != 0
-        || word(prior, 0x179c)? != 0
-        || word(prior, 0x0d32)? != 0xc4f0
-        || word(prior, 0x0a78)? != 0
-    {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "HUD admitted quiet upstream producer interval".to_owned(),
-        });
-    }
-    Ok(())
-}
 /// Her stock as the frame begins, from record N: the switch reads it before this frame's shots
 /// and pickups change it.
 pub(super) fn stock_at_start(start: &[u8]) -> Result<StockAtStart, Outcome> {
@@ -496,51 +407,6 @@ pub(super) fn countdown_runs(start: &[u8], end: &[u8]) -> Result<CountdownRuns, 
 /// The countdown choice of main gameplay: it runs the escape countdown each frame.
 pub(super) const MAIN_GAMEPLAY_COUNTDOWN: CountdownRuns = CountdownRuns::MaintainCountdown;
 
-pub fn input<'a>(
-    start: &[u8],
-    end: &[u8],
-    content: &'a Content,
-) -> Result<OwnedInput<'a>, Outcome> {
-    validate_quiet_controls(start)?;
-    let (select, cancel) = bindings(start)?.buttons(word(start, 0x008f)?, word(start, 0x008b)?);
-    let runs = match word(end, 0x0a44)? {
-        0xe725 | 0xe7f5 | 0xe86a | 0xe8dc | 0xe8ec | 0xe8aa => true,
-        0xe7d2 | 0xe833 | 0xe8d6 | 0xe8d9 | 0xe902 | 0xe8cd => false,
-        _ => return Err(data_failure(None, "HUD mini-map handler")),
-    };
-    Ok(OwnedInput {
-        frame: FrameInputs {
-            frame: frame_count(start)?,
-            stock_at_start: stock_at_start(start)?,
-            controls: Controls {
-                select,
-                cancel,
-                can_switch: can_switch(end)?,
-            },
-            mini_map: MiniMapInputs {
-                runs,
-                turned_on: false,
-                position: Pair {
-                    x: word(end, 0x0af6)?,
-                    y: word(end, 0x0afa)?,
-                },
-                room: room_from_words(
-                    [word(end, 0x07a1)?, word(end, 0x07a3)?],
-                    [word(end, 0x07a5)?, word(end, 0x07a7)?],
-                ),
-                map: content.map(end)?,
-                map_collected: map_collected(end)?,
-            },
-            mother_brain_falls: false,
-            status: status(end)?,
-            collected: None,
-            muted_by: muted_by(end)?,
-            dropped_before_status_bar: Dropped::Nothing,
-            dropped_after_status_bar: Dropped::Nothing,
-            countdown: countdown_inputs(start, end)?,
-        },
-    })
-}
 /// The frame count as the frame begins, from record N.
 pub(super) fn frame_count(start: &[u8]) -> Result<FrameCount, Outcome> {
     Ok(FrameCount(word(start, 0x05b5)?.to_le_bytes()[0]))

@@ -8,20 +8,6 @@ provider = "pinned-native-capture"
 fields = ["frame.offers", "frame.cadence"]
 phase = "per frame"
 
-[preceding-ceres-neighbours]
-readers = ["preceding-cut-ceres-inputs"]
-dependency = "ceres.samus-and-stage"
-provider = "preceding-cut-independent-observations"
-fields = ["samus.position", "station.stage"]
-phase = "preceding-record-cut"
-
-[observed-ceres-actor-turn]
-readers = ["preceding-cut-ceres-inputs"]
-dependency = "ceres.actor-run"
-provider = "adjacent-cut-framework-counter-and-identity"
-fields = ["actor.identity", "actor.position", "actor.framework_counter"]
-phase = "current-record-cut"
-
 [unchanged-camera-neighbours]
 readers = ["preceding-cut-camera-inputs"]
 dependency = "camera.movement-and-room"
@@ -139,13 +125,6 @@ dependency = "weapons.drawing-insertion"
 provider = "independent-shot-contact-watch"
 fields = ["camera.drawing-origin", "drawing.counter-parity", "drawing.incoming-cursor"]
 phase = "before-flying-picture-insertion"
-
-[stationary-hud-neighbours]
-readers = ["preceding-cut-hud-inputs"]
-dependency = "hud.upstream-status-controls-and-map"
-provider = "preceding-cut-independent-observations"
-fields = ["frame-counter", "physical-controls", "bindings", "stock-at-start", "equipment", "progress-gauges", "samus-handlers", "samus-pose", "samus-position", "room-map-origin", "room-size", "area", "map-collected", "main-gameplay-countdown"]
-phase = "record N for the frame count, controls and stock as the frame begins; record N+1 for the status, handlers, pose, position and room"
 
 [standing-appearance-neighbours]
 readers = ["preceding-cut-appearance-inputs"]

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "4b513d02aee695a0517d8891d3d89458c16db8cf9fbd532d96b05a1a3600531d"
+index_sha256 = "a844fe5de5ce9f53217816d1408f39a8c03f5925f3877433c3a545f21eb2622c"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -74,24 +74,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "ceres/door-closes-after-departure"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "d39f90510a392df4f5910a0d9a27c6ee2732c14d94816b61a2699cdb63a180b4"
-
-[case.counts]
-cuts = 4
-fields = 20
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 13
-restorations = 0
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "weapons-contact/M0-four-searches"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -142,24 +124,6 @@ replies = 0
 null_cuts = 0
 null_fields = 3
 restorations = 1
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "hud/stationary-map-blink"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "240c1cbf98171fa4487f64d758c62412f866d60d7a06ca262b9481a179522e16"
-
-[case.counts]
-cuts = 17
-fields = 170
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 14
-null_fields = 167
-restorations = 0
 pending_boundaries = 0
 pending_restorations = 0
 

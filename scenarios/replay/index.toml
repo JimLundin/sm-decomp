@@ -233,30 +233,6 @@ limits = ["locked room-entry audio side and three ready, empty senders admitted"
 operation = "native-audio-frame"
 claim = "CPU producers, the CPU's frame timing and the audio clock outside case (T1)"
 [[case]]
-id = "ceres/door-closes-after-departure"
-kind = "scoped"
-row = "chain-any-0003-DFD7"
-actor_slot = 0
-start = { source = "cache-cut", frame = 6 }
-end = { cut_inclusive = 10 }
-rules = ["boss-ceres-ridley/Waiting", "boss-ceres-ridley/SheIsNear", "boss-ceres-ridley/Polling", "boss-ceres-ridley/Closing", "boss-ceres-ridley/Shown", "boss-ceres-ridley/Solid"]
-profile = "reference"
-responsibilities = ["ceres"]
-content = "ceres-reference"
-inputs = "preceding-cut-ceres-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["ceres.phase", "ceres.wait", "ceres.figure", "ceres.shown", "ceres.solid"], outputs = [] }
-checkpoints = false
-limits = ["Samus position and station stage externally admitted", "current-cut framework counter validates one externally scheduled run; actor selection and update timing unproved", "opening sound and shake outputs omitted", "pixel composition and downstream collision omitted", "durable Ceres codec unavailable"]
-
-[[case.borrowed]]
-operation = "preceding-ceres-neighbours"
-claim = "movement and progress producers outside case; Calm and Getaway only"
-
-[[case.borrowed]]
-operation = "observed-ceres-actor-turn"
-claim = "one run supplied externally; no Ceres output feeds input or owned state"
-
-[[case]]
 id = "weapons-contact/M0-four-searches"
 kind = "scoped"
 row = "chain-any-0003-DFD7"
@@ -333,26 +309,6 @@ source = { row = "item-morph-ball", cut = 1216, preceding_wram_sha256 = "2ef9895
 [[case.borrowed]]
 operation = "unchanged-camera-neighbours"
 claim = "prior facts admitted only while independently captured movement and room producer fields remain unchanged; camera-owned current fields are expectations only"
-
-[[case]]
-id = "hud/stationary-map-blink"
-kind = "scoped"
-row = "chain-any-0001-DF45"
-start = { source = "cache-cut", frame = 7 }
-end = { cut_inclusive = 24 }
-rules = ["interface-hud/HerBlink", "interface-hud/MiniMapWindow"]
-profile = "reference"
-responsibilities = ["hud"]
-content = "hud-reference"
-inputs = "preceding-cut-hud-inputs"
-expectations = { provider = "pinned-record-cache", fields = ["hud.grid", "hud.explored", "hud.energy", "hud.missiles", "hud.supers", "hud.bombs", "hud.highlighted", "hud.selected", "hud.one-shot", "hud.map-off"], outputs = [] }
-checkpoints = false
-limits = ["drops represented by Nothing under unselected invariant; turn-on represented by false under powered-on invariant; all alternatives require complete production state/output equivalence proof", "stationary upstream producer values borrowed and required unchanged", "exactly one ordinary HUD invocation supplied by scoped schedule; caller timing unproved", "click and switch events, video upload and composed pixels omitted", "durable HUD codec unavailable"]
-qualifications = ["With no item selected and the mini-map on, all 18 combinations of before-drop, after-drop and turn-on inputs preserve the complete state and outputs. The controls remain released and the case rejects pickups and boss events."]
-
-[[case.borrowed]]
-operation = "stationary-hud-neighbours"
-claim = "external quantities only; paired current cuts certify unchanged producers and one gameplay tick; main gameplay at both cuts runs the escape countdown"
 
 [[case]]
 id = "appearance/standing-clip"

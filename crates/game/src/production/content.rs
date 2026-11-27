@@ -119,10 +119,6 @@ pub enum ProductionContent {
     Appearance(Box<super::AppearanceContent>),
     /// Progress reports carry the typed world facts they record.
     Progress,
-    /// Every named imported HUD picture.
-    Hud(Box<interface_hud::HudPictures>),
-    /// Ceres door geometry and figures are defined by its clean model.
-    Ceres,
     /// Passage scene and doorway facts are carried State and explicit inputs.
     Doors,
 }
@@ -172,10 +168,6 @@ pub enum ProductionRules {
     Appearance(samus_appearance::Rules),
     /// Complete progress parameters.
     Progress(run_progress::Rules),
-    /// Complete immutable HUD parameters.
-    Hud(super::HudRules),
-    /// Complete Ceres door parameters.
-    Ceres(boss_ceres_ridley::Rules),
     /// Complete passage parameters.
     Doors(world_doors::Rules),
 }

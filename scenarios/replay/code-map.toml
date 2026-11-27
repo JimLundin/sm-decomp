@@ -91,64 +91,6 @@ targets = [
 ]
 
 [[rule]]
-id = "boss-ceres-ridley/Closing"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
-  { role = "adapter", path = "crates/game/src/production/entries.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
-  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/Polling"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
-  { role = "adapter", path = "crates/game/src/production/entries.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
-  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/SheIsNear"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/inputs.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
-  { role = "adapter", path = "crates/game/src/production/entries.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
-  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/Shown"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/phase.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
-  { role = "adapter", path = "crates/game/src/production/entries.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
-  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/Solid"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/phase.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
-  { role = "adapter", path = "crates/game/src/production/entries.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
-  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "boss-ceres-ridley/Waiting"
-targets = [
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/phase.rs" },
-  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
-  { role = "adapter", path = "crates/game/src/production/entries.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
-  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
-]
-
-[[rule]]
 id = "enemy-interactions/ActorShake"
 targets = [
   { role = "model", path = "crates/clean/enemy_interactions/src/actor.rs" },

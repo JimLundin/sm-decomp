@@ -41,22 +41,6 @@ pub enum BlocksOutputs {
     Frame(world_blocks::Report),
 }
 
-/// A selected clean HUD entry; ordinary play runs only once.
-#[derive(Clone, Copy)]
-pub enum HudInput<'a> {
-    /// Every physical controller, progress, map, frame and drop input for play.
-    Play(&'a interface_hud::FrameInputs<'a>),
-    /// An actual passage/load/cinematic input from its selected producer or causal source.
-    OutOfPlay(&'a interface_hud::OutOfPlayInputs<'a>),
-    /// A boss met on entering its room.
-    Boss {
-        /// The admitted boss kind.
-        boss: interface_hud::Boss,
-        /// Its room's mini-map origin.
-        room_cell: interface_hud::Place,
-    },
-}
-
 pub(super) fn admit(
     seed: ProductionSeed,
     content: &ProductionContent,
@@ -158,12 +142,6 @@ fn admit_standalone(
             ProductionContent::Progress,
             ProductionRules::Progress(_),
         ) => OwnedState::Progress(state),
-        (ProductionSeed::Hud(state), ProductionContent::Hud(_), ProductionRules::Hud(_)) => {
-            OwnedState::Hud(state)
-        }
-        (ProductionSeed::Ceres(state), ProductionContent::Ceres, ProductionRules::Ceres(_)) => {
-            OwnedState::Ceres(state)
-        }
         (ProductionSeed::Doors(state), ProductionContent::Doors, ProductionRules::Doors(_)) => {
             OwnedState::Doors(state)
         }
@@ -303,21 +281,6 @@ fn advance(
             ProductionOutputs::Progress
         }
         (
-            OwnedState::Hud(state),
-            ProductionContent::Hud(pictures),
-            ProductionRules::Hud(rules),
-            AdvanceInput::Hud(input),
-        ) => ProductionOutputs::Hud(advance_hud(state, rules.get(), pictures, input)?),
-        (
-            OwnedState::Ceres(state),
-            ProductionContent::Ceres,
-            ProductionRules::Ceres(rules),
-            AdvanceInput::Ceres(inputs),
-        ) => {
-            let output = ceres_advance(state, inputs, rules);
-            ProductionOutputs::Ceres(output)
-        }
-        (
             OwnedState::Doors(state),
             ProductionContent::Doors,
             ProductionRules::Doors(rules),
@@ -363,38 +326,4 @@ fn advance_blocks(
                 .map_err(ProductionFault::Blocks)?,
         ),
     })
-}
-
-fn advance_hud(
-    state: &mut interface_hud::HudState,
-    rules: &interface_hud::Rules,
-    pictures: &interface_hud::HudPictures,
-    input: HudInput<'_>,
-) -> Result<Option<interface_hud::FrameOutputs>, ProductionFault> {
-    Ok(match input {
-        HudInput::Play(inputs) => Some(
-            state
-                .frame_of_play(rules, pictures, inputs)
-                .map_err(|frame| ProductionFault::Unsupported(Unsupported::Hud(frame)))?,
-        ),
-        HudInput::OutOfPlay(inputs) => {
-            state.out_of_play(inputs);
-            None
-        }
-        HudInput::Boss { boss, room_cell } => {
-            state.boss_blanks_the_map(rules, pictures, boss, room_cell);
-            None
-        }
-    })
-}
-
-/// Shared complete Ceres adapter entry.
-pub(super) fn ceres_advance(
-    state: &mut boss_ceres_ridley::CeresDoor,
-    inputs: &boss_ceres_ridley::Inputs,
-    rules: &boss_ceres_ridley::Rules,
-) -> boss_ceres_ridley::Run {
-    let output = state.run(inputs, rules);
-    *state = output.door;
-    output
 }
