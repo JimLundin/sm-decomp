@@ -6,13 +6,13 @@
 # `git am`, authorship and messages kept. Each must touch only the [import] paths of
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
 # `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
-# code_check.sh (nothing cargo would run or read at build time, and no variant import), add no scan.sh hit to a file
-# that didn't hold it at the export's start, and add no function the mirror scan maps onto one
-# routine (against the spec and decode notes on BRANCH), or nothing is applied. If BRANCH
-# lacks a clean crate the export started with, its empty scaffold is committed first (trailer
-# `Role: integrator`), so the patches apply as they were made. The workspace takes every folder
-# of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring the model
-# into the engine is the integrator's next commit.
+# code_check.sh (nothing cargo would run or read at build time, and no variant import), add no
+# scan.sh hit to a file that didn't hold it at the export's start, and add no function the
+# mirror scan maps onto one routine (against the spec and decode notes on BRANCH), or nothing is
+# applied. If BRANCH lacks a clean crate the export started with, its empty scaffold is committed
+# first (trailer `Role: integrator`), so the patches apply as they were made. The workspace takes
+# every folder of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring
+# the model into the engine is the integrator's next commit.
 #
 # Once applied, the export's crates must hold the capability rule (no files, network, processes,
 # environment or unsafe code): Clippy with the repository's crates/clean/.clippy.toml and only the workspace's
